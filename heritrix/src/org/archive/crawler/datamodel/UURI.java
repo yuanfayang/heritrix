@@ -12,8 +12,8 @@ package org.archive.crawler.datamodel;
  * These instances will always have been normalized 
  * (massaged in ways that by spec and in practice,
  * do not change the URI's meaning or function) and
- * rehabilitated (patched in riskless ways to be
- * legal, eg escaping spaces). 
+ * rehabilitated (patched in riskless or necessary
+ * ways to be legal, eg escaping spaces). 
  * 
  * @author gojomo
  *
@@ -22,6 +22,7 @@ public class UURI {
 	java.net.URI uri;
 	
 	public static UURI createURI(String u) {
+		// TODO implement
 		return null;
 	}
 	

@@ -4,10 +4,8 @@
  *
  * $Header$
  */
-package org.archive.crawler.framework;
+package org.archive.crawler.datamodel;
 
-import org.archive.crawler.datamodel.AttributeList;
-import org.archive.crawler.datamodel.UURI;
 
 /**
  * @author gojomo

@@ -4,7 +4,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.core;
+package org.archive.crawler.framework;
 
 import org.archive.crawler.datamodel.CrawlURI;
 

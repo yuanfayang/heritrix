@@ -6,16 +6,28 @@
  */
 package org.archive.crawler.framework;
 
+import org.archive.crawler.datamodel.*;
 import org.archive.crawler.datamodel.CrawlURI;
 
 /**
  * 
  * @author Gordon Mohr
  */
-public interface Processor {
-	public boolean wants(CrawlURI curi);
-	public void process(CrawlURI curi);
-	public void init(Config conf);
+public class Processor {
+	public void process(CrawlURI curi) {
+		// by default, simply forward curi along
+		curi.setNextProcessor(getDefaultNext());
+	}
 	
-	public void addEntryFilter(UURIFilter f);
+	/**
+	 * 
+	 */
+	private Processor getDefaultNext() {
+		return null;
+		
+	}
+	
+	public void init(Config conf, CrawlController controller) {
+		// default do nothing
+	}
 }

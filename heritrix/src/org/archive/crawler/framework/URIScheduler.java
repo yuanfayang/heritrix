@@ -6,7 +6,6 @@
  */
 package org.archive.crawler.framework;
 
-import org.archive.crawler.core.ToeThread;
 import org.archive.crawler.datamodel.CrawlURI;
 
 /**
@@ -14,7 +13,8 @@ import org.archive.crawler.datamodel.CrawlURI;
  *
  */
 public interface URIScheduler {
-
+	CrawlController controller = null;
+	
 	/**
 	 * @param thread
 	 * @return

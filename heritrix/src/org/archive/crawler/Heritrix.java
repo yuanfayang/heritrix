@@ -4,9 +4,10 @@
  *
  * $Header$
  */
-package org.archive.crawler.core;
+package org.archive.crawler;
 
-import org.archive.crawler.framework.CrawlOrder;
+import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.framework.CrawlController;
 
 /**
  * Main class for Heritrix crawler.
@@ -16,7 +17,7 @@ import org.archive.crawler.framework.CrawlOrder;
  * undertake, and begins that crawl.
  * 
  * (Eventually, will start web UI and await further
- * instructions instead.)
+ * instructions.)
  * 
  * @author gojomo
  *

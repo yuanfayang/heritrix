@@ -6,7 +6,13 @@
  */
 package org.archive.crawler.framework;
 
+import org.archive.crawler.datamodel.*;
+
 /**
+ * Handles all persistence for Scheduler and Selector, allowing
+ * them to be stateless (and somewhat indifferent to the strategies
+ * used for giant URI queues/sets).
+ * 
  * @author gojomo
  *
  */

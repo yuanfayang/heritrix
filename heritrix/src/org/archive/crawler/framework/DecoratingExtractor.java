@@ -13,6 +13,6 @@ package org.archive.crawler.framework;
  * 
  * @author Gordon Mohr
  */
-public interface DecoratingExtractor extends Processor {
+public class DecoratingExtractor extends Processor {
 
 }
