@@ -24,6 +24,7 @@
 package org.archive.crawler.frontier;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -41,6 +42,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.HttpStatus;
@@ -101,9 +104,6 @@ public class Frontier
     private static final Logger logger =
         Logger.getLogger(Frontier.class.getName());
 
-    /** how many items to store in memory atop each keyedqueue
-     * higher == more RAM used per active host; lower == more disk IO */
-    private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
     /** how many multiples of last fetch elapsed time to wait before recontacting same server */
     public final static String ATTR_DELAY_FACTOR = "delay-factor";
     /** always wait this long after one completion before recontacting 
@@ -128,30 +128,47 @@ public class Frontier
     public final static String ATTR_MAX_HOST_BANDWIDTH_USAGE =
         "max-per-host-bandwidth-usage-KB-sec";
 
-    private final static Float DEFAULT_DELAY_FACTOR = new Float(5);
-    private final static Integer DEFAULT_MIN_DELAY = new Integer(500);
-    private final static Integer DEFAULT_MAX_DELAY = new Integer(5000);
-    private final static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
-    private final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
-    private final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
-    private final static Integer DEFAULT_HOST_VALENCE = new Integer(1); 
-    private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
-        new Integer(0);
-    private final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
-        new Integer(0);
-    private final static float KILO_FACTOR = 1.024F;
+    /** how many items to store in memory atop of the pending queue
+     * higher == more RAM used per active host; lower == more disk IO */
+    public final static String ATTR_PENDING_QUEUE_MEMORY_CAPACITY =
+        "pending-queue-memory-capacity";
+    /** maximum how many items to store in memory atop each keyedqueue
+     * higher == more RAM used per active host; lower == more disk IO */
+    public final static String ATTR_HOST_QUEUES_MEMORY_CAPACITY =
+        "host-queues-memory-capacity";
 
-    private final static String F_ADD = "F+ ";
-    private final static String F_EMIT = "Fe ";
-    private final static String F_RESCHEDULE = "Fr ";
-    private final static String F_SUCCESS = "Fs ";
-    private final static String F_FAILURE = "Ff ";
+
+    protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
+    protected final static Integer DEFAULT_MIN_DELAY = new Integer(500);
+    protected final static Integer DEFAULT_MAX_DELAY = new Integer(5000);
+    protected final static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
+    protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
+    protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
+    protected final static Integer DEFAULT_HOST_VALENCE = new Integer(1); 
+    protected final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
+        new Integer(0);
+    protected final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
+        new Integer(0);
+
+    protected final static Integer DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY =
+        new Integer(10000);
+    protected final static Integer DEFAULT_HOST_QUEUES_MEMORY_CAPACITY =
+        new Integer(200);
+
+    
+    protected final static float KILO_FACTOR = 1.024F;
+
+    protected final static String F_ADD = "F+ ";
+    protected final static String F_EMIT = "Fe ";
+    protected final static String F_RESCHEDULE = "Fr ";
+    protected final static String F_SUCCESS = "Fs ";
+    protected final static String F_FAILURE = "Ff ";
 
     protected CrawlController controller;
 
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
-    UURISet alreadyIncluded;
+    protected UURISet alreadyIncluded;
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
     
@@ -159,7 +176,7 @@ public class Frontier
 
     // every CandidateURI not yet in process or another queue;
     // all seeds start here; may contain duplicates
-    Queue pendingQueue; // of CandidateURIs
+    protected Queue pendingQueue; // of CandidateURIs
 
     // all active per-class queues
     HashMap allClassQueuesMap = new HashMap(); // of String (classKey) -> KeyedQueue
@@ -236,7 +253,7 @@ public class Frontier
             "usage has been to high.\n0 means no bandwidth limitation.",
             DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE));
         t.setOverrideable(false);
-        addElementToDefinition(
+        t = addElementToDefinition(
             new SimpleType(ATTR_MAX_HOST_BANDWIDTH_USAGE,
             "The maximum average bandwidth the crawler is allowed to use per " +
             "host. \nThe actual readspeed is not affected by this setting, " +
@@ -244,6 +261,26 @@ public class Frontier
             "bandwidth usage has been to high.\n0 means no bandwidth " +
             "limitation.",
             DEFAULT_MAX_HOST_BANDWIDTH_USAGE));
+        t.setExpertSetting(true);
+        t = addElementToDefinition(
+                new SimpleType(ATTR_PENDING_QUEUE_MEMORY_CAPACITY,
+                "Size of the pending queue's in memory head.\n Once it grows " +
+                "beyond this size additional items will be written to a file " +
+                "on disk. Default value " + 
+                DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY + ". Higher value " +
+                "means more RAM used; lower means more disk I/O",
+                DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY));
+        t.setOverrideable(false);
+        t.setExpertSetting(true);
+        t = addElementToDefinition(
+                new SimpleType(ATTR_HOST_QUEUES_MEMORY_CAPACITY,
+                "Size of each host queue's in memory head.\n Once each grows " +
+                "beyond this size additional items will be written to a file " +
+                "on disk. Default value " + DEFAULT_HOST_QUEUES_MEMORY_CAPACITY+
+                ". A high value means more RAM used per host queue while a low"+
+                " value will require more disk I/O.",
+                DEFAULT_HOST_QUEUES_MEMORY_CAPACITY));
+        t.setExpertSetting(true);
     }
 
     /**
@@ -253,30 +290,80 @@ public class Frontier
      */
     public void initialize(CrawlController c)
         throws FatalConfigurationException, IOException {
+        this.controller = c;
 
-        // TODO: Make the queue size configurable.
-        pendingQueue = new DiskBackedQueue(c.getStateDisk(),"pendingQ",false,10000);
+        pendingQueue = createPendingQueue(c.getStateDisk(),"pendingQ");
 
-        // TODO: Make the uri set configurable.
-        alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
-        //alreadyIncluded = new PagedUURISet(c.getScratchDisk());
+        alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
+                "alreadyIncluded");
+        
+        loadSeeds();
+    }
+    
+    /**
+     * Create a queue that will serve as the pending queue.
+     * 
+     * @param dir Directory where pending queue files should be written
+     * @param filePrefix Prefix to names of pending queue files
+     * @param capacity In memory cache capacity.
+     * @return A queue that is usable as a pending queue.
+     * @throws IOException If problems occur creating files on disk
+     */
+    protected Queue createPendingQueue(File dir, String filePrefix)
+            throws IOException, FatalConfigurationException {
+        try {
+            return new DiskBackedQueue(
+                    dir,
+                    filePrefix,
+                    false,
+                    ((Integer) getAttribute(ATTR_PENDING_QUEUE_MEMORY_CAPACITY))
+                        .intValue());
+        } catch (AttributeNotFoundException e) {
+            throw new FatalConfigurationException("AttributeNotFoundException " +
+                    "encountered on reading " + 
+                    ATTR_PENDING_QUEUE_MEMORY_CAPACITY + ". Message:\n" +
+                    e.getMessage());
+        } catch (MBeanException e) {
+            throw new FatalConfigurationException("MBeanException " +
+                    "encountered on reading " + 
+                    ATTR_PENDING_QUEUE_MEMORY_CAPACITY + ". Message:\n" +
+                    e.getMessage());
+        } catch (ReflectionException e) {
+            throw new FatalConfigurationException("ReflectionException " +
+                    "encountered on reading " + 
+                    ATTR_PENDING_QUEUE_MEMORY_CAPACITY + ". Message:\n" +
+                    e.getMessage());
+        }
+    }
+    
+    /**
+     * Create a UURISet that will serve as record of already seen URIs.
+     * 
+     * @param dir Directory where the set's files should be written
+     * @param filePrefix Prefix to names of the set's files
+     * @return A UURISet that will serve as a record of already seen URIs
+     * @throws IOException If problems occur creating files on disk
+     */
+    protected UURISet createAlreadyIncluded(File dir, String filePrefix)
+            throws IOException, FatalConfigurationException {
+        // TODO: Make the uri set configurable? 
+        // Can be overridden by subclasses
+        return new FPUURISet(new MemLongFPSet(20,0.75f));
+        //return new PagedUURISet(c.getScratchDisk());
 
         // alternative: pure disk-based set
-//        alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
+        // return new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
 
         // alternative: disk-based set with in-memory cache supporting quick positive contains() checks
-//        alreadyIncluded = new FPUURISet(
-//              new CachingDiskLongFPSet(
-//                      c.getScratchDisk(),
-//                      "alreadyIncluded",
-//                      23, // 8 million slots on disk (for start)
-//                      0.75f,
-//                      20, // 1 million slots in cache (always)
-//                      0.75f));
-
+        // return = new FPUURISet(
+        //         new CachingDiskLongFPSet(
+        //                 c.getScratchDisk(),
+        //                 "alreadyIncluded",
+        //                 23, // 8 million slots on disk (for start)
+        //                 0.75f,
+        //                 20, // 1 million slots in cache (always)
+        //                 0.75f));
         
-        this.controller = c;
-        loadSeeds();
     }
 
     /**
@@ -793,7 +880,7 @@ public class Frontier
      * @return The KeyedQueeu for the CrawlURI or null if it does not exist and
      *         an exception occured trying to create it.
      */
-    private KeyedQueue keyedQueueFor(CrawlURI curi) {
+    protected KeyedQueue keyedQueueFor(CrawlURI curi) {
         KeyedQueue kq = null;
         try {
             kq = (KeyedQueue)this.allClassQueuesMap.get(curi.getClassKey());
@@ -804,9 +891,14 @@ public class Frontier
         }
         if (kq==null) {
             try {
-                kq = new KeyedQueue(curi.getClassKey(), 
-                    this.controller.getStateDisk(),
-                    DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
+                try {
+					kq = new KeyedQueue(curi.getClassKey(), 
+					    this.controller.getStateDisk(),
+					    ((Integer) getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY
+                                ,curi)).intValue());
+				} catch (AttributeNotFoundException e3) {
+                    logger.severe(e3.getMessage());
+				}
                 try {
                     kq.setValence(((Integer)getAttribute(ATTR_HOST_VALENCE,curi)).intValue());
                 } catch (AttributeNotFoundException e2) {
