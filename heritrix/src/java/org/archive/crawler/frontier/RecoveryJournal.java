@@ -108,7 +108,15 @@ implements FrontierJournal {
     }
 
     public void finishedFailure(CrawlURI curi) {
-        write("\n" + F_FAILURE + curi.getURIString());
+        finishedFailure(curi.getURIString());
+    }
+    
+    public void finishedFailure(UURI uuri) {
+        finishedFailure(uuri.toString());
+    }
+    
+    public void finishedFailure(String u) {
+        write("\n" + F_FAILURE + u);
     }
 
     public void rescheduled(CrawlURI curi) {
@@ -142,13 +150,20 @@ implements FrontierJournal {
         String read;
         try {
             while ((read = reader.readLine()) != null) {
-                if (read.startsWith(F_SUCCESS)
+                boolean wasSuccess = read.startsWith(F_SUCCESS);
+                if (wasSuccess
 						|| (retainFailures && read.startsWith(F_FAILURE))) {
                     String args[] = read.split("\\s+");
                     try {
                         UURI u = UURIFactory.getInstance(args[1]);
                         frontier.considerIncluded(u);
-                        frontier.getFrontierJournal().finishedSuccess(u);
+                        if(wasSuccess) {
+                            frontier.getFrontierJournal().finishedSuccess(u);
+                        } else {
+                            // carryforward failure, in case future recovery
+                            // wants to no retain them as finished  
+                            frontier.getFrontierJournal().finishedFailure(u);
+                        }
                     } catch (URIException e) {
                         e.printStackTrace();
                     }

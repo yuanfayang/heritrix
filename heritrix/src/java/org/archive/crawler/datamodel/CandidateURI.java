@@ -188,6 +188,9 @@ implements Serializable, Lineable {
      * @return String version of referral URI
      */
     public String flattenVia() {
+        if(via == null) {
+            return "";
+        }
         if (via instanceof String) {
             // already OK
             return (String) via;
