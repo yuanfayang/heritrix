@@ -22,8 +22,8 @@
 		causes problems.  The crawler will not run if you leave this value as the default.
 -->
  <http-headers>
-  <User-Agent>Heritrix Manifest Crawl (contact gojomo@archive.org)</User-Agent>
-  <From>crawler-devel@archive.org</From>
+  <User-Agent>Heritrix Manifest Crawl (+http://crawler.archive.org)</User-Agent>
+  <From>archive-crawler-agent@lists.sourceforge.net</From>
  </http-headers>
  
 <!-- 	Following is a list of artifical limits that may be placed on the crawler.

@@ -22,7 +22,7 @@
 		causes problems.  The crawler will not run if you leave this value as the default.
 -->
  <http-headers>
-  <User-Agent>Heritrix pre-Alpha (See http://crawler.archive.org)</User-Agent>
+  <User-Agent>Heritrix pre-Alpha (+http://crawler.archive.org)</User-Agent>
   <From>archive-crawler-agent@lists.sourceforge.net</From>
  </http-headers>
  
