@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Vector;
-import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -36,33 +35,25 @@ import org.w3c.dom.Node;
 
 public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlListener
 {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.CrawlController");
-
-	private String orderFile;	// Default order file (order.xml by default)
-	private CrawlOrder crawlOrder;			// Default CrawlOrder. (matches order.xml) 
+	private String orderFile;			// Default order file (order.xml by default)
+	private CrawlOrder crawlOrder;		// Default CrawlOrder. (matches order.xml) 
 	
 	//Crawl Jobs	
-	private CrawlJob currentJob;			// Job currently being crawled
-	private Vector pendingCrawlJobs;		// A list of CrawlJobs
-	private Vector completedCrawlJobs;	// A list of CrawlJobs
+	private CrawlJob currentJob;		// Job currently being crawled
+	private Vector pendingCrawlJobs;	// A list of pending CrawlJobs
+	private Vector completedCrawlJobs;	// A list of completed CrawlJobs
 	
 	private boolean shouldcrawl;
 	
 	private boolean crawling = false;
 	private String statusMessage = "No actions taken"; //Reports the success or failure of the last action taken.
-	private int crawlerAction = -1;
-	// private String diskPath; - Depracated, access CrawlOrder directly.
-	private String workingDirectory;
-	private Node orderNode;
+
 	private CrawlController controller;
 	private OrderTransformation orderTransform;
-	
-	private int jobserial; //Unique ID for jobs.  
 	
 	public SimpleHandler()
 	{
 		shouldcrawl = false;
-		jobserial = 1;
 		pendingCrawlJobs = new Vector();
 		completedCrawlJobs = new Vector();
 		
@@ -85,7 +76,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		orderTransform = new OrderTransformation(); // Used to convert HTML forms into an XML
 
 		try {
-			orderNode = OrderTransformation.readDocumentFromFile(WEB_APP_PATH+orderFile);
+			Node orderNode = OrderTransformation.readDocumentFromFile(WEB_APP_PATH+orderFile);
 			orderTransform.setNode(orderNode);
 
 			loadCrawlOrder(); // Finally load the crawlorder to memory 
@@ -275,7 +266,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 	 * 
 	 * Info on success or failure (in user readable form can be accessed via getStatusMessage()
 	 */
-	public void terminateJob()
+	public synchronized void terminateJob()
 	{
 		if(isCrawling()==false)
 		{
