@@ -124,13 +124,23 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 
 		// TODO sanity check the passed curi before writing
 
-		// figure out content type, truncate at delimiter ';'
+		// figure out content type, truncate at delimiters [;, ]
+		// truncated multi-part content type header at ';'.
+		// apache httpclient collapses values of multiple instances of the header into one comma-separated value,
+		// therefore truncated at ','.
+		// Current ia_tools that work with arc files except 5-column space-separated meta-lines, 
+		// therefore truncate at ' '.
 		String contentType = curi.getContentType();
 		if(contentType==null) {
 			contentType = "no-type"; // per ARC spec
 		} else if(curi.getContentType().indexOf(';') >= 0 ){
 			contentType = contentType.substring(0,contentType.indexOf(';'));
-		}
+		} else if(curi.getContentType().indexOf(',') >= 0 ){
+			contentType = contentType.substring(0,contentType.indexOf(','));
+		} else if(curi.getContentType().indexOf(' ') >= 0 ){
+			contentType = contentType.substring(0,contentType.indexOf(' '));
+		
+	}
 		
 		String hostIP = curi.getServer().getHost().getIP().getHostAddress();
 		String dateStamp = ArchiveUtils.get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME));			
