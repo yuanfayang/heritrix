@@ -294,14 +294,14 @@ ${package_declaration}</programlisting></para>
 
     <para>All classes in the crawler that has configurable settings subclasses
     <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html">ComplexType</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html">ComplexType</ulink>
     or one of its descendants. The ComplexType implements the
     javax.management.DynamicMBean interface. This gives you a way to ask the
     object for what attributes it supports and standard methods for getting
     and setting these attributes.</para>
 
     <para>The entry point into the settings framework is the <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/SettingsHandler.html">SettingsHandler</ulink>.
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/SettingsHandler.html">SettingsHandler</ulink>.
     This class is responsible for loading and saving from persistent storage
     and for interconnecting the different parts of the framework.</para>
 
@@ -320,7 +320,7 @@ ${package_declaration}</programlisting></para>
 
       <para>The settings framework supports a hierarchy of settings. This
       hierarchy is built by <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/CrawlerSettings.html">CrawlerSettings</ulink>
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/CrawlerSettings.html">CrawlerSettings</ulink>
       objects. On the top there is a settings object representing the global
       settings. This consist of all the settings that a crawl job needs for
       running. Beneath this global object there is one "per" settings object
@@ -365,15 +365,15 @@ ${package_declaration}</programlisting></para>
       settings framework to traverse up to effective value for the attribute,
       but instead want to know that the attribute is not set on this level. To
       achieve this there is <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#getLocalAttribute(org.archive.crawler.datamodel.settings.CrawlerSettings,%20java.lang.String)">getLocalAttribute(CrawlerSettings
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getLocalAttribute(org.archive.crawler.settings.CrawlerSettings,%20java.lang.String)">getLocalAttribute(CrawlerSettings
       settings, String name)</ulink> and <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#setAttribute(org.archive.crawler.datamodel.settings.CrawlerSettings,%20javax.management.Attribute)">setAttribute(CrawlerSettings
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#setAttribute(org.archive.crawler.settings.CrawlerSettings,%20javax.management.Attribute)">setAttribute(CrawlerSettings
       settings, Attribute attribute)</ulink> methods taking a settings object
       as a parameter. These methods works only on the supplied settings
       object. In addition the methods <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#getAttribute(java.lang.String)">getAttribute(name)</ulink>
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getAttribute(java.lang.String)">getAttribute(name)</ulink>
       and <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#setAttribute(javax.management.Attribute)">setAttribute(Attribute
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#setAttribute(javax.management.Attribute)">setAttribute(Attribute
       attribute)</ulink> is there for conformance to the Java JMX
       specification. The latter to always works on the global settings
       object.</para>
@@ -383,7 +383,7 @@ ${package_declaration}</programlisting></para>
       That means that the settings framework should work its way up the
       settings hierarchy to find the value in effect for the context. The
       method <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ComplexType.html#getAttribute(java.lang.String,%20org.archive.crawler.datamodel.CrawlURI)">getAttribute(String
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getAttribute(java.lang.String,%20org.archive.crawler.datamodel.CrawlURI)">getAttribute(String
       name, CrawlURI uri)</ulink> should be used to make sure that the right
       context is used. The <xref linkend="get_attribute_flow" /> shows how the
       settings framework finds the effective value given a context.</para>
@@ -406,7 +406,7 @@ ${package_declaration}</programlisting></para>
     <para>As mentioned earlier all configurable modules in Heritrix subclasses
     ComplexType (or one of its descendants). When you write your own module
     you should inherit from <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ModuleType.html">ModuleType</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ModuleType.html">ModuleType</ulink>
     which is a subclass of ComplexType intended for be subclassed by all
     modules in Heritrix. Heritrix knows how to handle a ComplexType and to get
     the needed information to render the user interface part for it. To make
@@ -416,10 +416,87 @@ ${package_declaration}</programlisting></para>
       <listitem>
         <para>A module should always implement a constructor taking exactly
         one argument - the name argument (<ulink
-        url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/settings/ModuleType.html#ModuleType(java.lang.String)">see
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ModuleType.html#ModuleType(java.lang.String)">see
         ModuleType(String name)</ulink>).</para>
       </listitem>
+
+      <listitem>
+        <para>All attributes you want to be configurable should be defined in
+        the constructor of the module.</para>
+      </listitem>
     </orderedlist>
+
+    <sect2>
+      <title>The obligatory one argument constructor</title>
+
+      <para>All modules needs to have a constructor taking a String argument.
+      This string is used to identify the module. In the case where a module
+      is of a type that is replacing an existing module of which there could
+      only be one, it is important that the same name is used. In this case
+      the constructor might choose to ignore the name string and substitute it
+      with a hardcoded one. This is for example the case with the Frontier.
+      The name of the Frontier should always be the string "frontier". For
+      this reason the URIFrontier interface that all Frontiers should
+      implement has a static variable:<programlisting>public static final String ATTR_NAME = "frontier";</programlisting>which
+      implementations of the Frontier use instead of the string argument
+      submitted to the constructor. Here is the part of the default Frontiers
+      constructor that shows how this should be done.<programlisting>public Frontier(String name) {
+    //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
+    //therefore we'll ignore the supplied parameter. 
+    super(URIFrontier.ATTR_NAME, "Frontier. \nMaintains the internal" +
+        " state of the crawl. It dictates the order in which URIs" +
+        " will be scheduled. \nThis frontier is mostly a breadth-first" +
+        " frontier, which refrains from emitting more than one" +
+        " CrawlURI of the same \'key\' (host) at once, and respects" +
+        " minimum-delay and delay-factor specifications for" +
+        " politeness.");</programlisting>As shown in this example, the
+      constructor must call the superclass's constructor. This example also
+      shows how to set the description of a module. The description is used by
+      the user interface to guide the user in configuring the crawl. If you
+      don't want to set a description (strongly discouraged), the ModuleType
+      also have a one argument constructor taking just the name.</para>
+    </sect2>
+
+    <sect2>
+      <title>Defining attributes</title>
+
+      <para>The attributes on a module you want to be configurable must be
+      defined in the modules constructor. For this purpose the ComplexType has
+      a method <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#addElementToDefinition(org.archive.crawler.settings.Type)">addElementToDefinition(Type
+      type)</ulink>. The argument given to this method is a definition of the
+      attribute. The <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/Type.html">Type</ulink>
+      class is the superclass of all the attribute definitions allowed for a
+      ModuleType. Since the ComplexType, which ModuleType inherits, is itself
+      a subclass of Type, you can add new ModuleTypes as attributes to your
+      module. The Type class implements configuration methods common for all
+      Types that defines an attribute on your module. The
+      addElementToDefinition method returns the added Type so that it is easy
+      to refine the configuration of the Type. Lets look at an example (also
+      from the default Frontier) of an attribute definiton.<programlisting>public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE = "total-bandwidth-usage-KB-sec";
+private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE = new Integer(0);
+...
+
+Type t;
+t = addElementToDefinition(
+    new SimpleType(ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
+    "The maximum average bandwidth the crawler is allowed to use. \n" +
+    "The actual readspeed is not affected by this setting, it only " +
+    "holds back new URIs from being processed when the bandwidth " +
+    "usage has been to high.\n0 means no bandwidth limitation.",
+    DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE));
+t.setOverrideable(false);</programlisting>Here we add an attribute definition
+      of the SimpleType (which is a subclass of Type). The SimpleType's
+      constructor takes three arguments: name, description and a default
+      value. Usually the name and default value are defined as constants like
+      here, but this is of course optional. The line
+      <command>t.setOverrideable(false);</command> informs the settings
+      framework to not allow per overrides on this attribute. For a full list
+      of methods for configuring a Type see the <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/Type.html">Type</ulink>
+      class.</para>
+    </sect2>
   </sect1>
 
   <sect1>
