@@ -11,8 +11,10 @@
 
     <subsection name="Releases">
         <p>All releases are available off the 
-        <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">Sourceforge Downloads</a> page.</p>
-        
+        <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">Sourceforge Downloads</a> page.  Release notes can be
+        found here,
+        <a href="articles/releasenotes.html#1_0_0_limitations">Heritrix
+        Release Notes</a>.</p>
 	</subsection>
    
     <subsection name="Continuous build">
