@@ -58,6 +58,8 @@ public class CrawlOrder extends ModuleType {
     public static final String ATTR_NAME = "crawl-order";
     public static final String ATTR_SETTINGS_DIRECTORY = "settings-directory";
     public static final String ATTR_DISK_PATH = "disk-path";
+    public static final String ATTR_LOGS_PATH = "logs-path";
+    public static final String ATTR_CHECKPOINTS_PATH = "checkpoints-path";
     public static final String ATTR_STATE_PATH = "state-path";
     public static final String ATTR_SCRATCH_PATH = "scratch-path";
     public static final String ATTR_RECOVER_PATH = "recover-path";
@@ -104,6 +106,20 @@ public class CrawlOrder extends ModuleType {
                 "Directory where logs, arcs and other run time files will " +
                 "be kept. If this path is a relative path, it will be " +
                 "relative to the crawl order.", "disk"));
+        e.setOverrideable(false);
+        e.setExpertSetting(true);
+
+        e = addElementToDefinition(new SimpleType(ATTR_LOGS_PATH,
+                "Directory where crawler log files will be kept. If this path " +
+                "is a relative path, it will be relative to the 'disk-path'.",
+                ""));
+        e.setOverrideable(false);
+        e.setExpertSetting(true);
+
+        e = addElementToDefinition(new SimpleType(ATTR_CHECKPOINTS_PATH,
+                "Directory where crawler checkpoint files will be kept. If this path " +
+                "is a relative path, it will be relative to the 'disk-path'.",
+                "checkpoints"));
         e.setOverrideable(false);
         e.setExpertSetting(true);
 
@@ -308,6 +324,27 @@ public class CrawlOrder extends ModuleType {
      */
     public MapType getLoggers() {
         return loggers;
+    }
+
+    // must include a bot name and info URL
+    private static String ACCEPTABLE_USER_AGENT =
+        "\\S+.*\\(\\+http://\\S*\\).*";
+    // must include a contact email address
+    private static String ACCEPTABLE_FROM = "\\S+@\\S+\\.\\S+";
+
+    /**
+     * Checks if the User Agent and From field are set 'correctly' in
+     * the specified Crawl Order.
+     *
+     * @param order The Crawl Order to check
+     * @return true if it passes, false otherwise.
+     */
+    public boolean checkUserAgentAndFrom() {
+        // don't start the crawl if they're using the default user-agent
+        String userAgent = this.getUserAgent(null);
+        String from = this.getFrom(null);
+        return userAgent.matches(ACCEPTABLE_USER_AGENT)
+            && from.matches(ACCEPTABLE_FROM);
     }
 
 }
