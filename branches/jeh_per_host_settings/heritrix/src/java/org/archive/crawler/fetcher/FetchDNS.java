@@ -27,6 +27,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -65,7 +67,7 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
         super(name, "DNS Fetcher");
     }
 
-  	public void initialize(CrawlController c){
+  	public void initialize(CrawlController c) throws AttributeNotFoundException{
   		super.initialize(c);
   		
   		// lookup nameserver
