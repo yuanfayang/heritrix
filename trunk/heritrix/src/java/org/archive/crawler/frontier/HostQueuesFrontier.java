@@ -66,6 +66,7 @@ import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.url.Canonicalizer;
+import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.crawler.util.FPUriUniqFilter;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
@@ -223,6 +224,16 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     // flags indicating operator-specified crawl pause/end 
     private boolean shouldPause = false;
     private boolean shouldTerminate = false;
+    
+    /**
+     * True if we're to use the BDB already seen implementation
+     * in place of the in-memory already included set.
+     * 
+     * @see http://crawler.archive.org/cgi-bin/wiki.pl?AlreadySeen
+     */
+    private static String ATTR_USE_BDB_ALREADY_INCLUDED =
+        "use-bdb-already-included";
+    private static Boolean DEFAULT_USE_BDB_ALREADY_INCLUDED = Boolean.FALSE;
   
     public HostQueuesFrontier(String name) {
         this(name,"HostQueuesFrontier. \nMaintains the internal" +
@@ -320,6 +331,25 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 +"(1).",
                 DEFAULT_HOST_QUEUES_MEMORY_CAPACITY));
         t.setExpertSetting(true);
+        t = addElementToDefinition(
+            new SimpleType(ATTR_USE_BDB_ALREADY_INCLUDED,
+            "Use disk-based Berkeley DB to hold the set of Already Included" +
+            "URIs. \n" +
+            "The Already Included URI set is by-default kept in memory." +
+            " The continuous growth of this URI set in memory is one" +
+            " cause of out of memory exceptions.  Enabling this option," +
+            " the Already Included set is kept on-disk in a Berkeley DB" +
+            " table. Enabling this feature will cause the crawler to" +
+            " harvest more documents before" +
+            " it runs out of memory at the cost of the crawler" +
+            " harvesting at a (progressively) slightly slower rate. Lookups" +
+            " in BDB as opposed to lookups" +
+            " done against a RAM-based Already Included set take about 4" +
+            " times longer when the Already Included set is 10million items" +
+            " (0.5ms vs. ~2ms).  BDB Already Included lookups slow as the" +
+            " the set grows" +
+            " at ~Log(n) rate.", DEFAULT_USE_BDB_ALREADY_INCLUDED));
+        t.setExpertSetting(true);        
     }
 
     /**
@@ -345,26 +375,17 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     protected UriUniqFilter createAlreadyIncluded(File dir, String filePrefix)
     throws IOException, FatalConfigurationException {
-        UriUniqFilter uuf = new FPUriUniqFilter(new MemLongFPSet(23,0.75f));
+        Boolean b = DEFAULT_USE_BDB_ALREADY_INCLUDED;
+        try {
+            b = (Boolean)getAttribute(null, ATTR_USE_BDB_ALREADY_INCLUDED);
+        } catch (AttributeNotFoundException e) {
+            e.printStackTrace();
+        }
+        UriUniqFilter uuf = (b.booleanValue())?
+            (UriUniqFilter)new BdbUriUniqFilter(dir):
+            (UriUniqFilter)new FPUriUniqFilter(new MemLongFPSet(23,0.75f));
         uuf.setDestination(this);
         return uuf;
-        
-        // some other possible ideas/experiments:
-        
-        //return new PagedUURISet(c.getScratchDisk());
-
-        // alternative: pure disk-based set
-        // return new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
-
-        // alternative: disk-based set with in-memory cache supporting quick positive contains() checks
-        // return = new FPUURISet(
-        //         new CachingDiskLongFPSet(
-        //                 c.getScratchDisk(),
-        //                 "alreadyIncluded",
-        //                 23, // 8 million slots on disk (for start)
-        //                 0.75f,
-        //                 20, // 1 million slots in cache (always)
-        //                 0.75f));
     }
 
     /**
