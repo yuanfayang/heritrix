@@ -2,8 +2,78 @@
  <comment>
   A simple crawl to test the crawler's features.
  </comment>
- <crawl-scope src="test-config/scope.xml" />
- <crawler-behavior src="test-config/behavior.xml" />
+ 
+<crawler-behavior>
+
+ <http-headers>
+  <User-Agent>Heritrix pre-Alpha (contact gojomo@archive.org)</User-Agent>
+  <From>gojomo@archive.org</From>
+ </http-headers>
+ 
+ <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
+ <store class="org.archive.crawler.basic.SimpleStore" />
+ <selector class="org.archive.crawler.basic.SimpleSelector">
+  <seeds src="test-config/seeds.txt" />
+ </selector>
+ 
+ <processors>
+  <processor 
+    name="Preprocessor" 
+    class="org.archive.crawler.basic.SimplePreconditionEnforcer"
+    next="DNS">
+   <params delay-factor="1" />
+  </processor>
+  <processor 
+    name="DNS" 
+    class="org.archive.crawler.basic.FetcherDNS"
+    next="HTTP">
+  </processor>
+  <processor 
+    name="HTTP" 
+    class="org.archive.crawler.basic.FetcherHTTPSimple"
+    next="ExtractorHTTP">
+  </processor>
+  <processor 
+    name="ExtractorHTTP" 
+    class="org.archive.crawler.basic.ExtractorHTTP"
+    next="ExtractorHTML">
+  </processor>
+  <processor 
+    name="ExtractorHTML" 
+    class="org.archive.crawler.basic.ExtractorHTML"
+    next="Archiver">
+  </processor>
+  <processor 
+    name="Archiver" 
+    class="org.archive.crawler.basic.ARCWriter"
+    next="Cacher">
+    	<compression use="true"/>
+    	<arc-files max-size-bytes="20000000"/>
+    	<!-- 
+    	<filter 
+    	 name="http-only"
+    	 class="org.archive.crawler.util.URIRegExpFilter"
+    	 regexp="^http://" />
+    	 -->
+  </processor>
+  <processor 
+    name="Cacher" 
+    class="org.archive.crawler.basic.HostInfoUpdater">
+  </processor>
+ </processors>
+ 
+ <limits>
+  <!-- actual enforcement of these limits may depend on choice 
+       of processors that read and respect these limits -->
+  <max-pages value="1000" />
+  <max-duration value="1h" />
+  <max-resources-per-site value="1000" />
+  <max-toe-threads value="2" />
+  <max-link-depth value="40" />
+ </limits>
+
+</crawler-behavior>
+
  <disk path="arcs/" />
  <arc-file prefix="arcprefix" />
 </crawl-order>
