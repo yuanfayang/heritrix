@@ -262,8 +262,8 @@
         </dependency>
         <dependency>
             <id>dnsjava</id>
-            <version>1.5</version>
-            <url>http://www.xbill.org/dnsjava/</url>
+            <version>1.6.2</version>
+            <url>http://www.dnsjava.org/</url>
             <properties>
                 <description>DNS Lookups.
                 </description>
