@@ -151,8 +151,6 @@ public class Frontier
     protected final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
         new Integer(0);
 
-    protected final static Integer DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY =
-        new Integer(10000);
     protected final static Integer DEFAULT_HOST_QUEUES_MEMORY_CAPACITY =
         new Integer(200);
 
@@ -204,8 +202,8 @@ public class Frontier
 
     // ration memory usage by inactive queues
     private int inactiveQueuesMemoryLoadTotal = 0;
-    private int inactiveQueuesMemoryLoadTarget = 10000;
-    private int inactivePerQueueLoadThreshold = 10000;
+    private int inactiveQueuesMemoryLoadTarget = 1000;
+    private int inactivePerQueueLoadThreshold = 1000;
 
     
     public Frontier(String name){
@@ -281,16 +279,6 @@ public class Frontier
             "bandwidth usage has been to high.\n0 means no bandwidth " +
             "limitation.",
             DEFAULT_MAX_HOST_BANDWIDTH_USAGE));
-        t.setExpertSetting(true);
-        t = addElementToDefinition(
-                new SimpleType(ATTR_PENDING_QUEUE_MEMORY_CAPACITY,
-                "Size of the pending queue's in memory head.\n Once it grows " +
-                "beyond this size additional items will be written to a file " +
-                "on disk. Default value " +
-                DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY + ". Higher value " +
-                "means more RAM used; lower means more disk I/O",
-                DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY));
-        t.setOverrideable(false);
         t.setExpertSetting(true);
         t = addElementToDefinition(
                 new SimpleType(ATTR_HOST_QUEUES_MEMORY_CAPACITY,
@@ -457,18 +445,12 @@ public class Frontier
             caUri.setSchedulingDirective(CandidateURI.HIGH);
         }
 
-        enqueueToKeyed(asCrawlUri(caUri));
-		
-        try {
+        if(enqueueToKeyed(asCrawlUri(caUri))) {
             this.alreadyIncluded.add(caUri);
-        } catch (OutOfMemoryError oom) {
-            // add failed, and future adds might not succeed either
-            controller.requestCrawlPause();
-            throw oom;
-        }
-        this.queuedCount++;
-        // Update recovery log.
-        this.controller.recover.info("\n"+F_ADD+caUri.getURIString());
+            this.queuedCount++;
+            // Update recovery log.
+            this.controller.recover.info("\n"+F_ADD+caUri.getURIString());
+        } // else ignore: enqueueToKeyed already disposed of curi
     }
 
     /**
@@ -839,6 +821,7 @@ public class Frontier
     protected void noteInProcess(CrawlURI curi) {
         URIWorkQueue kq = keyedQueueFor(curi);
         if(kq==null){
+            logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
         }
 
@@ -902,18 +885,21 @@ public class Frontier
      * to create the KeyedQueue will have been logged.
      *
      * @param curi The CrawlURI
+     * @return wether CrawlURI was ssuccessfully enqueued
      */
-    protected void enqueueToKeyed(CrawlURI curi) {
+    protected boolean enqueueToKeyed(CrawlURI curi) {
         URIWorkQueue kq = keyedQueueFor(curi);
         if(kq==null){
             logger.severe("No workQueue found for "+curi);
-            return; // Couldn't find/create kq.
+            curi.setFetchStatus(S_UNQUEUEABLE);
+            failureDisposition(curi);
+            return false; // Couldn't find/create kq.
         }
 
         if(kq.getState()==URIWorkQueue.INACTIVE) {
             // inactive queue: manage memory load
             enqueueToKeyedInactive(kq, curi);
-            return;
+            return true;
         }
         // active queue: may affect scheduling
         kq.enqueue(curi);
@@ -921,6 +907,7 @@ public class Frontier
             // if kq state changed, update frontier's internals
             updateQ(kq);
         }
+        return true;
     }
 
     /**
