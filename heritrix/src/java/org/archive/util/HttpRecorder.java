@@ -296,8 +296,10 @@ public class HttpRecorder {
      * @return A ReplayCharSequence.  Call close on the RCS when done w/ it.
      * Will return indeterminate results if the underlying recording streams
      * have not been closed first.
+     * @throws IOException
+     * @throws IOException
      */
-    public ReplayCharSequence getReplayCharSequence() {
+    public ReplayCharSequence getReplayCharSequence() throws IOException {
         return getRecordedInput().getReplayCharSequence(this.characterEncoding);
     }
 }

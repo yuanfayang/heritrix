@@ -102,7 +102,13 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 
         this.numberOfCURIsHandled++;
 
-        ReplayCharSequence cs = curi.getHttpRecorder().getReplayCharSequence();
+        ReplayCharSequence cs = null;
+        try {
+            cs = curi.getHttpRecorder().getReplayCharSequence();
+        } catch (IOException e) {
+            curi.addLocalizedError(this.getName(), e,
+            	"Failed get of replay char sequence.");
+        }
         if (cs == null) {
             logger.warning("Failed getting ReplayCharSequence: " +
                 curi.toString());

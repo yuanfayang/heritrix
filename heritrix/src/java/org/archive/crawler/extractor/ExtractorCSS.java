@@ -59,6 +59,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
 
     private static String ESCAPED_AMP = "&amp";
     static final String BACKSLAH = "\\\\";
+    
     /**
      *  CSS URL extractor pattern.
      *
@@ -79,7 +80,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
     }
 
     /**
-     * @param curi
+     * @param curi Crawl URI to process.
      */
     public void innerProcess(CrawlURI curi) {
 
@@ -97,7 +98,12 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         }
         this.numberOfCURIsHandled++;
 
-        ReplayCharSequence cs = curi.getHttpRecorder().getReplayCharSequence();
+        ReplayCharSequence cs = null;
+        try {
+            cs = curi.getHttpRecorder().getReplayCharSequence();
+        } catch (IOException e) {
+            logger.severe("Failed getting ReplayCharSequence: " + e.getMessage());
+        }
         if (cs == null) {
             logger.warning("Failed getting ReplayCharSequence: " +
                 curi.toString());
