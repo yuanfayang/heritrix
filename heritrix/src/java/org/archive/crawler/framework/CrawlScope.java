@@ -203,18 +203,12 @@ public class CrawlScope extends Filter {
         int maxLinkHops = 0;
         int maxTransHops = 0;
         CrawlerSettings settings = getSettingsFromObject(o);
-        CrawlScope scope =
-            (CrawlScope) globalSettings().getModule(CrawlScope.ATTR_NAME);
 
         try {
-            maxLinkHops =
-                ((Integer) scope
-                    .getAttribute(settings, CrawlScope.ATTR_MAX_LINK_HOPS))
-                    .intValue();
-            maxTransHops =
-                ((Integer) scope
-                    .getAttribute(settings, CrawlScope.ATTR_MAX_TRANS_HOPS))
-                    .intValue();
+            maxLinkHops = ((Integer) getAttribute(
+                    settings, CrawlScope.ATTR_MAX_LINK_HOPS)).intValue();
+            maxTransHops = ((Integer) getAttribute(
+                    settings, CrawlScope.ATTR_MAX_TRANS_HOPS)).intValue();
         } catch (AttributeNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
