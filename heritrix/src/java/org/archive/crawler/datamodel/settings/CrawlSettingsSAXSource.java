@@ -275,24 +275,25 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         for (int i = 0; i < attsInfo.length; i++) {
             ModuleAttributeInfo attribute = (ModuleAttributeInfo) attsInfo[i];
             Object value;
-            if (attribute.getComplexType() == null) {
+            if (! attribute.isComplexType()) {
                 try {
                     value = data.get(attribute.getName());
                 } catch (AttributeNotFoundException e) {
                     value = attribute.getDefaultValue();
-                    //throw new SAXException(e);
                 }
             } else {
-                value =
-                    settings.getData(
-                        attribute.getComplexType().getAbsoluteName());
+                try {
+                    value = complexType.getLocalAttribute(settings, attribute.getName());
+                } catch (AttributeNotFoundException e) {
+                    throw new SAXException(e);
+                }
             }
             if (orderFile || value != null) {
                 // Write only overridden values unless this is the order file
-                if (attribute.getComplexType() != null) {
+                if (attribute.isComplexType()) {
                     // Call method recursively for complex types
                     parseComplexType(
-                        attribute.getComplexType(),
+                        (ComplexType) value, //attribute.getComplexType(),
                         indent + indentAmount);
                 } else {
                     // Write element

@@ -34,7 +34,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     private final boolean overridable;
     private final Object defaultValue;
     private final Object legalValueLists[];
-    private ComplexType complexType;
+    private boolean complexType = false;
 
     /**
      * @param name
@@ -58,9 +58,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
         legalValueLists = legalValues;
         this.defaultValue = checkValue(defaultValue);
         if (type instanceof ComplexType) {
-            complexType = (ComplexType) type;
-        } else {
-            complexType = null;
+            complexType = true;
         }
     }
 
@@ -68,10 +66,9 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
         return legalValueLists;
     }
 
-    public ComplexType getComplexType() {
+    public boolean isComplexType() {
         return complexType;
     }
-
     /**
      * @return
      */
@@ -140,8 +137,8 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
      * @see javax.management.MBeanAttributeInfo#getType()
      */
     public String getType() {
-        if (complexType != null) {
-            return complexType.getClass().getName();
+        if (complexType) {
+            return defaultValue.getClass().getName();
         } else {
             return super.getType();
         }
