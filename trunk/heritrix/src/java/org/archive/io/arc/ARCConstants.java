@@ -89,7 +89,7 @@ public interface ARCConstants
     /**
      * ARC header field seperator character.
      */
-    public static final char HEADER_FIELD_SEPERATOR = ' ';
+    public static final char HEADER_FIELD_SEPARATOR = ' ';
 
     /**
      * ARC file *MAGIC NUMBER*.

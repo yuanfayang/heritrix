@@ -412,7 +412,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                 list.add(buffer.toString());
                 // LOOP TERMINATION.
                 break;
-            } else if (c == HEADER_FIELD_SEPERATOR) {
+            } else if (c == HEADER_FIELD_SEPARATOR) {
                 list.add(buffer.toString());
                 buffer = new StringBuffer();
             } else {
