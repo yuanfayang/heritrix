@@ -150,7 +150,10 @@ public class CrawlController implements Serializable {
      */
     private String sExit;
     
-    private boolean beginPaused = false;  // whether controller should start in PAUSED state
+    /**
+     * Whether controller should start in PAUSED state.
+     */
+    private boolean beginPaused = false;
 
     private static final Object NASCENT = "NASCENT".intern();
     private static final Object RUNNING = "RUNNING".intern();
@@ -270,6 +273,7 @@ public class CrawlController implements Serializable {
      * Used by bdb serialization.
      */
     private StoredClassCatalog classCatalog = null;
+
 
     /**
      * default constructor
@@ -961,10 +965,21 @@ public class CrawlController implements Serializable {
      * Operator requested for crawl to stop.
      */
     public synchronized void requestCrawlStop() {
+        requestCrawlStop(CrawlJob.STATUS_ABORTED);
+    }
+    
+    /**
+     * Operator requested for crawl to stop.
+     */
+    public synchronized void requestCrawlStop(String message) {
         if (state == STOPPING || state == FINISHED) {
             return;
         }
-        this.sExit = CrawlJob.STATUS_ABORTED;
+        if (message == null) {
+            throw new IllegalArgumentException("Message cannot be" +
+                " null.");
+        }
+        this.sExit = message;
         beginCrawlStop();
     }
 

@@ -115,6 +115,12 @@ ARCWriterSettings, FetchStatusCodes {
      * Key to use asking settings for max size value.
      */
     public static final String ATTR_MAX_SIZE_BYTES = "max-size-bytes";
+    
+    /**
+     * Key for the maximum ARC bytes to write attribute.
+     */
+    public static final String ATTR_MAX_BYTES_WRITTEN =
+        "total-bytes-to-write";
 
     /**
      * Key to use asking settings for arc path value.
@@ -159,6 +165,11 @@ ARCWriterSettings, FetchStatusCodes {
      */
     transient private ARCWriterPool pool = null;
     
+    /**
+     * Total number of bytes written to disc.
+     */
+    private long totalBytesWritten = 0;
+    
 
     /**
      * @param name Name of this writer.
@@ -166,7 +177,8 @@ ARCWriterSettings, FetchStatusCodes {
     public ARCWriterProcessor(String name) {
         super(name, "ARCWriter processor");
         Type e = addElementToDefinition(
-            new SimpleType(ATTR_COMPRESS, "Compress arc files.",
+            new SimpleType(ATTR_COMPRESS, "Compress ARC files when writing" +
+                    " to disk.",
                 new Boolean(DEFAULT_COMPRESS)));
         e.setOverrideable(false);
         e = addElementToDefinition(
@@ -179,18 +191,18 @@ ARCWriterSettings, FetchStatusCodes {
                 "(The prefix will be separated from the date by a hyphen).",
                 DEFAULT_ARC_FILE_PREFIX));
         e = addElementToDefinition(
-            new SimpleType(ATTR_SUFFIX, "Suffix to tag onto arc files.\n" +
+            new SimpleType(ATTR_SUFFIX, "Suffix to tag onto ARC files.\n" +
                 "If value is '${HOSTNAME}', will use hostname for suffix." +
                 " If empty, no suffix will be added.",
                 DEFAULT_SUFFIX));
         e.setOverrideable(false);
         e = addElementToDefinition(
-            new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of arc file",
+            new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of each ARC file",
                 new Integer(DEFAULT_MAX_ARC_FILE_SIZE)));
         e.setOverrideable(false);
         e = addElementToDefinition(
-            new StringList(ATTR_PATH, "Where to store arc files.\n" +
-                "Supply absolute or relative path.  If relative, arcs will" +
+            new StringList(ATTR_PATH, "Where to store ARC files.\n" +
+                "Supply absolute or relative path.  If relative, ARCs will" +
                 " will be written relative to the 'disk-path' setting." +
                 " If more than one path specified, we'll round-robin" +
                 " dropping files to each.  This setting is safe" +
@@ -208,6 +220,13 @@ ARCWriterSettings, FetchStatusCodes {
             " of a crawl.",
             new Integer(ARCWriterPool.DEFAULT_MAXIMUM_WAIT)));
         e.setOverrideable(false);
+        e = addElementToDefinition(new SimpleType(ATTR_MAX_BYTES_WRITTEN,
+            "Total ARC bytes to write to disk." +
+            " Once the size of all ARCs on disk has exceeded this limit," +
+            " this processor will stop the crawler.\n" +
+            "A value of zero means no upper limit.", new Long(0)));
+        e.setOverrideable(false);
+        e.setExpertSetting(true);
     }
 
     public synchronized void initialTasks() {
@@ -398,6 +417,17 @@ ARCWriterSettings, FetchStatusCodes {
         String ip)
     throws IOException {
         ARCWriter writer = this.pool.borrowARCWriter();
+        long position = writer.getPosition();
+        // See if we need to open a new ARC because we've exceeed maxBytes
+        // per ARC.
+        writer.checkARCFileSize();
+        if (writer.getPosition() != position) {
+            // We just closed the ARC because it was larger than maxBytes.
+            // Add to the totalBytesWritten the size of the first record
+            // in the ARC.
+            this.totalBytesWritten += (writer.getPosition() - position);
+            position = writer.getPosition();
+        }
         if (writer == null) {
             throw new IOException("Writer is null");
         }
@@ -424,6 +454,19 @@ ARCWriterSettings, FetchStatusCodes {
             if (writer != null) {
                 this.pool.returnARCWriter(writer);
             }
+        }
+        this.totalBytesWritten += (writer.getPosition() - position);
+        checkBytesWritten();
+    }
+    
+    protected void checkBytesWritten() {
+        long max = getMaxToWrite();
+        if (max <= 0) {
+            return;
+        }
+        if (max <= this.totalBytesWritten) {
+            getController().requestCrawlStop("Finished - Maximum bytes (" +
+                Long.toString(max) + ") written");
         }
     }
     
@@ -540,6 +583,11 @@ ARCWriterSettings, FetchStatusCodes {
             sfx = str;
         }
         return sfx;
+    }
+    
+    public long getMaxToWrite() {
+        Object obj = getAttributeUnchecked(ATTR_MAX_BYTES_WRITTEN);
+        return (obj == null)? 0: ((Long)obj).longValue();
     }
 
 	public void crawlEnding(String sExitMessage) {
