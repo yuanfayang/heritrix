@@ -219,8 +219,10 @@ public class UURI extends URI {
      */
     private static String patchEscape(String uri, URI base)
             throws URIException {
-        if (uri == null || uri.length() <= 0) {
+        if (uri == null) {
             throw new NullPointerException();
+        } else if (uri.length() <= 0){
+            throw new URIException();
         }
 
         // Replace nbsp with normal spaces (so that they get stripped if at
