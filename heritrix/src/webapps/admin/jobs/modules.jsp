@@ -18,6 +18,7 @@
 									"org.archive.crawler.extractor.ExtractorHTTP|ExtractorHTTP",
 									"org.archive.crawler.extractor.ExtractorHTML|ExtractorHTML",
 									"org.archive.crawler.extractor.ExtractorHTML2|ExtractorHTML2",
+									"org.archive.crawler.extractor.ExtractorCSS|ExtractorCSS",
 									"org.archive.crawler.extractor.ExtractorSWF|ExtractorSWF",
 									"org.archive.crawler.extractor.ExtractorJS|ExtractorJS",
 									"org.archive.crawler.extractor.ExtractorPDF|ExtractorPDF",
