@@ -31,7 +31,6 @@ import java.util.Iterator;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.util.SeedsInputIterator;
 import org.archive.util.DevUtils;
@@ -74,7 +73,7 @@ public abstract class CrawlScope extends Filter {
         addElementToDefinition(new SimpleType(ATTR_SEEDS, "File from which to extract seeds", "seeds.txt"));
     }
 
-    public void initialize(CrawlerSettings settings) {
+    public void initialize(CrawlController controller) {
         // TODO let configuration info specify seedExtractor
     }
 
