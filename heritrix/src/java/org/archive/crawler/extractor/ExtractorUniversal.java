@@ -27,8 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
@@ -378,11 +376,11 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
             int ch = instream.read();
             StringBuffer lookat = new StringBuffer();
             long counter = 0;
-            long maxdepth = ((Long)getAttribute(ATTR_MAX_DEPTH_BYTES)).longValue();
+            long maxdepth = ((Long)getAttribute(ATTR_MAX_DEPTH_BYTES,curi)).longValue();
             if(maxdepth<=0){
                 maxdepth = Long.MAX_VALUE;
             }
-            long maxURLLength = ((Long)getAttribute(ATTR_MAX_URL_LENGTH)).longValue();
+            long maxURLLength = ((Long)getAttribute(ATTR_MAX_URL_LENGTH,curi)).longValue();
             boolean foundDot = false;
             while(ch != -1 && ++counter <= maxdepth){   
                 
@@ -434,12 +432,6 @@ public class ExtractorUniversal extends Processor implements CoreAttributeConsta
             //TODO: Handle this exception.
             e.printStackTrace();
         } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (MBeanException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ReflectionException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
