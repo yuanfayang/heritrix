@@ -67,8 +67,9 @@ public class LogReader
     }
 
     /**
-     * Gets a portion of a log file. Starting at a given line number and the n-1 lines
-     * following that one or until the end of the log if that is reached first.
+     * Gets a portion of a log file. Starting at a given line number and the n-1 
+     * lines following that one or until the end of the log if that is reached 
+     * first.
      *
      * @param aFileName The filename of the log/file
      * @param lineNumber The number of the first line to get (if larger then the file an
@@ -76,14 +77,19 @@ public class LogReader
      * @param n How many lines to return (total, including the one indicated by lineNumber).
      *                   If smaller then 1 then an empty string will be returned.
      *
-     * @return A portion of the file starting at lineNumber and reaching lineNumber+n.
+     * @return An array of two strings is returned. At index 0 a portion of the 
+     *         file starting at lineNumber and reaching lineNumber+n is located.
+     *         At index 1 there is an informational string about how large a
+     *         segment of the file is being returned.
      *         Null is returned if errors occur (file not found or io exception)
      */
-    public static String get(String aFileName, int lineNumber, int n)
+    public static String[] get(String aFileName, int lineNumber, int n)
     {
         StringBuffer ret = new StringBuffer();
+        String info = null;
         try{
-            BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
+            File log = new File(aFileName);
+            BufferedReader bf = new BufferedReader(new FileReader(log), 8192);
 
             String line = null;
             int i=1;
@@ -91,12 +97,15 @@ public class LogReader
                 if(i >= lineNumber && i < (lineNumber+n))
                 {
                     ret.append(line);
-                    ret.append("\n");
+                    ret.append('\n');
                 } else if( i >= (lineNumber+n)){
                     break;
                 }
                 i++;
             }
+            long logsize = log.length();
+            double percent = ((double)ret.length()/logsize)*100;
+            info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
         }catch(FileNotFoundException e){
             e.printStackTrace();
             return null;
@@ -104,7 +113,8 @@ public class LogReader
             e.printStackTrace();
             return null;
         }
-        return ret.toString();
+        String[] tmp = {ret.toString(),info};
+        return tmp;
     }
 
     /**
@@ -155,15 +165,21 @@ public class LogReader
      *                 effectively reset for it.
      * @param prependLineNumbers If true, then each line will be prepended by it's line number in
      *                           the file.
-     * @return Returns all lines in a log/file matching a given regular expression.
-     *         Null is returned if file not found or io exception occur. If a PatternSyntaxException
-     *         occurs, it's error message will be returned.
+     * @return An array of two strings is returned. At index 0 tall lines in a 
+     *         log/file matching a given regular expression is located.
+     *         At index 1 there is an informational string about how large a
+     *         segment of the file is being returned.
+     *         Null is returned if errors occur (file not found or io exception)
+     *         If a PatternSyntaxException occurs, it's error message will be 
+     *         returned and the informational string will be empty (not null).
      */
-    public static String getByRegExpr(String aFileName, String regExpr, int addLines, boolean prependLineNumbers)
-    {
-        // TODO: Optimize how this is done?
+    public static String[] getByRegExpr(String aFileName, 
+                                      String regExpr, 
+                                      int addLines, 
+                                      boolean prependLineNumbers) {
         StringBuffer ret = new StringBuffer();
-
+        String info = "";
+        
         try{
             Pattern p = Pattern.compile(regExpr);
             BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
@@ -172,9 +188,13 @@ public class LogReader
             int i = 1;
             boolean doAdd = false;
             int addCount = 0;
+            long lines = 0;
+            long linesMatched = 0;
             while ((line = bf.readLine()) != null) {
+                lines++;
                 if(p.matcher(line).matches()){
                     // Found a match
+                    linesMatched++;
                     if(prependLineNumbers){
                         ret.append(i);
                         ret.append(". ");
@@ -186,6 +206,7 @@ public class LogReader
                 } else if(doAdd) {
                     if(addCount < addLines){
                         //Ok, still within addLines
+                        linesMatched++;
                         if(prependLineNumbers){
                             ret.append(i);
                             ret.append(". ");
@@ -199,6 +220,7 @@ public class LogReader
                 }
                 i++;
             }
+            info = "Displaying " + linesMatched + " of " + lines + " total lines in file";
         }catch(FileNotFoundException e){
             e.printStackTrace();
             return null;
@@ -206,9 +228,10 @@ public class LogReader
             e.printStackTrace();
             return null;
         }catch(PatternSyntaxException e){
-            return e.getMessage();
+            ret = new StringBuffer(e.getMessage());
         }
-        return ret.toString();
+        String[] tmp = {ret.toString(),info};
+        return tmp;
     }
 
     /**
@@ -222,13 +245,17 @@ public class LogReader
      *                 We will stop including new lines once we hit the first that does not match.
      * @param prependLineNumbers If true, then each line will be prepended by it's line number in
      *                           the file.
-     * @return Returns all lines in a log/file matching a given regular expression.
-     *         Null is returned if file not found or io exception occur. If a PatternSyntaxException
-     *         occurs, it's error message will be returned.
+     * @return An array of two strings is returned. At index 0 tall lines in a 
+     *         log/file matching a given regular expression is located.
+     *         At index 1 there is an informational string about how large a
+     *         segment of the file is being returned.
+     *         Null is returned if errors occur (file not found or io exception)
+     *         If a PatternSyntaxException occurs, it's error message will be 
+     *         returned and the informational string will be empty (not null).
      */
-    public static String getByRegExpr(String aFileName, String regExpr, String addLines, boolean prependLineNumbers){
+    public static String[] getByRegExpr(String aFileName, String regExpr, String addLines, boolean prependLineNumbers){
         StringBuffer ret = new StringBuffer();
-
+        String info = "";
         try{
             Matcher m = Pattern.compile(regExpr).matcher("");
             BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
@@ -236,9 +263,13 @@ public class LogReader
             String line = null;
             int i = 1;
             boolean doAdd = false;
+            long lines = 0;
+            long linesMatched = 0;
             while ((line = bf.readLine()) != null) {
+                lines++;
                 m.reset(line);
                 if(m.matches()){
+                    linesMatched++;
                     // Found a match
                     if(prependLineNumbers){
                         ret.append(i);
@@ -249,6 +280,7 @@ public class LogReader
                     doAdd = true;
                 } else if(doAdd) {
                     if(line.indexOf(addLines)==0){
+                        linesMatched++;
                         //Ok, line begins with 'addLines'
                         if(prependLineNumbers){
                             ret.append(i);
@@ -262,6 +294,7 @@ public class LogReader
                 }
                 i++;
             }
+            info = "Displaying " + linesMatched + " of " + lines + " total lines in file";
         }catch(FileNotFoundException e){
             e.printStackTrace();
             return null;
@@ -269,18 +302,23 @@ public class LogReader
             e.printStackTrace();
             return null;
         }catch(PatternSyntaxException e){
-            return e.getMessage();
+            ret = new StringBuffer(e.getMessage());
         }
-        return ret.toString();
+        String[] tmp = {ret.toString(),info};
+        return tmp;
     }
 
     /**
      * Implementation of a unix-like 'tail' command
      *
      * @param aFileName a file name String
-     * @return the String representation of at most 10 last lines
+     * @return An array of two strings is returned. At index 0 the String 
+     *         representation of at most 10 last lines is located.
+     *         At index 1 there is an informational string about how large a
+     *         segment of the file is being returned.
+     *         Null is returned if errors occur (file not found or io exception)
      */
-    public static String tail(String aFileName) {
+    public static String[] tail(String aFileName) {
         return tail(aFileName, 10);
     }
 
@@ -289,19 +327,26 @@ public class LogReader
      *
      * @param aFileName a file name String
      * @param n int number of lines to be returned
-     * @return the String representation of at most n last lines
+     * @return 
+     * @return An array of two strings is returned. At index 0 the String 
+     *         representation of at most n last lines is located.
+     *         At index 1 there is an informational string about how large a
+     *         segment of the file is being returned.
+     *         Null is returned if errors occur (file not found or io exception)
      */
-    public static String tail(String aFileName, int n) {
+    public static String[] tail(String aFileName, int n) {
         int BUFFERSIZE = 1024;
         long pos;
         long endPos;
         long lastPos;
         int numOfLines = 0;
+        String info=null;
         byte[] buffer = new byte[BUFFERSIZE];
         StringBuffer sb = new StringBuffer();
         RandomAccessFile raf = null;
         try {
-            raf = new RandomAccessFile(new File(aFileName), "r");
+            File log = new File(aFileName);
+            raf = new RandomAccessFile(log, "r");
             endPos = raf.length();
             lastPos = endPos;
 
@@ -355,8 +400,13 @@ public class LogReader
                 raf.readFully(buffer);
                 sb.append(new String(buffer));
             }
+
+            long logsize = log.length();
+            double percent = ((double)sb.length()/logsize)*100;
+            info = "Displaying: " + ArchiveUtils.doubleToString(percent,1) + "% of " + ArchiveUtils.formatBytesForDisplay(logsize);
         } catch (Exception e) {
             e.printStackTrace();
+            sb = null;
         } finally {
             try {
                 if (raf != null) {
@@ -366,6 +416,10 @@ public class LogReader
                 e.printStackTrace();
             }
         }
-        return sb.toString();
+        if(sb==null){
+            return null;
+        }
+        String[] tmp = {sb.toString(),info};
+        return tmp;
     }
 }
