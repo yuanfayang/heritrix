@@ -48,4 +48,6 @@ public interface CoreAttributeConstants {
 	public static String A_HTML_EMBEDS = "html-embeds";
 	public static String A_DISTANCE_FROM_SEED = "distance-from-seed";
 	public static String A_HTML_LINKS = "html-links";
+
+	public static String A_META_ROBOTS = "meta-robots";
 }
