@@ -149,6 +149,7 @@ public class PreconditionEnforcer
         }
         // require /robots.txt if not present
         if (isRobotsExpired(curi)) {
+        	// Need to get robots
             logger.fine( "No valid robots for " + curi.getServer()
                 + "; deferring " + curi);
                 
@@ -212,6 +213,9 @@ public class PreconditionEnforcer
             curi.markPrerequisite("dns:" + curi.getServer().getHostname(),
                 getController().getPostprocessorChain());          
             return true;
+        }
+        if(curi.getUURI().getScheme().equals("dns")){
+            curi.setPrerequisite(true);
         }
 
         // DNS preconditions OK
