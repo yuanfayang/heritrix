@@ -132,7 +132,7 @@ public class ARHostQueueTest extends TestCase {
                 hq.getState()==ARHostQueue.HQSTATE_SNOOZED);
         // Wait past wakeup time        
         synchronized(this){
-            wait(hq.getNextReadyTime()-System.currentTimeMillis()+10);
+            wait(hq.getNextReadyTime()-System.currentTimeMillis()+100);
         }
         assertTrue("HQ should now be ready, is " + hq.getStateByName(),
                 hq.getState()==ARHostQueue.HQSTATE_READY);
@@ -221,7 +221,8 @@ public class ARHostQueueTest extends TestCase {
         
         // We do not change the 'time of next processing' on update
         // so curis[2] should again be at top of queue. 
-        hq.update(curi,true,System.currentTimeMillis()+2000); // Wake in 5 sec.
+        long timeOfPolitenessWakeUp = System.currentTimeMillis()+2000;
+        hq.update(curi,true,timeOfPolitenessWakeUp); // Wake in 5 sec.
         assertTrue("HQ should be snoozed, is " + hq.getStateByName(),
                 hq.getState()==ARHostQueue.HQSTATE_SNOOZED);
         
@@ -231,6 +232,8 @@ public class ARHostQueueTest extends TestCase {
         } catch(IllegalStateException e){
             // This is supposed to happen
         }
+        assertEquals("HQs time of next ready should reflect set wait time ",
+                timeOfPolitenessWakeUp, hq.getNextReadyTime());
         
         
         /*
@@ -239,11 +242,13 @@ public class ARHostQueueTest extends TestCase {
          */
         // Wait past wakeup time        
         synchronized(this){
-            wait(hq.getNextReadyTime()-System.currentTimeMillis()+10);
+            wait(hq.getNextReadyTime()-System.currentTimeMillis()+100);
         }
         assertTrue("HQ should now be ready, is " + hq.getStateByName(),
                 hq.getState()==ARHostQueue.HQSTATE_READY);
-    
+        assertEquals("HQs time of next ready should still be when it 'woken' " +
+                "up.", timeOfPolitenessWakeUp, hq.getNextReadyTime());
+   
         /*
          * Invoke next so that the HQ has a URI being processed. Then
          * close the HQ and reopen it to ensure that this happens normally, i.e.
@@ -317,6 +322,8 @@ public class ARHostQueueTest extends TestCase {
                 curi.getURIString(), hq.peek().getURIString());
         
 
+        // TODO: Test sorting with scheduling directives.
+        
         /*
          * Close the ARHostQueue and the Environment
          */
