@@ -216,7 +216,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             CandidateURI caUri =
                 CandidateURI.createSeedCandidateURI((UURI)iter.next());
             caUri.setSchedulingDirective(CandidateURI.MEDIUM);
-            schedule(caUri);
+            innerSchedule(caUri);
         }
     }
 
@@ -519,6 +519,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         
         /* Update HQ */
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
+        curi.processingCleanup(); // Ready the URI for reserialization.
+
         try {
             hq.update(curi, true,
                 (curi.containsKey(A_FETCH_COMPLETED_TIME)?
@@ -545,9 +547,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     protected void reschedule(CrawlURI curi, boolean errorWait)
             throws AttributeNotFoundException {
-        // Eliminate state related to only prior processing passthrough.
-        curi.processingCleanup(); // This will reset prereq value.
-        
         long delay = 0;
         if(errorWait){
             if(curi.containsKey(A_RETRY_DELAY)) {
@@ -559,6 +558,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         }
         
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
+        curi.processingCleanup(); // Ready the URI for reserialization.
         try {
             hq.update(curi, errorWait, delay);
         } catch (IOException e) {
@@ -600,6 +600,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
+        curi.processingCleanup(); // Ready the URI for serialization.
         try {
             // No wait on failure. No contact was made with the server.
             hq.update(curi,false, 0, shouldBeForgotten(curi)); 
@@ -634,6 +635,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.setSchedulingDirective(CandidateURI.NORMAL);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
+        curi.processingCleanup(); // Ready the URI for reserialization.
+
         try {
             // No politness wait on disregard. No contact was made with server
             hq.update(curi, false, 0, shouldBeForgotten(curi));
