@@ -48,8 +48,6 @@ public class CrawlURITest extends TmpDirTestCase {
         this.seed = new CrawlURI(UURIFactory.getInstance(url));
         this.seed.setSchedulingDirective(CrawlURI.MEDIUM);
         this.seed.setIsSeed(true);
-        // Force calc. of class key.
-        this.seed.getClassKey();
         // Force caching of string.
         this.seed.toString();
         this.seed.setVia(url);
@@ -138,16 +136,17 @@ public class CrawlURITest extends TmpDirTestCase {
             host != null && host.length() > 0);
     }
     
-    public void testCalculateClassKey() throws URIException {
-        final String uri = "http://mprsrv.agri.gov.cn";
-        CrawlURI curi = new CrawlURI(UURIFactory.getInstance(uri));
-        String key = curi.getClassKey();
-        assertTrue("Key1 is bad " + key,
-            key.equals(curi.getUURI().getAuthorityMinusUserinfo()));
-    	final String baduri = "ftp://pfbuser:pfbuser@mprsrv.agri.gov.cn/clzreceive/";
-        curi = new CrawlURI(UURIFactory.getInstance(baduri));
-        key = curi.getClassKey();
-        assertTrue("Key2 is bad " + key,
-            key.equals(curi.getUURI().getAuthorityMinusUserinfo()));
-	}
+// TODO: move to QueueAssignmentPolicies
+//    public void testCalculateClassKey() throws URIException {
+//        final String uri = "http://mprsrv.agri.gov.cn";
+//        CrawlURI curi = new CrawlURI(UURIFactory.getInstance(uri));
+//        String key = curi.getClassKey();
+//        assertTrue("Key1 is bad " + key,
+//            key.equals(curi.getUURI().getAuthorityMinusUserinfo()));
+//    	final String baduri = "ftp://pfbuser:pfbuser@mprsrv.agri.gov.cn/clzreceive/";
+//        curi = new CrawlURI(UURIFactory.getInstance(baduri));
+//        key = curi.getClassKey();
+//        assertTrue("Key2 is bad " + key,
+//            key.equals(curi.getUURI().getAuthorityMinusUserinfo()));
+//	}
 }
