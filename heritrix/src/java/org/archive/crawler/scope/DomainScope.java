@@ -24,7 +24,6 @@
 package org.archive.crawler.scope;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
@@ -115,7 +114,6 @@ public class DomainScope extends CrawlScope {
         // synchronization block.  The seeds list may get updated during our
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
-        final List seeds = getSeedlist();
         String seedDomain = null;
         String candidateDomain =null;
 
@@ -132,38 +130,37 @@ public class DomainScope extends CrawlScope {
             return false;
         }
 
-        synchronized(seeds) {
-            for (Iterator i = seeds.iterator(); i.hasNext();) {
-                UURI s = (UURI)i.next();
-                // Get seed domain where www[0-9]*\. is stripped.
-                try {
-                    seedDomain = s.getHostBasename();
-                }
-                catch (URIException e) {
-                    logger.severe("UURI getHostBasename failed for seed: " +
-                        s);
-                }
-                if (seedDomain == null) {
-                    // GetHost can come back null.  See bug item
-                    // [ 910120 ] java.net.URI#getHost fails when leading digit
-                    continue;
-                }
-
-                // Check if stripped hosts are same.
-                if (seedDomain.equals(candidateDomain)) {
-                    return true;
-                }
-
-                // Hosts are not same. Adjust seed basename to check if
-                // candidate domain ends with .seedDomain
-                seedDomain = DOT + seedDomain;
-                if (seedDomain.regionMatches(0, candidateDomain,
-                    candidateDomain.length() - seedDomain.length(),
-                    seedDomain.length())) {
-                    // Domain suffix congruence
-                    return true;
-                } // Else keep trying other seeds
+        Iterator iter = seedsIterator();
+        while(iter.hasNext()) {
+            UURI s = (UURI)iter.next();
+            // Get seed domain where www[0-9]*\. is stripped.
+            try {
+                seedDomain = s.getHostBasename();
             }
+            catch (URIException e) {
+                logger.severe("UURI getHostBasename failed for seed: " +
+                    s);
+            }
+            if (seedDomain == null) {
+                // GetHost can come back null.  See bug item
+                // [ 910120 ] java.net.URI#getHost fails when leading digit
+                continue;
+            }
+
+            // Check if stripped hosts are same.
+            if (seedDomain.equals(candidateDomain)) {
+                return true;
+            }
+
+            // Hosts are not same. Adjust seed basename to check if
+            // candidate domain ends with .seedDomain
+            seedDomain = DOT + seedDomain;
+            if (seedDomain.regionMatches(0, candidateDomain,
+                candidateDomain.length() - seedDomain.length(),
+                seedDomain.length())) {
+                // Domain suffix congruence
+                return true;
+            } // Else keep trying other seeds
         }
         // if none found, fail
         return false;
