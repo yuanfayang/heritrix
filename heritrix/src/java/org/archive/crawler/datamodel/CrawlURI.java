@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.fetcher.FetchDNS;
@@ -56,7 +57,11 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI extends CandidateURI
     implements CoreAttributeConstants, FetchStatusCodes {
-    private static String DEFAULT_CLASS_KEY = "default..."; // when neat host-based class-key fails us
+    
+    /**
+     * When neat host-based class-key fails us
+     */
+    private static String DEFAULT_CLASS_KEY = "default...";
     
     // INHERITED FROM CANDIDATEURI
     // uuri: core identity: the "usable URI" to be crawled
@@ -348,21 +353,21 @@ public class CrawlURI extends CandidateURI
      * @return Token (usually the hostname) which indicates
      * what "class" this CrawlURI should be grouped with.
      */
-    public String getClassKey() {
+    public String getClassKey() throws URIException {
         if(classKey==null) {
             classKey = calculateClassKey();
         }
         return classKey;
     }
 
-    private String calculateClassKey() {
-        String scheme = getUURI().getUri().getScheme();
+    private String calculateClassKey() throws URIException {
+        String scheme = getUURI().getScheme();
         if (scheme.equals("dns")){
             return FetchDNS.parseTargetDomain(this);
         }
-        String host = getUURI().getUri().getHost();
+        String host = getUURI().getHost();
         if (host == null) {
-            String authority =  getUURI().getUri().getAuthority();
+            String authority =  getUURI().getAuthority();
             if(authority == null) {
                 return DEFAULT_CLASS_KEY;
             } else {

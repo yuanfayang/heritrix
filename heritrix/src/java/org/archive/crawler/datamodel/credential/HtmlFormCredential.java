@@ -22,7 +22,6 @@
  */
 package org.archive.crawler.datamodel.credential;
 
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -136,21 +135,20 @@ public class HtmlFormCredential extends Credential {
 
     public boolean isPrerequisite(final CrawlURI curi) {
         boolean result = false;
-        String curiStr = curi.getUURI().getURIString();
+        String curiStr = curi.getUURI().toString();
         String loginUri = getPrerequisite(curi);
         if (loginUri != null) {
             try {
-                UURI uuri = UURI.createUURI(loginUri,
-                    curi.getUURI().getRawUri());
+                UURI uuri = new UURI(curi.getUURI(), loginUri);
                 if (uuri != null && curiStr != null &&
-                    uuri.getURIString().equals(curiStr)) {
+                    uuri.toString().equals(curiStr)) {
                     result = true;
                     if (!curi.isPrerequisite()) {
                         curi.setPrerequisite(true);
                         logger.fine(curi + " is prereq.");
                     }
                 }
-            } catch (URISyntaxException e) {
+            } catch (URIException e) {
                 logger.severe("Failed to uuri: " + curi + ", " +
                     e.getMessage());
             }

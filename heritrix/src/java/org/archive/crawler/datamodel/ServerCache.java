@@ -25,6 +25,7 @@ package org.archive.crawler.datamodel;
 
 import java.util.HashMap;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.settings.SettingsHandler;
 import org.xbill.DNS.FindServer;
 
@@ -65,8 +66,8 @@ public class ServerCache {
      * @param curi
      * @return CrawlServer
      */
-    public CrawlServer getServerFor(CrawlURI curi) {
-        String scheme = curi.getUURI().getUri().getScheme();
+    public CrawlServer getServerFor(CrawlURI curi) throws URIException {
+        String scheme = curi.getUURI().getScheme();
         if (scheme.equals("dns")) {
             // set crawlhost to default nameserver
             String primaryDns = FindServer.server();
@@ -79,12 +80,12 @@ public class ServerCache {
             }
         }
 
-        String hostOrAuthority = curi.getUURI().getUri().getAuthority();
-        if (hostOrAuthority != null && scheme.equals("https")) {
+        String hostOrAuthority = curi.getUURI().getAuthority();
+        if (hostOrAuthority != null && scheme.equals(UURI.HTTP_PORT)) {
             // If https and no port specified, add default https port to
             // distinuish https from http server without a port.
             if (!hostOrAuthority.matches(".+:[0-9]+")) {
-                hostOrAuthority += ":443";
+                hostOrAuthority += ":" + UURI.HTTPS_PORT;
             }
         }
         // TODOSOMEDAY: make this robust against those rare cases

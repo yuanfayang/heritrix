@@ -32,6 +32,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.SeedList;
 import org.archive.crawler.datamodel.UURI;
@@ -326,17 +327,23 @@ public class CrawlScope extends Filter {
      * @param a First UURI of compare.
      * @param b Second UURI of compare.
      * @return True if UURIs are of same host.
+     * @throws URIException
      */
-    protected boolean isSameHost(UURI a, UURI b)
-    {
+    protected boolean isSameHost(UURI a, UURI b) {
         boolean isSameHost = false;
         if (a != null && b != null) {
             // getHost can come back null.  See
             // "[ 910120 ] java.net.URI#getHost fails when leading digit"
-            if (a.getHost() != null && b.getHost() != null) {
-                if (a.getHost().equals(b.getHost())) {
-                    isSameHost = true;
+            try {
+                if (a.getHost() != null && b.getHost() != null) {
+                    if (a.getHost().equals(b.getHost())) {
+                        isSameHost = true;
+                    }
                 }
+            }
+            catch (URIException e) {
+                logger.severe("Failed compare of " + a + " " + b + ": " +
+                    e.getMessage());
             }
         }
         return isSameHost;

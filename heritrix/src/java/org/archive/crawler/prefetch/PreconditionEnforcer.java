@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlServer;
@@ -132,10 +133,15 @@ public class PreconditionEnforcer
      */
     private boolean considerRobotsPreconditions(CrawlURI curi) {
         // treat /robots.txt fetches specially
-        if (curi.getUURI().getPath().equals("/robots.txt")) {
-            // allow processing to continue
-            curi.setPrerequisite(true);
-            return false;
+        try {
+            if (curi.getUURI().getPath().equals("/robots.txt")) {
+                // allow processing to continue
+                curi.setPrerequisite(true);
+                return false;
+            }
+        }
+        catch (URIException e) {
+            logger.severe("Failed get of path for " + curi);
         }
         // require /robots.txt if not present
         if (isRobotsExpired(curi)) {
@@ -144,9 +150,14 @@ public class PreconditionEnforcer
                 
             // Robots expired - should be refetched even though its already
             // crawled.
-            curi.markPrerequisite(
-                curi.getUURI().getRawUri().resolve("/robots.txt").toString(),
-                getController().getPostprocessorChain());
+            try {
+                curi.markPrerequisite(
+                    curi.getUURI().resolve("/robots.txt").toString(),
+                    getController().getPostprocessorChain());
+            }
+            catch (URIException e1) {
+                logger.severe("Failed resolve using " + curi);
+            }
             return true;
         }
         // test against robots.txt if available

@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +38,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.util.DevUtils;
 
 
@@ -203,7 +203,7 @@ public class SeedList extends AbstractList {
                 FileWriter fw = new FileWriter(f, true);
                 // Write to new (last) line the URL.
                 fw.write("\n");
-                fw.write(uuri.toExternalForm());
+                fw.write(uuri.toString());
                 fw.flush();
                 fw.close();
                 result = true;
@@ -320,10 +320,10 @@ public class SeedList extends AbstractList {
                             candidate = "http://" + candidate;
                         }
                         try {
-                            this.next = UURI.createUURI(candidate);
+                            this.next = new UURI(candidate);
                             // next loaded with next seed
                             return true;
-                        } catch (URISyntaxException e1) {
+                        } catch (URIException e1) {
                             Object[] array = { null, candidate };
                             SeedList.this.logger.log(Level.INFO,
                                 "Reading seeds: " + e1.getMessage(), array );

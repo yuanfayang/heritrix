@@ -36,6 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.settings.CrawlerSettings;
 
 /**
@@ -44,7 +45,9 @@ import org.archive.crawler.settings.CrawlerSettings;
  *
  */
 public class RobotsExclusionPolicy implements Serializable {
-    private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.RobotsExclusionPolicy");
+    
+    private static final Logger logger =
+        Logger.getLogger(RobotsExclusionPolicy.class.getName());
 
     private final static int NORMAL_TYPE = 0;
     private final static int ALLOWALL_TYPE = 1;
@@ -58,7 +61,6 @@ public class RobotsExclusionPolicy implements Serializable {
 
     private LinkedList userAgents = null;
     private HashMap disallows = null; // of (String -> List)
-    private boolean hasErrors = false; // flag for flawed bu workable robots.txts
     transient RobotsHonoringPolicy honoringPolicy = null;
 
     private String lastUsedUserAgent = null;
@@ -147,7 +149,6 @@ public class RobotsExclusionPolicy implements Serializable {
             HashMap d, boolean errs, RobotsHonoringPolicy honoringPolicy) {
         userAgents = u;
         disallows = d;
-        hasErrors = errs;
         this.honoringPolicy = honoringPolicy;
 
         if(honoringPolicy == null) return;
@@ -224,9 +225,14 @@ public class RobotsExclusionPolicy implements Serializable {
                     disallow = false;
                     break;
                 }
-                if ( curi.getUURI().getUri().getPath().startsWith(disallowedPath) ) {
-                    // the user agent tested isn't allowed to get this uri
-                    disallow = true;
+                try {
+                    if ( curi.getUURI().getPath().startsWith(disallowedPath) ) {
+                        // the user agent tested isn't allowed to get this uri
+                        disallow = true;
+                    }
+                }
+                catch (URIException e) {
+                    logger.severe("Failed getPath from " + curi);
                 }
             }
             if(disallow == false) {

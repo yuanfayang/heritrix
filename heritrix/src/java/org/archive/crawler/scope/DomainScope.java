@@ -26,6 +26,7 @@ package org.archive.crawler.scope;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
@@ -82,7 +83,7 @@ public class DomainScope extends CrawlScope {
             "subdomains of the seeds' original domains. www[#].host is considered " +
             "to be the same as host.");
 
-        additionalFocusFilter = (Filter) addElementToDefinition(
+        this.additionalFocusFilter = (Filter) addElementToDefinition(
                 new FilePatternFilter(ATTR_ADDITIONAL_FOCUS_FILTER));
 
         this.transitiveFilter = (Filter) addElementToDefinition(
@@ -119,7 +120,13 @@ public class DomainScope extends CrawlScope {
                 }
                 
                 // Might be a close-enough match
-                String seedDomain = s.getHost();
+                String seedDomain = null;
+                try {
+                    seedDomain = s.getHost();
+                }
+                catch (URIException e) {
+                    logger.severe("Failed get host: " + s);
+                }
                 if (seedDomain == null) {
                     // GetHost can come back null.  See
                     // "[ 910120 ] java.net.URI#getHost fails when leading digit"
@@ -127,7 +134,13 @@ public class DomainScope extends CrawlScope {
                 }
                 // Strip www[#]
                 seedDomain = seedDomain.replaceFirst("^www\\d*", "");
-                String candidateDomain = u.getHost();
+                String candidateDomain = null;
+                try {
+                    candidateDomain = u.getHost();
+                }
+                catch (URIException e1) {
+                    logger.severe("Failed get host from " + u);
+                }
                 if (candidateDomain == null) {
                     // either an opaque, unfetchable, or unparseable URI
                     continue;

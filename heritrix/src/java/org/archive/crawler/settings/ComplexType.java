@@ -44,6 +44,7 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.ReflectionException;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -334,11 +335,19 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             context = new Context();
             context.uri = (o instanceof CandidateURI) ? ((CandidateURI) o)
                     .getUURI() : (UURI) o;
-            context.settings = getSettingsHandler().getSettings(context.uri.getHost(), context.uri);
+            try {
+                context.settings = getSettingsHandler().
+                    getSettings(context.uri.getHost(), context.uri);
+            }
+            catch (URIException e1) {
+                logger.severe("Failed to get host");
+            }
 
             if (attributeName != null) {
                 try {
-                    context.settings = getDataContainerRecursive(context, attributeName).getSettings();
+                    context.settings =
+                        getDataContainerRecursive(context, attributeName).
+                            getSettings();
                 } catch (AttributeNotFoundException e) {
                     // Nothing found, globals will be used
                 }

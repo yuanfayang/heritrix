@@ -64,7 +64,7 @@ public class URIRegExpFilter extends Filter {
         if(o instanceof CandidateURI) {
             input = ((CandidateURI)o).getURIString();
         } else if (o instanceof UURI ){
-            input = ((UURI)o).getURIString();
+            input = ((UURI)o).toString();
         } else {
             //TODO handle other inputs
             input = o.toString();
