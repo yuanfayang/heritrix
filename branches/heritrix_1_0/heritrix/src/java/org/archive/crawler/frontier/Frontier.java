@@ -301,14 +301,14 @@ public class Frontier
         t = addElementToDefinition(
                 new SimpleType(ATTR_ALREADY_INCLUDED_SIZE_EXPONENT,
                 "The initial size of the crawler's already-included URI" +
-                "structure, as a power of 2. The default value of 23 " +
-                "preallocates a 8 million slot structure, which can be" +
-                "75% filled before it grows (doubles in size). Each slot" +
-                "requires 9 bytes, so the default structure takes 72MB. " +
-                "If you know your crawl will schedule more than 6 million" +
-                "URIs, it is wise to preallocate a larger structure, so that" +
-                "the crawler does not need to acquire new giant chunks of" +
-                "memory during the crawl.",
+                " structure, as a power of 2.\nThe default value of 23" +
+                " preallocates a 8 million slot structure, which can be" +
+                " 75% filled before it grows (doubles in size). Each slot" +
+                " requires 9 bytes, so the default structure takes 72MB." +
+                " If you know your crawl will schedule more than 6 million" +
+                " URIs, it is wise to preallocate a larger structure, so that" +
+                " the crawler does not need to acquire new giant chunks of" +
+                " memory during the crawl.",
                 DEFAULT_ALREADY_INCLUDED_SIZE_EXPONENT));
         t.setExpertSetting(true);
     }
