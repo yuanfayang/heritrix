@@ -187,13 +187,12 @@ public class ARCSocketFactoryTest
                 + " attempts");
         }
 
-        // Get response though I ignore it.
-        method.getResponseBody();
+        byte[] responseBody = method.getResponseBody();
         method.releaseConnection();
         
         // Have to force the close myself.  httpclient doesn't call socket
-        // close.  It wants to recycle.  It doesn't even call close on streams.
-        // It doesn't expect to get an EOF out of stream; rather it
+        // close.  It wants to recycle.  It doesn't even call close on streams
+        // because it doesn't expect to get an EOF out of stream; rather it
         // wraps our stream w/ a watching stream that looks for content-length
         // characters and there returns a -1.
         this.socket.close();
