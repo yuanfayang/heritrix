@@ -38,10 +38,10 @@ extends BaseRule {
     protected static Logger logger =
         Logger.getLogger(BaseRule.class.getName());
     private static final String DESCRIPTION = "General regex rule.\n" +
-        "Specify a matching regex and a format string used outputing" +
+        "Specify a matching regex and a format string used outputting" +
         " result if a match was found.  If problem compiling regex or" +
         " interpreting format, problem is logged, and this rule does" +
-        " nothing.  Note that this rule cannot be used as an override.";
+        " nothing.  See User Manual for example usage.";
     private static final String ATTR_REGEX = "matching-regex";
     private static final String ATTR_FORMAT = "format";
     private static final String ATTR_COMMENT = "comment";
@@ -50,7 +50,8 @@ extends BaseRule {
         this(name, "(.*)", "${1}");
     }
     
-    protected RegexRule(String name, String defaultRegex, String defaultFormat) {
+    protected RegexRule(String name, String defaultRegex,
+            String defaultFormat) {
         super(name, DESCRIPTION);
         addElementToDefinition(new SimpleType(ATTR_REGEX,
             "Java regular expression.\nIf the regex matches, we'll rewrite" +
@@ -92,7 +93,8 @@ extends BaseRule {
         for (int i = 0; i < format.length(); i++) {
             switch(format.charAt(i)) {
                 case '\\':
-                    if ((i + 1) < format.length() && format.charAt(i + 1) == '$') {
+                    if ((i + 1) < format.length() &&
+                            format.charAt(i + 1) == '$') {
                         // Don't write the escape character in output.
                         continue;
                     }
