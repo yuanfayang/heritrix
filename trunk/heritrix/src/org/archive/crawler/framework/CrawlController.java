@@ -442,7 +442,7 @@ public class CrawlController {
 	 * @return
 	 */
 	public int getToeCount() {
-		return toePool.getActiveToeCount();
+		return toePool.getToeCount();
 	}
 
 }

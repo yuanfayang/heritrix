@@ -69,4 +69,11 @@ public class ToePool {
 		return count;
 	}
 
+	/**
+	 * @return
+	 */
+	public int getToeCount() {
+		return toes.size();
+	}
+
 }

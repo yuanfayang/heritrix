@@ -36,15 +36,22 @@ public interface URIFrontier {
 	/**
 	 * @return
 	 */
-	int successfullyFetchedCount();
+	long successfullyFetchedCount();
 
 	/**
 	 * @return
 	 */
-	int discoveredUriCount();
+	long discoveredUriCount();
+
+	/**
+	 * Estimated number of URIs scheduled for prcoessing..
+	 *  
+	 * @return
+	 */
+	long pendingUriCount();
 
 	/**
 	 * @return
 	 */
-	int failedFetchCount();
+	long failedFetchCount();
 }
