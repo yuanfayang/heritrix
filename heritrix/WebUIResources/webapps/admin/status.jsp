@@ -27,7 +27,7 @@
 	<body>
 		<table border="0" cellspacing="0" cellpadding="0" width="100%">
 			<tr>
-				<td valign="top" width="50%">
+				<td valign="top" width="60%">
 					<table border="0" cellspacing="0" cellpadding="0" >
 						<tr>
 							<td>
@@ -99,7 +99,7 @@
 						%>
 					</table>
 				</td>
-				<td valign="top" width="50%">
+				<td valign="top" width="40%">
 					<table border="0" cellspacing="0" cellpadding="0" >
 						<tr>
 							<td>
