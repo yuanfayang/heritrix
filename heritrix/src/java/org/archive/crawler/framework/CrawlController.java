@@ -728,6 +728,7 @@ public class CrawlController implements Serializable {
         // A proper exit will change this value.
 
         // start periodic background logging of crawl statistics
+        statistics.noteStart();
         Thread statLogger = new Thread(statistics);
         statLogger.setName("StatLogger");
         statLogger.start();
