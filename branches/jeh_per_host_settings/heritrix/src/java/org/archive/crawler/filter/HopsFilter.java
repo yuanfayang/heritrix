@@ -23,8 +23,11 @@
  */
 package org.archive.crawler.filter;
 
+import javax.management.AttributeNotFoundException;
+
+import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -36,7 +39,15 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class HopsFilter extends Filter {
-	int maxLinkHops = Integer.MAX_VALUE;
+	/**
+     * @param name
+     * @param description
+     */
+    public HopsFilter(String name) {
+        super(name, "Hops filter");
+    }
+
+    int maxLinkHops = Integer.MAX_VALUE;
 	int maxTransHops = Integer.MAX_VALUE;
 	
 	/* (non-Javadoc)
@@ -59,10 +70,16 @@ public class HopsFilter extends Filter {
 		return (linkCount > maxLinkHops)|| (transCount>maxTransHops);
 	}
 
-	public void initialize(CrawlController c) {
-		super.initialize(c);
-		maxLinkHops = getIntAt("@max-link-hops",maxLinkHops);
-		maxTransHops = getIntAt("@max-trans-hops",maxTransHops);
+	public void initialize(CrawlerSettings settings) {
+		super.initialize(settings);
+        Scope scope = (Scope) getSettingsHandler().getModule(Scope.ATTR_NAME);
+        try {
+            maxLinkHops = ((Integer) scope.getAttribute(settings, Scope.ATTR_MAX_LINK_HOPS)).intValue();
+            maxTransHops = ((Integer) scope.getAttribute(settings, Scope.ATTR_MAX_TRANS_HOPS)).intValue();
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 	}
 
 }
