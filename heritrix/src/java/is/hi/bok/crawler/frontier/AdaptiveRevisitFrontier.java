@@ -22,11 +22,14 @@
 */
 package is.hi.bok.crawler.frontier;
 
+import is.hi.bok.crawler.processor.ChangeEvaluator;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,6 +55,9 @@ import org.archive.crawler.settings.Type;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 
+import st.ata.util.AList;
+import st.ata.util.HashtableAList;
+
 
 /**
  * A Frontier that will repeatedly visit all encountered URIs. 
@@ -71,6 +77,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
     // Constants for storing information in a CrawlURI's AList
     public static final String A_TIME_OF_NEXT_PROCESSING = 
         "time-of-next-processing";
+    public static final String A_WAIT_INTERVAL = "wait-interval";
 
     private static final Logger logger =
         Logger.getLogger(AdaptiveRevisitFrontier.class.getName());
@@ -104,6 +111,10 @@ public class AdaptiveRevisitFrontier extends ModuleType
     public final static String ATTR_PREFERENCE_EMBED_HOPS = "preference-embed-hops";
     protected final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(1); 
 
+    /** Default wait time after initial visit. */
+    public final static String ATTR_INITIAL_WAIT_INTERVAL = "initial-wait-interval";
+    protected final static Long DEFAULT_INITIAL_WAIT_INTERVAL = new Long(86400000); // 1 day
+    
     protected CrawlController controller;
     
     protected ARHostQueueList hostQueues;
@@ -174,6 +185,12 @@ public class AdaptiveRevisitFrontier extends ModuleType
                     " host.",
                     DEFAULT_HOST_VALENCE));
             t.setExpertSetting(true);
+            t = addElementToDefinition(new SimpleType(ATTR_INITIAL_WAIT_INTERVAL,
+                    "The initial wait time between revisits. Will then be " +
+                    "updated according to crawler experiance. I.e. shorter " +
+                    "wait, visit more often, if document has changed between " +
+                    "visits, and vica versa.",
+                    DEFAULT_INITIAL_WAIT_INTERVAL));
     }
 
     
@@ -248,6 +265,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
         // Optionally preferencing embeds up to MEDIUM
         int prefHops = ((Integer) getUncheckedAttribute(curi,
                 ATTR_PREFERENCE_EMBED_HOPS)).intValue();
+        boolean prefEmbed = false;
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
             if (embedHops > 0 && embedHops <= prefHops
@@ -255,11 +273,41 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 // number of embed hops falls within the preferenced range, and
                 // uri is not already MEDIUM -- so promote it
                 curi.setSchedulingDirective(CandidateURI.MEDIUM);
+                prefEmbed = true;
             }
         }
+
+        Long initialWait = DEFAULT_INITIAL_WAIT_INTERVAL;
+        try {
+            initialWait = (Long)getAttribute(curi,ATTR_INITIAL_WAIT_INTERVAL);
+        } catch (AttributeNotFoundException e1) {
+            // TODO Handle AttributeNotFoundException
+            e1.printStackTrace();
+        }
+        // TODO: Find a better wait of preserving the initial wait. 
+        // Half the initial wait because we know it will be doubled when it 
+        // turns out the document 'has changed' on first visit
+        curi.getAList().putLong(A_WAIT_INTERVAL,initialWait.longValue()/2);
+        // Finally, allow curi to be fetched right now 
+        //(but not overriding overdue items)
+        curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,
+                System.currentTimeMillis());
         
         try {
-            hostQueues.getHQ(curi.getClassKey()).add(curi,false); //TODO: Handle embedds
+System.out.println("ARFrontier.schedule(" + curi.getURIString() + ")");
+            ARHostQueue hq = hostQueues.getHQ(curi.getClassKey());
+            if(hq == null){
+                // Need to create it.
+                int valence = DEFAULT_HOST_VALENCE.intValue();
+                try {
+                    valence = ((Integer)getAttribute(curi,ATTR_HOST_VALENCE)).intValue();
+                } catch (AttributeNotFoundException e2) {
+                    // TODO Auto-generated catch block
+                    e2.printStackTrace();
+                }
+                hq = hostQueues.createHQ(curi.getClassKey(),valence);
+            }
+            hq.add(curi,prefEmbed);
         } catch (IOException e) {
             // TODO Handle IOExceptions
             e.printStackTrace();
@@ -320,7 +368,10 @@ public class AdaptiveRevisitFrontier extends ModuleType
         
         try {
             CrawlURI curi = hq.next();
+            // Populate CURI with 'transient' variables such as server.
+            curi.setServer(getServer(curi));
             logger.finer("Issuing " + curi + " for processing");
+System.out.println("ARFrontier.next("+curi.getURIString()+")");            
             return curi;
         } catch (IOException e) {
             // TODO: Need to handle this in an intelligent manner. 
@@ -349,16 +400,49 @@ public class AdaptiveRevisitFrontier extends ModuleType
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
-    public synchronized void finished(CrawlURI cURI) {
-        logger.fine("Frontier.finished start: " + cURI.getURIString());
-        cURI.incrementFetchAttempts();
-        logLocalizedErrors(cURI);
+    public synchronized void finished(CrawlURI curi) {
+        logger.fine("Frontier.finished start: " + curi.getURIString());
+System.out.println("ARFrontier.finished("+curi.getURIString()+") " + CrawlURI.fetchStatusCodesToString(curi.getFetchStatus())); 
+        curi.incrementFetchAttempts();
+        logLocalizedErrors(curi);
         try {
-            innerFinished(cURI);
+            innerFinished(curi);
         } finally {
             // This method cleans out all curi state.
-            cURI.processingCleanup();
+            curi.processingCleanup();
         }
+    }
+    
+    /**
+     * Removes all info in a CrawlURI that need not be stored between revisits.
+     * @param curi The crawl uri to process
+     */
+    protected void discardUnneededCrawlURIInfo(CrawlURI curi){
+        Iterator it = curi.getAList().getKeys();
+        AList tmp = new HashtableAList();
+        while(it.hasNext()){
+            String key = (String)it.next();
+            if(isNeededInCrawlURI(key)){
+                tmp.putObject(key, curi.getAList().getObject(key));
+            }
+        }
+        curi.setAList(tmp);
+    }
+    
+    /**
+     * Decides if a key to a CrawlURIs AList denotes information that needs to
+     * be stored between revisits.
+     * @param key the key to check
+     * @return true if the information needs to be stored between revisits.
+     */
+    protected boolean isNeededInCrawlURI(String key){
+        if(key.equals(A_TIME_OF_NEXT_PROCESSING) || 
+                key.equals(A_DELAY_FACTOR) ||
+                key.equals(A_FETCH_COMPLETED_TIME) ||
+                key.equals(A_WAIT_INTERVAL)){
+            return true;
+        }
+        return false;
     }
     
     protected synchronized void innerFinished(CrawlURI curi) {
@@ -371,7 +455,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 e1.printStackTrace();
             }
             
-            // TODO: consider updateScheduling(curi, kq);
             if (curi.isSuccess()) {
                 successDisposition(curi);
             } else if (needsPromptRetry(curi)) {
@@ -383,7 +466,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 reschedule(curi,true);
                 controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
             } else if(isDisregarded(curi)) {
-                // Check for codes that mean that while we the crawler did
+                // Check for codes that mean that while the crawler did
                 // manage to get it it must be disregarded for any reason.
                 disregardDisposition(curi);
             } else {
@@ -396,8 +479,11 @@ public class AdaptiveRevisitFrontier extends ModuleType
         } catch (RuntimeException e) {
             curi.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
+
+System.out.println("RTE in innerFinished() " + e.getMessage());
+e.printStackTrace();
             curi.getAList().putObject(A_RUNTIME_EXCEPTION, e);
-            failureDisposition(curi);
+            //TODO: consider failureDisposition(curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
@@ -449,9 +535,29 @@ public class AdaptiveRevisitFrontier extends ModuleType
         // the curi.
         controller.fireCrawledURISuccessfulEvent(curi);
         
-        // TODO: Update curi's time of next processing
+        // Update curi's time of next processing
+        long waitInterval = curi.getAList().getLong(A_WAIT_INTERVAL);
+        curi.setSchedulingDirective(CrawlURI.NORMAL);
+        int change = ChangeEvaluator.CHANGED;
+        try{
+            curi.getAList().getInt(ChangeEvaluator.A_CHANGE_STATUS);
+        } catch( NoSuchElementException e ){
+            // Do nothing, we'll assume it has changed.
+        }
+        if(change==ChangeEvaluator.CHANGED){
+            // Had changed. Half wait interval time.
+            waitInterval = waitInterval / 2;
+        } else {
+            // Had not changed. Double wait interval time
+            waitInterval = waitInterval*2;
+        }
+        
+        curi.getAList().putLong(A_WAIT_INTERVAL,waitInterval);
+        curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,
+                System.currentTimeMillis()+waitInterval);
         
         ARHostQueue hq = hostQueues.getHQ(curi.getClassKey());
+        discardUnneededCrawlURIInfo(curi);
         try {
             hq.update(curi,true,
                     curi.getAList().getLong(A_FETCH_COMPLETED_TIME) + 
@@ -463,8 +569,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
             // TODO Handle AttributeNotFoundException
             e.printStackTrace();
         }
-        
-        //finishedSuccess(curi);
     }
 
     /**
@@ -492,10 +596,13 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue();
             }
         }
+
+        // TODO: Consider, can we just leave the time of next processing unchanged?
+        discardUnneededCrawlURIInfo(curi);
         
         ARHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         try {
-            hq.update(curi,errorWait, delay);
+            hq.update(curi, errorWait, delay);
         } catch (IOException e) {
             // TODO Handle IOException
             e.printStackTrace();
@@ -530,6 +637,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
         // TODO: (shouldBeForgotten(curi)) 
         
         // TODO: Either allow for update with delete, or set time in the distant future for retry
+        curi.setSchedulingDirective(CrawlURI.NORMAL);
+        discardUnneededCrawlURIInfo(curi);
 
         ARHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         try {
@@ -571,6 +680,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
         disregardedUriCount++;
         
         curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); //Todo: consider timout before retrying disregarded elements.
+        curi.setSchedulingDirective(CrawlURI.NORMAL);
+        discardUnneededCrawlURIInfo(curi);
 
         ARHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         try {
@@ -760,9 +871,9 @@ public class AdaptiveRevisitFrontier extends ModuleType
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#oneLineReport()
      */
-    public String oneLineReport() {
+    public synchronized String oneLineReport() {
         // TODO Auto-generated method stub
-        return null;
+        return hostQueues.oneLineReport();
     }
 
     /* (non-Javadoc)
@@ -770,7 +881,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
      */
     public synchronized String report() {
         // TODO Auto-generated method stub
-        return null;
+        return hostQueues.report();
     }
 
     /* (non-Javadoc)

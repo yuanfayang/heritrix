@@ -117,6 +117,10 @@ public class ARHostQueue {
      * it, including any that are currently being processed.
      */
     long size;
+    /** Number of URIs belonging to this queue that are being processed at the
+     *  moment. This number will always be in the range of 0 - valence 
+     */
+    long inProcessing;
     /** The ARHostQueueList that contains this class. This reference is 
      *  maintained to inform the owning class of changes to the sort order
      *  value. Value may be null, in which case no notices are made.*/
@@ -145,7 +149,7 @@ public class ARHostQueue {
     /** A cursor into the secondaryUriDB. The first item here is the head of 
      *  this HQ's priority queue. The cursors position at any given time is
      *  undefined. Methods using it must seek the proper position themselves.*/
-    protected Cursor secondaryCursor;
+//    protected Cursor secondaryCursor;
 
     
     
@@ -179,6 +183,8 @@ public class ARHostQueue {
             for(int i = 0 ; i < valence ; i++){
                 wakeUpTime[i]=0; // 0 means open slot.
             }
+            
+            inProcessing = 0;
             
             this.hostName = hostName;
             
@@ -230,7 +236,7 @@ public class ARHostQueue {
                                                        secConfig);
             
             // Open a cursor into the secondary database;
-            secondaryCursor = secondaryUriDB.openCursor(null,null);
+//            secondaryCursor = secondaryUriDB.openCursor(null,null);
             
             // Check if we are opening an existing DB...
             size = countCrawlURIs();
@@ -625,7 +631,9 @@ public class ARHostQueue {
             
             // Then remove from list of in processing URIs
             deleteInProcessing(curi.getURIString());
-    
+            
+            inProcessing--;
+            
             // Check if we need to update nextReadyTime
             long curiTimeOfNextProcessing = curi.getAList().getLong(
                     AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING);
@@ -686,9 +694,15 @@ public class ARHostQueue {
                         " priority queue for processing. " + opStatus.toString());
             }
             
-            // Finally update nextReadyTime with new top.
-            setNextReadyTime(peek().getAList().getLong(
-                    AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING));
+            // Finally update nextReadyTime with new top if one exists.
+            CrawlURI top = peek();
+            long nextReady = Long.MAX_VALUE;
+            if(top != null){
+                nextReady = top.getAList().getLong(
+                        AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING);
+            }
+            inProcessing++;
+            setNextReadyTime(nextReady);
             return curi;
         } catch (DatabaseException e) {
             // Blanket catch all DBExceptions and convert to IOExceptions.
@@ -708,9 +722,9 @@ public class ARHostQueue {
      * <i>not</i> be updated and returned to the queue. To get URIs ready for
      * processing use {@link #next() next()}.
      * 
-     * @return the URI with the earliest time of next processing
+     * @return the URI with the earliest time of next processing or null if 
+     *         the queue is empty or all URIs are currently being processed.
      * 
-     * @throws IllegalStateException if the HQ is empty
      * @throws IOException if an error occurs reading from the database
      */
     public CrawlURI peek() throws IllegalStateException, IOException{
@@ -720,6 +734,7 @@ public class ARHostQueue {
             DatabaseEntry dataEntry = new DatabaseEntry();
             
             CrawlURI curi = null;
+            Cursor secondaryCursor = secondaryUriDB.openCursor(null,null);
             
             OperationStatus opStatus = 
                 secondaryCursor.getFirst(keyEntry, dataEntry, LockMode.DEFAULT);
@@ -728,13 +743,13 @@ public class ARHostQueue {
                 curi = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
             } else {
                 if( opStatus == OperationStatus.NOTFOUND ){
-                    throw new IllegalStateException("Can not perform peek()" +
-                            " on empty queue");
+                   curi = null;
                 } else {
                     throw new IOException("Error occured in " +
                             "ARHostQueue.peek()." + opStatus.toString());
                 }
             }
+            secondaryCursor.close();
             return curi;
         } catch (DatabaseException e) {
             // Blanket catch all DBExceptions and convert to IOExceptions.
@@ -814,9 +829,7 @@ public class ARHostQueue {
      */
     protected void setNextReadyTime(long newTime){
         long old = getNextReadyTime(); // store the old 'publish' value;
-        if(nextReadyTime>newTime){
-            nextReadyTime=newTime;
-        }
+        nextReadyTime=newTime;
         reorder(old);
     }
     
@@ -891,7 +904,7 @@ public class ARHostQueue {
      */
     public void close() throws IOException{
         try{
-            secondaryCursor.close();
+//            secondaryCursor.close();
             secondaryUriDB.close();
             processingUriDB.close();
             classCatalogDB.close();
@@ -913,12 +926,7 @@ public class ARHostQueue {
      * @return true if number of in processing URIs = valence 
      */
     private boolean isBusy(){
-        for(int i=0 ; i < valence ; i++){
-            if(wakeUpTime[i]>-1){
-                return false;
-            }
-        }
-        return true;
+        return inProcessing == valence;
     }
     
     /**
@@ -968,6 +976,44 @@ public class ARHostQueue {
             }
         }
         return earliest;
+    }
+    
+    /**
+     * Returns a report detailing the status of this HQ.
+     * @return a report detailing the status of this HQ.
+     */
+    public String report(){
+        try{
+            StringBuffer ret = new StringBuffer(256);
+            ret.append("ARHostQueue: " + hostName + "\n");
+            ret.append("Size:       " + size + "\n");
+            ret.append("State:      " + getStateByName() + "\n");
+            ret.append("Next ready: " + (getNextReadyTime() - System.currentTimeMillis()) + "\n");
+            ret.append("Top URIs: " + "\n");
+            
+            Cursor secondaryCursor = secondaryUriDB.openCursor(null,null);
+            
+            DatabaseEntry keyEntry = new DatabaseEntry();
+            DatabaseEntry dataEntry = new DatabaseEntry();
+            
+            OperationStatus opStatus = secondaryCursor.getFirst(keyEntry,dataEntry,LockMode.DEFAULT);
+            int i = 0;
+            while(i<10 && opStatus == OperationStatus.SUCCESS){
+            
+                CrawlURI tmp = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
+                ret.append("  URI:              " + tmp.getURIString() + "\n");
+                ret.append("  Next processing:  " + tmp.getAList().getLong(
+                        AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING) + "\n");
+                ret.append("  Sched. directive: " + tmp.getSchedulingDirective() + "\n");
+                
+                opStatus = secondaryCursor.getNext(keyEntry,dataEntry,LockMode.DEFAULT);
+                i++;
+            }
+            
+            return ret.toString();
+        } catch( DatabaseException e ){
+            return "Exception occured compiling report:\n" + e.getMessage();
+        }
     }
     
     /**
