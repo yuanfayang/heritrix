@@ -78,6 +78,16 @@ public class PatchedHttpClient extends HttpClient
     private int timeoutInMilliseconds = 0;
 
     /**
+     * Name of proxy server.
+     */
+    private String proxyname = null;
+
+    /**
+     * Port proxy server is on.
+     */
+    private int proxyport = 0;
+
+    /**
      * The connection timeout in milliseconds.
      *
      * HERITRIX: Duplicated because super is private.  Below we override setters
@@ -147,6 +157,13 @@ public class PatchedHttpClient extends HttpClient
         this.timeoutInMilliseconds = newTimeoutInMilliseconds;
     }
 
+    public synchronized void setHttpProxy(String proxyname) {
+        this.proxyname = proxyname;
+    }
+    
+    public synchronized void setHttpProxyport(int proxyport) {
+        this.proxyport = proxyport;
+    }
 
     /**
      * Executes the given {@link HttpMethod HTTP method} using the given custom
@@ -219,9 +236,10 @@ public class PatchedHttpClient extends HttpClient
                     defaultHostConfiguration.getProtocol()
                 );
             }
-            if (!methodConfiguration.isProxySet()
+            if (proxyname != null && proxyname.length() > 0) {
+                methodConfiguration.setProxy(proxyname, proxyport);
+            } else if (!methodConfiguration.isProxySet()
                 && defaultHostConfiguration.isProxySet()) {
-
                 methodConfiguration.setProxy(
                     defaultHostConfiguration.getProxyHost(),
                     defaultHostConfiguration.getProxyPort()

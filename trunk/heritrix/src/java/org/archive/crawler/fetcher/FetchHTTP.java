@@ -93,16 +93,24 @@ import org.archive.util.HttpRecorder;
 public class FetchHTTP extends Processor
     	implements CoreAttributeConstants, FetchStatusCodes {
     // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(FetchHTTP.class,1);
+    private static final long serialVersionUID =
+        ArchiveUtils.classnameBasedUID(FetchHTTP.class,1);
     
     private static Logger logger = Logger.getLogger(FetchHTTP.class.getName());
 
+    public static final String ATTR_HTTP_PROXY_HOST = "http-proxy-host";
+    public static final String ATTR_HTTP_PROXY_PORT = "http-proxy-port";
     public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
     public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
     public static final String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
     public static final String ATTR_LOAD_COOKIES = "load-cookies-from-file";
     public static final String ATTR_SAVE_COOKIES = "save-cookies-to-file";
     public static final String ATTR_ACCEPT_HEADERS = "accept-headers";
+   
+    /**
+     * SSL trust level setting attribute name.
+     */
+    public static final String ATTR_TRUST = "trust-level";
     
     private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
@@ -114,19 +122,15 @@ public class FetchHTTP extends Processor
      */
     private static final boolean DEFAULT_HTTPCLIENT_STRICT = true;
 
-    /**
-     * SSL trust level setting attribute name.
-     */
-    public static final String ATTR_TRUST = "trust-level";
-
     transient PatchedHttpClient http = null;
 
     private int soTimeout;
 
     /**
      * How many 'instant retries' of HttpRecoverableExceptions have occurred
+     * 
+     * Would like it to be 'long', but longs aren't atomic
      */
-    // Would like to be 'long', but longs aren't atomic
     private int recoveryRetries = 0;
 
     // Would like to be 'long', but longs aren't atomic
@@ -171,6 +175,13 @@ public class FetchHTTP extends Processor
             "Accept Headers to include in each request. Each must be the"
             + " complete header, e.g., 'Accept-Language: en'"));
         e.setExpertSetting(true);
+        addElementToDefinition(new SimpleType(ATTR_HTTP_PROXY_HOST,
+            "Proxy hostname (set only if needed)", ""));
+        e.setExpertSetting(true);
+        addElementToDefinition(new SimpleType(ATTR_HTTP_PROXY_PORT,
+            "Proxy port (set only if needed)", ""));
+        e.setExpertSetting(true);
+
     }
 
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
@@ -272,7 +283,7 @@ public class FetchHTTP extends Processor
         if (logger.isLoggable(Level.FINE)) {
             logger.fine((curi.isPost()? "POST": "GET") + " " +
             		curi.getUURI().toString() + " " + statusCode + " " +
-                contentSize + " " + curi.getContentType());
+                    contentSize + " " + curi.getContentType());
         }
 
         if (curi.isSuccess() && addedCredentials) {
@@ -377,6 +388,24 @@ public class FetchHTTP extends Processor
         // Set strict on the client; whatever the client's mode overrides
         // the methods mode inside in the depths of executeMethod.
         this.http.setStrictMode(DEFAULT_HTTPCLIENT_STRICT);
+
+        try {
+            String proxy = (String) getAttribute(ATTR_HTTP_PROXY_HOST);
+            if (proxy.equals("") != true) {
+                this.http.setHttpProxy(proxy);
+                this.http.setHttpProxyport(
+                    Integer.parseInt(((String)getAttribute(ATTR_HTTP_PROXY_PORT))));
+            }
+        } catch (AttributeNotFoundException e) {
+            logger.warning("Failed get of proxy settings: " +
+                e.getLocalizedMessage());
+        } catch (MBeanException e) {
+            logger.warning("Failed get of proxy settings: " +
+                e.getLocalizedMessage());
+        } catch (ReflectionException e) {
+            logger.warning("Failed get of proxy settings: " +
+                e.getLocalizedMessage());
+        }
 
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
         ((HttpMethodBase)method).setHttp11(false);
