@@ -331,5 +331,27 @@ public class ArchiveUtils {
         // TODO Auto-generated method stub
 
     }
+    
+    /**
+     * Converts a double to a string.
+     * @param val The double to convert
+     * @param precision How many characters to include after '.'
+     * @return the double as a string.
+     */
+    public static String doubleToString(double val, int precision){
+        String tmp = Double.toString(val);
+        if(tmp.indexOf(".")!=-1){
+            // Need to handle the part after '.'
+            if(precision<=0){
+                tmp = tmp.substring(0,tmp.indexOf('.'));
+            } else {
+                if(tmp.length()>tmp.indexOf('.')+precision+1){
+                    // Need to trim
+                    tmp = tmp.substring(0,tmp.indexOf('.')+precision+1);
+                }
+            }
+        }
+        return tmp;
+    }
 }
 

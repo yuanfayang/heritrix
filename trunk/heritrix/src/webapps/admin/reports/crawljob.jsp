@@ -2,6 +2,7 @@
 <%@include file="/include/secure.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.admin.LongWrapper,java.util.*" %>
+<%@ page import="org.archive.util.ArchiveUtils" %>
 <%
 	/**
 	 *  Page allows user to view the information in the StatisticsTracker 
@@ -111,7 +112,7 @@
 											{
 												// Show current and overall stats.
 										%>
-												<%=stats.currentProcessedDocsPerSec()%> (<%=stats.processedDocsPerSec()%>)
+												<%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>)
 												&nbsp;&nbsp;&nbsp;
 												<b>KB/sec:</b>&nbsp;<%=stats.currentProcessedKBPerSec()%> (<%=stats.processedKBPerSec()%>)
 										<%
