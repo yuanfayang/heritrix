@@ -5,6 +5,7 @@
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.datamodel.settings.*" %>
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
+<%@ page import="org.archive.util.TextUtils" %>
 
 <%@ page import="java.io.*,java.lang.Boolean,java.util.Vector,java.util.ArrayList" %>
 <%@ page import="javax.management.MBeanInfo, javax.management.Attribute, javax.management.MBeanAttributeInfo,javax.management.AttributeNotFoundException, javax.management.MBeanException,javax.management.ReflectionException"%>
@@ -19,11 +20,11 @@
 	 *
 	 * @return the HTML for selecting an implementation of a specific crawler module
 	 */
-	public String buildModuleSetter(MBeanAttributeInfo module, ArrayList availibleOptions, String name){
+	public String buildModuleSetter(MBeanAttributeInfo module, ArrayList availibleOptions, String name, String currentDescription){
 		StringBuffer ret = new StringBuffer();
 		
 		ArrayList unusedOptions = new ArrayList();
-		
+
 		// Let's figure out which are not being used.
 		for(int i=0 ; i<availibleOptions.size() ; i++){
 			if(module.getType().equals((String)availibleOptions.get(i))==false){
@@ -31,12 +32,13 @@
 			}
 		}
 		
-		ret.append("<table><tr><td>Current selection:</td><td>");
-		ret.append("<i>" + module.getType() + "</i>");
+		ret.append("<table><tr><td>&nbsp;Current selection:</td><td>");
+		ret.append(module.getType());
 		ret.append("</td><td></td></tr>");
+		ret.append("<tr><td></td><td width='100' colspan='2'><i>" + currentDescription + "</i></td>");
 		
 		if(unusedOptions.size()>0){ 
-			ret.append("<tr><td>Availible alternatives:</td><td>");
+			ret.append("<tr><td>&nbsp;Availible alternatives:</td><td>");
 			ret.append("<select name='cbo" + name + "'>");
 			for(int i=0 ; i<unusedOptions.size() ; i++){
 				ret.append("<option value='"+unusedOptions.get(i)+"'>");
@@ -92,6 +94,9 @@
 				ret.append("<td></td>");
 			}
 			ret.append("<td><a href=\"javascript:doRemoveMapItem('" + name + "','"+att.getName()+"')\">Remove</a></td>");
+			ret.append("<td><a href=\"javascript:alert('");
+			ret.append(TextUtils.escapeForJavascript(att.getDescription()));
+			ret.append("')\">Info</a></td>\n");
 			ret.append("</tr>");
 			alt = !alt;
 		}
@@ -323,13 +328,21 @@
 		<p>
 			<b>Select URI Frontier</b>
 		<p>
-			<%=buildModuleSetter(settingsHandler.getOrder().getAttributeInfo("frontier"),CrawlJobHandler.loadOptions("urifrontiers.options"),"Frontier")%>
+			<%=buildModuleSetter(
+				settingsHandler.getOrder().getAttributeInfo("frontier"),
+				CrawlJobHandler.loadOptions("urifrontiers.options"),
+				"Frontier",
+				((ComplexType)settingsHandler.getOrder().getAttribute("frontier")).getMBeanInfo().getDescription())%>
 
 	
 		<p>
 			<b>Select crawl scope</b>
 		<p>
-			<%=buildModuleSetter(settingsHandler.getOrder().getAttributeInfo("scope"),CrawlJobHandler.loadOptions("scopes.options"),"Scope")%>
+			<%=buildModuleSetter(
+				settingsHandler.getOrder().getAttributeInfo("scope"),
+				CrawlJobHandler.loadOptions("scopes.options"),
+				"Scope",
+				((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getMBeanInfo().getDescription())%>
 				
 		<p>
 			<b>Select Processors</b>
