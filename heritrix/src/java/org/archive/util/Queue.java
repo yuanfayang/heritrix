@@ -62,6 +62,9 @@ public interface Queue {
      */
     void release();
     
+    /**
+     * @return top object, without removing it
+     */
     Object peek();
     
     /**
@@ -71,11 +74,7 @@ public interface Queue {
      * unsafe.
      * <p>
      * Editing the queue while using the iterator is not safe.
-     * @param limit the iterator to items in quick access cache (as opposed to
-     *              slow access mediums such as disks). What constitutes a
-     *              cache varies according to the implementation of each queue.
-     *              Queues that do not have multiple storage mediums should
-     *              always return all items. 
+     * @param inCacheOnly
      * @return an iterator for the queue
      */
     Iterator getIterator(boolean inCacheOnly);
