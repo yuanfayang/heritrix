@@ -512,7 +512,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	 * @return
 	 */
 	public int uriFetchSuccessCount() {
-		return controller.getSelector().successfullyFetchedCount();
+		return controller.getFrontier().successfullyFetchedCount();
 	}
 
 	/** This returns the number of completed URIs as a percentage of the total
@@ -534,22 +534,22 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	 * (unfetched pages) and fetched pages/failed fetch attempts.
 	 */
 	public int urisEncounteredCount() {
-		return controller.getStore().discoveredUriCount();
+		return controller.getFrontier().discoveredUriCount();
 	}
 
 	/**
 	 * Get the total number of URIs where fetches have been attempted.
 	 */
 	public int totalFetchAttempts() {
-		return controller.getSelector().successfullyFetchedCount()
-			+ controller.getSelector().failedFetchCount();
+		return controller.getFrontier().successfullyFetchedCount()
+			+ controller.getFrontier().failedFetchCount();
 	}
 
 	/** Get the total number of failed fetch attempts (404s, connection failures -> give up, etc)
 	 * @return int
 	 */
 	public int failedFetchAttempts() {
-		return controller.getSelector().failedFetchCount();
+		return controller.getFrontier().failedFetchCount();
 	}
 
 	/** Returns the total number of successul resources (web pages, images, etc)
@@ -557,7 +557,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	 * @return int
 	 */
 	public int successfulFetchAttempts() {
-		return controller.getSelector().successfullyFetchedCount();
+		return controller.getFrontier().successfullyFetchedCount();
 	}
 
 	/** Returns the total number of uncompressed bytes written to disk.  This may 

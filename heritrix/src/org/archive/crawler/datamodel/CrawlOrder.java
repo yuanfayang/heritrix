@@ -15,6 +15,7 @@ import org.w3c.dom.Document;
 /** Read and manipulate configuration (order) file.
  */
 public class CrawlOrder extends XMLConfig {
+	private static final String XP_CRAWL_ORDER_NAME = "//crawl-order/@name";
 	private static final String XP_HTTP_USER_AGENT = "//http-headers/@User-Agent";
 	private static final String XP_HTTP_FROM = "//http-headers/@From";
 	private static final String XP_MAX_TOE_THREADS = "//behavior/@max-toe-threads";
@@ -76,7 +77,7 @@ public class CrawlOrder extends XMLConfig {
 			defaultFilePath = ".";
 		}
 		
-		loadParents(pathToDoc);
+		//loadParents(pathToDoc);
 		initialize();
 
 	}
@@ -85,7 +86,7 @@ public class CrawlOrder extends XMLConfig {
 	 *  be called on the primary (non-inherited from) crawl order.
 	 */
 	public void initialize(){
-		name = getStringAt("//crawl-order/@name");
+		name = getStringAt(XP_CRAWL_ORDER_NAME);
 	}
 	
 	protected void loadParents(String pathToDoc) throws InitializationException {

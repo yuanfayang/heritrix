@@ -23,4 +23,19 @@ public interface URIFrontier {
 	
 	boolean isEmpty();
 	long size();
+
+	/**
+	 * @return
+	 */
+	int discoveredUriCount();
+
+	/**
+	 * 
+	 */
+	int successfullyFetchedCount();
+
+	/**
+	 * 
+	 */
+	int failedFetchCount();
 }
