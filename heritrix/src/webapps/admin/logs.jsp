@@ -17,7 +17,8 @@
 	boolean ln = false;
 	boolean grep = false;
 	boolean indent = false;
-	
+    int linesToSkip = 1;
+    	
 	/* Which log to display */
 	String fileName = request.getParameter("log");
 	if(fileName == null || fileName.length() <= 0)
@@ -93,7 +94,13 @@
 		else if(mode != null && mode.equalsIgnoreCase("regexpr"))
 		{
 			/* View by regexpr */
-			regexpr = request.getParameter("regexpr");
+            try
+            {
+                linesToSkip = Integer.parseInt(request.getParameter("linesToSkip"));
+            }
+            catch(Exception e){/*Ignore*/}
+            
+            regexpr = request.getParameter("regexpr");
 			
 			if(regexpr == null)
 			{
@@ -111,11 +118,11 @@
 				
 				if(indent)
 				{
-					log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, " ", ln);
+					log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, " ", ln,linesToSkip-1,linesToShow);
 				}
 				else
 				{
-					log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, 0, ln);
+					log = LogReader.getByRegExprFromSeries(diskPath + fileName, regexpr, 0, ln,linesToSkip-1,linesToShow);
 				}
 			}
 		}
@@ -294,15 +301,30 @@
 								<input size="50" name="regexpr" value="<%=request.getParameter("regexpr")==null?"":request.getParameter("regexpr")%>" align="absmiddle">&nbsp;<input type="submit" value="Get">
 							</td>
 						</tr>
+                        <tr>
+                            <td align="right">
+                                <font size="-2">(<a href="/admin/help/regexpr.jsp">about java reg.expr.</a>)</font>&nbsp;
+                            </td>
+                            <td nowrap colspan="2">
+                                Start at match:&nbsp; <input size="4" name="linesToSkip" value="<%=linesToSkip%>">
+                            </td>
+                            <td nowrap colspan="2" width="100%">
+                                &nbsp;&nbsp;Show matches:&nbsp;<input size="4" name="linesToShow" value="<%=linesToShow%>"> (0 = all)
+                            </td>
+                        </tr>
 						<tr>
-							<td align="right">
-								<font size="-2">(<a href="/admin/help/regexpr.jsp">about java reg.expr.</a>)</font>&nbsp;
-							</td>
+						    <td></td>
 							<td nowrap>
 								<input name="ln" value="true" type="checkbox" <%=request.getParameter("ln")!=null&&request.getParameter("ln").equalsIgnoreCase("true")?"checked":""%>><input type="hidden" name="linesToShow" value="<%=linesToShow%>">
 							</td>
 							<td nowrap>
 								&nbsp;Line numbers&nbsp;&nbsp;
+							</td>
+							<td nowrap>
+							    &nbsp;<input name="grep" value="true" type="checkbox" <%=request.getParameter("grep")!=null&&request.getParameter("grep").equalsIgnoreCase("true")?"checked":""%>>
+							</td>
+							<td width="100%">
+							    &nbsp;Grep style&nbsp;&nbsp;
 							</td>
 						</tr>
 						<tr>
@@ -313,16 +335,6 @@
 							</td>
 							<td width="100%" colspan="3">
 								&nbsp;Include following indented lines&nbsp;&nbsp;
-							</td>
-						</tr>
-						<tr>
-							<td>
-							</td>
-							<td nowrap>
-								<input name="grep" value="true" type="checkbox" <%=request.getParameter("grep")!=null&&request.getParameter("grep").equalsIgnoreCase("true")?"checked":""%>>
-							</td>
-							<td nowrap>
-								&nbsp;Grep style&nbsp;&nbsp;
 							</td>
 						</tr>
 					</table>
