@@ -496,11 +496,16 @@ public class CrawlController extends Thread {
     private void setupDisk() throws FatalConfigurationException,
                                     AttributeNotFoundException {
         String diskPath
-              = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
-
+            = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         disk = getSettingsHandler().getPathRelativeToWorkingDirectory(diskPath);
         disk.mkdirs();
-        scratchDisk = new File(disk.getPath(), "scratch");
+
+        String scratchDiskPath
+            = (String) order.getAttribute(null, CrawlOrder.ATTR_SCRATCH_PATH);
+        scratchDisk = new File(scratchDiskPath);
+        if (!scratchDisk.isAbsolute()) {
+            scratchDisk = new File(disk.getPath(), scratchDiskPath);
+        }
         scratchDisk.mkdirs();
     }
 
