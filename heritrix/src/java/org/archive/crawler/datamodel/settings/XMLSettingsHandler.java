@@ -49,6 +49,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.FileUtils;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -300,49 +301,7 @@ public class XMLSettingsHandler extends SettingsHandler {
             getPathRelativeToWorkingDirectory(newSettingsDirectory));
         
         // Copy the per host files
-        copyFiles(oldSettingsDirectory, newDir);
-    }
-    
-    /** Recursively copy all files in the per settings directory.
-     * 
-     * @param src file or directory to copy from.
-     * @param dest file or directory to copy to.
-     * @throws IOException
-     */
-    private void copyFiles(File src, File dest) throws IOException {
-        if (!src.exists()) {
-            return;
-        }
-
-        if (src.isDirectory()) {
-            // Create destination directory
-            dest.mkdirs();
-            
-            // Go trough the contents of the directory
-            String list[] = src.list();
-            for (int i = 0; i < list.length; i++) {
-                File src1 = new File(src, list[i]);
-                File dest1 = new File(dest, list[i]);
-                copyFiles(src1 , dest1);
-            }
-            
-        } else {
-
-            // get channels
-            FileInputStream fis = new FileInputStream(src);
-            FileOutputStream fos = new FileOutputStream(dest);
-            FileChannel fcin = fis.getChannel();
-            FileChannel fcout = fos.getChannel();
-
-            // do the file copy
-            fcin.transferTo(0, fcin.size(), fcout);
-
-            // finish up
-            fcin.close();
-            fcout.close();
-            fis.close();
-            fos.close();
-        }
+        FileUtils.copyFiles(oldSettingsDirectory, newDir);
     }
     
     /**
