@@ -22,6 +22,8 @@
  */
 package org.archive.crawler.admin;
 
+import java.io.Serializable;
+
 /**
  * Wraps a long. Used in place of Long so that when we extract it from a
  * Collection we can modify the long value without creating a new object. This way
@@ -29,7 +31,7 @@ package org.archive.crawler.admin;
  *
  * @author Kristinn Sigurdsson
  */
-public class LongWrapper{
+public class LongWrapper implements Serializable {
     public long longValue;
     public LongWrapper(int initial){
         longValue = initial;
