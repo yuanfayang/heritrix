@@ -569,26 +569,57 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     private static void usage(HelpFormatter formatter, Options options,
             int exitCode) {
-        formatter.printHelp(
-            "java org.archive.io.arc.ARCReader [--offset=OFFSET] ARCFILE",
-            options);
+        formatter.printHelp("java org.archive.io.arc.ARCReader" +
+            " [--offset=# [--nohead]] ARCFILE",  options);
         System.exit(exitCode);
+    }
+    
+    /**
+     * @param rec ARCRecord.
+     * @param nohead Whether to output the header or just skip over.
+     * @throws IOException
+     */
+    private static void processRequestHeaders(ARCRecord rec, boolean nohead)
+            throws IOException {
+        int c = -1;
+        int lastChar = -1;
+        boolean newline = false;
+        for (boolean finished = false; !finished && ((c = rec.read()) != -1);) {
+            if ((byte)c == '\n' && (byte)lastChar == '\r') {
+                if (newline) {
+                    // If already a newline, then this is the second
+                    // newline and so we're at end of header.
+                    finished = true;
+                }
+                newline = true;
+            } else {
+                if ((byte)c != '\r') {
+                    newline = false;
+                }
+                lastChar = c;
+            }
+            if (!nohead) {
+                System.out.write(c & 0xff);
+            }
+        }
     }
     
     /**
      * Command-line interface to ARCReader.
      * 
      * Here is the command-line interface:
-     * <pre>usage: java org.archive.io.arc.ARCReader [--offset=OFFSET] ARCFILE
+     * <pre>
+     * usage: java org.archive.io.arc.ARCReader [--offset=# [--nohead]] ARCFILE
      *  -h,--help      Prints this message and exits.
-     *  -o,--offset    Outputs record at this offset into arc file.
-     * </pre>
+     *  -n,--nohead    Do not output request header as part of record.
+     *  -o,--offset    Outputs record at this offset into arc file.</pre>
      * 
      * <p>See in <code>$HERITRIX_HOME/bin/arcreader</code> for a script that'll
      * take care of classpaths and the calling of ARCReader.
      * 
      * @param args Command-line arguments.
-     * @throws IOException
+     * @throws IOException Failed read of passed arc files.
+     * @throws ParseException Failed parse of the command line.
      */
     public static void main(String [] args)
         throws IOException, ParseException {
@@ -598,6 +629,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             "Prints this message and exits."));
         options.addOption(new Option("o","offset", true,
             "Outputs record at this offset into arc file."));
+        options.addOption(new Option("n","nohead", false,
+            "Do not output request header as part of record."));
         PosixParser parser = new PosixParser();
         CommandLine cmdline = parser.parse(options, args, false);
         List cmdlineArgs = cmdline.getArgList();
@@ -611,6 +644,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         
         // Now look at options passed.
         long offset = -1;
+        boolean nohead = false;
         for (int i = 0; i < cmdlineOptions.length; i++) {
             switch(cmdlineOptions[i].getId()) {
                 case 'h':
@@ -622,6 +656,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                         Long.parseLong(cmdlineOptions[i].getValue());
                 	    break;
                         
+                case 'n':
+                    nohead = true;
+                    break;
+                        
                 default:
                     throw new RuntimeException("Unexpected option: " +
                         + cmdlineOptions[i].getId());
@@ -629,18 +667,21 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         }
         
         if (offset >= 0) {
-        	    if (cmdlineArgs.size() != 1) {
-        	    	    System.out.println("Error: Pass one arcfile only if" +
-                    " getting a record.");
-                usage(formatter, options, 1);
+            if (cmdlineArgs.size() != 1) {
+        	    System.out.println("Error: Pass one arcfile only.");
+        	    usage(formatter, options, 1);
             }
             ARCReader arc = ARCReaderFactory.
                 get(new File((String)cmdlineArgs.get(0)));
             ARCRecord rec = arc.get(offset);
-            int c = -1;
-            while ((c = rec.read()) != -1) {
-            	    System.out.print((char)c);
+            processRequestHeaders(rec, nohead);
+            for (int c = -1; (c = rec.read()) != -1;) {
+                System.out.write(c & 0xff);
             }
+            System.out.flush();
+        } else if (cmdlineOptions.length > 0) {
+            System.out.println("Error: Unexpected option.");
+            usage(formatter, options, 1);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 ARCReader arc =
@@ -648,12 +689,14 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                 for (Iterator ii = arc.iterator(); ii.hasNext();) {
                     ARCRecord r = (ARCRecord)ii.next();
                     ARCRecordMetaData meta = r.getMetaData();
-                    System.out.println(meta.getOffset() + " " +
+                    System.out.println(meta.getUrl() + " " +
+                        meta.getDate() + " " +
+                        meta.getOffset() + " " +
                         meta.getLength() + " " +
-                        meta.getIp() + " " +
                         meta.getMimetype() + " " +
-                        meta.getUrl());
+                        meta.getIp() + " ");
                     r.close();
+                    System.out.flush();
                 }
             }
         }
