@@ -46,7 +46,7 @@
 					<table border="0" cellspacing="0" cellpadding="0" width="100%" height="60">
 						<tr>
 							<td align="center" height="40" valign="bottom">
-								<a border="0" href="/admin/main.jsp"><img border="0" src="/admin/images/logo.jpg" width="145"></a>
+								<a border="0" href="/admin/main.jsp"><img border="0" src="/admin/images/logo.gif" height="37" width="145"></a>
 							</td>
 						</tr>
 						<tr>
@@ -60,7 +60,7 @@
 					&nbsp;&nbsp;
 				</td>
 				<td width="100%">
-					<table border="0" cellspacing="0" cellpadding="0" height="60" width="100%">
+					<table border="0" cellspacing="0" cellpadding="0" height="60">
 						<tr>
 							<td colspan="2">
 								<%

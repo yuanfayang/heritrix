@@ -16,7 +16,7 @@
 
 	if(job != null && job.isReadOnly()){
 		// Can't edit a read only job!
-		response.sendRedirect("/admin/jobs/noedit.jsp?job="+job.getUID());
+		response.sendRedirect("/admin/jobs.jsp?message=Can not edit a read-only job");
 		return;
 	}
 	
@@ -365,7 +365,7 @@
 			</tr>
 		</table>
 		
-		<b>Note:</b> Not all changes made to running crawls will have an effect.
+		<b>Note:</b> Not all changes made to running crawls will have an effect.<br>
 		<input type="submit" value="Update job">
 		
 		</form>

@@ -54,7 +54,7 @@
 
 <%@include file="/include/head.jsp"%>
 
-	<fieldset style="width: 600px">
+	<fieldset style="width: 750px">
 		<legend>Crawler status</legend>
 		<table border="0" cellspacing="0" cellpadding="0" width="100%">
 			<tr>
@@ -72,14 +72,64 @@
 							<td>
 								<b>Current job:</b>&nbsp;
 							</td>
-							<td>
+							<td nowrap>
 								<%=handler.isCrawling()?handler.getCurrentJob().getJobName():"None"%>
 							</td>
 						</tr>
-						<%
-							if(handler.isCrawling())
-							{
-						%>
+						<tr>
+							<td>
+								<b>Jobs pending:</b>&nbsp;
+							</td>
+							<td>
+								<%=handler.getPendingJobs().size()%>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<b>Jobs completed:</b>&nbsp;
+							</td>
+							<td>
+								<%=handler.getCompletedJobs().size()%>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td valign="top" width="40%">
+					<table border="0" cellspacing="0" cellpadding="0" >
+						<tr>
+							<td>
+								<b>Used memory:</b>&nbsp;
+							</td>
+							<td>
+								<%=(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024%> Kb
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<b>Heap size:</b>&nbsp;
+							</td>
+							<td>
+								<%=(Runtime.getRuntime().totalMemory())/1024%> Kb
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<b>Max heap size:</b>&nbsp;
+							</td>
+							<td>
+								<%=(Runtime.getRuntime().maxMemory())/1024%> Kb
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<%
+				if(handler.isCrawling())
+				{
+			%>
+					<tr>
+						<td valign="top">
+							<table border="0" cellspacing="0" cellpadding="0">
 								<tr>
 									<td height="5" colspan="2">
 									</td>
@@ -127,33 +177,10 @@
 										%>
 									</td>
 								</tr>
-						<%	
-							}
-						%>
-					</table>
-				</td>
-				<td valign="top" width="40%">
-					<table border="0" cellspacing="0" cellpadding="0" >
-						<tr>
-							<td>
-								<b>Jobs pending:</b>&nbsp;
-							</td>
-							<td>
-								<%=handler.getPendingJobs().size()%>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<b>Jobs completed:</b>&nbsp;
-							</td>
-							<td>
-								<%=handler.getCompletedJobs().size()%>
-							</td>
-						</tr>
-						<%
-							if(handler.isCrawling())
-							{
-						%>
+							</table>
+						</td>
+						<td valign="top">
+							<table border="0" cellspacing="0" cellpadding="0">
 								<tr>
 									<td height="5" colspan="2">
 									</td>
@@ -174,13 +201,11 @@
 										<%=(stats.getTotalBytesWritten()/1048576)%> MB
 									</td>
 								</tr>
-						<%	
-							}
-						%>
-					</table>
-				</td>
-			</tr>
-			<%
+							</table>
+						</td>
+					</tr>
+			<%	
+				}
 				if(handler.isCrawling())
 				{
 					long begin = stats.successfulFetchAttempts();
