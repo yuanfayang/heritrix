@@ -6,16 +6,11 @@
   <body>
 
     <release version="0.1.0" date="2003-12-31">
-      <action dev="vmassol" type="add">
-        Added blah blah.
-      </action>              
-      <action dev="vmassol" type="fix">
-        Corrected bug blah blah.
-      </action>              
-      <action dev="vmassol" type="remove">
-        Removed blah blah.
-      </action>              
-    </release>
+    	Initial Mavenized development version number (CVS/internal only).
+      <action dev="heritrix" type="add">
+        Added everything to new project layout.
+      </action>
+     </release>
 
   </body>
 </document>
