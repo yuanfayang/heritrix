@@ -34,7 +34,6 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -74,8 +73,13 @@ import org.archive.crawler.settings.XMLSettingsHandler;
  * @author Kristinn Sigurdsson
  *
  */
-public class Heritrix
-{
+public class Heritrix {
+    /**
+     * Heritrix logging instance.
+     */
+    private static final Logger logger =
+        Logger.getLogger(Heritrix.class.getName());
+    
     /**
      * Name of the heritrix home system property.
      */
@@ -137,12 +141,6 @@ public class Heritrix
     private static SimpleHttpServer httpServer = null;
 
     /**
-     * Heritrix logging instance.
-     */
-    private static Logger logger
-        = Logger.getLogger("org.archive.crawler.Heritrix");
-
-    /**
      * Heritrix properties.
      *
      * Read from properties file on startup and cached thereafter.
@@ -188,6 +186,9 @@ public class Heritrix
 
     /**
      * Where to write this classes startup output.
+     * 
+     * This out should only be used if Heritrix is being run from the
+     * command-line.
      */
     private static PrintWriter out = null;
 
@@ -220,6 +221,16 @@ public class Heritrix
     private static final String ROOT_CONTEXT = "/";
 
     /**
+     * Set to true if application is running from a command line.
+     */
+    private static boolean commandLine = false;
+    
+    /**
+     * Name of our conf directory.
+     */
+    private static final String CONF_DIR = "conf";
+
+    /**
      * Launch program
      *
      * @param args Command line arguments.
@@ -227,22 +238,25 @@ public class Heritrix
      * @throws Exception
      */
     public static void main(String[] args)
-        throws Exception
-    {
-        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
-        calculateHome();
+    throws Exception {
+        Heritrix.commandLine = true;
         File startLog = new File(getHeritrixHome(), STARTLOG);
-        Heritrix.out = new PrintWriter(isDevelopment()? System.out:
+        Heritrix.out = new PrintWriter(isDevelopment()? 
+            System.out:
             new PrintStream(new FileOutputStream(startLog)));
-
         try {
+            Heritrix.confdir = getSubDir(CONF_DIR);
+            Heritrix.warsdir = getSubDir("webapps");
             initialize();
-            doStart(args);
+            String status = doStart(args);
+            if (status != null) {
+                Heritrix.out.println(status);
+            }
         }
 
         catch(Exception e) {
             // Show any exceptions in STARTLOG.
-            e.printStackTrace(out);
+            e.printStackTrace(Heritrix.out);
             throw e;
         }
 
@@ -251,17 +265,26 @@ public class Heritrix
             // script that we've started.  Otherwise, just flush it; if in
             // development, the output is probably a console.
             if (!isDevelopment()) {
-                Heritrix.out.close();
+                if (Heritrix.out != null) {
+                    Heritrix.out.close();
+                }
             } else {
-                Heritrix.out.flush();
+                if (Heritrix.out != null) {
+                    Heritrix.out.flush();
+                }
             }
         }
     }
 
     /**
      * @return Heritrix home directory.
+     * @throws IOException
      */
-    public static File getHeritrixHome() {
+    public static File getHeritrixHome()
+    throws IOException {
+        if (Heritrix.heritrixHome == null) {
+            calculateHome();
+        }
         return Heritrix.heritrixHome;
     }
 
@@ -269,7 +292,11 @@ public class Heritrix
      * Exploit <code>-Dheritrix.home</code> if available to us.
      * @throws IOException
      */
-    protected static void calculateHome() throws IOException {
+    protected static void calculateHome()
+    throws IOException {
+        if (Heritrix.heritrixHome != null) {
+            return;
+        }
         String home = System.getProperty(HOME_KEY);
         if (home != null && home.length() > 0) {
             heritrixHome = new File(home);
@@ -282,16 +309,19 @@ public class Heritrix
         }
     }
 
-    protected static void initialize()
-        throws IOException
-    {
-        confdir = getSubDir("conf");
+    public static void initialize()
+    throws IOException {
+        // We can come in here without calling getHeritrixHome if we
+        // came via the webapp initialization rather than via Heritrix.main.
+        if (Heritrix.heritrixHome == null) {
+            Heritrix.heritrixHome = getHeritrixHome();
+        }
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
         loadProperties();
         patchLogging();
         configureTrustStore();
-        warsdir = getSubDir("webapps");
         String jobsdirStr = getProperty(JOBSDIR_KEY, JOBSDIR_DEFAULT);
-        jobsdir = jobsdirStr.startsWith(File.separator)?
+        Heritrix.jobsdir = jobsdirStr.startsWith(File.separator)?
             new File(jobsdirStr): new File(getHeritrixHome(), jobsdirStr);
     }
 
@@ -305,13 +335,12 @@ public class Heritrix
      * @throws IOException if unable to find expected subdir.
      */
     protected static File getSubDir(String subdirName)
-        throws IOException
-    {
+    throws IOException {
         String path = isDevelopment()?
-            "src" + File.separator + subdirName: subdirName;
+            "src" + File.separator + subdirName:
+            subdirName;
         File dir = new File(getHeritrixHome(), path);
-        if (!dir.exists())
-        {
+        if (!dir.exists()) {
             throw new IOException("Cannot find subdir: " + subdirName);
         }
         return dir;
@@ -335,7 +364,7 @@ public class Heritrix
             false: Boolean.valueOf(getPropertyOrNull(key)).booleanValue();
     }
 
-    protected static void doStart(String [] args)
+    protected static String doStart(String [] args)
     throws Exception {
         // Get defaults for commandline arguments from the properties file.
         String tmpStr = getPropertyOrNull("heritrix.cmdline.port");
@@ -352,7 +381,8 @@ public class Heritrix
         boolean selfTest = false;
         String selfTestName = null;
 
-        CommandLineParser clp = new CommandLineParser(args, out, getVersion());
+        CommandLineParser clp = new CommandLineParser(args, Heritrix.out,
+            getVersion());
         List arguments = clp.getCommandLineArguments();
         Option [] options = clp.getCommandLineOptions();
 
@@ -425,6 +455,7 @@ public class Heritrix
             }
         }
 
+        String status = null;
         // Ok, we should now have everything to launch the program.
         if (selfTest) {
             // If more than just '--selftest' and '--port' passed, then
@@ -440,7 +471,7 @@ public class Heritrix
                 // No arguments accepted by selftest.
                 clp.usage(1);
             }
-            selftest(selfTestName, port);
+            status = selftest(selfTestName, port);
         } else if (noWui) {
             if (options.length > 1) {
                 // If more than just '--nowui' passed, then there is
@@ -448,10 +479,15 @@ public class Heritrix
                 // rather than proceed.
                 clp.usage(1);
             }
-            launch(crawlOrderFile);
+            status = doOneCrawl(crawlOrderFile);
         } else {
-            launch(crawlOrderFile, runMode, port, adminLoginPassword);
+            status = startEmbeddedWebserver(port, adminLoginPassword);
+            String tmp = launch(crawlOrderFile, runMode);
+            if (tmp != null) {
+                status += ('\n' + tmp);
+            }
         }
+        return status;
     }
 
     /**
@@ -491,12 +527,9 @@ public class Heritrix
      * @throws IOException
      */
     protected static void loadProperties()
-        throws IOException
-    {
-        InputStream is =
-            new FileInputStream(getPropertiesFile());
-        properties = new Properties();
-        properties.load(is);
+    throws IOException {
+        Heritrix.properties = new Properties();
+        Heritrix.properties.load(getPropertiesInputStream());
         
         // Any property that begins with CRAWLER_PACKAGE, make it
         // into a system property.
@@ -513,19 +546,24 @@ public class Heritrix
         }
     }
 
-    protected static File getPropertiesFile() throws FileNotFoundException {
-        File result = null;
+    protected static InputStream getPropertiesInputStream()
+    throws IOException {
+        File file = null;
         String alternateProperties = System.getProperty(PROPERTIES_KEY);
         if (alternateProperties != null && alternateProperties.length() > 0) {
-            result = new File(alternateProperties);
+            file = new File(alternateProperties);
         }
-        if (result == null || !result.exists()) {
-            result = new File(getConfdir(), PROPERTIES);
+        if (file == null || !file.exists()) {
+            file = new File(getConfdir(), PROPERTIES);
         }
-        if (!result.exists()) {
-            throw new FileNotFoundException(result.getAbsolutePath());
+        InputStream is = (file != null)?
+            new FileInputStream(file):
+            Heritrix.class.getResourceAsStream("/" + PROPERTIES_KEY);
+        if (is == null) {
+            throw new IOException("Failed to load properties file from" +
+                " filesystem or from classpath.");
         }
-        return result;
+        return is;
     }
 
     /**
@@ -537,22 +575,19 @@ public class Heritrix
      * @throws SecurityException
      */
     protected static void patchLogging()
-        throws SecurityException, IOException
-    {
-        if (System.getProperty("java.util.logging.config.class") != null)
-        {
+    throws SecurityException, IOException {
+        if (System.getProperty("java.util.logging.config.class") != null) {
             return;
         }
 
-        if (System.getProperty("java.util.logging.config.file") != null)
-        {
+        if (System.getProperty("java.util.logging.config.file") != null) {
             return;
         }
 
         // No user-set logging properties established; use defaults
-        // from distribution-packaged 'heritrix.properties'
-        InputStream is = new FileInputStream(getPropertiesFile());
-        LogManager.getLogManager().readConfiguration(is);
+        // from distribution-packaged 'heritrix.properties'.
+        LogManager.getLogManager().
+            readConfiguration(getPropertiesInputStream());
     }
 
     /**
@@ -630,8 +665,9 @@ public class Heritrix
      * @param port Port number to use for web UI.
      *
      * @exception Exception
+     * @return Status of how selftest startup went.
      */
-    protected static void selftest(String oneSelfTestName, int port)
+    protected static String selftest(String oneSelfTestName, int port)
         throws Exception {
         // Put up the webserver w/ the root and selftest webapps only.
         final String SELFTEST = "selftest";
@@ -641,8 +677,10 @@ public class Heritrix
         // Set up digest auth for a section of the server so selftest can run
         // auth tests.  Looks like can only set one login realm going by the
         // web.xml dtd.  Otherwise, would be nice to selftest basic and digest.
-        Heritrix.httpServer.setAuthentication(REALM, ROOT_CONTEXT,
-            getPropertiesFile().getAbsolutePath());
+        // Have login, password and role all be SELFTEST.  Must match what is
+        // in the selftest order.xml file.
+        Heritrix.httpServer.setAuthentication(SELFTEST, ROOT_CONTEXT, SELFTEST,
+            SELFTEST, SELFTEST);
         // Start server.
         Heritrix.httpServer.startServer();
         File selftestDir = new File(getConfdir(), SELFTEST);
@@ -668,24 +706,27 @@ public class Heritrix
             ((Credential)i.next()).setCredentialDomain(null, ROOTURI);
         }
         Heritrix.jobHandler.startCrawler();
-        out.println((new Date()).toString() + " Heritrix " + getVersion() +
-            " selftest started.");
-        out.println("Selftest first crawls " + getSelftestURL() +
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("Heritrix " + getVersion() + " selftest started.");
+        buffer.append("\nSelftest first crawls " + getSelftestURL() +
             " and then runs an analysis.");
-        out.println("Result of analysis printed to " + HERITRIX_OUT_FILE +
-            " when done.");
-        out.println("Selftest job directory for logs and arcs:\n" +
+        buffer.append("\nResult of analysis printed to " +
+            HERITRIX_OUT_FILE + " when done.");
+        buffer.append("\nSelftest job directory for logs and arcs:\n" +
             job.getDirectory().getAbsolutePath());
+        return buffer.toString();
     }
 
     /**
-     * Launch the crawler without a web UI
+     * Launch the crawler without a web UI.
+     * 
+     * Run the passed crawl only.
      *
      * @param crawlOrderFile The crawl order to crawl.
      * @throws InitializationException
      * @throws InvalidAttributeValueException
      */
-    protected static void launch(String crawlOrderFile)
+    protected static String doOneCrawl(String crawlOrderFile)
         throws InitializationException, InvalidAttributeValueException
     {
         XMLSettingsHandler handler =
@@ -694,36 +735,35 @@ public class Heritrix
         controller = new CrawlController();
         controller.initialize(handler);
         controller.requestCrawlStart();
-        out.println((new Date()).toString() + " Heritrix " + getVersion() +
-            " crawl started using " + crawlOrderFile + ".");
+        return "Crawl started using " + crawlOrderFile + ".";
+    }
+    
+    /**
+     * Launch the crawler for a web UI.
+     *
+     * Crawler hangs around waiting on jobs.
+     *
+     * @exception Exception
+     * @return A status string describing how the launch went.
+     * @throws Exception
+     */
+    public static String launch() throws Exception {
+        return launch(null, false);
     }
 
     /**
-     * Launch the crawler with a web UI.
+     * Launch the crawler for a web UI.
      *
+     * Crawler hangs around waiting on jobs.
+     * 
      * @param crawlOrderFile File to crawl.  May be null.
      * @param runMode Whether crawler should be set to run mode.
-     * @param port Port number to use for web UI.
-     * @param adminLoginPassword Compound of login and password.
      *
      * @exception Exception
-     *
+     * @return A status string describing how the launch went.
      */
-    protected static void launch(String crawlOrderFile, boolean runMode,
-            int port, String adminLoginPassword)
-        throws Exception
-    {
-        String adminUN =
-            adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
-        String adminPW =
-            adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
-        httpServer = new SimpleHttpServer("admin", ROOT_CONTEXT, port, false);
-        // Name of passed 'realm' must match what is in configured in web.xml.
-        // We'll use ROLE for 'realm' and 'role'.
-        final String ROLE = "administrator";
-        Heritrix.httpServer.setAuthentication(ROLE, ROOT_CONTEXT, adminUN,
-            adminPW, ROLE);
-        httpServer.startServer();
+    public static String launch(String crawlOrderFile, boolean runMode)
+    throws Exception {
         Heritrix.jobHandler = new CrawlJobHandler();
         String status = null;
         if (crawlOrderFile != null) {
@@ -743,17 +783,39 @@ public class Heritrix
             jobHandler.startCrawler();
             status = "Crawler set to run mode but no order file to crawl";
         }
-
+        return status;
+    }
+    
+    /**
+     * Start up the embedded Jetty webserver instance.
+     * This is done when we're run from the command-line.
+     * @param port Port number to use for web UI.
+     * @param adminLoginPassword Compound of login and password.
+     * @throws Exception
+     * @return Status on webserver startup.
+     */
+    protected static String startEmbeddedWebserver(int port,
+        String adminLoginPassword)
+    throws Exception {
+        String adminUN =
+            adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
+        String adminPW =
+            adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
+        httpServer = new SimpleHttpServer("admin", ROOT_CONTEXT, port, false);
+        // Name of passed 'realm' must match what is in configured in web.xml.
+        // We'll use ROLE for 'realm' and 'role'.
+        final String ROLE = "admin";
+        Heritrix.httpServer.setAuthentication(ROLE, ROOT_CONTEXT, adminUN,
+            adminPW, ROLE);
+        httpServer.startServer();
         InetAddress addr = InetAddress.getLocalHost();
         String uiLocation = "http://" + addr.getHostName() + ":" + port;
-        out.println((new Date()).toString() + " Heritrix " + getVersion() +
-            " is running.");
-        out.println("Web console is at: " + uiLocation);
-        out.println("Web console login and password: " + adminUN + "/" +
-            adminPW);
-        if (status != null) {
-            out.println(status);
-        }
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("Heritrix " + getVersion() + " is running.");
+        buffer.append("\nWeb console is at: " + uiLocation);
+        buffer.append("\nWeb console login and password: " +
+            adminUN + "/" + adminPW);
+        return buffer.toString();
     }
 
     protected static CrawlJob createCrawlJob(CrawlJobHandler handler,
@@ -804,11 +866,11 @@ public class Heritrix
     }
 
     /**
-     * @return The conf directory under HERITRIX_HOME.
+     * @return The conf directory under HERITRIX_HOME or null if none can
+     * be found.
      */
-    public static File getConfdir()
-    {
-        return confdir;
+    public static File getConfdir() {
+        return Heritrix.confdir;
     }
 
     /**
@@ -856,7 +918,7 @@ public class Heritrix
      * possible to finish what they are doing.
      */
     public static void prepareHeritrixShutDown(){
-        if(httpServer!=null){
+        if(httpServer != null){
             // Shut down the web access.
             try {
                 httpServer.stopServer();
@@ -893,8 +955,7 @@ public class Heritrix
      * @param exitCode Code to pass System.exit.
      *
      */
-    public static void performHeritrixShutDown(int exitCode)
-    {
+    public static void performHeritrixShutDown(int exitCode) {
         System.exit(exitCode);
     }
 
@@ -998,4 +1059,11 @@ public class Heritrix
         }
         return null;
     }
+    
+    /**
+     * @return Returns true if Heritrix was launched from the command line.
+     */
+    public static boolean isCommandLine() {
+        return Heritrix.commandLine;
+    }   
 }

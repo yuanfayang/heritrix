@@ -197,7 +197,7 @@
           <string name="credential-domain" />
           <string name="realm">selftest</string>
           <string name="login">selftest</string>
-          <string name="password">basic</string>
+          <string name="password">selftest</string>
         </newObject>
         <newObject name="Selftest GET form login" 
             class="org.archive.crawler.datamodel.credential.HtmlFormCredential">

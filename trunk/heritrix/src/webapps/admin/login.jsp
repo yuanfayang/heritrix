@@ -57,7 +57,8 @@
             <tr>
                 <td colspan="2" height="100%" valign="top" class="main">
                     <form method="post" 
-                        action='<%= response.encodeURL("j_security_check") %>'>
+                        action='<%= response.encodeURL("j_security_check") %>'
+                            name="loginForm">
                         <input type="hidden" name="action" value="login">
                         <input type="hidden" name="redirect" 
                             value="<%=request.getParameter("back")%>">
