@@ -459,6 +459,9 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
                 try {
                     parentModule.setAttribute(settings, module);
                 } catch (AttributeNotFoundException e) {
+                    // Attribute was not found, but the complex type might
+                    // be a MapType and then we are allowed to add new
+                    // elements.
                     try {
                         parentModule.addElement(settings, module);
                     } catch (IllegalStateException ise) {
@@ -523,13 +526,23 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
             Object container = stack.peek();
             if (container instanceof ComplexType) {
                 try {
-                    ((ComplexType) container).setAttribute(settings,
-                            new Attribute(elementName, value));
-                } catch (AttributeNotFoundException e) {
-                    logger.warning("Unknown attribute '" + elementName
-                            + "' in '" + locator.getSystemId() + "', line: "
-                            + locator.getLineNumber() + ", column: "
-                            + locator.getColumnNumber());
+                    try {
+                        ((ComplexType) container).setAttribute(settings,
+                                new Attribute(elementName, value));
+                    } catch (AttributeNotFoundException e) {
+                        // Attribute was not found, but the complex type might
+                        // be a MapType and then we are allowed to add new
+                        // elements.
+                        try {
+                            ((ComplexType) container).addElement(settings,
+                                    new SimpleType(elementName, "", value));
+                        } catch (IllegalStateException ise) {
+                            logger.warning("Unknown attribute '" + elementName
+                                    + "' in '" + locator.getSystemId()
+                                    + "', line: " + locator.getLineNumber()
+                                    + ", column: " + locator.getColumnNumber());
+                        }
+                    }
                 } catch (InvalidAttributeValueException e) {
                     try {
                         logger.warning("Illegal value '"
