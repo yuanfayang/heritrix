@@ -152,11 +152,11 @@ public class Frontier
 
     protected final static float KILO_FACTOR = 1.024F;
 
-    protected CrawlController controller;
+    protected CrawlController controller = null;
 
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
-    protected UURISet alreadyIncluded;
+    protected UURISet alreadyIncluded = null;
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
 
@@ -291,12 +291,9 @@ public class Frontier
     public void initialize(CrawlController c)
         throws FatalConfigurationException, IOException {
         this.controller = c;
-
-//        pendingQueue = createPendingQueue(c.getStateDisk(),"pendingQ");
-
-        alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
-                "alreadyIncluded");
-
+        this.controller.addCrawlStatusListener(this);
+        this.alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
+            "alreadyIncluded");
         loadSeeds();
     }
     
@@ -313,21 +310,6 @@ public class Frontier
         // TODO: Make the uri set configurable?
         // Can be overridden by subclasses
         return new FPUURISet(new MemLongFPSet(23,0.75f));
-        //return new PagedUURISet(c.getScratchDisk());
-
-        // alternative: pure disk-based set
-        // return new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
-
-        // alternative: disk-based set with in-memory cache supporting quick positive contains() checks
-        // return = new FPUURISet(
-        //         new CachingDiskLongFPSet(
-        //                 c.getScratchDisk(),
-        //                 "alreadyIncluded",
-        //                 23, // 8 million slots on disk (for start)
-        //                 0.75f,
-        //                 20, // 1 million slots in cache (always)
-        //                 0.75f));
-
     }
 
     /**
@@ -413,6 +395,9 @@ public class Frontier
      * @param caUri The CandidateURI to schedule
      */
     private void innerSchedule(CandidateURI caUri) {
+        if (isCrawlEnded()) {
+        	return;   
+        }
         if(!caUri.forceFetch() && this.alreadyIncluded.contains(caUri)) {
             logger.finer("Disregarding alreadyIncluded "+caUri);
             return;
@@ -471,7 +456,6 @@ public class Frontier
     private CrawlURI next() {
         long now = System.currentTimeMillis();
         CrawlURI curi = null;
-
         enforceBandwidthThrottle(now);
         
         // Check for snoozing queues who are ready to wake up.
@@ -572,18 +556,21 @@ public class Frontier
     public synchronized CrawlURI next(int timeout) throws InterruptedException {
         long now = System.currentTimeMillis();
         long until = now + timeout;
-
-        while(now<until) {
+        while(now < until && !isCrawlEnded()) {
             // Keep trying till we hit timeout.
             CrawlURI curi = next();
-            if(curi!=null) {
+            if(curi != null) {
                 return curi;
             }
             long earliestWake = earliestWakeTime();
             // Sleep to timeout or earliestWakeup time, whichever comes first
             long sleepuntil = earliestWake < until ? earliestWake : until;
-            if(sleepuntil > now){
-                wait(sleepuntil-now); // If new URIs are scheduled, we will be woken
+            if(sleepuntil > now) {
+                // If new URIs are scheduled, we will be awoken.
+                // Don't sleep longer than a second ever so we notice
+                // if crawl has been terminated.
+                long waitTime = Math.min(sleepuntil - now, 1000);
+                wait(waitTime); 
             }
             now = System.currentTimeMillis();
         }
@@ -602,10 +589,13 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public synchronized void finished(CrawlURI curi) {
+        // Don't do any 'extra' work if crawl has been terminated.
+        if (!isCrawlEnded()) {
+        	// Catch up on scheduling.
+        	innerBatchFlush();
+        	notify(); // new items might be available, let waiting threads know
+        }
         logger.fine("Frontier.finished: " + curi.getURIString());
-        // Catch up on scheduling
-        innerBatchFlush();
-        notify(); // new items might be available, let waiting threads know
         
         try {
             noteProcessingDone(curi);
@@ -615,10 +605,14 @@ public class Frontier
             } else if (needsPromptRetry(curi)) {
                 // Consider statuses which allow nearly-immediate retry
                 // (like deferred to allow precondition to be fetched)
-                reschedule(curi);
+                if (!isCrawlEnded()) {
+                	reschedule(curi);
+                }
             } else if (needsRetrying(curi)) {
                 // Consider errors which can be retried
-                scheduleForRetry(curi);
+                if (!isCrawlEnded()) {
+                	scheduleForRetry(curi);
+                }
             } else if(isDisregarded(curi)) {
                 // Check for codes that mean that while we the crawler did
                 // manage to get it it must be disregarded for any reason.
@@ -1307,15 +1301,17 @@ public class Frontier
      * @param curi The CrawlURI to forget
      */
     protected void forget(CrawlURI curi) {
-        logger.finer("Forgetting "+curi);
-        alreadyIncluded.remove(curi.getUURI());
+        if (this.alreadyIncluded != null) {
+        	logger.finer("Forgetting "+curi);
+        	this.alreadyIncluded.remove(curi.getUURI());
+        }
     }
 
     /**  (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
      */
     public long discoveredUriCount(){
-        return alreadyIncluded.size();
+        return this.alreadyIncluded == null? 0: alreadyIncluded.size();
     }
 
     /** (non-Javadoc)
@@ -1646,7 +1642,7 @@ public class Frontier
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
      */
     public void crawlEnding(String sExitMessage) {
-        // We are not interested in the crawlEnding event
+        // This code is not called.
     }
 
     /** (non-Javadoc)
@@ -1656,8 +1652,17 @@ public class Frontier
         // Ok, if the CrawlController is exiting we delete our reference to it
         // to facilitate gc.
         this.controller = null;
+        this.alreadyIncluded = null;
     }
-
+    
+    /**
+     * @return True if the crawl has been terminated (User action).
+     */
+    protected boolean isCrawlEnded() {
+    	// If controller is null and alreadyIncluded is null, we're finished
+        // (or we haven't yet been initialized).
+        return (this.controller == null && this.alreadyIncluded == null);
+    }
 
     // custom serialization
     private void writeObject(ObjectOutputStream stream) throws IOException {
@@ -1698,7 +1703,9 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#considerIncluded(org.archive.crawler.datamodel.UURI)
      */
     public void considerIncluded(UURI u) {
-        this.alreadyIncluded.add(u);
+        if (this.alreadyIncluded != null) {
+            this.alreadyIncluded.add(u);
+        }
     }
 
     /* (non-Javadoc)
