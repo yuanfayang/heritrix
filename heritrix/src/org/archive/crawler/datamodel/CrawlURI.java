@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.datamodel;
 
+import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.framework.Processor;
 
 
@@ -22,7 +23,7 @@ import org.archive.crawler.framework.Processor;
  * 
  * @author Gordon Mohr
  */
-public class CrawlURI {
+public class CrawlURI implements URIStoreable {
 	AttributeList alist;
 	UURI uuri; 
 	Processor nextProcessor;
@@ -47,6 +48,41 @@ public class CrawlURI {
 	 */
 	public void setNextProcessor(Processor processor) {
 		nextProcessor = processor;
+	}
+	/**
+	 * @return
+	 */
+	public Object getClassKey() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.basic.URIStoreable#getStoreState()
+	 */
+	public Object getStoreState() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.basic.URIStoreable#setStoreState(java.lang.Object)
+	 */
+	public void setStoreState(Object s) {
+		// TODO Auto-generated method stub
+		
+	}
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.basic.URIStoreable#getWakeTime()
+	 */
+	public long getWakeTime() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.basic.URIStoreable#setWakeTime(long)
+	 */
+	public void setWakeTime(long w) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	
