@@ -88,16 +88,16 @@ public class RegularExpressionConstraint extends Constraint {
      * @see org.archive.crawler.datamodel.settings.Constraint#innerCheck(org.archive.crawler.datamodel.settings.Type,
      *      javax.management.Attribute)
      */
-    public FailedCheck innerCheck(ComplexType owner, Type definition,
-            Attribute attribute) {
+    public FailedCheck innerCheck(CrawlerSettings settings, ComplexType owner,
+            Type definition, Attribute attribute) {
         if (attribute.getValue() instanceof CharSequence) {
             if (!TextUtils
                     .matches(pattern, (CharSequence) attribute.getValue())) {
-                return new FailedCheck(owner, definition, attribute);
+                return new FailedCheck(settings, owner, definition, attribute);
 
             }
         } else {
-            return new FailedCheck(owner, definition, attribute,
+            return new FailedCheck(settings, owner, definition, attribute,
                     "Can't do regexp on non CharSequence.");
         }
         return null;

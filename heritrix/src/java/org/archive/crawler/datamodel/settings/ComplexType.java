@@ -506,8 +506,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      *         wrong type and cannot be converted to the right type.
      * @see javax.management.DynamicMBean#setAttribute(javax.management.Attribute)
      */
-    public synchronized final void setAttribute(CrawlerSettings settings, Attribute attribute)
-        throws InvalidAttributeValueException, AttributeNotFoundException {
+    public synchronized final void setAttribute(CrawlerSettings settings,
+            Attribute attribute) throws InvalidAttributeValueException,
+            AttributeNotFoundException {
 
         DataContainer data = getOrCreateDataContainer(settings);
         Object value = attribute.getValue();
@@ -515,8 +516,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         ModuleAttributeInfo attrInfo = (ModuleAttributeInfo) getAttributeInfo(
                 settings.getParent(), attribute.getName());
 
-        ModuleAttributeInfo localAttrInfo = (ModuleAttributeInfo) data.getAttributeInfo(attribute
-                .getName());
+        ModuleAttributeInfo localAttrInfo = (ModuleAttributeInfo) data
+                .getAttributeInfo(attribute.getName());
 
         // Check if attribute exists
         if (attrInfo == null && localAttrInfo == null) {
@@ -554,7 +555,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         }
         
         // Check if the attribute value is legal
-        FailedCheck error = checkValue(attribute);
+        FailedCheck error = checkValue(settings, attribute);
         if (error != null) {
             if (error.getLevel() == Level.SEVERE) {
                 throw new InvalidAttributeValueException(error.getMessage());
@@ -593,15 +594,18 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * Check an attribute to see if it fulfills all the constraints set on the
      * definition of this attribute.
      * 
+     * @param settings the CrawlerSettings object for which this check was
+     *            executed.
      * @param attribute the attribute to check.
      * @return null if everything is ok, otherwise it returns a FailedCheck
      *         object with detailed information of what went wrong.
      */
-    public FailedCheck checkValue(Attribute attribute) {
-        return checkValue(getDefinition(attribute), attribute);
+    public FailedCheck checkValue(CrawlerSettings settings, Attribute attribute) {
+        return checkValue(settings, getDefinition(attribute), attribute);
     }
 
-    FailedCheck checkValue(Type definition, Attribute attribute) {
+    FailedCheck checkValue(CrawlerSettings settings, Type definition,
+            Attribute attribute) {
         FailedCheck res = null;
 
         // Check if value fulfills any constraints
@@ -609,7 +613,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         if (constraints != null) {
             for (Iterator it = constraints.iterator(); it.hasNext()
                     && res == null;) {
-                res = ((Constraint) it.next()).check(this, definition, attribute);
+                res = ((Constraint) it.next()).check(settings, this,
+                        definition, attribute);
             }
         }
 

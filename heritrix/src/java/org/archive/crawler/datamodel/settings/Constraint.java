@@ -79,9 +79,9 @@ public abstract class Constraint implements Comparable {
      * @return null if ok, or an instance of {@link FailedCheck}if the check
      *         failed.
      */
-    public final FailedCheck check(ComplexType owner, Type definition,
-            Attribute attribute) {
-        return innerCheck(owner, definition, attribute);
+    public final FailedCheck check(CrawlerSettings settings, ComplexType owner,
+            Type definition, Attribute attribute) {
+        return innerCheck(settings, owner, definition, attribute);
     }
     
     /** The method all subclasses should implement to do the actual checking.
@@ -92,8 +92,8 @@ public abstract class Constraint implements Comparable {
      * @return null if ok, or an instance of {@link FailedCheck}if the check
      *         failed.
      */
-    public abstract FailedCheck innerCheck(ComplexType owner, Type definition,
-            Attribute attribute);
+    public abstract FailedCheck innerCheck(CrawlerSettings settings,
+            ComplexType owner, Type definition, Attribute attribute);
     
     /** Get the default message to return if a check fails.
      * 
@@ -109,6 +109,7 @@ public abstract class Constraint implements Comparable {
      */
     public class FailedCheck {
         private final String msg;
+        private final CrawlerSettings settings;
         private final ComplexType owner;
         private final Type definition;
         private final Object value;
@@ -116,14 +117,18 @@ public abstract class Constraint implements Comparable {
         /**
          * Construct a new FailedCheck object.
          * 
+         * @param settings the CrawlerSettings object for which this check was
+         *            executed.
          * @param owner the ComplexType owning the attribute to check.
          * @param definition the definition to check the attribute against.
          * @param attribute the attribute to check.
          * @param msg a message describing what went wrong and possibly hints to
          *            the user on how to fix it.
          */
-        public FailedCheck(ComplexType owner, Type definition, Attribute attr, String msg) {
+        public FailedCheck(CrawlerSettings settings, ComplexType owner,
+                Type definition, Attribute attr, String msg) {
             this.msg = msg;
+            this.settings = settings;
             this.owner = owner;
             this.definition = definition;
             this.value = attr.getValue();
@@ -133,12 +138,15 @@ public abstract class Constraint implements Comparable {
          * Construct a new FailedCheck object using the constraints default
          * message.
          * 
+         * @param settings the CrawlerSettings object for which this check was
+         *            executed.
          * @param owner the ComplexType owning the attribute to check.
          * @param definition the definition to check the attribute against.
          * @param attribute the attribute to check.
          */
-        public FailedCheck(ComplexType owner, Type definition, Attribute attr) {
-            this(owner, definition, attr, getDefaultMessage());
+        public FailedCheck(CrawlerSettings settings, ComplexType owner,
+                Type definition, Attribute attr) {
+            this(settings, owner, definition, attr, getDefaultMessage());
         }
 
         /** Get the error message.
@@ -179,6 +187,14 @@ public abstract class Constraint implements Comparable {
          */
         public ComplexType getOwner() {
             return owner;
+        }
+
+        /** Get the {@link CrawlerSettings} for the checked attribute.
+         * 
+         * @return the {@link CrawlerSettings} for the checked attribute.
+         */
+        public CrawlerSettings getSettings() {
+            return settings;
         }
 
         /** Returns a human readeable string for the failed check.
