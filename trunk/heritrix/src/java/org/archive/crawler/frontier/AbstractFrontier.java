@@ -39,12 +39,14 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -81,6 +83,10 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     public final static String ATTR_MAX_DELAY = "max-delay-ms";
     protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000); // 30 secs
 
+    /** number of hops of embeds (ERX) to bump to front of host queue */
+    public final static String ATTR_PREFERENCE_EMBED_HOPS = "preference-embed-hops";
+    protected final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(1); 
+    
     /** maximum per-host bandwidth usage */
     public final static String ATTR_MAX_HOST_BANDWIDTH_USAGE =
         "max-per-host-bandwidth-usage-KB-sec";
@@ -136,6 +142,15 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
                     "How long to wait by default until we retry fetching a" +
                 " URI that failed to be retrieved (seconds). ",
                 DEFAULT_RETRY_DELAY));
+        addElementToDefinition(new SimpleType(ATTR_PREFERENCE_EMBED_HOPS,
+                "Number of embedded (or redirected) hops up to which " +
+                "a URI has higher priority scheduling. For example, if set" +
+                "to 1 (the default), items such as inline images (1-hop" +
+                "embedded resources) will be scheduled ahead of all regular" +
+                "links (or many-hop resources, like nested frames). If set to" +
+                "zero, no preferencing will occur, and embeds/redirects are" +
+                "scheduled the same as regular links.",
+                DEFAULT_PREFERENCE_EMBED_HOPS));
         Type t;
         t = addElementToDefinition(
             new SimpleType(ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
@@ -318,6 +333,61 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
         enforceBandwidthThrottle(now);
     }
     
+    /**
+     * Perform any special handling of the CrawlURI, such as promoting
+     * its URI to seed-status, or preferencing it because it is an 
+     * embed. 
+     *  
+     * @param curi
+     */
+    protected void applySpecialHandling(CrawlURI curi) {
+        if (curi.isSeed() && curi.getVia() != null
+                && curi.flattenVia().length() > 0) {
+            // The only way a seed can have a non-empty via is if it is the
+            // result of a seed redirect.  Add it to the seeds list.
+            //
+            // This is a feature.  This is handling for case where a seed
+            // gets immediately redirected to another page.  What we're doing is
+            // treating the immediate redirect target as a seed.
+            List seeds = this.controller.getScope().getSeedlist();
+            synchronized (seeds) {
+                seeds.add(curi.getUURI());
+            }
+            // And it needs rapid scheduling.
+            curi.setSchedulingDirective(CandidateURI.MEDIUM);
+        }
+
+        
+        // optionally preferencing embeds up to MEDIUM
+        int prefHops = ((Integer) getUncheckedAttribute(curi,
+                ATTR_PREFERENCE_EMBED_HOPS)).intValue();        if (prefHops > 0) {
+            int embedHops = curi.getTransHops();
+            if (embedHops > 0 && embedHops <= prefHops
+                    && curi.getSchedulingDirective() == CandidateURI.NORMAL) {
+                // number of embed hops falls within the preferenced range, and
+                // uri is not already MEDIUM -- so promote it
+                curi.setSchedulingDirective(CandidateURI.MEDIUM);
+            }
+        }
+    }
+    
+    /**
+     * Perform fixups on a CrawlURI about to be returned via next().
+     * 
+     * @param curi
+     */
+    protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
+        curi.setHolder(q);
+        CrawlServer cs = this.controller.getServerCache().getServerFor(curi);
+        if (cs != null) {
+            curi.setServer(cs);
+        } else {
+            // TODO: perhaps short-circuit the emit here, 
+            // because URI will be rejected as unfetchable
+        }
+        this.controller.recover.emitted(curi);
+    }
+
     /**
      * @param curi
      * @return
