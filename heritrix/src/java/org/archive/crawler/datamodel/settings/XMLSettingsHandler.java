@@ -104,6 +104,13 @@ public class XMLSettingsHandler extends SettingsHandler {
 		}
 	}
 
+    public void initialize(File source) {
+        File tmpOrderFile = orderFile;
+        orderFile = source;
+        this.initialize();
+        orderFile = tmpOrderFile;
+    }
+    
 	private File scopeToFile(String scope) {
 		File file;
 		if (scope == null || scope.equals("")) {
@@ -151,19 +158,7 @@ public class XMLSettingsHandler extends SettingsHandler {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.datamodel.settings.SettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
-	 */
-	protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
-        File filename;
-        if (settings.getScope() == null) {
-            // Read order file
-            filename = orderFile;
-        } else {
-            // Read per host file
-            File dirname = scopeToFile(settings.getScope());
-            filename = new File(dirname, settingsFilename);
-        }
+    protected final CrawlerSettings readSettingsObject(CrawlerSettings settings, File filename) {
         if(filename.exists()) {
             logger.fine("Reading " + filename.getAbsolutePath());
             try {
@@ -189,6 +184,22 @@ public class XMLSettingsHandler extends SettingsHandler {
         } else {
             settings = null;
         }
-		return settings;
+        return settings;
+    }
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.datamodel.settings.SettingsHandler#readSettingsObject(org.archive.crawler.datamodel.settings.CrawlerSettings, java.lang.String)
+	 */
+	protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
+        File filename;
+        if (settings.getScope() == null) {
+            // Read order file
+            filename = orderFile;
+        } else {
+            // Read per host file
+            File dirname = scopeToFile(settings.getScope());
+            filename = new File(dirname, settingsFilename);
+        }
+        return readSettingsObject(settings, filename);
 	}
 }
