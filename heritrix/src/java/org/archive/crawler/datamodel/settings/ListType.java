@@ -33,13 +33,17 @@ import java.util.List;
  * @author John Erik Halse
  *
  */
-public abstract class ListType {
+public abstract class ListType implements Type {
     private final List listData = new ArrayList();
+    private final String name;
+    private final String description;
 
     /**
      * 
      */
-    public ListType() {
+    public ListType(String name, String description) {
+        this.name = name;
+        this.description = description;
     }
 
     public void add(Object element) {
@@ -74,4 +78,25 @@ public abstract class ListType {
     }
     
     public abstract boolean checkType(Object element) throws ClassCastException;
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getDefaultValue()
+     */
+    public Object getDefaultValue() {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getDescription()
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getName()
+     */
+    public String getName() {
+        return name;
+    }
 }
