@@ -108,6 +108,16 @@ Eventually. For now, the crawler is still in early development, and only if you 
         </p>
         </answer>
       </faq>
+      <faq id="oome_broadcrawl">
+        <question>
+        <p>Why do I get an OutOfMemoryException ten minutes after starting 
+        a broad scoped crawl?</p></question>
+        <answer>
+        <p>See the note in
+        <a hef="https://sourceforge.net/tracker/?func=detail&amp;atid=539102&amp;aid=896772&amp;group_id=73833">[ 896772 ] "Site-first"/'frontline' prioritization</a>.
+        </p>
+        </answer>
+      </faq>
   </part>
 
   <part id="references">
