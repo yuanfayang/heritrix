@@ -1,7 +1,7 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,org.archive.util.LogReader" %>
+<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.datamodel.settings.SettingsHandler,org.archive.crawler.datamodel.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.util.LogReader" %>
 
 <%
 	/* Various settings with default values (where applicable) */
@@ -23,24 +23,24 @@
 	}
 
 	/* Location of logs */
-	CrawlOrder crawlOrder = null;
+	SettingsHandler settingsHandler = null;
 	if(request.getParameter("job") != null && request.getParameter("job").length() > 0){
 		//Get logs for specific job. This assumes that the logs for each job are stored in a unique location.
-		crawlOrder = handler.getJob(request.getParameter("job")).getSettingsHandler().getOrder();
+		settingsHandler = handler.getJob(request.getParameter("job")).getSettingsHandler();
 	}else{
 		if(handler.getCurrentJob() != null){
 			// If no specific job then assume current one
-			crawlOrder = handler.getCurrentJob().getSettingsHandler().getOrder();
+			settingsHandler = handler.getCurrentJob().getSettingsHandler();
 		} else if(handler.getCompletedJobs().size() > 0){
 			// If no current job, use the latest completed job.
-			crawlOrder = ((CrawlJob)handler.getCompletedJobs().get(handler.getCompletedJobs().size()-1)).getSettingsHandler().getOrder();
+			settingsHandler = ((CrawlJob)handler.getCompletedJobs().get(handler.getCompletedJobs().size()-1)).getSettingsHandler();
 		}
 	}
 	
-	if(crawlOrder != null)
+	if(settingsHandler != null)
 	{
-		String diskPath = (String)crawlOrder.getAttribute(CrawlOrder.ATTR_DISK_PATH,) + "/";
-		diskPath = crawlOrder.getPathRelativeToOrderFile(diskPath);
+		String diskPath = (String)settingsHandler.getOrder().getAttribute(CrawlOrder.ATTR_DISK_PATH) + "/";
+		diskPath = ((XMLSettingsHandler)settingsHandler).getPathRelativeToOrderFile(diskPath);
 		// Got a valid crawl order, find it's logs
 		if(mode != null && mode.equalsIgnoreCase("number"))
 		{
@@ -110,6 +110,7 @@
 	} 
 	else 
 	{
+		mode = "tail";
 		logText = "Invalid or missing crawl order";
 	}
 	
