@@ -14,19 +14,18 @@
     <integer name="max-toe-threads">50</integer>
     <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
       <boolean name="enabled">true</boolean>
-      <boolean name="inverted">false</boolean>
       <string name="seedsfile">seeds.txt</string>
       <integer name="max-link-hops">5</integer>
       <integer name="max-trans-hops">5</integer>
-      <newObject name="excludeFilter" class="org.archive.crawler.filter.OrFilter">
+      <newObject name="excludeFilter" 
+            class="org.archive.crawler.filter.OrFilter">
         <boolean name="enabled">true</boolean>
-        <boolean name="inverted">false</boolean>
+        <boolean name="make-filter-XOR">false</boolean>
         <map name="filters">
         </map>
       </newObject>
       <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
         <boolean name="enabled">true</boolean>
-        <boolean name="inverted">false</boolean>
         <integer name="max-speculative-hops">0</integer>
         <integer name="max-referral-hops">0</integer>
         <integer name="max-embed-hops">0</integer>
