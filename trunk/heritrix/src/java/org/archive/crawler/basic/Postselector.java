@@ -159,6 +159,11 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
         } catch (URISyntaxException ex) {
             Object[] array = { curi, curi.getPrerequisiteUri() };
             getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
+        } catch (NumberFormatException e) {
+            // UURI.createUURI will occasionally throw this error.
+            Object[] array = { curi, curi.getPrerequisiteUri() };
+            getController().uriErrors.log(
+                Level.INFO,e.getMessage(), array);
         }
     }
 
@@ -215,6 +220,11 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
                 Object[] array = { curi, link };
                 getController().uriErrors.log(
                     Level.INFO,ex.getMessage(), array);
+            } catch (NumberFormatException e) {
+                // UURI.createUURI will occasionally throw this error.
+                Object[] array = { curi, link };
+                getController().uriErrors.log(
+                    Level.INFO,e.getMessage(), array);
             }
         }
     }
