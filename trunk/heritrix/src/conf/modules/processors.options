@@ -19,3 +19,4 @@ org.archive.crawler.writer.ARCWriterProcessor|Archiver
 org.archive.crawler.writer.MirrorWriterProcessor|MirrorWriter
 org.archive.crawler.postprocessor.CrawlStateUpdater|Updater
 org.archive.crawler.postprocessor.Postselector|Postselector
+org.archive.crawler.postprocessor.LowDiskPauseProcessor|LowDiskPause
