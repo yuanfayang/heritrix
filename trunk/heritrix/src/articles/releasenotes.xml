@@ -55,9 +55,8 @@ java.net.SocketException: Socket is not connected
           (Current version is alpha2).</para>
         </sect4>
       </sect3>
-    </sect2>
 
-    <sect2 id="lostjobs">
+    <sect3 id="lostjobs">
         <title>Jobs don't show in UI when a bunch are run back-to-back</title>
         <para>If more than one job waiting in the queue of pending jobs, 
         then the second job often won't show in the UI; The UI says its
@@ -67,14 +66,15 @@ java.net.SocketException: Socket is not connected
         by viewing the crawl job logs on disk (Oddly, the 3rd queued up job
         will start to show in the UI again).
         </para>
-    </sect2>
-    <sect2 id="oome_pending_jobs">
+    </sect3>
+    <sect3 id="oome_pending_jobs">
         <title>Running more than one job in series throws OOME</title>
         <para>OutOfMemoryExceptions are frequent when jobs are run in series.
         <ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1055592&amp;group_id=73833&amp;atid=539099">[ 1055592 ]
         terminated crawl still hogging memory, causing OOM</ulink>. 
         For now, restart Heritrix between the running of jobs.
         </para>
+    </sect3>
     </sect2>
         
 
