@@ -15,7 +15,7 @@
 
 	if(handler.isCrawling())
 	{
-		stats = handler.getStatistics();
+		stats = (StatisticsTracker)handler.getStatistics(); //Assume that StatisticsTracker is being used.
 	}
 
 %>

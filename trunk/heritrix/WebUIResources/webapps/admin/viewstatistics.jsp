@@ -1,7 +1,7 @@
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
 
-<%@ page import="org.archive.crawler.framework.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.Vector" %>
+<%@ page import="org.archive.crawler.framework.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*" %>
 <%
 	/**
 	 *  Page allows user to view the information in the StatisticsTracker 
@@ -23,7 +23,7 @@
 			if(cjob.getUID().equals(job))
 			{
 				// Found it!
-				stats = cjob.getStatisticsTracker();
+				stats = (StatisticsTracker)cjob.getStatisticsTracking();
 			}
 		}
 	}
@@ -177,6 +177,65 @@
 					</tr>
 				</table>
 				&nbsp;<br>
+
+				<table>
+					<tr>
+						<th>
+							Status code
+						</th>
+						<th>
+							Number of occurances
+						</th>
+					</tr>
+					<%
+						HashMap statusCodeDistribution = stats.getStatusCodeDistribution();
+						Iterator statusCodes = statusCodeDistribution.keySet().iterator();
+						while(statusCodes.hasNext())
+						{
+							Object code = statusCodes.next();
+					%>
+							<tr>
+								<td>
+									<%=code%>
+								</td>
+								<td>
+									<%=statusCodeDistribution.get(code)%>
+								</td>
+							</tr>
+					<%
+						}
+					%>				
+				</table>
+
+				<table>
+					<tr>
+						<th>
+							File type
+						</th>
+						<th>
+							Number of occurances
+						</th>
+					</tr>
+					<%
+						HashMap fileDistribution = stats.getFileDistribution();
+						Iterator files = fileDistribution.keySet().iterator();
+						while(files.hasNext())
+						{
+							Object file = files.next();
+					%>
+							<tr>
+								<td>
+									<%=file%>
+								</td>
+								<td>
+									<%=fileDistribution.get(file)%>
+								</td>
+							</tr>
+					<%
+						}
+					%>				
+				</table>
+
 				<a href="completedjobs.jsp">Back</a><br>
 		<%
 			} // End if(cjob==null)else clause
