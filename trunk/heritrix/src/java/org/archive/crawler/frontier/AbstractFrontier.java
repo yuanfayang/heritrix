@@ -409,7 +409,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     protected CrawlURI asCrawlUri(CandidateURI caUri) {
         CrawlURI curi;
         if(caUri instanceof CrawlURI) {
-            curi = (CrawlURI) caUri;
+            curi = (CrawlURI)caUri;
         } else {
             curi = CrawlURI.from(caUri,nextOrdinal++);
         }
@@ -515,13 +515,11 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
             curi.getFetchStatus()== S_CONNECT_LOST) {
             if(curi.getAList().containsKey(A_RETRY_DELAY)) {
                 return curi.getAList().getInt(A_RETRY_DELAY);
-            } else {
-                // use overall default
-                return ((Long)getUncheckedAttribute(curi,ATTR_RETRY_DELAY)).longValue();
             }
-        } else {
-            return 0; // no delay for most 
+            return ((Long)getUncheckedAttribute(curi,ATTR_RETRY_DELAY)).
+                longValue();
         }
+        return 0; // no delay for most 
     }
     
     /**
@@ -782,7 +780,8 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
      * @return a String token representing a queue
      */
     protected String getClassKey(CrawlURI curi) {
-        String queueKey = (String) getUncheckedAttribute(curi,ATTR_FORCE_QUEUE);
+        String queueKey =
+            (String)getUncheckedAttribute(curi, ATTR_FORCE_QUEUE);
         if("".equals(queueKey)) {
             // typical case, barring overrides
             queueKey = queueAssignmentPolicy.getClassKey(curi);
