@@ -978,9 +978,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public String getFrontierOneLine() {
         if (controller == null || controller.getFrontier() == null) {
             return "Crawler not running";
-        } else {
-            return controller.getFrontier().oneLineReport();
         }
+        return controller.getFrontier().oneLineReport();
     }
     
     /**
@@ -992,9 +991,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public String getFrontierReport() {
         if (controller == null || controller.getFrontier() == null) {
             return "Crawler not running";
-        } else {
-            return controller.getFrontier().report();
         }
+        return controller.getFrontier().report();
     }
 
     /**
@@ -1003,10 +1001,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public String getThreadOneLine() {
         if (controller == null) {
             return "Crawler not running";
-        } else {
-            return controller.oneLineReportThreads();
         }
+        return controller.oneLineReportThreads();
     }
+    
     /**
      * Get the CrawlControllers ToeThreads report for the running crawl. If no
      * crawl is running a message to that effect will be returned instead.
@@ -1015,9 +1013,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public String getThreadsReport() {
         if (controller == null) {
             return "Crawler not running";
-        } else {
-            return controller.reportThreads();
         }
+        return controller.reportThreads();
     }
 
     /**
@@ -1040,9 +1037,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public String getProcessorsReport() {
         if (controller == null) {
             return "Crawler not running";
-        } else {
-            return controller.reportProcessors();
         }
+        return controller.reportProcessors();
     }
 
     /**
@@ -1161,7 +1157,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param inCacheOnly
      *            Limit marker scope to 'cached' URIs.
      * @return a URIFrontierMarker for the current job.
-     * @see #getPendingURIsList(URIFrontierMarker, int, boolean)
+     * @see #getPendingURIsList(FrontierMarker, int, boolean)
      * @see org.archive.crawler.framework.Frontier#getInitialMarker(String,
      *      boolean)
      * @see org.archive.crawler.framework.FrontierMarker

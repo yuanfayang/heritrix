@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
@@ -58,8 +59,9 @@ import org.archive.crawler.settings.XMLSettingsHandler;
  * @see org.archive.crawler.admin.CrawlJobHandler#newProfile(CrawlJob, String, String, String)
  */
 
-public class CrawlJob
-{
+public class CrawlJob {
+    private static final Logger logger =
+        Logger.getLogger(CrawlJob.class.getName());
     /*
      * Possible values for Priority
      */
@@ -318,13 +320,23 @@ public class CrawlJob
      * This will also save the statistics tracker if it is not null and the
      * job status is finished (regardless of how it's finished)
      */
-    private void writeJobFile(){
-        if(isProfile==false && isNew==false){
-            FileWriter jobWriter = null;
+    private void writeJobFile() {
+        if (isProfile) {
+            return;
+        }
+        
+        FileWriter jobWriter = null;
+        File f = new File(jobDir.getAbsolutePath(), "state.job");
+        if (!f.exists() || !f.canWrite()) {
+            logger.warning("Can't update status on " +
+                    f.getAbsolutePath() + " because file does not" +
+            " exist (or is unwriteable)");
+            return;
+        }
+        
+        try {
+            jobWriter = new FileWriter(f, false);
             try {
-                jobWriter = new FileWriter(jobDir.getAbsolutePath() +
-                        File.separator + "state.job", false);
-                try {
                 jobWriter.write(UID+"\n");
                 jobWriter.write(name+"\n");
                 jobWriter.write(status+"\n");
@@ -336,15 +348,13 @@ public class CrawlJob
                 jobWriter.write(statisticsFileSave+"\n");// TODO: Is this right?
                 // Can be multiple lines so we keep it last
                 jobWriter.write(errorMessage==null?"":errorMessage+"\n");
-                jobWriter.flush();
-                } finally {
-                	    jobWriter.close();
-                }
-            } catch (IOException e) {
-                Heritrix.addAlert(new Alert("IOException saving job " + name,
-                        "An IOException occured when saving job " +
-                                name + " (" + UID + ")",e, Level.WARNING));
+            } finally {
+                jobWriter.close();
             }
+        } catch (IOException e) {
+            Heritrix.addAlert(new Alert("IOException saving job " + name,
+                    "An IOException occured when saving job " +
+                    name + " (" + UID + ")",e, Level.WARNING));
         }
     }
 
@@ -546,11 +556,7 @@ public class CrawlJob
      * @return the path of the job's base directory.
      */
     public File getDirectory(){
-        if(isProfile){
-            return new File(getSettingsDirectory());
-        } else {
-            return jobDir;
-        }
+        return isProfile? new File(getSettingsDirectory()): jobDir;
     }
 
     /**
@@ -618,17 +624,17 @@ public class CrawlJob
     }
 
     /**
-     * @param name
+     * @param chkptName Name of chkpoint.
      * @return checkpoint matching the given name
      */
-    public Checkpoint getCheckpoint(String name) {
+    public Checkpoint getCheckpoint(String chkptName) {
         if(checkpoints==null) {
             scanCheckpoints();
         }
         Iterator iter = checkpoints.iterator();
         while(iter.hasNext()) {
             Checkpoint candidate = (Checkpoint) iter.next();
-            if (candidate.getName().equals(name)) {
+            if (candidate.getName().equals(chkptName)) {
                 return candidate;
             }
         }
@@ -658,6 +664,7 @@ public class CrawlJob
     /**
      * Returns the absolute path of the specified log.
      * Note: If crawl has not begun, this file may not exist.
+     * @param log
      * @return the absolute path for the specified log.
      * @throws AttributeNotFoundException
      * @throws ReflectionException
