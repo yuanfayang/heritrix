@@ -21,7 +21,7 @@ public class TransclusionFilter extends Filter {
 	int maxTransHops = 0;
 	
 	// 1-3 trailing P(recondition)/R(eferral)/E(mbed) hops
-	private static final String TRANSCLUSION_PATH = ".*[PRE][PRE]?[PRE]?$";
+	private static final String TRANSCLUSION_PATH = ".*[PREX][PREX]?[PREX]?$";
 	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)

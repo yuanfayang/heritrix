@@ -6,8 +6,8 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.basic.URIStoreable;
@@ -301,25 +301,25 @@ public class CrawlURI extends CandidateURI
 	 * @param value
 	 */
 	public void addEmbed(String u) {
-		addToNamedList(A_HTML_EMBEDS, u);
+		addToNamedSet(A_HTML_EMBEDS, u);
 	}
 
-	private void addToNamedList(String key, Object o) {
-		List l;
+	private void addToNamedSet(String key, Object o) {
+		Set s;
 		if(!alist.containsKey(key)) {
-			l = new ArrayList();
-			alist.putObject(key, l);
+			s = new HashSet();
+			alist.putObject(key, s);
 		} else {
-			l = (List)alist.getObject(key);
+			s = (Set)alist.getObject(key);
 		}
-		l.add(o);
+		s.add(o);
 	}
 
 	/**
 	 * @param value
 	 */
 	public void addLink(String u) {
-		addToNamedList(A_HTML_LINKS, u);
+		addToNamedSet(A_HTML_LINKS, u);
 	}
 
 	/**
@@ -451,5 +451,12 @@ public class CrawlURI extends CandidateURI
 	 */
 	public void setContentSize(long l) {
 		contentSize = l;
+	}
+
+	/**
+	 * @param string
+	 */
+	public void addSpeculativeEmbed(String string) {
+		addToNamedSet(A_HTML_SPECULATIVE_EMBEDS,string);
 	}
 }
