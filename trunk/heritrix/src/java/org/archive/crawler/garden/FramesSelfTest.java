@@ -22,16 +22,76 @@
  */
 package org.archive.crawler.garden;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.archive.io.arc.ARCRecordMetaData;
+
 /**
- * 
+ * Test crawler can parse pages w/ frames in them.
  * 
  * @author stack
  * @version $Id$
  */
 public class FramesSelfTest extends GardenSelfTestCase
 {
+    /**
+     * Files we expect to find in the archive.
+     */
+    private static final String [] FILES = { "topframe.html",
+            "leftframe.html", "rightframe.html",
+            "noframe.html", "index.html"};
+    
+    
     public void testFramesSelfTest()
     {
-        // Does nothing yet.
+        String frameDirURL = getSelftestURLWithTrailingSlash() + getTestName();
+        File frameDir = new File(getWebappDir(), getTestName());
+        Map files = new HashMap(FILES.length);
+        // If file exits on disk, set it into our map w/ a FALSE flag.
+        for (int i = 0; i < FILES.length; i++)
+        {
+            File fileOnDisk = new File(frameDir, FILES[i]);
+            if (fileOnDisk.exists())
+            {
+                files.put(FILES[i], Boolean.FALSE);
+            }
+        }
+        assertTrue("Files are present on disk", files.size() == FILES.length);
+
+        // Now iterate through the ARCRecord meta data and every time I find
+        // a map entry, set the flag for that entry to TRUE.
+        List metaDatas = getReadReader().getMetaDatas();
+        ARCRecordMetaData metaData = null;
+        for (Iterator i = metaDatas.iterator(); i.hasNext();)
+        {
+            metaData = (ARCRecordMetaData)i.next();
+            String url = metaData.getUrl();
+            if (url.startsWith(frameDirURL))
+            {
+                String name = url.substring(url.lastIndexOf("/") + 1);
+                if (files.containsKey(name)
+                    && metaData.getMimetype().equalsIgnoreCase("text/html"))
+                {
+                    files.put(name, Boolean.TRUE);
+                }
+            }
+        }
+        
+        // Now make sure all files have been found in the arc.
+        String notInARC = null;
+        for (Iterator i = files.keySet().iterator(); i.hasNext();)
+        {   
+            String key = (String)i.next();
+            if (!((Boolean)files.get(key)).booleanValue())
+            {
+                notInARC = key;
+                break;
+            }
+        }
+        assertNull("File was not found in arc: " + notInARC, notInARC);
     }
 }
