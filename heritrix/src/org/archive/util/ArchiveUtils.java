@@ -14,9 +14,9 @@ import java.util.Date;
  *
  */
 public class ArchiveUtils {
-    public static SimpleDateFormat TIMESTAMP12 = new SimpleDateFormat("yyyyMMddhhmm");	
-	public static SimpleDateFormat TIMESTAMP14 = new SimpleDateFormat("yyyyMMddhhmmss");	
-	public static SimpleDateFormat TIMESTAMP17 = new SimpleDateFormat("yyyyMMddhhmmssSSS");	
+    public static SimpleDateFormat TIMESTAMP12 = new SimpleDateFormat("yyyyMMddHHmm");	
+	public static SimpleDateFormat TIMESTAMP14 = new SimpleDateFormat("yyyyMMddHHmmss");	
+	public static SimpleDateFormat TIMESTAMP17 = new SimpleDateFormat("yyyyMMddHHmmssSSS");	
 
 	// utility functions for creating arc-style date stamps
 	public static String get17DigitDate(){
