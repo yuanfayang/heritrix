@@ -237,6 +237,8 @@
 			response.sendRedirect("/admin/jobs/modules.jsp?job="+theJob.getUID());
 		}else if(request.getParameter("action").equals("filters")){
 			response.sendRedirect("/admin/jobs/filters.jsp?job="+theJob.getUID());
+		}else if(request.getParameter("action").equals("per")){
+			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID());
 		}
 		return;
 	}	
@@ -250,6 +252,7 @@
 	// Settings for the page header
 	String title = "Configure settings";
 	int tab = theJob.isProfile()?2:1;
+	int jobtab = 2;
 %>
 
 <%@include file="/include/head.jsp"%>
@@ -295,11 +298,18 @@
 			doSubmit();
 		}
 		
+		function doGotoPer(){
+			document.frmConfig.action.value="per";
+			doSubmit();
+		}
+		
 		function doPop(text){
 			alert(text);
 		}
 	</script>
-	
+
+	<p>
+		<%@include file="/include/jobnav.jsp"%>
 	<p>
 	
 	<form name="frmConfig" method="post" action="configure.jsp">
@@ -307,11 +317,6 @@
 		<input type="hidden" name="action" value="done">
 		<input type="hidden" name="job" value="<%=theJob.getUID()%>">
 	
-		<% if(theJob.isRunning() == false){ %>
-			<input type="button" value="Adjust modules" onClick="doGotoModules()">
-			<input type="button" value="Select filters" onClick="doGotoFilters()">
-		<% } %>
-		<input type="button" value="Done" onClick="doSubmit()">
 		<p>			
 		<table>
 			<tr>
@@ -351,13 +356,8 @@
 				</td>
 			</tr>
 		</table>
-		<p>
-		<% if(theJob.isRunning() == false){ %>
-			<input type="button" value="Adjust modules" onClick="doGotoModules()">
-			<input type="button" value="Select filters" onClick="doGotoFilters()">
-		<% } %>
-		<input type="button" value="Done" onClick="doSubmit()">
-	
 	</form>
+	<p>
+		<%@include file="/include/jobnav.jsp"%>
 		
 <%@include file="/include/foot.jsp"%>
