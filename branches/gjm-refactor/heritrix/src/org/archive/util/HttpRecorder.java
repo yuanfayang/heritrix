@@ -57,9 +57,19 @@ public class HttpRecorder {
 	/**
 	 * 
 	 */
-	public void close() throws IOException {
-		ris.close();
-		ros.close();
+	public void close() {
+		try {
+			ris.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			ros.close();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 
 	/**

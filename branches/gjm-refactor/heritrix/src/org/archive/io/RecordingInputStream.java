@@ -16,6 +16,9 @@ import java.net.SocketTimeoutException;
  *
  */
 public class RecordingInputStream extends InputStream {
+//	private long timeout;
+//	private long maxLength;
+//	private long timeoutTime;
 	protected InputStream wrappedStream;
 	protected RecordingOutputStream recordingOutputStream;
 
@@ -34,6 +37,11 @@ public class RecordingInputStream extends InputStream {
 	public void open(InputStream wrappedStream) throws IOException {
 		this.wrappedStream = wrappedStream;
 		recordingOutputStream.open(new NullOutputStream());
+//		if (timeout>0) {
+//			timeoutTime = System.currentTimeMillis() + timeout;
+//		} else {
+//			timeoutTime = 0;
+//		}
 	}
 
 	/* (non-Javadoc)
@@ -43,7 +51,8 @@ public class RecordingInputStream extends InputStream {
 		int b = wrappedStream.read();
 		if (b != -1) {
 			recordingOutputStream.write(b);
-		} 
+		}
+//		checkLimits();
 		return b;
 	}
 	
@@ -89,12 +98,20 @@ public class RecordingInputStream extends InputStream {
 		return recordingOutputStream.getSize();
 	}
 
-
+//	/**
+//	 * @param maxLength
+//	 * @param timeout
+//	 */
+//	public void setLimits(long maxLength, long timeout) {
+//		this.maxLength = maxLength;
+//		this.timeout = timeout;
+//	}
+	
 	/**
 	 * @param maxLength
 	 * @param timeout
 	 */
-	public boolean readFullyOrUntil(long maxLength, long timeout) throws IOException {
+	public void readFullyOrUntil(long maxLength, long timeout) throws IOException {
 		long timeoutTime;
 		long totalBytes = 0;
 		if(timeout>0) {
@@ -114,12 +131,13 @@ public class RecordingInputStream extends InputStream {
 			} catch (SocketTimeoutException e) {
 				// DO NOTHING; just want to check overall timeout
 			}
-			if (totalBytes>maxLength || System.currentTimeMillis() > timeoutTime) {
-				// exceeded maxes
-				return true;
+			if (totalBytes>maxLength) {
+				throw new RecorderLengthExceededException();
+			}
+			if (System.currentTimeMillis() > timeoutTime) {
+				throw new RecorderTimeoutException();
 			}
 		}
-		return false; // did not timeout or overflow
 	}
 
 
