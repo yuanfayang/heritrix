@@ -47,10 +47,18 @@
           </fileset>
         </chmod>
 
-        <!--Copy webapps to build directory w/ filtering enabled.-->
+        <!--Copy webapps to build directory w/ filtering enabled.
+            Do the copy like this doing non-jpg first and then gif.
+            Otherwise, ant breaks the jpgs because it interpolates.
+         -->
         <copy todir="${maven.build.dir}/webapps" filtering="true">
           <fileset dir="${maven.src.dir}/webapps">
-            <include name="**/*"/>
+            <exclude name="**/*.gif"/>
+          </fileset>
+        </copy>
+        <copy todir="${maven.build.dir}/webapps" filtering="false">
+          <fileset dir="${maven.src.dir}/webapps">
+            <include name="**/*.gif"/>
           </fileset>
         </copy>
 
