@@ -18,7 +18,6 @@ import org.w3c.dom.Document;
  */
 public class CrawlOrder extends XMLConfig {
 	String name;
-	CrawlScope scope;
 	CrawlerBehavior behavior;
 	String outputLocation;
 	
@@ -38,7 +37,6 @@ public class CrawlOrder extends XMLConfig {
 		xNode = doc;
 		try {
 			name 		= getNodeAt("/crawl-order/@name").getNodeValue();
-			scope 		= new CrawlScope(XPathAPI.selectSingleNode(doc,"//crawl-scope"));
 			behavior 	= new CrawlerBehavior(XPathAPI.selectSingleNode(doc,"//crawler-behavior"));
 			
 			outputLocation 	= getStringAt("//disk/@path");
@@ -56,13 +54,6 @@ public class CrawlOrder extends XMLConfig {
 	public CrawlerBehavior getBehavior() {
 		return behavior;
 		
-	}
-
-	/**
-	 * 
-	 */
-	public CrawlScope getScope() {
-		return scope;
 	}
 
 	/**
