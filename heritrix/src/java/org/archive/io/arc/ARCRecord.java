@@ -103,7 +103,16 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * If non-null and bytes available, give out its contents before we
      * go back to the underlying stream.
      */
-    private InputStream httpHeaderStream = null;;
+    private InputStream httpHeaderStream = null;
+    
+    /**
+     * Minimal http header length.
+     * 
+     * I've seen in arcs content length of 1 with no 
+     * header.
+     */
+    private static final long MIN_HTTP_HEADER_LENGTH =
+        "HTTP/1.1 200 OK\r\n".length();
 
     /**
      * Constructor.
@@ -153,36 +162,39 @@ public class ARCRecord extends InputStream implements ARCConstants {
     private InputStream readHttpHeader() throws IOException {
         // If judged a record that doesn't have an http header, return
         // immediately.
-        if(!metaData.getUrl().startsWith("http")) {
+        if(!this.metaData.getUrl().startsWith("http") ||
+            this.metaData.getLength() <= MIN_HTTP_HEADER_LENGTH) {
             return null;
         }
         byte [] statusBytes = HttpParser.readRawLine(this.in);
-        if (statusBytes == null || statusBytes.length <= 0 ||
-                !isCrNl(statusBytes)) {
+        int eolCharCount = getEolCharsCount(statusBytes);
+        if (eolCharCount <= 0) {
             throw new IOException("Failed to read http status where one " +
-                " was expected.");
+                " was expected: " + new String(statusBytes));
         }
         String statusLine = HttpConstants.getString(statusBytes, 0,
-                statusBytes.length - 2 /*crnl*/);
+                statusBytes.length - eolCharCount);
         if ((statusLine == null) ||
                 !StatusLine.startsWithHTTP(statusLine)) {
             throw new IOException("Failed parse of http status line.");
         }
         this.httpStatus = new StatusLine(statusLine);
         
-        // Save off the bytes read.
+        // Save off all bytes read.
         ByteArrayOutputStream baos = new ByteArrayOutputStream(4 * 1024);
         baos.write(statusBytes);
+        
+        // Now read rest of the header lines.
         for (byte [] lineBytes = null; true;) {
             lineBytes = HttpParser.readRawLine(this.in);
-            if (lineBytes == null || lineBytes.length <= 0 ||
-                    !isCrNl(lineBytes)) {
-                throw new IOException("Failed reading http headers.");
+            eolCharCount = getEolCharsCount(lineBytes);
+            if (eolCharCount <= 0) {
+                throw new IOException("Failed reading http headers: " +
+                    new String(lineBytes));
             }
-            String line = HttpConstants.getString(lineBytes, 0, lineBytes.length - 2);
             // Save the bytes read.
             baos.write(lineBytes);
-            if ((lineBytes.length - 2) <= 0) {
+            if ((lineBytes.length - eolCharCount) <= 0) {
                 // We've finished reading the http header.
                 break;
             }
@@ -192,13 +204,18 @@ public class ARCRecord extends InputStream implements ARCConstants {
     }
     
     /**
-     * @return True if line has '\r\n' on the end.
+     * @return Count of end-of-line characters or zero if none.
      */
-    private boolean isCrNl (byte [] bytes) {
-        return (bytes != null &&
-            bytes.length >= 2 &&
-            bytes[bytes.length - 1] == '\n' &&
-            bytes[bytes.length -2] == '\r');
+    private int getEolCharsCount(byte [] bytes) {
+        int count = 0;
+        if (bytes != null && bytes.length >=1 &&
+                bytes[bytes.length - 1] == '\n') {
+            count++;
+            if (bytes.length >=2 && bytes[bytes.length -2] == '\r') {
+                count++;
+            }
+        }
+        return count;
     }
     
     public boolean markSupported() {
@@ -234,46 +251,51 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * @throws IOException
      */
     public int read() throws IOException {
-        // If http header, return bytes from it before we go to underlying
-        // stream.
-        if (this.httpHeaderStream != null &&
-                this.httpHeaderStream.available() > 0) {
-            return this.httpHeaderStream.read();
-        }
-        
         int c = -1;
-        if (available() > 0) {
-            c = this.in.read();
-            if (c == -1) {
-                throw new IOException("Premature EOF before end-of-record.");
+        if (this.httpHeaderStream != null &&
+                (this.httpHeaderStream.available() > 0)) {
+            // If http header, return bytes from it before we go to underlying
+            // stream.
+            c = this.httpHeaderStream.read();
+        } else {
+            if (available() > 0) {
+                c = this.in.read();
+                if (c == -1) {
+                    throw new IOException("Premature EOF before end-of-record.");
+                }
+                this.digest.update((byte)c);
             }
-            this.digest.update((byte)c);
-            this.position++;
         }
-
+        this.position++;
         return c;
     }
 
     public int read(byte [] b, int offset, int length) throws IOException {
-        // If http header, return bytes from it before we go to underlying
-        // stream.
+        int read = -1;
         if (this.httpHeaderStream != null &&
-                this.httpHeaderStream.available() > 0) {
-            int read = Math.min(length - offset, available());
-            return this.httpHeaderStream.read(b, offset, read);
-        }
-        
-        int read = Math.min(length - offset, available());
-        if (read == 0) {
-            read = -1;
-        } else {
-            read = this.in.read(b, offset, read);
-            if (read == -1) {
-                throw new IOException("Premature EOF before end-of-record.");
+                (this.httpHeaderStream.available() > 0)) {
+            // If http header, return bytes from it before we go to underlying
+            // stream.
+            read = Math.min(length - offset,
+                this.httpHeaderStream.available());
+            if (read == 0) {
+                read = -1;
+            } else {
+                read = this.httpHeaderStream.read(b, offset, read);
             }
-            this.digest.update(b, offset, read);
-            this.position += read;
+        } else {
+            read = Math.min(length - offset, available());
+            if (read == 0) {
+                read = -1;
+            } else {
+                read = this.in.read(b, offset, read);
+                if (read == -1) {
+                    throw new IOException("Premature EOF before end-of-record.");
+                }
+                this.digest.update(b, offset, read);
+            }
         }
+        this.position += read;
         return read;
     }
 
