@@ -911,6 +911,19 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
+     * Get the one-line Frontier report.
+     * 
+     * @return
+     */
+    public String getFrontierOneLine() {
+        if (controller == null || controller.getFrontier() == null) {
+            return "Crawler not running";
+        } else {
+            return controller.getFrontier().oneLineReport();
+        }
+    }
+    
+    /**
      * Returns the Frontier report for the running crawl. If no crawl is running
      * a message to that effect will be returned instead.
      *
@@ -924,6 +937,18 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
     }
 
+    /**
+     * Get the one-line threads report.
+     * 
+     * @return
+     */
+    public String getThreadOneLine() {
+        if (controller == null) {
+            return "Crawler not running";
+        } else {
+            return controller.oneLineReportThreads();
+        }
+    }
     /**
      * Get the CrawlControllers ToeThreads report for the running crawl. If no
      * crawl is running a message to that effect will be returned instead.

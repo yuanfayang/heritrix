@@ -1033,6 +1033,13 @@ public class CrawlController implements Serializable {
         return toePool.getToeCount();
     }
 
+	/**
+	 * @return toepool one-line report
+	 */
+	public String oneLineReportThreads() {
+		// TODO Auto-generated method stub
+		return toePool.oneLineReport();
+	}
     /**
      * @return Compiles and returns a human readable report on the
      * ToeThreads in it's ToePool.
@@ -1316,5 +1323,4 @@ public class CrawlController implements Serializable {
             System.gc();
         }
     }
-
 }

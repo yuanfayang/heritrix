@@ -1519,6 +1519,22 @@ public class Frontier
         return numberOfDeletes;
     }
 
+    
+    /**
+     * One-line summary report, useful for display when full report
+     * may be unwieldy. 
+     * 
+     * @return
+     */
+    public String oneLineReport() {
+    	StringBuffer rep = new StringBuffer();
+    	rep.append(allClassQueuesMap.size()+" queues: ");
+    	rep.append(readyClassQueues.size()+" ready, ");
+    	rep.append(snoozeQueues.size()+" snoozed, ");
+    	rep.append(inactiveClassQueues.size()+" inactive");    	
+    	return rep.toString();
+    }
+    
     /**
      * This method compiles a human readable report on the status of the frontier
      * at the time of the call.

@@ -70,8 +70,10 @@
 <p>
 <b>Internal reports on ongoing crawl</b><br>
 <ul>
-	<li><a href="/admin/reports/frontier.jsp">Frontier report</a>
-	<li><a href="/admin/reports/threads.jsp">Thread report</a>
+	<li><a href="/admin/reports/frontier.jsp">Frontier report</a><br>
+	    <tt><%= handler.getFrontierOneLine() %></tt>
+	<li><a href="/admin/reports/threads.jsp">Thread report</a><br>
+	    <tt><%= handler.getThreadOneLine() %></tt>
 	<li><a href="/admin/reports/processors.jsp">Processors report</a>
 <ul>
 <% } %>

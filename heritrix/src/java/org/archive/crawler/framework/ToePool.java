@@ -27,9 +27,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.archive.crawler.event.CrawlStatusAdapter;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.Histotable;
 
 /**
  * A collection of ToeThreads. The class manages the ToeThreads currently
@@ -144,6 +146,36 @@ public class ToePool extends CrawlStatusAdapter {
         this.controller = null;
     }
 
+    
+    /**
+     * One-line summary report, useful for display before drilling
+     * into full report.
+     * 
+     * @return
+     */
+    public String oneLineReport() {
+    	StringBuffer rep = new StringBuffer();
+    	Histotable ht = new Histotable();
+        for (int i = 0; i < this.toes.size(); i++) {
+            ToeThread tt = (ToeThread)this.toes.get(i);
+            if(tt!=null) {
+                ht.tally(tt.getStep());
+            }
+        }
+        TreeSet sorted = ht.getSorted();
+        rep.append(this.toes.size()+" threads: ");        
+        rep.append(Histotable.entryString(sorted.first()));
+        if(sorted.size()>1) {
+        	Iterator iter = sorted.iterator();
+        	iter.next();
+            rep.append("; "+Histotable.entryString(iter.next()));
+        }
+        if(sorted.size()>2) {
+        	rep.append("; etc...");
+        }
+    	return rep.toString();
+    }
+    
     /**
      * Get ToeThreads internal status report. Presented in human readable form.
      *

@@ -321,6 +321,13 @@ public interface URIFrontier {
      */
     public long totalBytesWritten();
 
+	/**
+	 * Compile a one-line summary report about this frontier. 
+	 * 
+	 * @return A one-line report of this frontier's status.
+	 */
+	public String oneLineReport();
+	
     /**
      * This methods compiles a human readable report on the status of the
      * frontier at the time of the call.
@@ -448,4 +455,6 @@ public interface URIFrontier {
      * info that may have changed in external files.
      */
     public void kickUpdate();
+
+
 }
