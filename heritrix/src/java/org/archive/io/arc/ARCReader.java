@@ -201,7 +201,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 		}
         if (this.in.markSupported()) {
             try {
-                ((Position)this.in).setPosition(0);
+                ((Position)this.in).seek(0);
             }
             catch (IOException e) {
                 throw new RuntimeException(e.getClass().getName() + ": " +
@@ -219,7 +219,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 	 */
 	public ARCRecord get(long offset) throws IOException {
         cleanupCurrentRecord();
-        ((Position)this.in).setPosition(offset);
+        ((Position)this.in).seek(offset);
         // Calling next looks weird but under the wraps it does the right thing.
         return (ARCRecord)next();
     }
@@ -303,7 +303,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         }
 
         try {
-			return createARCRecord(this.in, ((Position)this.in).getPosition());
+			return createARCRecord(this.in, ((Position)this.in).getFilePointer());
 		} catch (IOException e) {
 			throw new NoSuchElementException(e.getClass() + ": " +
                 e.getMessage());

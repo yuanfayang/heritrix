@@ -140,7 +140,7 @@ public class GZIPMemberInputStream extends MappedByteBufferInputStream
                     // Its a GZIP header and we're not supposed to
                     // let it out. Return a -1 signifying end of GZIP
                     // member and move back behind the character we just read.
-                    setPosition(getPosition() - 1);
+                    seek(getFilePointer() - 1);
                     c = -1;
                 } else {
                     // It is a GZIP header but we are supposed to let it out.
@@ -166,7 +166,7 @@ public class GZIPMemberInputStream extends MappedByteBufferInputStream
                             // let it out. Return a -1 signifying end of GZIP
                             // member and move back behind the character we just
                             // read.
-                            setPosition(getPosition() - read + i);
+                            seek(getFilePointer() - read + i);
                             read = i;
                             b[i + off] = -1;
                         } else {
@@ -181,7 +181,7 @@ public class GZIPMemberInputStream extends MappedByteBufferInputStream
                     // This is an awkward situation.  Take the simple out for
                     // the moment.  Roll the buffer back to just before the
                     // GZIPInputStream header and let that out.
-                    setPosition(getPosition() - read + i);
+                    seek(getFilePointer() - read + i);
                     read = i;
                     break;
                 }
@@ -212,12 +212,12 @@ public class GZIPMemberInputStream extends MappedByteBufferInputStream
 
         // Read the next candidate header bytes.
         byte [] header = new byte[READ];
-        long position = getPosition();
+        long position = getFilePointer();
         // Call the super block read so skip over the checking that is in our
         // locally implemented version.
         super.read(header, 0, header.length);
         // Reset underlying stream.
-        setPosition(position);
+        seek(position);
         gzipHeader = testGZIPHeader(header, 0);
         return gzipHeader;
     }

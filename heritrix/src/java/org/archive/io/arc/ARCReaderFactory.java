@@ -188,7 +188,7 @@ public class ARCReaderFactory implements ARCConstants {
 			// to here.
             this.in = new MappedByteBufferInputStream(initialize(arcfile));
 			// Read in the arcfile header.
-            createARCRecord(this.in, ((Position)this.in).getPosition());
+            createARCRecord(this.in, ((Position)this.in).getFilePointer());
 		}
 	}
 	
@@ -208,7 +208,7 @@ public class ARCReaderFactory implements ARCConstants {
 			// to here.
 			this.in = new GZIPMemberInputStream(initialize(arcfile));
             // Read in arcfile header record.
-            createARCRecord(this.in, ((Position)this.in).getPosition());
+            createARCRecord(this.in, ((Position)this.in).getFilePointer());
 		}
         
         /**
@@ -241,7 +241,7 @@ public class ARCReaderFactory implements ARCConstants {
 
             try {
                 return createARCRecord(this.in,
-                    ((Position)this.in).getPosition());
+                    ((Position)this.in).getFilePointer());
             } catch (IOException e) {
                 throw new NoSuchElementException(e.getClass() + ": " +
                     e.getMessage());

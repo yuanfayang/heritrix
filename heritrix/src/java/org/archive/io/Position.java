@@ -36,11 +36,11 @@ public interface Position {
     * @return Position in stream (or whatever).
     * @throws IOException
     */ 
-    public long getPosition() throws IOException;
+    public long getFilePointer() throws IOException;
     
     /**
      * @param position at which to position underlying stream.
      * @throws IOException
      */
-    public void setPosition(long position) throws IOException;
+    public void seek(long position) throws IOException;
 }

@@ -32,7 +32,7 @@ import java.nio.MappedByteBuffer;
  * An inputstream perspective on a MappedByteBuffer.
  * 
  * This class is effectively a random access input stream.  Used
- * {@link #getPosition()} to get current location and then mark and reset to
+ * {@link #getFilePointer()} to get current location and then mark and reset to
  * move about in the stream.
  * 
  * @author stack
@@ -125,11 +125,11 @@ public class MappedByteBufferInputStream extends InputStream
 		return this.mbb.remaining();
 	}
 	
-	public long getPosition() throws IOException {
+	public long getFilePointer() throws IOException {
 		return this.mbb.position();
 	}
 	
-	public void setPosition(long position) throws IOException {
+	public void seek(long position) throws IOException {
         assert position < Integer.MAX_VALUE: "Position too big for int.";
 		this.mbb.position((int)position);
 	}

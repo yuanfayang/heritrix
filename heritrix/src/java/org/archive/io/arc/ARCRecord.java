@@ -127,7 +127,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     public void close() throws IOException {
         if (this.in != null) {
-        	    skip();
+            skip();
             this.in = null;
         }
     }
