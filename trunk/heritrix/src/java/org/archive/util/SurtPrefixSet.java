@@ -32,6 +32,9 @@ import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.archive.util.iterator.LineReadingIterator;
+import org.archive.util.iterator.RegexpLineIterator;
+
 /**
  * Specialized TreeSet for keeping a set of String prefixes. 
  * 
@@ -41,6 +44,7 @@ import java.util.TreeSet;
  * @author gojomo
  */
 public class SurtPrefixSet extends TreeSet {
+    private static final String SURT_PREFIX_DIRECTIVE = "+";
 
     /**
      * Test whether the given String is prefixed by one
@@ -90,12 +94,12 @@ public class SurtPrefixSet extends TreeSet {
         BufferedReader reader = new BufferedReader(r);
         String s;
         
-        LineReadingIterator iter = 
-            new LineReadingIterator(
-                    reader,
-                    LineReadingIterator.COMMENT_LINE,
-                    LineReadingIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT,
-                    LineReadingIterator.ENTRY);
+        Iterator iter = 
+            new RegexpLineIterator(
+                    new LineReadingIterator(reader),
+                    RegexpLineIterator.COMMENT_LINE,
+                    RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT,
+                    RegexpLineIterator.ENTRY);
 
         while (iter.hasNext()) {
             s = (String) iter.next();
@@ -110,28 +114,81 @@ public class SurtPrefixSet extends TreeSet {
         BufferedReader reader = new BufferedReader(r);
         String s;
         
-        LineReadingIterator iter = 
-            new LineReadingIterator(
-                    reader,
-                    LineReadingIterator.COMMENT_LINE,
-                    LineReadingIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT,
-                    LineReadingIterator.ENTRY);
+        Iterator iter = 
+            new RegexpLineIterator(
+                    new LineReadingIterator(reader),
+                    RegexpLineIterator.COMMENT_LINE,
+                    RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT,
+                    RegexpLineIterator.ENTRY);
 
         while (iter.hasNext()) {
             s = (String) iter.next();
             // s is a URI (or even fragmentary hostname), not a SURT
-            if(s.indexOf(':') == -1 || s.indexOf('.') < s.indexOf(':')) {
-                // No scheme present; prepend "http://"
-                s = "http://" + s;
-            } else if (s.startsWith("https://")) {
-                s = "http" + s.substring("https".length());
-            }
-            // convert to full SURT
-            s = SURT.fromURI(s);
-            // truncate to implied prefix
-            s = SurtPrefixSet.asPrefix(s);
-            add(s);
+            deduceFromPlain(s);
         }
+    }
+
+    /**
+     * Import SURT prefixes from a file with mixed URI and SURT prefix
+     * format. 
+     * 
+     * @param fr
+     * @param deduceFromSeeds
+     */
+    public void importFromMixed(Reader r, boolean deduceFromSeeds) {
+        BufferedReader reader = new BufferedReader(r);
+        String s;
+        
+        Iterator iter = 
+            new RegexpLineIterator(
+                    new LineReadingIterator(reader),
+                    RegexpLineIterator.COMMENT_LINE,
+                    RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT,
+                    RegexpLineIterator.ENTRY);
+
+        while (iter.hasNext()) {
+            s = (String) iter.next();
+            if(s.startsWith(SURT_PREFIX_DIRECTIVE)) {
+                // it's specifically a SURT prefix line
+                String u = s.substring(SURT_PREFIX_DIRECTIVE.length()).trim();
+                if(u.contains("(")) {
+                    // formal SURT prefix
+                    add(u);
+                } else {
+                    // hostname/normal form URI from which 
+                    // to deduce SURT prefix
+                    deduceFromPlain(u);
+                }
+                
+                continue; 
+            } else {
+                if(deduceFromSeeds) {
+                    // also deducing 'implied' SURT prefixes 
+                    // from normal URIs/hostname seeds
+                    deduceFromPlain(s);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Given a plain URI or hostname, deduce an implied SURT prefix from
+     * it and add to active prefixes. 
+     * 
+     * @param u String of URI or hostname
+     */
+    private void deduceFromPlain(String u) {
+        if(u.indexOf(':') == -1 || u.indexOf('.') < u.indexOf(':')) {
+            // No scheme present; prepend "http://"
+            u = "http://" + u;
+        } else if (u.startsWith("https://")) {
+            u = "http" + u.substring("https".length());
+        }
+        // convert to full SURT
+        u = SURT.fromURI(u);
+        // truncate to implied prefix
+        u = SurtPrefixSet.asPrefix(u);
+        add(u);
     }
 
     /**
@@ -176,4 +233,6 @@ public class SurtPrefixSet extends TreeSet {
             fw.write((String)iter.next() + "\n");
         }
     }
+
+
 }

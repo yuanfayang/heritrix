@@ -29,6 +29,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.util.SurtPrefixSet;
@@ -80,6 +81,15 @@ public class SurtPrefixScope extends RefinedScope {
 
     }
 
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.CrawlScope#initialize(org.archive.crawler.framework.CrawlController)
+     */
+    public void initialize(CrawlController controller) {
+        super.initialize(controller);
+        readPrefixes();
+    }
+    
     /**
      * Check if a URI is part of this scope.
      * 
@@ -132,20 +142,20 @@ public class SurtPrefixScope extends RefinedScope {
         }
         
         // interpret seeds as surts, if appropriate
-        if (((Boolean) getUncheckedAttribute(null, ATTR_SEEDS_AS_SURT_PREFIXES))
-                .booleanValue()) {
+        boolean deduceFromSeeds = 
+            ((Boolean) getUncheckedAttribute(null, ATTR_SEEDS_AS_SURT_PREFIXES))
+            .booleanValue();
+        try {
+            fr = new FileReader(getSeedfile());
             try {
-                fr = new FileReader(getSeedfile());
-                try {
-                    surtPrefixes.importFromUris(fr);
-                } finally {
-                    fr.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
+                surtPrefixes.importFromMixed(fr,deduceFromSeeds);
+            } finally {
+                fr.close();
             }
-        }      
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }  
 
         // dump surts to file, if appropriate
         String dumpPath = (String) getUncheckedAttribute(null,
