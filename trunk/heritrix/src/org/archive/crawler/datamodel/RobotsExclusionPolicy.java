@@ -101,6 +101,8 @@ public class RobotsExclusionPolicy {
 		if (catchall!=null) {
 			userAgents.addLast(catchall);
 		}
+		
+		if(disallows.isEmpty()) return ALLOWALL;
 		return new RobotsExclusionPolicy(userAgents, disallows, hasErrors, honoringPolicy);
 	}
 	
