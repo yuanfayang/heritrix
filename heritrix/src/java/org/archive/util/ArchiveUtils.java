@@ -53,7 +53,13 @@ public class ArchiveUtils {
      * Arc-style date stamp in the format yyyyMMddHHmmssSSS and UTC time zone.
      */
     public static final SimpleDateFormat TIMESTAMP17;
+    
+    /**
+     * Default character to use padding strings.
+     */
+    private static final char DEFAULT_PAD_CHAR = ' ';
 
+    
     // Initialize fomatters with pattern and time zone
     static {
         TimeZone TZ = TimeZone.getTimeZone("GMT");
@@ -173,7 +179,8 @@ public class ArchiveUtils {
         return TIMESTAMP12.parse(date);
     }
 
-    /** Convert an <code>int</code> to a <code>String</code>, and pad it to
+    /** 
+     * Convert an <code>int</code> to a <code>String</code>, and pad it to
      * <code>pad</code> spaces.
      * @param i the int
      * @param pad the width to pad to.
@@ -181,10 +188,11 @@ public class ArchiveUtils {
      */
     public static String padTo(final int i, final int pad) {
         String n = Integer.toString(i);
-        return padTo(n,pad);
+        return padTo(n, pad);
     }
-
-    /** Pad the given <code>String</code> to <code>pad</code> characters wide
+    
+    /** 
+     * Pad the given <code>String</code> to <code>pad</code> characters wide
      * by pre-pending spaces.  <code>s</code> should not be <code>null</code>.
      * If <code>s</code> is already wider than <code>pad</code> no change is
      * done.
@@ -194,14 +202,35 @@ public class ArchiveUtils {
      * @return String w/ padding.
      */
     public static String padTo(final String s, final int pad) {
+        return padTo(s, pad, DEFAULT_PAD_CHAR);
+    }
+
+    /** 
+     * Pad the given <code>String</code> to <code>pad</code> characters wide
+     * by pre-pending <code>padChar</code>.
+     * 
+     * <code>s</code> should not be <code>null</code>. If <code>s</code> is
+     * already wider than <code>pad</code> no change is done.
+     *
+     * @param s the String to pad
+     * @param pad the width to pad to.
+     * @param padChar The pad character to use.
+     * @return String w/ padding.
+     */
+    public static String padTo(final String s, final int pad,
+            final char padChar) {
+        String result = s;
         int l = s.length();
-        StringBuffer sb = new StringBuffer();
-        while(l<pad) {
-            sb.append(" ");
-            l++;
+        if (l < pad) {
+            StringBuffer sb = new StringBuffer(pad);
+            while(l < pad) {
+                sb.append(padChar);
+                l++;
+            }
+            sb.append(s);
+            result = sb.toString();
         }
-        sb.append(s);
-        return sb.toString();
+        return result;
     }
 
     /** check that two byte arrays are equal.  They may be <code>null</code>.
