@@ -33,7 +33,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.admin.CrawlJob;
-import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.ListType;
