@@ -188,8 +188,12 @@ public class ToeThread extends Thread
 	 */
 	private void seriousError(Error err) {
 	    // try to prevent timeslicing until we have a chance to deal with OOM
+        // TODO: recognize that new JVM priority indifference may make this
+        // priority-jumbling pointless
         setPriority(DEFAULT_PRIORITY+1);  
         if (controller!=null) {
+            // TODO: consider if SoftReferences would be a better way to 
+            // engineer a soft-landing for low-memory conditions
             controller.freeReserveMemory();
             // actually hold all ToeThreads
             controller.lockMemory();
