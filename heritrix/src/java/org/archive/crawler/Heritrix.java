@@ -31,6 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.util.Date;
@@ -139,7 +140,7 @@ public class Heritrix
     /**
      * CrawlJob handler. Manages multiple crawl jobs at runtime.
      */
-    protected static CrawlJobHandler jobHandler;
+    protected static CrawlJobHandler jobHandler = null;
 
     /**
      * Heritrix start log file.
@@ -175,7 +176,7 @@ public class Heritrix
     public static void main(String[] args)
         throws Exception
     {
-        out = new PrintWriter(new FileOutputStream(new File(STARTLOG)));
+        out = getOut();
         
         try
         {
@@ -199,7 +200,19 @@ public class Heritrix
         }
     }
     
-    private static void initialize()
+    /**
+     * If in development we print on System.out else to STARTLOG.
+     * 
+     * @return Printwriter to use.
+     */
+	private static PrintWriter getOut() throws FileNotFoundException
+    {
+        return new PrintWriter(isDevelopment()?
+             System.out: 
+             new PrintStream(new FileOutputStream(new File(STARTLOG))));
+	}
+
+	private static void initialize()
         throws IOException
     {
         String home = System.getProperty(HOME_KEY);
