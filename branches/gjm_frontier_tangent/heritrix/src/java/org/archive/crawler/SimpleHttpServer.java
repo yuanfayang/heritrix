@@ -116,7 +116,7 @@ public class SimpleHttpServer
     /**
      * Stop the running server.
      *
-     * @throws InterruptedException
+     * @throws Exception
      */
     public synchronized void stopServer() throws InterruptedException
     {

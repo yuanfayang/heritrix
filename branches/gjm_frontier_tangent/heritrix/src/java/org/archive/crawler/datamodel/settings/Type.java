@@ -44,7 +44,7 @@ public abstract class Type extends Attribute {
      * @param value
      */
     public Type(String name, Object value) {
-        super(name, value);
+        super(name.intern(), value);
     }
 
     /** Get the description of this type

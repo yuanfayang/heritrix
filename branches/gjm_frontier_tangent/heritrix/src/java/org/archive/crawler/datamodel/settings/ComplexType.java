@@ -93,7 +93,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      */
     public ComplexType(String name, String description) {
         super(name, null);
-        this.description = description;
+        this.description = description.intern();
     }
 
     protected void setAsOrder(SettingsHandler settingsHandler)
@@ -289,7 +289,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     private void setupVariables(ComplexType object) {
         object.parent = this;
         object.settingsHandler = getSettingsHandler();
-        object.absoluteName = getAbsoluteName() + '/' + object.getName();
+        object.absoluteName =
+            (getAbsoluteName() + '/' + object.getName()).intern();
     }
 
     public SettingsHandler getSettingsHandler() {

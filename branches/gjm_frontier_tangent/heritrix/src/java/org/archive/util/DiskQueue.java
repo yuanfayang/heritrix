@@ -200,6 +200,14 @@ public class DiskQueue implements Queue, Savable {
     }
 
     /* (non-Javadoc)
+     * @see org.archive.util.Queue#peek()
+     */
+    public Object peek() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
@@ -223,28 +231,24 @@ public class DiskQueue implements Queue, Savable {
     /* (non-Javadoc)
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
-    public void deleteMatchedItems(QueueItemMatcher matcher) {
+    public long deleteMatchedItems(QueueItemMatcher matcher) {
         // While not processed as many items as there currently are in the queue
         //  dequeue item
         //  if it does not match, requeue it.
         //  else discard it
         // end loop
         long itemsInQueue = length();
+        long numberOfDeletes = 0;
         for ( int i = 0 ; i < itemsInQueue ; i++ ){
             Object o = dequeue();
             if(matcher.match(o)==false){
                 // Not supposed to delete this one, put it back
                 enqueue(o);
+            } else {
+                numberOfDeletes++;
             }
         }
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.util.Queue#peek()
-     */
-    public Object peek() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return numberOfDeletes;
     }
 
 }

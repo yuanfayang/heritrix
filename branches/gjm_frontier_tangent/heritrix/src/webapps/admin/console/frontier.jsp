@@ -58,6 +58,11 @@
 	            document.frmFrontierList.submit();
 	        }
         }
+        function checkForEnter(e){
+			if(e.keyCode == 13){ //13 ascii == enter key
+                doDisplayInitial();
+			}
+        }
     </script>
     <form name="frmFrontierList" method="POST" action="frontier.jsp">
     <input type="hidden" name="action" value="">
@@ -67,7 +72,7 @@
                 Regular expression:
             </td>
             <td colspan="3">
-                <input name="match" size="33" value="<%=regexpr%>">
+                <input name="match" size="33" value="<%=regexpr%>" onKeyPress="checkForEnter(event)">
             </td>
             <td nowrap>
                 &nbsp;<a href="/admin/help/regexpr.jsp">?</a>&nbsp;&nbsp;
@@ -83,7 +88,7 @@
                 Display matches:
             </td>
             <td colspan="4">
-                <input name="numberOfMatches" size="6" value="<%=numberOfMatches%>">
+                <input name="numberOfMatches" size="6" value="<%=numberOfMatches%>" onKeyPress="checkForEnter(event)">
             </td>
         </tr>
         <tr>
@@ -130,9 +135,9 @@
 	                   regexpr = marker.getMatchExpression();
 	                } else if(action.equals("delete")){
 	                   // Delete based on regexpr.
-	                   handler.deleteURIsFromPending(regexpr);
+	                   long numberOfDeletes = handler.deleteURIsFromPending(regexpr);
                        out.println("<tr><td height='5'></td></tr>");
-	                   out.println("<tr><td colspan='7'><b>All URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
+	                   out.println("<tr><td colspan='7'><b>All " + numberOfDeletes + " URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
                        out.println("<tr><td height='5'></td></tr>");
 	                }
 	                

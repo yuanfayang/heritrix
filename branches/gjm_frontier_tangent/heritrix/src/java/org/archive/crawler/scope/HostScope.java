@@ -24,7 +24,6 @@
 package org.archive.crawler.scope;
 
 import java.util.Iterator;
-import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
@@ -66,8 +65,7 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class HostScope extends CrawlScope {
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.basic.HostScope");
+
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
 
     Filter transitiveFilter;
@@ -80,7 +78,7 @@ public class HostScope extends CrawlScope {
             "'archive.org' the subdomain 'crawler.archive.org' will not " +
             "be crawled. www.host is considered to be the same as host.");
 
-        transitiveFilter = (Filter) addElementToDefinition(
+        this.transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
     }
 
@@ -89,10 +87,10 @@ public class HostScope extends CrawlScope {
      * @return True if transitive filter accepts passed object.
      */
     protected boolean transitiveAccepts(Object o) {
-        if (transitiveFilter == null) {
+        if (this.transitiveFilter == null) {
             return true;
         }
-        return transitiveFilter.accepts(o);
+        return this.transitiveFilter.accepts(o);
     }
 
     /**
@@ -112,8 +110,7 @@ public class HostScope extends CrawlScope {
         Iterator iter = getSeedsIterator();
         while (iter.hasNext()) {
             UURI s = (UURI) iter.next();
-            if (s.getHost().equals(u.getHost())) {
-                // hosts match
+            if (isSameHost(s, u)) {
                 return true;
             }
         }

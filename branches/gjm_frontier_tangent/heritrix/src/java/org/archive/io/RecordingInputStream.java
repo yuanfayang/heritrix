@@ -65,23 +65,24 @@ public class RecordingInputStream
      */
     public RecordingInputStream(int bufferSize, String backingFilename)
     {
-        recordingOutputStream = new RecordingOutputStream(bufferSize,
+        this.recordingOutputStream = new RecordingOutputStream(bufferSize,
             backingFilename);
     }
 
     public void open(InputStream wrappedStream) throws IOException {
         assert this.in == null;
         this.in = wrappedStream;
-        recordingOutputStream.open();
+        this.recordingOutputStream.open();
     }
 
     /* (non-Javadoc)
      * @see java.io.InputStream#read()
      */
     public int read() throws IOException {
+        assert this.in != null: "Inputstream is null.";
         int b = this.in.read();
         if (b != -1) {
-            recordingOutputStream.write(b);
+            this.recordingOutputStream.write(b);
         }
         return b;
     }
@@ -90,9 +91,10 @@ public class RecordingInputStream
      * @see java.io.InputStream#read(byte[], int, int)
      */
     public int read(byte[] b, int off, int len) throws IOException {
+        assert this.in != null: "Inputstream is null.";
         int count = this.in.read(b,off,len);
         if (count > 0) {
-            recordingOutputStream.write(b,off,count);
+            this.recordingOutputStream.write(b,off,count);
         }
         return count;
     }
@@ -101,9 +103,10 @@ public class RecordingInputStream
      * @see java.io.InputStream#read(byte[])
      */
     public int read(byte[] b) throws IOException {
+        assert this.in != null: "Inputstream is null.";
         int count = this.in.read(b);
         if (count > 0) {
-            recordingOutputStream.write(b,0,count);
+            this.recordingOutputStream.write(b,0,count);
         }
         return count;
     }
@@ -117,22 +120,23 @@ public class RecordingInputStream
             this.in.close();
             this.in = null;
         }
-        recordingOutputStream.close();
+        this.recordingOutputStream.close();
     }
 
     public ReplayInputStream getReplayInputStream() throws IOException {
-        return recordingOutputStream.getReplayInputStream();
+        return this.recordingOutputStream.getReplayInputStream();
     }
 
     public ReplayInputStream getContentReplayInputStream() throws IOException {
-        return recordingOutputStream.getContentReplayInputStream();
+        return this.recordingOutputStream.getContentReplayInputStream();
     }
 
     public long readFully() throws IOException {
         byte[] buf = new byte[4096];
-        while(read(buf)!=-1) {
+        while(read(buf) != -1) {
+            // Empty out the stream.
         }
-        return recordingOutputStream.getSize();
+        return this.recordingOutputStream.getSize();
     }
 
     /**
@@ -192,22 +196,22 @@ public class RecordingInputStream
     }
 
     public long getSize() {
-        return recordingOutputStream.getSize();
+        return this.recordingOutputStream.getSize();
     }
 
     public void markContentBegin() {
-        recordingOutputStream.markContentBegin();
+        this.recordingOutputStream.markContentBegin();
     }
 
     public void startDigest() {
-        recordingOutputStream.startDigest();
+        this.recordingOutputStream.startDigest();
     }
 
     /**
      * Convenience method for setting SHA1 digest.
      */
     public void setSha1Digest() {
-        recordingOutputStream.setSha1Digest();
+        this.recordingOutputStream.setSha1Digest();
     }
 
     /**
@@ -219,7 +223,7 @@ public class RecordingInputStream
      * @param md
      */
     public void setDigest(MessageDigest md) {
-        recordingOutputStream.setDigest(md);
+        this.recordingOutputStream.setDigest(md);
     }
 
     /**
@@ -230,19 +234,19 @@ public class RecordingInputStream
      * @return the digest final value
      */
     public byte[] getDigestValue() {
-        return recordingOutputStream.getDigestValue();
+        return this.recordingOutputStream.getDigestValue();
     }
 
     public CharSequence getCharSequence() {
-        return recordingOutputStream.getReplayCharSequence();
+        return this.recordingOutputStream.getReplayCharSequence();
     }
 
     public long getResponseContentLength() {
-        return recordingOutputStream.getResponseContentLength();
+        return this.recordingOutputStream.getResponseContentLength();
     }
 
     public void closeRecorder() throws IOException {
-        recordingOutputStream.closeRecorder();
+        this.recordingOutputStream.closeRecorder();
     }
 
     /**

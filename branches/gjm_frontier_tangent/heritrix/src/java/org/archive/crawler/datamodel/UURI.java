@@ -48,7 +48,8 @@ public class UURI implements Serializable {
     // TODO: move this policy elsewhere
     private static int DEFAULT_MAX_URI_LENGTH = 2083;
 
-    private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.UURI");
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.datamodel.UURI");
 
     protected java.net.URI uri;
     protected String uriString;

@@ -61,6 +61,11 @@ public interface Queue {
      * release any OS/IO resources associated with Queue
      */
     void release();
+
+    /**
+     * @return
+     */
+    Object peek();
     
     /**
      * Returns an iterator for the queue.
@@ -85,11 +90,7 @@ public interface Queue {
      * Making other changes to the queue while this method is being 
      * processed is not safe. 
      * @param matcher a queue item matcher
+     * @return the number of deleted items
      */
-    void deleteMatchedItems(QueueItemMatcher matcher);
-
-    /**
-     * @return
-     */
-    Object peek();
+    long deleteMatchedItems(QueueItemMatcher matcher);
 }

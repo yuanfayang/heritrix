@@ -40,6 +40,9 @@ import org.archive.io.RecordingOutputStream;
  *
  * Initially only supports HTTP/1.0 (one request, one response per stream)
  *
+ * Call {@link #markContentBegin()} to demarc the transition between HTTP
+ * header and body.
+ * 
  * @author gojomo
  */
 public class HttpRecorder
@@ -66,8 +69,8 @@ public class HttpRecorder
     * Backing file input stream suffix.
     */
     private static final String RECORDING_INPUT_STREAM_SUFFIX = ".ris";
-
-
+    
+    
     /**
      * Create an HttpRecorder.
      *
@@ -181,7 +184,7 @@ public class HttpRecorder
      * Close both input and output recorders.
      *
      * Recorders are the output streams to which we are recording.
-     * {@link #close} closes the stream that is being recorded and the
+     * {@link #close()} closes the stream that is being recorded and the
      * recorder. This method explicitly closes the recorder only.
      */
     public void closeRecorders() {

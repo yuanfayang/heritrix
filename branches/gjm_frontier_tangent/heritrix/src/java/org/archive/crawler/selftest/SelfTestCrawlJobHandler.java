@@ -57,7 +57,7 @@ public class SelfTestCrawlJobHandler
 
     public SelfTestCrawlJobHandler()
     {
-        super();
+        super(false,false); //No need to load jobs or profiles
     }
 
     public void crawlEnded(String sExitMessage)

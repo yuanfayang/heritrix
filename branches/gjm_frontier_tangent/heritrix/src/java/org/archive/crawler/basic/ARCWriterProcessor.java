@@ -131,9 +131,16 @@ public class ARCWriterProcessor
 
     /**
      * Reference to an ARCWriter.
+     * 
+     * Gets set by synchronized {@link #_initialize()}.
      */
-    ARCWriterPool pool = null;
+    private ARCWriterPool pool = null;
 
+    /**
+     * Has this processor been initialized.
+     */
+    private boolean initialized = false;
+    
 
     /**
      * @param name
@@ -141,62 +148,72 @@ public class ARCWriterProcessor
     public ARCWriterProcessor(String name) {
         super(name, "ARCWriter processor");
         addElementToDefinition(
-            new SimpleType(
-                ATTR_COMPRESS,
-                "Compress arc files",
-                new Boolean(useCompression)));
+            new SimpleType(ATTR_COMPRESS, "Compress arc files",
+                new Boolean(this.useCompression)));
         addElementToDefinition(
-            new SimpleType(ATTR_PREFIX, "Prefix", arcPrefix));
+            new SimpleType(ATTR_PREFIX, "Prefix", this.arcPrefix));
         addElementToDefinition(
-            new SimpleType(
-                ATTR_MAX_SIZE_BYTES,
-                "Max size of arc file",
-                new Integer(arcMaxSize)));
+            new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of arc file",
+                new Integer(this.arcMaxSize)));
         addElementToDefinition(
             new SimpleType(ATTR_PATH, "Where to store arc files", ""));
         addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
             "Maximum active ARC writers in pool",
-            new Integer(poolMaximumActive)));
+            new Integer(this.poolMaximumActive)));
         addElementToDefinition(new SimpleType(ATTR_POOL_MAX_WAIT,
             "Maximum time to wait on ARC writer pool element (milliseconds)",
-            new Integer(poolMaximumWait)));
+            new Integer(this.poolMaximumWait)));
     }
 
-    private boolean initialized = false;
     public void initialize() {
-        if (!initialized) {
-            Logger logger = getSettingsHandler().getOrder().getController()
-                            .runtimeErrors;
-
-            // readConfiguration populates settings used creating ARCWriter.
-            try {
-                readConfiguration();
-            } catch (MBeanException e) {
-                logger.warning(e.getLocalizedMessage());
-            } catch (ReflectionException e) {
-                logger.warning(e.getLocalizedMessage());
-            } catch (AttributeNotFoundException e) {
-                logger.warning(e.getLocalizedMessage());
-            }
-
-            try {
-                // Set up the pool of ARCWriters.
-                this.pool =
-                    new ARCWriterPool(
-                        outputDir,
-                        this.arcPrefix,
-                        this.useCompression,
-                        poolMaximumActive,
-                        poolMaximumWait);
-            } catch (IOException e) {
-                logger.warning(e.getLocalizedMessage());
-            }
-            initialized = true;
+        
+        if (!this.initialized) {
+            _initialize();
         }
+    }
+    
+    private synchronized void _initialize() {
+        
+        // Recheck inside now we're inside the synchronized block to be sure.
+        // I've seen the case where two threads have seen the flag set to false
+        // and both have then proceeded to call into this method thereby
+        // setting up two instances of ARCWriterPool.
+        if (this.initialized) {
+            return;
+        }
+        
+        Logger logger = getSettingsHandler().getOrder().getController()
+            .runtimeErrors;
+
+        // ReadConfiguration populates settings used creating ARCWriter.
+        try {
+            readConfiguration();
+        } catch (MBeanException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (ReflectionException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (AttributeNotFoundException e) {
+            logger.warning(e.getLocalizedMessage());
+        }
+
+        try {
+            // Set up the pool of ARCWriters.
+            this.pool =
+                new ARCWriterPool(this.outputDir,
+                    this.arcPrefix,
+                    this.useCompression,
+                    this.poolMaximumActive,
+                    this.poolMaximumWait);
+            
+        } catch (IOException e) {
+            logger.warning(e.getLocalizedMessage());
+        }
+        this.initialized = true;
     }
 
     protected void readConfiguration()
         throws AttributeNotFoundException, MBeanException, ReflectionException {
+
         // set up output directory
         setUseCompression(
             ((Boolean) getAttribute(ATTR_COMPRESS)).booleanValue());
@@ -315,48 +332,48 @@ public class ARCWriterProcessor
 
         // Save the calculated contentSize for logging purposes
         // TODO handle this need more sensibly
-        curi.setContentSize((long)recordLength);
+        curi.setContentSize(recordLength);
     }
 
-    // getters and setters
+    // Getters and setters
     public int getArcMaxSize() {
-        return arcMaxSize;
+        return this.arcMaxSize;
     }
 
     public String getArcPrefix() {
-            return arcPrefix;
+        return this.arcPrefix;
     }
 
     public File getOutputDir() {
-        return outputDir;
+        return this.outputDir;
     }
 
     public void setArcMaxSize(int i) {
-        arcMaxSize = i;
+        this.arcMaxSize = i;
     }
 
     public void setArcPrefix(String buffer) {
-        arcPrefix = buffer;
+        this.arcPrefix = buffer;
     }
 
     public void setUseCompression(boolean use) {
-        useCompression = use;
+        this.useCompression = use;
     }
 
     public boolean useCompression() {
-        return useCompression;
+        return this.useCompression;
     }
 
     public void setOutputDir(String buffer) {
-        outputDir = new File(buffer);
-        if (!outputDir.isAbsolute()) {
+        this.outputDir = new File(buffer);
+        if (!this.outputDir.isAbsolute()) {
             // OutputDir should be relative to "disk"
-            outputDir = new File(getController().getDisk(), buffer);
+            this.outputDir = new File(getController().getDisk(), buffer);
         }
 
-        if (!outputDir.exists()) {
+        if (!this.outputDir.exists()) {
             try {
-                outputDir.mkdirs();
+                this.outputDir.mkdirs();
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -22,7 +22,9 @@
  */
 package org.archive.crawler.fetcher;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.logging.Logger;
@@ -68,7 +70,8 @@ public class FetchHTTP extends Processor
     public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
     public static final String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
     public static final String ATTR_MAX_FETCH_ATTEMPTS = "max-fetch-attempts";
-    public static final String ATTR_LOAD_COOKIES = "cookies-file";
+    public static final String ATTR_LOAD_COOKIES = "load-cookies-from-file";
+    public static final String ATTR_SAVE_COOKIES = "save-cookies-to-file";
 
     private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
@@ -136,6 +139,8 @@ public class FetchHTTP extends Processor
             "Max number of fetches to attempt", DEFAULT_MAX_FETCH_ATTEMPTS));
         addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
             "File to preload cookies from", ""));
+        addElementToDefinition(new SimpleType(ATTR_SAVE_COOKIES,
+            "When crawl finishes save cookies to this file", ""));
         addElementToDefinition(new SimpleType(ATTR_STRICT,
                 "Strict adherence to HTTP protocol.  At a minimum all cookies"
                 + " will be served on one line only",
@@ -160,8 +165,9 @@ public class FetchHTTP extends Processor
         // think it current.
         curi.setHttpRecorder(null);
         
+        initialize();     
         if (!canFetch(curi)) {
-            // cannot fetch this, due to protocol, retries, or other problems
+            // Cannot fetch this, due to protocol, retries, or other problems
             return;
         }
 
@@ -335,6 +341,10 @@ public class FetchHTTP extends Processor
             CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
             MultiHttpConnectionProvider connectionManager =
                 new MultiHttpConnectionProvider();
+            // We use the multithreaded connection manager because, at the
+            // least, cookies will be shared across clients.  It also seems
+            // SimpleConnectionManager is unsafe run in an environment running
+            // multiple instances (to be verified).
 //            MultiThreadedHttpConnectionManager connectionManager =
 //                new MultiThreadedHttpConnectionManager();
 //            // Ensure there will be as many http connections available as
@@ -348,6 +358,9 @@ public class FetchHTTP extends Processor
                 String trustLevel = (String)getAttribute(ATTR_TRUST);
                 Protocol.registerProtocol("https", new Protocol("https", 
                     new ConfigurableTrustManagerProtocolSocketFactory(trustLevel), 443));
+                Protocol.registerProtocol("https", new Protocol("https", 
+                  new ConfigurableTrustManagerProtocolSocketFactory(trustLevel),
+                  443));
             }
             
             catch (Exception e)
@@ -359,16 +372,8 @@ public class FetchHTTP extends Processor
             }
 
             // load cookies from a file if specified in the order file.
-            try {
-                loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));
-            } catch (MBeanException e) {
-                logger.warning(e.getLocalizedMessage());
-            } catch (ReflectionException e) {
-                logger.warning(e.getLocalizedMessage());
-            } catch (AttributeNotFoundException e) {
-                logger.warning(e.getLocalizedMessage());
-            }
-
+            loadCookies();
+            
             // Considered same as overall timeout, for now.
             // TODO: When HTTPClient stops using a monitor 'waitingThread'
             // thread to watch over the getting of the socket from socket
@@ -458,7 +463,7 @@ public class FetchHTTP extends Processor
      *
      * @param cookiesFile file in the Netscape's 'cookies.txt' format.
      */
-    private void loadCookies(String cookiesFile) {
+    public void loadCookies(String cookiesFile) {
         // Do nothing if cookiesFile is not specified.
         if (cookiesFile == null || cookiesFile.length() <= 0) {
             return;
@@ -476,14 +481,11 @@ public class FetchHTTP extends Processor
                     if (cookieParts.length == 7) {
                         // Create cookie with not expiration date (-1 value).
                         // TODO: add this as an option.
-                        cookie =
-                            new Cookie(
-                                cookieParts[0],
-                                cookieParts[5],
-                                cookieParts[6],
-                                cookieParts[2],
-                                -1,
-                                (new Boolean(cookieParts[3])).booleanValue());
+                        cookie = 
+                            new Cookie(cookieParts[0], cookieParts[5],
+                                cookieParts[6], cookieParts[2], -1,
+                                Boolean.valueOf(cookieParts[3]).booleanValue());
+                                
                         if (cookieParts[1].toLowerCase().equals("true")) {
                             cookie.setDomainAttributeSpecified(true);
                         } else {
@@ -497,12 +499,9 @@ public class FetchHTTP extends Processor
             }
         } catch (FileNotFoundException e) {
             // We should probably throw FatalConfigurationException.
-            System.out.println(
-                "Could not find file: "
-                    + cookiesFile
-                    + " (Element: "
-                    + ATTR_LOAD_COOKIES
-                    + ")");
+            System.out.println("Could not find file: " + cookiesFile
+                    + " (Element: " + ATTR_LOAD_COOKIES + ")");
+                    
         } catch (IOException e) {
             // We should probably throw FatalConfigurationException.
             e.printStackTrace();
@@ -530,4 +529,120 @@ public class FetchHTTP extends Processor
         return ret.toString();
     }
 
+    
+    /**
+     * Load cookies from the file specified in the order file.
+     * 
+     * <p> 
+     * The file is a text file in the Netscape's 'cookies.txt' file format.<br>
+     * Example entry of cookies.txt file:<br>
+     * <br>
+     * www.archive.org FALSE / FALSE 1074567117 details-visit texts-cralond<br>
+     * <br>
+     * Each line has 7 tab-separated fields:<br>
+     * <li>1. DOMAIN: The domain that created and have access to the cookie 
+     * value.
+     * <li>2. FLAG: A TRUE or FALSE value indicating if hosts within the given 
+     * domain can access the cookie value.
+     * <li>3. PATH: The path within the domain that the cookie value is valid 
+     * for.
+     * <li>4. SECURE: A TRUE or FALSE value indicating if to use a secure 
+     * connection to access the cookie value.
+     * <li>5. EXPIRATION: The expiration time of the cookie value (unix style.)
+     * <li>6. NAME: The name of the cookie value
+     * <li>7. VALUE: The cookie value
+     */
+    public void loadCookies() {
+        try {
+            loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));
+        } catch (MBeanException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (ReflectionException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (AttributeNotFoundException e) {
+            logger.warning(e.getLocalizedMessage());
+        }
+    }
+    /**
+     * Saves cookies to the file specified in the order file.
+     * 
+     * Output file is in the Netscape 'cookies.txt' format.
+     *
+     */
+    public void saveCookies() {
+        try {
+            saveCookies((String) getAttribute(ATTR_SAVE_COOKIES));
+        } catch (MBeanException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (ReflectionException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (AttributeNotFoundException e) {
+            logger.warning(e.getLocalizedMessage());
+        }
+    }
+    /**
+     * Saves cookies to a file.
+     * 
+     * Output file is in the Netscape 'cookies.txt' format.
+     * 
+     * @param saveCookiesFile output file.
+     */
+    public void saveCookies(String saveCookiesFile) {
+        // Do nothing if cookiesFile is not specified.
+        if (saveCookiesFile == null || saveCookiesFile.length() <= 0) {
+            return;
+        }
+        
+        FileOutputStream out = null;        
+        try {
+            out = new FileOutputStream(new File(saveCookiesFile));
+            Cookie cookies[] = http.getState().getCookies();
+            String tab ="\t";
+            out.write("# Heritrix Cookie File\n".getBytes());
+            out.write(
+                "# This file is the Netscape cookies.txt format\n\n".getBytes());
+            for (int i = 0; i < cookies.length; i++) {
+                StringBuffer line = new StringBuffer();
+                line.append(cookies[i].getDomain());
+                line.append(tab);
+                line.append(
+                    cookies[i].isDomainAttributeSpecified() == true
+                        ? "TRUE"
+                        : "FALSE");
+                line.append(tab);
+                line.append(cookies[i].getPath());
+                line.append(tab);
+                line.append(
+                    cookies[i].getSecure() == true ? "TRUE" : "FALSE");
+                line.append(tab);
+                line.append(cookies[i].getName());
+                line.append(tab);
+                line.append(cookies[i].getValue());
+                line.append("\n");
+                out.write(line.toString().getBytes());
+            }
+        } catch (FileNotFoundException e) {
+            // We should probably throw FatalConfigurationException.
+            System.out.println("Could not find file: " + saveCookiesFile
+                    + " (Element: " + ATTR_SAVE_COOKIES + ")");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    /**
+     * At the end save cookies to the file specified in the order file. 
+     *  
+     * @see org.archive.crawler.framework.Processor#finalTasks()
+     */
+    public void finalTasks() {
+        saveCookies();
+    }
 }

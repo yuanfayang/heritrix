@@ -24,8 +24,6 @@
 package org.archive.crawler.scope;
 
 import java.util.Iterator;
-import java.util.logging.Logger;
-
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.TransclusionFilter;
@@ -66,8 +64,7 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class DomainScope extends CrawlScope {
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.basic.DomainScope");
+
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
 
     Filter transitiveFilter;
@@ -80,7 +77,7 @@ public class DomainScope extends CrawlScope {
             "subdomains of the seeds' original domains. www[#].host is considered " +
             "to be the same as host.");
 
-        transitiveFilter = (Filter) addElementToDefinition(
+        this.transitiveFilter = (Filter) addElementToDefinition(
                 new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
     }
 
@@ -89,11 +86,11 @@ public class DomainScope extends CrawlScope {
      * @return True if transitive filter accepts passed object.
      */
     protected boolean transitiveAccepts(Object o) {
-        return transitiveFilter.accepts(o);
+        return this.transitiveFilter.accepts(o);
     }
 
     /**
-     * @param o
+     * @param o An instance of UURI or of CandidateURI.
      * @return True if focus filter accepts passed object.
      */
     protected boolean focusAccepts(Object o) {
@@ -107,14 +104,20 @@ public class DomainScope extends CrawlScope {
             return false;
         }
         Iterator iter = getSeedsIterator();
+        assert iter != null: "Iterator is null.";
         while (iter.hasNext()) {
             UURI s = (UURI) iter.next();
-            if (s.getHost().equals(u.getHost())) {
-                // hosts match
+            if(isSameHost(s, u)) {
                 return true;
             }
+
             // might be a close-enough match
             String seedDomain = s.getHost();
+            if (seedDomain == null) {
+                // getHost can come back null.  See
+                // "[ 910120 ] java.net.URI#getHost fails when leading digit"
+                continue;
+            }
             // strip www[#]
             seedDomain = seedDomain.replaceFirst("^www\\d*", "");
             String candidateDomain = u.getHost();
