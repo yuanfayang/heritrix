@@ -33,10 +33,9 @@ import java.util.Map;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 
-/**
+/** 
  * 
  * @author John Erik Halse
- *
  */
 public class DataContainer extends HashMap {
     private ComplexType complexType;
@@ -108,7 +107,7 @@ public class DataContainer extends HashMap {
         if (attrInfo == null) {
             throw new IllegalArgumentException("Name not defined: " + key);
         }
-        attrInfo.checkValue(value);
+        value = attrInfo.checkValue(value);
 
         MBeanAttributeInfo localAttribute = getAttributeInfo((String) key);
         if (localAttribute == null) {
