@@ -317,6 +317,17 @@
             </properties>
         </dependency>
         <dependency>
+            <id>poi-scratchpad</id>
+            <version>2.0-RC1-20031102</version>
+            <url>http://jakarta.apache.org/poi/</url>
+            <properties>
+                <description>For parsing PDFs.  Has the 
+                org.apache.poi.hdf.extractor.WordDocument.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+        <dependency>
             <id>javaswf</id>
             <version />
             <url>http://www.anotherbigidea.com/javaswf</url>
