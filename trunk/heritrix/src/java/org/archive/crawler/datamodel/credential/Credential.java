@@ -54,7 +54,6 @@ public abstract class Credential extends ModuleType {
      */
     public boolean equals(Object arg0)
     {
-        String x = CredentialDomain.xxx;
         return this.hashCode() == arg0.hashCode();
     }
 }
