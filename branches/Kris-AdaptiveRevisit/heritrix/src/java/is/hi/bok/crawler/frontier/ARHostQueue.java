@@ -27,10 +27,14 @@ import java.io.IOException;
 import org.archive.crawler.datamodel.CrawlURI;
 
 import com.sleepycat.bind.EntryBinding;
+import com.sleepycat.bind.serial.ClassCatalog;
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
+import com.sleepycat.bind.serial.TupleSerialKeyCreator;
 import com.sleepycat.bind.tuple.StringBinding;
 import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.bind.tuple.TupleInput;
+import com.sleepycat.bind.tuple.TupleOutput;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
@@ -41,12 +45,12 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.je.SecondaryDatabase;
-import com.sleepycat.je.SecondaryKeyCreator;
 
 /**
  * A priority based queue of CrawlURIs. Each queue should represent
  * one host (although this is not enforced in this class). Items are ordered
- * by the time of next processing and also indexed by the URI.
+ * by the scheduling directive and time of next processing (in that order) 
+ * and also indexed by the URI.
  * <p>
  * The HQ does no calculations on the 'time of next processing.' It always 
  * relies on values already set on the CrawlURI.
@@ -62,6 +66,9 @@ import com.sleepycat.je.SecondaryKeyCreator;
  * @author Kristinn Sigurdsson
  */
 public class ARHostQueue {
+    
+    // TODO: Need to be able to remove URIs, both by name and reg.expr.
+    
     // Constants declerations
     /** HQ contains no queued CrawlURIs elements. This state only occurs after 
      *  queue creation before the first add. After the first item is added the 
@@ -84,7 +91,8 @@ public class ARHostQueue {
      *  this value, never read it directly. */
     int state;
     /** Time (in milliseconds) when the HQ will next be ready to issue a URI
-     *  for processing. 
+     *  for processing. When setting this value, methods should use the 
+     *  setter method {@link #setNextReadyTime(long) setNextReadyTime()}
      */
     long nextReadyTime;
     /** Time (in milliseconds) when each URI 'slot' becomes available again.<p>
@@ -94,6 +102,10 @@ public class ARHostQueue {
      *  A zero or positive value smaller then the current time in milliseconds
      *  signifies an empty slot.<p> 
      *  Any negative value signifies a slot for a URI that is being processed.
+     *  <p>
+     *  Methods should never write directly to this, rather use the 
+     *  {@link #updateWakeUpTimeSlot(long) updateWakeUpTimeSlot()} and
+     *  {@link #useWakeUpTimeSlot() useWakeUpTimeSlot()} methods as needed.
      */
     long[] wakeUpTime;
     /** Number of simultanious connections permitted to this host. I.e. this 
@@ -105,6 +117,10 @@ public class ARHostQueue {
      * it, including any that are currently being processed.
      */
     long size;
+    /** The ARHostQueueList that contains this class. This reference is 
+     *  maintained to inform the owning class of changes to the sort order
+     *  value. Value may be null, in which case no notices are made.*/
+    ARHostQueueList owner;
     
     // Berkeley DB - All class member variables related to BDB JE
     // Databases
@@ -123,9 +139,6 @@ public class ARHostQueue {
     protected StoredClassCatalog classCatalog;
     /** A binding for the serialization of the primary key (URI string) */
     protected EntryBinding primaryKeyBinding;
-    /** A binding for the serialization of the secondary index (time of next
-     *  processing)*/
-    protected EntryBinding secondaryKeyBinding;
     /** A binding for the CrawlURIARWrapper object */
     protected EntryBinding crawlURIBinding;
     // Cursors into databases
@@ -203,8 +216,6 @@ public class ARHostQueue {
             // Create a serial binding for the CrawlURIARWrapper object 
             crawlURIBinding = new SerialBinding(classCatalog, 
                                                CrawlURI.class);
-            // Create a primitive binding for the secondary index (time of fetch)
-            secondaryKeyBinding = TupleBinding.getPrimitiveBinding(Long.class);
     
             // Open a secondary database to allow accessing the primary
             // database by the secondary key value.
@@ -212,7 +223,7 @@ public class ARHostQueue {
             secConfig.setAllowCreate(true);
             secConfig.setSortedDuplicates(true);
             secConfig.setKeyCreator(
-                    new MyKeyCreator(secondaryKeyBinding,crawlURIBinding));
+                    new OrderOfProcessingKeyCreator(classCatalog,CrawlURI.class));
             secondaryUriDB = env.openSecondaryDatabase(null, 
                                                        hostName+"/timeOfProcessing",
                                                        primaryUriDB,
@@ -314,7 +325,7 @@ public class ARHostQueue {
             if(opStatus == OperationStatus.SUCCESS){
                 if (curiProcessingTime < nextReadyTime){
                     // Update nextReadyTime to reflect new value.
-                    nextReadyTime = curiProcessingTime;
+                    setNextReadyTime(curiProcessingTime);
                 }
                 if(state == HQSTATE_EMPTY){
                     // Definately no longer empty.
@@ -351,7 +362,7 @@ public class ARHostQueue {
             throws DatabaseException{
         DatabaseEntry keyEntry = new DatabaseEntry();
         DatabaseEntry dataEntry = new DatabaseEntry();
-        
+
         StringBinding.stringToEntry(curi.getURIString(),keyEntry);
         crawlURIBinding.objectToEntry(curi,dataEntry);
         
@@ -396,7 +407,7 @@ public class ARHostQueue {
                 long curiNextReadyTime = curi.getAList().getLong(
                         AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING);
                 if(curiNextReadyTime<nextReadyTime){
-                    nextReadyTime = curiNextReadyTime;
+                    setNextReadyTime(curiNextReadyTime);
                 }
             } else {
                 // No more entries in processingUriDB
@@ -598,6 +609,7 @@ public class ARHostQueue {
             throws IllegalStateException, IOException{
         try{
             // First add it to the regular queue. 
+            
             OperationStatus opStatus = strictAdd(curi,false); 
             
             if(opStatus != OperationStatus.SUCCESS){
@@ -618,7 +630,7 @@ public class ARHostQueue {
             long curiTimeOfNextProcessing = curi.getAList().getLong(
                     AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING);
             if(nextReadyTime > curiTimeOfNextProcessing){
-                nextReadyTime = curiTimeOfNextProcessing;
+                setNextReadyTime(curiTimeOfNextProcessing);
             }
             
             // Update the wakeUpTime slot.
@@ -675,8 +687,8 @@ public class ARHostQueue {
             }
             
             // Finally update nextReadyTime with new top.
-            nextReadyTime = peek().getAList().getLong(
-                    AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING);
+            setNextReadyTime(peek().getAList().getLong(
+                    AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING));
             return curi;
         } catch (DatabaseException e) {
             // Blanket catch all DBExceptions and convert to IOExceptions.
@@ -713,14 +725,13 @@ public class ARHostQueue {
                 secondaryCursor.getFirst(keyEntry, dataEntry, LockMode.DEFAULT);
             
             if( opStatus == OperationStatus.SUCCESS){
-                Long key = (Long) secondaryKeyBinding.entryToObject(keyEntry);
                 curi = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
             } else {
                 if( opStatus == OperationStatus.NOTFOUND ){
-                    throw new IllegalStateException("Can not perform peek() on " +
-                            "empty queue");
+                    throw new IllegalStateException("Can not perform peek()" +
+                            " on empty queue");
                 } else {
-                    throw new DatabaseException("Error occured in " +
+                    throw new IOException("Error occured in " +
                             "ARHostQueue.peek()." + opStatus.toString());
                 }
             }
@@ -750,9 +761,12 @@ public class ARHostQueue {
             // Need to confirm state
             if(isBusy()){
                 state = HQSTATE_BUSY;
-            } else {             
+            } else {
+                //System.out.println("nextReadyTime " + nextReadyTime);
                 long currentTime = System.currentTimeMillis();
+                //System.out.println("currentTime   " + currentTime);
                 long wakeTime = getEarliestWakeUpTimeSlot();
+                //System.out.println("wakeTime      " + wakeTime);
                 
                 if(wakeTime > currentTime || nextReadyTime > currentTime){
                     state = HQSTATE_SNOOZED;
@@ -794,6 +808,36 @@ public class ARHostQueue {
         return nextReadyTime > wakeTime ? nextReadyTime : wakeTime;
     }
     
+    /**
+     * Updates nextReadyTime (if smaller) with the supplied value
+     * @param newTime the new value of nextReady Time;
+     */
+    protected void setNextReadyTime(long newTime){
+        long old = getNextReadyTime(); // store the old 'publish' value;
+        if(nextReadyTime>newTime){
+            nextReadyTime=newTime;
+        }
+        reorder(old);
+    }
+    
+    /**
+     * Method is called whenever something has been done that might have
+     * changed the value of the 'published' time of next ready. If the current
+     * value differs from the supplied 'old value' then the owner will be 
+     * notified.
+     * @param oldValue next ready time prior to whatever change that was made.
+     */
+    protected void reorder(long oldValue){
+        if(owner == null){
+            return; // Early return when no owner is set.
+        }
+        long curr = getNextReadyTime(); // current 'published' value;
+        if(curr != oldValue){
+            // The published value of next ready time (including politness)
+            // has changed. Notify the autorities.
+            owner.reorder(this,oldValue);
+        }
+    }
 
 
     /**
@@ -823,30 +867,19 @@ public class ARHostQueue {
      * 
      * @return the size of the HQ.
      */   
-    public long getSize() throws DatabaseException {
+    public long getSize(){
         return size;
     }
     
     /**
-     * Compares the this HQ to the supplied one.
-     * 
-     * @param comp the HQ to compare to.
-     * @return the value 0 if the argument HQ's time of next ready
-     *         is equal to this HQ's; a value less than 0 if this 
-     *         value is less than the argument HQ's; and a value 
-     *         greater than 0 if this value is greater.
+     * Set the ARHostQueueList object that contains this HQ. Will cause that
+     * object to be notified (via 
+     * {@link ARHostQueueList#reorder(ARHostQueue, long) reorder()} when the
+     * value used for sorting the list of HQs changes.
+     * @param owner the ARHostQueueList object that contains this HQ.
      */
-    public int compareTo(ARHostQueue comp){
-        long thisTime = getNextReadyTime();
-        long compTime = comp.getNextReadyTime();
-        if(thisTime>compTime){
-            return 1;
-        } else if(thisTime<compTime){
-            return -1;
-        } else {
-            // Equal time. Use hostnames
-            return hostName.compareTo(comp.getHostName());
-        }
+    public void setOwner(ARHostQueueList owner) {
+        this.owner = owner;
     }
 
     /**
@@ -893,11 +926,13 @@ public class ARHostQueue {
      * @param newVal
      */
     private void updateWakeUpTimeSlot(long newVal){
+        long old = getNextReadyTime();
         for(int i=0 ; i < valence ; i++){
             if(wakeUpTime[i]==-1){
                 wakeUpTime[i]=newVal;
             }
         }
+        reorder(old);
     }
     
     /**
@@ -906,12 +941,14 @@ public class ARHostQueue {
      * @return true if a slot was successfully reserved. False otherwise.
      */
     private boolean useWakeUpTimeSlot(){
+        long old = getNextReadyTime();
         for(int i=0 ; i < valence ; i++){
             if(wakeUpTime[i]>-1 && wakeUpTime[i]<=System.currentTimeMillis()){
                 wakeUpTime[i]=-1;
                 return true;
             }
         }
+        reorder(old);
         return false;
     }
     
@@ -934,33 +971,56 @@ public class ARHostQueue {
     }
     
     /**
-     * Creates the secondary (time of next processing) key for the secondary
-     * index. 
+     * Creates the secondary key for the secondary index.
+     * <p>
+     * The secondary index is the scheduling directive (first sorting) and 
+     * the time of next processing (sorted from earlies to latest within each
+     * scheduling directive). If the scheduling directive is missing or 
+     * unknown NORMAL will be assumed.   
      */
-    private static class MyKeyCreator implements SecondaryKeyCreator {
+    private static class OrderOfProcessingKeyCreator 
+            extends TupleSerialKeyCreator {
 
-        private EntryBinding secKeyBinding;
-        private EntryBinding dataBinding;
-
-        MyKeyCreator(EntryBinding secKeyBinding, EntryBinding dataBinding) {
-
-            this.secKeyBinding = secKeyBinding;
-            this.dataBinding = dataBinding;
+        /**
+         * Constructor. Invokes parent constructor.
+         * 
+         * @param classCatalog is the catalog to hold shared class information 
+         *                     and for a database should be a 
+         *                     StoredClassCatalog.
+         * @param dataClass is the CrawlURI class. 
+         */
+        public OrderOfProcessingKeyCreator(ClassCatalog classCatalog, 
+                Class dataClass) {
+            super(classCatalog, dataClass);
         }
 
-        public boolean createSecondaryKey(SecondaryDatabase secondaryDb,
-                                          DatabaseEntry keyEntry,
-                                          DatabaseEntry dataEntry,
-                                          DatabaseEntry resultEntry)
-            throws DatabaseException {
-
-            // Extract the time of next processing and encode it.
-            CrawlURI curi = 
-                (CrawlURI) dataBinding.entryToObject(dataEntry);
-            long key = curi.getAList().getLong(
+        /* (non-Javadoc)
+         * @see com.sleepycat.bind.serial.TupleSerialKeyCreator#createSecondaryKey(com.sleepycat.bind.tuple.TupleInput, java.lang.Object, com.sleepycat.bind.tuple.TupleOutput)
+         */
+        public boolean createSecondaryKey(TupleInput primaryKeyInput, 
+                                          Object dataInput, 
+                                          TupleOutput indexKeyOutput) {
+            CrawlURI curi = (CrawlURI)dataInput;
+            int directive = curi.getSchedulingDirective();
+            // Can not rely on the default directive constants having a good
+            // sort order
+            switch(directive){
+                case CrawlURI.HIGHEST : directive = 0; break;
+                case CrawlURI.HIGH : directive = 1; break;
+                case CrawlURI.MEDIUM : directive = 2; break;
+                case CrawlURI.NORMAL : directive = 3; break;
+                default : directive = 3; // If directive missing or unknown
+            }
+            
+            indexKeyOutput.writeInt(directive);
+            
+            long timeOfNextProcessing = curi.getAList().getLong(
                     AdaptiveRevisitFrontier.A_TIME_OF_NEXT_PROCESSING);
-            secKeyBinding.objectToEntry(new Long(key), resultEntry);
+            
+            indexKeyOutput.writeLong(timeOfNextProcessing);
+            
             return true;
         }
     }
+
 }
