@@ -73,7 +73,6 @@ public class LowDiskPauseProcessor extends Processor {
     public static final int DEFAULT_RECHECK_THRESHOLD = 200 * 1024; // 200MB
     
     protected int contentSinceCheck = 0;
-    protected List monitoredMounts;
     
     public static final Pattern VALID_DF_OUTPUT = 
         Pattern.compile("(?s)^Filesystem\\s+1K-blocks\\s+Used\\s+Available\\s+Use%\\s+Mounted on\\n.*");
@@ -104,19 +103,7 @@ public class LowDiskPauseProcessor extends Processor {
                     "observed. ",
                     new Integer(DEFAULT_RECHECK_THRESHOLD)));
         e.setOverrideable(false);
-    }
-
-    
-    
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#initialTasks()
-     */
-    protected void initialTasks() {
-        super.initialTasks();
-        monitoredMounts = Arrays.asList(((String) getUncheckedAttribute(null,
-                ATTR_MONITOR_MOUNTS)).split("\\s*"));
-    }
-    
+    } 
     
     /**
      * Notes a CrawlURI's content size in its running tally. If the 
@@ -152,6 +139,8 @@ public class LowDiskPauseProcessor extends Processor {
                 logger.severe("'df -k' output unacceptable for low-disk checking");
                 return;
             }
+            List monitoredMounts = Arrays.asList(((String) getUncheckedAttribute(null,
+                    ATTR_MONITOR_MOUNTS)).split("\\s*"));
             matcher = AVAILABLE_EXTRACTOR.matcher(df);
             while (matcher.find()) {
                 String mount = matcher.group(2);
