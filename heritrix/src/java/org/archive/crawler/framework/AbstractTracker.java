@@ -123,7 +123,7 @@ implements StatisticsTracking, CrawlStatusListener {
 
         // log the legend
         controller.progressStats.log(Level.INFO,
-                "   [timestamp] [discovered]    [queued] [downloaded]"
+                "   [timestamp]    [discovered] [queued] [downloaded]"
                     + "   [doc/s(avg)]  [KB/s(avg)]"
                     + " [dl-failures] [busy-thread] [mem-use-KB]"
             );

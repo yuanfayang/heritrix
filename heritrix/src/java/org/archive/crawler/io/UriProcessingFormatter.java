@@ -68,14 +68,15 @@ public class UriProcessingFormatter
         }
         mime = MimetypeUtils.truncate(mime);
 
-        long time;
-        String duration;
+        long time = System.currentTimeMillis();
+        String arcTimeAndDuration;
         if(curi.containsKey(A_FETCH_COMPLETED_TIME)) {
-            time = curi.getLong(A_FETCH_COMPLETED_TIME);
-            duration = Long.toString(time-curi.getLong(A_FETCH_BEGAN_TIME));
+            long completedTime = curi.getLong(A_FETCH_COMPLETED_TIME);
+            long beganTime = curi.getLong(A_FETCH_BEGAN_TIME);
+            arcTimeAndDuration = ArchiveUtils.get17DigitDate(beganTime) + "+"
+                    + Long.toString(completedTime - beganTime);
         } else {
-            time = System.currentTimeMillis();
-            duration = NA;
+            arcTimeAndDuration = NA;
         }
 
         Object via = curi.getVia();
@@ -91,7 +92,7 @@ public class UriProcessingFormatter
             digest = Base32.encode((byte[])digest);
         }
 
-        return ArchiveUtils.get17DigitDate(time)
+        return ArchiveUtils.getLog17Date(time)
             + " "
             + ArchiveUtils.padTo(curi.getFetchStatus(), 5)
             + " "
@@ -110,7 +111,7 @@ public class UriProcessingFormatter
             + ArchiveUtils.padTo(
                     Integer.toString(curi.getThreadNumber()), 3, '0')
         	+ " "
-            + duration
+            + arcTimeAndDuration
             + " "
             + checkForNull((String)digest)
             + " "
