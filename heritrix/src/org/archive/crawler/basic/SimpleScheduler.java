@@ -6,11 +6,11 @@
  */
 package org.archive.crawler.basic;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FatalConfigurationException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.ToeThread;
@@ -88,19 +88,14 @@ public class SimpleScheduler implements URIScheduler {
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URIScheduler#initialize()
 	 */
-	public void initialize(CrawlController c) {
+	public void initialize(CrawlController c) throws FatalConfigurationException {
 		controller = c;
-		store = (SimpleStore)c.getStore();
+		store = (SimpleStore) c.getStore();
 		// load seeds
-		try{
-			Iterator iter = c.getOrder().getBehavior().getSeeds().iterator();	
-			while (iter.hasNext()) {
-				insertAsSeed((UURI)iter.next());
-			}
-		}catch(IOException e){
-			e.printStackTrace();
+		Iterator iter = c.getOrder().getBehavior().getSeeds().iterator();
+		while (iter.hasNext()) {
+			insertAsSeed((UURI) iter.next());
 		}
-
 	}
 
 	/**

@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.FatalConfigurationException;
 import org.archive.crawler.datamodel.InitializationException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
@@ -92,7 +93,9 @@ public class CrawlerHandler extends AbstractHttpHandler {
 				case UPDATE :
 					updateCrawlerOrder(request);
 				case SHOW :
+					try{
 					outputCrawlOrder(_controller.getOrder(), response);
+					}catch(FatalConfigurationException e){}
 					break;
 				case START :
 					if (_crawling)
@@ -109,7 +112,11 @@ public class CrawlerHandler extends AbstractHttpHandler {
 					_crawling = true;
 					break;
 				case STATS :
+					try{
 					outputCrawlerStats(response);
+					}catch(FatalConfigurationException e){
+						//e.printStackTrace();
+					}
 					break;
 				default :
 					return;
@@ -120,7 +127,7 @@ public class CrawlerHandler extends AbstractHttpHandler {
 	}
 
 	private void outputCrawlerStats(HttpResponse r)
-		throws HttpException, IOException {
+		throws HttpException, IOException, FatalConfigurationException {
 
 		StringBuffer sb = new StringBuffer(32768);
 		sb.append("<html>\n<head>\n<title>Heritrix WUI</title>\n");
@@ -177,7 +184,7 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		outputHtmlPage(r, sb.toString());
 	}
 	private void outputCrawlOrder(CrawlOrder o, HttpResponse r)
-		throws HttpException, IOException {
+		throws HttpException, IOException, FatalConfigurationException {
 
 		StringBuffer sb = new StringBuffer();
 		sb.append(genPageStart());
