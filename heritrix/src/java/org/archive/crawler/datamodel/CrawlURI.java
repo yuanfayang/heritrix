@@ -675,7 +675,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public long getContentLength() {
         if (this.contentLength < 0) {
-            this.contentLength = getHttpRecorder().getResponseContentLength();
+            this.contentLength = (getHttpRecorder() != null)?
+                getHttpRecorder().getResponseContentLength(): 0;
         }
         return this.contentLength;
     }
