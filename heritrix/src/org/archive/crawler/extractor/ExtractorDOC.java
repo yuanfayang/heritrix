@@ -62,7 +62,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 		
 		// get the doc as a File
 		try{
-		  	documentStream = get.getResponseBodyAsStream();
+		  	documentStream = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
 		}catch(IOException e){
 			e.printStackTrace();
 		}
