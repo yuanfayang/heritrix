@@ -42,6 +42,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.Frontier;
+import org.archive.io.arc.ARCConstants;
 
 /**
  * Helper class for managing a simple Frontier change-events journal which is
@@ -56,19 +57,16 @@ import org.archive.crawler.framework.Frontier;
  */
 public class RecoveryJournal
 implements FrontierJournal {
-    protected final static String F_ADD = "F+ ";
-    protected final static String F_EMIT = "Fe ";
-    protected final static String F_RESCHEDULE = "Fr ";
-    protected final static String F_SUCCESS = "Fs ";
-    protected final static String F_FAILURE = "Ff ";
+    public final static String F_ADD = "F+ ";
+    public final static String F_EMIT = "Fe ";
+    public final static String F_RESCHEDULE = "Fr ";
+    public final static String F_SUCCESS = "Fs ";
+    public final static String F_FAILURE = "Ff ";
 
     /**
      * Stream on which we record frontier events.
      */
     private OutputStreamWriter out = null;
-
-
-    private static final String GZIP_SUFFIX = ".gz";
 
     
     /**
@@ -82,7 +80,7 @@ implements FrontierJournal {
     throws IOException {
         this.out = new OutputStreamWriter(new GZIPOutputStream(
             new BufferedOutputStream(new FileOutputStream(new File(path,
-                filename + GZIP_SUFFIX)))));
+                filename + ARCConstants.DOT_COMPRESSED_FILE_EXTENSION)))));
     }
 
     public synchronized void added(CrawlURI curi) {
