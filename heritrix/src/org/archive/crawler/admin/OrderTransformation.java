@@ -111,11 +111,20 @@ public class OrderTransformation extends XMLConfig {
 	public void transformXMLtoHTML(
 		String outputHTMLFile,
 		String aXMLFile,
-		String aXSLTemplate) {
+		String aXSLTemplate){
+		transformXMLtoHTML(outputHTMLFile, aXMLFile, aXSLTemplate, "./");
+}
+
+	public void transformXMLtoHTML(
+		String outputHTMLFile,
+		String aXMLFile,
+		String aXSLTemplate,
+		String workingDirectory) {
 		try {
 			Transformer xsltTransformer =
 				TransformerFactory.newInstance().newTransformer(
 					new StreamSource(aXSLTemplate));
+					xsltTransformer.setParameter("orderFilePath", workingDirectory);
 			xsltTransformer.transform(
 				new StreamSource(new FileReader(aXMLFile)),
 				new StreamResult(new File(outputHTMLFile)));

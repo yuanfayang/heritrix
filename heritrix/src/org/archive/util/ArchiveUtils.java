@@ -8,6 +8,7 @@ package org.archive.util;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.io.File;
 
 /**
  * @author gojomo
@@ -63,6 +64,24 @@ public class ArchiveUtils {
 		sb.append(s);
 		return sb.toString();
 	}	
-	
+	/**
+	 * Example: On Windows machine file test/test.txt is converted to test\test.txt 
+	 * @param aFileName
+	 * @return Retruns a file name apropriate for the system
+	 */
+	public static String systemFileName(String aFileName){
+		return (new File(aFileName)).getPath();
+	}
 
+	public static String getFilePath(String aFileName){
+		String tmpFileName = systemFileName(aFileName);
+		int pathEnd = tmpFileName.lastIndexOf(File.separatorChar);
+		if(pathEnd >=0 ){
+			return tmpFileName.substring(0, pathEnd+1);
+		}else{
+			return "./";
+		}
+		
+		
+	}
 }

@@ -37,9 +37,11 @@ public class CrawlOrder extends XMLConfig implements CrawlerConfigurationConstan
 		Document doc = null;
 		
 		// try to extract a default path for later file reading
-		int pathEnd = crawlOrderFile.lastIndexOf(File.separatorChar);
+		File f = new File(crawlOrderFile);
+		String tmpOrderFile = f.getPath();
+		int pathEnd = tmpOrderFile.lastIndexOf(File.separatorChar);
 		if(pathEnd >=0){
-			pathToDoc = crawlOrderFile.substring(0,pathEnd);
+			pathToDoc = tmpOrderFile.substring(0,pathEnd);
 		}
 		
 		try{
