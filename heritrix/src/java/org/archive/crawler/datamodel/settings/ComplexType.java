@@ -171,7 +171,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
     /**
      * @return
      */
-    protected String getAbsoluteName() {
+    public String getAbsoluteName() {
         return absoluteName;
     }
 
@@ -381,7 +381,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         return settings.getData(getAbsoluteName()).getMBeanInfo();
     }
 
-    protected MBeanAttributeInfo getAttributeInfo(
+    public MBeanAttributeInfo getAttributeInfo(
         CrawlerSettings settings,
         String name) {
         try {
@@ -391,7 +391,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         }
     }
 
-    protected MBeanAttributeInfo getAttributeInfo(String name) {
+    public MBeanAttributeInfo getAttributeInfo(String name) {
         return getAttributeInfo(globalSettings(), name);
     }
 

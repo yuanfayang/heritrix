@@ -16,10 +16,11 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.framework;
+package org.archive.crawler.admin;
 
 import org.archive.crawler.datamodel.settings.SettingsHandler;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
+import org.archive.crawler.framework.StatisticsTracking;
 
 
 /**
@@ -45,7 +46,7 @@ public class CrawlJob
 	/*
 	 * Possible states for a Job.
 	 */
-	/** Inital value. */
+	/** Inital value. May not be ready to run/incomplete. */
 	public static final String STATUS_CREATED = "Created";  
 	/** Job has been successfully submitted to a CrawlJobHandler */
 	public static final String STATUS_PENDING = "Pending"; 
