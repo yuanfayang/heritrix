@@ -196,28 +196,22 @@ public class RecordingInputStream
                 }
                 totalBytes += bytesRead;
                 if(Thread.interrupted()) {
-                    throw new InterruptedException("interrupted during IO");
+                    throw new InterruptedException("Interrupted during IO");
                 }
             } catch (SocketTimeoutException e) {
-                // FIXME: I don't think an IOException should be thrown here;
-                // it will cause the entire fetch to be aborted, as a connection
-                // lost (up in FetchHTTP). A socket timeout is just a transient
-                // problem, meaning nothing was available in the configured 
-                // timeout period, but something else might become available
-                // later. Unless we are constantly resetting the socket timeout
-                // to reflect the 'time remaining', the socket timeout should 
-                // be some constant interval at which we check the overall 
-                // timeout (below). Any given socket timeout is not a fatal
-                // problem, just a reminder to check the overall timeout and
-                // continue. (The below was added in rev 1.7, 20040218, perhaps
-                // to assist in debugging another problem.)
-                
-                // Socket timed out. If we  haven't exceeded the timeout, throw
-                // an IOException.  If we have, it'll be picked up on by test
-                // done below.
+                // A socket timeout is just a transient problem, meaning
+                // nothing was available in the configured  timeout period,
+                // but something else might become available later.
+                // Take this opportunity to check the overall 
+                // timeout (below).  One reason for this timeout is 
+                // servers that keep up the connection, 'keep-alive', even
+                // though we asked them to not keep the connection open.
                 if (System.currentTimeMillis() < timeoutTime) {
-                    throw new IOException("Socket timed out after " +
-                        (timeoutTime - startTime) + "ms: " + e.getMessage());
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.fine("Socket timed out after " +
+                            (timeoutTime - startTime) + "ms: " +
+                            e.getMessage());
+                    }
                 }
             } catch (NullPointerException e) {
                 // [ 896757 ] NPEs in Andy's Th-Fri Crawl.
