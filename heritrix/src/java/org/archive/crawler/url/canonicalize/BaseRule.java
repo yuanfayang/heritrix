@@ -36,7 +36,7 @@ import org.archive.crawler.url.CanonicalizationRule;
  * via the Heritrix settings system.
  * 
  * This base class is abstact.  Subclasses must implement the
- * {@link CanonicalizationRule#canonicalize(String)} method.
+ * {@link CanonicalizationRule#canonicalize(String, Object)} method.
  * 
  * @author stack
  * @version $Date$, $Revision$
