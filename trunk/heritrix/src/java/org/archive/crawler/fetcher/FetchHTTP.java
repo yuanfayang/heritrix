@@ -386,9 +386,6 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             // 401 is not 'success'.
             handle401(method, curi);
         }
-
-        // Save off the GetMethod just in case needed by subsequent processors.
-        curi.putObject(A_HTTP_TRANSACTION, method);
         
         if (rec.getRecordedInput().isOpen()) {
             logger.severe(curi.toString() + " RIS still open. Should have" +
@@ -418,6 +415,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         curi.setFetchStatus(method.getStatusCode());
         Header ct = method.getResponseHeader("content-type");
         curi.setContentType((ct == null)? null: ct.getValue());
+        // Save method into curi too.  Midfetch filters may want to leverage
+        // info in here.
+        curi.putObject(A_HTTP_TRANSACTION, method);
     }
 
     /**
