@@ -6,6 +6,9 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.io.IOException;
+import java.io.Serializable;
+
 /**
  * A URI, discovered or passed-in, that may be scheduled (and
  * thus become a CrawlURI). Contains just the fields necessary
@@ -16,7 +19,7 @@ package org.archive.crawler.datamodel;
  * 
  * @author Gordon Mohr
  */
-public class CandidateURI {
+public class CandidateURI implements Serializable {
 	/** Usuable URI under consideration */
 	UURI uuri;
 	/** Seed status */
@@ -131,5 +134,31 @@ public class CandidateURI {
 	 */
 	public String toString() {
 		return "CandidateURI("+getUURI()+")";
+	}
+	
+	
+	private void writeObject(java.io.ObjectOutputStream out)
+		 throws IOException {
+		 flattenVia();
+		 out.defaultWriteObject();
+	}
+
+	/**
+	 * 
+	 */
+	private void flattenVia() {
+		if (via instanceof String) {
+			// already OK
+			return;
+		}
+		if (via instanceof UURI) {
+			via = ((UURI)via).getUri().toString();
+			return;
+		}
+		if (via instanceof CandidateURI) {
+			via = ((CandidateURI)via).getUURI().getUri().toString();
+			return;
+		}
+		via = via.toString();
 	}
 }

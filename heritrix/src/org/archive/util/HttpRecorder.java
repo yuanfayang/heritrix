@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.archive.crawler.io.RecordingInputStream;
-import org.archive.crawler.io.RecordingOutputStream;
+import org.archive.io.RecordingInputStream;
+import org.archive.io.RecordingOutputStream;
 
 /**
  * Initially only supports HTTP/1.0 (one request, one response per stream)

@@ -25,6 +25,8 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.util.MemQueue;
+import org.archive.util.Queue;
 
 /**
  * A basic in-memory mostly breadth-first frontier, which 
@@ -56,11 +58,11 @@ public class Frontier
 	
 	// every CandidateURI not yet in process or another queue; 
 	// all seeds start here; may contain duplicates
-	LinkedList pendingQueue = new LinkedList(); // of CandidateURIs 
+	Queue pendingQueue; // of CandidateURIs 
 	
 	// every CandidateURI not yet in process or another queue; 
 	// all seeds start here; may contain duplicates
-	LinkedList pendingHighQueue = new LinkedList(); // of CandidateURIs 
+	Queue pendingHighQueue; // of CandidateURIs 
 
 	// every CrawlURI handed out for processing but not yet returned
 	HashMap inProcessMap = new HashMap(); // of String (classKey) -> CrawlURI
@@ -103,6 +105,9 @@ public class Frontier
 		minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
 		maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
 		
+		pendingQueue = new MemQueue(); // of CandidateURIs 
+	    pendingHighQueue = new MemQueue(); // of CandidateURIs 
+
 		this.controller = c;
 		Iterator iter = c.getScope().getSeeds().iterator();
 		while (iter.hasNext()) {
@@ -118,14 +123,14 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
 	 */
 	public synchronized void schedule(CandidateURI caUri) {
-		pendingQueue.addLast(caUri);
+		pendingQueue.enqueue(caUri);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URIFrontier#scheduleHigh(org.archive.crawler.datamodel.CandidateURI)
 	 */
 	public synchronized void scheduleHigh(CandidateURI caUri) {
-		pendingHighQueue.addLast(caUri);
+		pendingHighQueue.enqueue(caUri);
 	}
 
 
@@ -438,7 +443,7 @@ public class Frontier
 		if (pendingHighQueue.isEmpty()) {
 			return null;
 		}
-		return (CandidateURI)pendingHighQueue.removeFirst();
+		return (CandidateURI)pendingHighQueue.dequeue();
 	}
 	/**
 	 * 
@@ -447,7 +452,7 @@ public class Frontier
 		if (pendingQueue.isEmpty()) {
 			return null;
 		}
-		return (CandidateURI)pendingQueue.removeFirst();
+		return (CandidateURI)pendingQueue.dequeue();
 	}
 
 	/**
@@ -491,7 +496,7 @@ public class Frontier
 	 * @param curi
 	 */
 	private synchronized void pushToPending(CrawlURI curi) {
-		pendingQueue.addFirst(curi);
+		pendingHighQueue.enqueue(curi);
 		curi.setStoreState(URIStoreable.PENDING);
 	}
 	

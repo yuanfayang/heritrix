@@ -13,7 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.framework.CrawlController;
-import org.archive.util.TimedQueue;
+import org.archive.util.TimedFixedSizeList;
 
 /**
  * Tracks statistics that relate to the crawl in progress.  Callers should be
@@ -43,7 +43,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	protected HashMap statusCodeDistribution = new HashMap();
 
 	protected int totalProcessedBytes = 0;
-	protected TimedQueue recentlyCompletedFetches = new TimedQueue(60);
+	protected TimedFixedSizeList recentlyCompletedFetches = new TimedFixedSizeList(60);
 
 	protected Logger periodicLogger = null;
 	protected int logInterval = 60;

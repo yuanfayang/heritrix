@@ -401,9 +401,9 @@ public class SimpleStore implements FetchStatusCodes, CoreAttributeConstants {
 	 */
 	private void applyCarryforwards(CrawlURI curi, CrawlURI sourceCuri, boolean embed) {
 		if (embed) {
-			curi.setViaEmbedFrom(sourceCuri);
+			//curi.setViaEmbedFrom(sourceCuri);
 		} else {
-			curi.setViaLinkFrom(sourceCuri);
+			//curi.setViaLinkFrom(sourceCuri);
 		}
 
 //		int newChaffness = sourceCuri.getChaffness();

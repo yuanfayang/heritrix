@@ -7,25 +7,24 @@ package org.archive.util;
 import java.util.Iterator;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
 
-/** This class extends our simple queue.  It expects to store
- *  only CrawlURIs and will enforce a notion of time expiration,
+/** This class extends the FixedSizeList.  It expects to store
+ *  only TimedItems and will enforce a notion of time expiration,
  *  so that in addition to size limitations this queue will have 
- *  a "freshness" limiation, removing items that are too old.
+ *  a "freshness" limitation, removing items that are too old.
  * 
  * @author Parker Thompson
  */
-public class TimedQueue extends Queue implements CoreAttributeConstants{
+public class TimedFixedSizeList extends FixedSizeList implements CoreAttributeConstants{
 
 	// by default expire after a minute
 	long expireAfterMili = 60*1000;
 	
-	public TimedQueue() {
+	public TimedFixedSizeList() {
 		super();
 	}
 
-	public TimedQueue(int size) {
+	public TimedFixedSizeList(int size) {
 		super(size);
 	}
 	
@@ -33,7 +32,7 @@ public class TimedQueue extends Queue implements CoreAttributeConstants{
 	 *  @param size - the number of recent CrawlURIs to keep track of
 	 *  @param expire - the number of miliseconds after which to expire an entry
 	 */ 
-	public TimedQueue(int size, long expire){
+	public TimedFixedSizeList(int size, long expire){
 		super(size);
 		expireAfterMili = expire;
 	}
@@ -47,35 +46,14 @@ public class TimedQueue extends Queue implements CoreAttributeConstants{
 	/** Remove expired items from the queue */
 	protected void cleanUp(long now){
 		
-		if(store.size() == 0){
-			return;
+		long expireIfBefore = now - expireAfterMili;
+		
+		while ( (size() > 0)
+			     && ((TimedItem) getFirst()).getTime() < expireIfBefore) {
+			removeFirst();
 		}
-		
-		ProcessedCrawlURIRecord oldest = (ProcessedCrawlURIRecord)store.getFirst();
-		
-		if(oldest == null){
-			return;
-		}
-		
-		long finishTime = oldest.getEndTime();
-		
-		if(finishTime + expireAfterMili <= now){
-			store.remove(oldest);
-			
-			// go until we've removed all expired items
-			cleanUp(now);
-		}
-		return;
 	}
-	
-	public void add(Object item){
-		super.add(item);
-	}
-	
-	public void remove(Object item){
-		super.remove(item);
-	}
-	
+		
 	public void setExpireAfter(long miliseconds){
 		expireAfterMili = miliseconds;
 	}
@@ -97,7 +75,16 @@ public class TimedQueue extends Queue implements CoreAttributeConstants{
 	
 	public int size(){
 		cleanUp();
-		return store.size();
+		return size();
 	}
+	
+	public interface TimedItem {
 
+		/**
+		 * @return
+		 */
+		long getTime();
+	
+	}
 }
+

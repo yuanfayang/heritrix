@@ -4,12 +4,11 @@
  *
  * $Header$
  */
-package org.archive.crawler.io;
+package org.archive.io;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.archive.util.NullOutputStream;
 
 /**
  * @author gojomo

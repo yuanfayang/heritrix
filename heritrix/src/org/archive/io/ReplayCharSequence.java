@@ -4,10 +4,13 @@
  *
  * $Header$
  */
-package org.archive.crawler.io;
+package org.archive.io;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+
+import org.archive.crawler.io.CharSubSequence;
+
 
 /**
  * Provides a CharSequence view on recorded stream bytes (a prefix buffer
