@@ -221,7 +221,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         return settingsHandler;
     }
 
-    /**
+    /** Get the absolute name of this ComplexType.
+     * 
+     * The absolute name is like a file path with the name of the element
+     * prepended by all the parents names separated by slashes.
      * @return Absolute name.
      */
     public String getAbsoluteName() {
@@ -426,7 +429,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @param settings the settings object for which the attribute should be
      *        unset.
      * @param name the name of the attribute.
-     * @return Null.
+     * @return The removed attribute or null if nothing was removed.
      * @throws AttributeNotFoundException is thrown if the attribute name
      *         doesn't exist.
      */
