@@ -23,8 +23,13 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -34,9 +39,9 @@ import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.SeedList;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.OrFilter;
+import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -66,6 +71,7 @@ import org.archive.util.DevUtils;
  *
  */
 public class CrawlScope extends Filter {
+
     private static final Logger logger =
         Logger.getLogger(CrawlScope.class.getName());
     public static final String ATTR_NAME = "scope";
@@ -73,18 +79,6 @@ public class CrawlScope extends Filter {
     public static final String ATTR_EXCLUDE_FILTER = "exclude-filter";
     public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
     public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
-
-    /**
-     * List of seeds.
-     *
-     * This list is wrapped with the synchronized list whenever its
-     * instantiated.  This means, to iterate over this list, you'll need to
-     * synchronize on the list itself first.  See
-     * http://java.sun.com/j2se/1.4.2/docs/api/java/util/Collections.html#synchronizedList(java.util.List).
-     * Call getSeedList() to get the list to synchronize on.
-     */
-    private SeedList seedlist = null;
-
 
     private OrFilter excludeFilter;
 
@@ -139,25 +133,7 @@ public class CrawlScope extends Filter {
      * @param controller Controller object.
      */
     public void initialize(CrawlController controller) {
-        createSeedlist(getSeedfile(), getSettingsHandler().
-            getOrder().getController(), true);
-    }
-
-    /**
-     * Create seedlist.
-     *
-     * Always creates a caching SeedList.  Override if you want different
-     * behavior.
-     *
-     * @param seedfile Seedfile to use as seed source.
-     * @param c CrawlController
-     * @param caching True if seed list created is to cache seeds.
-     */
-    protected synchronized void createSeedlist(File seedfile,
-            CrawlController c, boolean caching) {
-        if (this.seedlist == null) {
-            this.seedlist = new SeedList(seedfile, caching);
-        }
+        // by default do nothing (subclasses override)
     }
 
     public String toString() {
@@ -183,31 +159,12 @@ public class CrawlScope extends Filter {
     }
 
     /**
-     * Use this method to get a reference to the seedlist.
-     *
-     * Use it to get an iterator.  You must synchronize on it as you iterate
-     * over it as per
-     * http://java.sun.com/j2se/1.4.2/docs/api/java/util/Collections.html#synchronizedList(java.util.List)
-     * to prevent concurrentmodificationexceptions.  Same is case if you want
-     * to add seeds.
-     *
-     * @return Returns a seedlist.
-     */
-    public List getSeedlist() {
-        return this.seedlist;
-    }
-
-    /**
      * Refresh seeds.
      *
-     * If caching, this will reread the seed file. If not, this will just update
-     * the seed file reference so all subsequent iterators will be against new
-     * file reference.
      */
     public void refreshSeeds() {
-        this.seedlist.refresh(getSeedfile());
+        // by default do nothing (subclasses which cache should override)
     }
-
 
     /**
      * @return Seed list file or null if problem getting settings file.
@@ -394,5 +351,52 @@ public class CrawlScope extends Filter {
         // much (eg if crawling from a million seeds)    
         refreshSeeds();
         excludeFilter.kickUpdate();
+    }
+
+    /**
+     * Gets an iterator over all configured seeds. Subclasses
+     * which cache seeds in memory can override with more
+     * efficient implementation. 
+     *
+     * @return Iterator, perhaps over a disk file, of seeds
+     */
+    public Iterator seedsIterator() {
+        BufferedReader br;
+        try {
+            br = new BufferedReader(new FileReader(getSeedfile()));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return new SeedFileIterator(br);
+    }
+
+    /**
+     * Add a new seed to scope. By default, simply appends
+     * to seeds file, though subclasses may handle differently.
+     *
+     * This method is *not* sufficient to get the new seed 
+     * scheduled in the Frontier for crawling -- it only 
+     * affects the Scope's seed record (and decisions which
+     * flow from seeds). 
+     *
+     * @param uuri UURI to add
+     * @return true if successful, false if add failed for any reason
+     */
+    public boolean addSeed(UURI uuri) {
+        File f = getSeedfile();
+        if (f != null) {
+            try {
+                FileWriter fw = new FileWriter(f, true);
+                // Write to new (last) line the URL.
+                fw.write("\n");
+                fw.write(uuri.toString());
+                fw.flush();
+                fw.close();
+                return true;
+            } catch (IOException e) {
+                DevUtils.warnHandle(e, "problem writing new seed");
+            }
+        }
+        return false; 
     }
 }

@@ -751,9 +751,8 @@ implements CrawlURIDispositionListener {
     }
     
     protected List getSeeds(CrawlController c) {
-        List seeds = c.getScope().getSeedlist();
         List seedsCopy = new Vector();
-        for(Iterator i = seeds.iterator(); i.hasNext();) {
+        for(Iterator i = c.getScope().seedsIterator(); i.hasNext();) {
             seedsCopy.add(((UURI)i.next()).toString());
         }
         return seedsCopy;

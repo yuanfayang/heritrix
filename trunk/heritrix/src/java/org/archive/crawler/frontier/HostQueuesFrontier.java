@@ -449,15 +449,12 @@ HasUriReceiver,  CrawlStatusListener {
         // synchronization block.  The seeds list may get updated during our
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
-        //
-        List seeds = this.controller.getScope().getSeedlist();
-        synchronized(seeds) {
-            for (Iterator i = seeds.iterator(); i.hasNext();) {
-                UURI u = (UURI)i.next();
-                CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
-                caUri.setSchedulingDirective(CandidateURI.MEDIUM);
-                innerSchedule(caUri);
-            }
+        Iterator iter = this.controller.getScope().seedsIterator();
+        while(iter.hasNext()) {
+            UURI u = (UURI)iter.next();
+            CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
+            caUri.setSchedulingDirective(CandidateURI.MEDIUM);
+            innerSchedule(caUri);
         }
     }
 
@@ -536,10 +533,7 @@ HasUriReceiver,  CrawlStatusListener {
             // This is a feature.  This is handling for case where a seed
             // gets immediately redirected to another page.  What we're doing
             // is treating the immediate redirect target as a seed.
-            List seeds = this.controller.getScope().getSeedlist();
-            synchronized(seeds) {
-                seeds.add(curi.getUURI());
-            }
+            this.controller.getScope().addSeed(curi.getUURI());
             // And it needs rapid scheduling.
             curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }
