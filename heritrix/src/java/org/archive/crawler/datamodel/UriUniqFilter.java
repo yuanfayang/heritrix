@@ -44,7 +44,7 @@ public interface UriUniqFilter {
     public void addForce(HasUri hu); // add given item, even if already present
     public void note(HasUri hu); // note item as seen, without passing through
     public void forget(HasUri hu); // forget that item was seen
-    public void flush(); // force all items to be evaluated, added or dropped
+    public long flush(); // force pending items to be added/dropped, return #added
     
     /**
      * @author gojomo
@@ -58,13 +58,4 @@ public interface UriUniqFilter {
     public interface HasUriReceiver {
         public void receive(HasUri h);
     }
-
-//  public boolean contains(UURI u);
-//  public boolean contains(CandidateURI curi);
-
-//    public void add(UURI u);
-//    public void remove(UURI u);
-//
-//    public void add(CandidateURI curi); // convenience; only really adds the UURI
-//    public void remove(CandidateURI curi); // convenience; only really adds the UURI
 }
