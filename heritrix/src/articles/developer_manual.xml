@@ -2185,22 +2185,20 @@ public class SimpleExtractor extends Processor
 
   <sect1 id="arcreader">
     <title>Reading arc files</title>
-    <para>By default, heritrix runs with the
-    <literal>ARCWriterProcessor</literal>.
-    This processor writes internet archive arc files.  Arc files are described
-    here: <ulink 
+    <para>By default, heritrix writes all its crawled to disk using
+    <ulink url="http://crawler.archive.org/apidocs/org/archive/crawler/writer/ARCWriterProcessor.html">ARCWriterProcessor</ulink>.
+    This processor writes the found crawl content as internet archive arc
+    files.  Arc files are described here: <ulink 
     url="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
     File Format</ulink>.</para>  
-    <para>See <ulink 
-    url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html">org.archive.io.arc.ARCReader</ulink>
-    for a java reader of arc files.  It has a command line interface that
-    can be used to print out meta info and for doing random access of arc
-    records (The command-line interface is described in the
-        <ulink 
-        url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html#main(java.lang.String[])">main method javadoc</ulink> comments).  Also 
-        see the arc file parsing tools that have been developed by
-        <ulink 
-        url="http://www.netarchive.dk/website/sources/index-en.htm">Netarchive.dk</ulink>.
+    <para><ulink 
+    url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html">ARCReader</ulink> can be used reading arc files.  It has a command line
+    interface that can be used to print out meta info and for doing random
+    access getting of arc records (The command-line interface is described in
+    the <ulink 
+        url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html#main(java.lang.String[])">main method javadoc</ulink> comments).</p>  
+        <p><ulink 
+        url="http://www.netarchive.dk/website/sources/index-en.htm">Netarchive.dk</ulink> have also developed arc reading and writing tools.
         </para>
 
   </sect1>
