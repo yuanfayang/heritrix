@@ -2688,7 +2688,75 @@
       <sect3 id="manifest_bundle.pl">
         <title>manifest_bundle.pl</title>
 
-        <para></para>
+        <para>This script will bundle up all resources referenced by a crawl
+        manifest file (<xref linkend="crawl-manifest.txt" />). Output bundle
+        is an uncompressed or compressed tar ball. Directory structure created
+        in the tar ball is as follow:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>Top level directory (crawl name)</para>
+          </listitem>
+
+          <listitem>
+            <para>Three default subdirectories (configuration, logs and
+            reports directories)</para>
+          </listitem>
+
+          <listitem>
+            <para>Any other arbitrary subdirectories</para>
+          </listitem>
+        </itemizedlist>
+
+        <para>Usage:<programlisting>  manifest_bundle.pl crawl_name manifest_file [-f output_tar_file] [-z] [ -flag directory]
+      -f output tar file. If omitted output to stdout.
+      -z compress tar file with gzip.
+      -flag is any upper case letter. Default values C, L, and are R are set to
+       configuration, logs and reports</programlisting></para>
+
+        <para>Example:<programlisting>  manifest_bundle.pl testcrawl crawl-manifest.txt -f    \
+        /0/testcrawl/manifest-bundle.tar.gz -z -F filters</programlisting></para>
+
+        <para>Produced tar ball for this example:<programlisting>  /0/testcrawl/manifest-bundle.tar.gz</programlisting>Bundled
+        directory structure for this example:<programlisting>  |-testcrawl
+      |- configurations
+      |- logs
+      |- reports
+      |- filters</programlisting></para>
+      </sect3>
+
+      <sect3>
+        <title>herihop.pl</title>
+
+        <para>This script recreates the hop path to the specified url. The hop
+        path is a path of links (URLs) that we followed to get to the
+        specified url.</para>
+
+        <para>Usage:<programlisting>  hoppath.pl crawl.log urlprefix
+  - urlprefix This parameter should start with a URI scheme such as 'http(s)://',
+    dns:', and others. Wrap this parameter with single quotes to avoid shell problems
+      usually caused by '&amp;'.</programlisting></para>
+
+        <para>Example:<programlisting>  hoppath.pl crawl.log 'http://www.house.gov/'</programlisting></para>
+
+        <para>Result:<programlisting>  2004-02-25-02-36-06:  http://www.house.gov/house/MemberWWW_by_State.html
+  2004-02-25-02-36-06:   L: http://wwws.house.gov/search97cgi/s97_cgi
+  2004-02-25-03-30-38:    L: http://www.house.gov/</programlisting></para>
+
+        <para>The L in the above example refers to the type of link followed
+        (see <xref linkend="discoverypath" />).</para>
+
+        <note>
+          <para>Keep in mind that for now this script works in the IA
+          environment only.</para>
+
+          <para>To run it outside the IA environment replace sort ($sort) and
+          bin_search ($bin_search) commands.</para>
+
+          <para>Please notify send problems/suggestions/questions to
+          <literal>archive-crawler _at_ yahoogroups _dot_
+          com</literal>.</para>
+        </note>
       </sect3>
     </sect2>
   </sect1>
