@@ -25,7 +25,6 @@
   */
 package org.archive.crawler.frontier;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,9 +47,8 @@ import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
-import org.archive.crawler.util.FPUriUniqFilter;
+import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.MemLongFPSet;
 
 import st.ata.util.FPGenerator;
 import EDU.oswego.cs.dl.util.concurrent.ClockDaemon;
@@ -106,6 +104,11 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
     /** daemon to wake (put in ready queue) WorkQueues at the appropriate time */
     protected ClockDaemon daemon = new ClockDaemon();
 
+    /** shared bdb Environment for Frontier subcomponents */
+    protected Environment dbEnvironment;
+    // TODO: investigate using multiple environments to split disk accesses
+    // across separate physical disks
+
     public BdbFrontier(String name) {
         this(name, "BdbFrontier. EXPERIMENTAL - MAY NOT BE RELIABLE. " +
                 "A Frontier using BerkeleyDB Java Edition Databases for " +
@@ -132,8 +135,17 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
     public void initialize(CrawlController c)
             throws FatalConfigurationException, IOException {
         this.controller = c;
-        pendingUris = createMultiQueue();
-        alreadyIncluded = createAlreadyIncluded();
+        EnvironmentConfig envConfig = new EnvironmentConfig();
+        envConfig.setAllowCreate(true);
+        try {
+            dbEnvironment = new Environment(c.getStateDisk(), envConfig);
+            pendingUris = createMultiQueue();
+            alreadyIncluded = createAlreadyIncluded();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new FatalConfigurationException(e.getMessage());
+        }
         loadSeeds();
     }
 
@@ -143,8 +155,8 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * 
      * @return the created BdbMultiQueue
      */
-    private BdbMultiQueue createMultiQueue() {
-        return new BdbMultiQueue(new File(controller.getStateDisk(),"uriQueues"));
+    private BdbMultiQueue createMultiQueue() throws DatabaseException {
+        return new BdbMultiQueue(this.dbEnvironment);
     }
 
     /**
@@ -155,11 +167,11 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @param filePrefix Prefix to names of the set's files
      * @return A UURISet that will serve as a record of already seen URIs
      * @throws IOException If problems occur creating files on disk
+     * @throws DatabaseException
      */
-    protected UriUniqFilter createAlreadyIncluded() throws IOException,
-            FatalConfigurationException {
+    protected UriUniqFilter createAlreadyIncluded() throws DatabaseException {
         // TODO: adapt to use stack's Bdb already-seen facility
-        UriUniqFilter uuf = new FPUriUniqFilter(new MemLongFPSet(23, 0.75f));
+        UriUniqFilter uuf = new BdbUriUniqFilter(this.dbEnvironment);
         uuf.setDestination(this);
         return uuf;
     }
@@ -546,42 +558,30 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
      * @author gojomo
      */
     public class BdbMultiQueue {
-        protected Environment myDbEnvironment = null;
-
+        /** database holding all pending URIs, grouped in virtual queues */
         protected Database pendingUrisDB = null;
-
+        /** database supporting bdb serialization */
         protected Database classCatalogDB = null;
-
+        /** supporting bdb serialization */ 
         protected StoredClassCatalog classCatalog = null;
-
+        /**  supporting bdb serialization of CrawlURIs*/
         protected SerialBinding crawlUriBinding;
 
-
         /**
-         * @param stateDisk
+         * Create the multi queue in the given environment. 
+         * 
+         * @param object
+         * @throws DatabaseException
          */
-        public BdbMultiQueue(File stateDisk) {
-            // Open the environment. Allow it to be created if it does not already exist. 
-            stateDisk.mkdirs();
-            try {
-                EnvironmentConfig envConfig = new EnvironmentConfig();
-                envConfig.setAllowCreate(true);
-                myDbEnvironment = new Environment(stateDisk, envConfig);
-                // Open the database. Create it if it does not already exist. 
-                DatabaseConfig dbConfig = new DatabaseConfig();
-                dbConfig.setAllowCreate(true);
-                pendingUrisDB = myDbEnvironment.openDatabase(null, "pending",
-                        dbConfig);
-                pendingUrisDB.truncate(null, false);
-                classCatalogDB = myDbEnvironment.openDatabase(null, "classes",
-                        dbConfig);
-                classCatalog = new StoredClassCatalog(classCatalogDB);
-                crawlUriBinding = new SerialBinding(classCatalog,
-                        CrawlURI.class);
-            } catch (DatabaseException dbe) {
-                // TODO: handle
-                dbe.printStackTrace();
-            }
+        public BdbMultiQueue(Environment env) throws DatabaseException {
+            // Open the database. Create it if it does not already exist. 
+            DatabaseConfig dbConfig = new DatabaseConfig();
+            dbConfig.setAllowCreate(true);
+            pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
+            pendingUrisDB.truncate(null, false);
+            classCatalogDB = env.openDatabase(null, "classes", dbConfig);
+            classCatalog = new StoredClassCatalog(classCatalogDB);
+            crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
         }
 
         /**
@@ -672,7 +672,6 @@ public class BdbFrontier extends AbstractFrontier implements Frontier,
             try {
                 pendingUrisDB.close();
                 classCatalogDB.close();
-                myDbEnvironment.close();
             } catch (DatabaseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
