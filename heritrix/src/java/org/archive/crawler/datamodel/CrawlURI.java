@@ -138,7 +138,15 @@ public class CrawlURI extends CandidateURI
 
     /** monotonically increasing number within a crawl;
      * useful for tending towards breadth-first ordering */
-    protected long ordinal; 
+    protected long ordinal;
+
+    /**
+     * Cache of this candidate uuri as a string.
+     * 
+     * Profiling shows us spending about 1-2% of total elapsed time in
+     * toString.
+     */
+    private String cachedCrawlURIString = null; 
 
     /**
      * Create a new instance of CrawlURI from a {@link UURI}.
@@ -475,11 +483,20 @@ public class CrawlURI extends CandidateURI
         this.prerequisite = prerequisite;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
+    /**
+     * @return This crawl URI as a string wrapped with 'CrawlURI(' + 
+     * ')'.
      */
     public String toString() {
-        return "CrawlURI("+getURIString()+")";
+        if (this.cachedCrawlURIString == null) {
+            synchronized (this) {
+                if (this.cachedCrawlURIString == null) {
+                    this.cachedCrawlURIString =
+                        "CrawlURI(" + getURIString() + ")";
+                }
+            }
+        }
+        return this.cachedCrawlURIString;
     }
 
     /**
