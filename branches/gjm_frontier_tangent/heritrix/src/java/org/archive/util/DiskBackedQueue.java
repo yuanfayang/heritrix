@@ -26,6 +26,7 @@ package org.archive.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 
@@ -111,6 +112,66 @@ public class DiskBackedQueue implements Queue {
      */
     public void release() {
         tailQ.release();
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#getIterator(boolean)
+     */
+    public Iterator getIterator(boolean inCacheOnly) {
+        if(inCacheOnly){
+            // The headQ is a memory based structure and
+            // that the tailQ is a disk based structure
+            return headQ.getIterator(true);
+        } else {
+            final Iterator it1 = headQ.getIterator(false);
+            final Iterator it2 = tailQ.getIterator(false);
+            
+            // Create and return a compound iterator over the two queues.
+            Iterator it = new Iterator(){
+                
+                private boolean lastNextWasIt1 = true;
+                
+                public void remove() {
+                    if( lastNextWasIt1 ){
+                        it1.remove();
+                    } else {
+                        it2.remove();
+                    }
+                }
+
+                public boolean hasNext() {
+                    return it1.hasNext() || it2.hasNext();
+                }
+
+                public Object next() {
+                    if(it1.hasNext()){
+                        // Still have something left in it1
+                        return it1.next();
+                    } else {
+                        // Donw with it1, working on it2
+                        lastNextWasIt1 = false;
+                        return it2.next();
+                    }
+                }
+            };
+            
+            return it;
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
+     */
+    public void deleteMatchedItems(QueueItemMatcher matcher) {
+        headQ.deleteMatchedItems(matcher);
+        tailQ.deleteMatchedItems(matcher);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#peek()
+     */
+    public Object peek() {
+         return headQ.peek();
     }
 
 }
