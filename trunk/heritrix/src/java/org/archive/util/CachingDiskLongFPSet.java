@@ -32,6 +32,15 @@ import java.io.IOException;
  * recently added or contains()-queries values from the
  * fixed-size in-memory cache.
  *
+ * Every add() or positive contains() inserts the 
+ * relevant fingerprint into the cache. 
+ * 
+ * Every million slots in the cache or disk cost 72MB of
+ * space. 
+ * 
+ * Lightly tested and unoptimized; may be quite slow and
+ * inefficient with its disk accesses.
+ * 
  * @author gojomo
  *
  */
