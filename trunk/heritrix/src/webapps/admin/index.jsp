@@ -13,7 +13,7 @@
     <script type="text/javascript">
         function doTerminateCurrentJob(){
             if(confirm("Are you sure you wish to terminate the job currently being crawled?")){
-                document.location = <%=request.getContextPath()%> + '/console/action.jsp?action=terminate';
+                document.location = '<%out.print(request.getContextPath());%>/console/action.jsp?action=terminate';
             }
         }    
     </script>
