@@ -66,7 +66,6 @@
       <float name="delay-factor">0.0</float>
       <integer name="max-delay-ms">0</integer>
       <integer name="min-delay-ms">0</integer>
-      <integer name="min-interval-ms">0</integer>
       <integer name="max-retries">10</integer>
       <long name="retry-delay-seconds">90</long>
       <integer name="total-bandwidth-usage-KB-sec">0</integer>
@@ -85,8 +84,8 @@
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
-        <integer name="ip-validity-duration-seconds">-1</integer>
-        <integer name="robot-validity-duration-m">4320</integer>
+        <integer name="ip-validity-duration-seconds">21600</integer>
+        <integer name="robot-validity-duration-seconds">86400</integer>
       </newObject>
     </map>
     <map name="fetch-processors">
