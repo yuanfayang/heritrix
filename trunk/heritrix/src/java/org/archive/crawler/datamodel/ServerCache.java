@@ -93,8 +93,9 @@ public class ServerCache {
                 // Fallback for cases where getAuthority() fails (eg dns:)
                 hostOrAuthorityStr = curi.getUURI().getCurrentHierPath();
                 if(hostOrAuthorityStr != null &&
-                    !hostOrAuthorityStr.matches("[\\w\\.:]+")) {
-                    // Not just word chars and dots and colons; throw away
+                    !hostOrAuthorityStr.matches("[-_\\w\\.:]+")) {
+                    // Not just word chars and dots and colons and dashes and 
+                    // underscores; throw away
                     hostOrAuthorityStr = null;
                 }
             }
