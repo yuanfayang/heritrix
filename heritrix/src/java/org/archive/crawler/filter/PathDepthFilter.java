@@ -46,7 +46,7 @@ public class PathDepthFilter extends Filter {
     public static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";
     Integer maxPathDepth = new Integer(Integer.MAX_VALUE);
     final static char slash = '/';
-    String path;
+    private String path = null;
 
     /**
      * @param name
@@ -65,9 +65,11 @@ public class PathDepthFilter extends Filter {
      */
     protected boolean innerAccepts(Object o) {
         this.path = null;
+        
         if (o == null) {
             return false;
         }
+        
         if(o instanceof CandidateURI) {
             try {
                 if (((CandidateURI)o).getUURI() != null) {
@@ -87,26 +89,27 @@ public class PathDepthFilter extends Filter {
             }
         }
 
-        if (path == null) {
+        if (this.path == null) {
             return true;
         }
 
         int count = 0;
-        for (int i = path.indexOf(slash);
-            i != -1;
-            i = path.indexOf(slash, i + 1)) {
+        for (int i = this.path.indexOf(slash); i != -1;
+        		i = this.path.indexOf(slash, i + 1)) {
             count++;
         }
+        
         if (o instanceof CrawlURI) {
             try {
-                maxPathDepth = (Integer) getAttribute(
+                this.maxPathDepth = (Integer) getAttribute(
                         ATTR_MAX_PATH_DEPTH, (CrawlURI) o);
             } catch (AttributeNotFoundException e) {
                 logger.severe(e.getMessage());
             }
         }
-        return (maxPathDepth != null) ?
-            count <= maxPathDepth.intValue():
+        
+        return (this.maxPathDepth != null) ?
+            count <= this.maxPathDepth.intValue():
             false;
     }
 
