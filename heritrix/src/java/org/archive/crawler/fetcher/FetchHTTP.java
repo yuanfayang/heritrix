@@ -70,6 +70,7 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.settings.StringList;
+import org.archive.httpclient.CloseConnectionMarker;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
@@ -283,8 +284,20 @@ public class FetchHTTP extends Processor
                 1000 * getTimeout(curi));
         } catch (RecorderTimeoutException ex) {
             curi.addAnnotation("timeTrunc");
+            if (method instanceof CloseConnectionMarker) {
+                ((CloseConnectionMarker)method).closeConnection();
+            } else {
+                logger.severe("Exceeded download time limit but method does" +
+                    " not support close.");
+            }
         } catch (RecorderLengthExceededException ex) {
             curi.addAnnotation("lengthTrunc");
+            if (method instanceof CloseConnectionMarker) {
+                ((CloseConnectionMarker)method).closeConnection();
+            } else {
+                logger.severe("Exceeded download size limit but method does" +
+                    " not support close.");
+            }
         } catch (IOException e) {
             cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
             return;
