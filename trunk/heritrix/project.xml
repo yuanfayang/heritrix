@@ -241,7 +241,7 @@
         <dependency>
             <id>stataclasses</id>
             <version>0.1.0</version>
-            <url>file://${basedir}/lib/stataclasses.jar</url>
+            <url>http://cvs.sourceforge.net/viewcvs.py/*checkout*/archive-crawler/ArchiveOpenCrawler/lib/stataclasses-0.1.0.jar</url>
             <properties>
                 <description>Utils supplied by Rayme Stata.
                 Gave it arbitrary 0.1.0 version number.
