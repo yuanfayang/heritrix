@@ -10,14 +10,11 @@
    max-trans-hops="5">
    
   <seeds>
- # http://www.archive.org/movies/movies.php
-   http://www.drudgereport.com
+ # http://www.drudgereport.com
    http://www.yahoo.com
    http://www.yahoo.com
    http://www.yahoo.com
  # http://my.yahoo.com
- # http://us.i1.yimg.com/us.yimg.com/i/my/edit2.gif
- # http://geocities.yahoo.com/v/w/
    http://www.google.com/dirhp
    
   </seeds>
