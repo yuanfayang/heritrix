@@ -28,10 +28,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.framework.ProcessorChain;
+import org.archive.util.HttpRecorder;
 
 import st.ata.util.AList;
 import st.ata.util.HashtableAList;
@@ -52,6 +53,8 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI extends CandidateURI
     implements URIStoreable, CoreAttributeConstants, FetchStatusCodes {
+    private static String DEFAULT_CLASS_KEY = "default..."; // when neat host-based class-key fails us
+    
     // INHERITED FROM CANDIDATEURI
     // uuri: core identity: the "usable URI" to be crawled
     // isSeed
@@ -62,10 +65,12 @@ public class CrawlURI extends CandidateURI
     // Scheduler lifecycle info
     private Object state;   // state within scheduling/store/selector
     private long wakeTime; // if "snoozed", when this CrawlURI may awake
+    private String classKey; // cached classKey value
     private long dontRetryBefore = -1;
 
     // Processing progress
-    Processor nextProcessor;
+    private Processor nextProcessor;
+    private ProcessorChain nextProcessorChain;
     private int fetchStatus = 0;    // default to unattempted
     private int deferrals = 0;     // count of postponements for prerequisites
     private int fetchAttempts = 0; // the number of fetch attempts that have been made
@@ -89,6 +94,21 @@ public class CrawlURI extends CandidateURI
 
     private long contentSize = -1;
     private long contentLength = -1;
+    
+    /**
+     * Current http recorder. 
+     * 
+     * Gets set upon successful request.  Reset at start of processing chain.
+     */
+    private HttpRecorder httpRecorder = null;
+    
+    /**
+     * Content type of a successfully fetched URI.
+     * 
+     * May be null even on successfully fetched URI.
+     */
+    private String contentType = null;
+
 
     /**
      * @param uuri
@@ -141,7 +161,7 @@ public class CrawlURI extends CandidateURI
     public static String fetchStatusCodesToString(int code){
         switch(code){
             // DNS
-            case 1    : return "DNS-1-OK"; 
+            case S_DNS_SUCCESS : return "DNS-1-OK"; 
             // HTTP Informational 1xx
             case 100  : return "HTTP-100-Info-Continue";
             case 101  : return "HTTP-101-Info-Switching Protocols";
@@ -187,6 +207,49 @@ public class CrawlURI extends CandidateURI
             case 503  : return "HTTP-503-ServerErr-Service Unavailable";
             case 504  : return "HTTP-504-ServerErr-Gateway Timeout";
             case 505  : return "HTTP-505-ServerErr-HTTP Version Not Supported";
+            // Heritrix internal codes (all negative numbers
+            case S_BLOCKED_BY_USER:
+                return "Heritrix(" + S_BLOCKED_BY_USER + ")-Blocked by user";
+            case S_DELETED_BY_USER:
+                return "Heritrix(" + S_DELETED_BY_USER + ")-Deleted by user";
+            case S_CONNECT_FAILED:
+                return "Heritrix(" + S_CONNECT_FAILED + ")-Connection failed";
+            case S_CONNECT_LOST:
+                return "Heritrix(" + S_CONNECT_LOST + ")-Connection lost";
+            case S_DEEMED_CHAFF:
+                return "Heritrix(" + S_DEEMED_CHAFF + ")-Deemed chaff";
+            case S_DEFERRED:
+                return "Heritrix(" + S_DEFERRED + ")-Deferred";
+            case S_DOMAIN_UNRESOLVABLE:
+                return "Heritrix(" + S_DOMAIN_UNRESOLVABLE
+                        + ")-Domain unresolvable";
+            case S_OUT_OF_SCOPE:
+                return "Heritrix(" + S_OUT_OF_SCOPE + ")-Out of scope";
+            case S_PREREQUISITE_FAILURE:
+                return "Heritrix(" + S_PREREQUISITE_FAILURE
+                        + ")-Prerequisite failure";
+            case S_ROBOTS_PRECLUDED:
+                return "Heritrix(" + S_ROBOTS_PRECLUDED + ")-Robots precluded";
+            case S_RUNTIME_EXCEPTION:
+                return "Heritrix(" + S_RUNTIME_EXCEPTION
+                        + ")-Runtime exception";
+            case S_SERIOUS_ERROR:
+                return "Heritrix(" + S_SERIOUS_ERROR + ")-Serious error";
+            case S_TIMEOUT:
+                return "Heritrix(" + S_TIMEOUT + ")-Timeout";
+            case S_TOO_MANY_EMBED_HOPS:
+                return "Heritrix(" + S_TOO_MANY_EMBED_HOPS
+                        + ")-Too many embed hops";
+            case S_TOO_MANY_LINK_HOPS:
+                return "Heritrix(" + S_TOO_MANY_LINK_HOPS
+                        + ")-Too many link hops";
+            case S_TOO_MANY_RETRIES:
+                return "Heritrix(" + S_TOO_MANY_RETRIES + ")-Too many retries";
+            case S_UNATTEMPTED:
+                return "Heritrix(" + S_UNATTEMPTED + ")-Unattempted";
+            case S_UNFETCHABLE_URI:
+                return "Heritrix(" + S_UNFETCHABLE_URI + ")-Unfetchable URI";
+            // Unknown return code
             default : return Integer.toString(code);
         }
     }
@@ -208,15 +271,24 @@ public class CrawlURI extends CandidateURI
         return fetchAttempts++;
     }
 
-     public Processor nextProcessor() {
-             return nextProcessor;
-     }
-     /**
-      * @param processor
-      */
-     public void setNextProcessor(Processor processor) {
-             nextProcessor = processor;
-     }
+    public Processor nextProcessor() {
+        return nextProcessor;
+    }
+    
+    public ProcessorChain nextProcessorChain() {
+        return nextProcessorChain;
+    }
+    
+    /**
+     * @param processor
+     */
+    public void setNextProcessor(Processor processor) {
+        nextProcessor = processor;
+    }
+    
+    public void setNextProcessorChain(ProcessorChain nextProcessorChain) {
+        this.nextProcessorChain = nextProcessorChain;
+    }
 
     /**
      * @return Token (usually the hostname) which indicates
@@ -225,9 +297,14 @@ public class CrawlURI extends CandidateURI
      * class is processed at once, all items of the class
      * are held for a politeness period, etc.
      */
-    public Object getClassKey() {
-        //return host.getHostname();
+    public String getClassKey() {
+        if(classKey==null) {
+            classKey = calculateClassKey();
+        }
+        return classKey;
+    }
 
+    private String calculateClassKey() {
         String scheme = getUURI().getUri().getScheme();
         if (scheme.equals("dns")){
             return FetchDNS.parseTargetDomain(this);
@@ -237,7 +314,7 @@ public class CrawlURI extends CandidateURI
             String authority =  getUURI().getUri().getAuthority();
             if(authority == null) {
                 // let it be its own key
-                return getUURI().getUriString();
+                return DEFAULT_CLASS_KEY;
             } else {
                 return authority;
             }
@@ -344,12 +421,20 @@ public class CrawlURI extends CandidateURI
         return "CrawlURI("+getUURI()+")";
     }
 
-    public String getContentType(){
-        if (getAList().containsKey(A_CONTENT_TYPE)) {
-             return getAList().getString(A_CONTENT_TYPE);
-        } else {
-            return null;
-        }
+    /**
+     * @return Fetched URIs content type.  May be null.
+     */
+    public String getContentType() {
+        return this.contentType;
+    }
+    
+    /**
+     * Set a fetched uri's content type.
+     * 
+     * @param ct Contenttype.  May be null.
+     */
+    public void setContentType(String ct) {
+        this.contentType = ct;
     }
 
     /**
@@ -550,10 +635,16 @@ public class CrawlURI extends CandidateURI
     /**
      * @param processor
      */
-    public void skipToProcessor(Processor processor) {
+    public void skipToProcessor(ProcessorChain processorChain, Processor processor) {
+        setNextProcessorChain(processorChain);
         setNextProcessor(processor);
     }
 
+    public void skipToProcessorChain(ProcessorChain processorChain) {
+        setNextProcessorChain(processorChain);
+        setNextProcessor(null);
+    }
+    
     /**
      * For completed HTTP transactions, the length of the content-body
      * (as given by the header or calculated)
@@ -563,15 +654,10 @@ public class CrawlURI extends CandidateURI
      *
      */
     public long getContentLength() {
-        if (contentLength<0) {
-            GetMethod get = (GetMethod) getAList().getObject(A_HTTP_TRANSACTION);
-            //if (get.getResponseHeader("Content-Length")!=null) {
-            //    contentLength = Integer.parseInt(get.getResponseHeader("Content-Length").getValue());
-            //} else {
-                contentLength = get.getHttpRecorder().getResponseContentLength();
-            //}
+        if (this.contentLength < 0) {
+            this.contentLength = getHttpRecorder().getResponseContentLength();
         }
-        return contentLength;
+        return this.contentLength;
     }
 
     /**
@@ -629,5 +715,55 @@ public class CrawlURI extends CandidateURI
         if (fetchAttempts>1) {
             addAnnotation(fetchAttempts+"t");
         }
+    }
+    
+    /**
+     * @return Returns the httpRecorder.  May be null.
+     */
+    public HttpRecorder getHttpRecorder() {
+        return httpRecorder;
+    }
+
+    /**
+     * @param httpRecorder The httpRecorder to set.
+     */
+    public void setHttpRecorder(HttpRecorder httpRecorder) {
+        this.httpRecorder = httpRecorder;
+    }
+    
+    /**
+     * @return True if this is a http transaction.
+     */
+    public boolean isHttpTransaction() {
+        return getAList().containsKey(A_HTTP_TRANSACTION);
+    }
+
+    /**
+     * Clean up after a run through the processing chain.
+     * 
+     * Called on the end of processing chain by Frontier#finish.  Null out any
+     * state only valid for this processing passthrough.
+     */
+    public void processingCleanup() {
+        this.httpRecorder = null; 
+
+        if (this.alist != null)
+        {
+            // Allow get to be GC'd.
+            this.alist.remove(A_HTTP_TRANSACTION);
+            // discard any ideas of prereqs -- may no longer be valid
+            this.alist.remove(A_PREREQUISITE_URI);
+        }
+    }
+
+    /**
+     * @param caUri
+     * @return
+     */
+    public static CrawlURI from(CandidateURI caUri) {
+        if (caUri instanceof CrawlURI) {
+            return (CrawlURI) caUri;
+        }
+        return new CrawlURI(caUri);
     }
 }
