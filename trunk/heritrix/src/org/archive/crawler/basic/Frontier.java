@@ -67,6 +67,13 @@ public class Frontier
 	
 	private static Logger logger =
 		Logger.getLogger("org.archive.crawler.basic.Frontier");
+		
+	private static String F_ADD = "\nF+ ";
+	private static String F_EMIT = "\nFe ";
+	private static String F_RESCHEDULE = "\nFr ";
+	private static String F_SUCCESS = "\nFs ";
+	private static String F_FAILURE = "\nFf ";
+		
 	CrawlController controller;
 	
 	// those UURIs which are already in-process (or processed), and
@@ -105,8 +112,8 @@ public class Frontier
 	HashMap heldCuris = new HashMap(); // of UURI -> CrawlURI
 
     // limits on retries TODO: separate into retryPolicy? 
-	private int maxRetries = 3;
-	private int retryDelay = 15000;
+	private int maxRetries = 30;
+	private int retryDelay = 900000; // 15 minutes
 //	private long minDelay;
 //	private float delayFactor;
 //	private long maxDelay;
@@ -213,13 +220,13 @@ public class Frontier
 	 * @see org.archive.crawler.framework.URIFrontier#batchFlush()
 	 */
 	public synchronized void batchFlush() {
-		Queue q = threadWaiting.getQueue();
-		while(!q.isEmpty()) {
-			schedule((CandidateURI) q.dequeue());
-		}
-		q = threadWaitingHigh.getQueue();
+		Queue q = threadWaitingHigh.getQueue();
 		while(!q.isEmpty()) {
 			scheduleHigh((CandidateURI) q.dequeue());
+		}
+		q = threadWaiting.getQueue();
+		while(!q.isEmpty()) {
+			schedule((CandidateURI) q.dequeue());
 		}
 	}
 
@@ -237,6 +244,7 @@ public class Frontier
 		}
 		pendingQueue.enqueue(caUri);
 		incrementScheduled();
+		controller.recover.info(F_ADD+caUri.getURIString());
 	}
 	
 	/** 
@@ -253,6 +261,7 @@ public class Frontier
 		}
 		pendingHighQueue.enqueue(caUri);
 		incrementScheduled();
+		controller.recover.info(F_ADD+caUri.getURIString());
 	}
 
 	/**
@@ -540,6 +549,7 @@ public class Frontier
 		}
 		curi.stripToMinimal();
 		decrementScheduled();
+		controller.recover.info(F_SUCCESS+curi.getURIString());
 	}
 
 
@@ -622,6 +632,7 @@ public class Frontier
 			curi.setServer(controller.getServerCache().getServerFor(curi));
 		}
 		logger.finer(this+".emitCuri("+curi+")");
+		controller.recover.info(F_EMIT+curi.getURIString());
 		return curi;
 	}
 
@@ -872,6 +883,7 @@ public class Frontier
 			curi.stripToMinimal();
 		}
 		decrementScheduled();
+		controller.recover.info(F_FAILURE+curi.getURIString());
 	}
 
 	/**
@@ -941,6 +953,7 @@ public class Frontier
 			UURI prereq = (UURI) curi.getPrerequisiteUri();
 			addAsHeld(curi,prereq);
 			curi.getAList().remove(A_PREREQUISITE_URI);
+			controller.recover.info(F_RESCHEDULE+curi.getURIString());
 			return;
 		}
 		if(curi.getAList().containsKey(A_RETRY_DELAY)) {
@@ -957,6 +970,7 @@ public class Frontier
 			// eligible for retry asap
 			pushToPending(curi);
 		}
+		controller.recover.info(F_RESCHEDULE+curi.getURIString());
 	}
 	
 	/**
