@@ -32,8 +32,8 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.archive.crawler.basic.Preselector;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.framework.Filter;
 
 /** JUnit tests for MapType
  *
@@ -71,19 +71,23 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
      * @throws AttributeNotFoundException
      */
     public void testAddRemoveSizeGlobal()
-           throws InvalidAttributeValueException, AttributeNotFoundException, MBeanException, ReflectionException {
+            throws InvalidAttributeValueException, AttributeNotFoundException,
+            MBeanException, ReflectionException {
 
-        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
         assertTrue("Map should be empty", map.isEmpty(null));
         assertEquals("Map should be empty", map.size(null), 0);
 
-        CrawlerModule module = new CrawlerModule("testModule");
-        assertSame("Did not return added element", map.addElement(null, module), module);
+        CrawlerModule module = new Preselector("testModule");
+        assertSame("Did not return added element",
+                map.addElement(null, module), module);
         assertFalse("Map should contain a element", map.isEmpty(null));
         assertEquals("Map should contain a element", map.size(null), 1);
 
-        assertSame("Did not return removed element", map.removeElement(null, "testModule"), module);
+        assertSame("Did not return removed element", map.removeElement(null,
+                "testModule"), module);
         assertTrue("Map should be empty", map.isEmpty(null));
         assertEquals("Map should be empty", map.size(null), 0);
     }
@@ -100,14 +104,15 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
            throws InvalidAttributeValueException, AttributeNotFoundException,
                   MBeanException, ReflectionException {
 
-        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
         assertTrue("Map should be empty", map.isEmpty(getPerHostSettings()));
         assertEquals("Map should be empty", 0, map.size(getPerHostSettings()));
 
-        CrawlerModule module1 = new Filter("testModule1", "Desc1");
-        CrawlerModule module2 = new Filter("testModule2", "Desc2");
-        CrawlerModule module3 = new Filter("testModule3", "Desc3");
+        CrawlerModule module1 = new Preselector("testModule1");
+        CrawlerModule module2 = new Preselector("testModule2");
+        CrawlerModule module3 = new Preselector("testModule3");
 
         assertSame("Did not return added element",
             map.addElement(getGlobalSettings(), module1), module1);
@@ -125,9 +130,11 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         assertEquals("Wrong number of elements", 1,
             map.size(getGlobalSettings()));
 
-        module1.setAttribute(getPerHostSettings(), new SimpleType("enabled", "desc", new Boolean(false)));
-        checkOrder(getGlobalSettings(), new Type[] {module1}, map);
-        checkOrder(getPerHostSettings(), new Type[] {module1, module2, module3}, map);
+        module1.setAttribute(getPerHostSettings(), new SimpleType("enabled",
+                "desc", new Boolean(false)));
+        checkOrder(getGlobalSettings(), new Type[] { module1}, map);
+        checkOrder(getPerHostSettings(),
+                new Type[] { module1, module2, module3}, map);
 
         assertSame("Did not return removed element",
             map.removeElement(getGlobalSettings(), "testModule1"), module1);
@@ -142,12 +149,14 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         assertEquals("Map should be empty", 0, map.size(getPerHostSettings()));
     }
 
-    public void testMoveElementUp() throws AttributeNotFoundException, MBeanException, ReflectionException, InvalidAttributeValueException {
-        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+    public void testMoveElementUp() throws AttributeNotFoundException,
+            MBeanException, ReflectionException, InvalidAttributeValueException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
-        CrawlerModule module1 = new CrawlerModule("testModule1");
-        CrawlerModule module2 = new CrawlerModule("testModule2");
-        CrawlerModule module3 = new CrawlerModule("testModule3");
+        CrawlerModule module1 = new Preselector("testModule1");
+        CrawlerModule module2 = new Preselector("testModule2");
+        CrawlerModule module3 = new Preselector("testModule3");
         map.addElement(null, module1);
         map.addElement(null, module2);
         map.addElement(null, module3);
@@ -166,12 +175,14 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         checkOrder(null, modules, map);
     }
 
-    public void testMoveElementDown() throws InvalidAttributeValueException, AttributeNotFoundException, MBeanException, ReflectionException {
-        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+    public void testMoveElementDown() throws InvalidAttributeValueException,
+            AttributeNotFoundException, MBeanException, ReflectionException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
-        CrawlerModule module1 = new CrawlerModule("testModule1");
-        CrawlerModule module2 = new CrawlerModule("testModule2");
-        CrawlerModule module3 = new CrawlerModule("testModule3");
+        CrawlerModule module1 = new Preselector("testModule1");
+        CrawlerModule module2 = new Preselector("testModule2");
+        CrawlerModule module3 = new Preselector("testModule3");
         map.addElement(null, module1);
         map.addElement(null, module2);
         map.addElement(null, module3);
@@ -221,14 +232,18 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         assertEquals("Iterator wrong length", modules.length, i);
     }
 
-    public void testGetDefaultValue() throws AttributeNotFoundException, MBeanException, ReflectionException {
-        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+    public void testGetDefaultValue() throws AttributeNotFoundException,
+            MBeanException, ReflectionException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_HTTP_HEADERS);
 
         assertSame(map.getDefaultValue(), map);
     }
 
-    public void testGetLegalValues() throws AttributeNotFoundException, MBeanException, ReflectionException {
-        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+    public void testGetLegalValues() throws AttributeNotFoundException,
+            MBeanException, ReflectionException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_HTTP_HEADERS);
 
         assertNull(map.getLegalValues());
     }
@@ -236,8 +251,10 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
     /*
      * Test for Object getValue()
      */
-    public void testGetValue() throws AttributeNotFoundException, MBeanException, ReflectionException {
-        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+    public void testGetValue() throws AttributeNotFoundException,
+            MBeanException, ReflectionException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_HTTP_HEADERS);
 
         assertSame(map.getValue(), map);
     }

@@ -74,7 +74,7 @@ public class OverrideTest extends SettingsFrameworkTestCase {
 
         // Set up override
         MapType proc = (MapType) getSettingsHandler().getOrder().getAttribute(
-                CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+                CrawlOrder.ATTR_HTTP_HEADERS);
         proc.addElement(getGlobalSettings(), module1);
         proc.setAttribute(getPerDomainSettings(), module2);
 
@@ -102,7 +102,7 @@ public class OverrideTest extends SettingsFrameworkTestCase {
 
         // Set up override
         MapType proc = (MapType) getSettingsHandler().getOrder().getAttribute(
-                CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
+                CrawlOrder.ATTR_HTTP_HEADERS);
         proc.addElement(getPerDomainSettings(), module1);
         proc.setAttribute(getPerHostSettings(), module2);
 
