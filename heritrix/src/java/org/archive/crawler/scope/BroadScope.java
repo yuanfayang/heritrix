@@ -61,8 +61,7 @@ public class BroadScope extends CrawlScope {
     public BroadScope(String name) {
         super(name);
         setDescription(
-            "A scope for broad crawls. Crawls made with this scope will not" +
-            "be limited to the hosts or domains of its seeds. NOTE: Such a " +
+            "A scope for broad crawls. Crawls made with this scope will not " +            "be limited to the hosts or domains of its seeds. NOTE: Such a " +
             "crawl will quickly discover enough unique hosts to exceed " +
 			"Heritrix 1.0.0's memory resources. Thus broad crawls are not " +
 			"recommended except as stress-tests.");
