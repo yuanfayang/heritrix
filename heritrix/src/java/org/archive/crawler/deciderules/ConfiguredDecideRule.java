@@ -1,4 +1,4 @@
-/* AcceptRule
+/* ConfiguredDecideRule
 *
 * $Id$
 *
