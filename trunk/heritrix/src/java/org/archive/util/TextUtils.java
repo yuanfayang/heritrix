@@ -177,4 +177,22 @@ public class TextUtils {
         }
         return buffer.toString();
     }
+    
+    /**
+     * Escapes a string so that it can be placed inside XML/HTML attribute.
+     * Replaces ampersand, less-than, greater-than, single-quote, and 
+     * double-quote with escaped versions. 
+     * 
+     * @param s The string to escape
+     * @return The same string escaped.
+     */
+    public static String escapeForMarkupAttribute(String s) {
+        // TODO: do this in a single pass instead of creating 5 junk strings
+        String escaped = s.replaceAll("&","&amp;");
+        escaped = escaped.replaceAll("<","&lt;");
+        escaped = escaped.replaceAll(">","&gt;");
+        escaped = escaped.replaceAll("\'","&apos;");
+        escaped = escaped.replaceAll("\"","&quot;");
+        return escaped; 
+    }
 }
