@@ -6,21 +6,18 @@
  */
 package org.archive.crawler.datamodel;
 
-import org.archive.crawler.basic.CrawlerConfigurationConstants;
-
+import java.io.File;
 import java.io.IOException;
 
 import javax.xml.transform.TransformerException;
 
 import org.apache.xpath.XPathAPI;
-import org.archive.crawler.framework.*;
+import org.archive.crawler.framework.XMLConfig;
 import org.w3c.dom.Document;
-
-import java.io.File;
 
 /** Read and manipulate configuration (order) file.
  */
-public class CrawlOrder extends XMLConfig implements CrawlerConfigurationConstants {
+public class CrawlOrder extends XMLConfig {
 	protected String name;
 	protected CrawlerBehavior behavior;
 	protected String outputLocation;
