@@ -35,19 +35,19 @@ import junit.framework.TestCase;
  */
 public class UURITest extends TestCase {
 
-    String uri = "http://archive.org/.././" + UURI.HTML_AMP_ENTITY + "\u00A0" +
+    String uri = "http://archive.org/.././" + "\u00A0" +
         UURI.SPACE + UURI.PIPE + UURI.CIRCUMFLEX + UURI.QUOT + UURI.SQUOT +
         UURI.APOSTROPH + UURI.LSQRBRACKET + UURI.RSQRBRACKET +
         UURI.LCURBRACKET + UURI.RCURBRACKET + UURI.BACKSLASH + "test/../a.gif" +
         "\u00A0" + UURI.SPACE;
 
     // Note: single quite is not being escaped by URI class.
-   String escaped_uri = "http://archive.org/" + UURI.AMP + UURI.ESCAPED_SPACE + 
+   String escaped_uri = "http://archive.org/" + UURI.ESCAPED_SPACE + 
         UURI.ESCAPED_SPACE + UURI.ESCAPED_PIPE + UURI.ESCAPED_CIRCUMFLEX +
         UURI.ESCAPED_QUOT + UURI.SQUOT + UURI.ESCAPED_APOSTROPH +
         UURI.ESCAPED_LSQRBRACKET + UURI.ESCAPED_RSQRBRACKET +
         UURI.ESCAPED_LCURBRACKET + UURI.ESCAPED_RCURBRACKET +
-        UURI.SLASH + "a.gif"; // NBSP and SPACE shoud be trimed;
+        UURI.SLASH + "a.gif"; // NBSP and SPACE should be trimmed;
     
     UURI uuri;
     
@@ -61,6 +61,6 @@ public class UURITest extends TestCase {
     }
 
     public final void testNormalize() {
-        assertTrue(escaped_uri.equals(uuri.getURIString()));        
+        assertTrue(escaped_uri.equals(uuri.getURIString()));
     }
 }

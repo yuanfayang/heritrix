@@ -57,6 +57,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorCSS");
 
+    private static String ESCAPED_AMP = "&amp";
     static final String BACKSLAH = "\\\\";
     /**
      *  CSS URL extractor pattern.
@@ -122,10 +123,9 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             Matcher uris = TextUtils.getMatcher(CSS_URI_EXTRACTOR, cs);
             while (uris.find()) {
                 String cssUri = uris.group(1);
-                // Escaping is now done in UURI.normalize();
-                // cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
-
-                // Remove backslash(s), an escape character used in CSS URL
+                // TODO: Escape more HTML Entities.
+                cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
+                // Remove backslash(s), an escape character, used in CSS URL
                 cssUri = TextUtils.replaceAll(BACKSLAH, cssUri, "");
                 foundLinks++;
                 curi.addLinkToCollection(cssUri, A_CSS_LINKS);

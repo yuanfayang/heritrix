@@ -205,8 +205,6 @@ public class UURI implements Serializable {
         return u;
     }
 
-    static final String HTML_AMP_ENTITY = "&amp;";
-    static final String AMP = "&";   
     static final String NBSP = "\\xA0";
     static final String SPACE = " ";
     static final String ESCAPED_SPACE = "%20";
@@ -262,11 +260,6 @@ public class UURI implements Serializable {
             s = TextUtils.replaceAll(SPACE, s, ESCAPED_SPACE);
         }        
         
-        // Replace HTML ampersand entity.
-        // TODO: decode more entities.
-        if (s.indexOf(HTML_AMP_ENTITY) >= 0){
-            s = TextUtils.replaceAll(HTML_AMP_ENTITY, s, AMP);
-        }
         // escape  | ^ " ' ` [ ] { } \
         // (IE actually sends these unescaped, but they can't
         // be put into a java.net.URI instance)
@@ -303,9 +296,9 @@ public class UURI implements Serializable {
             s = TextUtils.replaceAll(
                     RCURBRACKET_PATTERN, s, ESCAPED_RCURBRACKET);
         }
-        // IE acutally converts backslashes to slashes rather than to %5C.
-        // Since URIs that have backslases usually work only with IE, we will
-        // convert backslases to slases as well.
+        // IE actually converts backslashes to slashes rather than to %5C.
+        // Since URIs that have backslashes usually work only with IE, we will
+        // convert backslashes to slashes as well.
         // TODO: Maybe we can first convert backslashes by specs and than by IE
         // so that we fetch both versions. 
         if (s.indexOf(BACKSLASH) >= 0) {
