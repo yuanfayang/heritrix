@@ -31,6 +31,7 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.InstancePerThread;
@@ -102,8 +103,16 @@ public class ToeThread extends Thread
         controller = g.getController();
         serialNumber = sn;
         setPriority(DEFAULT_PRIORITY);
+        int outBufferSize = ((Integer) controller
+                .getOrder()
+                .getUncheckedAttribute(null,CrawlOrder.ATTR_RECORDER_OUT_BUFFER))
+                        .intValue();
+        int inBufferSize = ((Integer) controller
+                .getOrder()
+                .getUncheckedAttribute(null, CrawlOrder.ATTR_RECORDER_IN_BUFFER))
+                .intValue();  
         httpRecorder = new HttpRecorder(controller.getScratchDisk(),
-            "tt" + sn + "http");
+            "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
     }
 

@@ -90,15 +90,32 @@ public class HttpRecorder {
      * suffices <code>ris</code> for recorded input stream and
      * <code>ros</code> for recorded output stream.
      */
-    public HttpRecorder(File tempDir, String backingFilenameBase) {
+    public HttpRecorder(File tempDir, String backingFilenameBase, 
+            int outBufferSize, int inBufferSize) {
         tempDir.mkdirs();
         this.backingFileBasename =
             (new File(tempDir.getPath(), backingFilenameBase))
                 .getAbsolutePath();
-        this.ris = new RecordingInputStream(DEFAULT_INPUT_BUFFER_SIZE,
+        this.ris = new RecordingInputStream(inBufferSize,
             this.backingFileBasename + RECORDING_INPUT_STREAM_SUFFIX);
-        this.ros = new RecordingOutputStream(DEFAULT_OUTPUT_BUFFER_SIZE,
+        this.ros = new RecordingOutputStream(outBufferSize,
             this.backingFileBasename + RECORDING_OUTPUT_STREAM_SUFFIX);
+    }
+
+    /**
+     * Create an HttpRecorder.
+     * 
+     * @param tempDir
+     *            Directory into which we drop backing files for recorded input
+     *            and output.
+     * @param backingFilenameBase
+     *            Backing filename base to which we'll append suffices
+     *            <code>ris</code> for recorded input stream and
+     *            <code>ros</code> for recorded output stream.
+     */
+    public HttpRecorder(File tempDir, String backingFilenameBase) {
+        this(tempDir, backingFilenameBase, DEFAULT_INPUT_BUFFER_SIZE,
+                DEFAULT_OUTPUT_BUFFER_SIZE);
     }
 
     /**
