@@ -1802,7 +1802,9 @@ HasUriReceiver,  CrawlStatusListener {
         this.allClassQueuesMap = null;
         this.inactiveClassQueues = null;
         this.snoozeQueues = null;
-        this.controller = null;
+        // Clearing controller is a problem. We get
+        // NPEs in #preNext.
+        // this.controller = null;
     }
 
     /* (non-Javadoc)
