@@ -173,12 +173,12 @@ public class CrawlURI extends CandidateURI
             case 101  : return "HTTP-101-Info-Switching Protocols";
             // HTTP Successful 2xx
             case 200  : return "HTTP-200-Success-OK";
-            case 201  : return "HTTP-200-Success-Created";
-            case 202  : return "HTTP-200-Success-Accepted";
-            case 203  : return "HTTP-200-Success-Non-Authoritative";
-            case 204  : return "HTTP-200-Success-No Content ";
-            case 205  : return "HTTP-200-Success-Reset Content";
-            case 206  : return "HTTP-200-Success-Partial Content";
+            case 201  : return "HTTP-201-Success-Created";
+            case 202  : return "HTTP-202-Success-Accepted";
+            case 203  : return "HTTP-203-Success-Non-Authoritative";
+            case 204  : return "HTTP-204-Success-No Content ";
+            case 205  : return "HTTP-205-Success-Reset Content";
+            case 206  : return "HTTP-206-Success-Partial Content";
             // HTTP Redirection 3xx
             case 300  : return "HTTP-300-Redirect-Multiple Choices";
             case 301  : return "HTTP-301-Redirect-Moved Permanently";
