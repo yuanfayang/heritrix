@@ -1046,7 +1046,7 @@ public class CrawlURI extends CandidateURI
      * Return the 'holder' for the convenience of 
      * an external facility.
      *
-     * @return
+     * @return holder
      */
     public Object getHolder() {
         return holder;
@@ -1062,7 +1062,10 @@ public class CrawlURI extends CandidateURI
         holderKey=obj;
     }
     /**
-     * @return
+     * Return the 'holderKey' for convenience of 
+     * an external facility (Frontier).
+     * 
+     * @return holderKey 
      */
     public Object getHolderKey() {
         return holderKey;
@@ -1070,7 +1073,8 @@ public class CrawlURI extends CandidateURI
 
     /**
      * Get the ordinal (serial number) assigned at creation.
-     * @return
+     * 
+     * @return ordinal
      */
     public long getOrdinal() {
         return ordinal;
