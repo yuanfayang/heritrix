@@ -23,7 +23,7 @@ public interface URIManager {
 	 * @param nuri
 	 * @return
 	 */
-	public CrawlURI getCrawlURI(NormalizedURIString nuri);
+	public CrawlURI getCrawlURI(UURI uuri);
 	
 	/**
 	 * Inserts a URI into this URIManager.
@@ -33,7 +33,7 @@ public interface URIManager {
 	 * 
 	 * @param uri
 	 */
-	public void insert(NormalizedURIString nuri);
+	public void insert(UURI uuri);
 	
 	/**
 	 * Returns a CrawlURI after processing (or a processing
