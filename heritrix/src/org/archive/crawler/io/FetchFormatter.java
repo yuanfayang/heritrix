@@ -20,10 +20,11 @@ public class FetchFormatter extends Formatter {
 	 * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
 	 */
 	public String format(LogRecord lr) {
-		int statusCode = ((Integer)lr.getParameters()[0]).intValue();
-		String length = (String)lr.getParameters()[1];
-		URI uri = (URI)lr.getParameters()[2];
-		return statusCode+" "+length+" "+uri+"\n";
+		int threadNumber = ((Integer)lr.getParameters()[0]).intValue();
+		int statusCode = ((Integer)lr.getParameters()[1]).intValue();
+		String length = (String)lr.getParameters()[2];
+		URI uri = (URI)lr.getParameters()[3];
+		return threadNumber + " " + statusCode+" "+length+" "+uri+"\n";
 	}
 
 }
