@@ -72,6 +72,7 @@ public class ServerCache {
 			// set crawlhost to default nameserver
 			String primaryDns = FindServer.server();
 			if (primaryDns == null) {
+                System.err.println("Could not get primary DNS server.");
 				return null;
 			} else {
 				return getServerFor(primaryDns);

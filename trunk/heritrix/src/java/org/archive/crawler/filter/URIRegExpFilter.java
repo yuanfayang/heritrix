@@ -23,8 +23,6 @@
  */
 package org.archive.crawler.filter;
 
-import java.util.regex.Pattern;
-
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
@@ -43,14 +41,14 @@ import org.archive.util.TextUtils;
  */
 public class URIRegExpFilter extends Filter {
     final static String ATTR_REGEXP = "regexp";
-    //Pattern pattern;
 
     /**
      * @param name
      */
     public URIRegExpFilter(String name) {
         super(name, "URI regexp filter");
-        addElementToDefinition(new SimpleType(ATTR_REGEXP, "Regular expression", ""));
+        addElementToDefinition(
+                new SimpleType(ATTR_REGEXP, "Regular expression", ""));
     }
 
 	/* (non-Javadoc)
@@ -69,8 +67,8 @@ public class URIRegExpFilter extends Filter {
 		}
         CrawlURI curi = (CrawlURI) ((o instanceof CrawlURI) ? o : null);
         try {
-            Pattern pattern = Pattern.compile((String) getAttribute(ATTR_REGEXP, curi));
-            return TextUtils.matches(pattern, input);
+            return TextUtils.matches(
+                    (String) getAttribute(ATTR_REGEXP, curi), input);
         } catch (AttributeNotFoundException e) {
             return true;
         }

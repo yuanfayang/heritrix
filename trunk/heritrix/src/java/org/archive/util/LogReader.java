@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -229,14 +230,15 @@ public class LogReader
 		StringBuffer ret = new StringBuffer();
 		
 		try{
-			Pattern p = Pattern.compile(regExpr);
+			Matcher m = Pattern.compile(regExpr).matcher("");
 			BufferedReader bf = new BufferedReader(new FileReader(aFileName), 8192);
 		
 			String line = null;
 			int i = 1;
 			boolean doAdd = false;
 			while ((line = bf.readLine()) != null) {
-				if(TextUtils.matches(p, line)){
+                m.reset(line);
+				if(m.matches()){
 					// Found a match
 					if(prependLineNumbers){
 						ret.append(i);

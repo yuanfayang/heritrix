@@ -28,7 +28,6 @@ package org.archive.crawler.extractor;
 
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -58,16 +57,15 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorCSS");
 
-    static final Pattern ESCAPED_AMP = Pattern.compile("&amp;");
-    static final Pattern BACKSLAH = Pattern.compile("\\\\");
+    static final String ESCAPED_AMP = "&amp;";
+    static final String BACKSLAH = "\\\\";
 	/**
 	 *  CSS URL extractor pattern.
 	 * 
 	 *  This pattern extracts URIs for CSS files 
 	 **/
-    static final Pattern CSS_URI_EXTRACTOR =
-        Pattern.compile(
-            "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
+    static final String CSS_URI_EXTRACTOR =
+        "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]";
 
     private long numberOfCURIsHandled = 0;
     private long numberOfLinksExtracted = 0;

@@ -27,7 +27,6 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 //import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
@@ -97,7 +96,7 @@ public class UURI implements Serializable {
 		return normalize(u,null);
 	}
 	
-	static final Pattern DOTDOT = Pattern.compile("^(/\\.\\.)+");
+	static final String DOTDOT = "^(/\\.\\.)+";
 
 	/**
 	 * Normalize and derelativize
@@ -190,20 +189,20 @@ public class UURI implements Serializable {
 		return u;
 	}
 	
-	static final Pattern NBSP = Pattern.compile("\\xA0");
-	static final Pattern SPACE = Pattern.compile(" ");
-	static final Pattern PIPE = Pattern.compile("\\|");
-	static final Pattern CIRCUMFLEX = Pattern.compile("\\^");
-	static final Pattern QUOT = Pattern.compile("\"");
-	static final Pattern SQUOT = Pattern.compile("'");
-	static final Pattern APOSTROPH = Pattern.compile("`");
-	static final Pattern LSQRBRACKET = Pattern.compile("\\[");
-	static final Pattern RSQRBRACKET = Pattern.compile("\\]");
-	static final Pattern LCURBRACKET = Pattern.compile("\\{");
-	static final Pattern RCURBRACKET = Pattern.compile("\\}");
-	static final Pattern BACKSLASH = Pattern.compile("\\\\");
-	static final Pattern IMPROPERESC = Pattern.compile("%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))");
-	static final Pattern NEWLINE = Pattern.compile("\n+|\r+");
+	static final String NBSP = "\\xA0";
+	static final String SPACE = " ";
+	static final String PIPE = "\\|";
+	static final String CIRCUMFLEX = "\\^";
+	static final String QUOT = "\"";
+	static final String SQUOT = "'";
+	static final String APOSTROPH = "`";
+	static final String LSQRBRACKET = "\\[";
+	static final String RSQRBRACKET = "\\]";
+	static final String LCURBRACKET = "\\{";
+	static final String RCURBRACKET = "\\}";
+	static final String BACKSLASH = "\\\\";
+	static final String IMPROPERESC = "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
+	static final String NEWLINE = "\n+|\r+";
 	
 	/** apply URI escaping where necessary
 	 * 
@@ -328,7 +327,7 @@ public class UURI implements Serializable {
 		return new UURI(normalize(string,uri));
 	}
 
-	static final Pattern UNUSABLE_SCHEMES = Pattern.compile("(?i)^(javascript:)|(aim:)");
+	static final String UNUSABLE_SCHEMES = "(?i)^(javascript:)|(aim:)";
 
 	/**
 	 * @param string

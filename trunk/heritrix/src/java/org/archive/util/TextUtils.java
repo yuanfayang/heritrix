@@ -49,34 +49,42 @@ public class TextUtils {
 //		return LogReader.tail(aFileName, n);
 //	}
 
-	
-	final static Hashtable patternMatchers = new Hashtable(50); // Resuable match objects
-	
-	/**
-	 * Get a matcher object for a precompiled regex pattern.
-	 * This method tries to reuse Matcher objects for efficiency.
-	 * 
-	 * @param p the precompiled Pattern
-	 * @param input the character sequence the matcher should be using
-	 * @return a matcher object loaded with the submitted character sequence
-	 */
-	public static Matcher getMatcher(Pattern p, CharSequence input) {
-		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(p.pattern())) == null) {
-			matchers = new Stack();
-			patternMatchers.put(p.pattern(), matchers);
-		}
-		Matcher matcher;
-		try {
-			matcher = (Matcher) matchers.pop();
-			matcher.reset(input);
-		} catch(EmptyStackException e) {
-			matcher = p.matcher(input);
-		}
-		return matcher;
-	}
+	/** Reusable precompiled Pattern objects indexed on pattern string. */
+    final static Hashtable patterns = new Hashtable(50);
     
-	/**
+    /** Resuable match objects indexed on pattern string. Each element is a
+     * stack of Matcher objects that can be reused.
+     */
+	final static Hashtable patternMatchers = new Hashtable(50);
+	
+    /**
+     * Get a matcher object for a precompiled regex pattern.
+     * This method tries to reuse Matcher objects for efficiency.
+     * 
+     * @param p the precompiled Pattern
+     * @param input the character sequence the matcher should be using
+     * @return a matcher object loaded with the submitted character sequence
+     */
+    public static Matcher getMatcher(String pattern, CharSequence input) {
+        Matcher matcher;
+        Pattern p = (Pattern) patterns.get(pattern);
+        if (p == null) {
+            p = Pattern.compile(pattern);
+            patterns.put(pattern, p);
+            patternMatchers.put(pattern, new Stack());
+            matcher = p.matcher(input);
+        } else {
+            try {
+                matcher = (Matcher) ((Stack)patternMatchers.get(pattern)).pop();
+                matcher.reset(input);
+            } catch(EmptyStackException e) {
+                matcher = ((Pattern)patterns.get(pattern)).matcher(input);
+            }
+        }
+        return matcher;
+    }
+
+    /**
 	 * Use this method to indicate that you are finnished with a Matcher object so
 	 * that it can be recycled. It is up to the user to make sure that this object really isn't
 	 * used anymore. If used after it is marked as freed behaviour is unknown because
@@ -86,7 +94,9 @@ public class TextUtils {
 	 */
 	public static void freeMatcher(Matcher m) {
 		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(m.pattern().pattern())) == null) {
+		if((matchers = (Stack) patternMatchers.get(m.pattern().pattern()))
+            == null) {
+            
 			// This matcher wasn't created by any pattern in the map, throw it away
 			return;
 		}
@@ -103,21 +113,11 @@ public class TextUtils {
 	 * @param replacement the String to substitute every match with
 	 * @return the String with all the matches substituted
 	 */
-	public static String replaceAll(Pattern p, CharSequence input, String replacement) {
-		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(p.pattern())) == null) {
-			matchers = new Stack();
-			patternMatchers.put(p.pattern(), matchers);
-		}
-		Matcher matcher;
-		try {
-			matcher = (Matcher) matchers.pop();
-			matcher.reset(input);
-		} catch(EmptyStackException e) {
-			matcher = p.matcher(input);
-		}
-		String res = matcher.replaceAll(replacement);
-		matchers.push(matcher);
+	public static String replaceAll(
+            String pattern, CharSequence input, String replacement) {
+        Matcher m = getMatcher(pattern, input);
+		String res = m.replaceAll(replacement);
+        freeMatcher(m);
 		return res;
 	}
 
@@ -131,22 +131,12 @@ public class TextUtils {
 	 * @param replacement the String to substitute the first match with
 	 * @return the String with the first match substituted
 	 */
-	public static String replaceFirst(Pattern p, CharSequence input, String replacement) {
-		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(p.pattern())) == null) {
-			matchers = new Stack();
-			patternMatchers.put(p.pattern(), matchers);
-		}
-		Matcher matcher;
-		try {
-			matcher = (Matcher) matchers.pop();
-			matcher.reset(input);
-		} catch(EmptyStackException e) {
-			matcher = p.matcher(input);
-		}
-		String res = matcher.replaceFirst(replacement);
-		matchers.push(matcher);
-		return res;
+	public static String replaceFirst(
+            String pattern, CharSequence input, String replacement) {
+        Matcher m = getMatcher(pattern, input);
+        String res = m.replaceFirst(replacement);
+        freeMatcher(m);
+        return res;
 	}
 
 	/**
@@ -158,22 +148,11 @@ public class TextUtils {
 	 * @param input the character sequence to check
 	 * @return true if character sequence matches
 	 */
-	public static boolean matches(Pattern p, CharSequence input) {
-		Stack matchers;
-		if((matchers = (Stack) patternMatchers.get(p.pattern())) == null) {
-			matchers = new Stack();
-			patternMatchers.put(p.pattern(), matchers);
-		}
-		Matcher matcher;
-		try {
-			matcher = (Matcher) matchers.pop();
-			matcher.reset(input);
-		} catch(EmptyStackException e) {
-			matcher = p.matcher(input);
-		}
-		boolean res = matcher.matches();
-		matchers.push(matcher);
-		return res;
+	public static boolean matches(String pattern, CharSequence input) {
+        Matcher m = getMatcher(pattern, input);
+        boolean res = m.matches();
+        freeMatcher(m);
+        return res;
 	}
 
 	/**
@@ -185,8 +164,14 @@ public class TextUtils {
 	 * @param input the character sequence to split
 	 * @return array of Strings split by pattern
 	 */
-	public static String[] split(Pattern p, CharSequence input) {
-		return p.split(input);
+	public static String[] split(String pattern, CharSequence input) {
+        Pattern p = (Pattern) patterns.get(pattern);
+        if (p == null) {
+            p = Pattern.compile(pattern);
+            patterns.put(pattern, p);
+            patternMatchers.put(pattern, new Stack());
+        }
+        return p.split(input);
 	}
     
     /**
