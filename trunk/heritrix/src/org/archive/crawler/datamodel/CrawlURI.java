@@ -16,9 +16,9 @@ import org.archive.crawler.framework.Processor;
  * Except for a few special components, state is in a flexible
  * attibute list.
  * 
- * Should only be instantiated via URIManager.getCrawlURI(), 
+ * Should only be instantiated via URIStore.getCrawlURI(...), 
  * which will assure only one CrawlURI can exist per 
- * NormalizedURIString within a distinct "crawler".
+ * UURI within a distinct "crawler".
  * 
  * @author Gordon Mohr
  */

@@ -18,6 +18,13 @@ public class ToeThread extends Thread {
 	// in-process/on-hold curis? not for now
 	// a queue of curis to do next? not for now
 
+	/**
+	 * @param c
+	 */
+	public ToeThread(CrawlController c) {
+		controller = c;
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
@@ -48,5 +55,13 @@ public class ToeThread extends Thread {
 	private void finishCurrentCuri() {
 		controller.getSelector().inter(currentCuri);
 		currentCuri = null;
+	}
+
+	/**
+	 * 
+	 */
+	public void startCrawling() {
+		// TODO Auto-generated method stub
+		
 	}
 }
