@@ -437,9 +437,8 @@ public class Frontier
         }
         
         // optionally preferencing embeds up to MEDIUM
-        int prefHops = ((Integer) getAttributeOrDefault(
-                ATTR_PREFERENCE_EMBED_HOPS, curi, DEFAULT_PREFERENCE_EMBED_HOPS))
-                .intValue();
+        int prefHops = ((Integer) getUncheckedAttribute(curi,
+                ATTR_PREFERENCE_EMBED_HOPS)).intValue();
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
             if (embedHops > 0 && embedHops <= prefHops
@@ -487,8 +486,8 @@ public class Frontier
             URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
             kq.activate();
             assert kq.isEmpty() == false : "empty queue was waiting for activation";
-            kq.setMaximumMemoryLoad(((Integer) getAttributeOrDefault(ATTR_HOST_QUEUES_MEMORY_CAPACITY
-                    ,curi, DEFAULT_HOST_QUEUES_MEMORY_CAPACITY)).intValue());
+            kq.setMaximumMemoryLoad(((Integer) getUncheckedAttribute(curi,
+                    ATTR_HOST_QUEUES_MEMORY_CAPACITY)).intValue());
             updateQ(kq);
         }
         

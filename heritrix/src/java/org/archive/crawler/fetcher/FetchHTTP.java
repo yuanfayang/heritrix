@@ -223,7 +223,8 @@ public class FetchHTTP extends Processor
 
         // Get a reference to the HttpRecorder that is set into this ToeThread.
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
-        boolean sha1Content = ((Boolean)getAttributeOrNull(ATTR_SHA1_CONTENT,curi)).booleanValue();
+        boolean sha1Content = ((Boolean) getUncheckedAttribute(curi,
+                ATTR_SHA1_CONTENT)).booleanValue();
         if(sha1Content) {
             rec.getRecordedInput().setSha1Digest();
         } else {
