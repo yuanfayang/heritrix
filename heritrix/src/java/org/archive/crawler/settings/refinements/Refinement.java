@@ -83,7 +83,7 @@ public class Refinement {
      * @return true if within bounds.
      */
     public boolean isWithinRefinementBounds(CrawlURI uri) {
-        if (uri == null) {
+        if (uri == null || uri.getUURI() == null) {
             return false;
         }
         for (Iterator it = criteria.iterator(); it.hasNext();) {
