@@ -23,6 +23,13 @@ td
 	font-size: 12px;
 }
 
+th
+{
+	font-family: Verdana;
+	font-size: 12px;
+	font-weight: bold;
+}
+
 input
 {
 	font-family: Verdana;
