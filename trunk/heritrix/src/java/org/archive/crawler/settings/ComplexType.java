@@ -222,8 +222,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * This method should probably not be called from user code. It is a helper
      * method for the settings framework.
      *
-     * @param settings the settings object for which the {@link DataContainer}
-     *                 is active.
+     * @param context Context from which we get settings.
      * @return the active DataContainer.
      */
     protected DataContainer getDataContainerRecursive(Context context) {
