@@ -191,7 +191,12 @@ public class UURIFactory extends URI {
      */
     final static Pattern HTTP_SCHEME_SLASHES =
         Pattern.compile("^(https?://)/+(.*)");
-
+    
+    /**
+     * Consider URIs too long for IE as illegal.
+     */
+    private final static int MAX_URL_LENGTH = 2083;
+    
     /**
      * Protected constructor.
      */
@@ -309,6 +314,12 @@ public class UURIFactory extends URI {
             throw new NullPointerException();
         } else if (uri.length() == 0 && base == null){
             throw new URIException("URI length is zero (and not relative).");
+        }
+        
+        if (uri.length() > MAX_URL_LENGTH) {
+            // TODO: Would  make sense to test against for excessive length
+            // after all the fixup and normalization has been done.
+            throw new URIException("URI length > " + MAX_URL_LENGTH);
         }
 
         // Replace nbsp with normal spaces (so that they get stripped if at

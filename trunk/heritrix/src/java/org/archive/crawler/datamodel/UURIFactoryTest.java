@@ -217,6 +217,30 @@ public class UURIFactoryTest extends TestCase {
        checkExceptionOnIllegalDomainlabel("http://www.lycos.co.uk\"/l/b/\"");
    }    
    
+   /**
+    * Test for [ 1012520 ] UURI.length() &gt; 2k.
+    * @see <a href="http://sourceforge.net/tracker/index.php?func=detail&aid=1012520&group_id=73833&atid=539099">[ 1012520 ] UURI.length() &gt; 2k</a>
+    */
+   public final void test2kURI() throws URIException {
+       final StringBuffer buffer = new StringBuffer("http://a.b");
+       final String subPath = "/123456789";
+       for (int i = 0; i < 207; i++) {
+           buffer.append(subPath);
+       }
+       // String should be 2080 characters long.  Legal.
+       UURIFactory.getInstance(buffer.toString());
+       boolean gotException = false;
+       // Add ten more characters and make size illegal.
+       buffer.append(subPath);
+       try {
+           UURIFactory.getInstance(buffer.toString()); 
+       } catch (URIException e) {
+           gotException = true;
+       }
+       assertTrue("No expected exception complaining about long URI",
+           gotException);
+   } 
+   
    private void checkExceptionOnIllegalDomainlabel(String uuri) {
        boolean expectedException = false;
        try {
