@@ -159,12 +159,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
         while(iter.hasNext()) {
             Link wref = (Link)iter.next();
             try {
-                boolean isSeed = considerAsSeed(curi,wref);
-                
-                CandidateURI caURI = createCandidateURI(curi,wref);
+                CandidateURI caURI = createCandidateURI(curi, wref);
                 caURI.setSchedulingDirective(getSchedulingFor(wref));
-                caURI.setIsSeed(isSeed);
-                
+                caURI.setIsSeed(considerAsSeed(curi, wref));
                 schedule(caURI);
             } catch (URIException e) {
                 getController().logUriError(e,curi,wref.getDestination().toString());
@@ -173,11 +170,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
     }
     
-    /**
-     * @param curi
-     * @param wref
-     * @return
-     */
     private boolean considerAsSeed(CrawlURI curi, Link wref) {
         // Check if this is a seed with a 301 or 302.
         if (curi.isSeed()
@@ -192,10 +184,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
         return false;
     }
 
-    /**
-     * @param wref
-     * @return
-     */
     private int getSchedulingFor(Link wref) {
         if(wref.getHopType()=='R') {
             // treat redirects somewhat urgently

@@ -644,8 +644,10 @@ CoreAttributeConstants {
                 now = System.currentTimeMillis();
                 while(now<targetTime) {
                     synchronized(this) {
-                        logger.fine("Frontier waits for: " + sleepTime
+                        if (logger.isLoggable(Level.FINE)) {
+                            logger.fine("Frontier waits for: " + sleepTime
                                 + "ms to respect bandwidth limit.");
+                        }
                         // TODO: now that this is a wait(), frontier can
                         // still schedule and finish items while waiting,
                         // which is good, but multiple threads could all
@@ -775,7 +777,7 @@ CoreAttributeConstants {
                 // loaded in FetchHTTP on expectation that we're to go around
                 // again.  If no rfc2617 loaded, we should not be here.
                 boolean loaded = curi.hasRfc2617CredentialAvatar();
-                if (!loaded) {
+                if (!loaded && logger.isLoggable(Level.INFO)) {
                     logger.info("Have 401 but no creds loaded " + curi);
                 }
                 return loaded;
@@ -799,23 +801,60 @@ CoreAttributeConstants {
      * particular URI -- its not so easy; Each CandidateURI would need
      * a reference to the settings system.  That's awkward to pass in.
      * @param uuri Candidate URI to canonicalize.
-     * @return Canonicalized version of passed <code>caUri</code>.
-     * If a problem, no canonicalization is done and the
-     * CandidateURI#getURIString() is returned.
+     * @return Canonicalized version of passed <code>uuri</code>.
     */
     protected String canonicalize(UURI uuri) {
         return Canonicalizer.canonicalize(uuri, this.controller.getOrder());
     }
     
     /**
-     * @param curi a CrawlURI
+     * Canonicalize passed CandidateURI but also look at the CandidateURI
+     * context possibly skipping canonicalization if it means we may miss
+     * content.
+     * If canonicalization produces an URL that was 'alreadyseen',
+     * but the entry in the 'alreadyseen' database did nothing but
+     * redirect to the current URL, we won't
+     * get the current URL; we'll think we've already seen it.
+     * An example would be archive.org redirecting to
+     * www.archive.org. This method
+     * looks for this condition and DOES NOT canonicalize in this
+     * case.  Otherwise it returns canonicalized form.
+     * @param cauri CandidateURI to examine.
+     * @return True if we are not to canonicalize before passing to
+     * alreadyseen.
+     */
+    protected String conditionalCanonicalize(CandidateURI cauri) {
+        if (cauri.isSeed()) {
+            // Don't run canonicalization on seeds.
+            return cauri.getURIString();
+        }
+        String c = canonicalize(cauri.getUURI());
+        if (!cauri.isLocation()) {
+            // If not result of a redirect, return canonicalized version.
+            return c;
+        }
+        // This URI is result of a redirect.  Does the
+        // canonicalization of this URI and that of its via
+        // resolve to same thing?  If so, return uncanonicalized
+        // version of this uri.
+        boolean same = canonicalize(cauri.getVia()).equals(c);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Result for " + cauri.getURIString() + ", " +
+                cauri.getVia().toString() + ", " + cauri.getPathFromSeed() +
+                " : " + same);
+        }
+        return same? cauri.getURIString(): c;
+    }
+    
+    /**
+     * @param curi CrawlURI we're to get a key for.
      * @return a String token representing a queue
      */
     protected String getClassKey(CrawlURI curi) {
         String queueKey =
             (String)getUncheckedAttribute(curi, ATTR_FORCE_QUEUE);
         if("".equals(queueKey)) {
-            // typical case, barring overrides
+            // Typical case, barring overrides
             queueKey =
                 queueAssignmentPolicy.getClassKey(this.controller, curi);
         }

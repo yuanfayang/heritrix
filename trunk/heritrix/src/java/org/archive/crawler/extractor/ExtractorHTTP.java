@@ -34,7 +34,8 @@ import org.archive.crawler.framework.Processor;
  * Extracts URIs from HTTP response headers.
  * @author gojomo
  */
-public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
+public class ExtractorHTTP extends Processor
+implements CoreAttributeConstants {
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
@@ -50,23 +51,21 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
         }
         numberOfCURIsHandled++;
         HttpMethod method = (HttpMethod)curi.getObject(A_HTTP_TRANSACTION);
-        Header loc = method.getResponseHeader("Location");
-        if (loc != null) {
-            addHeaderLink(curi, loc);
-        }
-        loc = method.getResponseHeader("Content-Location");
-        if (loc != null) {
-            addHeaderLink(curi, loc);
-        }
+        addHeaderLink(curi, method.getResponseHeader("Location"));
+        addHeaderLink(curi, method.getResponseHeader("Content-Location"));
     }
 
-    private void addHeaderLink(CrawlURI curi, Header loc) {
+    protected void addHeaderLink(CrawlURI curi, Header loc) {
+        if (loc == null) {
+            // If null, return without adding anything.
+            return;
+        }
         // TODO: consider possibility of multiple headers
         try {
-            curi.createAndAddLink(loc.getValue(),loc.getName()+":",Link.REFER_HOP);
+            curi.createAndAddLink(loc.getValue(), loc.getName() + ":",
+                Link.REFER_HOP);
             numberOfLinksExtracted++;
         } catch (URIException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             getController().logUriError(e,curi,loc.getValue());
         }
@@ -76,10 +75,10 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
     public String report() {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorHTTP\n");
-        ret.append("  Function:          Extracts URIs from HTTP response headers\n");
+        ret.append("  Function:          " +
+            "Extracts URIs from HTTP response headers\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
-
         return ret.toString();
     }
 }
