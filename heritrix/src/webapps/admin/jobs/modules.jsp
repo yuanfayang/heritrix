@@ -212,7 +212,7 @@
         Object currentAttribute = null;
 		ModuleAttributeInfo att = (ModuleAttributeInfo)p[n]; //The attributes of the current attribute.
 
-		out.println("<tr><td>"+att.getType()+"</td>");
+		out.println("<tr><td>&nbsp;"+att.getType()+"</td>");
 		if(n!=0){
 			out.println("<td><a href=\"javascript:doMoveUpProcessor('"+att.getName()+"')\">Move up</a></td>");
 		} else {

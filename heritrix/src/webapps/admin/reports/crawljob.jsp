@@ -45,7 +45,10 @@
 			}
 			else if(stats == null)
 			{
-				out.println("No statistics associated with job.</b>  Job status: " + cjob.getStatus());			
+				out.println("<b>No statistics associated with job.</b><p><b>Job status:</b> " + cjob.getStatus());			
+				if(cjob.getErrorMessage()!=null){
+					out.println("<p><pre><font color='red'>"+cjob.getErrorMessage()+"</font></pre>");
+				}
 			}
 			else
 			{

@@ -42,6 +42,15 @@
 							<a href="/admin/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
 						</td>
 					</tr>
+					<% if(job.getErrorMessage()!=null){ %>
+					<tr>
+						<td>
+						</td>
+						<td colspan="2">
+							<pre><font color="red"><%=job.getErrorMessage()%></font></pre>
+						</td>
+					</tr>
+					<% } %>
 			<%
 				}
 			%>
