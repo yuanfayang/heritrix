@@ -10,8 +10,8 @@
                                                                                                                                  
                                                                                                                                  
 ## path to java home (not java executible)
-#export JAVA_HOME=<PUT JAVA HOME HERE>
-export JAVA_HOME=/usr/local/j2sdk1.4.0_02
+export JAVA_HOME=<PUT JAVA HOME HERE>
+#export JAVA_HOME=/usr/local/j2sdk1.4.0_02
 
 ## move into the run dir
 cd RunThis

@@ -36,6 +36,6 @@ if [ $1 ]
 then
 	ant -f build.xml -logger org.apache.tools.ant.listener.MailLogger $1
 else
-	echo "executing default build"
-	ant -f build.xml -logger org.apache.tools.ant.listener.MailLogger nightly
+	echo "executing default build (localbuild)"
+	ant -f build.xml -logger org.apache.tools.ant.listener.MailLogger localbuild
 fi
