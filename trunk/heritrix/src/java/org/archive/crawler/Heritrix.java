@@ -714,24 +714,18 @@ public class Heritrix
             adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
         User.addLogin(adminUN, adminPW, User.ADMINISTRATOR);
 
-        String status = null;
-
-        httpServer = new SimpleHttpServer(port, false);
+        httpServer = new SimpleHttpServer("admin", "/", port, false);
         httpServer.startServer();
-
-        jobHandler = new CrawlJobHandler();
-        if (crawlOrderFile != null)
-        {
+        Heritrix.jobHandler = new CrawlJobHandler();
+        String status = null;
+        if (crawlOrderFile != null) {
             CrawlJob job = createCrawlJob(jobHandler, new File(crawlOrderFile),
                 "Auto launched");
             jobHandler.addJob(job);
-            if(runMode)
-            {
+            if(runMode) {
                 jobHandler.startCrawler();
                 status = "Job being crawled: " + crawlOrderFile;
-            }
-            else
-            {
+            } else {
                 status = "Crawl job ready and pending: " + crawlOrderFile;
             }
         } else if(runMode) {
@@ -743,12 +737,12 @@ public class Heritrix
         }
 
         InetAddress addr = InetAddress.getLocalHost();
-        String uiLocation = "http://" + addr.getHostName() + ":" + port +
-            "/admin";
+        String uiLocation = "http://" + addr.getHostName() + ":" + port;
         out.println((new Date()).toString() + " Heritrix " + getVersion() +
             " is running.");
-        out.println("Web UI is at: " + uiLocation);
-        out.println("Login and password: " + adminUN + "/" + adminPW);
+        out.println("Web console is at: " + uiLocation);
+        out.println("Web console login and password: " + adminUN + "/" +
+            adminPW);
         if (status != null) {
             out.println(status);
         }

@@ -51,19 +51,19 @@
                             <i><%=job.getStatus()%></i>&nbsp;&nbsp;&nbsp;
                         </td>
                         <td>
-                            <a style="color: #003399;" class="underLineOnHover" target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">Crawl order</a>
+                            <a style="color: #003399;" class="underLineOnHover" target="_blank" href="<%=request.getContextPath()%>/jobs/vieworder.jsp?job=<%=job.getUID()%>">Crawl order</a>
                             &nbsp;
-                            <a style="color: #003399;" class="underLineOnHover" href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>&nav=3">Crawl report</a>
+                            <a style="color: #003399;" class="underLineOnHover" href="<%=request.getContextPath()%>/reports/crawljob.jsp?job=<%=job.getUID()%>&nav=3">Crawl report</a>
                             &nbsp;
-                            <a style="color: #003399;" class="underLineOnHover" href="/admin/reports/seeds.jsp?job=<%=job.getUID()%>&nav=3">Seeds report</a>
+                            <a style="color: #003399;" class="underLineOnHover" href="<%=request.getContextPath()%>/reports/seeds.jsp?job=<%=job.getUID()%>&nav=3">Seeds report</a>
                             &nbsp;
-                            <a style="color: #003399;" class="underLineOnHover" href="/admin/jobs/viewseeds.jsp?job=<%=job.getUID()%>">Seed file</a>
+                            <a style="color: #003399;" class="underLineOnHover" href="<%=request.getContextPath()%>/jobs/viewseeds.jsp?job=<%=job.getUID()%>">Seed file</a>
                             &nbsp;
-                            <a style="color: #003399;" class="underLineOnHover" href="/admin/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
+                            <a style="color: #003399;" class="underLineOnHover" href="<%=request.getContextPath()%>/logs.jsp?job=<%=job.getUID()%>&nav=3">Logs</a>
                             &nbsp;
-                            <a style="color: #003399;" class="underLineOnHover" href="/admin/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
+                            <a style="color: #003399;" class="underLineOnHover" href="<%=request.getContextPath()%>/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
                             &nbsp;
-                            <a style="color: #003399;" class="underLineOnHover" href="/admin/jobs/completed.jsp?action=delete&job=<%=job.getUID()%>&nav=3">Delete</a>
+                            <a style="color: #003399;" class="underLineOnHover" href="<%=request.getContextPath()%>/jobs/completed.jsp?action=delete&job=<%=job.getUID()%>&nav=3">Delete</a>
                             &nbsp;
                         </td>
                     </tr>

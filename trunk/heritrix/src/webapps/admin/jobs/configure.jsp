@@ -58,17 +58,18 @@
         if(action.equals("done")) {
             if(theJob.isNew()){            
                 handler.addJob(theJob);
-                response.sendRedirect("/admin/jobs.jsp?message=Job created");
+                response.sendRedirect(request.getContextPath() +
+                    "/jobs.jsp?message=Job created");
             }else{
                 if(theJob.isRunning()) {
                     handler.kickUpdate();
                 }
                 if(theJob.isProfile()) {
-                    response.sendRedirect(
-                        "/admin/profiles.jsp?message=Profile modified");
+                    response.sendRedirect(request.getContextPath() +
+                        "/profiles.jsp?message=Profile modified");
                 }else {
-                    response.sendRedirect(
-                        "/admin/jobs.jsp?message=Job modified");
+                    response.sendRedirect(request.getContextPath() +
+                        "/jobs.jsp?message=Job modified");
                 }
             }
             return;

@@ -235,7 +235,38 @@ public class JobConfigureUtils {
     }
 
     /**
+     * Check passed job is not null and not readonly.
+     * @param job Job to check.
+     * @param response Http response.
+     * @param redirectBasePath Full path for where to go next if an error.
+     * @param currDomain May be null.
+     * E.g. "/admin/jobs/per/overview.jsp".
+     * @return A job else we've redirected if no job or readonly.
+     * @throws IOException
+     */
+    public static CrawlJob checkCrawlJob(CrawlJob job,
+        HttpServletResponse response, String redirectBasePath,
+        String currDomain)
+    throws IOException {
+        if (job == null) {
+            // Didn't find any job with the given UID or no UID given.
+            response.sendRedirect(redirectBasePath +
+                "?message=No job selected");
+        } else if (job.isReadOnly()) {
+            // Can't edit this job.
+            response.sendRedirect(redirectBasePath +
+                "?job=" + job.getUID() +
+                ((currDomain != null && currDomain.length() > 0)?
+                    "&currDomain=" + currDomain: "") +
+                "&message=Can't edit a read only job");
+        }
+        return job;
+    }
+
+    /**
      * Handle job action.
+     * @param handler CrawlJobHandler to operate on.
+     * @param response Http response.
      * @param redirectBasePath Full path for where to go next if an error.
      * E.g. "/admin/jobs/per/overview.jsp".
      * @param domain Current domain.  Pass null for global domain.
@@ -252,22 +283,8 @@ public class JobConfigureUtils {
         InvalidAttributeValueException {
 
         // Load the job to manipulate
-        CrawlJob theJob = handler.getJob(request.getParameter("job"));
-
-        if (theJob == null) {
-            // Didn't find any job with the given UID or no UID given.
-            response.sendRedirect(redirectBasePath +
-                "?message=No job selected");
-            return null;
-        } else if (theJob.isReadOnly()) {
-            // Can't edit this job.
-            response.sendRedirect(redirectBasePath +
-                "?job=" + theJob.getUID() +
-                ((currDomain != null && currDomain.length() > 0)?
-                    "&currDomain=" + currDomain: "") +
-                "&message=Can't edit a read only job");
-            return theJob;
-        }
+        CrawlJob theJob = checkCrawlJob(handler.getJob(request.getParameter("job")),
+            response, redirectBasePath, currDomain);
 
         XMLSettingsHandler settingsHandler = (XMLSettingsHandler)theJob
             .getSettingsHandler();

@@ -152,11 +152,14 @@
     if(theJob == null)
     {
         // Didn't find any job with the given UID or no UID given.
-        response.sendRedirect("/admin/jobs.jsp?message=No job selected");
+        response.sendRedirect(request.getContextPath() +
+            "/jobs.jsp?message=No job selected");
         return;
     } else if(theJob.isReadOnly() || theJob.isRunning()){
         // Can't edit this job.
-        response.sendRedirect("/admin/jobs.jsp?message=Can't edit modules on a running or read only job");
+        response.sendRedirect(request.getContextPath() +
+            "/jobs.jsp?message=Can't edit modules on a running or read only" +
+            " job");
         return;
     }
 
@@ -169,15 +172,18 @@
             // Ok, done editing.
             if(theJob.isNew()){            
                 handler.addJob(theJob);
-                response.sendRedirect("/admin/jobs.jsp?message=Job created");
+                response.sendRedirect(request.getContextPath() +
+                    "/jobs.jsp?message=Job created");
             }else{
                 if(theJob.isRunning()){
                     handler.kickUpdate();
                 }
                 if(theJob.isProfile()){
-                    response.sendRedirect("/admin/profiles.jsp?message=Profile modified");
+                    response.sendRedirect(request.getContextPath() +
+                        "/profiles.jsp?message=Profile modified");
                 }else{
-                    response.sendRedirect("/admin/jobs.jsp?message=Job modified");
+                    response.sendRedirect(request.getContextPath() +
+                        "/jobs.jsp?message=Job modified");
                 }
             }
             return;

@@ -19,23 +19,26 @@
     CrawlJob theJob = handler.getJob(request.getParameter("job"));
     // Load display level
     String currDomain = request.getParameter("currDomain");
-    
-    if(theJob == null)
-    {
+    if(theJob == null) {
         // Didn't find any job with the given UID or no UID given.
-        response.sendRedirect("/admin/jobs.jsp?message=No job selected");
+        response.sendRedirect(request.getContextPath() +
+            "/jobs.jsp?message=No job selected");
         return;
-    } else if(theJob.isReadOnly()){
+    } else if(theJob.isReadOnly()) {
         // Can't edit this job.
-        response.sendRedirect("/admin/jobs.jsp?message=Can't edit modules on a read only job");
+        response.sendRedirect(request.getContextPath() +
+            "/jobs.jsp?message=Can't edit modules on a read only job");
         return;
     }
 
-    XMLSettingsHandler settingsHandler = (XMLSettingsHandler)theJob.getSettingsHandler();
+    XMLSettingsHandler settingsHandler =
+        (XMLSettingsHandler)theJob.getSettingsHandler();
     CrawlOrder crawlOrder = settingsHandler.getOrder();
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(currDomain);
-    ComplexType credstore = (ComplexType)crawlOrder.getAttribute(orderfile,CredentialStore.ATTR_NAME);
-    MapType credmap = (MapType)credstore.getAttribute(orderfile,CredentialStore.ATTR_CREDENTIALS);
+    ComplexType credstore = (ComplexType)crawlOrder.
+        getAttribute(orderfile,CredentialStore.ATTR_NAME);
+    MapType credmap = (MapType)credstore.
+        getAttribute(orderfile,CredentialStore.ATTR_CREDENTIALS);
 
     // See if we need to take any action
     if(request.getParameter("action") != null){
@@ -67,7 +70,10 @@
             if(theJob.isRunning()){
                 handler.kickUpdate();
             }
-            response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
+            response.sendRedirect(request.getContextPath() +
+                "/jobs/per/overview.jsp?job=" + theJob.getUID() +
+                "&currDomain=" + currDomain +
+                "&message=Override changes saved");
             return;
         }else if(action.equals("goto")){
             // Goto another page of the job/profile settings

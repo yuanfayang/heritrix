@@ -36,7 +36,10 @@
             if(theJob.isRunning()){
                 handler.kickUpdate();
             }
-            response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
+            response.sendRedirect(request.getContextPath() +
+                "/jobs/per/overview.jsp?job=" + theJob.getUID() +
+                "&currDomain=" + currDomain +
+                "&message=Override changes saved");
             return;
         } else if (action.equals("goto")) {
             // Goto another page of the job/profile settings

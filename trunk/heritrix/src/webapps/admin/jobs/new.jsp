@@ -69,18 +69,24 @@
         
         if(error == null && newJob != null){
             if(request.getParameter("action").equals("configure")){
-                response.sendRedirect("/admin/jobs/configure.jsp?job="+newJob.getUID());
+                response.sendRedirect(request.getContextPath() +
+                    "/jobs/configure.jsp?job="+newJob.getUID());
             } else if(request.getParameter("action").equals("modules")){
-                response.sendRedirect("/admin/jobs/modules.jsp?job="+newJob.getUID());
+                response.sendRedirect(request.getContextPath() +
+                   "/jobs/modules.jsp?job="+newJob.getUID());
             } else if(request.getParameter("action").equals("filters")){
-                response.sendRedirect("/admin/jobs/filters.jsp?job="+newJob.getUID());
+                response.sendRedirect(request.getContextPath() +
+                   "/jobs/filters.jsp?job="+newJob.getUID());
             } else if(request.getParameter("action").equals("url-canonicalization-rules")){
-                response.sendRedirect("/admin/jobs/url-canonicalization-rules.jsp?job="+newJob.getUID());
+                response.sendRedirect(request.getContextPath() +
+                   "/jobs/url-canonicalization-rules.jsp?job="+newJob.getUID());
             } else if(request.getParameter("action").equals("override")){
-                response.sendRedirect("/admin/jobs/per/overview.jsp?job="+newJob.getUID());
+                response.sendRedirect(request.getContextPath() +
+                   "/jobs/per/overview.jsp?job="+newJob.getUID());
             } else {
                 handler.addJob(newJob);
-                response.sendRedirect("/admin/jobs.jsp?message=Job created");
+                response.sendRedirect(request.getContextPath() +
+                   "/jobs.jsp?message=Job created");
             }
             return;
         }

@@ -26,8 +26,8 @@
     while(iter.hasNext()) {
         Checkpoint cp = (Checkpoint)iter.next();
         String cpName = cp.getName().replaceAll("\\+","%2B");
-        String uri = "/admin/jobs/resume.jsp?cp="+cpName+"&job="+job.getUID();
-        // String uri = (new URI("/admin/jobs/resume.jsp?cp="+cp.getName()+"&job="+job.getUID())).toString();
+        String uri = request.getContextPath () +
+            "/jobs/resume.jsp?cp="+cpName+"&job="+job.getUID();
         out.println("<li>");
         if(cp.isValid()) {
             out.println(" <a href='"+uri+"'>");

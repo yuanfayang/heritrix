@@ -18,8 +18,10 @@
     Iterator iter = handler.getCompletedJobs().iterator();
     while(iter.hasNext()) {
         CrawlJob job = (CrawlJob)iter.next();
-        out.println("<li><a href='/admin/jobs/resumefromcheckpoint.jsp?job="+job.getUID()+"'>"
-                    +job.getDisplayName());
+        out.println("<li><a href=\"");
+        out.println(request.getContextPath());
+        out.println("/jobs/resumefromcheckpoint.jsp?job=" + job.getUID() +
+            "\">" + job.getDisplayName());
     }
 %>    
     </ul>
