@@ -1530,7 +1530,6 @@ public class Frontier
         // visitation
         reader = new BufferedReader(new FileReader(pathToLog));
         while((read = reader.readLine()) != null) {
-            // Lines 3 chars or shorter do not have a URI!
             if(read.startsWith(F_ADD)) {
                 UURI u;
                 try {
