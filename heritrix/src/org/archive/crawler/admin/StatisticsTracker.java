@@ -155,9 +155,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		
 		// log the legend	
 		periodicLogger.log(Level.INFO,
-				"   [timestamp] [discovered]   [pending] [downloaded]"
+				"   [timestamp] [discovered]    [queued] [downloaded]"
 					+ " [doc/s(avg)]  [KB/s(avg)]"
-					+ " [dl-failures] [stall-thrds] [mem-use-KB]"
+					+ " [dl-failures] [busy-thread] [mem-use-KB]"
 			);
 
 		// keep logging until someone calls stop()
@@ -189,9 +189,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 		int docsPerSecond = processedDocsPerSec();
 		int currentDocsPerSecond = currentProcessedDocsPerSec();
 		int currentKBPerSec = currentProcessedKBPerSec();
-		int totalKBPerSec = processedKBPerSec();
+		long totalKBPerSec = processedKBPerSec();
 		long downloadFailures = failedFetchAttempts();
-		int pausedThreads = threadCount() - activeThreadCount(); 
+		int busyThreads = activeThreadCount(); 
 		Date now = new Date();
 		
 		
@@ -213,7 +213,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 			 .raAppend(64,currentDocsPerSecond+"("+docsPerSecond+")")
 			 .raAppend(77,currentKBPerSec+"("+totalKBPerSec+")")
 			 .raAppend(91,downloadFailures)
-			 .raAppend(105,pausedThreads)
+			 .raAppend(105,busyThreads)
 			 .raAppend(118,Runtime.getRuntime().totalMemory()/1024)
 			 .toString()
 		);
@@ -389,16 +389,16 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants, Craw
 	 *  over the life of the crawl.
 	 * @return kbPerSec
 	 */ 
-	public int processedKBPerSec(){
+	public long processedKBPerSec(){
 		if(totalFetchAttempts() == 0){
 			return 0;
 		}
 		
-		return (int)
+		return (long)
 				(((totalProcessedBytes / 1024)
 					/ ((System.currentTimeMillis() - crawlerStartTime)
 					/ 1000))
-				+ .5 // round to nearest int
+				+ .5 // round to nearest long
 		);
 	}
 	
