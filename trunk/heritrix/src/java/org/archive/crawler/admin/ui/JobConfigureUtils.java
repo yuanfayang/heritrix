@@ -630,7 +630,7 @@ public class JobConfigureUtils {
         
         boolean subMap = false;
         MapType thisMap = null;
-        List availableOptions = Collections.emptyList();
+        List availableOptions = Collections.EMPTY_LIST;
         if (mbean instanceof MapType) {
             thisMap = (MapType) mbean;
             if (thisMap.getContentType() != Processor.class) {
@@ -730,7 +730,9 @@ public class JobConfigureUtils {
      * @return
      */
     private static List getOptionsForType(Class type) {
-        String optionsFilename =  type.getSimpleName()+".options";
+        String typeName = type.getName();
+        String simpleName = typeName.substring(typeName.lastIndexOf(".")+1);
+        String optionsFilename = simpleName+".options";
         try {
             return CrawlJobHandler.loadOptions(optionsFilename);
         } catch (IOException e) {
