@@ -52,6 +52,10 @@ public class StatisticsTracker {
 	 */
 	public void incrementTypeCount(String mime){
 
+		if(mime == null){
+			mime = "unknown";
+		}
+		
 		// strip things like charset (e.g. text/html; charset=iso-blah-blah)	
 		int semicolonLoc = mime.indexOf(';'); 
 		if(semicolonLoc >= 0){
