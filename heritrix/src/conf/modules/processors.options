@@ -1,6 +1,6 @@
 # Availible processors. 
 # Each processor class should be listed with full package info
-# followed by a '|' and a descriptive name (containing only [a-z,A-z])
+# followed by a '|' and a descriptive name (containing only [a-zA-z])
 # Lines beginning with # and empty lines are ignored
 org.archive.crawler.prefetch.Preselector|Preselector
 org.archive.crawler.prefetch.PreconditionEnforcer|Preprocessor
@@ -21,3 +21,4 @@ org.archive.crawler.postprocessor.CrawlStateUpdater|Updater
 org.archive.crawler.postprocessor.Postselector|Postselector
 is.hi.bok.crawler.ar.processor.ChangeEvaluator|ChangeEvaluator
 is.hi.bok.crawler.ar.processor.WaitEvaluator|WaitEvaluator
+is.hi.bok.crawler.ar.processor.HTTPContentDigest|HTTPContentDigest
