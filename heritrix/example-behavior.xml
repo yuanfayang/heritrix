@@ -16,7 +16,7 @@
     name="Preprocessor" 
     class="org.archive.crawler.basic.SimplePolitenessEnforcer"
     next="DNS">
-   <param name="delay-factor" value="10" />
+   <params delay-factor="5" />
   </processor>
   <processor 
     name="DNS" 
@@ -50,7 +50,7 @@
   <max-pages value="1000" />
   <max-duration value="1h" />
   <max-resources-per-site value="1000" />
-  <max-toe-threads value="1" />
+  <max-toe-threads value="5" />
  </limits>
 
 </crawler-behavior>

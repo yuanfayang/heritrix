@@ -29,10 +29,10 @@ public class SimpleScheduler implements URIScheduler {
 	 * @see org.archive.crawler.framework.URIScheduler#curiFor(org.archive.crawler.framework.ToeThread)
 	 */
 	public CrawlURI curiFor(ToeThread thread) {
-		long now = System.currentTimeMillis();
-		long waitMax = 0;
 		synchronized (store) {
 			while(true) {
+				long now = System.currentTimeMillis();
+				long waitMax = 0;
 				store.wakeReadyQueues(now);
 				CrawlURI curi = null;
 				if (!store.getReadyClassQueues().isEmpty()) {
@@ -67,7 +67,10 @@ public class SimpleScheduler implements URIScheduler {
 	 * @return
 	 */
 	private CrawlURI emitCuri(CrawlURI curi) {
-		store.noteInProcess(curi);
+		if(curi != null) {
+			store.noteInProcess(curi);
+			curi.setHost(controller.getHostCache().getHostFor(curi));
+		}
 		return curi;
 	}
 

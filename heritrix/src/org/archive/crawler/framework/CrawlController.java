@@ -33,7 +33,7 @@ public class CrawlController {
 	List toes = new LinkedList(); /* of ToeThreads */;
 	int nextToeSerialNumber = 0;
 	
-	HostCache hosts;
+	HostCache hostCache;
 	
 	private boolean paused = false;
 	private boolean finished = false;
@@ -50,6 +50,8 @@ public class CrawlController {
 		store.initialize(this);
 		scheduler.initialize(this);
 		selector.initialize(this);
+		
+		hostCache = new HostCache();
 		
 		Iterator iter = processors.entrySet().iterator();
 		while (iter.hasNext()) {
@@ -148,6 +150,13 @@ public class CrawlController {
 	 */
 	public HashMap getProcessors() {
 		return processors;
+	}
+
+	/**
+	 * 
+	 */
+	public HostCache getHostCache() {
+		return hostCache;
 	}
 
 }

@@ -31,11 +31,21 @@ public class SimpleHTTPFetcher extends Processor {
 		if(!curi.getUURI().getUri().getScheme().equals("http")) {
 			return;
 		}
+		curi.getAList().putLong("http-begin-time",System.currentTimeMillis());
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
 		get.setFollowRedirects(false);
-		get.setRequestHeader("User-Agent","Heritrix 0.1 (+gojomo@archive.org)");
+		get.setRequestHeader("User-Agent",controller.getOrder().getBehavior().getUserAgent());
 		try {
 			http.executeMethod(get);
+			logger.info(
+				curi.getUURI().getUri()+": "
+				+get.getStatusCode()+" "
+				+get.getResponseBody().length);
+
+			// TODO consider errors
+			curi.getAList().putObject("http-transaction",get);
+			curi.getAList().putLong("http-complete-time",System.currentTimeMillis());
+
 		} catch (HttpException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -43,14 +53,6 @@ public class SimpleHTTPFetcher extends Processor {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		logger.info(
-			curi.getUURI().getUri()+": "
-			+get.getStatusCode()+" "
-			+get.getResponseBody().length);
-
-		// TODO consider errors
-		curi.getAList().putObject("http-transaction",get);
-		
 	}
 
 }

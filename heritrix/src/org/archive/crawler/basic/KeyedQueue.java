@@ -12,7 +12,7 @@ import java.util.LinkedList;
  * @author gojomo
  *
  */
-public class KeyedQueue extends LinkedList implements URIStoreable {
+public class KeyedQueue extends LinkedList implements URIStoreable, Comparable {
 	public static Object READY = new Object();
 	public static Object HOLDING = new Object();
 	public static Object SLEEPING = new Object();
@@ -47,32 +47,48 @@ public class KeyedQueue extends LinkedList implements URIStoreable {
 	 * @see org.archive.crawler.basic.URIStoreable#getStoreState()
 	 */
 	public Object getStoreState() {
-		// TODO Auto-generated method stub
-		return null;
+		return state;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.basic.URIStoreable#setStoreState(java.lang.Object)
 	 */
 	public void setStoreState(Object s) {
-		// TODO Auto-generated method stub
-		
+		state=s;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.basic.URIStoreable#getWakeTime()
 	 */
 	public long getWakeTime() {
-		// TODO Auto-generated method stub
-		return 0;
+		return wakeTime;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.basic.URIStoreable#setWakeTime(long)
 	 */
 	public void setWakeTime(long w) {
-		// TODO Auto-generated method stub
-		
+		wakeTime = w;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	public int compareTo(Object other) {
+		if(this==other) {
+			return 0; // for exact identity only
+		}
+		if (((KeyedQueue)other).getWakeTime()> wakeTime) {
+			return -1;
+		} 
+		if (((KeyedQueue)other).getWakeTime()< wakeTime) {
+			return 1;
+		} 
+		if (other.hashCode() > hashCode()) {
+			return -1;
+		} else {
+			return 1;
+		}
 	}
 	
 	
