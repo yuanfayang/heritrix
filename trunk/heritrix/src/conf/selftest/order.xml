@@ -52,7 +52,7 @@
       </newObject>
     </newObject>
     <map name="http-headers">
-      <string name="user-agent">os-heritrix/0.7.0 (+http://localhost.localdomain)</string>
+      <string name="user-agent">Selftest (+http://localhost.localdomain)</string>
       <string name="from">webmaster@localhost.localdomain</string>
     </map>
     <newObject name="robots-honoring-policy" class="org.archive.crawler.datamodel.RobotsHonoringPolicy">

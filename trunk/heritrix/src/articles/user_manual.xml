@@ -440,7 +440,7 @@
     the two settings under <emphasis role="bold">http-headers</emphasis>.
     These are the <literal>user-agent</literal> and <literal>from</literal>
     field of the HTTP headers in the crawlers requests. You must set them to
-    valid values before a crawl can be run. The current values should indicate
+    valid values before a crawl can be run. The current values upper-case
     what needs replacing. If you have trouble with that please refer to <xref
     linkend="httpheaders" /> for what's regarded as valid values.</para>
 
@@ -1432,11 +1432,32 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
           the HTTP headers generated when requesting URIs from
           webservers.</para>
 
+        <sect5 id="from">
+            <title>from</title>
           <para>The <literal>from</literal> attribute must contain a valid
-          e-mail address and the <literal>user-agent</literal> most be in the
-          following form:</para>
+          e-mail address.</para>
+          </sect5>
+         
+         <sect5 id="user-agent">
+            <title>user-agent</title>
 
-          <para><programlisting>  [name] (+[http-url])[optional-etc]</programlisting></para>
+            <para>The initial user-agent template you see when you first start heritrix will
+            look something like the following:</para>
+          <para><programlisting>Mozilla/5.0 (compatible; heritrix/@VERSION@ +PROJECT_URL_HERE</programlisting></para>
+            <para>You must change at least the 'PROJECT_URL_HERE' and put in place a website
+            that webmasters can go to to view information on the organization or person running
+            a crawl. The <literal>@VERSION@</literal> will be
+            interpolated with the heritrix version number if its left as is.</para>
+
+            <para>The <literal>user-agent</literal> string must adhere to the following
+            format:</para>
+          <para><programlisting>[optional-text] ([optional-text] +PROJECT_URL [optional-text]) [optional-text]</programlisting></para>
+          <para>The parenthesis and plus sign before the URL must be present.  Other examples of
+          valid user agents would include:</para>
+          <para><programlisting>my-heritrix-crawler (+http://mywebsite.com)
+Mozilla/5.0 (compatible; bush-crawler +http://whitehouse.gov)
+Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Library of Congress)</programlisting></para>
+        </sect5>
         </sect4>
 
         <sect4>

@@ -214,7 +214,7 @@
 				</td>
 				<td></td>
 				<td>
-					<input name="meta/description" value="<%=orderfile.getDescription()%>" style="width: 320px">
+					<input name="meta/description" value="<%=orderfile.getDescription()%>" style="width: 440px">
 				</td>
 			</tr>
 			<tr>
@@ -223,7 +223,7 @@
 				</td>
 				<td></td>
 				<td>
-					<input name="meta/operator" value="<%=orderfile.getOperator()%>" style="width: 320px">
+					<input name="meta/operator" value="<%=orderfile.getOperator()%>" style="width: 440px">
 				</td>
 			</tr>
 			<tr>
@@ -232,7 +232,7 @@
 				</td>
 				<td></td>
 				<td>
-					<input name="meta/organization" value="<%=orderfile.getOrganization()%>" style="width: 320px">
+					<input name="meta/organization" value="<%=orderfile.getOrganization()%>" style="width: 440px">
 				</td>
 			</tr>
 			<tr>
@@ -241,7 +241,7 @@
 				</td>
 				<td></td>
 				<td>
-					<input name="meta/audience" value="<%=orderfile.getAudience()%>" style="width: 320px">
+					<input name="meta/audience" value="<%=orderfile.getAudience()%>" style="width: 440px">
 				</td>
 			</tr>
 			<%=inputForm%>
@@ -256,7 +256,7 @@
 				</td>
                 <td></td>
 				<td>
-					<textarea name="seeds" style="width: 320px" rows="8" onChange="setUpdate()"><%
+					<textarea name="seeds" style="width: 440px" rows="8" onChange="setUpdate()"><%
 						BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
 						String sout = seeds.readLine();
 						while(sout!=null){

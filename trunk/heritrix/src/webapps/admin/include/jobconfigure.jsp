@@ -154,14 +154,14 @@
                                 // Some type of list.
                                 ListType list = (ListType)currentAttribute;
                                 p.append("<table border='0' cellspacing='0' cellpadding='0'>\n");
-                                p.append("<tr><td><select multiple name='" + attAbsoluteName + "' id='" + attAbsoluteName + "' size='4' style='width: 320px'>\n");
+                                p.append("<tr><td><select multiple name='" + attAbsoluteName + "' id='" + attAbsoluteName + "' size='4' style='width: 440px'>\n");
                                 for(int i=0 ; i<list.size() ; i++){
                                     p.append("<option value='" + list.get(i) +"'>"+list.get(i)+"</option>\n");
                                 }
                                 p.append("</select>");
                                 p.append("</td>\n");
                                 p.append("<td valign='top'><input type='button' value='Delete' onClick=\"doDeleteList('" + attAbsoluteName + "')\"></td></tr>\n");
-                                p.append("<tr><td><input name='" + attAbsoluteName + ".add' id='" + attAbsoluteName + ".add' style='width: 320px'></td>\n");
+                                p.append("<tr><td><input name='" + attAbsoluteName + ".add' id='" + attAbsoluteName + ".add' style='width: 440px'></td>\n");
                                 p.append("<td><input type='button' value='Add' onClick=\"doAddList('" + attAbsoluteName + "')\"></td></tr>\n");
                                 p.append("</table>\n");
             
@@ -195,7 +195,7 @@
 						        p.append("</table>\n");
                             } else if(legalValues != null && legalValues.length > 0) {
                                 //Have legal values. Build combobox.
-                                p.append("<select name='" + attAbsoluteName + "' style='width: 320px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
+                                p.append("<select name='" + attAbsoluteName + "' style='width: 440px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
                                 for(int i=0 ; i < legalValues.length ; i++){
                                     p.append("<option value='"+legalValues[i]+"'");
                                     if(currentAttribute.equals(legalValues[i])){
@@ -206,18 +206,18 @@
                                 p.append("</select>\n");
                             } else if (currentAttribute instanceof Boolean){
                                 // Boolean value
-                                p.append("<select name='" + attAbsoluteName + "' style='width: 320px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
+                                p.append("<select name='" + attAbsoluteName + "' style='width: 440px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
                                 p.append("<option value='False'"+ (currentAttribute.equals(new Boolean(false))?" selected":"") +">False</option>\n");
                                 p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
                                 p.append("</select>\n");
                             } else if (currentAttribute instanceof TextField){
                                 // Text area
-                                p.append("<textarea name='" + attAbsoluteName + "' style='width: 320px' rows='4' onChange=\"setEdited('" + attAbsoluteName + "')\">");
+                                p.append("<textarea name='" + attAbsoluteName + "' style='width: 440px' rows='4' onChange=\"setEdited('" + attAbsoluteName + "')\">");
                                 p.append(currentAttribute + "\n");
                                 p.append("</textarea>\n");
                             } else {
                                 //Input box
-                                p.append("<input name='" + attAbsoluteName + "' value='" + currentAttribute + "' style='width: 320px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
+                                p.append("<input name='" + attAbsoluteName + "' value='" + currentAttribute + "' style='width: 440px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
                             }
                         } else {
                             // Display non editable
