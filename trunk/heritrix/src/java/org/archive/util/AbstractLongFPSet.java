@@ -24,6 +24,7 @@
  */
 package org.archive.util;
 
+import java.io.Serializable;
 import java.util.logging.Logger;
 
 /**
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
  * @author gojomo
  *
  */
-public abstract class AbstractLongFPSet implements LongFPSet {
+public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
     private static Logger logger =
         Logger.getLogger("org.archive.util.AbstractLongFPSet");
 
@@ -58,6 +59,14 @@ public abstract class AbstractLongFPSet implements LongFPSet {
     /** The current number of elements in the set */
     protected long count;
 
+    /**
+     * To support serialization 
+     * TODO: verify needed?
+     */
+    public AbstractLongFPSet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
     /** Create a new AbstractLongFPSet with a given capacity and load Factor
      *
      * @param capacityPowerOfTwo The capacity as the exponent of a power of 2.
