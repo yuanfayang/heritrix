@@ -11,13 +11,13 @@
    
   <seeds>
  # http://www.rawr.net/index.swf
-  
- http://www.drudgereport.com
- http://www.yahoo.com
+  http://www.ccianet.org/papers/cyberinsecurity.pdf
+  http://www.drudgereport.com
+  http://www.yahoo.com
  # http://www.yahoo.com
  # http://www.yahoo.com
  # http://my.yahoo.com
- http://www.google.com/dirhp
+  http://www.google.com/dirhp
    
   </seeds>
  
@@ -33,6 +33,7 @@
     From="archive-crawler-agent@lists.sourceforge.net" 
    />
 
+ <!--
   <robots-honoring-policy name="most-favored-set" masquerade="true">
   	<user-agents>
   		<agent>foo</agent>
@@ -44,7 +45,8 @@
 		Disallow: /
 	</custom-robots>
   </robots-honoring-policy>
-
+ -->
+ 
   <frontier 
     class="org.archive.crawler.basic.Frontier"
     delay-factor="1"
@@ -77,9 +79,9 @@
       class="org.archive.crawler.fetcher.FetchHTTP"
       next="ExtractorHTTP"
 
-      timeout-seconds="20"
+      timeout-seconds="60"
       sotimeout-ms="10000"
-      max-length-bytes="65536"
+      max-length-bytes="1048576"
       max-fetch-attempts="5"
      />
     
@@ -104,16 +106,14 @@
     <processor
       name="ExtractorSWF"
       class="org.archive.crawler.extractor.ExtractorSWF"
-      next="Archiver"
+      next="ExtractorPDF"
      />
      
-    <!-- commented out until manner of reading raw document can be updated
     <processor
       name="ExtractorPDF"
       class="org.archive.crawler.extractor.ExtractorPDF"
       next="Archiver"
      />
-      -->
      
     <processor 
       name="Archiver" 
