@@ -42,6 +42,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.util.ArchiveUtils;
@@ -132,11 +133,7 @@ public abstract class SettingsHandler {
      */
     protected String getParentScope(String scope) {
         int split = scope.indexOf('.');
-        if (split == -1) {
-            return null;
-        } else {
-            return scope.substring(split + 1);
-        }
+        return (split == -1)? null: scope.substring(split + 1);
     }
 
     /** Get a module by name.
@@ -148,7 +145,7 @@ public abstract class SettingsHandler {
      * @return the module the name references.
      */
     public ModuleType getModule(String name) {
-        return (ModuleType) settingsCache.getGlobalSettings().getModule(name);
+        return settingsCache.getGlobalSettings().getModule(name);
     }
 
     /** Get a complex type by its absolute name.
@@ -174,12 +171,10 @@ public abstract class SettingsHandler {
             CrawlerSettings parentSettings = settings.getParent();
             if (parentSettings == null) {
                 throw new AttributeNotFoundException(absoluteName);
-            } else {
-                return getComplexTypeByAbsoluteName(parentSettings, absoluteName);
             }
-        } else {
-            return data.getComplexType();
+            return getComplexTypeByAbsoluteName(parentSettings, absoluteName);
         }
+        return data.getComplexType();
     }
 
     protected static String getTypeName(String className) {
@@ -260,12 +255,26 @@ public abstract class SettingsHandler {
     * This method passes around a URI that refinement are checked against.
     *
     * @param host the host or domain to get the settings for.
+     * @param uri
     * @return settings object in effect for the host/domain.
     * @see #getSettingsObject(String)
     * @see #getOrCreateSettingsObject(String)
     */
-    public CrawlerSettings getSettings(String host, UURI uri) {
+    public CrawlerSettings getSettings(String host, CrawlURI uri) {
         return getRefinementsForSettings(getSettingsForHost(host), uri);
+    }
+    
+    /**
+     * Get CrawlerSettings object in effect for a host or domain.
+     * TODO: FIX THIS.
+     * @param host the host or domain to get the settings for.
+     * @param uuri
+     * @return settings object in effect for the host/domain.
+     * @deprecated Use {@link #getSettings(String, CrawlURI)} instead.
+     */
+    public CrawlerSettings getSettings(String host, UURI uuri) {
+        return getRefinementsForSettings(getSettingsForHost(host),
+            new CrawlURI(uuri));
     }
 
     protected CrawlerSettings getSettingsForHost(String host) {
@@ -285,10 +294,10 @@ public abstract class SettingsHandler {
         return settings;
     }
 
-    private CrawlerSettings getRefinementsForSettings(CrawlerSettings settings, UURI uri) {
+    private CrawlerSettings getRefinementsForSettings(CrawlerSettings settings,
+            CrawlURI uri) {
         if (settings.hasRefinements()) {
-            Iterator it = settings.refinementsIterator();
-            while(it.hasNext()) {
+            for(Iterator it = settings.refinementsIterator(); it.hasNext();) {
                 Refinement refinement = (Refinement) it.next();
                 if (refinement.isWithinRefinementBounds(uri)) {
                     settings = getSettingsObject(settings.getScope(),
@@ -533,6 +542,7 @@ public abstract class SettingsHandler {
      *
      * <p>Implementations of the SettingsHandler that do not use files for
      * permanent storage should return an empty list.
+     * @return <code>List</code> of framework files.
      */
     public abstract List getListOfAllFiles();
 }

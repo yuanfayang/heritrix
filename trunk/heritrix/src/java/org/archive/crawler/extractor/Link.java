@@ -24,6 +24,8 @@
 */ 
 package org.archive.crawler.extractor;
 
+import java.io.Serializable;
+
 import org.archive.io.UnstableCharSequence;
 
 /**
@@ -36,7 +38,7 @@ import org.archive.io.UnstableCharSequence;
  * 
  * @author gojomo
  */
-public class Link {
+public class Link implements Serializable {
     /* contexts for when another syntax (XPath-like or header-based)
      *  in unavailable */
     /** stand-in value for embeds without other context */
@@ -76,6 +78,10 @@ public class Link {
     
     /**
      * Create a Link with the given fields.
+     * @param source
+     * @param destination
+     * @param context
+     * @param hopType
      */
     public Link(CharSequence source, CharSequence destination,
             CharSequence context, char hopType) {
@@ -91,7 +97,7 @@ public class Link {
      * any backing buffers they're currently reliant upon.
      * 
      * @param cs CharSequence to stabilize 
-     * @return
+     * @return CharSequence.
      */
     private CharSequence stabilize(CharSequence cs) {
         if(cs instanceof UnstableCharSequence) {

@@ -32,6 +32,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanInfo;
 import javax.xml.transform.sax.SAXSource;
 
+import org.archive.crawler.settings.refinements.ContentTypeRegExprCriteria;
 import org.archive.crawler.settings.refinements.PortnumberCriteria;
 import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.crawler.settings.refinements.RegularExpressionCriteria;
@@ -281,6 +282,10 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             } else if (limit instanceof RegularExpressionCriteria) {
                 writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_URIMATCHES,
                         ((RegularExpressionCriteria) limit).getRegexp(), nullAtts,
+                        indent + 2 * indentAmount);
+            } else if (limit instanceof ContentTypeRegExprCriteria) {
+                writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_CONTENTMATCHES,
+                        ((ContentTypeRegExprCriteria) limit).getRegexp(), nullAtts,
                         indent + 2 * indentAmount);
             }
         }

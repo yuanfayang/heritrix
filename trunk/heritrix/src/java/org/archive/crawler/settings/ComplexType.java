@@ -226,18 +226,14 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @return the active DataContainer.
      */
     protected DataContainer getDataContainerRecursive(Context context) {
-
         if (context.settings == null) {
             return null;
         }
-
         DataContainer data = context.settings.getData(this);
-
         if (data == null && context.settings.getParent(context.uri) != null) {
             context.settings = context.settings.getParent(context.uri);
             data = getDataContainerRecursive(context);
         }
-
         return data;
     }
 
@@ -255,6 +251,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      *                 is active.
      * @param key the key to look for.
      * @return the active DataContainer.
+     * @throws AttributeNotFoundException
      */
     protected DataContainer getDataContainerRecursive(Context context,
             String key) throws AttributeNotFoundException {
@@ -264,10 +261,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         while (data != null) {
             if (data.containsKey(key)) {
                 return data;
-            } else {
-                c.settings = data.getSettings().getParent(c.uri);
-                data = getDataContainerRecursive(c);
             }
+            c.settings = data.getSettings().getParent(c.uri);
+            data = getDataContainerRecursive(c);
         }
         throw new AttributeNotFoundException(key);
     }
@@ -320,7 +316,6 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      */
     Context getSettingsFromObject(Object o, String attributeName) {
         Context context;
-
         if (o == null) {
             context = null;
         } else if (o instanceof Context) {
@@ -331,12 +326,13 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             // Try to get settings for URI that has no references to a
             // CrawlServer [SIC - CrawlURI may have CrawlServer -gjm]
             context = new Context();
-            context.uri = (o instanceof CandidateURI) ? ((CandidateURI) o)
-                    .getUURI() : (UURI) o;
+            context.uri = (o instanceof CandidateURI)?
+                ((CandidateURI) o).getUURI() : (UURI)o;
             try {
                 context.settings = getSettingsHandler().
-                    getSettings(
-                        context.uri.getReferencedHost(), context.uri);
+                    getSettings(context.uri.getReferencedHost(),
+                        (o instanceof CrawlURI)?
+                            (CrawlURI)o: new CrawlURI(context.uri));
             }
             catch (URIException e1) {
                 logger.severe("Failed to get host");
@@ -521,12 +517,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         if (data != null && data.containsKey(name)) {
             // Attribute was found return it.
             return data.get(name);
-        } else {
-            // Try to find the attribute, will throw an exception if not found.
-            Context context = new Context(settings, null);
-            getDataContainerRecursive(context, name);
-            return null;
         }
+        // Try to find the attribute, will throw an exception if not found.
+        Context context = new Context(settings, null);
+        getDataContainerRecursive(context, name);
+        return null;
     }
 
     /** Set the value of a specific attribute of the ComplexType.
@@ -1074,16 +1069,15 @@ public abstract class ComplexType extends Type implements DynamicMBean {
        }
 
        public boolean hasNext() {
-           if (this.currentIterator.hasNext()) {
-               return true;
-           } else {
-               if(this.attributeStack.isEmpty()) {
-                   return false;
-               }
-               this.currentIterator = (Iterator) this.attributeStack.pop();
-           }
-           return this.currentIterator.hasNext();
-       }
+            if (this.currentIterator.hasNext()) {
+                return true;
+            }
+            if (this.attributeStack.isEmpty()) {
+                return false;
+            }
+            this.currentIterator = (Iterator)this.attributeStack.pop();
+            return this.currentIterator.hasNext();
+        }
 
        public Object next() {
            hasNext();
