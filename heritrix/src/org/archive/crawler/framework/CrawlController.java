@@ -34,6 +34,7 @@ public class CrawlController {
 	int nextToeSerialNumber = 0;
 	
 	HostCache hostCache;
+	ThreadKicker kicker;
 	
 	private boolean paused = false;
 	private boolean finished = false;
@@ -52,6 +53,8 @@ public class CrawlController {
 		selector.initialize(this);
 		
 		hostCache = new HostCache();
+		kicker = new ThreadKicker();
+		kicker.start();
 		
 		Iterator iter = processors.entrySet().iterator();
 		while (iter.hasNext()) {
@@ -158,6 +161,13 @@ public class CrawlController {
 	 */
 	public HostCache getHostCache() {
 		return hostCache;
+	}
+
+	/**
+	 * 
+	 */
+	public ThreadKicker getKicker() {
+		return kicker;
 	}
 
 }
