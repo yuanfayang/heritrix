@@ -324,7 +324,7 @@
             Object currentAttribute = null;
             ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
             try {
-                currentAttribute = mbean.getAttribute(att.getName());
+                currentAttribute = mbean.getAttribute(settings, att.getName());
             } catch (Exception e1) {
                 return;
             }
