@@ -114,12 +114,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
     public final static String ATTR_INITIAL_WAIT_INTERVAL = "initial-wait-interval-seconds";
     protected final static Long DEFAULT_INITIAL_WAIT_INTERVAL = new Long(86400); // 1 day
 
-    // TODO: ADD upper and lower bound settings for wait interval
-    // TODO: MAKE adaptive factor configurable
-    // TODO: ALLOW variable initial waits based on mime types + max/mins.
-    // TODO: DECIDE policy for UNKNOWN change status. Max wait?
-    // TODO: CONSIDER calculating updated wait interval in processor
-    
     protected CrawlController controller;
     
     protected ARHostQueueList hostQueues;
@@ -290,8 +284,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 try {
                     valence = ((Integer)getAttribute(curi,ATTR_HOST_VALENCE)).intValue();
                 } catch (AttributeNotFoundException e2) {
-                    // TODO Auto-generated catch block
-                    e2.printStackTrace();
+                    logger.severe("Unable to load valence.");
                 }
                 hq = hostQueues.createHQ(curi.getClassKey(),valence);
             }
@@ -378,7 +371,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
      * @see org.archive.crawler.framework.Frontier#isEmpty()
      */
     public boolean isEmpty() {
-        // TODO: There may be 'batched' URIs waiting!
+        // Technically, the Frontier should never become empty since URIs are
+        // only discarded under exceptional circumstances.
         return hostQueues.getSize() == 0;
     }
 
@@ -463,7 +457,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
             System.out.println("RTE in innerFinished() " + e.getMessage());
             e.printStackTrace();
             curi.getAList().putObject(A_RUNTIME_EXCEPTION, e);
-            //TODO: consider failureDisposition(curi);
+            failureDisposition(curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
@@ -495,7 +489,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
      * @param curi The CrawlURI
      */
     protected void successDisposition(CrawlURI curi) {
-        totalProcessedBytes += curi.getContentSize(); // TODO: Is this right?
+        totalProcessedBytes += curi.getContentSize();
         curi.aboutToLog();
         Object array[] = { curi };
         controller.uriProcessing.log(
@@ -504,11 +498,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
             array);
         // TODO: Maybe we will need some additional logging 
 
-        // note that CURI has passed out of scheduling
-        // TODO if (shouldBeForgotten(curi)) {
-            // curi is dismissed without prejudice: it can be reconstituted
-        //    forget(curi);
-        // TODO: Check if straight up success, duplicate success, first time etc.
         succeededFetchCount++;
         totalProcessedBytes += curi.getContentSize();
 
@@ -538,11 +527,12 @@ public class AdaptiveRevisitFrontier extends ModuleType
                     curi.getAList().getLong(A_FETCH_COMPLETED_TIME) + 
                     calculateSnoozeTime(curi));
         } catch (IOException e) {
-            // TODO Handle IOException
+            logger.severe("An IOException occured when updating " + 
+                    curi.getURIString() + "\n" + e.getMessage());
             e.printStackTrace();
         } catch (AttributeNotFoundException e) {
-            // TODO Handle AttributeNotFoundException
-            e.printStackTrace();
+            logger.severe("Unable to locate fetch completion time for " + 
+                    curi.getURIString());
         }
     }
 
@@ -569,7 +559,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
             }
         }
 
-        // TODO: Consider, can we just leave the time of next processing unchanged?
+        // We just leave the time of next processing unchanged so that it is
+        // in effect in the same position in the queue.
         discardUnneededCrawlURIInfo(curi);
         
         ARHostQueue hq = hostQueues.getHQ(curi.getClassKey());
@@ -606,10 +597,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 curi.getUURI().toString(),
                 array);
         }
-        // TODO: (shouldBeForgotten(curi)) 
         failedFetchCount++;
-        
-        // TODO: Either allow for update with delete, or set time in the distant future for retry
         
         // Put the failed URI at the very back of the queue.
         curi.setSchedulingDirective(CrawlURI.NORMAL);
@@ -619,7 +607,7 @@ public class AdaptiveRevisitFrontier extends ModuleType
         ARHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         try {
             // No wait on failure. No contact was made with the server.
-            hq.update(curi,false, 0); 
+            hq.update(curi,false, 0, shouldBeForgotten(curi)); 
         } catch (IOException e) {
             // TODO Handle IOException
             e.printStackTrace();
@@ -645,7 +633,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
                 curi.getUURI().toString(),
                 array);
         }
-        // TODO: (shouldBeForgotten(curi)) {
         disregardedUriCount++;
         
         curi.getAList().putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); //Todo: consider timout before retrying disregarded elements.
@@ -655,10 +642,31 @@ public class AdaptiveRevisitFrontier extends ModuleType
         ARHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         try {
             // No politness wait on disregard. No contact was made with server
-            hq.update(curi, false, 0);
+            hq.update(curi, false, 0, shouldBeForgotten(curi));
         } catch (IOException e) {
             // TODO Handle IOException
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Some URIs, if they recur,  deserve another
+     * chance at consideration: they might not be too
+     * many hops away via another path, or the scope
+     * may have been updated to allow them passage.
+     *
+     * @param curi
+     * @return True if curi should be forgotten.
+     */
+    protected boolean shouldBeForgotten(CrawlURI curi) {
+        switch(curi.getFetchStatus()) {
+            case S_OUT_OF_SCOPE:
+            case S_BLOCKED_BY_USER:
+            case S_TOO_MANY_EMBED_HOPS:
+            case S_TOO_MANY_LINK_HOPS:
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -901,7 +909,8 @@ public class AdaptiveRevisitFrontier extends ModuleType
         try {
             loadSeeds();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            logger.severe("IOException occured when reloading seeds.\n" +
+                    e.getMessage());
             e.printStackTrace();
         }
     }
@@ -917,7 +926,6 @@ public class AdaptiveRevisitFrontier extends ModuleType
     synchronized public void terminate() { 
         shouldTerminate = true;
         hostQueues.close();
-        // TODO: On terminate, close env and dbs
     }  
 
     /* (non-Javadoc)

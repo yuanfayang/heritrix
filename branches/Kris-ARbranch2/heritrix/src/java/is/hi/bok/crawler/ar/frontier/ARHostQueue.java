@@ -595,7 +595,7 @@ public class ARHostQueue implements ARAttributeConstants {
         
         return curi;
     }
-    
+
     /**
      * Update CrawlURI that has completed processing.
      * 
@@ -616,35 +616,72 @@ public class ARHostQueue implements ARAttributeConstants {
      *         {@link ARHostQueue#next() next()}.
      * @throws IOException if an error occurs accessing the database
      */
-    public void update(CrawlURI curi, boolean needWait, long wakeupTime) 
+    public void update(CrawlURI curi, 
+                       boolean needWait, 
+                       long wakeupTime) 
+            throws IllegalStateException, IOException{
+        update(curi,needWait,wakeupTime,false);
+    }
+    
+    
+    /**
+     * Update CrawlURI that has completed processing.
+     * 
+     * @param curi The CrawlURI. This must be a CrawlURI issued by this HQ's 
+     *             {@link #next() next()} method.
+     * @param needWait If true then the URI was processed successfully, 
+     *                 requiring a period of suspended action on that host. If
+     *                 valence is > 1 then seperate times are maintained for 
+     *                 each slot.
+     * @param wakeupTime If new state is 
+     *                   {@link ARHostQueue#HQSTATE_SNOOZED snoozed}
+     *                   then this parameter should contain the time (in 
+     *                   milliseconds) when it will be safe to wake the HQ up
+     *                   again. Otherwise this parameter will be ignored.
+     * @param forgetURI If true, the URI will be deleted from the queue.
+     * 
+     * @throws IllegalStateException if the CrawlURI
+     *         does not match a CrawlURI issued for crawling by this HQ's
+     *         {@link ARHostQueue#next() next()}.
+     * @throws IOException if an error occurs accessing the database
+     */
+    public void update(CrawlURI curi, 
+                       boolean needWait, 
+                       long wakeupTime, 
+                       boolean forgetURI) 
             throws IllegalStateException, IOException{
         logger.fine("Updating " + curi.getURIString());
         try{
-            // First add it to the regular queue. 
-            OperationStatus opStatus = strictAdd(curi,false); 
+            // First add it to the regular queue (if not forgetting it).
+            if(forgetURI == false){
+                OperationStatus opStatus = strictAdd(curi,false);
             
-            if(opStatus != OperationStatus.SUCCESS){
-                if(opStatus == OperationStatus.KEYEXIST){
-                    throw new IllegalStateException("Trying to update a CrawlURI" +
-                            " failed because it was in the queue" +
+                if(opStatus != OperationStatus.SUCCESS){
+                    if(opStatus == OperationStatus.KEYEXIST){
+                        throw new IllegalStateException("Trying to update a" +
+                            " CrawlURI failed because it was in the queue" +
                             " of URIs waiting for processing. URIs currently" +
                             " being processsed can never be in that queue." +
                             " HQ: " + hostName + ", CrawlURI: " + 
                             curi.getURIString());
+                    }
                 }
+
+                // Check if we need to update nextReadyTime
+                long curiTimeOfNextProcessing = curi.getAList().getLong(
+                        A_TIME_OF_NEXT_PROCESSING);
+                if(nextReadyTime > curiTimeOfNextProcessing){
+                    setNextReadyTime(curiTimeOfNextProcessing);
+                }
+                
+            } else {
+                size--;
             }
+            
             // Then remove from list of in processing URIs
             deleteInProcessing(curi.getURIString());
             
             inProcessing--;
-
-            
-            // Check if we need to update nextReadyTime
-            long curiTimeOfNextProcessing = curi.getAList().getLong(
-                    A_TIME_OF_NEXT_PROCESSING);
-            if(nextReadyTime > curiTimeOfNextProcessing){
-                setNextReadyTime(curiTimeOfNextProcessing);
-            }
             
             // Update the wakeUpTime slot.
             if(needWait==false){
