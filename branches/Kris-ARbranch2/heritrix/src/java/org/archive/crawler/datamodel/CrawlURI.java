@@ -56,6 +56,17 @@ import st.ata.util.HashtableAList;
 public class CrawlURI extends CandidateURI
     implements CoreAttributeConstants, FetchStatusCodes {
 
+    /** No knowledge of URI content. Possibly not fetched yet, unable
+     *  to check if different or an error occured on last fetch attempt. */
+    public static final int CONTENT_UNKNOWN = -1;
+    /** URI content has not changed between the two latest, successfully 
+     *  completed fetches. */
+    public static final int CONTENT_UNCHANGED = 0;
+    /** URI content had changed between the two latest, successfully completed
+     *  fetches. By definition, content has changed if there has only been one
+     *  successful fetch made. */
+    public static final int CONTENT_CHANGED = 1;
+    
     // INHERITED FROM CANDIDATEURI
     // uuri: core identity: the "usable URI" to be crawled
     // isSeed
@@ -106,6 +117,13 @@ public class CrawlURI extends CandidateURI
      * May be null even on successfully fetched URI.
      */
     private String contentType = null;
+    /**
+     * The state of the fetched content. 
+     * @see #CONTENT_CHANGED 
+     * @see #CONTENT_UNCHANGED 
+     * @see #CONTENT_UNKNOWN
+     */
+    private int contentState = CONTENT_UNKNOWN;
 
     /**
      * Key to get credential avatars from A_LIST.
@@ -1045,5 +1063,27 @@ public class CrawlURI extends CandidateURI
      */
     public long getOrdinal() {
         return ordinal;
+    }
+    
+    /**
+     * Get the content state.
+     * @return the content state.
+     * @see #CONTENT_CHANGED
+     * @see #CONTENT_UNCHANGED
+     * @see #CONTENT_UNKNOWN
+     */
+    public int getContentState() {
+        return contentState;
+    }
+    
+    /**
+     * Set the content state. 
+     * @param contentState New value for the content state.
+     * @see #CONTENT_CHANGED
+     * @see #CONTENT_UNCHANGED
+     * @see #CONTENT_UNKNOWN
+     */
+    public void setContentState(int contentChange) {
+        this.contentState = contentChange;
     }
 }

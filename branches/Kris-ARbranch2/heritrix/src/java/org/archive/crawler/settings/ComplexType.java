@@ -259,7 +259,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     protected DataContainer getDataContainerRecursive(Context context,
             String key) throws AttributeNotFoundException {
 
-        Context c = new Context(context.settings, context.uri);
+        Context c = new Context(context.settings, context.uri.getUURI());
         DataContainer data = getDataContainerRecursive(c);
         while (data != null) {
             if (data.containsKey(key)) {
@@ -331,12 +331,12 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             // Try to get settings for URI that has no references to a
             // CrawlServer [SIC - CrawlURI may have CrawlServer -gjm]
             context = new Context();
-            context.uri = (o instanceof CandidateURI) ? ((CandidateURI) o)
-                    .getUURI() : (UURI) o;
+            context.uri = (o instanceof CandidateURI) ? 
+                    CrawlURI.from((CandidateURI)o,0) : new CrawlURI((UURI)o);
             try {
                 context.settings = getSettingsHandler().
                     getSettings(
-                        context.uri.getReferencedHost(), context.uri);
+                        context.uri.getUURI().getReferencedHost(), context.uri);
             }
             catch (URIException e1) {
                 logger.severe("Failed to get host");
@@ -960,16 +960,17 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     class Context {
         CrawlerSettings settings;
-        UURI uri;
+        CrawlURI uri;
+        UURI uuri;
 
         Context() {
             settings = null;
-            uri = null;
+            uuri = null;
         }
 
         Context(CrawlerSettings settings, UURI uri) {
             this.settings = settings;
-            this.uri = uri;
+            this.uri = new CrawlURI(uri);
         }
     }
 
@@ -1004,7 +1005,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
        public AttributeIterator(Object ctxt) {
            this.context = getSettingsFromObject(ctxt);
 
-           Context c = new Context(context.settings, context.uri);
+           Context c = new Context(context.settings, context.uri.getUURI());
            DataContainer data = getDataContainerRecursive(c);
            while (data != null) {
                this.attributeStack.push(data.getLocalAttributeInfoList().

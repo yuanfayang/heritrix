@@ -1,19 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?><crawl-order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="heritrix_settings.xsd">
   <meta>
-    <name>default</name>
+    <name>defaultARTesting</name>
     <description>Default Profile</description>
     <operator>Admin</operator>
     <organization></organization>
     <audience></audience>
-    <date>20041129085327</date>
+    <date>20041129142911</date>
   </meta>
-  <refinement-list>
-    <refinement reference="Pics">
-      <description></description>
-      <limits>
-      </limits>
-    </refinement>
-  </refinement-list>
   <controller>
     <string name="settings-directory">settings</string>
     <string name="disk-path"></string>
@@ -27,7 +20,7 @@
     <integer name="max-toe-threads">50</integer>
     <integer name="recorder-out-buffer-bytes">4096</integer>
     <integer name="recorder-in-buffer-bytes">65536</integer>
-    <newObject name="scope" class="org.archive.crawler.scope.DomainScope">
+    <newObject name="scope" class="org.archive.crawler.scope.HostScope">
       <boolean name="enabled">true</boolean>
       <string name="seedsfile">seeds.txt</string>
       <integer name="max-link-hops">25</integer>
@@ -45,29 +38,24 @@
             <boolean name="enabled">true</boolean>
             <integer name="repetitions">3</integer>
           </newObject>
-          <newObject name="ctreg" class="org.archive.crawler.filter.ContentTypeRegExpFilter">
-            <boolean name="enabled">true</boolean>
-            <boolean name="if-match-return">true</boolean>
-            <string name="regexp"></string>
-          </newObject>
         </map>
       </newObject>
       <newObject name="additionalScopeFocus" class="org.archive.crawler.filter.FilePatternFilter">
         <boolean name="enabled">true</boolean>
-        <boolean name="if-match-return">true</boolean>
-        <string name="use-default-patterns">All</string>
-        <string name="regexp"></string>
+        <boolean name="if-match-return">false</boolean>
+        <string name="use-default-patterns">Custom</string>
+        <string name="regexp">.*</string>
       </newObject>
       <newObject name="transitiveFilter" class="org.archive.crawler.filter.TransclusionFilter">
         <boolean name="enabled">true</boolean>
-        <integer name="max-speculative-hops">1</integer>
-        <integer name="max-referral-hops">-1</integer>
-        <integer name="max-embed-hops">-1</integer>
+        <integer name="max-speculative-hops">0</integer>
+        <integer name="max-referral-hops">0</integer>
+        <integer name="max-embed-hops">0</integer>
       </newObject>
     </newObject>
     <map name="http-headers">
-      <string name="user-agent">Mozilla/5.0 (compatible; heritrix/@VERSION@ +PROJECT_URL_HERE)</string>
-      <string name="from">CONTACT_EMAIL_ADDRESS_HERE</string>
+      <string name="user-agent">Mozilla/5.0 (compatible; heritrix/@VERSION@ +http://vefsofnun.bok.hi.is)</string>
+      <string name="from">vefsofnun@bok.hi.is</string>
     </map>
     <newObject name="robots-honoring-policy" class="org.archive.crawler.datamodel.RobotsHonoringPolicy">
       <string name="type">classic</string>
@@ -76,21 +64,14 @@
       <stringList name="user-agents">
       </stringList>
     </newObject>
-    <newObject name="frontier" class="org.archive.crawler.frontier.HostQueuesFrontier">
-      <float name="delay-factor">5.0</float>
-      <integer name="max-delay-ms">5000</integer>
-      <integer name="min-delay-ms">500</integer>
+    <newObject name="frontier" class="is.hi.bok.crawler.ar.frontier.AdaptiveRevisitFrontier">
+      <float name="delay-factor">1.0</float>
+      <integer name="max-delay-ms">3000</integer>
+      <integer name="min-delay-ms">200</integer>
       <integer name="max-retries">30</integer>
       <long name="retry-delay-seconds">900</long>
-      <boolean name="hold-queues">false</boolean>
       <integer name="preference-embed-hops">1</integer>
       <integer name="host-valence">1</integer>
-      <boolean name="ip-politeness">false</boolean>
-      <string name="force-queue-assignment"></string>
-      <integer name="total-bandwidth-usage-KB-sec">0</integer>
-      <integer name="max-per-host-bandwidth-usage-KB-sec">0</integer>
-      <integer name="host-queues-memory-capacity">200</integer>
-      <boolean name="use-bdb-already-included">false</boolean>
     </newObject>
     <map name="uri-canonicalization-rules">
       <newObject name="Lowercase" class="org.archive.crawler.url.canonicalize.LowercaseRule">
@@ -153,6 +134,11 @@
       </newObject>
     </map>
     <map name="extract-processors">
+      <newObject name="ChangeEvaluator" class="is.hi.bok.crawler.ar.processor.ChangeEvaluator">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+      </newObject>
       <newObject name="ExtractorHTTP" class="org.archive.crawler.extractor.ExtractorHTTP">
         <boolean name="enabled">true</boolean>
         <map name="filters">
@@ -173,11 +159,6 @@
         <map name="filters">
         </map>
       </newObject>
-      <newObject name="ExtractorSWF" class="org.archive.crawler.extractor.ExtractorSWF">
-        <boolean name="enabled">true</boolean>
-        <map name="filters">
-        </map>
-      </newObject>
     </map>
     <map name="write-processors">
       <newObject name="Archiver" class="org.archive.crawler.writer.ARCWriterProcessor">
@@ -194,6 +175,17 @@
       </newObject>
     </map>
     <map name="post-processors">
+      <newObject name="WaitEvaluator" class="is.hi.bok.crawler.ar.processor.WaitEvaluator">
+        <boolean name="enabled">true</boolean>
+        <map name="filters">
+        </map>
+        <long name="initial-wait-interval-seconds">60</long>
+        <long name="max-wait-interval-seconds">200</long>
+        <long name="min-wait-interval-seconds">20</long>
+        <long name="default-wait-interval-seconds">600</long>
+        <double name="unchanged-factor">1.5</double>
+        <double name="changed-factor">1.5</double>
+      </newObject>
       <newObject name="Updater" class="org.archive.crawler.postprocessor.CrawlStateUpdater">
         <boolean name="enabled">true</boolean>
         <map name="filters">

@@ -29,7 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.CrawlURI;
 
 /**
  * A refinement criteria that checks if a URI is requested within a specific
@@ -74,7 +74,7 @@ public class TimespanCriteria implements Criteria {
      * @see org.archive.crawler.settings.refinements.Criteria#isWithinRefinementBounds(org.archive.crawler.datamodel.UURI,
      *      int)
      */
-    public boolean isWithinRefinementBounds(UURI uri) {
+    public boolean isWithinRefinementBounds(CrawlURI uri) {
         try {
             Date now = timeFormat.parse(timeFormat.format(new Date()));
             if (from.before(to)) {

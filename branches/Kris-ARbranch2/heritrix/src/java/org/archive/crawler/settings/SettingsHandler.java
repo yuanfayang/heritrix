@@ -42,7 +42,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.util.ArchiveUtils;
 
@@ -264,7 +264,7 @@ public abstract class SettingsHandler {
     * @see #getSettingsObject(String)
     * @see #getOrCreateSettingsObject(String)
     */
-    public CrawlerSettings getSettings(String host, UURI uri) {
+    public CrawlerSettings getSettings(String host, CrawlURI uri) {
         return getRefinementsForSettings(getSettingsForHost(host), uri);
     }
 
@@ -285,7 +285,7 @@ public abstract class SettingsHandler {
         return settings;
     }
 
-    private CrawlerSettings getRefinementsForSettings(CrawlerSettings settings, UURI uri) {
+    private CrawlerSettings getRefinementsForSettings(CrawlerSettings settings, CrawlURI uri) {
         if (settings.hasRefinements()) {
             Iterator it = settings.refinementsIterator();
             while(it.hasNext()) {

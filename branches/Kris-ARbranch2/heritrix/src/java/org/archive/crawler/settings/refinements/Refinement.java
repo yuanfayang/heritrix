@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.CrawlerSettings;
 
 
@@ -82,7 +82,7 @@ public class Refinement {
      * @param uri the URI that shoulb be checked.
      * @return true if within bounds.
      */
-    public boolean isWithinRefinementBounds(UURI uri) {
+    public boolean isWithinRefinementBounds(CrawlURI uri) {
         if (uri == null) {
             return false;
         }

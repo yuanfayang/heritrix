@@ -74,6 +74,9 @@
             } else if(item.equals("regExpr")) {
                 // Add new regular expr. criteria
                 newCrit = new RegularExpressionCriteria(request.getParameter("regexpr"));
+            } else if(item.equals("ContentType")) {
+                // Add new regular expr. criteria
+                newCrit = new ContentTypeRegExprCriteria(request.getParameter("ctregexpr"));
             } else if(item.equals("port")) {
                 // Add new port critera
                 newCrit = new PortnumberCriteria(request.getParameter("port"));
@@ -243,6 +246,21 @@
                 </td>
                 <td>
                     <input type="button" value="Add" onClick="doAdd('regExpr')">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Content type</b>:&nbsp;
+                </td>
+                <td>
+                    Reg.expr: 
+                </td>
+                <td colspan="3">    
+                    <input name="ctregexpr" style="width: 216px">
+                    <a class='help' href="javascript:alert('NOTE: When using content type refinement, changes to settings that are checked prior to fetch completion will have no effect!\nThat is, if either no CrawlURI is specified when looking up the refinement, or one with no set mime type, this refinement will not match.')">?</a>
+                </td>
+                <td>
+                    <input type="button" value="Add" onClick="doAdd('ContentType')">
                 </td>
             </tr>
         </table>
