@@ -88,9 +88,11 @@ public class BdbFrontier extends AbstractFrontier
 implements Frontier,
         FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     // be robust against trivial implementation changes
-    private static final int REPORT_MAX_QUEUES = 100;
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(BdbFrontier.class, 1);
+
+    /** truncate reporting of queues at some large but not unbounded number */
+    private static final int REPORT_MAX_QUEUES = 100;
 
     private static final Logger logger = Logger.getLogger(BdbFrontier.class
             .getName());
@@ -284,8 +286,6 @@ implements Frontier,
         return wq;
     }
 
-
-
     /**
      * Return the next CrawlURI to be processed (and presumably
      * visited/fetched) by a a worker thread.
@@ -318,6 +318,7 @@ implements Frontier,
                             // check if curi belongs in different queue
                             String currentQueueKey = getClassKey(curi);
                             if (currentQueueKey.equals(curi.getClassKey())) {
+                                // curi was in right queue, emit
                                 noteAboutToEmit(curi, readyQ);
                                 inProcessQueues.add(readyQ);
                                 return curi;
