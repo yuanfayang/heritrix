@@ -80,7 +80,9 @@ public class NewWorkQueue implements Serializable  {
         this.crawlServer = server;
         String tmpName = key;
         this.innerQ = new TieredQueue(3);
-        this.innerQ.initializeDiskBackedQueues(scratchDir,tmpName);
+        // SETTING TO -1 SO ITS OBVIOUSLY BROKEN.  SOMETHING
+        // MISSING HERE.  MAKING THIS COMMIT SO BUILD SUCCEEDS.
+        this.innerQ.initializeDiskBackedQueues(scratchDir, tmpName, -1);
     }
 
     /**

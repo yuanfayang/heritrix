@@ -166,7 +166,9 @@ public class NewFrontier
      */
     protected TieredQueue createMainQueue(File stateDisk, String string) throws IOException {
         TieredQueue tq = new TieredQueue(3);
-        tq.initializeDiskBackedQueues(stateDisk,string);
+        // SETTING TO -1 SO ITS OBVIOUSLY BROKEN.  SOMETHING
+        // MISSING HERE.  MAKING THIS COMMIT SO BUILD SUCCEEDS.
+        tq.initializeDiskBackedQueues(stateDisk,string, -1);
         return tq;
     }
 
@@ -385,7 +387,7 @@ public class NewFrontier
      * @param curi
      */
     protected void noteAboutToEmit(CrawlURI curi, NewWorkQueue q) {
-        curi.noteHolder(q);
+        curi.setHolder(q);
         CrawlServer cs = this.controller.getServerCache().getServerFor(curi);
         if (cs != null) {
             curi.setServer(cs);
