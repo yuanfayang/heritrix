@@ -25,4 +25,8 @@ public interface FetchStatusCodes {
 	public static int S_CONNECT_LOST = -3;
 	
 	public static int S_ROBOTS_PRECLUDED = -9998;
+	
+	
 }
+
+

@@ -17,15 +17,14 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.FetchStatusCodes;
+
 
 /**
- * Basic class for using the Apache Jakarta HTTPClient library
- * for fetching an HTTP URI. 
- * 
  * @author gojomo
  *
  */
-public class SimpleHTTPFetcher extends Processor implements InstancePerThread, CoreAttributeConstants {
+public class SimpleHTTPFetcher extends Processor implements InstancePerThread, CoreAttributeConstants, FetchStatusCodes {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleHTTPFetcher");
 	HttpClient http = new HttpClient();
 	
@@ -39,15 +38,10 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 			return;
 		}
 		
-		// if we haven't done a dns lookup shoot that off and defer further processing
-		if( ! curi.getHost().getHasBeenLookedUp() ){
-			logger.info("deferring processing of " + curi.toString() + " for dns lookup." );
-			
-			curi.setPrerequisiteUri("dns:" + curi.getHost().getHostname());
-			curi.cancelFurtherProcessing();
-			
-			return;
-		}
+
+		
+		// attempt to get the page
+		curi.incrementFetchAttempts();
 		
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME,System.currentTimeMillis());
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
@@ -72,9 +66,11 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 			}
 			
 		} catch (HttpException e) {
-			logger.warning(e+" on "+curi);
+			logger.warning(e+" at "+curi);
+			//TODO make sure we're using the right codes (unclear what HttpExceptions are right now)
+			curi.setFetchStatus(S_CONNECT_FAILED);
 		} catch (IOException e) {
-			logger.warning(e+" on "+curi);
+			curi.setFetchStatus(S_CONNECT_FAILED);
 		}
 	}
 

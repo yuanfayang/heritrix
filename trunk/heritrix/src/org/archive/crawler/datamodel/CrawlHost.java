@@ -54,11 +54,11 @@ public class CrawlHost {
 //		robots = RobotsExclusionPolicy.policyFor(vb);
 //	}
 	
-	public boolean getHasBeenLookedUp(){
+	public boolean hasBeenLookedUp(){
 		return hasBeenLookedUp;
 	}
-	public void setHasBeenLookedup(boolean status){
-		hasBeenLookedUp = status;
+	public void setHasBeenLookedUp(){
+		hasBeenLookedUp = true;
 	}
 	
 	/**
@@ -134,7 +134,7 @@ public class CrawlHost {
 		
 		// assume that a lookup as occurred by the time
 		// a caller decides to set this (even to null)
-		setHasBeenLookedup(true);
+		setHasBeenLookedUp();
 	}
 	
 	/**
