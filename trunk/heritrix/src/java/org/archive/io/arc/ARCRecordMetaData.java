@@ -24,6 +24,7 @@
  */
 package org.archive.io.arc;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
@@ -62,15 +63,28 @@ public class ARCRecordMetaData
      */
     private String statusCode = null;
     
+    /**
+     * The arc file this metadata came out.
+     */
+    private File arcFile = null;
+    
+    /**
+     * Shut down the default constructor.
+     */
+    protected ARCRecordMetaData() {
+        super();
+    }
+    
 
     /**
      * Constructor.
      *
+     * @param arcFile The arc file this metadata came out of.
      * @param headerFields Hash of meta fields.
      *
      * @throws IOException
      */
-    public ARCRecordMetaData(Map headerFields)
+    public ARCRecordMetaData(File arcFile, Map headerFields)
         throws IOException {
         // Make sure the minimum required fields are present,
         for (Iterator i = REQUIRED_VERSION_1_HEADER_FIELDS.iterator();
@@ -78,6 +92,7 @@ public class ARCRecordMetaData
             testRequiredField(headerFields, (String)i.next());
         }
         this.headerFields = headerFields;
+        this.arcFile = arcFile;
     }
 
     /**
@@ -171,6 +186,13 @@ public class ARCRecordMetaData
     public Map getHeaderFields()
     {
         return this.headerFields;
+    }
+    
+    /**
+     * @return Returns the arcFile.
+     */
+    public File getArcFile() {
+        return arcFile;
     }
     
     /**
