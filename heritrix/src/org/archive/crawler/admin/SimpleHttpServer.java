@@ -7,7 +7,6 @@
 package org.archive.crawler.admin;
 
 import org.mortbay.http.*;
-import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.http.handler.*;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlController;

@@ -6,6 +6,11 @@
  */
 package org.archive.crawler;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Vector;
 import java.util.logging.Logger;
 
 import org.archive.crawler.admin.SimpleHttpServer;
@@ -35,7 +40,7 @@ public class Heritrix {
 
 	public void instanceMain(String[] args) {
 		// Default crawlOrder
-		String crawlOrderFile = "test-config/order.xml"; 
+		String crawlOrderFile = "test-config/order.xml";
 		CrawlOrder order;
 		CrawlController controller = new CrawlController();
 
@@ -58,17 +63,17 @@ public class Heritrix {
 			default :
 				usage();
 				return;
-
 		}
 		logger.info("exitting main thread");
 	}
 	private void usage() {
-		System.out.println("USAGE: java Heritrix [-no-wui] ordel.xml");
 		System.out.println(
-			"\t-no-wui start crawler without Web User Interface");
+			"USAGE: java Heritrix [-no-wui] order.xml");
+		System.out.println(
+				"\t-no-wui start crawler without Web User Interface");
 	}
 	private void startServer(CrawlController c) {
-		SimpleHttpServer server = new SimpleHttpServer(80);
+		SimpleHttpServer server = new SimpleHttpServer();
 		server.setControler(c);
 		try {
 			server.startServer();
