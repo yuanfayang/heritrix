@@ -31,14 +31,14 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 
-
-/** Test the concept of overrides.
+/**
+ * Test the concept of overrides.
  * 
  * As this test is testing a concept, it involves more than one class to be
  * tested. Thus the name of this test doesn't match a class name.
  * 
  * @author John Erik Halse
- *
+ *  
  */
 public class OverrideTest extends SettingsFrameworkTestCase {
 
@@ -58,59 +58,70 @@ public class OverrideTest extends SettingsFrameworkTestCase {
 
     /**
      * Constructor for OverrideTest.
+     * 
      * @param arg0
      */
     public OverrideTest(String arg0) {
         super(arg0);
     }
 
-    public void testOverridingOfGlobalAttribute() throws AttributeNotFoundException, MBeanException, ReflectionException, InvalidAttributeValueException {
+    public void testOverridingOfGlobalAttribute()
+            throws AttributeNotFoundException, MBeanException,
+            ReflectionException, InvalidAttributeValueException {
         final String MODULE_NAME = "module1";
         CrawlerModule module1 = new CrawlerModule(MODULE_NAME);
         CrawlerModule module2 = new CrawlerModule(MODULE_NAME);
 
         // Set up override
-        MapType proc = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PROCESSORS);
+        MapType proc = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
         proc.addElement(getGlobalSettings(), module1);
         proc.setAttribute(getPerDomainSettings(), module2);
 
-        
         // Read back values to see if we get the right ones
         CrawlerModule getMod;
-        getMod = (CrawlerModule) proc.getAttribute(getGlobalSettings(), MODULE_NAME);
+        getMod = (CrawlerModule) proc.getAttribute(getGlobalSettings(),
+                MODULE_NAME);
         assertSame("Wrong global value", module1, getMod);
 
-        getMod = (CrawlerModule) proc.getAttribute(getPerDomainSettings(), MODULE_NAME);
+        getMod = (CrawlerModule) proc.getAttribute(getPerDomainSettings(),
+                MODULE_NAME);
         assertSame("Wrong domain value", module2, getMod);
 
-        getMod = (CrawlerModule) proc.getAttribute(getPerHostSettings(), MODULE_NAME);
+        getMod = (CrawlerModule) proc.getAttribute(getPerHostSettings(),
+                MODULE_NAME);
         assertSame("Wrong host value", module2, getMod);
     }
 
-    public void testOverridingOfNonGlobalAttribute() throws AttributeNotFoundException, MBeanException, ReflectionException, InvalidAttributeValueException {
+    public void testOverridingOfNonGlobalAttribute()
+            throws AttributeNotFoundException, MBeanException,
+            ReflectionException, InvalidAttributeValueException {
         final String MODULE_NAME = "module1";
         CrawlerModule module1 = new CrawlerModule(MODULE_NAME);
         CrawlerModule module2 = new CrawlerModule(MODULE_NAME);
 
         // Set up override
-        MapType proc = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PROCESSORS);
+        MapType proc = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
         proc.addElement(getPerDomainSettings(), module1);
         proc.setAttribute(getPerHostSettings(), module2);
 
-        
         // Read back values to see if we get the right ones
         CrawlerModule getMod;
         try {
-            getMod = (CrawlerModule) proc.getAttribute(getGlobalSettings(), MODULE_NAME);
+            getMod = (CrawlerModule) proc.getAttribute(getGlobalSettings(),
+                    MODULE_NAME);
             fail("Global value should not exist");
         } catch (AttributeNotFoundException e) {
             // OK! this should throw an exception;
         }
 
-        getMod = (CrawlerModule) proc.getAttribute(getPerDomainSettings(), MODULE_NAME);
+        getMod = (CrawlerModule) proc.getAttribute(getPerDomainSettings(),
+                MODULE_NAME);
         assertSame("Wrong domain value", module1, getMod);
 
-        getMod = (CrawlerModule) proc.getAttribute(getPerHostSettings(), MODULE_NAME);
+        getMod = (CrawlerModule) proc.getAttribute(getPerHostSettings(),
+                MODULE_NAME);
         assertSame("Wrong host value", module2, getMod);
     }
 

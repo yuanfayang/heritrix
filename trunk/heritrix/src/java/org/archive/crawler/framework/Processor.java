@@ -58,7 +58,6 @@ public class Processor extends CrawlerModule {
     /**
      * Key to use asking settings for postprocessor value.
      */
-    public final static String ATTR_POSTPROCESSOR = "postprocessor";
 
     private MapType filters;
     private Processor defaultNextProcessor = null;
@@ -74,15 +73,14 @@ public class Processor extends CrawlerModule {
         super(name, description);
         addElementToDefinition(new SimpleType(ATTR_ENABLED,
             "Is processor enabled", new Boolean(true)));
-        addElementToDefinition(new SimpleType(ATTR_POSTPROCESSOR,
-            "Postprocessor", new Boolean(false)));
         filters = (MapType) addElementToDefinition(new MapType(ATTR_FILTERS,
             "Filters", Filter.class));
     }
 
     public final void process(CrawlURI curi) {
         // by default, arrange for curi to proceed to next processor
-        curi.setNextProcessor(getDefaultNext(curi));
+        curi.setNextProcessor(getDefaultNextProcessor(curi));
+
         // Check if this processor is enabled before processing
         try {
             if (!((Boolean) getAttribute(ATTR_ENABLED, curi)).booleanValue()) {
@@ -143,26 +141,22 @@ public class Processor extends CrawlerModule {
      * @param curi The CrawlURI that we want to find the next processor for.
      * @return The next processor for the given CrawlURI in the processor chain.
      */
-    private Processor getDefaultNext(CrawlURI curi) {
+    public Processor getDefaultNextProcessor(CrawlURI curi) {
         return defaultNextProcessor;
     }
 
+    /** Set the default next processor in the chain.
+     * 
+     * @param nextProcessor the default next processor in the chain.
+     */
     public void setDefaultNextProcessor(Processor nextProcessor) {
         defaultNextProcessor = nextProcessor;
     }
 
-    private Processor getPostprocessor(CrawlURI curi) {
-        String processorName;
-        Processor processor = null;
-        try {
-            processorName = (String) getAttribute(ATTR_POSTPROCESSOR, curi);
-            processor = (Processor) getParent().getAttribute(processorName, curi);
-        } catch (AttributeNotFoundException e) {
-            logger.severe(e.getMessage());
-        }
-        return processor;
-    }
-
+    /** Get the controller object.
+     * 
+     * @return the controller object.
+     */
     public CrawlController getController() {
         return getSettingsHandler().getOrder().getController();
     }

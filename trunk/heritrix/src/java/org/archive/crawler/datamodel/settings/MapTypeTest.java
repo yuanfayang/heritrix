@@ -32,6 +32,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.Filter;
 
 /** JUnit tests for MapType
@@ -70,9 +71,9 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
      * @throws AttributeNotFoundException
      */
     public void testAddRemoveSizeGlobal()
-           throws InvalidAttributeValueException, AttributeNotFoundException {
+           throws InvalidAttributeValueException, AttributeNotFoundException, MBeanException, ReflectionException {
 
-        MapType map = getSettingsHandler().getOrder().getProcessors();
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
         assertTrue("Map should be empty", map.isEmpty(null));
         assertEquals("Map should be empty", map.size(null), 0);
@@ -99,7 +100,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
            throws InvalidAttributeValueException, AttributeNotFoundException,
                   MBeanException, ReflectionException {
 
-        MapType map = getSettingsHandler().getOrder().getProcessors();
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
         assertTrue("Map should be empty", map.isEmpty(getPerHostSettings()));
         assertEquals("Map should be empty", 0, map.size(getPerHostSettings()));
@@ -142,7 +143,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
     }
 
     public void testMoveElementUp() throws AttributeNotFoundException, MBeanException, ReflectionException, InvalidAttributeValueException {
-        MapType map = getSettingsHandler().getOrder().getProcessors();
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
         CrawlerModule module1 = new CrawlerModule("testModule1");
         CrawlerModule module2 = new CrawlerModule("testModule2");
@@ -166,7 +167,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
     }
 
     public void testMoveElementDown() throws InvalidAttributeValueException, AttributeNotFoundException, MBeanException, ReflectionException {
-        MapType map = getSettingsHandler().getOrder().getProcessors();
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
         CrawlerModule module1 = new CrawlerModule("testModule1");
         CrawlerModule module2 = new CrawlerModule("testModule2");
@@ -220,14 +221,14 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         assertEquals("Iterator wrong length", modules.length, i);
     }
 
-    public void testGetDefaultValue() {
-        MapType map = getSettingsHandler().getOrder().getProcessors();
+    public void testGetDefaultValue() throws AttributeNotFoundException, MBeanException, ReflectionException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
         assertSame(map.getDefaultValue(), map);
     }
 
-    public void testGetLegalValues() {
-        MapType map = getSettingsHandler().getOrder().getProcessors();
+    public void testGetLegalValues() throws AttributeNotFoundException, MBeanException, ReflectionException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
         assertNull(map.getLegalValues());
     }
@@ -235,8 +236,8 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
     /*
      * Test for Object getValue()
      */
-    public void testGetValue() {
-        MapType map = getSettingsHandler().getOrder().getProcessors();
+    public void testGetValue() throws AttributeNotFoundException, MBeanException, ReflectionException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS);
 
         assertSame(map.getValue(), map);
     }

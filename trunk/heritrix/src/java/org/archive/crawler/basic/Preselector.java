@@ -79,7 +79,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
         try {
             if (((Boolean) getAttribute(ATTR_BLOCK_ALL, curi)).booleanValue()) {
                 curi.setFetchStatus(S_BLOCKED_BY_USER);
-                curi.skipToProcessor(getController().getPostprocessor());
+                curi.skipToProcessorChain(getController().getPostprocessorChain());
             }
         } catch (AttributeNotFoundException e) {
             // Act as attribute was false, that is: do nothing.
@@ -91,7 +91,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
             if (regexp != null && !regexp.equals("")) {
                 if (TextUtils.matches(regexp, curi.getURIString())) {
                     curi.setFetchStatus(S_BLOCKED_BY_USER);
-                    curi.skipToProcessor(getController().getPostprocessor());
+                    curi.skipToProcessorChain(getController().getPostprocessorChain());
                 }
             }
         } catch (AttributeNotFoundException e) {
@@ -105,7 +105,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
                 if(!scope.accepts(curi)) {
                     // scope rejected
                     curi.setFetchStatus(S_OUT_OF_SCOPE);
-                    curi.skipToProcessor(getController().getPostprocessor());
+                    curi.skipToProcessorChain(getController().getPostprocessorChain());
                 }
             }
         } catch (AttributeNotFoundException e) {
