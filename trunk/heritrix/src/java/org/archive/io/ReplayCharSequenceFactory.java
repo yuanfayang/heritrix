@@ -827,7 +827,7 @@ public class ReplayCharSequenceFactory {
             boolean isException = false;
             try {
                 // Get a writer.  Output in our WRITE_ENCODING.
-                writer = /*new BufferedWriter(new OutputStreamWriter(*/
+                writer = /*new BufferedWriter(*/new OutputStreamWriter(
                     new FileOutputStream(unicode), WRITE_ENCODING)/*)*/;
                 assert writer != null: "Writer is null: " + name;
                 CoderResult result = null;

@@ -75,8 +75,7 @@ public class RecordingInputStream
 
     public void open(InputStream wrappedStream) throws IOException {
         logger.fine(Thread.currentThread().getName() + " opening " +
-            wrappedStream + ", this.in " + this.in + ", " +
-            Thread.currentThread().getName());
+            wrappedStream + ", " + Thread.currentThread().getName());
         assert this.in == null: "Inputstream is not null: " +
             Thread.currentThread().getName();
         this.in = wrappedStream;
