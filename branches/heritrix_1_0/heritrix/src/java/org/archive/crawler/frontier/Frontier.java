@@ -645,7 +645,7 @@ public class Frontier
     /**
      * @param curi
      */
-    private void disregardDisposition(CrawlURI curi) {
+    protected void disregardDisposition(CrawlURI curi) {
         //Let interested listeners know of disregard disposition.
         controller.fireCrawledURIDisregardEvent(curi);
 
@@ -673,7 +673,7 @@ public class Frontier
         }
     }
 
-    private boolean isDisregarded(CrawlURI curi) {
+    protected boolean isDisregarded(CrawlURI curi) {
         switch (curi.getFetchStatus()) {
             case S_ROBOTS_PRECLUDED :     // they don't want us to have it
             case S_OUT_OF_SCOPE :         // filtered out by scope
@@ -715,7 +715,7 @@ public class Frontier
      *
      * @param curi The CrawlURI
      */
-    private void successDisposition(CrawlURI curi) {
+    protected void successDisposition(CrawlURI curi) {
         totalProcessedBytes += curi.getContentSize();
 
         curi.aboutToLog();
@@ -769,7 +769,7 @@ public class Frontier
         }
     }
 
-    private void discardQueue(URIWorkQueue q) {
+    protected void discardQueue(URIWorkQueue q) {
         allClassQueuesMap.remove(q.getClassKey());
         q.discard();
         //assert !heldClassQueues.contains(q) : "heldClassQueues holding dead q";
@@ -778,7 +778,7 @@ public class Frontier
         //assert heldClassQueues.size()+readyClassQueues.size()+snoozeQueues.size() <= allClassQueuesMap.size() : "allClassQueuesMap discrepancy";
     }
 
-    private CrawlURI dequeueFromReady() {
+    protected CrawlURI dequeueFromReady() {
         URIWorkQueue firstReadyQueue = (URIWorkQueue)readyClassQueues.getFirst();
         assert firstReadyQueue.getState() == URIWorkQueue.READY : "top ready queue not ready but" + firstReadyQueue.getState();
         assert firstReadyQueue.isEmpty() == false : "top ready queue inexplicably empty";
@@ -794,7 +794,7 @@ public class Frontier
      * @see #noteInProcess(CrawlURI)
      * @throws URIException
      */
-    private CrawlURI emitCuri(CrawlURI curi) throws URIException {
+    protected CrawlURI emitCuri(CrawlURI curi) throws URIException {
         if(curi != null) {
             noteInProcess(curi);
             if (this.controller == null ||
@@ -1108,7 +1108,7 @@ public class Frontier
      *
      * @param curi The CrawlURI
      */
-    private void failureDisposition(CrawlURI curi) {
+    protected void failureDisposition(CrawlURI curi) {
         //Let interested listeners know of failed disposition.
         this.controller.fireCrawledURIFailureEvent(curi);
 
@@ -1147,7 +1147,7 @@ public class Frontier
      * @throws AttributeNotFoundException If problems occur trying to read the
      *            maximum number of retries from the settings framework.
      */
-    private boolean needsPromptRetry(CrawlURI curi)
+    protected boolean needsPromptRetry(CrawlURI curi)
             throws AttributeNotFoundException {
         if (curi.getFetchAttempts() >=
                 ((Integer)getAttribute(ATTR_MAX_RETRIES, curi)).intValue() ) {
@@ -1185,7 +1185,8 @@ public class Frontier
      * @throws AttributeNotFoundException If problems occur trying to read the
      *            maximum number of retries from the settings framework.
      */
-    private boolean needsRetrying(CrawlURI curi) throws AttributeNotFoundException {
+    protected boolean needsRetrying(CrawlURI curi)
+            throws AttributeNotFoundException {
         //
         if (curi.getFetchAttempts() >= ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
             return false;
@@ -1205,7 +1206,8 @@ public class Frontier
      * @param curi
      * @throws AttributeNotFoundException
      */
-    private void scheduleForRetry(CrawlURI curi) throws AttributeNotFoundException {
+    protected void scheduleForRetry(CrawlURI curi)
+            throws AttributeNotFoundException {
         long delay;
 
         if(curi.getAList().containsKey(A_RETRY_DELAY)) {
@@ -1236,7 +1238,7 @@ public class Frontier
      *
      * @param curi CrawlURI to reschedule.
      */
-    private void reschedule(CrawlURI curi) {
+    protected void reschedule(CrawlURI curi) {
         // Eliminate state related to only prior processing passthrough.
         boolean isPrereq = curi.isPrerequisite();
         curi.processingCleanup(); // This will reset prereq value.
@@ -1285,7 +1287,7 @@ public class Frontier
      * @param curi
      * @return True if curi should be forgotten.
      */
-    private boolean shouldBeForgotten(CrawlURI curi) {
+    protected boolean shouldBeForgotten(CrawlURI curi) {
         switch(curi.getFetchStatus()) {
             case S_OUT_OF_SCOPE:
             case S_BLOCKED_BY_USER:
@@ -1434,7 +1436,7 @@ public class Frontier
      * @return the number of matches found
      * @throws InvalidURIFrontierMarkerException
      */
-    private int inspectQueue( KeyedQueue queue,
+    protected int inspectQueue( KeyedQueue queue,
                               String queueName,
                               ArrayList list,
                               FrontierMarker marker,
