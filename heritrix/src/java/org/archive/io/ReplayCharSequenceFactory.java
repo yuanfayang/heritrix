@@ -857,7 +857,7 @@ public class ReplayCharSequenceFactory {
                 }
                
                 // REMOVE
-                assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
+                // assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
             
                 // Flush any remaining state from the decoder, being careful
                 // to detect output buffer overflow(s)
@@ -895,6 +895,7 @@ public class ReplayCharSequenceFactory {
                 //    deleteFile(unicode);
                 //}
             }
+
             //assert unicode.exists(): "No file: " + unicode.getAbsolutePath();
             return unicode;
         }
