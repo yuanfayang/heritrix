@@ -7,9 +7,11 @@
 package org.archive.crawler.basic;
 
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,6 +21,8 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.io.OutputStream;
+import org.xbill.DNS.*;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 
@@ -26,13 +30,13 @@ import org.archive.crawler.datamodel.CrawlOrder;
  * @author Parker Thompson
  *
  */
-public class ARCWriter extends Processor {
+public class ARCWriter extends Processor implements CoreAttributeConstants {
 	
 	private int arcMaxSize = 10000000;		// max size we want arc files to be (bytes)
 	private String arcPrefix = "archive";			// file prefix for arcs
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
-	private FileChannel fileChannel =null;		// manipulates file handle
+	private FileOutputStream out = null;		// for writing to files
 
 
   	public void initialize(CrawlController c){
@@ -48,113 +52,143 @@ public class ARCWriter extends Processor {
   	public void process(CrawlURI curi){
   		super.process(curi);
   		
-  		//TODO add switch to handle multiple protocols (or some other dispatcher)
-  		writeHttp(curi);
-
+  		// find the write protocol and write this sucker
+  		String scheme = curi.getUURI().getUri().getScheme();
+  		
+  		try{
+  			if(scheme.equals("dns")){
+  				writeDns(curi);
+  				
+  			}else if(scheme.equals("http")){
+	  			writeHttp(curi);
+  			}
+  					
+  		}catch(IOException e){
+  			e.printStackTrace();
+  		}
   	}
 
-	public void writeArcEntry(CrawlURI curi, byte[] record){
-		
+
+  	protected void writeMetaLine(CrawlURI curi, int recordLength){
+
 		// TODO sanity check the passed curi before writing
 		if (true){	
+			
+			// figure out content type, truncate at delimiter ';'
+			String contentType;
+			if(curi.getContentType().indexOf(';') >= 0 ){
+				contentType = curi.getContentType().substring(0,curi.getContentType().indexOf(';'));
+			}else{
+				contentType = curi.getContentType();
+			}
 						
 			String metaLineStr = "\n"
 					+ curi.getURIString()
 					+ " "
 					+ curi.getHost().getIP().getHostAddress()
 					+ " "
-					+ get14DigitDate()
+					+ curi.getAList().getLong(FETCH_BEGAN_AT)
 					+ " "
-					+  curi.getContentType()
+					// eliminate additonal args (e.g. "text/html; charset=iso-8859-1" => text/html)
+					+  contentType
 					+ " "
-					//+ (response.getPayload().getSize() + startLine.capacity() + headers.capacity()) + "\n";
-					+ record.length;
-							
-			ByteBuffer metaLine = ByteBuffer.wrap(metaLineStr.getBytes());
-			ByteBuffer recordBuffer = ByteBuffer.wrap(record);
-						
-			if (isNewArcNeeded()) {
-				createNewArcFile();
+					+ recordLength
+					+ "\n";	
+					
+			if(isNewArcNeeded()) {
+							createNewArcFile();
 			}
-	
-			try {
-				fileChannel.write(metaLine);
-				fileChannel.write(recordBuffer);
-
-			} catch (IOException e) {
+					
+			try{	
+			out.write(metaLineStr.getBytes());  		
+			}catch(IOException e){
 				e.printStackTrace();
 			}
-		}
-	}
-
-	private void createNewArcFile() {
+  		}
+  	}
+  	
+	protected void createNewArcFile() {
 
 		String date = get14DigitDate();
 		String fileName = outputDir + arcPrefix + date + ".arc";
 		try {
-			if(fileChannel != null){
-				fileChannel.close();
+			if(out != null){
+				out.close();
 			}
 							
 			file = new File(fileName);
-			fileChannel = new FileOutputStream(file, true).getChannel();
+			//out = new FileOutputStream(file, true).getChannel();
+			out = new FileOutputStream(file);
+			
 			String arcFileDesc =
 				"filedesc://"
 					+ fileName
 					+ " 0.0.0.0 "
 					+ date
 					+ " text/plain 77\n1 0 InternetArchive\nURL IP-address Archive-date Content-type Archive-length\n";
-			ByteBuffer fileDescBuff = ByteBuffer.wrap(arcFileDesc.getBytes());
-			fileChannel.write(fileDescBuff);
+			
+			out.write(arcFileDesc.getBytes());
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private boolean isNewArcNeeded(){
-		
-		try{
-			if (fileChannel.size() > arcMaxSize)
+	protected boolean isNewArcNeeded(){
+		if (file.length() > arcMaxSize){
 				return true;
-		}catch(IOException e){
-			e.printStackTrace();	
-		}	
-		return false;
+		}else{
+			return false;
+		}
 	}		
-
-	public void writeHttp(CrawlURI curi){
 	
-		GetMethod get 						= (GetMethod) curi.getAList().getObject("http-transaction");
-		//String charSet 						= get.getResponseCharSet();
-		Header[] headers 					= get.getResponseHeaders();
-		String responseBodyString 	= get.getResponseBodyAsString();
-
-		int headersSize 						= 0;
+	protected void writeHttp(CrawlURI curi) throws IOException {
 		
-		StringBuffer buffer = null;		// accumulate the record here
+		int recordLength		= 0;
+		GetMethod get 		= (GetMethod) curi.getAList().getObject("http-transaction");
+		Header[] headers 	= get.getResponseHeaders();
 		
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		for(int i=0; i < headers.length; i++){
-			headersSize += headers[i].toString().length();
+			baos.write(headers[i].toExternalForm().getBytes());
 		}
+		recordLength += baos.size();
 		
-		buffer = new StringBuffer(headersSize + responseBodyString.length());
-				
-		for(int i=0; i < headers.length; i++){
-			buffer.append(headers[i].toString());
-		}
-		buffer.append(responseBodyString);
-			
-		try {
-			//byte[] record = buffer.toString().getBytes(charSet);			
-			byte[] record = buffer.toString().getBytes();			
-			writeArcEntry(curi, record);
-			
-		} catch (Exception e) {
-			System.out.println(e);
-		}
+		// get body so we can calc length for metaline
+		byte[] body = get.getResponseBody();
+		recordLength += body.length;
+		// don't forget the extra CRLF between headers and body
+		recordLength += 2;
+		
+		writeMetaLine(curi,  recordLength);
+		
+		baos.writeTo(out);
+		out.write("\r\n".getBytes());
+		out.write(body);
+		out.write("\n".getBytes());
 	}
-
+	
+	public void writeDns(CrawlURI curi) throws IOException {
+	
+		int recordLength = 0;
+		
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		
+		Record[] rrSet = (Record[]) curi.getAList().getObject(RRECORD_SET_LABEL);
+		
+		for(int i=0; i < rrSet.length; i++){
+			byte[] record = rrSet[i].rdataToString().getBytes();
+			recordLength += record.length;
+			
+			baos.write(record);
+		}
+		
+		writeMetaLine(curi, recordLength);
+		
+		baos.writeTo(out);
+	 	out.write("\n".getBytes());
+	}
+	
 	// getters and setters		
 	public int getArcMaxSize() {
 		return arcMaxSize;
@@ -181,7 +215,6 @@ public class ARCWriter extends Processor {
 	}
 
 	public void setOutputDir(String buffer) {
-
 				
 		// make sure it's got a trailing file.seperator so the
 		// dir is not treated as a file prefix
@@ -199,6 +232,8 @@ public class ARCWriter extends Processor {
 			}catch(Exception e){
 				e.printStackTrace();
 			}		
+		}else{
+			outputDir = buffer;
 		}
 			
 		// start writing files to the new dir

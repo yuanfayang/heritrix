@@ -21,7 +21,7 @@ import org.archive.crawler.framework.Processor;
  * @author gojomo
  *
  */
-public class SimpleHTTPFetcher extends Processor implements InstancePerThread {
+public class SimpleHTTPFetcher extends Processor implements InstancePerThread, org.archive.crawler.datamodel.CoreAttributeConstants {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleHTTPFetcher");
 	HttpClient http = new HttpClient();
 	
@@ -35,12 +35,13 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread {
 			return;
 		}
 		
-		curi.getAList().putLong("http-begin-time",System.currentTimeMillis());
+		curi.getAList().putLong(FETCH_BEGAN_AT,System.currentTimeMillis());
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
 		get.setFollowRedirects(false);
 		get.setRequestHeader("User-Agent",controller.getOrder().getBehavior().getUserAgent());
 		try {
 			http.executeMethod(get);
+
 			Header contentLength = get.getResponseHeader("Content-Length");
 			logger.info(
 				curi.getUURI().getUri()+": "
