@@ -1,5 +1,5 @@
-<%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
+<%@include file="/include/handler.jsp"%>
 
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.datamodel.settings.ComplexType" %>
@@ -8,7 +8,6 @@
 
 <%@ page import="java.io.BufferedReader" %>
 <%@ page import="java.io.FileReader" %>
-<%@ page import="java.util.regex.Matcher"%>
 <%@ page import="java.util.regex.Pattern" %>
 
 <%

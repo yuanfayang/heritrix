@@ -96,8 +96,18 @@
                         return error;
                     }
     
-
-                    if(currentAttribute instanceof ComplexType) {
+                    // MapTypes that contain Strings, int or other Java primatives are 'simple maps' and while
+                    // technically complex types we will treat them like simple types.
+                    boolean simpleMap = currentAttribute instanceof MapType; 
+                    if(simpleMap){
+                        Class contentType = ((MapType)currentAttribute).getContentType();
+                        simpleMap = contentType == String.class
+                                    || contentType == Integer.class
+                                    || contentType == Double.class
+                                    || contentType == Float.class
+                                    || contentType == Boolean.class;
+                    }
+                    if(currentAttribute instanceof ComplexType && simpleMap == false) {
                         // Recursive call for complex types (contain other nodes and leaves)
                         p.append(printMBean((ComplexType)currentAttribute,settings,indent+"&nbsp;&nbsp;",lists,expert,errorHandler));
                     } else {
@@ -116,7 +126,7 @@
                         if ((att.isOverrideable() || localAttribute!=null) && settings != null) {
                             p.append("<td valign='top' width='1'><input name='" + attAbsoluteName + ".override' id='" + attAbsoluteName + ".override' value='true' onChange='setUpdate()'");
                             if(localAttribute != null){
-                                 p.append(" checked");
+                                p.append(" checked");
                             }
                             p.append(" type='checkbox'>");
                             p.append("</td>\n");
@@ -143,7 +153,34 @@
                                 p.append("</table>\n");
             
                                 lists.append("'"+attAbsoluteName+"',");
-                            } else if(legalValues != null && legalValues.length > 0){
+                            } else if(simpleMap) {
+                                // Simple map
+                                MapType map = (MapType)currentAttribute;
+                                p.append("<table border='0' cellspacing='0' cellpadding='0'>\n");
+                                p.append("<tr>\n");
+						        
+						        MBeanInfo mapInfo = map.getMBeanInfo(settings);
+						        MBeanAttributeInfo mp[] = mapInfo.getAttributes();
+
+						        // Printout modules in map.
+						        boolean alt = true;
+						        for(int n2=0; n2<mp.length; n2++) {
+						            ModuleAttributeInfo mapAtt = (ModuleAttributeInfo)mp[n2]; //The attributes of the current attribute.
+
+						            Object currentMapAttribute = null;
+						            Object localMapAttribute = null;
+						
+						            try {
+						                currentMapAttribute = map.getAttribute(settings,mapAtt.getName());
+						                localMapAttribute = map.getLocalAttribute(settings,mapAtt.getName());
+						            } catch (Exception e1) {
+						                p.append(e1.toString() + " " + e1.getMessage());
+						            }
+						            p.append("<td>" + mapAtt.getName() + "</td><td>" + currentAttribute + "</td>\n");
+						        }
+						        
+						        p.append("</tr></table>\n");
+                            } else if(legalValues != null && legalValues.length > 0) {
                                 //Have legal values. Build combobox.
                                 p.append("<select name='" + attAbsoluteName + "' style='width: 320px' onChange=\"setEdited('" + attAbsoluteName + "')\">\n");
                                 for(int i=0 ; i < legalValues.length ; i++){
@@ -269,14 +306,14 @@
                         if(currentAttribute instanceof ListType){
                             ListType list = (ListType)currentAttribute;
                             list.clear();
-                            String[] elems = request.getParameterValues(mbean.getAbsoluteName() + "/" + att.getName());
+                            String[] elems = request.getParameterValues(attAbsoluteName);
                             for(int i=0 ; elems != null && i < elems.length ; i++){
                                 list.add(elems[i]);
                             }
                         }
                         else{
                             try{
-                                mbean.setAttribute(settings, new Attribute(att.getName(),request.getParameter(mbean.getAbsoluteName() + "/" + att.getName())));
+                                mbean.setAttribute(settings, new Attribute(att.getName(),request.getParameter(attAbsoluteName)));
                             } catch (Exception e1) {
                                 e1.printStackTrace();
                                 return;

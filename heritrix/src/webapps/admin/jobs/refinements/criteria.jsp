@@ -1,0 +1,1 @@
+add remove criteria for a specific refinement ('refinment') of the current domain ('currDomain')

@@ -11,7 +11,7 @@
 	 *          1 - Filters
 	 *          2 - Settings
 	 *          4 - Credentials
-	 *          5 - Refinements
+	 *          5 - Criteria
 	 *
 	 * @author Kristinn Sigurdsson
 	 */
@@ -32,27 +32,27 @@
 
 						</td>
                         <td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('/admin/jobs/per/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
+                            <a href="javascript:doGoto('/admin/jobs/refinements/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
                         </td>
                         <td class="tab_seperator">
                         </td>
                         <td class="tab<%=jobtab==4?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('/admin/jobs/per/credentials.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==4?"_selected":""%>">Credentials</a>
+                            <a href="javascript:doGoto('/admin/jobs/refinements/credentials.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==4?"_selected":""%>">Credentials</a>
                         </td>
                         <td class="tab_seperator">
                         </td>
                         <td class="tab<%=jobtab==2?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('/admin/jobs/per/configure.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==2?"_selected":""%>">Settings</a>
+                            <a href="javascript:doGoto('/admin/jobs/refinements/configure.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==2?"_selected":""%>">Settings</a>
                         </td>
                         <td class="tab_seperator">
                         </td>
                         <td class="tab<%=jobtab==5?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('/admin/jobs/refinements/overview.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==5?"_selected":""%>">Refinements</a>
+                            <a href="javascript:doGoto('/admin/jobs/refinements/criteria.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==5?"_selected":""%>">Criteria</a>
                         </td>
                         <td class="tab_seperator">
                         </td>
 						<td class="tab">
-							<a href="javascript:doSubmit()" class="tab_text">Done with the override</a>
+							<a href="javascript:doSubmit()" class="tab_text">Done with the refinement</a>
 						</td>
 						<td class="tab_seperator">
 						</td>
