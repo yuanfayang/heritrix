@@ -84,4 +84,10 @@ public class HttpRecorderMethod {
     public void setConnection(HttpConnection connection) {
         this.connection = connection;
     }
+    /**
+     * @return Returns the httpRecorder.
+     */
+    public HttpRecorder getHttpRecorder() {
+        return httpRecorder;
+    }
 }

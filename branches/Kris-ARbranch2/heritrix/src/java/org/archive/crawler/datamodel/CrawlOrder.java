@@ -37,8 +37,8 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
-import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.ModuleType;
@@ -85,14 +85,22 @@ public class CrawlOrder extends ModuleType {
         "recorder-out-buffer-bytes";
     public static final String ATTR_RECORDER_IN_BUFFER =
         "recorder-in-buffer-bytes";
+    
+    /** Percentage of heap to allocate to bdb cache */
+    public static final String ATTR_BDB_CACHE_PERCENT =
+        "bdb-cache-percent";
+    
+    /**
+     * Default size of bdb cache.
+     */
+    private final static Integer DEFAULT_BDB_CACHE_PERCENT = new Integer(0);
 
-    String caseFlattenedUserAgent;
+    private String caseFlattenedUserAgent;
 
     private MapType httpHeaders;
     private MapType loggers;
 
     private CrawlController controller;
-    
 
     /**
      * Regex for acceptable user-agent format.
@@ -100,8 +108,6 @@ public class CrawlOrder extends ModuleType {
     private static String ACCEPTABLE_USER_AGENT =
         "\\S+.*\\(.*\\+http(s)?://\\S+\\.\\S+.*\\).*";
 
-
-    
     /**
      * Regex for acceptable from address.
      */
@@ -197,6 +203,13 @@ public class CrawlOrder extends ModuleType {
                 new Integer(65536)));
         e.setOverrideable(false);
         e.setExpertSetting(true);
+        
+        e = addElementToDefinition(new SimpleType(ATTR_BDB_CACHE_PERCENT,
+                "Percentage of heap to allocate to BerkeleyDB JE cache. " +
+                "Default of zero means no preference (accept BDB's default" +
+                "or properties setting).", DEFAULT_BDB_CACHE_PERCENT));
+        e.setExpertSetting(true);
+        e.setOverrideable(false);
         
         addElementToDefinition(new CrawlScope());
 

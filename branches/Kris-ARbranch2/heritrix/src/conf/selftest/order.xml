@@ -62,7 +62,7 @@
       <stringList name="user-agents">
       </stringList>
     </newObject>
-    <newObject name="frontier" class="org.archive.crawler.frontier.HostQueuesFrontier">
+    <newObject name="frontier" class="org.archive.crawler.frontier.BdbFrontier">
       <float name="delay-factor">0.0</float>
       <integer name="max-delay-ms">0</integer>
       <integer name="min-delay-ms">0</integer>
@@ -70,6 +70,7 @@
       <long name="retry-delay-seconds">90</long>
       <integer name="total-bandwidth-usage-KB-sec">0</integer>
       <integer name="max-per-host-bandwidth-usage-KB-sec">0</integer>
+      <boolean name="pause-at-finish">false</boolean>
     </newObject>
     <map name="uri-canonicalization-rules">
       <newObject name="Lowercase" 
@@ -161,7 +162,9 @@
         <string name="prefix">SELFTEST</string>
         <string name="suffix">${HOSTNAME}</string>
         <integer name="max-size-bytes">100000000</integer>
-        <string name="path">arcs</string>
+        <stringList name="path">
+          <string>arcs</string>
+        </stringList>
         <integer name="pool-max-active">1</integer>
         <integer name="pool-max-wait">300000</integer>
       </newObject>

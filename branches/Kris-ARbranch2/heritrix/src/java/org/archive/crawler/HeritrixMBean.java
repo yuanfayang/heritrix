@@ -29,7 +29,15 @@ package org.archive.crawler;
  */
 public interface HeritrixMBean {
     public void start();
-    public boolean isStarted();
-    public String getState();
+    public String getStatus();
     public void stop();
+    public boolean pause();
+    public boolean resume();
+    public boolean terminateCurrentJob();
+    public boolean schedule(String url);
+    public boolean scheduleForceFetch(String url);
+    public boolean scheduleSeed(String url);
+    public String scheduleFile(String path);
+    public String scheduleFileForceFetch(String path);
+    public String interrupt(String threadName);
 }

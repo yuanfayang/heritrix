@@ -62,7 +62,7 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.frontier.HostQueuesFrontier;
+import org.archive.crawler.frontier.BdbFrontier;
 import org.archive.crawler.io.LocalErrorFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
@@ -72,10 +72,18 @@ import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.GenerationFileHandler;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.GateSync;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Type;
 import org.xbill.DNS.dns;
+
+import EDU.oswego.cs.dl.util.concurrent.ReentrantLock;
+
+import com.sleepycat.bind.serial.StoredClassCatalog;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseConfig;
+import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.Environment;
+import com.sleepycat.je.EnvironmentConfig;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -120,19 +128,28 @@ public class CrawlController implements Serializable {
     private CrawlOrder order;
     private CrawlScope scope;
     private ProcessorChainList processorChains;
-    transient ToePool toePool;
+    private transient ToePool toePool;
     private Frontier frontier;
-    transient private ServerCache serverCache;
+    private transient ServerCache serverCache;
     private SettingsHandler settingsHandler;
 
-    // used to hold all threads in place in OutOfMemory condition
-    private GateSync memoryGate = new GateSync();
+
+    // used to enable/disable single-threaded operation after OOM
+    volatile boolean singleThreadMode = false; 
+    private static final ReentrantLock SINGLE_THREAD_LOCK = new ReentrantLock();
+
+    // emergency reserve of memory to allow some progress/reporting after OOM
     private LinkedList reserveMemory;
-    private static final int RESERVE_BLOCKS = 5;
-    private static final int RESERVE_BLOCK_SIZE = 2^20; // 1MB
+    private static final int RESERVE_BLOCKS = 1;
+    private static final int RESERVE_BLOCK_SIZE = 5*2^20; // 3MB
 
     // crawl state: as requested or actual
-    private String sExit;                 // exit status
+    
+    /**
+     * Crawl exit status.
+     */
+    private String sExit;
+    
     private boolean beginPaused = false;  // whether controller should start in PAUSED state
 
     private static final Object NASCENT = "NASCENT".intern();
@@ -142,6 +159,7 @@ public class CrawlController implements Serializable {
     private static final Object CHECKPOINTING = "CHECKPOINTING".intern();
     private static final Object STOPPING = "STOPPING".intern();
     private static final Object FINISHED = "FINISHED".intern();
+    private static final Object STARTED = "STARTED".intern();
 
     transient private Object state = NASCENT;
 
@@ -235,6 +253,23 @@ public class CrawlController implements Serializable {
 
     /** distinguished filename for this component in checkpoints */
     public static final String DISTINGUISHED_FILENAME = "controller.ser";
+    
+    /** Shared bdb Environment for Frontier subcomponents */
+    // TODO: investigate using multiple environments to split disk accesses
+    // across separate physical disks
+    private Environment bdbEnvironment = null;
+    
+    /**
+     * Shared class catalog database.  Used by the
+     * {@link #classCatalog}.
+     */
+    private Database classCatalogDB = null;
+    
+    /**
+     * Class catalog instance.
+     * Used by bdb serialization.
+     */
+    private StoredClassCatalog classCatalog = null;
 
     /**
      * default constructor
@@ -256,8 +291,8 @@ public class CrawlController implements Serializable {
     public void initialize(SettingsHandler sH)
             throws InitializationException {
         this.settingsHandler = sH;
-        order = settingsHandler.getOrder();
-        order.setController(this);
+        this.order = settingsHandler.getOrder();
+        this.order.setController(this);
         sExit = "";
         this.manifest = new StringBuffer();
         String onFailMessage = "";
@@ -283,6 +318,9 @@ public class CrawlController implements Serializable {
 
             onFailMessage = "Unable to create log file(s)";
             setupLogs();
+            
+            onFailMessage = "Unable to setup bdb environment.";
+            setupBdb();
 
             onFailMessage = "Unable to setup statistics";
             setupStatTracking();
@@ -310,6 +348,50 @@ public class CrawlController implements Serializable {
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
+    }
+    
+    private void setupBdb()
+    throws FatalConfigurationException, AttributeNotFoundException {
+        EnvironmentConfig envConfig = new EnvironmentConfig();
+        envConfig.setAllowCreate(true);
+        // This setting required by Linda Lee of bdbje as part of the 
+        // work on the bug #11552.
+        envConfig.setConfigParam("je.evictor.criticalPercentage", "1");
+        int bdbCachePercent = ((Integer)this.order.
+            getAttribute(null, CrawlOrder.ATTR_BDB_CACHE_PERCENT)).intValue();
+        if(bdbCachePercent > 0) {
+            // Operator has expressed a preference; override BDB default or 
+            // je.properties value
+            envConfig.setCachePercent(bdbCachePercent);
+        }
+        try {
+            this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
+            if (logger.isLoggable(Level.INFO)) {
+                // Write out the bdb configuration.
+                envConfig = bdbEnvironment.getConfig();
+                logger.info("BdbConfiguration: Cache percentage " +
+                    envConfig.getCachePercent() +
+                    ", cache size " + envConfig.getCacheSize());
+            }
+            // Open the class catalog database. Create it if it does not
+            // already exist. 
+            DatabaseConfig dbConfig = new DatabaseConfig();
+            dbConfig.setAllowCreate(true);
+            this.classCatalogDB = this.bdbEnvironment.
+                openDatabase(null, "classes", dbConfig);
+            this.classCatalog = new StoredClassCatalog(classCatalogDB);
+        } catch (DatabaseException e) {
+            e.printStackTrace();
+            throw new FatalConfigurationException(e.getMessage());
+        }
+    }
+    
+    public Environment getBdbEnvironment() {
+        return this.bdbEnvironment;
+    }
+    
+    public StoredClassCatalog getClassCatalog() {
+        return this.classCatalog;
     }
 
     /**
@@ -449,11 +531,8 @@ public class CrawlController implements Serializable {
                 && registeredCrawlURIDispositionListeners.size() > 0) {
                 Iterator it = registeredCrawlURIDispositionListeners.iterator();
                 while (it.hasNext()) {
-                    (
-                        (CrawlURIDispositionListener) it
-                            .next())
-                            .crawledURIFailure(
-                        curi);
+                    ((CrawlURIDispositionListener)it.next())
+                        .crawledURIFailure(curi);
                 }
             }
         }
@@ -463,21 +542,21 @@ public class CrawlController implements Serializable {
              AttributeNotFoundException, InvalidAttributeValueException,
              MBeanException, ReflectionException, ClassNotFoundException,
              InstantiationException, IllegalAccessException {
-        
-        serverCache = ServerCacheFactory.getServerCache(getSettingsHandler());
-
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
         	scope.initialize(this);
         }
+        
+        this.serverCache =
+            ServerCacheFactory.getServerCache(getSettingsHandler());
         
         if (frontier == null) {
             Object o = order.getAttribute(Frontier.ATTR_NAME);
             if (o instanceof Frontier) {
                 frontier = (Frontier)o;
             } else {
-                frontier = new HostQueuesFrontier(Frontier.ATTR_NAME);
-                order.setAttribute((HostQueuesFrontier) frontier);
+                frontier = new BdbFrontier(Frontier.ATTR_NAME);
+                order.setAttribute((BdbFrontier)frontier);
             }
 
             // Try to initialize frontier from the config file
@@ -682,7 +761,6 @@ public class CrawlController implements Serializable {
         }
     }
 
-
     /**
      * Sets the values for max bytes, docs and time based on crawl order. 
      */
@@ -717,6 +795,34 @@ public class CrawlController implements Serializable {
     public StatisticsTracking getStatistics() {
         return statistics;
     }
+    
+    protected void sendCrawlStateChangeEvent(Object newState, String message) {
+        synchronized (this.registeredCrawlStatusListeners) {
+            this.state = newState;
+            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
+                    i.hasNext();) {
+                CrawlStatusListener l = (CrawlStatusListener)i.next();
+                if (newState.equals(PAUSED)) {
+                   l.crawlPaused(message);
+                } else if (newState.equals(RUNNING)) {
+                    l.crawlResuming(message);
+                } else if (newState.equals(PAUSING)) {
+                   l.crawlPausing(message);
+                } else if (newState.equals(STARTED)) {
+                    l.crawlStarted(message);
+                } else if (newState.equals(STOPPING)) {
+                    l.crawlEnding(message);
+                } else if (newState.equals(FINISHED)) {
+                    l.crawlEnded(message);
+                } else {
+                    throw new RuntimeException("Unknown state");
+                }
+
+                logger.fine("Sent " + newState + " to " + l);
+            }
+            logger.info("Sent " + newState);
+        }
+    }
 
     /**
      * Operator requested crawl begin
@@ -726,18 +832,23 @@ public class CrawlController implements Serializable {
             runProcessorInitialTasks();
         }
 
-        // Sssume Frontier state already loaded
-        state = beginPaused ? PAUSED : RUNNING;
+        // Assume Frontier state already loaded.
         logger.info("Starting crawl.");
-
-        sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
+        sendCrawlStateChangeEvent(STARTED, STARTED.toString());
+        state = beginPaused ? PAUSED : RUNNING;
+        sendCrawlStateChangeEvent(state, state.toString());
         // A proper exit will change this value.
+        this.sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
 
-        // start periodic background logging of crawl statistics
+        // Start periodic background logging of crawl statistics.
+        // TODO: Convert noteStart to be handled by statistics
+        // capturing the 'STARTED' event.
         statistics.noteStart();
+        
         Thread statLogger = new Thread(statistics);
         statLogger.setName("StatLogger");
         statLogger.start();
+        
         frontier.unpause();
     }
 
@@ -745,17 +856,9 @@ public class CrawlController implements Serializable {
         logger.info("Entered complete stop.");
         // Run processors' final tasks
         runProcessorFinalTasks();
-        
+        // Ok, now we are ready to exit.
+        sendCrawlStateChangeEvent(FINISHED, this.sExit);
         synchronized (this.registeredCrawlStatusListeners) {
-            // Ok, now we are ready to exit.
-            this.state = FINISHED;
-            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
-                    i.hasNext();) {
-                CrawlStatusListener l = (CrawlStatusListener)i.next();
-                // Let the listeners know that the crawler is finished.
-                l.crawlEnded(this.sExit);
-                logger.info("Sent crawlEnded to " + l);
-            }
             // Remove all listeners now we're done with them.
             this.registeredCrawlStatusListeners.
                 removeAll(this.registeredCrawlStatusListeners);
@@ -773,23 +876,25 @@ public class CrawlController implements Serializable {
         this.order = null;
         this.scope = null;
         this.serverCache = null;
+        if (this.classCatalogDB != null) {
+            try {
+                this.classCatalogDB.close();
+            } catch (DatabaseException e) {
+                e.printStackTrace();
+            }
+            this.classCatalogDB = null;
+        }
+        this.bdbEnvironment = null;
     }
 
     private void completePause() {
         logger.info("Crawl paused.");
-        synchronized (this.registeredCrawlStatusListeners) {
-            this.state = PAUSED;
-            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
-                    i.hasNext(); ) {
-                ((CrawlStatusListener)i.next()).
-                    crawlPaused(CrawlJob.STATUS_PAUSED);
-            }
-        }
+        sendCrawlStateChangeEvent(PAUSED, CrawlJob.STATUS_PAUSED);
     }
 
     private boolean shouldContinueCrawling() {
         if (frontier.isEmpty()) {
-            sExit = CrawlJob.STATUS_FINISHED;
+            this.sExit = CrawlJob.STATUS_FINISHED;
             return false;
         }
 
@@ -797,16 +902,15 @@ public class CrawlController implements Serializable {
             // Hit the max byte download limit!
             sExit = CrawlJob.STATUS_FINISHED_DATA_LIMIT;
             return false;
-        } else if (
-            maxDocument > 0
+        } else if (maxDocument > 0
                 && frontier.succeededFetchCount() >= maxDocument) {
             // Hit the max document download limit!
-            sExit = CrawlJob.STATUS_FINISHED_DOCUMENT_LIMIT;
+            this.sExit = CrawlJob.STATUS_FINISHED_DOCUMENT_LIMIT;
             return false;
-        } else if (
-            maxTime > 0 && statistics.crawlDuration() >= maxTime * 1000) {
+        } else if (maxTime > 0 &&
+                statistics.crawlDuration() >= maxTime * 1000) {
             // Hit the max byte download limit!
-            sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
+            this.sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
             return false;
         }
         return state == RUNNING;
@@ -831,21 +935,18 @@ public class CrawlController implements Serializable {
         if (state == STOPPING || state == FINISHED) {
             return;
         }
-        sExit = CrawlJob.STATUS_ABORTED;
+        this.sExit = CrawlJob.STATUS_ABORTED;
         beginCrawlStop();
     }
 
-    private void beginCrawlStop() {
+    /**
+     * Start the process of stopping the crawl. 
+     */
+    public void beginCrawlStop() {
         logger.info("Starting beginCrawlStop()...");
-        synchronized (this.registeredCrawlStatusListeners) {
-            this.state = STOPPING;
-            frontier.terminate();
-            frontier.unpause();
-            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
-                    i.hasNext();) {
-                ((CrawlStatusListener)i.next()).crawlEnding(sExit);
-            }
-        }
+        sendCrawlStateChangeEvent(STOPPING, this.sExit);
+        frontier.terminate();
+        frontier.unpause();
         logger.info("Finished beginCrawlStop()."); 
     }
 
@@ -858,16 +959,9 @@ public class CrawlController implements Serializable {
             return;
         }
         sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
-
         logger.info("Pausing crawl...");
-        synchronized (this.registeredCrawlStatusListeners) {
-            this.state = PAUSING;
-            frontier.pause();
-            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
-                    i.hasNext();) {
-                ((CrawlStatusListener)i.next()).crawlPausing(sExit);
-            }
-        }
+        frontier.pause();
+        sendCrawlStateChangeEvent(PAUSING, this.sExit);
     }
 
     /**
@@ -886,20 +980,10 @@ public class CrawlController implements Serializable {
             // Can't resume if not been told to pause
             return;
         }
-
-        state = RUNNING;
+        multiThreadMode();
         frontier.unpause();
-
         logger.info("Crawl resumed.");
-
-        // Tell everyone that we have resumed from pause
-        synchronized (this.registeredCrawlStatusListeners) {
-            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
-                    i.hasNext();) {
-                ((CrawlStatusListener)i.next()).
-                    crawlResuming(CrawlJob.STATUS_RUNNING);
-            }
-        }
+        sendCrawlStateChangeEvent(RUNNING, CrawlJob.STATUS_RUNNING);
     }
 
     /**
@@ -1144,9 +1228,19 @@ public class CrawlController implements Serializable {
      * Evaluate if the crawl should stop because it is finished.
      */
     public void checkFinish() {
-        if(state == RUNNING && !shouldContinueCrawling()) {
+        if(atFinish()) {
             beginCrawlStop();
         }
+    }
+
+    /**
+     * Evaluate if the crawl should stop because it is finished,
+     * without actually stopping the crawl.
+     * 
+     * @return true if crawl is at a finish-possible state
+     */
+    public boolean atFinish() {
+        return state == RUNNING && !shouldContinueCrawling();
     }
 
     /**
@@ -1259,22 +1353,62 @@ public class CrawlController implements Serializable {
     }
 
     /**
-     * Close the memory gate, holding any thread that
-     * tries to acquire it in place.
+     * Go to single thread mode, where only one ToeThread may
+     * proceed at a time. Also acquires the single lock, so 
+     * no further threads will proceed past an 
+     * acquireContinuePermission. Caller mush be sure to release
+     * lock to allow other threads to proceed one at a time. 
      */
-    public void lockMemory() {
-        memoryGate.lock();
+    public void singleThreadMode() {
+        try {
+            SINGLE_THREAD_LOCK.acquire();
+            singleThreadMode = true; 
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     * Proceed only if the memory gate has not been
-     * closed. 
+     * Go to back to regular multi thread mode, where all
+     * ToeThreads may proceed at once
+     */
+    public void multiThreadMode() {
+        try {
+            SINGLE_THREAD_LOCK.acquire();
+            singleThreadMode = false; 
+            SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    /**
+     * Proceed only if allowed, giving CrawlController a chance
+     * to enforce single-thread mode.
+     *  
      * @throws InterruptedException
      */
-    public void acquireMemory() throws InterruptedException {
-        memoryGate.acquire();
+    public void acquireContinuePermission() throws InterruptedException {
+        if(singleThreadMode) {
+            SINGLE_THREAD_LOCK.acquire();
+            if(!singleThreadMode) {
+                // if changed while waiting, ignore
+                SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds());
+            }
+        } // else, permission is automatic
     }
 
+    /**
+     * Relinquish continue permission at end of processing (allowing
+     * another thread to proceed if in single-thread mode). 
+     */
+    public void releaseContinuePermission() {
+        if(singleThreadMode) {
+            if(SINGLE_THREAD_LOCK.holds()>0) {
+                SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds()); // release all
+            }
+        } // else do nothing; 
+    }
+    
     /**
      * 
      */
@@ -1285,12 +1419,20 @@ public class CrawlController implements Serializable {
         }
     }
 
+    /**
+     * Note that a ToeThread reached paused condition, possibly
+     * completing the crawl-pause. 
+     */
     public synchronized void toePaused() {
+        releaseContinuePermission();
         if (state ==  PAUSING && toePool.getActiveToeCount()==0) {
             completePause();
         }
     }
     
+    /**
+     * Note that a ToeThread ended, possibly completing the crawl-stop. 
+     */
     public synchronized void toeEnded() {
         if (state == STOPPING && toePool.getActiveToeCount() == 0) {
             completeStop();

@@ -35,6 +35,8 @@ import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -57,11 +59,13 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
+import org.archive.io.arc.ARCWriterSettings;
 import org.archive.util.ArchiveUtils;
 import org.xbill.DNS.Record;
 
@@ -77,7 +81,8 @@ import org.xbill.DNS.Record;
  * @author Parker Thompson
  */
 public class ARCWriterProcessor extends Processor
-implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
+implements CoreAttributeConstants, ARCConstants, CrawlStatusListener,
+ARCWriterSettings {
     /**
      * Logger.
      */
@@ -121,49 +126,26 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
      * throw IOException.
      */
     public static final String ATTR_POOL_MAX_WAIT = "pool-max-wait";
+    
+    /**
+     * Value to interpolate with actual hostname.
+     */
+    public static final String HOSTNAME_VARIABLE = "${HOSTNAME}";
+    
+    /**
+     * Default for arc suffix.
+     */
+    private static final String DEFAULT_SUFFIX = HOSTNAME_VARIABLE;
+    
+    /**
+     * Default path list.
+     */
+    private static final String [] DEFAULT_PATH = {"arcs"};
 
     /**
-     * Max size we want ARC files to be (bytes).
-     *
-     * Default is ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE.  Note that ARC
-     * files will usually be bigger than maxSize; they'll be maxSize + length
-     * to next boundary.
+     * Calculate metadata once only.
      */
-    private int arcMaxSize = DEFAULT_MAX_ARC_FILE_SIZE;
-
-    /**
-     * File prefix for ARCs.
-     *
-     * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
-     */
-    private String arcPrefix = DEFAULT_ARC_FILE_PREFIX;
-
-    /**
-     * File suffix for arcs.
-     */
-    private String arcSuffix = null;
-
-    /**
-     * Use compression flag.
-     *
-     * Default is ARCConstants.DEFAULT_COMPRESS.
-     */
-    private boolean useCompression = DEFAULT_COMPRESS;
-
-    /**
-     * Where to drop ARC files.
-     */
-    private File outputDir;
-
-    /**
-     * Maximum active elements in the ARCWriterPool.
-     */
-    private int poolMaximumActive = ARCWriterPool.DEFAULT_MAX_ACTIVE;
-
-    /**
-     * Maximum time to wait on pool elements.
-     */
-    private int poolMaximumWait = ARCWriterPool.DEFAULT_MAXIMUM_WAIT;
+    private List cachedMetadata = null;
 
     /**
      * Reference to an ARCWriter.
@@ -172,42 +154,52 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
     
 
     /**
-     * @param name
+     * @param name Name of this writer.
      */
     public ARCWriterProcessor(String name) {
         super(name, "ARCWriter processor");
         Type e = addElementToDefinition(
-            new SimpleType(ATTR_COMPRESS, "Compress arc files",
-                new Boolean(this.useCompression)));
+            new SimpleType(ATTR_COMPRESS, "Compress arc files.",
+                new Boolean(DEFAULT_COMPRESS)));
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_PREFIX, 
-                "ARC file prefix\n" +
+                "ARC file prefix.\n" +
                 "The text supplied here will be used as a prefix naming " +
                 "ARC files.  For example if the prefix is 'IAH', then " +
                 "ARC names will look like " +
                 "IAH-20040808101010-0001-HOSTNAME.arc.gz " +
                 "(The prefix will be separated from the date by a hyphen).",
-                this.arcPrefix));
+                DEFAULT_ARC_FILE_PREFIX));
         e = addElementToDefinition(
             new SimpleType(ATTR_SUFFIX, "Suffix to tag onto arc files.\n" +
-                "If value is '${HOSTNAME}', will use hostname for suffix.",
-                "${HOSTNAME}.  If empty, no suffix will be added."));
+                "If value is '${HOSTNAME}', will use hostname for suffix." +
+                " If empty, no suffix will be added.",
+                DEFAULT_SUFFIX));
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of arc file",
-                new Integer(this.arcMaxSize)));
+                new Integer(DEFAULT_MAX_ARC_FILE_SIZE)));
         e.setOverrideable(false);
         e = addElementToDefinition(
-            new SimpleType(ATTR_PATH, "Where to store arc files", "arcs"));
+            new StringList(ATTR_PATH, "Where to store arc files.\n" +
+                "Supply absolute or relative path.  If relative, arcs will" +
+                " will be written relative to the 'disk-path' setting." +
+                " If more than one path specified, we'll round-robin" +
+                " dropping files to each.  This setting is safe" +
+                " to change midcrawl (You can remove and add new dirs" +
+                " as the crawler progresses).", DEFAULT_PATH));
         e.setOverrideable(false);
         e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
-            "Maximum active ARC writers in pool",
-            new Integer(this.poolMaximumActive)));
+            "Maximum active ARC writers in pool.\n" +
+            "This setting cannot be varied over the life of a crawl.",
+            new Integer(ARCWriterPool.DEFAULT_MAX_ACTIVE)));
         e.setOverrideable(false);
         e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_WAIT,
-            "Maximum time to wait on ARC writer pool element (milliseconds)",
-            new Integer(this.poolMaximumWait)));
+            "Maximum time to wait on ARC writer pool element" +
+            " (milliseconds).\nThis setting cannot be varied over the life" +
+            " of a crawl.",
+            new Integer(ARCWriterPool.DEFAULT_MAXIMUM_WAIT)));
         e.setOverrideable(false);
     }
 
@@ -215,37 +207,13 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
         // Add this class to crawl state listeners
         getSettingsHandler().getOrder().getController().
             addCrawlStatusListener(this);
-
-        // ReadConfiguration populates settings used creating ARCWriter.
-        try {
-            readConfiguration();
-        } catch (MBeanException e) {
-            logger.warning(e.getLocalizedMessage());
-        } catch (ReflectionException e) {
-            logger.warning(e.getLocalizedMessage());
-        } catch (AttributeNotFoundException e) {
-            logger.warning(e.getLocalizedMessage());
-        }
-
-        try {
-            setupPool();
-
-        } catch (IOException e) {
-            logger.warning(e.getLocalizedMessage());
-        }
+        setupPool();
     }
 
-    void setupPool() throws IOException {
+    void setupPool() {
 		// Set up the pool of ARCWriters.
-		this.pool =
-                new ARCWriterPool(this.outputDir,
-                    this.arcPrefix,
-                    this.arcSuffix,
-                    this.useCompression,
-                    this.arcMaxSize,
-                    getMetadata(),
-                    this.poolMaximumActive,
-                    this.poolMaximumWait);
+		this.pool = new ARCWriterPool(this, getPoolMaximumActive(),
+            getPoolMaximumWait());
     }
 
     /**
@@ -257,7 +225,18 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
      * @return List of strings and/or files to add to arc file as metadata or
      * null.
      */
-    protected List getMetadata() {
+    public List getMetadata() {
+        if (this.cachedMetadata != null) {
+            return this.cachedMetadata;
+        }
+        return cacheMetadata();
+    }
+    
+    protected synchronized List cacheMetadata() {
+        if (this.cachedMetadata != null) {
+            return this.cachedMetadata;
+        }
+        
         List result = null;
         if (!XMLSettingsHandler.class.isInstance(getSettingsHandler())) {
             logger.warning("Expected xml settings handler (No arcmetadata).");
@@ -268,13 +247,14 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
         XMLSettingsHandler xsh = (XMLSettingsHandler)getSettingsHandler();
         File orderFile = xsh.getOrderFile();
         if (!orderFile.exists() || !orderFile.canRead()) {
-        	    logger.severe("File " + orderFile.getAbsolutePath() +
-        	        " is does not exist or is not readable.");
+                logger.severe("File " + orderFile.getAbsolutePath() +
+                    " is does not exist or is not readable.");
         } else {
-        	    result = new ArrayList(1);
-        	    result.add(getMetadataBody(orderFile));
+                result = new ArrayList(1);
+                result.add(getMetadataBody(orderFile));
         }
-        return result;
+        this.cachedMetadata = result;
+        return this.cachedMetadata;
     }
 
     /**
@@ -286,10 +266,6 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
      * @param orderFile Order file.
      *
      * @return String that holds the arc metaheader body.
-     *
-     * @throws TransformerConfigurationException
-     * @throws FileNotFoundException
-     * @throws UnknownHostException
      */
     protected String getMetadataBody(File orderFile) {
         String result = null;
@@ -332,22 +308,6 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
         return result;
     }
 
-	protected void readConfiguration()
-        throws AttributeNotFoundException, MBeanException, ReflectionException {
-
-        // set up output directory
-        setUseCompression(
-            ((Boolean) getAttribute(ATTR_COMPRESS)).booleanValue());
-        setArcPrefix((String) getAttribute(ATTR_PREFIX));
-        setArcSuffix((String) getAttribute(ATTR_SUFFIX));
-        setArcMaxSize(((Integer) getAttribute(ATTR_MAX_SIZE_BYTES)).intValue());
-        setOutputDir((String) getAttribute(ATTR_PATH));
-        setPoolMaximumActive(
-            ((Integer)getAttribute(ATTR_POOL_MAX_ACTIVE)).intValue());
-        setPoolMaximumWait(
-            ((Integer)getAttribute(ATTR_POOL_MAX_WAIT)).intValue());
-    }
-
     /**
      * Takes a CrawlURI and generates an arc record, writing it to disk.
      *
@@ -361,9 +321,7 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
             return;
         }
 
-        // Find the write protocol and write this sucker
         String scheme = curi.getUURI().getScheme().toLowerCase();
-
         try {
             if (scheme.equals("dns")) {
                 writeDns(curi);
@@ -376,17 +334,14 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
     }
 
     protected void writeHttp(CrawlURI curi)
-        throws IOException
-    {
-        if (curi.getFetchStatus() <= 0 && curi.isHttpTransaction())
-        {
+    throws IOException {
+        if (curi.getFetchStatus() <= 0 && curi.isHttpTransaction()) {
             // Error; do not write to ARC (for now)
             return;
         }
 
         int recordLength = (int)curi.getContentSize();
-        if (recordLength == 0)
-        {
+        if (recordLength == 0) {
             // Write nothing.
             return;
         }
@@ -395,16 +350,14 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
         if (writer == null) {
             throw new IOException("Writer is null");
         }
-        try
-        {
+        
+        try {
             writer.write(curi.getURIString(), curi.getContentType(),
-               curi.getServer().getHost().getIP().getHostAddress(),
+               getHostAddress(curi),
                curi.getAList().getLong(A_FETCH_BEGAN_TIME), recordLength,
                curi.getHttpRecorder().getRecordedInput().
                    getReplayInputStream());
-        }
-        finally
-        {
+        } finally {
             this.pool.returnARCWriter(writer);
         }
     }
@@ -422,10 +375,8 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
         int recordLength = fetchDate.length + 1;
         Record[] rrSet = (Record[]) curi.getAList().
             getObject(A_RRECORD_SET_LABEL);
-        if (rrSet != null)
-        {
-            for (int i = 0; i < rrSet.length; i++)
-            {
+        if (rrSet != null) {
+            for (int i = 0; i < rrSet.length; i++) {
                 byte[] record = rrSet[i].toString().getBytes();
                 recordLength += record.length;
                 baos.write(record);
@@ -439,11 +390,12 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
         if (writer == null) {
             throw new IOException("Writer is null");
         }
+        
         try {
             writer.write(curi.getURIString(), curi.getContentType(),
-                    curi.getServer().getHost().getIP().getHostAddress(),
-                    curi.getAList().getLong(A_FETCH_BEGAN_TIME),
-                    recordLength, baos);
+                getHostAddress(curi),
+                curi.getAList().getLong(A_FETCH_BEGAN_TIME),
+                recordLength, baos);
         } finally {
             this.pool.returnARCWriter(writer);
         }
@@ -452,86 +404,111 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
         // TODO handle this need more sensibly
         curi.setContentSize(recordLength);
     }
+    
+    private String getHostAddress(CrawlURI curi) {
+        return getController().getServerCache().getHostFor(curi).getIP().
+            getHostAddress();
+    }
+    
+    /**
+     * Version of getAttributes that catches and logs exceptions
+     * and returns null if failure to fetch the attribute.
+     * @param name Attribute name.
+     * @return Attribute or null.
+     */
+    public Object getAttributeUnchecked(String name) {
+        Object result = null;
+        try {
+            result = super.getAttribute(name);
+        } catch (AttributeNotFoundException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (MBeanException e) {
+            logger.warning(e.getLocalizedMessage());
+        } catch (ReflectionException e) {
+            logger.warning(e.getLocalizedMessage());
+        }
+        return result;
+    }
 
-    // Getters and setters
+   /**
+    * Max size we want ARC files to be (bytes).
+    *
+    * Default is ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE.  Note that ARC
+    * files will usually be bigger than maxSize; they'll be maxSize + length
+    * to next boundary.
+    * @return ARC maximum size.
+    */
     public int getArcMaxSize() {
-        return this.arcMaxSize;
+        Object obj = getAttributeUnchecked(ATTR_MAX_SIZE_BYTES);
+        return (obj == null)? DEFAULT_MAX_ARC_FILE_SIZE:
+            ((Integer)obj).intValue();
     }
 
     public String getArcPrefix() {
-        return this.arcPrefix;
+        Object obj = getAttributeUnchecked(ATTR_PREFIX);
+        return (obj == null)? DEFAULT_ARC_FILE_PREFIX: (String)obj;
     }
 
-    public File getOutputDir() {
-        return this.outputDir;
-    }
-
-    public void setArcMaxSize(int i) {
-        this.arcMaxSize = i;
-    }
-
-    public void setArcPrefix(String buffer) {
-        this.arcPrefix = buffer;
-    }
-
-    public void setArcSuffix(String suffix) {
-        this.arcSuffix = suffix;
-    }
-
-    public void setUseCompression(boolean use) {
-        this.useCompression = use;
-    }
-
-    public boolean useCompression() {
-        return this.useCompression;
-    }
-
-    public void setOutputDir(String buffer) {
-        this.outputDir = new File(buffer);
-        if (!this.outputDir.isAbsolute()) {
-            // OutputDir should be relative to "disk"
-            this.outputDir = new File(getController().getDisk(), buffer);
-        }
-
-        if (!this.outputDir.exists()) {
-            try {
-                this.outputDir.mkdirs();
-            } catch (Exception e) {
-                e.printStackTrace();
+    public List getOutputDirs() {
+        Object obj = getAttributeUnchecked(ATTR_PATH);
+        List list = (obj == null)? Arrays.asList(DEFAULT_PATH): (StringList)obj;
+        ArrayList results = new ArrayList();
+        for (Iterator i = list.iterator(); i.hasNext();) {
+            String path = (String)i.next();
+            File f = new File(path);
+            if (!f.isAbsolute()) {
+                f = new File(getController().getDisk(), path);
             }
+            if (!f.exists()) {
+                try {
+                    f.mkdirs();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    continue;
+                }
+            }
+            results.add(f);
         }
+        return results;
+    }
+    
+    public boolean isCompressed() {
+        Object obj = getAttributeUnchecked(ATTR_COMPRESS);
+        return (obj == null)? DEFAULT_COMPRESS:
+            ((Boolean)obj).booleanValue();
     }
 
     /**
      * @return Returns the poolMaximumActive.
      */
-    public int getPoolMaximumActive()
-    {
-        return this.poolMaximumActive;
-    }
-
-    /**
-     * @param poolMaximumActive The poolMaximumActive to set.
-     */
-    public void setPoolMaximumActive(int poolMaximumActive)
-    {
-        this.poolMaximumActive = poolMaximumActive;
+    public int getPoolMaximumActive() {
+        Object obj = getAttributeUnchecked(ATTR_POOL_MAX_ACTIVE);
+        return (obj == null)? ARCWriterPool.DEFAULT_MAX_ACTIVE:
+            ((Integer)obj).intValue();
     }
 
     /**
      * @return Returns the poolMaximumWait.
      */
-    public int getPoolMaximumWait()
-    {
-        return this.poolMaximumWait;
+    public int getPoolMaximumWait() {
+        Object obj = getAttributeUnchecked(ATTR_POOL_MAX_WAIT);
+        return (obj == null)? ARCWriterPool.DEFAULT_MAXIMUM_WAIT:
+            ((Integer)obj).intValue();
     }
 
-    /**
-     * @param poolMaximumWait The poolMaximumWait to set.
-     */
-    public void setPoolMaximumWait(int poolMaximumWait)
-    {
-        this.poolMaximumWait = poolMaximumWait;
+    public String getArcSuffix() {
+        Object obj = getAttributeUnchecked(ATTR_SUFFIX);
+        String sfx = (obj == null)? DEFAULT_SUFFIX: (String)obj;
+        if (sfx != null && sfx.trim().equals(HOSTNAME_VARIABLE)) {
+            String str = "localhost.localdomain";
+            try {
+                str = InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException ue) {
+                logger.severe("Failed getHostAddress for this host: " + ue);
+            }
+            sfx = str;
+        }
+        return sfx;
     }
 
 	public void crawlEnding(String sExitMessage) {
@@ -540,46 +517,38 @@ implements CoreAttributeConstants, ARCConstants, CrawlStatusListener {
         this.pool.close();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-	 */
 	public void crawlEnded(String sExitMessage) {
         // sExitMessage is unused.
 	}
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
-	 */
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
+    }
+    
 	public void crawlPausing(String statusMessage) {
         // sExitMessage is unused.
 	}
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
-	 */
 	public void crawlPaused(String statusMessage) {
         // sExitMessage is unused.
 	}
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
-	 */
 	public void crawlResuming(String statusMessage) {
         // sExitMessage is unused.
 	}
 	
-    // custom serialization
-    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+    private void readObject(ObjectInputStream stream)
+    throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;
+        ObjectPlusFilesInputStream coistream =
+            (ObjectPlusFilesInputStream)stream;
         coistream.registerFinishTask( new Runnable() {
             public void run() {
-                try {
-                    setupPool();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+                setupPool();
             }
         });
     }

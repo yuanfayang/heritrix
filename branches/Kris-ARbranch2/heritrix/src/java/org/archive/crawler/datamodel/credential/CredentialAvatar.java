@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.datamodel.credential;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -38,7 +39,7 @@ import org.archive.crawler.settings.SettingsHandler;
  *
  * Added to the CrawlServer upon successful authentication.  Used as a marker
  * of successful authentication event and for carrying credential
- * payload to used subsequently doing preemptive authentications (e.g.
+ * payload to be used subsequently doing preemptive authentications (e.g.
  * For case of RFC2617, needs to be offered everytime we're accessing inside
  * a protected area).  Also carried by the CrawlURI when cycling through
  * processing chain trying a credential to see if it will authenticate.
@@ -55,8 +56,8 @@ import org.archive.crawler.settings.SettingsHandler;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CredentialAvatar {
-
+public class CredentialAvatar
+implements Serializable {
     private static final Logger logger =
         Logger.getLogger(CredentialAvatar.class.getName());
 
@@ -74,8 +75,14 @@ public class CredentialAvatar {
      * Data.
      *
      * May be null.
+     * 
+     * <p>This used to be an Object and I used to store in here
+     * the httpclient AuthScheme but AuthScheme is not serializable
+     * and so there'd be trouble getting this payload to lie down
+     * in a bdb database.  Changed it to String.  That should be
+     * generic enough for credential purposes.
      */
-    private final Object payload;
+    private final String payload;
 
 
     /**
@@ -92,10 +99,10 @@ public class CredentialAvatar {
      * @param type Type for this credential avatar.
      * @param key Key for this credential avatar.
      * @param payload Data credential needs rerunning or preempting.  May be
-     * null and then just the presence is used as signifier of scuccessful
+     * null and then just the presence is used as signifier of successful
      * auth.
      */
-    public CredentialAvatar(Class type, String key, Object payload) {
+    public CredentialAvatar(Class type, String key, String payload) {
         if (!checkType(type)) {
             throw new IllegalArgumentException("Type is unrecognized: " +
                 type);
@@ -134,7 +141,7 @@ public class CredentialAvatar {
     /**
      * @return Returns the payload. May be null.
      */
-    public Object getPayload() {
+    public String getPayload() {
         return this.payload;
     }
 
@@ -181,7 +188,6 @@ public class CredentialAvatar {
      * @return The credential this avatar represents.
      */
     public Credential getCredential(SettingsHandler handler, CrawlURI curi) {
-
         Credential result = null;
 
         CredentialStore cs = CredentialStore.getCredentialStore(handler);

@@ -76,15 +76,12 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
 
         unMatchedURI = new CrawlURI(
             UURIFactory.getInstance("http://localhost.com/index.html"));
-        unMatchedURI.setServer(serverCache.getServerFor(unMatchedURI));
 
         matchDomainURI = new CrawlURI(
             UURIFactory.getInstance("http://audio.archive.org/index.html"));
-        matchDomainURI.setServer(serverCache.getServerFor(matchDomainURI));
 
         matchHostURI = new CrawlURI(
             UURIFactory.getInstance("http://www.archive.org/index.html"));
-        matchHostURI.setServer(serverCache.getServerFor(matchHostURI));
 
         // Write legit email and url so we avoid warnings if tests are reading
         // and writing order files.

@@ -262,6 +262,11 @@
         <email />
          <organization />
     </contributor>
+    <contributor>
+        <name>Ansi Zhousp</name>
+        <email>zhousp at gmail dot com</email>
+         <organization />
+    </contributor>
 
   </contributors>
 
@@ -462,12 +467,13 @@
         </dependency>
         <dependency>
             <id>itext</id>
-            <version>1.0</version>
+            <version>1.2</version>
             <url>http://www.lowagie.com/iText/</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <description>A library for parsing PDF files.</description>
-                <license>MPL and LGPL</license>
+                <license>MPL (http://www.lowagie.com/iText/MPL-1.1.txt)
+                </license>
             </properties>
         </dependency>
         <dependency>
@@ -495,7 +501,7 @@
         </dependency>
         <dependency>
             <id>commons-pool</id>
-            <version>1.1</version>
+            <version>1.2</version>
             <url>http://jakarta.apache.org/site/binindex.cgi#commons-pool</url>
             <properties>
                 <war.bundle>true</war.bundle>
@@ -506,7 +512,7 @@
         </dependency>
         <dependency>
             <id>commons-collections</id>
-            <version>2.1</version>
+            <version>3.1</version>
             <url>http://jakarta.apache.org/site/binindex.cgi#commons-collections</url>
             <properties>
                 <war.bundle>true</war.bundle>

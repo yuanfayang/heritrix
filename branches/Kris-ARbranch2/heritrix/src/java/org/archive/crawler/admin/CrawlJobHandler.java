@@ -57,6 +57,7 @@ import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
+import org.archive.crawler.frontier.HostQueuesFrontier;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
@@ -422,8 +423,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             job.setNew(false);
         }
         pendingCrawlJobs.add(job);
-        if(crawling == false && isRunning())
-        {
+        if(crawling == false && isRunning()) {
             // Start crawling
             startNextJob();
         }
@@ -934,7 +934,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         assert pendingCrawlJobs.contains(currentJob) :
             "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
-
         Checkpoint resumeFrom = currentJob.getResumeFromCheckpoint();
 
         try {
@@ -949,9 +948,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             }
             // Register as listener to get job finished notice.
             controller.addCrawlStatusListener(this);
-
             SettingsHandler settingsHandler = currentJob.getSettingsHandler();
-
             controller.initialize(settingsHandler);
         } catch (InitializationException e) {
             // Can't load current job since it is misconfigured.
@@ -1100,6 +1097,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public void crawlEnded(String sExitMessage) {
         // Not interested in this event.
     }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
+    }
 
     /**
      * Forward a 'kick' update to current controller if any.
@@ -1229,7 +1234,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     public String importUris(String file, String style, String force) {
-        boolean forceRevisit = "true".equals(force);
+        return importUris(file, style, "true".equals(force));
+    }
+
+    public String importUris(String file, String style, boolean forceRevisit) {
         String extractor;
         String output;
         if("crawlLog".equals(style)) {
@@ -1252,7 +1260,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         int addedCount = 0;
         try {
             br = new BufferedReader(new FileReader(source));
-
             Iterator iter = new LineReadingIterator(
                     br,
                     LineReadingIterator.COMMENT_LINE,
@@ -1260,20 +1267,70 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     output);
             while(iter.hasNext()) {
                 try {
-                    CandidateURI caUri = CandidateURI.fromString((String)iter.next());
-                    caUri.setForceFetch(forceRevisit);
-                    controller.getFrontier().schedule(caUri);
+                    importUri((String)iter.next(), forceRevisit, false, false);
                     addedCount++;
                 } catch (URIException e) {
                     e.printStackTrace();
                 }
             }
             br.close();
+            doFlush();
         } catch (IOException e) {
             e.printStackTrace();
             return e.toString();
         }
 
         return addedCount +" URIs added from "+ file;
+    }
+    
+    /**
+     * Schedule a uri.
+     * @param uri Uri to schedule.
+     * @param forceFetch Should it be forcefetched.
+     * @param isSeed True if seed.
+     * @throws URIException
+     */
+    public void importUri(final String uri, final boolean forceFetch,
+            final boolean isSeed)
+    throws URIException {
+        importUri(uri, forceFetch, isSeed, true);
+    }
+    
+    /**
+     * Schedule a uri.
+     * @param uri Uri to schedule.
+     * @param forceFetch Should it be forcefetched.
+     * @param isSeed True if seed.
+     * @param isFlush If true, flush the frontier IF it implements
+     * flushing.
+     * @throws URIException
+     */
+    public void importUri(final String uri, final boolean forceFetch,
+            final boolean isSeed, final boolean isFlush)
+    throws URIException {
+        CandidateURI caUri = CandidateURI.fromString(uri);
+        caUri.setForceFetch(forceFetch);
+        if (isSeed) {
+            caUri.setIsSeed(isSeed);
+        }
+        controller.getFrontier().schedule(caUri);
+        if (isFlush) {
+            doFlush();
+        }
+    }
+    
+    /**
+     * If its a HostQueuesFrontier, needs to be flushed for the queued.
+     */
+    protected void doFlush() {
+        if (controller.getFrontier() instanceof HostQueuesFrontier) {
+            ((HostQueuesFrontier)controller.getFrontier()).batchFlush();
+        }
+    }
+    
+    public void requestCrawlStop() {
+        if(this.controller != null) {
+            this.controller.requestCrawlStop();
+        }
     }
 }

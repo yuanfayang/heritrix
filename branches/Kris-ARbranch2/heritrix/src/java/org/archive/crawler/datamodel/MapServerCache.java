@@ -36,23 +36,7 @@ import org.archive.crawler.settings.SettingsHandler;
  *
  * @author gojomo
  */
-public class MapServerCache
-implements ServerCache {
-    private static Logger logger =
-        Logger.getLogger(ServerCache.class.getName());
-    
-    private SettingsHandler settingsHandler = null;
-    
-    /**
-     * hostname[:port] -> CrawlServer
-     */
-    private HashMap servers = new HashMap();
-    
-    /**
-     * hostname -> CrawlHost
-     */
-    private HashMap hosts = new HashMap();
-
+public class MapServerCache extends ServerCache {
     /**
      * Constructor with default access.
      * Has default access so you have to go via the ServerCacheFactory
@@ -64,76 +48,7 @@ implements ServerCache {
     
     public void initialize(SettingsHandler handler) {
         this.settingsHandler = handler;
-    }
-
-    public synchronized CrawlServer getServerFor(String h) {
-        CrawlServer cserver = (CrawlServer)this.servers.get(h);
-        if (cserver == null) {
-            String skey = new String(h); // ensure key is private object
-            cserver = new CrawlServer(skey);
-            cserver.setSettingsHandler(settingsHandler);
-            String hostname = cserver.getHostname();
-            CrawlHost host = (CrawlHost)this.hosts.get(hostname);
-            if (host == null) {
-                String hkey = new String(hostname); 
-                host = new CrawlHost(hkey);
-                hosts.put(hkey, host);
-            }
-            cserver.setHost(host);
-            servers.put(skey,cserver);
-        }
-        return cserver;
-    }
-
-    public CrawlServer getServerFor(CrawlURI curi) {
-        CrawlServer hostOrAuthority = null;
-        try {
-            // TODO: evaluate if this is really necessary -- why not 
-            // make the server of a dns CrawlURI the looked-up domain,
-            // also simplifying FetchDNS?
-            String hostOrAuthorityStr =
-                curi.getUURI().getAuthorityMinusUserinfo();
-            if (hostOrAuthorityStr == null) {
-                // Fallback for cases where getAuthority() fails (eg 'dns:'.
-                // DNS UURIs have the 'domain' in the 'path' parameter, not
-                // in the authority).
-                hostOrAuthorityStr = curi.getUURI().getCurrentHierPath();
-                if(hostOrAuthorityStr != null &&
-                    !hostOrAuthorityStr.matches("[-_\\w\\.:]+")) {
-                    // Not just word chars and dots and colons and dashes and
-                    // underscores; throw away
-                    hostOrAuthorityStr = null;
-                }
-            }
-            if (hostOrAuthorityStr != null &&
-                    curi.getUURI().getScheme().equals(UURIFactory.HTTPS)) {
-                // If https and no port specified, add default https port to
-                // distinuish https from http server without a port.
-                if (!hostOrAuthorityStr.matches(".+:[0-9]+")) {
-                    hostOrAuthorityStr += ":" + UURIFactory.HTTPS_PORT;
-                }
-            }
-            // TODOSOMEDAY: make this robust against those rare cases
-            // where authority is not a hostname.
-            if (hostOrAuthorityStr != null) {
-                hostOrAuthority = getServerFor(hostOrAuthorityStr);
-            }
-        } catch (URIException e) {
-            e.printStackTrace();
-        } catch (NullPointerException npe) {
-            logger.severe("NullPointerException with " + curi);
-            npe.printStackTrace();
-        }
-        return hostOrAuthority;
-    }
-    
-    public boolean containsServer(String serverKey) {
-        CrawlServer cserver = (CrawlServer) servers.get(serverKey);
-        return cserver != null; 
-    }
-    
-    public boolean containsHost(String hostKey) {
-        CrawlHost chost = (CrawlHost) hosts.get(hostKey);
-        return chost != null; 
+        this.servers = new HashMap();
+        this.hosts = new HashMap();
     }
 }

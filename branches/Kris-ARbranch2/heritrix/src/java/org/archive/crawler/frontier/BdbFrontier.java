@@ -32,15 +32,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
-import org.apache.commons.collections.HashBag;
+import org.apache.commons.collections.bag.HashBag;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -60,20 +60,7 @@ import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.queue.LinkedQueue;
 import org.archive.util.ArchiveUtils;
 
-import st.ata.util.FPGenerator;
-import EDU.oswego.cs.dl.util.concurrent.ClockDaemon;
-
-import com.sleepycat.bind.serial.SerialBinding;
-import com.sleepycat.bind.serial.StoredClassCatalog;
-import com.sleepycat.je.Cursor;
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
-import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.DatabaseNotFoundException;
-import com.sleepycat.je.Environment;
-import com.sleepycat.je.EnvironmentConfig;
-import com.sleepycat.je.OperationStatus;
 
 /**
  * A Frontier using several BerkeleyDB JE Databases to hold its record of
@@ -88,41 +75,42 @@ import com.sleepycat.je.OperationStatus;
  * @author Gordon Mohr
  */
 public class BdbFrontier extends AbstractFrontier
-implements Frontier,
-        FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
+implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
             .classnameBasedUID(BdbFrontier.class, 1);
 
     /** truncate reporting of queues at some large but not unbounded number */
-    private static final int REPORT_MAX_QUEUES = 1000;
+    private static final int REPORT_MAX_QUEUES = 5000;
 
     private static final Logger logger = Logger.getLogger(BdbFrontier.class
             .getName());
-
-    /** percentage of heap to allocate to bdb cache */
-    public final static String ATTR_BDB_CACHE_PERCENT =
-        "bdb-cache-percent";
-    protected final static Integer DEFAULT_BDB_CACHE_PERCENT =
-        new Integer(0);
     
     /** whether to hold queues INACTIVE until needed for throughput */
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
-    protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
+    protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(true); 
 
-    // budgetted rotation support
-    private static int DEFAULT_BUDGET_REFRESH_INCREMENT = 5000;
-    
+    /** whether to hold queues INACTIVE until needed for throughput */
+    public final static String ATTR_BALANCE_REPLENISH_AMOUNT = "balance-replenish-amount";
+    protected final static Integer DEFAULT_BALANCE_REPLENISH_AMOUNT = new Integer(3000);
+
+    /** total expenditure to allow a queue before 'retiring' it  */
+    public final static String ATTR_QUEUE_TOTAL_BUDGET = "queue-total-budget";
+    protected final static Long DEFAULT_QUEUE_TOTAL_BUDGET = new Long(-1);
+
+    /** cost assignment policy to use (by class name) */
+    public final static String ATTR_COST_POLICY = "cost-policy";
+    protected final static String DEFAULT_COST_POLICY = ZeroCostAssignmentPolicy.class.getName();
+
     /** all URIs scheduled to be crawled */
-    protected BdbMultiQueue pendingUris;
+    protected BdbMultipleWorkQueues pendingUris;
 
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
     protected UriUniqFilter alreadyIncluded;
 
-    // TODO: BDBify
     /** all known queues */
-    protected HashMap allQueues = new HashMap(); // of classKey -> BDBWorkQueue
+    protected Map allQueues = new HashMap(); // of classKey -> BDBWorkQueue
 
     /** all per-class queues whose first item may be handed out */
     protected LinkedQueue readyClassQueues = new LinkedQueue(); // of BDBWorkQueue
@@ -135,35 +123,38 @@ implements Frontier,
 
     /** all 'inactive' queues, not yet in active rotation */
     protected LinkedQueue inactiveQueues = new LinkedQueue();
-    
-    /** moves waking items from snoozedClassQueues to readyClassQueues */
-    protected ClockDaemon wakeDaemon = new ClockDaemon();
-    
-    /** runnable task to wake snoozed queues */
-    protected Runnable waker = new Runnable() {
-        public void run() {
-            BdbFrontier.this.wakeQueues();
-        }
-    };
-    
-    /** shared bdb Environment for Frontier subcomponents */
-    // TODO: investigate using multiple environments to split disk accesses
-    // across separate physical disks
-    protected Environment dbEnvironment;
+
+    /** 'retired' queues, no longer considered for activation */
+    protected LinkedQueue retiredQueues = new LinkedQueue();
 
     /** how long to wait for a ready queue when there's nothing snoozed */
     private static final long DEFAULT_WAIT = 1000; // 1 second
+
+    /** a policy for assigning 'cost' values to CrawlURIs */
+    private CostAssignmentPolicy costAssignmentPolicy;
     
+    /**
+     * A snoozed queue will be available at this time.
+     * Gets updated when queues are snoozed.
+     */
+    private volatile long nextWakeupTime = -1;
+    
+    
+    /** all policies available to be chosen */
+    String[] AVAILABLE_COST_POLICIES = new String[] {
+            DEFAULT_COST_POLICY,
+            UnitCostAssignmentPolicy.class.getName(),
+            WagCostAssignmentPolicy.class.getName(),
+            AntiCalendarCostAssignmentPolicy.class.getName()};
     /**
      * Create the BdbFrontier
      * 
      * @param name
      */
     public BdbFrontier(String name) {
-        this(name, "BdbFrontier. EXPERIMENTAL - MAY NOT BE RELIABLE. " +
-                "A Frontier using BerkeleyDB Java Edition Databases for " +
-                "persistence to disk. Not yet fully tested or " +
-                "feature-equivalent to classic HostQueuesFrontier.");
+        this(name, "BdbFrontier.\n" +
+            "A Frontier using BerkeleyDB Java Edition Databases for " +
+            "persistence to disk.");
     }
 
     /**
@@ -176,15 +167,7 @@ implements Frontier,
         // The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
         // therefore we'll ignore the supplied parameter.
         super(Frontier.ATTR_NAME, description);
-        Type t = addElementToDefinition(
-                new SimpleType(ATTR_BDB_CACHE_PERCENT,
-                "Percentage of heap to allocate to BerkeleyDB JE cache. " +
-                "Default of zero means no preference (accept BDB's default" +
-                "or properties setting).",
-                DEFAULT_BDB_CACHE_PERCENT));
-        t.setExpertSetting(true);
-        t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
+        Type t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
                 "Whether to hold newly-created per-host URI work" +
                 " queues until needed to stay busy.\n If false (default)," +
                 " all queues may contribute URIs for crawling at all" +
@@ -195,6 +178,28 @@ implements Frontier,
                 DEFAULT_HOLD_QUEUES));
         t.setExpertSetting(true);
         t.setOverrideable(false);
+        t = addElementToDefinition(new SimpleType(ATTR_BALANCE_REPLENISH_AMOUNT,
+                "Amount to replenish a queue's activity balance when it becomes " +
+                "active. Larger amounts mean more URIs will be tried from the " +
+                "queue before it is deactivated in favor of waiting queues. " +
+                "Default is 3000",
+                DEFAULT_BALANCE_REPLENISH_AMOUNT));
+        t.setExpertSetting(true);
+        t.setOverrideable(true);
+        t = addElementToDefinition(new SimpleType(ATTR_QUEUE_TOTAL_BUDGET,
+                "Total activity expenditure allowable to a single queue; queues " +
+                "over this expenditure will be 'retired' and crawled no more. " +
+                "Default of -1 means no ceiling on activity expenditures is " +
+                "enforced.",
+                DEFAULT_QUEUE_TOTAL_BUDGET));
+        t.setExpertSetting(true);
+        t.setOverrideable(true);
+
+        addElementToDefinition(new SimpleType(ATTR_COST_POLICY,
+                "Policy for calculating the cost of each URI attempted. " +
+                "The default UnitCostAssignmentPolicy considers the cost of " +
+                "each URI to be '1'.", DEFAULT_COST_POLICY, AVAILABLE_COST_POLICIES));
+        t.setExpertSetting(true);
     }
 
     /**
@@ -207,30 +212,22 @@ implements Frontier,
         // Call the super method. It sets up frontier journalling.
         super.initialize(c);
         this.controller = c;
-        EnvironmentConfig envConfig = new EnvironmentConfig();
-        envConfig.setAllowCreate(true);
-        int bdbCachePercent = ((Integer) getUncheckedAttribute(null,
-				ATTR_BDB_CACHE_PERCENT)).intValue();
-        if(bdbCachePercent > 0) {
-        	// Operator has expressed a preference; override BDB default or 
-        	// je.properties value
-        	envConfig.setCachePercent(bdbCachePercent);
-        }
         try {
-            dbEnvironment = new Environment(c.getStateDisk(), envConfig);
-            if (logger.isLoggable(Level.INFO)) {
-                // Write out the bdb configuration.
-                envConfig = dbEnvironment.getConfig();
-                logger.info("BdbConfiguration: Cache percentage " +
-                    envConfig.getCachePercent() +
-                    ", cache size " + envConfig.getCacheSize());
-            }
-            pendingUris = createMultiQueue();
+            pendingUris = createMultipleWorkQueues();
             alreadyIncluded = createAlreadyIncluded();
         } catch (DatabaseException e) {
             e.printStackTrace();
             throw new FatalConfigurationException(e.getMessage());
         }
+        try {
+            costAssignmentPolicy = (CostAssignmentPolicy) Class.forName(
+                    (String) getUncheckedAttribute(null, ATTR_COST_POLICY))
+                    .newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new FatalConfigurationException(e.getMessage());
+        }
+        
         loadSeeds();
     }
     
@@ -254,13 +251,8 @@ implements Frontier,
             this.pendingUris = null;
         }
         this.snoozedClassQueues = null;
-        if (this.wakeDaemon != null) {
-            this.wakeDaemon.shutDown();
-            this.wakeDaemon = null;
-        }
         this.queueAssignmentPolicy = null;
         this.readyClassQueues = null;
-        this.dbEnvironment = null;
         // Clearing controller is a problem. We get
         // NPEs in #preNext.
         // this.controller = null;
@@ -271,11 +263,13 @@ implements Frontier,
      * Create the single object (within which is one BDB database)
      * inside which all the other queues live. 
      * 
-     * @return the created BdbMultiQueue
+     * @return the created BdbMultipleWorkQueues
      * @throws DatabaseException
      */
-    private BdbMultiQueue createMultiQueue() throws DatabaseException {
-        return new BdbMultiQueue(this.dbEnvironment);
+    private BdbMultipleWorkQueues createMultipleWorkQueues()
+    throws DatabaseException {
+        return new BdbMultipleWorkQueues(this.controller.getBdbEnvironment(),
+            this.controller.getClassCatalog());
     }
 
     /**
@@ -286,7 +280,8 @@ implements Frontier,
      * @throws IOException
      */
     protected UriUniqFilter createAlreadyIncluded() throws IOException {
-        UriUniqFilter uuf = new BdbUriUniqFilter(this.dbEnvironment);
+        UriUniqFilter uuf =
+            new BdbUriUniqFilter(this.controller.getBdbEnvironment());
         uuf.setDestination(this);
         return uuf;
     }
@@ -329,15 +324,15 @@ implements Frontier,
      * @param curi
      */
     private void sendToQueue(CrawlURI curi) {
-        BdbWorkQueue wq = getQueueFor(curi.getClassKey());
+        BdbWorkQueue wq = getQueueFor(curi);
         synchronized (wq) {
-            wq.enqueue(curi);
+            wq.enqueue(this.pendingUris, curi);
             if(!wq.isHeld()) {
                 wq.setHeld();
                 if(holdQueues()) {
                     deactivateQueue(wq);
                 } else {
-                    replenishBudget(wq);
+                    replenishSessionBalance(wq);
                     readyQueue(wq);
                 }
             }
@@ -376,6 +371,7 @@ implements Frontier,
      */
     private void deactivateQueue(BdbWorkQueue wq) {
         try {
+            wq.setSessionBalance(0); // zero out session balance
             inactiveQueues.put(wq);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -384,19 +380,73 @@ implements Frontier,
             throw new RuntimeException(e);
         }
     }
+    
     /**
-     * Return the work queue for the given classKey. URIs
+     * Put the given queue on the inactiveQueues queue
+     * @param wq
+     */
+    private void retireQueue(BdbWorkQueue wq) {
+        try {
+            retiredQueues.put(wq);
+            decrementQueuedCount(wq.getCount());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.err.println("unable to retire queue "+wq);
+            // propagate interrupt up 
+            throw new RuntimeException(e);
+        }
+    }
+    
+    /** 
+     * Accomodate any changes in settings.
+     * 
+     * @see org.archive.crawler.framework.Frontier#kickUpdate()
+     */
+    public void kickUpdate() {
+        super.kickUpdate();
+        try {
+            // The rules for a 'retired' queue may have changed; so,
+            // unretire all queues to 'inactive'. If they still qualify
+            // as retired/overbudget next time they come up, they'll
+            // be re-retired; if not, they'll get a chance to become
+            // active under the new rules.
+            BdbWorkQueue q = (BdbWorkQueue) retiredQueues.poll(0);
+            while(q != null) {
+                unretireQueue(q);
+                q = (BdbWorkQueue) retiredQueues.poll(0);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            // propagate interrupt up 
+            throw new RuntimeException(e);
+        }
+    }
+    /**
+     * Restore a retired queue to the 'inactive' state. 
+     * 
+     * @param q
+     */
+    private void unretireQueue(BdbWorkQueue q) {
+        deactivateQueue(q);
+        incrementQueuedUriCount(q.getCount());
+    }
+
+    /**
+     * Return the work queue for the given CrawlURI's classKey. URIs
      * are ordered and politeness-delayed within their 'class'.
      * 
-     * @param classKey
+     * @param curi CrawlURI to base queue on
      * @return the found or created BdbWorkQueue
      */
-    private BdbWorkQueue getQueueFor(String classKey) {
+    private BdbWorkQueue getQueueFor(CrawlURI curi) {
         BdbWorkQueue wq;
+        String classKey = curi.getClassKey();
         synchronized (allQueues) {
-            wq = (BdbWorkQueue) allQueues.get(classKey);
+            wq = (BdbWorkQueue)allQueues.get(classKey);
             if (wq == null) {
-                wq = new BdbWorkQueue(classKey, pendingUris);
+                wq = new BdbWorkQueue(classKey);
+                wq.setTotalBudget(((Long)getUncheckedAttribute(
+                    curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue());
                 allQueues.put(classKey, wq);
             }
         }
@@ -418,22 +468,27 @@ implements Frontier,
         while (true) { // loop left only by explicit return or exception
             long now = System.currentTimeMillis();
 
-            // do common checks for pause, terminate, bandwidth-hold
+            // Do common checks for pause, terminate, bandwidth-hold
             preNext(now);
             
-            // don't wait if there are items buffered in alreadyIncluded or
-            // inactive queues
+            // If time, wake any snoozed queues.
+            long timeTilWake = this.nextWakeupTime - now;
+            if (timeTilWake <= 0) {
+                this.wakeQueues();
+                timeTilWake = this.nextWakeupTime - now;
+            }
+            // Don't wait if there are items buffered in alreadyIncluded or
+            // inactive queues, or wait any longer than interval to next wake
             long wait = (alreadyIncluded.pending() > 0)
-                    || (!inactiveQueues.isEmpty()) ? 0 : DEFAULT_WAIT;
-            
+                    || (!inactiveQueues.isEmpty()) ? 0 : Math.min(DEFAULT_WAIT,timeTilWake);
+
             BdbWorkQueue readyQ = (BdbWorkQueue) readyClassQueues.poll(wait);
             if (readyQ != null) {
                 while(true) { // loop left by explicit return or break on empty
                     CrawlURI curi = null;
                     synchronized(readyQ) {
-                        curi = readyQ.peek();                     
+                        curi = readyQ.peek(this.pendingUris);                     
                         if (curi != null) {
-                            curi.setServer(getServer(curi));
                             // check if curi belongs in different queue
                             String currentQueueKey = getClassKey(curi);
                             if (currentQueueKey.equals(curi.getClassKey())) {
@@ -446,7 +501,7 @@ implements Frontier,
                             // was queued (eg because its IP has become
                             // known). Requeue to new queue.
                             curi.setClassKey(currentQueueKey);
-                            readyQ.dequeue();
+                            readyQ.dequeue(this.pendingUris);
                             curi.setHolderKey(null);
                             sendToQueue(curi);
                         } else {
@@ -474,27 +529,31 @@ implements Frontier,
         }
     }
 
+// CURRENTLY INADVISABLE TO DISCARD QUEUE; loses running tallies
+// but retained in commented form for potential future use
+//    /**
+//     * Discard the given queue, allowing it to be garbage collected.
+//     * 
+//     * @param emptyQ
+//     */
+//    private void discardQueue(BdbWorkQueue emptyQ) {
+//        synchronized(allQueues) {
+//            allQueues.remove(emptyQ.getClassKey());
+//            // release held, allowing
+//            // subsequent enqueues to ready
+//            // readyQ.clearHeld();
+//        }
+//    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.AbstractFrontier#noteAboutToEmit(org.archive.crawler.datamodel.CrawlURI, org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue)
      */
     protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
-        // TODO Auto-generated method stub
         super.noteAboutToEmit(curi, q);
-        if(employBudgetRotation()) {
-            q.decrementBudget(getCost(curi));
-        }
-    }
-    
-    /** 
-     * Whether to use a budgeting process to rotate queues into and
-     * out of active status. 
-     * 
-     * @return true if budgetted rotation should be used, false otherwise
-     */
-    private boolean employBudgetRotation() {
-        // TODO for now, always do apply budget rotation
-        return true;
+        q.expend(getCost(curi));
+        // TODO: is this the best way to be sensitive to potential mid-crawl changes
+        long totalBudget = ((Long)getUncheckedAttribute(curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue();
+        q.setTotalBudget(totalBudget);
     }
 
     /**
@@ -505,8 +564,12 @@ implements Frontier,
      * @return the associated cost
      */
     private int getCost(CrawlURI curi) {
-        // for now, all CrawlURI have cost of 1
-        return 1;
+        int cost = curi.getHolderCost();
+        if (cost == -1) {
+            cost = costAssignmentPolicy.costOf(curi);
+            curi.setHolderCost(cost);
+        }
+        return cost;
     }
     
     /**
@@ -515,43 +578,85 @@ implements Frontier,
      * @throws InterruptedException
      */
     private void activateInactiveQueue() throws InterruptedException {
-        BdbWorkQueue activatedQ = (BdbWorkQueue) inactiveQueues.poll(0);
-        if(activatedQ!=null) {
-            replenishBudget(activatedQ);
-            readyQueue(activatedQ);
-            logger.info("ACTIVATED queue: "+activatedQ.classKey);
+        BdbWorkQueue candidateQ = (BdbWorkQueue) inactiveQueues.poll(0);
+        if(candidateQ != null) {
+            synchronized(candidateQ) {
+                replenishSessionBalance(candidateQ);
+                if(candidateQ.isOverBudget()){
+                    // if still over-budget after an activation & replenishing,
+                    // retire
+                    retireQueue(candidateQ);
+                } else {
+                    readyQueue(candidateQ);
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.fine("ACTIVATED queue: " +
+                            candidateQ.getClassKey());
+                    }
+                }
+            }
         }
     }
 
     /**
      * Replenish the budget of the given queue by the appropriate amount.
      * 
-     * @param activatedQ queue to replenish
+     * @param queue queue to replenish
      */
-    private void replenishBudget(BdbWorkQueue queue) {
-        queue.incrementBudget(DEFAULT_BUDGET_REFRESH_INCREMENT);
+    private void replenishSessionBalance(BdbWorkQueue queue) {
+        // get a CrawlURI for override context purposes
+        CrawlURI contextUri = queue.peek(this.pendingUris); 
+        // TODO: consider confusing cross-effects of this and IP-based politeness
+        queue.incrementSessionBalance(((Integer) getUncheckedAttribute(contextUri,
+                ATTR_BALANCE_REPLENISH_AMOUNT)).intValue());
+        queue.unpeek(); // don't insist on that URI being next released
     }
 
     /**
-     * Wake any queues sitting in the snoozed queue whose time has come
+     * Enqueue the given queue to either readyClassQueues or inactiveQueues,
+     * as appropriate.
+     * 
+     * @param wq
+     */
+    private void reenqueueQueue(BdbWorkQueue wq) {
+        if(wq.isOverBudget()) {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("DEACTIVATED queue: " +
+                    wq.getClassKey());
+            }
+            deactivateQueue(wq);
+        } else {
+            readyQueue(wq);
+        }
+    }
+    
+    /**
+     * Wake any queues sitting in the snoozed queue whose time has come.
      */
     void wakeQueues() {
         long now = System.currentTimeMillis();
+        // Set default next wake time to be in one millisecond in case nothing
+        // to wake.
+        long nextWakeTime = now + DEFAULT_WAIT;
+        int wokenQueuesCount = 0;
         synchronized (snoozedClassQueues) {
             while (true) {
                 if (snoozedClassQueues.isEmpty()) {
-                    return;
+                    break;
                 }
                 BdbWorkQueue peek = (BdbWorkQueue) snoozedClassQueues.first();
-                if (peek.getWakeTime() < now) {
+                nextWakeTime = peek.getWakeTime();
+                if ((nextWakeTime - now) <= 0) {
                     snoozedClassQueues.remove(peek);
                     peek.setWakeTime(0);
                     reenqueueQueue(peek);
+                    wokenQueuesCount++;
                 } else {
-                    return;
+                    break;
                 }
             }
         }
+
+        this.nextWakeupTime = Math.max(now, nextWakeTime);
     }
 
     /**
@@ -571,13 +676,16 @@ implements Frontier,
         curi.incrementFetchAttempts();
         logLocalizedErrors(curi);
         BdbWorkQueue wq = (BdbWorkQueue) curi.getHolder();
-        assert (wq.peek() == curi) : "unexpected peek " + wq;
+        assert (wq.peek(this.pendingUris) == curi) : "unexpected peek " + wq;
         inProcessQueues.remove(wq,1);
 
         if (needsRetrying(curi)) {
             // Consider errors which can be retried, leaving uri atop queue
             long delay_sec = retryDelayFor(curi);
+            curi.processingCleanup(); // lose state that shouldn't burden retry
             wq.unpeek();
+            // TODO: consider if this should happen automatically inside unpeek()
+            wq.update(pendingUris, curi); // rewrite any changes
             synchronized(wq) {
                 if (delay_sec > 0) {
                     long delay_ms = delay_sec * 1000;
@@ -593,7 +701,7 @@ implements Frontier,
         }
 
         // curi will definitely be disposed of without retry, so remove from q
-        wq.dequeue();
+        wq.dequeue(this.pendingUris);
         decrementQueuedCount(1);
         log(curi);
 
@@ -646,21 +754,6 @@ implements Frontier,
     }
 
     /**
-     * Enqueue the given queue to either readyClassQueues or inactiveQueues,
-     * as appropriate.
-     * 
-     * @param wq
-     */
-    private void reenqueueQueue(BdbWorkQueue wq) {
-        if(employBudgetRotation() && wq.getBudget() <= 0) {
-            logger.info("DEACTIVATED queue: "+wq.classKey);
-            deactivateQueue(wq);
-        } else {
-            readyQueue(wq);
-        }
-    }
-
-    /**
      * Place the given queue into 'snoozed' state, ineligible to
      * supply any URIs for crawling, for the given amount of time. 
      * 
@@ -669,9 +762,13 @@ implements Frontier,
      * @param delay_ms time to snooze in ms
      */
     private void snoozeQueue(BdbWorkQueue wq, long now, long delay_ms) {
-        wq.setWakeTime(now+delay_ms);
+        long nextTime = now + delay_ms;
+        wq.setWakeTime(nextTime);
         snoozedClassQueues.add(wq);
-        wakeDaemon.executeAfterDelay(delay_ms, waker);
+        // Update nextWakeupTime if we're supposed to wake up even sooner.
+        if (nextTime < this.nextWakeupTime) {
+            this.nextWakeupTime = nextTime;
+        }
     }
 
     /**
@@ -737,7 +834,7 @@ implements Frontier,
         while(iter.hasNext()) {
             BdbWorkQueue wq = (BdbWorkQueue)iter.next();
             wq.unpeek();
-            count += wq.deleteMatching(match);
+            count += wq.deleteMatching(this.pendingUris, match);
         }
         decrementQueuedCount(count);
         return count;
@@ -754,13 +851,15 @@ implements Frontier,
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
         int inactiveCount = inactiveQueues.getCount();
+        int retiredCount = retiredQueues.getCount();
         StringBuffer rep = new StringBuffer();
         rep.append(allCount + " queues: " + 
                 activeCount + " active (" + 
                 inProcessCount + " in-process; " +
                 readyCount + " ready; " + 
                 snoozedCount + " snoozed); " +
-                inactiveCount +" inactive");
+                inactiveCount +" inactive; " +
+                retiredCount + " retired");
         return rep.toString();
     }
 
@@ -777,6 +876,7 @@ implements Frontier,
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
         int inactiveCount = inactiveQueues.getCount();
+        int retiredCount = retiredQueues.getCount();
         StringBuffer rep = new StringBuffer();
 
         rep.append("Frontier report - "
@@ -798,8 +898,8 @@ implements Frontier,
         rep.append(  "                    In-process: " + inProcessCount  + "\n");
         rep.append(  "                         Ready: " + readyCount + "\n");
         rep.append(  "                       Snoozed: " + snoozedCount + "\n");
-        rep.append(  "           Inactive queues: " + 
-                inactiveCount + "\n");
+        rep.append(  "           Inactive queues: " + inactiveCount + "\n");
+        rep.append(  "            Retired queues: " + retiredCount + "\n");
         rep.append("\n -----===== IN-PROCESS QUEUES =====-----\n");
         Iterator iter = inProcessQueues.iterator();
         int count = 0; 
@@ -844,6 +944,17 @@ implements Frontier,
         if(inactiveQueues.getCount()>REPORT_MAX_QUEUES) {
             rep.append("...and "+(inactiveQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
         }
+        rep.append("\n -----===== RETIRED QUEUES =====-----\n");
+        iter = retiredQueues.iterator();
+        count = 0; 
+        while(iter.hasNext() && count < REPORT_MAX_QUEUES ) {
+            BdbWorkQueue q = (BdbWorkQueue) iter.next();
+            count++;
+            rep.append(q.report());
+        }
+        if(retiredQueues.getCount()>REPORT_MAX_QUEUES) {
+            rep.append("...and "+(retiredQueues.getCount()-REPORT_MAX_QUEUES)+" more.\n");
+        }
         return rep.toString();
     }
 
@@ -864,562 +975,5 @@ implements Frontier,
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.note(canonicalize(u));
     }
-
-    /**
-     * A BerkeleyDB-database-backed structure for holding ordered
-     * groupings of CrawlURIs. Reading the groupings from specific
-     * per-grouping (per-classKey/per-Host) starting points allows
-     * this to act as a collection of independent queues. 
-     * 
-     * TODO: cleanup/close handles, refactor, improve naming
-     * @author gojomo
-     */
-    public class BdbMultiQueue {
-        /** database holding all pending URIs, grouped in virtual queues */
-        protected Database pendingUrisDB = null;
-        /** database supporting bdb serialization */
-        protected Database classCatalogDB = null;
-        /** supporting bdb serialization */ 
-        protected StoredClassCatalog classCatalog = null;
-        /**  supporting bdb serialization of CrawlURIs*/
-        protected SerialBinding crawlUriBinding;
-
-        /**
-         * Create the multi queue in the given environment. 
-         * 
-         * @param env bdb environment to use
-         * @throws DatabaseException
-         */
-        public BdbMultiQueue(Environment env) throws DatabaseException {
-            // Open the database. Create it if it does not already exist. 
-            DatabaseConfig dbConfig = new DatabaseConfig();
-            dbConfig.setAllowCreate(true);
-            try {
-                // new preferred truncateDatabase() method cannot be used
-                // on an open (and thus certain to exist) database like 
-                // the deprecated method it replaces -- so use before
-                // opening the database and be ready if it doesn't exist
-                env.truncateDatabase(null, "pending", false);
-            } catch (DatabaseNotFoundException e) {
-                // ignored
-            }
-            pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
-            classCatalogDB = env.openDatabase(null, "classes", dbConfig);
-            classCatalog = new StoredClassCatalog(classCatalogDB);
-            crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
-        }
-
-        /**
-         * Delete all CrawlURIs matching the given expression.
-         * 
-         * @param match
-         * @param queue
-         * @param headKey
-         * @return count of deleted items
-         * @throws DatabaseException
-         * @throws DatabaseException
-         */
-        public long deleteMatchingFromQueue(String match, String queue,
-                DatabaseEntry headKey) throws DatabaseException {
-            long deletedCount = 0;
-            Pattern pattern = Pattern.compile(match);
-            DatabaseEntry key = headKey;
-            DatabaseEntry value = new DatabaseEntry();
-
-            Cursor cursor = null;
-            try {
-                cursor = pendingUrisDB.openCursor(null, null);
-                OperationStatus result = cursor.getSearchKeyRange(headKey,
-                        value, null);
-
-                while (result == OperationStatus.SUCCESS) {
-                    CrawlURI curi = (CrawlURI) crawlUriBinding
-                            .entryToObject(value);
-                    if (!curi.getClassKey().equals(queue)) {
-                        // rolled into next queue; finished with this queue
-                        break;
-                    }
-                    if (pattern.matcher(curi.getURIString()).matches()) {
-                        cursor.delete();
-                        deletedCount++;
-                    }
-                    result = cursor.getNext(key, value, null);
-                }
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-
-            return deletedCount;
-        }
-
-        /**
-         * @param m marker
-         * @param maxMatches
-         * @return list of matches starting from marker position
-         * @throws DatabaseException
-         */
-        public List getFrom(FrontierMarker m, int maxMatches) throws DatabaseException {
-            int matches = 0;
-            int tries = 0;
-            ArrayList results = new ArrayList(maxMatches);
-            BdbFrontierMarker marker = (BdbFrontierMarker) m;
-            
-            DatabaseEntry key = marker.getStartKey();
-            DatabaseEntry value = new DatabaseEntry();
-            
-            Cursor cursor = null;
-            OperationStatus result = null;
-            try {
-                cursor = pendingUrisDB.openCursor(null,null);
-                result = cursor.getSearchKey(key, value, null);
-                
-                while(matches<maxMatches && result == OperationStatus.SUCCESS) {
-                    CrawlURI curi = (CrawlURI) crawlUriBinding.entryToObject(value);
-                    if(marker.accepts(curi)) {
-                        results.add(curi);
-                        matches++;
-                    }
-                    tries++;
-                    result = cursor.getNext(key,value,null);
-                }
-            } finally {
-                if (cursor !=null) {
-                    cursor.close();
-                }
-            }
-            
-            if(result != OperationStatus.SUCCESS) {
-                // end of scan
-                marker.setStartKey(null);
-            }
-            return results;
-        }
-
-        /**
-         * Get a marker for beginning a scan over all contents
-         * 
-         * @param regexpr
-         * @return a marker pointing to the first item
-         */
-        public FrontierMarker getInitialMarker(String regexpr) {
-            try {
-                return new BdbFrontierMarker(getFirstKey(), regexpr);
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                return null; 
-            }
-        }
-
-        /**
-         * @return the key to the first item in the database
-         * @throws DatabaseException
-         */
-        protected DatabaseEntry getFirstKey() throws DatabaseException {
-            DatabaseEntry key = new DatabaseEntry();
-            DatabaseEntry value = new DatabaseEntry();
-            Cursor cursor = pendingUrisDB.openCursor(null,null);
-            cursor.getNext(key,value,null);
-            cursor.close();
-            return key;
-        }
-
-        /**
-         * Get the next nearest item after the given key. Relies on 
-         * external discipline to avoid asking for something from an
-         * origin where there are no associated items -- otherwise
-         * could get first item of next 'queue' by mistake. 
-         * 
-         * TODO: hold within a queue's range
-         * 
-         * @param headKey
-         * @return CrawlURI.
-         * @throws DatabaseException
-         */
-        public CrawlURI get(DatabaseEntry headKey) throws DatabaseException {
-            DatabaseEntry result = new DatabaseEntry();
-            Cursor cursor = pendingUrisDB.openCursor(null,null);
-            cursor.getSearchKeyRange(headKey, result, null);
-            cursor.close();
-            CrawlURI retVal = (CrawlURI) crawlUriBinding.entryToObject(result);
-            retVal.setHolderKey(headKey);
-            return retVal;
-        }
-
-
-
-        /**
-         * Put the given CrawlURI in at the appropriate place. 
-         * 
-         * @param curi
-         * @throws DatabaseException
-         */
-        public void put(CrawlURI curi) throws DatabaseException {
-            DatabaseEntry insertKey = (DatabaseEntry) curi.getHolderKey();
-            if (insertKey == null) {
-                insertKey = calculateInsertKey(curi);
-                curi.setHolderKey(insertKey);
-            }
-            DatabaseEntry value = new DatabaseEntry();
-            crawlUriBinding.objectToEntry(curi, value);
-            pendingUrisDB.put(null, insertKey, value);
-        }
-
-        /**
-         * Calculate the insertKey that places a CrawlURI in the
-         * desired spot. First 60 bits are always host (classKey)
-         * based -- ensuring grouping by host. Next 4 bits are
-         * priority -- allowing 'immediate' and 'soon' items to 
-         * sort above regular. Last 64 bits are ordinal serial number,
-         * ensuring earlier-discovered URIs sort before later. 
-         * 
-         * @param curi
-         * @return a DatabaseEntry key for the CrawlURI
-         */
-        private DatabaseEntry calculateInsertKey(CrawlURI curi) {
-            byte[] keyData = new byte[16];
-            long fp = FPGenerator.std64.fp(curi.getClassKey()) & 0xFFFFFFFFFFFFFFF0L;
-            fp = fp | curi.getSchedulingDirective();
-            ArchiveUtils.longIntoByteArray(fp, keyData, 0);
-            ArchiveUtils.longIntoByteArray(curi.getOrdinal(), keyData, 8);
-            return new DatabaseEntry(keyData);
-        }
-
-        /**
-         * Delete the given CrawlURI from persistent store. Requires
-         * the key under which it was stored be available. 
-         * 
-         * @param item
-         * @throws DatabaseException
-         */
-        public void delete(CrawlURI item) throws DatabaseException {
-            pendingUrisDB.delete(null, (DatabaseEntry) item.getHolderKey());
-        }
-
-        /**
-         * clean up 
-         *
-         */
-        public void close() {
-            try {
-                pendingUrisDB.close();
-                classCatalogDB.close();
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-
-    }
-
-    /**
-     * One independent queue of items with the same 'classKey' (eg host). 
-     * 
-     * @author gojomo
-     */
-    public class BdbWorkQueue implements Comparable {
-        String classKey;
-        
-        /** where items are really stored, for now */
-        BdbMultiQueue masterQueue; 
-        
-        /** total number of stored items */
-        long count = 0;
-        
-        /** the next item to be returned */ 
-        CrawlURI peekItem = null;
-
-        /** key coordinate to begin seeks, to find queue head */
-        byte[] origin; 
-
-        // useful for reporting
-        /** last URI enqueued */
-        private String lastQueued; 
-        /** last URI peeked */
-        private String lastPeeked;
-
-        /** whether queue is already in lifecycle stage */
-        boolean isHeld = false; 
-        
-        /** time to wake, if snoozed */
-        long wakeTime = 0;
-        
-        /** running 'budget' indicating whether queue should stay active */
-        int budget = 0;
-        
-        /**
-         * Create a virtual queue inside the given BdbMultiQueue 
-         * 
-         * @param classKey
-         * @param pendingUris
-         */
-        public BdbWorkQueue(String classKey, BdbMultiQueue pendingUris) {
-            this.classKey = classKey;
-            masterQueue = pendingUris;
-            origin = new byte[16];
-            long fp = FPGenerator.std64.fp(classKey) & 0xFFFFFFFFFFFFFFF0l;
-            ArchiveUtils.longIntoByteArray(fp, origin, 0);
-        }
-
-        public int getBudget() {
-            return budget;
-        }
-
-        /**
-         * Increase the internal running budget to be used before 
-         * deactivating the queue
-         * 
-         * @param amount amount to increment
-         * @return updated budget value
-         */
-        public int incrementBudget(int amount) {
-            this.budget = this.budget + amount;
-            return this.budget;
-        }
-
-        /**
-         * Decrease the internal running budget by the given amount. 
-         * @param amount tp decrement
-         * @return updated budget value
-         */
-        public int decrementBudget(int amount) {
-            this.budget = this.budget - amount;
-            return this.budget;
-        }
-
-        /**
-         * Delete URIs matching the given pattern from this queue. 
-         * 
-         * @param match
-         * @return count of deleted URIs
-         */
-        public long deleteMatching(String match) {
-            try {
-                long deleteCount = masterQueue.deleteMatchingFromQueue(match,classKey,new DatabaseEntry(origin));
-                this.count -= deleteCount;
-                return deleteCount;
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }
-
-        /**
-         * @return a string describing this queue
-         */
-        public String report() {
-            return "Queue " + classKey + "\n" + 
-                   "  "+ count + " items" + "\n" +
-                   "    last enqueued: " + lastQueued + "\n" +
-                   "      last peeked: " + lastPeeked + "\n" +
-                   ((wakeTime == 0) ? "" :
-                   "         wakes in: " + 
-                           (wakeTime-System.currentTimeMillis()) + "ms\n");
-        }
-
-        /**
-         * @param l
-         */
-        public void setWakeTime(long l) {
-            wakeTime = l;
-        }
-
-        /**
-         * @return wakeTime
-         */
-        public long getWakeTime() {
-            return wakeTime;
-        }
-        
-        /**
-         * @return classKey
-         */
-        private String getClassKey() {
-            return classKey;
-        }
-        
-        /**
-         * Clear isHeld to false
-         */
-        public void clearHeld() {
-            isHeld = false;
-        }
-
-        /**
-         * Whether the queue is already in a lifecycle stage --
-         * such as ready, in-progress, snoozed -- and thus should
-         * not be redundantly inserted to readyClassQueues
-         * 
-         * @return isHeld
-         */
-        public boolean isHeld() {
-            return isHeld;
-        }
-
-        /**
-         * Set isHeld to true
-         */
-        public void setHeld() {
-            isHeld = true; 
-        }
-
-        /**
-         * Remove the peekItem from the queue. 
-         * 
-         */
-        public void dequeue() {
-            try {
-                masterQueue.delete(peekItem);
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            unpeek();
-            count--;
-        }
-
-        /**
-         * Forgive the peek, allowing a subsequent peek to 
-         * return a different item. 
-         * 
-         */
-        public void unpeek() {
-            peekItem = null;
-        }
-
-        /**
-         * Return the topmost queue item -- and remember it,
-         * such that even later higher-priority inserts don't
-         * change it. 
-         * 
-         * TODO: evaluate if this is really necessary
-         * 
-         * @return topmost queue item
-         */
-        public CrawlURI peek() {
-            if (peekItem == null && count > 0) {
-                try {
-                    peekItem = masterQueue.get(new DatabaseEntry(origin));
-                    lastPeeked = peekItem.getURIString();
-                } catch (DatabaseException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
-                }
-            }
-            return peekItem;
-        }
-
-        /**
-         * Add the given CrawlURI
-         * 
-         * @param curi
-         */
-        public void enqueue(CrawlURI curi) {
-            try {
-                masterQueue.put(curi);
-                lastQueued = curi.getURIString();
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-            count++;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Comparable#compareTo(java.lang.Object)
-         */
-        public int compareTo(Object obj) {
-            if(this==obj) {
-                return 0; // for exact identity only
-            }
-            BdbWorkQueue other = (BdbWorkQueue)obj;
-            if (getWakeTime() > other.getWakeTime()) {
-                return 1;
-            }
-            if (getWakeTime() < other.getWakeTime()) {
-                return -1;
-            }
-            // at this point, the ordering is arbitrary, but still
-            // must be consistent/stable over time
-            return this.classKey.compareTo(other.getClassKey());
-        }
-    }
-
-    /**
-     * Marker for remembering a position within the BdbMultiQueue.
-     * 
-     * @author gojomo
-     */
-    public class BdbFrontierMarker implements FrontierMarker {
-        DatabaseEntry startKey;
-        Pattern pattern; 
-        int nextItemNumber;
-        
-        /**
-         * Create a marker pointed at the given start location.
-         * 
-         * @param startKey
-         * @param regexpr
-         */
-        public BdbFrontierMarker(DatabaseEntry startKey, String regexpr) {
-            this.startKey = startKey;
-            pattern = Pattern.compile(regexpr);
-            nextItemNumber = 1;
-        }
-
-        /**
-         * @param curi
-         * @return whether the marker accepts the given CrawlURI
-         */
-        public boolean accepts(CrawlURI curi) {
-            boolean retVal = pattern.matcher(curi.getURIString()).matches();
-            if(retVal==true) {
-                nextItemNumber++;
-            }
-            return retVal;
-        }
-
-        /**
-         * @param key position for marker
-         */
-        public void setStartKey(DatabaseEntry key) {
-            startKey = key;
-        }
-
-        /**
-         * @return startKey
-         */
-        public DatabaseEntry getStartKey() {
-            return startKey;
-        }
-
-        /* (non-Javadoc)
-         * @see org.archive.crawler.framework.FrontierMarker#getMatchExpression()
-         */
-        public String getMatchExpression() {
-            return pattern.pattern();
-        }
-
-        /* (non-Javadoc)
-         * @see org.archive.crawler.framework.FrontierMarker#getNextItemNumber()
-         */
-        public long getNextItemNumber() {
-            return nextItemNumber;
-        }
-
-        /* (non-Javadoc)
-         * @see org.archive.crawler.framework.FrontierMarker#hasNext()
-         */
-        public boolean hasNext() {
-            // as long as any startKey is stated, consider as having next
-            return startKey != null;
-        }
-    }
-
 }
 

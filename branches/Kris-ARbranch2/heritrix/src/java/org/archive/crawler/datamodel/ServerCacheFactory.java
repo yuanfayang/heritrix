@@ -26,19 +26,22 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.settings.SettingsHandler;
 
 /**
- * Factory for ServerCache.
+ * Factory for {@link ServerCache}.
+ * The usage pattern for a ServerCache is that CrawlController
+ * holds a references to the ServerCache to use per crawl. You
+ * must go via CrawlController to get at the current
+ * crawls' ServerCache.  Each call to
+ * {@link #getServerCache(SettingsHandler)}
+ * creates a new ServerCache instance.
  * @author stack
  * @version $Date$, $Revision$
  */
 public class ServerCacheFactory {
-    private static final ServerCacheFactory factory =
-        new ServerCacheFactory();
-    
     /**
      * Key to use getting class to instantiate from heritrix.properties.
      */
-    private static final String KEY = ServerCacheFactory.class.getName() +
-        ".class";
+    private static final String KEY =
+        ServerCacheFactory.class.getName() + ".class";
     
     private static String DEFAULT_SERVERCACHE =
         "org.archive.crawler.datamodel.MapServerCache";
@@ -53,7 +56,7 @@ public class ServerCacheFactory {
     /**
      * @param handler Settings handler to pass the ServerCache on
      * instantiation.
-     * @return Returns ServerCache instance.
+     * @return Returns a NEW ServerCache instance.
      * @throws ClassNotFoundException
      * @throws IllegalAccessException
      * @throws InstantiationException

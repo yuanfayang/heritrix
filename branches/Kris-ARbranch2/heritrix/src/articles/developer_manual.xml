@@ -1292,9 +1292,9 @@ public class MyFrontier extends ModuleType implements Frontier,
     Frontier would also be aware of the fact that Heritrix is multi threaded
     and try to process as many URIs simultaneously as allowed by the number of
     threads without breaking the politeness rules. Take a look at <ulink
-    url="http://crawler.archive.org/xref/org/archive/crawler/frontier/HostQueuesFrontier.html">Frontier</ulink>
+    url="http://crawler.archive.org/xref/org/archive/crawler/frontier/BdbFrontier.html">Frontier</ulink>
     <ulink
-    url="http://crawler.archive.org/apidocs/org/archive/crawler/frontier/HostQueuesFrontier.html">(javadoc)</ulink>
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/frontier/BdbFrontier.html">(javadoc)</ulink>
     to see how a full blown Frontier might look like.</para>
 
     <para>All Frontiers must implement the Frontier interface. Most

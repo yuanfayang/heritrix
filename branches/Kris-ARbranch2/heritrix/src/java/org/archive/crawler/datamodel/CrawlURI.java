@@ -56,6 +56,8 @@ import st.ata.util.HashtableAList;
 public class CrawlURI extends CandidateURI
     implements CoreAttributeConstants, FetchStatusCodes {
 
+    public static final int UNCALCULATED = -1;
+    
     /** No knowledge of URI content. Possibly not fetched yet, unable
      *  to check if different or an error occured on last fetch attempt. */
     public static final int CONTENT_UNKNOWN = -1;
@@ -89,8 +91,8 @@ public class CrawlURI extends CandidateURI
     private AList alist = new HashtableAList();
 
     // dynamic context
-    private int linkHopCount = -1; // from seeds
-    private int embedHopCount = -1; // from a sure link; reset upon any link traversal
+    private int linkHopCount = UNCALCULATED; // from seeds
+    private int embedHopCount = UNCALCULATED; // from a sure link; reset upon any link traversal
 
     // User agent to masquerade as when crawling this URI. If null, globals should be used
     private String userAgent = null;
@@ -99,17 +101,15 @@ public class CrawlURI extends CandidateURI
     private boolean linkExtractorFinished = false;
 
 ////////////////////////////////////////////////////////////////////
-    private transient CrawlServer server;
-
-    private long contentSize = -1;
-    private long contentLength = -1;
+    private long contentSize = UNCALCULATED;
+    private long contentLength = UNCALCULATED;
 
     /**
      * Current http recorder.
      *
      * Gets set upon successful request.  Reset at start of processing chain.
      */
-    transient private HttpRecorder httpRecorder = null;
+    private transient HttpRecorder httpRecorder = null;
 
     /**
      * Content type of a successfully fetched URI.
@@ -148,7 +148,10 @@ public class CrawlURI extends CandidateURI
     private boolean post = false;
 
     /** monotonically increasing number within a crawl;
-     * useful for tending towards breadth-first ordering */
+     * useful for tending towards breadth-first ordering.
+     * will sometimes be truncated to 56 bits, so behavior
+     * over 72 quadrillion instantiated CrawlURIs may be 
+     * buggy */
     protected long ordinal;
 
     /**
@@ -427,24 +430,6 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * Return the associated CrawlServer
-     *
-     * @return server
-     */
-    public CrawlServer getServer() {
-        return server;
-    }
-
-    /**
-     * Set the CrawlServer which this URI is to be associated with.
-     *
-     * @param host the CrawlServer which this URI is to be associated with.
-     */
-    public void setServer(CrawlServer host) {
-        this.server = host;
-    }
-
-    /**
      * Do all actions associated with setting a <code>CrawlURI</code> as
      * requiring a prerequisite.
      *
@@ -592,9 +577,9 @@ public class CrawlURI extends CandidateURI
     }
 
 
-    /** Get the size in bytes of this URI's content.  This may be set
-     *  at any time by any class and therefor should not be trusted.  Primarily
-     *  it exists to ease the calculation of statistics.
+    /** Get the size in bytes of this URI's content.
+     * This may be set at any time by any class and therefore should not be
+     * trusted. Primarily it exists to ease the calculation of statistics.
      * @return contentSize
      */
     public long getContentSize(){
@@ -664,11 +649,8 @@ public class CrawlURI extends CandidateURI
      * @return the annotations set for this uri.
      */
     public String getAnnotations() {
-        if(alist.containsKey(A_ANNOTATIONS)) {
-            return alist.getString(A_ANNOTATIONS);
-        } else {
-            return null;
-        }
+        return (alist.containsKey(A_ANNOTATIONS))?
+            alist.getString(A_ANNOTATIONS): null;
     }
 
     /**
@@ -744,11 +726,9 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * For completed HTTP transactions, the length of the content-body
-     * (as given by the header or calculated)
+     * For completed HTTP transactions, the length of the content-body.
      *
-     * @return The length of the content-body (as given by the header or
-     * calculated).
+     * @return For completed HTTP transactions, the length of the content-body.
      */
     public long getContentLength() {
         if (this.contentLength < 0) {
@@ -758,7 +738,7 @@ public class CrawlURI extends CandidateURI
     }
 
     /**
-     * @param l
+     * @param l Content size.
      */
     public void setContentSize(long l) {
         contentSize = l;
@@ -906,12 +886,12 @@ public class CrawlURI extends CandidateURI
      * @param ca Credential avatar to add to set of avatars.
      */
     public void addCredentialAvatar(CredentialAvatar ca) {
-    	    Set avatars = getCredentialAvatars();
-    	    if (avatars == null) {
-    	    	    avatars = new HashSet();
-    	    	    	setCredentialAvatars(avatars);
-    	    }
-    	    avatars.add(ca);
+        Set avatars = getCredentialAvatars();
+        if (avatars == null) {
+            avatars = new HashSet();
+            setCredentialAvatars(avatars);
+        }
+        avatars.add(ca);
     }
 
     /**
@@ -1027,6 +1007,7 @@ public class CrawlURI extends CandidateURI
 
     transient Object holder;
     transient Object holderKey;
+
     /**
      * Remember a 'holder' to which some enclosing/queueing
      * facility has assigned this CrawlURI
@@ -1073,6 +1054,27 @@ public class CrawlURI extends CandidateURI
      */
     public long getOrdinal() {
         return ordinal;
+    }
+
+
+    /** spot for an integer cost to be placed by external facility (frontier).
+     *  cost is truncated to 8 bits at times, so should not exceed 255 */
+    int holderCost = UNCALCULATED;
+    /**
+     * Return the 'holderCost' for convenience of external facility (frontier)
+     * @return value of holderCost
+     */
+    public int getHolderCost() {
+        return holderCost;
+    }
+
+    /**
+     *  Remember a 'holderCost' which some enclosing/queueing
+     * facility has assigned this CrawlURI
+     * @param cost value to remember
+     */
+    public void setHolderCost(int cost) {
+        holderCost = cost;
     }
     
     /**

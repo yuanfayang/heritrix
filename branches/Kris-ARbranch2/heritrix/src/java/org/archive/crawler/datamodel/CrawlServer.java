@@ -53,7 +53,6 @@ public class CrawlServer implements Serializable {
 
     private final String server; // actually, host+port in the https case
     private int port;
-    private transient CrawlHost host;
     private transient SettingsHandler settingsHandler;
     private RobotsExclusionPolicy robots;
     long robotsFetched = ROBOTS_NOT_FETCHED;
@@ -130,7 +129,7 @@ public class CrawlServer implements Serializable {
         validRobots = true;
         
         if (curi.getFetchStatus() != 200 ||
-                honoringPolicy.getType(getSettings(curi)) ==
+                honoringPolicy.getType(getSettings(curi.getUURI())) ==
                     RobotsHonoringPolicy.IGNORE)
         {
             // not found or other errors == all ok for now
@@ -149,10 +148,10 @@ public class CrawlServer implements Serializable {
         ReplayInputStream contentBodyStream = null;
         try {
             BufferedReader reader;
-            if (honoringPolicy.getType(getSettings(curi))
+            if (honoringPolicy.getType(getSettings(curi.getUURI()))
                 == RobotsHonoringPolicy.CUSTOM) {
                 reader = new BufferedReader(new StringReader(honoringPolicy
-                        .getCustomRobots(getSettings(curi))));
+                        .getCustomRobots(getSettings(curi.getUURI()))));
             }
             else
             {
@@ -164,7 +163,7 @@ public class CrawlServer implements Serializable {
                     new InputStreamReader(contentBodyStream));
             }
             robots = RobotsExclusionPolicy.policyFor(
-                    getSettings(curi),
+                    getSettings(curi.getUURI()),
                     reader,
                     honoringPolicy);
 
@@ -190,35 +189,6 @@ public class CrawlServer implements Serializable {
      */
     public String getName() {
        return server;
-    }
-
-    /**
-     * Get the associated CrawlHost
-     *
-     * @return host
-     */
-    public CrawlHost getHost() {
-        return host;
-    }
-
-    /** Set the CrawlHost for which this server is a service.
-     *
-     * @param host the CrawlHost.
-     */
-    public void setHost(CrawlHost host) {
-        this.host = host;
-    }
-
-    /** Get the hostname for this server.
-     *
-     * @return the hostname without any port numbers.
-     */
-    public String getHostname() {
-        int colonIndex = server.indexOf(":");
-        if(colonIndex < 0) {
-            return server;
-        }
-        return server.substring(0,colonIndex);
     }
 
     /** Get the port number for this server.
@@ -265,9 +235,10 @@ public class CrawlServer implements Serializable {
      * @return the settings object in effect for this server.
      * @throws URIException
      */
-    private CrawlerSettings getSettings(CrawlURI uri)
-    throws URIException {
-        return this.settingsHandler.getSettings(uri.getUURI().getReferencedHost(), uri);
+    private CrawlerSettings getSettings(UURI uri)
+            throws URIException {
+        return this.settingsHandler.getSettings(
+                uri.getReferencedHost(), new CrawlURI(uri));
     }
 
     /** Set the settings handler to be used by this server.
@@ -321,5 +292,39 @@ public class CrawlServer implements Serializable {
 	 */
 	public boolean isValidRobots() {
 		return validRobots;
+	}
+    
+    /**
+     * Get key to use doing lookup on server instances.
+     * @param curi CrawlURI we're to get server key for.
+     * @return String to use as server key.
+     * @throws URIException
+     */
+	public static String getServerKey(CrawlURI curi)
+	throws URIException {
+	    // TODO: evaluate if this is really necessary -- why not 
+	    // make the server of a dns CrawlURI the looked-up domain,
+	    // also simplifying FetchDNS?
+	    String key = curi.getUURI().getAuthorityMinusUserinfo();
+	    if (key == null) {
+	        // Fallback for cases where getAuthority() fails (eg 'dns:'.
+	        // DNS UURIs have the 'domain' in the 'path' parameter, not
+	        // in the authority).
+	        key = curi.getUURI().getCurrentHierPath();
+	        if(key != null && !key.matches("[-_\\w\\.:]+")) {
+	            // Not just word chars and dots and colons and dashes and
+	            // underscores; throw away
+	            key = null;
+	        }
+	    }
+	    if (key != null &&
+	            curi.getUURI().getScheme().equals(UURIFactory.HTTPS)) {
+	        // If https and no port specified, add default https port to
+	        // distinuish https from http server without a port.
+	        if (!key.matches(".+:[0-9]+")) {
+	            key += ":" + UURIFactory.HTTPS_PORT;
+	        }
+	    }
+	    return key;
 	}
 }

@@ -45,7 +45,7 @@ public class HttpRecorderPostMethod extends PostMethod {
     /**
      * Instance of http recorder method.
      */
-    private HttpRecorderMethod httpRecorderMethod = null;
+    protected HttpRecorderMethod httpRecorderMethod = null;
     
 
     public HttpRecorderPostMethod(String uri, HttpRecorder recorder) {

@@ -97,6 +97,14 @@ implements Serializable {
      * Cache of this uuri in SURT format
      */
     private String surtForm = null;
+    
+    // Technically, underscores are disallowed in the domainlabel
+    // portion of hostname according to rfc2396 but we'll be more
+    // loose and allow them. See: [ 1072035 ] [uuri] Underscore in
+    // host messes up port parsing.
+    static {
+        hostname.set('_');
+    }
 
 
     /**
