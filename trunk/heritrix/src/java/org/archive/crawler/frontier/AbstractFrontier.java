@@ -547,8 +547,9 @@ CoreAttributeConstants {
      * @return millisecond delay before retry
      */
     protected long retryDelayFor(CrawlURI curi) {
-        if ( curi.getFetchStatus() == S_CONNECT_FAILED || 
-            curi.getFetchStatus()== S_CONNECT_LOST) {
+        int status = curi.getFetchStatus();
+        if ( status == S_CONNECT_FAILED || status == S_CONNECT_LOST 
+             || status == S_DOMAIN_UNRESOLVABLE ) {
             if(curi.getAList().containsKey(A_RETRY_DELAY)) {
                 return curi.getAList().getInt(A_RETRY_DELAY);
             }

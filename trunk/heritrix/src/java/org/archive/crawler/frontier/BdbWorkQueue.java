@@ -257,7 +257,7 @@ implements Comparable, Serializable {
      * @param queues Work queues manager.
      * 
      */
-    public void dequeue(BdbMultipleWorkQueues queues) {
+    public synchronized void dequeue(BdbMultipleWorkQueues queues) {
         try {
             queues.delete(peekItem);
         } catch (DatabaseException e) {
@@ -302,12 +302,24 @@ implements Comparable, Serializable {
     }
 
     /**
-     * Add the given CrawlURI
-     * @param queues Work queues manager.
+     * Add the given CrawlURI, noting its addition in running count. (It
+     * should not already be present.)
      * 
+     * @param queues Work queues manager.
      * @param curi
      */
-    public void enqueue(BdbMultipleWorkQueues queues, CrawlURI curi) {
+    public synchronized void enqueue(BdbMultipleWorkQueues queues, CrawlURI curi) {
+        insert(queues, curi);
+        count++;
+    }
+
+    /**
+     * Insert the given curi, whether it is already present or not. 
+     * 
+     * @param queues
+     * @param curi
+     */
+    protected void insert(BdbMultipleWorkQueues queues, CrawlURI curi) {
         try {
             queues.put(curi);
             lastQueued = curi.getURIString();
@@ -316,9 +328,19 @@ implements Comparable, Serializable {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        count++;
     }
 
+    /**
+     * Update the given CrawlURI, which should already be present. (This
+     * is not checked.) Equivalent to an enqueue without affecting the count.
+     * 
+     * @param queues Work queues manager.
+     * @param curi
+     */
+    public void update(BdbMultipleWorkQueues queues, CrawlURI curi) {
+        insert(queues, curi);
+    }
+    
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */

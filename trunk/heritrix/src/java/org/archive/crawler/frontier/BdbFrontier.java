@@ -99,10 +99,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(true); 
 
-//    /** whether to hold queues INACTIVE until needed for throughput */
-//    public final static String ATTR_USE_BUDGETTED_ROTATION = "use-budgetted-rotation";
-//    protected final static Boolean DEFAULT_USE_BUDGETTED_ROTATION = new Boolean(true); 
-
     /** whether to hold queues INACTIVE until needed for throughput */
     public final static String ATTR_BALANCE_REPLENISH_AMOUNT = "balance-replenish-amount";
     protected final static Integer DEFAULT_BALANCE_REPLENISH_AMOUNT = new Integer(3000);
@@ -205,17 +201,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                 DEFAULT_HOLD_QUEUES));
         t.setExpertSetting(true);
         t.setOverrideable(false);
-//        t = addElementToDefinition(new SimpleType(ATTR_USE_BUDGETTED_ROTATION,
-//                "Whether to rotate queues out of active status based on " +
-//                "a budgetting mechanism. If true, an active queue will move " +
-//                "to inactive status -- making room for a waiting inactive queue " +
-//                "to become active -- when its budget is depleted. When its " +
-//                "turn to reactivate comes up, it will be given a refreshed " +
-//                "budget. Each URI attempted from a queue depletes its budget by " +
-//                "some amount. Default is true. ",
-//                DEFAULT_USE_BUDGETTED_ROTATION));
-//        t.setExpertSetting(true);
-//        t.setOverrideable(true);
         t = addElementToDefinition(new SimpleType(ATTR_BALANCE_REPLENISH_AMOUNT,
                 "Amount to replenish a queue's activity balance when it becomes " +
                 "active. Larger amounts mean more URIs will be tried from the " +
@@ -586,17 +571,28 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         }
     }
 
+// CURRENTLY INADVISABLE TO DISCARD QUEUE; loses running tallies
+// but retained in commented form for potential future use
+//    /**
+//     * Discard the given queue, allowing it to be garbage collected.
+//     * 
+//     * @param emptyQ
+//     */
+//    private void discardQueue(BdbWorkQueue emptyQ) {
+//        synchronized(allQueues) {
+//            allQueues.remove(emptyQ.getClassKey());
+//            // release held, allowing
+//            // subsequent enqueues to ready
+//            // readyQ.clearHeld();
+//        }
+//    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.AbstractFrontier#noteAboutToEmit(org.archive.crawler.datamodel.CrawlURI, org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue)
      */
     protected void noteAboutToEmit(CrawlURI curi, BdbWorkQueue q) {
         super.noteAboutToEmit(curi, q);
-//        if (((Boolean) getUncheckedAttribute(curi, ATTR_USE_BUDGETTED_ROTATION))
-//                .booleanValue()) {
-//            // only dock budget if rotation is in effect
-            q.expend(getCost(curi));
-//        }
+        q.expend(getCost(curi));
         // TODO: is this the best way to be sensitive to potential mid-crawl changes
         long totalBudget = ((Long)getUncheckedAttribute(curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue();
         q.setTotalBudget(totalBudget);
@@ -701,7 +697,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                 }
             }
         }
-        
+
         this.nextWakeupTime = Math.max(now, nextWakeTime);
     }
 
@@ -728,7 +724,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         if (needsRetrying(curi)) {
             // Consider errors which can be retried, leaving uri atop queue
             long delay_sec = retryDelayFor(curi);
+            curi.processingCleanup(); // lose state that shouldn't burden retry
             wq.unpeek();
+            // TODO: consider if this should happen automatically inside unpeek()
+            wq.update(pendingUris, curi); // rewrite any changes
             synchronized(wq) {
                 if (delay_sec > 0) {
                     long delay_ms = delay_sec * 1000;
