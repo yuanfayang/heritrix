@@ -254,7 +254,10 @@ public abstract class AbstractTracker extends CrawlerModule implements Statistic
      * @see org.archive.crawler.framework.CrawlStatusListener#crawlResuming(java.lang.String)
      */
     public void crawlResuming(String statusMessage) {
-        crawlerTotalPausedTime+=(System.currentTimeMillis()-crawlerPauseStarted);
+        if(crawlerPauseStarted>0){
+            // Ok, we managed to actually pause before resuming.
+            crawlerTotalPausedTime+=(System.currentTimeMillis()-crawlerPauseStarted);
+        }
         crawlerPauseStarted = 0;
         periodicLogger.log(
                     Level.INFO,
