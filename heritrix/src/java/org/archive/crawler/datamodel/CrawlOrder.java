@@ -53,9 +53,7 @@ public class CrawlOrder extends CrawlerModule {
     public static final String ATTR_HTTP_HEADERS = "http-headers";
     public static final String ATTR_USER_AGENT = "user-agent";
     public static final String ATTR_FROM = "from";
-    //public static final String ATTR_FRONTIER = "frontier";
     public static final String ATTR_PROCESSORS = "processors";
-    public static final String ATTR_FIRST_PROCESSOR = "first-processor";
     public static final String ATTR_LOGGERS = "loggers";
 
     public static final String XP_FRONTIER = "//behavior/frontier";
@@ -121,8 +119,6 @@ public class CrawlOrder extends CrawlerModule {
 
         addElementToDefinition(new CrawlerModule(URIFrontier.ATTR_NAME, "Frontier"));
 
-        addElementToDefinition(new SimpleType(ATTR_FIRST_PROCESSOR, "First processor", ""));
-        
         processors =
             (MapType) addElementToDefinition(new MapType(ATTR_PROCESSORS,
                 "URI processors"));
