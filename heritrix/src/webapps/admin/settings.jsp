@@ -10,12 +10,16 @@
 
 
 <p>
-<b><a href="/admin/settings/defaultcrawlorder.jsp">Default crawl order</a></b><br>
-<i>Modify the default crawl order that is used as a template for new crawl jobs.</i><br>
+<b>Default crawl order</b><br>
+<ul>
+	<li><a href="/admin/settings/defaultcrawlorder.jsp">Modify</a> - <i>Safe, but limited options</i>
+	<li><a href="/admin/settings/powereditdefaultcrawlorder.jsp">Power edit</a> - <i>Advanced users only</i>
+</ul>
+The default crawl order that is used as a template for new crawl jobs.<br>
 
 <p>
 <b>Access tool</b><br>
-<i>Not yet availible</i>
+Not yet availible
 
 
 <%@include file="/include/foot.jsp"%>

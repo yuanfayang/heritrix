@@ -143,7 +143,13 @@ public class CrawlController extends Thread {
 		order = o;	
 		order.initialize();
 		
-		checkUserAgentAndFrom();
+		if(checkUserAgentAndFrom(order)==false){
+			throw new FatalConfigurationException(
+				"You must set the User-Agent and From HTTP header values " +
+				"to acceptable strings before proceeding. \n" +
+				" User-Agent: [software-name](+[info-url])[misc]\n" +
+				" From: [email-address]");
+		}
 		
 		sExit = "";
 		
@@ -407,17 +413,18 @@ public class CrawlController extends Thread {
 	private static String ACCEPTABLE_FROM =
 	 "\\S+@\\S+\\.\\S+";
 	 
-	private void checkUserAgentAndFrom() throws InitializationException {
+	/**
+	 * Checks if the User Agent and From field are set 'correctly' in
+	 * the specified Crawl Order.
+	 * 
+	 * @param order The Crawl Order to check
+	 * @return true if it passes, false otherwise.
+	 */
+	public static boolean checkUserAgentAndFrom(CrawlOrder order){
 		// don't start the crawl if they're using the default user-agent
 		String userAgent = order.getUserAgent();
 		String from = order.getFrom();
-		if(!userAgent.matches(ACCEPTABLE_USER_AGENT)||!from.matches(ACCEPTABLE_FROM)) {
-			throw new FatalConfigurationException(
-				"You must set the User-Agent and From HTTP header values " +
-				"to acceptable strings before proceeding. \n" +
-				" User-Agent: [software-name](+[info-url])[misc]\n" +
-				" From: [email-address]");
-		}
+		return userAgent.matches(ACCEPTABLE_USER_AGENT) && from.matches(ACCEPTABLE_FROM);
 	}
 	
 	/**
