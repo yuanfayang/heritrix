@@ -42,6 +42,9 @@ import org.apache.commons.collections.Predicate;
  * @author Gordon Mohr
  */
 public class DiskBackedQueue implements Queue, Serializable {
+    /** if all contents would leave head less than this
+     * percent full, discard the backing file(s)*/
+    protected static final float DISCARD_BACKING_THRESHOLD = 0.25f;
     private static Logger logger = 
         Logger.getLogger(DiskBackedQueue.class.getName());
 
@@ -108,17 +111,31 @@ public class DiskBackedQueue implements Queue, Serializable {
     }
 
     protected void backingUpdate() {
-        if(length()<=headMax/4 && tailQ.isInitialized()){
-      		// Currently less then a quarter of what can fit in the memory cache
-            // is left in the queue. Flush out the items on disk and close the
-            // files to free up file handles.
-        	if(tailQ.isEmpty() == false){
-      			fillHeadQ();
-            }
-            if(tailQ.isEmpty()){
-                tailQ.release();
-            }
+        if(canDiscardBacking()) {
+            discardBacking();
         }
+    }
+
+    /**
+     * 
+     */
+    protected void discardBacking() {
+        // Flush out the items on disk and close the
+        // files to free up file handles.
+        fillHeadQ();
+        if(tailQ.isEmpty()){
+            tailQ.release();
+        }
+    }
+
+    /**
+     * @return
+     */
+    protected boolean canDiscardBacking() {
+        // Check if less then a quarter of what can fit in the memory
+        // cache is left in the queue.
+        return length() <= headMax * DISCARD_BACKING_THRESHOLD
+                && tailQ.isInitialized();
     }
 
     protected void fillHeadQ() {
