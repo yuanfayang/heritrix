@@ -11,7 +11,7 @@
 
 <%@include file="/include/head.jsp"%>
 
-		<table border="0">
+		<table border="0" cellspacing="0" cellpadding="0">
 			<tr>
 				<th>
 					Job name
@@ -22,24 +22,30 @@
 				<th>
 				</th>
 			</tr>
+			<tr>
+				<td colspan="3" height="1" bgcolor="#000000">
+				</td>
+			</tr>
 			<%
+				boolean altern = false;
 				for(int i=0 ; i	< jobs.size() ; i++)
 				{
 					CrawlJob job = (CrawlJob)jobs.get(i);
 			%>		
 					<tr>
-						<td>
-							<%=job.getJobName()%>
+						<td <%=altern?"bgcolor='#f0f0f0'":""%>>
+							&nbsp;&nbsp;<%=job.getJobName()%>&nbsp;&nbsp;
 						</td>
-						<td>
-							<%=job.getStatus()%>
+						<td <%=altern?"bgcolor='#f0f0f0'":""%>>
+							&nbsp;&nbsp;<%=job.getStatus()%>&nbsp;&nbsp;
 						</td>
-						<td>
-							<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">View order</a>
-							<a href="/admin/jobs/viewstatistics.jsp?job=<%=job.getUID()%>&nav=3">View statistics</a>
+						<td <%=altern?"bgcolor='#f0f0f0'":""%>>
+							&nbsp;&nbsp;<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">View order</a>
+							<a href="/admin/jobs/viewstatistics.jsp?job=<%=job.getUID()%>&nav=3">View statistics</a>&nbsp;&nbsp;
 						</td>
 					</tr>
 			<%
+					altern = !altern;
 				}
 			%>
 		</table>
