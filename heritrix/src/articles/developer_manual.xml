@@ -74,10 +74,21 @@
     <sect2>
       <title>Building Heritrix</title>
 
-      <para>You can build Heritrix from source using Maven. The Heritrix build
-      uses maven 1.0-rc1. See <ulink
-      url="http://maven.apache.org">maven.apache.org</ulink> for how to obtain
-      the binary and setup of your maven environment.</para>
+      <para>You can build Heritrix from source using Maven. Heritrix build has
+      been tested against maven-1.0rc1 and maven-1.0rc2. See <ulink
+       url="http://maven.apache.org">maven.apache.org</ulink> for how to obtain
+      the binary and setup of your maven environment. </para>
+                                                                                
+      <para>In addition to the base maven build, you will need to add the
+      maven sdocbook plugin which can be found on <ulink
+      url="http://sourceforge.net/projects/maven-plugins/">this page</ulink>.
+      This plugin is responsible for generating the user and developer
+      documentation. The sdocbook plugin has a dependency on the <ulink
+      url="http://java.sun.com/products/jimi/">jimi jar from sun</ulink> which
+      you will have to manually pull down and place into your maven
+      respository (Had to unzip the jini zip file and repackage it as a jar to
+      make maven happy).</para>
+
 
       <para>To build a CVS source checkout with Maven:<programlisting>% cd CVS_CHECKOUT_DIR 
 % $MAVEN_HOME/bin/maven dist</programlisting>In the target/distribution
@@ -124,8 +135,14 @@
       for a <filename>config.xml</filename> that will run the heritrix maven
       build under <ulink
       url="http://cruisecontrol.sourceforge.net/">cruisecontrol</ulink>. See
-      the <filename>README.txt</filename> in the same directory for how to set
-      up continuous building using cc.</para>
+      the <filename><ulink
+      url="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/cc/README.txt?content-type=text%2Fplain&amp;rev=1">README.txt</ulink></filename>
+      in the same directory for how to set up continuous building using cc.
+      Browse here to <ulink
+      url="http://crawltools.archive.org:8080/cruisecontrol/buildresults/ArchiveOpenCrawler">crawltools</ulink>
+      to see what the continuous build website looks like (It may not always
+      be available).</para>
+
     </sect2>
   </sect1>
 
