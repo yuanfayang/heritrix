@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.DecimalFormat;
 
 import org.archive.util.FileUtils;
 
@@ -42,6 +43,7 @@ public class Checkpoint {
     public static final String INVALID = "INVALID";
     /** name of file written with timestamp into valid checkpoints */
     public static final String VALIDITY_STAMP_FILENAME = "valid";
+    int seriesNumber;
     String name;
     String timestamp;
     File directory;
@@ -55,6 +57,7 @@ public class Checkpoint {
     public Checkpoint(File directory) {
         this.directory = directory;
         name = directory.getName();
+        seriesNumber = Integer.parseInt(name);
         File validityStamp = new File(directory,VALIDITY_STAMP_FILENAME);
         if(validityStamp.exists()==false) {
             timestamp = INVALID;
@@ -69,10 +72,22 @@ public class Checkpoint {
         
     }
 
+//    private void calculateSeriesFromHistoryName() {
+//        String[] numbers = historyName.split("\\+");
+//        int total = 0;
+//        for (int i = 0; i<numbers.length; i++) {
+//            if(numbers[i].length()>0) {
+//                total += Integer.parseInt(numbers[i]);
+//            }
+//        }
+//        seriesNumber = total;
+//        seriesName = (new DecimalFormat("00000")).format(seriesNumber);
+//    }
+
     /**
      * Return whether this checkpoint appears complete/resumable
      * (has 'valid' stamp file)
-     * @return
+     * @return true if valid
      */
     public boolean isValid() {
         return timestamp != INVALID;
@@ -94,7 +109,7 @@ public class Checkpoint {
      * @return checkpoint's name with timestamp notation
      */
     public String getDisplayName() {
-        return getName()+" ["+getTimestamp()+"]";
+        return getName() + " ["+getTimestamp()+"]";
     }
 
     /**
