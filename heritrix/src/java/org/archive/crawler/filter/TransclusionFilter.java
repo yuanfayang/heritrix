@@ -80,12 +80,22 @@ public class TransclusionFilter extends Filter {
     public TransclusionFilter(String name) {
         super(name, "Transclusion filter");
 
-        addElementToDefinition(new SimpleType(ATTR_MAX_SPECULATIVE_HOPS, "", 
-            new Integer(DEFAULT_MAX_SPECULATIVE_HOPS)));
-        addElementToDefinition(new SimpleType(ATTR_MAX_REFERRAL_HOPS, "",
-            new Integer(DEFAULT_MAX_REFERRAL_HOPS)));
-        addElementToDefinition(new SimpleType(ATTR_MAX_EMBED_HOPS, "",
-            new Integer(DEFAULT_MAX_EMBED_HOPS)));
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_MAX_SPECULATIVE_HOPS,
+                "Maximum number of consecutive speculative (i.e. URIs extracted " +
+                "that we are not sure if they are embeds or not) hops to allow.",
+                new Integer(DEFAULT_MAX_SPECULATIVE_HOPS)));
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_MAX_REFERRAL_HOPS,
+                "Maximum number of consecutive referral hops to allow.",
+                new Integer(DEFAULT_MAX_REFERRAL_HOPS)));
+        addElementToDefinition(
+            new SimpleType(
+                ATTR_MAX_EMBED_HOPS,
+                "Maximum number of consecutive embed hops to allow.",
+                new Integer(DEFAULT_MAX_EMBED_HOPS)));
     }
 
     /* (non-Javadoc)

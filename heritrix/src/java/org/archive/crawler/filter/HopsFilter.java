@@ -39,6 +39,8 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class HopsFilter extends Filter {
+    
+    
     /**
      * @param name
      */
@@ -80,25 +82,11 @@ public class HopsFilter extends Filter {
                         .getAttribute(CrawlScope.ATTR_MAX_TRANS_HOPS, curi))
                         .intValue();
             } catch (AttributeNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                logger.severe(e.getMessage());
+                return true; // Basically the filter is inactive if this occurs.
             }
         }
 
         return (linkCount > maxLinkHops)|| (transCount>maxTransHops);
     }
-
-/*
-    public void initialize(CrawlerSettings settings) {
-        super.initialize(settings);
-        Scope scope = (Scope) getSettingsHandler().getModule(Scope.ATTR_NAME);
-        try {
-            maxLinkHops = ((Integer) scope.getAttribute(settings, Scope.ATTR_MAX_LINK_HOPS)).intValue();
-            maxTransHops = ((Integer) scope.getAttribute(settings, Scope.ATTR_MAX_TRANS_HOPS)).intValue();
-        } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-*/
 }
