@@ -346,6 +346,16 @@ public class CrawlURI extends CandidateURI
         // TODO: rename, this is actually processing-loop-attempts
         return fetchAttempts++;
     }
+    
+    /**
+     * Reset the number of fetch attempts back to zero. This is used by 
+     * Frontiers that repeatedly visit the same URIs. Thus they reset this
+     * counter each time it is visited <i>successfully</i>, making this a 
+     * count of attempts to fetch a URI successfully. 
+     */
+    public void resetFetchAttempts(){
+        fetchAttempts = 0;
+    }
 
     /**
      * Get the next processor to process this URI.
