@@ -37,9 +37,9 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	SimpleStore store;
 	ArrayList filters = new ArrayList();
 	private int maxLinkDepth = -1;
-	private int maxDeferrals = 5;
+	private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
 	private int maxRetries = 3;
-	private int retryDelay = 30000;
+	private int retryDelay = 15000;
 
 	int completionCount = 0;
 	int failedCount = 0;
@@ -318,10 +318,16 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				failureDisposition(curi);
 				return;
 			}
-			curi.getAList().remove("prerequisite-uri");
-			store.reinsert(curi);
 			logger.fine("inserting prereq at head "+prereq);
-			store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
+			CrawlURI prereqCuri = store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
+			if (prereqCuri.getStoreState()==URIStoreable.FINISHED) {
+				curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+				failureDisposition(curi);
+				return;
+			}
+			curi.getAList().remove("prerequisite-uri");
+			//store.reinsert(curi);
+			store.insertAfter(curi,prereqCuri);
 		} catch (URISyntaxException ex) {
 			Object[] array = { curi, curi.getPrerequisiteUri() };
 			controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
