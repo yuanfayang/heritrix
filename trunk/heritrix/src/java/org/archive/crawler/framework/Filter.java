@@ -23,12 +23,15 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.settings.ComplexType;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
+import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 
 /**
@@ -88,18 +91,38 @@ public class Filter extends CrawlerModule {
             logger.severe(e.getMessage());
         }
 
-        return applyInversion(curi) ^ innerAccepts(o);
+        boolean accept = returnTrueIfMatches(curi) == innerAccepts(o);
+
+        if (accept && logger.isLoggable(Level.FINEST)) {
+            // Log if filter returns true
+            ComplexType p = this.getParent();
+            if (p instanceof MapType) {
+                p = p.getParent();
+            }
+            String msg = this.toString() + " belonging to " + p.toString()
+                         + " accepted " + o.toString();
+            logger.finest(msg);
+        }
+
+        return accept;
     }
 
     /**
      * Checks to see if filter functionality should be inverted for this
-     * curi. Classes extending this class should override this method with
+     * curi.<p>
+     * 
+     * All filters will by default return true if curi is accepted by the
+     * filter. If this method returns false, then the filter will return true
+     * if doesn't match.<p>
+     *  
+     * Classes extending this class should override this method with
      * appropriate code.
+     * 
      * @param curi Current CrawlURI
-     * @return true if filter should be inverted, false otherwise.
+     * @return true for default behaviour, false otherwise.
      */
-    protected boolean applyInversion(CrawlURI curi){
-        return false;
+    protected boolean returnTrueIfMatches(CrawlURI curi){
+        return true;
     }
     
     /**

@@ -68,7 +68,7 @@ import org.archive.util.DevUtils;
 public class CrawlScope extends Filter {
     public static final String ATTR_NAME = "scope";
     public static final String ATTR_SEEDS = "seedsfile";
-    public static final String ATTR_EXCLUDE_FILTER = "excludeFilter";
+    public static final String ATTR_EXCLUDE_FILTER = "exclude-filter";
     public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
     public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 

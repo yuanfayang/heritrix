@@ -41,7 +41,7 @@ import org.archive.util.TextUtils;
  */
 public class URIRegExpFilter extends Filter {
     public static final String ATTR_REGEXP = "regexp";
-    public static final String ATTR_INVERTED = "accept-matches";
+    public static final String ATTR_MATCH_RETURN_VALUE = "if-match-return";
 
     /**
      * @param name
@@ -49,14 +49,8 @@ public class URIRegExpFilter extends Filter {
     public URIRegExpFilter(String name) {
         super(name, "URI regexp filter.");
         addElementToDefinition(
-            new SimpleType(
-                ATTR_INVERTED,
-                "Only allow matches. \nIf set to true all URIs matching the "
-                    + "regular expression will be allowed and only those that "
-                    + "don't match will be filtered out. If false then URIs "
-                    + "matching the regular expression will be filtered out "
-                    + "others will be accepted.",
-                new Boolean(false)));
+            new SimpleType(ATTR_MATCH_RETURN_VALUE, "What to return when" +
+                    " regular expression matches. \n", new Boolean(true)));
         addElementToDefinition(
                 new SimpleType(ATTR_REGEXP, "Java regular expression.", ""));
     }
@@ -70,7 +64,7 @@ public class URIRegExpFilter extends Filter {
         if(o instanceof CandidateURI) {
             input = ((CandidateURI)o).getURIString();
         } else if (o instanceof UURI ){
-            input = ((UURI)o).getUriString();
+            input = ((UURI)o).getURIString();
         } else {
             //TODO handle other inputs
             input = o.toString();
@@ -101,13 +95,12 @@ public class URIRegExpFilter extends Filter {
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Filter#applyInversion()
      */
-    protected boolean applyInversion(CrawlURI curi) {
-       boolean inverter = false;
+    protected boolean returnTrueIfMatches(CrawlURI curi) {
        try {
-           inverter = ((Boolean) getAttribute(ATTR_INVERTED, curi)).booleanValue();
+           return ((Boolean) getAttribute(ATTR_MATCH_RETURN_VALUE, curi)).booleanValue();
        } catch (AttributeNotFoundException e) {
            logger.severe(e.getMessage());
+           return true;
        }
-       return inverter;
     }
 }

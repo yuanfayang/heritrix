@@ -465,8 +465,7 @@ public class Frontier
 
         curi.incrementFetchAttempts();
 
-        try
-        {
+        try {
             noteProcessingDone(curi);
             // snooze queues as necessary
             updateScheduling(curi);
@@ -474,24 +473,21 @@ public class Frontier
 
             logLocalizedErrors(curi);
 
-            if(curi.getFetchStatus() > 0)
-            {
+            if(curi.getFetchStatus() > 0) {
                 // Regard any status larger then 0 as success.
                 successDisposition(curi);
+                return;
             }
-            else if (needsRetrying(curi))
-            {
+            else if (needsRetrying(curi)) {
                 // Consider errors which can be retried
                 scheduleForRetry(curi);
             }
-            else if(isDisregarded(curi))
-            {
+            else if(isDisregarded(curi)) {
                 // Check for codes that mean that while we the crawler did
                 // manage to get it it must be disregarded for any reason.
                 disregardDisposition(curi);
             }
-            else
-            {
+            else {
                 // In that case FAILURE, note & log
                 failureDisposition(curi);
             }
@@ -505,8 +501,7 @@ public class Frontier
             logger.severe(e.getMessage());
         }
         
-        finally
-        {
+        finally {
             curi.processingCleanup();
         }
     }
@@ -527,14 +522,14 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().getUriString(),
+            curi.getUURI().getURIString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
             controller.runtimeErrors.log(
                 Level.WARNING,
-                curi.getUURI().getUriString(),
+                curi.getUURI().getURIString(),
                 array);
         }
         if (shouldBeForgotten(curi)) {
@@ -556,7 +551,9 @@ public class Frontier
             case S_ROBOTS_PRECLUDED :
                  // they don't want us to have it
             case S_OUT_OF_SCOPE :
-                 // filtered out
+                 // filtered out by scope
+            case S_BLOCKED_BY_USER :
+                 // filtered out by user
             case S_TOO_MANY_EMBED_HOPS :
                  // too far from last true link
             case S_TOO_MANY_LINK_HOPS :
@@ -580,7 +577,7 @@ public class Frontier
                 Object array[] = { curi, iter.next() };
                 controller.localErrors.log(
                     Level.WARNING,
-                    curi.getUURI().getUriString(),
+                    curi.getUURI().getURIString(),
                     array);
             }
             // once logged, discard
@@ -610,7 +607,7 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().getUriString(),
+            curi.getUURI().getURIString(),
             array);
 
         // note that CURI has passed out of scheduling
@@ -932,14 +929,14 @@ public class Frontier
         Object array[] = { curi };
         controller.uriProcessing.log(
             Level.INFO,
-            curi.getUURI().getUriString(),
+            curi.getUURI().getURIString(),
             array);
 
         // if exception, also send to crawlErrors
         if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
             controller.runtimeErrors.log(
                 Level.WARNING,
-                curi.getUURI().getUriString(),
+                curi.getUURI().getURIString(),
                 array);
         }
         if (shouldBeForgotten(curi)) {
@@ -1077,6 +1074,7 @@ public class Frontier
     private boolean shouldBeForgotten(CrawlURI curi) {
         switch(curi.getFetchStatus()) {
             case S_OUT_OF_SCOPE:
+            case S_BLOCKED_BY_USER:
             case S_TOO_MANY_EMBED_HOPS:
             case S_TOO_MANY_LINK_HOPS:
                 return true;
@@ -1213,7 +1211,7 @@ public class Frontier
                 {
                     CrawlURI cu = (CrawlURI)q[i];
                     rep.append("   Snooze item " + (i+1) + " - " + "CrawlUri" + "\n");
-                    rep.append("     UURI:           " + cu.getUURI().getUriString() + " " + cu.getPathFromSeed() + "\n");
+                    rep.append("     UURI:           " + cu.getUURI().getURIString() + " " + cu.getPathFromSeed() + "\n");
                     rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
                     rep.append("     Wakes in: " + (cu.getWakeTime()-System.currentTimeMillis()) + " msec\n");
                 }
@@ -1229,7 +1227,7 @@ public class Frontier
             {
                 CrawlURI cu = (CrawlURI)inProcessMap.get(q.next());
                 rep.append("   In process CrawlUri " + (i++) + "\n");
-                rep.append("     UURI:           " + cu.getUURI().getUriString() + " " + cu.getPathFromSeed() + "\n");
+                rep.append("     UURI:           " + cu.getUURI().getURIString() + " " + cu.getPathFromSeed() + "\n");
                 rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
             }
         }
@@ -1245,14 +1243,14 @@ public class Frontier
                 {
                     CrawlURI cu = (CrawlURI)qn;
                     rep.append("   Held item " + (i++) + " is a CrawlURI\n");
-                    rep.append("     UURI:           " + cu.getUURI().getUriString() + " " + cu.getPathFromSeed() + "\n");
+                    rep.append("     UURI:           " + cu.getUURI().getURIString() + " " + cu.getPathFromSeed() + "\n");
                     rep.append("     Fetch attempts: " + cu.getFetchAttempts () + "\n");
                 }
                 else if(qn instanceof UURI)
                 {
                     UURI uu = (UURI)qn;
                     rep.append("   Held item " + (i++) + " is a UURI\n");
-                    rep.append("     UURI:           " + uu.getUriString() + "\n");
+                    rep.append("     UURI:           " + uu.getURIString() + "\n");
                 }
                 else
                 {

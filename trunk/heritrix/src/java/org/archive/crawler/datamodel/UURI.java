@@ -288,8 +288,7 @@ public class UURI implements Serializable {
 
 
     public String toExternalForm(){
-
-    return uri.toString();
+        return uri.toString();
     }
 
     /* (non-Javadoc)
@@ -361,7 +360,7 @@ public class UURI implements Serializable {
     /**
      * @return The uri as a string.
      */
-    public String getUriString() {
+    public String getURIString() {
         return uriString;
     }
 

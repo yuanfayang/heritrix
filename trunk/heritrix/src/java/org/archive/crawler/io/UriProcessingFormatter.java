@@ -53,9 +53,8 @@ public class UriProcessingFormatter
 
         String length = NA;
         String mime = NA;
-        String uri = curi.getUURI().getUriString();
-        if (curi.isHttpTransaction())
-        {
+        String uri = curi.getUURI().getURIString();
+        if (curi.isHttpTransaction()) {
             if(curi.getContentLength()>=0) {
                 length = Long.toString(curi.getContentLength());
             } else if (curi.getContentSize()>0) {
@@ -88,12 +87,11 @@ public class UriProcessingFormatter
 
 
         Object via = curi.getVia();
-        if (via instanceof CandidateURI)
-        {
-            via = ((CandidateURI)via).getUURI().getUriString();
+        if (via instanceof CandidateURI) {
+            via = ((CandidateURI)via).getUURI().getURIString();
         }
         if (via instanceof UURI) {
-            via = ((UURI)via).getUriString();
+            via = ((UURI)via).getURIString();
         }
 
         return ArchiveUtils.get17DigitDate(time)
