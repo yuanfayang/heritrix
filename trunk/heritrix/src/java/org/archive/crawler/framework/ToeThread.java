@@ -132,9 +132,9 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 			}
 		
 			controller.getFrontier().finished(currentCuri);
-			lastFinishTime = System.currentTimeMillis();
 			synchronized(pool) {
 				currentCuri = null;
+                lastFinishTime = System.currentTimeMillis();
 				pool.noteAvailable(this);
 			}
 		}
@@ -203,9 +203,15 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 		rep.append("     Serial number: "+serialNumber+"\n");
 		
 		long now = System.currentTimeMillis();
+        
+            rep.append("     Availible: "+(isAvailable()?"True":"False")+"\n");
 		
 		if(lastFinishTime > lastStartTime)
 		{
+            if(isAvailable()==false){
+                rep.append("     ERROR THIS THREAD SHOULD BE AVAILIBLE!!!!!");
+                rep.append("       currentCuri: "+currentCuri.getURIString()+"\n");
+            }
 			// That means we finished something after we last started something
 			// or in other words we are not working on anything.
 			rep.append("     Status:    WAITING\n");
