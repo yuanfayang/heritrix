@@ -37,8 +37,6 @@ public class Heritrix {
 	public void instanceMain(String[] args) {
 		// Default crawlOrder
 		String crawlOrderFile = "test-config/order.xml";
-		CrawlOrder order;
-		CrawlController controller = new CrawlController();
 
 		try {
 			switch (args.length) {
@@ -49,8 +47,9 @@ public class Heritrix {
 					break;
 				case 2 :
 					if (args[0].equals("-no-wui")) {
+						CrawlController controller = new CrawlController();
 						crawlOrderFile = args[1];
-						order = CrawlOrder.readFromFile(crawlOrderFile);
+						CrawlOrder order = CrawlOrder.readFromFile(crawlOrderFile);
 						controller.initialize(order);
 						controller.startCrawl();
 						break;
