@@ -347,7 +347,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             if (complexType.getParent() == null) {
                 // Top level controller element
                 elementName = controllerElement;
-            } else if (settings.getParent() != null && complexType.getSettingsHandler().getModuleFromRegistry(complexType.getName()) != null) {
+            } else if (settings.getParent() != null && complexType.getSettingsHandler().getModule(complexType.getName()) != null) {
                 // This is not the order file and we are referencing an object
                 elementName = objectElement;
             } else {

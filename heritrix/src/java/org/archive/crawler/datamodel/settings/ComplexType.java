@@ -24,6 +24,9 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
@@ -40,12 +43,14 @@ import org.archive.crawler.datamodel.CrawlURI;
  * 
  * @author John Erik Halse
  */
-public class ComplexType implements DynamicMBean {
+public abstract class ComplexType implements DynamicMBean, Type {
     private AbstractSettingsHandler settingsHandler;
     private ComplexType parent;
     private String name;
     private String description;
     private String absoluteName;
+    private final ArrayList definition = new ArrayList();
+    private boolean initialized = false;
 
     /**
      * Private constructor to make sure that no one 
@@ -67,66 +72,35 @@ public class ComplexType implements DynamicMBean {
         settingsHandler.addToComplexTypeRegistry(this);
         settingsHandler.getSettingsObject(null).addComplexType(this);
         settingsHandler.addToModuleRegistry((CrawlerModule) this);
-    }
-
-    protected void setDefaults() {
-        // Standard null implementation
+        initialize();
     }
 
     public CrawlerSettings globalSettings() {
         return settingsHandler.getSettingsObject(null);
     }
 
-    public void addElementType(
-        String name,
-        String description,
-        boolean overrideable,
-        Object[] legalValues,
-        Object defaultValue) {
-        addElementType(
-            globalSettings(),
-            name,
-            description,
-            overrideable,
-            legalValues,
-            defaultValue);
-    }
-
-    public void addElementType(
-        CrawlerSettings settings,
-        String name,
-        String description,
-        boolean overrideable,
-        Object[] legalValues,
-        Object defaultValue) {
+    public Type addElement(CrawlerSettings settings, Type type) {
         getDataContainer(settings).addElementType(
-            name,
-            description,
-            overrideable,
-            legalValues,
-            defaultValue);
+            type.getName(),
+            type.getDescription(),
+            true,
+            null,
+            type.getDefaultValue());
+        if(type instanceof ComplexType) {
+            addComplexType(settings, (ComplexType) type);
+            ((ComplexType) type).initialize();
+        }
+        return type;
     }
 
-    public void addElementType(
-        String name,
-        String description,
-        Object defaultValue) {
-        addElementType(name, description, true, null, defaultValue);
-    }
-
-    public ComplexType addComplexType(ComplexType object) {
-        return addComplexType(globalSettings(), object);
-    }
-
-    public ComplexType addComplexType(CrawlerSettings settings, ComplexType object) {
+    private ComplexType addComplexType(CrawlerSettings settings, ComplexType object) {
         if(this.settingsHandler == null) {
             throw new IllegalStateException("Can't add ComplexType to 'free' ComplexType");
         }
         object.parent = this;
         object.settingsHandler = getSettingsHandler();
         object.absoluteName = getAbsoluteName() + '/' + object.getName();
-        addElementType(settings, object.getName(), object.getDescription(), true, null, object);
-
+        
         if (settings.getScope() == null) {
             // We're working with the global order file
             getSettingsHandler().addToComplexTypeRegistry(object);
@@ -137,7 +111,6 @@ public class ComplexType implements DynamicMBean {
         }
         settings.addComplexType(object);
 
-        object.setDefaults();
         return object;
     }
 
@@ -172,7 +145,7 @@ public class ComplexType implements DynamicMBean {
     }
 
     /*
-    public Object getAttribute(String name, CrawlerSettings settings) {
+    public Object getAttribute(CrawlerSettings settings, String name) {
         DataContainer data = settings.getData(getAbsoluteName());
         if(data == null) {
             try {
@@ -287,5 +260,29 @@ public class ComplexType implements DynamicMBean {
      */
     public void setDescription(String string) {
         description = string;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.Type#getDefaultValue()
+     */
+    public Object getDefaultValue() {
+        return this;
+    }
+
+    public Type addElementToDefinition(Type type) {
+        definition.add(type);
+        return type;
+    }
+
+    protected void initialize() {
+        Iterator it = definition.iterator();
+        while (it.hasNext()) {
+            addElement(globalSettings(), (Type) it.next());
+        }
+        initialized = true;
+    }
+    
+    public boolean initialized() {
+        return initialized;
     }
 }

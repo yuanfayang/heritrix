@@ -68,7 +68,7 @@ public abstract class AbstractSettingsHandler {
 		{STRING, "java.lang.String"},
 		{OBJECT, "org.archive.crawler.datamodel.settings.CrawlerModule"},
 		{TIMESTAMP, "java.util.Date"},
-		{MAP, "org.archive.crawler.datamodel.settings.ComplexType"},
+		{MAP, "org.archive.crawler.datamodel.settings.MapType"},
 		{INTEGER_LIST, "org.archive.crawler.datamodel.settings.IntegerList"},
 		{LONG_LIST, "org.archive.crawler.datamodel.settings.LongList"},
 		{FLOAT_LIST, "org.archive.crawler.datamodel.settings.FloatList"},
@@ -91,7 +91,6 @@ public abstract class AbstractSettingsHandler {
 	public AbstractSettingsHandler() {
         controller = new Controller(); // TODO: Change this to real controller
         controller.setAsController(this);
-        controller.setDefaults();
 	}
 
 	/**
@@ -128,7 +127,7 @@ public abstract class AbstractSettingsHandler {
 	 * @param name
 	 * @return
 	 */
-	protected CrawlerModule getModuleFromRegistry(String name) {
+	public CrawlerModule getModule(String name) {
 		return (CrawlerModule) moduleRegistry.get(name);
 	}
 	

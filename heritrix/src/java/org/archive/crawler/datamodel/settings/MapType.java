@@ -1,8 +1,8 @@
-/* CrawlerModule
+/* MapType
  * 
  * $Id$
  * 
- * Created on Dec 17, 2003
+ * Created on Jan 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
  *
@@ -25,27 +25,37 @@
 package org.archive.crawler.datamodel.settings;
 
 /**
- * Superclass of all modules that should be configurable.
  * 
  * @author John Erik Halse
+ *
  */
-public class CrawlerModule extends ComplexType {
-	/**
-	 * @param parent
-	 * @param name
-	 * @param description
-	 */
-	public CrawlerModule(String name, String description) {
-		super(name, description);
-	}
+public class MapType extends ComplexType {
+
+    /**
+     * @param name
+     * @param description
+     */
+    public MapType(String name, String description) {
+        super(name, description);
+    }
+/*
+    public Type addElementToDefinition(Type type) {
+        if(!(type instanceof MapType)) {
+            return super.addElementToDefinition(type);
+        } else {
+            throw new IllegalArgumentException("Nested maps are not allowed.");
+        }
+    }
+    */
     
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.settings.ComplexType#addElement(org.archive.crawler.datamodel.settings.CrawlerSettings, org.archive.crawler.datamodel.settings.Type)
      */
     public Type addElement(CrawlerSettings settings, Type type) {
-        if(initialized()) {
-            throw new IllegalStateException("Not allowed to add elements to modules");
+        if(!(type instanceof MapType)) {
+            return super.addElement(settings, type);
+        } else {
+            throw new IllegalArgumentException("Nested maps are not allowed.");
         }
-        return super.addElement(settings, type);
     }
 }
