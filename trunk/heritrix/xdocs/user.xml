@@ -294,6 +294,32 @@ scenario once the current job has completed, the next job will not be started.
 </p>
 </subsection>
 </section>
+<section name="URI Processing Chains">
+        <img src="./images/processing_steps.png"
+        alt="Processing Steps" style="width: 198px; height: 470px;"
+        align="right" />
+
+    <p>Each URI taken off the Frontier queue runs through the
+    <code>Processing Chains</code> listed in the diagram shown on the right.
+    URIs are always processed in the order shown in the diagram unless
+    a particular processor throws a fatal error.  In this circumstance, 
+    processing skips to the end, to the Post-processing chain, for cleanup.</p>
+
+    <p>Each processing chain is made up of zero or more individual processors.
+    For example, the extractor processing chain might comprise the
+    <code>ExtractorHTML</code>, an <code>ExtractorJS</code>, and
+    the <code>ExtractorUniversal</code> processors.
+    Within a processing step, the order in which processors are run is the
+    order in which processors are listed in the job order file.</p>
+
+    <p>Generally, particular processors only make sense with in the context of 
+    one particular processing chain. For example, it wouldn't make sense
+    to run the FetchHTTP processor in the Post-processing chain.  The UI
+    will only list those processors that make sense within the context
+    of the current processing chain.</p>
+
+</section>
+
 <section name="Environment Variables">
     <subsection name="HERITRIX_HOME">
     <p>Set this environment variable to point at the heritrix home directory.
