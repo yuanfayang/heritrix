@@ -52,7 +52,7 @@ public class ObjectPlusFilesOutputStream extends ObjectOutputStream {
      */
     public ObjectPlusFilesOutputStream(OutputStream out, File topDirectory) throws IOException {
         super(out);
-        pushAuxiliaryDirectory(topDirectory);
+        pushAuxiliaryDirectory(topDirectory.getAbsolutePath());
     }
     
     /**
@@ -61,8 +61,8 @@ public class ObjectPlusFilesOutputStream extends ObjectOutputStream {
      * 
      * @param dir
      */
-    public void pushAuxiliaryDirectory(File dir) {
-        auxiliaryDirectoryStack.addFirst(dir);
+    public void pushAuxiliaryDirectory(String dir) {
+        auxiliaryDirectoryStack.addFirst(new File(getAuxiliaryDirectory(),dir));
     }
     
     /**

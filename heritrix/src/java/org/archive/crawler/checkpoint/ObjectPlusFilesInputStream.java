@@ -57,16 +57,16 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
      * @param in
      * @throws java.io.IOException
      */
-    public ObjectPlusFilesInputStream(InputStream in) throws IOException {
+    public ObjectPlusFilesInputStream(InputStream in, File storeDir) throws IOException {
         super(in);
-        // TODO Auto-generated constructor stub
+        pushAuxiliaryDirectory(storeDir.getAbsolutePath());
     }
     
     /**
      * @param dir
      */
-    public void pushAuxiliaryDirectory(File dir) {
-        auxiliaryDirectoryStack.addFirst(dir);
+    public void pushAuxiliaryDirectory(String dir) {
+        auxiliaryDirectoryStack.addFirst(new File(getAuxiliaryDirectory(),dir));
     }
     
     /**
