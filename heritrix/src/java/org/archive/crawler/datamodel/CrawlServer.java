@@ -57,6 +57,7 @@ public class CrawlServer implements Serializable {
     private transient SettingsHandler settingsHandler;
     RobotsExclusionPolicy robots;
     long robotsFetched = ROBOTS_NOT_FETCHED;
+    boolean validRobots = false;
     Checksum robotstxtChecksum;
 
     // how many consecutive connection errors have been encountered;
@@ -122,10 +123,18 @@ public class CrawlServer implements Serializable {
             settingsHandler.getOrder().getRobotsHonoringPolicy();
 
         robotsFetched = System.currentTimeMillis();
+
+        if (curi.getFetchStatus() < 0 || curi.isHttpTransaction() == false) {
+            // robots.txt lookup failed.
+            validRobots = false;
+            return;
+        } else {
+            validRobots = true;   
+        }
+        
         if (curi.getFetchStatus() != 200 ||
                 honoringPolicy.getType(getSettings(curi.getUURI())) ==
-                    RobotsHonoringPolicy.IGNORE || 
-                        curi.isHttpTransaction() == false)
+                    RobotsHonoringPolicy.IGNORE)
         {
             // not found or other errors == all ok for now
             // TODO: consider handling server errors, redirects differently
@@ -170,7 +179,6 @@ public class CrawlServer implements Serializable {
                 contentBodyStream.close();
             }
         }
-        return;
     }
 
     /**
@@ -303,4 +311,14 @@ public class CrawlServer implements Serializable {
         }
         this.avatars.add(ca);
     }
+	/**
+     * If true then valid robots.txt information has been retrived. If false
+     * either no attempt has been made to fetch robots.txt or the attempt
+     * failed.
+     * 
+	 * @return Returns the validRobots.
+	 */
+	public boolean isValidRobots() {
+		return validRobots;
+	}
 }

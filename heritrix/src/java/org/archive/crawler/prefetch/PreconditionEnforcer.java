@@ -130,8 +130,9 @@ public class PreconditionEnforcer
      * Consider the robots precondition.
      * 
      * @param curi CrawlURI we're checking for any required preconditions.
-     * @return True, if this <code>curi</code> has a precondition.  False if
-     * we can precede to process this url.
+     * @return True, if this <code>curi</code> has a precondition or processing
+     *         should be terminated for some other reason.  False if
+     *         we can precede to process this url.
      */
     private boolean considerRobotsPreconditions(CrawlURI curi) {
         // treat /robots.txt fetches specially
@@ -166,16 +167,25 @@ public class PreconditionEnforcer
             return true;
         }
         // test against robots.txt if available
-        String ua = getController().getOrder().getUserAgent(curi);
-        if( curi.getServer().getRobots().disallows(curi, ua)) {
-            // Don't fetch and turn off later stages of processing.
+        if(curi.getServer().isValidRobots()){
+            String ua = getController().getOrder().getUserAgent(curi);
+            if( curi.getServer().getRobots().disallows(curi, ua)) {
+                // Don't fetch and turn off later stages of processing.
+                curi.skipToProcessorChain(getController().getPostprocessorChain());
+                curi.setFetchStatus(S_ROBOTS_PRECLUDED);
+                curi.getAList().putString("error","robots.txt exclusion");
+                logger.fine("robots.txt precluded " + curi);
+                return true;
+            }
+            return false;
+        } else {
+            // No valid robots found => Attempt to get robots.txt failed
             curi.skipToProcessorChain(getController().getPostprocessorChain());
-            curi.setFetchStatus(S_ROBOTS_PRECLUDED);
-            curi.getAList().putString("error","robots.txt exclusion");
-            logger.fine("robots.txt precluded " + curi);
+            curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+            curi.getAList().putString("error","robots.txt prerequisite failed");
+            logger.fine("robots.txt prerequisite failed " + curi);
             return true;
         }
-        return false;
     }
 
     /**
