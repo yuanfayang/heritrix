@@ -83,7 +83,6 @@ public class SeedsInputIterator implements Iterator {
 		// next is guaranteed set by a loadNext which returned true
 		UURI retVal = next;
 		next = null;
-		System.out.println("SEED: " + retVal.toExternalForm());
 		return retVal;
 	}
 
