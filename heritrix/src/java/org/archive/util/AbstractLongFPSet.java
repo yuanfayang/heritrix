@@ -29,22 +29,24 @@ import java.util.logging.Logger;
 
 /**
  * Shell of functionality for a Set of primitive long fingerprints, held
- * in an array of possibly-empty slots. The implementation of that holding
- * array is delegated to subclasses.
+ * in an array of possibly-empty slots.
+ * 
+ * The implementation of that holding array is delegated to subclasses.
  *
- * Capacity is always a power of 2.
+ * <p>Capacity is always a power of 2.
  *
- * Fingerprints are already assumed to be well-distributed, so the
+ * <p>Fingerprints are already assumed to be well-distributed, so the
  * hashed position for a value is just its high-order bits.
  *
  * @author gojomo
- *
+ * @version $Date$, $Revision$
  */
 public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
     private static Logger logger =
         Logger.getLogger("org.archive.util.AbstractLongFPSet");
 
-    /** A constant used to indicate that a slot in the set storage is empty.
+    /**
+     * A constant used to indicate that a slot in the set storage is empty.
      * A zero or positive value means slot is filled
      */
     protected static byte EMPTY = -1;
@@ -52,7 +54,7 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
     /** the capacity of this set, specified as the exponent of a power of 2 */
     protected int capacityPowerOfTwo;
 
-    /** the load factor, as a fraction.  This gives the amount of free space
+    /** The load factor, as a fraction.  This gives the amount of free space
      * to keep in the Set. */
     protected float loadFactor;
 
@@ -65,14 +67,16 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
      */
     public AbstractLongFPSet() {
         super();
-        // TODO Auto-generated constructor stub
     }
-    /** Create a new AbstractLongFPSet with a given capacity and load Factor
+    
+    /**
+     * Create a new AbstractLongFPSet with a given capacity and load Factor
      *
      * @param capacityPowerOfTwo The capacity as the exponent of a power of 2.
      *  e.g if the capacity is <code>4</code> this means <code>2^^4</code>
      * entries
-     * @param loadFactor the load factor for the set
+     * @param loadFactor The load factor as a fraction.  This gives the amount
+     * of free space to keep in the Set.
      */
     public AbstractLongFPSet(final int capacityPowerOfTwo, float loadFactor) {
         this.capacityPowerOfTwo = capacityPowerOfTwo;
@@ -80,7 +84,8 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
         this.count = 0;
     }
 
-    /** Does this set contain the given value?
+    /**
+     * Does this set contain the given value?
      *
      * @see org.archive.util.LongFPSet#contains(long)
      */
@@ -93,23 +98,26 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
         return false;
     }
 
-    /** Check the state of a slot in the storage.
+    /**
+     * Check the state of a slot in the storage.
      *
      * @param i the index of the slot to check
      * @return -1 if slot is filled; nonegative if full.
      */
     protected abstract int getSlotState(long i);
 
-    /** Note access (hook for subclass cache-replacement strategies)
+    /**
+     * Note access (hook for subclass cache-replacement strategies)
      *
-     * @param index
+     * @param index The index of the slot to check.
      */
     private void noteAccess(long index) {
         // by default do nothing
         // cache subclasses may use to update access counts, etc.
     }
 
-    /** Return the number of entries in this set.
+    /**
+     * Return the number of entries in this set.
      *
      * @see org.archive.util.LongFPSet#count()
      */
@@ -117,7 +125,8 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
         return count;
     }
 
-    /** Add the given value to this set
+    /**
+     * Add the given value to this set
      *
      * @see org.archive.util.LongFPSet#add(long)
      */
@@ -147,9 +156,9 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
 
     /**
      * Make additional space to keep the load under the target
-     * loadFactor level. Subclasses may grow or discard entries
-     * to satisfy.
-     *
+     * loadFactor level.
+     * 
+     * Subclasses may grow or discard entries to satisfy.
      */
     protected abstract void makeSpace();
 
@@ -161,18 +170,20 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
      */
     protected abstract void setAt(long i, long l);
 
-    /** Get the stored value at the given slot.
+    /** 
+     * Get the stored value at the given slot.
      *
      * @param i the slot index
      * @return The stored value at the given slot.
      */
     protected abstract long getAt(long i);
 
-    /** Given a value, check the store for its existence. If it exists, it
+    /** 
+     * Given a value, check the store for its existence. If it exists, it
      * will return the index where the value resides.  Otherwise it return
      * an encoded index, which is a possible storage location for the value.
      *
-     * Note, if we have a loading factor less than 1.0, there should always
+     * <p>Note, if we have a loading factor less than 1.0, there should always
      * be an empty location where we can store the value
      *
      * @param val the fingerprint value to check for
@@ -210,9 +221,6 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
         return (val >>> (64 - capacityPowerOfTwo));
     }
 
-    /* @(non-Javadoc)
-     * @see org.archive.util.LongFPSet#remove(long)
-     */
     public boolean remove(long l) {
         long i = indexFor(l);
         if (!slotHasData(i)) {
@@ -252,14 +260,8 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
         }
     }
 
-    /**
-     * @param index
-     */
     protected abstract void clearAt(long index);
 
-    /**
-     *
-     */
     protected abstract void relocate(long value, long fromIndex, long toIndex);
 
     /**
@@ -286,7 +288,8 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
         return - (index + 1);
     }
 
-    /** given a slot index, which could or could not be empty, return it as
+    /** 
+     * Given a slot index, which could or could not be empty, return it as
      * a slot index indicating an empty slot
      * @param index the slot index to convert
      * @return the index, converted to represent an empty slot
@@ -298,7 +301,8 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
         return -index - 1;
     }
 
-    /** does this index represent a slot with data?
+    /** 
+     * Does this index represent a slot with data?
      *
      * @param index the index to check
      * @return <code>true</code> if the slot has data
