@@ -87,6 +87,35 @@ public class UURIFactoryTest extends TestCase {
                uuri.toString().equals(tgtUri));
    }
    
+   public final void testWhitespaceEscaped() throws URIException {
+       // Test that we get all whitespace even if the uri is
+       // already escaped.
+       String uri = "http://archive.org/index%25 .html";
+       String tgtUri = "http://archive.org/index%25%20.html";
+       UURI uuri = UURIFactory.getInstance(uri);
+       assertTrue("Not equal " + uuri.toString(),
+               uuri.toString().equals(tgtUri));
+       uri = "http://archive.org/index%25\t.html";
+       tgtUri = "http://archive.org/index%25%09.html";
+       uuri = UURIFactory.getInstance(uri);
+       assertTrue("Not equal " + uuri.toString(),
+               uuri.toString().equals(tgtUri));
+       uri = "http://archive.org/index%25\u001D.html";
+       tgtUri = "http://archive.org/index%25%1D.html".toLowerCase();
+       uuri = UURIFactory.getInstance(uri);
+       assertTrue("Not equal " + uuri.toString(),
+               uuri.toString().equals(tgtUri));
+       uri = "http://gemini.info.usaid.gov/directory/" +
+           "pbResults.cfm?&urlNameLast=Adamson";
+       tgtUri = "http://gemini.info.usaid.gov/directory/faxResults.cfm?" +
+           "name=Charisse%20+Adamson,&location=RRB%20%20%20%205%2E08%2D006";
+       uuri = UURIFactory.getInstance(UURIFactory.getInstance(uri),
+           "faxResults.cfm?name=Charisse +Adamson,&location=" +
+           "RRB%20%20%20%205%2E08%2D006");
+       assertTrue("Not equal " + uuri.toString(),
+               uuri.toString().equals(tgtUri));
+   }
+   
    public final void testTrimSpaceNBSP() throws URIException {
        final String uri = "   http://archive.org/DIR WITH SPACES/" +
        UURIFactory.NBSP + "home.html    " + UURIFactory.NBSP + "   ";
