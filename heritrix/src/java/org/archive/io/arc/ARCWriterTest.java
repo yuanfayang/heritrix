@@ -373,4 +373,18 @@ extends TmpDirTestCase implements ARCConstants {
         assertTrue("No message " + err, 
             err.startsWith("WARNING Premature EOF before end-of-record"));
     }
+    
+    public void testCheckForWhiteSpace()
+    throws IOException {
+        ARCWriter writer =
+            createArcWithOneRecord("testCheckForWhiteSpace", true);
+        String x = writer.checkForWhiteSpace("one two");
+        assertTrue("Didn't remove space", x.equals("onetwo"));
+        x = writer.checkForWhiteSpace("     ");
+        assertTrue("Didn't remove space", x.equals("-"));
+        x = writer.checkForWhiteSpace("onetwo\n");
+        assertTrue("Didn't remove space", x.equals("onetwo"));
+        x = writer.checkForWhiteSpace("onetwo");
+        assertTrue("Didn't remove space", x.equals("onetwo"));
+    }
 }

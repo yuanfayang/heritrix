@@ -158,6 +158,8 @@ public class ARCWriter implements ARCConstants {
      */
     private static final Pattern METADATA_LINE_PATTERN =
         Pattern.compile("^\\S+ \\S+ \\S+ \\S+ \\S+(" + LINE_SEPARATOR + "?)$");
+    
+    private static final Pattern WHITE_SPACE = Pattern.compile("\\s");
 
     /**
      * Suffix given to files currently being written by Heritrix.
@@ -762,7 +764,13 @@ public class ARCWriter implements ARCConstants {
         if (hostIP == null) {
             throw new IOException("Null hostIP passed.");
         }
-
+        hostIP = checkForWhiteSpace(hostIP);
+        
+        if (contentType == null) {
+            throw new IOException("Mimetype is null");
+        }
+        contentType = checkForWhiteSpace(contentType);
+            
         if (uri == null || uri.length() <= 0) {
             throw new IOException("URI is empty: " + uri);
         }
@@ -779,6 +787,18 @@ public class ARCWriter implements ARCConstants {
             HEADER_FIELD_SEPARATOR + timeStamp +
             HEADER_FIELD_SEPARATOR + mimetype +
             HEADER_FIELD_SEPARATOR + recordLength + LINE_SEPARATOR;
+    }
+    
+    String checkForWhiteSpace(String inStr) {
+        Matcher m = WHITE_SPACE.matcher(inStr);
+        if (m.find()) {
+            // Replace spaces with empty string.
+            inStr = m.replaceAll("");
+        }
+        if (inStr.length() == 0) {
+            inStr = "-";
+        }
+        return inStr;
     }
     
     /**
