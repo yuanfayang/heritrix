@@ -69,7 +69,7 @@ implements CoreAttributeConstants {
     private static String ATTR_MAX_URL_LENGTH = "max-url-length";
 
     /** Maximum length for a URI that we try to match.*/
-    private static long DEFAULT_MAX_URL_LENGTH = 2083;
+    private static long DEFAULT_MAX_URL_LENGTH = UURI.MAX_URL_LENGTH;
 
     /**
      * Matches any string that begins with http:// or https:// followed by
