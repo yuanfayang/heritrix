@@ -28,9 +28,9 @@ package org.archive.crawler.admin.ui;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
@@ -49,7 +49,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
-import org.archive.crawler.datamodel.SeedList;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.ListType;
@@ -398,8 +397,7 @@ public class JobConfigureUtils {
     throws AttributeNotFoundException, MBeanException, ReflectionException,
             IOException {
         File seedfile = getSeedFile(hndlr);
-        SeedList seeds = new SeedList(seedfile, true);
-        writeReader(new BufferedReader(new InputStreamReader(seeds.getSeedStream())),
+        writeReader(new BufferedReader(new FileReader(seedfile)),
             out);
     }
     
