@@ -410,7 +410,8 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 
 		
 		int newChaffness = sourceCuri.getChaffness();
-		if(!sourceCuri.getUURI().getUri().getHost().equals(curi.getUURI().getUri().getHost())) {
+		if(sourceCuri.getUURI().getUri().getHost()==null ||
+		   sourceCuri.getUURI().getUri().getHost().equals(curi.getUURI().getUri().getHost())) {
 			newChaffness = 0;
 		} else {
 			BitSet scratch = (BitSet) sourceCuri.getFuzzy().clone();
