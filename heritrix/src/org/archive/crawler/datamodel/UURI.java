@@ -88,6 +88,11 @@ public class UURI {
 			}
 			u = u.normalize(); // factor out path cruft
 			String canonizedAuthority = u.getAuthority();
+			if(canonizedAuthority==null) {
+				logger.warning("bad URI: "+s+" relative to "+parent);
+				return null;
+			}
+		
 			// TODO fix the fact that this might clobber case-sensitive user-info
 			if (u.getScheme().equals("http")) {
 				// case-flatten host, remove default port

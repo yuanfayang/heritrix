@@ -9,6 +9,9 @@
 package org.archive.crawler.datamodel;
 
 /**
+ * CrawlURI attribute keys used by the core crawler
+ * classes.
+ * 
  * @author gojomo
  *
  */

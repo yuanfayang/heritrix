@@ -9,6 +9,10 @@ package org.archive.crawler.basic;
 import java.util.LinkedList;
 
 /**
+ * Ordered collection of items with the same "classKey". The 
+ * collection itself has a state, which may reflect where it
+ * is stored or what can be done with the contained items.
+ * 
  * @author gojomo
  *
  */

@@ -54,9 +54,10 @@ public class SimpleScheduler implements URIScheduler {
 				
 				try {
 					if(waitMax<0) {
-						System.out.println("breakin'");
+						logger.warning("negative wait "+waitMax+" ignored");
+					} else {
+						store.wait(waitMax);
 					}
-					store.wait(waitMax);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

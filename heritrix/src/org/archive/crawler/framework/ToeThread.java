@@ -13,6 +13,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.InstancePerThread;
 
 /**
+ * One "worker thread"; asks for CrawlURIs, processes them, 
+ * repeats unless told otherwise. 
  * 
  * @author Gordon Mohr
  */
@@ -35,18 +37,19 @@ public class ToeThread extends Thread {
 	public ToeThread(CrawlController c, int sn) {
 		controller = c;
 		serialNumber = sn;
+		setName("ToeThread #"+serialNumber);
 	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		logger.info("ToeThread #"+serialNumber+" started for order '"+controller.getOrder().getName()+"'");
+		logger.info(getName()+" started for order '"+controller.getOrder().getName()+"'");
 		while ( shouldCrawl ) {
 			processingLoop();
 		} 
 		controller.toeFinished(this);
-		logger.info("ToeThread #"+serialNumber+" finished for order '"+controller.getOrder().getName()+"'");
+		logger.info(getName()+" finished for order '"+controller.getOrder().getName()+"'");
 	}
 	
 	private synchronized void processingLoop() {
@@ -74,12 +77,12 @@ public class ToeThread extends Thread {
 				currentCuri = null;
 			} else {
 				// self-pause, because there's nothing left to crawl
-				logger.warning("ToeThread #"+serialNumber+" pausing: nothing to crawl");
+				logger.warning(getName()+" pausing: nothing to crawl");
 				paused = true;
 			}
 		} catch (OutOfMemoryError e) {
 			e.printStackTrace();
-			logger.warning("ToeThread #"+serialNumber+" pausing: out of memory error");
+			logger.warning(getName()+" pausing: out of memory error");
 			paused = true;
 		}
 	}
