@@ -118,7 +118,7 @@ public class ARCWriter
     /**
      * Directory into which we drop ARC files.
      */
-    private File outputDir = null;         
+    private File arcsDir = null;         
     
     /**
      * Use compression flag.
@@ -135,58 +135,49 @@ public class ARCWriter
     /**
      *  Output stream for arcFile.
      */
-    private OutputStream out = null;    
+    private OutputStream out = null;
 
     /**
-     * Append to arc files to assure uniqueness across threads in 
-     * the event multiple ARCWriters exist and are we are creating files
-     * concurrently.
-     * 
-     * This id should never be necessary.  This class assumes that never more 
-     * than one thread accessing the ARCWriter at any one time.  If this is not
-     * enforced, then we're sure to have myriad problems.  Retained as legacy.
-     * 
-     * TODO: Maybe give ARC files all the same base name and just have this
-     * id as the varient.  Will make it easier grouping ARC files written 
-     * by a particular instance.
+     * A running sequence used making unique ARC file names.
      */
-    private static int id = 0;  
+    private int id = 0;    
     
     
     /**
      * Constructor.
      *      
-     * @param outputDir Where to drop the ARC files.
+     * @param arcsDir Where to drop the ARC files.
      *
      * @exception IOException If passed directory does not exist or is not 
      * a directory.
      */
-    public ARCWriter(File outputDir)
+    public ARCWriter(File arcsDir)
         throws IOException
     {
-        this(outputDir, DEFAULT_ARC_FILE_PREFIX);
+        this(arcsDir, DEFAULT_ARC_FILE_PREFIX);
     }
 
     /**
      * Constructor.
      *     
-     * @param outputDir Where to drop the ARC files.
+     * @param arcsDir Where to drop the ARC files.
      * @param prefix ARC file prefix to use.
      *
      * @exception IOException If passed directory does not exist or is not 
      * a directory.
      */
-    public ARCWriter(File outputDir, String prefix)
+    public ARCWriter(File arcsDir, String prefix)
         throws IOException
     {
-        this(outputDir, prefix, DEFAULT_COMPRESS, DEFAULT_MAX_ARC_FILE_SIZE);
+        this(arcsDir, prefix, DEFAULT_COMPRESS, DEFAULT_MAX_ARC_FILE_SIZE);
     }
     
     /**
      * Constructor.
      *      
-     * @param outputDir Where to drop the ARC files.
-     * @param prefix ARC file prefix to use.
+     * @param arcsDir Where to drop the ARC files.
+     * @param prefix ARC file prefix to use.  If null, we use 
+     * DEFAULT_ARC_FILE_PREFIX.
      * @param compress Compress the ARC files written.  The compression is done
      * by individually gzipping each record added to the ARC file: i.e. the 
      * ARC file is a bunch of gzipped records concatenated together.
@@ -195,24 +186,12 @@ public class ARCWriter
      * @exception IOException If passed directory does not exist or is not 
      * a directory.
      */
-    public ARCWriter(File outputDir, String prefix, boolean compress,
+    public ARCWriter(File arcsDir, String prefix, boolean compress,
             int maxSize)
         throws IOException
     {
-        if (!outputDir.exists())
-        {
-            outputDir.mkdirs();
-        }
-        else
-        {
-            if (!outputDir.canWrite())
-            {
-                throw new IOException("Output dir " +
-                    outputDir.getAbsolutePath() + " not writeable.");
-            }
-        }
-        this.outputDir = outputDir;
-        this.prefix = prefix;
+        this.arcsDir = ArchiveUtils.ensureWriteableDirectory(arcsDir);
+        this.prefix = (prefix != null)? prefix: DEFAULT_ARC_FILE_PREFIX;
         this.compress = compress;
         if (maxSize < 0)
         {
@@ -260,19 +239,6 @@ public class ARCWriter
     }
     
     /**
-     * Increment ARC ID.
-     * 
-     * This method is synchronized though we assume no more than one instance
-     * of ARCWriter is possible. If more than one instance, we have problems.
-     * 
-     * @return Next ARC ID.
-     */
-    private synchronized int getNextId()
-    {
-        return ARCWriter.id++;
-    }
-    
-    /**
      * Create an ARC file.
      * 
      * @throws IOException
@@ -282,14 +248,37 @@ public class ARCWriter
     {
         close();
         String now = ArchiveUtils.get14DigitDate();
-        String name = prefix +  now + '-' + getNextId() + '.' + 
+        String name = prefix + getUniqueBasename(now) + '.' +
             ARC_FILE_EXTENSION + 
             ((this.compress)? '.' + COMPRESSED_FILE_EXTENSION: "");
-        this.arcFile = new File(outputDir, name);
+        this.arcFile = new File(arcsDir, name);
         this.out = new BufferedOutputStream(new FileOutputStream(this.arcFile));
         this.out.write(generateARCFileMetaData(now));
     }
    
+    /**
+     * Return a unique basename.
+     * 
+     * Name is timestamp + an every increasing sequence number.
+     * 
+     * @param now The current timestamp.
+     * 
+     * @return Unique basename.
+     */
+    private String getUniqueBasename(String now)
+    {
+        return now + '-' + Integer.toString(getNextId());
+    }
+    
+    /**
+     * @return Next id.
+     * @see #getUniqueBasename(String)
+     */
+    private synchronized int getNextId()
+    {
+        return id++;
+    }
+
     /**
      * Write out the ARCMetaData
      * 
@@ -595,11 +584,11 @@ public class ARCWriter
     }
 
     /**
-     * @return Output dir being used.
+     * @return Dir ARCare being dropped into.
      */
-    public File getOutputDir()
+    public File getArcsDir()
     {
-        return this.outputDir;
+        return this.arcsDir;
     }
     
     /**

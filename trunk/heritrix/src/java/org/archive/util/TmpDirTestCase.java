@@ -25,6 +25,7 @@
 package org.archive.util;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 
 import junit.framework.TestCase;
@@ -38,6 +39,7 @@ import junit.framework.TestCase;
  */
 public class TmpDirTestCase
     extends TestCase
+    implements FileFilter
 {
     /**
      * Name of the system property that holds pointer to tmp directory into
@@ -55,6 +57,12 @@ public class TmpDirTestCase
      * Directory to write temporary files to.
      */
     private File tmpDir = null;
+    
+    /**
+     * Store in here the file prefix for filefiltering done by some of the 
+     * unit tests.
+     */
+    private String fileFilterPrefix = null;
     
 
     public TmpDirTestCase()
@@ -96,12 +104,58 @@ public class TmpDirTestCase
         super.tearDown();
     }
     
-    
     /**
      * @return Returns the tmpDir.
      */
     public File getTmpDir()
     {
         return tmpDir;
+    }
+      
+    /**
+     * Delete any files left over from previous run.
+     * 
+     * @param basename Base name of files we're to clean up.
+     */
+    public void cleanUpOldFiles(String basename)
+    {
+        cleanUpOldFiles(getTmpDir(), basename);
+    }
+    
+    /**
+     * Delete any files left over from previous run.
+     * 
+     * @param basename Base name of files we're to clean up.
+     * @param basedir Directory to start cleaning in.
+     */
+    public void cleanUpOldFiles(File basedir, String basename)
+    {
+        File [] files = getListOfFiles(basedir, basename);
+        for (int i = 0; i < files.length; i++)
+        {
+            files[i].delete();
+        }
+    }
+    
+    /**
+     * @param basename Basename to look for.
+     * @return List of files in dir that start w/ passed basename.
+     */
+    protected File [] getListOfFiles(File dir, String basename)
+    {
+        this.fileFilterPrefix = basename;
+        return dir.listFiles(this);
+    }
+    
+    /**
+     * Return files that begin w/ {@link #fileFilterPrefix}
+     * 
+     * Implementation of the FileFilter.accept method.
+     * @param pathname File to filter.
+     * @return True if we are to include the passed file.
+     */
+    public boolean accept(File pathname)
+    {
+        return pathname.getName().startsWith(this.fileFilterPrefix);
     }
 }

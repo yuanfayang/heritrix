@@ -102,7 +102,7 @@
      -->
     <repository>
        <connection>scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/archive-crawler:ArchiveOpenCrawler</connection>
-        <url>http://cvs.sourceforge.net/viewcvs.py/archive-crawler/</url>
+        <url>http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler</url>
     </repository>
 
     <versions>
@@ -410,6 +410,27 @@
                 <license>IBM's Common Public License Version 0.5.</license>
             </properties>
         </dependency>
+        <dependency>
+            <id>commons-pool</id>
+            <version>1.1</version>
+            <url>http://jakarta.apache.org/site/binindex.cgi#commons-pool</url>
+            <properties>
+                <description>For object pooling.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+        <dependency>
+            <id>commons-collections</id>
+            <version>2.1</version>
+            <url>http://jakarta.apache.org/site/binindex.cgi#commons-collections</url>
+            <properties>
+                <description>Needed by commons-pool.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
+
   </dependencies>
 
   

@@ -35,20 +35,38 @@ import java.io.OutputStream;
  * Replays the bytes recorded from a RecordingInputStream or
  * RecordingOutputStream. 
  * 
+ * This InputStream supports mark and reset.
+ * 
  * @author gojomo
  */
 public class ReplayInputStream extends InputStream
 {    
-	protected BufferedInputStream diskStream;
-	protected byte[] buffer;
-	protected long size;
-	protected long position;
+	private BufferedInputStream diskStream;
+    private byte[] buffer;
+    private long position;
+    
+    /**
+     * Total size of stream content.
+     * 
+     * Size of data to replay.
+     */
+    private long size = -1;
     
     /**
      * Where the response body starts, if marked
      */
-    protected long responseBodyStart;
-	
+    protected long responseBodyStart = -1;
+    
+    /**
+     * The position the last time {@link #mark(int)} was called.
+     */
+	private long markpos = -1;
+    
+    /**
+     * The readlimit passed the last time mark was called.
+     */
+    private long readlimit = -1;
+    
     
 	/**
      * Constructor.
@@ -67,7 +85,7 @@ public class ReplayInputStream extends InputStream
             String backingFilename)
         throws IOException
     {
-		this(buffer,size,backingFilename);
+		this(buffer, size, backingFilename);
 		this.responseBodyStart = responseBodyStart;
 	}
 
@@ -94,8 +112,8 @@ public class ReplayInputStream extends InputStream
 	}
 
 	public long setToResponseBodyStart() {
-		position = responseBodyStart;
-		return position;
+		this.position = responseBodyStart;
+		return this.position;
 	}
 	
 	/* (non-Javadoc)
@@ -161,11 +179,57 @@ public class ReplayInputStream extends InputStream
 			diskStream.close();
 		} 
 	}
-	
-	/**
-	 * @return Amount THEORETICALLY remaining.
-	 */
-	public long remaining() {
-		return size - position;
-	}
+    
+    /* (non-Javadoc)
+     * @see java.io.InputStream#mark(int)
+     */
+    public synchronized void mark(int readlimit)
+    {
+        this.readlimit = readlimit;
+        this.markpos = this.position;
+    }
+
+    /* (non-Javadoc)
+     * @see java.io.InputStream#markSupported()
+     */
+    public boolean markSupported()
+    {
+        return true;
+    }
+
+    /* (non-Javadoc)
+     * @see java.io.InputStream#reset()
+     */
+    public synchronized void reset()
+        throws IOException
+    {
+        if (this.markpos == -1)
+        {
+            throw new IOException("Mark has not been called (markpos == -1).");
+        }
+        
+        // Adhere to the InputStream.reset contract -- only reset if we're 
+        // w/i readlimit.
+        if ((this.markpos - this.position) < this.readlimit)
+        {
+            this.position = markpos;
+        }
+    }
+    
+    /**
+     * Total size of stream content.
+     * @return Returns the size.
+     */
+    public long getSize()
+    {
+        return size;
+    }
+    
+    /**
+     * @return Amount THEORETICALLY remaining (TODO: Its not theoretical
+     * seemingly.  The class implemetentation depends on it being exact).
+     */
+    public long remaining() {
+        return size - position;
+    }
 }

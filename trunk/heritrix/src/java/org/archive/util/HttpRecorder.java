@@ -47,8 +47,25 @@ public class HttpRecorder
 	private static final int DEFAULT_OUTPUT_BUFFER_SIZE = 4096;
 	private static final int DEFAULT_INPUT_BUFFER_SIZE = 65536;
     
-	protected RecordingInputStream ris = null;
-	protected RecordingOutputStream ros = null;
+	private RecordingInputStream ris = null;
+    private RecordingOutputStream ros = null;
+    
+    /**
+     * Backing file basename.
+     * 
+     * Keep it around so can clean up backing files left on disk.
+     */
+    private String backingFileBasename = null;
+    
+    /**
+     * Backing file output stream suffix.
+     */
+    private static final String RECORDING_OUTPUT_STREAM_SUFFIX = ".ros";
+    
+   /**
+    * Backing file input stream suffix.
+    */
+    private static final String RECORDING_INPUT_STREAM_SUFFIX = ".ris";
 	
     
 	/**
@@ -63,10 +80,13 @@ public class HttpRecorder
 	public HttpRecorder(File tempDir, String backingFilenameBase) {
 		tempDir.mkdirs();
 		String tempDirPath = tempDir.getPath() + File.separatorChar;
-		ris = new RecordingInputStream(DEFAULT_INPUT_BUFFER_SIZE, 
-            tempDirPath + backingFilenameBase + ".ris", 2^20);
-		ros = new RecordingOutputStream(DEFAULT_OUTPUT_BUFFER_SIZE,
-            tempDirPath + backingFilenameBase + ".ros", 2^12);
+        this.backingFileBasename = 
+            (new File(tempDir.getPath(), backingFilenameBase))
+                .getAbsolutePath();
+		this.ris = new RecordingInputStream(DEFAULT_INPUT_BUFFER_SIZE, 
+            this.backingFileBasename + RECORDING_INPUT_STREAM_SUFFIX);
+		this.ros = new RecordingOutputStream(DEFAULT_OUTPUT_BUFFER_SIZE,
+            this.backingFileBasename + RECORDING_OUTPUT_STREAM_SUFFIX);
 	}
 
 	/**
@@ -125,8 +145,15 @@ public class HttpRecorder
 	 * @return A RIS.
 	 */
 	public RecordingInputStream getRecordedInput() {
-		return ris;
+		return this.ris;
 	}
+    
+    /**
+     * @return The RecordingOutputStream.
+     */
+    public RecordingOutputStream getRecordedOutput() {
+        return this.ros;
+    }
 
 	/**
 	 * Mark current position as the point where the HTTP headers end.
@@ -154,4 +181,53 @@ public class HttpRecorder
 			DevUtils.warnHandle(e, "Convert to runtime exception?");
 		}
 	}
+    
+    /**
+     * Clean up backing files.
+     * 
+     * @see java.lang.Object#finalize()
+     */
+    protected void finalize()
+        throws Throwable
+    {
+        try
+        {
+            this.cleanup();
+        }
+        
+        catch(Exception e)
+        {
+            // We're in finalize.  Not much we can do about this.
+            e.printStackTrace(System.out);
+        }
+        
+        super.finalize();
+    }
+    
+    /**
+     * Cleanup backing files.
+     * 
+     * Call when completely done w/ recorder.  Removes any backing files that
+     * may have been dropped.
+     */
+    public void cleanup()
+    {
+        this.close();
+        this.delete(this.backingFileBasename + RECORDING_OUTPUT_STREAM_SUFFIX);
+        this.delete(this.backingFileBasename + RECORDING_INPUT_STREAM_SUFFIX);   
+    }
+
+    /**
+     * Delete file if exists.
+     * 
+     * @param name Filename to delete.
+     */
+    private void delete(String name)
+    {
+        File f = new File(name);
+        if (f.exists())
+        {
+            f.delete();
+        }
+    }
 }
