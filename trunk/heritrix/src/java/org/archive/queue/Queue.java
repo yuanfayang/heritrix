@@ -38,7 +38,7 @@ import org.apache.commons.collections.Predicate;
 public interface Queue {
 
     /** Add an entry to the end of queue
-     * @param o the entry to queue
+     * @param obj the entry to queue
      */
     void enqueue(Object obj);
 
@@ -78,8 +78,6 @@ public interface Queue {
      * Releases queue from the obligation to return in the
      * next peek()/dequeue() the same object as returned by
      * any previous peek(). 
-     * 
-     * @return
      */
     void unpeek();
     
