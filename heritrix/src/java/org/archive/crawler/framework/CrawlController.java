@@ -876,10 +876,7 @@ public class CrawlController implements Serializable {
         this.progressStats = null;
 
         // Do cleanup.
-        if (this.statistics != null) {
-            this.statistics.cleanup();
-            this.statistics = null;
-        }
+        this.statistics = null;
         this.frontier = null;
         this.disk = null;
         this.scratchDisk = null;
