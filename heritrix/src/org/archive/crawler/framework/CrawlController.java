@@ -92,7 +92,7 @@ public class CrawlController {
 	}
 	
 	private void adjustToeCount() {
-		while(toes.size()<order.getCrawler().getMaxToes()) {
+		while(toes.size()<order.getBehavior().getMaxToes()) {
 			// TODO make number of threads self-optimizing
 			ToeThread newThread = new ToeThread(this);
 			toes.add(newThread);

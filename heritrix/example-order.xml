@@ -1,0 +1,8 @@
+<crawl-order name="example-crawl">
+ <comment>
+  A simple crawl for example purposes.
+ </comment>
+ <crawl-scope src="scope.xml" />
+ <crawler-behavior src="behavior.xml" />
+ <disk path="example-crawl" />
+</crawl-order>
