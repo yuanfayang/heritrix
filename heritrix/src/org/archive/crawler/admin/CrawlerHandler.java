@@ -252,7 +252,7 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		writer.write(
 			"<INPUT type=hidden name=CrawlerAction value=2>\n<br><INPUT TYPE=submit VALUE=\"UpdateOrder\">\n</FORM>");
 		writer.write(
-			"<FORM ACTION=\"http://localhost/Crawleraction\" METHOD=GET>\n<INPUT type=hidden name=CrawlerAction value=3>\n<br><INPUT TYPE=submit VALUE=\" StartCrawler \">\n</FROM>");
+			"<FORM ACTION=\"Crawleraction\" METHOD=GET>\n<INPUT type=hidden name=CrawlerAction value=3>\n<br><INPUT TYPE=submit VALUE=\" StartCrawler \">\n</FROM>");
 		writer.write(genPageEnd());
 		writer.flush();
 		buf.writeTo(out);
