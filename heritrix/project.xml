@@ -34,10 +34,10 @@
   <!--The group id shared by Internet Archive projects.-->
   <groupId>org.archive</groupId>
   
-  <!-- a unique name for this project -->
+  <!-- A unique name for this project -->
   <id>heritrix</id>
   
-  <!-- a short but descriptive name for the project -->
+  <!-- A short but descriptive name for the project -->
   <name>Heritrix</name>
   
   <!-- The version of the project under development, e.g.
@@ -56,7 +56,7 @@
     -->
   <currentVersion>1.3.0${version.build.suffix}</currentVersion>
   
-  <!-- details about the organization that 'owns' the project -->
+  <!-- Details about the organization that 'owns' the project -->
   <organization>
     <name>Internet Archive</name>
     <url>http://www.archive.org/</url>
