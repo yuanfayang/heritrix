@@ -1,17 +1,8 @@
 package org.archive.crawler.admin;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.util.Enumeration;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.CrawlJob;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.util.ArchiveUtils;
-
-import org.w3c.dom.Node;
 
 /**
  * @author Kristinn Sigurdsson
@@ -22,7 +13,7 @@ import org.w3c.dom.Node;
 
 public class SimpleCrawlJob implements CrawlJob
 {
-	protected int UID;
+	protected String UID;		//A UID issued by the CrawlJobHandler.
 	protected String sName;
 	protected String sFilename; //An XML file describing a crawl order (including path)
 	protected String sStatus;
@@ -30,12 +21,7 @@ public class SimpleCrawlJob implements CrawlJob
 	protected boolean isReadOnly = false;
 	protected int priority;
 	
-	protected OrderTransformation orderTransform;
-	protected Node orderNode;
-
-
-	
-	public SimpleCrawlJob(int UID, String name, String crawlorderfile, int priority)
+	public SimpleCrawlJob(String UID, String name, String crawlorderfile, int priority)
 	{
 		this.UID = UID;
 		this.priority = priority;
@@ -46,12 +32,12 @@ public class SimpleCrawlJob implements CrawlJob
 	}
 	
 	/**
-	 * Implemented to return [UID] 'crawl name'
+	 * Implemented to return 'crawl name' [UID]
 	 * 
 	 * @return
 	 */
 	public String getJobName() {
-		return "["+UID+"] " + sName;
+		return sName + " ["+UID+"]";
 	}
 
 	/**
@@ -157,59 +143,10 @@ public class SimpleCrawlJob implements CrawlJob
 		return stats;
 	}
 
-	public void createCrawlOrderFile(HttpServletRequest req, String filename)
-	{
-		Enumeration it = req.getParameterNames();
-		String name;
-		String seedsFileName = null;
-		String seeds = null;
-	
-		while (it.hasMoreElements()) 
-		{
-			name = it.nextElement().toString();
-			String value = req.getParameter(name);
-			if (name.equals("//seeds")) 
-			{
-				seeds = value;
-			} 
-			else 
-			{
-				if (name != null && value != null) 
-				{
-					if (name.equals("//seeds/@src")) 
-					{
-						seedsFileName = value;
-					}
-					orderTransform.setNodeValue(name, value);
-				}
-			}
-		}
-		if (seeds != null && seedsFileName != null) 
-		{
-			try 
-			{
-				BufferedWriter writer =
-					new BufferedWriter(
-						new FileWriter(ArchiveUtils.getFilePath(filename) + seedsFileName));
-				if (writer != null) 
-				{
-					writer.write(seeds);
-					writer.close();
-				}
-			}
-			catch (Exception e) 
-			{
-				// TODO: handle exception
-				e.printStackTrace();
-			}
-		}
-		orderTransform.serializeToXMLFile(AdminConstants.WEB_APP_PATH + filename);
-	}
-
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.CrawlJob#getUID()
 	 */
-	public int getUID() {
+	public String getUID() {
 		return UID;
 	}	
 }
