@@ -4,7 +4,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.basic;
+package org.archive.crawler.fetcher;
 
 import java.io.IOException;
 import java.io.InputStream;

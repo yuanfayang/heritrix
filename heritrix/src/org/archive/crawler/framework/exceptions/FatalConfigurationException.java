@@ -2,9 +2,10 @@
  * Created on Jul 29, 2003
  *
  */
-package org.archive.crawler.datamodel;
+package org.archive.crawler.framework.exceptions;
 
-import org.archive.crawler.datamodel.ConfigurationException;;
+import org.archive.crawler.framework.exceptions.ConfigurationException;
+;
 
 /**
  * @author Parker Thompson

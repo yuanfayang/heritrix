@@ -443,8 +443,6 @@ public class SimpleSelector extends XMLConfig implements CoreAttributeConstants,
 		}
 	}
 
-
-
 	/**
 	 * @param curi
 	 * @return
@@ -458,6 +456,8 @@ public class SimpleSelector extends XMLConfig implements CoreAttributeConstants,
 				return false;
 		}
 	}
+
+
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URISelector#initialize(org.archive.crawler.framework.CrawlController)
@@ -497,6 +497,4 @@ public class SimpleSelector extends XMLConfig implements CoreAttributeConstants,
 		}
 		return true;
 	}
-
-
 }

@@ -4,7 +4,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.basic;
+package org.archive.crawler.fetcher;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

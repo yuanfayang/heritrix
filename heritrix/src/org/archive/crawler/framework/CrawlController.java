@@ -17,12 +17,12 @@ import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
-import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FatalConfigurationException;
 import org.archive.crawler.datamodel.ServerCache;
-import org.archive.crawler.datamodel.InitializationException;
+import org.archive.crawler.datamodel.StatisticsTracker;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.io.CrawlErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
@@ -70,6 +70,7 @@ public class CrawlController {
 	CrawlScope scope;
 		
 	Processor firstProcessor;
+    Processor postprocessor;
 	LinkedHashMap processors = new LinkedHashMap(); 
 	List toes = new LinkedList(); /* of ToeThreads */;
 	int nextToeSerialNumber = 0;
@@ -112,6 +113,13 @@ public class CrawlController {
 
 		setupStatTracking();
 		setupCrawlModules();
+		setupToePool();
+		
+		// start periodic background logging of crawl statistics
+		Thread statLogger = new Thread(statistics);
+		statLogger.setName("StatLogger");
+		statLogger.start();
+		// TODO pause stat sampling when crawler paused
 	}
 
 	private void setupCrawlModules() throws FatalConfigurationException {
@@ -186,16 +194,11 @@ public class CrawlController {
 			}			
 		}
 		//statistics.setLogLevel(StatisticsTracker.VERBOSE_LOGGING);
-		
-		// start periodic background logging of crawl statistics
-		Thread statLogger = new Thread(statistics);
-		statLogger.start();
-		// TODO pause stat sampling when crawler paused
 	}
 
 
 	private void setupLogs() throws IOException {
-		String diskPath = disk.getAbsolutePath();
+		String diskPath = disk.getAbsolutePath() + File.separatorChar;
 		
 		FileHandler up = new FileHandler(diskPath+LOGNAME_CRAWL+".log");
 		up.setFormatter(new UriProcessingFormatter());
@@ -256,14 +259,13 @@ public class CrawlController {
 	 */
 	public void startCrawl() {
 		// assume Frontier state already loaded
-		setupToePool();
 		shouldCrawl=true;
 		runCrawl();
 	}
 
 
 	public void runCrawl() {
-		while(shouldCrawl) {
+		while(shouldCrawl()) {
 			 CrawlURI curi = frontier.next(timeout);
 			 if(curi != null) {
 				curi.setNextProcessor(firstProcessor);
@@ -271,6 +273,14 @@ public class CrawlController {
 			 } 
 		}
 	}
+
+	/**
+	 * @return
+	 */
+	private boolean shouldCrawl() {
+		return shouldCrawl && !frontier.isEmpty();
+	}
+
 
 	public void stopCrawl() {
 		shouldCrawl = false;
@@ -399,4 +409,19 @@ public class CrawlController {
 	public CrawlScope getScope() {
 		return scope;
 	}
+
+	/**
+	 * @return
+	 */
+	public Processor getPostprocessor() {
+		return postprocessor;
+	}
+
+	/**
+	 * @param processor
+	 */
+	public void setPostprocessor(Processor processor) {
+		postprocessor = processor;
+	}
+
 }

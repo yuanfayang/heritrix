@@ -2,9 +2,9 @@
  * Created on Jul 29, 2003
  *
  */
-package org.archive.crawler.datamodel;
+package org.archive.crawler.framework.exceptions;
 
-import org.archive.crawler.datamodel.InitializationException;
+import org.archive.crawler.framework.exceptions.InitializationException;
 
 /** ConfigurationExceptions should be thrown when a configuration file
  *   is missing data, or contains uninterpretable data, at runtime.  Fatal

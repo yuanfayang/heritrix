@@ -7,11 +7,12 @@
 package org.archive.crawler.basic;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.filter.HopsFilter;
+import org.archive.crawler.filter.SeedExtensionFilter;
+import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
-import org.archive.crawler.util.SeedExtensionFilter;
-import org.archive.crawler.util.TransclusionFilter;
 
 /**
  * A core CrawlScope suitable for the most common
@@ -45,7 +46,7 @@ import org.archive.crawler.util.TransclusionFilter;
  * @author gojomo
  *
  */
-public class BasicScope extends CrawlScope {
+public class Scope extends CrawlScope {
 	Filter focusFilter; 
 	Filter transitiveFilter; 
 	Filter excludeFilter;
@@ -74,9 +75,12 @@ public class BasicScope extends CrawlScope {
 			}
 		}
 		// setup exclude filter
-		excludeFilter = (Filter) instantiate("exclude");
-		if(excludeFilter!=null) {
-			excludeFilter.initialize(controller);
+		if(getNodeAt("@max-link-hops")!=null) {
+			// SeedExtensionFilter implied
+			excludeFilter = new HopsFilter();
+			excludeFilter.setNode(xNode);
+		} else {
+			excludeFilter = (Filter) instantiate("exclude");
 		}
 	}
 

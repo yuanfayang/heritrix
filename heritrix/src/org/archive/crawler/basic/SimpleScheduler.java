@@ -10,10 +10,10 @@ package org.archive.crawler.basic;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FatalConfigurationException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.ToeThread;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 
 /**
  * @author gojomo

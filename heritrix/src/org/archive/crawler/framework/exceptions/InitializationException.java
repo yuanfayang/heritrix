@@ -2,7 +2,7 @@
  * Created on Jul 29, 2003
  *
  */
-package org.archive.crawler.datamodel;
+package org.archive.crawler.framework.exceptions;
 
 /** InitializationExceptions should be thrown when there is a problem with 
  *   the crawl's initialization, such as file creation problems, etc.  In the event

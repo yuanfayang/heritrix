@@ -60,6 +60,7 @@ public class CandidateURI {
 	 */
 	public void setIsSeed(boolean b) {
 		isSeed=b;
+		setPathFromSeed("");
 	}
 
 	/**
@@ -95,5 +96,39 @@ public class CandidateURI {
 	 */
 	public void setScopeVersion(int i) {
 		inScopeVersion = i;
+	}
+	/**
+	 * @return
+	 */
+	public String getPathFromSeed() {
+		return pathFromSeed;
+	}
+
+	/**
+	 * @return
+	 */
+	public Object getVia() {
+		return via;
+	}
+
+	/**
+	 * @param string
+	 */
+	public void setPathFromSeed(String string) {
+		pathFromSeed = string;
+	}
+
+	/**
+	 * @param object
+	 */
+	public void setVia(Object object) {
+		via = object;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return "CandidateURI("+getUuri()+")";
 	}
 }

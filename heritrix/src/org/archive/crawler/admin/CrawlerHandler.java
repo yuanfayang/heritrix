@@ -15,10 +15,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.FatalConfigurationException;
-import org.archive.crawler.datamodel.InitializationException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.util.Sorts;
 import org.archive.crawler.util.StringIntPair;
 import org.archive.crawler.util.StringIntPairComparator;

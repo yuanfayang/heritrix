@@ -4,8 +4,9 @@
  *
  * $Header$
  */
-package org.archive.crawler.util;
+package org.archive.crawler.filter;
 
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -14,12 +15,16 @@ import org.archive.crawler.framework.Filter;
  * @author Gordon Mohr
  */
 public class TransclusionFilter extends Filter {
-
+	// 1-3 trailing P(recondition)/R(eferral)/E(mbed) hops
+	private static final String TRANSCLUSION_PATH = ".*[PRE][PRE]?[PRE]?$";
+	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
 	 */
 	protected boolean innerAccepts(Object o) {
-		// TODO Auto-generated method stub
+		if(o instanceof CandidateURI) {
+			return ((CandidateURI)o).getPathFromSeed().matches(TRANSCLUSION_PATH);
+		}
 		return false;
 	}
 

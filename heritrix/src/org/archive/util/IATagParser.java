@@ -10,6 +10,8 @@ import com.anotherbigidea.flash.interfaces.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Vector;
+
+import org.archive.crawler.extractor.*;
 //import java.util.zip.*;
 //import com.anotherbigidea.io.*;
 //import com.anotherbigidea.flash.*;
