@@ -174,11 +174,15 @@ implements ProtocolSocketFactory {
     }
     
     /**
+     * Get host address using first the heritrix cache of addresses, then,
+     * failing that, go to the dnsjava cache.
+     * 
+     * Default access so can be used by other classes in this package.
      * @param host Host whose address we're to fetch.
      * @return an IP address for this host or null if one can't be found
      * in caches.
      */
-    protected InetAddress getHostAddress(String host) {
+    static InetAddress getHostAddress(String host) {
         InetAddress result = null;
         if (controller != null) {
         	    CrawlServer cs = controller.getServerCache().

@@ -38,6 +38,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import org.archive.crawler.fetcher.*;
 
 /**
  * Test configurable trust.
@@ -211,7 +212,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
         Protocol.registerProtocol("https",
             new Protocol("https",
                 (ProtocolSocketFactory)
-                    (new ConfigurableTrustManagerProtocolSocketFactory(
+                    (new HeritixSSLProtocolSocketFactory(
                         ConfigurableX509TrustManager.OPEN)), 443));
         runURLs(client, OPEN_URLS, false);
     }
@@ -236,7 +237,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
         Protocol.registerProtocol("https",
            new Protocol("https",
                 (ProtocolSocketFactory)
-                    (new ConfigurableTrustManagerProtocolSocketFactory(
+                    (new HeritixSSLProtocolSocketFactory(
            		        ConfigurableX509TrustManager.LOOSE)), 443));
         runURLs(client, LOOSE_URLS, false);
     }
@@ -267,7 +268,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
         Protocol.registerProtocol("https",
            new Protocol("https",
                 ((ProtocolSocketFactory)
-                    new ConfigurableTrustManagerProtocolSocketFactory(
+                    new HeritixSSLProtocolSocketFactory(
            		    ConfigurableX509TrustManager.NORMAL)), 443));
         runURLs(client, OPEN_URLS, true);
     }
@@ -304,7 +305,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
         Protocol.registerProtocol("https",
            new Protocol("https",
                 ((ProtocolSocketFactory)
-                    new ConfigurableTrustManagerProtocolSocketFactory(
+                    new HeritixSSLProtocolSocketFactory(
            		    ConfigurableX509TrustManager.NORMAL)), 443));
         // TODO: Set the javax.net.ssl.trustStore before calling next method.
         // See org.archive.crawler.Heritrix#configureTrustStore().

@@ -82,7 +82,6 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
-import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
@@ -849,13 +848,15 @@ implements CoreAttributeConstants, FetchStatusCodes {
             HeritrixProtocolSocketFactory.getSocketFactory(), 80));
         HeritrixProtocolSocketFactory.initialize(getController());
 
-        // Put in place a configurable trustmanager as well as go
-        // by dnsjava to lookup remote hosts.
+        // Put in place a configurable trustmanager as well.  This
+        // below https protocol handler also depends on
+        // heritrixprotocol socket factory being in place; it uses
+        // its getHostAddress to get host IPs from heritrix cache.
         try {
             String trustLevel = (String) getAttribute(ATTR_TRUST);
             Protocol.registerProtocol("https", new Protocol("https",
                 ((ProtocolSocketFactory)
-                    new ConfigurableTrustManagerProtocolSocketFactory(
+                    new HeritixSSLProtocolSocketFactory(
                         trustLevel)), 443));
         } catch (Exception e) {
             // Convert all to RuntimeException so get an exception out if
