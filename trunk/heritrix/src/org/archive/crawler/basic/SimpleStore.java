@@ -239,7 +239,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes {
 		if(curi != null) {
 			
 			// if we have it but it's expired, start anew
-			if(curi.isExpired()){
+			if(!curi.dontFetchYet()){
 				allCuris.remove(uuri);
 				curi = null;
 			}else{

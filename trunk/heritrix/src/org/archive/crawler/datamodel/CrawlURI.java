@@ -61,18 +61,46 @@ public class CrawlURI implements URIStoreable, CoreAttributeConstants,  FetchSta
 		uuri=u;
 	}
 	
+	/**
+	 * Set the time this curi is considered expired (and thus must be refetched)
+	 * to 'expires'.  This function will set the time to an arbitrary value, if you do not wish
+	 * to clobber an earlier expiration time (e.g. setting a robots expiration after a dns
+	 * expiration) use setDontRetrySmart().
+	 * @param expires
+	 */
 	public void setDontRetryBefore(long expires){
 		dontRetryBefore = expires;
 	}
+	
+	/**
+	 * Set the expire time.  This function only allows you to set a 
+	 * nearer expire time, not to increase it.  To set an arbitrary
+	 * expire time use setDontRetryBefore()
+	 * @param expires
+	 */
+	public void setDontRetryBeforeSmart(long expires){
+		if(expires < dontRetryBefore || dontRetryBefore < 0){
+			dontRetryBefore = expires;
+		}
+	}
+	
 	public long getDontRetryBefore(){
 		return dontRetryBefore;
 	}
-	public boolean isExpired(){
-		if(dontRetryBefore < System.currentTimeMillis()){
+	
+	/**
+	 * Returns a boolean representing the status of the content in terms 
+	 * of expiration date.  If the content is considered expired dontFetchYet()
+	 * returns false.
+	 * @return
+	 */
+	public boolean dontFetchYet(){
+		if(dontRetryBefore > System.currentTimeMillis()){
 			return true;
 		}
 		return false;
 	}
+
 	
 	/**
 	 * @param uri

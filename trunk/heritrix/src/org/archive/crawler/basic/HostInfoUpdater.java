@@ -7,7 +7,10 @@
 package org.archive.crawler.basic;
 
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
 
 /**
@@ -21,14 +24,41 @@ import org.archive.crawler.framework.Processor;
  * @author gojomo
  *
  */
-public class HostInfoUpdater extends Processor {
+public class HostInfoUpdater extends Processor implements CoreAttributeConstants, FetchStatusCodes {
+
+	public static int MAX_DNS_FETCH_ATTEMPTS = 3;
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	protected void innerProcess(CrawlURI curi) {
-		
-		// make sure we only process schemes we understand (i.e. not dns)
+	
+		// if it's a dns entry set the expire time
+		if(curi.getUURI().getUri().getScheme().equals("dns")){
+
+			// if we've looked up the host update the expire time
+			if(curi.getHost().hasBeenLookedUp()){
+				long expires = curi.getHost().getIpExpires();
+				
+				if(expires > 0){
+					curi.setDontRetryBeforeSmart(expires);
+				}
+				
+			}else{
+				// if we've tried too many times give up
+				if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
+					curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+				}
+			}
+			
+			// if a robots.txt uri doesn't exist, create it and set the expire to be
+			// the same as the dns expire time
+			
+			
+			return;
+		}
+			
+		// if it's not dns make sure it's http, 'cause we don't know nuthin' else
 		if(!curi.getUURI().getUri().getScheme().equals("http")){
 			return;
 		}
@@ -40,8 +70,8 @@ public class HostInfoUpdater extends Processor {
 				curi.getHost().updateRobots(get);
 				
 				// see which epires first, the dns or the robots.txt
-				long expireCuri = ( curi.getHost().getIpExpires() < curi.getHost().getIpExpires()) ? curi.getHost().getIpExpires() : curi.getHost().getIpExpires();
-				curi.setDontRetryBefore(expireCuri);
+				long expireCuri = ( curi.getHost().getRobotsExpires() < curi.getHost().getIpExpires()) ? curi.getHost().getRobotsExpires() : curi.getHost().getIpExpires();
+				curi.setDontRetryBeforeSmart(expireCuri);
 			}
 		}
 	}
