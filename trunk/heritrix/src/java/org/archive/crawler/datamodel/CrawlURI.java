@@ -377,19 +377,28 @@ public class CrawlURI extends CandidateURI
     private String calculateClassKey() throws URIException {
         String scheme = getUURI().getScheme();
         if (scheme.equals("dns")){
+            if (via!=null) {
+                // special handling for DNS: treat as being
+                // of the same class as the triggering URI
+                // When a URI includes a port, this ensures 
+                // the DNS lookup goes atop the host:port
+                // queue that triggered it, rather than 
+                // some other host queue
+                return new UURI(flattenVia()).getAuthority();
+            } // else
             return FetchDNS.parseTargetDomain(this);
         }
-        String host = getUURI().getHost();
-        if (host == null) {
+//        String host = getUURI().getHost();
+//        if (host == null) {
             String authority =  getUURI().getAuthority();
             if(authority == null) {
                 return DEFAULT_CLASS_KEY;
             } else {
                 return authority;
             }
-        } else {
-            return host;
-        }
+//        } else {
+//            return host;
+//        }
     }
 
 
