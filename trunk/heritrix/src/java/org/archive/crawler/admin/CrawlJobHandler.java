@@ -698,10 +698,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
             return;
         }
         crawling = true;
-        controller.startCrawl();
         currentJob.setStatus(CrawlJob.STATUS_RUNNING);
         currentJob.setRunning(true);
         currentJob.setStatisticsTracking(controller.getStatistics());
+        controller.startCrawl();
     }
 
     /**
