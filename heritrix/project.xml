@@ -147,21 +147,29 @@
         <name>Gordon Mohr</name>
         <id>gojomo</id>
         <email>gojomo at archive dot com</email>
+         <organization>Internet Archive</organization>
+         <url>http://www.archive.org</url>
     </developer>
     <developer>
         <name>Igor Ranitovic</name>
         <id>ia_igor</id>
         <email>igor at archive dot com</email>
+        <organization>Internet Archive</organization>
+        <url>http://www.archive.org</url>
     </developer>
     <developer>
         <name>John Erik Halse</name>
         <id>johnerik</id>
         <email>johnh at archive dot com</email>
+        <organization>National Library of Norway</organization>
+        <url>http://www.nib.no</url>
     </developer>
     <developer>
         <name>Kristinn Sigurdsson</name>
         <id>kristinn_sig</id>
         <email>kristinn_sig at archive dot com</email>
+        <organization>National and University Library of Iceland</organization>
+        <url>http://www.bok.hi.is/</url>
     </developer>
     <developer>
         <name>Raymie Stata</name>
@@ -172,6 +180,8 @@
         <name>Michael Stack</name>
         <id>stack-sf</id>
         <email>stack at archive dot com</email>
+         <organization>Internet Archive</organization>
+         <url>http://www.archive.org</url>
     </developer>
   </developers>
 
@@ -179,6 +189,7 @@
     <contributor>
         <name>James Casey</name>
         <email>me at jamesc dot net</email>
+        <url>http://www.jamesc.net</url>
     </contributor>
   </contributors>
 
