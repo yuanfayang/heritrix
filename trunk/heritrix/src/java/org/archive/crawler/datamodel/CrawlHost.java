@@ -25,9 +25,11 @@ package org.archive.crawler.datamodel;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
-/** Represents a single remote "host".
+import org.archive.util.InetAddressUtil;
+
+/** 
+ * Represents a single remote "host".
  *
  * An host is a name for which there is a dns record or an IP-address. This
  * might be a machine or a virtual host.
@@ -35,9 +37,9 @@ import java.net.UnknownHostException;
  * @author gojomo
  */
 public class CrawlHost implements Serializable {
-    /** flag value indicating always-valid IP */
+    /** Flag value indicating always-valid IP */
     public static final long IP_NEVER_EXPIRES = -1;
-    /** flag value indicating an IP has not yet been looked up */
+    /** Flag value indicating an IP has not yet been looked up */
     public static final long IP_NEVER_LOOKED_UP = -2;
     private String hostname;
     private InetAddress ip;
@@ -59,31 +61,17 @@ public class CrawlHost implements Serializable {
 
     // Used when bandwith constraint are used
     private long earliestNextURIEmitTime = 0;
-
-    /** Create a new CrawlHost object.
+    
+    /** 
+     * Create a new CrawlHost object.
      *
      * @param hostname the host name for this host.
      */
     public CrawlHost(String hostname) {
         this.hostname = hostname;
-        if (hostname.matches(
-                "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
-            try {
-                String[] octets = hostname.split("\\.");
-
-                setIP(
-                    InetAddress.getByAddress(
-                        hostname,
-                        new byte[] {
-                            (byte) (new Integer(octets[0])).intValue(),
-                            (byte) (new Integer(octets[1])).intValue(),
-                            (byte) (new Integer(octets[2])).intValue(),
-                            (byte) (new Integer(octets[3])).intValue()}),
-                IP_NEVER_EXPIRES);  // never expire numeric IPs
-            } catch (UnknownHostException e) {
-                // this should never happen as a dns lookup is not made
-                e.printStackTrace();
-            }
+        InetAddress tmp = InetAddressUtil.getIPHostAddress(hostname);
+        if (tmp != null) {
+            setIP(tmp, IP_NEVER_EXPIRES);
         }
     }
 
@@ -138,22 +126,20 @@ public class CrawlHost implements Serializable {
         return this.ipTTL;
     }
 
-    /**
-     * @see java.lang.Object#toString()
-     */
     public String toString() {
         return "CrawlHost<" + hostname + "(ip:" + ip + ")>";
     }
 
-    /** Get the host name.
-     *
+    /**
+     * Get the host name.
      * @return Returns the host name.
      */
     public String getHostName() {
         return hostname;
     }
 
-    /** Get the earliest time a URI for this host could be emitted.
+    /** 
+     * Get the earliest time a URI for this host could be emitted.
      * This only has effect if constraints on bandwidth per host is set.
      *
      * @return Returns the earliestNextURIEmitTime.
@@ -162,7 +148,8 @@ public class CrawlHost implements Serializable {
         return earliestNextURIEmitTime;
     }
 
-    /** Set the earliest time a URI for this host could be emitted.
+    /** 
+     * Set the earliest time a URI for this host could be emitted.
      * This only has effect if constraints on bandwidth per host is set.
      *
      * @param earliestNextURIEmitTime The earliestNextURIEmitTime to set.
@@ -170,5 +157,4 @@ public class CrawlHost implements Serializable {
     public void setEarliestNextURIEmitTime(long earliestNextURIEmitTime) {
         this.earliestNextURIEmitTime = earliestNextURIEmitTime;
     }
-
 }

@@ -51,11 +51,11 @@ import org.archive.io.ReplayInputStream;
 public class CrawlServer implements Serializable {
     public static final long ROBOTS_NOT_FETCHED = -1;
 
-    private final String server; // actually, host+port in the http case
+    private final String server; // actually, host+port in the https case
     private int port;
     private transient CrawlHost host;
     private transient SettingsHandler settingsHandler;
-    RobotsExclusionPolicy robots;
+    private RobotsExclusionPolicy robots;
     long robotsFetched = ROBOTS_NOT_FETCHED;
     boolean validRobots = false;
     Checksum robotstxtChecksum;
@@ -79,7 +79,7 @@ public class CrawlServer implements Serializable {
         // TODO: possibly check for illegal host string
         server = h;
         int colonIndex = server.lastIndexOf(":");
-        if(colonIndex < 0) {
+        if (colonIndex < 0) {
             port = -1;
         } else {
             try {
@@ -106,9 +106,6 @@ public class CrawlServer implements Serializable {
         robots = policy;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     public String toString() {
         return "CrawlServer("+server+")";
     }
@@ -263,10 +260,13 @@ public class CrawlServer implements Serializable {
     }
 
     /** Get the settings object in effect for this server.
+     * @param uri
      *
      * @return the settings object in effect for this server.
+     * @throws URIException
      */
-    private CrawlerSettings getSettings(UURI uri) throws URIException {
+    private CrawlerSettings getSettings(UURI uri)
+    throws URIException {
         return this.settingsHandler.getSettings(uri.getReferencedHost(), uri);
     }
 
@@ -311,8 +311,9 @@ public class CrawlServer implements Serializable {
         }
         this.avatars.add(ca);
     }
+    
 	/**
-     * If true then valid robots.txt information has been retrived. If false
+     * If true then valid robots.txt information has been retrieved. If false
      * either no attempt has been made to fetch robots.txt or the attempt
      * failed.
      *
