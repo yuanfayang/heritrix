@@ -5,11 +5,12 @@ basic politeness
 simple http fetcher
 simple link extractor
 make HTTPfetcher threadsafe (perhaps by having an instance per thread)
+integrate ARCwriter (HTTP + DNS)
 
 Next few things to do:
+respect inline robots-directives (noarchive, nofollow, etc.)
 get to the bottom of HTTPClient "Recoverable exceptions" 
-implement Filters
-integrate ARCwriter (HTTP + DNS)
+implement Filters (RegExp, seed-extensions)
 collect better stats on system state (pending URIs, etc.) and progress (raw bytes, URI results)
 mercator-style progress log ("timings"?)
 create document of Alist keys/conventions

@@ -47,7 +47,7 @@
  <limits>
   <!-- actual enforcement of these limits may depend on choice 
        of SSS/processor instances that read and respect these limits -->
-  <max-link-depth value="0" /> <!-- zero means crawl seeds only -->
+  <max-link-depth value="3" /> <!-- zero means crawl seeds only -->
   <max-pages value="1000" />
   <max-duration value="1h" />
   <max-resources-per-site value="1000" />
