@@ -79,13 +79,7 @@ public class UriProcessingFormatter
             arcTimeAndDuration = NA;
         }
 
-        Object via = curi.getVia();
-        if (via instanceof CandidateURI) {
-            via = ((CandidateURI)via).getUURI().toString();
-        }
-        if (via instanceof UURI) {
-            via = ((UURI)via).toString();
-        }
+        String via = curi.flattenVia();
         
         Object digest = curi.getContentDigest();
         if(digest!=null) {
@@ -102,7 +96,7 @@ public class UriProcessingFormatter
             + " "
             + checkForNull(curi.getPathFromSeed())
             + " "
-            + checkForNull(via.toString())
+            + checkForNull(via)
             + " "
             + mime
             + " "
