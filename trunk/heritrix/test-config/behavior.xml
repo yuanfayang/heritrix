@@ -16,7 +16,7 @@
     name="Preprocessor" 
     class="org.archive.crawler.basic.SimplePolitenessEnforcer"
     next="DNS">
-   <params delay-factor="20" />
+   <params delay-factor="1" />
   </processor>
   <processor 
     name="DNS" 
@@ -37,8 +37,8 @@
     name="Archiver" 
     class="org.archive.crawler.basic.ARCWriter"
     next="Cacher">
-    	<compression use="false"/>
-    	<arc-files max-size-bytes="50000000"/>
+    	<compression use="true"/>
+    	<arc-files max-size-bytes="20000000"/>
   </processor>
   <processor 
     name="Cacher" 
@@ -52,7 +52,7 @@
   <max-pages value="1000" />
   <max-duration value="1h" />
   <max-resources-per-site value="1000" />
-  <max-toe-threads value="100" />
+  <max-toe-threads value="2" />
   <max-link-depth value="40" />
  </limits>
 
