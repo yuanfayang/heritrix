@@ -35,6 +35,7 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
+import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.CompositeIterator;
@@ -86,6 +87,9 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(KeyedQueue.class,1);
     
+    /** Associated CrawlServer instance, held to keep CrawlServer from being cache-flushed */
+    CrawlServer crawlServer;
+    
     /** ms time to wake, if snoozed */
     long wakeTime;
     /** common string 'key' of included items (typically hostname)  */
@@ -121,10 +125,16 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @param maxMemLoad Maximum number of items to keep in memory
      * @throws IOException When it fails to create disk based data structures.
      */
-    public KeyedQueue(String key, File scratchDir, int maxMemLoad)
+    public KeyedQueue(String key, CrawlServer server, File scratchDir, int maxMemLoad)
             throws IOException {
         super();
         this.classKey = key;
+        if(server!=null && !server.getName().startsWith(key)) {
+            // temp debugging output
+            System.err.println("KeyedQueue server<->key mismatch noted: "+server.getName()+"<->"+key);
+            // assert server.getHostname().startsWith(key) : "KeyedQueue server - key mismatch";
+        }
+        this.crawlServer = server;
         String tmpName = key;
         this.maxMemoryLoad = maxMemLoad;
         this.innerQ = new DiskBackedDeque(scratchDir,tmpName,false,maxMemLoad);    
@@ -313,7 +323,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(CrawlURI curi) {
-        
+     
         if(curi.needsImmediateScheduling()) {
             enqueueHigh(curi);
         } else if (curi.needsSoonScheduling()) {
