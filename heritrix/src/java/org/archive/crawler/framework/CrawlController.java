@@ -128,7 +128,7 @@ public class CrawlController implements Serializable {
     private GateSync memoryGate = new GateSync();
     private LinkedList reserveMemory;
     private static final int RESERVE_BLOCKS = 5;
-    private static final int RESERVE_BLOCK_SIZE = 2^19; // 512K
+    private static final int RESERVE_BLOCK_SIZE = 2^20; // 1MB
 
     // crawl state: as requested or actual
     private String sExit;                 // exit status
