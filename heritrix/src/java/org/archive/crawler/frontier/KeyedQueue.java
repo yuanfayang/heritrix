@@ -128,17 +128,18 @@ public class KeyedQueue implements Serializable  {
      *           file name, must therefor be a legal filename).
      * @param scratchDir Directory where disk based data structures will be
      *           created.
+     * @param compress whether items written to disk should be compressed or not.
      * @param headMax Maximum number of items to keep in memory (excluding
      *           those that have been enqueuedMedium or enqueuedHigh).
      * @throws IOException When it fails to create disk based data structures.
      */
-    public KeyedQueue(String key, File scratchDir, int headMax)
+    public KeyedQueue(String key, File scratchDir, boolean compress, int headMax)
             throws IOException {
         super();
         this.classKey = key;
         String tmpName = key;
         this.innerStack = new LinkedList();
-        this.innerQ = new DiskBackedQueue(scratchDir,tmpName,false,headMax);    
+        this.innerQ = new DiskBackedQueue(scratchDir,tmpName,false,compress,headMax);    
         this.unqueued = new LinkedList();
         // TODO: Currently unimplemented.  Commenting out for now because its
         // presence means extra two file descriptors per processed URI.
