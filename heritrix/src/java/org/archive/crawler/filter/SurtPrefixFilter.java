@@ -24,6 +24,7 @@
 */ 
 package org.archive.crawler.filter;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -40,7 +41,7 @@ import org.archive.util.SURT;
  * @author gojomo
  */
 public class SurtPrefixFilter extends Filter {
-    public static final String ATTR_SOURCE_FILE = "source-file";
+    public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
     public static final String ATTR_MATCH_RETURN_VALUE = "if-match-return";
 
     SurtPrefixSet surtPrefixes = null;
@@ -54,7 +55,7 @@ public class SurtPrefixFilter extends Filter {
             new SimpleType(ATTR_MATCH_RETURN_VALUE, "What to return when " +
                     "a prefix matches.\n", new Boolean(true)));
         addElementToDefinition(
-                new SimpleType(ATTR_SOURCE_FILE, "Source file from which to " +
+                new SimpleType(ATTR_SURTS_SOURCE_FILE, "Source file from which to " +
                         "read SURT prefixes.", ""));
     }
     
@@ -66,16 +67,26 @@ public class SurtPrefixFilter extends Filter {
             readPrefixes();
         }
         String s = SURT.fromURI(asString(o));
-        // TODO: collapse https to http; consider other cases of scheme-indifference
+        // also want to treat https as http
+        if(s.startsWith("https:")) {
+            s = "http:"+s.substring(6);
+        }
+        // TODO: consider other cases of scheme-indifference?
         return surtPrefixes.containsPrefixOf(s);
     }
 
     private void readPrefixes() {
         surtPrefixes = new SurtPrefixSet(); 
+        String sourcePath = (String) getAttributeOrNull(ATTR_SURTS_SOURCE_FILE,
+                (CrawlURI) null);
+        File source = new File(sourcePath);
+        if (!source.isAbsolute()) {
+            source = new File(getSettingsHandler().getOrder()
+                    .getController().getDisk(), sourcePath);
+        }
         FileReader fr = null;
         try {
-      		// TODO: make sure paths are calculated properly from job home directory
-            fr = new FileReader((String)getAttributeOrNull(ATTR_SOURCE_FILE,(CrawlURI)null));
+            fr = new FileReader(source);
             try {
                 surtPrefixes.importFrom(fr);
             } finally {
