@@ -39,8 +39,12 @@ import org.archive.crawler.util.FPUURISet;
 import org.archive.util.CachingDiskLongFPSet;
 
 /**
- * Overrides org.archive.crawler.frontier.Frontier to use disk bound
- * already included structures.
+ * Overrides org.archive.crawler.frontier.Frontier to use disk based
+ * already included structures. 
+ * 
+ * The underlying CachingDiskLongFPSet class has received little
+ * testing and may be very slow. Each million slots (of the cache
+ * or disk-based set) will use about 72MB of space.
  * 
  * @author Kristinn Sigurdsson
  */
@@ -81,7 +85,7 @@ public class DiskIncludedFrontier extends Frontier {
                 " CrawlURI of the same \'key\' (host) at once, and respects" +
                 " minimum-delay and delay-factor specifications for" +
                 " politeness.\nThis Frontier also uses a data structure that" +
-                " relies on writing data to disk for maintaining it's list of" +
+                " relies on writing data to disk for maintaining its list of" +
                 " already encountered URLs. This reduces memory use (that" +
                 " would otherwise be unlimited over time in large crawls)" +
                 " at the expense of performance.");
@@ -89,11 +93,11 @@ public class DiskIncludedFrontier extends Frontier {
         Type t;
         t = addElementToDefinition(
                 new SimpleType(ATTR_INCLUDED_URIS_CACHE_EXPONENT,
-                        "The size of the already included URIs list's in " +
-                        "memory cache. " +
+                        "The size of the already included URIs list" +
+                        "in-memory cache. " +
                         "The cache capacity will be 2 to the power of this " +
                         "factor. So a value of 20 equals just over 1 million " +
-                        "'slots'.",
+                        "'slots'. Each million slots require about 72MB of RAM.",
                         DEFAULT_INCLUDED_URIS_CACHE_EXPONENT));
         t.setExpertSetting(true);
         t.setOverrideable(false);
@@ -106,11 +110,12 @@ public class DiskIncludedFrontier extends Frontier {
         t.setOverrideable(false);
         t = addElementToDefinition(
                 new SimpleType(ATTR_INCLUDED_URIS_INITFILE_EXPONENT,
-                        "The inital size of the already included URIs list's " +
-                        "disk " +
-                        "structure. It's initial capacity will be 2 to the " +
+                        "The inital size of the already included URIs list " +
+                        "backing disk structure." +
+                        "Its initial capacity will be 2 to the " +
                         "power of this factor. So a value of 23 equals " +
-                        "about 8 million 'slots'.",
+                        "about 8 million 'slots', taking up about 576MB on" +
+                        "disk.",
                         DEFAULT_INCLUDED_URIS_INITFILE_EXPONENT));
         t.setExpertSetting(true);
         t.setOverrideable(false);
