@@ -202,7 +202,7 @@ public class Frontier
 
     // ration memory usage by inactive queues
     private int inactiveQueuesMemoryLoadTotal = 0;
-    private int inactiveQueuesMemoryLoadTarget = 1000;
+    private int inactiveQueuesMemoryLoadTarget = 10000;
     private int inactivePerQueueLoadThreshold = 1000;
 
     
@@ -1568,24 +1568,21 @@ public class Frontier
 
     private void appendKeyedQueue(StringBuffer rep, KeyedQueue kq, long now) {
         rep.append("    KeyedQueue  " + kq.getClassKey() + "\n");
-        rep.append("     Length:    " + kq.length() + "\n");
+        rep.append("     Length:        " + kq.length() + "\n");
 //        rep.append("     Is ready:  " + kq.shouldWake() + "\n");
-        rep.append("     Status:    " + kq.state.toString() + "\n");
+        rep.append("     Status:        " + kq.state.toString() + "\n");
         if(kq.getState()==URIWorkQueue.SNOOZED) {
-            rep.append("     Wakes in:  " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
+            rep.append("     Wakes in:      " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
         }
         if(kq.getInProcessItems().size()>0) {
             Iterator iter = kq.getInProcessItems().iterator();
             while (iter.hasNext()) {
-                rep.append("     InProcess: " + iter.next() + "\n");
+                rep.append("     InProcess:     " + iter.next() + "\n");
             }
         }
-        if(!kq.isEmpty()) {
-            Object o = kq.peek();
-            if (o instanceof CrawlURI) { o = ((CrawlURI)o).getURIString(); }
-            rep.append("     Top URI:   " + o+"\n");
+        rep.append("     Last enqueued: " + kq.getLastQueued()+"\n");
+        rep.append("     Last dequeued: " + kq.getLastDequeued()+"\n");
 
-        }
     }
 
     /** (non-Javadoc)
