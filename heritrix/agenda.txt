@@ -1,13 +1,16 @@
 _Recently done:
-make HTTPfetcher threadsafe (perhaps by having an instance per thread)
-integrate ARCwriter (HTTP + DNS)
 improved handling of HTTPClient "Recoverable exceptions" 
 begun document of Alist keys/conventions, in class CoreAttributesConstants
+separate out bad-URI error logs
+implemented per-processor, per-selector Filters, RegExp Filter
+eliminate crawlscope
+refactor extractors
+respect NOFOLLOW meta robots
 
 _Next few things to do:
-separate out bad-URI error logs
-respect inline robots-directives (noarchive, nofollow, etc.)
-implement Filters (RegExp, seed-extensions)
+implement Filters for seed-extension
+clean up log formats
+get links from DOC/PDF/SWF/etc formats
 investigate MG4J, Nutch components (Nutch HTTP + MG4J Strings?)
 implement an explicit configurable retry policy (or policies) / document oob errors
 collect better stats on system state (pending URIs, etc.) and progress (raw bytes, URI results)
