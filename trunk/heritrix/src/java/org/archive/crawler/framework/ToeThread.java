@@ -257,22 +257,40 @@ public class ToeThread extends Thread
             }
             step = STEP_DONE_WITH_PROCESSORS;
             currentProcessorName = "";
+        } catch (AssertionError ae) {
+            // This risks leaving crawl in fatally inconsistent state, 
+            // but is often reasonable for per-Processor assertion problems 
+            recoverableProblem(ae);
         } catch (RuntimeException e) {
-            step = STEP_HANDLING_RUNTIME_EXCEPTION;
-            e.printStackTrace(System.err);
-            currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
-            // store exception temporarily for logging
-            currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,e);
-            String title = "RuntimeException occured processing '" + currentCuri.getURIString() + "'";
-            String message = "The following RuntimeException occure when trying " +
-            		"to process '" + currentCuri.getURIString() + "'\n";
-            Heritrix.addAlert(new Alert(title,message.toString(),e, Level.SEVERE));
+            recoverableProblem(e);
         } catch (Error err) {
             // OutOfMemory & StackOverflow & etc.
             seriousError(err);
         }
     }
 
+
+    /**
+     * Handling for exceptions and errors that are possibly recoverable.
+     * 
+     * @param e
+     */
+    private void recoverableProblem(Throwable e) {
+        Object previousStep = step;
+        step = STEP_HANDLING_RUNTIME_EXCEPTION;
+        e.printStackTrace(System.err);
+        currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
+        // store exception temporarily for logging
+        currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION, e);
+        String title = "Problem occured processing '"
+                + currentCuri.getURIString() + "'";
+        String message = "Problem " + e + 
+                " occured when trying to process '"
+                + currentCuri.getURIString()
+                + "' at step " + previousStep + "\n";
+        Heritrix.addAlert(new Alert(title, message.toString(), e,
+                Level.SEVERE));
+    }
 
     /**
      * @param processor
