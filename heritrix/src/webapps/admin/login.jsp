@@ -1,3 +1,4 @@
+<%@ page errorPage="/error.jsp" %>
 <%@page import="org.archive.crawler.admin.auth.*,java.net.URLDecoder" %>
 
 <%

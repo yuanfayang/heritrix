@@ -1,3 +1,4 @@
+<%@ page errorPage="/error.jsp" %>
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 <%
