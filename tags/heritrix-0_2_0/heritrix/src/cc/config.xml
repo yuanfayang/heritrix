@@ -1,0 +1,59 @@
+<cruisecontrol>
+    <project name="ArchiveOpenCrawler" buildafterfailed="true">
+
+        <!--Bootstrappers are run every time the build runs, *before* the
+            modification checks
+         -->
+        <bootstrappers>
+            <currentbuildstatusbootstrapper 
+                file="logs/ArchiveOpenCrawler/buildstatus.txt"/>
+        </bootstrappers>
+
+        <!--Defines where cruise looks for changes, to decide whether to run
+            the build
+         -->
+        <modificationset quietperiod="300" >
+            <cvs localworkingcopy="checkout/ArchiveOpenCrawler"/>
+        </modificationset>
+
+        <!--Configures the actual build loop, how often and which build 
+            file/target.
+         -->
+        <schedule interval="3600">
+            <!--Looks like you can only do a maven target and nothing else so 
+                put all of the maven targets here on the one invocation.
+             -->
+            <maven mavenscript="/home/stack/software/maven-1.0-rc1/bin/maven"
+                projectfile="checkout/ArchiveOpenCrawler/project.xml"
+                goal="clean dist site:generate site:update-sourceforge" />
+        </schedule>
+
+        <!--Directory to write build logs to.-->
+        <log dir="logs/ArchiveOpenCrawler"/>
+
+        <!--Publishers are run *after* a build completes.-->
+        <publishers>
+            <currentbuildstatuspublisher
+                file="logs/ArchiveOpenCrawler/buildstatus.txt"/>
+
+            <artifactspublisher dir="checkout/ArchiveOpenCrawler/target/docs"
+                dest="artifacts/ArchiveOpenCrawler"/>
+
+            <email mailhost="mail-dev.archive.org"
+                returnaddress="stack@archive.org"
+                defaultsuffix="@archive.org"
+                buildresultsurl="http://crawl08.archive.org:8080/cruisecontrol/buildresults/ArchiveOpenCrawler">
+                <always address="buildmasters" />
+                <failure address="developers" />
+                <map alias="buildmasters" address="stack" />
+                <map alias="developers" address="stack" />
+                <map alias="stack" address="stack@archive.org" />
+            </email>
+        </publishers>
+
+    <!-- External cruise "plugins" used by this project (none needed) -->
+    <plugin name="artifactspublisher" 
+      classname="net.sourceforge.cruisecontrol.publishers.ArtifactsPublisher"/>
+
+    </project>
+</cruisecontrol> 
