@@ -26,12 +26,20 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,6 +52,10 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.StatisticsTracker;
+import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.checkpoint.CheckpointContext;
+import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
+import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
@@ -60,6 +72,7 @@ import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
+import org.archive.io.GenerationFileHandler;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -73,16 +86,18 @@ import org.archive.util.ArchiveUtils;
  *
  * @author Gordon Mohr
  */
-public class CrawlController {
-    
+public class CrawlController implements Serializable {
+    // be robust against trivial implementation changes
+    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(CrawlController.class,1);
+
     /**
-     * Messges from the crawlcontroller.
+     * Messages from the crawlcontroller.
      *
      * They appear on console.
      */
     private final static Logger logger =
         Logger.getLogger(CrawlController.class.getName());
-    
+
     // manifest support
     /** abbrieviation label for config files in manifest */
     public static final char MANIFEST_CONFIG_FILE = 'C';
@@ -104,20 +119,24 @@ public class CrawlController {
     private CrawlOrder order;
     private CrawlScope scope;
     private ProcessorChainList processorChains;
-    private ToePool toePool;
+    transient private ToePool toePool;
     private URIFrontier frontier;
-    private ServerCache serverCache;
+    transient private ServerCache serverCache;
     private SettingsHandler settingsHandler;
 
     // crawl state: as requested or actual
-    private String sExit;                  // exit status
-    private static final Object NASCENT = "NASCENT";
-    private static final Object RUNNING = "RUNNING";
-    private static final Object PAUSING = "PAUSING";
-    private static final Object PAUSED = "PAUSED";
-    private static final Object STOPPING = "STOPPING";
-    private static final Object FINISHED = "FINISHED";
-    private Object state = NASCENT;
+    private String sExit;                 // exit status
+    private boolean beginPaused = false;  // whether controller should start in PAUSED state
+
+    private static final Object NASCENT = "NASCENT".intern();
+    private static final Object RUNNING = "RUNNING".intern();
+    private static final Object PAUSING = "PAUSING".intern();
+    private static final Object PAUSED = "PAUSED".intern();
+    private static final Object CHECKPOINTING = "CHECKPOINTING".intern();
+    private static final Object STOPPING = "STOPPING".intern();
+    private static final Object FINISHED = "FINISHED".intern();
+
+    transient private Object state = NASCENT;
     
     // disk paths
     private File disk;        // overall disk path
@@ -125,6 +144,9 @@ public class CrawlController {
     private File checkpointsDisk;    // for checkpoint files 
     private File stateDisk;   // for temp files representing state of crawler (eg queues)
     private File scratchDisk; // for discardable temp files (eg fetch buffers)
+    
+    // checkpoint support
+    CheckpointContext cpContext;
     
     // crawl limits
     private long maxBytes;
@@ -138,11 +160,20 @@ public class CrawlController {
     private StringBuffer manifest;
 
     /**
+     * Record of fileHandlers established for loggers, 
+     * assisting file rotation.
+     */
+    transient private Map fileHandlers;
+    
+    /** suffix to use on active logs */
+    private static final String CURRENT_LOG_SUFFIX = ".log";
+
+    /**
      * Crawl progress logger.
      *
      * No exceptions.  Logs summary result of each url processing.
      */
-    public Logger uriProcessing;
+    transient public Logger uriProcessing;
 
     /**
      * This logger contains unexpected runtime errors.
@@ -150,7 +181,7 @@ public class CrawlController {
      * Would contain errors trying to set up a job or failures inside
      * processors that they are not prepared to recover from.
      */
-    public Logger runtimeErrors;
+    transient public Logger runtimeErrors;
 
     /**
      * This logger is for job-scoped logging, specifically errors which
@@ -158,24 +189,24 @@ public class CrawlController {
      *
      * Examples would be socket timeouts, exceptions thrown by extractors, etc.
      */
-    public Logger localErrors;
+    transient public Logger localErrors;
 
     /**
      * Special log for URI format problems, wherever they may occur.
      */
-    public Logger uriErrors;
+    transient public Logger uriErrors;
 
     /**
      * Statistics tracker writes here at regular intervals.
      */
-    public Logger progressStats;
+    transient public Logger progressStats;
 
     /**
      * Crawl replay logger.
      *
      * Currently captures Frontier/URI transitions but recovery is unimplemented.
      */
-    public Logger recover;
+    transient public Logger recover;
 
     /**
      * Logger to hold job summary report.
@@ -183,7 +214,7 @@ public class CrawlController {
      * Large state reports made at infrequent intervals (e.g. job ending) go
      * here.
      */
-    public Logger reports;
+    transient public Logger reports;
 
     // create a statistic tracking object and have it write to the log every
     protected StatisticsTracking statistics = null;
@@ -195,29 +226,29 @@ public class CrawlController {
      * concurrent modification exceptions.
      * See {@link java.util.Collections#synchronizedList(List)}.
      */
-    private final List registeredCrawlStatusListeners;
-    
+    transient private final List registeredCrawlStatusListeners;
     // Since there is a high probability that there will only ever by one
     // CrawlURIDispositionListner we will use this while there is only one:
-    CrawlURIDispositionListener registeredCrawlURIDispositionListener;
+    transient CrawlURIDispositionListener registeredCrawlURIDispositionListener;
     // And then switch to the array once there is more then one.
-    protected ArrayList registeredCrawlURIDispositionListeners;
+    transient protected ArrayList registeredCrawlURIDispositionListeners;
 
-
-
+    /** distinguished filename for this component in checkpoints */
+    public static final String DISTINGUISHED_FILENAME = "controller.ser";
 
     /**
-     * Default constructor
+     * default constructor
      */
     public CrawlController() {
         super();
         this.registeredCrawlStatusListeners =
             Collections.synchronizedList(new ArrayList());
+        // defer most setup to initialize methods
     }
 
     /**
      * Starting from nothing, set up CrawlController and associated
-     * classes to be ready for crawling.
+     * classes to be ready for a first crawl. 
      *
      * @param settingsHandler
      * @throws InitializationException
@@ -229,109 +260,46 @@ public class CrawlController {
         order = settingsHandler.getOrder();
         order.setController(this);
         sExit = "";
-
-        if (order.checkUserAgentAndFrom() == false) {
-            String message = "You must set the User-Agent and From HTTP" +
+ 
+        String onFailMessage = "";
+        try {
+            onFailMessage = "You must set the User-Agent and From HTTP" +
             " header values to acceptable strings. \n" +
             " User-Agent: [software-name](+[info-url])[misc]\n" +
-            " From: [email-address]";
-            Heritrix.addAlert(
-                new Alert(
-                    "FatalConfigurationException on crawl: " 
-                    + settingsHandler.getSettingsObject(null).getName(),
-                    message,Level.CONFIG));
-            throw new FatalConfigurationException(message);
-        }
+            " From: [email-address]\n";
+            order.checkUserAgentAndFrom();
 
-        try {
-            setupDisk();
-        } catch (FatalConfigurationException e) {
-            Heritrix.addAlert(
-                new Alert(
-                    "FatalConfigurationException on crawl: " 
-                    + settingsHandler.getSettingsObject(null).getName(),
-                    "Unable to setup disk: \n" + e.toString(),e,Level.CONFIG));
-            throw new InitializationException(
-                "Unable to setup disk\n", e);
-        } catch (AttributeNotFoundException e) {
-            Heritrix.addAlert(
-                new Alert(
-                    "AttributeNotFoundException on crawl: " 
-                    + settingsHandler.getSettingsObject(null).getName(),
-                    "Unable to setup disk\n",e,Level.CONFIG));
-            throw new InitializationException(
-                "Unable to setup disk\n", e);
-        }
+            onFailMessage = "Unable to setup disk";
+            if (disk == null) {
+                setupDisk();
+            }
 
-        try {
+            if(cpContext == null) {
+                // create if not already loaded
+                cpContext = new CheckpointContext(checkpointsDisk);
+            } else {
+                // note new begin point 
+                cpContext.noteResumed();
+            }
+
+            onFailMessage = "Unable to create log file(s)";
             setupLogs();
-        } catch (IOException e) {
-            Heritrix.addAlert(
-                new Alert(
-                    "IOException on crawl: " 
-                    + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to create log file(s)\n",e,Level.CONFIG));
-            throw new InitializationException(
-                "Unable to create log file(s): " + e.toString(),
-                e);
-        }
 
-        try {
+            onFailMessage = "Unable to setup statistics";
             setupStatTracking();
-        } catch (InvalidAttributeValueException e) {
-            Heritrix.addAlert(
-                new Alert(
-                    "InvalidAttributeValueException on crawl: " 
-                    + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup statistics \n",e,Level.CONFIG));
-            throw new InitializationException(
-                "Unable to setup statistics: " + e.toString(), e);
-        }
 
-
-        try {
+            onFailMessage = "Unable to setup crawl modules";
             setupCrawlModules();
-        } catch (FatalConfigurationException e) {
+            
+        } catch (Exception e) {
+            String extendedMessage = onFailMessage + ": " + e.toString();
             Heritrix.addAlert(
                 new Alert(
-                    "FatalConfigurationException on crawl: " 
+                    e.getClass().getName() + "on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n", e,Level.CONFIG));
-            throw new InitializationException(
-                "Unable to setup crawl modules: " + e.toString(), e);
-        } catch (AttributeNotFoundException e) {
-            Heritrix.addAlert(
-                new Alert(
-                    "AttributeNotFoundException on crawl: " 
-                    + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n", e,Level.CONFIG));
-            throw new InitializationException(
-                "Unable to setup crawl modules: " + e.toString(), e);
-        } catch (InvalidAttributeValueException e) {
-            Heritrix.addAlert(
-                new Alert(
-                    "InvalidAttributeValueException on crawl: " 
-                    + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n",e,Level.CONFIG));
-            throw new InitializationException(
-                "Unable to setup crawl modules: " + e.toString(), e);
-        } catch (MBeanException e) {
-            Heritrix.addAlert(
-                new Alert(
-                    "MBeanException on crawl: " 
-                    + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n", e,Level.CONFIG));
-            throw new InitializationException(
-                "Unable to setup crawl modules: " + e.toString(), e);
-        } catch (ReflectionException e) {
-            Heritrix.addAlert(
-                new Alert(
-                    "ReflectionException on crawl: " 
-                    + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n", e,Level.CONFIG));
-            throw new InitializationException(
-                "Unable to setup crawl modules: " + e.toString(), e);
-        }
+                    extendedMessage,e,Level.CONFIG));
+            throw new InitializationException(extendedMessage, e);
+        } 
         
         setupToePool();
     }
@@ -486,44 +454,48 @@ public class CrawlController {
     private void setupCrawlModules() throws FatalConfigurationException,
              AttributeNotFoundException, InvalidAttributeValueException,
              MBeanException, ReflectionException {
-        scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
-        Object o = order.getAttribute(URIFrontier.ATTR_NAME);
-        if (o instanceof URIFrontier) {
-            frontier = (URIFrontier) o;
-        } else {
-            frontier = new Frontier(URIFrontier.ATTR_NAME);
-            order.setAttribute((Frontier) frontier);
+        if (scope == null) {
+            scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
+        	scope.initialize(this);
         }
-
-        // try to initialize each scope and frontier from the config file
-        //scope.initialize(this);
-        try {
-            this.scope.initialize(this);
-            this.frontier.initialize(this);
-            
-            String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
-            if(recoverPath.length()>0) {
-                try {
-                    frontier.importRecoverLog(recoverPath);
-                } catch (IOException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                    throw new FatalConfigurationException("Recover.log problem: "+e1);
-                }
+        if (frontier == null) {
+            Object o = order.getAttribute(URIFrontier.ATTR_NAME);
+            if (o instanceof URIFrontier) {
+                frontier = (URIFrontier) o;
+            } else {
+                frontier = new Frontier(URIFrontier.ATTR_NAME);
+                order.setAttribute((Frontier) frontier);
             }
-        } catch (IOException e) {
-            throw new FatalConfigurationException(
-                "unable to initialize frontier: " + e);
+    
+            // try to initialize each scope and frontier from the config file
+            //scope.initialize(this);
+            try {
+                frontier.initialize(this);
+                
+                String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
+                if(recoverPath.length()>0) {
+                    try {
+                        frontier.importRecoverLog(recoverPath);
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        throw new FatalConfigurationException("Recover.log problem: "+e1);
+                    }
+                }
+            } catch (IOException e) {
+                throw new FatalConfigurationException(
+                    "unable to initialize frontier: " + e);
+            }
         }
 
         serverCache = new ServerCache(getSettingsHandler());
 
         // Setup processors
-        processorChains = new ProcessorChainList(order);
+        if (processorChains == null) {
+            processorChains = new ProcessorChainList(order);
+        }
     }
 
-    private void setupDisk() throws FatalConfigurationException,
-    AttributeNotFoundException {
+    private void setupDisk() throws AttributeNotFoundException {
         String diskPath
         = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         disk = getSettingsHandler().getPathRelativeToWorkingDirectory(diskPath);
@@ -538,7 +510,7 @@ public class CrawlController {
         logsDisk.mkdirs();
 
         String checkpointsDiskPath
-        = (String) order.getAttribute(null, CrawlOrder.ATTR_LOGS_PATH);
+        = (String) order.getAttribute(null, CrawlOrder.ATTR_CHECKPOINTS_PATH);
         checkpointsDisk = new File(logsDiskPath);
         if (!checkpointsDisk.isAbsolute()) {
             checkpointsDisk = new File(disk.getPath(), checkpointsDiskPath);
@@ -566,16 +538,20 @@ public class CrawlController {
         // the statistics object must be created before modules that use it if those
         // modules retrieve the object from the controller during initialization
         // (which some do).  So here we go with that.
+
         MapType loggers = order.getLoggers();
         if (loggers.isEmpty(null)) {
             // set up a default tracker
-            loggers.addElement(null, new StatisticsTracker("crawl-statistics"));
+            if (statistics == null) {
+                statistics = new StatisticsTracker("crawl-statistics");
+            }
+            loggers.addElement(null, (StatisticsTracker)statistics);
         }
         Iterator it = loggers.iterator(null);
         while (it.hasNext()) {
             StatisticsTracking tracker = (StatisticsTracking) it.next();
             tracker.initalize(this);
-            if (statistics == null && tracker instanceof StatisticsTracker) {
+            if (statistics == null) {
                 statistics = tracker;
             }
         }
@@ -584,52 +560,93 @@ public class CrawlController {
     private void setupLogs() throws IOException {
         String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
 
-        uriProcessing = Logger.getLogger(LOGNAME_CRAWL+"."+logsPath);
-        runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS+"."+logsPath);
-        localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS+"."+logsPath);
-        uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS+"."+logsPath);
-        progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS+"."+logsPath);
-        recover = Logger.getLogger(LOGNAME_RECOVER+"."+logsPath);
+        uriProcessing = 
+            Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
+        runtimeErrors = 
+            Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." + logsPath);
+        localErrors = 
+            Logger.getLogger(LOGNAME_LOCAL_ERRORS + "." + logsPath);
+        uriErrors = 
+            Logger.getLogger(LOGNAME_URI_ERRORS + "." + logsPath);
+        progressStats = 
+            Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." + logsPath);
+        recover = 
+            Logger.getLogger(LOGNAME_RECOVER + "." + logsPath);
 
-        FileHandler up = new FileHandler(logsPath + LOGNAME_CRAWL + ".log");
-        addToManifest(logsPath + LOGNAME_CRAWL + ".log", MANIFEST_LOG_FILE, true);
-        up.setFormatter(new UriProcessingFormatter());
-        uriProcessing.addHandler(up);
-        uriProcessing.setUseParentHandlers(false);
+        fileHandlers = new HashMap();
+        
+        setupLogFile(
+                uriProcessing, 
+                logsPath + LOGNAME_CRAWL + CURRENT_LOG_SUFFIX,
+                new UriProcessingFormatter(), 
+                true);
 
-        FileHandler cerr =
-            new FileHandler(logsPath + LOGNAME_RUNTIME_ERRORS + ".log");
-        addToManifest(logsPath + LOGNAME_RUNTIME_ERRORS + ".log", MANIFEST_LOG_FILE, true);
-        cerr.setFormatter(new RuntimeErrorFormatter());
-        runtimeErrors.addHandler(cerr);
-        runtimeErrors.setUseParentHandlers(false);
+        setupLogFile(
+                runtimeErrors,
+                logsPath + LOGNAME_RUNTIME_ERRORS + CURRENT_LOG_SUFFIX,
+                new RuntimeErrorFormatter(),
+                true);
 
-        FileHandler lerr =
-            new FileHandler(logsPath + LOGNAME_LOCAL_ERRORS + ".log");
-        addToManifest(logsPath + LOGNAME_LOCAL_ERRORS + ".log", MANIFEST_LOG_FILE, true);
-        lerr.setFormatter(new LocalErrorFormatter());
-        localErrors.addHandler(lerr);
-        localErrors.setUseParentHandlers(false);
+        setupLogFile(
+                localErrors,
+                logsPath + LOGNAME_LOCAL_ERRORS + CURRENT_LOG_SUFFIX,
+                new LocalErrorFormatter(),
+                true);
+        
+        setupLogFile(
+                uriErrors,
+                logsPath + LOGNAME_URI_ERRORS + CURRENT_LOG_SUFFIX,
+                new UriErrorFormatter(),
+                true);
 
-        FileHandler uerr =
-            new FileHandler(logsPath + LOGNAME_URI_ERRORS + ".log");
-        addToManifest(logsPath + LOGNAME_URI_ERRORS + ".log", MANIFEST_LOG_FILE, true);
-        uerr.setFormatter(new UriErrorFormatter());
-        uriErrors.addHandler(uerr);
-        uriErrors.setUseParentHandlers(false);
+        setupLogFile(
+                progressStats,
+                logsPath + LOGNAME_PROGRESS_STATISTICS + CURRENT_LOG_SUFFIX,
+                new StatisticsLogFormatter(),
+                true);
+ 
+        setupLogFile(
+                recover,
+                logsPath + LOGNAME_RECOVER + CURRENT_LOG_SUFFIX,
+                new PassthroughFormatter(),
+                false);
+    }
 
-        FileHandler stat =
-            new FileHandler(logsPath + LOGNAME_PROGRESS_STATISTICS + ".log");
-        addToManifest(logsPath + LOGNAME_PROGRESS_STATISTICS + ".log", MANIFEST_LOG_FILE, true);
-        stat.setFormatter(new StatisticsLogFormatter());
-        progressStats.addHandler(stat);
-        progressStats.setUseParentHandlers(false);
+    private void setupLogFile(Logger logger, String filename, Formatter f,
+            boolean shouldManifest) throws IOException, SecurityException {
+        GenerationFileHandler fh = new GenerationFileHandler(filename, true,
+                shouldManifest);
+        fh.setFormatter(f);
+        logger.addHandler(fh);
+        addToManifest(filename, MANIFEST_LOG_FILE, shouldManifest);
+        logger.setUseParentHandlers(false);
+        fileHandlers.put(logger, fh);
+    }
 
-        FileHandler reco = new FileHandler(logsPath + LOGNAME_RECOVER + ".log");
-        addToManifest(logsPath + LOGNAME_RECOVER + ".log", MANIFEST_LOG_FILE, false);
-        reco.setFormatter(new PassthroughFormatter());
-        recover.addHandler(reco);
-        recover.setUseParentHandlers(false);
+    /**
+     * Cause all active log files to be closed and moved to filenames
+     * ending with the (zero-padded to 5 places) generation suffix.
+     * Resume logging to new files with the same active log names.
+     * 
+     * @param generation
+     * @throws IOException
+     */
+    public void rotateLogFiles(int generation) throws IOException {
+        String generationSuffix = "."
+                + (new DecimalFormat("00000")).format(generation);
+        Iterator iter = fileHandlers.keySet().iterator();
+        while (iter.hasNext()) {
+            Logger l = (Logger) iter.next();
+            GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
+                    .get(l);
+            GenerationFileHandler newGfh = gfh.rotate(generationSuffix,
+                    CURRENT_LOG_SUFFIX);
+            addToManifest((String) newGfh.getFilenameSeries().get(1),
+                    MANIFEST_LOG_FILE, newGfh.shouldManifest());
+            l.removeHandler(gfh);
+            l.addHandler(newGfh);
+            fileHandlers.put(l, newGfh);
+        }
     }
 
     /**
@@ -643,12 +660,12 @@ public class CrawlController {
      * Operator requested crawl begin 
      */
     public void requestCrawlStart() {
-        runProcessorInitialTasks();
+        if(cpContext.isAtBeginning()) {
+            runProcessorInitialTasks();
+        }
         
         // assume Frontier state already loaded
-        //shouldCrawl = true;
-        //shouldPause = false;
-        state = RUNNING;
+        state = beginPaused ? PAUSED : RUNNING;
         logger.info("Should start Crawl");
 
         sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
@@ -659,8 +676,7 @@ public class CrawlController {
         statLogger.setName("StatLogger");
         statLogger.start();
 
-        // TODO: add 'start in pause' option?
-        toePool.setShouldPause(false);
+        toePool.setShouldPause(beginPaused);
     }
 
     private void completeStop() {
@@ -777,11 +793,14 @@ public class CrawlController {
 
     /**
      * Operator requested a checkpoint
-     * @return name of checkpoint on success, or null on failure
      */
-    public synchronized String requestCrawlCheckpoint() {
-        // TODO implement
-        return null;
+    public synchronized void requestCrawlCheckpoint() {
+        if (state != PAUSED) {
+            // can only checkpoint a paused crawl
+            return;
+        }
+        state = CHECKPOINTING;
+        new Thread(new CheckpointTask()).start();
     }
     
     /**
@@ -847,7 +866,6 @@ public class CrawlController {
 
         logger.info("Crawl job resumed");
         
-        Iterator iterator;
         // Tell everyone that we have resumed from pause
         synchronized (this.registeredCrawlStatusListeners) {
             for (Iterator i = this.registeredCrawlStatusListeners.iterator();
@@ -1115,9 +1133,100 @@ public class CrawlController {
         }
     }
 
+    /**
+     * Evaluate if the crawl should stop because it is finished.
+     */
     public void checkFinish() {
         if(state == RUNNING && !shouldContinueCrawling()) {
             beginCrawlStop();
         }
     }
+    
+    /**
+     * @author gojomo
+     */
+    public class CheckpointTask implements Runnable {
+        /** 
+         * @see java.lang.Runnable#run()
+         */
+        public void run() {
+            CrawlController.this.writeCheckpoint();
+        }
+    }
+
+
+    /**
+     * Write a checkpoint to disk. 
+     */
+    protected void writeCheckpoint() {
+        cpContext.begin();
+        try {
+            this.checkpointTo(cpContext);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            cpContext.checkpointFailed(e);
+        }
+        cpContext.end();
+        state = PAUSED;
+    }
+
+    /** 
+     * @param cpContext
+     * @throws IOException
+     */
+    public void checkpointTo(CheckpointContext cpContext) throws IOException {
+        Checkpoint checkpoint = new Checkpoint(cpContext.getCheckpointInProgressDirectory());
+        
+        rotateLogFiles(cpContext.getNextCheckpoint());
+        checkpoint.writeObjectPlusToFile(this,DISTINGUISHED_FILENAME);   
+    }
+
+    /**
+     * @param resumeFrom
+     * @return
+     * @throws InitializationException
+     */
+    public static CrawlController readFrom(Checkpoint resumeFrom) throws InitializationException {
+        try {
+            return (CrawlController) resumeFrom.readObjectFromFile(DISTINGUISHED_FILENAME);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new InitializationException("unable to read controller", e);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            throw new InitializationException("unable to read controller", e);
+        }
+    }
+
+    // custom serialization
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        stream.defaultWriteObject();
+//        ObjectPlusFilesOutputStream opfos = (ObjectPlusFilesOutputStream)stream;
+        // TODO: snapshot logs
+//        opfos.pushAuxiliaryDirectory("logs");
+//        Iterator iter = fileHandlers.keySet().iterator();
+//        while (iter.hasNext()) {
+//            Logger l = (Logger) iter.next();
+//            GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
+//                    .get(l);
+//            Iterator logFiles = gfh.getFilenameSeries().iterator();
+//            while(logFiles.hasNext()) {
+//                opfos.snapshotAppendOnlyFile(new File((String) logFiles.next()));
+//            }
+//        }
+//        opfos.writeUTF(""); // signal that all logFiles are done
+//        opfos.popAuxiliaryDirectory();
+        // TODO someday: snapshot on-disk settings/overrides/refinements
+    }
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+//        ObjectPlusFilesInputStream opfis = (ObjectPlusFilesInputStream)stream;
+        // TODO: restore logs
+
+        // ensure disk CrawlerSettings data is loaded
+        settingsHandler.initialize();
+    }
+
 }
