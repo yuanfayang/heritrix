@@ -10,7 +10,7 @@
 	<classpathentry kind="lib" path="lib/javaswf-CVS-SNAPSHOT-1.jar"/>
 	<classpathentry kind="lib" path="lib/poi-2.0-RC1-20031102.jar"/>
 	<classpathentry kind="lib" path="lib/poi-scratchpad-2.0-RC1-20031102.jar"/>
-	<classpathentry kind="lib" path="lib/org.mortbay.jetty-4.2.17.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-4.2.17.jar"/>
 	<classpathentry kind="lib" path="lib/stataclasses-0.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="lib/ant-1.5.4.jar"/>
