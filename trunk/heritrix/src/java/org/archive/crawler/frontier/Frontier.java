@@ -233,8 +233,10 @@ public class Frontier
     public void initialize(CrawlController c)
         throws FatalConfigurationException, IOException {
 
+        // TODO: Make the queue size configurable.
         pendingQueue = new DiskBackedQueue(c.getStateDisk(),"pendingQ",10000);
 
+        // TODO: Make the uri set configurable.
         alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
         //alreadyIncluded = new PagedUURISet(c.getScratchDisk());
 
@@ -456,7 +458,7 @@ public class Frontier
         long until = now + timeout;
         
         while(now<until) {
-            // Keep trying till we hit timout.
+            // Keep trying till we hit timeout.
             CrawlURI curi = next();
             if(curi!=null) {
                 return curi;
