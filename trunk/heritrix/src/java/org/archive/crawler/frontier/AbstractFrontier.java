@@ -35,6 +35,7 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
+import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
@@ -49,6 +50,8 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 
 /**
+ * Shared facilities for Frontier implementations. 
+ * 
  * @author gojomo
  */
 public abstract class AbstractFrontier extends ModuleType implements Frontier,
@@ -72,7 +75,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     /** always wait this long after one completion before recontacting
      * same server, regardless of multiple */
     public final static String ATTR_MIN_DELAY = "min-delay-ms";
-    protected final static Integer DEFAULT_MIN_DELAY = new Integer(2000); //2 seconds
+    protected final static Integer DEFAULT_MIN_DELAY = new Integer(3000); //2 seconds
     
     /** never wait more than this long, regardless of multiple */
     public final static String ATTR_MAX_DELAY = "max-delay-ms";
@@ -166,6 +169,18 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
         unpause();
     }
     
+    
+    /**
+     * Frontier is empty only if all queues are empty and
+     * no URIs are in-process
+     *
+     * @return True if queues are empty.
+     */
+    public synchronized boolean isEmpty() {
+        // TODO: consider synchronizing on something (allClassQueuesMap?)
+        return queuedCount == 0;
+    }
+    
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
@@ -246,6 +261,10 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
      * @throws EndedException
      */
     protected synchronized void preNext(long now) throws InterruptedException, EndedException {
+        
+        // check completion conditions
+        controller.checkFinish();
+        
         // enforce operator pause
         while(shouldPause) {
             controller.toePaused();
@@ -453,5 +472,70 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
      */
     public void kickUpdate() {
         loadSeeds();
+    }
+    
+    /**
+     * @param curi
+     * @param array
+     */
+    protected void log(CrawlURI curi) {
+        curi.aboutToLog();
+        Object array[] = { curi };
+        this.controller.uriProcessing.log(
+            Level.INFO,
+            curi.getUURI().toString(),
+            array );
+    }
+    
+    protected boolean isDisregarded(CrawlURI curi) {
+        switch (curi.getFetchStatus()) {
+            case S_ROBOTS_PRECLUDED :     // they don't want us to have it
+            case S_OUT_OF_SCOPE :         // filtered out by scope
+            case S_BLOCKED_BY_USER :      // filtered out by user
+            case S_TOO_MANY_EMBED_HOPS :  // too far from last true link
+            case S_TOO_MANY_LINK_HOPS :   // too far from seeds
+            case S_DELETED_BY_USER :      // user deleted
+                return true;
+            default:
+                return false;
+        }
+    }
+    
+    /**
+     * Checks if a recently completed CrawlURI that did not finish successfully
+     * needs to be retried (processed again after some time elapses)
+     *
+     * @param curi The CrawlURI to check
+     * @return True if we need to retry.
+     * @throws AttributeNotFoundException If problems occur trying to read the
+     *            maximum number of retries from the settings framework.
+     */
+    protected boolean needsRetrying(CrawlURI curi) {
+        if (overMaxRetries(curi)) {
+            return false; 
+        }
+        
+        switch (curi.getFetchStatus()) {
+            case HttpStatus.SC_UNAUTHORIZED:
+                // We can get here though usually a positive status code is
+                // a success.  We get here if there is rfc2617 credential data
+                // loaded and we're supposed to go around again.  See if any
+                // rfc2617 credential present and if there, assume it got
+                // loaded in FetchHTTP on expectation that we're to go around
+                // again.  If no rfc2617 loaded, we should not be here.
+                boolean loaded = curi.hasRfc2617CredentialAvatar();
+                if (!loaded) {
+                    logger.severe("Have 401 but no creds loaded " + curi);
+                }
+                return loaded;
+            case S_DEFERRED:
+            case S_CONNECT_FAILED:
+            case S_CONNECT_LOST:
+                // these are all worth a retry
+                // TODO: consider if any others (S_TIMEOUT in some cases?) deserve retry
+                return true;
+            default:
+                return false;
+        }
     }
 }
