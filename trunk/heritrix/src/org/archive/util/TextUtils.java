@@ -1,6 +1,10 @@
 package org.archive.util;
 
 import java.io.*;
+import java.util.EmptyStackException;
+import java.util.Hashtable;
+import java.util.Stack;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TextUtils {
@@ -98,9 +102,12 @@ public class TextUtils {
 		}
 	}
 
+	
+	final static Hashtable patternMatchers = new Hashtable(50); // Resuable match objects
+	
 	/**
 	 * Utility method using a precompiled pattern instead of using the replaceAll method of
-	 * the String class.
+	 * the String class. This method will also be reusing Matcher objects.
 	 * 
 	 * @see java.lang.String#replaceAll
 	 * @see java.util.regex.Pattern
@@ -109,16 +116,27 @@ public class TextUtils {
 	 * @param replacement the String to substitute every match with
 	 * @return the String with all the matches substituted
 	 */
-	public static String replaceAll(
-		Pattern p,
-		CharSequence input,
-		String replacement) {
-		return p.matcher(input).replaceAll(replacement);
+	public static String replaceAll(Pattern p, CharSequence input, String replacement) {
+		Stack matchers;
+		if((matchers = (Stack) patternMatchers.get(p)) == null) {
+			matchers = new Stack();
+			patternMatchers.put(p, matchers);
+		}
+		Matcher matcher;
+		try {
+			matcher = (Matcher) matchers.pop();
+			matcher.reset(input);
+		} catch(EmptyStackException e) {
+			matcher = p.matcher(input);
+		}
+		String res = matcher.replaceAll(replacement);
+		matchers.push(matcher);
+		return res;
 	}
 
 	/**
 	 * Utility method using a precompiled pattern instead of using the replaceFirst method of
-	 * the String class.
+	 * the String class. This method will also be reusing Matcher objects.
 	 * 
 	 * @see java.lang.String#replaceFirst
 	 * @see java.util.regex.Pattern
@@ -127,16 +145,27 @@ public class TextUtils {
 	 * @param replacement the String to substitute the first match with
 	 * @return the String with the first match substituted
 	 */
-	public static String replaceFirst(
-		Pattern p,
-		CharSequence input,
-		String replacement) {
-		return p.matcher(input).replaceFirst(replacement);
+	public static String replaceFirst(Pattern p, CharSequence input, String replacement) {
+		Stack matchers;
+		if((matchers = (Stack) patternMatchers.get(p)) == null) {
+			matchers = new Stack();
+			patternMatchers.put(p, matchers);
+		}
+		Matcher matcher;
+		try {
+			matcher = (Matcher) matchers.pop();
+			matcher.reset(input);
+		} catch(EmptyStackException e) {
+			matcher = p.matcher(input);
+		}
+		String res = matcher.replaceFirst(replacement);
+		matchers.push(matcher);
+		return res;
 	}
 
 	/**
 	 * Utility method using a precompiled pattern instead of using the matches method of
-	 * the String class.
+	 * the String class. This method will also be reusing Matcher objects.
 	 * 
 	 * @see java.lang.String#matches
 	 * @see java.util.regex.Pattern
@@ -145,7 +174,21 @@ public class TextUtils {
 	 * @return true if character sequence matches
 	 */
 	public static boolean matches(Pattern p, CharSequence input) {
-		return p.matcher(input).matches();
+		Stack matchers;
+		if((matchers = (Stack) patternMatchers.get(p)) == null) {
+			matchers = new Stack();
+			patternMatchers.put(p, matchers);
+		}
+		Matcher matcher;
+		try {
+			matcher = (Matcher) matchers.pop();
+			matcher.reset(input);
+		} catch(EmptyStackException e) {
+			matcher = p.matcher(input);
+		}
+		boolean res = matcher.matches();
+		matchers.push(matcher);
+		return res;
 	}
 
 	/**
