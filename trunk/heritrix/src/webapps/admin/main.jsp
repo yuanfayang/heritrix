@@ -182,7 +182,7 @@
 										<b>Total data written:</b>&nbsp;
 									</td>
 									<td>
-										<%=(stats.getTotalBytesWritten()/1048576)%> MB
+										<%=ArchiveUtils.formatBytesForDisplay(stats.getTotalBytesWritten())%>
 									</td>
 								</tr>
 							</table>

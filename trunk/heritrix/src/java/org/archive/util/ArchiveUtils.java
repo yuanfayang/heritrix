@@ -316,5 +316,38 @@ public class ArchiveUtils {
         }
         return tmp;
     }
+    
+    /**
+     * Takes an amount of bytes and formats it for display. This involves 
+     * converting it to Kb, Mb or Gb if the amount is enough to qualify for 
+     * the next level.
+     * <p>
+     * Displays as bytes (B): 0-1023
+     * Displays as kilobytes (KB): 1024 - 2097151 (~2Mb)
+     * Displays as megabytes (MB): 2097152 - 4294967295 (~4Gb)
+     * Displays as gigabytes (GB): 4294967296 - infinity
+     * 
+     * @param amount the amount of bytes
+     * @return A string containing the amount, properly formated.
+     */
+    public static String formatBytesForDisplay(long amount){
+        long kbStartAt = 1024;
+        long mbStartAt = 1024*1024*2;
+        long gbStartAt = 1024*1024*1024*4;
+        
+        if(amount < 1024){
+            // Display as bytes.
+            return amount + " B";
+        } else if(amount < 2097151) {
+            // Display as kilobytes
+            return Long.toString((long)(((double)amount/1024)+0.5))+" KB";
+        } else if(amount < gbStartAt) {
+            // Display as megabytes
+            return Long.toString((long)(((double)amount/(1024*1024))+0.5))+" MB";
+        } else {
+            // Display as gigabytes
+            return Long.toString((long)(((double)amount/(1024*1024*1024))+0.5))+" GB";
+        }
+    }
 }
 
