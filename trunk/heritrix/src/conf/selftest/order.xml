@@ -91,10 +91,8 @@
         <integer name="timeout-seconds">12</integer>
         <integer name="sotimeout-ms">20000</integer>
         <long name="max-length-bytes">9223372036854775807</long>
-        <integer name="max-fetch-attempts">10</integer>
         <string name="load-cookies-from-file"></string>
         <string name="save-cookies-to-file"></string>
-        <boolean name="strict">false</boolean>
         <string name="trust-level">open</string>
       </newObject>
     </map>
