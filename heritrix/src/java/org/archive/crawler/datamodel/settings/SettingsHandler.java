@@ -316,6 +316,12 @@ public abstract class SettingsHandler {
      *         in the persistent storage.
      */
     protected abstract CrawlerSettings readSettingsObject(CrawlerSettings settings);
+    
+    /** Delete a settings object from persistent storage.
+     * 
+     * @param settings the settings object to delete.
+     */
+    public abstract void deleteSettingsObject(CrawlerSettings settings);
 
     /** Get the CrawlOrder.
      * 

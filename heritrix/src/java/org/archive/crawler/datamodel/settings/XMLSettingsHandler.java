@@ -159,7 +159,6 @@ public class XMLSettingsHandler extends SettingsHandler {
             file = new File(settingsDirectory, path.toString());
         }
         
-        file.mkdirs();
         file = new File(file, settingsFilename);
         return file;
     }
@@ -182,9 +181,10 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @param filename the file to which the settings object should be written.
      */
     public final void writeSettingsObject(
-        CrawlerSettings settings,
-        File filename) {
+            CrawlerSettings settings, File filename) {
+                
         logger.fine("Writing " + filename.getAbsolutePath());
+        filename.getParentFile().mkdirs();
         try {
             StreamResult result =
                 new StreamResult(
@@ -246,6 +246,7 @@ public class XMLSettingsHandler extends SettingsHandler {
                          + filename.getAbsolutePath() + "': " + e.getMessage());
             }
         } else {
+            // File doesn't exist, return null to inidcate this.
             settings = null;
         }
         return settings;
@@ -393,5 +394,24 @@ public class XMLSettingsHandler extends SettingsHandler {
         }
         // Didn't find an override.
         return false;
+    }
+
+    /** Delete a settings object from persistent storage.
+     * 
+     * Deletes the file represented by the submitted settings object. All empty
+     * directories that are parents to the files path are also deleted.
+     * 
+     * @param settings the settings object to delete.
+     */
+    public void deleteSettingsObject(CrawlerSettings settings) {
+        File settingsDirectory = getSettingsDirectory();
+        File settingsFile = scopeToFile(settings.getScope());
+        
+        settingsFile.delete();
+        settingsFile = settingsFile.getParentFile();
+        while (settingsFile.isDirectory() && settingsFile.list().length == 0 && !settingsFile.equals(settingsDirectory)) {
+            settingsFile.delete();
+            settingsFile = settingsFile.getParentFile();
+        }
     }
 }
