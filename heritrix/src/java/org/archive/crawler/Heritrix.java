@@ -40,6 +40,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.Vector;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -228,6 +229,7 @@ public class Heritrix
     public static void main(String[] args)
         throws Exception
     {
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
         calculateHome();
         File startLog = new File(getHeritrixHome(), STARTLOG);
         Heritrix.out = new PrintWriter(isDevelopment()? System.out:
