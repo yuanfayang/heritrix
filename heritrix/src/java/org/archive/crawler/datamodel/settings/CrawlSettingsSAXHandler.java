@@ -83,6 +83,10 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
         handlers.put(SettingsHandler.INTEGER_LIST, new ListHandler());
         handlers.put(SettingsHandler.STRING, new SimpleElementHandler());
         handlers.put(SettingsHandler.INTEGER, new SimpleElementHandler());
+        handlers.put(SettingsHandler.FLOAT, new SimpleElementHandler());
+        handlers.put(SettingsHandler.LONG, new SimpleElementHandler());
+        handlers.put(SettingsHandler.BOOLEAN, new SimpleElementHandler());
+        handlers.put(SettingsHandler.DOUBLE, new SimpleElementHandler());
     }
 
     /* (non-Javadoc)
@@ -183,14 +187,14 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
     private class ModuleHandler extends ElementHandler {
         public void startElement(String name, Attributes atts)
             throws SAXException {
-            String moduleName;
+            CrawlerModule module;
             if (name.equals(XMLSettingsHandler.XML_ELEMENT_CONTROLLER)) {
-                moduleName = name;
+                module = settingsHandler.getOrder();
             } else {
-                moduleName =
-                    atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME);
+                module =
+                settingsHandler.getModule(atts.getValue(XMLSettingsHandler.XML_ATTRIBUTE_NAME));
             }
-            stack.push(settingsHandler.getModule(moduleName));
+            stack.push(module);
         }
 
         public void endElement(String name) throws SAXException {
