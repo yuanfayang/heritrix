@@ -118,7 +118,15 @@ public class DiskBackedQueue implements Queue, Serializable {
      * @see org.archive.util.Queue#peek()
      */
     public Object peek() {
-         return headQ.peek();
+    	Object o;
+    	if(headQ.isEmpty()){
+    		// TODO: Maybe fillHeadQ should be invoked instead?
+    		o = tailQ.dequeue();
+    		headQ.enqueue(o);
+    	} else {
+    		o = headQ.peek();    		
+    	}
+    	return o;
     }
 
     /**
