@@ -6,6 +6,7 @@
  */
 package org.archive.crawler.basic;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.SortedSet;
@@ -358,36 +359,73 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 	 * @param embed
 	 * @param i
 	 */
-	public void insert(UURI uuri, int dist) {
-		if(filteredOut(uuri)) return;
+	public CrawlURI insert(UURI uuri, CrawlURI sourceCuri, int extraHop) {
+		if(filteredOut(uuri)) return null;
 		CrawlURI curi = (CrawlURI)allCuris.get(uuri);
 		if(curi!=null) {
 			// already inserted
 			// TODO: perhaps yank to front?
+			// TODO: increment inlink counter?
 			// if curi is still locked out, ignore request to schedule
 			if(curi.getStoreState()!=URIStoreable.FINISHED || curi.dontFetchYet()){
-				return;
+				return curi;
 			} 
 			// yank URI back into scheduling if necessary
 			curi.reconstitute();
 		} else {
 			curi = new CrawlURI(uuri);
 		}
-		int newDist = dist;
-		if(curi.getAList().containsKey(A_DISTANCE_FROM_SEED)) {
-			newDist = Math.max(dist,curi.getAList().getInt(A_DISTANCE_FROM_SEED));
-		}
-		curi.getAList().putInt(A_DISTANCE_FROM_SEED,newDist);
+		
+		applyCarryforwards(curi,sourceCuri, extraHop );
+		
 		allCuris.put(uuri,curi);
 		KeyedQueue classQueue = (KeyedQueue) allClassQueuesMap.get(curi.getClassKey());
 		if ( classQueue == null ) {
 			pendingQueue.addLast(curi);
 			curi.setStoreState(URIStoreable.PENDING);
 			notify();
-			return;
+			return curi;
 		}
 		classQueue.addLast(curi);
 		curi.setStoreState(classQueue.getStoreState());
+		return curi;
+	}
+
+	/**
+	 * @param curi
+	 * @param sourceCuri
+	 */
+	private void applyCarryforwards(CrawlURI curi, CrawlURI sourceCuri, int extraHop) {
+		int newDist = sourceCuri.getAList().getInt("distance-from-seed")+extraHop;
+		if(curi.getAList().containsKey(A_DISTANCE_FROM_SEED)) {
+			int oldDist = curi.getAList().getInt(A_DISTANCE_FROM_SEED);
+			if (oldDist>newDist) {
+				curi.getAList().putInt(A_DISTANCE_FROM_SEED,newDist);
+				curi.setVia(sourceCuri);
+			} // otherwise leave alone
+		} else {
+			curi.getAList().putInt(A_DISTANCE_FROM_SEED,newDist);
+			curi.setVia(sourceCuri);
+		}
+
+		
+		int newChaffness = sourceCuri.getChaffness();
+		if(!sourceCuri.getUURI().getUri().getHost().equals(curi.getUURI().getUri().getHost())) {
+			newChaffness = 0;
+		} else {
+			BitSet scratch = (BitSet) sourceCuri.getFuzzy().clone();
+			scratch.xor(curi.getFuzzy());
+			int fuzzyDiff = scratch.cardinality();
+			if(fuzzyDiff<2) {
+				newChaffness += 1;
+			} else {
+				newChaffness -= 1;
+			}
+		}
+		if(newChaffness<0) {
+			newChaffness = 0;
+		}
+		curi.setChaffness(newChaffness);
 	}
 
 	/**
