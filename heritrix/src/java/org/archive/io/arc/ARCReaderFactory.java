@@ -34,7 +34,7 @@ import java.util.zip.GZIPInputStream;
 
 import org.archive.io.GZIPMemberInputStream;
 import org.archive.io.MappedByteBufferInputStream;
-import org.archive.io.Position;
+import org.archive.io.PositionableStream;
 
 /**
  * Return an ARCReader.
@@ -188,7 +188,7 @@ public class ARCReaderFactory implements ARCConstants {
 			// to here.
             this.in = new MappedByteBufferInputStream(initialize(arcfile));
 			// Read in the arcfile header.
-            createARCRecord(this.in, ((Position)this.in).getFilePointer());
+            createARCRecord(this.in, ((PositionableStream)this.in).getFilePointer());
 		}
 	}
 	
@@ -208,7 +208,7 @@ public class ARCReaderFactory implements ARCConstants {
 			// to here.
 			this.in = new GZIPMemberInputStream(initialize(arcfile));
             // Read in arcfile header record.
-            createARCRecord(this.in, ((Position)this.in).getFilePointer());
+            createARCRecord(this.in, ((PositionableStream)this.in).getFilePointer());
 		}
 
         /**
@@ -241,7 +241,7 @@ public class ARCReaderFactory implements ARCConstants {
 
             try {
                 return createARCRecord(this.in,
-                    ((Position)this.in).getFilePointer());
+                    ((PositionableStream)this.in).getFilePointer());
             } catch (IOException e) {
                 throw new NoSuchElementException(e.getClass() + ": " +
                     e.getMessage());

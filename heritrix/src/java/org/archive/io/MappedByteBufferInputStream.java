@@ -38,7 +38,7 @@ import java.nio.MappedByteBuffer;
  * @author stack
  */
 public class MappedByteBufferInputStream extends InputStream
-        implements Position {
+        implements PositionableStream {
 	
     /**
      * The mapped byte buffer we're feeding this stream from.
@@ -67,7 +67,7 @@ public class MappedByteBufferInputStream extends InputStream
 
 	public int read() throws IOException {
         checkClosed();
-		return (available() <= 0)? -1: this.mbb.get();
+		return (available() <= 0)? -1: this.mbb.get() & 0xff;
 	}
 
     public int read(byte[] b, int off, int len) throws IOException {
