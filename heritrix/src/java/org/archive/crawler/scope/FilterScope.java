@@ -75,7 +75,8 @@ public class FilterScope extends CrawlScope {
     public FilterScope(String name) {
         super(name);
         setDescription(
-            "A scope using customizable filters. To use this filter, add " +
+            "FilterScope: A scope using customizable filters. To use this " +
+            "filter, add " +
             "any desired filters to it and adjust their settigns. For advanced" +
             "users only.");
 
