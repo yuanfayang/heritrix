@@ -62,15 +62,17 @@ public class FetchHTTP
 			// only handles plain http for now
 			return;
 		}
-		
-		// make sure there are not restrictions on when we should fetch this
-		if(curi.dontFetchYet()){
-			return;
-		}
+
+// WRONG PLACE TO DO THIS; is a scheduling matter		
+//		// make sure there are not restrictions on when we should fetch this
+//		if(curi.dontFetchYet()){
+//			return;
+//		}
 		
 		// only try so many times...
 		if(curi.getFetchAttempts() >= maxTries){
-			curi.setFetchStatus(S_CONNECT_FAILED);
+			curi.setFetchStatus(S_TOO_MANY_RETRIES);
+			return; 
 		}
 		
 		// give it a go
@@ -125,6 +127,13 @@ public class FetchHTTP
 			rec.closeRecorders();
 			get.releaseConnection();
 			return;
+		} catch (IllegalArgumentException e) {
+			// httpclient may throw this for bad cookies
+			curi.addLocalizedError(
+					this.getName(),
+					e,
+					"executeMethod " +executeRead + ":" + readFullyRead);
+			// try to continue: it may not be fatal
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// for weird windows-only ArrayIndex exceptions from native code
 			// see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
@@ -157,7 +166,7 @@ public class FetchHTTP
 					this.getName(),
 					e,
 					"readFully " +executeRead + ":" + readFullyRead);
-			curi.setFetchStatus(S_CONNECT_FAILED);
+			curi.setFetchStatus(S_CONNECT_LOST);
 			return;
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// for weird windows-only ArrayIndex exceptions from native code
@@ -168,7 +177,7 @@ public class FetchHTTP
 					this.getName(),
 					e,
 					"readFully " +executeRead + ":" + readFullyRead);
-			curi.setFetchStatus(S_CONNECT_FAILED);
+			curi.setFetchStatus(S_CONNECT_LOST);
 			return;
 		} finally  {
 			rec.closeRecorders();
