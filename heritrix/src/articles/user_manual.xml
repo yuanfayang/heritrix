@@ -1068,10 +1068,8 @@
             Site-Particular Session IDs</title>
             <para>Say site x.y.z is returning URLs with a session ID key of
             <literal>cid</literal> as in
-            <literal>http://x.y.z/index.html?cid=XYZ123112232112229BCDEFFA0000111'</literal>.  Say the session ID value is always 32 characters.  Say also
-            that annoyingly its a new ID on each request so the crawler
-            thinks it a new page every time it visits x.y.z, and, for 
-            simplicity's sake, that it always appears on the end of the
+            <literal>http://x.y.z/index.html?cid=XYZ123112232112229BCDEFFA0000111</literal>.  Say the session ID value is always 32 characters.  Say also, 
+            for simplicity's sake, that it always appears on the end of the
             URL.
             </para>
             <sect4 id="urlcanonexamplesoln">
@@ -1100,7 +1098,8 @@
               group from the regex if the regex matched).
                 To see the rule in operation, set the logging level for
                 <literal>org.archive.crawler.url.Canonicalizer</literal>
-                in <literal>heritrix.properties</literal> and adjust your
+                in <literal>heritrix.properties</literal> (Try 
+                uncommenting the line <literal>org.archive.crawler.url.Canonicalizer.level = INFO</literal>). Study the output and adjust your
                 regex accordingly.
                 </para>
             </sect4>
