@@ -76,8 +76,8 @@ public class HtmlFormCredential extends Credential {
             " for running a POST/GET to an HTML login form.");
 
         Type t = addElementToDefinition(new SimpleType("login-uri",
-            "URI of page that contains the HTML login form we're to apply" +
-            " these credentials too.", ""));
+            "Full URI of page that contains the HTML login form we're to" +
+            " apply these credentials too: E.g. http://www.archive.org", ""));
         t.setOverrideable(false);
         t.setExpertSetting(true);
 
