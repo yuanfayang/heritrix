@@ -352,7 +352,7 @@ public class Frontier
                 CandidateURI caUri = new CandidateURI(u);
                 caUri.setSeed();
                 caUri.setSchedulingDirective(CandidateURI.HIGH);
-                innerSchedule(caUri);
+                schedule(caUri);
             }
         }
     }
@@ -851,6 +851,7 @@ public class Frontier
                 try {
                     String key = curi.getClassKey();
 					kq = new KeyedQueue(key,
+                        this.controller.getServerCache().getServerFor(curi),
 					    scratchDirFor(key),
 					    ((Integer) getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY
                                 ,curi)).intValue());
