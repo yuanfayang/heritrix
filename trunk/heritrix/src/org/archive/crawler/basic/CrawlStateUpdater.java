@@ -77,9 +77,9 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 		
 			if (curi.getUURI().getUri().getPath().equals("/robots.txt")) {
 				// update host with robots info
-				if(curi.getAList().containsKey("http-transaction")) {
-					GetMethod get = (GetMethod)curi.getAList().getObject("http-transaction");
-					curi.getServer().updateRobots(get);
+				if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+					GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+					curi.getServer().updateRobots(get, controller.getOrder().getRobotsHonoringPolicy());
 									
 					// curi can be refetched once robots data expires
 					curi.setDontRetryBefore(curi.getServer().getRobotsExpires());

@@ -9,6 +9,7 @@ package org.archive.crawler.datamodel;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.zip.Checksum;
@@ -76,9 +77,9 @@ public class CrawlServer implements Serializable {
 	/**
 	 * @param get
 	 */
-	public void updateRobots(GetMethod get) {
+	public void updateRobots(GetMethod get, RobotsHonoringPolicy honoringPolicy) {
 		robotsExpires = System.currentTimeMillis()+DEFAULT_ROBOTS_VALIDITY_DURATION;
-		if (get.getStatusCode()==404) {
+		if (get.getStatusCode()==404 || honoringPolicy.getType() == RobotsHonoringPolicy.IGNORE) {
 			// not found == all ok
 			robots = RobotsExclusionPolicy.ALLOWALL;
 			return;
@@ -93,11 +94,16 @@ public class CrawlServer implements Serializable {
 		// TODO: handle other errors, perhaps redirects
 		// note that akamai will return 400 for some "not founds"
 		try {
-			ReplayInputStream contentBodyStream = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
-			contentBodyStream.setToResponseBodyStart();
-			BufferedReader reader = new BufferedReader(
+			BufferedReader reader;
+			if(honoringPolicy.getType() == RobotsHonoringPolicy.CUSTOM) {
+				reader = new BufferedReader(new StringReader(honoringPolicy.getCustomRobots()));
+			} else {
+				ReplayInputStream contentBodyStream = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
+				contentBodyStream.setToResponseBodyStart();
+				reader = new BufferedReader(
 					new InputStreamReader(contentBodyStream));
-			robots = RobotsExclusionPolicy.policyFor(reader);
+			}
+			robots = RobotsExclusionPolicy.policyFor(reader, honoringPolicy);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -8,6 +8,7 @@ package org.archive.crawler.datamodel;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.*;
@@ -20,10 +21,16 @@ public class CrawlOrder extends XMLConfig {
 	private static final String XP_HTTP_USER_AGENT = "//http-headers/@User-Agent";
 	private static final String XP_HTTP_FROM = "//http-headers/@From";
 	private static final String XP_MAX_TOE_THREADS = "//behavior/@max-toe-threads";
+	private static final String XP_ROBOTS_HONORING_POLICY_NAME = "//behavior/robots-honoring-policy/@name";
+	private static final String XP_ROBOTS_HONORING_POLICY_MASQUERADE = "//behavior/robots-honoring-policy/@masquerade";
+	private static final String XP_ROBOTS_HONORING_POLICY_CUSTOM_ROBOTS = "//behavior/robots-honoring-policy/custom-robots";
+	private static final String XP_ROBOTS_HONORING_POLICY_USER_AGENTS = "//behavior/robots-honoring-policy/user-agents/agent";
+	
 	String caseFlattenedUserAgent;
 	String name;
     String outputLocation;
 	String crawlOrderFilename;
+	RobotsHonoringPolicy robotsHonoringPolicy = null;
 	
 	/**
 	 * @param crawlOrderFile
@@ -164,5 +171,31 @@ public class CrawlOrder extends XMLConfig {
 	 */
 	public String getCrawlOrderFilename() {
 		return crawlOrderFilename;
+	}
+
+	/**
+	 * This method constructs a new RobotsHonoringPolicy object from the orders file.
+	 * 
+	 * If this method is called repeatedly it will return the same instance each time.
+	 * 
+	 * @return the new RobotsHonoringPolicy
+	 */
+	public RobotsHonoringPolicy getRobotsHonoringPolicy() {
+		if (robotsHonoringPolicy==null) {
+			robotsHonoringPolicy = new RobotsHonoringPolicy(getStringAt(XP_ROBOTS_HONORING_POLICY_NAME));
+			robotsHonoringPolicy.setMasquerade(getStringAt(XP_ROBOTS_HONORING_POLICY_MASQUERADE));
+			
+			// if the policy type is custom, we should look up the admins robots.txt file
+			if(robotsHonoringPolicy.isType(RobotsHonoringPolicy.CUSTOM)) {
+				robotsHonoringPolicy.setCustomRobots(getStringAt(XP_ROBOTS_HONORING_POLICY_CUSTOM_ROBOTS));
+			}
+			if (robotsHonoringPolicy.isType(RobotsHonoringPolicy.MOST_FAVORED_SET)) {
+				Iterator iter = getTextNodesAt(xNode, XP_ROBOTS_HONORING_POLICY_USER_AGENTS).iterator();
+				while (iter.hasNext()) {
+					robotsHonoringPolicy.addUserAgent((String) iter.next());
+				}
+			}
+		}
+		return robotsHonoringPolicy;
 	}
 }
