@@ -87,9 +87,16 @@ public class MapType extends ComplexType {
         throws InvalidAttributeValueException {
         settings = settings == null ? globalSettings() : settings;
         
-        if (getDataContainerRecursive(settings) != null) {
-            throw new IllegalArgumentException(
-                "Duplicate element: " + element.getName());
+        if (settings != globalSettings()) {
+            try {
+                getAttribute(settings, element.getName());
+                // Element exist, throw an exception
+                throw new IllegalArgumentException(
+                    "Duplicate element: " + element.getName());
+
+            } catch (AttributeNotFoundException e) {
+                // Element doesn't exist, ok to add
+            }
         }
         
         if (!(element instanceof MapType) && (contentType.isInstance(element))) {
