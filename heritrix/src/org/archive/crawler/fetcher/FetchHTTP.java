@@ -41,7 +41,7 @@ public class FetchHTTP
 	private static long DEFAULT_MAX_LENGTH_BYTES = Long.MAX_VALUE;
 	private static int DEFAULT_MAX_FETCH_ATTEMPTS = 3;
 	
-	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetchHTTPSimple");
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.FetchHTTP");
 	HttpClient http;
 	private long timeout;
 	private long maxLength;
@@ -110,11 +110,13 @@ public class FetchHTTP
 			// the cost here rather than elsewhere. )
 			//InputStream is = get.getResponseBodyAsStream(); 
 			//while(is.read()!=-1) {} // TODOSOON: read in bigger chunks!
-			get.getHttpRecorder().getRecordedInput().readFullyOrUntil(maxLength,timeout);
+			if(get.getHttpRecorder().getRecordedInput().readFullyOrUntil(maxLength,timeout)) {
+				logger.info("time or size exceeded for "+curi);
+			}
 			get.getHttpRecorder().close();
 			
 			Header contentLength = get.getResponseHeader("Content-Length");
-			logger.info(
+			logger.fine(
 				curi.getUURI().getUri()+": "
 				+get.getStatusCode()+" "
 				+(contentLength==null ? "na" : contentLength.getValue()));
@@ -155,7 +157,8 @@ public class FetchHTTP
 					new MultiThreadedHttpConnectionManager();
 		http = new HttpClient(connectionManager);
 		// set connection timeout: considered same as overall timeout, for now
-		((HttpClientParams)http.getParams()).setConnectionTimeout((int)timeout);
+		// TODO: restore this when HTTPClient stops using monitor thread
+		//((HttpClientParams)http.getParams()).setConnectionTimeout((int)timeout);
 		// set per-read() timeout: overall timeout will be checked at least this
 		// frequently
 		((HttpClientParams)http.getParams()).setSoTimeout(1000);
