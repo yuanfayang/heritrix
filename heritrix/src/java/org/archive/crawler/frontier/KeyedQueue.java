@@ -113,6 +113,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @param key A unique identifier used to distingush files related to this
      *           objects disk based data structures (will be a part of their
      *           file name, must therefor be a legal filename).
+     * @param server Server instance this queue is for.
      * @param scratchDir Directory where disk based data structures will be
      *           created.
      * @param maxMemLoad Maximum number of items to keep in memory

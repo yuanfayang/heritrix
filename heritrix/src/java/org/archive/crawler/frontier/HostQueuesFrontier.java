@@ -620,21 +620,34 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      *  (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
-    public synchronized void finished(CrawlURI curi) {
+    public void finished(CrawlURI curi) {
+        logger.fine("Frontier.finished start: " + curi.getURIString());
         long start = System.currentTimeMillis();
-        logger.fine("Frontier.finished: " + curi.getURIString());
-        // Catch up on scheduling
-        innerBatchFlush();
-        notify(); // new items might be available, let waiting threads know
-        
+        curi.incrementFetchAttempts();
+        logLocalizedErrors(curi);
         try {
+        	innerFinished(curi);
+        }  finally {
+        	// This method cleans out all curi state.
+        	curi.processingCleanup();
+        	long duration = System.currentTimeMillis() - start;
+        	if(duration > 1000) {
+        		logger.warning("#" +
+        				((ToeThread)Thread.currentThread()).getSerialNumber() +
+						" " + duration + "ms" + " finished(" + curi.getURIString() +
+						") via " + curi.flattenVia());
+        	}
+        }
+    }
+    
+    protected synchronized void innerFinished(CrawlURI curi) {
+        try {
+            // Catch up on scheduling.  Can throw an URIException.
+            innerBatchFlush();
             URIWorkQueue kq = (URIWorkQueue) curi.getHolder();
             Object startState = kq.getState();
-            curi.incrementFetchAttempts();
-            logLocalizedErrors(curi);
             kq.noteProcessDone(curi);
             updateScheduling(curi, kq);
-
             if (curi.isSuccess()) {
                 successDisposition(curi);
             } else if (needsPromptRetry(curi)) {
@@ -656,6 +669,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             if(startState != kq.getState() || kq.isDiscardable()) {
                 updateQ(kq);
             }
+            
+            // New items might be available, let waiting threads know
+            notify();
         } catch (RuntimeException e) {
             curi.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
@@ -663,17 +679,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             failureDisposition(curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
-        } finally {
-            // This method cleans out all curi state.
-            curi.processingCleanup();
-        }
-
-        long duration = System.currentTimeMillis() - start;
-        if(duration > 1000) {
-            logger.warning("#" +
-                ((ToeThread)Thread.currentThread()).getSerialNumber() +
-                " " + duration + "ms" + " finished(" + curi.getURIString() +
-                ") via " + curi.flattenVia());
         }
     }
 
