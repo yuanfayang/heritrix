@@ -1127,8 +1127,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public static ArrayList loadOptions(String file)
     throws IOException {
-        InputStream is = CrawlJob.class.getResourceAsStream(File.separator +
-                "modules" + File.separator + file);
+        InputStream is = CrawlJob.class.getResourceAsStream("/" +
+                "modules" + "/" + file);
         if (is == null) {
             throw new IOException("Failed to get " + file + " from the " +
                 " CLASSPATH");
