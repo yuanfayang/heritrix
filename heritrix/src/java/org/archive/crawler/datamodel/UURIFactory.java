@@ -137,6 +137,7 @@ public class UURIFactory extends URI {
     public static final String NBSP = "\u00A0";
     public static final String SPACE = " ";
     public static final String ESCAPED_SPACE = "%20";
+    public static final String TRAILING_ESCAPED_SPACE = "^(.*)(%20)+$";
     public static final String PIPE = "|";
     public static final String PIPE_PATTERN = "\\|";
     public static final String ESCAPED_PIPE = "%7C";
@@ -379,6 +380,13 @@ public class UURIFactory extends URI {
         
         // Get rid of any trailing spaces or new-lines. 
         uri = uri.trim();
+        
+        // Get rid of any trailing escaped spaces.
+        for(Matcher m = TextUtils.getMatcher(TRAILING_ESCAPED_SPACE, uri);
+                m !=  null && m.matches();
+                m = TextUtils.getMatcher(TRAILING_ESCAPED_SPACE, uri)) {
+            uri = m.group(1);
+        }
         
         // IE actually converts backslashes to slashes rather than to %5C.
         // Since URIs that have backslashes usually work only with IE, we will
