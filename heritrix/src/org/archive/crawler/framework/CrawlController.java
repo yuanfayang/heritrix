@@ -8,6 +8,7 @@ package org.archive.crawler.framework;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.archive.crawler.datamodel.CrawlOrder;
@@ -19,7 +20,6 @@ import org.archive.crawler.datamodel.HostCache;
  * @author Gordon Mohr
  */
 public class CrawlController {
-
 	CrawlOrder order;
 	
 	URIScheduler scheduler;
@@ -28,8 +28,9 @@ public class CrawlController {
 	
 	Processor entryProcessor;
 	HashMap processors = new HashMap(); 
-	List toes /* of ToeThreads */;
-
+	List toes = new LinkedList(); /* of ToeThreads */;
+	int nextToeSerialNumber = 0;
+	
 	HostCache hosts;
 	
 	private boolean paused = false;
@@ -37,12 +38,12 @@ public class CrawlController {
 
 	public void initialize(CrawlOrder o) {
 		order = o;
+				
+		store = (URIStore) order.getBehavior().instantiate("//store");
+		scheduler = (URIScheduler) order.getBehavior().instantiate("//scheduler");
+		selector = (URISelector) order.getBehavior().instantiate("//selector");
 		
-		store = (URIStore) order.getBehavior().instantiate("store");
-		scheduler = (URIScheduler) order.getBehavior().instantiate("scheduler");
-		selector = (URISelector) order.getBehavior().instantiate("selector");
-		
-		entryProcessor = (Processor) order.getBehavior().instantiateAllInto("processors/processor",processors);
+		entryProcessor = (Processor) order.getBehavior().instantiateAllInto("//processors/processor",processors);
 		
 		store.initialize(this);
 		scheduler.initialize(this);
@@ -102,17 +103,18 @@ public class CrawlController {
 		// assume scheduler/URIStore already loaded state
 		
 		// start toes
+		adjustToeCount();
 		Iterator iter = toes.iterator();
 		while(iter.hasNext()) {
 			((ToeThread)iter.next()).unpause();
 		}
-		adjustToeCount();
 	}
 	
 	private void adjustToeCount() {
 		while(toes.size()<order.getBehavior().getMaxToes()) {
 			// TODO make number of threads self-optimizing
-			ToeThread newThread = new ToeThread(this);
+			ToeThread newThread = new ToeThread(this,nextToeSerialNumber);
+			nextToeSerialNumber++;
 			toes.add(newThread);
 			newThread.start();
 		}

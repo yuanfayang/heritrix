@@ -5,9 +5,9 @@
   <From>gojomo@archive.org</From>
  </http-headers>
  
- <scheduler class="org.archive.crawler.basic.BreadthFirstScheduler" />
+ <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
  <store class="org.archive.crawler.basic.SimpleStore" />
- <selector class="org.archive.crawler.basic.ConfigurableSelector">
+ <selector class="org.archive.crawler.basic.SimpleSelector">
   <exclude name="pathological path" regexp=".*/(.*)/\1/\1/.*" />
  </selector>
  
@@ -23,7 +23,7 @@
   </processor>
   <processor 
     name="DNS" 
-    class="org.archive.crawler.basic.DNSFetcher">
+    class="org.archive.crawler.basic.SimpleDNSFetcher">
   </processor>
   <processor 
     name="Extractor" 

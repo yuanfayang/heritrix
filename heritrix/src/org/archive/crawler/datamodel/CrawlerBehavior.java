@@ -25,7 +25,7 @@ public class CrawlerBehavior extends XMLConfig {
 	 * @return
 	 */
 	public int getMaxToes() {
-		return getIntAt("limits/max-toe-threads@value");
+		return getIntAt("//limits/max-toe-threads/@value");
 	}
 
 }
