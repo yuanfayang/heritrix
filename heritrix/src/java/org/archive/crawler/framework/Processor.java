@@ -53,9 +53,12 @@ public class Processor extends CrawlerModule {
      */
     public Processor(String name, String description) {
         super(name, description);
-        addElementToDefinition(new SimpleType(ATTR_ENABLED, "Is processor enabled", new Boolean(true)));
-        addElementToDefinition(new SimpleType(ATTR_POSTPROCESSOR, "Postprocessor", new Boolean(false)));
-        filters = (MapType) addElementToDefinition(new MapType(ATTR_FILTERS, "Filters"));
+        addElementToDefinition(new SimpleType(ATTR_ENABLED,
+            "Is processor enabled", new Boolean(true)));
+        addElementToDefinition(new SimpleType(ATTR_POSTPROCESSOR,
+            "Postprocessor", new Boolean(false)));
+        filters = (MapType) addElementToDefinition(new MapType(ATTR_FILTERS,
+            "Filters", Filter.class));
     }
 
 	protected CrawlController controller;
