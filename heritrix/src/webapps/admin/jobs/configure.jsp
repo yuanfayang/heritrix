@@ -74,7 +74,7 @@
 				else if(currentAttribute instanceof ListType){
 					// Some type of list.
 					ListType list = (ListType)currentAttribute;
-					p.append("<tr><td valign='top'>" + indent + att.getName() + ":&nbsp;</td>");
+					p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
 					p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
 					p.append(TextUtils.escapeForJavascript(att.getDescription()));
 					p.append("')\">?</a>&nbsp;</td>\n");
@@ -94,7 +94,7 @@
 				else{
 					Object[] legalValues = att.getLegalValues();
 					
-					p.append("<tr><td>" + indent + att.getName() + ":&nbsp;</td>");
+					p.append("<tr><td>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
 					p.append("<td ><a class='help' href=\"javascript:doPop('");
 					p.append(TextUtils.escapeForJavascript(att.getDescription()));
 					p.append("')\">?</a>&nbsp;</td><td>\n");
