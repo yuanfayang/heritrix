@@ -49,7 +49,7 @@ import org.archive.util.TextUtils;
  *
  */
 public class ExtractorHTML extends Processor implements CoreAttributeConstants {
-	private boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
+	protected boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
 
 	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorHTML");
 
@@ -117,7 +117,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	
 	/**
 	 */
-	private void processGeneralTag(CrawlURI curi, CharSequence element, CharSequence cs) {
+	protected void processGeneralTag(CrawlURI curi, CharSequence element, CharSequence cs) {
 		Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
 		
 		// Just in case it's an OBJECT tag
@@ -225,13 +225,13 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	// will find false positives
 	// TODO: add '/' check, suppress strings being concatenated via '+'?
 	static final Pattern JAVASCRIPT_LIKELY_URI_EXTRACTOR = Pattern.compile(
-	 "(\"|\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)");
+	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)");
 	
 	/**
 	 * @param curi
 	 * @param cs
 	 */
-	private void processScriptCode(CrawlURI curi, CharSequence cs) {
+	protected void processScriptCode(CrawlURI curi, CharSequence cs) {
 		String code = cs.toString();
 		//code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 		code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
@@ -250,7 +250,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param curi
 	 * @param value
 	 */
-	private void processLink(CrawlURI curi, CharSequence value) {
+	protected void processLink(CrawlURI curi, CharSequence value) {
 		//String link = value.toString();
 		//link = link.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 		String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
@@ -269,7 +269,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param curi
 	 * @param value
 	 */
-	private void processEmbed(CrawlURI curi, CharSequence value) {
+	protected void processEmbed(CrawlURI curi, CharSequence value) {
 		//String embed = value.toString();
 		//embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 		String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
@@ -347,7 +347,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param curi
 	 * @return True if HTML.
 	 */
-	private boolean expectedHTML(CrawlURI curi) {
+	protected boolean expectedHTML(CrawlURI curi) {
 		String path = curi.getUURI().getPath();
 		int dot = path.lastIndexOf('.');
 		if (dot<0) {
@@ -366,7 +366,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param curi
 	 * @param sequence
 	 */
-	private void processScript(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
+	protected void processScript(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
 		// for now, do nothing
 		// TODO: best effort extraction of strings
 		
@@ -382,7 +382,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
 	/**
 	 */
-	private boolean processMeta(CrawlURI curi, CharSequence cs) {
+	protected boolean processMeta(CrawlURI curi, CharSequence cs) {
 		Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
 
 		String name = null;
