@@ -62,7 +62,7 @@ import org.archive.util.Queue;
  * once, and respects minimum-delay and delay-factor specifications 
  * for politeness
  * 
- * @author gojomo
+ * @author Gordon Mohr
  *f
  */
 public class Frontier
@@ -138,14 +138,6 @@ public class Frontier
 	// CrawlURIs held until some specific other CrawlURI is emitted
 	HashMap heldCuris = new HashMap(); // of UURI -> CrawlURI
 
-    // limits on retries TODO: separate into retryPolicy? 
-//	private int maxRetries = 30;
-//	private int retryDelay = 900000; // 15 minutes
-//	private long minDelay;
-//	private float delayFactor;
-//	private long maxDelay;
-//	private int minInterval;
-
 	// top-level stats
 	long completionCount = 0;
 	long failedCount = 0;
@@ -170,8 +162,8 @@ public class Frontier
         // the argument to this constructor is just ignored.
         super(URIFrontier.ATTR_NAME, "Frontier");
         addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR,
-         "How many multiples of last fetch elapsed time to wait before " +
-         "recontacting same server", DEFAULT_DELAY_FACTOR));
+             "How many multiples of last fetch elapsed time to wait before " +
+             "recontacting same server", DEFAULT_DELAY_FACTOR));
         addElementToDefinition(new SimpleType(ATTR_MAX_DELAY,
             "Never wait more than this long, regardless of multiple",
             DEFAULT_MAX_DELAY));
@@ -418,7 +410,6 @@ public class Frontier
 		if(isEmpty()) {
 			// nothing left to crawl
 			logger.info("nothing left to crawl");
-			// TODO halt/spread the word???
 			return null;
 		}
 		
@@ -882,29 +873,22 @@ public class Frontier
 				
 			long completeTime = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
 			long durationTaken = (completeTime - curi.getAList().getLong(A_FETCH_BEGAN_TIME));
-//			durationToWait =
-//				(long) (getFloatAt(XP_DELAY_FACTOR,DEFAULT_DELAY_FACTOR)
-//					* durationTaken);
             durationToWait =
                     (long) (((Float) getAttribute(ATTR_DELAY_FACTOR, curi)).floatValue()
                         * durationTaken);
             
-
-			//long minDelay = getIntAt(XP_MIN_DELAY,DEFAULT_MIN_DELAY);
             long minDelay = ((Integer) getAttribute(ATTR_MIN_DELAY, curi)).longValue();
 			if (minDelay > durationToWait) {
 				// wait at least the minimum
 				durationToWait = minDelay;
 			}
 			
-			//long maxDelay = getIntAt(XP_MAX_DELAY,DEFAULT_MAX_DELAY);
             long maxDelay = ((Integer) getAttribute(ATTR_MAX_DELAY, curi)).longValue();
 			if (durationToWait > maxDelay) {
 				// wait no more than the maximum
 				durationToWait = maxDelay;
 			}
 			
-			//long minInterval = getIntAt(XP_MIN_INTERVAL,DEFAULT_MIN_INTERVAL);
             long minInterval = ((Integer) getAttribute(ATTR_MIN_INTERVAL, curi)).longValue();
 			if (durationToWait < (minInterval - durationTaken) ) {
 				// wait at least as long as necessary to space off from last fetch begin
