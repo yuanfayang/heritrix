@@ -256,13 +256,13 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @return true if state changed, false otherwise
      */
     public boolean checkEmpty() {
-        // update READY|EMPTY state after recent relevant changes
-        if (! (this.state == READY || this.state == EMPTY ) ) {
-            // only relevant for active states
+        // Update READY|EMPTY state after recent relevant changes
+        if (!(this.state == READY || this.state == EMPTY )) {
+            // Only relevant for active states
             return false;
         }
         Object previous = this.state;
-        this.state = isEmpty() ? EMPTY : READY;
+        this.state = isEmpty()? EMPTY : READY;
         return this.state != previous;
     }
 

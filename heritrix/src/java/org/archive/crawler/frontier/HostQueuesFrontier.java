@@ -81,11 +81,11 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
  * once, and respects minimum-delay and delay-factor specifications
  * for politeness.
  *
- * There are an arbitrary number of 'KeyedQueues' each representing 
+ * <p>There are an arbitrary number of 'KeyedQueues' each representing 
  * a certain 'key' class of URIs -- effectively, a single host (by 
  * hostname). 
  *
- * KeyedQueues may have an item in-process -- in which case they
+ * <p>KeyedQueues may have an item in-process -- in which case they
  * do not provide any other items for processing. KeyedQueues may
  * also be 'snoozed' -- when they should be kept inactive for a
  * period of time, to either enforce politeness policies or allow
@@ -168,18 +168,30 @@ public class HostQueuesFrontier
 
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 
-    // all per-class queues
-    ConcurrentReaderHashMap allClassQueuesMap = new ConcurrentReaderHashMap(); // of String (classKey) -> KeyedQueue
+    /** 
+     * All per-class queues.
+     * 
+     * Queues are of String (classKey) -&gt; KeyedQueue.
+     */
+    private ConcurrentReaderHashMap allClassQueuesMap =
+        new ConcurrentReaderHashMap();
 
-    // all per-class queues whose first item may be handed out (that is, 
-    // they are READY)
-    LinkedList readyClassQueues = new LinkedList(); // of KeyedQueues
+    /** 
+     * All per-class queues whose first item may be handed out (that is, 
+     * they are READY).
+     */
+    protected LinkedList readyClassQueues = new LinkedList(); // of KeyedQueues
 
-    // all per-class queues who are on hold until a certain time
-    SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime    
+    /**
+     * All per-class queues who are on hold until a certain time.
+     * Of KeyedQueue, sorted by wakeTime.
+     */
+    SortedSet snoozeQueues = new TreeSet(new SchedulingComparator());    
     
-    // all per-class queues who are INACTIVE; will be empty unless
-    // 'site-first'/'hold-queues' is set
+    /**
+     * All per-class queues that are INACTIVE; will be empty unless
+     * 'site-first'/'hold-queues' is set.
+     */
     LinkedList inactiveClassQueues = new LinkedList(); // of KeyedQueues
     
     // top-level stats
@@ -205,7 +217,7 @@ public class HostQueuesFrontier
     private boolean shouldPause = false;
     private boolean shouldTerminate = false;
   
-    public HostQueuesFrontier(String name){
+    public HostQueuesFrontier(String name) {
         this(name,"HostQueuesFrontier. \nMaintains the internal" +
                 " state of the crawl. It dictates the order in which URIs" +
                 " will be scheduled. \nThis frontier is mostly a breadth-first"+
@@ -215,9 +227,6 @@ public class HostQueuesFrontier
                 " politeness.");
     }
 
-    /**
-     * @param name
-     */
     public HostQueuesFrontier(String name, String description) {
         //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
         //therefore we'll ignore the supplied parameter.
@@ -299,12 +308,10 @@ public class HostQueuesFrontier
      * @see org.archive.crawler.framework.Frontier#initialize(org.archive.crawler.framework.CrawlController)
      */
     public void initialize(CrawlController c)
-        throws FatalConfigurationException, IOException {
+    throws FatalConfigurationException, IOException {
         this.controller = c;
-
         alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
-                "alreadyIncluded");
-
+            "alreadyIncluded");
         loadSeeds();
     }
     
@@ -317,9 +324,7 @@ public class HostQueuesFrontier
      * @throws IOException If problems occur creating files on disk
      */
     protected UriUniqFilter createAlreadyIncluded(File dir, String filePrefix)
-            throws IOException, FatalConfigurationException {
-        // Can be overridden by subclasses
-        
+    throws IOException, FatalConfigurationException {
         UriUniqFilter uuf = new FPUriUniqFilter(new MemLongFPSet(23,0.75f));
         uuf.setDestination(this);
         return uuf;
@@ -340,7 +345,6 @@ public class HostQueuesFrontier
         //                 0.75f,
         //                 20, // 1 million slots in cache (always)
         //                 0.75f));
-
     }
 
     /**
@@ -357,7 +361,6 @@ public class HostQueuesFrontier
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
         //
-
         List seeds = this.controller.getScope().getSeedlist();
         synchronized(seeds) {
             for (Iterator i = seeds.iterator(); i.hasNext();) {
@@ -370,10 +373,8 @@ public class HostQueuesFrontier
         }
     }
 
-    private static class ThreadLocalQueue extends ThreadLocal implements Serializable {
-        /* (non-Javadoc)
-         * @see java.lang.ThreadLocal#initialValue()
-         */
+    private static class ThreadLocalQueue
+    extends ThreadLocal implements Serializable {
         protected Object initialValue() {
             return new MemQueue();
         }
@@ -384,20 +385,12 @@ public class HostQueuesFrontier
         public Queue getQueue() {
             return (Queue)super.get();
         }
-
     }
 
-    /**
-     * @see org.archive.crawler.framework.Frontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
-     */
     protected void batchSchedule(CandidateURI caUri) {
         threadWaiting.getQueue().enqueue(caUri);
     }
 
-    /**
-     *
-     * @see org.archive.crawler.framework.Frontier#batchFlush()
-     */
     protected void batchFlush() {
         innerBatchFlush();
     }
@@ -405,7 +398,7 @@ public class HostQueuesFrontier
     private void innerBatchFlush(){
         Queue q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
-            innerSchedule((CandidateURI) q.dequeue());
+            innerSchedule((CandidateURI)q.dequeue());
         }
     }
 
@@ -432,22 +425,26 @@ public class HostQueuesFrontier
             alreadyIncluded.add(caUri);
         }
     }
-    
+
     /**
-     * @param huri
+     * This method is called if the URI has not already been
+     * seen.
+     * 
+     * This method is the implementation of the HasUriReceiver interface.
+     * 
+     * @param huri An URI object that has not been seen before.
      */
     public void receive(UriUniqFilter.HasUri huri) {
         CandidateURI caUri = (CandidateURI) huri;
         CrawlURI curi = asCrawlUri(caUri);
-
         if(curi.isSeed() && curi.getVia() != null
                 && curi.flattenVia().length() > 0){
             // The only way a seed can have a non-empty via is if it is the
             // result of a seed redirect.  Add it to the seeds list.
             //
             // This is a feature.  This is handling for case where a seed
-            // gets immediately redirected to another page.  What we're doing is
-            // treating the immediate redirect target as a seed.
+            // gets immediately redirected to another page.  What we're doing
+            // is treating the immediate redirect target as a seed.
             List seeds = this.controller.getScope().getSeedlist();
             synchronized(seeds) {
                 seeds.add(curi.getUURI());
@@ -456,7 +453,7 @@ public class HostQueuesFrontier
             curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }
         
-        // optionally preferencing embeds up to MEDIUM
+        // Optionally preferencing embeds up to MEDIUM
         int prefHops = ((Integer) getUncheckedAttribute(curi,
                 ATTR_PREFERENCE_EMBED_HOPS)).intValue();
         if (prefHops > 0) {
@@ -483,7 +480,8 @@ public class HostQueuesFrontier
      *
      * @see org.archive.crawler.framework.Frontier#next(int)
      */
-    synchronized public CrawlURI next() throws InterruptedException, EndedException {
+    synchronized public CrawlURI next()
+    throws InterruptedException, EndedException {
         while(true) {
             long now = System.currentTimeMillis();
             CrawlURI curi = null;
@@ -495,6 +493,7 @@ public class HostQueuesFrontier
                 controller.toePaused();
                 wait();
             }
+            
             // enforce operator terminate
             if(shouldTerminate) {
                 throw new EndedException("terminated");
@@ -505,21 +504,23 @@ public class HostQueuesFrontier
             // Check for snoozing queues who are ready to wake up.
             wakeReadyQueues(now);
     
-            // if no ready queues among active, activate inactive queues
+            // if no ready queues among active, activate inactive queues.
             // TODO: avoid activating new queue if wait for another would be trivial
             // TODO: have inactive queues sorted by priority
             // TODO: (probably elsewhere) deactivate active queues that "have 
             // done enough for now" ("enough" to be defined)
-            while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
+            while(this.readyClassQueues.isEmpty() &&
+            		!inactiveClassQueues.isEmpty()) {
                 KeyedQueue kq = (KeyedQueue) inactiveClassQueues.removeFirst();
                 kq.activate();
-                assert kq.isEmpty() == false : "empty queue was waiting for activation";
+                assert kq.isEmpty() == false :
+                    "Empty queue was waiting for activation";
                 kq.setMaximumMemoryLoad(((Integer) getUncheckedAttribute(curi,
                         ATTR_HOST_QUEUES_MEMORY_CAPACITY)).intValue());
                 updateQ(kq);
             }
             
-            // now, see if any holding queues are ready with a CrawlURI
+            // Now, see if any holding queues are ready with a CrawlURI
             if (!this.readyClassQueues.isEmpty()) {
                 curi = dequeueFromReady();
                 try {
@@ -530,28 +531,24 @@ public class HostQueuesFrontier
                 }
             }
     
-            // consider if URIs exhausted
+            // See if URIs exhausted
             if(isEmpty()) {
-                // nothing left to crawl
                 this.controller.requestCrawlStop();
                 throw new EndedException("exhausted");
             } 
             
-            if(alreadyIncluded.pending()>0) {
-                if(alreadyIncluded.flush()>0) {
-                    continue; // the while(true) with fresh URIs
+            if(alreadyIncluded.pending() > 0) {
+                if(alreadyIncluded.flush() > 0) {
+                	// Will go to the while(true) with fresh URIs
+                    continue;
                 }
-            } // else
+            } // Else
             
-            // wait until something changes
+            // Wait until something changes
             waitForChange(now);
         }
     }
 
-    /**
-     * @return
-     * @throws InterruptedException
-     */
     private void waitForChange(long now) throws InterruptedException {
         long wait = 1000; // TODO: consider right value
         if(!snoozeQueues.isEmpty()) {
@@ -561,10 +558,8 @@ public class HostQueuesFrontier
     }
 
     private CrawlURI asCrawlUri(CandidateURI caUri) {
-        if(caUri instanceof CrawlURI) {
-            return (CrawlURI) caUri;
-        }
-        return CrawlURI.from(caUri,nextOrdinal++);
+        return (caUri instanceof CrawlURI)?
+            (CrawlURI)caUri: CrawlURI.from(caUri,nextOrdinal++);
     }
 
     /**
@@ -577,7 +572,8 @@ public class HostQueuesFrontier
      * @param now
      * @throws InterruptedException
      */
-    private void enforceBandwidthThrottle(long now) throws InterruptedException {
+    private void enforceBandwidthThrottle(long now)
+    throws InterruptedException {
         int maxBandwidthKB;
         try {
             maxBandwidthKB = ((Integer) getAttribute(
@@ -661,7 +657,7 @@ public class HostQueuesFrontier
                 failureDisposition(curi);
             }
 
-            if(startState!=kq.getState() || kq.isDiscardable()) {
+            if(startState != kq.getState() || kq.isDiscardable()) {
                 updateQ(kq);
             }
         } catch (RuntimeException e) {
@@ -671,14 +667,13 @@ public class HostQueuesFrontier
             failureDisposition(curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
-        }
-
-        finally {
+        } finally {
+            // This method cleans out all curi state.
             curi.processingCleanup();
         }
 
-        long duration = System.currentTimeMillis()-start;
-        if(duration>1000) {
+        long duration = System.currentTimeMillis() - start;
+        if(duration > 1000) {
             System.err.println(
                     "#"+((ToeThread)Thread.currentThread()).getSerialNumber()
                     +" "+duration+"ms"
@@ -686,9 +681,6 @@ public class HostQueuesFrontier
         }
     }
 
-    /**
-     * @param curi
-     */
     protected void disregardDisposition(CrawlURI curi) {
         //Let interested listeners know of disregard disposition.
         controller.fireCrawledURIDisregardEvent(curi);
@@ -734,8 +726,7 @@ public class HostQueuesFrontier
     /**
      * Take note of any processor-local errors that have
      * been entered into the CrawlURI.
-     * @param curi
-     *
+     * @param curi CrawlURI with errors.
      */
     private void logLocalizedErrors(CrawlURI curi) {
         if(curi.getAList().containsKey(A_LOCALIZED_ERRORS)) {
@@ -776,12 +767,12 @@ public class HostQueuesFrontier
         } else {
             successCount++;
         }
-        controller.fireCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
+        // Let everyone know in case they want to do something before we strip
+        // the curi.
+        controller.fireCrawledURISuccessfulEvent(curi);
         curi.stripToMinimal();
         controller.recover.finishedSuccess(curi);
     }
-
-
 
     /**
      * Store is empty only if all queues are empty and
@@ -801,12 +792,15 @@ public class HostQueuesFrontier
      * @param now Current time in millisec.
      */
     protected void wakeReadyQueues(long now) {
-        while(!snoozeQueues.isEmpty()&&((URIWorkQueue)snoozeQueues.first()).getWakeTime()<=now) {
+        while(!snoozeQueues.isEmpty() &&
+                ((URIWorkQueue)snoozeQueues.first()).getWakeTime() <= now) {
             URIWorkQueue awoken = (URIWorkQueue)snoozeQueues.first();
             if (!snoozeQueues.remove(awoken)) {
-                logger.severe("first() item couldn't be remove()d! - "+awoken+" - " + snoozeQueues.contains(awoken));
+                logger.severe("First() item couldn't be remove()d! - " + awoken +
+                    " - " + snoozeQueues.contains(awoken));
                 logger.severe(report());
             }
+            assert !awoken.isEmpty(): "Snoozed queue is empty.";
             awoken.wake();
             updateQ(awoken);
         }
@@ -820,11 +814,15 @@ public class HostQueuesFrontier
     }
 
     protected CrawlURI dequeueFromReady() {
-        URIWorkQueue firstReadyQueue = (URIWorkQueue)readyClassQueues.getFirst();
-        assert firstReadyQueue.getState() == URIWorkQueue.READY : "top ready queue not ready but" + firstReadyQueue.getState();
-        assert firstReadyQueue.isEmpty() == false : "top ready queue inexplicably empty";
+        URIWorkQueue firstReadyQueue =
+            (URIWorkQueue)readyClassQueues.getFirst();
+        assert firstReadyQueue.getState() == URIWorkQueue.READY:
+            "Top ready queue not ready but" + firstReadyQueue.getState();
+        assert firstReadyQueue.isEmpty() == false :
+            "Top ready queue inexplicably empty";
         CrawlURI readyCuri = firstReadyQueue.dequeue();
-        readyCuri.setHolder(firstReadyQueue); // for future convenient reference
+        // For future convenient reference.
+        readyCuri.setHolder(firstReadyQueue);
         firstReadyQueue.checkEmpty();
         return readyCuri;
     }
@@ -883,14 +881,14 @@ public class HostQueuesFrontier
      * Get the KeyedQueue for a CrawlURI. If it does not exist it will be
      * created.
      * @param curi The CrawlURI
-     * @return The KeyedQueeu for the CrawlURI or null if it does not exist and
-     *         an exception occured trying to create it.
+     * @return The KeyedQueue for the CrawlURI or null if it does not exist and
+     * an exception occured trying to create it.
      */
     protected URIWorkQueue keyedQueueFor(CrawlURI curi) {
         URIWorkQueue kq = null;
         synchronized (allClassQueuesMap) {
             kq = (URIWorkQueue)this.allClassQueuesMap.get(curi.getClassKey());
-            if (kq==null) {
+            if (kq == null) {
                 try {
                     String key = curi.getClassKey();
                     // the creation of disk directories makes this a potentially
@@ -962,9 +960,9 @@ public class HostQueuesFrontier
      */
     protected void enqueueToKeyed(CrawlURI curi) {
         URIWorkQueue kq = keyedQueueFor(curi);
-        if(kq==null){
-            logger.severe("No workQueue found for "+curi);
-            // should only happen when other parts of the
+        if(kq == null){
+            logger.severe("No workQueue found for " + curi);
+            // Should only happen when other parts of the
             // system -- such as the U(sable)URI prescreening --
             // have problems.
             curi.setFetchStatus(S_UNQUEUEABLE); 
@@ -973,10 +971,10 @@ public class HostQueuesFrontier
         }
 
         kq.enqueue(curi);
-        if(kq.getState()!=URIWorkQueue.INACTIVE) {
-            // active queue: may affect scheduling
+        if(kq.getState() != URIWorkQueue.INACTIVE) {
+            // Active queue: may effect scheduling
             if(kq.checkEmpty()) {
-                // if kq state changed, update frontier's internals
+                // If kq state changed, update frontier's internals.
                 updateQ(kq);
             }
         }
@@ -990,25 +988,28 @@ public class HostQueuesFrontier
      * If an empty queue has become ready, add to ready queues.
      * Should only be called after state has changed.
      *
-     * @param kq
+     * @param kq Queue to update.
      * @throws InterruptedException
      */
     private void updateQ(URIWorkQueue kq) {
         Object state = kq.getState();
         if (kq.isDiscardable()) {
-            // empty & ready; discard
+            // Empty & ready; discard
             discardQueue(kq);
             return;
         }
-        if (state == URIWorkQueue.READY ) {
-            // has become ready
+        
+        if (state == URIWorkQueue.READY) {
+            // Has become ready
+            assert !kq.isEmpty(): "Adding to ready an empty queue.";
             readyClassQueues.addLast(kq);
             synchronized (this) {
                 notify(); // wake a waiting thread
             }
             return;
         }
-        // otherwise, no need to change whatever state it's in
+        
+        // Otherwise, no need to change whatever state it's in
         // TODO: verify this in only reached in sensible situations
     }
 
@@ -1029,7 +1030,8 @@ public class HostQueuesFrontier
      * @param kq A KeyedQueue
      * @throws AttributeNotFoundException
      */
-    protected void updateScheduling(CrawlURI curi, URIWorkQueue kq) throws AttributeNotFoundException {
+    protected void updateScheduling(CrawlURI curi, URIWorkQueue kq)
+    throws AttributeNotFoundException {
         long durationToWait = 0;
         if (curi.getAList().containsKey(A_FETCH_BEGAN_TIME)
             && curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
@@ -1177,10 +1179,6 @@ public class HostQueuesFrontier
         }
     }
 
-    /**
-     * @param curi
-     * @throws AttributeNotFoundException
-     */
     protected void scheduleForRetry(CrawlURI curi) 
             throws AttributeNotFoundException {
         long delay;
@@ -1236,7 +1234,7 @@ public class HostQueuesFrontier
             // must activate before snoozing
             inactiveClassQueues.remove(kq);
             kq.activate();
-        } else if(kq.getState()== URIWorkQueue.SNOOZED) {
+        } else if(kq.getState() == URIWorkQueue.SNOOZED) {
             // must be removed before time may be mutated
             snoozeQueues.remove(kq);
         } else if (kq.getState() == URIWorkQueue.READY ) {
@@ -1323,37 +1321,21 @@ public class HostQueuesFrontier
         return disregardedCount;
     }
 
-    /** (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#totalBytesWritten()
-     */
     public long totalBytesWritten() {
         return totalProcessedBytes;
     }
 
-    /** (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#getInitialMarker(java.lang.String, boolean)
-     */
     public FrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
         ArrayList keyqueueKeys = new ArrayList();
-        if(allClassQueuesMap.size()!=0)
-        {
+        if(allClassQueuesMap.size() != 0) {
             Iterator q = allClassQueuesMap.keySet().iterator();
-            while(q.hasNext())
-            {
+            while(q.hasNext()) {
                 keyqueueKeys.add(q.next());
             }
         }
         return new HostQueuesFrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
     }
 
-    /** (non-Javadoc)
-     *
-     * @param marker
-     * @param numberOfMatches
-     * @param verbose
-     * @return List of URIS.
-     * @throws InvalidFrontierMarkerException
-     */
     public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
             boolean verbose) throws InvalidFrontierMarkerException {
         if(marker instanceof HostQueuesFrontierMarker == false){
@@ -1463,11 +1445,9 @@ public class HostQueuesFrontier
         // Create QueueItemMatcher
         Predicate mat = new URIQueueMatcher(match, true, this);
         // Delete from all KeyedQueues
-        if(allClassQueuesMap.size()!=0)
-        {
+        if(allClassQueuesMap.size()!=0) {
             Iterator q = allClassQueuesMap.keySet().iterator();
-            while(q.hasNext())
-            {
+            while(q.hasNext()) {
                 URIWorkQueue kq = (URIWorkQueue)allClassQueuesMap.get(q.next());
                 numberOfDeletes += kq.deleteMatchedItems(mat);
 
