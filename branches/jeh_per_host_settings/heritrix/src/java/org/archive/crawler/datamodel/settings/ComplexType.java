@@ -274,9 +274,9 @@ public abstract class ComplexType implements DynamicMBean, Type {
         throws InvalidAttributeValueException, AttributeNotFoundException {
         DataContainer data = getDataContainer(settings);
 
-        data.put(name, value);
+        Object oldValue = data.put(name, value);
 
-        if (value instanceof ComplexType) {
+        if (value instanceof ComplexType && value != oldValue) {
             ComplexType object = (ComplexType) value;
             setupVaiables((ComplexType) value);
             object.initializeComplexType(settings);
