@@ -230,7 +230,7 @@
 				out.println("<a href='/admin/action.jsp?action=pause'>Pause current job</a> ");
 			}
 		}
-	%> | <a href="">Refresh</a>
+	%> | <a href="/admin/main.jsp">Refresh</a>
 	<p>
 		<a href="/admin/shutdown.jsp">Shut down Heritrix software</a>
 

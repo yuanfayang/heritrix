@@ -67,7 +67,7 @@
 									java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM. d, yyyy HH:mm:ss");
 									sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
 								%>
-								<b>Status of crawler as of <a style="color: #000000" href=""><%=sdf.format(new java.util.Date())%> GMT</a></b>
+								<b>Status of crawler as of <a style="color: #000000" href="<%=request.getRequestURL()%>"><%=sdf.format(new java.util.Date())%> GMT</a></b>
 							</td>
 						</tr>
 						<tr>
