@@ -1021,7 +1021,7 @@ public class CrawlURI extends CandidateURI
     /**
      * Return the retained content-digest value, if any.
      * 
-     * @return
+     * @return Digest value.
      */
     public Object getContentDigest() {
         return contentDigest;

@@ -372,7 +372,7 @@ public class CrawlOrder extends ModuleType {
     }
 
     /**
-     * @return
+     * @return Checkpoint directory.
      */
     public File getCheckpointsDirectory() {
         try {

@@ -147,7 +147,7 @@ public class Checkpoint {
      * @param filename
      * @throws IOException
      * @throws ClassNotFoundException
-     * @return
+     * @return Object read from file.
      */
     public Object readObjectFromFile(String filename) throws IOException, ClassNotFoundException {
         ObjectPlusFilesInputStream in =

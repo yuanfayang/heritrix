@@ -29,12 +29,12 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Selftest for figuring problems reported in
- * <a 
+ * Selftest for figuring problems parsing URIs in a page.
+ * 
+ * @author stack
+ * @see <a 
  * href="https://sourceforge.net/tracker/?func=detail&aid=788219&group_id=73833&atid=539099">[ 788219 ]
  * URI Syntax Errors stop page parsing.</a>
- *
- * @author stack
  * @version $Revision$, $Date$
  */
 public class BadURIsStopPageParsingSelfTest extends SelfTestCase
@@ -59,9 +59,9 @@ public class BadURIsStopPageParsingSelfTest extends SelfTestCase
         for (Iterator i = foundFiles.iterator(); i.hasNext();) {
             File f = (File)i.next();
             if (f.getAbsolutePath().endsWith("polishex.html")) {
-                // There is a URI in our list with the above as suffix.  Its in the
-                // arc as a 404. Remove it.  It doesn't exist on disk so it will
-                // cause the below testFilesInArc to fail.
+                // There is a URI in our list with the above as suffix.  Its in
+                // the arc as a 404. Remove it.  It doesn't exist on disk so it
+                // will cause the below testFilesInArc to fail.
                 continue;
             }
             editedFoundFiles.add(f);

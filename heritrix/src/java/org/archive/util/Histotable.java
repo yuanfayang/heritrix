@@ -61,7 +61,7 @@ public class Histotable {
 	/**
 	 * Record one more occurence of the given object key.
 	 * 
-	 * @param step
+	 * @param key Object key.
 	 */
 	public void tally(Object key) {
         if (totals.containsKey(key)) {
@@ -73,9 +73,7 @@ public class Histotable {
 	}
 	
 	/**
-	 * Return an up-to-date sorted version of the totalled info.
-	 * 
-	 * @return
+	 * @return Return an up-to-date sorted version of the totalled info.
 	 */
 	public TreeSet getSorted() {
 		if(sorted.size()<totals.size()) {
@@ -89,8 +87,8 @@ public class Histotable {
 	 * Utility method to convert a key->LongWrapper(count) into
 	 * the string "count key".
 	 * 
-	 * @param object
-	 * @return
+	 * @param e Map key.
+	 * @return String 'count key'.
 	 */
 	public static String entryString(Object e) {
 		Map.Entry entry = (Map.Entry) e;

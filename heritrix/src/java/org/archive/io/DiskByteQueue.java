@@ -107,9 +107,7 @@ public class DiskByteQueue implements Serializable {
 //    }
 
     /**
-     * The stream to read from this byte queue
-     *
-     * @return
+     * @return The stream to read from this byte queue
      * @throws IOException
      */
     public InputStream getHeadStream() throws IOException {
@@ -120,9 +118,8 @@ public class DiskByteQueue implements Serializable {
     }
 
     /**
-     * The stream to write to this byte queue
+     * @return The stream to write to this byte queue
      *
-     * @return
      * @throws FileNotFoundException
      */
     public OutputStream getTailStream() throws FileNotFoundException {

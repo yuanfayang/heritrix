@@ -150,7 +150,7 @@ public class Filter extends ModuleType {
      * plain string.
      * 
      * @param o
-     * @return
+     * @return Passed object as string.
      */
     protected String asString(Object o) {
         String input;

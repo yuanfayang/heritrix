@@ -251,13 +251,13 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * This method should probably not be called from user code. It is a helper
      * method for the settings framework.
      *
-     * @param settings the settings object for which the {@link DataContainer}
+     * @param context the settings object for which the {@link DataContainer}
      *                 is active.
      * @param key the key to look for.
      * @return the active DataContainer.
      */
-    protected DataContainer getDataContainerRecursive(Context context, String key)
-            throws AttributeNotFoundException {
+    protected DataContainer getDataContainerRecursive(Context context,
+            String key) throws AttributeNotFoundException {
 
         Context c = new Context(context.settings, context.uri);
         DataContainer data = getDataContainerRecursive(c);
@@ -425,7 +425,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      * @param name the name of the attribute to be retrieved.
      * @param uri the CrawlURI that this attribute should be valid for.
      * @return The value of the attribute retrieved.
-     * @see #getAttribute(CrawlerSettings settings, String name)
+     * @see #getAttribute(Object settings, String name)
      * @throws AttributeNotFoundException
      */
     public Object getAttribute(String name, CrawlURI uri)

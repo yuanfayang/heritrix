@@ -137,7 +137,7 @@ public class DiskBackedQueue implements Queue, Serializable {
     }
 
     /**
-     * @return
+     * @return True if can discard backing file.
      */
     protected boolean canDiscardBacking() {
         // Check if less then a quarter of what can fit in the memory
@@ -153,14 +153,14 @@ public class DiskBackedQueue implements Queue, Serializable {
      }
 
     /**
-     * @return
+     * @return backing dequeue queue instance.
      */
     protected Object backingDequeue() {
         return tailQ.dequeue();
     }
 
     /**
-     * @return
+     * @return Maximum size of head queue.
      */
     protected int headTargetSize() {
         return headMax;

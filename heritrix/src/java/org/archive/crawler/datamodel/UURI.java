@@ -184,10 +184,11 @@ public class UURI extends URI implements Serializable {
     }
 
     /**
-     * Strips www[0-9]*\. from the host.
+     * Strips www variants from the host.
      *
-     * If calling getHostBaseName becomes a performance issue we should
-     * consider adding the hostBasename member that is set on initialization.
+     * Strips www[0-9]*\. from the host.  If calling getHostBaseName becomes a
+     * performance issue we should consider adding the hostBasename member that
+     * is set on initialization.
      *
      * @return Host's basename.
      * @throws URIException
@@ -238,9 +239,8 @@ public class UURI extends URI implements Serializable {
     }
 
     /**
-     * Return the 'SURT' format of this UURI
+     * @return Return the 'SURT' format of this UURI
      * 
-     * @return
      * @throws URIException
      */
     public String getSurtForm() {

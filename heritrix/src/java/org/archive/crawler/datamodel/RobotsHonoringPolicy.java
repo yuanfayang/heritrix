@@ -183,7 +183,7 @@ public class RobotsHonoringPolicy  extends ModuleType {
     /**
      * Check if policy is of a certain type.
      *
-     * @param An object that can be resolved into a settings object.
+     * @param o An object that can be resolved into a settings object.
      * @param type the type to check against.
      * @return true if the policy is of the submitted type
      */

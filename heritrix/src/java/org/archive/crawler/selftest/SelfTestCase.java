@@ -399,7 +399,7 @@ public class SelfTestCase extends TestCase
      *
      * @param files List of files to find in the arc.  No other files but these
      * should be found in the arc.
-     * @param Files found in the arc.
+     * @param foundFiles Files found in the arc.
      */
     public void testFilesInArc(List files, List foundFiles)
     {

@@ -75,19 +75,15 @@ public interface URIWorkQueue {
     public abstract Object getState();
 
     /** 
-     * Is this KeyedQueue empty of ready-to-try URIs. (NOTE: may
+     * @return Is this KeyedQueue empty of ready-to-try URIs. (NOTE: may
      * still have 'frozen' off-to-side URIs.)
-     * 
-     * @return
      */
     public abstract boolean isEmpty();
 
     /** 
-     * Total number of available items. (Does not include
-     * any 'frozen' items.)
-     * 
      * @see org.archive.util.Queue#length()
-     * @return
+     * @return Total number of available items. (Does not include
+     * any 'frozen' items.)
      */
     public abstract long length();
 

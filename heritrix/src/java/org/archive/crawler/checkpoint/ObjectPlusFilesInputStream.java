@@ -80,7 +80,7 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
      * Return the top auxiliary directory, from
      * which saved files are restored.
      *
-     * @return
+     * @return Auxillary directory.
      */
     public File getAuxiliaryDirectory() {
         return (File)auxiliaryDirectoryStack.getFirst();

@@ -204,7 +204,7 @@ public abstract class Constraint implements Comparable {
         /** Returns a human readeable string for the failed check.
          * Returns the same as {@link #getMessage()}
          *
-         * @param String  a human readeable string for the failed check.
+         * @return A human readeable string for the failed check.
          */
         public String toString() {
             return getMessage();

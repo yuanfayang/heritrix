@@ -40,15 +40,12 @@ public interface Stack {
 
     /**
      * Remove and return item from top of Stack
-     *
-     * @return
+     * @return Item removed from top of Stack
      */
     public Object pop();
 
     /**
-     * Return item from top of Stack without removing it.
-     *
-     * @return
+     * @return Return item from top of Stack without removing it.
      */
     public Object peek();
 
@@ -63,7 +60,7 @@ public interface Stack {
     public void release();
 
     /**
-     * @return
+     * @return True if empty.
      */
     public boolean isEmpty();
 }

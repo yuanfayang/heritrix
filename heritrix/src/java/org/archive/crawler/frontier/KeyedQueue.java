@@ -371,11 +371,9 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     }
 
     /**
-     * Is this KeyedQueue empty of ready-to-try URIs. (NOTE: may
-     * still have 'frozen' off-to-side URIs.)
-     *
      * @see org.archive.util.Queue#isEmpty()
-     * @return
+     * @return Is this KeyedQueue empty of ready-to-try URIs. (NOTE: may
+     * still have 'frozen' off-to-side URIs.)
      */
     public boolean isEmpty() {
         return this.unqueued.isEmpty() && this.innerQ.isEmpty();
@@ -443,11 +441,9 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
 
     
     /** 
-     * Total number of available items. (Does not include
-     * any 'frozen' items.)
-     *
      * @see org.archive.util.Queue#length()
-     * @return
+     * @return Total number of available items. (Does not include
+     * any 'frozen' items.)
      */
     public long length() {
         return this.innerQ.length() + this.unqueued.size();
@@ -465,7 +461,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * 
      * @param inCacheOnly
      * @see org.archive.util.Queue#getIterator(boolean)
-     * @return
+     * @return Iterator.
      */
     public Iterator getIterator(boolean inCacheOnly) {
         // TODO: consider pushing all unqueued to deque to simplify
@@ -478,7 +474,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      *
      * @param matcher
      * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
-     * @return
+     * @return Number of deletes.
      */
     public long deleteMatchedItems(Predicate matcher) {
         // Delete from inner queue
@@ -552,19 +548,16 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
     }
 
     /**
-     * Return the last enqueued URI; useful for
+     * @return Return the last enqueued URI; useful for
      * assessing queue state.
-     * 
-     * @return
      */
     public String getLastQueued() {
         return lastQueued;
     }
 
     /**
-     * Return the last dequeued URI; useful
+     * @return Return the last dequeued URI; useful
      * for assessing queue state.
-     * @return
      */
     public String getLastDequeued() {
         // TODO Auto-generated method stub

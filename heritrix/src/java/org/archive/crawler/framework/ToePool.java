@@ -148,10 +148,8 @@ public class ToePool extends CrawlStatusAdapter {
 
     
     /**
-     * One-line summary report, useful for display before drilling
+     * @return One-line summary report, useful for display before drilling
      * into full report.
-     * 
-     * @return
      */
     public String oneLineReport() {
     	StringBuffer rep = new StringBuffer();

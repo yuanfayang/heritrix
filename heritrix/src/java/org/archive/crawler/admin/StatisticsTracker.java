@@ -440,7 +440,7 @@ public class StatisticsTracker extends AbstractTracker
 
     /**
      * Returns the accumulated number of bytes from files of a given file type.
-     * @param host name of the mime type
+     * @param filetype Filetype to check.
      * @return the accumulated number of bytes from files of a given mime type
      */
     public long getBytesPerFileType(String filetype){

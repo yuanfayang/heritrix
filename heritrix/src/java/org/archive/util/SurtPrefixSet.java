@@ -47,7 +47,7 @@ public class SurtPrefixSet extends TreeSet {
      * of this set's entries. 
      * 
      * @param s
-     * @return
+     * @return True if contains prefix.
      */
     public boolean containsPrefixOf(String s) {
         SortedSet sub = headSet(s+"\0");
@@ -104,7 +104,7 @@ public class SurtPrefixSet extends TreeSet {
     }
 
     /**
-     * @param fr
+     * @param r Where to read from.
      */
     public void importFromUris(Reader r) {
         BufferedReader reader = new BufferedReader(r);
@@ -139,6 +139,7 @@ public class SurtPrefixSet extends TreeSet {
      * for determining inclusion.
      * 
      * This involves: 
+     * <pre>
      *    (1) removing the last path component, if any
      *        (anything after the last '/', if there are
      *        at least 3 '/'s)
@@ -150,9 +151,10 @@ public class SurtPrefixSet extends TreeSet {
      *        for the how the SURT prefix is created, even
      *        though it is not signficant for the URI's
      *        treatment as a seed.)
+     * </pre>
      *
-     * @param s
-     * @return
+     * @param s String to work on.
+     * @return As prefix.
      */
     private static String asPrefix(String s) {
         // strip last path-segment, if more than 3 slashes

@@ -77,7 +77,7 @@ public class ObjectPlusFilesOutputStream extends ObjectOutputStream {
      * Return the current auxiliary directory for storing
      * files associated with serialized objects.
      *
-     * @return
+     * @return Auxillary directory.
      */
     public File getAuxiliaryDirectory() {
         return (File)auxiliaryDirectoryStack.getFirst();

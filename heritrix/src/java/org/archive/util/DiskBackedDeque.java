@@ -170,7 +170,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
     }
 
     /**
-     * @return
+     * @return Memory load.
      */
     public int memoryLoad() {
         return headQ.size();
