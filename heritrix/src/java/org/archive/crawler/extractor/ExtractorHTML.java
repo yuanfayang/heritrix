@@ -244,7 +244,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 		String code = cs.toString();
 		//code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
 		code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
-		ExtractorJS.considerStrings(curi,code);
+		numberOfLinksExtracted += ExtractorJS.considerStrings(curi,code);
 	}
 
 	static final String JAVASCRIPT = "(?i)^javascript:.*";
@@ -440,7 +440,6 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorHTML\n");
         ret.append("  Function:          Link extraction on HTML documents\n");
-        ret.append("                     - Embedded JavaScript handled by ExtractorJS\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
         
