@@ -145,8 +145,6 @@ implements AdaptiveRevisitAttributeConstants {
     protected SecondaryDatabase secondaryUriDB;
     /** A database containing those URIs that are currently being processed. */
     protected Database processingUriDB;
-    /** DB for the BDB serialization */
-    protected Database classCatalogDB;
     // Serialization support
     /** For BDB serialization of objects */
     protected StoredClassCatalog classCatalog;
@@ -165,6 +163,7 @@ implements AdaptiveRevisitAttributeConstants {
      *                 be unique for all HQs in the same Environment.
      * @param env Berkeley DB Environment. All BDB databases created will use 
      *            it.
+     * @param catalog Db for bdb class serialization.
      * @param valence The total number of simultanous URIs that the HQ can issue
      *                for processing. Once this many URIs have been issued for
      *                processing, the HQ will go into {@link #HQSTATE_BUSY busy}
@@ -210,8 +209,7 @@ implements AdaptiveRevisitAttributeConstants {
             dbConfig2.setTransactional(false); 
             dbConfig2.setAllowCreate(true);
             processingUriDB = env.openDatabase(null, 
-                    hostName + "/processing",
-                    dbConfig2);
+                    hostName + "/processing", dbConfig2);
             
             // Create a primitive binding for the primary key (URI string) 
             primaryKeyBinding = TupleBinding.getPrimitiveBinding(String.class);
@@ -226,9 +224,7 @@ implements AdaptiveRevisitAttributeConstants {
             secConfig.setKeyCreator(
                     new OrderOfProcessingKeyCreator(classCatalog,CrawlURI.class));
             secondaryUriDB = env.openSecondaryDatabase(null, 
-                                                       hostName+"/timeOfProcessing",
-                                                       primaryUriDB,
-                                                       secConfig);
+                hostName+"/timeOfProcessing", primaryUriDB, secConfig);
             
             // Check if we are opening an existing DB...
             size = countCrawlURIs();
@@ -945,7 +941,6 @@ implements AdaptiveRevisitAttributeConstants {
         try{
             secondaryUriDB.close();
             processingUriDB.close();
-            classCatalogDB.close();
             primaryUriDB.close();
         } catch (DatabaseException e) {
             // Blanket catch all DBExceptions and convert to IOExceptions.

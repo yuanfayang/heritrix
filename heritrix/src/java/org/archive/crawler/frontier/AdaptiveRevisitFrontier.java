@@ -210,20 +210,13 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * This method is called by initialize() and kickUpdate()
      */
     private void loadSeeds() {
-        // Get the seeds to refresh and then get an iterator inside a
-        // synchronization block.  The seeds list may get updated during our
-        // iteration. This will throw a concurrentmodificationexception unless
-        // we synchronize.
-        //
-        List seeds = this.controller.getScope().getSeedlist();
-        synchronized(seeds) {
-            for (Iterator i = seeds.iterator(); i.hasNext();) {
-                UURI u = (UURI)i.next();
-                CandidateURI caUri = new CandidateURI(u);
-                caUri.setIsSeed(true);
-                caUri.setSchedulingDirective(CandidateURI.MEDIUM);
-                innerSchedule(caUri);
-            }
+        // Get the seeds to refresh.
+        for (Iterator iter = this.controller.getScope().seedsIterator();
+                iter.hasNext();) {
+            CandidateURI caUri =
+                CandidateURI.createSeedCandidateURI((UURI)iter.next());
+            caUri.setSchedulingDirective(CandidateURI.MEDIUM);
+            schedule(caUri);
         }
     }
 
@@ -245,17 +238,14 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.setClassKey(queueAssignmentPolicy.getClassKey(controller,curi));
 
         if(curi.isSeed() && curi.getVia() != null
-                && curi.flattenVia().length() > 0){
+                && curi.flattenVia().length() > 0) {
             // The only way a seed can have a non-empty via is if it is the
             // result of a seed redirect.  Add it to the seeds list.
             //
             // This is a feature.  This is handling for case where a seed
             // gets immediately redirected to another page.  What we're doing
             // is treating the immediate redirect target as a seed.
-            List seeds = this.controller.getScope().getSeedlist();
-            synchronized(seeds) {
-                seeds.add(curi.getUURI());
-            }
+            this.controller.getScope().addSeed(curi.getUURI());
             // And it needs rapid scheduling.
             curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }
@@ -419,27 +409,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         innerFinished(curi);
     }
     
-    /**
-     * Removes all info in a CrawlURI's AList that is not a String, Long or Int.
-     * Other objects may not be serializable.
-     * @param curi
-     */
-    protected void discardUnneededCrawlURIInfo(CrawlURI curi){
-        AList a = curi.getAList();
-        String[] keys = a.getKeyArray();
-        
-        for( int i=0 ; i < keys.length ; i ++ ){
-            int type = a.getType(keys[i]);
-            if(type != AList.T_INT 
-                    && type != AList.T_LONG 
-                    && type != AList.T_STRING){
-                a.remove(keys[i]);
-            }
-        }
-        a.remove(A_ANNOTATIONS);
-        curi.processingCleanup();
-    }
-    
     protected synchronized void innerFinished(CrawlURI curi) {
         try {
             innerBatchFlush();
@@ -550,7 +519,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         
         /* Update HQ */
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
-        discardUnneededCrawlURIInfo(curi);
         try {
             hq.update(curi, true,
                 (curi.containsKey(A_FETCH_COMPLETED_TIME)?
@@ -573,6 +541,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      *
      * @param curi CrawlURI to reschedule.
      * @param errorWait signals if there should be a wait before retrying.
+     * @throws AttributeNotFoundException
      */
     protected void reschedule(CrawlURI curi, boolean errorWait)
             throws AttributeNotFoundException {
@@ -588,10 +557,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue();
             }
         }
-
-        // We just leave the time of next processing unchanged so that it is
-        // in effect in the same position in the queue.
-        discardUnneededCrawlURIInfo(curi);
         
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         try {
@@ -633,7 +598,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.setSchedulingDirective(CandidateURI.NORMAL);
         // TODO: reconsider this
         curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE);
-        discardUnneededCrawlURIInfo(curi);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         try {
@@ -668,7 +632,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         
         curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); //Todo: consider timout before retrying disregarded elements.
         curi.setSchedulingDirective(CandidateURI.NORMAL);
-        discardUnneededCrawlURIInfo(curi);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         try {
@@ -980,7 +943,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     public void importRecoverLog(String pathToLog, boolean retainFailures)
     throws IOException {
-        
+        throw new IOException("Unsupported");
     }
 
 }
