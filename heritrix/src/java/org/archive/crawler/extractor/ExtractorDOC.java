@@ -65,7 +65,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
         // Assumes docs will be coming in through http.
         // TODO make this more general (currently we're only fetching via http
         // so it doesn't matter)
-        if (!isHtmlTransactionContentToProcess(curi) ||
+        if (!isHttpTransactionContentToProcess(curi) ||
                 !isExpectedMimeType(curi.getContentType(),
                     "application/msword")) {
             return;

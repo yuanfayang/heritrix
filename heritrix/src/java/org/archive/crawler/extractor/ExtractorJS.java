@@ -86,7 +86,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
      * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
      */
     public void innerProcess(CrawlURI curi) {
-        if (!isHtmlTransactionContentToProcess(curi)) {
+        if (!isHttpTransactionContentToProcess(curi)) {
             return;
         }
 

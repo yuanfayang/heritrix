@@ -341,7 +341,7 @@ implements CoreAttributeConstants {
     }
 
     public void innerProcess(CrawlURI curi) {
-        if (!isHtmlTransactionContentToProcess(curi) ||
+        if (!isHttpTransactionContentToProcess(curi) ||
                 !isExpectedMimeType(curi.getContentType(), "text/html")) {
             return;
         }

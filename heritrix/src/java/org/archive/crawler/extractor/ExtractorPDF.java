@@ -61,7 +61,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
     }
 
     protected void innerProcess(CrawlURI curi){
-        if (!isHtmlTransactionContentToProcess(curi) ||
+        if (!isHttpTransactionContentToProcess(curi) ||
                 !isExpectedMimeType(curi.getContentType(),
                     "application/pdf")) {
             return;

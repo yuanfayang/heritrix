@@ -369,7 +369,7 @@ implements CoreAttributeConstants {
     }
 
     protected void innerProcess(CrawlURI curi) {
-        if (!isHtmlTransactionContentToProcess(curi)) {
+        if (!isHttpTransactionContentToProcess(curi)) {
             return;
         }
 
