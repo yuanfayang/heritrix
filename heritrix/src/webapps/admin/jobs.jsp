@@ -25,7 +25,8 @@
 	<b>Current job</b> - <i><%=handler.getCurrentJob().getJobName()%></i>
 	<ul>
 		<li><a href="/admin/reports/crawljob.jsp">View crawl report</a>
-		<li><a href="/admin/reports/seeds.jsp">View seeds report</a>
+        <li><a href="/admin/reports/seeds.jsp">View seeds report</a>
+        <li><a href="/admin/jobs/journal.jsp?job=<%=handler.getCurrentJob().getUID()%>">Journal</a>
 		<li><a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>">View crawl order (xml file)</a>
 		<li><a href="/admin/jobs/configure.jsp?job=<%=handler.getCurrentJob().getUID()%>">Edit configuration</a>
 	</ul>
