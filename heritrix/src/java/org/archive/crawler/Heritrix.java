@@ -385,10 +385,10 @@ public class Heritrix implements HeritrixMBean {
      * @return The file we dump stdout and stderr into.
      */
     public static String getHeritrixOut() {
-            String tmp = System.getProperty("heritrix.out");
-            if (tmp != null && tmp.length() > 0) {
-                    tmp = Heritrix.DEFAULT_HERITRIX_OUT;
-            }
+        String tmp = System.getProperty("heritrix.out");
+        if (tmp == null || tmp.length() == 0) {
+            tmp = Heritrix.DEFAULT_HERITRIX_OUT;
+        }
         return tmp;
     }
 
