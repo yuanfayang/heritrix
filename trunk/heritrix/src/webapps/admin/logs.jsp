@@ -71,8 +71,8 @@
             else
             {
                 int timestampLinenumber = LogReader.
-                    findFirstLineContainingFromSeries(fileName,
-                        timestamp + ".*");
+                    findFirstLineBeginningFromSeries(theJob.getLogPath(fileName),
+                        timestamp);
                 log =  LogReader.getFromSeries(theJob.getLogPath(fileName),
                     timestampLinenumber, linesToShow);
             }
@@ -263,7 +263,7 @@
                             </td>
                             <td>
                                 <input value="<%=request.getParameter("timestamp")==null?"":request.getParameter("timestamp")%>" name="timestamp" align="absmiddle" size="21">&nbsp;<input type="submit" value="Get"><br>
-                                (YYYYMMDDHHMMSS)
+                                (YYYY-MM-DDTHH:MM:SS.SSS)
                             </td>
                         </tr>
                         <tr>

@@ -1220,7 +1220,7 @@
           <title>org.archive.crawler.filter.OrFilter</title>
 
           <para>Contains any number of filters and returns true if any of them
-          returns true. A logical OR on it's filters basically.</para>
+          returns true. A logical OR on its filters basically.</para>
         </sect4>
 
         <sect4>
@@ -2819,9 +2819,9 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <para>View a section of a log that starts at a given time stamp and
           the next X lines following it. X is configurable, is 50 by default.
           The format of the time stamp is the same as in the logs
-          (YYYYMMDDHHMMSS). It is not necessary to add more detail to this
-          then is desired. For instance the entry 2004042508 will match the
-          first entry made after 8 am on the 25 of April, 2004.</para>
+          (YYYY-MM-DDTHH:MM:SS.SSS). It is not necessary to add more detail to 
+          this then is desired. For instance the entry 2004-04-25T08 will match 
+          the first entry made after 8 am on the 25 of April, 2004.</para>
         </listitem>
 
         <listitem>
@@ -2852,11 +2852,12 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>Below is a two line extract from a crawl.log:</para>
 
-        <para><programlisting>20040721232940438   200        310 http://127.0.0.1:9999/selftest/Charset/charsetselftest_end.html LLLL http://127.0.0.1:9999/selftest/Charset/shiftjis.jsp text/html #000 10 M77KNTBZH2IU6V2SIG5EEG45EJICNQNM -
-20040721232940481   200        225 http://127.0.0.1:9999/selftest/MaxLinkHops/5.html LLLLL http://127.0.0.1:9999/selftest/MaxLinkHops/4.html text/html #000 12 M77KNTBZH2IU6V2SIG5EEG45EJICNQNM -</programlisting></para>
+        <para><programlisting>2004-07-21T23:29:40.438Z   200        310 http://127.0.0.1:9999/selftest/Charset/charsetselftest_end.html LLLL http://127.0.0.1:9999/selftest/Charset/shiftjis.jsp text/html #000 20040721232940401+10 M77KNTBZH2IU6V2SIG5EEG45EJICNQNM -
+2004-07-21T23:29:40.502Z   200        225 http://127.0.0.1:9999/selftest/MaxLinkHops/5.html LLLLL http://127.0.0.1:9999/selftest/MaxLinkHops/4.html text/html #000 20040721232940481+12 M77KNTBZH2IU6V2SIG5EEG45EJICNQNM -</programlisting></para>
 
-        <para>The <emphasis rule="bold">first</emphasis> column is a 14-digit
-        time stamp. 
+        <para>The <emphasis rule="bold">first</emphasis> column is a timestamp
+        in ISO8601 format, to millisecond resolution. The time is the instant of
+        logging. 
         The <emphasis rule="bold">second</emphasis> column is the fetch status
         code.  Usually this is the
         HTTP status code but it can also be a negative number if
@@ -2882,10 +2883,13 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>The <emphasis rule="bold">seventh</emphasis> holds the
         document mime type, the <emphasis rule="bold">eighth</emphasis> column
         has the id of the worker thread that downloaded this document,
-        the <emphasis rule="bold">ninth</emphasis> holds the time in
-        milliseconds to download the document, the
-        <emphasis rule="bold">tenth</emphasis> fields is a sha-1 digest of
-        the content only (headers are not digested), and finally
+        the <emphasis rule="bold">ninth</emphasis> column holds a timestamp 
+        (in RFC2550/ARC condensed digits-only format) indicating when a network 
+        fetch was begun, and if appropriate, the millisecond duration of the
+        fetch, separated from the begin-time by a '+' character.</para>
+        
+        <para>The <emphasis rule="bold">tenth</emphasis> fields is a sha-1 
+        digest of the content only (headers are not digested), and finally
         (if pertinent), the <emphasis rule="bold">eleventh</emphasis>
         column holds 
         <quote>annotations</quote>.  Possible annontations include:
@@ -2925,7 +2929,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <listitem>
             <para><emphasis role="bold">timestamp</emphasis></para>
 
-            <para>Time stamp indicating when the line was written.</para>
+            <para>Timestamp indicating when the line was written, in ISO8601
+            format.</para>
           </listitem>
 
           <listitem>
@@ -3459,10 +3464,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <glossterm>Dates and times</glossterm>
 
         <glossdef>
-          <para>All times in Heritrix are GMT assuming the clock on the
-          machine Heritrix is running on is correct.</para>
+          <para>All times in Heritrix are GMT assuming the clock and timezone
+          on the local system are correct.</para>
 
-          <para>This means that all date/time in logs are GMT, all dates and
+          <para>This means that all dates/times in logs are GMT, all dates and
           times shown in the WUI are GMT and any times or dates entered by the
           user need to be in GMT.</para>
         </glossdef>
