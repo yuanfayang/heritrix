@@ -47,22 +47,32 @@ public class CrawlURITest extends TmpDirTestCase {
     		throws IOException, ClassNotFoundException {
         UURI uuri = UURIFactory.getInstance("http://www.dh.gov.uk/Home/fs/en");
         CrawlURI curi = new CrawlURI(uuri);
-        curi.schedulingDirective = "Medium";
+        curi.setSchedulingDirective(CrawlURI.MEDIUM);
         curi.setIsSeed(true);
         // Force calc. of class key.
         curi.getClassKey();
+        // Force caching of string.
+        curi.toString();
         curi.setVia(uuri);
         // Write out the object.
-        File serialize = new File(getTmpDir(), this.getClass().getName());
-        FileOutputStream fos = new FileOutputStream(serialize);
-        ObjectOutputStream oos = new ObjectOutputStream(fos);
-        oos.writeObject(curi);
-        oos.close();
-        // Read in the object.
-        FileInputStream fis = new FileInputStream(serialize);
-        ObjectInputStream ois = new ObjectInputStream(fis);
-        CrawlURI deserializedCuri = (CrawlURI)ois.readObject();
-        assertTrue("Deserialized not equal to original",
-            curi.toString().equals(deserializedCuri.toString()));
+        File serialize = new File(getTmpDir(), 
+            this.getClass().getName() + "serialize");
+        try {
+            FileOutputStream fos = new FileOutputStream(serialize);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(curi);
+            oos.close();
+            // Read in the object.
+            FileInputStream fis = new FileInputStream(serialize);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            CrawlURI deserializedCuri = (CrawlURI)ois.readObject();
+            assertTrue("Deserialized not equal to original",
+                curi.toString().equals(deserializedCuri.toString()));
+            String host = curi.getUURI().getHost();
+            assertTrue("Deserialized host not null",
+                host != null && host.length() >= 0);
+        } finally {
+            serialize.delete();
+        }
     }
 }
