@@ -43,17 +43,21 @@ import org.archive.util.Lineable;
 public class CandidateURI implements Serializable, Lineable, HasUri {
     private static final long serialVersionUID = -7152937921526560388L;
 
-    //public static final String FORCE_REVISIT = "Force";
-    public static final String HIGH = "High"; // before any others of its class
-    public static final String MEDIUM = "Medium"; // after any Highs
-    public static final String NORMAL = "Normal"; // whenever/end of queue
+    /** Highest priority */
+    public static final int HIGHEST = 0; // before any others of its class
+    /** High priority */
+    public static final int HIGH = 1; // after any highest
+    /** Medium priority */
+    public static final int MEDIUM = 2; // after any Highs
+    /** Normal/low priority */
+    public static final int NORMAL = 3; // whenever/end of queue
 
     /** Usuable URI under consideration */
     UURI uuri;
     /** Seed status */
     boolean isSeed = false;
 
-    String schedulingDirective = NORMAL;
+    int schedulingDirective = NORMAL;
     boolean forceRevisit = false; // even if already visited
     
     /** String of letters indicating how this URI was reached from a seed */
@@ -129,10 +133,16 @@ public class CandidateURI implements Serializable, Lineable, HasUri {
         return isSeed;
     }
 
+    /**
+     * @return path (hop-types) from seed
+     */
     public String getPathFromSeed() {
         return pathFromSeed;
     }
 
+    /**
+     * @return URI via which this one was discovered
+     */
     public Object getVia() {
         return via;
     }
@@ -262,13 +272,13 @@ public class CandidateURI implements Serializable, Lineable, HasUri {
     /**
      * @return Returns the schedulingDirective.
      */
-    public String getSchedulingDirective() {
+    public int getSchedulingDirective() {
         return schedulingDirective;
     }
-    /**
+    /** 
      * @param schedulingDirective The schedulingDirective to set.
      */
-    public void setSchedulingDirective(String schedulingDirective) {
+    public void setSchedulingDirective(int schedulingDirective) {
         this.schedulingDirective = schedulingDirective;
     }
 
