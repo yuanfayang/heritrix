@@ -32,11 +32,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
@@ -60,19 +60,10 @@ import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.queue.LinkedQueue;
 import org.archive.util.ArchiveUtils;
 
-import st.ata.util.FPGenerator;
-
-import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
-import com.sleepycat.je.Cursor;
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
-import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.DatabaseNotFoundException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
-import com.sleepycat.je.OperationStatus;
 
 /**
  * A Frontier using several BerkeleyDB JE Databases to hold its record of
@@ -125,15 +116,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     protected final static String DEFAULT_COST_POLICY = ZeroCostAssignmentPolicy.class.getName();
 
     /** all URIs scheduled to be crawled */
-    protected BdbMultiQueue pendingUris;
+    protected BdbMultipleWorkQueues pendingUris;
 
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
     protected UriUniqFilter alreadyIncluded;
 
-    // TODO: BDBify
     /** all known queues */
-    protected HashMap allQueues = new HashMap(); // of classKey -> BDBWorkQueue
+    protected Map allQueues = new HashMap(); // of classKey -> BDBWorkQueue
 
     /** all per-class queues whose first item may be handed out */
     protected LinkedQueue readyClassQueues = new LinkedQueue(); // of BDBWorkQueue
@@ -281,7 +271,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                     envConfig.getCachePercent() +
                     ", cache size " + envConfig.getCacheSize());
             }
-            pendingUris = createMultiQueue();
+            pendingUris = createMultipleWorkQueues();
             alreadyIncluded = createAlreadyIncluded();
         } catch (DatabaseException e) {
             e.printStackTrace();
@@ -294,7 +284,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         } catch (Exception e) {
             e.printStackTrace();
             throw new FatalConfigurationException(e.getMessage());
-        } 
+        }
+        
         loadSeeds();
     }
     
@@ -331,11 +322,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * Create the single object (within which is one BDB database)
      * inside which all the other queues live. 
      * 
-     * @return the created BdbMultiQueue
+     * @return the created BdbMultipleWorkQueues
      * @throws DatabaseException
      */
-    private BdbMultiQueue createMultiQueue() throws DatabaseException {
-        return new BdbMultiQueue(this.dbEnvironment);
+    private BdbMultipleWorkQueues createMultipleWorkQueues()
+    throws DatabaseException {
+        return new BdbMultipleWorkQueues(this.dbEnvironment);
     }
 
     /**
@@ -391,7 +383,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     private void sendToQueue(CrawlURI curi) {
         BdbWorkQueue wq = getQueueFor(curi);
         synchronized (wq) {
-            wq.enqueue(curi);
+            wq.enqueue(this.pendingUris, curi);
             if(!wq.isHeld()) {
                 wq.setHeld();
                 if(holdQueues()) {
@@ -453,7 +445,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     private void retireQueue(BdbWorkQueue wq) {
         try {
             retiredQueues.put(wq);
-            decrementQueuedCount(wq.count);
+            decrementQueuedCount(wq.getCount());
         } catch (InterruptedException e) {
             e.printStackTrace();
             System.err.println("unable to retire queue "+wq);
@@ -493,7 +485,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     private void unretireQueue(BdbWorkQueue q) {
         deactivateQueue(q);
-        incrementQueuedUriCount(q.count);
+        incrementQueuedUriCount(q.getCount());
     }
 
     /**
@@ -507,10 +499,11 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         BdbWorkQueue wq;
         String classKey = curi.getClassKey();
         synchronized (allQueues) {
-            wq = (BdbWorkQueue) allQueues.get(classKey);
+            wq = (BdbWorkQueue)allQueues.get(classKey);
             if (wq == null) {
-                wq = new BdbWorkQueue(classKey, pendingUris);
-                wq.setTotalBudget(((Long)getUncheckedAttribute(curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue());
+                wq = new BdbWorkQueue(classKey);
+                wq.setTotalBudget(((Long)getUncheckedAttribute(
+                    curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue());
                 allQueues.put(classKey, wq);
             }
         }
@@ -551,7 +544,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                 while(true) { // loop left by explicit return or break on empty
                     CrawlURI curi = null;
                     synchronized(readyQ) {
-                        curi = readyQ.peek();                     
+                        curi = readyQ.peek(this.pendingUris);                     
                         if (curi != null) {
                             // check if curi belongs in different queue
                             String currentQueueKey = getClassKey(curi);
@@ -565,7 +558,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                             // was queued (eg because its IP has become
                             // known). Requeue to new queue.
                             curi.setClassKey(currentQueueKey);
-                            readyQ.dequeue();
+                            readyQ.dequeue(this.pendingUris);
                             curi.setHolderKey(null);
                             sendToQueue(curi);
                         } else {
@@ -636,12 +629,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             synchronized(candidateQ) {
                 replenishSessionBalance(candidateQ);
                 if(candidateQ.isOverBudget()){
-                    // if still over-budget after an activation & replenishing, retire
+                    // if still over-budget after an activation & replenishing,
+                    // retire
                     retireQueue(candidateQ);
                 } else {
                     readyQueue(candidateQ);
                     if (logger.isLoggable(Level.FINE)) {
-                        logger.fine("ACTIVATED queue: "+candidateQ.classKey);
+                        logger.fine("ACTIVATED queue: " +
+                            candidateQ.getClassKey());
                     }
                 }
             }
@@ -655,7 +650,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     private void replenishSessionBalance(BdbWorkQueue queue) {
         // get a CrawlURI for override context purposes
-        CrawlURI contextUri = queue.peek(); 
+        CrawlURI contextUri = queue.peek(this.pendingUris); 
         // TODO: consider confusing cross-effects of this and IP-based politeness
         queue.incrementSessionBalance(((Integer) getUncheckedAttribute(contextUri,
                 ATTR_BALANCE_REPLENISH_AMOUNT)).intValue());
@@ -671,7 +666,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     private void reenqueueQueue(BdbWorkQueue wq) {
         if(wq.isOverBudget()) {
             if (logger.isLoggable(Level.FINE)) {
-                logger.fine("DEACTIVATED queue: "+wq.classKey);
+                logger.fine("DEACTIVATED queue: " +
+                    wq.getClassKey());
             }
             deactivateQueue(wq);
         } else {
@@ -726,7 +722,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         curi.incrementFetchAttempts();
         logLocalizedErrors(curi);
         BdbWorkQueue wq = (BdbWorkQueue) curi.getHolder();
-        assert (wq.peek() == curi) : "unexpected peek " + wq;
+        assert (wq.peek(this.pendingUris) == curi) : "unexpected peek " + wq;
         inProcessQueues.remove(wq,1);
 
         if (needsRetrying(curi)) {
@@ -748,7 +744,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         }
 
         // curi will definitely be disposed of without retry, so remove from q
-        wq.dequeue();
+        wq.dequeue(this.pendingUris);
         decrementQueuedCount(1);
         log(curi);
 
@@ -881,7 +877,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         while(iter.hasNext()) {
             BdbWorkQueue wq = (BdbWorkQueue)iter.next();
             wq.unpeek();
-            count += wq.deleteMatching(match);
+            count += wq.deleteMatching(this.pendingUris, match);
         }
         decrementQueuedCount(count);
         return count;
@@ -1024,632 +1020,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     }
 
     /**
-     * A BerkeleyDB-database-backed structure for holding ordered
-     * groupings of CrawlURIs. Reading the groupings from specific
-     * per-grouping (per-classKey/per-Host) starting points allows
-     * this to act as a collection of independent queues. 
-     * 
-     * TODO: cleanup/close handles, refactor, improve naming
-     * @author gojomo
+     * @return Returns the dbEnvironment.
      */
-    public class BdbMultiQueue {
-        /** database holding all pending URIs, grouped in virtual queues */
-        protected Database pendingUrisDB = null;
-        /** database supporting bdb serialization */
-        protected Database classCatalogDB = null;
-        /** supporting bdb serialization */ 
-        protected StoredClassCatalog classCatalog = null;
-        /**  supporting bdb serialization of CrawlURIs*/
-        protected SerialBinding crawlUriBinding;
-
-        /**
-         * Create the multi queue in the given environment. 
-         * 
-         * @param env bdb environment to use
-         * @throws DatabaseException
-         */
-        public BdbMultiQueue(Environment env) throws DatabaseException {
-            // Open the database. Create it if it does not already exist. 
-            DatabaseConfig dbConfig = new DatabaseConfig();
-            dbConfig.setAllowCreate(true);
-            try {
-                // new preferred truncateDatabase() method cannot be used
-                // on an open (and thus certain to exist) database like 
-                // the deprecated method it replaces -- so use before
-                // opening the database and be ready if it doesn't exist
-                env.truncateDatabase(null, "pending", false);
-            } catch (DatabaseNotFoundException e) {
-                // ignored
-            }
-            pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
-            classCatalogDB = env.openDatabase(null, "classes", dbConfig);
-            classCatalog = new StoredClassCatalog(classCatalogDB);
-            crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
-        }
-
-        /**
-         * Delete all CrawlURIs matching the given expression.
-         * 
-         * @param match
-         * @param queue
-         * @param headKey
-         * @return count of deleted items
-         * @throws DatabaseException
-         * @throws DatabaseException
-         */
-        public long deleteMatchingFromQueue(String match, String queue,
-                DatabaseEntry headKey) throws DatabaseException {
-            long deletedCount = 0;
-            Pattern pattern = Pattern.compile(match);
-            DatabaseEntry key = headKey;
-            DatabaseEntry value = new DatabaseEntry();
-
-            Cursor cursor = null;
-            try {
-                cursor = pendingUrisDB.openCursor(null, null);
-                OperationStatus result = cursor.getSearchKeyRange(headKey,
-                        value, null);
-
-                while (result == OperationStatus.SUCCESS) {
-                    CrawlURI curi = (CrawlURI) crawlUriBinding
-                            .entryToObject(value);
-                    if (!curi.getClassKey().equals(queue)) {
-                        // rolled into next queue; finished with this queue
-                        break;
-                    }
-                    if (pattern.matcher(curi.getURIString()).matches()) {
-                        cursor.delete();
-                        deletedCount++;
-                    }
-                    result = cursor.getNext(key, value, null);
-                }
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-
-            return deletedCount;
-        }
-
-        /**
-         * @param m marker
-         * @param maxMatches
-         * @return list of matches starting from marker position
-         * @throws DatabaseException
-         */
-        public List getFrom(FrontierMarker m, int maxMatches) throws DatabaseException {
-            int matches = 0;
-            int tries = 0;
-            ArrayList results = new ArrayList(maxMatches);
-            BdbFrontierMarker marker = (BdbFrontierMarker) m;
-            
-            DatabaseEntry key = marker.getStartKey();
-            DatabaseEntry value = new DatabaseEntry();
-            
-            Cursor cursor = null;
-            OperationStatus result = null;
-            try {
-                cursor = pendingUrisDB.openCursor(null,null);
-                result = cursor.getSearchKey(key, value, null);
-                
-                while(matches<maxMatches && result == OperationStatus.SUCCESS) {
-                    CrawlURI curi = (CrawlURI) crawlUriBinding.entryToObject(value);
-                    if(marker.accepts(curi)) {
-                        results.add(curi);
-                        matches++;
-                    }
-                    tries++;
-                    result = cursor.getNext(key,value,null);
-                }
-            } finally {
-                if (cursor !=null) {
-                    cursor.close();
-                }
-            }
-            
-            if(result != OperationStatus.SUCCESS) {
-                // end of scan
-                marker.setStartKey(null);
-            }
-            return results;
-        }
-
-        /**
-         * Get a marker for beginning a scan over all contents
-         * 
-         * @param regexpr
-         * @return a marker pointing to the first item
-         */
-        public FrontierMarker getInitialMarker(String regexpr) {
-            try {
-                return new BdbFrontierMarker(getFirstKey(), regexpr);
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                return null; 
-            }
-        }
-
-        /**
-         * @return the key to the first item in the database
-         * @throws DatabaseException
-         */
-        protected DatabaseEntry getFirstKey() throws DatabaseException {
-            DatabaseEntry key = new DatabaseEntry();
-            DatabaseEntry value = new DatabaseEntry();
-            Cursor cursor = pendingUrisDB.openCursor(null,null);
-            cursor.getNext(key,value,null);
-            cursor.close();
-            return key;
-        }
-
-        /**
-         * Get the next nearest item after the given key. Relies on 
-         * external discipline to avoid asking for something from an
-         * origin where there are no associated items -- otherwise
-         * could get first item of next 'queue' by mistake. 
-         * 
-         * TODO: hold within a queue's range
-         * 
-         * @param headKey
-         * @return CrawlURI.
-         * @throws DatabaseException
-         */
-        public CrawlURI get(DatabaseEntry headKey) throws DatabaseException {
-            DatabaseEntry result = new DatabaseEntry();
-            Cursor cursor = pendingUrisDB.openCursor(null,null);
-            cursor.getSearchKeyRange(headKey, result, null);
-            cursor.close();
-            CrawlURI retVal = (CrawlURI) crawlUriBinding.entryToObject(result);
-            retVal.setHolderKey(headKey);
-            return retVal;
-        }
-
-
-
-        /**
-         * Put the given CrawlURI in at the appropriate place. 
-         * 
-         * @param curi
-         * @throws DatabaseException
-         */
-        public void put(CrawlURI curi) throws DatabaseException {
-            DatabaseEntry insertKey = (DatabaseEntry) curi.getHolderKey();
-            if (insertKey == null) {
-                insertKey = calculateInsertKey(curi);
-                curi.setHolderKey(insertKey);
-            }
-            DatabaseEntry value = new DatabaseEntry();
-            crawlUriBinding.objectToEntry(curi, value);
-            pendingUrisDB.put(null, insertKey, value);
-        }
-
-        /**
-         * Calculate the insertKey that places a CrawlURI in the
-         * desired spot. First 60 bits are always host (classKey)
-         * based -- ensuring grouping by host. Next 4 bits are
-         * priority -- allowing 'immediate' and 'soon' items to 
-         * sort above regular. Next 8 bits are 'cost'. Last 64 bits 
-         * are ordinal serial number, ensuring earlier-discovered 
-         * URIs sort before later. 
-         * 
-         * @param curi
-         * @return a DatabaseEntry key for the CrawlURI
-         */
-        private DatabaseEntry calculateInsertKey(CrawlURI curi) {
-            byte[] keyData = new byte[16];
-            long fpPlus = FPGenerator.std64.fp(curi.getClassKey()) & 0xFFFFFFFFFFFFFFF0L;
-            fpPlus = fpPlus | curi.getSchedulingDirective(); 
-            ArchiveUtils.longIntoByteArray(fpPlus, keyData, 0);
-            long ordinalPlus = curi.getOrdinal() & 0x00FFFFFFFFFFFFFFL;
-            ordinalPlus = (((long)curi.getHolderCost()) << 56) | ordinalPlus;
-            ArchiveUtils.longIntoByteArray(ordinalPlus, keyData, 8);
-            return new DatabaseEntry(keyData);
-        }
-
-        /**
-         * Delete the given CrawlURI from persistent store. Requires
-         * the key under which it was stored be available. 
-         * 
-         * @param item
-         * @throws DatabaseException
-         */
-        public void delete(CrawlURI item) throws DatabaseException {
-            pendingUrisDB.delete(null, (DatabaseEntry) item.getHolderKey());
-        }
-
-        /**
-         * clean up 
-         *
-         */
-        public void close() {
-            try {
-                pendingUrisDB.close();
-                classCatalogDB.close();
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-
+    public Environment getBdbEnvironment() {
+        return this.dbEnvironment;
     }
-
-    /**
-     * One independent queue of items with the same 'classKey' (eg host). 
-     * 
-     * @author gojomo
-     */
-    public class BdbWorkQueue implements Comparable {
-        String classKey;
-        
-        /** where items are really stored, for now */
-        BdbMultiQueue masterQueue; 
-        
-        /** total number of stored items */
-        long count = 0;
-        
-        /** the next item to be returned */ 
-        CrawlURI peekItem = null;
-
-        /** key coordinate to begin seeks, to find queue head */
-        byte[] origin; 
-
-        // useful for reporting
-        /** last URI enqueued */
-        private String lastQueued; 
-        /** last URI peeked */
-        private String lastPeeked;
-
-        /** whether queue is already in lifecycle stage */
-        boolean isHeld = false; 
-        
-        /** time to wake, if snoozed */
-        long wakeTime = 0;
-        
-        /** running 'budget' indicating whether queue should stay active */
-        int sessionBalance = 0;
-        
-        /** cost of the last item to be charged against queue */
-        int lastCost = 0;
-        
-        /** total number of items charged against queue; with totalExpenditure
-         * can be used to calculate 'average cost'. */
-        long costCount = 0;
-        
-        /** running tally of total expenditures on this queue */
-        long totalExpenditure = 0;
-        
-        /** total to spend on this queue over its lifetime */
-        long totalBudget = 0;
-
-        /**
-         * Create a virtual queue inside the given BdbMultiQueue 
-         * 
-         * @param classKey
-         * @param pendingUris
-         */
-        public BdbWorkQueue(String classKey, BdbMultiQueue pendingUris) {
-            this.classKey = classKey;
-            masterQueue = pendingUris;
-            origin = new byte[16];
-            long fp = FPGenerator.std64.fp(classKey) & 0xFFFFFFFFFFFFFFF0l;
-            ArchiveUtils.longIntoByteArray(fp, origin, 0);
-        }
-
-        /**
-         * Set the session 'activity budget balance' to the given value
-         * 
-         * @param balance to use
-         */
-        public void setSessionBalance(int balance) {
-            this.sessionBalance = balance;
-        }
-
-        /**
-         * Return current session 'activity budget balance' 
-         * 
-         * @return session balance
-         */
-        public int getSessionBalance() {
-            return this.sessionBalance;
-        }
-
-        /**
-         * Set the total expenditure level allowable before queue is 
-         * considered inherently 'over-budget'. 
-         * 
-         * @param budget
-         */
-        public void setTotalBudget(long budget) {
-            this.totalBudget = budget;
-        }
-
-        /**
-         * Check whether queue has temporarily or permanently exceeded
-         * its budget. 
-         * 
-         * @return true if queue is over its set budget(s)
-         */
-        public boolean isOverBudget() {
-            // check whether running balance is depleted 
-            // or totalExpenditure exceeds totalBudget
-            return this.sessionBalance <= 0
-                    || (this.totalBudget >= 0 
-                            && this.totalExpenditure > this.totalBudget);
-        }
-        
-        /**
-         * Return the tally of all expenditures on this queue
-         * 
-         * @return total amount expended on this queue
-         */
-        public long getTotalExpenditure() {
-            return totalExpenditure;
-        }
-
-        /**
-         * Increase the internal running budget to be used before 
-         * deactivating the queue
-         * 
-         * @param amount amount to increment
-         * @return updated budget value
-         */
-        public int incrementSessionBalance(int amount) {
-            this.sessionBalance = this.sessionBalance + amount;
-            return this.sessionBalance;
-        }
-
-        /**
-         * Decrease the internal running budget by the given amount. 
-         * @param amount tp decrement
-         * @return updated budget value
-         */
-        public int expend(int amount) {
-            this.sessionBalance = this.sessionBalance - amount;
-            this.totalExpenditure = this.totalExpenditure + amount;
-            this.lastCost = amount;
-            this.costCount++;
-            return this.sessionBalance;
-        }
-
-        /**
-         * Delete URIs matching the given pattern from this queue. 
-         * 
-         * @param match
-         * @return count of deleted URIs
-         */
-        public long deleteMatching(String match) {
-            try {
-                long deleteCount = masterQueue.deleteMatchingFromQueue(match,classKey,new DatabaseEntry(origin));
-                this.count -= deleteCount;
-                return deleteCount;
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }
-
-        /**
-         * @return a string describing this queue
-         */
-        public String report() {
-            return "Queue " + classKey + "\n" + 
-                   "  "+ count + " items" + "\n" +
-                   "    last enqueued: " + lastQueued + "\n" +
-                   "      last peeked: " + lastPeeked + "\n" +
-                   ((wakeTime == 0) ? "" :
-                   "         wakes in: " + 
-                           (wakeTime-System.currentTimeMillis()) + "ms\n") +
-                   "   total expended: " + totalExpenditure + 
-                       " (total budget: " + totalBudget + ")\n" +
-                   "   active balance: " + sessionBalance + "\n" +
-                   "   last(avg) cost: " + lastCost + 
-                       "("+ArchiveUtils.doubleToString(
-                               ((double)totalExpenditure/costCount),1)+")\n";
-        }
-
-        /**
-         * @param l
-         */
-        public void setWakeTime(long l) {
-            wakeTime = l;
-        }
-
-        /**
-         * @return wakeTime
-         */
-        public long getWakeTime() {
-            return wakeTime;
-        }
-        
-        /**
-         * @return classKey
-         */
-        private String getClassKey() {
-            return classKey;
-        }
-        
-        /**
-         * Clear isHeld to false
-         */
-        public void clearHeld() {
-            isHeld = false;
-        }
-
-        /**
-         * Whether the queue is already in a lifecycle stage --
-         * such as ready, in-progress, snoozed -- and thus should
-         * not be redundantly inserted to readyClassQueues
-         * 
-         * @return isHeld
-         */
-        public boolean isHeld() {
-            return isHeld;
-        }
-
-        /**
-         * Set isHeld to true
-         */
-        public void setHeld() {
-            isHeld = true; 
-        }
-
-        /**
-         * Remove the peekItem from the queue. 
-         * 
-         */
-        public void dequeue() {
-            try {
-                masterQueue.delete(peekItem);
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            unpeek();
-            count--;
-        }
-
-        /**
-         * Forgive the peek, allowing a subsequent peek to 
-         * return a different item. 
-         * 
-         */
-        public void unpeek() {
-            peekItem = null;
-        }
-
-        /**
-         * Return the topmost queue item -- and remember it,
-         * such that even later higher-priority inserts don't
-         * change it. 
-         * 
-         * TODO: evaluate if this is really necessary
-         * 
-         * @return topmost queue item
-         */
-        public CrawlURI peek() {
-            if (peekItem == null && count > 0) {
-                try {
-                    peekItem = masterQueue.get(new DatabaseEntry(origin));
-                    lastPeeked = peekItem.getURIString();
-                } catch (DatabaseException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
-                }
-            }
-            return peekItem;
-        }
-
-        /**
-         * Add the given CrawlURI
-         * 
-         * @param curi
-         */
-        public void enqueue(CrawlURI curi) {
-            try {
-                masterQueue.put(curi);
-                lastQueued = curi.getURIString();
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-            count++;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Comparable#compareTo(java.lang.Object)
-         */
-        public int compareTo(Object obj) {
-            if(this==obj) {
-                return 0; // for exact identity only
-            }
-            BdbWorkQueue other = (BdbWorkQueue)obj;
-            if (getWakeTime() > other.getWakeTime()) {
-                return 1;
-            }
-            if (getWakeTime() < other.getWakeTime()) {
-                return -1;
-            }
-            // at this point, the ordering is arbitrary, but still
-            // must be consistent/stable over time
-            return this.classKey.compareTo(other.getClassKey());
-        }
+    
+    public StoredClassCatalog getBdbClassCatalog() {
+        return this.pendingUris.getClassCatalog();
     }
-
-    /**
-     * Marker for remembering a position within the BdbMultiQueue.
-     * 
-     * @author gojomo
-     */
-    public class BdbFrontierMarker implements FrontierMarker {
-        DatabaseEntry startKey;
-        Pattern pattern; 
-        int nextItemNumber;
-        
-        /**
-         * Create a marker pointed at the given start location.
-         * 
-         * @param startKey
-         * @param regexpr
-         */
-        public BdbFrontierMarker(DatabaseEntry startKey, String regexpr) {
-            this.startKey = startKey;
-            pattern = Pattern.compile(regexpr);
-            nextItemNumber = 1;
-        }
-
-        /**
-         * @param curi
-         * @return whether the marker accepts the given CrawlURI
-         */
-        public boolean accepts(CrawlURI curi) {
-            boolean retVal = pattern.matcher(curi.getURIString()).matches();
-            if(retVal==true) {
-                nextItemNumber++;
-            }
-            return retVal;
-        }
-
-        /**
-         * @param key position for marker
-         */
-        public void setStartKey(DatabaseEntry key) {
-            startKey = key;
-        }
-
-        /**
-         * @return startKey
-         */
-        public DatabaseEntry getStartKey() {
-            return startKey;
-        }
-
-        /* (non-Javadoc)
-         * @see org.archive.crawler.framework.FrontierMarker#getMatchExpression()
-         */
-        public String getMatchExpression() {
-            return pattern.pattern();
-        }
-
-        /* (non-Javadoc)
-         * @see org.archive.crawler.framework.FrontierMarker#getNextItemNumber()
-         */
-        public long getNextItemNumber() {
-            return nextItemNumber;
-        }
-
-        /* (non-Javadoc)
-         * @see org.archive.crawler.framework.FrontierMarker#hasNext()
-         */
-        public boolean hasNext() {
-            // as long as any startKey is stated, consider as having next
-            return startKey != null;
-        }
-    }
-
 }
 
