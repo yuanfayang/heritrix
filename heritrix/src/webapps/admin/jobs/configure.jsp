@@ -188,7 +188,7 @@
 		return;
 	} else if(theJob.isReadOnly()){
 		// Can't edit this job.
-		response.sendRedirect("/admin/jobs.jsp?message=Can't configure a running job");
+		response.sendRedirect("/admin/jobs.jsp?message=Can't configure a read only job");
 		return;
 	}
 
