@@ -119,6 +119,8 @@ public class Frontier
     public final static String ATTR_MAX_RETRIES = "max-retries";
     /** for retryable problems, seconds to wait before a retry */
     public final static String ATTR_RETRY_DELAY = "retry-delay-seconds";
+    /** maximum simultaneous requests in process to a host (queue) */
+    public final static String ATTR_HOST_VALENCE = "host-valence";
     /** maximum overall bandwidth usage */
     public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
         "total-bandwidth-usage-KB-sec";
@@ -132,6 +134,7 @@ public class Frontier
     private final static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
     private final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
     private final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
+    private final static Integer DEFAULT_HOST_VALENCE = new Integer(1); 
     private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
         new Integer(0);
     private final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
@@ -149,7 +152,9 @@ public class Frontier
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
     UURISet alreadyIncluded;
-
+    /** ordinal numbers to assign to created CrawlURIs */
+    protected long nextOrdinal = 1;
+    
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 
     // every CandidateURI not yet in process or another queue;
@@ -218,6 +223,11 @@ public class Frontier
                 "failed to be retrieved (seconds). ",
                 DEFAULT_RETRY_DELAY));
         Type t;
+        t = addElementToDefinition(new SimpleType(ATTR_HOST_VALENCE,
+                "Maximum number of simultaneous requests to a single" +
+                "host.",
+                DEFAULT_HOST_VALENCE));
+        t.setExpertSetting(true);
         t = addElementToDefinition(
             new SimpleType(ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
             "The maximum average bandwidth the crawler is allowed to use. \n" +
@@ -263,9 +273,7 @@ public class Frontier
 //                      0.75f,
 //                      20, // 1 million slots in cache (always)
 //                      0.75f));
-//        wakerThread = new Thread(new Waker());
-//        wakerThread.setName("Frontier.Waker");
-//        wakerThread.start();
+
         
         this.controller = c;
         loadSeeds();
@@ -379,7 +387,7 @@ public class Frontier
         }
 
         if(caUri.needsImmediateScheduling()) {
-            enqueueToKeyed(CrawlURI.from(caUri));
+            enqueueToKeyed(asCrawlUri(caUri));
         } else {
             this.pendingQueue.enqueue(caUri);
         }
@@ -424,7 +432,7 @@ public class Frontier
 
         // if that fails to find anything, check the pending queue
         while ((caUri = dequeueFromPending()) != null) {
-            curi = CrawlURI.from(caUri);
+            curi = asCrawlUri(caUri);
             enqueueToKeyed(curi);
             if (!this.readyClassQueues.isEmpty()) {
                 curi = dequeueFromReady();
@@ -449,6 +457,13 @@ public class Frontier
         }
     }
     
+    private CrawlURI asCrawlUri(CandidateURI caUri) {
+        if(caUri instanceof CrawlURI) {
+            return (CrawlURI) caUri;
+        }
+        return CrawlURI.from(caUri,nextOrdinal++);
+    }
+
     private void enforceBandwidthThrottle(long now) {
         int maxBandwidthKB;
         try {
@@ -697,7 +712,7 @@ public class Frontier
                 logger.severe("first() item couldn't be remove()d! - "+awoken+" - " + snoozeQueues.contains(awoken));
                 logger.severe(report());
             }
-            assert awoken.getInProcessItem() == null : "false ready: class peer still in process";
+            // assert awoken.getInProcessItem() == null : "false ready: class peer still in process";
             awoken.wake();
             updateQ(awoken);
         }
@@ -715,8 +730,9 @@ public class Frontier
 
     private CrawlURI dequeueFromReady() {
         KeyedQueue firstReadyQueue = (KeyedQueue)readyClassQueues.getFirst();
-        assert firstReadyQueue.getState() == KeyedQueue.READY : "top ready queue not ready";
+        assert firstReadyQueue.getState() == KeyedQueue.READY : "top ready queue not ready but" + firstReadyQueue.getState();
         CrawlURI readyCuri = (CrawlURI) firstReadyQueue.dequeue();
+        firstReadyQueue.checkEmpty();
         return readyCuri;
     }
 
@@ -758,14 +774,16 @@ public class Frontier
         if(kq==null){
             return; // Couldn't find/create kq.
         }
-            
-        assert kq.getInProcessItem() == null : "two CrawlURIs with same classKey in process";
+        
+        // assert kq.getInProcessItem() == null : "two CrawlURIs with same classKey in process";
 
         assert kq.getState() == KeyedQueue.READY || kq.getState() == KeyedQueue.EMPTY : 
             "odd state "+ kq.getState() + " for classQueue "+ kq + "of to-be-emitted CrawlURI";
 
         kq.noteInProcess(curi);
-        readyClassQueues.remove(kq);
+        if(kq.getState()==KeyedQueue.BUSY || kq.getState() == KeyedQueue.EMPTY) {
+            readyClassQueues.remove(kq);
+        }
     }
 
     /**
@@ -789,6 +807,11 @@ public class Frontier
                 kq = new KeyedQueue(curi.getClassKey(), 
                     this.controller.getStateDisk(),
                     DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
+                try {
+                    kq.setValence(((Integer)getAttribute(ATTR_HOST_VALENCE,curi)).intValue());
+                } catch (AttributeNotFoundException e2) {
+                    logger.severe(e2.getMessage());
+                }
                 kq.activate(); // TODO: have only a subset of queues by active at any one time
                 this.allClassQueuesMap.put(kq.getClassKey(),kq);
             } catch (IOException e) {
@@ -906,9 +929,12 @@ public class Frontier
             logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
         }
+        Object startState = kq.getState();
         kq.noteProcessDone(curi);
         updateScheduling(curi, kq);
-        updateQ(kq);
+        if(startState!=kq.getState()) {
+            updateQ(kq);
+        }
     }
 
     /**
@@ -1135,7 +1161,8 @@ public class Frontier
             snoozeQueues.remove(kq);
         } else if (kq.getState() == KeyedQueue.READY ) {
             readyClassQueues.remove(kq);
-        }
+        } 
+        
         kq.setWakeTime(wake);
         snoozeQueues.add(kq);
         kq.snooze();
@@ -1461,8 +1488,11 @@ public class Frontier
         if(kq.getState()==KeyedQueue.SNOOZED) {
             rep.append("     Wakes in:  " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
         }
-        if(kq.getState()==KeyedQueue.IN_PROCESS) {
-            rep.append("     InProcess: " + kq.getInProcessItem() + "\n");
+        if(kq.getInProcessItems().size()>0) {
+            Iterator iter = kq.getInProcessItems().iterator();
+            while (iter.hasNext()) {
+                rep.append("     InProcess: " + iter.next() + "\n");
+            }
         }
         if(!kq.isEmpty()) {
             rep.append("     Top URI:   " + ((CrawlURI)kq.peek()).getURIString()+"\n");
