@@ -59,7 +59,7 @@ import org.archive.util.DevUtils;
  * such as current robots.txt requests and the history
  * of attempts to crawl the same URI -- should NOT be
  * considered. Those potentially high-latency decisions
- * should be made at another step. .
+ * should be made at another step.
  *
  * @author gojomo
  *
