@@ -24,7 +24,6 @@
 package org.archive.crawler.framework;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -87,7 +86,7 @@ public class ToePool extends CrawlStatusAdapter {
         this.paused = true;
         this.controller = c;
         this.controller.addCrawlStatusListener(this);
-        this.toes = Collections.synchronizedList(new ArrayList(count));
+        this.toes = new ArrayList(count);
         // TODO make number of threads self-optimizing
         setSize(count);
     }
@@ -97,16 +96,6 @@ public class ToePool extends CrawlStatusAdapter {
      */
     public int getActiveToeCount() {
         return activeToeCount;
-//        int count = 0;
-//        synchronized (this.toes) {
-//            for(int i = 0; i < this.toes.size(); i++) {
-//                ToeThread tt = (ToeThread)this.toes.get(i);
-//                if(tt != null && !tt.isIdleOrDead()) {
-//                    count++;
-//                }
-//            }
-//        }
-//        return count;
     }
 
     /**
@@ -278,8 +267,7 @@ public class ToePool extends CrawlStatusAdapter {
         if(this.killedToes == null) {
             synchronized (this) {
                 if(this.killedToes == null) {
-                    this.killedToes =
-                        Collections.synchronizedList(new ArrayList(1));
+                    this.killedToes = new ArrayList(1);
                 }
             }
         }
