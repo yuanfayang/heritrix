@@ -61,6 +61,8 @@ See ./docs/articles/developer_manual.html or
 +---------------------------------------------------------------------+
 | Version |    Date    |                 Description                  |
 |---------+------------+----------------------------------------------|
+| 1.0.2   | 2004-09-14 | Bug fixes.                                   | 
+|---------+------------+----------------------------------------------| 
 |         |            | Added new prefix ('SURT') scope and filter,  |
 |         |            | compression of recovery log, mass adding of  |
 | 1.0.0   | 2004-08-06 | URIs to running crawler, crawling via a http |
@@ -136,6 +138,26 @@ See ./docs/articles/developer_manual.html or
 |---------+------------+----------------------------------------------|
 | 0.1.0   | 2003-12-31 | Mavenized build                              |
 +---------------------------------------------------------------------+
+
+Release 1.0.2 - 2004-09-14                                        
+
++-----------------------------------------------------------------+ 
+| Type |                    Changes                     |   By    | 
+|------+------------------------------------------------+---------| 
+|fix   |old crawls stick around, consuming memory       |stack-sf | 
+|------+------------------------------------------------+---------| 
+|fix   |Terminating paused crawl leaves zombie threads  |stack-sf | 
+|------+------------------------------------------------+---------| 
+|fix   |Excessive ARCWriterPool timeouts                |stack-sf | 
+|------+------------------------------------------------+---------| 
+|fix   |Per host overrides not taking effect.           |stack-sf | 
+|------+------------------------------------------------+---------| 
+|fix   |document size limit not working                 |stack-sf | 
+|------+------------------------------------------------+---------| 
+|fix   |UURI.length() > 2k                              |stack-sf | 
+|------+------------------------------------------------+---------| 
+|fix   |crawl.log has URIs with spaces in them stack-sf |stack-sf | 
++-----------------------------------------------------------------+ 
 
 Release 1.0.0 - 2004-08-06
 
