@@ -2191,14 +2191,22 @@ public class SimpleExtractor extends Processor
     files.  Arc files are described here: <ulink 
     url="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
     File Format</ulink>.</para>  
+
     <para><ulink 
     url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html">ARCReader</ulink> can be used reading arc files.  It has a command line
     interface that can be used to print out meta info and for doing random
     access getting of arc records (The command-line interface is described in
     the <ulink 
         url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCReader.html#main(java.lang.String[])">main method javadoc</ulink> comments).</para>  
+
         <para><ulink 
         url="http://www.netarchive.dk/website/sources/index-en.htm">Netarchive.dk</ulink> have also developed arc reading and writing tools.
+        </para>
+
+        <para>Tom Emerson of Basis Technologies has put up a project on
+        sourceforge to host a BSD-Licensed C++ ARC reader called
+        <ulink 
+        url="http://sourceforge.net/projects/libarchive/">libarchive</ulink>.
         </para>
 
   </sect1>
