@@ -273,6 +273,24 @@ public class XMLConfig {
 		return null;
 	}
 	
+	/**
+	 * Retrieve a (positive) integer value from the given xpath;
+	 * return -1 if none found or other error occurs. 
+	 * 
+	 * @param xpath
+	 * @return
+	 */
+	public boolean getBooleanAt(String xpath, boolean defaultValue) {
+		String value = getStringAt(xpath);
+		if(value==null) {
+			return defaultValue;
+		}
+		if(value.equalsIgnoreCase("yes")||value.equalsIgnoreCase("true")) {
+			return true;
+		}
+		return false;
+	}
+
 
 	/**
 	 * Retrieve a (positive) integer value from the given xpath;

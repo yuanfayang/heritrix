@@ -202,22 +202,22 @@ public class CrawlerHandler extends AbstractHttpHandler {
 			genHtmlTextField(
 				"//http-headers/User-Agent",
 				"USER AGENT",
-				o.getBehavior().getUserAgent()));
+				o.getUserAgent()));
 		sb.append(
 			genHtmlTextField(
 				"//http-headers/From",
 				" FROM",
-				o.getBehavior().getFrom()));
+				o.getFrom()));
 		sb.append(
 			genHtmlTextField(
 				"//limits/max-toe-threads/@value",
 				"MAX NUMBER OF THREADS",
-				String.valueOf(o.getBehavior().getMaxToes())));
-		sb.append(
-			genHtmlTextField(
-				"//limits/max-link-depth/@value",
-				"MAX LINK DEPTH",
-				String.valueOf(o.getBehavior().getMaxLinkDepth())));
+				String.valueOf(o.getMaxToes())));
+//		sb.append(
+//			genHtmlTextField(
+//				"//limits/max-link-depth/@value",
+//				"MAX LINK DEPTH",
+//				String.valueOf(o.getMaxLinkDepth())));
 		sb.append(
 			genHtmlTextField(
 				"/crawl-order/arc-file/@prefix",
@@ -243,13 +243,13 @@ public class CrawlerHandler extends AbstractHttpHandler {
 					.getNodeAt("//processors/processor/compression/@use")
 					.getNodeValue()));
 
-		sb.append(
-			genHtmlTextField(
-				"//selector/seeds/@src",
-				"SEEDS FILE",
-				o.getBehavior().getStringAt("//selector/seeds/@src")));
-
-		sb.append(genHtmlTextArea("seed-urls", "", o.getBehavior().getSeeds()));
+//		sb.append(
+//			genHtmlTextField(
+//				"//selector/seeds/@src",
+//				"SEEDS FILE",
+//				o.getStringAt("//selector/seeds/@src")));
+//
+//		sb.append(genHtmlTextArea("seed-urls", "", o.getSeeds()));
 		sb.append(
 			"<INPUT type=hidden name=CrawlerAction value=2>\n<br><INPUT TYPE=submit VALUE=\"UpdateOrder\">\n</FORM>");
 		sb.append(
@@ -297,16 +297,16 @@ public class CrawlerHandler extends AbstractHttpHandler {
 		Iterator it = req.getParameterNames().iterator();
 		String name;
 		_controller.getOrder().clearCaches();
-		_controller.getOrder().getBehavior().clearCaches();
+		_controller.getOrder().clearCaches();
 
 		while (it.hasNext()) {
 			name = it.next().toString();
 			String value = req.getParameter(name);
 			if (name.equals("seed-urls")) {
 				String[] urls = value.split("\n");
-				_controller.getOrder().getBehavior().clearSeeds();
-				for (int i = 0; i < urls.length; i++)
-					_controller.getOrder().getBehavior().addSeed(urls[i]);
+//				_controller.getOrder().clearSeeds();
+//				for (int i = 0; i < urls.length; i++)
+//					_controller.getOrder().getBehavior().addSeed(urls[i]);
 			} else {
 				if (_controller.getOrder().getNodeAt(name) != null) {
 					_controller.getOrder().getNodeAt(name).setNodeValue(value);

@@ -30,11 +30,15 @@ import st.ata.util.HashtableAList;
  * 
  * @author Gordon Mohr
  */
-public class CrawlURI
+public class CrawlURI extends CandidateURI
 	implements URIStoreable, CoreAttributeConstants, FetchStatusCodes {
-	// core identity: the "usable URI" to be crawled
-	private UURI uuri; 
-
+	// INHERITED FROM CANDIDATEURI
+	// uuri: core identity: the "usable URI" to be crawled
+	// isSeed
+	// inScopeVersion
+	// pathFromSeed
+	// via 
+	
 	// Scheduler lifecycle info
 	private Object state;   // state within scheduling/store/selector
 	private long wakeTime; // if "snoozed", when this CrawlURI may awake
@@ -51,32 +55,28 @@ public class CrawlURI
 	private AList alist = new HashtableAList();
 
 	// dynamic context
-	private CrawlURI via; // curi that led to this (lowest hops from seed)
 	private int linkHopCount = -1; // from seeds
 	private int embedHopCount = -1; // from a sure link; reset upon any link traversal
 
 ////////////////////////////////////////////////////////////////////
 	CrawlServer server;
 
-	
-	
 	private int contentSize = -1;
 	
-
 	/**
 	 * @param uuri
 	 */
-	public CrawlURI(UURI u) {
-		setUuri(u);
-	}
-		
-	/**
-	 * @param u
-	 */
-	private void setUuri(UURI u) {
-		uuri=u;
+	public CrawlURI(UURI uuri) {
+		super(uuri);
 	}
 
+		/**
+	 * @param caUri
+	 */
+	public CrawlURI(CandidateURI caUri) {
+		super(caUri.getUuri());
+		setIsSeed(caUri.getIsSeed());
+	}
 
 	/**
 	 * Set the time this curi is considered expired (and thus must be refetched)
@@ -123,18 +123,7 @@ public class CrawlURI
 	public int incrementFetchAttempts(){
 		return fetchAttempts++;
 	}
-	
-	/**
-	 * @param uriString
-	 */
-	public CrawlURI(String s){
-		try{
-			setUuri(UURI.createUURI(s));
-		}catch(Exception e){
-			setUuri(null);
-		}
-	}
-	
+		
 	/**
 	 * @return
 	 */
@@ -238,20 +227,6 @@ public class CrawlURI
 	 */
 	public void setPrerequisiteUri(String string) {
 		alist.putString("prerequisite-uri",string);
-	}
-
-	/**
-	 * @param object
-	 */
-	public void setDelayFactor(int f) {
-		alist.putInt(A_DELAY_FACTOR,f);
-	}
-	
-	/**
-	 * @param object
-	 */
-	public void setMinimumDelay(int m) {
-		alist.putInt(A_MINIMUM_DELAY,m);
 	}
 
 	/**
@@ -453,5 +428,4 @@ public class CrawlURI
 		linkHopCount = 0;
 		embedHopCount = 0;
 	}
-
 }

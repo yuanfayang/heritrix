@@ -16,12 +16,12 @@ import org.archive.crawler.framework.CrawlController;
 /**
  * Main class for Heritrix crawler.
  * 
- * Currently takes a single command-line argument, which
+ * Initially takes a single command-line argument, which
  * should be an XML crawl-order file describing the crawl to 
  * undertake, and begins that crawl.
  * 
- * (Eventually, will start web UI and await further
- * instructions.)
+ * Alternatively, can start a web UI and await further 
+ * instructions.
  * 
  * @author gojomo
  *

@@ -83,10 +83,10 @@ public class FetcherHTTPSimple
 		// use only HTTP/1.0 (to avoid receiving chunked responses)
 		get.setRequestHeader(
 			"User-Agent",
-			controller.getOrder().getBehavior().getUserAgent());
+			controller.getOrder().getUserAgent());
 		get.setRequestHeader(
 			"From",
-			controller.getOrder().getBehavior().getFrom());
+			controller.getOrder().getFrom());
 		
 		get.setHttpRecorder(((ToeThread)Thread.currentThread()).getHttpRecorder());
 		//controller.getKicker().kickMeAt(Thread.currentThread(),now+timeout);
