@@ -41,7 +41,8 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
 			// nothing to extract for other types here
 			return;
 		} 
-	
+
+		// TODO fix to use recordingStreams
 		byte[] docBytes = get.getResponseBody();
 			
 		PDFParser parser;
