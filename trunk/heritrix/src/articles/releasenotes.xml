@@ -107,7 +107,20 @@ java.net.SocketException: Socket is not connected
 
 
 
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1000840">1000840</ulink></entry><entry>Fix</entry><entry>DiskIncludedFrontier performance is awful</entry><entry>2004-07-30</entry><entry>gojomo</entry>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1058565">1058565</ulink></entry><entry>fix</entry><entry>Non-default 'logs' location doesn't show in web UI</entry><entry>2004-11-010</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1058568">1058568</ulink></entry><entry>fix</entry><entry>IMG 'lowsrc' may not be extracted</entry><entry>2004-11-010</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1055854">1055854</ulink></entry><entry>fix</entry><entry>completed crawls show as 'aborted by user'</entry><entry>2004-10-270</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1059237">1059237</ulink></entry><entry>fix</entry><entry>MultiThreadedHttpConnectionManager https already connected</entry><entry>2004-11-020</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1052578">1052578</ulink></entry><entry>fix</entry><entry>recovery log of recovered crawl insufficient to recover</entry><entry>2004-10-220</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=908690">908690</ulink></entry><entry>fix</entry><entry>Some dates are GMT, others are not  *</entry><entry>2004-03-020</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=958096">958096</ulink></entry><entry>fix</entry><entry>Flushing CrawlServers problematic   *</entry><entry>2004-05-210</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1052570">1052570</ulink></entry><entry>fix</entry><entry>Threads contend for scratch files (after kill/readFully/Gap)</entry><entry>2004-10-220</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1033701">1033701</ulink></entry><entry>fix</entry><entry>incorrect number of total active threads    *</entry><entry>2004-09-230</entry><entry>gojomo</entry></row>
+
+
+
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1000840">1000840</ulink></entry><entry>fix</entry><entry>diskincludedfrontier performance is awful</entry><entry>2004-07-30</entry><entry>gojomo</entry>
 </row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=1043251">1043251</ulink></entry><entry>Fix</entry><entry>better/longer dns retries on lookup failure</entry><entry>2004-10-08</entry><entry>gojomo</entry>
 </row>
