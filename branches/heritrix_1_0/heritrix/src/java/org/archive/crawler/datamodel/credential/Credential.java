@@ -70,7 +70,8 @@ public abstract class Credential extends ModuleType {
     {
         super(name, description);
         Type t = addElementToDefinition(new SimpleType(ATTR_CREDENTIAL_DOMAIN,
-                "The root URI this credential goes against.", ""));
+                "The root domain this credential goes against:" +
+                " E.g. www.archive.org", ""));
             t.setOverrideable(false);
             t.setExpertSetting(true);
     }
