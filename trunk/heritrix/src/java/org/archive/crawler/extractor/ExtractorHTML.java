@@ -48,7 +48,8 @@ import org.archive.util.TextUtils;
  * @author gojomo
  *
  */
-public class ExtractorHTML extends Processor implements CoreAttributeConstants {
+public class ExtractorHTML extends Processor
+implements CoreAttributeConstants {
 
     protected boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
 
@@ -561,7 +562,6 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         ret.append("  CrawlURIs handled: " + this.numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + this.numberOfLinksExtracted +
             "\n\n");
-
         return ret.toString();
     }
 }
