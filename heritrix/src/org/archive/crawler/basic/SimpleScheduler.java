@@ -53,6 +53,9 @@ public class SimpleScheduler implements URIScheduler {
 				waitMax = store.earliestWakeTime()-now;
 				
 				try {
+					if(waitMax<0) {
+						System.out.println("breakin'");
+					}
 					store.wait(waitMax);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
