@@ -129,7 +129,8 @@ public class SelfTestCrawlJobHandler
         {
             logger.info((new Date()).toString() + " Selftest " +
                 (result != null && result.wasSuccessful()? "PASSED": "FAILED"));
-            Heritrix.shutdown(result.wasSuccessful()? 0: 1);
+            Heritrix.shutdown(((result !=  null) && result.wasSuccessful())?
+                0: 1);
         }
     }
 }
