@@ -54,6 +54,9 @@ public class ToePool extends CrawlStatusAdapter {
     
     protected boolean paused;
 
+    /** next thread number to assign */
+    private int nextThreadNo = 0;
+    
     /**
      * List of toe threads.
      *
@@ -74,6 +77,8 @@ public class ToePool extends CrawlStatusAdapter {
      * See {@link java.util.Collections#synchronizedList(List)}.
      */
     protected List killedToes;
+
+
 
 
     /**
@@ -223,7 +228,7 @@ public class ToePool extends CrawlStatusAdapter {
         {
             // Adding more ToeThreads.
             for(int i = getToeCount(); i < newsize; i++) {
-                startNewThread(i);
+                startNewThread();
             }
             this.effectiveSize = newsize;
         }
@@ -290,9 +295,9 @@ public class ToePool extends CrawlStatusAdapter {
         // Thread number should always be equal to it's placement in toes.
         ToeThread toe = null;
         synchronized (this.toes) {
-            toe = (ToeThread)this.toes.get(threadNumber);
+            toe = getToe(threadNumber);
             toe.kill(threadNumber);
-            this.toes.remove(threadNumber);
+            this.toes.remove(toe);
         }
         if(this.killedToes == null) {
             synchronized (this) {
@@ -304,19 +309,40 @@ public class ToePool extends CrawlStatusAdapter {
         synchronized (this.killedToes) {
             this.killedToes.add(toe);
         }
-        if(replace){
-            // Create a new toe thread to take it's place. Replace toe
-            startNewThread(threadNumber);
-        }
+// DISABLE REPLACEMENT: too dangerous
+//        if(replace){
+//            // Create a new toe thread to take it's place. Replace toe
+//            startNewThread(threadNumber);
+//        }
     }
 
-    private void startNewThread(int threadNo) {
+    /**
+     * Return the ToeThread with the given serial number, or null if no
+     * matching ToeThread available.
+     * 
+     * @param threadNumber
+     * @return
+     */
+    private ToeThread getToe(int threadNumber) {
+        Iterator iter = this.toes.iterator();
+        while(iter.hasNext()) {
+            ToeThread candidate = (ToeThread) iter.next();
+            if (candidate.getSerialNumber() == threadNumber) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private void startNewThread() {
+        int threadNo = nextThreadNo;
+        nextThreadNo++;
         ToeThread newThread = new ToeThread(this.controller, threadNo);
         newThread.setPriority(DEFAULT_TOE_PRIORITY);
         // start paused if controller is paused.
         newThread.setShouldPause(this.paused);
         synchronized (this.toes) {
-            this.toes.add(threadNo, newThread);
+            this.toes.add(newThread);
         }
         newThread.start();
     }

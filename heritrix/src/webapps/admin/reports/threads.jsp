@@ -11,8 +11,7 @@
         // Kill thread.
         try{
             handler.killThread(Integer.parseInt(request.getParameter("threadNumber")),
-                    (request.getParameter("replace")!=null && 
-                        request.getParameter("replace").equals("replace")));
+                    false);
             message = "Kill message sent to thread #" + request.getParameter("threadNumber");
         } catch(NumberFormatException e){
             message = "Kill operation failed";
@@ -37,7 +36,8 @@
     <hr>
     <form name="frmThread" method="post" action="threads.jsp">
         <input type="hidden" name="action">
-        <b>Thread number:</b> <input name="threadNumber" size="3"> <input type="checkbox" name="replace" value="replace"> Replace thread <input type="button" onClick="doKill()" value="Kill thread">
+        <b>Thread number:</b> <input name="threadNumber" size="3"> 
+        <input type="button" onClick="doKill()" value="Kill thread">
     </form>
 
 <%@include file="/include/foot.jsp"%>
