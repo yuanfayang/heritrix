@@ -1,4 +1,11 @@
-/* Copyright (C) 2003 Internet Archive.
+/* 
+ * ArchiveUtils
+ * 
+ * $Header$
+ * 
+ * Created on Jul 7, 2003
+ *
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,10 +23,6 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ArchiveUtils.java
- * Created on Jul 7, 2003
- *
- * $Header$
  */
 package org.archive.util;
 
@@ -36,8 +39,17 @@ import java.io.File;
  * @author gojomo
  */
 public class ArchiveUtils {
+	/** 
+	 * Arc-style date stamp in the format yyyyMMddHHmm and UTC time zone.
+	 */
     public static SimpleDateFormat TIMESTAMP12;	
+	/**
+	 * Arc-style date stamp in the format yyyyMMddHHmmss and UTC time zone.
+	 */
 	public static SimpleDateFormat TIMESTAMP14;	
+	/**
+	 * Arc-style date stamp in the format yyyyMMddHHmmssSSS and UTC time zone.
+	 */
 	public static SimpleDateFormat TIMESTAMP17;	
 
 	// Initialize fomatters with pattern and time zone
@@ -120,7 +132,8 @@ public class ArchiveUtils {
 	/**
 	 * Utility function for parsing arc-style date stamps
 	 * in the format yyyMMddHHmmssSSS.
-	 * Date stamps are in the UTC time zone
+	 * Date stamps are in the UTC time zone.  The whole string will not be
+     * parsed, only the first 17 digits.
 	 * 
 	 * @param date an arc-style formatted date stamp
 	 * @return the Date corresponding to the date stamp string
@@ -133,7 +146,8 @@ public class ArchiveUtils {
 	/**
 	 * Utility function for parsing arc-style date stamps
 	 * in the format yyyMMddHHmmss.
-	 * Date stamps are in the UTC time zone
+	 * Date stamps are in the UTC time zone.  The whole string will not be
+     * parsed, only the first 14 digits.
 	 * 
 	 * @param date an arc-style formatted date stamp
 	 * @return the Date corresponding to the date stamp string
@@ -146,7 +160,8 @@ public class ArchiveUtils {
 	/**
 	 * Utility function for parsing arc-style date stamps
 	 * in the format yyyMMddHHmm.
-	 * Date stamps are in the UTC time zone
+	 * Date stamps are in the UTC time zone.  The whole string will not be
+     * parsed, only the first 12 digits.
 	 * 
 	 * @param date an arc-style formatted date stamp
 	 * @return the Date corresponding to the date stamp string
@@ -156,22 +171,27 @@ public class ArchiveUtils {
 		return TIMESTAMP12.parse(date);
 	}
 	
-	/**
-	 * @param i
-	 * @param pad
+	/** Convert an <code>int</code> to a <code>String</code>, and pad it to
+     * <code>pad</code> spaces.
+	 * @param i the int
+	 * @param pad the width to pad to.
 	 * @return String w/ padding.
 	 */
-	public static String padTo(int i, int pad) {
+	public static String padTo(final int i, final int pad) {
 		String n = Integer.toString(i);
 		return padTo(n,pad);
 	}
 	
-	/**
-	 * @param s
-	 * @param pad
+	/** Pad the given <code>String</code> to <code>pad</code> characters wide
+     * by pre-pending spaces.  <code>s</code> should not be <code>null</code>.
+     * If <code>s</code> is already wider than <code>pad</code> no change is
+     * done.
+     *
+	 * @param s the String to pad
+	 * @param pad the width to pad to.
 	 * @return String w/ padding.
 	 */
-	public static String padTo(String s, int pad) {
+	public static String padTo(final String s, final int pad) {
 		int l = s.length();
 		StringBuffer sb = new StringBuffer();
 		while(l<pad) {
@@ -180,27 +200,58 @@ public class ArchiveUtils {
 		}
 		sb.append(s);
 		return sb.toString();
-	}	
+	}
+    
 	/**
 	 * Example: On Windows machine file test/test.txt is converted to test\test.txt 
 	 * @param aFileName
 	 * @return Retruns a file name apropriate for the system
 	 */
 	public static String systemFileName(String aFileName){
-		return (new File(aFileName)).getPath();
+		return (aFileName != null ? (new File(aFileName)).getPath() : "null");
 	}
 
+	/**
+	 * Retunrs a file's path.
+	 * 
+	 * @param aFileName
+	 * @return
+	 */
 	public static String getFilePath(String aFileName){
 		String tmpFileName = systemFileName(aFileName);
 		int pathEnd = tmpFileName.lastIndexOf(File.separatorChar);
 		if(pathEnd >=0 ){
 			return tmpFileName.substring(0, pathEnd+1);
 		}else{
-			return "./";
+			return "." + File.separator;
 		}
 	}
-	
-	public static boolean byteArrayEquals(byte[] lhs, byte[] rhs) {
+
+	/**
+	 * Tests if a file's path is absolute.
+	 * 
+	 * @param aFileName the filename to check
+	 * @return <code>true</code> if it is an absolute file
+	 */
+	public static boolean isFilePathAbsolute(String aFileName){
+        // deal with null argument to avoid npe
+        if(aFileName == null) {
+            return false;
+        }
+		return (new File(aFileName)).isAbsolute();
+ 	}
+
+    /** check that two byte arrays are equal.  They may be <code>null</code>.
+     *
+     * @param lhs a byte array
+     * @param rhs another byte array.
+     * @return <code>true</code> if they are both equal (or both
+     * <code>null</code>)
+     */
+	public static boolean byteArrayEquals(final byte[] lhs, final byte[] rhs) {
+        if (lhs == null && rhs != null || lhs != null && rhs == null) {
+            return false;
+        }
 		if (lhs==rhs) {
 			return true;
 		}
@@ -214,4 +265,6 @@ public class ArchiveUtils {
 		}
 		return true;	
 	}
+
 }
+

@@ -25,12 +25,21 @@ package org.archive.util;
 
 import java.util.LinkedList;
 
-/**
+/** An im-memory implementation of a {@link Queue}.
+ * 
  * @author gojomo
  *
  */
 public class MemQueue extends LinkedList implements Queue {
+    /** Create a new, empty MemQueue
+     */
+    public MemQueue() {
+        super();
+    }
+    /* (non-javadoc)
+     * @see org.archive.util.Queue#enqueue()
 
+     */
 	public void enqueue(Object o) {
 		add(o);
 	}

@@ -39,6 +39,9 @@ import org.archive.crawler.framework.Processor;
 public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
     private static Logger logger = Logger.getLogger("org.archive.crawler.basic.ExtractorHTTP");
 
+    protected long numberOfCURIsHandled = 0;
+    protected long numberOfLinksExtracted= 0;
+
     /**
      * @param name
      * @param description
@@ -53,7 +56,8 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
 	public void innerProcess(CrawlURI curi) {
 
 		if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
-			GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+            numberOfCURIsHandled++;
+            GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 			CrawlURI curi1 = curi;
 			GetMethod get1 = get;
 			
@@ -68,10 +72,24 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
 			} 
 			// TODO: consider possibility of multiple headers
 			if(uris.size()>0) {
+                numberOfLinksExtracted += uris.size();
 				curi1.getAList().putObject(A_HTTP_HEADER_URIS, uris);
 				logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
 
 			}
 		}
 	}
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor.ExtractorHTTP\n");
+        ret.append("  Function:          Link extraction on HTTP headers\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        
+        return ret.toString();
+    }
 }

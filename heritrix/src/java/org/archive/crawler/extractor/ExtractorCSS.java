@@ -60,11 +60,18 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
 
     static final Pattern ESCAPED_AMP = Pattern.compile("&amp;");
     static final Pattern BACKSLAH = Pattern.compile("\\\\");
-    /** Regular expression that parses CSS URL uris */
+	/**
+	 *  CSS URL extractor pattern.
+	 * 
+	 *  This pattern extracts URIs for CSS files 
+	 **/
     static final Pattern CSS_URI_EXTRACTOR =
         Pattern.compile(
             "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]");
 
+    private long numberOfLinksExtracted= 0;
+    private long numberOfCURIsHandled = 0;
+    
     /**
      * @param name
      * @param description
@@ -93,6 +100,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             && (!curi.toString().toLowerCase().endsWith(".css"))) {
             return;
         }
+        numberOfCURIsHandled++;
 
         CharSequence cs =
             get.getHttpRecorder().getRecordedInput().getCharSequence();
@@ -107,15 +115,25 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             while (uris.find()) {
                 String cssUri = uris.group(1);
 				// Decode HTML entities
-				// TODO: decode more than just '&amp;' enitite
+				// TODO: decode more than just '&amp;' entity
 				cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
 				// Remove backslash(s), an escape character used in CSS URL  
                 cssUri = TextUtils.replaceAll(BACKSLAH, cssUri, "");
+                numberOfLinksExtracted++;
                 curi.addCSSLink(cssUri);
             }
             TextUtils.freeMatcher(uris);
         } catch (StackOverflowError e) {
             DevUtils.warnHandle(e, "ExtractorCSS StackOverflowError");
         }
+        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
     }
-}
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor.ExtractorCSS\n");
+        ret.append("  Function:          Link extraction on Cascading Style Sheets (.css)\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        
+        return ret.toString();
+    }}

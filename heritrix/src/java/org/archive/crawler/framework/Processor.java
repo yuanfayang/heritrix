@@ -24,12 +24,10 @@
 package org.archive.crawler.framework;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
-import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
@@ -182,34 +180,32 @@ public class Processor extends CrawlerModule {
             Constructor co =
                 getClass().getConstructor(new Class[] { String.class });
             newInstance =
-                (Processor) co.newInstance(new Object[] { getName() + serialNum });
+                (Processor) co.newInstance(new Object[] {
+                    getName() + serialNum
+                    });
             getParent().setAttribute(newInstance);
+            newInstance.setTransient(true);
 			newInstance.initialize(controller);
-		} catch (InstantiationException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InvalidAttributeValueException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
 		return newInstance;
 	}
+    
+    /**
+     * Compiles and returns a report (in human readable form) about the status
+     * of the processor.  The processor's name (of implementing class) should
+     * always be included.
+     * <p>
+     * Examples of stats declared would include:<br>
+     * * Number of CrawlURIs handled.<br>
+     * * Number of links extracted (for link extractors)<br>
+     * etc.
+     * 
+     * @return A human readable report on the processor's state.
+     */
+    public String report(){
+        return ""; // Default behavior.
+    }
 }

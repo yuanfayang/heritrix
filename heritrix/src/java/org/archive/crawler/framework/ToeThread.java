@@ -156,7 +156,8 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 			 return processor;
 		}
 		// must use local copy of processor
-		Processor localProcessor = (Processor) localProcessors.get(processor.getClass().getName());
+		Processor localProcessor = (Processor) localProcessors.get(
+                    processor.getClass().getName());
 		if (localProcessor == null) {
 			localProcessor = processor.spawn(this.getSerialNumber());
 			localProcessors.put(processor.getClass().getName(),localProcessor);

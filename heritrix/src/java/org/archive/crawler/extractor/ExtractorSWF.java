@@ -49,6 +49,9 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 
     private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorSWF");
 
+    protected long numberOfCURIsHandled = 0;
+    protected long numberOfLinksExtracted= 0;
+
     /**
      * @param name
      * @param description
@@ -80,7 +83,8 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 			return; 
 		}
 		
-		
+        numberOfCURIsHandled++;
+        
 		// get the swf as a File
 		try{
 			documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
@@ -131,10 +135,25 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 		
 		links = iatp.getLinks();
 		if(links.size() > 0){
+            numberOfLinksExtracted += links.size();
 			curi.getAList().putObject(A_HTML_LINKS, links);
 		}
 		
+        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
 		logger.fine(curi + " has " + links.size() + " links.");
 	}
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor.ExtractorSWF\n");
+        ret.append("  Function:          Link extraction on Shockwave Flash documents (.swf)\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        
+        return ret.toString();
+    }
 
 }

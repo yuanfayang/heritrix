@@ -68,6 +68,9 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 	static final Pattern JAVASCRIPT_LIKELY_URI_EXTRACTOR = Pattern.compile(
 	 "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)");	
 
+    protected long numberOfCURIsHandled = 0;
+    protected static long numberOfLinksExtracted= 0;
+
     /**
      * @param name
      * @param description
@@ -96,6 +99,8 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 		    &&(mimeType.indexOf("ecmascript")<0)) {
 			return;
 		}
+        
+        numberOfCURIsHandled++;
 				
 		CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
 		
@@ -110,6 +115,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
 			// TODO Auto-generated catch block
 			DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
 		}
+        curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
 	}
     
     public static void considerStrings(CrawlURI curi, CharSequence cs) {
@@ -120,12 +126,26 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
         	if(uri.matches()) {
                 String string = uri.group();
                 string = TextUtils.replaceAll(ESCAPED_AMP, string, "&");
-        	    curi.addSpeculativeEmbed(string);
+                numberOfLinksExtracted++;
+                curi.addSpeculativeEmbed(string);
             } else {
                considerStrings(curi,subsequence);
             }
             TextUtils.freeMatcher(uri);
         }
         TextUtils.freeMatcher(strings);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    public String report() {
+        StringBuffer ret = new StringBuffer();
+        ret.append("Processor: org.archive.crawler.extractor.ExtractorJS\n");
+        ret.append("  Function:          Link extraction on JavaScript code\n");
+        ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
+        
+        return ret.toString();
     }
 }
