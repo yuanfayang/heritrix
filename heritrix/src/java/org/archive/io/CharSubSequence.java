@@ -36,9 +36,6 @@ public class CharSubSequence implements EnhancedCharSequence {
     int end;
 
     public CharSubSequence(EnhancedCharSequence inner, int start, int end) {
-        
-        super();
-    
         if (end < start) {
             throw new IllegalArgumentException("Start " + start + " is > " +
                 " than end " + end);
@@ -58,31 +55,45 @@ public class CharSubSequence implements EnhancedCharSequence {
         this.end = end;
     }
 
+    /*
+     *  (non-Javadoc)
+     * @see java.lang.CharSequence#length()
+     */
     public int length() {
         return this.end - this.start;
     }
 
+    /*
+     *  (non-Javadoc)
+     * @see java.lang.CharSequence#charAt(int)
+     */
     public char charAt(int index) {
         return this.inner.charAt(this.start + index);
     }
 
+    /*
+     *  (non-Javadoc)
+     * @see java.lang.CharSequence#subSequence(int, int)
+     */
     public CharSequence subSequence(int begin, int finish) {
         return new CharSubSequence(this, begin, finish);
     }
     
+    /*
+     *  (non-Javadoc)
+     * @see java.lang.CharSequence#toString()
+     */
     public String toString() {
-        return inner.toString(this.start,length());
-//        StringBuffer sb = new StringBuffer(length());
-//        for(int i = 0; i < length(); i++) {
-//            sb.append(charAt(i));
-//        }
-//        return sb.toString();
+        return inner.substring(this.start,length());
     }
 
     /* (non-Javadoc)
-     * @see org.archive.io.EnhancedCharSequence#toString(int, int)
+     * @see org.archive.io.EnhancedCharSequence#subtring(int, int)
      */
-    public String toString(int offset, int length) {
-        return inner.toString(this.start+offset,length);
+    public String substring(int offset, int length) {
+        if(offset < 0 || length < 0 || offset+length>this.length()){
+            throw new IndexOutOfBoundsException();
+        }
+        return inner.substring(this.start+offset,length);
     }
 }

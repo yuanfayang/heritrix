@@ -555,10 +555,10 @@ public class ReplayCharSequenceFactory {
         }
 
         /* (non-Javadoc)
-         * @see org.archive.io.EnhancedCharSequence#toString(int, int)
+         * @see org.archive.io.EnhancedCharSequence#substring(int, int)
          */
-        public String toString(int offset, int length) {
-            StringBuffer ret = new StringBuffer();
+        public String substring(int offset, int length) {
+            StringBuffer ret = new StringBuffer(length);
             // Add to offset start-of-content offset to get us over HTTP header
             // if present.
             offset += this.contentOffset;
@@ -974,9 +974,9 @@ public class ReplayCharSequenceFactory {
         }
 
         /* (non-Javadoc)
-         * @see org.archive.io.EnhancedCharSequence#toString(int, int)
+         * @see org.archive.io.EnhancedCharSequence#substring(int, int)
          */
-        public String toString(int offset, int length) {
+        public String substring(int offset, int length) {
             // Not the absolute optimal way to do this but the content does
             // not appear to support the array() method.
             return this.content.toString().substring(offset,offset+length);
