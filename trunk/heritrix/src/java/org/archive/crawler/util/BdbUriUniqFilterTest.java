@@ -24,7 +24,6 @@
  */
 package org.archive.crawler.util;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -106,11 +105,10 @@ implements UriUniqFilter.HasUriReceiver {
      * Time import of recovery log.
      * REMOVE
      * @throws IOException
-     * @throws FileNotFoundException
      * @throws DatabaseException
      */
     public void testWriting()
-    throws FileNotFoundException, IOException, DatabaseException {
+    throws IOException, DatabaseException {
         long maxcount = 1000;
         // Look for a system property to override default max count.
         String key = this.getClass().getName() + ".maxcount";

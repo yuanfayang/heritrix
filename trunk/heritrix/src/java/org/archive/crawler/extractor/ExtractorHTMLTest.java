@@ -99,8 +99,7 @@ implements CoreAttributeConstants {
         UURI uuri = UURIFactory.getInstance("http://" + this.ARCHIVE_DOT_ORG);
         CrawlURI curi = setupCrawlURI(this.recorder, uuri.toString());
         extractor.innerProcess(curi);
-        Set links = (Set)curi.getAList().
-            getObject(CoreAttributeConstants.A_HTML_LINKS);
+        Set links = (Set)curi.getObject(CoreAttributeConstants.A_HTML_LINKS);
         boolean foundLinkToHewlettFoundation = false;
         for (Iterator i = links.iterator(); i.hasNext();) {
             String link = (String)i.next();
@@ -146,7 +145,7 @@ implements CoreAttributeConstants {
         curi.setFetchStatus(200);
         curi.setHttpRecorder(rec);
         // Fake out the extractor that this is a HTTP transaction.
-        curi.getAList().putObject(CoreAttributeConstants.A_HTTP_TRANSACTION,
+        curi.putObject(CoreAttributeConstants.A_HTTP_TRANSACTION,
             new Object());
         return curi;
     }
@@ -203,8 +202,7 @@ implements CoreAttributeConstants {
         CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
         extractor.innerProcess(curi);
         System.out.println("+" + extractor.report());
-        Set links = (Set)curi.getAList().
-            getObject(CoreAttributeConstants.A_HTML_LINKS);
+        Set links = (Set)curi.getObject(CoreAttributeConstants.A_HTML_LINKS);
         System.out.println("+HTML Links (A_HTML_LINKS):");
         if (links != null) {
             for (Iterator i = links.iterator(); i.hasNext();) {
@@ -212,8 +210,7 @@ implements CoreAttributeConstants {
             }
         }
         System.out.println("+HTML Embeds (A_HTML_EMBEDS):");
-        links = (Set)curi.getAList().
-			  getObject(CoreAttributeConstants.A_HTML_EMBEDS);
+        links = (Set)curi.getObject(CoreAttributeConstants.A_HTML_EMBEDS);
         if (links != null) {
             for (Iterator i = links.iterator(); i.hasNext();) {
                 System.out.println((String)i.next());
@@ -221,8 +218,8 @@ implements CoreAttributeConstants {
         }
         System.out.
             println("+HTML Speculative Embeds (A_HTML_SPECULATIVE_EMBEDS):");
-        links = (Set)curi.getAList().
-              getObject(CoreAttributeConstants.A_HTML_SPECULATIVE_EMBEDS);
+        links = (Set)curi.
+            getObject(CoreAttributeConstants.A_HTML_SPECULATIVE_EMBEDS);
         if (links != null) {
             for (Iterator i = links.iterator(); i.hasNext();) {
                 String u = (String)i.next();
@@ -242,10 +239,15 @@ implements CoreAttributeConstants {
         ExtractorHTML extractor = new ExtractorHTML("html extractor");
         CrawlURI curi=
             new CrawlURI(UURIFactory.getInstance("http://www.example.org"));
-        // an example from http://www.records.pro.gov.uk/documents/prem/18/1/default.asp?PageId=62&qt=true
-        CharSequence cs = "<embed src=\"/documents/prem/18/1/graphics/qtvr/hall.mov\" width=\"320\" height=\"212\" controller=\"true\" CORRECTION=\"FULL\" pluginspage=\"http://www.apple.com/quicktime/download/\" /> ";
+        // An example from http://www.records.pro.gov.uk/documents/prem/18/1/default.asp?PageId=62&qt=true
+        CharSequence cs = "<embed src=\"/documents/prem/18/1/graphics/qtvr/" +
+            "hall.mov\" width=\"320\" height=\"212\" controller=\"true\" " +
+            "CORRECTION=\"FULL\" pluginspage=\"http://www.apple.com/" +
+            "quicktime/download/\" /> ";
         extractor.extract(curi,cs);
-        assertTrue(((Collection)curi.getAList().getObject(A_HTML_EMBEDS)).contains("/documents/prem/18/1/graphics/qtvr/hall.mov"));
+        assertTrue(((Collection)curi.
+            getObject(A_HTML_EMBEDS)).
+                contains("/documents/prem/18/1/graphics/qtvr/hall.mov"));
     }
     
     /**
@@ -263,7 +265,7 @@ implements CoreAttributeConstants {
         CharSequence cs = "<a href=\"http://www.carsound.dk\n\n\n" +
         	"\"\ntarget=\"_blank\">C.A.R. Sound\n\n\n\n</a>";   
         extractor.extract(curi,cs);
-        Collection c = (Collection)curi.getAList().getObject(A_HTML_LINKS);
+        Collection c = (Collection)curi.getObject(A_HTML_LINKS);
         for (Iterator i = c.iterator(); i.hasNext();) {
             UURI uuri = UURIFactory.getInstance((String)i.next());
             assertTrue("Not stripping new lines",

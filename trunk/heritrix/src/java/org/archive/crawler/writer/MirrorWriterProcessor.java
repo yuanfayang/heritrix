@@ -53,8 +53,6 @@ import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.util.IoUtils;
 
-import st.ata.util.AList;
-
 /**
    Processor module that writes the results of successful fetches to
    files on disk.
@@ -333,10 +331,9 @@ extends Processor implements CoreAttributeConstants {
             baseDir = getController().getDisk().getPath() + File.separator
                 + baseSeg;
         }
-        AList alist = curi.getAList();
 
         // Already have a path for this URI.
-        boolean reCrawl = alist.containsKey(A_MIRROR_PATH);
+        boolean reCrawl = curi.containsKey(A_MIRROR_PATH);
 
         /*
           The file system path, relative to the value of ATTR_PATH, where
@@ -353,7 +350,7 @@ extends Processor implements CoreAttributeConstants {
         File destFile = null; // Write resource contents to this file.
         try {
             if (reCrawl) {
-                mps = alist.getString(A_MIRROR_PATH);
+                mps = curi.getString(A_MIRROR_PATH);
                 destFile = new File(baseDir + File.separator + mps);
                 File parent = destFile.getParentFile();
                 if (null != parent) {
@@ -373,7 +370,7 @@ extends Processor implements CoreAttributeConstants {
             logger.info(uuri.toString() + " -> " + destFile.getPath());
             writeToPath(recis, destFile);
             if (!reCrawl) {
-                alist.putString(A_MIRROR_PATH, mps);
+                curi.putString(A_MIRROR_PATH, mps);
             }
         } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e, "Mirror");

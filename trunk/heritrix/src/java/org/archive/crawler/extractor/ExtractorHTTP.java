@@ -59,7 +59,7 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
         {
             numberOfCURIsHandled++;
             HttpMethod method =
-                (HttpMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+                (HttpMethod)curi.getObject(A_HTTP_TRANSACTION);
             CrawlURI curi1 = curi;
 
             ArrayList uris = new ArrayList();
@@ -74,7 +74,7 @@ public class ExtractorHTTP extends Processor implements CoreAttributeConstants {
             // TODO: consider possibility of multiple headers
             if(uris.size()>0) {
                 numberOfLinksExtracted += uris.size();
-                curi1.getAList().putObject(A_HTTP_HEADER_URIS, uris);
+                curi1.putObject(A_HTTP_HEADER_URIS, uris);
                 logger.fine(curi+" has "+uris.size()+" uris-from-headers.");
             }
         }

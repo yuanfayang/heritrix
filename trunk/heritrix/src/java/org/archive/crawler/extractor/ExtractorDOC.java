@@ -136,7 +136,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
         // if we found any links add them to the curi for later processing
         if(links.size()>0) {
             numberOfLinksExtracted += links.size();
-            curi.getAList().putObject(A_HTML_LINKS, links);
+            curi.putObject(A_HTML_LINKS, links);
         }
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
         logger.fine(curi + " has " + links.size() + " links.");

@@ -46,7 +46,7 @@ public class CrawlURITest extends TmpDirTestCase {
         super.setUp();
         final String url = "http://www.dh.gov.uk/Home/fs/en";
         this.seed = new CrawlURI(UURIFactory.getInstance(url));
-        this.seed.setSchedulingDirective(CrawlURI.MEDIUM);
+        this.seed.setSchedulingDirective(CandidateURI.MEDIUM);
         this.seed.setIsSeed(true);
         // Force caching of string.
         this.seed.toString();
@@ -134,6 +134,17 @@ public class CrawlURITest extends TmpDirTestCase {
         String host = poppedCuri.getUURI().getHost();
         assertTrue("Host is empty",
             host != null && host.length() > 0);
+    }
+    
+    public void testCandidateURIWithLoadedAList()
+    throws URIException {
+        CandidateURI c = CandidateURI.
+            createSeedCandidateURI(UURIFactory.
+                getInstance("http://www.archive.org"));
+        c.putString("key", "value");
+        CrawlURI curi = new CrawlURI(c, 0);
+        assertTrue("Didn't find AList item",
+            curi.getString("key").equals("value"));
     }
     
 // TODO: move to QueueAssignmentPolicies

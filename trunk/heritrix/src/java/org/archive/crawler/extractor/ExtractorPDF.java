@@ -108,7 +108,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
 
         if(uris!=null && uris.size()>0) {
             numberOfLinksExtracted += uris.size();
-            curi.getAList().putObject("html-links", uris);
+            curi.putObject("html-links", uris);
         }
 
         logger.fine(curi+" has "+uris.size()+" links.");
