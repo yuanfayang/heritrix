@@ -72,6 +72,13 @@
       <a href="articles/limitations.html">Known Limitations</a>
       page.</answer>
     </faq>
+    <faq id="windowsstart">
+      <question>The crawler gets dns fine but nothing subsequently.
+      Why?</question>
+      <answer>If you are running on windows, it may be because the 
+      ordering of jars on the classpath is wrong.  See
+      <a href="http://groups.yahoo.com/group/archive-crawler/message/772">Why crawler [sic] nothing ???</a>.</answer>
+    </faq>
 
     <faq id="midfetch">
       <question>I only want to download <code>text/html</code> and nothing else.  Can I do it?</question>
