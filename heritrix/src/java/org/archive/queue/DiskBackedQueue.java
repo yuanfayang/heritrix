@@ -119,9 +119,6 @@ public class DiskBackedQueue implements Queue, Serializable {
         }
     }
 
-    /**
-     *
-     */
     protected void discardBacking() {
         // Flush out the items on disk and close the
         // files to free up file handles.
@@ -186,22 +183,17 @@ public class DiskBackedQueue implements Queue, Serializable {
      * @see org.archive.queue.Queue#peek()
      */
     public Object peek() {
-    	if(headQ.isEmpty()){
-    		fillHeadQ();
-    	}
-        if(!headQ.isEmpty()) {
-            return headQ.getFirst();
-        } else {
-            return tailQ.peek();
+        if(headQ.isEmpty()){
+            fillHeadQ();
         }
+        return (!headQ.isEmpty())? headQ.getFirst(): tailQ.peek();
     }
 
     /* (non-Javadoc)
      * @see org.archive.queue.Queue#unpeek()
      */
     public void unpeek() {
-        // nothign necessary; head of this queue is stable
-        
+        // Nothing necessary; head of this queue is stable
     }
     
     /**
@@ -240,10 +232,9 @@ public class DiskBackedQueue implements Queue, Serializable {
      * already in memory, they will remain in memory until
      * dequeued, and thereafter the max will not be exceeded.
      *
-     * @param hm
+     * @param hm Maximum number of items to keep in memory.
      */
     public void setHeadMax(int hm) {
         headMax = hm;
     }
-
 }
