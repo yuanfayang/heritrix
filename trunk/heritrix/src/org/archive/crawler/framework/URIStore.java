@@ -21,4 +21,7 @@ public interface URIStore {
 	 */
 	void initialize(CrawlController c);
 	
+	public int urisInFrontier();
+	
+	public int discoveredUriCount();
 }

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.Iterator;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -61,6 +62,31 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 		// TODO load state from disk 
 
 	}
+	
+	/** Return the number of pending (encountered but not visited) URIs
+	 * @return
+	 */
+	public int urisInFrontier(){
+		int uris = pendingQueue.size() ;
+		
+		Iterator i = allClassQueuesMap.values().iterator();
+		
+		while(i.hasNext()){
+			KeyedQueue queue = (KeyedQueue)i.next();
+			uris += queue.size();
+		}
+		
+		return uris;
+	}
+	
+	
+	/** Return the size of the URI store.
+	 * @return storeSize
+	 */
+	public int discoveredUriCount(){
+		return allCuris.size();	
+	}
+	
 
 	/**
 	 * @param uuri

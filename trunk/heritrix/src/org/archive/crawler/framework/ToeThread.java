@@ -142,4 +142,8 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	public int getSerialNumber() {
 		return serialNumber;
 	}
+	
+	public boolean isPaused(){
+		return paused;
+	}
 }
