@@ -8,17 +8,146 @@
     <title>Introduction</title>
 
     <para>Heritrix is the Internet Archive's open-source, extensible,
-    web-scale, archival-quality web crawler. This document explains how to
-    create, configure and run crawls using it.</para>
+    web-scale, archival-quality web crawler. </para>
+
+    <para>This document explains how to create, configure and run crawls using
+    it. It is intended for users of the software and presumes that they
+    possess at least a general familiarity with the concept of web crawling.
+    </para>
   </sect1>
 
   <sect1>
-    <title>Installing and launching Heritrix</title>
+    <title>Installing and running Heritrix</title>
 
-    <para></para>
+    <para>This chapter will explain how to set up Heritrix. Some basic Linux
+    administration skills are needed for this. </para>
+
+    <para>Because Heritrix is a pure Java program it can (in theory anyway) be
+    run on any platform that has a Java 1.4 VM. However we are only committed
+    to supporting it's operation on Linux and so this chapter only covers
+    setup on that platform. Other chapters in the user manual are entirely
+    platform agnostic.</para>
+
+    <para>This chapter also only covers installing and running the prepackaged
+    binary distributions of Heritrix. For information about downloading and
+    compiling the source see the Developers manual.</para>
+
+    <sect2>
+      <title>Obtaining and installing Heritrix</title>
+
+      <para>The packaged binary can be downloaded from the project's <ulink
+      url="http://sourceforge.net/projects/archive-crawler">sourceforge home
+      page</ulink>. Each release comes in four flavors, packaged as .tar.gz or
+      .zip and including source or not.</para>
+
+      <para>For installation on linux get the file
+      <filename>heritrix-?.?.?.tar.gz</filename> (where ?.?.? is the most
+      recent version number).</para>
+
+      <para>The packaged binary comes largely ready to run. Once downloaded it
+      can be untarred into the desired directory.</para>
+
+      <para><programlisting>  % tar xfz heritrix-?.?.?.tar.gz</programlisting></para>
+
+      <para>Once you have downloaded and untarred the correct file you can
+      move on to the next step.</para>
+    </sect2>
+
+    <sect2>
+      <title>Installing Java</title>
+
+      <para>Before you can install Heritrix you must ensure that a <emphasis
+      role="bold">JavaVM 1.4</emphasis> (or later) is installed on the
+      machine. Heritrix comes bundled with all libraries needed to run it. The
+      only prerequisite is the JavaVM.</para>
+
+      <para>If you already have Java installed you can move on the next step
+      if not you can download Java from:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis role="bold">Sun</emphasis> -- <ulink
+          url="http://java.sun.com/">java.sun.com</ulink> </para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">IBM</emphasis> -- <ulink
+          url="http://www.ibm.com/java">www.ibm.com/java</ulink></para>
+        </listitem>
+      </itemizedlist>
+
+      <para>It has been our experiance that running on Linux with the IBM Java
+      virtual machine Heritrix performs better then with the Sun JavaVM (Java
+      version 1.4.2). This may change in the future. There are no known
+      problems with using either of the two.</para>
+    </sect2>
+
+    <sect2>
+      <title>Running Heritrix</title>
+
+      <para> To run Heritrix, first do the following:<programlisting>  % export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</programlisting>...where
+      <literal>$HERITRIX_HOME</literal> is the location of your untarred
+      <filename>heritrix.?.?.?.tar.gz</filename>.</para>
+
+      <para>Next run:<programlisting>  % cd $HERITRIX_HOME
+  % chmod u+x $HERITRIX_HOME/bin/heritrix
+  % $HERITRIX_HOME/bin/heritrix --help</programlisting>This should give you
+      usage output like the following:</para>
+
+      <para><programlisting><computeroutput>  Usage: heritrix --help
+  Usage: heritrix --nowui ORDER_FILE
+  Usage: heritrix [--port=PORT] [--admin=LOGIN:PASSWORD] [--run] [ORDER_FILE]
+  Usage: heritrix [--port=PORT] --selftest[=TESTNAME]
+  Version: @VERSION@
+  Options:
+   -a,--admin      Login and password for web user interface administration.
+                   Default: admin/letmein.
+   -h,--help       Prints this message and exits.
+   -n,--nowui      Put heritrix into run mode and begin crawl using ORDER_FILE. Do
+                   not put up web user interface.
+   -p,--port       Port to run web user interface on.  Default: 8080.
+   -r,--run        Put heritrix into run mode. If ORDER_FILE begin crawl.
+   -s,--selftest   Run the integrated selftests. Pass test name to it only (Case
+                   sensitive: E.g. pass 'Charset' to run charset selftest).
+  Arguments:
+   ORDER_FILE     Crawl order to run.</computeroutput></programlisting>Launch
+      the crawler with the UI enabled by doing the following:</para>
+
+      <para><programlisting>  % $HERITRIX_HOME/bin/heritrix</programlisting>This
+      will start up heritrix printing out a startup message that looks like
+      the following:</para>
+
+      <para><programlisting>  [b116-dyn-60 619] heritrix-0.4.0 &gt; ./bin/heritrix
+  Tue Feb 10 17:03:01 PST 2004 Starting heritrix...
+  Tue Feb 10 17:03:05 PST 2004 Heritrix 0.4.0 is running.
+  Web UI is at: http://b116-dyn-60.archive.org:8080/admin
+  Login and password: admin/letmein</programlisting></para>
+
+      <para>The only command line options that you may want to use right away
+      are:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><literal>--port=PORT</literal> </para>
+
+          <para>Set what port the web based user interface runs on. </para>
+        </listitem>
+
+        <listitem>
+          <para><literal>--admin=LOGIN:PASSWORD</literal> </para>
+
+          <para>Change the default admin username and password. If you do not
+          do this then the defaul username and password will be in effect.
+          Since they are widely known that may not be desirable.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>See <xref linkend="wui" /> and <xref linkend="tutorial" /> to get
+      your first crawl up and running.</para>
+    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="wui">
     <title>Web based user interface</title>
 
     <para>After Heritrix has been launched from the command line, the web
@@ -51,7 +180,7 @@
     </caution>
   </sect1>
 
-  <sect1>
+  <sect1 id="tutorial">
     <title>A quick guide to running your first crawl job</title>
 
     <para></para>
@@ -386,10 +515,90 @@
         scopes have filters hardcoded into them. This allows you to edit their
         settings but not remove or replace them. For example most of the
         provided scopes have a <literal>Transclusion</literal> filter
-        hardcoded into them that handles transitive items. For more about
-        Filters see <xref linkend="filters" />.</para>
+        hardcoded into them that handles transitive items (URIs that normally
+        shouldn't be included but because of special circumstance they will be
+        included). </para>
 
-        <para></para>
+        <para>For more about Filters see <xref linkend="filters" />.</para>
+
+        <sect4 id="scopeproblems">
+          <title>Problems with the current Scopes</title>
+
+          <para>Up until now, our predefined Scope classes -- PathScope,
+          HostScope, DomainScope, BroadScope -- all could be thought of as
+          fitting a specific pattern: A URI is included if and only if:</para>
+
+          <para><programlisting>    ( ( focusFilter.accepts(u)
+        || transitiveFilter.accepts(u) )
+      &amp;&amp; exclusionFilter.accepts(u) == false )</programlisting></para>
+
+          <para>More generally, the <emphasis>focus</emphasis> filter was
+          meant to rule things in by prima facia/regexp-pattern analysis; the
+          <emphasis>transitive</emphasis> filter rule extra items in by
+          dynamic path analysis (for example, off site embedded images); and
+          the <emphasis>exclusion</emphasis> filter rule things out by any
+          number of chained exclusion rules. So in a typical crawl, the
+          <emphasis>focus</emphasis> filter drew from one of these
+          categories:<itemizedlist>
+              <listitem>
+                <para><emphasis role="bold">broad</emphasis> : accept
+                all</para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold">domain</emphasis>: accept if on
+                same 'domain' (for some definition) as seeds</para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold">host</emphasis>: accept if on
+                exact host as seeds</para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold">path</emphasis>: accept if on same
+                host and a shared path-prefix as seeds</para>
+              </listitem>
+            </itemizedlist>The <emphasis>transitive</emphasis> filter was
+          configured based on the various link-hops and embed-hops thresholds
+          set by the operator.</para>
+
+          <para>The <emphasis>exclusion</emphasis> filter was in fact a
+          compound chain of filters, OR'ed together, such that any one of them
+          could knock a URI out of consideration. However, a number of aspects
+          of this arrangement have caused problems: <orderedlist>
+              <listitem>
+                <para>To truly understand what happens to an URI, you must
+                understand the above nested boolean-construct.</para>
+              </listitem>
+
+              <listitem>
+                <para>Adding mixed focuses -- such as all of this one host,
+                all of this other domain, and then just these paths on this
+                other host -- is not supported, nor easy to mix-in to the
+                <emphasis>focus</emphasis> filter.</para>
+              </listitem>
+
+              <listitem>
+                <para>Constructing and configuring the multiple filters
+                required many setup steps across several WUI pages.</para>
+              </listitem>
+
+              <listitem>
+                <para>The reverse sense of the <emphasis>exclusion</emphasis>
+                filters -- if URIs are accepted by the filter, they are
+                excluded from the crawl -- proved confusing, exacerbated by
+                the fact that 'filter' itself can commonly mean either 'filter
+                in' or 'filter out'.</para>
+              </listitem>
+            </orderedlist></para>
+
+          <para>As a result of these problems major changes are planed in post
+          1.0.0 versions of Heritrix. The concept of scope will remain but how
+          they are defined and configured will change drastically . Those
+          changes will also greatly affect the filters (see <xref
+          linkend="filters" />).</para>
+        </sect4>
       </sect3>
 
       <sect3>
@@ -554,7 +763,7 @@
           <para>This equates to the canonical root URI of RFC2617;
           effectively, in our case, its the CrawlServer name or <ulink
           url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">URI
-          authority</ulink> (domain plus port if other than port 80). </para>
+          authority</ulink> (domain plus port if other than port 80).</para>
         </sect4>
 
         <sect4 id="realm">
@@ -677,7 +886,7 @@
       (com, net, org, etc) who are in turn overridden by domains (yahoo.com,
       archive.org, etc.) who can further be overridden by sub domains
       (crawler.archive.org). There is no limit for how deep into the sub
-      domains the overrides can go. </para>
+      domains the overrides can go.</para>
 
       <para>When a URI is being processed the settings for it's host is then
       first lookup up. If the needed setting is not available there it's super
@@ -769,22 +978,22 @@
       <orderedlist>
         <listitem>
           <para>Refinements are applied based on arbitrary criteria rather
-          then encountered URIs domain. </para>
+          then encountered URIs domain.</para>
 
           <para>Currently it is possible to set criteria based on the time of
           day, a regular expression matching the URI and the port number of
-          the URI. </para>
+          the URI.</para>
         </listitem>
 
         <listitem>
-          <para>They incur a performance penalty. </para>
+          <para>They incur a performance penalty.</para>
 
           <para>This effect is small if there numbers are few but for each URI
           encountered there must be a check made to see if it matches any of
           the existing criteria of defined refinements.</para>
 
           <para>This effect can be mitigated by applying refinements to
-          overrides rather then the global settings. </para>
+          overrides rather then the global settings.</para>
         </listitem>
       </orderedlist>
 
@@ -831,7 +1040,7 @@
           <listitem>
             <para><emphasis role="bold">Port number</emphasis></para>
 
-            <para>Match only those URIs for the given port number. </para>
+            <para>Match only those URIs for the given port number.</para>
 
             <para>Default port number for HTTP is 80 and for 443 HTTPS.</para>
           </listitem>
@@ -840,7 +1049,7 @@
             <para><emphasis role="bold">Time of day</emphasis></para>
 
             <para>If this criteria is applied the refinement will be in effect
-            between the hours specified each day. </para>
+            between the hours specified each day.</para>
 
             <para>The format for the input boxes is HHMM (hours and
             minutes).</para>
@@ -859,7 +1068,7 @@
 
             <para>The refinement will only be in effect for those URIs that
             match the given regular expression.<note>
-                <para> See <xref linkend="regexpr" /> for more on them.</para>
+                <para>See <xref linkend="regexpr" /> for more on them.</para>
               </note></para>
           </listitem>
         </itemizedlist>
@@ -878,7 +1087,7 @@
       <title>Console</title>
 
       <para>The Console presents on overview of the current status of the
-      crawler. </para>
+      crawler.</para>
 
       <sect3>
         <title>Crawler status</title>
@@ -935,7 +1144,7 @@
             <para><emphasis role="bold">Max heap size</emphasis></para>
 
             <para>The amount of memory (in kilobytes) that the JavaVM can
-            <emphasis>at most </emphasis>allocate itself. </para>
+            <emphasis>at most </emphasis>allocate itself.</para>
           </listitem>
 
           <listitem>
@@ -1206,7 +1415,7 @@
       <title>Dates and times</title>
 
       <para>All times in Heritrix are GMT assuming the clock on the machine
-      Heritrix is running on is correct. </para>
+      Heritrix is running on is correct.</para>
 
       <para>This means that all date/time stamps in logs are GMT, all dates
       and times shown in the WUI are GMT and any times or dates entered by the
