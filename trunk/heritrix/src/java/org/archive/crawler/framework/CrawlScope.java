@@ -72,16 +72,16 @@ public class CrawlScope extends Filter {
     public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
     public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 
-    // a monotonically increasing version number, for scopes that may change
-    int version = 0;
     private List seeds = null;
     private OrFilter excludeFilter;
 
-    /**
-     * @param name
+    /** Constructs a new CrawlScope.
+     * 
+     * @param name the name is ignored since it always have to be the value of
+     *        the constant ATT_NAME.
      */
     public CrawlScope(String name) {
-        super(name, "Crawl scope");
+        super(ATTR_NAME, "Crawl scope");
         addElementToDefinition(new SimpleType(ATTR_SEEDS,
                 "File from which to extract seeds", "seeds.txt"));
         addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
@@ -94,26 +94,23 @@ public class CrawlScope extends Filter {
                 ATTR_EXCLUDE_FILTER));
     }
 
+    /** Default constructor.
+     */
     public CrawlScope() {
         this(ATTR_NAME);
-    }
-
-    /**
-     * Return the scope version. Increments if the scope changes,
-     * for example by operator edits during a crawl. A CandidateURI
-     * remembers any scope version it was previously accepted by,
-     * which helps avoid redundant scope checks.
-     *
-     * @return Scope version.
-     */
-    public int getVersion() {
-        return version;
     }
 
     public String toString() {
         return "CrawlScope<" + getName() + ">";
     }
 
+    /** Refreshes the seeds cache.
+     * 
+     * This method could safely be overridden by a null implementation for
+     * scopes that doesn't need the seeds to be cached. For example is there
+     * no reason for the BroadScope to cache seeds since it doesn't have to
+     * check the seeds to see if a URI is inside the scope.
+     */
     public void refreshSeedsIteratorCache() {
         // seeds should be in memory for scope tests
         seeds = null;
@@ -231,7 +228,7 @@ public class CrawlScope extends Filter {
      * @return True if transitive filter accepts passed object.
      */
     protected boolean transitiveAccepts(Object o) {
-        return true;
+        return false;
     }
 
     /** Check if URI is accepted by the focus of this scope.
