@@ -221,8 +221,8 @@ public class UURI extends URI {
             throws URIException {
         if (uri == null) {
             throw new NullPointerException();
-        } else if (uri.length() <= 0){
-            throw new URIException("URI length is zero.");
+        } else if (uri.length() == 0 && base == null){
+            throw new URIException("URI length is zero (and not relative).");
         }
 
         // Replace nbsp with normal spaces (so that they get stripped if at
