@@ -379,14 +379,11 @@ public class Heritrix {
         print(" Web UI on port " + port + "\n");
         try {
           InetAddress addr = InetAddress.getLocalHost();
-          
-          // Get IP Address
-          byte[] ipAddr = addr.getAddress();
-          
           // Get hostname
           String hostname = addr.getHostName();
           print(" http://" + hostname + ":" + port + "/admin\n");
         } catch (UnknownHostException e) {
+            e.printStackTrace();
         }
         print(
       " operator login/password = "

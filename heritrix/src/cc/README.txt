@@ -105,29 +105,18 @@ w/ settings under the jetty etc/ dir (jetty.xml) and then did
 'java -Djetty.port=8080 -jar start.jar' under the jetty dir (Note, our crawl??
 machines only allow web access on port 8080).
 
-+ Run cruisecontrol.  Run it w/ the '-port 8081' argument so you can browse to 
-the JMX server that cruisecontrol puts up (At the least you can force 
-a build using the JMX server):
++ Run cruisecontrol.  Here's a sample startup script:
     
-    % export CCDIR=/PATH/TO/cruisecontrol-2.1.4/main
-    % export CVS_RSH=ssh
-    % export MAVEN_HOME=/home/stack/software/maven
-    % chmod u+x $CCDIR/bin/cruisecontrol.sh -port 8081
-    % cd $CCBUILDDIR
-    % $CCDIR/bin/cruisecontrol.sh
+    #!/bin/sh
+    export JAVA_HOME=$HOME/bin/j2sdk1.4.2_03
+    export PATH=$PATH:$JAVA_HOME/bin
+    export CVS_RSH=ssh
+    export MAVEN_HOME=$HOME/bin/maven-1.0-rc1
+    export CCDIR=$HOME/bin/cruisecontrol-2.1.4/main
+    export JETTY_HOME=$HOME/bin/Jetty-4.2.15rc0/
+    nohup $CCDIR/bin/cruisecontrol.sh -port 8081 &
+    cd $JETTY_HOME
+    nohup $JAVA_HOME/bin/java -jar start.jar &
 
-Make sure its all running fine (Check the logs dir under CCBUILDDIR and 
-visit the website at HOST:8080).
-
-+ Here is a summation of environment settings done on crawl04 in stack's home
-directory, the location out of which we're running cc:
-
-     1003  export CVS_RSH=ssh
-     1004  export MAVEN_HOME=/home/stack/bin/maven-1.0-rc1
-     1005  export ANT_HOME=/home/stack/bin/apache-ant-1.5.4
-     1009  export CCDIR=/home/stack/bin/cruisecontrol-2.1.4/main
-     1011  export JAVA_HOME=/home/stack/bin/j2sdk1.4.2_03/
-     1014  export PATH=$PATH:$JAVA_HOME/bin
-     1013  $CCDIR/bin/cruisecontrol.sh -port 8081
-     1020  cd ~/bin/Jetty-4.2.15rc0
-     1022  java -jar start.jar
+Make sure its all running fine (Check the logs dir under CCBUILDDIR, 
+visit the website at HOST:8080, and visit the jmx server at HOST:8081).

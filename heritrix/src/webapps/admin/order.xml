@@ -98,7 +98,7 @@
     -->
     
     <processor 
-    	class="org.archive.crawler.basic.ARCWriter" 
+    	class="org.archive.crawler.basic.ARCWriterProcessor" 
     	compress="yes" 
     	max-arc-size="100000000" 
     	name="Archiver" 

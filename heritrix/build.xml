@@ -40,6 +40,7 @@
   </property>
   <property name="testreportdir" value="target/test-reports">
   </property>
+    <property name="testtmpdir" value="target/test-tmp" />
   <property name="distdir" value="dist">
   </property>
   <property name="javadocdir" value="dist/docs/api">
@@ -119,11 +120,10 @@
     </fail>
   </target>
   <target name="internal-test" depends="compile-tests">
-    <mkdir dir="${testreportdir}">
-    </mkdir>
+    <mkdir dir="${testreportdir}" />
     <junit dir="./" failureproperty="test.failure" printSummary="yes" fork="true" haltonerror="true">
-      <sysproperty key="basedir" value=".">
-      </sysproperty>
+      <sysproperty key="basedir" value="." />
+      <sysproperty key="testtmpdir" value="${testtmpdir}" />
       <formatter type="xml">
       </formatter>
       <formatter usefile="false" type="plain">
