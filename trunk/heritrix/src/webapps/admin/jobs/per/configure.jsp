@@ -213,7 +213,7 @@
 							return;
 						}
 					}
-				} else {
+				} else if(request.getParameter(mbean.getAbsoluteName()+"/"+att.getName()) != null) {
 					// Is not being overriden. 
 					try{
 						mbean.unsetAttribute(settings,att.getName());
