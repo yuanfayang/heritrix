@@ -196,7 +196,8 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * Move queue from READY or EMPTY to DISCARDED
      */
     public void discard() {
-        assert this.state == READY || this.state == EMPTY;
+        assert this.state == READY || this.state == EMPTY : "discarding queue in bad state";
+        assert inProcessItems.isEmpty() : "discarding busy queue";
         this.state = DISCARDED;
     }
     /**
@@ -207,25 +208,25 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @param o
      */
     public void noteInProcess(CrawlURI o) {
-        assert this.state == READY || this.state == EMPTY;
-        //assert this.inProcessItem == null;
+        assert this.state == READY || this.state == EMPTY : 
+            "unexpected state " + this.state;
         inProcessItems.add(o);
         inProcessLoad += loadFor(o);
-        if(inProcessLoad>=valence) {
+        if (inProcessLoad >= valence) {
             this.state = BUSY;
-        }
+        } 
     }
 
     /**
      * Note that the given item's processing
      * has completed; forget the in-process item
-     * and move queue from BUSY to READY or
-     * EMPTY state
+     * and move queue from BUSY or READY to 
+     * READY or EMPTY state if necessary
      *
      * @param o
      */
     public void noteProcessDone(CrawlURI o) {
-        // assert this.state == BUSY;
+        // assert this.state == BUSY : "unexpected state "+ this.state;
         assert inProcessItems.contains(o);
         inProcessItems.remove(o);
         inProcessLoad -= loadFor(o);
@@ -260,7 +261,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      */
     public boolean checkEmpty() {
         // update READY|EMPTY state after recent relevant changes
-        if (! (this.state == READY || this.state == EMPTY) ) {
+        if (! (this.state == READY || this.state == EMPTY ) ) {
             // only relevant for active states
             return false;
         }
@@ -521,9 +522,7 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @return True if discardable.
      */
     public boolean isDiscardable() {
-        return isEmpty() &&
-            ((this.frozenQ != null)? this.frozenQ.isEmpty(): true) &&
-                this.state == EMPTY;
+        return isEmpty() && this.state == EMPTY && inProcessItems.isEmpty();
     }
 
     // custom serialization

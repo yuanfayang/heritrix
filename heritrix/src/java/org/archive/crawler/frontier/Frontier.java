@@ -109,10 +109,6 @@ public class Frontier
     public final static String ATTR_MIN_DELAY = "min-delay-ms";
     /** never wait more than this long, regardless of multiple */
     public final static String ATTR_MAX_DELAY = "max-delay-ms";
-    /** always wait at least this long between request *starts*
-     * (contrasted with min-delay: if min-interval time has already elapsed during last
-     * fetch, then next fetch may occur immediately; it constrains starts not off-cycles) */
-    public final static String ATTR_MIN_INTERVAL = "min-interval-ms";
     /** maximum times to emit a CrawlURI without final disposition */
     public final static String ATTR_MAX_RETRIES = "max-retries";
     /** for retryable problems, seconds to wait before a retry */
@@ -141,7 +137,6 @@ public class Frontier
     protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
     protected final static Integer DEFAULT_MIN_DELAY = new Integer(500);
     protected final static Integer DEFAULT_MAX_DELAY = new Integer(5000);
-    protected final static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
     protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
     protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
@@ -232,13 +227,7 @@ public class Frontier
         addElementToDefinition(new SimpleType(ATTR_MIN_DELAY,
             "Always wait this long after one completion before recontacting " +
             "same server, regardless of multiple", DEFAULT_MIN_DELAY));
-        addElementToDefinition(new SimpleType(ATTR_MIN_INTERVAL,
-            "Always wait at least this long between request *starts*. \n " +
-            "Contrasted with min-delay: if min-interval time has already " +
-            "elapsed during last fetch, then next fetch may occur " +
-            "immediately; it constrains starts not off-cycles.",
-            DEFAULT_MIN_INTERVAL));
-        addElementToDefinition(new SimpleType(ATTR_MAX_RETRIES,
+         addElementToDefinition(new SimpleType(ATTR_MAX_RETRIES,
             "How often to retry fetching a URI that failed to be retrieved.\n" +
             "If zero, the crawler will get the robots.txt only.",
             DEFAULT_MAX_RETRIES));
@@ -823,8 +812,6 @@ public class Frontier
             return; // Couldn't find/create kq.
         }
 
-        // assert kq.getInProcessItem() == null : "two CrawlURIs with same classKey in process";
-
         assert kq.getState() == URIWorkQueue.READY || kq.getState() == URIWorkQueue.EMPTY : 
             "odd state "+ kq.getState() + " for classQueue "+ kq + "of to-be-emitted CrawlURI";
 
@@ -847,8 +834,9 @@ public class Frontier
         if (kq==null) {
             try {
                 try {
-					kq = new KeyedQueue(curi.getClassKey(),
-					    this.controller.getStateDisk(),
+                    String key = curi.getClassKey();
+					kq = new KeyedQueue(key,
+					    scratchDirFor(key),
 					    ((Integer) getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY
                                 ,curi)).intValue());
                     kq.setValence(((Integer)getAttribute(ATTR_HOST_VALENCE,curi)).intValue());
@@ -874,6 +862,25 @@ public class Frontier
             }
         }
         return kq;
+    }
+
+    /**
+     * Return a scratch dir for the given key's temp files. Every key gets its
+     * own subdir. To avoid having any one directory with thousands of files, 
+     * there are also two levels of enclosing directory named by the least-significant
+     * hex digits of the key string's java hashcode. 
+     * 
+     * @param key
+     * @return
+     */
+    private File scratchDirFor(String key) {
+        String hex = Integer.toHexString(key.hashCode());
+        while (hex.length()<4) {
+            hex = "0"+hex;
+        }
+        int len = hex.length(); 
+        return new File(this.controller.getStateDisk(), hex.substring(len-2, len)
+                + File.separator + hex.substring(len-4, len-2) + File.separator + key);
     }
 
     /**
@@ -1017,7 +1024,7 @@ public class Frontier
         Object startState = kq.getState();
         kq.noteProcessDone(curi);
         updateScheduling(curi, kq);
-        if(startState!=kq.getState()) {
+        if(startState!=kq.getState() || kq.isDiscardable()) {
             updateQ(kq);
         }
     }
@@ -1053,14 +1060,6 @@ public class Frontier
             if (durationToWait > maxDelay) {
                 // wait no more than the maximum
                 durationToWait = maxDelay;
-            }
-
-            long minInterval =
-                ((Integer) getAttribute(ATTR_MIN_INTERVAL, curi)).longValue();
-            if (durationToWait < (minInterval - durationTaken) ) {
-                // wait at least as long as necessary to space off
-                // from last fetch begin
-                durationToWait = minInterval - durationTaken;
             }
 
             long now = System.currentTimeMillis();
