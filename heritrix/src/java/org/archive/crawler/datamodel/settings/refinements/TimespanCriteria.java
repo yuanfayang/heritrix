@@ -142,4 +142,19 @@ public class TimespanCriteria implements Criteria {
         }
         return false;
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.refinements.Criteria#getName()
+     */
+    public String getName() {
+        return "Time of day criteria";
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.settings.refinements.Criteria#getDescription()
+     */
+    public String getDescription() {
+        return "Accept any URIs between the hours of " + getFrom() + " and "
+            + getTo() + " each day.";
+    }
 }
