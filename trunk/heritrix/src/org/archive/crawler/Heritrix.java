@@ -57,14 +57,13 @@ public class Heritrix {
 	 * @see #usage()
 	 */
 	public static void main(String[] args) {
-//		(new Heritrix()).instanceMain(args);
-
 		boolean noWUI = false;
 		int port = -1;
 		String crawlOrderFile = null;
-		int crawllaunch = -1; // 0 = no crawl order specified, 1 = start, 2 = wait, 3 = set as default.
+		boolean start = false;
+		boolean setAsDefault = false;
 		
-		if(args.length > 3){
+		if(args.length > 4){
 			// Too many arguments. Display usage
 			usage();
 			return;
@@ -103,33 +102,23 @@ public class Heritrix {
 						}
 					}
 					else if(arg.equals("--start")){
-						if(crawllaunch != -1){
-							// Can't define crawllaunch twice.
+						if(start){
+							// Can't say --start twice
 							usage();
 							return;
 						}
 						else{
-							crawllaunch = 1;
-						}
-					}
-					else if(arg.equals("--wait")){
-						if(crawllaunch != -1){
-							// Can't define crawllaunch twice.
-							usage();
-							return;
-						}
-						else{
-							crawllaunch = 2;
+							start = true;
 						}
 					}
 					else if(arg.equals("--set-as-default")){
-						if(crawllaunch != -1){
-							// Can't define crawllaunch twice.
+						if(setAsDefault){
+							// Can't say it twice
 							usage();
 							return;
 						}
 						else{
-							crawllaunch = 3;
+							setAsDefault = true;
 						}
 					}
 					else{
@@ -166,7 +155,12 @@ public class Heritrix {
 					usage();
 					return;
 				}
-				crawllaunch = 0;
+				if(setAsDefault)
+				{
+					//Need to specify a crawl order if you select set-as-default
+					usage();
+					return;
+				}
 			}
 			
 			if(port == -1){
@@ -174,18 +168,13 @@ public class Heritrix {
 				port = SimpleHttpServer.DEFAULT_PORT;
 			}
 			
-			if(crawllaunch == -1 && crawlOrderFile != null && noWUI == false)
-			{
-				//Set default crawllaunch behavior
-				crawllaunch = 2;
-			}
 			// Ok, we should now have everything to launch the program.
 			
 			if(noWUI){
 				launch(crawlOrderFile);
 			}
 			else{
-				launch(port,crawlOrderFile,crawllaunch);
+				launch(port,crawlOrderFile,start,setAsDefault);
 			}
 		}
 	}
@@ -195,7 +184,7 @@ public class Heritrix {
 	 * 
 	 * @param crawlOrderFile The crawl order to crawl.
 	 */
-	protected static void launch(String crawlOrderFile){
+	private static void launch(String crawlOrderFile){
 		try {
 			CrawlController controller = new CrawlController();
 			CrawlOrder order = CrawlOrder.readFromFile(crawlOrderFile);
@@ -215,29 +204,27 @@ public class Heritrix {
 	 * 
 	 * @param port The port that the web UI will run on
 	 * @param crawlOrderFile A crawl order file to use
-	 * @param crawllaunch How to use the crawl order file 
-	 * 		              (1 = start crawling, 
-	 *                     2 = ready for crawl but don't start,
-	 *                     3 = set as default configuration,
-	 * 					   Any other = no crawl order specified)
+	 * @param start Should start crawling
+	 * @param setAsDefault Set the values in crawlOrderFile as the default values for new jobs. 
 	 */
-	protected static void launch(int port, String crawlOrderFile, int crawllaunch){
+	private static void launch(int port, String crawlOrderFile, boolean start, boolean setAsDefault){
 		handler = new SimpleHandler();
 		String status = "";
 
-		if(crawllaunch == 3){
+		if(setAsDefault){
 			// Set crawl order file as new default 
 			handler.setDefaultCrawlOrder(crawlOrderFile);
-			status = "\t- default crawl order updated to match: " + crawlOrderFile;
+			status = "\tDefault crawl order updated to match: " + crawlOrderFile + "\n";
 		}
-		else if(crawllaunch == 1 || crawllaunch == 2){
+		else if(crawlOrderFile != null){
 			CrawlJob cjob = new SimpleCrawlJob(handler.getNextJobUID(),"Auto launched",crawlOrderFile, CrawlJob.PRIORITY_HIGH);
 			handler.addJob(cjob);
-			status = "\t1 crawl job ready and pending: " + crawlOrderFile;
-			if(crawllaunch == 1){
-				handler.startCrawler();
-				status = "\t1 job being crawled: " + crawlOrderFile;
-			}
+			status = "\tCrawl job scheduled: " + crawlOrderFile + "\n";
+		}
+
+		if(start){
+			handler.startCrawler();
+			status += "\tCrawler started";
 		}
 
 		try {
@@ -251,103 +238,53 @@ public class Heritrix {
 		System.out.println(status);
 	}
 
-//	public void instanceMain(String[] args) {
-//		String crawlOrderFile = "test-config/order.xml";
-//
-//		try {
-//			switch (args.length) {
-//				case 1 :
-//					crawlOrderFile = args[0];
-//					handler = new SimpleHandler();
-//				
-//					CrawlJob cjob = new SimpleCrawlJob(handler.getNextJobUID(),"Auto launched",crawlOrderFile, CrawlJob.PRIORITY_HIGH);
-//				
-//					handler.addJob(cjob);
-//					handler.startCrawler();
-//				case 0 :
-//					startServer();
-//					break;
-//				case 2 :
-//					if (args[0].equals("-no-wui")) {
-//						CrawlController controller = new CrawlController();
-//						crawlOrderFile = args[1];
-//						CrawlOrder order = CrawlOrder.readFromFile(crawlOrderFile);
-//						controller.initialize(order);
-//						controller.startCrawl();
-//						break;
-//					}
-//				default :
-//					usage();
-//					return;
-//			}
-//		// catch all configuration exceptions, which at this level are fatal
-//		}catch(InitializationException e){
-//			System.out.println("Fatal configuration exception: " + e.toString());
-//		}
-//		
-//		logger.info("exitting main thread");
-//		
-//	}
-	
 	/**
-	 * Print out the command line argument usage for this program.
+	 * Print out the command line argument usage for this program. 
 	 * <p>
-	 * <pre>USAGE: java Heritrix [--no-wui | --port:xxxx] &lt;crawl order file> [--start | --wait | --set-as-default] [-?]
+	 * <pre>USAGE: java Heritrix [--no-wui | --port:xxxx] &lt;crawl order file&gt; [--start] [--set-as-default] [-?]
 	 *	--no-wui           Start crawler without Web User Interface
 	 *	--port:xxxx        The port that the web UI will run on, 8080 is default
 	 *	&lt;crawl order file&gt; The crawl to launch. Optional if --no-wui not specified, in which case the next 
-	 *	                   parameter controls it's behavior.
+	 *	                   two parameter controls it's behavior.
 	 *
-	 *	Only if --no-wui is NOT selected and a crawl order file IS specified:
-	 *	--start            Start crawling as specified by the given crawl order file.
-	 *	--wait             Load the job specified by the given crawl order file but do not start crawling. 
-	 *	                   Default behavior.
-	 *	--set-as-default   Set the specified crawl order as the default crawl order
+	 *	Only if web user interface is being used:
+	 *	--start            Start crawling submitted crawl jobs. Without this new jobs (including the one specifed by
+	 *	                   the given crawl order) will be held in the pending queue until the operator starts the 
+	 *	                   crawler from the web UI.
+	 *	--set-as-default   If a crawl order is specified it will be used to update the default crawl order. Selecting
+	 *	                   this option means that the crawl order specified will not be started as a crawl job.
 	 *
  	 *	-?                 Display this message</pre>
 	 */
-	protected static void usage() {
+	public static void usage() {
 		System.out.println(
 			"Heritrix: Version unknown. Build unknown");
 		System.out.println(
-			"USAGE: java Heritrix [--no-wui | --port:xxxx] <crawl order file> [--start | --wait | --set-as-default] [-?]");
+			"USAGE: java Heritrix [--no-wui | --port:xxxx] <crawl order file> [--start] [--set-as-default] [-?]");
 		System.out.println(
 				"\t--no-wui\t\t\tStart crawler without Web User Interface");
 		System.out.println(
 				"\t--port:xxxx\t\t\tThe port that the web UI will run on, 8080 is default");
 		System.out.println(
-				"\t<crawl order file>\tThe crawl to launch. Optional if --no-wui not specified, in which case the next parameter controls it's behavior.");
+				"\t<crawl order file>\tThe crawl to launch. Optional if --no-wui not specified, in which case the next"); 
 		System.out.println(
-				"\n\tOnly if --no-wui is NOT selected and a crawl order file IS specified:");
+				"\t\t\t\t\t\tparameter controls it's behavior.");
 		System.out.println(
-				"\t--start\t\t\t\tStart crawling as specified by the given crawl order file.");
+				"\n\tOnly if web user interface is being used:");
 		System.out.println(
-				"\t--wait\t\t\t\tLoad the job specified by the given crawl order file but do not start crawling. Default behavior.");
+				"\t--start\t\t\t\tStart crawling submitted crawl jobs. Without this new jobs (including the one specifed by");
 		System.out.println(
-				"\t--set-as-default\tSet the specified crawl order as the default crawl order");
+				"\t\t\t\t\t\tthe given crawl order) will be held in the pending queue until the operator starts the");
+		System.out.println(
+				"\t\t\t\t\t\tcrawler from the web UI.");
+		System.out.println(
+				"\t--set-as-default\tIf a crawl order is specified it will be used to update the default crawl order. Selecting");
+		System.out.println(
+				"\t\t\t\t\t\tthis option means that the crawl order specified will not be started as a crawl job.");
 		System.out.println(
 				"\n\t-?\t\t\t\t\tDisplay this message");
 	}
 
-//	private void startServer() {
-//		try {
-//			SimpleHttpServer server = new SimpleHttpServer();
-//			server.startServer();
-//		} catch (Exception e) {
-//			e.printStackTrace(System.out);
-//		}
-//
-//	}
-//
-//	private void startServer(CrawlController c) {
-//		try {
-//			SimpleHttpServer server = new SimpleHttpServer();
-//			server.startServer();
-//		} catch (Exception e) {
-//			e.printStackTrace(System.out);
-//		}
-//	}
-	
 	/**
 	 * Get the job handler
 	 * 
