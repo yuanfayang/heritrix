@@ -15,34 +15,56 @@
 %>
 
 <p>
-<b>Reports on ongoing and finished crawl jobs</b><br>
-<% if(crawling == false && jobs.size() == 0){ %>
-		&nbsp;No crawl jobs have been started
-<% } else { %>
-	<ul>
+<table border="0" cellspacing="0" cellpadding="1">
+    <tr>
+        <td colspan="3">
+            <b>Reports on ongoing and finished crawl jobs</b> (newest to oldest)
+        </td>
+	<% if(crawling == false && jobs.size() == 0){ %>
+        <tr>
+            <td>&nbsp;No crawl jobs have been started</td>
+        </tr>
+	<% } else { %>
 		<%  if(crawling){ %>
-				<li>
-					<%=handler.getCurrentJob().getJobName()%>
-					<i><%=handler.getCurrentJob().getStatus()%></i> 
-					-
-					<a href="/admin/reports/crawljob.jsp?job=<%=handler.getCurrentJob().getUID()%>">Crawl report</a>
-					<a href="/admin/reports/seeds.jsp?job=<%=handler.getCurrentJob().getUID()%>">Seed report</a>
+	            <tr bgcolor="#EEEEFF">
+	                <td>
+					   <%=handler.getCurrentJob().getJobName()%>&nbsp;
+					</td>
+					<td>
+					   <i><%=handler.getCurrentJob().getStatus()%></i>&nbsp;&nbsp;
+					</td>
+					<td>
+						<a href="/admin/reports/crawljob.jsp?job=<%=handler.getCurrentJob().getUID()%>">Crawl report</a>
+						&nbsp;
+	       				<a href="/admin/reports/seeds.jsp?job=<%=handler.getCurrentJob().getUID()%>">Seed report</a>
+	       				&nbsp;
+	                </td>
+	            </tr>
 		<% 
 			}
+			boolean alt = !crawling;
 			for(int i=jobs.size()-1; i>=0; i--){ 
 				CrawlJob job = (CrawlJob)jobs.get(i);
 		%>
-				<li>
-					<%=job.getJobName()%>
-					<i><%=job.getStatus()%></i> 
-					-
-					<a href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>">Crawl report</a>
-					<a href="/admin/reports/seeds.jsp?job=<%=job.getUID()%>">Seed report</a>
-		<% 
+	            <tr <%=alt?"bgcolor='#EEEEFF'":""%>>
+	                <td>
+						<%=job.getJobName()%>&nbsp;&nbsp;
+	                </td>
+	                <td>
+						<i><%=job.getStatus()%></i>&nbsp;&nbsp;
+	                </td>
+	                <td>
+						<a href="/admin/reports/crawljob.jsp?job=<%=job.getUID()%>">Crawl report</a>
+						&nbsp;
+						<a href="/admin/reports/seeds.jsp?job=<%=job.getUID()%>">Seed report</a>
+	                </td>
+	            </tr>
+		<%
+                alt = !alt; 
 			} 
 		%>
-	</ul>
-<% } %>
+	<% } %>
+</table>
 
 <% if(crawling){ %>
 <p>

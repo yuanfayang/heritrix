@@ -17,7 +17,7 @@
 %>
 
 <%@include file="/include/head.jsp"%>
-		<table border="0">
+		<table border="0" cellspacing="0" cellpadding="1">
 			<tr>
 				<th>
 					Job name
@@ -30,25 +30,31 @@
 				</th>
 			</tr>
 			<%
+                boolean alt = true;
 				for(int i=0 ; i	< jobs.size() ; i++)
 				{
 					CrawlJob job = (CrawlJob)jobs.get(i);
 			%>		
-					<tr>
+					<tr <%=alt?"bgcolor='#EEEEFF'":""%>>
 						<td>
-							<%=job.getJobName()%>
+							<%=job.getJobName()%>&nbsp;&nbsp;
 						</td>
 						<td>
-							<%=job.getStatus()%>
+							<i><%=job.getStatus()%></i>&nbsp;&nbsp;
 						</td>
 						<td>
 							<a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=job.getUID()%>">View order</a>
+							&nbsp;
                             <a href="/admin/jobs/configure.jsp?job=<%=job.getUID()%>">Edit configuration</a>
+                            &nbsp;
                             <a href="/admin/jobs/journal.jsp?job=<%=job.getUID()%>">Journal</a>
+                            &nbsp;
 							<a href="/admin/jobs/pending.jsp?action=delete&job=<%=job.getUID()%>">Delete</a>
+							&nbsp;
 						</td>
 					</tr>
 			<%
+                    alt = !alt;
 				}
 			%>
 		</table>
