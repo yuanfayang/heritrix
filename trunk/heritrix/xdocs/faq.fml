@@ -10,7 +10,7 @@
             What does "Heritrix" mean?
       </question>
       <answer>
-        <p><em>Heritrix</em> (sometimes spelled <em>heretrix</em>) is an archaic word for <em>inheritess</em>. Since our crawler seeks to collect the digital artifacts of our culture for the benefit of future researchers and generations, this name seemed apt.</p>
+        <p><em>Heritrix</em> (sometimes spelled <em>heretrix</em>) is an archaic word for <em>inheritess</em>. Since our crawler seeks to collect the digital artifacts of our culture and <i>preserve</i> them for the benefit of future researchers and generations, this name seemed apt.</p>
       </answer>
     </faq>
 
@@ -38,6 +38,12 @@ Eventually. For now, the crawler is still in early development, and only if you 
   </part>
   <part id="problems">
     <title>Common Problems</title>
+    <faq id="limitations">
+      <question>Are there known limitations?</question>
+      <answer>See the 
+      <a href="articles/limitations.html">Known Limitations</a>
+      page.</answer>
+    </faq>
     <faq id="toomanyopenfiles">
       <question>Why do I get
       <i>java.io.FileNotFoundException...(Too many open files)</i>?

@@ -16,7 +16,8 @@
         misspelled or missaid as <em>heratrix</em>/<em>heritix</em>/
         <em>heretix</em>/<em>heratix</em>) is an 
         archaic word for <em>heiress</em> (woman who inherits). Since our 
-        crawler seeks to collect the digital artifacts of our culture for 
+        crawler seeks to collect and <i>preserve</i> the digital
+        artifacts of our culture for 
         the benefit of future researchers and generations, this name 
         seemed apt.</p>
     </section>
@@ -50,6 +51,8 @@
         added basic/digest auth and http post/get login facility, and added
         help to UI. Bug fixes. 
         See <a href="/changes-report.html">Changes</a> log for detail.
+        See also 
+        <a href="articles/limitations.html">Known Limitations</a>.
         </p>
     </subsection>
 
