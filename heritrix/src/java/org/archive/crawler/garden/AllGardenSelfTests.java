@@ -22,6 +22,9 @@
  */
 package org.archive.crawler.garden;
 
+import java.io.File;
+
+import junit.extensions.TestSetup;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -33,12 +36,37 @@ import junit.framework.TestSuite;
  */
 public class AllGardenSelfTests
 {
-    public static Test suite()
+    /**
+     * Run all of the selftest suite.
+     * 
+     * Each unit test to run as part of selftest needs to be added here.
+     * 
+     * @param jobDir Job output directory.  Has the seed file, the order file
+     * and logs.  
+     * @param jobName Name of job.  The logs are kept in jobdir/jobname.
+     * @param arcDir Directory in which to find arc files.
+     * @param prefix ARC file prefix.
+     * 
+     * @return Suite of all selftests.
+     */
+    public static Test suite(final File jobDir, final String jobName,
+            final File arcDir, final String prefix)
     {
         TestSuite suite = new TestSuite("Test for org.archive.crawler.garden");
         //$JUnit-BEGIN$
         suite.addTestSuite(BackgroundImageExtractionSelfTest.class);
         //$JUnit-END$
-        return suite;
+        
+        // Return an anonymous instance of TestSetup that does the one-time
+        // set up of GardenSelfTestCase base class installing required test
+        // parameters.
+        return new TestSetup(suite)
+            {
+                protected void setUp() throws Exception
+                {
+                    GardenSelfTestCase.initialize(jobDir, jobName, arcDir,
+                        prefix);
+                }
+            };
     }
 }

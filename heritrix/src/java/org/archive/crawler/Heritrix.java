@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -43,6 +44,7 @@ import javax.management.InvalidAttributeValueException;
 import org.apache.commons.cli.Option;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
+import org.archive.crawler.admin.SelftestCrawlJobHandler;
 import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
@@ -101,14 +103,20 @@ public class Heritrix
     /**
      * The heritrix home directory.
      * 
-     * Need this location so we can get at our configuration.  Default to 
-     * where we're launched from.
+     * Need this location so we can get at our configuration.  Is null if 
+     * dir is where the JVM was launched from and no heritrix.home property 
+     * supplied.
      */
     private static File heritrixHome = null;
     
     private static File confdir = null;
     private static File webappsdir = null;
     private static File jobsdir = null;
+    
+    /**
+     * Instance of web server if one was started.
+     */
+    private static SimpleHttpServer httpServer = null;
 
     /**
      * Heritrix logging instance.
@@ -142,6 +150,11 @@ public class Heritrix
      * Where to write this classes startup output.
      */
 	private static PrintWriter out = null;
+
+    /**
+     * Name of the file to which heritrix logs stdout and stderr.
+     */
+    private static final String HERITRIX_OUT_FILE = "heritrix_out.log";
     
 
     /**
@@ -182,44 +195,46 @@ public class Heritrix
         throws IOException
     {
         String home = System.getProperty(HOME_KEY);
-        if (home == null || home.length() <= 0)
+        if (home != null && home.length() > 0)
         {
-            home = ".";
+            heritrixHome = new File(home);
+            if (!heritrixHome.exists())
+            {
+                throw new IOException("HERITRIX_HOME <" + home +
+                    "> does not exist.");
+            }
         }
-        
-        heritrixHome = new File(home);
-        if (!heritrixHome.exists())
-        {
-            throw new IOException("HERITRIX_HOME <" + home +
-            "> does not exist.");
-        }
-        
-        // Make sure of conf dir.
-        File dir = new File(heritrixHome,
-            isDevelopment()? "src" + File.separator + "conf": "conf");
-        if (!dir.exists())
-        {
-            throw new IOException("Cannot find conf dir: " + dir);
-        }
-        confdir = dir;
-        
-        // Now I have conf dir, load properties and patch the logging.
+        confdir = getSubDir("conf");
         loadProperties();
         patchLogging();
-        
-        // Make sure of webapps dir.
-        dir = new File(heritrixHome,
-                isDevelopment()? "src" + File.separator + "webapps": "webapps");
+        webappsdir = getSubDir("webapps");
+        String jobsdirStr = getProperty(JOBSDIR_KEY, JOBSDIR_DEFAULT);
+        jobsdir =
+            (jobsdirStr.startsWith(File.separator) || heritrixHome == null)?
+                new File(jobsdirStr): new File(heritrixHome, jobsdirStr); 
+    }
+    
+    /**
+     * Check for existence of expected subdir.
+     * 
+     * If development flag set, then look for dir under src dir.
+     * 
+     * @param subdirName Dir to look for.
+     * @return The extant subdir.
+     * @throws IOException if unable to find expected subdir.
+     */
+    private static File getSubDir(String subdirName)
+        throws IOException
+    {
+        String path = isDevelopment()?
+            "src" + File.separator + subdirName: subdirName;
+        File dir = (heritrixHome != null)?
+            new File(heritrixHome, path): new File(path);
         if (!dir.exists())
         {
-            throw new IOException("Cannot find webapps dir: " + dir);
+            throw new IOException("Cannot find subdir: " + subdirName);
         }
-        webappsdir = dir;
-        
-        // Make sure of jobs dir.
-        String jobsdirStr = getProperty(JOBSDIR_KEY, JOBSDIR_DEFAULT);
-        jobsdir = (jobsdirStr.startsWith(File.separator))?
-            new File(jobsdirStr): new File(heritrixHome, jobsdirStr); 
+        return dir;
     }
 
     private static void doStart(String [] args)
@@ -335,7 +350,7 @@ public class Heritrix
                 // No arguments accepted by selftest.
                 clp.usage(1);
             }
-            launch(port);
+            selftest(port);
         }
         else if (noWui)
         {
@@ -468,29 +483,31 @@ public class Heritrix
      *
      * @exception Exception
      */
-    private static void launch(int port) throws Exception
+    private static void selftest(int port) throws Exception
     {
         // Put up the webserver.  It has the selftest garden to go against.
-        SimpleHttpServer server = new SimpleHttpServer(port);
-        server.startServer();
-        
-        // TODO: DO THIS PROPERLY.
-        // TODO: If an error starting up I shouldn't run the tests.
-        // out.println("Starting SelfTest");
-        // junit.textui.TestRunner.run(AllGardenSelfTests.suite());      
-        
+        httpServer = new SimpleHttpServer(port);
+        httpServer.startServer();
         File selftestDir = new File(getConfdir(), "selftest");
         File crawlOrderFile = new File(selftestDir, "job-selftest.xml");
-        File seedFile = new File(selftestDir, "seeds-selftest.xml");
-        jobHandler = new CrawlJobHandler();
-        CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Selftest");
-        // Now make a new job based off job just created.  This should get my
-        // job into the jobs directory rather than have it log and arc beside
-        // order file's original location.
-        job = jobHandler.newJob(job, "selftest", "Integration self test",
-            seedFile.getAbsolutePath());
+        jobHandler = new SelftestCrawlJobHandler();
+        // Create a job based off the selftest order file.  Then use this as
+        // a template to pass jobHandler.newJob().  Doing this gets our
+        // selftest output to show under the jobs directory. 
+        // Pass as a seed a pointer to the webserver we just put up.
+        CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
+        String seed = "http://localhost:" + Integer.toString(port) + "/garden";
+        job = jobHandler.newJob(job, "selftest", "Integration self test", seed);
         jobHandler.addJob(job);
         jobHandler.startCrawler();
+        out.println((new Date()).toString() + " Heritrix " + getVersion() +
+            " selftest started.");
+        out.println("Selftest first crawls " + seed +
+            " and then runs an analysis.");
+        out.println("Result of analysis printed to " + HERITRIX_OUT_FILE +
+            " when done.");
+        out.println("Selftest job directory:\n" +
+            jobHandler.getJobdir(job).getAbsolutePath());
     }
 
     /**
@@ -508,8 +525,8 @@ public class Heritrix
         CrawlController controller = new CrawlController();
         controller.initialize(handler);
         controller.startCrawl();
-        out.println("Heritrix " + getVersion() + " is crawling " +
-            crawlOrderFile + ".");
+        out.println((new Date()).toString() + " Heritrix " + getVersion() +
+            " crawl started using " + crawlOrderFile + ".");
     }
     
     /**
@@ -559,13 +576,13 @@ public class Heritrix
             status = "Crawler set to run mode but no order file to crawl";
         }
 
-        SimpleHttpServer server = new SimpleHttpServer(port);
-        server.startServer();
+        httpServer = new SimpleHttpServer(port);
+        httpServer.startServer();
         InetAddress addr = InetAddress.getLocalHost();
         String uiLocation = "http://" + addr.getHostName() + ":" + port +
             "/admin";
-
-        out.println("Heritrix " + getVersion() + " is running.");
+        out.println((new Date()).toString() + " Heritrix " + getVersion() +
+            " is running.");
         out.println("Web UI is at: " + uiLocation);
         out.println("Login and password: " + adminUN + "/" + adminPW);
         if (status != null)
@@ -641,10 +658,10 @@ public class Heritrix
     }
     
     /**
-     * @return Returns the heritrixHome.
+     * @return Returns the httpServer. May be null if one was not started.
      */
-    public static File getHeritrixHome()
+    public static SimpleHttpServer getHttpServer()
     {
-        return heritrixHome;
+        return httpServer;
     }
 }

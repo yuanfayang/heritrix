@@ -22,17 +22,15 @@
  */
 package org.archive.crawler.garden;
 
-import junit.framework.TestCase;
-
 /**
  * 
  * 
  * @author stack
  * @version $Id$
  */
-public class BackgroundImageExtractionSelfTest extends TestCase
+public class BackgroundImageExtractionSelfTest
+    extends GardenSelfTestCase
 {
-
     /*
      * @see TestCase#setUp()
      */
