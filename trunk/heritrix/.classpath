@@ -26,5 +26,6 @@
 	<classpathentry kind="lib" path="lib/dnsjava-1.6.2.jar"/>
 	<classpathentry kind="lib" path="lib/je-1.7.1-12115_11552.jar"/>
 	<classpathentry kind="lib" path="lib/commons-pool-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/dsi.unimi.it-0.9.1-4.4.0.jar"/>
 	<classpathentry kind="output" path="target"/>
 </classpath>

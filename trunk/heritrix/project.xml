@@ -611,6 +611,17 @@
                 <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
             </properties>
         </dependency>
+        <dependency>
+            <id>dsi.unimi.it</id>
+            <version>0.9.1-4.4.0</version>
+            <url>http://mg4j.dsi.unimi.it/</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <description>This JAR supplies alternatives to String, 
+                StringBuffer, and unsynchronized I/0. This JAR was made from subsets of mg4j-0.9.1 and from fastutil-4.4.0 -- two jars that came out of the ubicrawler project, http://ubi0.iit.cnr.it/projects/ubi/ -- using autojar. Here is how I made this jar: % java -jar autojar-1.2.2/autojar-1.2.2.jar -v -o dsi.unimi.it-mg4j-0.9.1_fastutil-4.4.0.jar -c mg4j-0.9.1/mg4j-0.9.1.jar:fastutil-4.4.0/fastutil-4.4.0.jar it.unimi.dsi.mg4j.util.MutableString.class it.unimi.dsi.mg4j.io.FastBufferedInputStream.class it.unimi.dsi.mg4j.io.FastBufferedOutputStream.class it.unimi.dsi.mg4j.io.FastBufferedReader.class it.unimi.dsi.mg4j.io.FastByteArrayInputStream.class it.unimi.dsi.mg4j.io.FastByteArrayOutputStream.class it.unimi.dsi.mg4j.io.FastMultiByteArrayInputStream.class</description>
+                <license>Both MG4J and fastutils are LGPL</license>
+            </properties>
+        </dependency>
 
   </dependencies>
 
