@@ -182,16 +182,17 @@ public class FetchHTTP extends Processor
             rec.closeRecorders();
             get.releaseConnection();
             return;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // for weird windows-only ArrayIndex exceptions from native code
-            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-            // treating as if it were an IOException
-            curi.addLocalizedError(this.getName(), e, "executeMethod");
-            curi.setFetchStatus(S_CONNECT_FAILED);
-            rec.closeRecorders();
-            get.releaseConnection();
-            return;
-        }
+        } 
+//        catch (ArrayIndexOutOfBoundsException e) {
+//            // for weird windows-only ArrayIndex exceptions from native code
+//            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+//            // treating as if it were an IOException
+//            curi.addLocalizedError(this.getName(), e, "executeMethod");
+//            curi.setFetchStatus(S_CONNECT_FAILED);
+//            rec.closeRecorders();
+//            get.releaseConnection();
+//            return;
+//        }
 
         try {
             // force read-to-end, so that any socket hangs occur here,
