@@ -42,7 +42,13 @@ public class IoUtils {
     public static String getClasspathPath(File file) {
         String path = file.getPath();
         if (File.separatorChar != '/') {
+            // OK.  We're probably on a windows system. Strip
+            // drive if its present and convert '\' to '/'.
             path = path.replace(File.separatorChar, '/');
+            int index = path.indexOf(':');
+            if (index > 0 && index < 3) {
+                path.substring(index + 1);
+            }
         }
         return path;
     }
