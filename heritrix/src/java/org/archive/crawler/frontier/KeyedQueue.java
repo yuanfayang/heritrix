@@ -36,10 +36,41 @@ import org.archive.util.Queue;
 import org.archive.util.QueueItemMatcher;
 
 /**
- * Ordered collection of items with the same "classKey". The
+ * Ordered collection of work items with the same "classKey". The
  * collection itself has a state, which may reflect where it
  * is stored or what can be done with the contained items.
+ * 
+ * For easy access to several locations in the main collection,
+ * it is held between 2 data structures: a top stack and a 
+ * bottom queue. (These in turn may be disk-backed.)
+ * 
+ * Also maintains a collection 'off to the side' of 'frozen'
+ * items. 
  *
+ * About KeyedQueue states:
+ * 
+ * All KeyedQueues begin INACTIVE. A call to activate() will 
+ * render them READY (if not empty of eligible URIs) or EMPTY
+ * otherwise. 
+ * 
+ * A noteInProcess() puts the KeyedQueue into IN_PROCESS state. 
+ * A matching noteProcessDone() puts the KeyedQueue bank into 
+ * READY or EMPTY. 
+ * 
+ * A freeze() may be issued to any READY or EMPTY queue to 
+ * put it into FROZEN state. Only an unfreeze() will move 
+ * the queue to INACTIVE state. 
+ * 
+ * A deactivate() may be issued to any READY or EMPTY queue
+ * to put it into INACTIVE state. 
+ * 
+ * A snooze() may be issued to any READY or EMPTY queue to 
+ * put it into SNOOZED state.
+ * 
+ * A discard() may be issued to any EMPTY queue to put it into
+ * the DISCARDED state. A queue never leaves the discarded state;
+ * if a queue of its hostname is needed again, a new one is created.
+ * 
  * @author gojomo
  *
  */
@@ -59,18 +90,22 @@ public class KeyedQueue implements Queue {
     /** EMPTY: eligible to supply URIs, but without any to supply */
     public static final Object EMPTY = "EMPTY".intern();
     /** FINISHED: discarded because empty (not irreversible) */
-    public static final Object FINISHED = "FINISHED".intern();
+    public static final Object DISCARDED = "FINISHED".intern();
 
+    /** ms time to wake, if snoozed */
     long wakeTime;
+    /** common string 'key' of included items (typically hostname)  */
     String classKey;
+    /** current state; see above values */
     Object state;
 
+    /** if state is IN_PROCESS, item in progress */
     Object inProcessItem;
     
-    LinkedList innerStack; // topmost items
-    Queue innerQ;
+    LinkedList innerStack; // topmost eligible items
+    Queue innerQ; // rest of eligible items
     
-    Queue frozenQ; // put-to-side items
+    Queue frozenQ; // put-to-side items; not returned from normal accessors
 
     /**
      * @param key A unique identifier used to distingush files related to this
@@ -91,60 +126,148 @@ public class KeyedQueue implements Queue {
         }
         innerStack = new LinkedList();
         innerQ = new DiskBackedQueue(scratchDir,tmpName,headMax);
-        // frozenQ = new DiskBackedQueue(scratchDir,tmpName+".frozen",headMax);
+        frozenQ = new DiskBackedQueue(scratchDir,tmpName+".frozen",headMax);
+        state = INACTIVE;
     }
 
     /**
-     * @return
-     */
-    public boolean isReady() {
-        return System.currentTimeMillis() > wakeTime;
-    }
-
-    /**
+     * The 'classKey' identifier common to items in this queue
      * @return Object
      */
     public String getClassKey() {
         return classKey;
     }
 
-
-    /** (non-Javadoc)
+    /** 
+     * The state of this queue.
+     * 
      * @return
      */
-    public Object getStoreState() {
+    public Object getState() {
         return state;
     }
 
-    /** (non-Javadoc)
-     * @param s
+//
+// STATE TRANSITIONS
+//
+    /**
+     * Move queue from INACTIVE to ACTIVE state
      */
-    public void setStoreState(Object s) {
-        state=s;
+    public void activate() {
+        assert state == INACTIVE;
+        state = isEmpty() ? EMPTY : READY;
     }
-
-    /** (non-Javadoc)
+    /**
+     * Move queue from READY or EMPTY state to INACTIVE
+     */
+    public void deactivate() {
+        assert state == READY || state == EMPTY;
+        state = INACTIVE;
+    }
+    /**
+     * Move queue from READY or EMPTY state to FROZEN
+     */
+    public void freeze() {
+        assert state == READY || state == EMPTY;
+        state = FROZEN;
+    }
+    /**
+     * Move queue from FROZEN state to INACTIVE
+     */
+    public void unfreeze() {
+        assert state == FROZEN;
+        state = INACTIVE;
+    }
+    /**
+     * Move queue from READY or EMPTY state to SNOOZED
+     */
+    public void snooze() {
+        assert state == READY || state == EMPTY;
+        state = SNOOZED;
+    }
+    /**
+     * Move queue from SNOOZED state to READY or EMPTY
+     */
+    public void wake() {
+        assert state == SNOOZED;
+        state = isEmpty() ? EMPTY : READY;
+    }
+    /**
+     * Move queue from READY or EMPTY to DISCARDED
+     */
+    public void discard() {
+        assert state == READY || state == EMPTY;
+        state = DISCARDED;
+    }
+    /**
+     * Note that the given item is 'in process';
+     * move queue from READY or EMPTY to IN_PROCESS
+     * and remember in-process item.
+     * 
+     * @param o
+     */
+    public void noteInProcess(Object o) {
+        assert state == READY || state == EMPTY;
+        assert inProcessItem == null;
+        inProcessItem = o;
+        state = IN_PROCESS;
+    }
+    /**
+     * Note that the given item's processing
+     * has completed; forget the in-process item
+     * and move queue from IN_PROCESS to READY or 
+     * EMPTY state
+     * 
+     * @param o
+     */
+    public void noteProcessDone(Object o) {
+        assert state == IN_PROCESS;
+        assert inProcessItem == o;
+        inProcessItem = null;
+        state = isEmpty() ? EMPTY : READY;
+    }
+    /**
+     * Update READY/EMPTY state after preceding
+     * queue edit operations.
+     * 
+     * @return true if state changed, false otherwise
+     */
+    public boolean checkEmpty() {
+        // update READY|EMPTY state after recent relevant changes
+        if (! (state == READY || state == EMPTY) ) {
+            // only relevant for active states
+            return false;
+        }
+        Object previous = state;
+        state = isEmpty() ? EMPTY : READY;
+        return state != previous;
+    }
+    
+//
+// SCHEDULING SUPPORT
+//
+    
+    /** 
+     * time to wake, when snoozed
+     * 
      * @return
      */
     public long getWakeTime() {
         return wakeTime;
     }
 
-    /** (non-Javadoc)
+    /**
+     * set time to wake, when snoozed
+     * 
      * @param w
      */
     public void setWakeTime(long w) {
         wakeTime = w;
     }
 
-    /** (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    public String toString() {
-        return "KeyedQueue[classKey="+getClassKey()+"]";
-    }
-
-    /** (non-Javadoc)
+    /** 
+     * To ensure total and consistent ordering when 
+     * in scheduled order, a fallback sort criterion
      * @return
      */
     public String getSortFallback() {
@@ -161,14 +284,19 @@ public class KeyedQueue implements Queue {
         return this == o;
     }
 
-    /** (non-Javadoc)
+    /** 
+     * Add an item in the default manner
+     * 
      * @see org.archive.util.Queue#enqueue(java.lang.Object)
      */
     public void enqueue(Object o) {
         innerQ.enqueue(o);
     }
 
-    /** (non-Javadoc)
+    /** 
+     * Is this KeyedQueue empty of ready-to-try URIs. (NOTE: may
+     * still have 'frozen' off-to-side URIs.)
+     * 
      * @see org.archive.util.Queue#isEmpty()
      */
     public boolean isEmpty() {
@@ -176,7 +304,9 @@ public class KeyedQueue implements Queue {
         // return innerStack.isEmpty() && innerQ.isEmpty() && frozenQ.isEmpty();
     }
 
-    /** (non-Javadoc)
+    /** 
+     * Remove an item in the default manner
+     * 
      * @see org.archive.util.Queue#dequeue()
      */
     public Object dequeue() {
@@ -186,28 +316,47 @@ public class KeyedQueue implements Queue {
         return innerQ.dequeue();
     }
 
-    /** (non-Javadoc)
+    /** 
+     * Total number of available items. (Does not include
+     * any 'frozen' items.)
+     * 
      * @see org.archive.util.Queue#length()
      */
     public long length() {
         return innerQ.length()+innerStack.size();
     }
 
+    /** 
+     * Total number of 'frozen' items. 
+     * 
+     * @return
+     */
+    public long frozenLength() {
+        return innerQ.length()+innerStack.size();
+    }
+    
     /**
-     *
+     * Release any external resources (eg open files) which
+     * may be held.
+     * 
      */
     public void release() {
         innerQ.release();
+        frozenQ.release();
     }
 
-    /** (non-Javadoc)
+    /** 
+     * Iterate over all available (non-frozen) items. 
+     * 
      * @see org.archive.util.Queue#getIterator(boolean)
      */
     public Iterator getIterator(boolean inCacheOnly) {
         return new CompositeIterator(innerStack.iterator(),innerQ.getIterator(inCacheOnly));
     }
 
-    /** (non-Javadoc)
+    /** 
+     * Delete items matching the supplied criterion. 
+     * 
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
     public long deleteMatchedItems(QueueItemMatcher matcher) {
@@ -226,6 +375,9 @@ public class KeyedQueue implements Queue {
     }
 
     /**
+     * the remembered item in process (set
+     * with noteInProgress()
+     * 
      * @return
      */
     public Object getInProcessItem() {
@@ -233,19 +385,17 @@ public class KeyedQueue implements Queue {
     }
 
     /**
-     * @param curi
-     */
-    public void setInProcessItem(CrawlURI curi) {
-        inProcessItem = curi;
-    }
-
-    /**
+     * enqueue at a middle location (ahead of 'most'
+     * items, but behind any recent 'enqueueHigh's
+     * 
      * @param curi
      */
     public void enqueueMedium(CrawlURI curi) {
         innerStack.addLast(curi);
     }
     /**
+     * enqueue ahead of everything else
+     * 
      * @param curi
      */
     public void enqueueHigh(CrawlURI curi) {
@@ -253,12 +403,19 @@ public class KeyedQueue implements Queue {
     }
 
     /**
+     * enqueue to the 'frozen' set-aside queue,
+     * which holds items indefinitely (only 
+     * operator action returns them to availability)
+     * 
      * @param curi
      */
     public void enqueueFrozen(CrawlURI curi) {
-        // frozenQ.enqueue(curi);
+        frozenQ.enqueue(curi);
     }
+    
     /**
+     * return, without removing, the top available item
+     * 
      * @return
      */
     public Object peek() {
@@ -269,6 +426,18 @@ public class KeyedQueue implements Queue {
             return innerQ.peek();
         }
         return null;
+    }
+
+    /**
+     * may this KeyedQueue be completely discarded? only
+     * if empty of available and frozen items, and not 
+     * SNOOZED or FROZEN (which implies state info which 
+     * would be lost if discarded)
+     * 
+     * @return
+     */
+    public boolean isDiscardable() {
+        return isEmpty() && frozenQ.isEmpty() && state == EMPTY;
     }
 
 }
