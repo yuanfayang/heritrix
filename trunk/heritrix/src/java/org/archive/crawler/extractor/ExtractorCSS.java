@@ -69,10 +69,10 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
      *  This pattern extracts URIs for CSS files
      **/
 //    static final String CSS_URI_EXTRACTOR =
-//        "url[(][\"\'\\s]{0,2}(([^\\\\\'\"\\s)]*(\\\\[\'\"\\s()])*)*)[\'\"\\s)]";
-    static final String CSS_URI_EXTRACTOR =
-        "url[(]\\s*([\"\']?)([^\\\"\\'].*?)\\1\\s*[)]";
-
+//        "url[(]\\s*([\"\']?)([^\\\"\\'].*?)\\1\\s*[)]";
+    static final String CSS_URI_EXTRACTOR =    
+    "(?:@import (?:url[(]|)|url[(])\\s*([\\\"\']?)([^\\\"\'].*?)\\1\\s*[);]";
+    
     private long numberOfCURIsHandled = 0;
     private long numberOfLinksExtracted = 0;
 
@@ -133,7 +133,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         try {
             Matcher uris = TextUtils.getMatcher(CSS_URI_EXTRACTOR, cs);
             while (uris.find()) {
-                String cssUri = uris.group(1);
+                String cssUri = uris.group(2);
                 // TODO: Escape more HTML Entities.
                 cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
                 // Remove backslashes when used as escape character in CSS URL
