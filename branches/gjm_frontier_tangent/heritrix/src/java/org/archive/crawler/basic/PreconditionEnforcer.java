@@ -60,8 +60,11 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
         }
 
         // make sure we only process schemes we understand (i.e. not dns)
-        if(! (curi.getUURI().getScheme().equals("http") | curi.getUURI().getScheme().equals("https"))){
-            logger.fine("PolitenessEnforcer doesn't understand uri's of type "+curi.getUURI().getScheme() + " (ignoring)");
+        String scheme = curi.getUURI().getScheme().toLowerCase(); 
+        if (! (scheme.equals("http") || scheme.equals("https")))
+        {
+            logger.fine("PolitenessEnforcer doesn't understand uri's of type " +
+                scheme + " (ignoring)");
             return;
         }
 
@@ -91,7 +94,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
             ){
             logger.fine("No valid robots for "+curi.getServer()+"; deferring "+curi);
             if(curi.getServer().getRobotsExpires()<0) {
-                curi.setPrerequisiteUri("/robots.txt");
+                curi.setForcedPrerequisiteUri("/robots.txt");
              } else {
                  // Robots expired - should be refetched even though its already crawled
                  curi.setForcedPrerequisiteUri("/robots.txt");
@@ -99,14 +102,14 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
              //curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry
              curi.incrementDeferrals();
              curi.setFetchStatus(S_DEFERRED);
-             curi.skipToProcessor(getController().getPostprocessor());
+             curi.skipToProcessorChain(getController().getPostprocessorChain());
              return true;
          }
          // test against robots.txt if available
           String ua = getController().getOrder().getUserAgent(curi);
          if( curi.getServer().getRobots().disallows(curi, ua)) {
              // don't fetch
-             curi.skipToProcessor(getController().getPostprocessor());  // turn off later stages
+             curi.skipToProcessorChain(getController().getPostprocessorChain());  // turn off later stages
              curi.setFetchStatus(S_ROBOTS_PRECLUDED);
              curi.getAList().putString("error","robots.txt exclusion");
              logger.fine("robots.txt precluded "+curi);
@@ -123,7 +126,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 
         if(curi.getServer()==null) {
             curi.setFetchStatus(S_UNFETCHABLE_URI);
-            curi.skipToProcessor(getController().getPostprocessor());
+            curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }
         // if we haven't done a dns lookup  and this isn't a dns uri
@@ -136,11 +139,11 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
                     + " for dns lookup.");
 
             String hostname = curi.getServer().getHostname();
-            curi.setPrerequisiteUri("dns:" + hostname);
+            curi.setForcedPrerequisiteUri("dns:" + hostname);
             //curi.getAList().putInt(A_RETRY_DELAY,0); // allow immediate retry
             curi.setFetchStatus(S_DEFERRED);
             curi.incrementDeferrals();
-            curi.skipToProcessor(getController().getPostprocessor());
+            curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }
 
@@ -159,7 +162,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
             // to allow us to treat dns failures and connections failures (downed hosts, route failures, etc) seperately.
             curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
             //curi.incrementFetchAttempts();
-            curi.skipToProcessor(getController().getPostprocessor());
+            curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }
         return false;
