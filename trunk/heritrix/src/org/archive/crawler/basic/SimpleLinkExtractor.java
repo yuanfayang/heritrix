@@ -17,6 +17,9 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 
 /**
+ * Basic link-extraction, from an HTTP response's headers and
+ * HTML content-body, using regular expressions. 
+ *
  * @author gojomo
  *
  */

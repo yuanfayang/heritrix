@@ -19,6 +19,9 @@ import org.archive.crawler.framework.Processor;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 
 /**
+ * Basic class for using the Apache Jakarta HTTPClient library
+ * for fetching an HTTP URI. 
+ * 
  * @author gojomo
  *
  */
@@ -69,10 +72,9 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 			}
 			
 		} catch (HttpException e) {
-			logger.warning(e+" at "+curi);
+			logger.warning(e+" on "+curi);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.warning(e+" on "+curi);
 		}
 	}
 
