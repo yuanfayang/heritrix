@@ -317,22 +317,16 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         throws AttributeNotFoundException {
         settings = settings == null ? globalSettings() : settings;
 
-        Object res;
-        try {
-            res = getLocalAttribute(settings, name);
-        } catch (AttributeNotFoundException e) {
-            res = null;
-        }
-
-        if (res == null) {
-            // If value wasn't found try recurse up settings hierarchy
-            if (settings != null && settings.getParent() != null) {
-                res = getAttribute(settings.getParent(), name);
+        DataContainer data = settings.getData(this);
+        data = getDataContainerRecursive(settings);
+        while (data != null) {
+            if (data.containsKey(name)) {
+                return data.get(name);
             } else {
-                throw new AttributeNotFoundException(name);
+                data = getDataContainerRecursive(data.getSettings().getParent());
             }
         }
-        return res;
+        throw new AttributeNotFoundException(name);
     }
 
     /** Obtain the value of a specific attribute that is valid for a
@@ -344,24 +338,23 @@ public abstract class ComplexType extends Type implements DynamicMBean {
      *  
      * @param settings the CrawlerSettings object to search for this attribute.
      * @param name the name of the attribute to be retrieved.
-     * @return The value of the attribute retrieved.
+     * @return The value of the attribute retrieved or null if its not set.
      * @see CrawlerSettings
-     * @throws AttributeNotFoundException
+     * @throws AttributeNotFoundException is thrown if the attribute doesn't
+     *         exist.
      */
     public Object getLocalAttribute(CrawlerSettings settings, String name)
-        throws AttributeNotFoundException {
-        if (settings == null) {
-            settings = globalSettings();
-        }
+            throws AttributeNotFoundException {
+
+        settings = settings == null ? globalSettings() : settings;
+
         DataContainer data = settings.getData(this);
-        if (data == null) {
-            if (isOverridden(settings, name)) {
-                return null;
-            } else {
-                throw new AttributeNotFoundException(name);
-            }
+        if (data != null && data.containsKey(name)) {
+            return data.get(name);
+        } else {
+            getAttribute(settings, name);
+            return null;
         }
-        return data.get(name);
     }
 
     /** Set the value of a specific attribute of the ComplexType.
