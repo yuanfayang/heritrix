@@ -22,6 +22,16 @@
 			// Tell handler to stop crawl job
 			handler.terminateJob();
 		}
+		else if(sAction.equalsIgnoreCase("pause"))
+		{
+			// Tell handler to pause crawl job
+			handler.pauseJob();
+		}
+		else if(sAction.equalsIgnoreCase("resume"))
+		{
+			// Tell handler to resume crawl job
+			handler.resumeJob();
+		}
 		else if(sAction.equalsIgnoreCase("gc"))
 		{
 			// Tell handler to stop crawl job
