@@ -443,7 +443,7 @@ implements Serializable, Lineable {
         getAList().putLong(key, value);
     }
     
-    public long getInt(String key) {
+    public int getInt(String key) {
         return getAList().getInt(key);
     }
     
