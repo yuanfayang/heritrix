@@ -28,9 +28,12 @@ package org.archive.crawler.admin.ui;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
@@ -57,6 +60,7 @@ import org.archive.crawler.settings.ModuleAttributeInfo;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.util.IoUtils;
 
 /**
  * Utility methods used configuring jobs in the admin UI.
@@ -396,9 +400,9 @@ public class JobConfigureUtils {
     public static void printOutSeeds(SettingsHandler hndlr, Writer out)
     throws AttributeNotFoundException, MBeanException, ReflectionException,
             IOException {
-        File seedfile = getSeedFile(hndlr);
-        writeReader(new BufferedReader(new FileReader(seedfile)),
-            out);
+        // getSeedStream looks for seeds on disk and on classpath.
+        InputStream is = getSeedStream(hndlr);
+        writeReader(new BufferedReader(new InputStreamReader(is)), out);
     }
     
     /**
@@ -428,6 +432,36 @@ public class JobConfigureUtils {
         String seedsFileStr = (String)((ComplexType)hndlr.getOrder().
             getAttribute("scope")).getAttribute("seedsfile");
         return hndlr.getPathRelativeToWorkingDirectory(seedsFileStr);
+    }
+    
+    /**
+     * Return seeds as a stream.
+     * This method will work for case where seeds are on disk or on classpath.
+     * @param hndlr SettingsHandler.  Used to find seeds.txt file.
+     * @return InputStream on current seeds file.
+     * @throws IOException
+     * @throws ReflectionException
+     * @throws MBeanException
+     * @throws AttributeNotFoundException
+     */
+    protected static InputStream getSeedStream(SettingsHandler hndlr)
+    throws IOException, AttributeNotFoundException, MBeanException,
+            ReflectionException {
+        InputStream is = null;
+        File seedFile = getSeedFile(hndlr);
+        if (!seedFile.exists()) {
+            // Is the file on the CLASSPATH?
+            is = SettingsHandler.class.
+                getResourceAsStream(IoUtils.getClasspathPath(seedFile));
+        } else if(seedFile.canRead()) {
+            is = new FileInputStream(seedFile);
+        }
+        if (is == null) {
+            throw new IOException(seedFile + " does not" +
+            " exist -- neither on disk nor on CLASSPATH -- or is not" +
+            " readable.");
+        }
+        return is;
     }
     
     /**
