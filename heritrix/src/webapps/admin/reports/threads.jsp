@@ -3,7 +3,7 @@
 
 <%
 	String title = "Threads report";
-	int navigation = 73;
+	int tab = 4;
 %>
 
 <%@include file="/include/head.jsp"%>
