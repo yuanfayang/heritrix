@@ -466,7 +466,8 @@ public class ARCRecord extends InputStream implements ARCConstants {
                 c = this.in.read();
                 if(c != LINE_SEPARATOR) {
                     System.err.println("ERROR("+metaData.getDate()
-                            +" "+metaData.getUrl()+"):"
+                            +" "+metaData.getUrl()
+                            +" "+metaData.getArcFile()+"):"
                             +" expected newline, received char: "+c);
                 }
                 if(this.readAllAvailable) {
@@ -476,13 +477,15 @@ public class ARCRecord extends InputStream implements ARCConstants {
                     }
                     if(excess > 0) {
                         System.err.println("ERROR("+metaData.getDate()
-                                +" "+metaData.getUrl()+"):"
+                                +" "+metaData.getUrl()
+                                +" "+metaData.getArcFile()+"):"
                                 +" excess record material:"+excess);
                     }
                 }
             } else {
                 System.err.println("ERROR("+metaData.getDate()
-                        +" "+metaData.getUrl()+"):"
+                        +" "+metaData.getUrl()
+                        +" "+metaData.getArcFile()+"):"
                         +" expected record-terminator-newline missing");
             }
 //                // If there's still stuff on the line, its the LINE_SEPARATOR
