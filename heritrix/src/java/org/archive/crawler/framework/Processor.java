@@ -122,6 +122,18 @@ public class Processor extends ModuleType {
 
     /**
      * Classes subclassing this one should override this method to perform
+     * processor specific actions.
+     * <p>
+     * 
+     * This method is garanteed to be called after the crawl is set up, but
+     * before any URI-processing has occured.
+     */
+    protected void initialTasks () {
+        // by default do nothing
+    }
+    
+    /**
+     * Classes subclassing this one should override this method to perform
      * processor specific actions.  
      *
      */

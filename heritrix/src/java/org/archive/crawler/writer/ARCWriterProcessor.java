@@ -136,12 +136,6 @@ public class ARCWriterProcessor
     private ARCWriterPool pool = null;
 
     /**
-     * Has this processor been initialized.
-     */
-    private boolean initialized = false;
-    
-
-    /**
      * @param name
      */
     public ARCWriterProcessor(String name) {
@@ -170,23 +164,8 @@ public class ARCWriterProcessor
         e.setOverrideable(false);
     }
 
-    public void initialize() {
-        
-        if (!this.initialized) {
-            _initialize();
-        }
-    }
-    
-    private synchronized void _initialize() {
-        
-        // Recheck inside now we're inside the synchronized block to be sure.
-        // I've seen the case where two threads have seen the flag set to false
-        // and both have then proceeded to call into this method thereby
-        // setting up two instances of ARCWriterPool.
-        if (this.initialized) {
-            return;
-        }
-        
+    public synchronized void initialTasks() {
+        System.out.println("XXX - ARCWriterProcessor:initialTasks:   ");
         Logger logger = getSettingsHandler().getOrder().getController()
             .runtimeErrors;
 
@@ -213,7 +192,6 @@ public class ARCWriterProcessor
         } catch (IOException e) {
             logger.warning(e.getLocalizedMessage());
         }
-        this.initialized = true;
     }
 
     protected void readConfiguration()
@@ -238,9 +216,7 @@ public class ARCWriterProcessor
      *
      * @param curi CrawlURI to process.
      */
-    protected void innerProcess(CrawlURI curi)
-    {
-        initialize();
+    protected void innerProcess(CrawlURI curi) {
         // If failure, or we haven't fetched the resource yet, return
         if (curi.getFetchStatus() <= 0) {
             return;
@@ -249,19 +225,13 @@ public class ARCWriterProcessor
         // Find the write protocol and write this sucker
         String scheme = curi.getUURI().getScheme().toLowerCase();
 
-        try
-        {
-            if (scheme.equals("dns"))
-            {
+        try {
+            if (scheme.equals("dns")) {
                 writeDns(curi);
-            }
-            else if (scheme.equals("http") || scheme.equals("https"))
-            {
+            } else if (scheme.equals("http") || scheme.equals("https")) {
                 writeHttp(curi);
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e, "WriteARCRecord");
         }
     }

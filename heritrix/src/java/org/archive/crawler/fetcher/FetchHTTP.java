@@ -124,11 +124,6 @@ public class FetchHTTP extends Processor
     private int soTimeout;
     
     /**
-     * If this processor has been initialized.
-     */
-    private boolean initialized = false;
-    
-    /**
      * Reference to the credential store.
      */
     private CredentialStore credentialStore = null;
@@ -187,7 +182,6 @@ public class FetchHTTP extends Processor
     }
 
     protected void innerProcess(CrawlURI curi) {
-        initialize();     
         if (!canFetch(curi)) {
             // Cannot fetch this, due to protocol, retries, or other problems
             return;
@@ -577,63 +571,51 @@ public class FetchHTTP extends Processor
         }
     }
 
-    public void initialize()
-    {
-        if (!this.initialized)
-        {
-            this.soTimeout = getSoTimeout(null);
-            CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
-            SingleHttpConnectionManager connectionManager =
-                new SingleHttpConnectionManager();
-            this.http = new PatchedHttpClient(connectionManager);
+    public void initialTasks() {
+        this.soTimeout = getSoTimeout(null);
+        CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
+        SingleHttpConnectionManager connectionManager = new SingleHttpConnectionManager();
+        this.http = new PatchedHttpClient(connectionManager);
 
-            try
-            {
-                String trustLevel = (String)getAttribute(ATTR_TRUST);
-                Protocol.registerProtocol("https", new Protocol("https", 
-                  new ConfigurableTrustManagerProtocolSocketFactory(trustLevel),
-                  443));
-                
-                // Get a credential store object reference.
-                this.credentialStore =
-                    (CredentialStore)this.getSettingsHandler().getOrder().
-                        getAttribute(CredentialStore.ATTR_NAME);
-            }
-            
-            catch (Exception e)
-            {
-                // Convert all to RuntimeException so get an exception out if
-                // initialization fails.
-                throw new RuntimeException(
-                    "Failed initialization getting attributes: " +
-                        e.getMessage());
-            }
+        try {
+            String trustLevel = (String) getAttribute(ATTR_TRUST);
+            Protocol.registerProtocol("https", new Protocol("https",
+                    new ConfigurableTrustManagerProtocolSocketFactory(
+                            trustLevel), 443));
 
-            // load cookies from a file if specified in the order file.
-            loadCookies();
-            
-            // Considered same as overall timeout, for now.
-            // TODO: When HTTPClient stops using a monitor 'waitingThread'
-            // thread to watch over the getting of the socket from socket
-            // factory and instead supports the java.net.Socket#connect timeout.
-            // http.setConnectionTimeout((int)timeout);
-            // set per-read() timeout: overall timeout will be checked at least
-            // this
-            // frequently
-            this.http.setTimeout(this.soTimeout);
-     
-            this.initialized = true;
+            // Get a credential store object reference.
+            this.credentialStore = (CredentialStore) this.getSettingsHandler()
+                    .getOrder().getAttribute(CredentialStore.ATTR_NAME);
         }
+
+        catch (Exception e) {
+            // Convert all to RuntimeException so get an exception out if
+            // initialization fails.
+            throw new RuntimeException(
+                    "Failed initialization getting attributes: "
+                            + e.getMessage());
+        }
+
+        // load cookies from a file if specified in the order file.
+        loadCookies();
+
+        // Considered same as overall timeout, for now.
+        // TODO: When HTTPClient stops using a monitor 'waitingThread'
+        // thread to watch over the getting of the socket from socket
+        // factory and instead supports the java.net.Socket#connect timeout.
+        // http.setConnectionTimeout((int)timeout);
+        // set per-read() timeout: overall timeout will be checked at least
+        // this
+        // frequently
+        this.http.setTimeout(this.soTimeout);
+
     }
 
     private boolean getStrict(CrawlURI curi) {
         Boolean isStrict = null;
-        try
-        {
-            isStrict  = (Boolean)getAttribute(ATTR_STRICT, curi);
-        }
-        catch (Exception e)
-        {
+        try {
+            isStrict = (Boolean) getAttribute(ATTR_STRICT, curi);
+        } catch (Exception e) {
             isStrict = new Boolean(DEFAULT_STRICT);
         }
         return isStrict.booleanValue();
