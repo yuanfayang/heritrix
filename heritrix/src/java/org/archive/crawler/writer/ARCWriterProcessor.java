@@ -59,6 +59,7 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -357,7 +358,7 @@ ARCWriterSettings, FetchStatusCodes {
         
         write(curi, recordLength,
             curi.getHttpRecorder().getRecordedInput().
-                   getReplayInputStream());
+                   getReplayInputStream(), getHostAddress(curi));
     }
 
     protected void writeDns(CrawlURI curi)
@@ -383,14 +384,16 @@ ARCWriterSettings, FetchStatusCodes {
         }
         
         write(curi, recordLength,
-            new ByteArrayInputStream(baos.toByteArray()));
+            new ByteArrayInputStream(baos.toByteArray()),
+            curi.getString(A_DNS_SERVER_IP_LABEL));
 
         // Save the calculated contentSize for logging purposes
         // TODO handle this need more sensibly
         curi.setContentSize(recordLength);
     }
     
-    protected void write(CrawlURI curi, int recordLength, InputStream in)
+    protected void write(CrawlURI curi, int recordLength, InputStream in,
+        String ip)
     throws IOException {
         ARCWriter writer = this.pool.borrowARCWriter();
         if (writer == null) {
@@ -400,11 +403,11 @@ ARCWriterSettings, FetchStatusCodes {
         try {
             if (in instanceof ReplayInputStream) {
                 writer.write(curi.getURIString(), curi.getContentType(),
-                    getHostAddress(curi), curi.getLong(A_FETCH_BEGAN_TIME),
+                    ip, curi.getLong(A_FETCH_BEGAN_TIME),
                     recordLength, (ReplayInputStream)in);
             } else {
                 writer.write(curi.getURIString(), curi.getContentType(),
-                    getHostAddress(curi), curi.getLong(A_FETCH_BEGAN_TIME),
+                    ip, curi.getLong(A_FETCH_BEGAN_TIME),
                     recordLength, in);
             }
         } catch (IOException e) {
@@ -423,8 +426,12 @@ ARCWriterSettings, FetchStatusCodes {
     }
     
     private String getHostAddress(CrawlURI curi) {
-        return getController().getServerCache().getHostFor(curi).getIP().
-            getHostAddress();
+        CrawlHost h = getController().getServerCache().getHostFor(curi);
+        if (h == null) {
+            throw new NullPointerException("Crawlhost is null for " +
+                curi);
+        }
+        return h.getIP().getHostAddress();
     }
     
     /**

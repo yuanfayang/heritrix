@@ -38,6 +38,7 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.util.InetAddressUtil;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
+import org.xbill.DNS.FindServer;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.Type;
 import org.xbill.DNS.dns;
@@ -150,14 +151,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
             curi.putObject(A_RRECORD_SET_LABEL, rrecordSet);
             // Get TTL and IP info from the first A record (there may be
             // multiple, e.g. www.washington.edu) then update the CrawlServer
-            for (int i = 0; i < rrecordSet.length; i++) {
-                if (rrecordSet[i].getType() != Type.A) {
-                    continue;
-                }
-                ARecord AsA = (ARecord) rrecordSet[i];
-                targetHost.setIP(AsA.getAddress(), AsA.getTTL());
-                break; // only need to process one record
-            }
+            ARecord arecord = getFirstARecord(rrecordSet);
+            targetHost.setIP(arecord.getAddress(), arecord.getTTL());
         } else {
             if (((Boolean) getUncheckedAttribute(null,
                     ATTR_ACCEPT_NON_DNS_RESOLVES)).booleanValue()) {
@@ -177,7 +172,23 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
             }
         }
-
+        // Add the IP of the dns server to this dns crawluri.
+        curi.putString(A_DNS_SERVER_IP_LABEL, FindServer.server());
         curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
+    }
+    
+    protected ARecord getFirstARecord(Record[] rrecordSet) {
+        ARecord arecord = null;
+        if (rrecordSet == null || rrecordSet.length == 0) {
+            return arecord;
+        }
+        for (int i = 0; i < rrecordSet.length; i++) {
+            if (rrecordSet[i].getType() != Type.A) {
+                continue;
+            }
+            arecord = (ARecord) rrecordSet[i];
+            break;
+        }
+        return arecord;
     }
 }

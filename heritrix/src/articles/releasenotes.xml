@@ -14,6 +14,25 @@
 
   <sect1 id="1_4_0">
     <title>Release 1.4.0 - NOT YET RELEASED</title>
+    <sect2 id="1_4_0_changes">
+        <title>Changes</title>
+        <sect3 id="dns_arc_ip">
+            <title>The IP in dns ARC Records</title>
+            <para>Dns entries in ARCs look like this:
+<programlisting>dns:www.archive.org 207.241.238.254 20050310233154 text/dns 58 20050310233154
+www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
+            The above record is for the lookup of www.archive.org.</para>
+
+            
+            <para>Previous to 1.4.0, the IP used on the ARC Record metaline
+            -- the first line of an ARC Record entry (207.241.238.254 in the
+            above example) -- was the IP of
+            the host looked up.  As of 1.4.0, we write the IP of the dns
+            server that returned us the address looked up.  Previous to this
+            there was no recording of the dnsserver IP.
+            </para>
+        </sect3>
+    </sect2>
     <sect2 id="1_4_0_limitations">
       <title>Known Limitations/Issues</title>
       <sect3 id="glibc2_3_2"><title>Glibc 2.3.2 and NPTL</title>
