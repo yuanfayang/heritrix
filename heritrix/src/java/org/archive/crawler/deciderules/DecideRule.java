@@ -1,4 +1,4 @@
-/* Rule
+/* DecideRule
 *
 * $Id$
 *
@@ -29,12 +29,14 @@ import org.archive.crawler.settings.ModuleType;
 
 /**
  * Interface for rules which, given an object to evaluate,
- * respond with a decision: Rule.ACCEPT, Rule.REJECT, or 
- * Rule.PASS. This is friendlier to chaining and common
- * usage scenarios than strictly binary filtering, and 
- * may be less confusing in its terminology/effect/nesting.
+ * respond with a decision: {@link DecideRule#ACCEPT}, 
+ * {@link DecideRule#REJECT}, or 
+ * {@link DecideRule#PASS}.
+ * 
+ * Rules return {@link #PASS} by default.
  *
  * @author gojomo
+ * @see org.archive.crawler.deciderules.DecideRuleSequence
  */
 public class DecideRule extends ModuleType {
     // enumeration of 'actions'
@@ -43,20 +45,25 @@ public class DecideRule extends ModuleType {
     public static final String PASS = "PASS";
 
     /**
-     * @param name
+     * Constructor.
+     * @param name Name of this rule.
      */
     public DecideRule(String name) {
         super(name);
-        // TODO Auto-generated constructor stub
     }
 
+    /**
+     * Make decision on passed <code>object</code>.
+     * @param object Object to rule on.
+     * @return {@link #ACCEPT}, {@link #REJECT}, or {@link #PASS}.
+     */
     public Object decisionFor(Object object) {
         return PASS;
     }
 
     /**
      * Respond to a settings update, refreshing any internal settings-derived
-     * state
+     * state.
      */
     public void kickUpdate() {
         // by default do nothing

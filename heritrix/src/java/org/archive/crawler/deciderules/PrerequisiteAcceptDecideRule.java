@@ -36,10 +36,6 @@ import org.archive.crawler.extractor.Link;
  * @author gojomo
  */
 public class PrerequisiteAcceptDecideRule extends AcceptDecideRule {
-
-    /**
-     * @param name
-     */
     public PrerequisiteAcceptDecideRule(String name) {
         super(name);
         setDescription("PrerequisiteAcceptDecideRule: ACCEPTs " +
@@ -47,22 +43,16 @@ public class PrerequisiteAcceptDecideRule extends AcceptDecideRule {
                 "'link'.");
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.rules.Rule#applyTo(java.lang.Object)
-     */
-    public Object decisionFor(Object object) {
-        
+    public Object decisionFor(Object object) {        
         try {
             String hopsPath = ((CandidateURI)object).getPathFromSeed();
-            if (hopsPath.length() > 0
-                    && hopsPath.charAt(hopsPath.length()-1) == Link.PREREQ_HOP) {
+            if (hopsPath.length() > 0 &&
+                    hopsPath.charAt(hopsPath.length()-1) == Link.PREREQ_HOP) {
                 return ACCEPT;
             }
         } catch (ClassCastException e) {
-           // do nothing
+           // Do nothing
         }
         return PASS;
-        
     }
-
 }

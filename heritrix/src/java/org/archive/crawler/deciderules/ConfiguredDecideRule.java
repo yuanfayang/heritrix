@@ -34,26 +34,17 @@ import org.archive.crawler.settings.SimpleType;
  * @author gojomo
  */
 public class ConfiguredDecideRule extends DecideRule {
-
     public final static String ATTR_DECISION = "decision";
     public final static String[] ALLOWED_TYPES = new String[] {ACCEPT, REJECT};
     
-    /**
-     * @param name
-     */
     public ConfiguredDecideRule(String name) {
         super(name);
         setDescription("FRAMEWORK: Should not appear as choice");
-
         addElementToDefinition(new SimpleType(ATTR_DECISION,
-                "Decision to be applied", ACCEPT, ALLOWED_TYPES));
+            "Decision to be applied", ACCEPT, ALLOWED_TYPES));
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.rules.Rule#applyTo(java.lang.Object)
-     */
     public Object decisionFor(Object object) {
-        return ((Object) getUncheckedAttribute(object, ATTR_DECISION));
+        return getUncheckedAttribute(object, ATTR_DECISION);
     }
-
 }

@@ -31,21 +31,13 @@ package org.archive.crawler.deciderules;
  * @author gojomo
  */
 public class AcceptDecideRule extends DecideRule {
-
-    /**
-     * @param name
-     */
     public AcceptDecideRule(String name) {
         super(name);
         setDescription("AcceptRule: always gives ACCEPT decision. " +
-                "Useful to establish an initial default.");
+            "Useful to establish an initial default.");
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.rules.Rule#applyTo(java.lang.Object)
-     */
     public Object decisionFor(Object object) {
         return ACCEPT;
     }
-
 }

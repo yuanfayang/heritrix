@@ -31,21 +31,13 @@ package org.archive.crawler.deciderules;
  * @author gojomo
  */
 public class RejectDecideRule extends DecideRule {
-
-    /**
-     * @param name
-     */
     public RejectDecideRule(String name) {
         super(name);
         setDescription("RejectDecideRule: always gives REJECT decision. " +
         "Useful to establish an initial default.");
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.rules.Rule#applyTo(java.lang.Object)
-     */
     public Object decisionFor(Object object) {
         return REJECT;
     }
-
 }

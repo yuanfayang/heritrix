@@ -27,14 +27,11 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.framework.Filter;
-import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.Type;
 
 /**
  * DecidingFilter: a classic Filter which makes its accept/reject
- * decision based on whatever DecideRules have been set up inside
+ * decision based on whatever {@link DecideRule}s have been set up inside
  * it. 
  *
  * @author gojomo
@@ -44,26 +41,19 @@ public class DecidingFilter extends Filter {
     private static final Logger logger =
         Logger.getLogger(DecidingFilter.class.getName());
     public static final String ATTR_DECIDE_RULES = "decide-rules";
-
-    private DecideRuleSequence rules;
     
     public DecidingFilter(String name, String description) {
         this(name);
         setDescription(description);
     }
 
-    /**
-     * @param name
-     */
     public DecidingFilter(String name) {
-        super(
-            name,
+        super(name,
             "DecidingFilter. A filter that applies one or more DecideRules " +
             "to determine whether a URI is accepted (returns true) or " +
             "rejected (returns false).");
-        
-        this.rules = (DecideRuleSequence) addElementToDefinition(new DecideRuleSequence(
-                ATTR_DECIDE_RULES));
+        addElementToDefinition(
+            new DecideRuleSequence(ATTR_DECIDE_RULES));
     }
 
     protected DecideRule getDecideRule(Object o) {
@@ -75,10 +65,7 @@ public class DecidingFilter extends Filter {
     }
 
     protected boolean innerAccepts(Object o) {
-        DecideRule rule;
-        rule = getDecideRule(o);
-        Object decision = rule.decisionFor(o);
-        return decision == DecideRule.ACCEPT;
+        return getDecideRule(o).decisionFor(o) == DecideRule.ACCEPT;
     }
 
     /**

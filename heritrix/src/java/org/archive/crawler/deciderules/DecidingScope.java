@@ -43,8 +43,6 @@ public class DecidingScope extends CrawlScope {
         Logger.getLogger(DecidingScope.class.getName());
     public static final String ATTR_DECIDE_RULES = "decide-rules";
 
-    private DecideRuleSequence rules;
-
     public DecidingScope(String name) {
         super(name);
         setDescription(
@@ -52,7 +50,7 @@ public class DecidingScope extends CrawlScope {
                 "DecideRules to determine whether a URI is accepted " +
                 "or rejected (returns false).");
     
-    this.rules = (DecideRuleSequence) addElementToDefinition(new DecideRuleSequence(
+        addElementToDefinition(new DecideRuleSequence(
             ATTR_DECIDE_RULES));
     }
     
@@ -65,9 +63,6 @@ public class DecidingScope extends CrawlScope {
     }
 
     protected boolean innerAccepts(Object o) {
-        DecideRule rule;
-        rule = getDecideRule(o);
-        Object decision = rule.decisionFor(o);
-        return decision == DecideRule.ACCEPT;
+        return getDecideRule(o).decisionFor(o) == DecideRule.ACCEPT;
     }
 }
