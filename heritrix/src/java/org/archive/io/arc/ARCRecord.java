@@ -26,6 +26,10 @@ package org.archive.io.arc;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+import org.archive.util.Base32;
 
 
 /**
@@ -70,6 +74,16 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * Set flag when we've reached the end-of-record.
      */
     private boolean eor = false;
+    
+    /**
+     * Compute digest on what we read and add to metadata when done.
+     * 
+     * Currently hardcoded as sha-1. TODO: Remove when arcs record
+     * digest or else, add a facility that allows the arc reader to
+     * compare the calculated digest to that which is recorded in
+     * the arc.
+     */
+    private MessageDigest digest = null;
 
     /**
      * Constructor.
@@ -77,8 +91,10 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent.
      * @param metaData Meta data.
+     * @throws IOException
      */
-    public ARCRecord(InputStream in, ARCRecordMetaData metaData) {
+    public ARCRecord(InputStream in, ARCRecordMetaData metaData)
+    		throws IOException {
         this(in, metaData, 0);
     }
 
@@ -89,17 +105,23 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * is to represent.
      * @param metaData Meta data.
      * @param bodyOffset Offset into the body.  Usually 0.
+     * @throws IOException
      */
     public ARCRecord(InputStream in, ARCRecordMetaData metaData,
-                int bodyOffset) {
+                int bodyOffset) 
+    		throws IOException {
         this.in = in;
         this.metaData = metaData;
         this.position = bodyOffset;
+        try {
+            this.digest = MessageDigest.getInstance("SHA1");
+        } catch (NoSuchAlgorithmException e) {
+            // Convert to IOE because thats more amenable to callers
+            // -- they are dealing with it anyways.
+            throw new IOException(e.getMessage());
+        }
     }
 
-    /* (non-Javadoc)
-     * @see java.io.InputStream#markSupported()
-     */
     public boolean markSupported() {
         return false;
     }
@@ -139,6 +161,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
             if (c == -1) {
                 throw new IOException("Premature EOF before end-of-record.");
             }
+            this.digest.update((byte)c);
             this.position++;
         }
 
@@ -154,6 +177,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
             if (read == -1) {
                 throw new IOException("Premature EOF before end-of-record.");
             }
+            this.digest.update(b, offset, read);
             this.position += read;
         }
         return read;
@@ -196,7 +220,8 @@ public class ARCRecord extends InputStream implements ARCConstants {
     private void skip() throws IOException {
         if (!this.eor) {
             // Read to the end of the body of the record.  Exhaust the stream.
-            // Can't skip to end because underlying stream may be compressed.
+            // Can't skip to end because underlying stream may be compressed
+            // and we're calculating the digest for the record.
             if (available() > 0) {
                 skip(available());
             }
@@ -223,6 +248,8 @@ public class ARCRecord extends InputStream implements ARCConstants {
                     c = this.in.read();
                     if (c != -1) {
                         if (c == LINE_SEPARATOR) {
+                            // Update digest.
+                            this.digest.update((byte)c);
                             continue;
                         }
                         if (this.in.markSupported()) {
@@ -237,6 +264,9 @@ public class ARCRecord extends InputStream implements ARCConstants {
             }
 
             this.eor = true;
+            // Set the metadata digest as base32 string.
+            this.metaData.
+            	setDigest(Base32.encode((byte[])this.digest.digest()));
         }
     }
 }

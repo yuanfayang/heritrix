@@ -571,6 +571,13 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * <p>See in <code>$HERITRIX_HOME/bin/arcreader</code> for a script that'll
      * take care of classpaths and the calling of ARCReader.
      *
+     * <p>Outputs using a pseudo-CDX format as described here:
+     * <a href="http://www.archive.org/web/researcher/cdx_legend.php">CDX
+     * Legent</a> and here
+     * <a href="http://www.archive.org/web/researcher/example_cdx.php">Example</a>.
+     * Legend used in below is: 'CDX b e a m c V (or v if uncompressed) n'.
+     * Hash is hard-coded straight SHA-1 hash of content.
+     *
      * @param args Command-line arguments.
      * @throws IOException Failed read of passed arc files.
      * @throws ParseException Failed parse of the command line.
@@ -639,18 +646,28 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 // long start = System.currentTimeMillis();
-                ARCReader arc =
-                    ARCReaderFactory.get(new File((String)i.next()));
+                File f = new File((String)i.next());
+                boolean compressed = ARCReaderFactory.isCompressed(f);
+                ARCReader arc = ARCReaderFactory.get(f);
+                // Write output as pseudo-CDX file.  See
+                // http://www.archive.org/web/researcher/cdx_legend.php
+                // and http://www.archive.org/web/researcher/example_cdx.php.
+                // Hash is hard-coded straight SHA-1 hash of content.
+                System.out.println("CDX b e a m c " +
+                    ((compressed)? "V": "v") + " n");
                 for (Iterator ii = arc.iterator(); ii.hasNext();) {
                     ARCRecord r = (ARCRecord)ii.next();
-                    ARCRecordMetaData meta = r.getMetaData();
-                    System.out.println(meta.getUrl() + " " +
-                        meta.getDate() + " " +
-                        meta.getOffset() + " " +
-                        meta.getLength() + " " +
-                        meta.getMimetype() + " " +
-                        meta.getIp() + " ");
+                    // Read the whole record so we get out a hash.
                     r.close();
+                    ARCRecordMetaData meta = r.getMetaData();
+                    System.out.println(meta.getDate() + " " +	// 'b' date.
+                        meta.getIp() + " " +		// 'e' IP
+                        meta.getUrl() + " " +		// 'a' Original URI
+                        meta.getMimetype() + " " +	// 'm' Mimetype
+                        meta.getDigest() + " " +	// 'c' "Old-style" checksum
+                        meta.getOffset() + " " +	// 'V' or 'v' offset.
+                        meta.getLength() + " "		// 'n' Arc doc length.
+                        );
                     System.out.flush();
                 }
 
