@@ -68,7 +68,6 @@ public abstract class CrawlScope extends Filter {
 
     /**
      * @param name
-     * @param description
      */
     public CrawlScope(String name) {
         super(name, "Crawl scope");

@@ -160,13 +160,6 @@ public class Processor extends CrawlerModule {
             ((Filter) iter.next()).initialize(c);
         }
 	}
-	
-	/**
-	 * @param string
-	private void setName(String string) {
-		name=string;
-	}
-     */
 
 	public Processor spawn(int serialNum) {
 		Processor newInstance = null;

@@ -61,7 +61,6 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
 
     /**
      * @param name
-     * @param description
      */
     public FetchDNS(String name) {
         super(name, "DNS Fetcher");

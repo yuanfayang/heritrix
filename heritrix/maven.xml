@@ -18,6 +18,16 @@
           </fileset>
         </copy>
 
+        <!--Set filter token used in a few instances below.-->
+        <filter token="VERSION" value="${pom.currentVersion}" />
+
+        <!--Add the conf dir to our binary distribution.-->
+        <copy todir="${maven.dist.bin.assembly.dir}/conf" filtering="true">
+          <fileset dir="./src/conf">
+            <include name="**/*"/>
+          </fileset>
+        </copy>
+
         <!--Copy to a bin dir the heritrix start script.-->
         <copy todir="${maven.dist.bin.assembly.dir}/bin">
           <fileset dir="${maven.src.dir}/scripts">
@@ -37,16 +47,33 @@
           </fileset>
         </chmod>
 
-        <!--Copy over the admin webapp.-->
-        <filter token="VERSION" value="${pom.currentVersion}" />
-        <copy todir="${maven.dist.bin.assembly.dir}/webapps" filtering="true">
+        <!--Copy webapps to build directory w/ filtering enabled.-->
+        <copy todir="${maven.build.dir}/webapps" filtering="true">
           <fileset dir="${maven.src.dir}/webapps">
             <include name="**/*"/>
           </fileset>
         </copy>
 
-    </postGoal>
+        <!--Now create war files of what is in build directory.-->
+        <property name="webapps.dir" value="${maven.build.dir}/webapps" />
+        <war destfile="${maven.build.dir}/admin.war"
+            webxml="${webapps.dir}/admin/WEB-INF/web.xml"
+            basedir="${webapps.dir}/admin" />
+        <war destfile="${maven.build.dir}/garden.war"
+            webxml="${webapps.dir}/garden/WEB-INF/web.xml"
+            basedir="${webapps.dir}/garden" />
+        <war destfile="${maven.build.dir}/root.war"
+            webxml="${webapps.dir}/garden/WEB-INF/web.xml"
+            basedir="${webapps.dir}/root" />
 
+        <!--Copy over the just made war files into the distribution copy.-->
+        <copy todir="${maven.dist.bin.assembly.dir}/webapps">
+          <fileset dir="${maven.build.dir}">
+            <include name="*.war"/>
+          </fileset>
+        </copy>
+    </postGoal>
+    
     <postGoal name="dist:prepare-src-filesystem">
         <echo>[Heritrix] dist:prepare-src-filesystem postGoal</echo>
         <!--Add the lib dir to our binary distribution.-->

@@ -47,7 +47,6 @@ public class URIRegExpFilter extends Filter {
 
     /**
      * @param name
-     * @param description
      */
     public URIRegExpFilter(String name) {
         super(name, "URI regexp filter");

@@ -1,6 +1,6 @@
 <%@include file="/include/secure_limited.jsp"%>
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.SimpleCrawlJob,java.io.File" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.CrawlJob,java.io.File" %>
 
 <%
 	SimpleCrawlJob thejob = null;

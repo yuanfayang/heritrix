@@ -53,7 +53,6 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
 
     /**
      * @param name
-     * @param description
      */
     public Postselector(String name) {
         super(name, "Post selector");

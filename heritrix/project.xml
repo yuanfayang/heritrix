@@ -439,6 +439,16 @@
                 <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
             </properties>
         </dependency>
+        <dependency>
+            <id>commons-cli</id>
+            <version>1.0</version>
+            <url>http://jakarta.apache.org/site/binindex.cgi</url>
+            <properties>
+                <description>Needed doing Heritrix command-line processing.
+                </description>
+                <license>Apache 1.1 http://www.apache.org/LICENSE.txt</license>
+            </properties>
+        </dependency>
 
   </dependencies>
 
@@ -458,15 +468,6 @@
       </excludes>
     </unitTest>
 
-    <resources>
-      <resource>
-        <filtering>true</filtering> 
-        <directory>src/conf</directory>
-        <includes>
-          <include>*.properties</include>
-        </includes>
-      </resource>
-    </resources>
   </build>
 
     <!--List of reports to generate.

@@ -22,5 +22,6 @@
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.3.jar"/>
 	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
 	<classpathentry kind="lib" path="lib/httpclient-20031002.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>
 	<classpathentry kind="output" path="target"/>
 </classpath>

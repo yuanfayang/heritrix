@@ -120,7 +120,6 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 
     /**
      * @param name
-     * @param description
      */
     public ExtractorHTML(String name) {
         super(name, "HTML extractor");

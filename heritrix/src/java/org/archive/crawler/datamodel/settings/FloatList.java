@@ -45,7 +45,7 @@ public class FloatList extends ListType {
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      *        in a user interface.
-     * @param the list from which this lists gets its initial values.
+     * @param l the list from which this lists gets its initial values.
      */
     public FloatList(String name, String description, FloatList l) {
         super(name, description);
@@ -58,7 +58,7 @@ public class FloatList extends ListType {
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      *        in a user interface.
-     * @param the array from which this lists gets its initial values.
+     * @param l the array from which this lists gets its initial values.
      */
     public FloatList(String name, String description, Float[] l) {
         super(name, description);
@@ -71,7 +71,7 @@ public class FloatList extends ListType {
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      *        in a user interface.
-     * @param the array from which this lists gets its initial values.
+     * @param l the array from which this lists gets its initial values.
      */
     public FloatList(String name, String description, float[] l) {
         super(name, description);

@@ -37,7 +37,7 @@ public interface CrawlStatusListener
 	 * 
 	 * @param sExitMessage Type of exit. Should be one of the STATUS constants in defined in CrawlJob.
 	 * 
-	 * @see org.archive.crawler.framework.CrawlJob
+	 * @see org.archive.crawler.admin.CrawlJob
 	 */
 	public void crawlEnding(String sExitMessage);	
 	
@@ -46,7 +46,7 @@ public interface CrawlStatusListener
 	 * 
 	 * @param sExitMessage Type of exit. Should be one of the STATUS constants in defined in CrawlJob.
 	 * 
-	 * @see org.archive.crawler.framework.CrawlJob
+	 * @see org.archive.crawler.admin.CrawlJob
 	 */
 	public void crawlEnded(String sExitMessage);
 

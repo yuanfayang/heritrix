@@ -84,6 +84,7 @@ public class XMLSettingsHandler extends SettingsHandler {
     /** Create a new XMLSettingsHandler object.
      * 
      * @param orderFile where the order file is located.
+     * @throws InvalidAttributeValueException
      */
     public XMLSettingsHandler(File orderFile)
         throws InvalidAttributeValueException {
@@ -276,9 +277,10 @@ public class XMLSettingsHandler extends SettingsHandler {
      * Observe that this method should only be called after the SettingsHandler
      * has been initialized.
      * 
-     * @param orderFileName where the new order file should be saved.
-     * @param settingsDirectory the top level directory of the per host/domain
+     * @param newOrderFileName where the new order file should be saved.
+     * @param newSettingsDirectory the top level directory of the per host/domain
      *                          settings files.
+     * @throws IOException
      */
     public void copySettings(File newOrderFileName, String newSettingsDirectory)
       throws IOException {

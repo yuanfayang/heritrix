@@ -2,14 +2,33 @@
 ##
 ## This script launches the heritrix crawler.
 ##
+##
 ## Environment variable prerequisites
-## 
-## HERITRIX_HOME    Pointer to your heritrix install.
 ##
 ## JAVA_HOME        Must point at your JDK install.
 ##
-## JAVA_OPTS        (Optional) Java runtime options.  Default ''.
 ##
+## Optional environment variables
+## 
+## HERITRIX_HOME    Pointer to your heritrix install.  If not present, we 
+##                  make an educated guess based of position relative to this
+##                  script.
+##
+## JAVA_OPTS        Java runtime options.
+##
+
+# Resolve links - $0 may be a softlink
+PRG="$0"
+while [ -h "$PRG" ]; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '.*/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`/"$link"
+  fi
+done
+PRGDIR=`dirname "$PRG"`
 
 # Read local heritrix properties if any.
 if [ -f $HOME/.heritrixrc ]
@@ -17,25 +36,10 @@ then
   . $HOME/.heritrixrc
 fi
 
-# Check HERITRIX_HOME has been set.
+# Set HERITRIX_HOME.
 if [ -z "$HERITRIX_HOME" ]
 then
-    # TODO: Add some detective work locating heritrix.
-    echo "Before running this script, you must set the HERITRIX_HOME" 
-    echo "environment variable so it points at your heritrix install." 
-    exit 1
-fi
-
-# We need a LOGGING_DIR to write stdout and stdin to.
-if [ -z "${HERITRIX_LOGGING_DIR}" ]
-then
-    # TODO: Do this hardcoding better.  Read from order file.
-    HERITRIX_LOGGING_DIR=${HERITRIX_HOME}/disk
-fi
-
-if [ ! -d ${HERITRIX_LOGGING_DIR} ]
-then
-    mkdir -p ${HERITRIX_LOGGING_DIR}
+    HERITRIX_HOME=`cd "$PRGDIR/.." ; pwd`
 fi
 
 # Find JAVA_HOME.
@@ -51,59 +55,62 @@ then
   JAVA_HOME=$JAVA_BINDIR/..
 fi
 
-if [ "$JAVACMD" = "" ] 
+if [ -z "$JAVACMD" ] 
 then 
-   # it may be defined in env - including flags!!
+   # It may be defined in env - including flags!!
    JAVACMD=$JAVA_HOME/bin/java
 fi
 
-# Ignore previous classpath.  Build one that contains heritrix jar and contain
+# Ignore previous classpath.  Build one that contains heritrix jar and content
 # of the lib directory.
 oldCP=$CLASSPATH
 unset CLASSPATH
-CLASSPATH=`ls ${HERITRIX_HOME}/heritrix*.jar`
-for jar in `ls $HERITRIX_HOME/lib`
+for jar in `ls $HERITRIX_HOME/lib/*.jar $HERITRIX_HOME/*.jar`
 do
-    CLASSPATH=${CLASSPATH}:${HERITRIX_HOME}/lib/${jar}
+    CLASSPATH=${CLASSPATH}:${jar}
 done
 
 # Make sure of java opts.
-if [ "$JAVA_OPTS" = "" ]
+if [ -z "$JAVA_OPTS" ]
 then
   JAVA_OPTS=""
 fi
 
-# Start log contains useful information on started crawler.  This file is
-# created by Heritrix main class on start up.
-startlog="start.log"
+# heritrix_dmesg.log contains startup output from the crawler main class. 
+# As soon as content appears in this log, this shell script prints the 
+# successful (or failed) startup content and moves off waiting on heritrix
+# startup. This technique is done so we can show on the console startup 
+# messages emitted by java subsequent to the redirect of stdout and stderr.
+startMessage="${HERITRIX_HOME}/heritrix_dmesg.log"
 
-# Clean up start log just in case that something went wrong during previous 
-# run.
-if [ -f $startlog ]
+# Remove any file that may have been left over from previous starts.
+if [ -f $startMessage ]
 then
-    rm -f $startlog
+    rm -f $startmessage
 fi
 
-# Run heritrix as daemon
-MAIN=org.archive.crawler.Heritrix
-nohup $JAVA_HOME/bin/java ${JAVA_OPTS} -classpath ${CLASSPATH} $MAIN $@ >> \
-    ${HERITRIX_LOGGING_DIR}/stdout.log 2>> ${HERITRIX_LOGGING_DIR}/stderr.log \
-    &
+# Run heritrix as daemon.  Redirect stdout and stderr to a file.
+stdouterrlog=${HERITRIX_HOME}/heritrix_out.log
+echo "`date` Starting heritrix" >> $stdouterrlog
+main=org.archive.crawler.Heritrix
+nohup $JAVA_HOME/bin/java -Dheritrix.home=${HERITRIX_HOME} \
+    ${JAVA_OPTS} -classpath ${CLASSPATH} $main $@ \
+    >> ${stdouterrlog} 2>&1 &
 
-echo "Starting Heritrix..."
-
-# Wait for creation of start log 
-while [ ! -f $startlog ]
+# Wait for content in the heritrix_dmesg.log file.
+echo -n "`date` Starting heritrix"
+while true 
 do
-    sleep 1;
+    sleep 1
+    if [ -s $startMessage ]
+    then
+        echo
+        cat $startMessage
+        rm -f $startMessage
+        break
+    fi
+    echo -n '.'
 done
-
-# Cat and clean up start log.
-if [ -f $startlog ]
-then
-	cat $startlog
-	rm -f $startlog
-fi
 
 # Restore any old CLASSPATH.
 if [ "$oldCP" != "" ]; then
