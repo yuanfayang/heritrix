@@ -28,9 +28,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
@@ -46,7 +48,7 @@ import org.archive.util.TmpDirTestCase;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class ExtractorHTMLTest extends TmpDirTestCase {
+public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeConstants {
     
     private File orderFile = null;
     private CrawlerSettings globalSettings = null;
@@ -123,5 +125,20 @@ public class ExtractorHTMLTest extends TmpDirTestCase {
             }
         }
         assertTrue("Did not find gif url", foundLinkToHewlettFoundation);
+    }
+    
+    /**
+     * Test a paritculate <embed src=...> construct that was suspicious in
+     * the No10GovUk crawl.
+     * 
+     * @throws URIException
+     */
+    public void testEmbedSrc() throws URIException {
+        ExtractorHTML extractor = new ExtractorHTML("html extractor");
+        CrawlURI curi= new CrawlURI(new UURI("http://www.example.org"));
+        // an example from http://www.records.pro.gov.uk/documents/prem/18/1/default.asp?PageId=62&qt=true
+        CharSequence cs = "<embed src=\"/documents/prem/18/1/graphics/qtvr/hall.mov\" width=\"320\" height=\"212\" controller=\"true\" CORRECTION=\"FULL\" pluginspage=\"http://www.apple.com/quicktime/download/\" /> ";
+        extractor.extract(curi,cs);
+        assertTrue(((Collection)curi.getAList().getObject(A_HTML_EMBEDS)).contains("/documents/prem/18/1/graphics/qtvr/hall.mov"));
     }
 }
