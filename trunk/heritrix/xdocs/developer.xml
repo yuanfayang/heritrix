@@ -36,7 +36,7 @@
                 documentation but it does produce all else needed to run 
                 Heritrix.</p>
 
-                <p>If you are building Heritrix w/ Ant, you must have Ant 1.5 
+                <p>If you are building Heritrix with Ant, you must have Ant 1.5 
                     installed.  Make sure the Ant optional.jar file 
                     sits beside the junit.jar. See <a 
                     href="http://ant.apache.org/manual/OptionalTasks/junit.html">JUnit 
@@ -46,7 +46,7 @@
                     1.0-rc1. See maven.apache.org. </p>
 
 	<subsection name="Building Heritrix with Ant">
-	    <p>If you obtained packaged source, here is how you build w/ Ant: 
+	    <p>If you obtained packaged source, here is how you build with Ant: 
 <source>% tar xfz heritrix-?.?.?-src.tar.gz 
 % cd heritrix-?.?.? % $ANT_HOME/bin/ant dist </source> </p>
             <p>In the <em>dist</em> subdir will be all you need to run the 
@@ -55,7 +55,7 @@
 	</subsection>
             
             <subsection name="Building Heritrix with Maven">
-            <p>To build a CVS source checkout w/ Maven:
+            <p>To build a CVS source checkout with Maven:
 <source>% cd CVS_CHECKOUT_DIR 
 % $MAVEN_HOME/bin/maven dist</source> </p>
             <p>In the <em>target/distribution</em> subdir, you will find 
@@ -81,10 +81,10 @@
                 files separate. To be honest, we do not like this approach 
                 because you must look in two different directories to find 
                 files." from <em>Section 4.11.3, Java Extreme Programming 
-                Cookbook, By Eric M. Burke, Brian M. Coyner</em>. We agree w/ 
+                Cookbook, By Eric M. Burke, Brian M. Coyner</em>. We agree with 
                 the above so we put Unit Test classes beside the classes they 
                 are testing in the source tree giving them the name of the 
-                Class they are testing w/ a Test suffix. </p>
+                Class they are testing with a Test suffix. </p>
         </section>
         <section name="Coding Conventions">
             <p>Heritrix baselines on SUN's <a 
@@ -100,7 +100,7 @@
                 Guidelines</a>.</p>
 
             <subsection name="No Tabs">
-                <p>No tabs in source code. Set your editor to indent w/ 
+                <p>No tabs in source code. Set your editor to indent with 
                     spaces.</p>
             </subsection>
 
