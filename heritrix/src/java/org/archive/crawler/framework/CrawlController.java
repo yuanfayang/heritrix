@@ -62,7 +62,7 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.frontier.HostQueuesFrontier;
+import org.archive.crawler.frontier.BdbFrontier;
 import org.archive.crawler.io.LocalErrorFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
@@ -555,8 +555,8 @@ public class CrawlController implements Serializable {
             if (o instanceof Frontier) {
                 frontier = (Frontier)o;
             } else {
-                frontier = new HostQueuesFrontier(Frontier.ATTR_NAME);
-                order.setAttribute((HostQueuesFrontier) frontier);
+                frontier = new BdbFrontier(Frontier.ATTR_NAME);
+                order.setAttribute((BdbFrontier)frontier);
             }
 
             // Try to initialize frontier from the config file
