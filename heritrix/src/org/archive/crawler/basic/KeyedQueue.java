@@ -89,4 +89,15 @@ public class KeyedQueue extends LinkedList implements URIStoreable {
 		return classKey.toString();
 	}
 
+
+	/**
+	 * The only equals() that matters for KeyedQueues is
+	 * object equivalence.
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	public boolean equals(Object o) {
+		return this == o;
+	}
+
 }
