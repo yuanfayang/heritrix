@@ -7,7 +7,7 @@ package org.archive.util;
 import java.util.Iterator;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
 
 /** This class extends our simple queue.  It expects to store
  *  only CrawlURIs and will enforce a notion of time expiration,
@@ -51,13 +51,13 @@ public class TimedQueue extends Queue implements CoreAttributeConstants{
 			return;
 		}
 		
-		CrawlURI oldest = (CrawlURI)store.getFirst();
+		ProcessedCrawlURIRecord oldest = (ProcessedCrawlURIRecord)store.getFirst();
 		
 		if(oldest == null){
 			return;
 		}
 		
-		long finishTime = oldest.getAList().getLong(A_FETCH_COMPLETED_TIME);
+		long finishTime = oldest.getEndTime();
 		
 		if(finishTime + expireAfterMili <= now){
 			store.remove(oldest);

@@ -167,6 +167,8 @@
 <loggers>
   <crawl-statistics>
     <interval>60</interval>
+    <!-- acceptable values: mercator, human, verbose -->
+    <level>mercator</level>
   </crawl-statistics>
 </loggers>
 

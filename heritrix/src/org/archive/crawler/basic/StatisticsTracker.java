@@ -5,6 +5,7 @@
 package org.archive.crawler.basic;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,9 +14,9 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.ProcessedCrawlURIRecord;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.util.TimedQueue;
-
 
 /**
  * Tracks statistics that relate to the crawl in progress.  Callers should be
@@ -29,6 +30,13 @@ import org.archive.util.TimedQueue;
  */
 public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 
+	// logging levels
+	public static final int MERCATOR_LOGGING = 0;
+	public static final int HUMAN_LOGGING = 1;
+	public static final int VERBOSE_LOGGING = 2;
+	
+	protected int logLevel = MERCATOR_LOGGING;
+
 	protected CrawlController controller;
 
 	// keep track of the file types we see (mime type -> count)
@@ -38,7 +46,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	protected HashMap statusCodeDistribution = new HashMap();
 
 	protected int totalProcessedBytes = 0;
-	protected TimedQueue recentCrawlURIs = new TimedQueue(60);
+	protected TimedQueue recentlyCompletedFetches = new TimedQueue(60);
 
 	protected Logger periodicLogger = null;
 	protected int logInterval = 60;
@@ -94,9 +102,9 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	
 		// log the legend	
 		periodicLogger.log(Level.INFO,
-				"[timestamp] [discovered-pages] [pending-pages] [downloaded-pages]"
-					+ " [unique-pages] [overall-docs-per-sec] [current-docs-per-sec] [overall-KB-sec]"
-					+ " [current-KB-sec] [download-failures] [stalled-threads] [memory-usage]"
+				"[timestamp]\t\t[discovered-pages]\t[pending-pages]\t[downloaded-pages]"
+					+ "\t[unique-pages]\t[overall-docs-per-sec]\t[current-docs-per-sec]\t[overall-KB-sec]"
+					+ "\t[current-KB-sec]\t[download-failures]\t[stalled-threads]\t[memory-usage]"
 			);
 
 		// keep logging as long as this thang is running
@@ -136,93 +144,116 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 			periodicLogger.log(
 				Level.INFO,
 				timestamp.format(now)
-				+ " " + discoveredPages
-				+ " " + pendingPages
-				+ " " + downloadedPages
-				+ " " + uniquePages
-				+ " " + docsPerSecond
-				+ " " + currentDocsPerSecond
-				+ " " + totalKBPerSec
-				+ " " + currentKBPerSec
-				+ " " + downloadFailures
-				+ " " + pausedThreads
-				+ " " + Runtime.getRuntime().totalMemory()
+				+ "\t\t" + discoveredPages
+				+ "\t\t\t" + pendingPages
+				+ "\t\t" + downloadedPages
+				+ "\t\t\t" + uniquePages
+				+ "\t\t" + docsPerSecond
+				+ "\t\t\t" + currentDocsPerSecond
+				+ "\t\t\t" + totalKBPerSec
+				+ "\t\t\t" + currentKBPerSec
+				+ "\t\t\t" + downloadFailures
+				+ "\t\t\t" + pausedThreads
+				+ "\t\t\t" + Runtime.getRuntime().totalMemory()
 			);
 
-			// some human readable stuff, in case we want to look at the log file
-			periodicLogger.log(Level.INFO, now.toString());
-			periodicLogger.log(
-				Level.INFO,
-				"\tURIs Completed:\t"
-					+ percentOfDiscoveredUrisCompleted()
-					+ "% (fetched/discovered)");
-			periodicLogger.log(
-				Level.INFO,
-				"\tDocument Processing Rate:\t" + currentKBPerSec + " kb/sec.");
-			periodicLogger.log(
-				Level.INFO,
-				"\tDocument Processing Rate:\t" + docsPerSecond + " documents/sec.");
-			periodicLogger.log(
-				Level.INFO,
-				"\tTotal Processed Bytes:\t" +(totalProcessedBytes/1000000) + " mb");
-			periodicLogger.log(
-				Level.INFO,
-				"\tDiscovered URIs:\t" + urisEncounteredCount());
-			periodicLogger.log(
-				Level.INFO,
-				"\tFrontier (unfetched):\t" + urisInFrontierCount());
-			periodicLogger.log(
-				Level.INFO,
-				"\tFetch Attempts:\t" + totalFetchAttempts());
-			periodicLogger.log(
-				Level.INFO,
-				"\tSuccesses:\t" + successfulFetchAttempts());
-			periodicLogger.log(Level.INFO, "\tThreads:");
-			periodicLogger.log(Level.INFO, "\t\tTotal:\t" + threadCount());
-			periodicLogger.log(
-				Level.INFO,
-				"\t\tActive:\t" + activeThreadCount());
+			if (logLevel >= HUMAN_LOGGING) {
 
-			// print file type distribution (mime types)
-			HashMap dist = getFileDistribution();
-			if (dist.size() > 0) {
-				Iterator keyIterator = dist.keySet().iterator();
-
+				// some human readable stuff, in case we want to look at the log file
+				periodicLogger.log(Level.INFO, now.toString());
 				periodicLogger.log(
 					Level.INFO,
-					"\tFetched Resources MIME Distribution:");
-
-				while (keyIterator.hasNext()) {
-					String key = (String) keyIterator.next();
-					String val = ((Integer) dist.get(key)).toString();
-					periodicLogger.log(Level.INFO, "\t\t" + val + "\t" + key);
-				}
-				
-			} else {
+					"\tURIs Completed:\t"
+						+ percentOfDiscoveredUrisCompleted()
+						+ "% (fetched/discovered)");
 				periodicLogger.log(
 					Level.INFO,
-					"\tNo mime statistics currently available.");
+					"\tDocument Processing Rate:\t"
+						+ currentKBPerSec
+						+ " kb/sec.");
+				periodicLogger.log(
+					Level.INFO,
+					"\tDocument Processing Rate:\t"
+						+ docsPerSecond
+						+ " documents/sec.");
+				periodicLogger.log(
+					Level.INFO,
+					"\tTotal Processed Bytes:\t"
+						+ (totalProcessedBytes / 1000000)
+						+ " mb");
+				periodicLogger.log(
+					Level.INFO,
+					"\tDiscovered URIs:\t" + urisEncounteredCount());
+				periodicLogger.log(
+					Level.INFO,
+					"\tFrontier (unfetched):\t" + urisInFrontierCount());
+				periodicLogger.log(
+					Level.INFO,
+					"\tFetch Attempts:\t" + totalFetchAttempts());
+				periodicLogger.log(
+					Level.INFO,
+					"\tSuccesses:\t" + successfulFetchAttempts());
+				periodicLogger.log(Level.INFO, "\tThreads:");
+				periodicLogger.log(Level.INFO, "\t\tTotal:\t" + threadCount());
+				periodicLogger.log(
+					Level.INFO,
+					"\t\tActive:\t" + activeThreadCount());
 			}
 
-			// print status code distributions (e.g. 404, 200, etc)
-			HashMap codeDist = getStatusCodeDistribution();
-			if (codeDist.size() > 0) {
-				Iterator keyIterator = codeDist.keySet().iterator();
+			if (logLevel >= VERBOSE_LOGGING) {
 
-				periodicLogger.log(Level.INFO, "\tStatus Code Distribution:");
+				// print file type distribution (mime types)
+				HashMap dist = getFileDistribution();
+				Object[] keys = dist.keySet().toArray();
+				Arrays.sort(keys);
 
-				while (keyIterator.hasNext()) {
-					String key = (String) keyIterator.next();
-					String val = ((Integer) codeDist.get(key)).toString();
+				if (dist.size() > 0) {
+					//	Iterator keyIterator = t.iterator(); //dist.keySet().iterator();
+					periodicLogger.log(
+						Level.INFO,
+						"\tFetched Resources MIME Distribution:");
 
-					periodicLogger.log(Level.INFO, "\t\t" + val + "\t" + key);
+					for (int i = 0; i < keys.length; i++) {
+						String key = (String) keys[i];
+						String val = ((Integer) dist.get(key)).toString();
+						periodicLogger.log(
+							Level.INFO,
+							"\t\t" + val + "\t" + key);
+					}
+
+				} else {
+					periodicLogger.log(
+						Level.INFO,
+						"\tNo mime statistics currently available.");
 				}
-			} else {
-				periodicLogger.log(
-					Level.INFO,
-					"\tNo code sistribution statistics.");
-			}
 
+				// print status code distributions (e.g. 404, 200, etc)
+				HashMap codeDist = getStatusCodeDistribution();
+				Object[] cdKeys = codeDist.keySet().toArray();
+				Arrays.sort(cdKeys);
+
+				if (codeDist.size() > 0) {
+					Iterator keyIterator = codeDist.keySet().iterator();
+
+					periodicLogger.log(
+						Level.INFO,
+						"\tStatus Code Distribution:");
+
+					for (int i = 0; i < cdKeys.length; i++) {
+						String key = (String) cdKeys[i];
+						String val = ((Integer) codeDist.get(key)).toString();
+
+						periodicLogger.log(
+							Level.INFO,
+							"\t\t" + val + "\t" + key);
+					}
+
+				} else {
+					periodicLogger.log(
+						Level.INFO,
+						"\tNo code sistribution statistics.");
+				}
+			}
 			//periodicLogger.log(Level.INFO, delimiter);
 		}
 	}
@@ -248,22 +279,34 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 		);
 	}
 	
+	/** Get the current logging level */
+	public int getLogLevel(){
+		return logLevel;
+	}
+	
+	/** Set the log level.  See statically defined logging levels in this class
+	 *  for potential values 
+	 */
+	public void setLogLevel(int ll){
+		logLevel = ll;
+	}
+	
 	/** Returns an estimate of recent document download rates
 	 *  based on a queue of recently seen CrawlURIs.  
 	 * @return currentDocsPerSec
 	 */
 	public int currentProcessedDocsPerSec(){
 		// if we haven't done anyting or there isn't a reasonable sample size give up
-		if(totalFetchAttempts() == 0 || recentCrawlURIs.size() < 2){
+		if(totalFetchAttempts() == 0 || recentlyCompletedFetches.size() < 2){
 			return 0;
 		}
 		
-		long sampleStartTime = ((CrawlURI)recentCrawlURIs.getFirst()).getAList().getLong(A_FETCH_BEGAN_TIME);
+		long sampleStartTime = ((ProcessedCrawlURIRecord)recentlyCompletedFetches.getFirst()).getStartTime();
 		//long sampleEndTime = ((CrawlURI)recentCrawlURIs.getLast()).getAList().getLong(A_FETCH_COMPLETED_TIME);
 		long sampleEndTime = System.currentTimeMillis();
 		
 		return (int)
-				(recentCrawlURIs.size() / 
+				(recentlyCompletedFetches.size() / 
 				 ((sampleEndTime - sampleStartTime)
 					/ 1000 ) 
 				+ .5 // round to nearest int
@@ -294,19 +337,18 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	 * @return
 	 */
 	public int currentProcessedKBPerSec(){
-		if(totalFetchAttempts() == 0 || recentCrawlURIs.size() < 2){
+		if(totalFetchAttempts() == 0 || recentlyCompletedFetches.size() < 2){
 			return 0;
 		}
 		
 		int totalRecentSize = 0;
 		
-		Iterator recentItr = recentCrawlURIs.iterator();
+		Iterator recentItr = recentlyCompletedFetches.iterator();
 		while(recentItr.hasNext()){
-			totalRecentSize += getCrawlURISize((CrawlURI)recentItr.next());
+			totalRecentSize += ((ProcessedCrawlURIRecord)recentItr.next()).getSize();
 		}
 		
-		long sampleStartTime = ((CrawlURI)recentCrawlURIs.getFirst()).getAList().getLong(A_FETCH_BEGAN_TIME);
-		//long sampleEndTime = ((CrawlURI)recentCrawlURIs.getLast()).getAList().getLong(A_FETCH_COMPLETED_TIME);
+		long sampleStartTime = ((ProcessedCrawlURIRecord)recentlyCompletedFetches.getFirst()).getStartTime();
 		long sampleEndTime = System.currentTimeMillis();
 		long samplePeriod = (sampleEndTime - sampleStartTime)/1000;
 		int totalRecentKB = totalRecentSize / 1000;
@@ -327,19 +369,19 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 		if(! curi.getAList().containsKey(A_FETCH_BEGAN_TIME)){
 			return;
 		}
-		if(! curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)){
-			// fake end times, which should be good enough for our calculations
-			curi.getAList().putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
-		}
+		
+		// get the size from the curi and make sure the size field is set
+		int curiSize = getCrawlURISize(curi);
+		curi.setContentSize(curiSize);
 		
 		// the selector is going to strip the original of its' alist, 
 		// so let's keep a copy instead with just what we need
-		CrawlURI copy= (CrawlURI)curi.clone();
+		ProcessedCrawlURIRecord record = new ProcessedCrawlURIRecord(curi);
 		
 		// store in the queue
-		recentCrawlURIs.add(copy);
+		recentlyCompletedFetches.add(record);
 
-		totalProcessedBytes += getCrawlURISize(copy);
+		totalProcessedBytes += curiSize;
 	}
 	
 	/** Determine the size of a URIs content by either 
@@ -358,7 +400,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 			return size;
 		}
 		
-		// TODO do this the hard way
+		// TODO do this the hard way (looking at AList)
 		return 0;
 	}
 	
@@ -540,35 +582,32 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	 */
 	public int approximateCompletionRate() {
 
-		if (recentCrawlURIs.size() < 2) {
+		if (recentlyCompletedFetches.size() < 2) {
 			return 0;
 		}
 
-		CrawlURI oldest = (CrawlURI)recentCrawlURIs.getFirst();
-		CrawlURI newest = (CrawlURI)recentCrawlURIs.getLast();
+		ProcessedCrawlURIRecord oldest = (ProcessedCrawlURIRecord)recentlyCompletedFetches.getFirst();
+		ProcessedCrawlURIRecord newest = (ProcessedCrawlURIRecord)recentlyCompletedFetches.getLast();
 
-		long startTime = getCrawlURIStartTime(oldest);
-		long endTime = getCrawlURIEndTime(newest);
-
-		long period = endTime - startTime;
-
+		long period = newest.getEndTime() - oldest.getStartTime();
+	
 		int totalRecentBytes = 0;
 
-		Iterator recentURIs = recentCrawlURIs.iterator();
+		Iterator recentURIs = recentlyCompletedFetches.iterator();
 
 		while (recentURIs.hasNext()) {
-			CrawlURI current = (CrawlURI) recentURIs.next();
-			totalRecentBytes += getCrawlURISize(current);
+			ProcessedCrawlURIRecord current = (ProcessedCrawlURIRecord) recentURIs.next();
+			totalRecentBytes += current.getSize();
 		}
 
 		// return bytes/sec
 		return (int) (1000 * totalRecentBytes / period);
 	}
 
-	public long getCrawlURIStartTime(CrawlURI curi){
-		return curi.getAList().getLong(A_FETCH_BEGAN_TIME);
-	}
-	public long getCrawlURIEndTime(CrawlURI curi){
-		return curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
-	}
+//	public long getCrawlURIStartTime(CrawlURI curi){
+//		return curi.getAList().getLong(A_FETCH_BEGAN_TIME);
+//	}
+//	public long getCrawlURIEndTime(CrawlURI curi){
+//		return curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
+//	}
 }

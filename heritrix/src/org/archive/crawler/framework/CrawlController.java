@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
+import org.archive.crawler.basic.CrawlerConfigurationContants;
 import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -32,9 +33,9 @@ import org.archive.crawler.io.UriProcessingFormatter;
  * 
  * @author Gordon Mohr
  */
-public class CrawlController {
+public class CrawlController implements CrawlerConfigurationContants{
 	
-	public static final String DEFAULT_USER_AGENT = "Heritrix pre-Alpha (contact gojomo@archive.org)";
+
 	
 	private File disk;
 	public Logger uriProcessing = Logger.getLogger("uri-processing");
@@ -129,8 +130,21 @@ public class CrawlController {
 		// the statistics object must be created before modules that use it if those 
 		// modules retrieve the object from the controller during initialization 
 		// (which some do).  So here we go with that.
-		int interval = order.getIntAt("//crawl-statistics/interval", 60);
+		int interval = order.getIntAt("//crawl-statistics/interval", DEFAULT_STATISTICS_REPORT_INTERVAL);
 		statistics = new StatisticsTracker(this, interval);
+		
+		// set the log level
+		String logLevel = order.getStringAt("//loggers/crawl-statistics/level");
+		if(logLevel != null){
+			if(logLevel.toLowerCase().equals("mercator")){
+				statistics.setLogLevel(StatisticsTracker.MERCATOR_LOGGING);
+			}else if(logLevel.toLowerCase().equals("human")){
+				statistics.setLogLevel(StatisticsTracker.HUMAN_LOGGING);
+			}else if(logLevel.toLowerCase().equals("verbose")){
+				statistics.setLogLevel(StatisticsTracker.VERBOSE_LOGGING);
+			}			
+		}
+		//statistics.setLogLevel(StatisticsTracker.VERBOSE_LOGGING);
 			
 		store = (URIStore) order.getBehavior().instantiate("//store");
 		scheduler = (URIScheduler) order.getBehavior().instantiate("//scheduler");
