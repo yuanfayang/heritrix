@@ -299,6 +299,18 @@ will be found in their development locations and startup messages will
 show on the console.
 </p>
 </subsection>
+
+<subsection name="javax.net.ssl.trustStore">
+<p>Heritrix has its own truststore at <code>conf/heritrix.cacerts</code>
+that it uses if the <code>FetcherHTTP</code> is configured to use a 
+trust level of other than <code>open</code> (<code>open</code> is the default
+setting).  In the unusual case where  you'd like to have heritrix
+use an alternate truststore, point at the alternate by supplying the JSSE
+<code>javax.net.ssl.trustStore</code> property on the command line:
+e.g. <code>java -Djavax.net.ssl.trustStore=/tmp/truststore org.archive.crawler.Heritrix</code>.
+</p>
+</subsection>
+
 <subsection name="java.util.logging.config.file">
 <p>The heritrix conf directory
     includes a file named <em>heritrix.properties</em>.  A 

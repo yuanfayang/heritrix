@@ -1,4 +1,4 @@
-/* HeritrixSSLProtocolSocketFactoryTest
+/* ConfigurableX509TrustManagerTest
  * 
  * Created on Feb 18, 2004
  *
@@ -39,11 +39,18 @@ import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory;
 
 /**
- * Test trusting different types of certificates.
+ * Test configurable trust.
  * 
  * This class is usually commented out doing nought because tests against 
- * real sites out on the net.  TODO: Turn this all into a selftest installing
- * my own certificates of the various types.
+ * real sites out on the net whose condition can change at any time is too 
+ * flakey a pretext for this suite to be included as part of general unit
+ * test.  Not only that but the machine you are running on -- the JVM
+ * you are using -- will effect the outcome of these tests.
+ * Enable this suite when doing ConfigurableX509TrustManager 
+ * development/testing.
+ * 
+ * <p>TODO: Turn this all into a selftest installing my own certificates
+ * of the various types.
  * 
  * <p>Turn on debugging flags to help figure failures:
  * <a href="http://java.sun.com/j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html#Debug">Debugging
@@ -51,13 +58,13 @@ import org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory;
  * @author stack
  * @version $Id$
  */
-public class HeritrixSSLProtocolSocketFactoryTest extends TestCase
+public class ConfigurableX509TrustManagerTest extends TestCase
 {
     /**
-     * Heritrix logging instance.
+     * Logging instance.
      */
-    protected static Logger logger = Logger.
-       getLogger("org.archive.httpclient.HeritrixSSLProtocolSocketFactoryTest");
+    private static Logger logger = Logger.getLogger(
+        "org.archive.httpclient.ConfigurableX509TrustManagerTest");
     
     /**
      * Site w/ selfsigned certificate.
@@ -72,12 +79,12 @@ public class HeritrixSSLProtocolSocketFactoryTest extends TestCase
         "https://www.verisign.com/";
     
     /**
-     * URLs that should work w/ the LOOSE trust level.
+     * URLs that should work w/ the LOOSE trust level but that fail w/ 
+     * default httpclient ssl.
      */
     private static final String [] LOOSE_URLS =
     {
-        SELF_SIGNED_URL,
-        CA_NOT_IN_IBM_TRUSTSTORE     
+        SELF_SIGNED_URL
     };
     
     /**
@@ -90,7 +97,8 @@ public class HeritrixSSLProtocolSocketFactoryTest extends TestCase
         
         // Gives back a 40x if we use our 'open' TrustManager otherwise 
         // is 'certificate expired' message ('certificate expired' seems to be
-        // message that comes out if we don't have the CA in our chain.
+        // message that comes out if we don't have the CA in our chain).
+        //
         "https://s.as-us.falkag.net/",
             
         // This site is signed by a chain of DOD CAs.  W/ our 'open' TrustManger
@@ -140,9 +148,9 @@ public class HeritrixSSLProtocolSocketFactoryTest extends TestCase
     };
     
     /**
-     * @param test
+     * @param test Name of the test to run.
      */
-    public HeritrixSSLProtocolSocketFactoryTest(String test)
+    public ConfigurableX509TrustManagerTest(String test)
     {
         super(test);
     }
@@ -150,39 +158,50 @@ public class HeritrixSSLProtocolSocketFactoryTest extends TestCase
     /**
      * Select tests to run.
      *
-     * @return Test to run for HeritrixSSLProtocolSocketFactoryTest.
+     * @return Test to run for ConfigurableX509TrustManagerTest.
      */
     public static Test suite()
     {
         TestSuite suite = new TestSuite();
     
-        /**
+        /*
          * Commented out because going out to net to fetch random urls whose
          * state can change at any time is too flakey to include as part of 
-         * general unit test suite.  Comment in if doing heritrix 
-         * sslsocketfactory development/testing.
+         * general unit test suite.  Comment in if doing 
+         * ConfigurableX509TrustManagerTest development/testing.
          *
-            suite.addTest(new HeritrixSSLProtocolSocketFactoryTest(
-                "testOpenHeritrixSSLProtocolSocketFactory"));
-            suite.addTest(new HeritrixSSLProtocolSocketFactoryTest(
-                "testLooseHeritrixSSLProtocolSocketFactory"));
-            suite.addTest(new HeritrixSSLProtocolSocketFactoryTest(
-                "testNormalHeritrixSSLProtocolSocketFactory"));
-            suite.addTest(new HeritrixSSLProtocolSocketFactoryTest(
+         *
+            suite.addTest(new ConfigurableX509TrustManagerTest(
+                "testOpenConfigurableX509TrustManagerTest"));
+            suite.addTest(new ConfigurableX509TrustManagerTest(
+               "testLooseConfigurableX509TrustManagerTest"));
+            suite.addTest(new ConfigurableX509TrustManagerTest(
+               "testNormalConfigurableX509TrustManagerTest"));
+               
+            // Strict setting not yet implemented.
+         * 
+         */
+        
+        
+        /* This is a tough test to do.  See comment at head of method.
+         *
+         *
+            suite.addTest(
+                new ConfigurableX509TrustSSLProtocolSocketFactoryTest(
                 "testHeritrixTrustStore"));
-        */
+         */
         
         return suite;
     }
     
     /**
-     * Test the heritrix trust manager set to OPEN.
+     * Test the configurable trust manager set to OPEN.
      * 
      * @throws KeyManagementException
      * @throws KeyStoreException
      * @throws NoSuchAlgorithmException
      */
-    public void testOpenHeritrixSSLProtocolSocketFactory()
+    public void testOpenConfigurableX509TrustManagerTest()
         throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
@@ -193,19 +212,20 @@ public class HeritrixSSLProtocolSocketFactoryTest extends TestCase
             
         Protocol.registerProtocol("https", 
             new Protocol("https", 
-            new HeritrixSSLProtocolSocketFactory(HeritrixX509TrustManager.OPEN),
-                443));
+                new ConfigurableX509TrustSSLProtocolSocketFactory(
+                    ConfigurableX509TrustManager.OPEN),
+				443));
         runURLs(client, OPEN_URLS, false);
     }
  
     /**
-     * Test the heritrix trust manager set to LOOSE.
+     * Test the configurable trust manager set to LOOSE.
      * 
      * @throws KeyManagementException
      * @throws KeyStoreException
      * @throws NoSuchAlgorithmException
      */
-    public void testLooseHeritrixSSLProtocolSocketFactory()
+    public void testLooseConfigurableX509TrustManagerTest()
         throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
@@ -216,23 +236,26 @@ public class HeritrixSSLProtocolSocketFactoryTest extends TestCase
             
         Protocol.registerProtocol("https", 
            new Protocol("https", 
-           new HeritrixSSLProtocolSocketFactory(HeritrixX509TrustManager.LOOSE),
+           new ConfigurableX509TrustSSLProtocolSocketFactory(
+           		    ConfigurableX509TrustManager.LOOSE),
                 443));
         runURLs(client, LOOSE_URLS, false);
     }
         
     /**
-     * Test heritrix trust manager set to NORMAL.  
+     * Test configurable trust manager set to NORMAL.  
      * 
      * The trust manager should get same results as case were our trust manager
-     * is not installed.  Rerun the OPEN_URLS only expect to get an exception
-     * for every one when our trust manager is installed and set to NORMAL.
+     * is not installed.  Run the OPEN_URLS w/o the configurable trust manager
+     * installed and expect an exception every time.  Rerun the OPEN_URLS 
+     * w/ the trust manager installed and expect to get an exception
+     * for every one when trust level is set to NORMAL.
      * 
      * @throws KeyManagementException
      * @throws KeyStoreException
      * @throws NoSuchAlgorithmException
      */
-    public void testNormalHeritrixSSLProtocolSocketFactory()
+    public void testNormalConfigurableX509TrustManagerTest()
         throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException
     {
@@ -243,20 +266,26 @@ public class HeritrixSSLProtocolSocketFactoryTest extends TestCase
             
         Protocol.registerProtocol("https", 
            new Protocol("https", 
-           new HeritrixSSLProtocolSocketFactory(HeritrixX509TrustManager.NORMAL),
+           new ConfigurableX509TrustSSLProtocolSocketFactory(
+           		    ConfigurableX509TrustManager.NORMAL),
                 443));
         runURLs(client, OPEN_URLS, true);
     }
     
     /**
-     * Test heritrix trust manager set to NORMAL.  
+     * Test heritrix trust store.  
      * 
      * Test first w/o our trust manager and we should fail because we don't have
-     * the CA for the verisign site when runnign on IBM JVM.  Then test 
-     * w/ our test manager set to NORMAL.  Loading our Trust Manager makes us
-     * use the heritrix trustStore which does have the verisign CA.
+     * the CA for the verisign site when running on IBM JVM 1.4.1.  Then test 
+     * w/ our test manager set to NORMAL AND load the heritrix truststore
+     * which does have the verisign CA
+     * (See {@link org.archive.crawler.Heritrix#configureTrustStore()}).
      * 
-     * THIS TEST ONLY WORKS IF IBM JVM 1.4.1.
+     * <p>THIS TEST ONLY WORKS IF IBM JVM 1.4.1.
+     * 
+     * <p>TODO: This test needs to have setting of truststore implemented.
+     * 
+     * <p>TODO: Move this test to heritrix.
      * 
      * @throws KeyManagementException
      * @throws KeyStoreException
@@ -274,8 +303,11 @@ public class HeritrixSSLProtocolSocketFactoryTest extends TestCase
             
         Protocol.registerProtocol("https", 
            new Protocol("https", 
-           new HeritrixSSLProtocolSocketFactory(HeritrixX509TrustManager.NORMAL),
+           new ConfigurableX509TrustSSLProtocolSocketFactory(
+           		    ConfigurableX509TrustManager.NORMAL),
                 443));
+        // TODO: Set the javax.net.ssl.trustStore before calling next method.
+        // See org.archive.crawler.Heritrix#configureTrustStore().
         runURLs(client, caNotInIBMTrustStore, false);
     }
     

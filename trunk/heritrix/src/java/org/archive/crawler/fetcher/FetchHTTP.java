@@ -44,8 +44,8 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ToeThread;
-import org.archive.httpclient.HeritrixSSLProtocolSocketFactory;
-import org.archive.httpclient.HeritrixX509TrustManager;
+import org.archive.httpclient.ConfigurableX509TrustSSLProtocolSocketFactory;
+import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.HttpRecorder;
@@ -142,8 +142,8 @@ public class FetchHTTP
             + " certificates including selfsigned), 'normal' (all valid"
             + " certificates not including selfsigned) to 'strict' (Cert is"
             + " valid and DN must match servername)",
-            HeritrixX509TrustManager.DEFAULT,
-            HeritrixX509TrustManager.LEVELS_AS_ARRAY);
+            ConfigurableX509TrustManager.DEFAULT,
+            ConfigurableX509TrustManager.LEVELS_AS_ARRAY);
         trustLevel.setOverrideable(false);
         addElementToDefinition(trustLevel);
     }
@@ -313,7 +313,7 @@ public class FetchHTTP
                 String trustLevel = (String)getAttribute(ATTR_TRUST);
                 Protocol.registerProtocol("https", 
                     new Protocol("https", 
-                        new HeritrixSSLProtocolSocketFactory(trustLevel),
+                        new ConfigurableX509TrustSSLProtocolSocketFactory(trustLevel),
                     443));
             }
             

@@ -243,6 +243,7 @@ public class Heritrix
         confdir = getSubDir("conf");
         loadProperties();
         patchLogging();
+        configureTrustStore();
         warsdir = getSubDir("webapps");
         String jobsdirStr = getProperty(JOBSDIR_KEY, JOBSDIR_DEFAULT);
         jobsdir =
@@ -477,6 +478,31 @@ public class Heritrix
             LogManager.getLogManager().readConfiguration(is);
         }
     }
+    
+    /**
+     * Configure our trust store.
+     * 
+     * If system property is defined, then use it for our truststore.  Otherwise
+     * use the heritrix truststore under conf directory if it exists.
+     */
+    private static void configureTrustStore()
+    {
+        String value = getProperty(TRUSTSTORE_KEY);
+        if (value == null || value.length() <= 0)
+        {
+            // Use the heritrix store if it exists on disk.
+            File heritrixStore = new File(getConfdir(), "heritrix.cacerts");
+            if(heritrixStore.exists())
+            {
+                value = heritrixStore.getAbsolutePath();
+            }
+        }
+        
+        if (value != null && value.length() > 0)
+        {
+            System.setProperty(TRUSTSTORE_KEY, value);
+        }
+    }
 
     /**
      * Get a property value from the properties file or from system properties.
@@ -487,7 +513,7 @@ public class Heritrix
      *
      * @return Property if found or default if no such property.
      */
-    public static String getProperty(String key)
+    private static String getProperty(String key)
     {
         return getProperty(key, null);
     }
@@ -502,7 +528,7 @@ public class Heritrix
      *
      * @return Property if found or default if no such property.
      */
-    public static String getProperty(String key, String fallback)
+    private static String getProperty(String key, String fallback)
     {
         String value = System.getProperty(key);
         if (value == null && properties !=  null)
@@ -682,34 +708,6 @@ public class Heritrix
     public static File getConfdir()
     {
         return confdir;
-    }
-    
-    /**
-     * Get our trust store.
-     * 
-     * If system property is defined, then use it for our truststore.  Otherwise
-     * use the heritrix truststore under conf.  If a truststore hasn't been 
-     * set on the commandline, calling this method sets the heritrix truststore
-     * into system properties.
-     * 
-     * <p>This method is in here because this class knows how to build up 
-     * paths for the production and development contexts.
-     * 
-     * @return The truststore to use.
-     */
-    public static void configureTrustStore()
-    {
-        String value = System.getProperty(TRUSTSTORE_KEY);
-        if (value == null || value.length() <= 0)
-        {
-            // Use the heritrix store if it exists on disk.
-            File heritrixStore = new File(getConfdir(), "heritrix.cacerts");
-            if(heritrixStore.exists())
-            {
-                value = heritrixStore.getAbsolutePath();
-                System.setProperty(TRUSTSTORE_KEY, value);
-            }
-        }
     }
 
     /**
