@@ -43,12 +43,13 @@ public class SurtPrefixSetTest extends TestCase {
     private static final String WWW_BOK_IS_REDUNDANT_SURT = "http://(is,bok,www";
 
     private static final String TEST_SURT_LIST = 
-                ARCHIVE_ORG_DOMAIN_SURT + "\n" +
-                WWW_EXAMPLE_ORG_HOST_SURT + "\n" +
-                HOME_EXAMPLE_ORG_PATH_SURT + "\n" +
-                BOK_IS_REDUNDANT_SURT + "\n" +
-                IS_DOMAIN_SURT + "\n" +
-                WWW_BOK_IS_REDUNDANT_SURT + "\n";
+        "# a test set of surt prefixes \n" +
+        ARCHIVE_ORG_DOMAIN_SURT + "\n" +
+        WWW_EXAMPLE_ORG_HOST_SURT + "\n" +
+        HOME_EXAMPLE_ORG_PATH_SURT + "\n" +
+        BOK_IS_REDUNDANT_SURT + " # is redundant\n" +
+        IS_DOMAIN_SURT + "\n" +
+        WWW_BOK_IS_REDUNDANT_SURT + " # is redundant\n";
     
     /**
      * Create a new SurtPrefixSetTest object
