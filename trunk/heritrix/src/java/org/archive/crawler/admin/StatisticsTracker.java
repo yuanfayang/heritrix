@@ -919,7 +919,7 @@ public class StatisticsTracker extends AbstractTracker
         rep.newline();
 
         TreeSet statusCodeDistribution = getSortedByValue(getStatusCodeDistribution());
-        tmp = filesDistribution.iterator();;
+        tmp = statusCodeDistribution.iterator();;
         while(tmp.hasNext()){
             Map.Entry host = (Map.Entry)tmp.next();
             rep.append(host.getKey().toString());
