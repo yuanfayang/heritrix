@@ -30,13 +30,17 @@
 <%@ page import="javax.management.ReflectionException"%>
 
 <%!
-	/** TODO: FIX JAVADOC
+	/** 
 	 * Builds up the the HTML code to display any ComplexType attribute
-	 * of the settings in an editable form. Uses recursion.
+	 * of the settings in an editable form. Uses recursion. Checkboxes
+	 * indicate which settings are overrides, which are inherited and
+	 * (by absence of checkboxes) which can not be overriden.
 	 *
 	 * @param mbean The ComplexType to build a display
 	 * @param indent A string that will be added in front to indent the
 	 *               current type.
+	 * @param settings CrawlerSettings for the domain to override setting
+	 *                 for.
 	 * @param lists All 'lists' encountered will have their name added	 
 	 *              to this StringBuffer followed by a comma.
 	 * @returns The HTML code described above.
@@ -64,16 +68,10 @@
 				ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
 				try {
 					currentAttribute = mbean.getAttribute(settings,att.getName());
+					localAttribute = mbean.getLocalAttribute(settings,att.getName());
 				} catch (Exception e1) {
 					String error = e1.toString() + " " + e1.getMessage();
 					return error;
-				}
-				try{
-					//TODO: Exceptions are BAD. Stop disregarding them.
-					localAttribute = mbean.getLocalAttribute(settings,att.getName());
-				} catch (Exception e) {
-					// Disregard exception.
-					localAttribute = null;
 				}
 
 				if(currentAttribute instanceof ComplexType) {
@@ -160,13 +158,19 @@
 		return p.toString();
 	}
 	
-	/** TODO: FIX JAVADOC
+	/**
 	 * This methods updates a ComplexType with information passed to it
 	 * by a HttpServletRequest. It assumes that for every 'simple' type
 	 * there is a corrisponding parameter in the request. A recursive
-	 * call will be made for any nested ComplexTypes.
+	 * call will be made for any nested ComplexTypes. For each attribute
+	 * it will check if the relevant override is set (name.override 
+	 * parameter equals 'true'). If so the attribute setting on the 
+	 * specified domain level (settings) will be rewritten. If it is not
+	 * we well ensure that it isn't being overridden.
 	 * 
 	 * @param mbean The ComplexType to update
+	 * @param settings CrawlerSettings for the domain to override setting
+	 *                 for.
 	 * @param request The HttpServletRequest to use to update the 
 	 *                ComplexType
 	 */
@@ -211,7 +215,12 @@
 					}
 				} else {
 					// Is not being overriden. 
-					// TODO: Need to see if it WAS overridden and if so remove the override.
+					try{
+						mbean.unsetAttribute(settings,att.getName());
+					} catch (Exception e1) {
+						e1.printStackTrace();
+						return;
+					}
 				}
 			}
 		}
