@@ -28,6 +28,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
@@ -244,7 +248,7 @@ public class FetchHTTP
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#initialize(org.archive.crawler.framework.CrawlController)
 	 */
-	public void initialize(CrawlController c) {
+	public void initialize(CrawlController c) throws AttributeNotFoundException {
 		super.initialize(c);
 		//		timeout = 1000*getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS);
 		//soTimeout = getIntAt(XP_SOTIMEOUT_MS, DEFAULT_SOTIMEOUT_MS);
@@ -259,10 +263,13 @@ public class FetchHTTP
 		http = new HttpClient(connectionManager);
 		
 		// load cookies from a file if specified in the order file.
-		try {
-            loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));
-        } catch (Exception e) {
-        }
+            try {
+                loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));
+            } catch (MBeanException e) {
+                throw new AttributeNotFoundException(e.getMessage());
+            } catch (ReflectionException e) {
+                throw new AttributeNotFoundException(e.getMessage());
+            }
 		
 		// set connection timeout: considered same as overall timeout, for now
 		// TODO: restore this when HTTPClient stops using monitor thread
