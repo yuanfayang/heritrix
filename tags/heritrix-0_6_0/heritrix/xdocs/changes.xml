@@ -1,0 +1,133 @@
+<document>
+  <properties>
+    <title>Change Log</title>
+    <author email="stack at archive dot org">Michael Stack</author>
+  </properties>
+  <body>
+                                                                                
+    <release version="0.6.0" date="2004-03-25">
+                                                                                
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=861861">861861 Redirects(/refreshes) from seeds should == new seeds - Completed</a></action>
+                                                                                
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=899223">899223 Special seed-success report shoudl be offered</a></action>
+<action dev="johnerik" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=891986">891986 Bandwidth throttle function, setting.</a></action>
+                                                                                
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=899223">899223 Special seed-success report shoudl be offered</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=877275">877275 integrated operator 'diary' needed </a></action>
+<action dev="johnerik" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=891983">891983 IP, Robots expirations should be settable</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=910152">910152 Recovery of old jobs on WUI (re)start</a></action>
+<action dev="ia_igor" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=781171">781171 parsing css</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=912986">912986 log views should give an idea of file size (where possible)</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=912989">912989 Alerts should have 'select all' button...</a></action>
+<action dev="ia_igor" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=856593">856593 [load][save][turn on/off] cookies</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=912201">912201 Add levels to alerts</a></action>
+<action dev="johnerik" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=896665">896665 Split processor chains.</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=896754">896754 Show total
+of disregards</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=903095">903095 Show increments of megabytes in ui</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=896794">896794 serious errors (eg outofmemory) should show up in UI</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=900520">900520 Short description of ComplexTypes in user interface.</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=899982">899982 Should be possible to alter filters while crawling.</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=896672">896672 Display progress (doc/sec) with more precision</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=896677">896677 Highlight the success or failures of each seed</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=896760">896760 Prominent notification when seeds have problems</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=896801">896801 java regexps (in log view) need help text</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=896778">896778 Log viewing enhancements:</a></action>
+<action dev="kristinn_sig" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=896795">896795 frontier, thread report improvements</a></action>
+<action dev="ia_igor" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detailamp;group_id=73833amp;atid=539099&amp;aid=876516">876516 default launch should nohup, save stdout/stderr</a></action>
+                                                                                
+                                                                                
+<action dev="stack-sf" type="update">Update
+of httpclient to release 2.0</action>
+<action dev="stack-sf" type="update">Update
+of jmx libs to release 1.2.1</action>
+/release
+<action dev="kristinn_sig" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896763" >896763 127.0.0.1 in job report</a></action>
+<action dev="kristinn_sig" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896767" >896767 Frontier retry-delay should include units (eg -seconds)</a></action>
+<action dev="kristinn_sig" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=898994" >898994 Revisiting admin URIs if not logged in should prompt login </a></action>
+<action dev="johnerik" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=899019" >899019 Deadlock in Andy's 2nd Crawl   </a></action>
+<action dev="parkerthompson" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=767225" >767225 Better bad-config handling </a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=815357" >815357 mysterious pause facing network (DNS) problem  </a></action>
+<action dev="kristinn_sig" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896747" >896747 ExtractorJS's report overstates it's discovered URIs   </a></action>
+<action dev="kristinn_sig" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896667" >896667 Web UI does not display correctly in IE</a></action>
+<action dev="kristinn_sig" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896780" >896780 console clarity/safety </a></action>
+<action dev="johnerik" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896655" >896655 Does not respect per settings added after crawl was started.   </a></action>
+<action dev="ia_igor" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=856555" >856555 'empty' records in compressed arc files</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=895955" >895955 URIRegExpFilter retains memory </a></action>
+
+
+                                                                                
+    </release>
+                                                                                
+    <release version="0.4.1" date="2004-02-12">
+      <action dev="stack-sf" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=895955&amp;group_id=73833&amp;atid=539099">895955 URIRegExpFilter retains memory</a>
+      </action>
+    </release>
+
+       
+    <release version="0.4.0" date="2004-02-10">
+                                                                                
+      <action dev="stack-sf" type="add">
+        New MBEAN-based configuration system. Reads and writes
+        XML to validate against heritrix_settings.xsd.
+      </action>
+                                                                                
+      <action dev="stack-sf" type="update">
+        UI extensively revamped.  Exploits new configuration system.
+      </action>
+                                                                                
+      <action dev="stack-sf" type="add">
+        60-odd unit tests added.
+      </action>
+                                                                                
+      <action dev="stack-sf" type="add">
+        Integration selftest framework.
+      </action>
+                                                                                
+      <action dev="stack-sf" type="add">
+        Added pooling of ARCWriters.
+      </action>
+                                                                                
+      <action dev="stack-sf" type="update">
+        Start script backgrounds heritrix and redirects stdout/stderr to
+        heritrix_out.log.  See <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=876516">876516 Default launch should nohup, save stdout/stderr</a>
+        Web UI accesses are loggged to heritrix_out.log also.
+      </action>
+                                                                                
+                                                                                
+      <action dev="stack-sf" type="update">
+        Updated httpclient to version 2.0RC3.
+      </action>
+                                                                                
+      <action dev="stack-sf" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=763517">763517 IAGZIPOutputStream NPE under IBM JVM</a>
+      </action>
+      <action dev="stack-sf" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=809018">809018 Cleaner versioned testing build needed</a>
+      </action>
+      <action dev="stack-sf" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=872729">872729 Cmd-line options for setting web ui username/password</a>
+      </action>
+      <action dev="stack-sf" type="fix">
+        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=863317">863317 Universal single-pass extractor</a>
+      </action>
+                                                                                
+     </release>
+                                                                                
+    <release version="0.2.0" date="2003-01-05">
+      <action dev="stack-sf" type="add">
+        First 'official' release.
+      </action>
+     </release>
+                                                                                
+    <release version="0.1.0" date="2003-12-31">
+      <action dev="gojomo" type="add">
+        Initial Mavenized development version number (CVS/internal only).
+        Added everything to new project layout.
+      </action>
+     </release>
+                                                                                
+  </body>
+</document>
+               

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+  <properties>
+    <title>Glossary of Heritrix Terms</title>
+    <author email="stack at archive dot org">St.Ack</author>
+    <revision>$Id$</revision>
+  </properties>
+
+  <body>
+    <section name="Glossary">
+    <subsection name="Checkpointing">
+        <p>Heritrix currently has no checkpointing facility. However, our
+        conception of what we need is heavily influenced by what Mercator
+        provided. In <a 
+        href="http://citeseer.nj.nec.com/najork01highperformance.html">one
+        of the papers on Mercator</a> it is described this way:
+<source>Checkpointing is an important part of any long-running process such as
+a web crawl. By checkpointing we mean writing a representation of the crawler's
+state to stable storage that, in the event of a failure, is sufficient to allow
+the crawler to recover its state by reading the checkpoint and to resume
+crawling from the exact state it was in at the time of the checkpoint. By this
+definition, in the event of a failure, any work performed after the most recent
+checkpoint is lost, but none of the work up to the most recent checkpoint. In
+Mercator, the frequency with which the background thread performs a checkpoint
+is user-configurable; we typically checkpoint anywhere from 1 to 4 times per
+day.</source></p>
+    </subsection>
+
+
+    </section>
+  </body>
+</document>
