@@ -2839,7 +2839,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         values.</para>
         <para>The <emphasis rule="bold">third</emphasis> column is the size of
         the downloaded
-        document in bytes.  The <emphasis rule="bold">fourth</emphasis> column
+        document in bytes.  For HTTP, Size is the size of the content-only.
+        It excludes the size of the HTTP response headers. For DNS, its
+        the total size of the DNS response.
+        The <emphasis rule="bold">fourth</emphasis> column
         is the URI of the document
         downloaded.  The <emphasis rule="bold">fifth</emphasis> column holds
         breadcrumb codes showing

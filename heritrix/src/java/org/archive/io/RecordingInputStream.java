@@ -180,7 +180,8 @@ public class RecordingInputStream
             timeoutTime = Long.MAX_VALUE;
         }
 
-        byte[] buf = new byte[4096];
+        int buffersize = Math.min(4096, (int)maxLength);
+        byte[] buf = new byte[buffersize];
         long bytesRead = -1;
         while (true) {
             try {
@@ -223,10 +224,10 @@ public class RecordingInputStream
                     e.getMessage() + " " + Thread.currentThread().getName());
             }
 
-            if (maxLength > 0 && totalBytes > maxLength) {
+            if (maxLength > 0 && totalBytes >= maxLength) {
                 throw new RecorderLengthExceededException();
             }
-            if (System.currentTimeMillis() > timeoutTime) {
+            if (System.currentTimeMillis() >= timeoutTime) {
                 throw new RecorderTimeoutException("Timedout after " +
                     (timeoutTime - startTime) + "ms.");
             }

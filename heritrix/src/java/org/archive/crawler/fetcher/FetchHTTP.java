@@ -170,12 +170,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * What to log if midfetch abort.
      */
     private static final String MIDFETCH_ABORT_LOG = "midFetchAbort";
-    
-    /**
-     * Gets set in {@link #checkAbort(CrawlURI)}.
-     */
-    private boolean abort = false;
-    
 
     /**
      * Constructor.
@@ -187,9 +181,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
         this.midfetchfilters = (MapType) addElementToDefinition(
             new MapType(MIDFETCH_ATTR_FILTERS, "Filters applied after" +
                 " receipt of HTTP response headers but before we start to" +
-                " download the body.  If any filter returns" +
-                " FALSE, the fetch is aborted (Use filters to" +
-                " exclude content).", Filter.class));
+                " download the body. If any filter returns" +
+                " FALSE, the fetch is aborted. Prerequisites such as" +
+                " robots.txt by-pass filtering (i.e. they cannot be" +
+                " midfetch aborted.", Filter.class));
         this.midfetchfilters.setExpertSetting(true);
         
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
@@ -274,27 +269,28 @@ implements CoreAttributeConstants, FetchStatusCodes {
         String curiString = curi.getUURI().toString();
         HttpMethod method = null;
         if (curi.isPost()) {
-        	method = new HttpRecorderPostMethod(curiString, rec) {
-        		protected void readResponseBody(HttpState state,
-        		    HttpConnection conn)
+            method = new HttpRecorderPostMethod(curiString, rec) {
+                protected void readResponseBody(HttpState state,
+                        HttpConnection conn)
                 throws IOException, HttpException {
                     addResponseContent(this, curi);
-                    // The marking of body begin is skipped if we abort.
-                    this.httpRecorderMethod.markContentBegin(conn);
-                    if (!checkAbort(curi)) {
+                    if (checkMidfetchAbort(curi, this.httpRecorderMethod, conn)) {
+                        abort();
+                    } else {
                         super.readResponseBody(state, conn);
                     }
-        		}
+                }
             };
         } else {
-       	    method = new HttpRecorderGetMethod(curiString, rec) {
+            method = new HttpRecorderGetMethod(curiString, rec) {
                 protected void readResponseBody(HttpState state,
-                    HttpConnection conn)
+                        HttpConnection conn)
                 throws IOException, HttpException {
                     addResponseContent(this, curi);
-                    // This step is skipped if we abort.
-                    this.httpRecorderMethod.markContentBegin(conn);
-                    if (!checkAbort(curi)) {
+                    if (checkMidfetchAbort(curi, this.httpRecorderMethod,
+                            conn)) {
+                        abort();
+                    } else {
                         super.readResponseBody(state, conn);
                     }
                 }
@@ -308,51 +304,48 @@ implements CoreAttributeConstants, FetchStatusCodes {
         method.setDoAuthentication(addedCredentials);
         
         try {
-            this.abort = false;
-        	this.http.executeMethod(method);
+            this.http.executeMethod(method);
         } catch (IOException e) {
-        	failedExecuteCleanup(method, curi, e);
+        	   failedExecuteCleanup(method, curi, e);
             method.releaseConnection();
-        	return;
+        	   return;
         } catch (ArrayIndexOutOfBoundsException e) {
-        	// For weird windows-only ArrayIndex exceptions in native
-        	// code... see
-        	// http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-        	// treating as if it were an IOException
-        	failedExecuteCleanup(method, curi, e);
-        	method.releaseConnection();
-        	return;
+            // For weird windows-only ArrayIndex exceptions in native
+            // code... see
+            // http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+            // treating as if it were an IOException
+            failedExecuteCleanup(method, curi, e);
+            method.releaseConnection();
+            return;
         }
         
-        try {
-            // Force read-to-end, so that any socket hangs occur here,
-            // not in later modules.
-            rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
-                    1000 * getTimeout(curi));
-        } catch (RecorderTimeoutException ex) {
-            curi.addAnnotation("timeTrunc");
-            method.releaseConnection();
-            method.abort();
-        } catch (RecorderLengthExceededException ex) {
-            curi.addAnnotation("lenTrunc");
-            method.releaseConnection();
-            method.abort();
-        } catch (IOException e) {
-            cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
-            return;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // For weird windows-only ArrayIndex exceptions from native code
-            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-            // treating as if it were an IOException
-            cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
-            return;
-        } finally {
-            if (this.abort) {
+        if (!((HttpMethodBase)method).isAborted()) {
+            try {
+                // Force read-to-end, so that any socket hangs occur here,
+                // not in later modules.
+                rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
+                        1000 * getTimeout(curi));
+            } catch (RecorderTimeoutException ex) {
+                curi.addAnnotation("timeTrunc");
                 rec.close();
                 method.abort();
-                curi.addAnnotation(MIDFETCH_ABORT_LOG);
-            } else {
-                method.releaseConnection();
+            } catch (RecorderLengthExceededException ex) {
+                curi.addAnnotation("lenTrunc");
+                rec.close();
+                method.abort();
+            } catch (IOException e) {
+                cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
+                return;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                // For weird windows-only ArrayIndex exceptions from native code
+                // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+                // treating as if it were an IOException
+                cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
+                return;
+            } finally {
+                if (!((HttpMethodBase)method).isAborted()) {
+                    method.releaseConnection();
+                }
             }
         }
 
@@ -367,7 +360,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         curi.setHttpRecorder(rec);
         
         int statusCode = method.getStatusCode();
-        long contentSize = curi.getHttpRecorder().getRecordedInput().getSize();
+        long contentSize = rec.getRecordedInput().getSize();
         curi.setContentSize(contentSize);
         curi.setContentDigest(rec.getRecordedInput().getDigestValue());
         if (logger.isLoggable(Level.INFO)) {
@@ -403,11 +396,14 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
     }
     
-    protected boolean checkAbort(CrawlURI curi) {
-        if (filtersAccept(midfetchfilters, curi)) {
+    protected boolean checkMidfetchAbort(CrawlURI curi,
+            HttpRecorderMethod method, HttpConnection conn) {
+        if (curi.isPrerequisite() || filtersAccept(midfetchfilters, curi)) {
             return false;
         }
-        this.abort = true;
+        method.markContentBegin(conn);
+        method.getHttpRecorder().close();
+        curi.addAnnotation(MIDFETCH_ABORT_LOG);
         return true;
     }
     
@@ -509,8 +505,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param curi CrawlURI from which we pull configuration.
      * @param method The Method to configure.
      */
-    private void configureMethod(CrawlURI curi, HttpMethod method)
-    {
+    private void configureMethod(CrawlURI curi, HttpMethod method) {
         // Don't auto-follow redirects
         method.setFollowRedirects(false);
         

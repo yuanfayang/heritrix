@@ -299,8 +299,7 @@ public class RecordingOutputStream extends OutputStream {
 
         // This setting of size is important.  Its passed to ReplayInputStream
         // on creation.  It uses it to know EOS.
-        if (this.size == 0)
-        {
+        if (this.size == 0) {
             this.size = this.position;
         }
     }
