@@ -80,7 +80,7 @@ public class SimpleScheduler implements URIScheduler {
 			assert curi.getStoreState() != URIStoreable.FINISHED : "state "+curi.getStoreState()+" instead of ready for "+ curi; 
 			//assert curi.getAList() != null : "null alist in curi " + curi + " state "+ curi.getStoreState();
 			store.noteInProcess(curi);
-			curi.setHost(controller.getHostCache().getHostFor(curi));
+			curi.setServer(controller.getHostCache().getServerFor(curi));
 		}
 		return curi;
 	}

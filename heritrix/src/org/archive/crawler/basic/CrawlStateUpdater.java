@@ -44,8 +44,8 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 		if(curi.getUURI().getUri().getScheme().equals("dns")){
 
 			// if we've looked up the host update the expire time
-			if(curi.getHost().hasBeenLookedUp()){
-				long expires = curi.getHost().getIpExpires();
+			if(curi.getServer().getHost().hasBeenLookedUp()){
+				long expires = curi.getServer().getHost().getIpExpires();
 				
 				if(expires > 0){
 					curi.setDontRetryBefore(expires);
@@ -78,10 +78,10 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
 				// update host with robots info
 				if(curi.getAList().containsKey("http-transaction")) {
 					GetMethod get = (GetMethod)curi.getAList().getObject("http-transaction");
-					curi.getHost().updateRobots(get);
+					curi.getServer().updateRobots(get);
 									
 					// curi can be refetched once robots data expires
-					curi.setDontRetryBefore(curi.getHost().getRobotsExpires());
+					curi.setDontRetryBefore(curi.getServer().getRobotsExpires());
 				}
 			}
 		}

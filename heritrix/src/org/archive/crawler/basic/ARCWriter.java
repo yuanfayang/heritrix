@@ -167,7 +167,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 				contentType = contentType.substring(0,contentType.indexOf(';'));
 			}
 			
-			String hostIP = curi.getHost().getIP().getHostAddress();
+			String hostIP = curi.getServer().getHost().getIP().getHostAddress();
 			String dateStamp = ArchiveUtils.get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME));			
 			
 			// fail if we're missing anythign critical

@@ -68,10 +68,10 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 			return false; 
 		}
 		// require /robots.txt if not present
-		if (	curi.getHost().getRobotsExpires() < 0 // "cheap" test of default
-				|| curi.getHost().getRobotsExpires()<System.currentTimeMillis()
+		if (	curi.getServer().getRobotsExpires() < 0 // "cheap" test of default
+				|| curi.getServer().getRobotsExpires()<System.currentTimeMillis()
 			){
-			logger.fine("No valid robots for "+curi.getHost()+"; deferring "+curi);
+			logger.fine("No valid robots for "+curi.getServer()+"; deferring "+curi);
 			curi.setPrerequisiteUri("/robots.txt");
 			curi.incrementDeferrals();
 			curi.cancelFurtherProcessing();
@@ -79,7 +79,7 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 		}
 		// test against robots.txt if available
 		String ua = controller.getOrder().getBehavior().getUserAgent();
-		if( curi.getHost().getRobots().disallows(curi.getUURI().getUri().getPath(),ua)) {
+		if( curi.getServer().getRobots().disallows(curi.getUURI().getUri().getPath(),ua)) {
 			// don't fetch
 			curi.cancelFurtherProcessing();  // turn off later stages
 			curi.setFetchStatus(S_ROBOTS_PRECLUDED);
@@ -96,29 +96,36 @@ public class SimplePreconditionEnforcer extends Processor implements FetchStatus
 	 */
 	private boolean considerDnsPreconditions(CrawlURI curi) {
 		
-		if(curi.getHost()==null) {
+		if(curi.getServer()==null) {
 			curi.setFetchStatus(S_UNFETCHABLE_URI);
 			curi.cancelFurtherProcessing();
 			return true;
 		}
 		// if we haven't done a dns lookup  and this isn't a dns uri 
 		// shoot that off and defer further processing
-		if( !curi.getHost().hasBeenLookedUp() && 
-			!curi.getUURI().getUri().getScheme().equals("dns")
-		){
-			logger.fine("deferring processing of " + curi.toString() + " for dns lookup." );
+		if (!curi.getServer().getHost().hasBeenLookedUp()
+			&& !curi.getUURI().getUri().getScheme().equals("dns")) {
+			logger.fine(
+				"deferring processing of "
+					+ curi.toString()
+					+ " for dns lookup.");
 
-			String hostname = curi.getHost().getHostname();
+			String hostname = curi.getServer().getHostname();
 			curi.setPrerequisiteUri("dns:" + hostname);
 			curi.incrementDeferrals();
-			curi.cancelFurtherProcessing();			
+			curi.cancelFurtherProcessing();
 			return true;
 		}
-		
+
 		// if we've done a dns lookup and it didn't resolve a host
 		// cancel all processing of this URI
-		if(curi.getHost().hasBeenLookedUp() && curi.getHost().getIP() == null){
-			logger.fine("no dns for " + curi.getHost().toString() + " cancelling processing for " + curi.toString() );
+		if (curi.getServer().getHost().hasBeenLookedUp()
+			&& curi.getServer().getHost().getIP() == null) {
+			logger.fine(
+				"no dns for "
+					+ curi.getServer().toString()
+					+ " cancelling processing for "
+					+ curi.toString());
 
 			//TODO currently we're using FetchAttempts to denote both fetch attempts and
 			// the choice to not attempt (here).  Eventually these will probably have to be treated seperately
