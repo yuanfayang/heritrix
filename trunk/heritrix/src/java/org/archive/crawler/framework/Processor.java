@@ -212,21 +212,21 @@ public class Processor extends ModuleType {
     }
 
     public Processor spawn(int serialNum) {
-        Processor newInstance = null;
+        Processor newInst = null;
         try {
             Constructor co =
                 getClass().getConstructor(new Class[] { String.class });
-            newInstance =
+            newInst =
                 (Processor) co.newInstance(new Object[] {
                     getName() + serialNum
                     });
-            getParent().setAttribute(newInstance);
-            newInstance.setTransient(true);
+            getParent().setAttribute(newInst);
+            newInst.setTransient(true);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        return newInstance;
+        return newInst;
     }
 
     /**
@@ -260,6 +260,7 @@ public class Processor extends ModuleType {
      * the CrawlURI represents a successful http transaction.
      */
     protected boolean isHtmlTransactionContentToProcess(CrawlURI curi) {
+        // FIXME: 'html' in name doesn't make sense
         return isContentToProcess(curi) &&
             curi.isHttpTransaction() &&
             curi.isSuccess();
