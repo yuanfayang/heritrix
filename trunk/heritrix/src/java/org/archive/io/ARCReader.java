@@ -40,12 +40,13 @@ import java.util.zip.GZIPInputStream;
  * @author gojomo
  *
  */
-public class ARCReader {
-	protected InputStream inStream;
-	protected FileInputStream arcStream;
-	protected ARCResource lastResource;
-	protected int resourcePosition;
-	protected long filePosition;
+public class ARCReader
+{
+    protected InputStream inStream;
+    protected FileInputStream arcStream;
+    protected ARCResource lastResource;
+    protected int resourcePosition;
+    protected long filePosition;
 	
 	/**
 	 * 
