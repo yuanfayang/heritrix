@@ -110,4 +110,6 @@ public interface URIFrontier {
     * @return A report on the current status of the frontier.
     */
     public String report();
+    
+    public void importRecoverLog(String pathToLog) throws IOException;
 }
