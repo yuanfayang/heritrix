@@ -495,7 +495,7 @@
         </dependency>
         <dependency>
             <id>commons-pool</id>
-            <version>1.1</version>
+            <version>1.2</version>
             <url>http://jakarta.apache.org/site/binindex.cgi#commons-pool</url>
             <properties>
                 <war.bundle>true</war.bundle>

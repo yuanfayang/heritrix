@@ -25,8 +25,8 @@
 package org.archive.crawler.writer;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.HashMap;
@@ -51,7 +51,8 @@ import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
 import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayInputStream;
-import org.archive.util.ArchiveUtils;
+import org.archive.util.IoUtils;
+
 import st.ata.util.AList;
 
 /**
@@ -356,7 +357,7 @@ extends Processor implements CoreAttributeConstants {
                 destFile = new File(baseDir + File.separator + mps);
                 File parent = destFile.getParentFile();
                 if (null != parent) {
-                    ArchiveUtils.ensureWriteableDirectory(parent);
+                    IoUtils.ensureWriteableDirectory(parent);
                 }
             } else {
                 URIToFileReturn r = null; // Return from uriToFile().

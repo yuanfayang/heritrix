@@ -23,6 +23,9 @@
 package org.archive.util;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * I/O Utility methods.
@@ -42,5 +45,71 @@ public class IoUtils {
             path = path.replace(File.separatorChar, '/');
         }
         return path;
+    }
+    
+    /**
+     * Ensure writeable directory.
+     *
+     * If doesn't exist, we attempt creation.
+     *
+     * @param dir Directory to test for exitence and is writeable.
+     *
+     * @return The passed <code>dir</code>.
+     *
+     * @exception IOException If passed directory does not exist and is not
+     * createable, or directory is not writeable or is not a directory.
+     */
+    public static File ensureWriteableDirectory(String dir)
+    throws IOException {
+        return ensureWriteableDirectory(new File(dir));
+    }
+    
+    /**
+     * Ensure writeable directories.
+     *
+     * If doesn't exist, we attempt creation.
+     *
+     * @param dirs List of Files to test.
+     *
+     * @return The passed <code>dirs</code>.
+     *
+     * @exception IOException If passed directory does not exist and is not
+     * createable, or directory is not writeable or is not a directory.
+     */
+    public static List ensureWriteableDirectory(List dirs)
+    throws IOException {
+        for (Iterator i = dirs.iterator(); i.hasNext();) {
+             ensureWriteableDirectory((File)i.next());
+        }
+        return dirs;
+    }
+
+    /**
+     * Ensure writeable directory.
+     *
+     * If doesn't exist, we attempt creation.
+     *
+     * @param dir Directory to test for exitence and is writeable.
+     *
+     * @return The passed <code>dir</code>.
+     *
+     * @exception IOException If passed directory does not exist and is not
+     * createable, or directory is not writeable or is not a directory.
+     */
+    public static File ensureWriteableDirectory(File dir)
+    throws IOException {
+        if (!dir.exists()) {
+            dir.mkdirs();
+        } else {
+            if (!dir.canWrite()) {
+                throw new IOException("Dir " + dir.getAbsolutePath() +
+                    " not writeable.");
+            } else if (!dir.isDirectory()) {
+                throw new IOException("Dir " + dir.getAbsolutePath() +
+                    " is not a directory.");
+            }
+        }
+
+        return dir;
     }
 }

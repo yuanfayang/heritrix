@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -97,7 +98,8 @@ public class ARCWriterTest
         int maxSize, int recordCount)
     throws IOException {
         cleanUpOldFiles(baseName);
-        ARCWriter arcWriter = new ARCWriter(getTmpDir(),
+        File [] files = {getTmpDir()};
+        ARCWriter arcWriter = new ARCWriter(Arrays.asList(files),
             baseName + '-' + PREFIX, compress, maxSize);
         assertNotNull(arcWriter);
         for (int i = 0; i < recordCount; i++) {
@@ -159,15 +161,6 @@ public class ARCWriterTest
         File arcFile = writeRecords("writeRecord", false,
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
         validate(arcFile, recordCount  + 1); // Header record.
-    }
-    
-
-    public void testGetOutputDir() throws IOException {
-        ARCWriter arcWriter = new ARCWriter(getTmpDir(),
-            "getOutputDir-" + PREFIX, null, false, DEFAULT_MAX_ARC_FILE_SIZE,
-            null);
-        assertEquals(getTmpDir(), arcWriter.getArcsDir());
-        arcWriter.close();
     }
 
     public void testWriteRecordCompressed() throws IOException {
