@@ -265,7 +265,7 @@
         </dependency>
         <dependency>
             <id>org.mortbay.jetty</id>
-            <version>4.2.15rc0</version>
+            <version>4.2.17</version>
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
                 <description>The Jetty servlet container.
@@ -277,7 +277,7 @@
         </dependency>
         <dependency>
             <id>org.mortbay.jmx</id>
-            <version>4.2.15rc0</version>
+            <version>4.2.17</version>
             <url>http://jetty.mortbay.com/jetty/</url>
             <properties>
                 <description>This jar came w/ Jetty.  Seems to be jetty
