@@ -44,7 +44,7 @@ import org.archive.util.CachingDiskLongFPSet;
  * 
  * @author Kristinn Sigurdsson
  */
-public class DiskBasedFrontier extends Frontier {
+public class DiskIncludedFrontier extends Frontier {
     
     /** The size of the already included's in memory cache. The cache 
      *  capacity will be 2 to the power of this factor.
@@ -73,7 +73,7 @@ public class DiskBasedFrontier extends Frontier {
     protected final static Float DEFAULT_INCLUDED_URIS_INITFILE_LOADFACTOR = 
         new Float(0.75f);
 
-    public DiskBasedFrontier(String name) {
+    public DiskIncludedFrontier(String name) {
         super(name,"Frontier. \nMaintains the internal" +
                 " state of the crawl. It dictates the order in which URIs" +
                 " will be scheduled. \nThis frontier is mostly a breadth-first"+
