@@ -25,14 +25,15 @@ import org.apache.commons.httpclient.Header;
  *
  */
 public class ExtractorPDF extends Processor implements CoreAttributeConstants {
-	private static int DEFAULT_MAX_SIZE_TO_PARSE = 4*1024*1024; // 4MB
+	private static int DEFAULT_MAX_SIZE_TO_PARSE = 5*1024*1024; // 5MB
 	private long maxSizeToParse = DEFAULT_MAX_SIZE_TO_PARSE; // TODO: make configurable
 
 	private static Logger logger = Logger.getLogger("org.archive.crawler.extractor.ExtractorPDF");
 	
 	protected void innerProcess(CrawlURI curi){
 
-		if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+		if(! (curi.getAList().containsKey(A_HTTP_TRANSACTION)&&curi.getFetchStatus()==200)) {
+			// TODO: generalize for when codes other than 200 might have good content
 			return;
 		}
 		
@@ -70,7 +71,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
 			tempFile.delete();
 		}
 		
-		if(uris.size()>0) {
+		if(uris!=null && uris.size()>0) {
 			curi.getAList().putObject("html-links", uris);
 		}
 		
