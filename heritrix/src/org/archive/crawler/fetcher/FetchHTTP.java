@@ -91,9 +91,13 @@ public class FetchHTTP
 		get.setFollowRedirects(false); // don't auto-follow redirects
 		get.getParams().setVersion(HttpVersion.HTTP_1_0);
 		// use only HTTP/1.0 (to avoid receiving chunked responses)
+		String userAgent = curi.getUserAgent();
+		if(userAgent == null) {
+			userAgent = controller.getOrder().getUserAgent();
+		}
 		get.setRequestHeader(
 			"User-Agent",
-			controller.getOrder().getUserAgent());
+			userAgent);
 		get.setRequestHeader(
 			"From",
 			controller.getOrder().getFrom());
