@@ -16,7 +16,7 @@
 	CrawlJob cjob = null;
 
 	StatisticsTracker stats = null;
-	
+	 
 	if(job != null)
 	{
 		cjob = handler.getJob(job);
