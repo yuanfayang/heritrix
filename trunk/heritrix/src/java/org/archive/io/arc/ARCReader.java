@@ -249,7 +249,47 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     protected void cleanupCurrentRecord() throws IOException {
         if (this.currentRecord != null) {
             this.currentRecord.close();
+            gotoEOR(this.currentRecord);
             this.currentRecord = null;
+        }
+    }
+    
+    /**
+     * Skip over any trailing new lines at end of the record so we're lined up
+     * ready to read the next.
+     * @param record
+     * @throws IOException
+     */
+    protected void gotoEOR(ARCRecord record) throws IOException {
+        if (this.in.available() <= 0) {
+            return;
+        }
+        
+        // Remove any trailing LINE_SEPARATOR
+        int c = -1;
+        while (this.in.available() > 0) {
+            if (this.in.markSupported()) {
+                this.in.mark(1);
+            }
+            c = this.in.read();
+            if (c != -1) {
+                if (c == LINE_SEPARATOR) {
+                    continue;
+                }
+                if (this.in.markSupported()) {
+                    // We've overread.  We're probably in next record.  There is
+                    // no way of telling for sure. It may be dross at end of
+                    // current record. Backup.
+                    this.in.reset();
+                    break;
+                }
+                ARCRecordMetaData meta = (this.currentRecord != null)?
+                    record.getMetaData(): null;
+                throw new IOException("Read " + (char)c +
+                    " when only " + LINE_SEPARATOR + " expected. " + 
+                    this.arcFile + ((meta != null)?
+                        meta.getHeaderFields().toString(): ""));
+            }
         }
     }
     
@@ -274,13 +314,13 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @return An iterator over the total arcfile.
      */
     public Iterator iterator() {
-            // Eat up any record outstanding.
-            try {
-                    cleanupCurrentRecord();
-            } catch (IOException e) {
-                    throw new RuntimeException(e.getClass().getName() + ": " +
+        // Eat up any record outstanding.
+        try {
+            cleanupCurrentRecord();
+        } catch (IOException e) {
+            throw new RuntimeException(e.getClass().getName() + ": " +
                     e.getMessage());
-            }
+        }
         
         // Now reset stream to the start of the arc file.
         try {
@@ -296,14 +336,12 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @return True if we have more ARC records to read.
      */
     public boolean hasNext() {
-        if (this.currentRecord != null) {
-            // Call close on any extant record.  This will scoot us past
-            // any content not yet read.
-            try {
-                cleanupCurrentRecord();
-            } catch (IOException e) {
-                throw new NoSuchElementException(e.getMessage());
-            }
+        // Call close on any extant record.  This will scoot us past
+        // any content not yet read.
+        try {
+            cleanupCurrentRecord();
+        } catch (IOException e) {
+            throw new NoSuchElementException(e.getMessage());
         }
         
         try {
