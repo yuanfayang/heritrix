@@ -1105,9 +1105,7 @@ public class Heritrix implements HeritrixMBean {
                 MBeanServer server = (MBeanServer)i.next();
                 if (server != null) {
                     // Only register with the JMX agent started on cmdline.
-                    if ((System.getProperty("com.sun.management.jmxremote")
-                            != null) ||
-                        (System.getProperty("com.sun.management.jmxremote.port")
+                    if ((System.getProperty("com.sun.management.jmxremote.port")
                                 != null)) {
                             server.registerMBean(h,
                                 new ObjectName(getJmxName()));

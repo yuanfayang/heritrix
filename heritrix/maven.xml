@@ -43,6 +43,7 @@
         <copy todir="${maven.dist.bin.assembly.dir}/conf" filtering="true">
           <fileset dir="./src/conf/">
             <include name="heritrix.*"/>
+            <include name="jmxremote.password.template"/>
             <exclude name="*.cacerts"/>
           </fileset>
         </copy>
@@ -111,7 +112,6 @@
         <copy todir="${maven.build.dir}/webapps/admin/docs/articles/">
           <fileset dir="${maven.build.dir}/docs/articles/" />
         </copy>
-
         <!--Compile jsp pages into a jar.
             TODO: Make this conditional.
          -->
