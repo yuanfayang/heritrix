@@ -179,7 +179,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * content is only time that it makes sense.
      * 
      * <p>After calling this method, you can call
-     * {@link getHttpHeaders()} to get the read http header.
+     * {@link #getHttpHeaders()} to get the read http header.
      * 
      * @throws IOException
      */
@@ -290,6 +290,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
     }
     
     /**
+     * @param bytes Array of bytes to examine for an EOL.
      * @return Count of end-of-line characters or zero if none.
      */
     private int getEolCharsCount(byte [] bytes) {
@@ -478,10 +479,9 @@ public class ARCRecord extends InputStream implements ARCConstants {
                             // break.
                             this.in.reset();
                             break;
-                        } else {
-                            throw new IOException("Read " + (char)c +
-                                " when only" + LINE_SEPARATOR + " expected.");
                         }
+                        throw new IOException("Read " + (char)c +
+                            " when only" + LINE_SEPARATOR + " expected.");
                     }
                 }
             }
@@ -489,7 +489,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
             this.eor = true;
             // Set the metadata digest as base32 string.
             this.metaData.
-            	setDigest(Base32.encode((byte[])this.digest.digest()));
+            	setDigest(Base32.encode(this.digest.digest()));
             if (this.httpStatus != null) {
                 int statusCode = this.httpStatus.getStatusCode();
                 this.metaData.setStatusCode(Integer.toString(statusCode));
