@@ -33,7 +33,7 @@
         <p>See the <a href="user.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
-    <subsection name="First Release 01/05/2005">
+    <subsection name="First Release 01/05/2004">
         <p>Today we made our first 'official' heritrix release,
          <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">heritrix-0.2.0</a>.</p>
     </subsection>
