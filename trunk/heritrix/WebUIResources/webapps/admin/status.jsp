@@ -27,7 +27,7 @@
 	<body>
 		<table border="0" cellspacing="0" cellpadding="0" width="100%">
 			<tr>
-				<td valign="top">
+				<td valign="top" width="50%">
 					<table border="0" cellspacing="0" cellpadding="0" >
 						<tr>
 							<td>
@@ -55,7 +55,7 @@
 								</tr>
 								<tr>
 									<td>
-										<b>Overall processed docs/sec:</b>&nbsp;
+										<b>Processed docs/sec:</b>&nbsp;
 									</td>
 									<td>
 										<%=stats.processedDocsPerSec()%>
@@ -69,12 +69,37 @@
 										<%/*=stats.currentProcessedDocsPerSec()*/%>
 									</td>
 								</tr-->
+								<tr>
+									<td>
+										<b>Run time:</b>&nbsp;
+									</td>
+									<td>
+										<%
+											long time = (stats.getCrawlEndTime()-stats.getCrawlStartTime())/1000;
+											
+											if(time>3600)
+											{
+												//got hours.
+												out.println(time/3600 + " h., ");
+												time = time % 3600;
+											}
+											
+											if(time > 60)
+											{
+												out.println(time/60 + " min. and ");
+												time = time % 60;
+											}
+
+											out.println(time + " sec.");
+										%>
+									</td>
+								</tr>
 						<%	
 							}
 						%>
 					</table>
 				</td>
-				<td valign="top">
+				<td valign="top" width="50%">
 					<table border="0" cellspacing="0" cellpadding="0" >
 						<tr>
 							<td>
@@ -105,15 +130,15 @@
 										<b>Active thread count:</b>&nbsp;
 									</td>
 									<td>
-										<%=stats.activeThreadCount()%>
+										<%=stats.activeThreadCount()%> of <%=stats.threadCount()%>
 									</td>
 								</tr>
 								<tr>
 									<td>
-										<b>Total bytes written:</b>&nbsp;
+										<b>Total data written:</b>&nbsp;
 									</td>
 									<td>
-										<%=stats.getTotalBytesWritten()%>
+										<%=(stats.getTotalBytesWritten()/1048576)%> MB
 									</td>
 								</tr>
 						<%	
