@@ -669,19 +669,15 @@ public class CrawlController implements Serializable {
 
     private void setupLogs() throws IOException {
         String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
+        uriProcessing = Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
+        runtimeErrors = Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." +
+            logsPath);
+        localErrors = Logger.getLogger(LOGNAME_LOCAL_ERRORS + "." + logsPath);
+        uriErrors = Logger.getLogger(LOGNAME_URI_ERRORS + "." + logsPath);
+        progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." +
+            logsPath);
 
-        uriProcessing =
-            Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
-        runtimeErrors =
-            Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." + logsPath);
-        localErrors =
-            Logger.getLogger(LOGNAME_LOCAL_ERRORS + "." + logsPath);
-        uriErrors =
-            Logger.getLogger(LOGNAME_URI_ERRORS + "." + logsPath);
-        progressStats =
-            Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." + logsPath);
-
-        fileHandlers = new HashMap();
+        this.fileHandlers = new HashMap();
 
         setupLogFile(
                 uriProcessing,
@@ -718,12 +714,12 @@ public class CrawlController implements Serializable {
     private void setupLogFile(Logger logger, String filename, Formatter f,
             boolean shouldManifest) throws IOException, SecurityException {
         GenerationFileHandler fh = new GenerationFileHandler(filename, true,
-                shouldManifest);
+            shouldManifest);
         fh.setFormatter(f);
         logger.addHandler(fh);
         addToManifest(filename, MANIFEST_LOG_FILE, shouldManifest);
         logger.setUseParentHandlers(false);
-        fileHandlers.put(logger, fh);
+        this.fileHandlers.put(logger, fh);
     }
 
     /**
@@ -869,10 +865,13 @@ public class CrawlController implements Serializable {
         }
         
         closeLogFiles();
+        
+        // Release reference to file handler instances.
+        this.fileHandlers = null;
 
         logger.info("Finished crawl.");
 
-        // Do cleanup to facilitate GC.
+        // Do cleanup.
         this.frontier = null;
         this.disk = null;
         this.scratchDisk = null;

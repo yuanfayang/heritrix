@@ -58,7 +58,9 @@ public class GenerationFileHandler extends FileHandler {
      * @throws IOException
      * @throws SecurityException
      */
-    public GenerationFileHandler(String pattern, boolean append, boolean shouldManifest) throws IOException, SecurityException {
+    public GenerationFileHandler(String pattern, boolean append,
+            boolean shouldManifest)
+    throws IOException, SecurityException {
         super(pattern, append);
         filenameSeries.addFirst(pattern);
         this.shouldManifest = shouldManifest;
@@ -69,7 +71,9 @@ public class GenerationFileHandler extends FileHandler {
      * @param shouldManifest
      * @throws IOException
      */
-    public GenerationFileHandler(LinkedList filenameSeries, boolean shouldManifest) throws IOException {
+    public GenerationFileHandler(LinkedList filenameSeries,
+            boolean shouldManifest)
+    throws IOException {
         super((String)filenameSeries.getFirst(), false); // never append in this case
         this.filenameSeries = filenameSeries;
         this.shouldManifest = shouldManifest;
@@ -85,30 +89,34 @@ public class GenerationFileHandler extends FileHandler {
      * @return GenerationFileHandler instance.
      * @throws IOException
      */
-    public GenerationFileHandler rotate(String storeSuffix,String activeSuffix) throws IOException {
+    public GenerationFileHandler rotate(String storeSuffix,
+            String activeSuffix)
+    throws IOException {
         close();
         String filename = (String) filenameSeries.getFirst();
         if(filename.endsWith(activeSuffix)==false) {
-            // error
-            throw new FileNotFoundException("active file does not have expected suffix");
+            throw new FileNotFoundException("active file does not have" +
+                " expected suffix");
         }
-        String storeFilename = filename.substring(0,filename.length()-activeSuffix.length())+storeSuffix;
+        String storeFilename = filename.substring(0,
+            filename.length() - activeSuffix.length()) + storeSuffix;
         File activeFile = new File(filename);
         File storeFile = new File(storeFilename);
         if(activeFile.renameTo(storeFile)==false) {
-            throw new IOException("unable to move "+filename+" to "+storeFilename);
+            throw new IOException("unable to move " + filename+" to " +
+                storeFilename);
         }
         filenameSeries.add(1,storeFilename);
-        GenerationFileHandler newGfh =  new GenerationFileHandler(filenameSeries, shouldManifest);
+        GenerationFileHandler newGfh = 
+            new GenerationFileHandler(filenameSeries, shouldManifest);
         newGfh.setFormatter(this.getFormatter());
         return newGfh;
     }
+    
     /**
      * @return True if should manifest.
      */
     public boolean shouldManifest() {
-        // TODO Auto-generated method stub
         return false;
     }
-
 }
