@@ -464,7 +464,19 @@ public class CrawlJobHandler implements CrawlStatusListener {
             discardNewJob();
         }
         String UID = getNextJobUID();
-        newJob = new CrawlJob(UID,name,makeNew(baseOn,name,description,seeds,"jobs"+File.separator+name+"-"+UID),CrawlJob.PRIORITY_AVERAGE);
+        newJob =
+            new CrawlJob(
+                UID,
+                name,
+                makeNew(
+                    baseOn,
+                    name,
+                    description,
+                    seeds,
+                    "jobs" + File.separator + name + "-" + UID,
+                    "job-"+name+".xml",
+                    "seeds-"+name+".txt"),
+                CrawlJob.PRIORITY_AVERAGE);
         return newJob;
     }
     
@@ -480,7 +492,17 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return The new profile.
      */
     public CrawlJob newProfile(CrawlJob baseOn, String name, String description, String seeds) throws FatalConfigurationException{
-       CrawlJob newProfile = new CrawlJob(name,makeNew(baseOn,name,description,seeds,getProfilesDirectory()+File.separator+name));
+    CrawlJob newProfile =
+        new CrawlJob(
+            name,
+            makeNew(
+                baseOn,
+                name,
+                description,
+                seeds,
+                getProfilesDirectory() + File.separator + name,
+                "order.xml",
+                "seeds.txt"));
        addProfile(newProfile);
        return newProfile;
     }
@@ -503,7 +525,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
                                        String name, 
                                        String description, 
                                        String seeds, 
-                                       String path) 
+                                       String path,
+                                       String filename,
+                                       String seedfile) 
                                        throws FatalConfigurationException{
         XMLSettingsHandler profileSettingsHandler;
         XMLSettingsHandler newHandler;
@@ -522,9 +546,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
         // Create filenames etc.
         File newSettingsDir = new File(path);
         newSettingsDir.mkdirs();
-        String seedfile = "seeds-"+name+".txt";
         
         try {
+            // Set the seed file
             ((ComplexType)newHandler.getOrder().getAttribute("scope")).setAttribute(new Attribute("seedsfile",seedfile));
         } catch (AttributeNotFoundException e1) {
             throw new FatalConfigurationException("AttributeNotFoundException occured while setting seed file for new job/profile\n" + e1.getMessage());
@@ -536,7 +560,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             throw new FatalConfigurationException("ReflectionException occured while setting seed file for new job/profile\n" + e1.getMessage());
         }
         
-        File newFile = new File(path+File.separator+"job-"+name+"-1.xml");
+        File newFile = new File(path,filename);
         
         try {
             newHandler.copySettings(newFile,(String)newHandler.getOrder().getAttribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY));
@@ -553,7 +577,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
  
         orderfile.setName(name);
         orderfile.setDescription(description);
-
+        
         BufferedWriter writer;
         try {
             writer = new BufferedWriter(new FileWriter(new File(newHandler.getPathRelativeToWorkingDirectory(seedfile))));
