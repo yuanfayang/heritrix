@@ -8,6 +8,8 @@ package org.archive.crawler.datamodel;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.archive.crawler.basic.FetcherDNS;
@@ -355,6 +357,31 @@ public class CrawlURI
 	 */
 	public String getSortFallback() {
 		return uuri.toString();
+	}
+
+	/**
+	 * @param value
+	 */
+	public void addEmbed(String u) {
+		addToNamedList(A_HTML_EMBEDS, u);
+	}
+
+	private void addToNamedList(String key, Object o) {
+		List l;
+		if(!alist.containsKey(key)) {
+			l = new ArrayList();
+			alist.putObject(key, l);
+		} else {
+			l = (List)alist.getObject(key);
+		}
+		l.add(o);
+	}
+
+	/**
+	 * @param value
+	 */
+	public void addLink(String u) {
+		addToNamedList(A_HTML_LINKS, u);
 	}
 	
 /*	public boolean isFubared(){
