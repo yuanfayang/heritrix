@@ -206,7 +206,7 @@ public class ToeThread extends Thread
             controller.requestCrawlPause();
         }
         
-        // OutOfMemory & StackOverflow & etc.
+        // OutOfMemory etc.
         String extraInfo = DevUtils.extraInfo();
         System.err.println("<<<");
         System.err.println(err);
@@ -220,7 +220,7 @@ public class ToeThread extends Thread
             currentCuri.addAnnotation("err="+err.getClass().getName());
             currentCuri.addAnnotation("os"+currentCuri.getFetchStatus());
 			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
-            context = currentCuri.getURIString();
+            context = currentCuri.getURIString() + " in " + currentProcessorName;
 		}
         String title = "Serious error occured processing '" + context + "'";
         String message = "The following serious error occured when trying " +
@@ -308,7 +308,8 @@ public class ToeThread extends Thread
         String message = "Problem " + e + 
                 " occured when trying to process '"
                 + currentCuri.getURIString()
-                + "' at step " + previousStep + "\n";
+                + "' at step " + previousStep 
+                + " in " + currentProcessorName +"\n";
         Heritrix.addAlert(new Alert(title, message.toString(), e,
                 Level.SEVERE));
     }
