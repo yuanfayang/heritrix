@@ -37,4 +37,11 @@ public abstract class Filter extends XMLConfig {
 			inverter = true;
 		}
 	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return "Filter<"+name+">";
+	}
+
 }
