@@ -56,6 +56,8 @@ public class FileUtils
      * @throws IOException
      */
     public static void copyFiles(File src, File dest) throws IOException {
+        // TODO: handle failures at any step
+        
         if (!src.exists()) {
             return;
         }
@@ -85,45 +87,65 @@ public class FileUtils
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public static void copyFile(File src, File dest) throws FileNotFoundException, IOException {
-		copyFile(src, dest, -1);
-	}
+    public static boolean copyFile(File src, File dest)
+            throws FileNotFoundException, IOException {
+        return copyFile(src, dest, -1);
+    }
 
 	/**
      * Copy up to extent bytes of the source file to the destination
      * 
-	 * @param src
-	 * @param dest
-	 * @param extent
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 */
-	public static void copyFile(File src, File dest, long extent) throws FileNotFoundException, IOException {
-		if(dest.exists()) {
+     * @param src
+     * @param dest
+     * @param extent
+     *            maximum number of bytes to copy
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public static boolean copyFile(File src, File dest, long extent)
+            throws FileNotFoundException, IOException {
+
+        if (dest.exists()) {
             dest.delete();
-        } 
-        // get channels
-		FileInputStream fis = new FileInputStream(src);
-		FileOutputStream fos = new FileOutputStream(dest);
-		FileChannel fcin = fis.getChannel();
-		FileChannel fcout = fos.getChannel();
-		
-        if (extent<0) {
-         extent = fcin.size();   
         }
-        
-		// do the file copy
-		long trans = fcin.transferTo(0, extent, fcout);
-        if(trans < extent ) {
-            System.err.println("FileUtils.copyFile() only transferred "+trans+" of "+extent);
+        FileInputStream fis = null;
+        FileOutputStream fos = null;
+        FileChannel fcin = null;
+        FileChannel fcout = null;
+        try {
+            // get channels
+            fis = new FileInputStream(src);
+            fos = new FileOutputStream(dest);
+            fcin = fis.getChannel();
+            fcout = fos.getChannel();
+
+            if (extent < 0) {
+                extent = fcin.size();
+            }
+
+            // do the file copy
+            long trans = fcin.transferTo(0, extent, fcout);
+            if (trans < extent) {
+                return false;
+            }
+            return true;
+            
+        } finally {
+            // finish up
+            if (fcin != null) {
+                fcin.close();
+            }
+            if (fcout != null) {
+                fcout.close();
+            }
+            if (fis != null) {
+                fis.close();
+            }
+            if (fos != null) {
+                fos.close();
+            }
         }
-        
-		// finish up
-		fcin.close();
-		fcout.close();
-		fis.close();
-		fos.close();
-	}
+    }
 
 	/** Deletes all files and subdirectories under dir.
      * @param dir
@@ -150,22 +172,23 @@ public class FileUtils
      * Utility method to read an entire file as a String.
      * 
      * @param file
-     * @return
-     * @throws IOException
+     * @return @throws
+     *         IOException
      */
     public static String readFileAsString(File file) throws IOException {
-        StringBuffer sb = new StringBuffer();
+        StringBuffer sb = new StringBuffer((int) file.length());
         String line;
-        BufferedReader br
-            = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(file)));
         line = br.readLine();
-        while(line!=null) {
+        while (line != null) {
             sb.append(line);
             line = br.readLine();
         }
         br.close();
         return sb.toString();
     }
+    
     /**
      * Get a list of all files in directory that have passed prefix.
      *
@@ -198,8 +221,8 @@ public class FileUtils
         class RegexpFileFilter implements FileFilter {
             Pattern pattern;
 
-            protected RegexpFileFilter(String regexp) {
-                pattern = Pattern.compile(regexp);
+            protected RegexpFileFilter(String re) {
+                pattern = Pattern.compile(re);
             }
 
             public boolean accept(File pathname) {
