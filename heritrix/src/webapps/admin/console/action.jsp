@@ -44,5 +44,5 @@
 //		}
 		
 	}	
-	response.sendRedirect("/admin/main.jsp");
+	response.sendRedirect(request.getContextPath() + "/index.jsp");
 %>

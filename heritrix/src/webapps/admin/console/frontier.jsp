@@ -131,7 +131,7 @@
                 <input name="match" size="33" value="<%=regexpr%>" onKeyPress="checkForEnter(event)">
             </td>
             <td nowrap>
-                &nbsp;<a href="/admin/help/regexpr.jsp">?</a>&nbsp;&nbsp;
+                &nbsp;<a href="<%=request.getContextPath()%>/help/regexpr.jsp">?</a>&nbsp;&nbsp;
             </td>
             <td nowrap>
                 <input type="button" value="Display URIs" onClick="doDisplayInitial()">&nbsp;&nbsp;&nbsp;<input type="button" value="Delete URIs" onClick="doDelete()">

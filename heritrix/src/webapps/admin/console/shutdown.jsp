@@ -40,7 +40,7 @@
 			command line launching</font>
 		<p>
 			<input type="button" value="I'm sure, shut it down" onClick="doShutDown()">
-			<input type="button" value="Cancel" onClick="document.location='/admin/main.jsp'">
+			<input type="button" value="Cancel" onClick="document.location='<%=request.getContextPath()%>/index.jsp'">
 
 	<% } %>
 <%@include file="/include/foot.jsp"%>
