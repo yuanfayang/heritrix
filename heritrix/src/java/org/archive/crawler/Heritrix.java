@@ -50,7 +50,7 @@ import org.archive.crawler.admin.auth.User;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.garden.SelftestCrawlJobHandler;
+import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
 
 
 /**
@@ -166,7 +166,7 @@ public class Heritrix
     private static final String HERITRIX_OUT_FILE = "heritrix_out.log";
 
     /**
-     * When running selftest, we set in here the URL for the selftest garden.
+     * When running selftest, we set in here the URL for the selftest.
      */
     private static String getSelftestURL = null;
     
@@ -507,19 +507,19 @@ public class Heritrix
      */
     private static void selftest(int port) throws Exception
     {
-        // Put up the webserver.  It has the selftest garden to go against.
+        // Put up the webserver.  It has the selftest to go against.
         Heritrix.httpServer = new SimpleHttpServer(port);
         Heritrix.httpServer.startServer();
         File selftestDir = new File(getConfdir(), "selftest");
         File crawlOrderFile = new File(selftestDir, "job-selftest.xml");
-        Heritrix.jobHandler = new SelftestCrawlJobHandler();
+        Heritrix.jobHandler = new SelfTestCrawlJobHandler();
         // Create a job based off the selftest order file.  Then use this as
         // a template to pass jobHandler.newJob().  Doing this gets our
         // selftest output to show under the jobs directory. 
         // Pass as a seed a pointer to the webserver we just put up.
         CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
         Heritrix.getSelftestURL =
-            "http://localhost:" + Integer.toString(port) + "/garden/";
+            "http://localhost:" + Integer.toString(port) + "/selftest/";
         job = Heritrix.jobHandler.newJob(job, "selftest",
             "Integration self test", getSelftestURL);
         Heritrix.jobHandler.addJob(job);

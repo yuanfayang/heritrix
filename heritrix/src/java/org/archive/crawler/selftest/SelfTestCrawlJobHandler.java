@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.garden;
+package org.archive.crawler.selftest;
 
 import java.io.File;
 import java.util.Date;
@@ -44,19 +44,19 @@ import org.archive.crawler.datamodel.settings.ComplexType;
  * @author stack
  * @version $Id$
  */
-public class SelftestCrawlJobHandler
+public class SelfTestCrawlJobHandler
     extends CrawlJobHandler
 {
     /**
      * Name of the selftest webapp.
      */
-    private static final String SELFTEST_WEBAPP = "garden";
+    private static final String SELFTEST_WEBAPP = "selftest";
     
     
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.admin.SelftestCrawlJobHandler");
     
-    public SelftestCrawlJobHandler()
+    public SelfTestCrawlJobHandler()
     {
         super();
     }
@@ -105,7 +105,7 @@ public class SelftestCrawlJobHandler
                 File webappDir =
                     Heritrix.getHttpServer().getWebappPath(SELFTEST_WEBAPP);
                 Test test =
-                    AllGardenSelfTests.suite(Heritrix.getSelftestURL(),
+                    AllSelfTestCases.suite(Heritrix.getSelftestURL(),
                         webappDir, jobDir, jobName, arcDir, prefix);
                 result = junit.textui.TestRunner.run(test);
             }

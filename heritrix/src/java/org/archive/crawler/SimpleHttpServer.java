@@ -152,7 +152,7 @@ public class SimpleHttpServer
     
     /**
      * @param contextName Name of context to look for.  Possible names would be 
-     * '/admin', '/', or '/garden'.
+     * '/admin', '/', or '/selftest'.
      * 
      * @return named context.
      */

@@ -528,9 +528,9 @@ Run the integration self test on the command line by doing the following:
 
     % $HERITRIX_HOME/bin/heritrix.sh --selftest
 
-This will set the crawler going against itself, in particular, the garden
+This will set the crawler going against itself, in particular, the selftest
 webapp. When done, it runs an analsys of the produced arc files and logs and
-dumps a ruling into heritrix_out.log . See the org.archive.crawler.garden
+dumps a ruling into heritrix_out.log . See the org.archive.crawler.selftest
 package for more on how the selftest works.
 
 3.12 cruisecontrol

@@ -1,4 +1,4 @@
-/* GardenTestCase
+/* SelfTestCase
  * 
  * Created on Feb 4, 2004
  *
@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.garden;
+package org.archive.crawler.selftest;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +40,7 @@ import junit.framework.TestCase;
  * @author stack
  * @version $Id$
  */
-public class GardenSelfTestCase extends TestCase
+public class SelfTestCase extends TestCase
 {
     /**
      * Suffix for selftest classes.
@@ -72,12 +72,12 @@ public class GardenSelfTestCase extends TestCase
     private static ARCReader readReader = null;
 
 
-    public GardenSelfTestCase()
+    public SelfTestCase()
     {
         super();
     }
 
-    public GardenSelfTestCase(String testName)
+    public SelfTestCase(String testName)
     {
         super(testName);
     }
@@ -89,7 +89,7 @@ public class GardenSelfTestCase extends TestCase
     {
         if (!initialized)
         {
-            throw new Exception("GardenSelfTestCase.initialize() not called" +
+            throw new Exception("SelfTestCase.initialize() not called" +
                 " before running of first test.");
         }
         super.setUp();
@@ -117,20 +117,20 @@ public class GardenSelfTestCase extends TestCase
         {
             throw new IOException("SelftestURL not set");
         }    
-        GardenSelfTestCase.selftestURL =
+        SelfTestCase.selftestURL =
             selftestURL.endsWith("/")? selftestURL: selftestURL + "/";
         
         if (webappDir == null || !webappDir.exists())
         {
             throw new IOException("WebappDir not set");
         }
-        GardenSelfTestCase.webappDir = webappDir;
+        SelfTestCase.webappDir = webappDir;
             
         if (jobDir == null || !jobDir.exists())
         {
             throw new IOException("Jobdir not set");
         }
-        GardenSelfTestCase.jobDir = jobDir;
+        SelfTestCase.jobDir = jobDir;
         
         if (arcDir == null || !arcDir.exists())
         {
@@ -141,13 +141,13 @@ public class GardenSelfTestCase extends TestCase
         {
             throw new IOException("JobName not set");
         }    
-        GardenSelfTestCase.jobName = jobName;
+        SelfTestCase.jobName = jobName;
         
         if (prefix == null || prefix.length() <= 0)
         {
             throw new IOException("Prefix not set");
         }    
-        GardenSelfTestCase.prefix = prefix;
+        SelfTestCase.prefix = prefix;
         
         // Find the arc file in the arcDir.  Should only be one.  Then make
         // an instance of ARCReader and call the validate on it.
@@ -161,7 +161,7 @@ public class GardenSelfTestCase extends TestCase
         readReader = new ARCReader(arcFile);
         readReader.validate();
         
-        GardenSelfTestCase.initialized = true;
+        SelfTestCase.initialized = true;
     }
     
     /**

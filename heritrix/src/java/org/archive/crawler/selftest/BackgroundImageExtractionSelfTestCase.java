@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.garden;
+package org.archive.crawler.selftest;
 
 import java.io.File;
 import java.util.Iterator;
@@ -34,8 +34,8 @@ import org.archive.io.arc.ARCRecordMetaData;
  * @author stack
  * @version $Id$
  */
-public class BackgroundImageExtractionSelfTest
-    extends GardenSelfTestCase
+public class BackgroundImageExtractionSelfTestCase
+    extends SelfTestCase
 {   
     /**
      * The name of the background image the crawler is supposed to find.

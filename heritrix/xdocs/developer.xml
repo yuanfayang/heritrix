@@ -227,10 +227,10 @@ ${package_declaration}</source></p>
             <source>% $HERITRIX_HOME/bin/heritrix.sh --selftest</source>
             </p>
             <p>This will set the crawler going against itself, in particular,
-            the <i>garden</i> webapp.  When done, it runs an analsys of 
+            the <i>selftest</i> webapp.  When done, it runs an analsys of 
             the produced arc files and logs and dumps a ruling into 
             <i>heritrix_out.log</i>.  See the 
-            <i>org.archive.crawler.garden</i> package for more on how the
+            <i>org.archive.crawler.selftest</i> package for more on how the
             selftest works.</p>
         </section>
                         
