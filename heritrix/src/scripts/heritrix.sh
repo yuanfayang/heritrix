@@ -62,12 +62,10 @@ then
 fi
 
 # Ignore previous classpath.  Build one that contains heritrix jar and content
-# of the lib directory.
-oldCP=$CLASSPATH
-unset CLASSPATH
+# of the lib directory into the variable CP.
 for jar in `ls $HERITRIX_HOME/lib/*.jar $HERITRIX_HOME/*.jar`
 do
-    CLASSPATH=${CLASSPATH}:${jar}
+    CP=${CP}:${jar}
 done
 
 # Make sure of java opts.
@@ -93,9 +91,8 @@ fi
 stdouterrlog=${HERITRIX_HOME}/heritrix_out.log
 echo "`date` Starting heritrix" >> $stdouterrlog
 main=org.archive.crawler.Heritrix
-nohup $JAVA_HOME/bin/java -Dheritrix.home=${HERITRIX_HOME} \
-    ${JAVA_OPTS} -classpath ${CLASSPATH} $main $@ \
-    >> ${stdouterrlog} 2>&1 &
+CLASSPATH=${CP} nohup $JAVA_HOME/bin/java -Dheritrix.home=${HERITRIX_HOME} \
+    ${JAVA_OPTS} $main $@ >> ${stdouterrlog} 2>&1 &
 
 # Wait for content in the heritrix_dmesg.log file.
 echo -n "`date` Starting heritrix"
@@ -111,11 +108,3 @@ do
     fi
     echo -n '.'
 done
-
-# Restore any old CLASSPATH.
-if [ "$oldCP" != "" ]; then
-    CLASSPATH=${oldCP}
-    export CLASSPATH
-else
-    unset CLASSPATH
-fi
