@@ -46,7 +46,7 @@ public class DiskBackedQueue implements Queue, Serializable {
     /** if all contents would leave head less than this
      * percent full, discard the backing file(s)*/
     protected static final float DISCARD_BACKING_THRESHOLD = 0.25f;
-    private static Logger logger = 
+    private static Logger logger =
         Logger.getLogger(DiskBackedQueue.class.getName());
 
     protected int headMax;
@@ -118,7 +118,7 @@ public class DiskBackedQueue implements Queue, Serializable {
     }
 
     /**
-     * 
+     *
      */
     protected void discardBacking() {
         // Flush out the items on disk and close the
@@ -128,7 +128,7 @@ public class DiskBackedQueue implements Queue, Serializable {
             tailQ.release();
         }
     }
-    
+
     /**
      * Release any file-handles in arecoverable way.
      */
@@ -186,7 +186,7 @@ public class DiskBackedQueue implements Queue, Serializable {
     public Object peek() {
     	if(headQ.isEmpty()){
     		fillHeadQ();
-    	} 
+    	}
     	return headQ.getFirst();
     }
 
@@ -203,7 +203,7 @@ public class DiskBackedQueue implements Queue, Serializable {
             Iterator it = new CompositeIterator(
                     headQ.iterator(),
                     tailQ.getIterator(false));
-            
+
             return it;
         }
     }
@@ -223,9 +223,9 @@ public class DiskBackedQueue implements Queue, Serializable {
     /**
      * Set the maximum number of items to keep in memory
      * at the structure's top. If more than that number are
-     * already in memory, they will remain in memory until 
+     * already in memory, they will remain in memory until
      * dequeued, and thereafter the max will not be exceeded.
-     * 
+     *
      * @param hm
      */
     public void setHeadMax(int hm) {

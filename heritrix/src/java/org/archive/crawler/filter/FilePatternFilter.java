@@ -1,8 +1,8 @@
-/* 
+/*
  * PathSuffixFilter
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Mar 11, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -36,8 +36,8 @@ import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SimpleType;
 
 /**
- * Compares suffix of a passed CrawlURI, UURI, or String against a regular 
- * expression pattern accepting matches. 
+ * Compares suffix of a passed CrawlURI, UURI, or String against a regular
+ * expression pattern accepting matches.
  *
  * @author Igor Ranitovic
  */
@@ -60,7 +60,7 @@ public class FilePatternFilter extends URIRegExpFilter {
     public static final String VIDEO = "Video";
     public static final String MISC = "Miscellaneous";
     public static final String CUSTOM = "Custom";
-    
+
     /**
      * @param name
      */
@@ -75,9 +75,9 @@ public class FilePatternFilter extends URIRegExpFilter {
             "for this filter, turning it into (effectively) a generic " +
             "regular expression filter.");
 
-        String[] options = new String[] {ALL, IMAGES, AUDIO, VIDEO, MISC, 
+        String[] options = new String[] {ALL, IMAGES, AUDIO, VIDEO, MISC,
                                             CUSTOM};
-                                
+
         addElementToDefinition(
             new SimpleType(ATTR_USE_DEFAULT, "URLs that match selected file " +
                 "patterns will be crawled. Default file patterns are:\n" +
@@ -87,7 +87,7 @@ public class FilePatternFilter extends URIRegExpFilter {
                 "All: All above patterns\nChoose 'Custom' to specify your own" +
                 " pattern. These default patterns are case insensitive.",
                 "All", options));
-                
+
         addElementToDefinition(
             new SimpleType(ATTR_REGEXP, "Custom java regular expression.+n " +
                     "This regular expression will be used instead of the " +
@@ -100,15 +100,15 @@ public class FilePatternFilter extends URIRegExpFilter {
 
     }
 
-    /** 
+    /**
      * @see org.archive.crawler.filter.URIRegExpFilter#getRegexp(java.lang.Object)
      */
     protected String getRegexp(Object o) {
         try {
             String patternType = (String)getAttribute(o, ATTR_USE_DEFAULT);
-            
+
             if (patternType.equals(ALL)){
-                return ALL_DEFAULT_PATTERNS;   
+                return ALL_DEFAULT_PATTERNS;
             } else if (patternType.equals(IMAGES)){
                 return IMAGES_PATTERNS;
             }else if (patternType.equals(AUDIO)){
@@ -117,22 +117,22 @@ public class FilePatternFilter extends URIRegExpFilter {
                 return VIDEO_PATTERNS;
             }else if(patternType.equals(MISC)){
                 return MISC_PATTERNS;
-            }else if(patternType.equals(CUSTOM)){                            
+            }else if(patternType.equals(CUSTOM)){
                 return (String) getAttribute(o, ATTR_REGEXP);
-                        
+
             }else {
                 assert false : "Unrecognized pattern type " + patternType +
                                ". Should never happened!";
             }
-                
+
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
-        
+
         return null;  // Basically the filter is inactive if this occurs.
     }
-    
-    /** 
+
+    /**
      * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
      */
     public boolean accepts(Object o) {

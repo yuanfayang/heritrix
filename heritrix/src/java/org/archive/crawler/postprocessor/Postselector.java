@@ -50,17 +50,17 @@ import org.archive.crawler.settings.Type;
  * @author gojomo
  *
  */
-public class Postselector extends Processor implements CoreAttributeConstants, 
+public class Postselector extends Processor implements CoreAttributeConstants,
         FetchStatusCodes {
-            
-    private static Logger logger = 
+
+    private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.Postselector");
 
-    private final static Boolean DEFAULT_SEED_REDIRECTS_NEW_SEEDS = 
+    private final static Boolean DEFAULT_SEED_REDIRECTS_NEW_SEEDS =
         new Boolean(true);
-    private final static String ATTR_SEED_REDIRECTS_NEW_SEEDS = 
+    private final static String ATTR_SEED_REDIRECTS_NEW_SEEDS =
         "seed-redirects-new-seed";
-    
+
     // limits on retries TODO: separate into retryPolicy?
     //private int maxDeferrals = 10; // should be at least max-retries plus 3 or so
 
@@ -128,10 +128,10 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                         Level.INFO, e.getMessage(), array);
                 }
             }
-            handleLinkCollection( curi, viaURI, 
+            handleLinkCollection( curi, viaURI,
                 A_JS_FILE_LINKS, 'X', CandidateURI.NORMAL);
         }
-        
+
     }
 
     private UURI getBaseURI(CrawlURI curi) {
@@ -155,13 +155,13 @@ public class Postselector extends Processor implements CoreAttributeConstants,
 //            curi.setFetchStatus(S_PREREQUISITE_FAILURE);
 //            return;
 //        }
-        
+
         try {
             // create and schedule prerequisite
             UURI prereq = new UURI(getBaseURI(curi),
                 (String)curi.getPrerequisiteUri());
             CandidateURI caUri = new CandidateURI(prereq);
-            caUri.setSchedulingDirective(CandidateURI.FORCE_REVISIT);                              
+            caUri.setSchedulingDirective(CandidateURI.FORCE_REVISIT);
             caUri.setVia(curi);
             caUri.setPathFromSeed(curi.getPathFromSeed()+ "P");
 
@@ -200,17 +200,17 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         logger.finer("URI rejected: " + caUri);
         return false;
     }
-        
+
     /**
-     * Method handles links according to the collection, type and scheduling 
+     * Method handles links according to the collection, type and scheduling
      * priority.
-     * 
+     *
      * @param curi CrawlURI that is origin of the links.
      * @param baseUri URI that is used to resolve links.
      * @param collection Collection name.
      * @param linkType Type of links.
      * @param directive how should URIs be scheduled
-     */    
+     */
     private void handleLinkCollection(CrawlURI curi, UURI baseUri,
             String collection, char linkType, String directive)
     {
@@ -218,10 +218,10 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             // do not follow links of error pages
             return;
         }
-        
+
         // Check if this is a seed with a 301 or 302.
         boolean seed = false;
-        if ( curi.isSeed() 
+        if ( curi.isSeed()
                 && (curi.getFetchStatus()==301 || curi.getFetchStatus()==302)
                 && collection.equals(A_HTTP_HEADER_URIS) ) {
             try {
@@ -239,12 +239,12 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                 e.printStackTrace();
             }
         }
-        
+
         Collection links = (Collection)curi.getAList().getObject(collection);
         for (Iterator iter = links.iterator(); iter.hasNext(); ) {
             String link = (String)iter.next();
             if (link == null || link.length() <= 0) {
-                continue;   
+                continue;
             }
             try {
                 UURI uuri = new UURI(baseUri, link);
@@ -255,7 +255,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                 caURI.setPathFromSeed(curi.getPathFromSeed()+ linkType);
                 logger.finest("inserting link from " + collection + " of type "
                     + linkType + " at head " + uuri);
-                    
+
                 schedule(caURI);
             } catch (URIException ex) {
                 Object[] array = { curi, link };

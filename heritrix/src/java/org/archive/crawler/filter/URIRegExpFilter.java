@@ -54,7 +54,7 @@ public class URIRegExpFilter extends Filter {
         addElementToDefinition(
                 new SimpleType(ATTR_REGEXP, "Java regular expression.", ""));
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Filter#accepts(java.lang.Object)
      */
@@ -76,9 +76,9 @@ public class URIRegExpFilter extends Filter {
             return TextUtils.matches(getRegexp(o), input);
         }
     }
-    
+
     /** Get the regular expression string to match the URI against.
-     * 
+     *
      * @param o the object for which the regular expression should be
      *          matched against.
      * @return the regular expression to match against.
@@ -91,7 +91,7 @@ public class URIRegExpFilter extends Filter {
             return null;  // Basically the filter is inactive if this occurs.
         }
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Filter#applyInversion()
      */

@@ -21,7 +21,7 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+*/
 package org.archive.crawler.checkpoint;
 
 import java.io.File;
@@ -36,9 +36,9 @@ import org.archive.util.FileUtils;
 
 /**
  * Enhanced ObjectOutputStream with support for restoring
- * files that had been saved, in parallel with object 
+ * files that had been saved, in parallel with object
  * serialization.
- * 
+ *
  * @author gojomo
  *
  */
@@ -49,7 +49,7 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
     /**
      * Instantiate over the given stream and using the supplied
      * auxiliary storage directory.
-     * 
+     *
      * @param in
      * @param storeDir
      * @throws IOException
@@ -58,28 +58,28 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
         super(in);
         auxiliaryDirectoryStack.addFirst(storeDir);
     }
-    
+
     /**
      * Push another default storage directory for use
      * until popped.
-     * 
+     *
      * @param dir
      */
     public void pushAuxiliaryDirectory(String dir) {
         auxiliaryDirectoryStack.addFirst(new File(getAuxiliaryDirectory(),dir));
     }
-    
+
     /**
      * Discard the top auxiliary directory.
      */
     public void popAuxiliaryDirectory() {
         auxiliaryDirectoryStack.removeFirst();
     }
-    
+
     /**
      * Return the top auxiliary directory, from
      * which saved files are restored.
-     * 
+     *
      * @return
      */
     public File getAuxiliaryDirectory() {
@@ -90,7 +90,7 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
      * Restore a file from storage, using the name and length
      * info on the serialization stream and the file from the
      * current auxiliary directory, to the given File.
-     * 
+     *
      * @param destination
      * @throws IOException
      */
@@ -105,7 +105,7 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
      * Restore a file from storage, using the name and length
      * info on the serialization stream and the file from the
      * current auxiliary directory, to the given File.
-     * 
+     *
      * @param directory
      * @throws IOException
      */
@@ -120,23 +120,23 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
     /**
      * Register a task to be done when the ObjectPlusFilesInputStream
      * is closed.
-     * 
+     *
      * @param task
      */
     public void registerFinishTask(Runnable task) {
         postRestoreTasks.addFirst(task);
     }
-    
+
     private void doFinishTasks() {
     	Iterator iter = postRestoreTasks.iterator();
     	while(iter.hasNext()) {
-    		((Runnable)iter.next()).run();   
+    		((Runnable)iter.next()).run();
         }
     }
-    
-    /** 
+
+    /**
      * In addition to default, do any registered cleanup tasks.
-     * 
+     *
      * @see java.io.InputStream#close()
      */
     public void close() throws IOException {

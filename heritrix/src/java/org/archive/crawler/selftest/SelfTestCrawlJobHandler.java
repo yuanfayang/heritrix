@@ -56,17 +56,17 @@ public class SelfTestCrawlJobHandler
 
     /**
      * Name of selftest to run.
-     * 
+     *
      * If set, run this test only.  Otherwise run them all.
      */
     private String selfTestName = null;
-    
+
 
     public SelfTestCrawlJobHandler()
     {
         this(null);
     }
-    
+
     public SelfTestCrawlJobHandler(String selfTestName)
     {
         super(false,false); //No need to load jobs or profiles
@@ -129,7 +129,7 @@ public class SelfTestCrawlJobHandler
         {
             // TODO: This technique where I'm calling shutdown directly means
             // we bypass the running of other crawlended handlers.  Means
-            // that such as the statistics tracker have no chance to run so 
+            // that such as the statistics tracker have no chance to run so
             // reports are never generated.  Fix -- but preserve 0 or 1 exit
             // code.
             logger.info((new Date()).toString() + " Selftest " +

@@ -73,21 +73,21 @@ public class CrawlScope extends Filter {
 
     /**
      * List of seeds.
-     * 
+     *
      * This list is wrapped with the synchronized list whenever its
-     * instantiated.  This means, to iterate over this list, you'll need to 
-     * synchronize on the list itself first.  See 
+     * instantiated.  This means, to iterate over this list, you'll need to
+     * synchronize on the list itself first.  See
      * http://java.sun.com/j2se/1.4.2/docs/api/java/util/Collections.html#synchronizedList(java.util.List).
      * Call getSeedList() to get the list to synchronize on.
      */
     private SeedList seedlist = null;
-    
-    
+
+
     private OrFilter excludeFilter;
-    
-    
+
+
     /** Constructs a new CrawlScope.
-     * 
+     *
      * @param name the name is ignored since it always have to be the value of
      *        the constant ATT_NAME.
      */
@@ -107,7 +107,7 @@ public class CrawlScope extends Filter {
                 new Integer(5)));
         this.excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
                 ATTR_EXCLUDE_FILTER));
-        
+
         // Try to preserve the values of these attributes when we exchange
         // scopes.
         setPreservedFields(new String[] { ATTR_SEEDS, ATTR_MAX_LINK_HOPS,
@@ -119,26 +119,26 @@ public class CrawlScope extends Filter {
     public CrawlScope() {
         this(ATTR_NAME);
     }
-    
+
     /**
-     * Initialize is called just before the crawler starts to run.  
-     * 
+     * Initialize is called just before the crawler starts to run.
+     *
      * The settings system is up and initialized so can be used.  This
      * initialize happens after {@link #earlyInitialize(CrawlerSettings)}.
-     * 
+     *
      * @param controller Controller object.
      */
     public void initialize(CrawlController controller) {
         createSeedlist(getSeedfile(), getSettingsHandler().
             getOrder().getController(), true);
     }
-    
+
     /**
      * Create seedlist.
-     * 
-     * Always creates a caching SeedList.  Override if you want different 
+     *
+     * Always creates a caching SeedList.  Override if you want different
      * behavior.
-     * 
+     *
      * @param seedfile Seedfile to use as seed source.
      * @param l Logger to use internally.
      * @param caching True if seed list created is to cache seeds.
@@ -153,7 +153,7 @@ public class CrawlScope extends Filter {
     public String toString() {
         return "CrawlScope<" + getName() + ">";
     }
-    
+
     /**
      * @param o An instance of UURI or of CandidateURI.
      * @return Make into a UURI.
@@ -171,25 +171,25 @@ public class CrawlScope extends Filter {
         }
         return u;
     }
-    
+
     /**
      * Use this method to get a reference to the seedlist.
-     * 
+     *
      * Use it to get an iterator.  You must synchronize on it as you iterate
      * over it as per
      * http://java.sun.com/j2se/1.4.2/docs/api/java/util/Collections.html#synchronizedList(java.util.List)
      * to prevent concurrentmodificationexceptions.  Same is case if you want
      * to add seeds.
-     * 
+     *
      * @return Returns a seedlist.
      */
     public List getSeedlist() {
         return this.seedlist;
     }
-    
+
     /**
      * Refresh seeds.
-     * 
+     *
      * If caching, this will reread the seed file. If not, this will just update
      * the seed file reference so all subsequent iterators will be against new
      * file reference.
@@ -197,8 +197,8 @@ public class CrawlScope extends Filter {
     public void refreshSeeds() {
         this.seedlist.refresh(getSeedfile());
     }
-        
-    
+
+
     /**
      * @return Seed list file or null if problem getting settings file.
      */
@@ -263,7 +263,7 @@ public class CrawlScope extends Filter {
         }
 
         CandidateURI cand = (CandidateURI)o;
-        
+
         String path = cand.getPathFromSeed();
         int linkCount = 0;
         int transCount = 0;
@@ -344,7 +344,7 @@ public class CrawlScope extends Filter {
         }
         return isSameHost;
     }
-    
+
     /** Check if URI is accepted by the additional focus of this scope.
      *
      * This method should be overridden in subclasses.
@@ -353,9 +353,9 @@ public class CrawlScope extends Filter {
      * @return True if additional focus filter accepts passed object.
      */
     protected boolean additionalFocusAccepts(Object o){
-        return false; 
+        return false;
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */

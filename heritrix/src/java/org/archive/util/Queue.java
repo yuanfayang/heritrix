@@ -63,16 +63,16 @@ public interface Queue {
      * release any OS/IO resources associated with Queue
      */
     void release();
-    
+
     /**
      * @return top object, without removing it
      */
     Object peek();
-    
+
     /**
      * Returns an iterator for the queue.
      * <p>
-     * The returned iterator's <code>remove</code> method is considered 
+     * The returned iterator's <code>remove</code> method is considered
      * unsafe.
      * <p>
      * Editing the queue while using the iterator is not safe.
@@ -82,11 +82,11 @@ public interface Queue {
     Iterator getIterator(boolean inCacheOnly);
 
     /**
-     * All objects in the queue where <code>matcher.match(object)</code> 
+     * All objects in the queue where <code>matcher.match(object)</code>
      * returns true will be deleted from the queue.
      * <p>
-     * Making other changes to the queue while this method is being 
-     * processed is not safe. 
+     * Making other changes to the queue while this method is being
+     * processed is not safe.
      * @param matcher a predicate
      * @return the number of deleted items
      */

@@ -93,7 +93,7 @@ public class SelfTestCase extends TestCase
 
     /**
      * Metadata list from the arc reader.
-     * 
+     *
      * Gotten as byproduct of calling validate on the arcreader.
      */
 	private static List metaDatas;
@@ -218,7 +218,7 @@ public class SelfTestCase extends TestCase
         testNonNullExists(SelfTestCase.logsDir);
         // Calculate the arcfile name.  Find it in the arcDir.  Should only be
         // one. Then make an instance of ARCReader and call the validate on it.
-        ComplexType arcWriterProcessor = 
+        ComplexType arcWriterProcessor =
             crawlOrder.getSettingsHandler().getModule("Archiver");
         String arcDirStr = (String)arcWriterProcessor.
             getAttribute(ARCWriterProcessor.ATTR_PATH);
@@ -284,7 +284,7 @@ public class SelfTestCase extends TestCase
     {
         return SelfTestCase.readReader;
     }
-    
+
     /**
      * @return Returns list of ARCReader metadatas, the byproduct of calling
      * validate.
@@ -381,7 +381,7 @@ public class SelfTestCase extends TestCase
 
     /**
      * Test passed list were all found in the arc.
-     * 
+     *
      * If more or less found, test fails.
      *
      * @param files List of files to find in the arc.  No other files but these

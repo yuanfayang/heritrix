@@ -50,7 +50,7 @@ public abstract class Type extends Attribute {
     private Class legalValueType;
 
     /** Creates a new instance of Type.
-     * 
+     *
      * @param name
      * @param value
      */
@@ -91,13 +91,13 @@ public abstract class Type extends Attribute {
     }
 
     /** Set if this Type should be overideable.
-     * 
+     *
      * @param b true if this Type should be overideable.
      */
     public void setOverrideable(boolean b) {
         overrideable = b;
     }
-    
+
     /** Returns true if this ComplexType should be saved to persistent storage.
     *
     * @return true if this ComplexType should be saved to persistent storage.
@@ -117,24 +117,24 @@ public abstract class Type extends Attribute {
    }
 
     /** Returns true if this Type should only show up in expert mode in UI.
-     * 
+     *
      * @return true if this Type should only show up in expert mode in UI.
      */
     public boolean isExpertSetting() {
         return isExpertSetting;
     }
-    
+
     /** Set if this Type should only show up in expert mode in UI.
-     * 
+     *
      * @param isExpertSetting true if this Type should only show up in
      *        expert mode in UI.
      */
     public void setExpertSetting(boolean isExpertSetting) {
         this.isExpertSetting = isExpertSetting;
     }
-    
+
     /** Returns a list of constraints for the value of this type.
-     * 
+     *
      * @return Returns the constraints or null if there aren't any.
      */
     public List getConstraints() {
@@ -142,34 +142,34 @@ public abstract class Type extends Attribute {
     }
 
     /** Add a constraint to this type.
-     * 
+     *
      * Every constraint must be fulfilled for a value of this type to be valid.
-     * 
+     *
      * @param constraint the constraint to add.
      */
     public void addConstraint(Constraint constraint) {
         constraints.add(constraint);
         Collections.sort(constraints);
     }
-    
+
     /**
      * Get the class values of this Type must be an instance of.
-     * 
+     *
      * @return Returns the legalValueType.
      */
     public Class getLegalValueType() {
         return legalValueType;
     }
-    
+
     /**
      * Set the class values of this Type must be an instance of.
-     * 
+     *
      * @param legalValueType The legalValueType to set.
      */
     public void setLegalValueType(Class legalValueType) {
         this.legalValueType = legalValueType;
     }
-    
+
     /**
      * The implementation of equals consider to Types as equal if name and
      * value are equal. Description is allowed to differ.

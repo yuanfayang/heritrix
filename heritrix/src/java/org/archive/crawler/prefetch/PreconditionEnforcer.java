@@ -66,7 +66,7 @@ public class PreconditionEnforcer
     /** minutes to keep IP information for */
     public final static String ATTR_IP_VALIDITY_DURATION
         = "ip-validity-duration-seconds";
-    /** minutes to cache robots info */ 
+    /** minutes to cache robots info */
     public final static String ATTR_ROBOTS_VALIDITY_DURATION
         = "robot-validity-duration-m";
 
@@ -75,9 +75,9 @@ public class PreconditionEnforcer
      */
     public PreconditionEnforcer(String name) {
         super(name, "Precondition enforcer");
-        
+
         Type e;
-        
+
         e = addElementToDefinition(new SimpleType(ATTR_IP_VALIDITY_DURATION,
                 "How long a dns-record is considered valid (in seconds). \n" +
                 "If the value is set to '-1', then the dns-record's ttl-value" +
@@ -101,7 +101,7 @@ public class PreconditionEnforcer
         }
 
         // make sure we only process schemes we understand (i.e. not dns)
-        String scheme = curi.getUURI().getScheme().toLowerCase(); 
+        String scheme = curi.getUURI().getScheme().toLowerCase();
         if (! (scheme.equals("http") || scheme.equals("https"))) {
             logger.fine("PolitenessEnforcer doesn't understand uri's of type " +
                 scheme + " (ignoring)");
@@ -111,7 +111,7 @@ public class PreconditionEnforcer
         if (considerRobotsPreconditions(curi)) {
             return;
         }
-        
+
         if (!curi.isPrerequisite() && credentialPrecondition(curi)) {
             return;
         }
@@ -128,7 +128,7 @@ public class PreconditionEnforcer
 
     /**
      * Consider the robots precondition.
-     * 
+     *
      * @param curi CrawlURI we're checking for any required preconditions.
      * @return True, if this <code>curi</code> has a precondition or processing
      *         should be terminated for some other reason.  False if
@@ -153,7 +153,7 @@ public class PreconditionEnforcer
         	// Need to get robots
             logger.fine( "No valid robots for " + curi.getServer()
                 + "; deferring " + curi);
-                
+
             // Robots expired - should be refetched even though its already
             // crawled.
             try {
@@ -199,7 +199,7 @@ public class PreconditionEnforcer
             curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }
-        
+
         // if we've done a dns lookup and it didn't resolve a host
         // cancel further fetch-processing of this URI, because
         // the domain is unresolvable
@@ -214,14 +214,14 @@ public class PreconditionEnforcer
             curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }
-        
+
         // if we haven't done a dns lookup  and this isn't a dns uri
         // shoot that off and defer further processing
         if (isIpExpired(curi) && !curi.getUURI().getScheme().equals("dns")) {
             logger.fine("Deferring processing of " + curi.toString()
                 + " for dns lookup.");
             curi.markPrerequisite("dns:" + curi.getServer().getHostname(),
-                getController().getPostprocessorChain());          
+                getController().getPostprocessorChain());
             return true;
         }
         if(curi.getUURI().getScheme().equals("dns")){
@@ -234,7 +234,7 @@ public class PreconditionEnforcer
 
     /**
      * Get the maximum time a dns-record is valid.
-     * 
+     *
      * @param curi the uri this time is valid for.
      * @return the maximum time a dns-record is valid -- in seconds -- or
      * negative if record's ttl should be used.
@@ -246,12 +246,12 @@ public class PreconditionEnforcer
         } catch (AttributeNotFoundException e) {
             d = DEFAULT_IP_VALIDITY_DURATION;
         }
-        
+
         return d.longValue();
     }
 
     /** Return true if ip should be looked up.
-     * 
+     *
      * @param curi the URI to check.
      * @return true if ip should be looked up.
      */
@@ -261,12 +261,12 @@ public class PreconditionEnforcer
             // IP has not been looked up yet.
             return true;
         }
-        
+
         if (host.getIpTTL() == CrawlHost.IP_NEVER_EXPIRES) {
             // IP never expires (numeric IP)
             return false;
         }
-        
+
         long duration = getIPValidityDuration(curi);
         if (duration == 0) {
             // Never expire ip if duration is null (set by user or more likely,
@@ -280,17 +280,17 @@ public class PreconditionEnforcer
             // the specified duration is longer than the dns ttl.
             duration = ttl;
         }
-        
+
         // Duration and ttl are in seconds.  Convert to millis.
         if (duration > 0) {
             duration *= 1000;
         }
-        
+
         return (duration + host.getIpFetched()) < System.currentTimeMillis();
     }
 
     /** Get the maximum time a robots.txt is valid.
-     * 
+     *
      * @param curi
      * @return the time a robots.txt is valid in milliseconds.
      */
@@ -309,10 +309,10 @@ public class PreconditionEnforcer
 
     /**
      * Is the robots policy expired.
-     * 
+     *
      * This method will also return true if we haven't tried to get the
      * robots.txt for this server.
-     * 
+     *
      * @param curi
      * @return true if the robots policy is expired.
      */
@@ -336,33 +336,33 @@ public class PreconditionEnforcer
 
    /**
     * Consider credential preconditions.
-    * 
+    *
     * Looks to see if any credential preconditions (e.g. html form login
     * credentials) for this <code>CrawlServer</code>. If there are, have they
     * been run already? If not, make the running of these logins a precondition
     * of accessing any other url on this <code>CrawlServer</code>.
-    * 
+    *
     * <p>
     * One day, do optimization and avoid running the bulk of the code below.
     * Argument for running the code everytime is that overrides and refinements
     * may change what comes back from credential store.
-    * 
+    *
     * @param curi CrawlURI we're checking for any required preconditions.
     * @return True, if this <code>curi</code> has a precondition that needs to
     *         be met before we can proceed. False if we can precede to process
     *         this url.
     */
     private boolean credentialPrecondition(final CrawlURI curi) {
-        
+
         boolean result = false;
-        
+
         CredentialStore cs =
             CredentialStore.getCredentialStore(getSettingsHandler());
         if (cs == null) {
             logger.severe("No credential store for " + curi);
             return result;
         }
-        
+
         Iterator i = cs.iterator(curi);
         if (i == null) {
             return result;
@@ -370,7 +370,7 @@ public class PreconditionEnforcer
 
         while (i.hasNext()) {
             Credential c = (Credential)i.next();
-            
+
             if (c.isPrerequisite(curi)) {
                 // This credential has a prereq. and this curi is it.  Let it
                 // through.  Add its avatar to the curi as a mark.  Also, does
@@ -382,15 +382,15 @@ public class PreconditionEnforcer
                 curi.setPost(c.isPost(curi));
                 break;
             }
-            
+
             if (!c.rootUriMatch(curi)) {
                 continue;
             }
-            
+
             if (!c.hasPrerequisite(curi)) {
                 continue;
             }
-            
+
             if (!authenticated(c, curi)) {
                 // Han't been authenticated.  Queue it and move on (Assumption
                 // is that we can do one authentication at a time -- usually one
@@ -412,17 +412,17 @@ public class PreconditionEnforcer
         }
         return result;
     }
-    
+
     /**
      * Has passed credential already been authenticated.
-     * 
+     *
      * @param credential Credential to test.
      * @param curi CrawlURI.
      * @return True if already run.
      */
     private boolean authenticated(final Credential credential,
             final CrawlURI curi) {
-        
+
         boolean result = false;
         if (!curi.getServer().hasCredentialAvatars()) {
             return result;

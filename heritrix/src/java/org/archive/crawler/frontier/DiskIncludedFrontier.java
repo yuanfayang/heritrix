@@ -1,23 +1,23 @@
 /* Frontier
- * 
+ *
  * $Id$
- * 
+ *
  * Created on 24.5.2004
  *
  * Copyright (C) 2004 National and University Library of Iceland.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -40,41 +40,41 @@ import org.archive.util.CachingDiskLongFPSet;
 
 /**
  * Overrides org.archive.crawler.frontier.Frontier to use disk based
- * already included structures. 
- * 
+ * already included structures.
+ *
  * The underlying CachingDiskLongFPSet class has received little
  * testing and may be very slow. Each million slots (of the cache
  * or disk-based set) will use about 72MB of space.
- * 
+ *
  * @author Kristinn Sigurdsson
  */
 public class DiskIncludedFrontier extends Frontier {
-    
-    /** The size of the already included's in memory cache. The cache 
+
+    /** The size of the already included's in memory cache. The cache
      *  capacity will be 2 to the power of this factor.
      */
-    public final static String ATTR_INCLUDED_URIS_CACHE_EXPONENT = 
+    public final static String ATTR_INCLUDED_URIS_CACHE_EXPONENT =
         "included-uris-cache-exponent";
 
-    /** The inital size of the already included's disk structure. It's initial 
+    /** The inital size of the already included's disk structure. It's initial
      *  capacity will be 2 to the power of this factor.
      */
-    public final static String ATTR_INCLUDED_URIS_INITFILE_EXPONENT = 
+    public final static String ATTR_INCLUDED_URIS_INITFILE_EXPONENT =
         "included-uris-initfile-exponent";
-    
+
     public final static String ATTR_INCLUDED_URIS_CACHE_LOADFACTOR =
         "included-uris-cache-loadfactor";
-    
+
     public final static String ATTR_INCLUDED_URIS_INITFILE_LOADFACTOR =
         "included-uris-initfile-loadfactor";
-    
-    protected final static Integer DEFAULT_INCLUDED_URIS_CACHE_EXPONENT = 
+
+    protected final static Integer DEFAULT_INCLUDED_URIS_CACHE_EXPONENT =
         new Integer(20); // 1 million slots
-    protected final static Integer DEFAULT_INCLUDED_URIS_INITFILE_EXPONENT = 
+    protected final static Integer DEFAULT_INCLUDED_URIS_INITFILE_EXPONENT =
         new Integer(23); // 8 million slots
-    protected final static Float DEFAULT_INCLUDED_URIS_CACHE_LOADFACTOR = 
+    protected final static Float DEFAULT_INCLUDED_URIS_CACHE_LOADFACTOR =
         new Float(0.75f);
-    protected final static Float DEFAULT_INCLUDED_URIS_INITFILE_LOADFACTOR = 
+    protected final static Float DEFAULT_INCLUDED_URIS_INITFILE_LOADFACTOR =
         new Float(0.75f);
 
     public DiskIncludedFrontier(String name) {
@@ -89,7 +89,7 @@ public class DiskIncludedFrontier extends Frontier {
                 " already encountered URLs. This reduces memory use (that" +
                 " would otherwise be unlimited over time in large crawls)" +
                 " at the expense of performance.");
-        
+
         Type t;
         t = addElementToDefinition(
                 new SimpleType(ATTR_INCLUDED_URIS_CACHE_EXPONENT,
@@ -127,7 +127,7 @@ public class DiskIncludedFrontier extends Frontier {
         t.setExpertSetting(true);
         t.setOverrideable(false);
     }
- 
+
 
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.Frontier#createAlreadyIncluded(java.io.File, java.lang.String)

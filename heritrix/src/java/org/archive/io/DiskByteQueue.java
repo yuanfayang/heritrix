@@ -53,14 +53,14 @@ import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
  *
  * The current write-target file (tail) has a file extension
  * ".qout", the current read file (head) has a file extension
- * ".qin". 
- * 
+ * ".qin".
+ *
  * @author Gordon Mohr
  */
 public class DiskByteQueue implements Serializable {
     private static final String IN_FILE_EXTENSION = ".qin";
     private static final String OUT_FILE_EXTENSION = ".qout";
-    
+
     File tempDir; // enclosing directory for support files
     String backingFilenamePrefix; // filename prefix for both support files
     File inFile; // file from which bytes are read
@@ -68,11 +68,11 @@ public class DiskByteQueue implements Serializable {
     transient FlipFileInputStream headStream;   // read stream
     long rememberedPosition = -1;
     transient FlipFileOutputStream tailStream;  // write stream
-    
+
     /**
-     * Create a new BiskBackedByteQueue in the given directory with given 
+     * Create a new BiskBackedByteQueue in the given directory with given
      * filename prefix
-     * 
+     *
      * @param tempDir
      * @param backingFilenamePrefix
      * @param reuse whether to reuse any prexisting backing files
@@ -94,10 +94,10 @@ public class DiskByteQueue implements Serializable {
             }
         }
     }
-    
+
     /**
      * Create the support streams
-     * 
+     *
      * @param readPosition
      * @throws IOException
      */
@@ -105,25 +105,25 @@ public class DiskByteQueue implements Serializable {
         tailStream = new FlipFileOutputStream();
         headStream = new FlipFileInputStream(readPosition);
     }
-    
+
     /**
      * The stream to read from this byte queue
-     * 
+     *
      * @return
      */
     public InputStream getHeadStream() {
         return headStream;
     }
-    
+
     /**
      * The stream to write to this byte queue
-     * 
+     *
      * @return
      */
     public OutputStream getTailStream() {
         return tailStream;
     }
-    
+
     /**
      * flip the current outFile to the inFile role,
      * make new outFile
@@ -136,12 +136,12 @@ public class DiskByteQueue implements Serializable {
         outFile.renameTo(inFile);
         tailStream.setupStreams();
     }
-    
+
     /**
      * Returns an input stream that covers the entire queue. It only allows read
-     * access. Reading from it will not affect the queue in any way. It is not 
+     * access. Reading from it will not affect the queue in any way. It is not
      * safe to add or remove items to the queue while using this stream.
-     * 
+     *
      * @return an input stream that covers the entire queue
      * @throws IOException
      */
@@ -159,26 +159,26 @@ public class DiskByteQueue implements Serializable {
                     headStream.getReadPosition());
             inStream1 = new BufferedInputStream(tmpFileStream1, 4096);
         }
-        
+
         // Get the tail file, alright to read it from start. Wrap it up.
         tailStream.flush(); // Let's make sure nothing is stuck in buffers.
         FileInputStream tmpFileStream2 = new FileInputStream(
                 outFile);
         BufferedInputStream inStream2 = new BufferedInputStream(tmpFileStream2,
                 4096);
-        
+
         // Create input stream with object stream header and then wrap it up
         // along with the two input streams in a SequenceInputStream and return it.
         ByteArrayOutputStream baOutStream = new ByteArrayOutputStream();
         new ObjectOutputStream(baOutStream); // This triggers the header to be written to baOutStream.
         ByteArrayInputStream baInStream = new ByteArrayInputStream(baOutStream.toByteArray());
-        
+
         return new SequenceInputStream(
                 (inStream1 == null ? (InputStream) baInStream
                         : (InputStream) new SequenceInputStream(baInStream,
                                 inStream1)), inStream2);
     }
-    
+
     /**
      * @throws IOException
      */
@@ -189,7 +189,7 @@ public class DiskByteQueue implements Serializable {
         tailStream.close();
         tailStream = null;
     }
-    
+
     /**
      * frees all streams/files associated with this object
      * @throws IOException
@@ -199,21 +199,21 @@ public class DiskByteQueue implements Serializable {
         inFile.delete();
         outFile.delete();
     }
-    
+
     /**
      * @throws IOException
      */
     public void disconnect() throws IOException {
         close();
     }
-    
+
     /**
      * @throws IOException
      */
     public void connect() throws IOException {
         initializeStreams(rememberedPosition);
     }
-    
+
     // custom serialization
     private void writeObject(ObjectOutputStream stream) throws IOException {
         tailStream.flush();
@@ -226,14 +226,14 @@ public class DiskByteQueue implements Serializable {
         // save head (read) stream file & extent
         coostream.snapshotAppendOnlyFile(inFile);
         // take note of current read position in read file
-        coostream.writeLong(headStream.getReadPosition()); 
+        coostream.writeLong(headStream.getReadPosition());
     }
-    
+
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         // now, must restore constituent files to their checkpoint-time
         // extents and read positions
-        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;       
+        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;
         // restore tail (write) stream file & extent
         coistream.restoreFile(outFile);
         // restore head (read) stream file & extent
@@ -242,19 +242,19 @@ public class DiskByteQueue implements Serializable {
         long readPosition = coistream.readLong();
         initializeStreams(readPosition);
     }
-    
-    
-    
+
+
+
     /**
      * An output stream that supports the DiskBackedByteQueue, by
      * always appending to the current outFile.
-     * 
+     *
      * @author Gordon Mohr.
      */
-    class FlipFileOutputStream extends OutputStream {        
+    class FlipFileOutputStream extends OutputStream {
         BufferedOutputStream outStream;
         FileOutputStream fileStream;
-        
+
         /**
          * Constructor
          * @throws FileNotFoundException if unable to create FileOutStream.
@@ -262,34 +262,34 @@ public class DiskByteQueue implements Serializable {
         public FlipFileOutputStream() throws FileNotFoundException  {
             setupStreams();
         }
-        
+
         protected void setupStreams() throws FileNotFoundException {
             fileStream = new FileOutputStream(outFile,true);
             outStream = new BufferedOutputStream(fileStream, 4096);
         }
-        
+
         /** (non-Javadoc)
          * @see java.io.OutputStream#write(int)
          */
         public void write(int b) throws IOException {
             outStream.write(b);
         }
-        
+
         /** (non-Javadoc)
          * @see java.io.OutputStream#write(byte[], int, int)
          */
         public void write(byte[] b, int off, int len) throws IOException {
             outStream.write(b, off, len);
         }
-        
+
         /** (non-Javadoc)
          * @see java.io.OutputStream#write(byte[])
          */
         public void write(byte[] b) throws IOException {
             outStream.write(b);
         }
-        
-        
+
+
         /** (non-Javadoc)
          * @see java.io.OutputStream#close()
          */
@@ -297,7 +297,7 @@ public class DiskByteQueue implements Serializable {
             super.close();
             outStream.close();
         }
-        
+
         /** (non-Javadoc)
          * @see java.io.OutputStream#flush()
          */
@@ -305,20 +305,20 @@ public class DiskByteQueue implements Serializable {
             outStream.flush();
         }
     }
-    
-    
+
+
     /**
      * An input stream that supports the DiskBackedByteQueue,
      * by always reading from the current inFile, and triggering
      * a "flip" when one inFile is exhausted.
-     * 
+     *
      * @author Gordon Mohr.
      */
     public class FlipFileInputStream extends InputStream {
         FileInputStream fileStream;
         InputStream inStream;
         long position;
-        
+
         /**
          * Constructor.
          * @param readPosition
@@ -327,7 +327,7 @@ public class DiskByteQueue implements Serializable {
         public FlipFileInputStream(long readPosition) throws IOException {
             setupStreams(readPosition);
         }
-        
+
         /** (non-Javadoc)
          * @see java.io.InputStream#read()
          */
@@ -345,14 +345,14 @@ public class DiskByteQueue implements Serializable {
             }
             return c;
         }
-        
+
         /** (non-Javadoc)
          * @see java.io.InputStream#read(byte[])
          */
         public int read(byte[] b) throws IOException {
             return read(b,0,b.length);
         }
-        
+
         /** (non-Javadoc)
          * @see java.io.InputStream#read(byte[], int, int)
          */
@@ -370,8 +370,8 @@ public class DiskByteQueue implements Serializable {
             }
             return count;
         }
-        
-        
+
+
         /**
          * Once the current file is exhausted, this method is called to flip files
          * for both input and output streams.
@@ -385,7 +385,7 @@ public class DiskByteQueue implements Serializable {
             DiskByteQueue.this.flip();
             setupStreams(0);
         }
-        
+
         private void setupStreams(long readPosition) throws IOException {
             inFile.createNewFile(); // if does not already exist
             fileStream = new FileInputStream(inFile);
@@ -393,7 +393,7 @@ public class DiskByteQueue implements Serializable {
             inStream.skip(readPosition);
             position = readPosition;
         }
-        
+
         /** (non-Javadoc)
          * @see java.io.InputStream#close()
          */
@@ -403,7 +403,7 @@ public class DiskByteQueue implements Serializable {
                 inStream.close();
             }
         }
-        
+
         /**
          * Returns the current position of the input stream in the current file
          * (since last flip).
@@ -412,6 +412,6 @@ public class DiskByteQueue implements Serializable {
         public long getReadPosition() {
             return position;
         }
-        
+
     }
 }

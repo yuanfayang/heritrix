@@ -75,10 +75,10 @@ public interface FetchStatusCodes {
     public static final int S_OUT_OF_SCOPE = -5000;
     /** blocked from fetch by user setting. */
     public static final int S_BLOCKED_BY_USER = -5001;
-    
+
     /** deleted from frontier by user */
     public static final int S_DELETED_BY_USER = -6000;
-    
+
     /** Processing thread was killed */
     public static final int S_PROCESSING_THREAD_KILLED = -7000;
 

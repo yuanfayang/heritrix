@@ -1,7 +1,7 @@
 /* CrawlStateUpdater
- * 
+ *
  * Created on Jun 5, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -43,8 +43,8 @@ import org.archive.crawler.framework.Processor;
  */
 public class CrawlStateUpdater extends Processor implements
         CoreAttributeConstants, FetchStatusCodes {
-    
-    private static final Logger logger = 
+
+    private static final Logger logger =
         Logger.getLogger(CrawlStateUpdater.class.getName());
 
     public CrawlStateUpdater(String name) {
@@ -55,14 +55,14 @@ public class CrawlStateUpdater extends Processor implements
         String scheme = curi.getUURI().getScheme().toLowerCase();
 
         if (scheme.equals("http") || scheme.equals("https")) {
-            
+
             // update connection problems counter
             if(curi.getFetchStatus()==S_CONNECT_FAILED) {
                 curi.getServer().incrementConsecutiveConnectionErrors();
             } else if (curi.getFetchStatus()>0){
                 curi.getServer().resetConsecutiveConnectionErrors();
             }
-            
+
             // update robots info
             try {
                 if (curi.getUURI().getPath() != null &&

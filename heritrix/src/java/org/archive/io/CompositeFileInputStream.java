@@ -21,7 +21,7 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+*/
 package org.archive.io;
 
 import java.io.File;
@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class CompositeFileInputStream extends FilterInputStream{
     Iterator filenames;
-    
+
     /* (non-Javadoc)
      * @see java.io.InputStream#read()
      */
@@ -74,7 +74,7 @@ public class CompositeFileInputStream extends FilterInputStream{
         }
         return c;
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.InputStream#skip(long)
      */
@@ -86,7 +86,7 @@ public class CompositeFileInputStream extends FilterInputStream{
         }
         return s;
     }
-    
+
     /**
      * @param files
      * @throws IOException

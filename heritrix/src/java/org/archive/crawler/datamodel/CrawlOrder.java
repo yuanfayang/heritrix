@@ -78,7 +78,7 @@ public class CrawlOrder extends ModuleType {
     public static final String ATTR_WRITE_PROCESSORS = "write-processors";
     public static final String ATTR_POST_PROCESSORS = "post-processors";
     public static final String ATTR_LOGGERS = "loggers";
-    
+
 
     String caseFlattenedUserAgent;
 
@@ -93,7 +93,7 @@ public class CrawlOrder extends ModuleType {
         super(ATTR_NAME, "Heritrix crawl order. \nThis forms the root of " +
                 "the settings framework.");
         Type e;
-        
+
         e = addElementToDefinition(new SimpleType(ATTR_SETTINGS_DIRECTORY,
                 "Directory where override settings are kept. \nThe settings " +
                 "for many modules can be overridden based on the domain or " +
@@ -103,7 +103,7 @@ public class CrawlOrder extends ModuleType {
                 " an absolute path is provided.", "settings"));
         e.setOverrideable(false);
         e.setExpertSetting(true);
-        
+
         e = addElementToDefinition(new SimpleType(ATTR_DISK_PATH,
                 "Directory where logs, arcs and other run time files will " +
                 "be kept. If this path is a relative path, it will be " +
@@ -166,7 +166,7 @@ public class CrawlOrder extends ModuleType {
                 ATTR_HTTP_HEADERS, "HTTP headers. \nInformation that will " +
                         "be used when constructing the HTTP headers of " +
                         "the crawler's HTTP requests."));
-       
+
         e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_USER_AGENT,
                 "User agent to act as. \nThis field must contain a valid " +
                 "URL leading to the website of the person or organization " +
@@ -176,7 +176,7 @@ public class CrawlOrder extends ModuleType {
                 "\\S+.*\\(\\+http://\\S*\\).*", Level.WARNING,
                 "This field must contain a valid URL leading to the website " +
                 "of the person or organization responsible for this crawl."));
-        
+
         e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_FROM,
                 "Contact information. \nThis field must contain a valid" +
                 "e-mail address for the person or organization responsible" +
@@ -222,7 +222,7 @@ public class CrawlOrder extends ModuleType {
                 "Statistics tracking modules. \nAny number of specialised " +
                 "statistics tracker that monitor a crawl and write logs, " +
                 "reports and/or provide information to the user interface."));
-        
+
         e = addElementToDefinition(new SimpleType(ATTR_RECOVER_PATH,
                 "Optional recover.log to preload Frontier.\n A recover log " +
                 "is automatically generated during a crawl. If a crawl " +
@@ -232,7 +232,7 @@ public class CrawlOrder extends ModuleType {
                 "repeating a crawl.", ""));
         e.setOverrideable(false);
         e.setExpertSetting(true);
-        
+
         e = addElementToDefinition(
            new CredentialStore(CredentialStore.ATTR_NAME));
         e.setOverrideable(true);
@@ -345,7 +345,7 @@ public class CrawlOrder extends ModuleType {
     /**
      * Checks if the User Agent and From field are set 'correctly' in
      * the specified Crawl Order.
-     * 
+     *
      * @throws FatalConfigurationException
      */
     public void checkUserAgentAndFrom() throws FatalConfigurationException {
@@ -370,7 +370,7 @@ public class CrawlOrder extends ModuleType {
             return null;
         }
     }
-    
+
     private File getDirectoryRelativeToDiskPath(String subpath) {
         File disk;
         try {

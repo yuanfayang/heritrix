@@ -34,7 +34,7 @@ import java.io.Serializable;
 public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet, Serializable {
     static final int DEFAULT_CAPACITY_POWER_OF_TWO = 10;
     static final float DEFAULT_LOAD_FACTOR = 0.75f;
-    
+
     byte[] slots;
     long[] values;
 
@@ -111,7 +111,7 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet, Serial
         slots[(int)index]=EMPTY;
         values[(int)index]=0;
     }
-    
+
     public boolean quickContains(long fp) {
         return contains(fp);
     }

@@ -1,7 +1,7 @@
 /* SettingsCache
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Mar 17, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -26,12 +26,12 @@ package org.archive.crawler.settings;
 
 
 /** This class keeps a map of host names to settings objects.
- * 
+ *
  * It is implemented with soft references which implies that the elements can
  * be garbage collected when there's no strong references to the elements.
  * Even if there's no strong references left elements will not be garbage
  * collected unless the memory is needed.
- * 
+ *
  * @author John Erik Halse
  *
  */
@@ -43,7 +43,7 @@ public class SettingsCache {
     private final SoftSettingsHash hostToSettings = new SoftSettingsHash(4000);
 
     private final CrawlerSettings globalSettings;
-    
+
     /** Creates a new instance of the settings cache
      */
     public SettingsCache(CrawlerSettings globalSettings) {
@@ -51,8 +51,8 @@ public class SettingsCache {
     }
 
     /** Get the effective settings for a host.
-     * 
-     * @param host the host to get settings for. 
+     *
+     * @param host the host to get settings for.
      * @return the settings or null if not in cache.
      */
     public CrawlerSettings getSettings(String host, String refinement) {
@@ -63,9 +63,9 @@ public class SettingsCache {
         CrawlerSettings settings = hostToSettings.get(key);
         return settings;
     }
-    
+
     /** Get a settings object.
-     * 
+     *
      * @param scope the scope of the settings object to get.
      * @return the settings object or null if not in cache.
      */
@@ -79,7 +79,7 @@ public class SettingsCache {
     }
 
     /** Add a settings object to the cache.
-     * 
+     *
      * @param host the host for which the settings object is valid.
      * @param settings the settings object.
      */
@@ -90,9 +90,9 @@ public class SettingsCache {
         key = computeKey(settings.getScope(), refinement);
         settingsCache.put(key, settings);
     }
-    
+
     /** Delete a settings object from the cache.
-     * 
+     *
      * @param settings the settings object to remove.
      */
     public synchronized void deleteSettingsObject(CrawlerSettings settings) {
@@ -109,9 +109,9 @@ public class SettingsCache {
     }
 
     /** Make sure that no host strings points to wrong settings.
-     * 
+     *
      * This method clears most of the host to settings mappings. Because of the
-     * performance penalty this should only used when really needed.  
+     * performance penalty this should only used when really needed.
      */
     public synchronized void refreshHostToSettings() {
         hostToSettings.clear();
@@ -121,7 +121,7 @@ public class SettingsCache {
             hostToSettings.put(entry);
         }
     }
-    
+
     public CrawlerSettings getGlobalSettings() {
         return globalSettings;
     }

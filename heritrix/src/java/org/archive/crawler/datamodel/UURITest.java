@@ -1,7 +1,7 @@
 /* UURITest
- *  
+ *
  * $Id$
- * 
+ *
  * Created on Apr 2, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -34,32 +34,32 @@ import org.apache.commons.httpclient.URIException;
 
 /**
  * Test UURI's normalize method.
- * 
+ *
  * @author Igor Ranitovic
  */
 public class UURITest extends TestCase {
 
     public final void testEscaping() throws URIException {
-        
+
         // Note: single quote is not being escaped by URI class.
-        final String ESCAPED_URISTR = "http://archive.org/" + UURI.ESCAPED_SPACE + 
+        final String ESCAPED_URISTR = "http://archive.org/" + UURI.ESCAPED_SPACE +
             UURI.ESCAPED_SPACE + UURI.ESCAPED_PIPE + UURI.ESCAPED_CIRCUMFLEX +
             UURI.ESCAPED_QUOT + UURI.SQUOT + UURI.ESCAPED_APOSTROPH +
             UURI.ESCAPED_LSQRBRACKET + UURI.ESCAPED_RSQRBRACKET +
             UURI.ESCAPED_LCURBRACKET + UURI.ESCAPED_RCURBRACKET +
             UURI.SLASH + "a.gif"; // NBSP and SPACE should be trimmed;
-        
+
         final String URISTR = "http://archive.org/.././" + "\u00A0" +
             UURI.SPACE + UURI.PIPE + UURI.CIRCUMFLEX + UURI.QUOT + UURI.SQUOT +
             UURI.APOSTROPH + UURI.LSQRBRACKET + UURI.RSQRBRACKET +
             UURI.LCURBRACKET + UURI.RCURBRACKET + UURI.BACKSLASH +
             "test/../a.gif" + "\u00A0" + UURI.SPACE;
-        
+
         UURI uuri = new UURI(URISTR);
         String uuriStr = uuri.toString();
         assertTrue(ESCAPED_URISTR.equals(uuriStr));
     }
-    
+
     public final void testRelative() throws URIException {
         UURI uuriTgt = new UURI("http://archive.org:83/home.html");
         UURI uri = new UURI("http://archive.org:83/one/two/three.html");
@@ -67,11 +67,11 @@ public class UURITest extends TestCase {
         assertTrue("Not equal",
             uuriTgt.toString().equals(uuri.toString()));
     }
-    
+
     /**
-     * Test that an empty uuri does the right thing -- that we get back the 
+     * Test that an empty uuri does the right thing -- that we get back the
      * base.
-     * 
+     *
      * @throws URIException
      */
     public final void testRelativeEmpty() throws URIException {
@@ -81,7 +81,7 @@ public class UURITest extends TestCase {
         assertTrue("Empty length don't work",
             uuriTgt.toString().equals(uuri.toString()));
     }
-    
+
     public final void testAbsolute() throws URIException {
         UURI uuriTgt = new UURI("http://archive.org:83/home.html");
         UURI uri = new UURI("http://archive.org:83/one/two/three.html");
@@ -89,10 +89,10 @@ public class UURITest extends TestCase {
         assertTrue("Not equal",
             uuriTgt.toString().equals(uuri.toString()));
     }
-    
+
     /**
      * [ 788277 ] Doing separate DNS lookup for same host
-     * 
+     *
      * https://sourceforge.net/tracker/?func=detail&aid=788277&group_id=73833&atid=539099
      * @throws URIException
      */
@@ -102,10 +102,10 @@ public class UURITest extends TestCase {
         assertEquals("Failed equating hosts with dot",
             uuri1.getHost(), uuri2.getHost());
     }
-    
+
     /**
      * [ 874220 ] NPE in java.net.URI.encode
-     * 
+     *
      * https://sourceforge.net/tracker/?func=detail&aid=874220&group_id=73833&atid=539099
      * @throws URIException
      */
@@ -115,25 +115,25 @@ public class UURITest extends TestCase {
             "&#65533;&#65533;&#65533;?&#65533;&#65533;";
         assertNotNull("Encoded chars " + s, new UURI(s));
     }
-    
+
     /**
      * [ 927940 ] java.net.URI parses %20 but getHost null
-     * 
+     *
      * https://sourceforge.net/tracker/?func=detail&aid=927940&group_id=73833&atid=539099
-     * 
+     *
      * @throws URIException If fail to get host.
      */
     public final void testSpaceInHost() throws URIException {
         UURI uuri = new UURI(
             "http://www.local-regions.odpm%20.gov.uk" +
                 "/lpsa/challenge/pdf/propect.pdf");
-        assertTrue("Failed space in host " + uuri.toString(), 
+        assertTrue("Failed space in host " + uuri.toString(),
             uuri.getHost() != null && uuri.getHost().length() > 0);
     }
-    
+
     /**
      * [ 808270 ] java.net.URI chokes on hosts_with_underscores.
-     * 
+     *
      * https://sourceforge.net/tracker/?func=detail&aid=808270&group_id=73833&atid=539099
      * @throws URIException
      */
@@ -143,10 +143,10 @@ public class UURITest extends TestCase {
         assertEquals("Failed get of host with underscore",
             "x_underscore_underscore.2u.com.tw", uuri.getHost());
     }
-    
+
     /**
      * [ 910120 ] java.net.URI#getHost fails when leading digit.
-     * 
+     *
      * https://sourceforge.net/tracker/?func=detail&aid=910120&group_id=73833&atid=539099
      * @throws URIException
      */
@@ -155,10 +155,10 @@ public class UURITest extends TestCase {
         assertEquals("Failed get of host with digit",
             "0204chat.2u.com.tw", uuri.getHost());
     }
-    
+
     /**
      * [ 949548 ] Constraining java URI class.
-     * 
+     *
      * https://sourceforge.net/tracker/?func=detail&aid=949548&group_id=73833&atid=539099
      */
     public final void testPort() {
@@ -168,7 +168,7 @@ public class UURITest extends TestCase {
         checkBadPort(
             "https://webmail.gse.harvard.edu:9100robots.txt/robots.txt");
     }
-    
+
     /**
      * Test bad port throws exception.
      * @param uri URI with bad port to check.
@@ -183,7 +183,7 @@ public class UURITest extends TestCase {
         }
         assertTrue("Didn't throw exception: " + uri, exception);
     }
-    
+
     /**
      * Preserve userinfo capitalization.
      * @throws URIException
@@ -193,11 +193,11 @@ public class UURITest extends TestCase {
         assertEquals("Not equal", uuri.getAuthority(),
             "stack:StAcK@www.tyopaikat.com");
     }
-    
+
     /**
      * Tests from rfc2396 with amendments to accomodate differences
      * intentionally added to make our URI handling like IEs.
-     * 
+     *
      * <pre>
      *       g:h           =  g:h
      *       g             =  http://a/b/c/g
@@ -222,7 +222,7 @@ public class UURITest extends TestCase {
      *       ../../        =  http://a/
      *       ../../g       =  http://a/g
      * </pre>
-     * 
+     *
      * @throws URIException
      */
     public final void testRFC2396Relative() throws URIException {

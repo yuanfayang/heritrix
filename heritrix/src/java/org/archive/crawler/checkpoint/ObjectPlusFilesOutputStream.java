@@ -21,7 +21,7 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+*/
 package org.archive.crawler.checkpoint;
 
 import java.io.File;
@@ -37,15 +37,15 @@ import org.archive.util.FileUtils;
  * Enhanced ObjectOutputStream which maintains (a stack of) auxiliary
  * directories and offers convenience methods for serialized objects
  * to save their related disk files alongside their serialized version.
- * 
+ *
  * @author gojomo
  */
 public class ObjectPlusFilesOutputStream extends ObjectOutputStream {
     LinkedList auxiliaryDirectoryStack = new LinkedList();
-    
+
     /**
      * Constructor
-     * 
+     *
      * @param out
      * @param topDirectory
      * @throws java.io.IOException
@@ -54,69 +54,69 @@ public class ObjectPlusFilesOutputStream extends ObjectOutputStream {
         super(out);
         auxiliaryDirectoryStack.addFirst(topDirectory);
     }
-    
+
     /**
      * Add another subdirectory for any file-capture needs during the
      * current serialization.
-     * 
+     *
      * @param dir
      */
     public void pushAuxiliaryDirectory(String dir) {
         auxiliaryDirectoryStack.addFirst(new File(getAuxiliaryDirectory(),dir));
     }
-    
+
     /**
      * Remove the top subdirectory.
-     * 
+     *
      */
     public void popAuxiliaryDirectory() {
         auxiliaryDirectoryStack.removeFirst();
     }
-    
+
     /**
      * Return the current auxiliary directory for storing
      * files associated with serialized objects.
-     * 
+     *
      * @return
      */
     public File getAuxiliaryDirectory() {
         return (File)auxiliaryDirectoryStack.getFirst();
     }
-    
+
     /**
      * Store a snapshot of an object's supporting file to the
-     * current auxiliary directory. Should only be used for 
+     * current auxiliary directory. Should only be used for
      * files which are strictly appended-to, because it tries
-     * to use a "hard link" where possible (meaning that 
-     * future edits to the original file's contents will 
-     * also affect the snapshot). 
-     * 
-     * Remembers current file extent to allow a future restore 
-     * to ignore subsequent appended data. 
-     * 
+     * to use a "hard link" where possible (meaning that
+     * future edits to the original file's contents will
+     * also affect the snapshot).
+     *
+     * Remembers current file extent to allow a future restore
+     * to ignore subsequent appended data.
+     *
      * @param file
      * @throws IOException
      */
     public void snapshotAppendOnlyFile(File file) throws IOException {
-        // write filename 
+        // write filename
         String name = file.getName();
         writeUTF(name);
         // write current file length
         writeLong(file.length());
         File auxDir = getAuxiliaryDirectory();
         if(!auxDir.exists()) {
-        	auxDir.mkdirs();   
+        	auxDir.mkdirs();
         }
         File destination = new File(auxDir,name);
         hardlinkOrCopy(file, destination);
     }
-    
+
 	/**
-     * Create a backup of this given file, first by trying a "hard 
+     * Create a backup of this given file, first by trying a "hard
      * link", then by using a copy if hard linking is unavailable
      * (either because it is unsupported or the origin and checkpoint
      * directories are on different volumes).
-     * 
+     *
 	 * @param file
 	 * @param destination
      * @throws IOException
@@ -124,7 +124,7 @@ public class ObjectPlusFilesOutputStream extends ObjectOutputStream {
 	private void hardlinkOrCopy(File file, File destination) throws IOException {
 		// For Linux/UNIX, try a hard link first.
         Process link = Runtime.getRuntime().exec("ln "+file.getAbsolutePath()+" "+destination.getAbsolutePath());
-        // TODO NTFS also supports hard links; add appropriate try 
+        // TODO NTFS also supports hard links; add appropriate try
         try {
 			link.waitFor();
 		} catch (InterruptedException e) {

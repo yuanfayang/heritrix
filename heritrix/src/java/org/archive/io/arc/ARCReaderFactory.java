@@ -38,11 +38,11 @@ import org.archive.io.Position;
 
 /**
  * Return an ARCReader.
- * 
+ *
  * @author stack
  */
 public class ARCReaderFactory implements ARCConstants {
-    
+
     /**
      * This factory instance.
      */
@@ -155,7 +155,7 @@ public class ARCReaderFactory implements ARCConstants {
 
         return uncompressedARCFile;
     }
-    
+
     /**
      * @param arcFile File to test.
       * @exception IOException If file does not exist or is not unreadable.
@@ -210,13 +210,13 @@ public class ARCReaderFactory implements ARCConstants {
             // Read in arcfile header record.
             createARCRecord(this.in, ((Position)this.in).getFilePointer());
 		}
-        
+
         /**
          * Return the next record.
          *
          * Override so can move the underlying stream on to the next gzip
          * member.
-         * 
+         *
          * <p>Its unpredictable what will happen if you do not call hasNext
          * before you come in here for another record (This method does not
          * call hasNext for you).
@@ -234,7 +234,7 @@ public class ARCReaderFactory implements ARCConstants {
                     throw new NoSuchElementException(e.getMessage());
                 }
             }
-            
+
             // Here, move the underlying gzip member input stream on to
             // the next record.
             ((GZIPMemberInputStream)this.in).next();
@@ -247,19 +247,19 @@ public class ARCReaderFactory implements ARCConstants {
                     e.getMessage());
             }
         }
-        
+
         /**
          * Create new arc record.
-         * 
+         *
          * Override so can attach a GZIPInputStream onto the passed stream.
          *
          * <p>Encapsulate housekeeping that has to do w/ creating a new record.
-         * 
-         * <p>Call this method at end of constructor to read in the 
+         *
+         * <p>Call this method at end of constructor to read in the
          * arcfile header.  Will be problems reading subsequent arc records
          * if you don't since arcfile header has the list of metadata fields for
          * all records that follow.
-         * 
+         *
          * @param is InputStream to use.
          * @param offset Absolute offset into arc file.
          * @throws IOException

@@ -46,10 +46,10 @@ import java.util.logging.Logger;
  */
 public class RecordingInputStream
     extends InputStream {
-    
+
     protected static Logger logger =
         Logger.getLogger("org.archive.io.RecordingInputStream");
-    
+
     /**
      * Where we are recording to.
      */
@@ -174,16 +174,16 @@ public class RecordingInputStream
         if (!isOpen()) {
             return;
         }
-        
+
         long timeoutTime;
         long totalBytes = 0;
-        
+
         if(timeout > 0) {
             timeoutTime = System.currentTimeMillis() + timeout;
         } else {
             timeoutTime = Long.MAX_VALUE;
         }
-        
+
         byte[] buf = new byte[4096];
         long bytesRead = -1;
         while (true) {
@@ -212,7 +212,7 @@ public class RecordingInputStream
                 throw new NullPointerException("Stream " + this.in + ", " +
                     e.getMessage() + " " + Thread.currentThread().getName());
             }
-            
+
             if (totalBytes > maxLength) {
                 throw new RecorderLengthExceededException();
             }
@@ -267,7 +267,7 @@ public class RecordingInputStream
     public ReplayCharSequence getReplayCharSequence() {
         return getReplayCharSequence(null);
     }
-    
+
     /**
      * @param characterEncoding Encoding of recorded stream.
      * @return A ReplayCharSequence  Will return null if an IOException.  Call
@@ -297,7 +297,7 @@ public class RecordingInputStream
         fos.close();
         ris.close();
     }
-    
+
     /**
      * @return True if we've been opened.
      */

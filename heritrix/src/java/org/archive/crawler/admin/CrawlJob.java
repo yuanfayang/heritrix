@@ -1,5 +1,5 @@
 /* CrawlJob
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -39,13 +39,13 @@ import org.archive.crawler.settings.XMLSettingsHandler;
 
 /**
  * A CrawlJob encapsulates a 'crawl order' with any and all information and
- * methods needed by a CrawlJobHandler to accept and execute them. 
- * 
- * <p>A given crawl job may also be a 'profile' for a crawl. In that case it 
- * should not be executed as a crawl but can be edited and used as a template 
+ * methods needed by a CrawlJobHandler to accept and execute them.
+ *
+ * <p>A given crawl job may also be a 'profile' for a crawl. In that case it
+ * should not be executed as a crawl but can be edited and used as a template
  * for creating new CrawlJobs.
- * 
- * <p>All of it's constructors are protected since only a CrawlJobHander  
+ *
+ * <p>All of it's constructors are protected since only a CrawlJobHander
  * should construct new CrawlJobs.
  *
  * @author Kristinn Sigurdsson
@@ -118,33 +118,33 @@ public class CrawlJob
     private String statisticsFileSave = "";
 
     private String errorMessage = null;
-    
+
     private File jobDir = null;
-    
+
     private CrawlJobErrorHandler errorHandler = null;
 
     protected XMLSettingsHandler settingsHandler;
-    
+
     // all discovered on-disk checkpoints for this job
     private Collection checkpoints = null;
 
     // Checkpoint to resume
     private Checkpoint resumeFrom = null;
-    
+
     /**
-     * A constructor for jobs. 
-     * 
+     * A constructor for jobs.
+     *
      * <p> Create, ready to crawl, jobs.
-     * @param UID A unique ID for this job. Typically emitted by the 
+     * @param UID A unique ID for this job. Typically emitted by the
      *            CrawlJobHandler.
      * @param name The name of the job
      * @param settingsHandler The associated settings
-     * @param errorHandler The crawl jobs settings error handler. 
+     * @param errorHandler The crawl jobs settings error handler.
      *           <tt>null</tt> means none is set
      * @param priority job priority.
-     * @param dir The directory that is considered this jobs working directory. 
+     * @param dir The directory that is considered this jobs working directory.
      */
-    public CrawlJob(String UID, String name, XMLSettingsHandler settingsHandler, 
+    public CrawlJob(String UID, String name, XMLSettingsHandler settingsHandler,
             CrawlJobErrorHandler errorHandler, int priority, File dir) {
         this.UID = UID;
         this.name = name;
@@ -155,13 +155,13 @@ public class CrawlJob
     }
 
     /**
-     * A constructor for profiles. 
-     * 
+     * A constructor for profiles.
+     *
      * <p> Any job created with this constructor will be
-     * considered a profile. Profiles are not stored on disk (only their 
-     * settings files are stored on disk). This is because their data is 
+     * considered a profile. Profiles are not stored on disk (only their
+     * settings files are stored on disk). This is because their data is
      * predictible given any settings files.
-     * @param UIDandName A unique ID for this job. For profiles this is the same 
+     * @param UIDandName A unique ID for this job. For profiles this is the same
      *           as name
      * @param settingsHandler The associated settings
      * @param errorHandler The crawl jobs settings error handler.
@@ -177,11 +177,11 @@ public class CrawlJob
         status = STATUS_PROFILE;
         this.errorHandler = errorHandler;
     }
-    
+
     /**
-     * A constructor for reloading jobs from disk. Jobs (not profiles) have 
-     * their data written to persistent storage in the file system. This method 
-     * is used to load the job from such storage. This is done by the 
+     * A constructor for reloading jobs from disk. Jobs (not profiles) have
+     * their data written to persistent storage in the file system. This method
+     * is used to load the job from such storage. This is done by the
      * <code>CrawlJobHandler</code>.
      * <p>
      * Proper structure of a job file (TODO: Maybe one day make this an XML file)
@@ -195,7 +195,7 @@ public class CrawlJob
      * Line 8. setting file (with path) <br>
      * Line 9. statistics tracker file (with path) <br>
      * Line 10-?. error message (String, empty for null), can be many lines <br>
-     * 
+     *
      * @param jobFile
      *            a file containing information about the job to load.
      * @param errorHandler The crawl jobs settings error handler.
@@ -205,7 +205,7 @@ public class CrawlJob
      * @throws IOException
      *            if io operations fail
      */
-    protected CrawlJob(File jobFile, CrawlJobErrorHandler errorHandler) 
+    protected CrawlJob(File jobFile, CrawlJobErrorHandler errorHandler)
             throws InvalidJobFileException, IOException {
         this.errorHandler = errorHandler;
         // Open file
@@ -217,7 +217,7 @@ public class CrawlJob
         name = jobReader.readLine();
         // status
         status = jobReader.readLine();
-        if(status.equals(STATUS_ABORTED)==false 
+        if(status.equals(STATUS_ABORTED)==false
                 && status.equals(STATUS_CREATED)==false
                 && status.equals(STATUS_DELETED)==false
                 && status.equals(STATUS_FINISHED)==false
@@ -271,7 +271,7 @@ public class CrawlJob
             numberOfJournalEntries = Integer.parseInt(tmp);
         } catch(NumberFormatException e){
             throw new InvalidJobFileException("numberOfJournalEntries " +
-                    "(line 5) in job file '" + jobFile.getAbsolutePath() + 
+                    "(line 5) in job file '" + jobFile.getAbsolutePath() +
                     "' is not valid: " + "'" + tmp + "'");
         }
         // settingsHandler
@@ -284,7 +284,7 @@ public class CrawlJob
             settingsHandler.initialize();
         } catch (InvalidAttributeValueException e1) {
             throw new InvalidJobFileException("Problem reading from settings " +
-                    "file (" + tmp + ") specified in job file '" + 
+                    "file (" + tmp + ") specified in job file '" +
                     jobFile.getAbsolutePath() + "'\n" + e1.getMessage());
         }
         // Statistics tracker.
@@ -306,7 +306,7 @@ public class CrawlJob
     }
 
     /**
-     * Cause the job to be written to persistent storage. 
+     * Cause the job to be written to persistent storage.
      * This will also save the statistics tracker if it is not null and the
      * job status is finished (regardless of how it's finished)
      */
@@ -314,7 +314,7 @@ public class CrawlJob
         if(isProfile==false && isNew==false){
             try {
                 FileWriter jobWriter =
-                    new FileWriter(jobDir.getAbsolutePath() + 
+                    new FileWriter(jobDir.getAbsolutePath() +
                         File.separator + "state.job", false);
                 jobWriter.write(UID+"\n");
                 jobWriter.write(name+"\n");
@@ -326,7 +326,7 @@ public class CrawlJob
                 jobWriter.write(getSettingsDirectory()+"\n");
                 jobWriter.write(statisticsFileSave+"\n");// TODO: Is this right?
                 // Can be multiple lines so we keep it last
-                jobWriter.write(errorMessage==null?"":errorMessage+"\n"); 
+                jobWriter.write(errorMessage==null?"":errorMessage+"\n");
                 jobWriter.flush();
                 jobWriter.close();
             } catch (IOException e) {
@@ -336,7 +336,7 @@ public class CrawlJob
             }
         }
     }
-    
+
     /**
      * Returns this jobs unique ID (UID) that was issued by the CrawlJobHandler()
      * when this job was first created.
@@ -361,11 +361,11 @@ public class CrawlJob
     public String getJobName(){
         return name;
     }
-    
+
     /**
      * Return the combination of given name and UID most commonly
-     * used in administrative interface. 
-     * 
+     * used in administrative interface.
+     *
      * @return Job's name with UID notation
      */
     public String getDisplayName() {
@@ -445,7 +445,7 @@ public class CrawlJob
 
     /**
      * Set the stat tracking helper object.
-     * 
+     *
      * @param tracker
      */
     public void setStatisticsTracking(StatisticsTracking tracker){
@@ -515,7 +515,7 @@ public class CrawlJob
         isRunning = b;
         writeJobFile(); //Save changes
         //TODO: Job ending -> Save statistics tracker.
-        //TODO: This is likely to happen as the CrawlEnding event occurs, need to ensure that the StatisticsTracker is saved to disk on CrawlEnded. Maybe move responsibility for this into the StatisticsTracker? 
+        //TODO: This is likely to happen as the CrawlEnding event occurs, need to ensure that the StatisticsTracker is saved to disk on CrawlEnded. Maybe move responsibility for this into the StatisticsTracker?
     }
 
     /**
@@ -528,7 +528,7 @@ public class CrawlJob
     public String getSettingsDirectory() {
         return settingsHandler.getOrderFile().getPath();
     }
-    
+
     /**
      * Returns the path of the job's base directory. For profiles this is always
      * equal to <code>new File(getSettingsDirectory())</code>.
@@ -541,7 +541,7 @@ public class CrawlJob
             return jobDir;
         }
     }
-    
+
     /**
      * Get the error message associated with this job. Will return null if there
      * is no error message.
@@ -567,7 +567,7 @@ public class CrawlJob
     public int getNumberOfJournalEntries() {
         return numberOfJournalEntries;
     }
-    
+
     /**
      * @param numberOfJournalEntries The number of journal entries to set.
      */
@@ -575,14 +575,14 @@ public class CrawlJob
         this.numberOfJournalEntries = numberOfJournalEntries;
         writeJobFile();
     }
-    
+
     /**
      * @return Returns the error handler for this crawl job
      */
     public CrawlJobErrorHandler getErrorHandler() {
         return errorHandler;
     }
-    
+
     /**
      * Read all the checkpoints found in the job's checkpoints
      * directory into Checkpoint instances
@@ -596,8 +596,8 @@ public class CrawlJob
             checkpoints.add(cp);
         }
     }
-        
-        
+
+
     /**
      * @return collection of Checkpoint instances available
      * on disk for this job
@@ -630,16 +630,16 @@ public class CrawlJob
     public Checkpoint getResumeFromCheckpoint() {
         return resumeFrom;
     }
-    
+
     /**
      * Update the job's state to reflect that it should
      * be resumed from the given checkpoint.
-     * 
+     *
      * @param cp
      */
     public void configureForResume(Checkpoint cp) {
         // TODO clear old data? reset any values?
-        
+
         // mark as resume, remember checkpoint
         resumeFrom  = cp;
     }

@@ -111,7 +111,7 @@ public class ConfigurationException extends InitializationException {
     public void setFile(String name){
         file = name;
     }
-    
+
     /**
      * @return name of configuration file being parsed when this exception occurred
      */

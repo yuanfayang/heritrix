@@ -1,7 +1,7 @@
 /* SoftHashMap
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Mar 18, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -54,12 +54,12 @@ public class SoftSettingsHash {
      * The number of key-value mappings contained in this hash.
      */
     private int size;
-  
+
     /**
      * The next size value at which to resize (capacity * load factor).
      */
     private int threshold;
-  
+
     /**
      * Reference queue for cleared entries
      */
@@ -78,7 +78,7 @@ public class SoftSettingsHash {
      * Constructs a new, empty <tt>SoftSettingsHash</tt> with the given initial
      * capacity.
      *
-     * @param  initialCapacity The initial capacity of the 
+     * @param  initialCapacity The initial capacity of the
      *         <tt>SoftSettingsHash</tt>
      * @throws IllegalArgumentException  If the initial capacity is negative.
      */
@@ -90,7 +90,7 @@ public class SoftSettingsHash {
             initialCapacity = MAXIMUM_CAPACITY;
 
         int capacity = 1;
-        while (capacity < initialCapacity) 
+        while (capacity < initialCapacity)
             capacity <<= 1;
         table = new SettingsEntry[capacity];
         threshold = (int)(capacity * LOAD_FACTOR);
@@ -105,7 +105,7 @@ public class SoftSettingsHash {
     }
 
     /**
-     * Return index for hash code h. 
+     * Return index for hash code h.
      */
     static int indexFor(int h, int length) {
         return h & (length-1);
@@ -152,7 +152,7 @@ public class SoftSettingsHash {
         expungeStaleEntries();
         return size;
     }
-  
+
     /**
      * Returns the value to which the specified key is mapped in this weak
      * hash map, or <tt>null</tt> if the map contains no mapping for
@@ -170,7 +170,7 @@ public class SoftSettingsHash {
         int hash = hash(key);
         expungeStaleEntries();
         int index = indexFor(hash, table.length);
-        SettingsEntry e = table[index]; 
+        SettingsEntry e = table[index];
         while (e != null) {
             if (e.hash == hash && eq(key, e.get()))
                 return e.settings;
@@ -178,11 +178,11 @@ public class SoftSettingsHash {
         }
         return null;
     }
-  
+
     /**
      * Associates the specified settings object with the specified key in this
      * hash.
-     * 
+     *
      * If the hash previously contained a settings object for this key, the old
      * object is replaced.
      *
@@ -214,15 +214,15 @@ public class SoftSettingsHash {
 
         modCount++;
         table[i] = new SettingsEntry(key, settings, queue, hash, table[i]);
-        if (++size >= threshold) 
+        if (++size >= threshold)
             resize(table.length * 2);
         return null;
     }
-    
+
     public CrawlerSettings put(SettingsEntry entry) {
         return put(entry.getKey(), entry.getValue());
     }
-  
+
     /**
      * Rehashes the contents of this hash into a new <tt>HashMap</tt> instance
      * with a larger capacity. This method is called automatically when the
@@ -239,9 +239,9 @@ public class SoftSettingsHash {
         int oldCapacity = oldTable.length;
 
         // check if needed
-        if (size < threshold || oldCapacity > newCapacity) 
+        if (size < threshold || oldCapacity > newCapacity)
             return;
-    
+
         SettingsEntry[] newTable = new SettingsEntry[newCapacity];
 
         transfer(oldTable, newTable);
@@ -274,7 +274,7 @@ public class SoftSettingsHash {
                     entry.settings = null; //  "   "
                     size--;
                 } else {
-                    int i = indexFor(entry.hash, dest.length);  
+                    int i = indexFor(entry.hash, dest.length);
                     entry.next = dest[i];
                     dest[i] = entry;
                 }
@@ -306,7 +306,7 @@ public class SoftSettingsHash {
             if (hash == entry.hash && eq(key, entry.get())) {
                 modCount++;
                 size--;
-                if (prev == entry) 
+                if (prev == entry)
                     table[i] = next;
                 else
                     prev.next = next;
@@ -330,7 +330,7 @@ public class SoftSettingsHash {
 
         modCount++;
         SettingsEntry tab[] = table;
-        for (int i = 0; i < tab.length; ++i) 
+        for (int i = 0; i < tab.length; ++i)
             tab[i] = null;
         size = 0;
 
@@ -343,8 +343,8 @@ public class SoftSettingsHash {
 
     /**
      * The entries in this hash extend SoftReference, using the host string
-     * as the key. 
-     */ 
+     * as the key.
+     */
     static class SettingsEntry extends SoftReference {
         private CrawlerSettings settings;
         private final int hash;
@@ -354,8 +354,8 @@ public class SoftSettingsHash {
          * Create new entry.
          */
         SettingsEntry(String key, CrawlerSettings settings, ReferenceQueue queue,
-              int hash, SettingsEntry next) { 
-            super(key, queue); 
+              int hash, SettingsEntry next) {
+            super(key, queue);
             this.settings = settings;
             this.hash  = hash;
             this.next  = next;
@@ -368,7 +368,7 @@ public class SoftSettingsHash {
         public CrawlerSettings getValue() {
             return settings;
         }
-    
+
         public boolean equals(Object o) {
             if (!(o instanceof SettingsEntry))
                 return false;
@@ -378,7 +378,7 @@ public class SoftSettingsHash {
             if (key1 == key2 || (key1 != null && key1.equals(key2))) {
                 CrawlerSettings setting1 = getValue();
                 CrawlerSettings setting2 = e.getValue();
-                if (setting1 == setting2 || (setting1 != null && setting1.equals(setting2))) 
+                if (setting1 == setting2 || (setting1 != null && setting1.equals(setting2)))
                     return true;
             }
             return false;
@@ -388,18 +388,18 @@ public class SoftSettingsHash {
     /** Iterator over all elements in hash.
      */
     class EntryIterator implements Iterator {
-        int index; 
+        int index;
         SettingsEntry entry = null;
         SettingsEntry lastReturned = null;
         int expectedModCount = modCount;
 
-        /** 
+        /**
          * Strong reference needed to avoid disappearance of key
          * between hasNext and next
          */
-        String nextKey = null; 
+        String nextKey = null;
 
-        /** 
+        /**
          * Strong reference needed to avoid disappearance of key
          * between nextEntry() and any use of the entry
          */
@@ -434,7 +434,7 @@ public class SoftSettingsHash {
         public Object next() {
             return nextEntry();
         }
-        
+
         public SettingsEntry nextEntry() {
             if (modCount != expectedModCount)
                 throw new ConcurrentModificationException();
@@ -453,7 +453,7 @@ public class SoftSettingsHash {
                 throw new IllegalStateException();
             if (modCount != expectedModCount)
                 throw new ConcurrentModificationException();
-      
+
             SoftSettingsHash.this.remove(currentKey);
             expectedModCount = modCount;
             lastReturned = null;
@@ -463,7 +463,7 @@ public class SoftSettingsHash {
     }
 
     /** Make hash value from a String.
-     * 
+     *
      * @param key the string for which to create hash value.
      * @return the hash value.
      */

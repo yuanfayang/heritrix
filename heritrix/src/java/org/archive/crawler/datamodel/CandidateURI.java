@@ -54,7 +54,7 @@ public class CandidateURI implements Serializable, Lineable {
 
     String schedulingDirective = NORMAL;
     boolean inclusionTested = false;
-    
+
     /** String of letters indicating how this URI was reached from a seed */
     // P precondition
     // R redirection
@@ -70,11 +70,11 @@ public class CandidateURI implements Serializable, Lineable {
 
     /**
      * Cache of this candidate uuri as a string.
-     * 
+     *
      * Profiling shows us spending about 1-2% of total elapsed time in
      * toString.
      */
-    private String cachedCandidateURIString = null;   
+    private String cachedCandidateURIString = null;
 
     /**
      * @param u
@@ -82,18 +82,18 @@ public class CandidateURI implements Serializable, Lineable {
     public CandidateURI(UURI u) {
         uuri = u;
     }
-    
+
     /**
-     * Set the <tt>isSeed</tt> attribute of this URI. 
+     * Set the <tt>isSeed</tt> attribute of this URI.
      * @param b Is this URI a seed, true or false.
      */
     public void setIsSeed(boolean b) {
         isSeed=b;
     }
-    
+
     /**
-     * A quick way to mark this URI as being a seed. 
-     * 
+     * A quick way to mark this URI as being a seed.
+     *
      * <p>Equal to calling:
      * <code>
      *   setIsSeed(true);
@@ -151,7 +151,7 @@ public class CandidateURI implements Serializable, Lineable {
     }
 
     /**
-     * @return This candidate URI as a string wrapped with 'CandidateURI(' + 
+     * @return This candidate URI as a string wrapped with 'CandidateURI(' +
      * ')'.
      */
     public String toString() {
@@ -280,14 +280,14 @@ public class CandidateURI implements Serializable, Lineable {
         this.schedulingDirective = schedulingDirective;
     }
 
-    
+
     /**
      * @return True if needs immediate scheduling.
      */
     public boolean needsImmediateScheduling() {
         return schedulingDirective==HIGH || schedulingDirective == FORCE_REVISIT;
     }
-    
+
     /**
      * @return True if needs soon but not top scheduling.
      */

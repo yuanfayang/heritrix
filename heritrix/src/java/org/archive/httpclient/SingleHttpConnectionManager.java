@@ -21,7 +21,7 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+*/
 package org.archive.httpclient;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ import org.apache.commons.httpclient.SimpleHttpConnectionManager;
  * just gives out a new connection each time -- skipping the overhead
  * of connection management, since we already throttle our crawler
  * with external mechanisms.
- * 
+ *
  * @author gojomo
  */
 public class SingleHttpConnectionManager extends SimpleHttpConnectionManager {
@@ -56,7 +56,7 @@ public class SingleHttpConnectionManager extends SimpleHttpConnectionManager {
     public void releaseConnection(HttpConnection conn) {
         finishLast(conn);
     }
-    
+
     static void finishLast(HttpConnection conn) {
         // copied from superclass because it wasn't made available to subclasses
         InputStream lastResponse = conn.getLastResponseInputStream();

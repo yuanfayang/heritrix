@@ -79,7 +79,7 @@ public class DataContainer extends HashMap {
      */
     public void addElementType(Type type, int index)
             throws InvalidAttributeValueException {
-        
+
         if (attributeNames.containsKey(type.getName())) {
             throw new IllegalArgumentException(
                     "Duplicate field: " + type.getName());
@@ -241,7 +241,7 @@ public class DataContainer extends HashMap {
 
     /**
      * Remove an attribute from the DataContainer.
-     * 
+     *
      * @param key name of the attribute to remove.
      * @return the element that was removed.
      * @throws AttributeNotFoundException is thrown if there is no attribute

@@ -1,7 +1,7 @@
 /* PortnumberCriteria
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Apr 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -32,7 +32,7 @@ import org.archive.crawler.datamodel.UURI;
  * <p/>
  * If the port number is not known it will try to use the default port number
  * for the URI's scheme.
- * 
+ *
  * @author John Erik Halse
  */
 public class PortnumberCriteria implements Criteria {
@@ -46,7 +46,7 @@ public class PortnumberCriteria implements Criteria {
 
     /**
      * Create a new instance of PortnumberCriteria.
-     * 
+     *
      * @param portNumber the port number for this criteria.
      */
     public PortnumberCriteria(String portNumber) {
@@ -75,7 +75,7 @@ public class PortnumberCriteria implements Criteria {
 
     /**
      * Get the port number that is to be checked against a URI.
-     * 
+     *
      * @return Returns the portNumber.
      */
     public String getPortNumber() {
@@ -83,7 +83,7 @@ public class PortnumberCriteria implements Criteria {
     }
     /**
      * Set the port number that is to be checked against a URI.
-     * 
+     *
      * @param portNumber The portNumber to set.
      */
     public void setPortNumber(String portNumber) {

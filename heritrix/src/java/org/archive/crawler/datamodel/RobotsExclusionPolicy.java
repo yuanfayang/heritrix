@@ -45,7 +45,7 @@ import org.archive.crawler.settings.CrawlerSettings;
  *
  */
 public class RobotsExclusionPolicy implements Serializable {
-    
+
     private static final Logger logger =
         Logger.getLogger(RobotsExclusionPolicy.class.getName());
 
@@ -175,7 +175,7 @@ public class RobotsExclusionPolicy implements Serializable {
             }
         }
     }
-    
+
     public RobotsExclusionPolicy(int type) {
         this(null, null, null, false, null);
         this.type = type;
@@ -251,10 +251,10 @@ public class RobotsExclusionPolicy implements Serializable {
     }
 
     // Methods for object serialization.
-    
+
     /** If object is DENYALL or ALLOWALL, only the object identity and type
      * is written in the serialization stream.
-     * 
+     *
      * @param stream the serialization stream.
      */
     private void writeObject(ObjectOutputStream stream) throws IOException {
@@ -266,7 +266,7 @@ public class RobotsExclusionPolicy implements Serializable {
 
     /** If object is DENYALL or ALLOWALL, only the object identity and type
      * is read from the serialization stream.
-     * 
+     *
      * @param stream the serialization stream.
      */
     private void readObject(ObjectInputStream stream)
@@ -290,5 +290,5 @@ public class RobotsExclusionPolicy implements Serializable {
         }
         return null;
     }
-    
+
 }

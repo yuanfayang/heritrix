@@ -50,7 +50,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * Stream can only be read sequentially.  Will only return this records
      * content returning a -1 if you try to read beyond the end of the current
      * record.
-     * 
+     *
      * <p>Streams can be markable or not.  If they are, we'll be able to roll
      * back when we've read too far.  If not markable, assumption is that
      * the underlying stream is managing our not reading too much (This pertains
@@ -60,7 +60,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
 
     /**
      * Position w/i the ARCRecord content, within <code>in</code>.
-     * 
+     *
      * This position is relative within this ARCRecord.  Its not
      * same as the arcfile position.
      */
@@ -81,7 +81,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
     public ARCRecord(InputStream in, ARCRecordMetaData metaData) {
         this(in, metaData, 0);
     }
-    
+
     /**
      * Constructor.
      *
@@ -96,7 +96,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
         this.metaData = metaData;
         this.position = bodyOffset;
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.InputStream#markSupported()
      */
@@ -114,7 +114,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
     /**
      * Calling close on a record skips us past this record to the next record
      * in the stream.
-     * 
+     *
      * It does not actually close the stream.  The underlying steam is probably
      * being used by the next arc record.
      *
@@ -144,7 +144,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
 
         return c;
     }
-    
+
     public int read(byte [] b, int offset, int length) throws IOException {
         int read = Math.min(length - offset, available());
         if (read == 0) {
@@ -165,7 +165,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
     public int available() {
         return (int)(this.metaData.getLength() - this.position);
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.InputStream#skip(long)
      */
@@ -175,7 +175,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
         long total = 0;
         for (int read = 0; (total < n) && (read != -1);) {
             read = Math.min(SKIP_BUFFERSIZE, (int)(n - total));
-            // TODO: Interesting is that reading from compressed stream, we only 
+            // TODO: Interesting is that reading from compressed stream, we only
             // read about 500 characters at a time though we ask for 4k.
             // Look at this sometime.
             read = read(b, 0, read);

@@ -1,7 +1,7 @@
 /* HeritrixSSLProtocolSocketFactory
- * 
+ *
  * Created on Feb 24, 2004
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -25,7 +25,7 @@ package org.archive.util;
 
 /**
  * A marker interface to denote a class with a gettable HttpRecorder.
- * 
+ *
  * @author stack
  * @version $Id$
  */

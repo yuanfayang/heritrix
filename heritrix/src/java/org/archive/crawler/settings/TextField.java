@@ -1,7 +1,7 @@
 /* TextType
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Mar 26, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -27,19 +27,19 @@ package org.archive.crawler.settings;
 import org.archive.util.TextUtils;
 
 /** Class to hold values for text fields.
- * 
+ *
  * Objects of this class could be used instead of {@link java.lang.String} to
  * hold text strings with newlines in it. SimpleTypes with values wrapped in
  * objects of this class will show up in the UI as multiline text areas.
- * 
+ *
  * @author John Erik Halse
  *
  */
 public class TextField implements CharSequence {
     private String value;
-    
+
     /** Constructs a new TextField object.
-     * 
+     *
      * @param value the string represented by this TextField.
      */
     public TextField(String value) {
@@ -66,7 +66,7 @@ public class TextField implements CharSequence {
     public CharSequence subSequence(int start, int end) {
         return value.subSequence(start, end);
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
      */
@@ -84,7 +84,7 @@ public class TextField implements CharSequence {
     public int hashCode() {
         return value.hashCode();
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */

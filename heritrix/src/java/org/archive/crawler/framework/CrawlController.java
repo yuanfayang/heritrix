@@ -136,34 +136,34 @@ public class CrawlController implements Serializable {
     private static final Object FINISHED = "FINISHED".intern();
 
     transient private Object state = NASCENT;
-    
+
     // disk paths
     private File disk;        // overall disk path
-    private File logsDisk;    // for log files 
-    private File checkpointsDisk;    // for checkpoint files 
+    private File logsDisk;    // for log files
+    private File checkpointsDisk;    // for checkpoint files
     private File stateDisk;   // for temp files representing state of crawler (eg queues)
     private File scratchDisk; // for discardable temp files (eg fetch buffers)
-    
+
     // checkpoint support
     CheckpointContext cpContext;
-    
+
     // crawl limits
     private long maxBytes;
     private long maxDocument;
     private long maxTime;
-    
-    /** 
+
+    /**
      * A manifest of all files used/created during this crawl. Written to file
-     * at the end of the crawl (the absolutely last thing done). 
+     * at the end of the crawl (the absolutely last thing done).
      */
     private StringBuffer manifest;
 
     /**
-     * Record of fileHandlers established for loggers, 
+     * Record of fileHandlers established for loggers,
      * assisting file rotation.
      */
     transient private Map fileHandlers;
-    
+
     /** suffix to use on active logs */
     public static final String CURRENT_LOG_SUFFIX = ".log";
 
@@ -220,7 +220,7 @@ public class CrawlController implements Serializable {
 
     /**
      * List of crawl status listeners.
-     * 
+     *
      * All iterations need to synchronize on this object if they're to avoid
      * concurrent modification exceptions.
      * See {@link java.util.Collections#synchronizedList(List)}.
@@ -247,7 +247,7 @@ public class CrawlController implements Serializable {
 
     /**
      * Starting from nothing, set up CrawlController and associated
-     * classes to be ready for a first crawl. 
+     * classes to be ready for a first crawl.
      *
      * @param settingsHandler
      * @throws InitializationException
@@ -259,7 +259,7 @@ public class CrawlController implements Serializable {
         order = settingsHandler.getOrder();
         order.setController(this);
         sExit = "";
- 
+
         String onFailMessage = "";
         try {
             onFailMessage = "You must set the User-Agent and From HTTP" +
@@ -277,7 +277,7 @@ public class CrawlController implements Serializable {
                 // create if not already loaded
                 cpContext = new CheckpointContext(checkpointsDisk);
             } else {
-                // note new begin point 
+                // note new begin point
                 cpContext.noteResumed();
             }
 
@@ -289,17 +289,17 @@ public class CrawlController implements Serializable {
 
             onFailMessage = "Unable to setup crawl modules";
             setupCrawlModules();
-            
+
         } catch (Exception e) {
             String extendedMessage = onFailMessage + ": " + e.toString();
             Heritrix.addAlert(
                 new Alert(
-                    e.getClass().getName() + "on crawl: " 
+                    e.getClass().getName() + "on crawl: "
                     + settingsHandler.getSettingsObject(null).getName(),
                     extendedMessage,e,Level.CONFIG));
             throw new InitializationException(extendedMessage, e);
-        } 
-        
+        }
+
         setupToePool();
     }
 
@@ -465,12 +465,12 @@ public class CrawlController implements Serializable {
                 frontier = new Frontier(URIFrontier.ATTR_NAME);
                 order.setAttribute((Frontier) frontier);
             }
-    
+
             // try to initialize each scope and frontier from the config file
             //scope.initialize(this);
             try {
                 frontier.initialize(this);
-                
+
                 String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
                 if(recoverPath.length()>0) {
                     try {
@@ -499,7 +499,7 @@ public class CrawlController implements Serializable {
         = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         disk = getSettingsHandler().getPathRelativeToWorkingDirectory(diskPath);
         disk.mkdirs();
-       
+
         String logsDiskPath
         = (String) order.getAttribute(null, CrawlOrder.ATTR_LOGS_PATH);
         logsDisk = new File(logsDiskPath);
@@ -523,7 +523,7 @@ public class CrawlController implements Serializable {
             stateDisk = new File(disk.getPath(), stateDiskPath);
         }
         stateDisk.mkdirs();
-        
+
         String scratchDiskPath
         = (String) order.getAttribute(null, CrawlOrder.ATTR_SCRATCH_PATH);
         scratchDisk = new File(scratchDiskPath);
@@ -559,25 +559,25 @@ public class CrawlController implements Serializable {
     private void setupLogs() throws IOException {
         String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
 
-        uriProcessing = 
+        uriProcessing =
             Logger.getLogger(LOGNAME_CRAWL + "." + logsPath);
-        runtimeErrors = 
+        runtimeErrors =
             Logger.getLogger(LOGNAME_RUNTIME_ERRORS + "." + logsPath);
-        localErrors = 
+        localErrors =
             Logger.getLogger(LOGNAME_LOCAL_ERRORS + "." + logsPath);
-        uriErrors = 
+        uriErrors =
             Logger.getLogger(LOGNAME_URI_ERRORS + "." + logsPath);
-        progressStats = 
+        progressStats =
             Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." + logsPath);
-        recover = 
+        recover =
             Logger.getLogger(LOGNAME_RECOVER + "." + logsPath);
 
         fileHandlers = new HashMap();
-        
+
         setupLogFile(
-                uriProcessing, 
+                uriProcessing,
                 logsPath + LOGNAME_CRAWL + CURRENT_LOG_SUFFIX,
-                new UriProcessingFormatter(), 
+                new UriProcessingFormatter(),
                 true);
 
         setupLogFile(
@@ -591,7 +591,7 @@ public class CrawlController implements Serializable {
                 logsPath + LOGNAME_LOCAL_ERRORS + CURRENT_LOG_SUFFIX,
                 new LocalErrorFormatter(),
                 true);
-        
+
         setupLogFile(
                 uriErrors,
                 logsPath + LOGNAME_URI_ERRORS + CURRENT_LOG_SUFFIX,
@@ -603,7 +603,7 @@ public class CrawlController implements Serializable {
                 logsPath + LOGNAME_PROGRESS_STATISTICS + CURRENT_LOG_SUFFIX,
                 new StatisticsLogFormatter(),
                 true);
- 
+
         setupLogFile(
                 recover,
                 logsPath + LOGNAME_RECOVER + CURRENT_LOG_SUFFIX,
@@ -626,7 +626,7 @@ public class CrawlController implements Serializable {
      * Cause all active log files to be closed and moved to filenames
      * ending with the (zero-padded to 5 places) generation suffix.
      * Resume logging to new files with the same active log names.
-     * 
+     *
      * @param generation
      * @throws IOException
      */
@@ -647,7 +647,7 @@ public class CrawlController implements Serializable {
             fileHandlers.put(l, newGfh);
         }
     }
-    
+
     /**
      * Close all log files.
      */
@@ -670,13 +670,13 @@ public class CrawlController implements Serializable {
     }
 
     /**
-     * Operator requested crawl begin 
+     * Operator requested crawl begin
      */
     public void requestCrawlStart() {
         if(cpContext.isAtBeginning()) {
             runProcessorInitialTasks();
         }
-        
+
         // assume Frontier state already loaded
         state = beginPaused ? PAUSED : RUNNING;
         logger.info("Should start Crawl");
@@ -695,7 +695,7 @@ public class CrawlController implements Serializable {
     private void completeStop() {
         finishProcessors();
         writeManifest();
-        
+
         synchronized (this.registeredCrawlStatusListeners) {
             // Ok, now we are ready to exit.
             this.state = FINISHED;
@@ -708,9 +708,9 @@ public class CrawlController implements Serializable {
             this.registeredCrawlStatusListeners.
                 removeAll(this.registeredCrawlStatusListeners);
         }
-        
+
         closeLogFiles();
-        
+
         logger.info("exiting a crawl run");
 
         // Do cleanup to facilitate GC.
@@ -724,15 +724,15 @@ public class CrawlController implements Serializable {
     }
 
     private void writeManifest() {
-        // Complete manifest (write configuration files and any 
-        // files managed by CrawlController to it - files managed by other 
-        // classes, excluding the settings framework, are responsible for 
+        // Complete manifest (write configuration files and any
+        // files managed by CrawlController to it - files managed by other
+        // classes, excluding the settings framework, are responsible for
         // adding their files to the manifest themselves.)
         Iterator it = settingsHandler.getListOfAllFiles().iterator();
         while(it.hasNext()){
             addToManifest((String)it.next(),MANIFEST_CONFIG_FILE,true);
         }
-        
+
         // Write manifest to disk.
         try {
             FileWriter fw = new FileWriter(getDisk().getPath()+
@@ -769,7 +769,7 @@ public class CrawlController implements Serializable {
         runProcessorFinalTasks();
     }
 
-    private void completePause() {   
+    private void completePause() {
         logger.info("Crawl job paused");
         synchronized (this.registeredCrawlStatusListeners) {
             this.state = PAUSED;
@@ -780,10 +780,10 @@ public class CrawlController implements Serializable {
             }
         }
     }
-    
+
     private boolean shouldContinueCrawling() {
         if (frontier.isEmpty()) {
-            sExit = CrawlJob.STATUS_FINISHED; 
+            sExit = CrawlJob.STATUS_FINISHED;
             return false;
         }
 
@@ -801,7 +801,7 @@ public class CrawlController implements Serializable {
             maxTime > 0 && statistics.crawlDuration() >= maxTime * 1000) {
             // Hit the max byte download limit!
             sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
-            return false; 
+            return false;
         }
         return state == RUNNING;
     }
@@ -817,7 +817,7 @@ public class CrawlController implements Serializable {
         state = CHECKPOINTING;
         new Thread(new CheckpointTask()).start();
     }
-    
+
     /**
      * Operator requested for crawl to stop.
      */
@@ -880,7 +880,7 @@ public class CrawlController implements Serializable {
         toePool.setShouldPause(false);
 
         logger.info("Crawl job resumed");
-        
+
         // Tell everyone that we have resumed from pause
         synchronized (this.registeredCrawlStatusListeners) {
             for (Iterator i = this.registeredCrawlStatusListeners.iterator();
@@ -942,15 +942,15 @@ public class CrawlController implements Serializable {
     }
 
     /** Get the list of processor chains.
-     * 
+     *
      * @return the list of processor chains.
      */
     public ProcessorChainList getProcessorChainList() {
         return processorChains;
     }
-    
+
     /** Get the first processor chain.
-     * 
+     *
      * @return the first processor chain.
      */
     public ProcessorChain getFirstProcessorChain() {
@@ -958,7 +958,7 @@ public class CrawlController implements Serializable {
     }
 
     /** Get the postprocessor chain.
-     * 
+     *
      * @return the postprocessor chain.
      */
     public ProcessorChain getPostprocessorChain() {
@@ -1074,9 +1074,9 @@ public class CrawlController implements Serializable {
     public SettingsHandler getSettingsHandler() {
         return settingsHandler;
     }
-    
+
     /**
-     * This method iterates through processor chains to run processors' initial 
+     * This method iterates through processor chains to run processors' initial
      * tasks.
      *
      */
@@ -1090,7 +1090,7 @@ public class CrawlController implements Serializable {
     }
 
     /**
-     * This method iterates through processor chains to run processors' final 
+     * This method iterates through processor chains to run processors' final
      * tasks.
      *
      */
@@ -1104,7 +1104,7 @@ public class CrawlController implements Serializable {
     }
 
     /**
-     * Kills a thread. For details see 
+     * Kills a thread. For details see
      * {@link org.archive.crawler.framework.ToePool#killThread(int, boolean)
      * ToePool.killThread(int, boolean)}.
      * @param threadNumber Thread to kill.
@@ -1114,16 +1114,16 @@ public class CrawlController implements Serializable {
     public void killThread(int threadNumber, boolean replace){
         toePool.killThread(threadNumber, replace);
     }
-    
+
     /**
      * Add a file to the manifest of files used/generated by the current
      * crawl.
-     * 
-     * @param file The filename (with absolute path) of the file to add  
-     * @param type The type of the file 
+     *
+     * @param file The filename (with absolute path) of the file to add
+     * @param type The type of the file
      * @param bundle Should the file be included in a typical bundling of
      *           crawler files.
-     * 
+     *
      * @see #MANIFEST_CONFIG_FILE
      * @see #MANIFEST_LOG_FILE
      * @see #MANIFEST_REPORT_FILE
@@ -1134,8 +1134,8 @@ public class CrawlController implements Serializable {
 
     /**
      * Note that a ToeThread is pausing; may receive more than one
-     * notification, if a thread is notify()d while paused. 
-     * 
+     * notification, if a thread is notify()d while paused.
+     *
      * @param thread
      */
     public void toeChanged(ToeThread thread) {
@@ -1156,12 +1156,12 @@ public class CrawlController implements Serializable {
             beginCrawlStop();
         }
     }
-    
+
     /**
      * @author gojomo
      */
     public class CheckpointTask implements Runnable {
-        /** 
+        /**
          * @see java.lang.Runnable#run()
          */
         public void run() {
@@ -1171,7 +1171,7 @@ public class CrawlController implements Serializable {
 
 
     /**
-     * Write a checkpoint to disk. 
+     * Write a checkpoint to disk.
      */
     protected void writeCheckpoint() {
         cpContext.begin();
@@ -1186,15 +1186,15 @@ public class CrawlController implements Serializable {
         state = PAUSED;
     }
 
-    /** 
+    /**
      * @param cpContext
      * @throws IOException
      */
     public void checkpointTo(CheckpointContext cpContext) throws IOException {
         Checkpoint checkpoint = new Checkpoint(cpContext.getCheckpointInProgressDirectory());
-        
+
         rotateLogFiles(cpContext.getNextCheckpoint());
-        checkpoint.writeObjectPlusToFile(this,DISTINGUISHED_FILENAME);   
+        checkpoint.writeObjectPlusToFile(this,DISTINGUISHED_FILENAME);
     }
 
     /**
@@ -1260,7 +1260,7 @@ public class CrawlController implements Serializable {
         opfis.popAuxiliaryDirectory();
         // ensure disk CrawlerSettings data is loaded
         // settingsHandler.initialize();
-        
+
         // setup status listeners
         this.registeredCrawlStatusListeners =
             Collections.synchronizedList(new ArrayList());

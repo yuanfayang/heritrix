@@ -71,7 +71,7 @@ public class ARCRecordMetaData
      *
      * @param fields Map of fields.
      * @param requiredField Field to test for.
-     * 
+     *
      * @exception IOException If required field is not present.
      */
     protected void testRequiredField(Map fields, String requiredField)
@@ -126,7 +126,7 @@ public class ARCRecordMetaData
     public String getVersion() {
         return (String)this.headerFields.get(VERSION_HEADER_FIELD_KEY);
     }
-    
+
     /**
      * @return Offse into arcfile at which this record begins.
      */

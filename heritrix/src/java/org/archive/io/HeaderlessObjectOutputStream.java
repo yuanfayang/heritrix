@@ -46,5 +46,5 @@ public class HeaderlessObjectOutputStream extends ObjectOutputStream {
 		// do nothing
 	}
 
-    
+
 }

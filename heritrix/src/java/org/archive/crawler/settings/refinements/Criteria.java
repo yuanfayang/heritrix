@@ -1,7 +1,7 @@
 /* Criteria
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Apr 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -29,19 +29,19 @@ import org.archive.crawler.datamodel.UURI;
 
 /**
  * Superclass for the refinement criteria.
- * 
+ *
  * @author John Erik Halse
  *
  */
 public interface Criteria {
     /**
      * Check if a uri is within the bounds of this criteria.
-     * 
+     *
      * @param uri the URI to check.
      * @return true if the uri is within the bounds.
      */
     public boolean isWithinRefinementBounds(UURI uri);
-    
+
     /**
      * Returns the name of the Criteria type.
      * @return the name of the Criteria type

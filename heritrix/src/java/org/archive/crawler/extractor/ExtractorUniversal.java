@@ -36,7 +36,7 @@ import org.archive.util.TextUtils;
 
 /**
  * A last ditch extractor that will look at the raw byte code and try to extract
- * anything that <i>looks</i> like a link. 
+ * anything that <i>looks</i> like a link.
  *
  * If used, it should always be specified as the last link extractor in the
  * order file.
@@ -46,8 +46,8 @@ import org.archive.util.TextUtils;
  * in a URL (see #isURLableChar(int) for details).
  * Once it hits the end of such a string (i.e. finds a character that
  * should not be in a URL) it will try to determine if it has found a URL.
- * This is done be seeing if the string is an IP address prefixed with 
- * http(s):// or contains a dot followed by a Top Level Domain and end of 
+ * This is done be seeing if the string is an IP address prefixed with
+ * http(s):// or contains a dot followed by a Top Level Domain and end of
  * string or a slash.
  *
  * @author Kristinn Sigurdsson
@@ -56,14 +56,14 @@ public class ExtractorUniversal extends Processor
     implements CoreAttributeConstants
 {
     private static String ATTR_MAX_DEPTH_BYTES = "max-depth-bytes";
-    
+
     /** Default value for how far into an unknown document we should scan
      * - 10k. A value of 0 or lower will disable this.
      */
     private static long DEFAULT_MAX_DEPTH_BYTES = 10240;
 
     private static String ATTR_MAX_URL_LENGTH = "max-url-length";
-    
+
     /** Maximum length for a URI that we try to match.*/
     private static long DEFAULT_MAX_URL_LENGTH = 2083;
 
@@ -377,7 +377,7 @@ public class ExtractorUniversal extends Processor
             // We only handle HTTP at the moment.
             return;
         }
-        
+
         numberOfCURIsHandled++;
 
         try

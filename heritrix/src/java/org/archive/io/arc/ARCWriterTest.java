@@ -132,7 +132,7 @@ public class ARCWriterTest
             ARCRecordMetaData meta = (ARCRecordMetaData)metaDatas.get(i);
             ARCRecord r = reader.get(meta.getOffset());
             String mimeType = r.getMetaData().getMimetype();
-            assertTrue("Record is bogus", 
+            assertTrue("Record is bogus",
                 mimeType != null && mimeType.length() > 0);
         }
         reader.close();

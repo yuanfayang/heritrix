@@ -1,21 +1,21 @@
 /* ReplayCharSequenceFactoryTest
- * 
+ *
  * Created on Mar 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -33,7 +33,7 @@ import org.archive.util.TmpDirTestCase;
 
 /**
  * Test the ReplayCharSequence factory.
- * 
+ *
  * @author stack
  * @version $Revision$, $Date$
  */
@@ -44,24 +44,24 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
      */
     private static Logger logger =
         Logger.getLogger("org.archive.io.ReplayCharSequenceFactoryTest");
-    
+
 
     private static final int SEQUENCE_LENGTH = 127;
     private static final int MULTIPLIER = 3;
     private static final int BUFFER_SIZE = SEQUENCE_LENGTH * MULTIPLIER;
     private static final int INCREMENT = 1;
-    
+
     /**
      * Buffer of regular content.
      */
     private byte [] regularBuffer = null;
-    
+
     /**
      * Instance of the replay char sequence factory.
      */
     private ReplayCharSequenceFactory factory = null;
-    
-    
+
+
     /*
      * @see TestCase#setUp()
      */
@@ -74,9 +74,9 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     }
 
     public void testShiftjis() throws IOException {
-        
+
         // Here's the bytes for the JIS encoding of the Japanese form of Nihongo
-        byte[] bytes_nihongo = {    
+        byte[] bytes_nihongo = {
             (byte) 0x1B, (byte) 0x24, (byte) 0x42, (byte) 0x46,
             (byte) 0x7C, (byte) 0x4B, (byte) 0x5C, (byte) 0x38,
             (byte) 0x6C, (byte) 0x1B, (byte) 0x28, (byte) 0x42,
@@ -84,7 +84,7 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         final String ENCODING = "SJIS";
         // Here is nihongo converted to JVM encoding.
         String nihongo = new String(bytes_nihongo, ENCODING);
-        
+
         String fileName =
             writeShiftjisFile("testShiftjis", bytes_nihongo).
                 getAbsolutePath();
@@ -92,24 +92,24 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
                 bytes_nihongo, bytes_nihongo.length +
                     (bytes_nihongo.length * MULTIPLIER),
                 0, fileName, ENCODING);
-        
+
         // Now check that start of the rcs comes back in as nihongo string.
         String rcsStr = rcs.subSequence(0, nihongo.length()).toString();
         assertTrue("Nihongo " + nihongo + " does not equal converted string" +
-                " from rcs " + rcsStr, 
+                " from rcs " + rcsStr,
             nihongo.equals(rcsStr));
         // And assert next string is also properly nihongo.
         if (rcs.length() >= (nihongo.length() * 2)) {
             rcsStr = rcs.subSequence(nihongo.length(),
                 nihongo.length() + nihongo.length()).toString();
-            assertTrue("Nihongo " + nihongo + " does not equal converted " + 
-                " string from rcs (2nd time)" + rcsStr, 
+            assertTrue("Nihongo " + nihongo + " does not equal converted " +
+                " string from rcs (2nd time)" + rcsStr,
                 nihongo.equals(rcsStr));
         }
     }
-    
+
     public void testGetReplayCharSequenceByteZeroOffset() throws IOException {
-        
+
         String fileName =
             writeRegularFile("testGetReplayCharSequenceByteZeroOffset").
                 getAbsolutePath();
@@ -123,9 +123,9 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
             accessingCharacters(rcs);
         }
     }
-    
+
     public void testGetReplayCharSequenceByteOffset() throws IOException {
-        
+
         String fileName =
             writeRegularFile("testGetReplayCharSequenceByteOffset").
                 getAbsolutePath();
@@ -139,10 +139,10 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
             accessingCharacters(rcs);
         }
     }
-    
+
     public void testGetReplayCharSequenceMultiByteZeroOffset()
         throws IOException {
-        
+
         String fileName =
             writeRegularFile("testGetReplayCharSequenceMultiByteZeroOffset").
                 getAbsolutePath();
@@ -158,7 +158,7 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     }
 
     public void testGetReplayCharSequenceMultiByteOffset() throws IOException {
-        
+
         String fileName =
             writeRegularFile("testGetReplayCharSequenceMultiByteOffset").
                 getAbsolutePath();
@@ -172,12 +172,12 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
             accessingCharacters(rcs);
         }
     }
-    
+
     /**
      * Accessing characters test.
-     * 
+     *
      * Checks that characters in the rcs are in sequence.
-     * 
+     *
      * @param rcs The ReplayCharSequence to try out.
      */
     private void accessingCharacters(CharSequence rcs) {
@@ -195,12 +195,12 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         logger.info(rcs + " seeks count " + seeks + " in " +
             ((new Date().getTime()) - timestamp) + " milliseconds.");
     }
-    
+
     /**
      * Check the character read.
-     * 
-     * Throws assertion if not expected result. 
-     * 
+     *
+     * Throws assertion if not expected result.
+     *
      * @param rcs ReplayCharSequence to read from.
      * @param i Character offset.
      */
@@ -209,7 +209,7 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         assertTrue("Character " + Integer.toString(c) + " at offset " + i +
             " unexpected.", (c % SEQUENCE_LENGTH) == (i % SEQUENCE_LENGTH));
     }
-    
+
     /**
      * @return Write a shiftjis file w/ japanese characters.
      */
@@ -219,7 +219,7 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         writeFile(file, buffer, MULTIPLIER);
         return file;
     }
-    
+
     /**
      * @return Regular file reference.
      */
@@ -229,10 +229,10 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         writeFile(file, this.regularBuffer, MULTIPLIER);
         return file;
     }
-    
+
     /**
      * Write a file.
-     * 
+     *
      * @param file File to write.
      * @param buffer Regular content to write.
      * @param count Number of times to write the buffer.
@@ -246,10 +246,10 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         }
         bos.close();
     }
-    
+
     /**
      * Fill a buffer w/ regular progression of characters.
-     * 
+     *
      * @para buffer Buffer to fill.
      * @return The buffer we filled.
      */
@@ -265,7 +265,7 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
         }
         return buffer;
     }
-    
+
     public void testCheckParameters()
     {
         // TODO.

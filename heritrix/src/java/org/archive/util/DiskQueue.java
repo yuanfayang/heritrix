@@ -77,7 +77,7 @@ public class DiskQueue implements Queue, Serializable {
      * object is ready for use
      */
     private boolean isInitialized = false;
-    
+
     private boolean reuse;
 
 
@@ -110,7 +110,7 @@ public class DiskQueue implements Queue, Serializable {
     }
 
     /** Create a new {@link DiskQueue} which creates its temporary files in a
-     * given directory, with a given prefix. 
+     * given directory, with a given prefix.
      * @param file
      * @param file_prefix
      * @throws IOException
@@ -124,13 +124,13 @@ public class DiskQueue implements Queue, Serializable {
             bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
             bytes.initializeStreams(0);
         }
-        testStream = new ObjectOutputStream(new DevNull());        
+        testStream = new ObjectOutputStream(new DevNull());
         tailStream = new HeaderlessObjectOutputStream(bytes.getTailStream());
         headStream = new HeaderlessObjectInputStream(bytes.getHeadStream());
         // tailStream.flush(); // ??
         isInitialized = true;
     }
-    
+
     protected boolean isInitialized(){
     	return isInitialized;
     }
@@ -212,12 +212,12 @@ public class DiskQueue implements Queue, Serializable {
             }
             bytes = null;
         }
-        isInitialized = false; 
-        // If this object is used again after this method is invoked, the 
+        isInitialized = false;
+        // If this object is used again after this method is invoked, the
         // late initialization will be reinvoked aquiring these resources
         // again.
     }
-    
+
     private void releaseStreams() throws IOException {
         if(testStream != null) {
             testStream.close();
@@ -235,8 +235,8 @@ public class DiskQueue implements Queue, Serializable {
 
     /**
      * Disconnect from any backing files, without deleting those
-     * files, allowing reattachment later. 
-     * 
+     * files, allowing reattachment later.
+     *
      */
     public void disconnect() {
         try {
@@ -247,9 +247,9 @@ public class DiskQueue implements Queue, Serializable {
             // TODO convert to runtime exception?
             DevUtils.logger.log(Level.SEVERE,"disconnect()" +
                 DevUtils.extraInfo(),e);
-        } 
+        }
     }
-    
+
     /**
      * Reconnect to disk-based backing
      */
@@ -272,26 +272,26 @@ public class DiskQueue implements Queue, Serializable {
     public Iterator getIterator(boolean inCacheOnly) {
         // There are no levels of storage so we will return all items.
         Iterator it = null;
-        
+
         if( isInitialized ){
             try {
                 it = new DiskQueueIterator(bytes.getReadAllInputStream(),length);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } 
+        }
         if( it == null ){
             it = new Iterator(){
                 public void remove() { throw new UnsupportedOperationException(); }
                 public boolean hasNext() { return false; }
                 public Object next() { throw new NoSuchElementException(); }
-            };        
+            };
         }
-        
+
         return it;
     }
 
-    /** 
+    /**
      * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
     public long deleteMatchedItems(Predicate matcher) {
@@ -318,6 +318,6 @@ public class DiskQueue implements Queue, Serializable {
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         // after deserialization, must reinitialize object streams from underlying bytestreams
-        isInitialized = false; 
+        isInitialized = false;
     }
 }

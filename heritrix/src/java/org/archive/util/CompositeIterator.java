@@ -21,7 +21,7 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+*/
 package org.archive.util;
 
 import java.util.ArrayList;
@@ -33,10 +33,10 @@ import java.util.NoSuchElementException;
  * @author gojomo
  */
 public class CompositeIterator implements Iterator {
-    ArrayList iterators = new ArrayList(); 
+    ArrayList iterators = new ArrayList();
     Iterator currentIterator;
     int indexOfCurrentIterator = -1;
-    
+
     /**
      * Moves to the next (non empty) iterator. Returns false if there are no
      * more (non empty) iterators, true otherwise.
@@ -46,7 +46,7 @@ public class CompositeIterator implements Iterator {
         if (++indexOfCurrentIterator < iterators.size()) {
             currentIterator = (Iterator) iterators.get(indexOfCurrentIterator);
             // If the new iterator was empty this will move us to the next one.
-            return hasNext(); 
+            return hasNext();
         } else {
             currentIterator = null;
             return false;
@@ -65,7 +65,7 @@ public class CompositeIterator implements Iterator {
             return nextIterator();
         }
     }
-    
+
     /* (non-Javadoc)
      * @see java.util.Iterator#next()
      */
@@ -76,14 +76,14 @@ public class CompositeIterator implements Iterator {
             throw new NoSuchElementException();
         }
     }
-    
+
     /* (non-Javadoc)
      * @see java.util.Iterator#remove()
      */
     public void remove() {
         throw new UnsupportedOperationException();
     }
-    
+
     /**
      * Create an empty CompositeIterator. Internal
      * iterators may be added later.
@@ -91,10 +91,10 @@ public class CompositeIterator implements Iterator {
     public CompositeIterator() {
         super();
     }
-    
+
     /**
      * Convenience method for concatenating together
-     * two iterators. 
+     * two iterators.
      * @param i1
      * @param i2
      */
@@ -105,8 +105,8 @@ public class CompositeIterator implements Iterator {
     }
 
     /**
-     * Add an iterator to the internal chain. 
-     * 
+     * Add an iterator to the internal chain.
+     *
      * @param i an iterator to add.
      */
     private void add(Iterator i) {

@@ -30,11 +30,11 @@ import java.nio.MappedByteBuffer;
 
 /**
  * An inputstream perspective on a MappedByteBuffer.
- * 
+ *
  * This class is effectively a random access input stream.  Used
  * {@link #getFilePointer()} to get current location and then mark and reset to
  * move about in the stream.
- * 
+ *
  * @author stack
  */
 public class MappedByteBufferInputStream extends InputStream
@@ -44,12 +44,12 @@ public class MappedByteBufferInputStream extends InputStream
      * The mapped byte buffer we're feeding this stream from.
      */
 	private final MappedByteBuffer mbb;
-    
+
     /**
      * Position to return to on call to reset.
      */
 	private int mark = 0;
-    
+
     /**
      * True if close has been called on this stream.
      */
@@ -64,7 +64,7 @@ public class MappedByteBufferInputStream extends InputStream
 		this.mbb = mbb;
         this.closed = false;
 	}
-    
+
 	public int read() throws IOException {
         checkClosed();
 		return (available() <= 0)? -1: this.mbb.get();
@@ -78,7 +78,7 @@ public class MappedByteBufferInputStream extends InputStream
         }
         return read;
     }
-    
+
     /* (non-Javadoc)
 	 * @see java.io.InputStream#close()
 	 */
@@ -86,13 +86,13 @@ public class MappedByteBufferInputStream extends InputStream
 		super.close();
         this.closed = true;
 	}
-    
+
     protected void checkClosed() throws IOException {
     	    if (this.closed) {
             throw new IOException("Stream has been closed");
         }
     }
-    
+
     /* (non-Javadoc)
 	 * @see java.io.InputStream#markSupported()
 	 */

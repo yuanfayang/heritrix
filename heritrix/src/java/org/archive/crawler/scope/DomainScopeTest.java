@@ -1,8 +1,8 @@
-/* 
+/*
  * TestDomianScope
- * 
+ *
  * $Id$
- * 
+ *
  * Created on May 17, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -37,7 +37,7 @@ import junit.framework.TestCase;
 
 /**
  * Test the domain scope focus filter.
- * 
+ *
  * @author Igor Ranitovic
  */
 public class DomainScopeTest extends TestCase {
@@ -49,10 +49,10 @@ public class DomainScopeTest extends TestCase {
     private TestUnitDomainScope dc;
 
     /**
-     * Since testing only focus filter overwrite all other filter to return 
+     * Since testing only focus filter overwrite all other filter to return
      * false.
-     * 
-     * Also overwrite getSeedlsit so the test seeds is used. 
+     *
+     * Also overwrite getSeedlsit so the test seeds is used.
      */
     private class TestUnitDomainScope extends DomainScope {
 

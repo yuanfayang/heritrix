@@ -1,21 +1,21 @@
 /* CredentialStoreTest
- * 
+ *
  * Created on Apr 1, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -40,7 +40,7 @@ import org.archive.crawler.settings.SettingsFrameworkTestCase;
 
 /**
  * Test add, edit, delete from credential store.
- * 
+ *
  * @author stack
  * @version $Revision$, $Date$
  */
@@ -48,12 +48,12 @@ public class CredentialStoreTest extends SettingsFrameworkTestCase {
 
     protected static Logger logger =
         Logger.getLogger("org.archive.crawler.datamodel.CredentialTest");
-    
+
     final public void testCredentials()
-        throws InvalidAttributeValueException, IllegalArgumentException, 
+        throws InvalidAttributeValueException, IllegalArgumentException,
         InvocationTargetException, AttributeNotFoundException, MBeanException,
         ReflectionException {
-        
+
         CredentialStore store = (CredentialStore)this.settingsHandler.
             getOrder().getAttribute(CredentialStore.ATTR_NAME);
         writeCrendentials(store, this.getGlobalSettings(), "global");
@@ -85,12 +85,12 @@ public class CredentialStoreTest extends SettingsFrameworkTestCase {
         assertTrue("Not enough names, size " + size, size == names.size());
         return names;
     }
-    
+
     private void writeCrendentials(CredentialStore store, CrawlerSettings context,
                 String prefix)
         throws InvalidAttributeValueException, AttributeNotFoundException,
         IllegalArgumentException, InvocationTargetException {
-        
+
         List types = CredentialStore.getCredentialTypes();
         for (Iterator i = types.iterator(); i.hasNext();) {
             Class cl = (Class)i.next();

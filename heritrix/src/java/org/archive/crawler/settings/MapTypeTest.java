@@ -106,7 +106,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         for (int i = 0; i < atts.length; i++) {
             map.removeElement(getGlobalSettings(), atts[i].getName());
         }
-        
+
         assertTrue("Map should be empty", map.isEmpty(getPerHostSettings()));
         assertEquals("Map should be empty", 0, map.size(getPerHostSettings()));
 
@@ -261,7 +261,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
     }
 
     /* Test for getAttribute
-     * 
+     *
      */
     public void testGetAttribute() throws AttributeNotFoundException,
             MBeanException, ReflectionException, InvalidAttributeValueException {
@@ -283,7 +283,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
             // OK
         }
     }
-    
+
     public void testListAttributes() throws AttributeNotFoundException,
             MBeanException, ReflectionException, InvalidAttributeValueException {
         MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
@@ -293,7 +293,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         for (Iterator it = map.iterator(null); it.hasNext();) {
             atts.add(new SimpleType("", "", ((Attribute) it.next()).getValue()));
         }
-        
+
         SimpleType type1 = new SimpleType("testType1", "description", "value");
         SimpleType type2 = new SimpleType("testType2", "description", "value");
         map.addElement(getGlobalSettings(), type1);

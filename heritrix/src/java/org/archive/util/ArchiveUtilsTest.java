@@ -200,7 +200,7 @@ public class ArchiveUtilsTest extends TestCase {
         assertTrue("same contents", ArchiveUtils.byteArrayEquals(foo, foo2));
         assertFalse("different contents", ArchiveUtils.byteArrayEquals(foo, bar2));
     }
-    
+
     /** test doubleToString() */
     public void testDoubleToString(){
         double test = 12.345;
@@ -214,12 +214,12 @@ public class ArchiveUtilsTest extends TestCase {
             "cecking precision higher then the double has",
             ArchiveUtils.doubleToString(test, 65).equals("12.345"));
     }
-    
+
     public void testFormatBytesForDisplay(){
         long kb = 1024;
         long mb = 1024*1024*2;
         long gb = ((long)1024*1024)*1024*4;
-        
+
         assertEquals("formating negative number","0 B",ArchiveUtils.formatBytesForDisplay(-1));
         assertEquals("formating byte - lower bound","0 B",ArchiveUtils.formatBytesForDisplay(0));
         assertEquals("formating byte - upper bound","1023 B",ArchiveUtils.formatBytesForDisplay(kb-1));

@@ -48,7 +48,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
         super(dir, name, reuse, headMax);
         stack = new DiskStack(new File(dir,name+".top"));
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.Stack#push(java.lang.Object)
      */
@@ -56,11 +56,11 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
         headQ.addFirst(object);
         enforceHeadSize();
     }
-    
+
     /**
-     * Ensure that only the chosen maximum number of 
+     * Ensure that only the chosen maximum number of
      * items are held in memory, pushing any excess
-     * to the stack as necessary. 
+     * to the stack as necessary.
      */
     private void enforceHeadSize() {
         while(headQ.size()>headMax) {
@@ -71,21 +71,21 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
     /**
      * Set the number of items to keep in memory,
      * and adjust current head to match.
-     * 
+     *
      * @param hm
      */
     public void setHeadMax(int hm) {
         super.setHeadMax(hm);
         enforceHeadSize();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.Stack#pop()
      */
     public Object pop() {
         return dequeue();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.Queue#peek()
      */
@@ -94,14 +94,14 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
         push(candidate);
         return candidate;
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.Stack#height()
      */
     public long height() {
         return length();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.DiskBackedQueue#backingDequeue()
      */
@@ -113,7 +113,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
         // then disk queue
         return tailQ.dequeue();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.DiskBackedQueue#discardBacking()
      */
@@ -121,7 +121,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
         super.discardBacking();
         stack.release();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
@@ -138,7 +138,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
         // TODO Auto-generated method stub
         return super.getIterator(inCacheOnly);
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.DiskBackedQueue#headTargetSize()
      */
@@ -146,7 +146,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
         // leave space for in-memory pushes
         return super.headTargetSize()/2;
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.Queue#isEmpty()
      */
@@ -154,7 +154,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
         // include stack in calculation
         return super.isEmpty() && stack.isEmpty();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.Queue#length()
      */
@@ -162,7 +162,7 @@ public class DiskBackedDeque extends DiskBackedQueue implements Deque, Serializa
         // include stack in calculation
         return super.length() + stack.height();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.util.DiskBackedQueue#disconnect()
      */

@@ -1,9 +1,9 @@
 /* DevNull
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Jun 23, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -30,7 +30,7 @@ import java.io.OutputStream;
 /**
  * This class takes input and does nothing with it, sort of a /dev/null for the
  * rest of us.
- * 
+ *
  * @author Parker Thompson
  */
 public class DevNull extends OutputStream {

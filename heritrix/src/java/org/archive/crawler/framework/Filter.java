@@ -110,21 +110,21 @@ public class Filter extends ModuleType {
     /**
      * Checks to see if filter functionality should be inverted for this
      * curi.<p>
-     * 
+     *
      * All filters will by default return true if curi is accepted by the
      * filter. If this method returns false, then the filter will return true
      * if doesn't match.<p>
-     *  
+     *
      * Classes extending this class should override this method with
      * appropriate code.
-     * 
+     *
      * @param curi Current CrawlURI
      * @return true for default behaviour, false otherwise.
      */
     protected boolean returnTrueIfMatches(CrawlURI curi){
         return true;
     }
-    
+
     /**
      * Classes subclassing this one should override this method to perfrom
      * their custom determination of whether or not the object given to it.

@@ -60,7 +60,7 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
     protected long count;
 
     /**
-     * To support serialization 
+     * To support serialization
      * TODO: verify needed?
      */
     public AbstractLongFPSet() {

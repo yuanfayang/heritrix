@@ -1,23 +1,23 @@
 /* Alert
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Feb 20, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -32,19 +32,19 @@ import java.util.logging.Logger;
 import org.archive.util.ArchiveUtils;
 
 /**
- * A simple data class that captures one alert. 
- * 
- * <p>An alert is a message to a human operator created by Heritrix when 
- * exceptional conditions occur that can not be reported in any other way except 
- * through logs. 
- * 
- * <p>In general all condition that cause alerts should also cause similar info 
- * to be written to an appropriate log. To aid this the class offers a method 
+ * A simple data class that captures one alert.
+ *
+ * <p>An alert is a message to a human operator created by Heritrix when
+ * exceptional conditions occur that can not be reported in any other way except
+ * through logs.
+ *
+ * <p>In general all condition that cause alerts should also cause similar info
+ * to be written to an appropriate log. To aid this the class offers a method
  * that will dump the alert to a specified log. Also each alert has a Level
  * attribute, same as log entries.
- * 
+ *
  * @author Kristinn Sigurdsson
- * 
+ *
  * @see org.archive.crawler.Heritrix#addAlert(Alert)
  */
 public class Alert {
@@ -53,11 +53,11 @@ public class Alert {
     private String alertBody;
     private String ID;
     private Date time;
-    
+
     private Level level;
-    
+
     private static int nextID = 0;
-    
+
     /**
      * Create a new alert
      * @param title short descriptive string that represents a title for the alert
@@ -77,12 +77,12 @@ public class Alert {
 
     /**
      * Create a new alert
-     * 
+     *
      * @param title
      *            short descriptive string that represents a title for the alert
      * @param body
      *            the alert message
-     * @param error 
+     * @param error
      *            an error associated with the alert. It's content will be
      *            written to the body
      * @param level
@@ -123,7 +123,7 @@ public class Alert {
     }
 
     /**
-     * Is alert new? 
+     * Is alert new?
      * @return True if the alert is new (setAlertSeen() has not been invoked)
      */
     public boolean isNew() {
@@ -144,7 +144,7 @@ public class Alert {
     public String getID() {
         return ID;
     }
-    
+
     public boolean equals(Alert compare){
         return compare.getID().equals(ID);
     }
@@ -169,6 +169,6 @@ public class Alert {
      * @param logger The log to write to
      */
     public void print(Logger logger) {
-        logger.log(level,alertBody);        
+        logger.log(level,alertBody);
     }
 }

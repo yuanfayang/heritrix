@@ -46,7 +46,7 @@ import org.archive.crawler.settings.SimpleType;
 public class OrFilter extends Filter {
     public static final String ATTR_MATCH_RETURN_VALUE = "if-matches-return";
     public static final String ATTR_FILTERS = "filters";
-    
+
     public OrFilter(String name, String description) {
         this(name);
         setDescription(description);
@@ -66,11 +66,11 @@ public class OrFilter extends Filter {
                 ATTR_MATCH_RETURN_VALUE,
                 "What to return when one of the filters matches. \nIf true, "
                     + "this filter will return true if one of the subfilters "
-                    + "return true, false otherwise. If false, this filter " 
+                    + "return true, false otherwise. If false, this filter "
                     + "will return false if one of the subfilters"
                     + "return true, false otherwise.",
                 new Boolean(true)));
-        
+
         addElementToDefinition(new MapType(ATTR_FILTERS,
                 "This is a list of filters who's functionality should be" +
                 " logically or'ed together by the OrFilter.", Filter.class));
@@ -85,7 +85,7 @@ public class OrFilter extends Filter {
             return null;
         }
     }
-    
+
     protected boolean innerAccepts(Object o) {
         if (isEmpty(o)) {
             return true;

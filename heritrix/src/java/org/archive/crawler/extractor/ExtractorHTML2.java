@@ -31,10 +31,10 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CrawlURI;
 
 /**
- * Extended version of ExtractorHTML with more aggressive javascript link 
+ * Extended version of ExtractorHTML with more aggressive javascript link
  * extraction where javascript code is parsed first with general HTML tags
  * regexp, and than by javascript speculative link regexp.
- * 
+ *
  * @author Igor Ranitovic
  *
  */
@@ -52,7 +52,7 @@ public class ExtractorHTML2 extends ExtractorHTML {
      * @param sequence
      */
     protected void processScript(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
- 
+
          // first, get attributes of script-open tag
         // as per any other tag
         processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));

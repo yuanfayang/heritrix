@@ -202,14 +202,14 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         if (settings.hasRefinements()) {
             parseRefinements(1 + indentAmount);
         }
-        
+
         // Write the modules
         Iterator modules = settings.topLevelModules();
         while (modules.hasNext()) {
             ComplexType complexType = (ComplexType) modules.next();
             parseComplexType(complexType, 1 + indentAmount);
         }
-        
+
         handler.ignorableWhitespace(indentArray, 0, 1);
         handler.endElement(nsu, rootElement, rootElement);
         handler.ignorableWhitespace(indentArray, 0, 1);
@@ -305,15 +305,15 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         // Write settings description
         writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_DESCRIPTION, settings
                 .getDescription(), null, indent + indentAmount);
-        
+
         // Write settings operator
         writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_OPERATOR, settings
                 .getOperator(), null, indent + indentAmount);
-        
+
         // Write settings description
         writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_ORGANIZATION, settings
                 .getOrganization(), null, indent + indentAmount);
-        
+
         // Write settings description
         writeSimpleElement(XMLSettingsHandler.XML_ELEMENT_AUDIENCE, settings
                 .getAudience(), null, indent + indentAmount);
@@ -334,10 +334,10 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         handler.endElement(nsu, XMLSettingsHandler.XML_ELEMENT_META,
                 XMLSettingsHandler.XML_ELEMENT_META);
     }
-    
+
     /**
      * Create SAX events from a {@link ComplexType}.
-     * 
+     *
      * @param complexType the object to creat SAX events from.
      * @param indent the indentation amount for prettyprinting XML.
      * @throws SAXException is thrown if an error occurs.
@@ -374,7 +374,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         handler.ignorableWhitespace(indentArray, 0, indent);
         handler.endElement(nsu, objectElement, objectElement);
     }
-    
+
     private void parseAttribute(ComplexType complexType,
             ModuleAttributeInfo attribute, int indent) throws SAXException {
         Object value;
@@ -422,7 +422,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
             }
         }
     }
-    
+
     /** Create SAX events for the content of a {@link ListType}.
      *
      * @param value the ListType whose content we create SAX events for.

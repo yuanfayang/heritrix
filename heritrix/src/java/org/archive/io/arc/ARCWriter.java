@@ -85,7 +85,7 @@ import org.archive.util.DevUtils;
  * the SUN JDK but the IBM JDK threw NPE inside in the deflate.reset -- its zlib
  * native call doesn't seem to like the notion of resetting -- so I gave up on
  * it.
- * 
+ *
  * <p>Because of such as the above and troubles with GZIPInputStream, we should
  * write our own GZIP*Streams, ones that resettable and consious of gzip
  * members.
@@ -115,7 +115,7 @@ import org.archive.util.DevUtils;
 public class ARCWriter implements ARCConstants {
     private static final Logger logger =
         Logger.getLogger(ARCWriter.class.getName());
-    
+
     /**
      * Max size we allow ARC files to be (bytes).
      *
@@ -131,10 +131,10 @@ public class ARCWriter implements ARCConstants {
      * Default is ARCConstants.DEFAULT_ARC_FILE_PREFIX.
      */
     private String prefix = DEFAULT_ARC_FILE_PREFIX;
-    
+
     /**
      * Tail to add to arc file name.
-     * 
+     *
      * Default is no tail.
      */
     private String suffix = "";
@@ -160,15 +160,15 @@ public class ARCWriter implements ARCConstants {
      *  Output stream for arcFile.
      */
     private OutputStream out = null;
-    
+
     /**
      * A running sequence used making unique ARC file names.
      */
     private static int serialNo = 0;
-    
+
     /**
      * NumberFormat instance for formatting serial number.
-     * 
+     *
      * Pads serial number with zeros.
      */
     private static NumberFormat serialNoFormatter =
@@ -176,7 +176,7 @@ public class ARCWriter implements ARCConstants {
 
     /**
      * Arc file meta data list of files.
-     * 
+     *
      * Can be null.  Else list of file and/or string objects to write into the
      * 'body' of the first record in the arc file, the arc file meta record.
      */
@@ -184,7 +184,7 @@ public class ARCWriter implements ARCConstants {
 
     /**
      * Encoding to use getting bytes from strings.
-     * 
+     *
      * Specify an encoding rather than leave it to chance: i.e whatever the
      * JVMs encoding.  Use an encoding that gets the stream as bytes, not chars.
      */
@@ -215,7 +215,7 @@ public class ARCWriter implements ARCConstants {
     public ARCWriter(File arcsDir, String prefix) throws IOException {
         this(arcsDir, prefix, DEFAULT_COMPRESS, DEFAULT_MAX_ARC_FILE_SIZE);
     }
-    
+
     /**
      * Constructor.
      *
@@ -234,7 +234,7 @@ public class ARCWriter implements ARCConstants {
             throws IOException {
         this(arcsDir, prefix, null, compress, maxSize, null);
     }
-    
+
     /**
      * Constructor.
      *
@@ -308,7 +308,7 @@ public class ARCWriter implements ARCConstants {
         close();
         String now = ArchiveUtils.get14DigitDate();
         String name = this.prefix + '-' + getUniqueBasename(now) +
-            ((this.suffix == null || this.suffix.length() <= 0)? 
+            ((this.suffix == null || this.suffix.length() <= 0)?
                 "": "-" + this.suffix) +
             '.' + ARC_FILE_EXTENSION +
             ((this.compress)? '.' + COMPRESSED_FILE_EXTENSION: "");
@@ -337,12 +337,12 @@ public class ARCWriter implements ARCConstants {
 	private static synchronized int getNewSerialNo() {
 		return ARCWriter.serialNo++;
 	}
-    
+
     /**
      * Reset the serial number.
      */
     public static synchronized void resetSerialNo() {
-        ARCWriter.serialNo = 0;   
+        ARCWriter.serialNo = 0;
     }
 
 	/**
@@ -351,7 +351,7 @@ public class ARCWriter implements ARCConstants {
      * <p>Generate ARC file meta data.  Currently we only do version 1 of the
      * ARC file formats or version 1.1 when metadata has been supplied (We
      * write it into the body of the first record in the arc file).
-     * 
+     *
      * <p>Version 1 metadata looks roughly like this:
      *
      * <pre>filedesc://testWriteRecord-JunitIAH20040110013326-2.arc 0.0.0.0 \\
@@ -449,7 +449,7 @@ public class ARCWriter implements ARCConstants {
 
     /**
      * Write all metadata to passed <code>baos</code>.
-     * 
+     *
      * @param baos Byte array to write to.
      */
     private void writeMetaData(ByteArrayOutputStream baos)

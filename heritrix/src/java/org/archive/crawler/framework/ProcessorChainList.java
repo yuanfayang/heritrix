@@ -1,7 +1,7 @@
 /* ProcessorChainList
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Mar 3, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -40,17 +40,17 @@ import org.archive.crawler.settings.MapType;
 
 
 /** A list of all the ProcessorChains.
- * 
+ *
  * @author John Erik Halse
  */
 public class ProcessorChainList {
     private List chainList = new ArrayList();
     private Map chainMap = new HashMap();
-    
+
     /** Constructs a new ProcessorChainList.
-     * 
+     *
      * @param order the Crawl Order to get configuration from.
-     * 
+     *
      * @throws FatalConfigurationException is thrown if chains could not be
      *         set up properly.
      */
@@ -84,12 +84,12 @@ public class ProcessorChainList {
     }
 
     /** Add a new chain of processors to the chain list.
-     * 
+     *
      * This method takes a map of processors and wraps it in a ProcessorChain
      * object and adds it to the list of chains.
-     * 
+     *
      * @param processorMap the processor map to be added.
-     */ 
+     */
     public void addProcessorMap(String name, MapType processorMap) {
         ProcessorChain processorChain = new ProcessorChain(processorMap);
         ProcessorChain previousChain = getLastChain();
@@ -99,20 +99,20 @@ public class ProcessorChainList {
         chainList.add(processorChain);
         chainMap.put(name, processorChain);
     }
-    
+
     /** Get the first processor chain.
-     * 
+     *
      * @return the first processor chain.
      */
     public ProcessorChain getFirstChain() {
         return (ProcessorChain) chainList.get(0);
     }
-    
+
     /** Get the last processor chain.
-     * 
+     *
      * The last processor chain should contain processors that should always
      * be run for a URI that has started its way through the processors.
-     * 
+     *
      * @return the last processor chain.
      */
     public ProcessorChain getLastChain() {
@@ -124,7 +124,7 @@ public class ProcessorChainList {
     }
 
     /** Get the total number of all processors in all the chains.
-     * 
+     *
      * @return the total number of all processors in all the chains.
      */
     public int processorCount() {
@@ -136,7 +136,7 @@ public class ProcessorChainList {
     }
 
     /** Get an iterator over the processor chains.
-     * 
+     *
      * @return an iterator over the processor chains.
      */
     public Iterator iterator() {
@@ -144,7 +144,7 @@ public class ProcessorChainList {
     }
 
     /** Get the number of processor chains.
-     * 
+     *
      * @return the number of processor chains.
      */
     public int size() {
@@ -152,7 +152,7 @@ public class ProcessorChainList {
     }
 
     /** Get a processor chain by its index in the list of chains.
-     * 
+     *
      * @param index the chains index in the list of chains.
      * @return the requested processor chain.
      */
@@ -161,10 +161,10 @@ public class ProcessorChainList {
     }
 
     /** Get a processor chain by its name.
-     * 
+     *
      * @param name name of the processor chain to get.
      * @return the requested processor chain.
-     */ 
+     */
     public ProcessorChain getProcessorChain(String name) {
         return (ProcessorChain) chainMap.get(name);
     }

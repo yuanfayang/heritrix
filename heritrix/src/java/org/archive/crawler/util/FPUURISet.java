@@ -151,7 +151,7 @@ public class FPUURISet extends AbstractSet implements UURISet, Serializable {
     public boolean quickContains(CandidateURI curi) {
         return quickContains(curi.getUURI());
     }
-    
+
     // custom serialization
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     	stream.defaultReadObject();

@@ -61,17 +61,17 @@ public class ToeThread extends Thread
     private static final String STEP_ABOUT_TO_RETURN_URI = "ABOUT_TO_RETURN_URI";
     private static final String STEP_HANDLING_SERIOUS_ERROR = "HANDLING_SERIOUS_ERROR";
     private static final String STEP_FINISHING_PROCESS = "FINISHING_PROCESS";
-    
-    
+
+
     private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
     private static int DEFAULT_TAKE_TIMEOUT = 3000;
-    
+
     private ToePool pool;
     private volatile boolean shouldCrawl = true;
     private volatile boolean shouldPause = false;
-    
-    /** 
-     * If set then this thread was 'killed' by an outside agent it should 
+
+    /**
+     * If set then this thread was 'killed' by an outside agent it should
      * then terminate itself as quickly as possible.
      */
     private volatile boolean shouldDie = false;
@@ -90,7 +90,7 @@ public class ToeThread extends Thread
 
     // debugging + used by kill() to know what state the toe is in.
     private String step = STEP_NASCENT;
-    
+
     /**
      * @param c
      * @param p
@@ -106,7 +106,7 @@ public class ToeThread extends Thread
     }
 
     /**
-     * @return If true then this thread is idle or dead. 
+     * @return If true then this thread is idle or dead.
      */
     public synchronized boolean isIdleOrDead() {
         return currentCuri == null || shouldDie == true;
@@ -118,7 +118,7 @@ public class ToeThread extends Thread
     public void run() {
         String name = controller.getOrder().getCrawlOrderName();
         logger.fine(getName()+" started for order '"+name+"'");
-        
+
         try {
             while ( shouldCrawl ) {
                 while ( shouldPause ) {
@@ -136,7 +136,7 @@ public class ToeThread extends Thread
                 currentCuri = (CrawlURI) controller.getFrontier().next(DEFAULT_TAKE_TIMEOUT);
                 if ( currentCuri != null ) {
                     processCrawlUri();
-                    step = STEP_ABOUT_TO_RETURN_URI; 
+                    step = STEP_ABOUT_TO_RETURN_URI;
                     synchronized(this) {
                         dieCheck();
                         controller.getFrontier().finished(currentCuri);
@@ -149,7 +149,7 @@ public class ToeThread extends Thread
             }
             step = STEP_EXIT_PROCESSING_LOOP;
         } catch (InterruptedException e1) {
-            if(!shouldDie){ 
+            if(!shouldDie){
                 // Thread was interrupted for unknown reasons.
                 System.err.println("interrupted while working on "+currentCuri);
                 e1.printStackTrace();
@@ -165,7 +165,7 @@ public class ToeThread extends Thread
             httpRecorder.closeRecorders();
             httpRecorder = null;
             localProcessors = null;
-            
+
             logger.fine(getName()+" finished for order '"+name+"'");
             step = STEP_FINISHED;
         }
@@ -174,8 +174,8 @@ public class ToeThread extends Thread
     /**
      * If an external die request is detected, throw an interrupted exception.
      * Used before anything that should not be attempted by a 'zombie' thread
-     * that the Frontier/Crawl has given up on. 
-     * 
+     * that the Frontier/Crawl has given up on.
+     *
      * @throws InterruptedException
      */
     private void dieCheck() throws InterruptedException {
@@ -184,9 +184,9 @@ public class ToeThread extends Thread
         }
     }
 
-    /** 
-     * Pass the CrawlURI to all appropriate processors 
-     * 
+    /**
+     * Pass the CrawlURI to all appropriate processors
+     *
      * @throws InterruptedException
      */
     private void processCrawlUri() throws InterruptedException {
@@ -195,7 +195,7 @@ public class ToeThread extends Thread
         lastStartTime = System.currentTimeMillis();
         try {
             while (currentCuri.nextProcessorChain() != null) {
-                step = STEP_ABOUT_TO_BEGIN_CHAIN; 
+                step = STEP_ABOUT_TO_BEGIN_CHAIN;
                 // Starting on a new processor chain.
                 currentCuri.setNextProcessor(currentCuri.nextProcessorChain().getFirstProcessor());
                 currentCuri.setNextProcessorChain(currentCuri.nextProcessorChain().getNextProcessorChain());
@@ -258,7 +258,7 @@ public class ToeThread extends Thread
     }
 
     /**
-     * 
+     *
      */
     public synchronized void stopAfterCurrent() {
         logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
@@ -312,7 +312,7 @@ public class ToeThread extends Thread
             rep.newline();
             rep.padTo(8);
             rep.append(currentCuri.getPathFromSeed());
-            if(currentCuri.getVia() != null 
+            if(currentCuri.getVia() != null
                     && currentCuri.getVia() instanceof CandidateURI){
                 rep.append(" ");
                 rep.append(((CandidateURI)currentCuri.getVia()).getURIString());
@@ -376,33 +376,33 @@ public class ToeThread extends Thread
             notifyAll();
         }
     }
-    
+
     /** Get the CrawlController acossiated with this thread.
-     * 
+     *
      * @return Returns the CrawlController.
      */
     public CrawlController getController() {
         return controller;
     }
-    
+
     /**
      * Terminates a thread.
-     * 
+     *
      * <p> Calling this method will ensure that the current thread will stop
-     * processing as soon as possible (note: this may be never). Meant to 
+     * processing as soon as possible (note: this may be never). Meant to
      * 'short circuit' hung threads.
-     * 
+     *
      * <p> Current crawl uri will have it's fetch status set accordingly and
      * will be immediately returned to the frontier.
-     * 
-     * <p> As noted before, this does not ensure that the thread will stop 
+     *
+     * <p> As noted before, this does not ensure that the thread will stop
      * running (ever). But once evoked it will not try and communicate with
-     * other parts of crawler and will terminate as soon as control is 
+     * other parts of crawler and will terminate as soon as control is
      * established.
-     * 
+     *
      * <p> Method should only be invoked by it's ToePool. Otherwise the pool
      * will become out of sync with the threads currently alive.
-     * 
+     *
      * @param newSerial New serial (id) for the thread.
      */
     protected void kill(int newSerial){
@@ -416,11 +416,11 @@ public class ToeThread extends Thread
                 controller.getFrontier().finished(currentCuri);
                 // currentCuri = null;
             }
-        } 
+        }
         this.interrupt();
         if(controller!=null) {
             controller.toeChanged(this);
         }
     }
-    
+
 }

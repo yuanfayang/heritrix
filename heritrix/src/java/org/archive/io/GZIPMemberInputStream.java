@@ -99,7 +99,7 @@ public class GZIPMemberInputStream extends MappedByteBufferInputStream
      *
      * Call {@link #hasNext()} before calling this method else you'll get a
      * IOException at the end of the stream.
-     * 
+     *
      * @return Returns null (Just so we align with the Iterator interface).
      */
     public Object next() {
@@ -128,7 +128,7 @@ public class GZIPMemberInputStream extends MappedByteBufferInputStream
             // Quick return.
             return -1;
         }
-        
+
         // See this on java and unsigned bytes:
         // http://jguru.com/faq/view.jsp?EID=13647
         // That is, its always a signed int in java no matter what
@@ -152,7 +152,7 @@ public class GZIPMemberInputStream extends MappedByteBufferInputStream
         }
         return c;
     }
-    
+
     public int read(byte[] b, int off, int len) throws IOException {
         int read = super.read(b, off, len);
         // Look for gzip header in buffer before letting it out.
@@ -189,8 +189,8 @@ public class GZIPMemberInputStream extends MappedByteBufferInputStream
         }
         return read;
     }
-    
-    
+
+
 
     /**
      * Test for GZIP header.
@@ -221,14 +221,14 @@ public class GZIPMemberInputStream extends MappedByteBufferInputStream
         gzipHeader = testGZIPHeader(header, 0);
         return gzipHeader;
     }
-    
+
     /**
      * Review passed buffer looking for gzip header.
-     * 
+     *
      * The passed offset is assumped to point at one past the start of the gzip
      * header. Its assumed we've already tested a positive on first byte of
      * gzip header.
-     * 
+     *
      * @param buffer Buffer to review.
      * @param offset Where to start looking at in the buffer.
      * @return True if the passed buffer looks like a zip + 1 header.

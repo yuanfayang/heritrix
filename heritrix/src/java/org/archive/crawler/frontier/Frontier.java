@@ -80,18 +80,18 @@ import org.archive.util.Queue;
  * emitting more than one CrawlURI of the same 'key' (host) at
  * once, and respects minimum-delay and delay-factor specifications
  * for politeness.
- * 
+ *
  * There is one generic 'pendingQueue', and then an arbitrary
  * number of other 'KeyedQueues' each representing a certain
  * 'key' class of URIs -- effectively, a single host (by hostname).
- * 
+ *
  * KeyedQueues may have an item in-process -- in which case they
  * do not provide any other items for processing. KeyedQueues may
- * also be 'snoozed' -- when they should be kept inactive for a 
+ * also be 'snoozed' -- when they should be kept inactive for a
  * period of time, to either enforce politeness policies or allow
- * a configurable amount of time between error retries. 
- * 
- * 
+ * a configurable amount of time between error retries.
+ *
+ *
  * @author Gordon Mohr
  */
 public class Frontier
@@ -106,7 +106,7 @@ public class Frontier
 
     /** how many multiples of last fetch elapsed time to wait before recontacting same server */
     public final static String ATTR_DELAY_FACTOR = "delay-factor";
-    /** always wait this long after one completion before recontacting 
+    /** always wait this long after one completion before recontacting
      * same server, regardless of multiple */
     public final static String ATTR_MIN_DELAY = "min-delay-ms";
     /** never wait more than this long, regardless of multiple */
@@ -144,7 +144,7 @@ public class Frontier
     protected final static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
     protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
     protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
-    protected final static Integer DEFAULT_HOST_VALENCE = new Integer(1); 
+    protected final static Integer DEFAULT_HOST_VALENCE = new Integer(1);
     protected final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
         new Integer(0);
     protected final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
@@ -155,7 +155,7 @@ public class Frontier
     protected final static Integer DEFAULT_HOST_QUEUES_MEMORY_CAPACITY =
         new Integer(200);
 
-    
+
     protected final static float KILO_FACTOR = 1.024F;
 
     protected final static String F_ADD = "F+ ";
@@ -171,7 +171,7 @@ public class Frontier
     protected UURISet alreadyIncluded;
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
-    
+
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 
     // every CandidateURI not yet in process or another queue;
@@ -186,15 +186,15 @@ public class Frontier
     LinkedList readyClassQueues = new LinkedList(); // of String (queueKey) -> KeyedQueue
 
     // all per-class queues who are on hold until a certain time
-    SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime    
-    
+    SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime
+
     // top-level stats
     long queuedCount = 0;
-    
+
     long successCount = 0;
     long failedCount = 0;
     long disregardedCount = 0; //URI's that are disregarded (for example because of robot.txt rules)
-    
+
     long totalProcessedBytes = 0;
 
 
@@ -202,7 +202,7 @@ public class Frontier
     long nextURIEmitTime = 0;
     long processedBytesAfterLastEmittedURI = 0;
     int lastMaxBandwidthKB = 0;
-    
+
     public Frontier(String name){
         this(name,"Frontier. \nMaintains the internal" +
                 " state of the crawl. It dictates the order in which URIs" +
@@ -210,15 +210,15 @@ public class Frontier
                 " frontier, which refrains from emitting more than one" +
                 " CrawlURI of the same \'key\' (host) at once, and respects" +
                 " minimum-delay and delay-factor specifications for" +
-                " politeness.");  
+                " politeness.");
     }
-    
+
     /**
      * @param name
      */
     public Frontier(String name, String description) {
         //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
-        //therefore we'll ignore the supplied parameter. 
+        //therefore we'll ignore the supplied parameter.
         super(URIFrontier.ATTR_NAME, description);
         addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR,
             "How many multiples of last fetch elapsed time to wait before " +
@@ -270,7 +270,7 @@ public class Frontier
                 new SimpleType(ATTR_PENDING_QUEUE_MEMORY_CAPACITY,
                 "Size of the pending queue's in memory head.\n Once it grows " +
                 "beyond this size additional items will be written to a file " +
-                "on disk. Default value " + 
+                "on disk. Default value " +
                 DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY + ". Higher value " +
                 "means more RAM used; lower means more disk I/O",
                 DEFAULT_PENDING_QUEUE_MEMORY_CAPACITY));
@@ -300,13 +300,13 @@ public class Frontier
 
         alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
                 "alreadyIncluded");
-        
+
         loadSeeds();
     }
-    
+
     /**
      * Create a queue that will serve as the pending queue.
-     * 
+     *
      * @param dir Directory where pending queue files should be written
      * @param filePrefix Prefix to names of pending queue files
      * @param capacity In memory cache capacity.
@@ -324,25 +324,25 @@ public class Frontier
                         .intValue());
         } catch (AttributeNotFoundException e) {
             throw new FatalConfigurationException("AttributeNotFoundException " +
-                    "encountered on reading " + 
+                    "encountered on reading " +
                     ATTR_PENDING_QUEUE_MEMORY_CAPACITY + ". Message:\n" +
                     e.getMessage());
         } catch (MBeanException e) {
             throw new FatalConfigurationException("MBeanException " +
-                    "encountered on reading " + 
+                    "encountered on reading " +
                     ATTR_PENDING_QUEUE_MEMORY_CAPACITY + ". Message:\n" +
                     e.getMessage());
         } catch (ReflectionException e) {
             throw new FatalConfigurationException("ReflectionException " +
-                    "encountered on reading " + 
+                    "encountered on reading " +
                     ATTR_PENDING_QUEUE_MEMORY_CAPACITY + ". Message:\n" +
                     e.getMessage());
         }
     }
-    
+
     /**
      * Create a UURISet that will serve as record of already seen URIs.
-     * 
+     *
      * @param dir Directory where the set's files should be written
      * @param filePrefix Prefix to names of the set's files
      * @return A UURISet that will serve as a record of already seen URIs
@@ -350,7 +350,7 @@ public class Frontier
      */
     protected UURISet createAlreadyIncluded(File dir, String filePrefix)
             throws IOException, FatalConfigurationException {
-        // TODO: Make the uri set configurable? 
+        // TODO: Make the uri set configurable?
         // Can be overridden by subclasses
         return new FPUURISet(new MemLongFPSet(20,0.75f));
         //return new PagedUURISet(c.getScratchDisk());
@@ -367,25 +367,25 @@ public class Frontier
         //                 0.75f,
         //                 20, // 1 million slots in cache (always)
         //                 0.75f));
-        
+
     }
 
     /**
      * Load up the seeds.
-     * 
+     *
      * This method is called on initialize and inside in the crawlcontroller
      * when it wants to force reloading of configuration.
-     * 
+     *
      * @see org.archive.crawler.framework.CrawlController#kickUpdate()
      */
     public void loadSeeds() {
-        // Get the seeds to refresh and then get an iterator inside a 
+        // Get the seeds to refresh and then get an iterator inside a
         // synchronization block.  The seeds list may get updated during our
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
         //
-        // TODO:  THe calling the refreshSeeds method forces the reading of all 
-        // seeds into a cache.  This might not be always what is wanted, 
+        // TODO:  THe calling the refreshSeeds method forces the reading of all
+        // seeds into a cache.  This might not be always what is wanted,
         // particularly if broad crawl with millions of seeds.
         this.controller.getScope().refreshSeeds();
         List seeds = this.controller.getScope().getSeedlist();
@@ -424,14 +424,14 @@ public class Frontier
         threadWaiting.getQueue().enqueue(caUri);
     }
 
-    /** 
-     * 
+    /**
+     *
      * @see org.archive.crawler.framework.URIFrontier#batchFlush()
      */
     public synchronized void batchFlush() {
         innerBatchFlush();
     }
-    
+
     private void innerBatchFlush(){
         Queue q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
@@ -460,13 +460,13 @@ public class Frontier
             logger.finer("Disregarding alreadyIncluded "+caUri);
             return;
         }
-        
-        if(caUri.isSeed() && caUri.getVia() != null 
+
+        if(caUri.isSeed() && caUri.getVia() != null
                 && caUri.flattenVia().length()>0){
-            // The only way a seed can have a non-empty via is if it is the 
+            // The only way a seed can have a non-empty via is if it is the
             // result of a seed redirect.  Add it to the seeds list.
-            // 
-            // This is a feature.  This is handling for case where a seed 
+            //
+            // This is a feature.  This is handling for case where a seed
             // gets immediately redirected to another page.  What we're doing is
             // treating the immediate redirect target as a seed.
             List seeds = this.controller.getScope().getSeedlist();
@@ -492,11 +492,11 @@ public class Frontier
      * Return the next CrawlURI to be processed (and presumably
      * visited/fetched) by a a worker thread.
      *
-     * First checks any "Ready" per-host queues, then the global 
+     * First checks any "Ready" per-host queues, then the global
      * pending queue.
      *
      * @return next CrawlURI to be processed. Or null if none is availible.
-     * 
+     *
      * @see org.archive.crawler.framework.URIFrontier#next(int)
      */
     private CrawlURI next() {
@@ -504,7 +504,7 @@ public class Frontier
         CrawlURI curi = null;
 
         enforceBandwidthThrottle(now);
-        
+
         CandidateURI caUri;
 
         // Check for snoozing queues who are ready to wake up.
@@ -547,7 +547,7 @@ public class Frontier
             return null;
         }
     }
-    
+
     private CrawlURI asCrawlUri(CandidateURI caUri) {
         if(caUri instanceof CrawlURI) {
             return (CrawlURI) caUri;
@@ -598,7 +598,7 @@ public class Frontier
         }
     }
 
-    /** 
+    /**
      * @param timeout Time to wait on next CrawlURI.
      * @return The next CrawlURI eligible for processing.
      * @throws InterruptedException
@@ -606,7 +606,7 @@ public class Frontier
     public synchronized CrawlURI next(int timeout) throws InterruptedException {
         long now = System.currentTimeMillis();
         long until = now + timeout;
-        
+
         while(now<until) {
             // Keep trying till we hit timeout.
             CrawlURI curi = next();
@@ -649,7 +649,7 @@ public class Frontier
             if(curi.getFetchStatus() != S_DELETED_BY_USER){
                 noteProcessingDone(curi);
             }
-            
+
             if (curi.isSuccess()) {
                 successDisposition(curi);
             } else if (needsPromptRetry(curi)) {
@@ -667,7 +667,7 @@ public class Frontier
                 // In that case FAILURE, note & log
                 failureDisposition(curi);
             }
-            
+
         } catch (RuntimeException e) {
             curi.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
@@ -676,7 +676,7 @@ public class Frontier
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
-        
+
         finally {
             curi.processingCleanup();
         }
@@ -864,10 +864,10 @@ public class Frontier
         if(kq==null){
             return; // Couldn't find/create kq.
         }
-        
+
         // assert kq.getInProcessItem() == null : "two CrawlURIs with same classKey in process";
 
-        assert kq.getState() == KeyedQueue.READY || kq.getState() == KeyedQueue.EMPTY : 
+        assert kq.getState() == KeyedQueue.READY || kq.getState() == KeyedQueue.EMPTY :
             "odd state "+ kq.getState() + " for classQueue "+ kq + "of to-be-emitted CrawlURI";
 
         kq.noteInProcess(curi);
@@ -895,7 +895,7 @@ public class Frontier
         if (kq==null) {
             try {
                 try {
-					kq = new KeyedQueue(curi.getClassKey(), 
+					kq = new KeyedQueue(curi.getClassKey(),
 					    this.controller.getStateDisk(),
 					    ((Integer) getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY
                                 ,curi)).intValue());
@@ -954,8 +954,8 @@ public class Frontier
 
     /**
      * If an empty queue has become ready, add to ready queues.
-     * Should only be called after state has changed. 
-     * 
+     * Should only be called after state has changed.
+     *
      * @param kq
      */
     private void updateQ(KeyedQueue kq) {
@@ -972,18 +972,18 @@ public class Frontier
                 notify(); // wake a waiting thread
             }
             return;
-        } 
+        }
         // otherwise, no need to change whatever state it's in
         // TODO: verify this in only reached in sensible situations
     }
-        
+
     /**
      * stop this queue from being actively scheduled
      * essentially: a reaction to a serious connectivity
      * problem or operator request
-     * 
+     *
      * @param kq
-     */ 
+     */
     public synchronized void freezeQueue(KeyedQueue kq) {
         if(kq.getState()== KeyedQueue.SNOOZED) {
             snoozeQueues.remove(kq);
@@ -992,11 +992,11 @@ public class Frontier
         }
         kq.freeze();
     }
-    
+
     /**
      * allow this queue to be actively scheduled
      * (by operator request)
-     * 
+     *
      * @param kq
      */
     public synchronized void unfreezeQueue(KeyedQueue kq) {
@@ -1039,7 +1039,7 @@ public class Frontier
      * appropriate politeness window.
      *
      * @param curi The CrawlURI
-     * @param kq A KeyedQueue 
+     * @param kq A KeyedQueue
      * @throws AttributeNotFoundException
      */
     protected void updateScheduling(CrawlURI curi, KeyedQueue kq) throws AttributeNotFoundException {
@@ -1065,7 +1065,7 @@ public class Frontier
                 durationToWait = maxDelay;
             }
 
-            long minInterval = 
+            long minInterval =
                 ((Integer) getAttribute(ATTR_MIN_INTERVAL, curi)).longValue();
             if (durationToWait < (minInterval - durationTaken) ) {
                 // wait at least as long as necessary to space off
@@ -1079,7 +1079,7 @@ public class Frontier
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
                 CrawlHost host = curi.getServer().getHost();
-                long minDurationToWait = 
+                long minDurationToWait =
                     host.getEarliestNextURIEmitTime() - now;
                 float maxBandwidth = maxBandwidthKB * KILO_FACTOR;
                 long processedBytes = curi.getContentSize();
@@ -1090,11 +1090,11 @@ public class Frontier
                     durationToWait = minDurationToWait;
                 }
             }
-            
+
             if(durationToWait > 0) {
                 snoozeQueueUntil(kq, completeTime + durationToWait);
                 return;
-            } 
+            }
         }
     }
 
@@ -1137,7 +1137,7 @@ public class Frontier
      * Checks if a recently completed CrawlURI that did not finish successfully
      * needs to be retried immediately (processed again as soon as politeness
      * allows.)
-     * 
+     *
      * @param curi The CrawlURI to check
      * @return True if we need to retry promptly.
      * @throws AttributeNotFoundException If problems occur trying to read the
@@ -1149,11 +1149,11 @@ public class Frontier
                 ((Integer)getAttribute(ATTR_MAX_RETRIES, curi)).intValue() ) {
             return false;
         }
-        
+
         switch (curi.getFetchStatus()) {
             case S_DEFERRED:
                 return true;
-                
+
             case HttpStatus.SC_UNAUTHORIZED:
                 // We can get here though usually a positive status code is
                 // a success.  We get here if there is rfc2617 credential data
@@ -1166,16 +1166,16 @@ public class Frontier
                     logger.severe("Have 401 but no creds loaded " + curi);
                 }
                 return loaded;
-            
+
             default:
                 return false;
         }
     }
-    
+
     /**
      * Checks if a recently completed CrawlURI that did not finish successfully
      * needs to be retried (processed again after some time elapses)
-     * 
+     *
      * @param curi The CrawlURI to check
      * @return True if we need to retry.
      * @throws AttributeNotFoundException If problems occur trying to read the
@@ -1220,7 +1220,7 @@ public class Frontier
         }
 
         reschedule(curi);
-        
+
         controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
         controller.recover.info("\n"+F_RESCHEDULE+curi.getURIString());
     }
@@ -1228,12 +1228,12 @@ public class Frontier
     /**
      * Put near top of relevant keyedqueue (but behind anything recently
      * scheduled 'high')
-     * 
+     *
      * @param curi CrawlURI to reschedule.
      */
     private void reschedule(CrawlURI curi) {
         // Eliminate state related to only prior processing passthrough.
-        boolean isPrereq = curi.isPrerequisite(); 
+        boolean isPrereq = curi.isPrerequisite();
         curi.processingCleanup(); // This will reset prereq value.
         if (isPrereq == false) {
         	curi.setSchedulingDirective(CandidateURI.MEDIUM);
@@ -1259,8 +1259,8 @@ public class Frontier
             snoozeQueues.remove(kq);
         } else if (kq.getState() == KeyedQueue.READY ) {
             readyClassQueues.remove(kq);
-        } 
-        
+        }
+
         kq.setWakeTime(wake);
         snoozeQueues.add(kq);
         kq.snooze();
@@ -1305,14 +1305,14 @@ public class Frontier
     public long discoveredUriCount(){
         return alreadyIncluded.size();
     }
-    
+
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#queuedUriCount()
      */
     public long queuedUriCount(){
         return queuedCount;
     }
-    
+
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#finishedUriCount()
      */
@@ -1374,7 +1374,7 @@ public class Frontier
     }
 
     /** (non-Javadoc)
-     * 
+     *
      * @param marker
      * @param numberOfMatches
      * @param verbose
@@ -1386,7 +1386,7 @@ public class Frontier
         if(marker instanceof FrontierMarker == false){
             throw new InvalidURIFrontierMarkerException();
         }
-        
+
         FrontierMarker mark = (FrontierMarker)marker;
         ArrayList list = new ArrayList(numberOfMatches);
 
@@ -1397,13 +1397,13 @@ public class Frontier
             if(keyq==null){
                 throw new InvalidURIFrontierMarkerException();
             }
-            
+
             numberOfMatches -= inspectQueue(keyq,"hostQueue("+queueKey+")",list,mark,verbose, numberOfMatches);
             if(numberOfMatches>0){
                 mark.nextQueue();
             }
         }
-        
+
         // inspect the PendingQueue
         if(numberOfMatches > 0 && mark.currentQueue == -1){
             numberOfMatches -= inspectQueue(pendingQueue,"pendingQueue",list,mark,verbose, numberOfMatches);
@@ -1418,7 +1418,7 @@ public class Frontier
 
     /**
      * Adds any applicable URIs from a given queue to the given list.
-     * 
+     *
      * @param queue
      *            The queue to inspect
      * @param queueName
@@ -1444,11 +1444,11 @@ public class Frontier
             // Not good. Invalid marker.
             throw new InvalidURIFrontierMarkerException();
         }
-        
+
         if(queue.length()==0){
             return 0;
         }
-        
+
         Iterator it = queue.getIterator(marker.inCacheOnly);
         int foundMatches = 0;
         long itemsScanned = 0;
@@ -1470,7 +1470,7 @@ public class Frontier
                         verb.newline();
                         verb.padTo(2);
                         verb.append(caURI.getPathFromSeed());
-                        if(caURI.getVia() != null 
+                        if(caURI.getVia() != null
                                 && caURI.getVia() instanceof CandidateURI){
                             verb.append(" ");
                             verb.append(((CandidateURI)caURI.getVia()).getURIString());
@@ -1506,7 +1506,7 @@ public class Frontier
             {
                 KeyedQueue kq = (KeyedQueue)allClassQueuesMap.get(q.next());
                 numberOfDeletes += kq.deleteMatchedItems(mat);
-                 
+
                 // If our deleting has emptied the KeyedQueue then update it's
                 // state.
                 kq.checkEmpty();
@@ -1666,7 +1666,7 @@ public class Frontier
                         CandidateURI caUri = new CandidateURI(u);
                         caUri.setVia(pathToLog);
                         // TODO: reevaluate if this is correct
-                        caUri.setPathFromSeed("L"); 
+                        caUri.setPathFromSeed("L");
                         schedule(caUri);
                     }
                 } catch (URIException e) {

@@ -21,7 +21,7 @@
 * You should have received a copy of the GNU Lesser Public License
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/ 
+*/
 package org.archive.crawler.checkpoint;
 
 import java.io.File;
@@ -34,7 +34,7 @@ import org.archive.util.FileUtils;
 
 /**
  * Record of a specific checkpoint on disk.
- * 
+ *
  * @author gojomo
  */
 public class Checkpoint {
@@ -46,11 +46,11 @@ public class Checkpoint {
     String name;
     String timestamp;
     File directory;
-    
+
     /**
      * Create a Checkpoint instance based on the given prexisting
      * checkpoint directory
-     * 
+     *
      * @param directory
      */
     public Checkpoint(File directory) {
@@ -68,7 +68,7 @@ public class Checkpoint {
                 timestamp = INVALID;
             }
         }
-        
+
     }
 
 //    private void calculateSeriesFromHistoryName() {
@@ -91,20 +91,20 @@ public class Checkpoint {
     public boolean isValid() {
         return timestamp != INVALID;
     }
-    
+
     /**
      * Get the name of this Checkpoint (eg "+2+1")
-     * 
+     *
      * @return Returns the name.
      */
     public String getName() {
         return name;
     }
-    
+
     /**
      * Return the combination of given name and timestamp most commonly
-     * used in administrative interface. 
-     * 
+     * used in administrative interface.
+     *
      * @return checkpoint's name with timestamp notation
      */
     public String getDisplayName() {
@@ -121,8 +121,8 @@ public class Checkpoint {
     /**
      * Utility function to serialize an object to a file, using
      * the enhanced ObjectPlusFilesOutputStream, which offers facilities
-     * to store related files alongside the serialized object. 
-     * 
+     * to store related files alongside the serialized object.
+     *
      * @param o
      * @param filename
      * @throws FileNotFoundException
@@ -131,26 +131,26 @@ public class Checkpoint {
     public void writeObjectPlusToFile(Object o, String filename) throws FileNotFoundException, IOException {
         this.directory.mkdirs();
         File storeDir = new File(this.directory, filename+".aux");
-        ObjectPlusFilesOutputStream out = 
+        ObjectPlusFilesOutputStream out =
             new ObjectPlusFilesOutputStream(
                     new FileOutputStream(
                             new File(this.directory,filename)), storeDir);
         out.writeObject(o);
         out.close();
     }
-    
+
     /**
-     * Utility function to deserialize an object, plus any 
+     * Utility function to deserialize an object, plus any
      * related files stored alongside it, from a file and
-     * accompanying directory structure. 
-     * 
+     * accompanying directory structure.
+     *
      * @param filename
      * @throws IOException
      * @throws ClassNotFoundException
-     * @return 
+     * @return
      */
     public Object readObjectFromFile(String filename) throws IOException, ClassNotFoundException {
-        ObjectPlusFilesInputStream in = 
+        ObjectPlusFilesInputStream in =
             new ObjectPlusFilesInputStream(
                     new FileInputStream(
                             new File(this.directory,filename)),

@@ -1,21 +1,21 @@
 /* SeedList
- * 
+ *
  * Created on Apr 29, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -45,14 +45,14 @@ import org.archive.util.DevUtils;
 
 /**
  * Class to manage the seed list.
- * 
+ *
  * Manages cache of seeds.
- * 
+ *
  * @author stack
  * @version $Revision$, $Date$
  */
 public class SeedList extends AbstractList implements Serializable {
-    
+
     /**
      * Regexp for identifying URIs in seed input data
      */
@@ -61,28 +61,28 @@ public class SeedList extends AbstractList implements Serializable {
             "\\.[a-zA-Z0-9-]+))(\\.[a-zA-Z0-9-]+)*(:\\d+)?(/\\S*)?)");
 
     /**
-     * Cached name of seed file.  
-     * 
+     * Cached name of seed file.
+     *
      * Can be refreshed by passing an argument to {@link #refresh(File)}
      */
     private File seedfile = null;
-    
+
     /**
      * Where to log, via controller.
-     * 
+     *
      * Passed in to the constructor.
      */
     final CrawlController controller;
-    
+
     /**
      * Cache of seeds.
      */
     private List cache = null;
 
-    
+
     /**
      * Constructor
-     * 
+     *
      * @param seedfile Default seed file to use.
      * @param controller controller to provide logging
      * @param caching True if we're to cache the seed list.
@@ -96,7 +96,7 @@ public class SeedList extends AbstractList implements Serializable {
             refresh(seedfile);
         }
     }
-    
+
     /**
      * Blocked default constructor.
      */
@@ -105,7 +105,7 @@ public class SeedList extends AbstractList implements Serializable {
         // Must initialize with something because logger is final.
         this.controller = null;
     }
-    
+
     /**
      * @return Returns the current seedfile.
      */
@@ -119,7 +119,7 @@ public class SeedList extends AbstractList implements Serializable {
     protected void setSeedfile(File seedfile) {
         this.seedfile = seedfile;
     }
-    
+
     /** (non-Javadoc)
      * @see java.util.List#get(int)
      */
@@ -131,21 +131,21 @@ public class SeedList extends AbstractList implements Serializable {
      * @see java.util.Collection#size()
      */
     public int size() {
-        return (this.cache != null)? this.cache.size(): -1; 
+        return (this.cache != null)? this.cache.size(): -1;
     }
-    
-    /** 
+
+    /**
      * Refreshes the cache, if caching in operation.
-     * 
+     *
      * If no cache, this is a noop.
      */
     public void refresh() {
         refresh(null);
     }
-    
-    /** 
+
+    /**
      * Refresh the seed file and the cache, if caching in operation.
-     * 
+     *
      * @param file Seed file.  If null, we use the default.  Otherwise, we
      * freshen our seedfile with whats passed here.
      */
@@ -154,7 +154,7 @@ public class SeedList extends AbstractList implements Serializable {
             setSeedfile(file);
         }
 
-        // Get iterator before we check on whether cache exists.  Null cache 
+        // Get iterator before we check on whether cache exists.  Null cache
         // is signal inside in the iterator method that we should get iterator
         // over seed file rather than over cache.
         if (this.cache != null) {
@@ -165,7 +165,7 @@ public class SeedList extends AbstractList implements Serializable {
             catch (IOException e) {
                 this.controller.uriErrors.severe("Failed to get seed iterator: " + e);
             }
-            
+
             if (i != null) {
                 synchronized (this.cache) {
                     this.cache.clear();
@@ -176,24 +176,24 @@ public class SeedList extends AbstractList implements Serializable {
             }
         }
     }
-    
+
     /**
      * Add a URI to the list of seeds. Includes adding the URI to the seed file.
-     * 
+     *
      * Assumption is that the caller is worrying about synchronization.
-     * 
+     *
      * @param newSeed The new seed to add.
      * @return True if we updated the seedlist.
      */
     public boolean add(Object newSeed) {
-        
+
         boolean result = false;
         if (!(newSeed instanceof UURI)) {
             throw new IllegalArgumentException("Must pass UURI: " + newSeed);
         }
-        
+
         UURI uuri = (UURI)newSeed;
-        
+
         if (this.cache != null) {
             this.cache.add(uuri);
              result = true;
@@ -213,10 +213,10 @@ public class SeedList extends AbstractList implements Serializable {
                 DevUtils.warnHandle(e, "problem writing new seed");
             }
         }
-        
+
         return result;
     }
-    
+
     /**
      * @return Iterator over the seeds.  If you do not read the iterator
      * to the end, and this you are not caching the seedlist, there is a
@@ -234,7 +234,7 @@ public class SeedList extends AbstractList implements Serializable {
         }
         return iterator;
     }
-    
+
     /**
      * Read seeds from the given BufferedReader. Any lines where the
      * first non-whitespace character is '#' are considered
@@ -250,17 +250,17 @@ public class SeedList extends AbstractList implements Serializable {
      *
      */
     private class SeedIterator implements Iterator {
-       
-        /** 
+
+        /**
          * Pattern to extract seeds
          */
         private Pattern seedExtractor = DEFAULT_SEED_EXTRACTOR;
-        
+
         UURI next = null;
 
         private BufferedReader reader;
-        
-        
+
+
         private SeedIterator() throws IOException {
             super();
             if (!getSeedfile().exists() ||
@@ -271,21 +271,21 @@ public class SeedList extends AbstractList implements Serializable {
             this.reader =
                 new BufferedReader(new FileReader(getSeedfile()));
         }
-        
+
         /** (non-Javadoc)
          * @see java.util.Iterator#remove()
          */
         public void remove() {
             throw new UnsupportedOperationException();
         }
-        
+
         /** (non-Javadoc)
          * @see java.util.Iterator#hasNext()
          */
         public boolean hasNext() {
             return (this.next != null)? true: loadNext();
         }
-        
+
         /** (non-Javadoc)
          * @see java.util.Iterator#next()
          */
@@ -298,7 +298,7 @@ public class SeedList extends AbstractList implements Serializable {
             this.next = null;
             return retVal;
         }
-        
+
         /**
          * Scanning the reader, load the 'next' field with the
          * next valid seed UURI. Return true if next is loaded,
@@ -346,7 +346,7 @@ public class SeedList extends AbstractList implements Serializable {
                 return false;
             }
         }
-        
+
         /**
          * As this iterator is backed by a reader, it should
          * receive a close() so that it can close the reader.
@@ -361,9 +361,9 @@ public class SeedList extends AbstractList implements Serializable {
                     SeedList.this.controller.uriErrors.severe(
                         "Failed close of the seed reader.");
                 }
-            } 
+            }
         }
-        
+
         /* (non-Javadoc)
          * @see java.lang.Object#finalize()
          */

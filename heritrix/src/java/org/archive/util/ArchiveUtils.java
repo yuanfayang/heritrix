@@ -282,7 +282,7 @@ public class ArchiveUtils {
 
         return dir;
     }
-    
+
     /**
      * Converts a double to a string.
      * @param val The double to convert
@@ -304,10 +304,10 @@ public class ArchiveUtils {
         }
         return tmp;
     }
-    
+
     /**
-     * Takes an amount of bytes and formats it for display. This involves 
-     * converting it to Kb, Mb or Gb if the amount is enough to qualify for 
+     * Takes an amount of bytes and formats it for display. This involves
+     * converting it to Kb, Mb or Gb if the amount is enough to qualify for
      * the next level.
      * <p>
      * Displays as bytes (B): 0-1023
@@ -318,7 +318,7 @@ public class ArchiveUtils {
      * Negative numbers will be returned as '0 B'.
      * <p>
      * All values will be approximated down (i.e. 2047 bytes are 1 KB)
-     * 
+     *
      * @param amount the amount of bytes
      * @return A string containing the amount, properly formated.
      */
@@ -326,7 +326,7 @@ public class ArchiveUtils {
         long kbStartAt = 1024;
         long mbStartAt = 1024*1024*2;
         long gbStartAt = ((long)1024*1024)*1024*4;
-        
+
         if(amount < 0){
             return "0 B";
         }
@@ -344,7 +344,7 @@ public class ArchiveUtils {
             return Long.toString((long)(((double)amount/(1024*1024*1024))))+" GB";
         }
     }
-    
+
     /**
      * Convert milliseconds value to a human-readable duration
      * @param time
@@ -373,9 +373,9 @@ public class ArchiveUtils {
     /**
      * Generate a long UID based on the given class and version number.
      * Using this instead of the default will assume serialization
-     * compatibility across class changes unless version number is 
+     * compatibility across class changes unless version number is
      * intentionally bumped.
-     * 
+     *
      * @param class1
      * @param version
      * @return
@@ -385,4 +385,4 @@ public class ArchiveUtils {
         return (long)callingClassname.hashCode() << 32 + version;
     }
 }
-    
+

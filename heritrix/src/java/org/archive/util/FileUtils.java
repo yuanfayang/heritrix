@@ -57,7 +57,7 @@ public class FileUtils
      */
     public static void copyFiles(File src, File dest) throws IOException {
         // TODO: handle failures at any step
-        
+
         if (!src.exists()) {
             return;
         }
@@ -81,7 +81,7 @@ public class FileUtils
 
     /**
      * Copy the src file to the destination.
-     * 
+     *
      * @param src
      * @param dest
      * @throws FileNotFoundException
@@ -94,7 +94,7 @@ public class FileUtils
 
 	/**
      * Copy up to extent bytes of the source file to the destination
-     * 
+     *
      * @param src
      * @param dest
      * @param extent
@@ -129,7 +129,7 @@ public class FileUtils
                 return false;
             }
             return true;
-            
+
         } finally {
             // finish up
             if (fcin != null) {
@@ -166,11 +166,11 @@ public class FileUtils
         return dir.delete();
     }
 
-    
+
 
     /**
      * Utility method to read an entire file as a String.
-     * 
+     *
      * @param file
      * @return @throws
      *         IOException
@@ -188,7 +188,7 @@ public class FileUtils
         br.close();
         return sb.toString();
     }
-    
+
     /**
      * Get a list of all files in directory that have passed prefix.
      *

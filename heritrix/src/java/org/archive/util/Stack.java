@@ -21,37 +21,37 @@
  *
  * $Header$
  */
- 
+
 package org.archive.util;
 
 
 /**
  * Simple Stack: supports add and remove at top.
- * 
+ *
  * @author gojomo
  */
 public interface Stack {
     /**
      * Add object to top of Stack
-     * 
+     *
      * @param object
      */
     public void push(Object object);
-    
+
     /**
      * Remove and return item from top of Stack
-     * 
+     *
      * @return
      */
     public Object pop();
-    
+
     /**
      * Return item from top of Stack without removing it.
-     * 
+     *
      * @return
      */
     public Object peek();
-    
+
     /**
      * Number of items in the Stack.
      */

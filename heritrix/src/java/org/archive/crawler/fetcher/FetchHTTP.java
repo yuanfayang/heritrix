@@ -1,9 +1,9 @@
 /* FetchHTTP.java
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Jun 5, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -75,7 +75,7 @@ import org.archive.util.ConfigurableX509TrustManager;
 import org.archive.util.HttpRecorder;
 
 /**
- * HTTP fetcher that uses <a 
+ * HTTP fetcher that uses <a
  * href="http://jakarta.apache.org/commons/httpclient/">Apache Jakarta Commons
  * HttpClient</a> library.
  *
@@ -86,9 +86,9 @@ import org.archive.util.HttpRecorder;
  */
 public class FetchHTTP extends Processor
     	implements CoreAttributeConstants, FetchStatusCodes {
-    
+
     private static Logger logger = Logger.getLogger(FetchHTTP.class.getName());
-    
+
     public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
     public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
     public static final String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
@@ -117,7 +117,7 @@ public class FetchHTTP extends Processor
      * Setting for protocol strictness.
      */
     private boolean strict = DEFAULT_STRICT;
-    
+
     /**
      * SSL trust level setting attribute name.
      */
@@ -126,19 +126,19 @@ public class FetchHTTP extends Processor
     PatchedHttpClient http = null;
 
     private int soTimeout;
-    
+
     /**
      * How many 'instant retries' of HttpRecoverableExceptions have occurred
      */
     // Would like to be 'long', but longs aren't atomic
     private int recoveryRetries = 0;
-    
+
     // Would like to be 'long', but longs aren't atomic
-    private int curisHandled = 0; 
-    
+    private int curisHandled = 0;
+
     /**
      * Constructor.
-     * 
+     *
      * @param name Name of this processor.
      */
     public FetchHTTP(String name) {
@@ -152,7 +152,7 @@ public class FetchHTTP extends Processor
             + "give up (and retry later)", DEFAULT_SOTIMEOUT_MS));
         e.setExpertSetting(true);
         addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
-            "Max length in bytes to fetch (truncate at this length)", 
+            "Max length in bytes to fetch (truncate at this length)",
             DEFAULT_MAX_LENGTH_BYTES));
         addElementToDefinition(new SimpleType(ATTR_MAX_FETCH_ATTEMPTS,
             "Max number of fetches to attempt", DEFAULT_MAX_FETCH_ATTEMPTS));
@@ -187,10 +187,10 @@ public class FetchHTTP extends Processor
         }
 
         this.curisHandled++;
-        
+
         // Note begin time
         curi.getAList().putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
-        
+
         // Get a reference to the HttpRecorder that is set into this ToeThread.
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
         HttpMethod method = curi.isPost()?
@@ -258,17 +258,17 @@ public class FetchHTTP extends Processor
         } finally {
             method.releaseConnection();
         }
-        
+
         // Note completion time
         curi.getAList().putLong(A_FETCH_COMPLETED_TIME,
             System.currentTimeMillis());
 
         // Set the response charset into the HttpRecord if available.
         rec.setCharacterEncoding(((HttpMethodBase)method).getResponseCharSet());
-        
+
         // Set httpRecorder into curi for convenience of subsequent processors.
         curi.setHttpRecorder(rec);
-        
+
         int statusCode = method.getStatusCode();
         long contentSize = curi.getHttpRecorder().getRecordedInput().getSize();
         curi.setContentSize(contentSize);
@@ -280,7 +280,7 @@ public class FetchHTTP extends Processor
             		curi.getUURI().toString() + " " + statusCode + " " +
                 contentSize + " " + curi.getContentType());
         }
-        
+
         if (curi.isSuccess() && addedCredentials) {
             // Promote the credentials from the CrawlURI to the CrawlServer
             // so they are available for all subsequent CrawlURIs on this
@@ -330,7 +330,7 @@ public class FetchHTTP extends Processor
         // above.
         method.releaseConnection();
     }
-    
+
     /**
      * @return maximum immediate retures.
      */
@@ -379,11 +379,11 @@ public class FetchHTTP extends Processor
     {
         // Don't auto-follow redirects
         method.setFollowRedirects(false);
-        
+
         // Set strict on the client; whatever the client's mode overrides
         // the methods mode inside in the depths of executeMethod.
         this.http.setStrictMode(getStrict(curi));
-        
+
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
         ((HttpMethodBase)method).setHttp11(false);
 
@@ -398,13 +398,13 @@ public class FetchHTTP extends Processor
 
     /**
      * Add credentials if any to passed <code>method</code>.
-     * 
+     *
      * Do credential handling.  Credentials are in two places.  1. Credentials
      * that succeeded are added to the CrawlServer (Or rather, avatars for
      * credentials are whats added because its not safe to keep around
-     * references to credentials).  2. Credentials to be tried are in the curi. 
+     * references to credentials).  2. Credentials to be tried are in the curi.
      * Returns true if found credentials to be tried.
-     * 
+     *
      * @param curi Current CrawlURI.
      * @param method The method to add to.
      * @return True if prepopulated <code>method</code> with credentials AND the
@@ -415,7 +415,7 @@ public class FetchHTTP extends Processor
      * server.
      */
     private boolean populateCredentials(CrawlURI curi, HttpMethod method) {
-        
+
         // First look at the server avatars. Add any that are to be volunteered
         // on every request (e.g. RFC2617 credentials).  Every time creds will
         // return true when we call 'isEveryTime().
@@ -429,9 +429,9 @@ public class FetchHTTP extends Processor
                 }
             }
         }
-        
+
         boolean result = false;
-        
+
         // Now look in the curi.  The Curi will have credentials loaded either
         // by the handle401 method if its a rfc2617 or it'll have been set into
         // the curi by the preconditionenforcer as this login uri came through.
@@ -445,13 +445,13 @@ public class FetchHTTP extends Processor
                 }
             }
         }
-        
+
         return result;
     }
 
     /**
      * Promote successful credential to the server.
-     * 
+     *
      * @param curi CrawlURI whose credentials we are to promote.
      * @param method Method used.
      */
@@ -465,7 +465,7 @@ public class FetchHTTP extends Processor
                 CredentialAvatar ca = (CredentialAvatar)i.next();
                 curi.removeCredentialAvatar(ca);
                 // The server to attach too may not be the server that hosts
-                // this passed curi.  It might be of another subdomain. 
+                // this passed curi.  It might be of another subdomain.
                 // The avatar needs to be added to the server that is dependent
                 // on this precondition.  Find it by name.  Get the name from
                 // the credential this avatar represents.
@@ -488,30 +488,30 @@ public class FetchHTTP extends Processor
             }
         }
     }
-    
+
     /**
      * Server is looking for basic/digest auth credentials (RFC2617). If we have
      * any, put them into the CrawlURI and have it come around again. Presence
      * of the credential serves as flag to frontier to requeue promptly. If we
      * already tried this domain and still got a 401, then our credentials are
      * bad. Remove them and let this curi die.
-     * 
+     *
      * @param get Method that got a 401.
      * @param curi CrawlURI that got a 401.
      */
     private void handle401(final HttpMethod method, final CrawlURI curi) {
-        
+
         AuthScheme authscheme = getAuthScheme(method, curi);
         if (authscheme == null) {
             return;
         }
-        
+
         String realm = authscheme.getRealm();
         if (realm == null) {
             return;
         }
-        
-        // Look to see if this curi had rfc2617 avatars loaded.  If so, are 
+
+        // Look to see if this curi had rfc2617 avatars loaded.  If so, are
         // any of them for this realm?  If so, then the credential failed if
         // we got a 401 and it should be let die a natural 401 death.
         Set curiRfc2617Credentials =
@@ -519,7 +519,7 @@ public class FetchHTTP extends Processor
         Rfc2617Credential extant = Rfc2617Credential.
             getByRealm(curiRfc2617Credentials, realm, curi);
         if (extant != null) {
-            // Then, already tried this credential.  Remove ANY rfc2617 
+            // Then, already tried this credential.  Remove ANY rfc2617
             // credential since presence of a rfc2617 credential serves
             // as flag to frontier to requeue this curi and let the curi
             // die a natural death.
@@ -547,7 +547,7 @@ public class FetchHTTP extends Processor
                     		getByRealm(storeRfc2617Credentials, realm, curi);
                     if (found == null) {
                         logger.fine("No rfc2617 credentials for realm " +
-                            realm + " in " + curi); 
+                            realm + " in " + curi);
                     } else {
                         found.attach(curi, authscheme);
                         logger.fine("Found credential for realm " + realm +
@@ -567,7 +567,7 @@ public class FetchHTTP extends Processor
     private Set getCredentials(SettingsHandler handler, CrawlURI curi,
             Class type) {
         Set result = null;
-        
+
         if (curi.hasCredentialAvatars()) {
             for (Iterator i = curi.getCredentialAvatars().iterator();
                     i.hasNext();) {
@@ -734,11 +734,11 @@ public class FetchHTTP extends Processor
                     if (cookieParts.length == 7) {
                         // Create cookie with not expiration date (-1 value).
                         // TODO: add this as an option.
-                        cookie = 
+                        cookie =
                             new Cookie(cookieParts[0], cookieParts[5],
                                 cookieParts[6], cookieParts[2], -1,
                                 Boolean.valueOf(cookieParts[3]).booleanValue());
-                                
+
                         if (cookieParts[1].toLowerCase().equals("true")) {
                             cookie.setDomainAttributeSpecified(true);
                         } else {
@@ -754,7 +754,7 @@ public class FetchHTTP extends Processor
             // We should probably throw FatalConfigurationException.
             System.out.println("Could not find file: " + cookiesFile
                     + " (Element: " + ATTR_LOAD_COOKIES + ")");
-                    
+
         } catch (IOException e) {
             // We should probably throw FatalConfigurationException.
             e.printStackTrace();
@@ -768,7 +768,7 @@ public class FetchHTTP extends Processor
             }
         }
     }
-        
+
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#report()
      */
@@ -785,21 +785,21 @@ public class FetchHTTP extends Processor
 
     /**
      * Load cookies from the file specified in the order file.
-     * 
-     * <p> 
+     *
+     * <p>
      * The file is a text file in the Netscape's 'cookies.txt' file format.<br>
      * Example entry of cookies.txt file:<br>
      * <br>
      * www.archive.org FALSE / FALSE 1074567117 details-visit texts-cralond<br>
      * <br>
      * Each line has 7 tab-separated fields:<br>
-     * <li>1. DOMAIN: The domain that created and have access to the cookie 
+     * <li>1. DOMAIN: The domain that created and have access to the cookie
      * value.
-     * <li>2. FLAG: A TRUE or FALSE value indicating if hosts within the given 
+     * <li>2. FLAG: A TRUE or FALSE value indicating if hosts within the given
      * domain can access the cookie value.
-     * <li>3. PATH: The path within the domain that the cookie value is valid 
+     * <li>3. PATH: The path within the domain that the cookie value is valid
      * for.
-     * <li>4. SECURE: A TRUE or FALSE value indicating if to use a secure 
+     * <li>4. SECURE: A TRUE or FALSE value indicating if to use a secure
      * connection to access the cookie value.
      * <li>5. EXPIRATION: The expiration time of the cookie value (unix style.)
      * <li>6. NAME: The name of the cookie value
@@ -818,7 +818,7 @@ public class FetchHTTP extends Processor
     }
     /**
      * Saves cookies to the file specified in the order file.
-     * 
+     *
      * Output file is in the Netscape 'cookies.txt' format.
      *
      */
@@ -835,9 +835,9 @@ public class FetchHTTP extends Processor
     }
     /**
      * Saves cookies to a file.
-     * 
+     *
      * Output file is in the Netscape 'cookies.txt' format.
-     * 
+     *
      * @param saveCookiesFile output file.
      */
     public void saveCookies(String saveCookiesFile) {
@@ -845,8 +845,8 @@ public class FetchHTTP extends Processor
         if (saveCookiesFile == null || saveCookiesFile.length() <= 0) {
             return;
         }
-        
-        FileOutputStream out = null;        
+
+        FileOutputStream out = null;
         try {
             out = new FileOutputStream(new File(saveCookiesFile));
             Cookie cookies[] = this.http.getState().getCookies();
@@ -891,14 +891,14 @@ public class FetchHTTP extends Processor
         }
     }
     /**
-     * At the end save cookies to the file specified in the order file. 
-     *  
+     * At the end save cookies to the file specified in the order file.
+     *
      * @see org.archive.crawler.framework.Processor#finalTasks()
      */
     public void finalTasks() {
         saveCookies();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */

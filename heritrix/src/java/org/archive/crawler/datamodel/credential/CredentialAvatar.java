@@ -1,21 +1,21 @@
 /* CredentialAvatar
- * 
+ *
  * Created on Apr 23, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -35,49 +35,49 @@ import org.archive.crawler.settings.SettingsHandler;
 
 /**
  * A credential representation.
- * 
+ *
  * Added to the CrawlServer upon successful authentication.  Used as a marker
- * of successful authentication event and for carrying credential 
+ * of successful authentication event and for carrying credential
  * payload to used subsequently doing preemptive authentications (e.g.
  * For case of RFC2617, needs to be offered everytime we're accessing inside
  * a protected area).  Also carried by the CrawlURI when cycling through
  * processing chain trying a credential to see if it will authenticate.
- * 
+ *
  * <p>This class exists because its not safe to keep references
  * to the settings derived Credential classes so instead of keeping references
  * to credential classes, we carry around this avatar.
- * 
+ *
  * <p>Scope for avatars is crawlserver.  Only used within a CrawlServer
  * scope.
- * 
+ *
  * <p>Immutable.
- * 
+ *
  * @author stack
  * @version $Revision$, $Date$
  */
 public class CredentialAvatar {
-    
+
     private static final Logger logger =
         Logger.getLogger(CredentialAvatar.class.getName());
-    
+
     /**
      * Key for this credential avatar.
      */
     private final String key;
-    
+
     /**
      * Type represented by this avatar.
      */
     private final Class type;
-    
+
     /**
      * Data.
-     * 
+     *
      * May be null.
      */
     private final Object payload;
-    
-    
+
+
     /**
      * Constructor.
      * @param type Type for this credential avatar.
@@ -86,7 +86,7 @@ public class CredentialAvatar {
     public CredentialAvatar(Class type, String key) {
         this(type, key, null);
     }
-    
+
     /**
      * Constructor.
      * @param type Type for this credential avatar.
@@ -104,7 +104,7 @@ public class CredentialAvatar {
         this.type = type;
         this.payload = payload;
     }
-   
+
     /**
      * Shutdown default constructor.
      */
@@ -114,7 +114,7 @@ public class CredentialAvatar {
         this.type = null;
         this.payload = null;
     }
-        
+
     /**
      * @param candidateType Type to check.
      * @return True if this is a known credential type.
@@ -130,21 +130,21 @@ public class CredentialAvatar {
         }
         return result;
     }
-    
+
     /**
      * @return Returns the payload. May be null.
      */
     public Object getPayload() {
         return this.payload;
     }
-    
+
     /**
      * @return Returns the key.
      */
     public String getKey() {
         return this.key;
     }
-    
+
     /**
      * @return Type represented by this avatar.
      */
@@ -159,7 +159,7 @@ public class CredentialAvatar {
 	public boolean match(Class otherType) {
 		return this.type.equals(otherType);
 	}
-    
+
     /**
      * @param otherType Credential to match.
      * @param otherKey Key to test.
@@ -170,7 +170,7 @@ public class CredentialAvatar {
             (otherKey != null && this.key != null &&
             		this.key.equals(otherKey));
     }
-    
+
     public String toString() {
         return getType() + "." + this.getKey();
     }
@@ -181,22 +181,22 @@ public class CredentialAvatar {
      * @return The credential this avatar represents.
      */
     public Credential getCredential(SettingsHandler handler, CrawlURI curi) {
-        
+
         Credential result = null;
-        
+
         CredentialStore cs = CredentialStore.getCredentialStore(handler);
         if (cs == null) {
             logger.severe("No credential store for " + curi);
             return result;
         }
-        
+
         Iterator i = cs.iterator(curi);
         if (i == null) {
             logger.severe("Have CredentialAvatar " + toString() +
                 " but no iterator: " + curi);
             return result;
         }
-        
+
         while (i.hasNext()) {
             Credential c = (Credential)i.next();
             if (!this.type.isInstance(c)) {
@@ -214,12 +214,12 @@ public class CredentialAvatar {
                 break;
             }
         }
-        
+
         if (result == null) {
             logger.severe("Have CredentialAvatar " + toString() +
                 " but no corresponding credential: " + curi);
         }
-        
-        return result;    
+
+        return result;
     }
 }

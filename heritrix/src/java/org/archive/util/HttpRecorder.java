@@ -44,14 +44,14 @@ import org.archive.io.ReplayCharSequence;
  *
  * Call {@link #markContentBegin()} to demarc the transition between HTTP
  * header and body.
- * 
+ *
  * @author gojomo
  */
 public class HttpRecorder {
 
     protected static Logger logger =
         Logger.getLogger("org.archive.util.HttpRecorder");
-    
+
     private static final int DEFAULT_OUTPUT_BUFFER_SIZE = 4096;
     private static final int DEFAULT_INPUT_BUFFER_SIZE = 65536;
 
@@ -74,13 +74,13 @@ public class HttpRecorder {
     * Backing file input stream suffix.
     */
     private static final String RECORDING_INPUT_STREAM_SUFFIX = ".ris";
-    
+
     /**
      * Response character encoding.
      */
     private String characterEncoding = null;
-    
-    
+
+
     /**
      * Create an HttpRecorder.
      *
@@ -103,7 +103,7 @@ public class HttpRecorder {
 
     /**
      * Wrap the provided stream with the internal RecordingInputStream
-     * 
+     *
      * Its safe to call multiple times.  We only wrap on first call.
      *
      * @param is InputStream to wrap.
@@ -126,7 +126,7 @@ public class HttpRecorder {
 
     /**
      * Wrap the provided stream with the internal RecordingOutputStream
-     * 
+     *
      * Its safe to call multiple times.  We only wrap on first call.
      *
      * @param os The output stream to wrap.
@@ -257,11 +257,11 @@ public class HttpRecorder {
             f.delete();
         }
     }
-    
+
     /**
      * Get the current threads' HttpRecorder.
-     * 
-     * @return This threads' HttpRecorder.  Returns null if can't find a 
+     *
+     * @return This threads' HttpRecorder.  Returns null if can't find a
      * HttpRecorder in current instance.
      */
     public static HttpRecorder getHttpRecorder()
@@ -272,7 +272,7 @@ public class HttpRecorder {
         {
             recorder = ((HttpRecorderMarker)thread).getHttpRecorder();
         }
-        
+
         return recorder;
     }
 
@@ -283,7 +283,7 @@ public class HttpRecorder {
     {
         this.characterEncoding = characterEncoding;
     }
-    
+
     /**
      * @return Returns the characterEncoding.
      */
@@ -291,10 +291,10 @@ public class HttpRecorder {
     {
         return this.characterEncoding;
     }
-    
+
     /**
      * @return A ReplayCharSequence.  Call close on the RCS when done w/ it.
-     * Will return indeterminate results if the underlying recording streams 
+     * Will return indeterminate results if the underlying recording streams
      * have not been closed first.
      */
     public ReplayCharSequence getReplayCharSequence() {

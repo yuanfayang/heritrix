@@ -1,21 +1,21 @@
 /* ExtractorHTMLTest
- * 
+ *
  * Created on May 19, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -44,19 +44,19 @@ import org.archive.util.TmpDirTestCase;
 
 /**
  * Test html extractor.
- * 
+ *
  * @author stack
  * @version $Revision$, $Date$
  */
 public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeConstants {
-    
+
     private File orderFile = null;
     private CrawlerSettings globalSettings = null;
     private XMLSettingsHandler settingsHandler = null;
     private final String ARCHIVE_DOT_ORG = "archive.org";
     private final String LINK_TO_FIND = "http://www.hewlett.org";
     private HttpRecorder recorder = null;
-    
+
 
     /*
      * @see TestCase#setUp()
@@ -126,11 +126,11 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
         }
         assertTrue("Did not find gif url", foundLinkToHewlettFoundation);
     }
-    
+
     /**
      * Test a paritculate <embed src=...> construct that was suspicious in
      * the No10GovUk crawl.
-     * 
+     *
      * @throws URIException
      */
     public void testEmbedSrc() throws URIException {

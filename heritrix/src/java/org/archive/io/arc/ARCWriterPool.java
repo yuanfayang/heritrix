@@ -52,7 +52,7 @@ public class ARCWriterPool {
      */
     static final Logger logger =
         Logger.getLogger(ARCWriterPool.class.getName());
-    
+
     /**
      * Default maximum active number of ARCWriters in the pool.
      */
@@ -105,7 +105,7 @@ public class ARCWriterPool {
             ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE, null,
             DEFAULT_MAX_ACTIVE, DEFAULT_MAXIMUM_WAIT);
     }
-    
+
     /**
      * Constructor
      *
@@ -249,12 +249,12 @@ public class ARCWriterPool {
          * The prefix to give new arc files.
          */
         private String prefix = null;
-        
+
         /**
          * Compress ARC files.
          */
         private boolean compress = ARCConstants.DEFAULT_COMPRESS;
-        
+
         /**
          * Arc suffix.
          */
@@ -272,12 +272,12 @@ public class ARCWriterPool {
 
         /**
          * Arc file meta data list.
-         * 
+         *
          * Can be null.  Else list of string and/or file objects.
          */
         private final List metadata;
 
-        
+
         /**
          * Constructor
          *

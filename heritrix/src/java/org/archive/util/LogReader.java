@@ -53,7 +53,7 @@ public class LogReader
      * @return The String representation of the entire file.
      *         Null is returned if errors occur (file not found or io exception)
      */
-    public static String get(String aFileName){ 
+    public static String get(String aFileName){
         try {
             return get(new FileReader(aFileName));
         } catch (FileNotFoundException e) {
@@ -64,7 +64,7 @@ public class LogReader
 
     /**
      * Reads entire contents of reader, returns as string.
-     * 
+     *
      * @param reader
      * @return String of entire contents; null for any error.
      */
@@ -83,11 +83,11 @@ public class LogReader
             return null;
         }
         return ret.toString();
-    } 
+    }
 
     /**
-     * Gets a portion of a log file. Starting at a given line number and the n-1 
-     * lines following that one or until the end of the log if that is reached 
+     * Gets a portion of a log file. Starting at a given line number and the n-1
+     * lines following that one or until the end of the log if that is reached
      * first.
      *
      * @param aFileName The filename of the log/file
@@ -96,7 +96,7 @@ public class LogReader
      * @param n How many lines to return (total, including the one indicated by lineNumber).
      *                   If smaller then 1 then an empty string will be returned.
      *
-     * @return An array of two strings is returned. At index 0 a portion of the 
+     * @return An array of two strings is returned. At index 0 a portion of the
      *         file starting at lineNumber and reaching lineNumber+n is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
@@ -115,10 +115,10 @@ public class LogReader
     }
 
     /**
-     * Gets a portion of a log spread across a numbered series of files. 
-     * 
-     * Starting at a given line number and the n-1 lines following that 
-     * one or until the end of the log if that is reached 
+     * Gets a portion of a log spread across a numbered series of files.
+     *
+     * Starting at a given line number and the n-1 lines following that
+     * one or until the end of the log if that is reached
      * first.
      *
      * @param aFileName The filename of the log/file
@@ -127,7 +127,7 @@ public class LogReader
      * @param n How many lines to return (total, including the one indicated by lineNumber).
      *                   If smaller then 1 then an empty string will be returned.
      *
-     * @return An array of two strings is returned. At index 0 a portion of the 
+     * @return An array of two strings is returned. At index 0 a portion of the
      *         file starting at lineNumber and reaching lineNumber+n is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
@@ -146,8 +146,8 @@ public class LogReader
     }
 
     /**
-     * Gets a portion of a log file. Starting at a given line number and the n-1 
-     * lines following that one or until the end of the log if that is reached 
+     * Gets a portion of a log file. Starting at a given line number and the n-1
+     * lines following that one or until the end of the log if that is reached
      * first.
      *
      * @param reader source to scan for lines
@@ -157,7 +157,7 @@ public class LogReader
      *                   If smaller then 1 then an empty string will be returned.
      *
      * @param logsize total size of source
-     * @return An array of two strings is returned. At index 0 a portion of the 
+     * @return An array of two strings is returned. At index 0 a portion of the
      *         file starting at lineNumber and reaching lineNumber+n is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
@@ -280,17 +280,17 @@ public class LogReader
      *                 effectively reset for it.
      * @param prependLineNumbers If true, then each line will be prepended by it's line number in
      *                           the file.
-     * @return An array of two strings is returned. At index 0 tall lines in a 
+     * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
      *         Null is returned if errors occur (file not found or io exception)
-     *         If a PatternSyntaxException occurs, it's error message will be 
+     *         If a PatternSyntaxException occurs, it's error message will be
      *         returned and the informational string will be empty (not null).
      */
-    public static String[] getByRegExpr(String aFileName, 
-                                      String regExpr, 
-                                      int addLines, 
+    public static String[] getByRegExpr(String aFileName,
+                                      String regExpr,
+                                      int addLines,
                                       boolean prependLineNumbers) {
         try {
             return getByRegExpr(new FileReader(aFileName), regExpr, addLines, prependLineNumbers);
@@ -313,17 +313,17 @@ public class LogReader
      *                 effectively reset for it.
      * @param prependLineNumbers If true, then each line will be prepended by it's line number in
      *                           the file.
-     * @return An array of two strings is returned. At index 0 tall lines in a 
+     * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
      *         Null is returned if errors occur (file not found or io exception)
-     *         If a PatternSyntaxException occurs, it's error message will be 
+     *         If a PatternSyntaxException occurs, it's error message will be
      *         returned and the informational string will be empty (not null).
      */
-    public static String[] getByRegExprFromSeries(String aFileName, 
-                                      String regExpr, 
-                                      int addLines, 
+    public static String[] getByRegExprFromSeries(String aFileName,
+                                      String regExpr,
+                                      int addLines,
                                       boolean prependLineNumbers) {
         try {
             return getByRegExpr(seriesReader(aFileName), regExpr, addLines, prependLineNumbers);
@@ -346,21 +346,21 @@ public class LogReader
      *                 effectively reset for it.
      * @param prependLineNumbers If true, then each line will be prepended by it's line number in
      *                           the file.
-     * @return An array of two strings is returned. At index 0 tall lines in a 
+     * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
      *         Null is returned if errors occur (file not found or io exception)
-     *         If a PatternSyntaxException occurs, it's error message will be 
+     *         If a PatternSyntaxException occurs, it's error message will be
      *         returned and the informational string will be empty (not null).
      */
-    public static String[] getByRegExpr(InputStreamReader reader, 
-                                      String regExpr, 
-                                      int addLines, 
+    public static String[] getByRegExpr(InputStreamReader reader,
+                                      String regExpr,
+                                      int addLines,
                                       boolean prependLineNumbers) {
         StringBuffer ret = new StringBuffer();
         String info = "";
-        
+
         try{
             Pattern p = Pattern.compile(regExpr);
             BufferedReader bf = new BufferedReader(reader, 8192);
@@ -425,12 +425,12 @@ public class LogReader
      *                 We will stop including new lines once we hit the first that does not match.
      * @param prependLineNumbers If true, then each line will be prepended by it's line number in
      *                           the file.
-     * @return An array of two strings is returned. At index 0 tall lines in a 
+     * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
      *         Null is returned if errors occur (file not found or io exception)
-     *         If a PatternSyntaxException occurs, it's error message will be 
+     *         If a PatternSyntaxException occurs, it's error message will be
      *         returned and the informational string will be empty (not null).
      */
     public static String[] getByRegExpr(String aFileName, String regExpr, String addLines, boolean prependLineNumbers){
@@ -453,12 +453,12 @@ public class LogReader
      *                 We will stop including new lines once we hit the first that does not match.
      * @param prependLineNumbers If true, then each line will be prepended by it's line number in
      *                           the file.
-     * @return An array of two strings is returned. At index 0 tall lines in a 
+     * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
      *         Null is returned if errors occur (file not found or io exception)
-     *         If a PatternSyntaxException occurs, it's error message will be 
+     *         If a PatternSyntaxException occurs, it's error message will be
      *         returned and the informational string will be empty (not null).
      */
     public static String[] getByRegExprFromSeries(String aFileName, String regExpr, String addLines, boolean prependLineNumbers){
@@ -481,12 +481,12 @@ public class LogReader
      *                 We will stop including new lines once we hit the first that does not match.
      * @param prependLineNumbers If true, then each line will be prepended by it's line number in
      *                           the file.
-     * @return An array of two strings is returned. At index 0 tall lines in a 
+     * @return An array of two strings is returned. At index 0 tall lines in a
      *         log/file matching a given regular expression is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
      *         Null is returned if errors occur (file not found or io exception)
-     *         If a PatternSyntaxException occurs, it's error message will be 
+     *         If a PatternSyntaxException occurs, it's error message will be
      *         returned and the informational string will be empty (not null).
      */
     public static String[] getByRegExpr(InputStreamReader reader, String regExpr, String addLines, boolean prependLineNumbers){
@@ -547,7 +547,7 @@ public class LogReader
      * Implementation of a unix-like 'tail' command
      *
      * @param aFileName a file name String
-     * @return An array of two strings is returned. At index 0 the String 
+     * @return An array of two strings is returned. At index 0 the String
      *         representation of at most 10 last lines is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
@@ -562,7 +562,7 @@ public class LogReader
      *
      * @param aFileName a file name String
      * @param n int number of lines to be returned
-     * @return An array of two strings is returned. At index 0 the String 
+     * @return An array of two strings is returned. At index 0 the String
      *         representation of at most n last lines is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
@@ -576,13 +576,13 @@ public class LogReader
             return null;
         }
     }
-    
+
     /**
      * Implementation of a unix-like 'tail -n' command
      *
      * @param raf a RandomAccessFile to tail
      * @param n int number of lines to be returned
-     * @return An array of two strings is returned. At index 0 the String 
+     * @return An array of two strings is returned. At index 0 the String
      *         representation of at most n last lines is located.
      *         At index 1 there is an informational string about how large a
      *         segment of the file is being returned.
@@ -675,7 +675,7 @@ public class LogReader
         String[] tmp = {sb.toString(),info};
         return tmp;
     }
-    
+
     /**
      * @param fileName
      * @return
@@ -683,16 +683,16 @@ public class LogReader
      */
     private static CompositeFileReader seriesReader(String fileName) throws IOException {
         LinkedList filenames = new LinkedList();
-        int seriesNumber = 1; 
+        int seriesNumber = 1;
         NumberFormat fmt = new DecimalFormat("00000");
-        String predecessorFilename = 
-            fileName.substring(0,fileName.length()-CrawlController.CURRENT_LOG_SUFFIX.length()) 
+        String predecessorFilename =
+            fileName.substring(0,fileName.length()-CrawlController.CURRENT_LOG_SUFFIX.length())
             + fmt.format(seriesNumber);
         while((new File(predecessorFilename)).exists()) {
             filenames.add(predecessorFilename);
             seriesNumber++;
-            predecessorFilename = 
-                fileName.substring(0,fileName.length()-CrawlController.CURRENT_LOG_SUFFIX.length()) 
+            predecessorFilename =
+                fileName.substring(0,fileName.length()-CrawlController.CURRENT_LOG_SUFFIX.length())
                 + fmt.format(seriesNumber);
         }
         filenames.add(new File(fileName)); // add current file

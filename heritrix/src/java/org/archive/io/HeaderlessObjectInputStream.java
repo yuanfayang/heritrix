@@ -47,5 +47,5 @@ public class HeaderlessObjectInputStream extends ObjectInputStream {
 			StreamCorruptedException {
 		// do nothing
 	}
-    
+
 }
