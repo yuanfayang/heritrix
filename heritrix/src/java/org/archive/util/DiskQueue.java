@@ -32,7 +32,6 @@ import java.io.ObjectOutputStream;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.archive.crawler.framework.Savable;
 import org.archive.io.DiskBackedByteQueue;
@@ -53,8 +52,6 @@ import org.archive.io.NullOutputStream;
  * @author Gordon Mohr
  */
 public class DiskQueue implements Queue, Savable {
-    private static Logger logger
-        = Logger.getLogger("org.archive.util.DiskQueue");
 
     /** the directory used to create the temporary files */
     private File scratchDir;
