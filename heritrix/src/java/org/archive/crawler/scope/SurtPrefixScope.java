@@ -28,13 +28,14 @@ import java.util.TreeSet;
 import org.archive.crawler.datamodel.UURI;
 
 /**
- * A specialized CrawlScope suitable for the most common crawl needs, limiting
+ * A specialized CrawlScope suitable for the most common crawl needs.
  * 
  * Roughly, as with other existing CrawlScope variants, SurtPrefixScope's logic
  * is that a URI is included if:
- *  (( isSeed(uri) || focusFilter.accepts(uri) ) ||
- * transitiveFilter.accepts(uri) ) && ! excludeFilter.accepts(uri)
- * 
+ * <pre>
+ *  ( isSeed(uri) || focusFilter.accepts(uri) ) ||
+ *     transitiveFilter.accepts(uri) ) && ! excludeFilter.accepts(uri)
+ * </pre>
  * Specifically, SurtPrefixScope uses a SurtFilter to test for focus-inclusion.
  * 
  * @author gojomo
