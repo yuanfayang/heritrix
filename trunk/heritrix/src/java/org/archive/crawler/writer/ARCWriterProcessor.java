@@ -330,7 +330,8 @@ ARCWriterSettings, FetchStatusCodes {
 
         String scheme = curi.getUURI().getScheme().toLowerCase();
         try {
-            if (scheme.equals("dns") && curi.getFetchStatus()==S_DNS_SUCCESS) {
+            if (scheme.equals("dns") && curi.getFetchStatus() ==
+                    S_DNS_SUCCESS) {
                 writeDns(curi);
             } else if (scheme.equals("http") || scheme.equals("https")) {
                 writeHttp(curi);
@@ -388,7 +389,8 @@ ARCWriterSettings, FetchStatusCodes {
             curi.getString(A_DNS_SERVER_IP_LABEL));
 
         // Save the calculated contentSize for logging purposes
-        // TODO handle this need more sensibly
+        // TODO handle this need more sensibly.  The length setting
+        // should be done back in the DNSFetcher.
         curi.setContentSize(recordLength);
     }
     
