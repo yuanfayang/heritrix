@@ -10,7 +10,7 @@ package org.archive.crawler.basic;
  */
 public interface CrawlerConfigurationContants {
 	
-	public static final String DEFAULT_USER_AGENT = "default user agent";
 	public static final String DEFAULT_CRAWLER_NAME = "HerItrix";
-
+	public static final String DEFAULT_USER_AGENT = "Heritrix pre-Alpha (contact gojomo@archive.org)";
+	public static final int DEFAULT_STATISTICS_REPORT_INTERVAL = 60;
 }
