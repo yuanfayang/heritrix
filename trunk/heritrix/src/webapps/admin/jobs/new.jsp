@@ -18,11 +18,8 @@
      * Create a new job
      */
     CrawlJob theJob = handler.getJob(request.getParameter("job"));
-    boolean isProfile = false;
-    if(request.getParameter("profile") != null &&
-            request.getParameter("profile").equals("true")) {
-        isProfile = true;
-    }
+    boolean isProfile = "true".equals(request.getParameter("profile"));
+    boolean isRecover = "true".equals(request.getParameter("recover"));
     
     if(theJob == null) {
         //Ok, use default profile then.
@@ -70,7 +67,10 @@
                     error = "Profile name must be unique!";
                 }
             } else {
-                newJob = handler.newJob(theJob, metaName, 
+                newJob = handler.newJob(
+                    theJob, 
+                    isRecover,
+                    metaName, 
                     jobDescription,
                     request.getParameter("seeds"),
                     CrawlJob.PRIORITY_AVERAGE);
@@ -122,6 +122,9 @@
             <input type="hidden" name="action" value="new">
             <input type="hidden" name="profile" value="<%=isProfile%>">
             <input type="hidden" name="job" value="<%=theJob.getUID()%>">
+            <%     if(isRecover) { %>
+            <input type="hidden" name="recover" value="true">
+            <%    }  %>
             <b>
                 Create new 
             <%     if(isProfile){ %>
@@ -130,6 +133,9 @@
                 crawl job 
             <%    }    %>
                 based on
+            <%     if(isRecover) { %>
+                recovery of 
+            <%    }  %>
             <%     if(request.getParameter("job")==null){%>
                 default profile
             <% 
