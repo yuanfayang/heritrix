@@ -9,6 +9,7 @@ package org.archive.crawler.basic;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -40,10 +41,11 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread {
 		get.setRequestHeader("User-Agent",controller.getOrder().getBehavior().getUserAgent());
 		try {
 			http.executeMethod(get);
+			Header contentLength = get.getResponseHeader("Content-Length");
 			logger.info(
 				curi.getUURI().getUri()+": "
 				+get.getStatusCode()+" "
-				+get.getResponseBody().length);
+				+(contentLength==null ? "na" : contentLength.getValue()));
 
 			// TODO consider errors
 			curi.getAList().putObject("http-transaction",get);
