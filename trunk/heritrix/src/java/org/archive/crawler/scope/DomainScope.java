@@ -75,7 +75,7 @@ public class DomainScope extends CrawlScope {
     public DomainScope(String name) {
         super(name);
         setDescription(
-            "A scope for domain crawls. Crawl made with this scope will be " +
+            "A scope for domain crawls. Crawls made with this scope will be " +
             "limited to the domain of it's seeds. It will however reach " +
             "subdomains of the seeds' original domains. www.host is considered " +
             "to be the same as host.");
