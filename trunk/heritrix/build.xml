@@ -1,467 +1,245 @@
-<?xml version="1.0"?>
-	
-
-<!--
-##################################################################
-##                                                              ##
-## In general you should not need to modify this file to        ##
-## modify this file to build Heritrix.  But, you should         ##
-## modify build.properties and startbuild.sh, each of which     ##
-## have instructions about how and where to adapt them to your  ##
-## local build environment.                                     ##
-##                                                              ##
-##################################################################
--->
-
-    
-<project name="archive-open-crawler" default="localbuild" basedir=".">
-
-    <!-- All the inputs are read from build.properties file --> 
-    <property file="build.properties" />
-
-    <!-- This is link to access all the environment variables -->
-    <property environment="env" />
-
-    <target name="make-property-file">
-
-	<!-- if cvsTag/version is not set set it -->
-	<property name="currentBuildNum" value="n/a" />
-	<property name="version" value="unknown" />
-	<property name="cvsTagLabel" value="n/a" />
-
-	<!-- make sure we get hostame on both windows and linux -->
-	<property name="env.COMPUTERNAME" value="${env.HOSTNAME}" />
-
-	<propertyfile
-		file="${property.file}" 
-		comment="Build of Heritrix version ${version} build ${currentBuildNum}">
-
-		<entry key="java.vm.vendor" 
-			value="${java.vm.vendor}" />
-
-		<entry key="java.runtime.name" 
-			value="${java.runtime.name}" />
-
-		<entry key="cvs.tag" 
-			value="${cvsTagLabel}" />
-
-		<entry key="java.version" 
-			value="${java.version}" />
-
-		<entry key="ant.version"
-			value="${ant.version}" />
-	
-		<entry key="build.number"
-			value="${currentBuildNum}" />
-		
-		<entry key="build.version"
-			value="${version}" />
-		
-		<entry key="build.date"
-			type="date"
-			pattern="EEEE MMM dd, yyyy"
-			value="now" />
-
-		<entry key="build.time"
-			type="date"
-			pattern="kk:mm:ss"
-			value="now" />
-
-		<entry key="build.host" value="${env.COMPUTERNAME}" />
-		<entry key="build.user.name" value="${user.name}" />
-		<entry key="build.os.name" value="${os.name}" />
-	</propertyfile>
-    </target>
-   
-    <target name="tag-current-repository">
-
-	<!-- this will cause a failure if cvsTag is not set
-		by the caller (the version/build target).  Which
-		should prevent somthing "bad" from happening,
-		it'll just fail.
-	-->
-	<property name="cvsTag" value="" />
-
-	<cvs command="-d ${cvsroot} rtag -R ${cvsTag} ${module-name}"
-                failonerror="yes" />
-    </target>
-
-    <target name="checkout-by-label" depends="init">
-                                                                                
-        <description>
-            This target checks out all the source files and third party
-                binaries from CVS for a given build version.
-        </description>
-
-                                                                         
-        <!-- NOTE: YOU'LL PROBABLY NEED TO CHANGE THESE VARS
-                IN build.properties -->
-        <cvs cvsRoot="${cvsroot}"
-                dest="${repository}"
-		tag="${cvsTag}"
-                package="${module-name}"
-                failonerror="yes" />
-    </target>
-
-    <target name="_label-as-build">
-	<buildnumber file="${buildnumber.file}" />
-
-	<property name="cvsTagLabel" value="build" />
-	<property name="cvsTag" value="b${build.number}" />
-	<property name="currentBuildNum" value="${build.number}" />
-
-	<echo message="setting cvs label (rtag) to ${cvsTag}" />
-    </target>
-
-    <target name="_label-as-version">
-	<property name="cvsTagLabel" value="version" />
-	<property name="cvsTag" value="v${_version}" />
-
-	<echo message="setting cvs label (rtag) to ${cvsTag}" />
-    </target>
-
-    <target name="release-version" depends="_label-as-version,init,tag-current-repository,checkout-by-label,compile-core,compile-unit-testsrc,run-unit-testcases,package">
-	<echo message="*****************************************************" />
-	<echo message="THIS SHOULD ONLY BE RUN ON THE OFFICIAL BUILD MACHINE" />
-	<echo message="*****************************************************" />
-    </target>
-
-    <target name="release-build" depends="_label-as-build,init,tag-current-repository,checkout-by-label,compile-core,compile-unit-testsrc,run-unit-testcases,package">
-	<echo message="*****************************************************" />
-	<echo message="THIS SHOULD ONLY BE RUN ON THE OFFICIAL BUILD MACHINE" />
-	<echo message="*****************************************************" />
-    </target>
-
-    <target name="build-by-tag" depends="checkout-by-label,compile-core,compile-unit-testsrc,run-unit-testcases,package">
-	<echo message="note: select a version using ant ... -DcvsTag=version" />
-    </target>
-
-    <target name="init">
-    
-        <description>
-            This target creates the build structure 
-        </description> 
-
-        <mkdir dir="${repository}" /> 
-        <mkdir dir="${packageBaseDir}" />
-        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}" />
-        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${src}" /> 
-        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${coreclasses}" />
-        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${javadocs}" />
-        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${build}" />
-        <mkdir dir="${packageBaseDir}/archive-open-crawler-${version}/${bin}"/> 
-        <mkdir dir="${buildDir}" />
-	<mkdir dir="${unitTestDir}" />
-
-        <mkdir dir="junit/${junitclasses}" />
-        <mkdir dir="junit/${junitjavadocs}" />
-        <mkdir dir="junit/${junitreports}" />
-
-	<mkdir dir="bin" />
-	
-	<!--
-	<mkdir dir="src" />
-	-->
-
-	<mkdir dir="NightlyBuilds" />
-
-	<!--
-        <echo message="Classpath setting is ${classpath}" />
-	-->
-
-	<mkdir dir="RunThis" />
-	<mkdir dir="RunThis/test-config" />
-        <mkdir dir="RunThis/lib" />
-        <mkdir dir="RunThis/bin" />
-    </target>
-
-
-
-    <target name="checkout-core" depends="init">
-    
-        <description> 
-            This target checks out all the source files and third party 
-		binaries from CVS.
-        </description> 
-       
-	<!-- NOTE: YOU'LL PROBABLY NEED TO CHANGE THESE VARS 
-		IN build.properties --> 
-        <cvs cvsRoot="${cvsroot}" 
-		dest="${repository}" 
-		package="${module-name}" 
-		failonerror="yes" />
-        
-    </target>
-
-
-    <target name="compile-core" depends="init">
-    
-        <description> 
-            This target compiles the core sources files 
-		(not the unit test sources) 
-        </description> 
-
-        <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${src}" 
-              includeEmptyDirs="false" >
-            <fileset dir="${repository}/ArchiveOpenCrawler/src" >
-                <include name="**/*.java" />
-            </fileset>
-        </copy>
-
-        <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${coreclasses}">
-            <fileset dir="${repository}/ArchiveOpenCrawler/lib/binaries">
-                <include name="**/*.jar"/>
-                <include name="**/*.zip"/>
-            </fileset>
-        </copy>     
-      
-        <depend 
-		srcdir="${packageBaseDir}/archive-open-crawler-${version}/${src}" 
-                destdir="${buildDir}"  
-                cache="dependencycache" 
-                closure="yes"> 
-                
-             <classpath>
-                  <pathelement path="${classpath}"/>
-                  <pathelement location="${buildDir}"/> 
-             </classpath> 
-             
-        </depend>
-      
-        <javac srcdir="${packageBaseDir}/archive-open-crawler-${version}/${src}" 
-               destdir="${buildDir}" 
-               debug="${debug}" 
-               optimize="${optimize}" 
-               nowarn="${nowarn}" 
-	       source="1.4"
-               compiler="${compiler}"> 
-      
-             <classpath>
-                  <pathelement path="${classpath}"/>
-                  <pathelement location="${buildDir}"/> 
-             </classpath> 
-             
-        </javac> 
-
-    </target>
-
-
-
-    <target name="javadoc" depends="init,compile-core"
-	>
-    
-         <description> 
-              This target generates the javadocs for the compiled classes 
-         </description> 
-
-         <javadoc packagenames="*.*" 
-         	sourcepath="${packageBaseDir}/archive-open-crawler-${version}/${src}"
-                  classpath="${classpath}"
-                  destdir="${packageBaseDir}/archive-open-crawler-${version}/${javadocs}"
-		  source="1.4" >
-         </javadoc> 
-         
-    </target> 
-
-
-
-    <target name="package" depends="init,compile-core,javadoc,make-property-file">
-    
-	<property name="cvsTag" value="" />
-
-        <description> 
-            This target packages all the source files,classfiles and javadocs. 
-        </description> 
-       
-	<copy todir="${packageBaseDir}/archive-open-crawler-${version}">
-		<fileset dir="${basedir}">
-		  <include name="${property.file}" />
-		</fileset>
-	</copy> 
-
-        <copy todir="${packageBaseDir}/archive-open-crawler-${version}">
-            <fileset dir="${repository}/ArchiveOpenCrawler">
-                <exclude name="**/*.java" />
-            </fileset>
-        </copy>
-<!-- 
-        <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${bin}">
-            <fileset dir="${repository}/ArchiveOpenCrawler/bin">
-                <include name="**/*" />
-            </fileset>
-        </copy>
-
-        <copy todir="${packageBaseDir}/archive-open-crawler-${version}/${build}">
-            <fileset dir="${repository}/ArchiveOpenCrawler/build">
-                <include name="**/*" />
-            </fileset>
-        </copy> 
-        
--->
-        <jar destfile="${packageBaseDir}/archive-open-crawler-${version}/${coreclasses}/crawlerclasses.jar" 
-                      basedir="${buildDir}">
-        </jar>
-
-
-        <tstamp>
-            <format property="currentdate" pattern="MMddyyyy" />
-        </tstamp>
-
-        <tar tarfile="${basedir}/archive-open-crawler-${version}-${currentdate}.tar" 
-             basedir="${packageBaseDir}"
-             longfile="gnu">  
-             <tarfileset dir="${bin}" 
-                         prefix="archive-open-crawler-${version}/${bin}"
-                         mode="755">
-                 <include name="**/*.sh" />             
-             </tarfileset> 
-        </tar>     
-        
-        <gzip zipfile="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${cvsTag}-${currentdate}.tar.gz" 
-              src="${basedir}/archive-open-crawler-${version}-${currentdate}.tar"/> 
-              
-	<!-- now put stuff somewhere we can run a crawl from -->
-
-	<copy todir="RunThis">
-		<fileset dir="${packageBaseDir}/archive-open-crawler-${version}/${coreclasses}">
-			<include name="crawlerclasses.jar" />
-		</fileset>
-        </copy>
-
-	<!--	
-	<copy todir="RunThis/test-config/">
-		<fileset dir="${packageBaseDir}/archive-open-crawler-${version}/test-config">
-			<include name="**/*" />
-		</fileset>
-	</copy>
-	-->
-
-        <copy todir="RunThis/">
-                <fileset dir="${packageBaseDir}/archive-open-crawler-${version}/configurations/nightly-builds">
-                        <include name="**/*" />
-                </fileset>
-        </copy>
-
-	<copy todir="RunThis/lib/">
-		<fileset dir="${packageBaseDir}/archive-open-crawler-${version}/lib">
-			<include name="**/*" />
-		</fileset>
-	</copy>
-
-	<!-- clean up packaging (like christmas day at noon) -->
-        <delete file="${basedir}/archive-open-crawler-${version}-${currentdate}.tar">
-        </delete>
-
-    </target>
-    
-    <target 
-	name="nightly" 
-	depends="init,checkout-core,compile-core,compile-unit-testsrc,run-unit-testcases,package">
-    
-        <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${cvsTag}-${currentdate}.tar.gz" 
-        	todir="${basedir}/${NightlyBuildsDir}" /> 
-
-	<delete dir="${basedir}/${NightlyBuildsDir}/latest" />
-        <copy file="${basedir}/${NightlyBuildsDir}/archive-open-crawler-${version}-${cvsTag}-${currentdate}.tar.gz" 
-               todir="${basedir}/${NightlyBuildsDir}/latest" /> 
-        
-        <!-- This is presently disabled as there is no uploading to sourceforge.net -->
-        <!-- <move file="archive-open-crawler-${version}-${currentdate}.tar.gz"
-              tofile="latest-archive-open-crawler-${version}.tar.gz" /> -->
-              
-        <delete file="${basedir}/archive-open-crawler-${version}-${cvsTag}-${currentdate}.tar.gz" />      
-              
-        <echo message="" />
-        <echo message="*****************************************************" />
-	<echo message="Latest build available here: ${basedir}/NightlyBuilds" />
-        <echo message="*****************************************************" />
-        
-    </target>
-
-    <target name="all" depends="init,checkout-core,compile-core,compile-unit-testsrc,run-unit-testcases,javadoc,package"/>
-
-    <target name="clean">
-        <description> 
-            This target cleans up all the resources created during build time. 
-        </description> 
-        
-        <delete dir="${packageBaseDir}" />
-        <delete dir="junit" />
-        
-    </target>
-
-    <target name="localbuild" depends="init,compile-core,javadoc,package">
-        <description> 
-            This target is given for user convenience to make a build locally 
-        </description> 
-    </target>
-
-    <target name="compile-unit-testsrc" depends="init,compile-core">
-        <description> 
-            This target compiles all the junit test sources. 
-        </description> 
-
-        <javac srcdir="${repository}/${module-name}/testsrc" 
-               destdir="${unitTestDir}" 
-               debug="${debug}" 
-               optimize="${optimize}" 
-	       source="1.4"
-               nowarn="${nowarn}" 
-               compiler="${compiler}"> 
-
-             <classpath>
-                  <pathelement path="${classpath}"/>
-                  <pathelement location="${buildDir}"/> 
-                  <pathelement location="${unitTestDir}"/> 
-             </classpath> 
-        </javac> 
-
-
-    </target>
-
-
-    <target name="run-unit-testcases" depends="compile-unit-testsrc">
-        <description> 
-            This target runs all the JUnit test cases 
-        </description> 
-        
-
-        <!-- <junit printsummary="withOutAndErr" showoutput="true"> -->
-        <junit printsummary="yes" showoutput="true">
-            <classpath>
-                <pathelement path="${classpath}"/>
-                <pathelement location="${basedir}/${buildDir}"/> 
-                <pathelement location="${basedir}/${unitTestDir}"/> 
-            </classpath> 
-       
-            <formatter type="plain" /> 
-        
-            <batchtest 
-		fork="yes" 
-		haltonfailure="no" 
-		todir="junit/${junitreports}">
-
-		<fileset dir="${basedir}/${unitTestDir}">
-		  <include name="**/*Test.class" />
-		</fileset>
-              </batchtest>
-            </junit>
-	
-	<delete>
-		<fileset dir="${basedir}" includes="*.arc.gz" />
-	</delete>
-
-    </target>
-    
-    <target name="javadoc-unit-testcases" depends="init,compile-core,compile-unit-testsrc">
-        <description> 
-            <!-- This target generates javadocs for all the unit test classes -->
-        </description> 
-        
-        <javadoc packagenames="*.*" 
-                 sourcepath="${repository}/testsrc" 
-                 destdir="junit/${junitjavadocs}">
-        </javadoc> 
-    </target>
-
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--build.xml generated by maven from project.xml version 0.1.0-dev
+  on date December 19 2003, time 1610.  Was then modified by St.Ack.  
+
+  Use this build.xml to build a heritrix jar and to run unit tests.
+
+  + We do not make jar dependent on test target. To run the test target, 
+  you'll need to satisfy a junit ant task dependency. The junit jar needs
+  to be in SAME location as the ant optional.jar that contains the junit
+  ant task.  See http://ant.apache.org/manual/OptionalTasks/junit.html.
+  Since we do not supply a build.sh script expecting the developer to have 
+  ant installed, the developer will need to take care of resolving the junit
+  dependency for their ant install before they can run the test target.
+  -->
+
+<project default="jar" name="heritrix" basedir=".">
+    <!--Set the 'noget' property false.  Prevents our going to download 
+        jars we already have in place under out lib dir.
+     -->
+    <property name="noget" value="false" />
+
+    <!--Add a define for our lib of external jars.-->
+    <property name="srclibdir" value="lib" />
+
+  <target name="help">
+    <echo message="Type 'ant -projecthelp' for more info." />  
+  </target>
+
+  <property name="defaulttargetdir" value="target">
+  </property>
+  <property name="libdir" value="target/lib">
+  </property>
+  <property name="classesdir" value="target/classes">
+  </property>
+  <property name="testclassesdir" value="target/test-classes">
+  </property>
+  <property name="testreportdir" value="target/test-reports">
+  </property>
+  <property name="distdir" value="dist">
+  </property>
+  <property name="javadocdir" value="dist/docs/api">
+  </property>
+  <property name="final.name" value="heritrix-0.1.0-dev">
+  </property>
+  <target name="init" description="o Initializes some properties">
+    <mkdir dir="${libdir}">
+    </mkdir>
+    <condition property="noget">
+      <equals arg2="only" arg1="${build.sysclasspath}">
+      </equals>
+    </condition>
+  </target>
+  <target name="compile" description="o Compile the code" depends="get-deps">
+    <mkdir dir="${classesdir}">
+    </mkdir>
+    <javac destdir="${classesdir}" deprecation="true" debug="true" 
+        optimize="false" excludes="**/package.html" source="1.4">
+      <src>
+        <pathelement location="src/java">
+        </pathelement>
+      </src>
+      <classpath>
+        <fileset dir="${libdir}">
+          <include name="*.jar">
+          </include>
+        </fileset>
+        <!--Our reference to our external libs.-->
+        <fileset dir="${srclibdir}">
+          <include name="*.jar">
+          </include>
+        </fileset>
+      </classpath>
+    </javac>
+    <copy todir="${classesdir}">
+      <fileset dir="src/conf">
+        <include name="*.properties">
+        </include>
+      </fileset>
+    </copy>
+  </target>
+  <target name="jar" description="o Create the jar" depends="compile">
+    <jar jarfile="${defaulttargetdir}/${final.name}.jar" 
+            excludes="**/package.html" basedir="${classesdir}" >
+        <manifest>
+            <attribute name="Main-Class" value="org.archive.crawler.Heritrix"/>
+            <attribute name="Class-Path" value="lib/commons-logging.jar lib/dnsjava.jar lib/httpclient-cvs-20031002.jar lib/itext.jar lib/jasper-compiler.jar lib/jasper-runtime.jar lib/javaswf.jar lib/javax.servlet.jar lib/jmxri.jar lib/jmxtools.jar lib/junit.jar lib/org.mortbay.jetty.jar lib/org.mortbay.jmx.jar lib/poi.jar lib/stataclasses.jar"/>
+        </manifest>
+    </jar>
+  </target>
+  <target name="clean" description="o Clean up the generated directories">
+    <delete dir="${defaulttargetdir}">
+    </delete>
+    <delete dir="${distdir}">
+    </delete>
+  </target>
+  <target name="dist" description="o Create a distribution" depends="jar, javadoc">
+    <mkdir dir="dist">
+    </mkdir>
+    <copy todir="dist">
+        <fileset dir="${defaulttargetdir}" includes="*.jar" />
+        <fileset dir="${basedir}" includes="LICENSE*, README*" />
+    </copy>
+    <copy todir="dist/lib" >
+        <fileset dir="lib" />
+    </copy>
+    <copy todir="dist/webapps">
+        <fileset dir="src/webapps" />
+    </copy>
+    <copy todir="dist/bin">
+        <fileset dir="src/shell" />
+    </copy>
+  </target>
+  <target name="test" description="o Run the test cases" if="test.failure" depends="internal-test">
+    <fail message="There were test failures.">
+    </fail>
+  </target>
+  <target name="internal-test" depends="compile-tests">
+    <mkdir dir="${testreportdir}">
+    </mkdir>
+    <junit dir="./" failureproperty="test.failure" printSummary="yes" fork="true" haltonerror="true">
+      <sysproperty key="basedir" value=".">
+      </sysproperty>
+      <formatter type="xml">
+      </formatter>
+      <formatter usefile="false" type="plain">
+      </formatter>
+      <classpath>
+        <fileset dir="${libdir}">
+          <include name="*.jar">
+          </include>
+        </fileset>
+        <pathelement path="${testclassesdir}">
+        </pathelement>
+        <pathelement path="${classesdir}">
+        </pathelement>
+        <!--Our reference to our external libs.-->
+        <fileset dir="${srclibdir}">
+          <include name="*.jar">
+          </include>
+        </fileset>
+      </classpath>
+      <batchtest todir="${testreportdir}">
+        <fileset dir="src/java">
+          <include name="**/*Test.java">
+          </include>
+          <exclude name="**/NaughtyTest.java">
+          </exclude>
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+  <target name="compile-tests" depends="compile">
+    <mkdir dir="${testclassesdir}">
+    </mkdir>
+    <javac destdir="${testclassesdir}" deprecation="true" debug="true" optimize="false" excludes="**/package.html" source="1.4">
+      <src>
+        <pathelement location="src/java">
+        </pathelement>
+      </src>
+      <classpath>
+        <fileset dir="${libdir}">
+          <include name="*.jar">
+          </include>
+        </fileset>
+        <pathelement path="${classesdir}">
+        </pathelement>
+        <!--Our reference to our external libs.-->
+        <fileset dir="${srclibdir}">
+          <include name="*.jar">
+          </include>
+        </fileset>
+      </classpath>
+    </javac>
+  </target>
+  <target name="javadoc" description="o Generate javadoc" depends="jar">
+    <mkdir dir="${javadocdir}">
+    </mkdir>
+    <tstamp>
+      <format pattern="2003-yyyy" property="year">
+      </format>
+    </tstamp>
+    <property name="copyright" value="Copyright &amp;copy;  Internet Archive. All Rights Reserved.">
+    </property>
+    <property name="title" value="Heritrix 0.1.0-dev API">
+    </property>
+    <javadoc use="true" private="true" destdir="${javadocdir}" author="true" version="true" sourcepath="src/java" packagenames="org.archive.*" 
+        source="1.4">
+      <classpath>
+        <fileset dir="${libdir}">
+          <include name="*.jar">
+          </include>
+        </fileset>
+        <pathelement location="target/${final.name}.jar">
+        </pathelement>
+      </classpath>
+    </javadoc>
+  </target>
+  <target name="get-deps" unless="noget" depends="init">
+    <get dest="${libdir}/commons-httpclient-2.0-rc2.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/commons-httpclient/jars/commons-httpclient-2.0-rc2.jar">
+    </get>
+    <get dest="${libdir}/commons-logging-1.0.3.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/commons-logging/jars/commons-logging-1.0.3.jar">
+    </get>
+    <get dest="${libdir}/dnsjava-1.3.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/dnsjava/jars/dnsjava-1.3.jar">
+    </get>
+    <get dest="${libdir}/stataclasses-.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/stataclasses/jars/stataclasses-.jar">
+    </get>
+    <get dest="${libdir}/org.mortbay.jetty-4.2.15rc0.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/org.mortbay.jetty/jars/org.mortbay.jetty-4.2.15rc0.jar">
+    </get>
+    <get dest="${libdir}/org.mortbay.jmx-4.2.15rc0.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/org.mortbay.jmx/jars/org.mortbay.jmx-4.2.15rc0.jar">
+    </get>
+    <get dest="${libdir}/javax.servlet-2.3.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/javax.servlet/jars/javax.servlet-2.3.jar">
+    </get>
+    <get dest="${libdir}/jasper-runtime-.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/jasper-runtime/jars/jasper-runtime-.jar">
+    </get>
+    <get dest="${libdir}/jasper-compiler-.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/jasper-compiler/jars/jasper-compiler-.jar">
+    </get>
+    <get dest="${libdir}/jmxri-.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/jmxri/jars/jmxri-.jar">
+    </get>
+    <get dest="${libdir}/jmxtools-.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/jmxtools/jars/jmxtools-.jar">
+    </get>
+    <get dest="${libdir}/poi-1.5.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/poi/jars/poi-1.5.jar">
+    </get>
+    <get dest="${libdir}/javaswf-.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/javaswf/jars/javaswf-.jar">
+    </get>
+    <get dest="${libdir}/itext-1.0.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/itext/jars/itext-1.0.jar">
+    </get>
+    <get dest="${libdir}/ant-1.5.3.1.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/ant/jars/ant-1.5.3.1.jar">
+    </get>
+    <get dest="${libdir}/junit-3.8.1.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/junit/jars/junit-3.8.1.jar">
+    </get>
+    <get dest="${libdir}/junit-3.8.1.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/junit/jars/junit-3.8.1.jar">
+    </get>
+    <get dest="${libdir}/ant-1.5.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/ant/jars/ant-1.5.jar">
+    </get>
+    <get dest="${libdir}/ant-optional-1.5.jar" usetimestamp="true" ignoreerrors="true" src="http://www.ibiblio.org/maven/ant/jars/ant-optional-1.5.jar">
+    </get>
+  </target>
+  <target name="install-maven">
+    <get dest="${user.home}/maven-install-latest.jar" usetimestamp="true" src="${repo}/maven/maven-install-latest.jar">
+    </get>
+    <unjar dest="${maven.home}" src="${user.home}/maven-install-latest.jar">
+    </unjar>
+  </target>
 </project>

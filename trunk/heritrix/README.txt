@@ -1,37 +1,36 @@
-Archive Open Crawler (Heritrix) README.txt
+----------------------------------------------------------------------
+$Id$
+----------------------------------------------------------------------
+Heritrix, crawler.archive.org, is the Internet Archive's open-source,
+extensible, web-scale, archival-quality web crawler project.  See 
+http://crawler.archive.org.
 
-This document is a work in progress.  Hopefully it should be enough to get you
-at least up and running, but if you run into major confusions please bring them
-to the mailing list so we can what types of issues users are facing and either
-address them in the code or here in the documentation.
+Webmasters!  Heritrix is designed to respect the  robots.txt  exclusion
+directives and  META robots tags. If you notice our crawler behaving poorly,
+please send us email at archive-crawler-agent *at* lists *dot* sourceforge
+*dot* net.
 
-For more on the Archive Open Crawler (Heritrix), see crawler.archive.org.
 
 Table of Contents
 
-I.  Before You Begin
+I.   Before You Begin
   a. Requirements
   
-II. Getting Started
-  a. Fetching from CVS
-  b. Building
-  c. Building CVS by Tag
-  d. Meta-data
+II.  Getting Started
+  a. Building
+  b. Starting Heritrix
   
-III.  Configuration Files
-  a. Configuration File Manifest
-  b. order.xml
-  c. environment.txt
-  d. build.xml
-  e. build.properties
-  f.  Sample Configuration Files
+III. Configuration Files
 
-IV. Crawling
-   a. The Graphical User Interface
-   b. The Command Line Interface
+IV.   Crawling
+  a. ARC Files
+  b. The Graphical User Interface
+  c. The Command Line Interface
 
-V.  License
- 
+V.   License
+
+VI.  Miscellaneous
+
    
 I. Before You Begin
 
@@ -39,209 +38,173 @@ a.  Requirements
 
 i. Java Runtime Environment
 
-The Archive Open Crawler is implemented purely in java.  This means that the
-only true requirement for running it is that you have a JRE installed.  We
-recommend the IBM JRE as it has proven to be much more effecient than other
-implementations, but the Sun JRE should work as well.
+The Heritrix crawler is implemented purely in java.  This means that the
+only true requirement for running it is that you have a JRE installed.  The
+Heritrix crawler makes use of 1.4 features so your JRE must be at least 
+of a 1.4.0 pedigree.
 
-ii. Ant (recommended)
+ii. Linux
 
-We also recommend that you download and install ant, a build tool for java
-applications.  This is not strictly required, but it will make your life much
-easier, and we have written several scripts that should keep you from ever
-having to worry about all the ugly realities of java development (think
-classpaths).  All this and more can be yours, but, as I mentioned, you need to
-install ant.
-  
+The Heritrix crawler has been built and tested on Linux only.  We'll eventually
+get to other platforms but thats all that we're run on to date.
+
+iii. Building
+
+You can build Heritrix from source using Ant or Maven.  The Maven build is 
+more comprehensive and will generate all from either the packaged source or
+from a CVS checkout.  The Ant build is less complete in that it doesn't
+generate the distribution documentation but it does produce all else needed to
+run Heritrix.
+
+If you are building Heritrix w/ Ant, you must have Ant installed.  You can get
+Ant here: http://ant.apache.org/.  Our build used 1.5.x Ant.  If you want to
+run the Heritrix unit tests from Ant, you will have to make sure the Ant
+optional.jar file sits beside the junit.jar.  See 
+http://ant.apache.org/manual/OptionalTasks/junit.html for what you must do
+setting up Ant to run junit tests.
+
+The Heritrix maven build was developed using 1.0-rc1.  You can get Maven from
+here: http://maven.apache.org.
+
+
 II.  Getting Started
 
-If you're reading this it probably means you've already checked out the crawler
-code from CVS. But, for the sake of completeness let's go though it all.
+There are three ways to obtain Heritrix: packaged binary or packaged source 
+download from http://sourceforge.net/projects/archive-crawler or via checkout
+from CVS.  
 
-a.  Fetching from CVS
+The packaged binary is named heritrix-?.?.?.tar.gz or heritrix-?.?.?.zip and
+the packaged source is named heritrix-?.?.?-src.tar.gz or heritrix-?.?.?-src.zip
+where '?.?.?' is the current heritrix release version.
 
-Note:  Because this project is hosted at sourceforge, fetching from CVS is
-slightly idosyncratic.  By default if you check out a project anonymously you
-will get a nightly snapshot of the project, rather than the latest-greatest
-source at the time you start the checkout. 
+For how to get Heritrix from CVS, see 
+http://sourceforge.net/cvs/?group_id=73833.  Be aware that anonymous access
+does not give you the current HEAD but a snapshot that can at times be up to 24
+hours behind current development.
 
-How you get the source from CVS is up to you.  If you are not familiar with CVS,
-or you're just lazy (it's ok we are too) the easiest way to get started is to do
-the following:
+a. Building
 
-1.  Install a JRE and ant (see Getting Started)
+i. If you obtained packaged source, here is how you build w/ Ant:
 
-2.  Browse Sourceforge CVS repository via http:
-  
- http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/archive-crawler/ArchiveOpenCrawler/
+    % tar xfz heritrix-?.?.?-src.tar.gz
+    % cd heritrix-?.?.?
+    % $ANT_HOME/bin/ant dist
 
-2. Grab build.xml and build.properties from the repository.
+In the 'dist' subdir will be all you need to run the Heritrix crawler. To learn
+more about the ant build, type 'ant -projecthelp'.
 
-3.  Open build.properties and modify per the instructions provided in the
-comments. This should be straightforward.
+To build a CVS source checkout w/ Maven:
 
-4.  Grab startbuild.sh or startbuild.bat (depending on your os of choice) and
-environment.txt.  Open and modify environment.txt to suit your local enviroment
-per the instructions included in the comments.
+    $ cd CVS_CHECKOUT_DIR
+    $ $MAVEN_HOME/bin/maven dist
 
-5.  Run startbuild[sh,bat] checkout-core
+In the 'target/distribution' subdir, you will find packaged source and binary
+builds. Run '$MAVEN_HOME/bin/maven -g' for other Maven possibilities.
 
-Note:  If you are using anonymous CVS you may receive errors during this last
-step that indicate a failure to connect to CVS.  This often happens,
-particularly during periods of heavy-usage.  Just keep trying, or setup a
-sourceforge account and modify build.properties to use this (see example in
-build.properties).
+b. Starting Heritrix
 
-And that's it.  You should now be able to see a directory within your checkout
-directory (where you ran this script from) that is called 'CVSCheckoutDir' and
-contains the Archive Open Crawler source.  
+To run Heritrix, first do the following:
 
-b. Building
+    % export $HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX
 
-If you've followed the above instructions for fetching from CVS you're one
-command away from having the crawler built.  If you have the source, but did not
-fetch it via the startbuild script you'll need to follow the instructions in
-'Fetching From CVS' steps 3-4.
+...where $HERITRIX_HOME is the location of your built Heritrix (i.e.  under the
+'dist' dir if you built w/ Ant, or under the untarred  binary
+target/distribution/heritrix.?.?.?.tar.gz dir if you built w/ Maven, or 
+under the untarred heritrix.?.?.?.tar.gz if you pulled a packaged binary).
 
-Note:  If you didn't fetch from CVS using the build script you'll need to run
-'startbuild[sh,bat] init' to create the appropriate directory structure, then
-move the source tree into the newly-created
-./CVSCheckoutDir/ArchiveOpenCrawler'.  
+Next run:
 
-Now, all you need to do to start a build is run 'startbuild[sh,bat] package'.
-This will compile all the classes needed to run the crawler, and deposit the
-class files in the 'build' directory.  It will then create a jar file of
-everything needed to run the crawler and deposit this file in a directory called
-'RunThis'. 
+    % cd $HERITIRIX_HOME
+    % chmod u+x $HERITRIX_HOME/bin/heritrix.sh
+    % $HERITRIX_HOME/bin/heritrix --help
 
-To see other build possibilities look for <target> elements in build.xml.  There
-are serveral options not discussed here that may be very useful.  Specifically,
-once you set up authenticated CVS, you may find the 'nightlybuild' target
-useful.
+This should output something like the following:
 
-c.  Building Releases from CVS by Tag
+    Heritrix: Version unknown. Build unknown
+    USAGE: java Heritrix [--no-wui | --port:xxxx] ORDER.XML
+            [--start | --wait | --set-as-default] [-?]
+        --no-wui    Start crawler without Web User Interface
+        --port:xxxx The port that the web UI will run on, 8080 is default
+        ORDER.XML   The "crawl order file" to launch. Optional if --no-wui not
+                    specified, in which case the next parameter controls it's
+                    behavior.  
+    Only if --no-wui is NOT selected and a "crawl order file" file IS specified:
+       --start      Start crawling as specified by the given crawl order file.
+       --wait       Load the job specified by the given crawl order file but
+                    do not start crawling. Default behavior.
+       --set-as-default Set the specified crawl order as default crawl order
+       -?           Display this message
 
-CVS allows us to keep track of which files, in what state, went into each
-build/version that is released.  If you wish to build a specific version or build,
-for example to test the behavior of an old build, you may do so by specifying
-a build target of 'build-by-tag' and passing the build/versions' cvs tag as
-an additional argument.
+The "crawl order file" or "order.xml" is the "master config file".  It
+specifies which modules will be used to  process URIs, in which order URIs will
+be processed, how and where files will be written to disk, how "polite" the
+crawler should be, crawl limits, etc.  The configuration system is currently
+undergoing revision and the format of order.xml will be changed.  The best
+thing to do meantime is to copy an existing "order.xml" file.  See under
+'docs/example-settings/broad-crawl' for an up-to-date sample configuration that
+does a broad crawl (If there is no docs/example-settings in your built
+distribution, see 
+http://crawler.archive.org/docs/example-settings/broad-crawl/order.xml).
 
-To determine a particular build's tag refer to the file build.metadata within the
-crawler's root directory.  All official releases should contain a tag that is in the
-form vX_Y for major/minor version releases, where X is the major version 
-number and Y is the minor version number, and bX for regularly occuring
-builds, where X is an integer (e.g. b1025).
-
-d. Meta-data
-
-As mentioned in 'Building Releases from CVS by Tag' ant builds of Heritrix
-include a file called 'build.metadata' that contains some useful information 
-pertaining to the who/what/when/wheres of the build process.
-
-If you experience execution problems and the build environment differs 
-significantly from your own you may need to rebuild.  If you experience
-a problem that is solved in this way (they should be few and far between)
-PLEASE REPORT IT.
-
-Additionally, some of this information should be included whenever 
-submitting a bug report, where pertinent.
-
-III. Configuration
-
-By default the crawler should be set up to run on a single machine
-out-of-the-box with very little configuration.  
-
-a.  Configuration File Manifest
-
-Following is a list of requisite configuration files and a brief description of
-why they exist:
-
-  order.xml - 	This is the "master config file".  It specifies which modules
-	will be used to  process URIs, in which order URIs will be processed, 
-	how and where files will ge written to disk, how "polite" the crawler 
-	should be, etc.  
-
-  seeds.txt - This file specifies a one-per-line list of URIs with which to 
-	seed the crawl.  
-
-  environment.txt – This file specifies several environment variables that the 
-	build scripts will need to work on your local system.
-
-  build.xml – This file is used by and in the build process.  
-
-  build.properties – Defines variables used by ant when building targets 
-	defined in build.xml.
-
-b.  order.xml
-
-<develop a detailed description of order.xml elements/attributes after the schema has settled down>
-
-c. environment.txt
-
-This file is meant as a one-stop configuration location.  Because many scripts
-will need to know about things like the location of java, the location of ant,
-etc, this file was created so these only need be defined once.  
-
-d. build.xml
-
-This is a standard ant configuration file and will be used if you use ant to
-build Heritrix.  It specifies a number of targets.  You will probably be
-interested in the following targets:
-
-  all – build it all, package it up, get it ready to run (fetches latest from cvs).
-  localbuild – build from local source.
-  run-unit-testcases – run unit tests against the source.
-  clean – clean up after the build.
-  checkout-core – get the lastest source from cvs.
-  compile-core – create class files.
-  
-e. build.properties 
-
-build.properties is ant's solution to seperating content and business logic.
-While build.xml is the business logic that makes the builds happen,
-build.properties specifies the content to plug into these directives.  This is
-where output directories are defined, cvs usernames/passwords/authentication
-methods are defined, etc.
-
-f.  Sample Configuration Files
-
-Sample configuration files can be found in cvs.  Build configuration files
-(build.xml, environment.txt, build.properties) can be found in the cvs root
-directory.  Various examples of order.xml and seeds.txt files can be found under
-the configurations directory within cvs.
-
-IV. Crawling
-
-Starting a crawl should be relatively painless operation.  Currently there are
-two ways to start a crawl, graphically, or using a shell script.  For most
-crawls both methods should be easy to use, though if you want to make
-configuration changes without having to hand-edit files the graphical interface
-may be the better choice.
-
-Note:  Before you beging crawling you must change the default user agent in
-order.xml. You should set this to something meaningful that allows
+Before you begin crawling you *MUST* at least change the default user agent in
+the order.xml.  You should set this to something meaningful that allows 
 administrators of sites you'll be crawling to contact you.  Please do not leave
 the Archive Open Crawler project's contact information in this field, we do not
 have the time or the resources to field complaints about crawlers which we are
 not in control of.
 
-a.  The Graphical User Interface
+Once you have an order.xml file edited to your liking you can run the crawler
+either via the UI or without.  Here is how you'd run it w/o going via the UI:
 
-<insert some stuff here when we get a GUI that we want people to use>
+    $ $HERITRIX_HOME/bin/heritrix.sh --no-wui order.xml
 
-b.  Command Line Interface
+You should see output showing the crawler running.  Tail the logs, see your 
+order.xml for where you told the crawler to dump them, to monitor crawler
+progress.
 
-If you have an aversion to GUIs there's also a shell script called
-startcrawl.[sh,bat] that may be used to start a crawl.  
+To start the crawler w/ the UI enabled run the following:
 
+    $ $HERITRIX_HOME/bin/heritrix.sh
+
+You should see output like the following:
+
+    14:11:10.415 EVENT  Starting Jetty/4.2.15rc0
+    14:11:10.603 EVENT  Checking Resource aliases
+    14:11:10.832 EVENT  Started WebApplicationContext[/admin,Admin]
+    14:11:11.094 EVENT  Started SocketListener on 0.0.0.0:8080
+    14:11:11.095 EVENT  Started org.mortbay.jetty.Server@1f6f0bf
+    Heritrix is running
+            Web UI on port 8080
+
+Browse to the Web UI to start a crawl and to load and configure crawl jobs.
+Eventually this will be the preferred mechanism configuring and running 
+crawls but its currently under development.
+
+III. Configuration
+
+TODO: The configuration system is being revised at the moment.  Meantime study 
+extant configurations at docs/example-settings.
+
+IV. Crawling
+
+a. ARC Files.
+
+As Heritrix runs, by default, all it pulls it saves off as Internet Archive 
+ARC files. Internet Archive ARC files are described here: 
+http://www.archive.org/web/researcher/ArcFileFormat.php.  Heritrix drops
+version 1 ARC files.
+
+b. The Graphical User Interface
+        TODO
+
+c. The Command Line Interface
+        TODO
 
 V. License
 
-Heritrix is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser Public License as published by
-the Free Software Foundation; either version 2.1 of the License, or
-any later version.
+Heritrix is free software; you can redistribute it and/or modify it under the
+terms of the GNU Lesser Public License as published by the Free Software
+Foundation; either version 2.1 of the License, or any later version.
  
 Heritrix is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -251,3 +214,11 @@ GNU Lesser Public License for more details.
 You should have received a copy of the GNU Lesser Public License
 along with Heritrix (See LICENSE.txt); if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+
+For the licenses for libraries used by Heritrix and included in its 
+distribution, see the dependencies section of project.xml for pointers to
+their licenses (TODO: Generate a license page).
+
+
+VI. Miscellaneous
+    TODO

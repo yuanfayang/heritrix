@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<project name="Heritrix">
+
+  <properties>
+    <title>Heritrix</title>
+    <author email="stack at archive dot org">Michael Stack</author>
+    <revision>$Id$</revision>
+  </properties>
+
+  <body>
+    <menu name="Overview">
+      <item name="License" href="/license.html"/>
+      <item name="System Requirements" href="/requirements.html"/>
+      <item name="Download" 
+        href="http://sourceforge.net/projects/archive-crawler"/>
+      <item name="User Manual" href="/user.html"/>
+      <item name="Deverloper Manual" href="/developer.html"/>
+      <item name="FAQ" href="/faq.html"/>
+      <item name="Wiki" 
+        href="http://crawler.archive.org/cgi-bin/wiki.pl?HomePage"/>
+      <item name="Glossary" href="/glossary.html"/>
+    </menu>
+  </body>
+</project>

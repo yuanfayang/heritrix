@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+  <properties>
+    <title>Developer Manual</title>
+    <author email="stack at archive dot org">St.Ack</author>
+    <revision>$Id$</revision>
+  </properties>
+
+  <body>
+    <section name="Developer Manual Introduction">
+
+            <p>This doc. is for observers and contributors who'd like to 
+            pull and build from source.  In here we'll talk of cvs access, 
+            the code layout, core technologies and patterns and their why, 
+            key technical decisions and why.</p>
+    </section>
+
+    <section name="Obtaining Heritrix">
+
+<p>There three ways to obtain Heritrix: packaged binary or packaged source
+download from http://sourceforge.net/projects/archive-crawler or via checkout
+from CVS (See http://sourceforge.net/cvs/?group_id=73833 for how to fetch
+from CVS.  Note, anonymous access does not give you the current HEAD but
+a snapshot that can at times be up to 24 hours behind HEAD).  The packaged
+binary will be named heritrix-?.?.?.tar.gz or heritrix-?.?.?.zip and the
+packaged source will be n amed heritrix-?.?.?-src.tar.gz
+or heritrix-?.?.?-src.zip where '?.?.?' is the heritrix release version.
+</p>
+
+</section>
+<section name="Building Heritrix">
+
+<p>If you obtained packaged source, here is how you build w/ Ant:
+<source>
+    % tar xfz heritrix-?.?.?-src.tar.gz
+    % cd heritrix-?.?.?
+    % $ANT_HOME/bin/ant dist
+</source>
+</p>
+<p>In the 'dist' subdir will be all you need to run the Heritrix crawler. To
+learn more about the ant build, type 'ant -projecthelp'.
+</p>
+                                                                                
+<p>To build a CVS source checkout w/ Maven:
+<source>
+    % cd CVS_CHECKOUT_DIR (or heritrix-?.?.?)
+    % $MAVEN_HOME/bin/maven dist
+</source>
+</p>
+<p>In the 'target/distribution' subdir, you will find packaged source and binary
+builds. Run '$MAVEN_HOME/bin/maven -g' for other Maven possibilities.
+</p>
+</section>
+
+
+<section name="Eclipse">
+<p>At the head of the CVS tree, you'll find Eclipse <em>.project</em> and 
+<em>.classpath</em> configuration files that should make integrating the CVS
+checkout into your Eclipse development environment straight-forward.
+</p>
+</section>
+
+<section name="Unit Tests Code">
+<p>"[A] popular convention is to place all test classes in a parallel
+directory structure. This allows you to use the same Java package names for
+your tests, while keeping the source files separate. To be honest, we do not
+like this approach because you must look in two different directories to find
+files." Section 4.11.3, Java Extreme Programming Cookbook, By Eric M. Burke, 
+Brian M. Coyner.  We agree w/ the above so we put Unit Test classes beside the
+classes they are testing in the source tree giving them the name of the Class
+they are testing w/ a Test suffix.
+</p>
+</section>
+
+<section name="Coding Conventions">
+<p>Heritrix baselines on SUN's <a 
+href="http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html">Code Conventions for the JavaTM Programming Language</a>.  It'd be hard not to they 
+say so little.  They at least say 
+<a href="http://java.sun.com/docs/codeconv/html/CodeConventions.doc3.html#313">maximum
+line length of 80 characters</a>.  Below are tightenings of the SUN 
+conventions used in Heritrix.
+</p>
+
+<subsection name="No Tabs">
+    <p>No tabs in source code.  Set you editor to indent w/ spaces.</p>
+</subsection>
+<subsection name="Indent Width">
+    <p>Indents are 4 charcters wide.</p>
+</subsection>
+
+</section>
+
+
+</body>
+</document>
