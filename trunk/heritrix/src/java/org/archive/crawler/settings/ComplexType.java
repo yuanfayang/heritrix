@@ -434,6 +434,21 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         throws AttributeNotFoundException {
         return getAttribute(uri, name);
     }
+    
+    /** Obtain the value of a specific attribute that is valid for a
+     * specific CrawlURI, or null if the attribute does not exist.
+     * 
+     * @param name
+     * @param curi
+     * @return
+     */
+    public Object getAttributeOrNull(String name, CrawlURI curi) {
+        try {
+            return getAttribute(name,curi);   
+        } catch (AttributeNotFoundException anfe) {
+            return null;
+        }
+    }
 
     /** Obtain the value of a specific attribute that is valid for a
      * specific CrawlerSettings object.
@@ -987,11 +1002,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
            if (this.currentIterator.hasNext()) {
                return true;
            } else {
-               try {
-                   this.currentIterator = (Iterator) this.attributeStack.pop();
-               } catch (EmptyStackException e) {
+               if (this.attributeStack.isEmpty()) {
                    return false;
                }
+               this.currentIterator = (Iterator) this.attributeStack.pop();
            }
            return this.currentIterator.hasNext();
        }
@@ -1047,11 +1061,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
            if (this.currentIterator.hasNext()) {
                return true;
            } else {
-               try {
-                   this.currentIterator = (Iterator) this.attributeStack.pop();
-               } catch (EmptyStackException e) {
+               if(this.attributeStack.isEmpty()) {
                    return false;
                }
+               this.currentIterator = (Iterator) this.attributeStack.pop();
            }
            return this.currentIterator.hasNext();
        }
