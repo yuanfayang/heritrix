@@ -54,9 +54,6 @@ import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
-import org.mortbay.http.DigestAuthenticator;
-import org.mortbay.http.HashUserRealm;
-import org.mortbay.jetty.servlet.WebApplicationContext;
 
 
 /**
