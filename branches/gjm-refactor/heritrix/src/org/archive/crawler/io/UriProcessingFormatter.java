@@ -77,7 +77,7 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 
 		return ArchiveUtils.get17DigitDate(time)
 			+ " "
-			+ ArchiveUtils.padTo(curi.getFetchStatus(),4)
+			+ ArchiveUtils.padTo(curi.getFetchStatus(),5)
 			+ " "
 			+ ArchiveUtils.padTo(length,10)
 			+ " "
