@@ -37,6 +37,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	SimpleStore store;
 	ArrayList filters = new ArrayList();
 	private int maxLinkDepth = -1;
+	private int maxDeferrals = 5;
 	int completionCount = 0;
 	
 	/* (non-Javadoc)
@@ -47,7 +48,9 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		synchronized(store) {		
 			
 			store.noteProcessingDone(curi);
-			
+			// snooze queues as necessary
+			updateScheduling(curi);
+
 			// consider errors which halt further processing
 			if (isDispositiveFailure(curi)) {
 				failureDisposition(curi);
@@ -74,8 +77,6 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 				handleLinks(curi);
 			}
 			
-			// snooze queues as necessary
-			updateScheduling(curi);
 			
 			// SUCCESS: note & log
 			successDisposition(curi);	
@@ -235,6 +236,18 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	protected void handlePrerequisites(CrawlURI curi) {
 		try {
 			UURI prereq = UURI.createUURI(curi.getPrerequisiteUri(),curi.getUURI().getUri());
+			if ( curi.getDeferrals() > maxDeferrals ) {
+				curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+				failureDisposition(curi);
+				return;
+			}		
+			if (!canSchedule(prereq)) {
+				// prerequisite cannot be fetched (it's probably already failed)
+				// must give up on 
+				curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+				failureDisposition(curi);
+				return;
+			}
 			curi.getAList().remove("prerequisite-uri");
 			store.reinsert(curi);
 			store.insertAtHead(prereq,curi.getAList().getInt("distance-from-seed"));
@@ -245,6 +258,28 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	}
 	
 	
+	/**
+	 * Is it possible for the given UURI to be enqueued for
+	 * processing? Or is it already precluded/failed/unretryable?
+	 * 
+	 * @param prereq
+	 * @return
+	 */
+	private boolean canSchedule(UURI u) {
+		CrawlURI curi = store.getExistingCrawlURI(u);
+		if (curi == null) {
+			// can always try scheduling a new CrawlURI
+			return true;
+		}
+		if (curi.getStoreState()==URIStoreable.FINISHED) {
+			// it's retired
+			return false;
+		}
+		// otherwise, OK
+		return true;
+	}
+
+
 	/**
 	 * The CrawlURI has encountered a problem, and will not
 	 * be retried. 
