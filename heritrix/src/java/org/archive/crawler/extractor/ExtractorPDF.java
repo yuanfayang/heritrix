@@ -24,8 +24,10 @@ package org.archive.crawler.extractor;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
@@ -98,8 +100,16 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
         }
 
         if(uris!=null && uris.size()>0) {
+            Iterator iter = uris.iterator();
+            while(iter.hasNext()) {
+                String uri = (String)iter.next();
+                try {
+                    curi.createAndAddLink(uri,Link.NAVLINK_MISC,Link.NAVLINK_HOP);
+                } catch (URIException e1) {
+                    getController().logUriError(e1,curi,uri);
+                }
+            }
             numberOfLinksExtracted += uris.size();
-            curi.putObject("html-links", uris);
         }
 
         logger.fine(curi+" has "+uris.size()+" links.");

@@ -30,8 +30,10 @@ import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
@@ -112,7 +114,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
                 curi.toString());
             return;
         }
-        this.numberOfLinksExtracted += processStyleCode(curi, cs);
+        this.numberOfLinksExtracted += processStyleCode(curi, cs, getController());
         // Set flag to indicate that link extraction is completed.
         curi.linkExtractorFinished();
         // Done w/ the ReplayCharSequence.  Close it.
@@ -126,22 +128,30 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         }
     }
 
-    public static long processStyleCode (CrawlURI curi, CharSequence cs) {
+    public static long processStyleCode(CrawlURI curi, CharSequence cs, CrawlController controller) {
         long foundLinks = 0;
+        Matcher uris = null;
+        String cssUri;
         try {
-            Matcher uris = TextUtils.getMatcher(CSS_URI_EXTRACTOR, cs);
+            uris = TextUtils.getMatcher(CSS_URI_EXTRACTOR, cs);
             while (uris.find()) {
-                String cssUri = uris.group(2);
+                cssUri = uris.group(2);
                 // TODO: Escape more HTML Entities.
                 cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
                 // Remove backslashes when used as escape character in CSS URL
                 cssUri = TextUtils.replaceAll(CSS_BACKSLASH_ESCAPE, cssUri, "$1");
                 foundLinks++;
-                curi.addLinkToCollection(cssUri, A_CSS_LINKS);
+                Link wref;
+                try {
+                    curi.createAndAddLink(cssUri,Link.EMBED_MISC,Link.EMBED_HOP);
+                } catch (URIException e) {
+                    controller.logUriError(e,curi,cssUri);
+                }
             }
-            TextUtils.freeMatcher(uris);
         } catch (StackOverflowError e) {
             DevUtils.warnHandle(e, "ExtractorCSS StackOverflowError");
+        } finally {
+            TextUtils.freeMatcher(uris);
         }
         return foundLinks;
     }

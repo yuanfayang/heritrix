@@ -426,8 +426,7 @@ implements CoreAttributeConstants {
 
                         // And add the URL to speculative embeds.
                         numberOfLinksExtracted++;
-                        curi.addLinkToCollection(
-                            newURL, A_HTML_SPECULATIVE_EMBEDS);
+                        curi.createAndAddLink(newURL,Link.SPECULATIVE_MISC,Link.SPECULATIVE_HOP);
                     }
                     // Reset lookat for next string.
                     lookat = new StringBuffer();

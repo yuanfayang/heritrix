@@ -28,6 +28,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.URIException;
 import org.apache.poi.hdf.extractor.WordDocument;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -121,16 +122,15 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 
             String hyperlink = page.substring(linkStart, linkEnd);
 
-            //System.out.println("link: '" + hyperlink + "'");
-            links.add(hyperlink);
+            try {
+                curi.createAndAddLink(hyperlink,Link.NAVLINK_MISC,Link.NAVLINK_HOP);
+            } catch (URIException e1) {
+                getController().logUriError(e1,curi,hyperlink);
+            }
+            numberOfLinksExtracted++;
             currentPos = page.indexOf("HYPERLINK", linkEnd + 1);
         }
 
-        // if we found any links add them to the curi for later processing
-        if(links.size()>0) {
-            numberOfLinksExtracted += links.size();
-            curi.putObject(A_HTML_LINKS, links);
-        }
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
         logger.fine(curi + " has " + links.size() + " links.");
     }

@@ -29,6 +29,7 @@ package org.archive.crawler.extractor;
 import java.io.IOException;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 
 import com.anotherbigidea.flash.writers.SWFActionsImpl;
 
@@ -40,7 +41,8 @@ import com.anotherbigidea.flash.writers.SWFActionsImpl;
 public class CrawlUriSWFAction
 extends SWFActionsImpl {
     CrawlURI curi;
-
+    CrawlController controller; // for error reporting
+    
     private long linkCount;
     static final String JSSTRING = "javascript:";
 
@@ -48,9 +50,10 @@ extends SWFActionsImpl {
      *
      * @param curi
      */
-    public CrawlUriSWFAction(CrawlURI curi) {
+    public CrawlUriSWFAction(CrawlURI curi, CrawlController controller) {
         assert (curi != null) : "CrawlURI should not be null";
         this.curi = curi;
+        this.controller = controller; 
         this.linkCount = 0;
     }
 
@@ -67,9 +70,9 @@ extends SWFActionsImpl {
         // to use 'target.' Most of the time 'target' is not set, or it is set
         // to '_self' or '_blank'.
         if (url.startsWith(JSSTRING)) {
-            linkCount =+ ExtractorJS.considerStrings(curi, url, false);
+            linkCount =+ ExtractorJS.considerStrings(curi, url, controller, false);
         } else {
-            curi.addLinkToCollection(url, CrawlURI.A_HTML_EMBEDS);
+            curi.createAndAddLink(url,Link.EMBED_MISC,Link.EMBED_HOP);
             linkCount++;
         }
     }

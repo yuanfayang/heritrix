@@ -28,8 +28,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -98,11 +99,11 @@ implements CoreAttributeConstants {
         UURI uuri = UURIFactory.getInstance("http://" + this.ARCHIVE_DOT_ORG);
         CrawlURI curi = setupCrawlURI(this.recorder, uuri.toString());
         extractor.innerProcess(curi);
-        Set links = (Set)curi.getObject(CoreAttributeConstants.A_HTML_LINKS);
+        Collection links = curi.getOutLinks();
         boolean foundLinkToHewlettFoundation = false;
         for (Iterator i = links.iterator(); i.hasNext();) {
-            String link = (String)i.next();
-            if (link.equals(this.LINK_TO_FIND)) {
+            Link link = (Link)i.next();
+            if (link.getDestination().toString().equals(this.LINK_TO_FIND)) {
                 foundLinkToHewlettFoundation = true;
                 break;
             }
@@ -168,6 +169,10 @@ implements CoreAttributeConstants {
         	return;
         }
         ExtractorHTML extractor = new ExtractorHTML("html extractor");
+// FYI: if target doc requires consulting settings (eg has meta robots),
+// must hack in assignment of extractor's settingsHandler, which requires
+// changes to ExtractorHTML and ComplexType. 
+//        extractor.applySettingsHandlerForTesting(this.settingsHandler);
         extractor.earlyInitialize(this.globalSettings);
         URL url = new URL(baseUURI.toString());
         this.recorder = HttpRecorder.
@@ -176,31 +181,54 @@ implements CoreAttributeConstants {
         CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
         extractor.innerProcess(curi);
         System.out.println("+" + extractor.report());
-        Set links = (Set)curi.getObject(CoreAttributeConstants.A_HTML_LINKS);
-        System.out.println("+HTML Links (A_HTML_LINKS):");
+        int count = 0; 
+        Collection links = curi.getOutLinks();
+        System.out.println("+HTML Links (hopType="+Link.NAVLINK_HOP+"):");
         if (links != null) {
             for (Iterator i = links.iterator(); i.hasNext();) {
-                System.out.println((String)i.next());
+                Link link = (Link)i.next();
+                if (link.getHopType()==Link.NAVLINK_HOP) {
+                    count++;
+                    System.out.println(link.getDestination());
+                }
             }
         }
-        System.out.println("+HTML Embeds (A_HTML_EMBEDS):");
-        links = (Set)curi.getObject(CoreAttributeConstants.A_HTML_EMBEDS);
+        System.out.println("+HTML Embeds (hopType="+Link.EMBED_HOP+"):");
         if (links != null) {
             for (Iterator i = links.iterator(); i.hasNext();) {
-                System.out.println((String)i.next());
+                Link link = (Link)i.next();
+                if (link.getHopType()==Link.EMBED_HOP) {
+                    count++;
+                    System.out.println(link.getDestination());
+                }
             }
         }
         System.out.
-            println("+HTML Speculative Embeds (A_HTML_SPECULATIVE_EMBEDS):");
-        links = (Set)curi.
-            getObject(CoreAttributeConstants.A_HTML_SPECULATIVE_EMBEDS);
+            println("+HTML Speculative Embeds (hopType="+Link.SPECULATIVE_HOP+"):");
         if (links != null) {
             for (Iterator i = links.iterator(); i.hasNext();) {
-                String u = (String)i.next();
-                System.out.println(u + " " + curi.getUURI() + " " +
-                    UURIFactory.getInstance(curi.getUURI(), u));
+                Link link = (Link)i.next();
+                if (link.getHopType()==Link.SPECULATIVE_HOP) {
+                    count++;
+                    System.out.println(link.getDestination());
+                }
             }
         }
+        System.out.
+            println("+HTML Other (all other hopTypes):");
+        if (links != null) {
+            for (Iterator i = links.iterator(); i.hasNext();) {
+                Link link = (Link) i.next();
+                if (link.getHopType() != Link.SPECULATIVE_HOP
+                        && link.getHopType() != Link.NAVLINK_HOP
+                        && link.getHopType() != Link.EMBED_HOP) {
+                    count++;
+                    System.out.println(link.getHopType() + " "
+                            + link.getDestination());
+                }
+            }
+        }
+        System.out.println("TOTAL URIS EXTRACTED: "+count);
     }
 
     /**
@@ -219,9 +247,12 @@ implements CoreAttributeConstants {
             "CORRECTION=\"FULL\" pluginspage=\"http://www.apple.com/" +
             "quicktime/download/\" /> ";
         extractor.extract(curi,cs);
-        assertTrue(((Collection)curi.
-            getObject(A_HTML_EMBEDS)).
-                contains("/documents/prem/18/1/graphics/qtvr/hall.mov"));
+        assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                return ((Link) object).getDestination().toString().contains(
+                        "/documents/prem/18/1/graphics/qtvr/hall.mov");
+            }
+        }));
     }
     
     /**
@@ -239,12 +270,14 @@ implements CoreAttributeConstants {
         CharSequence cs = "<a href=\"http://www.carsound.dk\n\n\n" +
         	"\"\ntarget=\"_blank\">C.A.R. Sound\n\n\n\n</a>";   
         extractor.extract(curi,cs);
-        Collection c = (Collection)curi.getObject(A_HTML_LINKS);
-        for (Iterator i = c.iterator(); i.hasNext();) {
-            UURI uuri = UURIFactory.getInstance((String)i.next());
-            assertTrue("Not stripping new lines",
-                uuri.toString().equals("http://www.carsound.dk/"));
-        }
+        Collection c = curi.getOutLinks();
+        assertTrue("Not stripping new lines", CollectionUtils.exists(curi
+                .getOutLinks(), new Predicate() {
+            public boolean evaluate(Object object) {
+                return ((Link) object).getDestination().toString().contains(
+                        "http://www.carsound.dk/");
+            }
+        }));
     }
     
     public static void main(String[] args) throws Exception {
