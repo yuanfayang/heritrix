@@ -46,6 +46,11 @@
   <processor
   	name="ExtractorDOC"
   	class="org.archive.crawler.basic.ExtractorDOC"
+  	next="ExtractorSWF">
+  </processor>
+  <processor
+    name="ExtractorSWF"
+    class="org.archive.crawler.basic.ExtractorSWF"
     next="Archiver">
   </processor>
   <processor 
