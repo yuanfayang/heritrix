@@ -58,6 +58,7 @@ import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
@@ -137,8 +138,8 @@ public class Frontier
 
 
     protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
-    protected final static Integer DEFAULT_MIN_DELAY = new Integer(2000);
-    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000);
+    protected final static Integer DEFAULT_MIN_DELAY = new Integer(2000); //2 seconds
+    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000); //30 seconds
     protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
     protected final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(false); 
@@ -279,7 +280,7 @@ public class Frontier
         t.setExpertSetting(true);
         t = addElementToDefinition(
                 new SimpleType(ATTR_HOST_QUEUES_MEMORY_CAPACITY,
-                "Size of each host queue's in memory head.\n Once each grows " +
+                "Size of each host queue's in-memory head.\n Once each grows " +
                 "beyond this size additional items will be written to a file " +
                 "on disk. Default value " + DEFAULT_HOST_QUEUES_MEMORY_CAPACITY+
                 ". A high value means more RAM used per host queue while a low"+
@@ -411,7 +412,15 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public synchronized void schedule(CandidateURI caUri) {
+        long start = System.currentTimeMillis();
         innerSchedule(caUri);
+        long duration = System.currentTimeMillis()-start;
+        if(duration>1000) {
+            System.err.println(
+                    "#"+((ToeThread)Thread.currentThread()).getSerialNumber()
+                    +" "+duration+"ms"
+                    +" schedule("+caUri.getURIString()+") via "+caUri.flattenVia());
+        }
     }
 
     /**
@@ -628,6 +637,7 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public synchronized void finished(CrawlURI curi) {
+        long start = System.currentTimeMillis();
         logger.fine("Frontier.finished: " + curi.getURIString());
         // Catch up on scheduling
         innerBatchFlush();
@@ -665,6 +675,14 @@ public class Frontier
 
         finally {
             curi.processingCleanup();
+        }
+
+        long duration = System.currentTimeMillis()-start;
+        if(duration>1000) {
+            System.err.println(
+                    "#"+((ToeThread)Thread.currentThread()).getSerialNumber()
+                    +" "+duration+"ms"
+                    +" finished("+curi.getURIString()+") via "+curi.flattenVia());
         }
     }
 
