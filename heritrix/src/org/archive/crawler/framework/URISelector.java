@@ -30,5 +30,9 @@ public interface URISelector {
 	 * 
 	 */
 	void initialize(CrawlController c);
+	
+	int successfullyFetchedCount();
+	
+	int failedFetchCount();
 
 }

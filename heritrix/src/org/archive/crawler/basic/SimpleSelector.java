@@ -42,6 +42,7 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	private int retryDelay = 30000;
 
 	int completionCount = 0;
+	int failedCount = 0;
 	
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URISelector#inter(org.archive.crawler.datamodel.CrawlURI)
@@ -147,6 +148,21 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		}
 	}
 
+	/** Return the number of URIs successfully completed to date.
+	 * 
+	 * @return
+	 */
+	public int successfullyFetchedCount(){
+		return completionCount;
+	}
+	
+	/** Return the number of URIs that failed to date.
+	 * 
+	 * @return
+	 */
+	public int failedFetchCount(){
+		return failedCount;
+	}
 
 	/**
 	 * The CrawlURI has been successfully crawled, and will be
@@ -335,6 +351,9 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 	 * @param curi
 	 */
 	protected void failureDisposition(CrawlURI curi) {
+		
+		failedCount++;
+		
 		// send to basic log 
 		Object array[] = { curi };
 		controller.uriProcessing.log(

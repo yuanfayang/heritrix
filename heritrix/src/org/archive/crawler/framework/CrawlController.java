@@ -23,6 +23,7 @@ import org.archive.crawler.datamodel.HostCache;
 import org.archive.crawler.io.CrawlErrorFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
+import org.archive.crawler.basic.StatisticsTracker;
 
 /**
  * 
@@ -33,6 +34,8 @@ public class CrawlController {
 	public Logger uriProcessing = Logger.getLogger("uri-processing");
 	public Logger crawlErrors = Logger.getLogger("crawl-errors");
 	public Logger uriErrors = Logger.getLogger("uri-errors");
+	
+	protected StatisticsTracker statistics = new StatisticsTracker(this);
 
 	CrawlOrder order;
 	
@@ -50,6 +53,13 @@ public class CrawlController {
 	
 	private boolean paused = false;
 	private boolean finished = false;
+
+	/** Return the list of toes (threads) this controller is using.
+	 */
+	public List getToes(){
+		return toes;
+	}
+
 
 	public void initialize(CrawlOrder o) {
 		order = o;
@@ -152,6 +162,14 @@ public class CrawlController {
 		}
 		return curi;
 	}
+	
+	/** Return the object this controller is using to track crawl statistics
+	 */
+	public StatisticsTracker getStatistics(){
+		return statistics;
+	}
+	
+	
 	/**
 	 * 
 	 */
@@ -164,6 +182,25 @@ public class CrawlController {
 		while(iter.hasNext()) {
 			((ToeThread)iter.next()).unpause();
 		}
+	}
+	
+	public int getActiveToeCount(){
+		List toes = getToes();
+		int active = 0;
+		
+		Iterator list = toes.listIterator();
+		
+		while(list.hasNext()){
+			ToeThread t = (ToeThread)list.next();
+			if(!t.isPaused()){
+				active++;
+			}
+		}
+		return active;	
+	}
+	
+	public int getToeCount(){
+		return toes.size();
 	}
 	
 	private void adjustToeCount() {
@@ -211,4 +248,43 @@ public class CrawlController {
 	//	return kicker;
 	//}
 
+
+	/** Print to stdout basic statistics about the crawl (for stat testing) */
+	public void printStatistics(){
+	
+		//System.out.println(":");
+		//System.out.println("\t:\t" + statistics.);
+		
+		System.out.println("Fetch Progress:");
+		System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
+		System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
+		System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
+		System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
+		System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
+		System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
+
+		System.out.println("Threads:");
+	
+		System.out.println("\tTotal:\t" + statistics.threadCount());
+		System.out.println("\tActive:\t" + statistics.activeThreadCount());
+
+
+		HashMap dist = statistics.getFileDistribution();
+		
+		if(dist.size() > 0){
+			Iterator keyIterator = dist.keySet().iterator();
+
+			System.out.println("Fetched Resources MIME Distribution:");
+	
+			while(keyIterator.hasNext()){
+				String key = (String)keyIterator.next();
+				String val = ((Integer)dist.get(key)).toString();
+				
+				System.out.println("\t" + key + "\t" + val);	
+			}
+		}else{
+			System.out.println("No mime statistics, size is " + dist.size());
+		}
+
+	}
 }

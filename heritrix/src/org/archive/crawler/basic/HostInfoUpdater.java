@@ -9,6 +9,7 @@ package org.archive.crawler.basic;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
 
@@ -26,6 +27,13 @@ import org.archive.crawler.framework.Processor;
 public class HostInfoUpdater extends Processor implements CoreAttributeConstants, FetchStatusCodes {
 
 	public static int MAX_DNS_FETCH_ATTEMPTS = 3;
+	protected StatisticsTracker statistics = null;
+	
+	public void initialize(CrawlController c){
+		super.initialize(c);
+		
+		statistics = c.getStatistics();
+	}
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
@@ -49,29 +57,31 @@ public class HostInfoUpdater extends Processor implements CoreAttributeConstants
 					curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
 				}
 			}
-			
-			// if a robots.txt uri doesn't exist, create it and set the expire to be
-			// the same as the dns expire time
-			
-			
-			return;
-		}
+
 			
 		// if it's not dns make sure it's http, 'cause we don't know nuthin' else
-		if(!curi.getUURI().getUri().getScheme().equals("http")){
-			return;
+		}else if(curi.getUURI().getUri().getScheme().equals("http")){
+		
+			if (curi.getUURI().getUri().getPath().equals("/robots.txt")) {
+				// update host with robots info
+				if(curi.getAList().containsKey("http-transaction")) {
+					GetMethod get = (GetMethod)curi.getAList().getObject("http-transaction");
+					curi.getHost().updateRobots(get);
+				
+					// see which epires first, the dns or the robots.txt
+					long expireCuri = ( curi.getHost().getRobotsExpires() < curi.getHost().getIpExpires()) ? curi.getHost().getRobotsExpires() : curi.getHost().getIpExpires();
+					curi.setDontRetryBefore(expireCuri);
+				}
+			}
 		}
 		
-		if (curi.getUURI().getUri().getPath().equals("/robots.txt")) {
-			// update host with robots info
-			if(curi.getAList().containsKey("http-transaction")) {
-				GetMethod get = (GetMethod)curi.getAList().getObject("http-transaction");
-				curi.getHost().updateRobots(get);
-				
-				// see which epires first, the dns or the robots.txt
-				long expireCuri = ( curi.getHost().getRobotsExpires() < curi.getHost().getIpExpires()) ? curi.getHost().getRobotsExpires() : curi.getHost().getIpExpires();
-				curi.setDontRetryBeforeSmart(expireCuri);
-			}
+		// if we've "successfully" fetch it incriment our count for this type of file
+		if(curi.getFetchStatus() > 0 ){
+			statistics.incrementTypeCount(curi.getContentType());	
+		}
+		
+		if ( (statistics.successfulFetchAttempts() % 50) == 0) {
+			controller.printStatistics();
 		}
 	}
 }
