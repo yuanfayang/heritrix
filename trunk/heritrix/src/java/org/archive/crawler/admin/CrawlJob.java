@@ -326,13 +326,13 @@ public class CrawlJob {
         }
         
         FileWriter jobWriter = null;
-        File f = new File(jobDir.getAbsolutePath(), "state.job");
-        if (!f.exists() || !f.canWrite()) {
+        if (!jobDir.exists() || !jobDir.canWrite()) {
             logger.warning("Can't update status on " +
-                    f.getAbsolutePath() + " because file does not" +
-            " exist (or is unwriteable)");
+                jobDir.getAbsolutePath() + " because file does not" +
+                " exist (or is unwriteable)");
             return;
         }
+        File f = new File(jobDir.getAbsolutePath(), "state.job");
         
         try {
             jobWriter = new FileWriter(f, false);
