@@ -33,6 +33,7 @@ import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -67,6 +68,7 @@ import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.crawler.settings.StringList;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
@@ -100,7 +102,8 @@ public class FetchHTTP extends Processor
     public static final String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
     public static final String ATTR_LOAD_COOKIES = "load-cookies-from-file";
     public static final String ATTR_SAVE_COOKIES = "save-cookies-to-file";
-
+    public static final String ATTR_ACCEPT_HEADERS = "accept-headers";
+    
     private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
     private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(Long.MAX_VALUE);
@@ -164,6 +167,10 @@ public class FetchHTTP extends Processor
             ConfigurableX509TrustManager.LEVELS_AS_ARRAY));
         e.setOverrideable(false);
         e.setExpertSetting(true);
+        e = addElementToDefinition(new StringList(ATTR_ACCEPT_HEADERS,
+            "Accept Headers to include in each request. Each must be the"
+            + " complete header, e.g., 'Accept-Language: en'"));
+        e.setExpertSetting(true);
     }
 
     protected void innerProcess(CrawlURI curi) throws InterruptedException {
@@ -185,6 +192,7 @@ public class FetchHTTP extends Processor
             (HttpMethod)new HttpRecorderGetMethod(
                 curi.getUURI().toString(), rec);
         configureMethod(curi, method);
+        maybeSetAcceptHeaders(curi, method);
         boolean addedCredentials = populateCredentials(curi, method);
         int immediateRetries = 0;
         while (true) {
@@ -909,6 +917,27 @@ public class FetchHTTP extends Processor
         }
     }
     
+    private void maybeSetAcceptHeaders(CrawlURI curi, HttpMethod get) {
+        try {
+            StringList accept_headers = (StringList) getAttribute(ATTR_ACCEPT_HEADERS, curi);
+            if (!accept_headers.isEmpty()) {
+                for (ListIterator i = accept_headers.listIterator(); i.hasNext();) {
+                    String hdr = (String) i.next();
+                    String[] nvp = hdr.split(": +");
+                    if (nvp.length == 2) {
+                        get.setRequestHeader(nvp[0], nvp[1]);
+                    }
+                    else {
+                        logger.warning("Invalid accept header: " + hdr);
+                    }
+                }
+            }
+        }
+        catch (AttributeNotFoundException e) {
+            logger.severe(e.getMessage());
+        }
+    }
+
     // custom serialization
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
