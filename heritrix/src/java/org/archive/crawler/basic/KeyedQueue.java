@@ -25,12 +25,15 @@ package org.archive.crawler.basic;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.util.CompositeIterator;
 import org.archive.util.DiskBackedQueue;
 import org.archive.util.Queue;
+import org.archive.util.QueueItemMatcher;
 
 /**
  * Ordered collection of items with the same "classKey". The
@@ -44,12 +47,12 @@ public class KeyedQueue implements Queue, URIStoreable {
     private static Logger logger = Logger.getLogger("org.archive.crawler.basic.KeyedQueue");
 
     long wakeTime;
-    Object classKey;
+    String classKey;
     Object state;
 
     Object inProcessItem;
     
-    LinkedList innerStack;
+    LinkedList innerStack; // topmost items
     Queue innerQ;
 
     /**
@@ -57,7 +60,7 @@ public class KeyedQueue implements Queue, URIStoreable {
      * @param scratchDir
      * @param headMax
      */
-    public KeyedQueue(Object key, File scratchDir, int headMax) {
+    public KeyedQueue(String key, File scratchDir, int headMax) {
         super();
         classKey = key;
         String tmpName = null;
@@ -81,7 +84,7 @@ public class KeyedQueue implements Queue, URIStoreable {
     /**
      * @return Object
      */
-    public Object getClassKey() {
+    public String getClassKey() {
         return classKey;
     }
 
@@ -176,6 +179,20 @@ public class KeyedQueue implements Queue, URIStoreable {
         innerQ.release();
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#getIterator(boolean)
+     */
+    public Iterator getIterator(boolean inCacheOnly) {
+        return new CompositeIterator(innerStack.iterator(),innerQ.getIterator(inCacheOnly));
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
+     */
+    public void deleteMatchedItems(QueueItemMatcher matcher) {
+        innerQ.deleteMatchedItems(matcher);
+    }
+
     /**
      * @return
      */
@@ -201,6 +218,19 @@ public class KeyedQueue implements Queue, URIStoreable {
      */
     public void enqueueHigh(CrawlURI curi) {
         innerStack.addFirst(curi);
+    }
+
+    /**
+     * @return
+     */
+    public Object peek() {
+        if(!innerStack.isEmpty()) {
+            return innerStack.getFirst();
+        }
+        if(!innerQ.isEmpty()) {
+            return innerQ.peek();
+        }
+        return null;
     }
 
 }
