@@ -86,11 +86,18 @@
 					p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
 					p.append(TextUtils.escapeForJavascript(att.getDescription()));
 					p.append("')\">?</a>&nbsp;</td>\n");
-					p.append("<td valign='top'><input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true'");
-					if(localAttribute != null){
-						 p.append(" checked");
+					
+					// Create override
+					p.append("<td valign='top'>");
+					if (att.isOverrideable()) {
+						p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true'");
+						if(localAttribute != null){
+							 p.append(" checked");
+						}
+						p.append(">");
 					}
-					p.append("></td>\n");
+					p.append("</td>\n");
+					
 					p.append("<td><table border='0' cellspacing='0' cellpadding='0'>\n");
 					p.append("<tr><td><select multiple name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
 					for(int i=0 ; i<list.size() ; i++){
@@ -112,11 +119,16 @@
 					p.append(TextUtils.escapeForJavascript(att.getDescription()));
 					p.append("')\">?</a>&nbsp;</td><td>\n");
 
-					p.append("<input type='checkbox' value='true' name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override'");
-					if(localAttribute != null){
-						 p.append(" checked");
+					// Create override
+					if (att.isOverrideable()) {
+						p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + ".override' type='checkbox' value='true'");
+						if(localAttribute != null){
+							 p.append(" checked");
+						}
+						p.append(">");
 					}
-					p.append("></td>\n<td>\n");
+					p.append("</td>\n<td>");
+
 					if(legalValues != null && legalValues.length > 0){
 						//Have legal values. Build combobox.
 						p.append("<select name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px'>\n");
@@ -235,15 +247,10 @@
 		settingsHandler.writeSettingsObject(orderfile);
 		
 		if(request.getParameter("action").equals("done")){
-			if(theJob.isNew()){			
-				handler.addJob(theJob);
-				response.sendRedirect("/admin/jobs.jsp?message=Job created");
-			}else{
-				if(theJob.isRunning()){
-					handler.kickUpdate();
-				}
-				response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
+			if(theJob.isRunning()){
+				handler.kickUpdate();
 			}
+			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
 		}else if(request.getParameter("action").equals("filters")){
 			response.sendRedirect("/admin/jobs/per/filters.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
 		}
@@ -319,7 +326,8 @@
 		<p>	
 			<b>Instructions:</b> To override a setting, check the box in front of it and input new settings.<br>
 			Unchecked settings are inherited settings from super domain. Changes to settings that<br>
-			do not have a checked box will be discarded.
+			do not have a checked box will be discarded. If no checkbox is provided then that<br>
+			setting is not overrideable. It is displayed for information only.
 		<p>		
 		<table>
 			<%=inputForm%>
