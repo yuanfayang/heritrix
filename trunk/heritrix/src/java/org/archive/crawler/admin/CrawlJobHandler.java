@@ -867,7 +867,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
 
         currentJob = (CrawlJob) pendingCrawlJobs.first();
-        assert pendingCrawlJobs.contains(currentJob) : "pendingCrawlJobs is in an illegal state";
+        assert pendingCrawlJobs.contains(currentJob) :
+            "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
 
         Checkpoint resumeFrom = currentJob.getResumeFromCheckpoint();

@@ -689,9 +689,7 @@ public class Heritrix
             {
                 status = "Crawl job ready and pending: " + crawlOrderFile;
             }
-        }
-        else if(runMode)
-        {
+        } else if(runMode) {
             // The use case is that jobs are to be run on a schedule and that
             // if the crawler is in run mode, then the scheduled job will be
             // run at appropriate time.  Otherwise, not.
@@ -706,8 +704,7 @@ public class Heritrix
             " is running.");
         out.println("Web UI is at: " + uiLocation);
         out.println("Login and password: " + adminUN + "/" + adminPW);
-        if (status != null)
-        {
+        if (status != null) {
             out.println(status);
         }
     }
