@@ -33,8 +33,8 @@ import java.util.logging.Logger;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
-import org.archive.util.CompositeIterator;
 import org.archive.util.Inverter;
+import org.archive.util.iterator.CompositeIterator;
 
 
 

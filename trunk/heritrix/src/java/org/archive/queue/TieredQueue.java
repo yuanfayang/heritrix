@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.apache.commons.collections.Predicate;
-import org.archive.util.CompositeIterator;
+import org.archive.util.iterator.CompositeIterator;
 
 /**
  * A queue with multiple internal queues, numbered 0 to n.
