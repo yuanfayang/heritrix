@@ -60,10 +60,9 @@ import org.archive.crawler.datamodel.CrawlURI;
  * 
  * @author John Erik Halse
  */
-public abstract class ComplexType implements DynamicMBean, Type {
+public abstract class ComplexType extends Type implements DynamicMBean {
     private SettingsHandler settingsHandler;
     private ComplexType parent;
-    private String name;
     private String description;
     private String absoluteName;
     private final List definition = new ArrayList();
@@ -77,6 +76,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
      * instantiates this class with the empty constructor.
      */
     private ComplexType() {
+        super(null, null);
     }
 
     /** Creates a new instance of ComplexType.
@@ -85,7 +85,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
      * @param description the description of the element.
      */
     public ComplexType(String name, String description) {
-        this.name = name;
+        super(name, null);
         this.description = description;
     }
 
@@ -93,7 +93,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         throws InvalidAttributeValueException {
         this.settingsHandler = settingsHandler;
         this.parent = null;
-        this.absoluteName = name;
+        this.absoluteName = getName();
         settingsHandler.getSettingsObject(null).addModule((CrawlerModule) this);
         settingsHandler.addToComplexTypeRegistry(this);
         settingsHandler.getSettingsObject(null).addComplexType(this);
@@ -142,7 +142,17 @@ public abstract class ComplexType implements DynamicMBean, Type {
         }
 
         settings.addComplexType(object);
-        object.initializeComplexType(settings);
+        //object.initializeComplexType(settings);
+        if (!object.initialized) {
+            Iterator it = object.definition.iterator();
+            while (it.hasNext()) {
+                Type t = (Type) it.next();
+                object.definitionMap.put(t.getName(), t);
+                object.addElement(settings, t);
+            }
+            object.earlyInitialize(settings);
+        }
+        object.initialized = true;
 
         return object;
     }
@@ -162,10 +172,6 @@ public abstract class ComplexType implements DynamicMBean, Type {
 
     public SettingsHandler getSettingsHandler() {
         return settingsHandler;
-    }
-
-    public String getName() {
-        return name;
     }
 
     /**
@@ -272,7 +278,22 @@ public abstract class ComplexType implements DynamicMBean, Type {
         return data.get(name);
     }
 
-    /* (non-Javadoc)
+    /** Set the value of a specific attribute of the ComplexType.
+     * 
+     * This method sets the specific attribute for the order file.
+     * 
+     * @param attribute The identification of the attribute to be set and the
+     *                  value it is to be set to.
+     * @throws AttributeNotFoundException is thrown if there is no attribute
+     *         with this name.
+     * @throws InvalidAttributeValueException is thrown if the attribute is of
+     *         wrong type and cannot be converted to the right type.
+     * @throws MBeanException this is to conform to the MBean specification, but
+     *         this exception is never thrown, though this might change in the
+     *         future.
+     * @throws ReflectionException this is to conform to the MBean specification, but
+     *         this exception is never thrown, though this might change in the
+     *         future.
      * @see javax.management.DynamicMBean#setAttribute(javax.management.Attribute)
      */
     public void setAttribute(Attribute attribute)
@@ -284,34 +305,34 @@ public abstract class ComplexType implements DynamicMBean, Type {
         setAttribute(settingsHandler.getSettingsObject(null), attribute);
     }
 
+    /** Set the value of a specific attribute of the ComplexType.
+     * 
+     * This method is an extension to the Dynamic MBean specification so that
+     * it is possible to set the value for a CrawlerSettings object other than
+     * the settings object representing the order.
+     * 
+     * @param settings the settings object for which this attributes value is valid
+     * @param attribute The identification of the attribute to be set and the
+     *                  value it is to be set to.
+     * @throws AttributeNotFoundException is thrown if there is no attribute
+     *         with this name.
+     * @throws InvalidAttributeValueException is thrown if the attribute is of
+     *         wrong type and cannot be converted to the right type.
+     * @see javax.management.DynamicMBean#setAttribute(javax.management.Attribute)
+     */
     public void setAttribute(CrawlerSettings settings, Attribute attribute)
         throws InvalidAttributeValueException, AttributeNotFoundException {
-            setAttribute(settings, attribute.getName(), attribute.getValue());
-    }
 
-    public void setAttribute(Type element)
-        throws AttributeNotFoundException, InvalidAttributeValueException {
-        setAttribute(settingsHandler.getSettingsObject(null), element);
-    }
-
-    public void setAttribute(CrawlerSettings settings, Type element)
-        throws InvalidAttributeValueException, AttributeNotFoundException {
-            setAttribute(settings, element.getName(), element);
-    }
-
-    private void setAttribute(CrawlerSettings settings, String name, Object value)
-        throws InvalidAttributeValueException, AttributeNotFoundException {
         DataContainer data = getDataContainer(settings);
-
-        Object oldValue = data.put(name, value);
+        Object value = attribute.getValue();
+        Object oldValue = data.put(attribute.getName(), value);
 
         if (value instanceof ComplexType && value != oldValue) {
-            ComplexType object = (ComplexType) value;
-            setupVaiables((ComplexType) value);
+            ComplexType complex = (ComplexType) value;
+            setupVaiables(complex);
             //object.initializeComplexType(settings);
-            addComplexType(settings, object);
+            addComplexType(settings, complex);
         }
-
     }
 
     private DataContainer getDataContainer(CrawlerSettings settings)
@@ -330,7 +351,10 @@ public abstract class ComplexType implements DynamicMBean, Type {
                 if (parentData == null) {
                     settings.addModule((CrawlerModule) this);
                 } else {
-                    globalSettings().getData(parent.getAbsoluteName()).copyAttributeInfo(getName(), parentData);
+                    globalSettings().getData(
+                        parent.getAbsoluteName()).copyAttributeInfo(
+                        getName(),
+                        parentData);
                 }
             }
 
@@ -395,22 +419,29 @@ public abstract class ComplexType implements DynamicMBean, Type {
         return getAttributeInfo(globalSettings(), name);
     }
 
-    /**
-     * @return
+    /** Get the description of this type
+     * 
+     * The description should be suitable for showing in a user interface.
+     * 
+     * @return this type's description
      */
     public String getDescription() {
         return description;
     }
 
-    /**
-     * @return
+    /** Get the parent of this ComplexType.
+     * 
+     * @return the parent of this ComplexType.
      */
     public ComplexType getParent() {
         return parent;
     }
 
-    /**
-     * @param string
+    /** Set the description of this ComplexType
+     * 
+     * The description should be suitable for showing in a user interface.
+     * 
+     * @param string the description to set for this type.
      */
     public void setDescription(String string) {
         description = string;
@@ -423,6 +454,11 @@ public abstract class ComplexType implements DynamicMBean, Type {
         return this;
     }
 
+    /** Add a new attribute to the definition of this ComplexType.
+     * 
+     * @param type the type to add.
+     * @return the newly added type.
+     */
     public Type addElementToDefinition(Type type) {
         definition.add(type);
         return type;
@@ -449,7 +485,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
         }
         initialized = true;
     }
-    
+
     /** This method can be overridden in subclasses to do local
      * initialisation.
      * 
@@ -475,19 +511,35 @@ public abstract class ComplexType implements DynamicMBean, Type {
     public Object[] getLegalValues() {
         return null;
     }
-    
-    /**
-     * @return
+
+    /** Returns true if this ComplexType should be saved to persistent storage.
+     * 
+     * @return true if this ComplexType should be saved to persistent storage.
      */
     public boolean isTransient() {
         return isTransient;
     }
 
-    /**
-     * @param b
+    /** Set to false if this attribute should not be serialized to persistent
+     * storage.
+     * 
+     * @param b if false this complexType will not be saved to persistent
+     *          storage.
      */
     public void setTransient(boolean b) {
         isTransient = b;
+    }
+
+    /** Returns this object.
+     * 
+     * This method is implemented to be able to treat the ComplexType as an
+     * subclass of @link javax.management.Attribute.
+     * 
+     * @return this object.
+     * @see javax.management.Attribute#getValue()
+     */
+    public Object getValue() {
+        return this;
     }
 
 }

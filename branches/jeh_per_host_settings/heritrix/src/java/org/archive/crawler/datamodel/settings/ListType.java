@@ -32,9 +32,8 @@ import java.util.List;
  * 
  * @author John Erik Halse
  */
-public abstract class ListType implements Type {
+public abstract class ListType extends Type {
     private final List listData = new ArrayList();
-    private final String name;
     private final String description;
 
     /** Constructs a new ListType.
@@ -43,7 +42,7 @@ public abstract class ListType implements Type {
      * @param description the description of the list
      */
     public ListType(String name, String description) {
-        this.name = name;
+        super(name, null);
         this.description = description;
     }
 
@@ -152,13 +151,6 @@ public abstract class ListType implements Type {
         return description;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.settings.Type#getName()
-     */
-    public String getName() {
-        return name;
-    }
-
     /** Removes all elements from this list.
      */
     public void clear() {
@@ -182,5 +174,17 @@ public abstract class ListType implements Type {
      */
     public Object[] getLegalValues() {
         return null;
+    }
+
+    /** Returns this object.
+     * 
+     * This method is implemented to be able to treat the ListType as an
+     * subclass of @link javax.management.Attribute.
+     * 
+     * @return this object.
+     * @see javax.management.Attribute#getValue()
+     */
+    public Object getValue() {
+        return this;
     }
 }
