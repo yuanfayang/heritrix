@@ -35,6 +35,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.RobotsHonoringPolicy;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
@@ -241,7 +242,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         String res = null;
         try {
             if (codebase != null) {
-                codebaseURI = new UURI(codebase);
+                // TODO: Pass in the charset.
+                codebaseURI = UURIFactory.getInstance(codebase);
             }
             while(iter.hasNext()) {
                 res = iter.next().toString();

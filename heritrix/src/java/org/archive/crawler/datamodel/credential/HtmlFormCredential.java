@@ -39,6 +39,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -139,7 +140,7 @@ public class HtmlFormCredential extends Credential {
         String loginUri = getPrerequisite(curi);
         if (loginUri != null) {
             try {
-                UURI uuri = new UURI(curi.getUURI(), loginUri);
+                UURI uuri = UURIFactory.getInstance(curi.getUURI(), loginUri);
                 if (uuri != null && curiStr != null &&
                     uuri.toString().equals(curiStr)) {
                     result = true;

@@ -322,7 +322,7 @@ public class SeedList extends AbstractList implements Serializable {
                             candidate = "http://" + candidate;
                         }
                         try {
-                            this.next = new UURI(candidate);
+                            this.next = UURIFactory.getInstance(candidate);
                             // next loaded with next seed
                             return true;
                         } catch (URIException e1) {

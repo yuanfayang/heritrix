@@ -38,6 +38,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -121,7 +122,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
             UURI viaURI = baseUri;
             if (curi.flattenVia() != null && curi.flattenVia().length() != 0) {
                 try {
-                    viaURI = new UURI(curi.flattenVia());
+                    viaURI = UURIFactory.getInstance(curi.flattenVia());
                 } catch (URIException e) {
                     Object[] array = { curi, curi.flattenVia() };
                     getController().uriErrors.log(
@@ -140,7 +141,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
         }
         String base = curi.getAList().getString(A_HTML_BASE);
         try {
-            return new UURI(base);
+            return UURIFactory.getInstance(base);
         } catch (URIException e) {
             Object[] array = { curi, base };
             getController().uriErrors.log(Level.INFO,e.getMessage(), array);
@@ -158,7 +159,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
 
         try {
             // create and schedule prerequisite
-            UURI prereq = new UURI(getBaseURI(curi),
+            UURI prereq = UURIFactory.getInstance(getBaseURI(curi),
                 (String)curi.getPrerequisiteUri());
             CandidateURI caUri = new CandidateURI(prereq);
             caUri.setSchedulingDirective(CandidateURI.FORCE_REVISIT);
@@ -247,7 +248,7 @@ public class Postselector extends Processor implements CoreAttributeConstants,
                 continue;
             }
             try {
-                UURI uuri = new UURI(baseUri, link);
+                UURI uuri = UURIFactory.getInstance(baseUri, link);
                 CandidateURI caURI = new CandidateURI(uuri);
                 caURI.setSchedulingDirective(directive);
                 caURI.setIsSeed(seed);

@@ -36,7 +36,7 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.settings.refinements.Criteria;
 import org.archive.crawler.settings.refinements.PortnumberCriteria;
@@ -243,7 +243,7 @@ public class XMLSettingsHandlerTest extends SettingsFrameworkTestCase {
         String newFrom2 = (String) newHeaders.getAttribute(
                 CrawlOrder.ATTR_FROM, getMatchHostURI());
         CrawlURI matchHostAndPortURI = new CrawlURI(
-            new UURI("http://www.archive.org:10/index.html"));
+            UURIFactory.getInstance("http://www.archive.org:10/index.html"));
         String newFrom3 = (String) newHeaders.getAttribute(
                 CrawlOrder.ATTR_FROM, matchHostAndPortURI);
 

@@ -30,10 +30,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.UURI;
-
 import junit.framework.TestCase;
+
+import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.UURIFactory;
 
 /**
  * Test the domain scope focus filter.
@@ -124,7 +124,7 @@ public class DomainScopeTest extends TestCase {
     }
 
     public void addURL(ArrayList list, String url) throws URIException {
-        list.add(new UURI(url));
+        list.add(UURIFactory.getInstance(url));
     }
 
     public void testInScope() throws URIException {

@@ -387,7 +387,8 @@ public class CrawlURI extends CandidateURI
                     // the DNS lookup goes atop the host:port
                     // queue that triggered it, rather than 
                     // some other host queue
-                    candidate = new UURI(flattenVia()).getAuthority();
+                    candidate =
+                        UURIFactory.getInstance(flattenVia()).getAuthority();
                 } else {
                     candidate= FetchDNS.parseTargetDomain(this);
                 }
