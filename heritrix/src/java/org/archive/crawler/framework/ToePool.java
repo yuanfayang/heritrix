@@ -165,9 +165,28 @@ public class ToePool extends ThreadGroup {
     public void setSize(int newsize)
     {
         targetSize = newsize;
-        int toSpawn = newsize - getToeCount(); 
-        for(int i = 1; i <= toSpawn; i++) {
-            startNewThread();
+        int difference = newsize - getToeCount(); 
+        if (difference > 0) {
+            // must create threads
+            for(int i = 1; i <= difference; i++) {
+                startNewThread();
+            }
+        } else {
+            // must retire extra threads
+            int retainedToes = targetSize; 
+            Thread[] toes = this.getToes();
+            for (int i = 0; i < toes.length ; i++) {
+                if(!(toes[i] instanceof ToeThread)) {
+                    continue;
+                }
+                retainedToes--;
+                if (retainedToes>=0) {
+                    continue; // this toe is spared
+                }
+                // otherwise:
+                ToeThread tt = (ToeThread)toes[i];
+                tt.retire();
+            }
         }
     }
 

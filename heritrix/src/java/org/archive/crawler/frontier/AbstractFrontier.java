@@ -45,6 +45,7 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue;
@@ -471,8 +472,8 @@ CoreAttributeConstants {
             }
         }
         
-        // enforce operator terminate
-        if(shouldTerminate) {
+        // enforce operator terminate or thread retirement
+        if(shouldTerminate || ((ToeThread)Thread.currentThread()).shouldRetire()) {
             throw new EndedException("terminated");
         }
         
