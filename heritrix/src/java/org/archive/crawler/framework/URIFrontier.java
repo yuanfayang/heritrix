@@ -174,34 +174,9 @@ public interface URIFrontier {
      *
      * @param caURI The URI to schedule.
      *
-     * @see #batchSchedule(CandidateURI)
      * @see CandidateURI#setSchedulingDirective(String)
      */
     public void schedule(CandidateURI caURI);
-
-    /**
-     * Schedules a CandidateURI.
-     *
-     * <p>This is a non-synchronized method for scheduling large numbers of
-     * URIs at a time. All URIs scheduled with this method will be 'held' in
-     * a thread specific container until {@link #batchFlush() batchFlush()} is
-     * invoked.
-     *
-     * @param caURI The URI to schedule.
-     *
-     * @see #schedule(CandidateURI)
-     * @see #batchFlush()
-     */
-    public void batchSchedule(CandidateURI caURI);
-
-    /**
-     * Forces all the URIs that have been batched up for scheduling by the
-     * {@link #batchSchedule(CandidateURI) batchSchedule()} method to be
-     * actually scheduled.
-     *
-     * <p>This is a synchronized method.
-     */
-    public void batchFlush();
 
     /**
      * Report a URI being processed as having finished processing.
@@ -261,23 +236,6 @@ public interface URIFrontier {
      * @return Number of finished URIs.
      */
     public long finishedUriCount();
-
-    /**
-     * Number of URIs that are awaiting detailed processing.
-     *
-     * <p>Number of discovered URIs that have not been inspected for scope or
-     * duplicates (generally referred to as <i>pending</i> URIs. Depending
-     * on the implementation of the <tt>URIFrontier</tt> this might always be
-     * zero. It may also be an adjusted number that tries to account for
-     * duplicates by estimation.
-     *
-     * <p>This does not count URIs scheduled with
-     * {@link #batchSchedule(CandidateURI) batchSchedule()} and are waiting for
-     * the batch to be flushed.
-     *
-     * @return Estimated number of URIs scheduled for prcoessing.
-     */
-    public long pendingUriCount();
 
     /**
      * Number of <i>successfully</i> processed URIs.
