@@ -1,7 +1,8 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
 
-<%@ page import="org.archive.crawler.framework.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*,java.io.*" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,java.util.*,java.io.*" %>
+<%@ page import="org.archive.crawler.datamodel.settings.ComplexType"%>
 <%
 	String job = request.getParameter("job");
 	CrawlJob cjob = null;
@@ -31,14 +32,14 @@
 		%>
 				<fieldset style="width: 600px">
 					<legend>Seed file for '<%=cjob.getJobName()%>'</legend>
-		<%
-				BufferedReader seeds = new BufferedReader(new FileReader(new File(cjob.getCrawlOrder().getStringAt(SimpleHandler.XP_SEEDS_FILE))));
+					<pre><%
+				BufferedReader seeds = new BufferedReader(new FileReader(cjob.getSettingsHandler().getPathRelativeToWorkingDirectory((String)((ComplexType)cjob.getSettingsHandler().getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
 				String sout = seeds.readLine();
 				while(sout!=null){
 					out.println(sout);
 					sout = seeds.readLine();
 				}
-		%>
+		%></pre>
 				</fieldset>
 		<%
 			} // End if(cjob==null)else clause

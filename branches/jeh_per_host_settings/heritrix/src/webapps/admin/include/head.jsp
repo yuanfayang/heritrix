@@ -140,7 +140,7 @@
 							</td>
 							<td class="tab_seperator">&nbsp;</td>
 							<td class="tab<%=tab==2?"_selected":""%>">
-								<a href="/admin/settings.jsp" class="tab_text<%=tab==2?"_selected":""%>">Settings</a>
+								<a href="/admin/profiles.jsp" class="tab_text<%=tab==2?"_selected":""%>">Profiles</a>
 							</td>
 							<td class="tab_seperator">&nbsp;</td>
 							<td class="tab<%=tab==3?"_selected":""%>">
