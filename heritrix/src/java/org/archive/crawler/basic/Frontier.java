@@ -42,6 +42,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
@@ -109,8 +110,10 @@ public class Frontier
 
     public final static String ATTR_MAX_RETRIES = "max-retries";
     public final static String ATTR_RETRY_DELAY = "retry-delay-seconds";
-    public final static String ATTR_MAX_OVERALL_BANDWITH_USAGE =
-        "total-bandwith-usage-KB-sec";
+    public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
+        "total-bandwidth-usage-KB-sec";
+    public final static String ATTR_MAX_HOST_BANDWIDTH_USAGE =
+        "max-per-host-bandwidth-usage-KB-sec";
 
     private final static Float DEFAULT_DELAY_FACTOR = new Float(5);
     private final static Integer DEFAULT_MIN_DELAY = new Integer(500);
@@ -118,7 +121,9 @@ public class Frontier
     private final static Integer DEFAULT_MIN_INTERVAL = new Integer(1000);
     private final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
     private final static Long DEFAULT_RETRY_DELAY = new Long(900); //15 minutes
-    private final static Integer DEFAULT_MAX_OVERALL_BANDWITH_USAGE =
+    private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
+        new Integer(0);
+    private final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
         new Integer(0);
     private final static float KILO_FACTOR = 1.024F;
     
@@ -222,9 +227,10 @@ public class Frontier
     // scheduledDuplicates/totalUrisScheduled is running estimate of rate to discount pendingQueues
     long scheduledDuplicates = 0;
 
-    // Used when bandwith constraint are used
+    // Used when bandwidth constraint are used
     long nextURIEmitTime = 0;
     long processedBytesAfterLastEmittedURI = 0;
+    int lastMaxBandwidthKB = 0;
     
     /**
      * @param name
@@ -262,10 +268,21 @@ public class Frontier
             "failed to be retrieved (seconds). ",
             DEFAULT_RETRY_DELAY));
         Type t = addElementToDefinition(
-            new SimpleType(ATTR_MAX_OVERALL_BANDWITH_USAGE,
-            "The maximum average bandwith the crawler is allowed to use",
-            DEFAULT_MAX_OVERALL_BANDWITH_USAGE));
+            new SimpleType(ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
+            "The maximum average bandwidth the crawler is allowed to use. \n" +
+            "The actual readspeed is not affected by this setting, it only " +
+            "holds back new URIs from being processed when the bandwidth " +
+            "usage has been to high.\n0 means no bandwidth limitation.",
+            DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE));
         t.setOverrideable(false);
+        addElementToDefinition(
+            new SimpleType(ATTR_MAX_HOST_BANDWIDTH_USAGE,
+            "The maximum average bandwidth the crawler is allowed to use per " +
+            "host. \nThe actual readspeed is not affected by this setting, " +
+            "it only holds back new URIs from being processed when the " +
+            "bandwidth usage has been to high.\n0 means no bandwidth " +
+            "limitation.",
+            DEFAULT_MAX_HOST_BANDWIDTH_USAGE));
     }
 
     /**
@@ -282,6 +299,7 @@ public class Frontier
         //pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
 
         alreadyIncluded = new FPUURISet(new MemLongFPSet(20,0.75f));
+        //alreadyIncluded = new PagedUURISet(c.getScratchDisk());
 
         // alternative: pure disk-based set
 //        alreadyIncluded = new FPUURISet(new DiskLongFPSet(c.getScratchDisk(),"alreadyIncluded",3,0.5f));
@@ -489,32 +507,38 @@ public class Frontier
         long waitMax = 0;
         CrawlURI curi = null;
 
-        int maxBandwithKB;
+        int maxBandwidthKB;
         try {
-            maxBandwithKB = ((Integer) getAttribute(
-                    ATTR_MAX_OVERALL_BANDWITH_USAGE)).intValue();
+            maxBandwidthKB = ((Integer) getAttribute(
+                    ATTR_MAX_OVERALL_BANDWIDTH_USAGE)).intValue();
         } catch (Exception e) {
             // Should never happen, but if, return default.
             logger.severe(e.getLocalizedMessage());
-            maxBandwithKB = DEFAULT_MAX_OVERALL_BANDWITH_USAGE.intValue();
+            maxBandwidthKB = DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE.intValue();
         }
-        if (maxBandwithKB > 0) {
-            // Enforce bandwith limit
+        if (maxBandwidthKB > 0) {
+            // Make sure that new bandwidth setting doesn't affect total crawl
+            if (maxBandwidthKB != lastMaxBandwidthKB) {
+                lastMaxBandwidthKB = maxBandwidthKB;
+                processedBytesAfterLastEmittedURI = totalProcessedBytes;
+            }
+
+            // Enforce bandwidth limit
             long sleepTime = nextURIEmitTime - now;
 
-            float maxBandwith = maxBandwithKB * KILO_FACTOR;
+            float maxBandwidth = maxBandwidthKB * KILO_FACTOR;
             long processedBytes =
                 totalProcessedBytes - processedBytesAfterLastEmittedURI;
             long shouldHaveEmittedDiff =
                 nextURIEmitTime == 0 ? 0 : nextURIEmitTime - now;
-            nextURIEmitTime = (long) (processedBytes / maxBandwith)
+            nextURIEmitTime = (long) (processedBytes / maxBandwidth)
                     + now + shouldHaveEmittedDiff;
             processedBytesAfterLastEmittedURI = totalProcessedBytes;
 
             if (sleepTime > 0) {
                 synchronized(this) {
                     logger.fine("Frontier sleeps for: " + sleepTime
-                            + "ms to respect bandwith limit.");
+                            + "ms to respect bandwidth limit.");
                     try {
                         Thread.sleep(sleepTime);
                     } catch (InterruptedException e) {
@@ -1124,13 +1148,33 @@ public class Frontier
                 durationToWait = maxDelay;
             }
 
-            long minInterval = ((Integer) getAttribute(ATTR_MIN_INTERVAL, curi)).longValue();
+            long minInterval = 
+                ((Integer) getAttribute(ATTR_MIN_INTERVAL, curi)).longValue();
             if (durationToWait < (minInterval - durationTaken) ) {
-                // wait at least as long as necessary to space off from last fetch begin
+                // wait at least as long as necessary to space off
+                // from last fetch begin
                 durationToWait = minInterval - durationTaken;
             }
 
-            if(durationToWait>0) {
+            long now = System.currentTimeMillis();
+            int maxBandwidthKB = ((Integer) getAttribute(
+                        ATTR_MAX_HOST_BANDWIDTH_USAGE, curi)).intValue();
+            if (maxBandwidthKB > 0) {
+                // Enforce bandwidth limit
+                CrawlHost host = curi.getServer().getHost();
+                long minDurationToWait = 
+                    host.getEarliestNextURIEmitTime() - now;
+                float maxBandwidth = maxBandwidthKB * KILO_FACTOR;
+                long processedBytes = curi.getContentSize();
+                host.setEarliestNextURIEmitTime(
+                        (long) (processedBytes / maxBandwidth) + now);
+
+                if (minDurationToWait > durationToWait) {
+                    durationToWait = minDurationToWait;
+                }
+            }
+            
+            if(durationToWait > 0) {
                 snoozeQueueUntil(kq, completeTime + durationToWait);
                 return;
             } 
