@@ -460,12 +460,12 @@
     <unitTestSourceDirectory>src/java</unitTestSourceDirectory>
 
     <unitTest>
+      <excludes>
+        <exclude>**/*SelfTest.java</exclude>
+      </excludes>
       <includes>
         <include>**/*Test.java</include>
       </includes>
-      <excludes>
-        <exclude>**/SelfTest.java</exclude>
-      </excludes>
     </unitTest>
 
   </build>
