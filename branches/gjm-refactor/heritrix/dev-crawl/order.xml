@@ -5,26 +5,22 @@
 
  <scope 
    class="org.archive.crawler.basic.Scope"
-   mode="domain"
-   max-link-hops="100"
+   
+   max-link-hops="1"
    max-trans-hops="3">
    
   <seeds>
-   http://www.archive.org/movies/movies.php
-   http://www.yahoo.com
+ #  http://www.archive.org/movies/movies.php
+ #  http://www.drudgereport.com
+    http://www.yahoo.com
+    http://www.google.com/dirhp
   </seeds>
-  
-  <filter 
-    name="domain-focus" 
-    class="org.archive.crawler.filter.SeedExtensionFilter"
-    mode="domain" 
-   /> 
-   
+ 
  </scope>
  
  <behavior
    disk-path="disk"
-   max-toe-threads="2"
+   max-toe-threads="10"
    >
    
   <http-headers
@@ -100,6 +96,7 @@
       name="Archiver" 
       class="org.archive.crawler.basic.ARCWriter"
       next="Updater"
+      path="arcs"
       compress="yes"
       max-arc-size="20000000">
 	   <!--
