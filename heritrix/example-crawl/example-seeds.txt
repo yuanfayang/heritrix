@@ -5,7 +5,7 @@ http://www.msn.com
 # http://www.cnn.com
 http://www.drudgereport.com
 # http://www.aol.com
-# http://www.msnbc.com
+http://www.msnbc.com
 
 # http://www.archive.org
 # http://www.google.com
@@ -20,4 +20,5 @@ http://www.drudgereport.com
 
 #http://java.sun.com
 
+# http://www.loc.gov
 
