@@ -803,6 +803,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     public void initialTasks() {
+        super.initialTasks();
         configureHttp();
 
         // load cookies from a file if specified in the order file.
@@ -814,6 +815,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         HeritrixProtocolSocketFactory.cleanup();
         // At the end save cookies to the file specified in the order file.
         saveCookies();
+        super.finalTasks();
     }
 
     protected void configureHttp() throws RuntimeException {

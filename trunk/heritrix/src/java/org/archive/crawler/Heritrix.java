@@ -585,8 +585,7 @@ public class Heritrix
      *
      * @return Property if found or default if no such property.
      */
-    protected static String getProperty(String key)
-    {
+    public static String getProperty(String key) {
         return getProperty(key, null);
     }
 
@@ -600,14 +599,23 @@ public class Heritrix
      *
      * @return Property if found or default if no such property.
      */
-    protected static String getProperty(String key, String fallback)
+    public static String getProperty(String key, String fallback)
     {
         String value = System.getProperty(key);
-        if (value == null && properties !=  null)
-        {
+        if (value == null && properties !=  null) {
             value = properties.getProperty(key);
         }
         return (value != null)? value: fallback;
+    }
+    
+    
+    public static int getIntProperty(String key, int fallback) {
+        String tmp = getProperty(key);
+        int result = fallback;
+        if (tmp != null && tmp.length() > 0) {
+            result = Integer.parseInt(tmp);
+        }
+        return result;
     }
 
     /**

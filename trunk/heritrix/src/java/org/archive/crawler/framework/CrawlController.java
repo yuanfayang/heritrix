@@ -517,41 +517,49 @@ public class CrawlController implements Serializable {
 
     private void setupDisk() throws AttributeNotFoundException {
         String diskPath
-        = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
+            = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
         disk = getSettingsHandler().getPathRelativeToWorkingDirectory(diskPath);
         disk.mkdirs();
-
-        String logsDiskPath
-        = (String) order.getAttribute(null, CrawlOrder.ATTR_LOGS_PATH);
-        logsDisk = new File(logsDiskPath);
-        if (!logsDisk.isAbsolute()) {
-            logsDisk = new File(disk.getPath(), logsDiskPath);
+        
+        this.logsDisk = getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
+        this.checkpointsDisk = getSettingsDir(CrawlOrder.ATTR_CHECKPOINTS_PATH);
+        this.stateDisk = getSettingsDir(CrawlOrder.ATTR_STATE_PATH);
+        this.scratchDisk = getSettingsDir(CrawlOrder.ATTR_SCRATCH_PATH);
+    }
+    
+    /**
+     * @return The logging directory or null if problem reading the settings.
+     */
+    public File getLogsDir() {
+        File f = null;
+        try {
+            f = getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
+        } catch (AttributeNotFoundException e) {
+            logger.severe("Failed get of logs directory: " + e.getMessage());
         }
-        logsDisk.mkdirs();
-
-        String checkpointsDiskPath
-        = (String) order.getAttribute(null, CrawlOrder.ATTR_CHECKPOINTS_PATH);
-        checkpointsDisk = new File(logsDiskPath);
-        if (!checkpointsDisk.isAbsolute()) {
-            checkpointsDisk = new File(disk.getPath(), checkpointsDiskPath);
+        return f;
+    }
+    
+    /**
+     * Return fullpath to the directory named by <code>key</code>
+     * in settings.
+     * If directory does not exist, it and all intermediary dirs
+     * will be created.
+     * @param key Key to use going to settings.
+     * @return Full path to directory named by <code>key</code>.
+     * @throws AttributeNotFoundException
+     */
+    protected File getSettingsDir(String key)
+    throws AttributeNotFoundException {
+        String path = (String)order.getAttribute(null, key);
+        File f = new File(path);
+        if (!f.isAbsolute()) {
+            f = new File(disk.getPath(), path);
         }
-        checkpointsDisk.mkdirs();
-
-        String stateDiskPath
-        = (String) order.getAttribute(null, CrawlOrder.ATTR_STATE_PATH);
-        stateDisk = new File(stateDiskPath);
-        if (!stateDisk.isAbsolute()) {
-            stateDisk = new File(disk.getPath(), stateDiskPath);
+        if (!f.exists()) {
+            f.mkdirs();
         }
-        stateDisk.mkdirs();
-
-        String scratchDiskPath
-        = (String) order.getAttribute(null, CrawlOrder.ATTR_SCRATCH_PATH);
-        scratchDisk = new File(scratchDiskPath);
-        if (!scratchDisk.isAbsolute()) {
-            scratchDisk = new File(disk.getPath(), scratchDiskPath);
-        }
-        scratchDisk.mkdirs();
+        return f;
     }
 
     /**
