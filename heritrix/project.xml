@@ -198,12 +198,12 @@
         </dependency>
         <dependency>
             <id>dnsjava</id>
-            <version>1.3</version>
+            <version>1.5</version>
             <url>http://www.xbill.org/dnsjava/</url>
             <properties>
                 <description>DNS Lookups.
                 </description>
-                <license>LGPL</license>
+                <license>BSD</license>
             </properties>
         </dependency>
         <dependency>

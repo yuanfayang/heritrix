@@ -3,7 +3,7 @@
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/commons-logging.jar"/>
-	<classpathentry kind="lib" path="lib/dnsjava.jar"/>
+	<classpathentry kind="lib" path="lib/dnsjava-1.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/httpclient-cvs-20031002.jar"/>
 	<classpathentry kind="lib" path="lib/itext.jar"/>
 	<classpathentry kind="lib" path="lib/jasper-compiler.jar"/>
