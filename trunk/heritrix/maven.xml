@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
-<project>
+<project 
+    default="dist"
+    xmlns:j="jelly:core" 
+    xmlns:u="jelly:util" 
+    xmlns:maven="jelly:maven"
+    xmlns:ant="jelly:ant">
+
     <preGoal name="xdoc:jelly-transform">
         <attainGoal name="faq"/>
     </preGoal> 
@@ -55,6 +61,7 @@
           </fileset>
         </chmod>
 
+
         <!--Copy webapps to build directory w/ filtering enabled.
             Do the copy like this doing non-jpg first and then gif.
             Otherwise, ant breaks the jpgs because it interpolates.
@@ -69,6 +76,11 @@
             <include name="**/*.gif"/>
           </fileset>
         </copy>
+
+        <!--Compile jsp pages into a jar.
+            TODO: Make this conditional.
+         -->
+        <attainGoal name="jspc" />
 
         <!--Now create war files of what is in build directory.-->
         <property name="webapps.dir" value="${maven.build.dir}/webapps" />
@@ -99,6 +111,69 @@
           </fileset>
         </copy>
     </postGoal>
+
+    <goal name="testing" >
+        <property name="webapp" value="XXXXXXXX" />
+        <attainGoal name="makewebapp" />
+    </goal>
+
+    <goal name="jspc">
+        <!--Compile down to servlets all in the ${webapp.name} webapp
+            (Set this ant property before calling this goal).  Compile the 
+            generated java classes.  Make a jar of them and install under
+            the webapp/lib dir.  Add web.xml fragment that lists all servlets
+            to the web.xml.
+            
+            Currently does admin webapp only.
+         -->
+        <property name="webapp.name" value="admin" />
+        <echo>[jspc] Precompiling ${webapp.name} jsp pages.</echo>
+        <property name="jspc" value="${maven.build.dir}/jspc/${webapp.name}" />
+        <property name="jsp.jar" value="${jspc}/jsp.jar" />
+        <property name="web.fragment" value="${jspc}/web-fragment.xml" />
+        <property name="jspc.src" value="${jspc}/src" />
+        <property name="jspc.classes" value="${jspc}/classes" />
+        <property name="webapp.src.dir" value="${maven.src.dir}/webapps" />
+        <property name="webinf"
+            value="${maven.build.dir}/webapps/${webapp.name}/WEB-INF" />
+        <!--Make a couple of dirs.-->
+        <mkdir dir="${jspc.src}" />
+        <mkdir dir="${jspc.classes}" />
+        <!--Classpath to use in the believe.-->
+        <path id="jspc.classpath">
+            <path  refid="maven.dependency.classpath" />
+            <pathelement path="${maven.build.dest}" />
+        </path>
+        <!--Run the compilation of the jsp pages. Note, jasper has its own
+            included ant task but ant also comes w/ a jspc.  We use the ant
+            one below.  The jasper one gave me grief trying to figure out
+            exclude of 'include' dir.
+         -->
+        <jspc destdir="${jspc.src}" srcdir="${webapp.src.dir}/${webapp.name}"
+            verbose="100" package="org.archive.crawler.jspc.${webapp.name}"
+            webinc="${web.fragment}" classpathref="jspc.classpath"
+            uriroot="${webapp.src.dir}/${webapp.name}" >
+                <!--This include/exclude mechanism is really contrary.
+                    The below seems to work properly though keeping the
+                    include out of the fragments and out of the path of
+                    our compiler; nothing under include is compilable
+                    but its needed.
+                 -->
+                <exclude name="**/include/*.jsp"/>
+        </jspc>
+        <javac sourcepath="" srcdir="${jspc.src}" destdir="${jspc.classes}" 
+            classpathref="jspc.classpath" />
+        <loadfile srcFile="${web.fragment}" property="fragment"
+            failonerror="true" />
+        <replace file="${webinf}/web.xml"
+            token="&lt;!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]--&gt;"
+            value="${fragment}" />
+        <!--Jar up classes and copy into webapp/lib.-->
+        <property name="webapp.lib" value="${webinf}/lib" />
+        <jar destfile="${jsp.jar}" basedir="${jspc.classes}" />
+        <mkdir dir="${webapp.lib}" />
+        <copy todir="${webapp.lib}" file="${jsp.jar}" /> 
+    </goal>
 
     <goal name="site:update-sourceforge">
         <!--This goal will update sourceforge crawler.archive.org site. Assumes

@@ -4,4 +4,5 @@
 
 <web-app>
 	<display-name>Admin</display-name>
+    <!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]-->
 </web-app>
