@@ -113,6 +113,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		crawling = false;
 		currentJob.setStatus(sExitMessage);
 		completedCrawlJobs.add(currentJob);
+		currentJob.setReadOnly(); //Further changes have no meaning
 		currentJob = null;
 		controller = null; // Remove the reference so that the old controller can be gc.
 		if(shouldcrawl)
