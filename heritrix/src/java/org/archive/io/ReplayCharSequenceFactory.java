@@ -256,7 +256,9 @@ public class ReplayCharSequenceFactory {
      * Provides a (Replay)CharSequence view on recorded stream bytes (a prefix
      * buffer and overflow backing file).
      *
-     * Uses a wraparound rolling buffer of the last windowSize bytes read
+     * Treats the byte stream as 8-bit.
+     * 
+     * <p>Uses a wraparound rolling buffer of the last windowSize bytes read
      * from disk in memory; as long as the 'random access' of a CharSequence
      * user stays within this window, access should remain fairly efficient.
      * (So design any regexps pointed at these CharSequences to work within
@@ -341,6 +343,13 @@ public class ReplayCharSequenceFactory {
          */
         private int contentOffset;
 
+        /**
+         * 8-bit encoding used reading single bytes from buffer and
+         * stream.
+         */
+        private static final String DEFAULT_SINGLE_BYTE_ENCODING =
+            "ISO-8859-1";
+
         
         /**
          * Constructor.
@@ -399,32 +408,28 @@ public class ReplayCharSequenceFactory {
          * 
          * @return Characater at offset <code>index</code>.
          */
-        public char charAt(int index)
-        {
-            char c;
+        public char charAt(int index) {
+            int c = -1;
             // Add to index start-of-content offset to get us over HTTP header
             // if present.
             index += this.contentOffset;
             if (index < this.prefixBuffer.length) {
-            
                 // If index is into our prefix buffer.
-                c = (char) this.prefixBuffer[index];
-                
+                c = this.prefixBuffer[index];
             } else if (index >= this.wrapOrigin &&
                 (index - this.wrapOrigin) < this.wraparoundBuffer.length) {
-                
                 // If index is into our buffer window on underlying backing file.
-                c = (char)this.wraparoundBuffer[
+                c = this.wraparoundBuffer[
                         ((index - this.wrapOrigin) + this.wrapOffset) %
                             this.wraparoundBuffer.length];
             } else {
-                
                 // Index is outside of both prefix buffer and our buffer window
                 // onto the underlying backing file.  Fix the buffer window
                 // location.
                 c = faultCharAt(index);
             }
-            
+            // Stream is treated as single byte.  Make sure characters returned
+            // are not negative.
             return (char)(c & 0xff);
         }
 
@@ -445,7 +450,7 @@ public class ReplayCharSequenceFactory {
          * @param index Index of character to fetch.
          * @return A character that's outside the current buffers
          */
-        private char faultCharAt(int index) {
+        private int faultCharAt(int index) {
             if(index >= this.wrapOrigin + this.wraparoundBuffer.length) {
                 // Moving forward
                 while (index >= this.wrapOrigin + this.wraparoundBuffer.length)
@@ -453,11 +458,11 @@ public class ReplayCharSequenceFactory {
                     // TODO optimize this
                     advanceBuffer();
                 }
-                return charAt(index-this.contentOffset);
+                return charAt(index - this.contentOffset);
             } else {
                 // Moving backward
                 recenterBuffer(index);
-                return charAt(index-this.contentOffset);
+                return charAt(index - this.contentOffset);
             }
         }
 
@@ -556,32 +561,42 @@ public class ReplayCharSequenceFactory {
         /* (non-Javadoc)
          * @see org.archive.io.EnhancedCharSequence#substring(int, int)
          */
-        public String substring(int offset, int length) {
-            StringBuffer ret = new StringBuffer(length);
+        public String substring(int offset, int len) {
+            StringBuffer ret = new StringBuffer(len);
             // Add to offset start-of-content offset to get us over HTTP header
             // if present.
             offset += this.contentOffset;
             if (offset < this.prefixBuffer.length) {
                 // Need something from the prefix buffer.
                 int from = offset;
-                int count = this.prefixBuffer.length-from; //To the end of the buffer
-                if (offset+length < this.prefixBuffer.length){
-                    count = length; //length falls within the buffer.
+                // To the end of the buffer
+                int count = this.prefixBuffer.length - from;
+                if (offset + len < this.prefixBuffer.length) {
+                    count = len; // length falls within the buffer.
                 } else {
                     // Will need more then is in the prefixBuffer.
-                    offset = prefixBuffer.length+1;
-                    length = length-count;
+                    offset = this.prefixBuffer.length + 1;
+                    len = len - count;
                 }
                 // Since we are dealing with a byte buffer we'll have to use 
                 // a String and then wrap up in a StringBuffer to concat with
                 // the backing file. TODO: This can probably be optimized.
-                ret.append(new String(this.prefixBuffer,from,count));
-                
+                //
+                // Also, force an 8-bit encoding.  Default jvm encoding is
+                // usually -- us context -- 7 bit ascii.  If we don't force
+                // 8-bit, characters above 127 are considered rubbish.
+                try {
+                    ret.append(new String(this.prefixBuffer,from,count,
+                        DEFAULT_SINGLE_BYTE_ENCODING));
+                }
+                catch (UnsupportedEncodingException e) {
+                    logger.severe("Failed encoding string: " + e.getMessage());
+                }
             } 
             if (offset >= this.prefixBuffer.length) {
                 // TODO: Maybe better performance can be gained by reading 
                 // blocks from files.
-                int to = offset + length;
+                int to = offset + len;
                 for(int i = offset ; i < to ; i++) {
                     ret.append(charAt(i - this.contentOffset));
                 }
