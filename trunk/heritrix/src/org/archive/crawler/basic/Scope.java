@@ -84,13 +84,21 @@ public class Scope extends CrawlScope {
 		}
 		// setup exclude filter
 		if(getNodeAt("@max-link-hops")!=null) {
-			// SeedExtensionFilter implied
+			// HopsFilter implied
 			excludeFilter = new HopsFilter();
 			excludeFilter.setNode(xNode);
-		} else {
-			excludeFilter = (Filter) instantiate("exclude");
+		} 
+		Filter optionalExclude = (Filter) instantiate("exclude");
+		if (optionalExclude != null) {
+			if (excludeFilter == null) {
+				excludeFilter = optionalExclude;
+			} else {
+				excludeFilter = excludeFilter.orWith(optionalExclude);
+			}
 		}
-		excludeFilter.initialize(controller);
+		if (excludeFilter != null) {
+			excludeFilter.initialize(controller);
+		} 
 	}
 
 	/**
