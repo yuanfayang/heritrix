@@ -10,6 +10,7 @@
 	<classpathentry kind="lib" path="lib/jasper-runtime-tomcat-4.1.24.jar"/>
 	<classpathentry kind="lib" path="lib/javaswf-CVS-SNAPSHOT-1.jar"/>
 	<classpathentry kind="lib" path="lib/jakarta-poi-1.5.1.jar"/>
+	<classpathentry kind="lib" path="lib/jakarta-poi-scratchpad-1.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/jmxri-4.2.15rc0.jar"/>
 	<classpathentry kind="lib" path="lib/jmxtools-4.2.15rc0.jar"/>
 	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
