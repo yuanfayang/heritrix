@@ -412,13 +412,13 @@ public class ExperimentalFrontier
         
         if (curi.isSuccess()) {
             totalProcessedBytes += curi.getContentSize();
-            successCount++;
+            incrementSucceededFetchCount();
             controller.fireCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
             controller.recover.finishedSuccess(curi);        
         } else if(isDisregarded(curi)) {
             // Check for codes that mean that while we the crawler did
             // manage to try it, it must be disregarded for some reason.
-            disregardedCount++;
+            incrementDisregardedUriCount();
             //Let interested listeners know of disregard disposition.
             controller.fireCrawledURIDisregardEvent(curi);
             // if exception, also send to crawlErrors
@@ -443,7 +443,7 @@ public class ExperimentalFrontier
                     array);
             }
 
-            this.failedCount++;
+            incrementFailedFetchCount();
             this.controller.recover.finishedFailure(curi);
         }
         
@@ -664,11 +664,10 @@ public class ExperimentalFrontier
         }
         // Delete from pendingQueue
 //        numberOfDeletes += pendingQueue.deleteMatchedItems(mat);
-        queuedCount -= numberOfDeletes;
+        decrementQueuedCount(numberOfDeletes);
         return numberOfDeletes;
     }
 
-    
     /**
      * @return One-line summary report, useful for display when full report
      * may be unwieldy. 
@@ -699,11 +698,11 @@ public class ExperimentalFrontier
                    + controller.getOrder().getCrawlOrderName() + "\n");
         rep.append("\n -----===== STATS =====-----\n");
         rep.append(" Discovered:    " + discoveredUriCount() + "\n");
-        rep.append(" Queued:        " + queuedCount + "\n");
+        rep.append(" Queued:        " + queuedUriCount() + "\n");
         rep.append(" Finished:      " + finishedUriCount() + "\n");
-        rep.append("  Successfully: " + successCount + "\n");
-        rep.append("  Failed:       " + failedCount + "\n");
-        rep.append("  Disregarded:  " + disregardedCount + "\n");
+        rep.append("  Successfully: " + succeededFetchCount() + "\n");
+        rep.append("  Failed:       " + failedFetchCount() + "\n");
+        rep.append("  Disregarded:  " + disregardedUriCount() + "\n");
         rep.append("\n -----===== QUEUES =====-----\n");
         rep.append(" Already included size:     " + alreadyIncluded.count()+"\n");
 //        rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
@@ -774,7 +773,7 @@ public class ExperimentalFrontier
         //treat as disregarded
         controller.fireCrawledURIDisregardEvent(curi);
         log(curi);
-        disregardedCount++;
+        incrementDisregardedUriCount();
         curi.stripToMinimal();
         curi.processingCleanup();
     }

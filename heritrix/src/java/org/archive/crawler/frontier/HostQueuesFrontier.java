@@ -196,11 +196,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     LinkedList inactiveClassQueues = new LinkedList(); // of KeyedQueues
     
     // top-level stats
-    long queuedCount = 0;
+    long queuedUriCount = 0;
 
-    long successCount = 0;
-    long failedCount = 0;
-    long disregardedCount = 0; //URI's that are disregarded (for example because of robot.txt rules)
+    long succeededFetchCount = 0;
+    long failedFetchCount = 0;
+    long disregardedUriCount = 0; //URI's that are disregarded (for example because of robot.txt rules)
 
     long totalProcessedBytes = 0;
 
@@ -705,7 +705,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             // curi is dismissed without prejudice: it can be reconstituted
             forget(curi);
         } else {
-            disregardedCount++;
+            disregardedUriCount++;
             curi.stripToMinimal();
         }
     }
@@ -766,7 +766,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             // curi is dismissed without prejudice: it can be reconstituted
             forget(curi);
         } else {
-            successCount++;
+            succeededFetchCount++;
         }
         // Let everyone know in case they want to do something before we strip
         // the curi.
@@ -851,7 +851,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         logger.finer(this + ".emitCuri(" + curi + ")");
         this.controller.recover.emitted(curi);
         // One less URI in the queue.
-        this.queuedCount--;
+        this.queuedUriCount--;
         return curi;
     }
 
@@ -977,7 +977,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 updateQ(kq);
             }
         }
-        this.queuedCount++;
+        this.queuedUriCount++;
         // Update recovery log.
         this.controller.recover.added(curi);
         return;
@@ -1108,7 +1108,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             // curi is dismissed without prejudice: it can be reconstituted
             forget(curi);
         } else {
-            this.failedCount++;
+            this.failedFetchCount++;
             curi.stripToMinimal();
         }
         this.controller.recover.finishedFailure(curi);
@@ -1219,7 +1219,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }
         enqueueToKeyed(curi);
-        queuedCount++;
+        queuedUriCount++;
     }
 
     /**
@@ -1289,35 +1289,35 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
     public long queuedUriCount(){
-        return queuedCount;
+        return queuedUriCount;
     }
 
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
-        return successCount+failedCount+disregardedCount;
+        return succeededFetchCount+failedFetchCount+disregardedUriCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#successfullyFetchedCount()
+     * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
      */
-    public long successfullyFetchedCount(){
-        return successCount;
+    public long succeededFetchCount(){
+        return succeededFetchCount;
     }
 
     /** (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#failedFetchCount()
      */
     public long failedFetchCount(){
-       return failedCount;
+       return failedFetchCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#disregardedFetchCount()
+     * @see org.archive.crawler.framework.Frontier#disregardedUriCount()
      */
-    public long disregardedFetchCount() {
-        return disregardedCount;
+    public long disregardedUriCount() {
+        return disregardedUriCount;
     }
 
     public long totalBytesWritten() {
@@ -1457,7 +1457,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         }
         // Delete from pendingQueue
 //        numberOfDeletes += pendingQueue.deleteMatchedItems(mat);
-        queuedCount -= numberOfDeletes;
+        queuedUriCount -= numberOfDeletes;
         return numberOfDeletes;
     }
 
@@ -1492,11 +1492,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                    + controller.getOrder().getCrawlOrderName() + "\n");
         rep.append("\n -----===== STATS =====-----\n");
         rep.append(" Discovered:    " + discoveredUriCount() + "\n");
-        rep.append(" Queued:        " + queuedCount + "\n");
+        rep.append(" Queued:        " + queuedUriCount() + "\n");
         rep.append(" Finished:      " + finishedUriCount() + "\n");
-        rep.append("  Successfully: " + successCount + "\n");
-        rep.append("  Failed:       " + failedCount + "\n");
-        rep.append("  Disregarded:  " + disregardedCount + "\n");
+        rep.append("  Successfully: " + succeededFetchCount() + "\n");
+        rep.append("  Failed:       " + failedFetchCount() + "\n");
+        rep.append("  Disregarded:  " + disregardedUriCount() + "\n");
         rep.append("\n -----===== QUEUES =====-----\n");
         rep.append(" Already included size:     " + alreadyIncluded.count()+"\n");
 //        rep.append(" Pending queue length:      " + pendingQueue.length()+ "\n");
