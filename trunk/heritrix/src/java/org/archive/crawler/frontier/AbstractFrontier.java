@@ -122,6 +122,11 @@ CoreAttributeConstants {
     protected final static String 
         ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.]*"; // word chars, dash, period
     
+    /** whether pause, rather than finish, when crawl appears done */
+    public final static String ATTR_PAUSE_AT_FINISH = "pause-at-finish";
+    // TODO: change default to true once well-tested
+    protected final static Boolean DEFAULT_PAUSE_AT_FINISH = new Boolean(false); 
+
     // top-level stats
     private long queuedUriCount = 0;  // total URIs queued to be visited
     private long succeededFetchCount = 0; 
@@ -222,6 +227,14 @@ CoreAttributeConstants {
         t.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FORCE_QUEUE,
                 Level.WARNING, "This field must contain only alphanumeric " +
                         "characters plus period, dash, or underscore."));
+        t = addElementToDefinition(new SimpleType(ATTR_PAUSE_AT_FINISH,
+                "Whether to pause when the crawl appears finished, rather " +
+                "than immediately end the crawl. This gives the operator an " +
+                "opportunity to view crawl results, and possibly add URIs or " +
+                "adjust settings, while the crawl state is still available. " +
+                "Default is false.",
+                DEFAULT_PAUSE_AT_FINISH));
+
     }
     
     
@@ -308,6 +321,16 @@ CoreAttributeConstants {
      */
     protected synchronized void incrementQueuedUriCount() {
         queuedUriCount++;
+    }
+    
+    /**
+     * Increment the running count of queued URIs. Synchronized
+     * because operations on longs are not atomic. 
+     * 
+     * @param increment amount to increment the queued count
+     */
+    protected synchronized void incrementQueuedUriCount(long increment) {
+        queuedUriCount += increment;
     }
     
     /**
@@ -429,13 +452,26 @@ CoreAttributeConstants {
     protected synchronized void preNext(long now) throws InterruptedException, EndedException {
         
         // check completion conditions
-        controller.checkFinish();
+        if(controller.atFinish()) {
+            if(((Boolean)getUncheckedAttribute(null,ATTR_PAUSE_AT_FINISH)).booleanValue()) {
+                controller.requestCrawlPause();
+            } else {
+                controller.beginCrawlStop();
+            }
+        }
         
         // enforce operator pause
-        while(shouldPause) {
-            controller.toePaused();
-            wait();
+        if(shouldPause) {
+            while(shouldPause) {
+                controller.toePaused();
+                wait();
+            }
+            // exitted pause; possibly finish regardless of pause-at-finish
+            if(controller.atFinish()) {
+                controller.beginCrawlStop();
+            }
         }
+        
         // enforce operator terminate
         if(shouldTerminate) {
             throw new EndedException("terminated");
