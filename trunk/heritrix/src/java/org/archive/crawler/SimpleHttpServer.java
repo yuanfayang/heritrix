@@ -74,7 +74,7 @@ public class SimpleHttpServer
 
         // Have accesses go into the stdout/stderr log for now.  Later, if
         // demand, we'll have accesses go into their own file.
-        NCSARequestLog a = new NCSARequestLog(Heritrix.getHERITRIX_OUT_FILE());
+        NCSARequestLog a = new NCSARequestLog(Heritrix.HERITRIX_OUT_FILE);
         a.setRetainDays(90);
         a.setAppend(true);
         a.setExtended(false);
