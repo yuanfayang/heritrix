@@ -30,9 +30,8 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.settings.ModuleType;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.MapType;
+import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 
 /**
@@ -137,11 +136,10 @@ public class Processor extends ModuleType {
      * @return True if all filters accept this CrawlURI.
      */
     protected boolean filtersAccept(CrawlURI curi) {
-        CrawlerSettings settings = getSettingsFromObject(curi);
-        if (filters.isEmpty(settings)) {
+        if (filters.isEmpty(curi)) {
             return true;
         }
-        Iterator iter = filters.iterator(settings);
+        Iterator iter = filters.iterator(curi);
         while(iter.hasNext()) {
             Filter f = (Filter)iter.next();
             if( !f.accepts(curi) ) {

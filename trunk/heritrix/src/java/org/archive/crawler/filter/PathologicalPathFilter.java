@@ -75,8 +75,7 @@ public class PathologicalPathFilter extends URIRegExpFilter {
     protected String getRegexp(Object o) {
         int rep;
         try {
-            rep = ((Integer) getAttribute(getSettingsFromObject(o),
-                    ATTR_REPETITIONS)).intValue();
+            rep = ((Integer) getAttribute(o, ATTR_REPETITIONS)).intValue();
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
             return null;

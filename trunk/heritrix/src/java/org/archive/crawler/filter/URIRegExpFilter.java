@@ -85,7 +85,7 @@ public class URIRegExpFilter extends Filter {
      */
     protected String getRegexp(Object o) {
         try {
-            return (String) getAttribute(getSettingsFromObject(o), ATTR_REGEXP);
+            return (String) getAttribute(o, ATTR_REGEXP);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
             return null;  // Basically the filter is inactive if this occurs.

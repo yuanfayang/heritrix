@@ -40,7 +40,6 @@ import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.filter.OrFilter;
@@ -212,13 +211,12 @@ public class CrawlScope extends Filter {
 
         int maxLinkHops = 0;
         int maxTransHops = 0;
-        CrawlerSettings settings = getSettingsFromObject(o);
 
         try {
             maxLinkHops = ((Integer) getAttribute(
-                    settings, CrawlScope.ATTR_MAX_LINK_HOPS)).intValue();
+                    o, CrawlScope.ATTR_MAX_LINK_HOPS)).intValue();
             maxTransHops = ((Integer) getAttribute(
-                    settings, CrawlScope.ATTR_MAX_TRANS_HOPS)).intValue();
+                    o, CrawlScope.ATTR_MAX_TRANS_HOPS)).intValue();
         } catch (AttributeNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

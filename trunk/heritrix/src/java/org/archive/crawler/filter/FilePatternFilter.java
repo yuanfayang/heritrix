@@ -105,8 +105,7 @@ public class FilePatternFilter extends URIRegExpFilter {
      */
     protected String getRegexp(Object o) {
         try {
-            String patternType = (String)getAttribute(getSettingsFromObject(o),
-                ATTR_USE_DEFAULT);
+            String patternType = (String)getAttribute(o, ATTR_USE_DEFAULT);
             
             if (patternType.equals(ALL)){
                 return ALL_DEFAULT_PATTERNS;   
@@ -119,8 +118,7 @@ public class FilePatternFilter extends URIRegExpFilter {
             }else if(patternType.equals(MISC)){
                 return MISC_PATTERNS;
             }else if(patternType.equals(CUSTOM)){                            
-                return (String) getAttribute(
-                        getSettingsFromObject(o), ATTR_REGEXP);
+                return (String) getAttribute(o, ATTR_REGEXP);
                         
             }else {
                 assert false : "Unrecognized pattern type " + patternType +

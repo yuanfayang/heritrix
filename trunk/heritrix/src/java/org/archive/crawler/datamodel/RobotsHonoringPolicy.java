@@ -26,6 +26,7 @@ package org.archive.crawler.datamodel;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.settings.ModuleType;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
@@ -122,8 +123,7 @@ public class RobotsHonoringPolicy  extends ModuleType {
      */
     public boolean shouldMasquerade(CrawlURI curi) {
         try {
-            return ((Boolean) getAttribute(
-                getSettingsFromObject(curi), ATTR_MASQUERADE)).booleanValue();
+            return ((Boolean) getAttribute(curi, ATTR_MASQUERADE)).booleanValue();
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
             return false;
@@ -157,10 +157,10 @@ public class RobotsHonoringPolicy  extends ModuleType {
      *
      * @return policy type
      */
-    public int getType(CrawlerSettings settings) {
+    public int getType(Object context) {
         int type = CLASSIC;
         try {
-            String typeName = (String) getAttribute(settings, "type");
+            String typeName = (String) getAttribute(context, "type");
             if(typeName.equals("classic")) {
                 type = RobotsHonoringPolicy.CLASSIC;
             } else if(typeName.equals("ignore")) {
@@ -188,7 +188,7 @@ public class RobotsHonoringPolicy  extends ModuleType {
      * @return true if the policy is of the submitted type
      */
     public boolean isType(Object o, int type) {
-        return type == getType(getSettingsFromObject(o));
+        return type == getType(o);
     }
 
 }

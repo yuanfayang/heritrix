@@ -78,8 +78,7 @@ public class OrFilter extends Filter {
 
     private MapType getFilters (Object o) {
         try {
-            MapType filters = (MapType) getAttribute(
-                getSettingsFromObject(o), ATTR_FILTERS);
+            MapType filters = (MapType) getAttribute(o, ATTR_FILTERS);
             return filters;
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getLocalizedMessage());
@@ -110,11 +109,11 @@ public class OrFilter extends Filter {
     }
 
     public boolean isEmpty(Object o) {
-        return getFilters(o).isEmpty(getSettingsFromObject(o));
+        return getFilters(o).isEmpty(o);
     }
 
     public Iterator iterator(Object o) {
-        return getFilters(o).iterator(getSettingsFromObject(o));
+        return getFilters(o).iterator(o);
     }
 
     /* (non-Javadoc)
