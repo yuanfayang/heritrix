@@ -92,6 +92,7 @@ public class JobConfigureUtils {
      *            Http request.
      * @param response
      *            Http response.
+     * @return Crawljob.
      */
     protected static CrawlJob getAndCheckJob(CrawlJob job,
             HttpServletRequest request, HttpServletResponse response) {
@@ -277,10 +278,11 @@ public class JobConfigureUtils {
     /**
      * Handle job action.
      * @param handler CrawlJobHandler to operate on.
+     * @param request Http request.
      * @param response Http response.
      * @param redirectBasePath Full path for where to go next if an error.
      * E.g. "/admin/jobs/per/overview.jsp".
-     * @param domain Current domain.  Pass null for global domain.
+     * @param currDomain Current domain.  Pass null for global domain.
      * @return The crawljob configured.
      * @throws IOException
      * @throws AttributeNotFoundException
@@ -294,11 +296,11 @@ public class JobConfigureUtils {
         InvalidAttributeValueException {
 
         // Load the job to manipulate
-        CrawlJob theJob = checkCrawlJob(handler.getJob(request.getParameter("job")),
-            response, redirectBasePath, currDomain);
+        CrawlJob theJob =
+            checkCrawlJob(handler.getJob(request.getParameter("job")),
+                response, redirectBasePath, currDomain);
 
-        XMLSettingsHandler settingsHandler = (XMLSettingsHandler)theJob
-            .getSettingsHandler();
+        XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
         // If currDomain is null, then we're at top-level.
         CrawlerSettings settings = settingsHandler
             .getSettingsObject(currDomain);
@@ -367,8 +369,7 @@ public class JobConfigureUtils {
     
     /**
      * Print complete seeds list on passed in PrintWriter.
-     * @param settingsHandler Current handler.
-     * @param out Writer to write out all seeds to.
+     * @param hndlr Current handler.
      * @param payload What to write out.
      * @throws AttributeNotFoundException
      * @throws MBeanException
@@ -377,7 +378,8 @@ public class JobConfigureUtils {
      * @throws IOException
      */
     public static void printOutSeeds(SettingsHandler hndlr, String payload)
-    throws AttributeNotFoundException, MBeanException, ReflectionException, IOException {
+    throws AttributeNotFoundException, MBeanException, ReflectionException,
+    IOException {
         File seedfile = getSeedFile(hndlr);
         writeReader(new StringReader(payload),
             new BufferedWriter(new FileWriter(seedfile)));
@@ -385,7 +387,7 @@ public class JobConfigureUtils {
     
     /**
      * Print complete seeds list on passed in PrintWriter.
-     * @param settingsHandler Current handler.
+     * @param hndlr Current handler.
      * @param out Writer to write out all seeds to.
      * @throws ReflectionException
      * @throws MBeanException
@@ -402,6 +404,7 @@ public class JobConfigureUtils {
     }
     
     /**
+     * @param hndlr Settings handler.
      * @return Seeds file.
      * @throws ReflectionException
      * @throws MBeanException
@@ -416,14 +419,16 @@ public class JobConfigureUtils {
     
     /**
      * Print complete seeds list on passed in PrintWriter.
-     * @param seedsFile File to read seeds from.
+     * @param reader File to read seeds from.
      * @param out Writer to write out all seeds to.
      * @throws IOException
      */
     protected static void writeReader(Reader reader, Writer out)
     throws IOException {
-        char [] buffer = new char[1024 * 4];
-        for(int read = reader.read(buffer); read != -1; read = reader.read()) {
+        final int bufferSize = 1024 * 4;
+        char [] buffer = new char[bufferSize];
+        int read = -1;
+        while ((read = reader.read(buffer, 0, bufferSize)) != -1) {
             out.write(buffer, 0, read);
         }
         out.flush();
