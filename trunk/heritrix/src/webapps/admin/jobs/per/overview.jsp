@@ -32,16 +32,6 @@
 
 	// Load display level
 	String currDomain = request.getParameter("currDomain");
-	String parentDomain = null;
-	if(currDomain==null){
-		currDomain = "";
-	} else {
-		if(currDomain.indexOf('.')==-1){
-			parentDomain = "";
-		} else {
-			parentDomain = currDomain.substring(currDomain.indexOf('.')+1);
-		}
-	}
 
 	// Get the settings objects.
 	XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
@@ -67,7 +57,17 @@
 				}
 			}
 			return;
-		}else if(action.equals("modules")){
+		} else if(action.equals("edit")){
+			// Edit settings.
+			// First make sure the file exists (create it if it doesn't)
+			String theDomain = request.getParameter("currDomain");
+			if(theDomain != null && theDomain.length()>0){
+				settingsHandler.writeSettingsObject(settingsHandler.getOrCreateSettingsObject(theDomain));
+				// Then redirect to configure override.
+				response.sendRedirect("/admin/jobs/per/configure.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
+				return;
+			}
+		} else if(action.equals("modules")){
 			// Go to modules.
 			response.sendRedirect("/admin/jobs/modules.jsp?job="+theJob.getUID());
 			return;
@@ -82,6 +82,17 @@
 		}
 	}
 	
+	// Adjust display data.
+	String parentDomain = null;
+	if(currDomain==null){
+		currDomain = "";
+	} else {
+		if(currDomain.indexOf('.')==-1){
+			parentDomain = "";
+		} else {
+			parentDomain = currDomain.substring(currDomain.indexOf('.')+1);
+		}
+	}	
 	String title = "Per domain settings";
 	int tab = theJob.isProfile()?2:1;
 	int jobtab = 3;
@@ -107,6 +118,22 @@
 			doSubmit();
 		}
 		
+		function doCreateEdit(){
+			document.frmPer.action.value="edit";
+			document.frmPer.currDomain.value = document.frmPer.newDomain.value;
+			doSubmit();
+		}
+		
+		function doCreate(){
+			document.frmPer.action.value="edit";
+			doSubmit();
+		}
+		
+		function doEdit(){
+			document.frmPer.action.value="edit";
+			doSubmit();
+		}
+		
 		function doGotoDomain(domain){
 			document.frmPer.currDomain.value = domain;
 			document.frmPer.action.value="noop";
@@ -122,11 +149,11 @@
 		<input type="hidden" name="currDomain" value="<%=currDomain%>">
 		<b>
 			Known overrides for 
-			<%=currDomain.length()>0?"'"+currDomain+"' of the ":""%>
 			<%=theJob.isProfile()?"profile":"job"%>
 			<%=theJob.getJobName()%>:
 		</b>
 		<p>
+		<b><%=currDomain%></b>
 		<ul>
 		<% 	
 			if(currDomain.length()>0) { 
@@ -150,17 +177,18 @@
 			if(currDomain.length()>0){ 
 				if(localSettings != null){
 		%>
-					<p><a href="">Edit override for '<%=currDomain%>'</a><br>
+					<p><a href="javascript:doEdit()">Edit override for '<%=currDomain%>'</a><br>
 		<%
 				} else {
 		%>
-					<p><a href="">Create override for '<%=currDomain%>'</a>
+					<p><a href="javascript:doCreate()">Create override for '<%=currDomain%>'</a>
 		<% 
 				}
 			} 
 		%>
 		<p>
-			<b>New override:</b><br>
-			Domain: <input value="<%=currDomain%>"><input type="button" value="Create">
+			<b>Quick override:</b><br>
+			Domain: <input name="newDomain" value="<%=currDomain%>">
+			<input type="button" value="Create/Edit" onClick="doCreateEdit()">
 	</form>
 <%@include file="/include/foot.jsp"%>
