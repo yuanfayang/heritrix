@@ -11,7 +11,7 @@ use strict;
 my $crawllog = shift;
 my $urlprefix = shift;
 my $flatcrawllog = "flat.crawl.log";
-my $sort = "~brad/bin/av_sort_good_buffer_size -k5,5 -S 70%";
+my $sort = "av_sort -k5,5 -S 50%";
 my $bin_search = "/alexa/bin/bin_search";
 my @stack;
 my $cmd;
@@ -20,27 +20,27 @@ my $cmd;
 # todo: add some smarts to it.
 if ( ! -f $flatcrawllog ) {
     open (FH, "< $crawllog")
-	or die "Coudn't open file $crawllog: ($!)\n";
+        or die "Coudn't open file $crawllog: ($!)\n";
     open (FLATLOG, "| $sort > $flatcrawllog")
-	or die "Couldn't open filehandle to $flatcrawllog: ($!)\n";
+        or die "Couldn't open filehandle to $flatcrawllog: ($!)\n";
     print STDOUT "Sorting crawl log file... please wait. This may take a several minutes and it is done only once!\n"; 
     my $line = "";
     while (<FH>) {
-	chomp;
-	if (/^200[34]/) {
-	    if ($line) {
-		$line =~ tr/ //s;
-		print FLATLOG "$line\n";
-	    }
-	    $line = "";
-	    $line = $_;
-	} else {
-	    if (/^  /) {
-		$line .= $_;
-	    } else {
-		$line .= "\n";
-	    }
-	}
+        chomp;
+        if (/^200[34]/) {
+            if ($line) {
+                $line =~ tr/ //s;
+                print FLATLOG "$line\n";
+            }
+            $line = "";
+            $line = $_;
+        } else {
+            if (/^  /) {
+                $line .= $_;
+            } else {
+                $line .= "\n";
+            }
+        }
     }
     close(FH);
     close(FLATLOG);
@@ -64,7 +64,7 @@ if (scalar @parts == 10) {
 
 # Check if seed.
 if (scalar @parts == 7) {
-    print "Found seed for requested prefix!\nSeed: $parts[4]\n";
+    print "Found seed for requested prefix!\n$parts[0]: Seed: $parts[4]\n";
     exit;
 }
 
@@ -73,7 +73,7 @@ my @chars = split(//, $parts[7]);
 my $pathchar = $chars[-1];
 
 # push first url in path to stack
-my $line = "$pathchar $parts[4]\n";
+my $line = "$parts[0]: $pathchar: $parts[4]\n";
 push @stack, $line;
 
 # search for this url next
@@ -91,7 +91,7 @@ while ( $i < $pathlength ){
 
     # Adjust for crawl.log that has extra field due (multi part mime type)
     if (scalar @parts == 10) {
-	splice(@parts, 7, 1);
+        splice(@parts, 7, 1);
     }
 
     # get next path character
@@ -99,7 +99,7 @@ while ( $i < $pathlength ){
     $pathchar = $chars[-1];
     
     # push url in path to stack
-    $line = "$pathchar: $urlinpath\n";
+    $line = "$parts[0]: $pathchar: $urlinpath\n";
     push @stack, $line;
     
     # next url in path
@@ -107,10 +107,24 @@ while ( $i < $pathlength ){
     $i++;
 }
 
-$line = "$urlinpath\n";
+$line = "$parts[0]: $urlinpath\n";
 push @stack, $line;
-my $spaces = "";
+my $spaces = " ";
 while (@stack){
-    print "$spaces", pop(@stack);
+    @parts = split(/ /, pop(@stack));
+    $line = formatDate($parts[0]) . ":" . $spaces;
+    $i=1;
+    while ( $i < scalar @parts) {
+        $line .= " " . $parts[$i];
+        $i++;
+    }
+    print "$line";
     $spaces .= " ";
+}
+
+
+sub formatDate {
+
+    my @p = split(//, shift);
+    return "$p[0]$p[1]$p[2]$p[3]-$p[4]$p[5]-$p[6]$p[7]-$p[8]$p[9]-$p[10]$p[11]-$p[12]$p[14]";
 }
