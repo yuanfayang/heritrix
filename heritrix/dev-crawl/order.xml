@@ -11,8 +11,8 @@
    
   <seeds>
  #  http://www.archive.org/movies/movies.php
- # http://www.drudgereport.com
- # http://www.yahoo.com
+   http://www.drudgereport.com
+   http://www.yahoo.com
    http://www.google.com/dirhp
    
   </seeds>
@@ -21,7 +21,7 @@
  
  <behavior
    disk-path="disk"
-   max-toe-threads="2"
+   max-toe-threads="25"
    >
    
   <http-headers
@@ -52,13 +52,13 @@
     
     <processor 
       name="DNS" 
-      class="org.archive.crawler.fetcher.FetcherDNS"
+      class="org.archive.crawler.fetcher.FetchDNS"
       next="HTTP"
      />
     
     <processor 
       name="HTTP" 
-      class="org.archive.crawler.fetcher.FetcherHTTPSimple"
+      class="org.archive.crawler.fetcher.FetchHTTP"
       next="ExtractorHTTP"
       
       timeout-seconds="10"
