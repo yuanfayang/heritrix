@@ -64,6 +64,7 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 						
 			http.executeMethod(get);
 			
+			
 			// force read-to-end, so that any socket hangs occur here,
 			// not in later modules
 			// 
@@ -72,7 +73,9 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, C
 			// spider, just one doing some indexing/analysis --
 			// this might be wasteful. As it is, it just moves 
 			// the cost here rather than elsewhere. )
-			get.getResponseBody(); 			
+			get.getResponseBody(); 	
+			
+			curi.setFetchStatus(1);		
 			
 			Header contentLength = get.getResponseHeader("Content-Length");
 			logger.info(
