@@ -96,6 +96,12 @@ public interface UriUniqFilter {
     public long flush();
     
     /**
+     * Close down any allocated resources.
+     * Makes sense calling this when checkpointing.
+     */
+    public void close();
+    
+    /**
      * Objects that have a URI implement this interface.
      * 
      * Implementers of this interface would include UURI.

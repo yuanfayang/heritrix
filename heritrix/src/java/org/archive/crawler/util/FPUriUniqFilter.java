@@ -103,4 +103,8 @@ public class FPUriUniqFilter implements UriUniqFilter, Serializable {
         // No items pile up in this implementation
         return 0;
     }
+
+	public void close() {
+		// Nothing to do.
+	}
 }
