@@ -68,6 +68,12 @@ public class UURIFactoryTest extends TestCase {
 		assertTrue(ESCAPED_URISTR.equals(uuriStr));
 	}
     
+    public final void testPort0080is80() throws URIException {
+        UURI uuri = UURIFactory.getInstance("http://archive.org:0080");
+        assertTrue("Doesn't strip leading zeros " + uuri,
+            uuri.toString().equals("http://archive.org/"));
+    }
+    
     public final void testBadPath() {
         String message = null;
         UURI uuri = null;

@@ -180,7 +180,7 @@ public class UURIFactory extends URI {
     /**
      * Authority port number regex.
      */
-    final static Pattern PORTREGEX = Pattern.compile(".*:([0-9]+)$");
+    final static Pattern PORTREGEX = Pattern.compile("(.*:)([0-9]+)$");
     
     /**
      * Legal characters in the domain label part of a uri authority.
@@ -473,12 +473,12 @@ public class UURIFactory extends URI {
         if (uriAuthority != null) {
             if (uriScheme != null && uriScheme.length() > 0 &&
                     uriScheme.equals(HTTP)) {
+                uriAuthority = checkPort(uriAuthority);
                 uriAuthority = stripTail(uriAuthority, HTTP_PORT);
-                checkPort(uriAuthority);
             } else if (uriScheme != null && uriScheme.length() > 0 &&
                     uriScheme.equals(HTTPS)) {
+                uriAuthority = checkPort(uriAuthority);
                 uriAuthority = stripTail(uriAuthority, HTTPS_PORT);
-                checkPort(uriAuthority);
             }
             // Strip any prefix dot or tail dots from the authority.
             uriAuthority = stripTail(uriAuthority, DOT);
@@ -525,6 +525,9 @@ public class UURIFactory extends URI {
      */
     protected void validateEscaping(String component)
     throws URIException {
+        if (component == null) {
+            return;
+        }
         byte[] rawdata = null;
         try { 
             rawdata = URLCodec.decodeUrl(EncodingUtil.getAsciiBytes(component));
@@ -599,14 +602,28 @@ public class UURIFactory extends URI {
      * Check port on passed http authority.  Make sure the size is not larger
      * than allowed: See the 'port' definition on this
      * page, http://www.kerio.com/manual/wrp/en/418.htm.
+     * Also, we've seen port numbers of '0080' whose leading zeros confuse
+     * the parent class. Strip the leading zeros.
      *
      * @param uriAuthority
+     * @return Null or an amended port number.
      */
-    private void checkPort(String uriAuthority) throws URIException {
+    private String checkPort(String uriAuthority)
+    throws URIException {
         Matcher m = PORTREGEX.matcher(uriAuthority);
         if (m.matches()) {
-            String no = m.group(1);
+            String no = m.group(2);
             if (no != null && no.length() > 0) {
+                // First check if the port has leading zeros
+                // as in '0080'.  Strip them if it has and
+                // then reconstitute the uriAuthority.
+                boolean hasLeadingZeros = false;
+                while (no.charAt(0) == '0') {
+                    no = no.substring(1);
+                    hasLeadingZeros = true;
+                }
+                uriAuthority = m.group(1) + no;
+                // Now makesure the number is legit.
                 int portNo = Integer.parseInt(no);
                 if (portNo <= 0 || portNo > 65535) {
                     throw new URIException("Port out of bounds: " +
@@ -614,6 +631,7 @@ public class UURIFactory extends URI {
                 }
             }
         }
+        return uriAuthority;
     }
 
     /**
