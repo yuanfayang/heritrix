@@ -99,6 +99,14 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
         return isTransient;
     }
 
+    /** Returns true if this Type should only show up in expert mode in UI.
+     * 
+     * @return true if this Type should only show up in expert mode in UI.
+     */
+    public boolean isExpertSetting() {
+        return isExpertSetting;
+    }
+    
     /**
      * @return Default value.
      */
