@@ -8,8 +8,10 @@ package org.archive.io;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.logging.Level;
 
 import org.archive.crawler.io.CharSubSequence;
+import org.archive.util.DevUtils;
 
 
 /**
@@ -140,12 +142,20 @@ public class ReplayCharSequence implements CharSequence {
 	}
 	
 	private void loadBuffer() {
+		long len = -1;
 		try {
+			len=raFile.length();
 			raFile.seek(wrapOrigin-prefixBuffer.length);
 			raFile.readFully(wraparoundBuffer,0,(int)Math.min(wraparoundBuffer.length, size-wrapOrigin ));
 		} catch (IOException e) {
 			// TODO convert this to a runtime error?
-			e.printStackTrace();
+			DevUtils.logger.log(
+				Level.SEVERE,
+				"raFile.seek("+(wrapOrigin-prefixBuffer.length)+")\n"+
+				"raFile.readFully(wraparoundBuffer,0,"+((int)Math.min(wraparoundBuffer.length, size-wrapOrigin ))+")\n"+
+				"raFile.length()"+len+"\n"+
+				DevUtils.extraInfo(),
+				e);
 		}
 	}
 
@@ -161,7 +171,7 @@ public class ReplayCharSequence implements CharSequence {
 			wrapOrigin++;
 		} catch (IOException e) {
 			// TODO convert this to a runtime error?
-			e.printStackTrace();
+			DevUtils.logger.log(Level.SEVERE,"advanceBuffer()"+DevUtils.extraInfo(),e);
 		}
 		
 	}

@@ -10,6 +10,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -156,7 +157,7 @@ public class DiskLongFPSet extends AbstractLongFPSet implements LongFPSet {
 			rawRafile.writeByte(EMPTY);
 		} catch (IOException e) {
 			// TODO convert to runtime exception
-			e.printStackTrace();
+			DevUtils.logger.log(Level.SEVERE,"clearAt("+index+")"+DevUtils.extraInfo(),e);
 		}
 	}
 
