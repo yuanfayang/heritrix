@@ -24,11 +24,17 @@
 package org.archive.util;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
+import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
+import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.io.*;
 import org.archive.io.RandomAccessInputStream;
 import org.archive.io.RandomAccessOutputStream;
@@ -40,7 +46,7 @@ import org.archive.io.RandomAccessOutputStream;
  * @author gojomo
  *
  */
-public class DiskStack implements Stack {
+public class DiskStack implements Stack, Serializable {
     /** the backing file */
     protected File storage;
 
@@ -50,16 +56,33 @@ public class DiskStack implements Stack {
     /** pointer to top prevIndex + topItem in backing file */
     protected long topItemPointer = -1;
     
-    RandomAccessFile raf;
-    HeaderlessObjectOutputStream pushStream;
-    HeaderlessObjectInputStream popStream;
+    transient RandomAccessFile raf;
+    transient HeaderlessObjectOutputStream pushStream;
+    transient HeaderlessObjectInputStream popStream;
 
     /**
-     * 
+     * @param storage
+     * @throws FileNotFoundException
+     * @throws IOException
      */
     public DiskStack(File storage) throws IOException {
         super();
         this.storage = storage;
+        // test minimally if supplied file is sensible
+        if(storage.exists()==false) {
+            storage.createNewFile();
+        }
+    }
+    
+    /**
+     * Initialization tasks are put off until backing is 
+     * needed, and may be repeated if backing is discarded
+     * during object lifetime.
+     * 
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    private void lazyInitialize() throws FileNotFoundException, IOException {
         raf = new RandomAccessFile(storage, "rws");
         if (raf.length()>0) {
             restore();
@@ -69,9 +92,10 @@ public class DiskStack implements Stack {
         pushStream = new HeaderlessObjectOutputStream(new RandomAccessOutputStream(raf));
         popStream = new HeaderlessObjectInputStream(new RandomAccessInputStream(raf));
     }
-    
+
     /**
-     * 
+     * Add date to front of fresh backing file.
+     * @throws IOException
      */
     private void start() throws IOException {
         raf.writeLong(0);
@@ -80,7 +104,7 @@ public class DiskStack implements Stack {
 
     /**
      * Read height and index of top item from end of file.
-     * 
+     * @throws IOException
      */
     private void restore() throws IOException {
         raf.seek(raf.length()-16);
@@ -93,6 +117,9 @@ public class DiskStack implements Stack {
      */
     public void push(Object object) {
         try {
+            if(raf==null) {
+                lazyInitialize();
+            }
             long itemStartPointer = raf.getFilePointer();
             pushStream.writeObject(object);
             pushStream.reset();
@@ -115,11 +142,15 @@ public class DiskStack implements Stack {
         }
         Object retObj = null;
         try {
+            if(raf == null) {
+                lazyInitialize();
+            }
             raf.seek(topItemPointer-8);
             long nextPointer = raf.readLong();
             retObj = popStream.readObject();
             height--;
             raf.seek(topItemPointer);
+            raf.setLength(topItemPointer); // truncate to current size
             topItemPointer = nextPointer;
         } catch (IOException e) {
             DevUtils.logger.log(Level.SEVERE,"pop()" +
@@ -151,9 +182,15 @@ public class DiskStack implements Stack {
      * @throws IOException
      */
     public void close() throws IOException {
-        pushStream.close();
-        popStream.close();
-        raf.close();
+        if(pushStream!=null) {
+            pushStream.close();
+        }
+        if(popStream!=null) {
+            popStream.close();
+        }
+        if(raf!=null) {
+            raf.close();
+        }
     }
     
     /**
@@ -170,8 +207,12 @@ public class DiskStack implements Stack {
      * @see org.archive.util.Stack#release()
      */
     public void release() {
-        // TODO Auto-generated method stub
-        
+        try {
+            discard();
+        } catch (IOException e) {
+            DevUtils.logger.log(Level.SEVERE,"release()" +
+                    DevUtils.extraInfo(),e);
+        }
     }
 
     /* (non-Javadoc)
@@ -181,4 +222,23 @@ public class DiskStack implements Stack {
         return height == 0;
     }
 
+    // custom serialization
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        stream.defaultWriteObject();
+        // now, must snapshot constituent files and their current extents/positions
+        // to allow equivalent restoral
+        ObjectPlusFilesOutputStream coostream = (ObjectPlusFilesOutputStream)stream;
+        // save storage file
+        // TODO: ensure copy, since file is editted in place
+        coostream.snapshotAppendOnlyFile(storage ); 
+    }
+    
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        // now, must restore constituent files to their checkpoint-time
+        // extents and read positions
+        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;       
+        // restore storage file
+        coistream.restoreFile(storage);
+    }
 }
