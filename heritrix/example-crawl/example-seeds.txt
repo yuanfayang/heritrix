@@ -1,9 +1,9 @@
 http://www.yahoo.com
-# http://www.google.com/dirhp
+http://www.google.com/dirhp
 # http://www.lycos.com
-# http://www.msn.com
+http://www.msn.com
 # http://www.cnn.com
-# http://www.drudgereport.com
+http://www.drudgereport.com
 # http://www.aol.com
 # http://www.msnbc.com
 
@@ -19,3 +19,5 @@ http://www.yahoo.com
 # http://enterprise.lycos.com
 
 #http://java.sun.com
+
+

@@ -18,10 +18,10 @@
     modifier="not"
     regexp=".*/(.*)/\1/\1/.*" />
    <filter 
-    name="no-more-than-10-slashes" 
+    name="no-more-than-20-slashes" 
     class="org.archive.crawler.util.URIRegExpFilter"
     modifier="not"
-    regexp=".*//.*/.*/.*/.*/.*/.*/.*/.*/.*" />
+    regexp=".*//.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*/.*" />
   </selector>
   
   <scheduler class="org.archive.crawler.basic.SimpleScheduler" />
@@ -34,6 +34,7 @@
      class="org.archive.crawler.basic.SimplePreconditionEnforcer"
      next="DNS">
     <params delay-factor="20" />
+    <params minimum-delay="1000" />
    </processor>
    <processor 
      name="DNS" 
@@ -80,7 +81,7 @@
    <max-pages value="1000" />
    <max-duration value="1h" />
    <max-resources-per-site value="1000" />
-   <max-toe-threads value="5" />
+   <max-toe-threads value="50" />
   </limits>
 
  </crawler-behavior>
