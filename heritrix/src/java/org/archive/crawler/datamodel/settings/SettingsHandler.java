@@ -286,8 +286,10 @@ public abstract class SettingsHandler {
         }
 
         // Add the settings object to the cache
-        synchronized (hostToSettings) {
-            hostToSettings.put(host, new WeakReference(settings));
+        if (ref == null) {
+            synchronized (hostToSettings) {
+                hostToSettings.put(host, new WeakReference(settings));
+            }
         }
 
         return settings;

@@ -73,7 +73,7 @@ public class DataContainer extends HashMap {
      *
      * @param name name of the element to add.
      * @param description description ef the element to add.
-     * @param overrideable should this element be overrideable.
+     * @param isOverrideable should this element be overrideable.
      * @param legalValues an array of legal values for this element or null if
      *                    there are no constraints.
      * @param defaultValue the default value for this element.
@@ -112,7 +112,7 @@ public class DataContainer extends HashMap {
      *
      * @param name name of the element to add.
      * @param description description ef the element to add.
-     * @param overrideable should this element be overrideable.
+     * @param isOverrideable should this element be overrideable.
      * @param legalValues an array of legal values for this element or null if
      *                    there are no constraints.
      * @param defaultValue the default value for this element.
@@ -155,6 +155,19 @@ public class DataContainer extends HashMap {
         if (this != destination) {
             Object attribute = attributeNames.get(name);
             destination.attributeNames.put(name, attribute);
+        }
+    }
+
+    protected void copyAttribute(String name, DataContainer destination) throws InvalidAttributeValueException, AttributeNotFoundException {
+        if (this != destination) {
+            MBeanAttributeInfo attribute = (MBeanAttributeInfo) attributeNames.get(name);
+            destination.attributeNames.put(name, attribute);
+            
+            int index = attributes.indexOf(attribute);
+            if (index != -1 && !destination.attributes.contains(attribute)) {
+                destination.attributes.add(index, attribute);
+            }
+            destination.put(attribute.getName(), get(attribute.getName()));
         }
     }
 
