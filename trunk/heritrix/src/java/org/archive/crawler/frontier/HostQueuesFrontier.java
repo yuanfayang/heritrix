@@ -800,7 +800,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                     " - " + snoozeQueues.contains(awoken));
                 logger.severe(report());
             }
-            assert !awoken.isEmpty(): "Snoozed queue is empty.";
             awoken.wake();
             updateQ(awoken);
         }
