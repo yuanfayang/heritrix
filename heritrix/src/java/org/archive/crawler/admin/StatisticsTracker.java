@@ -21,8 +21,11 @@
  */
 package org.archive.crawler.admin;
 
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.logging.Level;
 
 import org.archive.crawler.datamodel.CrawlURI;
@@ -262,6 +265,26 @@ public class StatisticsTracker extends AbstractTracker{
 			map.put(key, new Integer(1));
 		}
 	}
+
+    /**
+     * Sort the entries of the given HashMap in descending order 
+     * by their values, which must be Numbers
+     * @param map
+     * @return
+     */
+    public TreeSet getSortedByValue(HashMap map) {
+        TreeSet sortedSet = new TreeSet(
+            new Comparator() {
+                public int compare(Object e1, Object e2) {
+                    long comp =
+                        ((Number)((Map.Entry)e2).getValue()).longValue()
+                        -((Number)((Map.Entry)e1).getValue()).longValue();
+                    return comp > 0 ? 1 : comp < 0 ? - 1 : 0;
+                }
+            });
+        sortedSet.addAll(map.entrySet());
+        return sortedSet;
+    }
 
 	/** Return a HashMap representing the distribution of status codes for
 	 *  successfully fetched curis, as represented by a hashmap where
