@@ -2560,10 +2560,19 @@ public class SimpleExtractor extends Processor
 
   <appendix>
     <title>Settings XML Schema</title>
-
     <para>The XML Schema that describes the crawler job order file can be
     viewed as xhtml here, <ulink
     url="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/webapps/root/heritrix_settings.html?rev=1">heritrix_settings.html</ulink>.</para>
+  </appendix>
+
+  <appendix id="profiling">
+    <title>Profiling Heritrix</title>
+    <para>Heritrix uses <ulink url="http://www.ej-technologies.com/products/jprofiler/overview.html">JProfiler</ulink>.
+    See <ulink 
+    url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1002336&amp;group_id=73833&amp;atid=539102">[ 1002336 ] Figure what profiler to use</ulink> for
+    a (rambling) log of experience with the various profilers and of 
+    how we arrived at this choice.
+    </para>
   </appendix>
 
   <bibliography>
