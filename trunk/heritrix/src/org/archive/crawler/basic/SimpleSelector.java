@@ -29,7 +29,8 @@ public class SimpleSelector implements URISelector {
 
 	CrawlController controller;
 	SimpleStore store;
-	int completionCount;
+	private int maxLinkDepth = -1;
+	int completionCount = 0;
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URISelector#inter(org.archive.crawler.datamodel.CrawlURI)
@@ -56,14 +57,16 @@ public class SimpleSelector implements URISelector {
 					store.insertAtHead(embed,curi.getAList().getInt("distance-from-seed"));
 				}
 			}
-			// handle links 
-			if (curi.getAList().containsKey("html-links")) {
-				Collection links = (Collection)curi.getAList().getObject("html-links");
-				Iterator iter = links.iterator();
-				while(iter.hasNext()) {
-					String l = (String)iter.next();
-					UURI embed = UURI.createUURI(l,curi.getBaseUri());
-					store.insert(embed,curi.getAList().getInt("distance-from-seed")+1);
+			// handle links, if not too deep
+			if ((maxLinkDepth>=0) && (curi.getAList().getInt("distance-from-seed") < maxLinkDepth) ) {
+				if (curi.getAList().containsKey("html-links")) {
+					Collection links = (Collection)curi.getAList().getObject("html-links");
+					Iterator iter = links.iterator();
+					while(iter.hasNext()) {
+						String l = (String)iter.next();
+						UURI embed = UURI.createUURI(l,curi.getBaseUri());
+						store.insert(embed,curi.getAList().getInt("distance-from-seed")+1);
+					}
 				}
 			}
 			
@@ -114,6 +117,8 @@ public class SimpleSelector implements URISelector {
 	public void initialize(CrawlController c) {
 		controller = c;
 		store = (SimpleStore)c.getStore();
+		maxLinkDepth = controller.getOrder().getBehavior().getIntAt("//limits/max-link-depth/@value");
+		
 		ConsoleHandler ch = new ConsoleHandler();
 		ch.setFormatter(new FetchFormatter());
 		fetchLogger.addHandler(ch);
