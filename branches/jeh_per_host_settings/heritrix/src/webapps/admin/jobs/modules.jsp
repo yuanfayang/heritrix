@@ -28,9 +28,23 @@
 									"org.archive.crawler.basic.Postselector"
 									};
 
-	XMLSettingsHandler settingsHandler = (XMLSettingsHandler)handler.getJob(request.getParameter("job")).getSettingsHandler();
-	settingsHandler.initialize();
+	// Get the default settings.
+	
+	CrawlJob theJob = handler.getJob(request.getParameter("job"));
+	
+	
+	if(theJob == null)
+	{
+		// Didn't find any job with the given UID or no UID given.
+		response.sendRedirect("/admin/jobs.jsp?message=No job selected");
+		return;
+	} else if(theJob.isReadOnly() || theJob.isRunning()){
+		// Can't edit this job.
+		response.sendRedirect("/admin/jobs.jsp?message=Can't edit modules on a running or read only job");
+		return;
+	}
 
+	XMLSettingsHandler settingsHandler = (XMLSettingsHandler)theJob.getSettingsHandler();
 
 	String title = "Edit job modules";
 	int tab = 1;
@@ -39,25 +53,58 @@
 <%@include file="/include/head.jsp"%>
 
 <p><b>Chose URI Frontier</b>
-
-<p><b>Select Processors</b>
 <p>
+<table>
+	<tr>
+		<td>
+			<select>
+			<%
+				MBeanAttributeInfo frontier = settingsHandler.getOrder().getAttributeInfo("frontier");
+				for(int i=0 ; i<availibleURIFrontiers.length ; i++){
+					out.print("<option value='"+availibleURIFrontiers[i]+"'");
+					if(frontier.getType().equals((String)availibleURIFrontiers[i])){
+						out.print(" selected");
+					}
+					out.println(">"+ availibleURIFrontiers[i]+"</option>");
+				}
+			%>
+			</select>
+		</td>
+		<td>
+			<input type="button" value="Set URI Frontier">
+		</td>
+	</tr>
+</table>
+
+<p>
+	<b>Select Processors</b>
+<p>
+<form name="frmProcessors" method="post" action="modules.jsp">
 <table>
 <%
 	Vector unusedProcessors = new Vector();
-	for(int i=0 ; i<availibleProcessors.length ; i++){
+	ComplexType procs = ((ComplexType)settingsHandler.getOrder().getAttribute("processors"));
+	MBeanInfo procInfo = procs.getMBeanInfo();
+	MBeanAttributeInfo p[] = procInfo.getAttributes();
 	
-		ComplexType mbean = ((ComplexType)settingsHandler.getOrder().getAttribute("processors"));
-		MBeanInfo procInfo = mbean.getMBeanInfo();
-		MBeanAttributeInfo a[] = procInfo.getAttributes();
-		
+	// Printout used proc.
+	for(int n=0; n<p.length; n++) {
+        Object currentAttribute = null;
+		ModuleAttributeInfo att = (ModuleAttributeInfo)p[n]; //The attributes of the current attribute.
+
+		out.println("<tr><td>"+att.getType()+"</td><td><a href=\"doMoveUpProcessor('"+att.getName()+"')\">Move up</a> <a href=\"doMoveDownProcessor('"+att.getName()+"')\">Move down</a> <a href=\"doMoveRemoveProcessor('"+att.getName()+"')\">Remove</a></td></tr>");
+	}
+
+	// Find out which aren't being used.
+	for(int i=0 ; i<availibleProcessors.length ; i++){
 		boolean isIncluded = false;
 		
-		for(int n=0; n<a.length; n++) {
+		for(int n=0; n<p.length; n++) {
             Object currentAttribute = null;
-			ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
+			ModuleAttributeInfo att = (ModuleAttributeInfo)p[n]; //The attributes of the current attribute.
+
 			try {
-				currentAttribute = mbean.getAttribute(att.getName());
+				currentAttribute = procs.getAttribute(att.getName());
 			} catch (Exception e1) {
 				out.println(e1.toString() + " " + e1.getMessage());
 			}
@@ -67,20 +114,18 @@
 				break;
 			}
 		}
-		if(isIncluded){
-			out.println("<tr><td>"+availibleProcessors[i]+"</td><td><a href=''>Move up</a> <a href=''>Move down</a> <a href=''>Remove</a></td></tr>");
-		}
-		else{
+		if(isIncluded == false){
+			// Yep the current one is unused.
 			unusedProcessors.add(availibleProcessors[i]);
 		}
 	}
 %>
 	<tr>
 		<td>
-			<select>
+			<select name="cboAddProcessor">
 			<%
 				for(int i=0 ; i<unusedProcessors.size() ; i++){
-					out.println("<option>"+unusedProcessors.get(i)+"</option>");
+					out.println("<option value='"+unusedProcessors.get(i)+"'>"+unusedProcessors.get(i)+"</option>");
 				}
 			%>
 			</select>
@@ -89,8 +134,8 @@
 			<input type="button" value="Add">
 		</td>
 	</tr>
-
 </table>
+</form>
 
 <p><b>Select Statistics Tracking</b>
 

@@ -427,7 +427,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         XMLSettingsHandler newHandler;
         try {
             newHandler = new XMLSettingsHandler(newFile);
-            newHandler.initialize(newFile);
+            newHandler.initialize();
             newJob = new CrawlJob(getNextJobUID(),name,newHandler,CrawlJob.PRIORITY_AVERAGE);
         } catch (InvalidAttributeValueException e2) {
             // TODO Auto-generated catch block
@@ -525,7 +525,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         controller.addCrawlStatusListener(this);
 
         SettingsHandler settingsHandler = currentJob.getSettingsHandler();
-        settingsHandler.initialize();
         try {
             controller.initialize(settingsHandler);
         } catch (Exception e) {
@@ -540,6 +539,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         crawling = true;
         controller.startCrawl();
         currentJob.setStatus(CrawlJob.STATUS_RUNNING);
+        currentJob.setRunning(true);
         currentJob.setStatisticsTracking(controller.getStatistics());
     }
 
@@ -618,8 +618,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public void crawlEnding(String sExitMessage) {
         crawling = false;
         currentJob.setStatus(sExitMessage);
-        completedCrawlJobs.add(currentJob);
         currentJob.setReadOnly(); //Further changes have no meaning
+        currentJob.setRunning(false);
+        completedCrawlJobs.add(currentJob);
         currentJob = null;
         // Remove the reference so that the old controller can be gc.
         controller = null;
@@ -639,5 +640,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public void crawlEnded(String sExitMessage) {
         // Not interested in this event.
     }
-
+    
+    /**
+     * Forward a 'kick' update to current controller if any.
+     * @see CrawlController#kickUpdate()
+     */
+    public void kickUpdate(){
+        if(controller!=null){
+            controller.kickUpdate();
+        }
+    }
 }
