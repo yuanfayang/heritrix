@@ -222,6 +222,9 @@ public class CrawlURI extends CandidateURI
                 return "Heritrix(" + S_UNATTEMPTED + ")-Unattempted";
             case S_UNFETCHABLE_URI:
                 return "Heritrix(" + S_UNFETCHABLE_URI + ")-Unfetchable URI";
+            case S_PROCESSING_THREAD_KILLED:
+                return "Heritrix(" + S_PROCESSING_THREAD_KILLED + ")-" + 
+                    "Processing thread killed";
             // Unknown return code
             default : return Integer.toString(code);
         }

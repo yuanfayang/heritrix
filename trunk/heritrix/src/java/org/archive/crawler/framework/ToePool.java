@@ -24,29 +24,35 @@
 package org.archive.crawler.framework;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
-import java.util.logging.Level;
 
 import org.archive.crawler.event.CrawlStatusAdapter;
-import org.archive.util.DevUtils;
+import org.archive.util.ArchiveUtils;
 
 /**
- * A collection of ToeThreads.
+ * A collection of ToeThreads. The class manages the ToeThreads currently 
+ * running. Including increasing and decreasing their number, keeping track
+ * of their state and it can be used to kill hung threads.
  *
- * @author gojomo
- *
+ * @author Gordon Mohr
+ * @author Kristinn Sigurdsson
+ * 
+ * @see org.archive.crawler.framework.ToeThread
  */
 public class ToePool extends CrawlStatusAdapter {
     public static int DEFAULT_TOE_PRIORITY = Thread.NORM_PRIORITY - 1;
 
     protected CrawlController controller;
     protected ArrayList toes;
+    protected ArrayList killedToes = null;
     protected int effectiveSize = 0;
-    
+
     protected boolean paused;
 
     /**
-     * Constructor
+     * Constructor. Creates a pool of ToeThreads. Threads start in a paused
+     * state.
      *
      * @param c A reference to the CrawlController for the current crawl.
      * @param count The number of ToeThreads to start with
@@ -60,28 +66,29 @@ public class ToePool extends CrawlStatusAdapter {
         setSize(count);
     }
 
-    public synchronized ToeThread available() {
-        while(true) {
-            for(int i=0; i < effectiveSize ; i++){
-                if(((ToeThread)toes.get(i)).isAvailable()) {
-                    return (ToeThread) toes.get(i);
-                }
-            }
-            // nothing available
-            try {
-                wait(200);
-            } catch (InterruptedException e) {
-                DevUtils.logger.log(Level.SEVERE,"available()"+DevUtils.extraInfo(),e);
-            }
-        }
-    }
-
-    /**
-     * @param thread
-     */
-    public synchronized void noteAvailable(ToeThread thread) {
-        notify();
-    }
+//  No longer used. Threads 'pull' work now. 
+//    public synchronized ToeThread available() {
+//        while(true) {
+//            for(int i=0; i < effectiveSize ; i++){
+//                if(((ToeThread)toes.get(i)).isAvailable()) {
+//                    return (ToeThread) toes.get(i);
+//                }
+//            }
+//            // nothing available
+//            try {
+//                wait(200);
+//            } catch (InterruptedException e) {
+//                DevUtils.logger.log(Level.SEVERE,"available()"+DevUtils.extraInfo(),e);
+//            }
+//        }
+//    }
+//
+//    /**
+//     * @param thread
+//     */
+//    public synchronized void noteAvailable(ToeThread thread) {
+//        notify();
+//    }
 
     /**
      * @return The number of ToeThreads that are not available
@@ -98,7 +105,8 @@ public class ToePool extends CrawlStatusAdapter {
     }
 
     /**
-     * @return The number of ToeThreads
+     * @return The number of ToeThreads. This may include killed ToeThreads
+     *         that were not replaced.
      */
     public int getToeCount() {
         return toes.size();
@@ -108,11 +116,10 @@ public class ToePool extends CrawlStatusAdapter {
      * The crawl controller uses this method to notify the pool that the crawl 
      * has ended.
      * All toe threads will be ordered to stop after current.
-     * All references in this object will be set to null to facilitate GC.
-     * Once the CrawlController has called this method, this object should be 
-     * considered
-     * as having been destroyed.
-     * @param statusMessage
+     * 
+     * @param statusMessage Supplied status message is of no interest.
+     * 
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(String)
      */
     public void crawlEnding(String statusMessage) {
         Iterator it = toes.iterator();
@@ -131,18 +138,41 @@ public class ToePool extends CrawlStatusAdapter {
         // Destory referances to facilitate GC.
         toes.removeAll(toes); //Empty it
         toes = null;
+        killedToes.removeAll(killedToes);
+        // TODO Can anything more be done to ensure that the killed threads die?
+        killedToes = null;
         controller = null;
     }
 
     /**
-     * Gets a ToeThreads internal status report.
+     * Get ToeThreads internal status report. Presented in human readable form.
      *
-     * @param toe the number of the ToeThread to query.
      * @return ToeThreads internal status report.
      */
-    public String getReport(int toe)
+    public String report()
     {
-        return ((ToeThread)toes.get(toe)).report();
+        StringBuffer rep = new StringBuffer(32); 
+        rep.append("Toe threads report - " + 
+                ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+        rep.append(" Job being crawled: " + 
+                controller.getOrder().getCrawlOrderName() + "\n");
+        rep.append(" Number of toe threads in pool: " + 
+            getToeCount() + " (" + getActiveToeCount() + " active)\n");
+
+        for (int i = 0; i < toes.size(); i++) {
+            rep.append("   ToeThread #" + i + "\n");
+            rep.append(((ToeThread)toes.get(i)).report());
+        }
+        
+        if (killedToes != null){
+            rep.append("\n --- Killed and replaced threads --- \n\n");
+            for (int i = 0; i < killedToes.size(); i++) {
+                rep.append("   Killed ToeThread #" + i + "\n");
+                rep.append(((ToeThread)killedToes.get(i)).report());
+            }
+        }
+            
+        return rep.toString();
     }
     
     /**
@@ -180,9 +210,14 @@ public class ToePool extends CrawlStatusAdapter {
     }
 
     /**
-     * @param b
+     * Broadcasts a new value for <tt>shouldPause</tt> to all ToeThreads.
+     * If this value is true then all threads should enter a paused state as
+     * soon as possible and stay there. If false then the treads should 
+     * resume (continue) their work. The ToePool will also remember the 
+     * current value and issue it to any new ToeThreads that may be created.
+     * @param b New value for <tt>shouldPause</tt>
      */
-    public void setShouldPause(boolean b) {
+    protected void setShouldPause(boolean b) {
         Iterator iter = toes.iterator();
         paused = b;
         while(iter.hasNext()) {
@@ -202,5 +237,45 @@ public class ToePool extends CrawlStatusAdapter {
      */
     public void crawlResuming(String statusMessage) {
         setShouldPause(false);
+    }
+    
+    /**
+     * Kills specified thread. Killed thread can be optionally replaced with a
+     * new thread.
+     * 
+     * <p><b>WARNING:</b> This operation should be used with great care. It may
+     * destabilize the crawler.
+     * 
+     * @param threadNumber Thread to kill
+     * @param replace If true then a new thread will be created to take the 
+     *           killed threads place. Otherwise the total number of threads
+     *           will decrease by one.
+     */
+    public void killThread(int threadNumber, boolean replace){
+        // Thread number should always be equal to it's placement in toes.
+        ToeThread toe = (ToeThread)toes.get(threadNumber);
+        if(replace){
+            // Kill the toe thread, move it to a list of killed threads and 
+            // create a new toe thread to take it's place.
+            if(killedToes==null){
+                killedToes = new ArrayList(1);
+            }
+            // Negative index starting at -1 for killed toes.
+            int newSerial = (killedToes.size()+1)*-1;
+            // Remove toe
+            toes.remove(threadNumber);
+            killedToes.add(toe);
+            toe.kill(newSerial);
+            // Replace toe
+            ToeThread newThread = new ToeThread(controller,this,threadNumber);
+            newThread.setPriority(DEFAULT_TOE_PRIORITY);
+            // start paused if controller is paused.
+            newThread.setShouldPause(paused); 
+            toes.add(threadNumber,newThread);
+            newThread.start();
+        } else {
+            // If it is not being replaced we will leave it in the toes array.
+            toe.kill(threadNumber);
+        }
     }
 }
