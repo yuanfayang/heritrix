@@ -34,10 +34,14 @@ import javax.management.InvalidAttributeValueException;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.util.ArchiveUtils;
 
-/**
+/** An instance of this class holds a hierarchy of settings.
+ * 
+ * More than one instance in memory is allowed so that a new CrawlJob could
+ * be configured while another job is running.
+ * 
+ * This class should be subclassed to adapt to a persistent storage.
  * 
  * @author John Erik Halse
- *
  */
 public abstract class SettingsHandler {
     /** Registry of CrawlerModules in order file indexed on module name */
@@ -98,7 +102,7 @@ public abstract class SettingsHandler {
         }
     }
 
-    /**
+    /** Create a new SettingsHandler object.
      * 
      */
     public SettingsHandler() throws InvalidAttributeValueException {
@@ -106,8 +110,9 @@ public abstract class SettingsHandler {
         order.setAsOrder(this);
     }
 
-    /**
+    /** Initialize the SettingsHandler.
      * 
+     * This method reads the default settings from the persistent storage.
      */
     public void initialize() {
         readSettingsObject(globalSettings);
@@ -136,9 +141,13 @@ public abstract class SettingsHandler {
         return parent;
     }
 
-    /**
-     * @param name
-     * @return
+    /** Get a module by name.
+     * 
+     * All modules in the order should have unique names. This method makes it
+     * possible to get the modules of the order by this name.
+     *  
+     * @param name the modules name.
+     * @return the module the name references.
      */
     public CrawlerModule getModule(String name) {
         return (CrawlerModule) moduleRegistry.get(name);
@@ -152,10 +161,6 @@ public abstract class SettingsHandler {
         complexTypesRegistry.put(type.getAbsoluteName(), type);
     }
 
-    /**
-     * @param absoluteName
-     * @return
-     */
     protected ComplexType getComplexTypeFromRegistry(String absoluteName) {
         return (ComplexType) complexTypesRegistry.get(absoluteName);
     }
@@ -212,11 +217,16 @@ public abstract class SettingsHandler {
         return value;
     }
 
-    /**
-     * Get configuration object for a host.
-     * 
-     * @param host the host to get the configuration for
-     * @return CrawlConfiguration object for the host
+    /** Get CrawlerSettings object in effect for a host or domain.
+     *
+     * If there is no specific settings for the host/domain, it will recursively
+     * go up the hierarchy to find the settings object that should be used for
+     * this host/domain.
+     *
+     * @param host the host or domain to get the settings for.
+     * @return settings object in effect for the host/domain.
+     * @see #getSettingsObject(String)
+     * @see #getOrCreateSettingsObject(String)
      */
     public CrawlerSettings getSettings(String host) {
         CrawlerSettings settings = getSettingsObject(host);
@@ -228,9 +238,17 @@ public abstract class SettingsHandler {
         return settings;
     }
 
-    /**
-     * @param scope
-     * @return
+    /** Get CrawlerSettings object for a host or domain.
+     * 
+     * The difference between this method and the 
+     * <code>getSettings(String host)</code> is that this method will return
+     * null if there is no settings for particular host or domain. 
+     * 
+     * @param scope the host or domain to get the settings for.
+     * @return settings object for the host/domain or null if no
+     *         settings exist for the host/domain.
+     * @see #getSettings(String)
+     * @see #getOrCreateSettingsObject(String)
      */
     public CrawlerSettings getSettingsObject(String scope) {
         CrawlerSettings settings;
@@ -240,26 +258,50 @@ public abstract class SettingsHandler {
             settings = (CrawlerSettings) settingsCache.get(scope);
         } else {
             settings = new CrawlerSettings(this, getParentObject(scope), scope);
-            readSettingsObject(settings);
+            settings = readSettingsObject(settings);
+        }
+        return settings;
+    }
+
+    /** Get or create CrawlerSettings object for a host or domain.
+     * 
+     * This method is similar to @link #getSettingsObject(String) except that if
+     * there is no settings for this particular host or domain a new settings
+     * object will be returned.
+     * 
+     * @param scope the host or domain to get or create the settings for.
+     * @return settings object for the host/domain.
+     * @see #getSettings(String)
+     * @see #getSettingsObject(String)
+     */
+    public CrawlerSettings getOrCreateSettingsObject(String scope) {
+        CrawlerSettings settings;
+        settings = getSettingsObject(scope);
+        if (settings == null) {
+            settings = new CrawlerSettings(this, getParentObject(scope), scope);
             settingsCache.put(scope, settings);
         }
         return settings;
     }
 
-    /**
-     * @param configuration
+    /** Write the CrawlerSettings object to persistent storage.
+     * 
+     * @param settings the settings object to write.
      */
     public abstract void writeSettingsObject(CrawlerSettings settings);
 
-    /**
-     * @param parent
-     * @param scope
-     * @return
+    /** Read the CrawlerSettings object from persistent storage.
+     * 
+     * @param settings the settings object to be updated with data from the
+     *                 persistent storage.
+     * @return the updated settings object or null if there was no data for this
+     *         in the persistent storage.
      */
     protected abstract CrawlerSettings readSettingsObject(CrawlerSettings settings);
 
-    /**
-     * @return
+    /** Get the CrawlOrder.
+     * 
+     * @return the CrawlOrder
      */
     public CrawlOrder getOrder() {
         return order;
