@@ -857,7 +857,10 @@ public class CrawlController implements Serializable {
         beginCrawlStop();
     }
 
-    private void beginCrawlStop() {
+    /**
+     * Start the process of stopping the crawl. 
+     */
+    public void beginCrawlStop() {
         logger.info("Starting beginCrawlStop()...");
         sendCrawlStateChangeEvent(STOPPING, this.sExit);
         frontier.terminate();
@@ -1142,9 +1145,19 @@ public class CrawlController implements Serializable {
      * Evaluate if the crawl should stop because it is finished.
      */
     public void checkFinish() {
-        if(state == RUNNING && !shouldContinueCrawling()) {
+        if(atFinish()) {
             beginCrawlStop();
         }
+    }
+
+    /**
+     * Evaluate if the crawl should stop because it is finished,
+     * without actually stopping the crawl.
+     * 
+     * @return true if crawl is at a finish-possible state
+     */
+    public boolean atFinish() {
+        return state == RUNNING && !shouldContinueCrawling();
     }
 
     /**
@@ -1283,12 +1296,19 @@ public class CrawlController implements Serializable {
         }
     }
 
+    /**
+     * Note that a ToeThread reached paused condition, possibly
+     * completing the crawl-pause. 
+     */
     public synchronized void toePaused() {
         if (state ==  PAUSING && toePool.getActiveToeCount()==0) {
             completePause();
         }
     }
     
+    /**
+     * Note that a ToeThread ended, possibly completing the crawl-stop. 
+     */
     public synchronized void toeEnded() {
         if (state == STOPPING && toePool.getActiveToeCount() == 0) {
             completeStop();
