@@ -66,7 +66,7 @@ public class DiskByteQueue implements Serializable {
     File inFile; // file from which bytes are read
     File outFile; // file to which bytes are written
     transient FlipFileInputStream headStream;   // read stream
-    long rememberedPosition = -1;
+    long rememberedPosition = 0;
     transient FlipFileOutputStream tailStream;  // write stream
 
     /**
@@ -95,23 +95,27 @@ public class DiskByteQueue implements Serializable {
         }
     }
 
-    /**
-     * Create the support streams
-     *
-     * @param readPosition
-     * @throws IOException
-     */
-    public void initializeStreams(long readPosition) throws IOException {
-        tailStream = new FlipFileOutputStream();
-        headStream = new FlipFileInputStream(readPosition);
-    }
+//    /**
+//     * Create the support streams
+//     *
+//     * @param readPosition
+//     * @throws IOException
+//     */
+//    public void initializeStreams(long readPosition) throws IOException {
+//        tailStream = new FlipFileOutputStream();
+//        headStream = new FlipFileInputStream(readPosition);
+//    }
 
     /**
      * The stream to read from this byte queue
      *
      * @return
+     * @throws IOException
      */
-    public InputStream getHeadStream() {
+    public InputStream getHeadStream() throws IOException {
+        if(headStream==null) {
+            headStream = new FlipFileInputStream(rememberedPosition);
+        }
         return headStream;
     }
 
@@ -119,8 +123,12 @@ public class DiskByteQueue implements Serializable {
      * The stream to write to this byte queue
      *
      * @return
+     * @throws FileNotFoundException
      */
-    public OutputStream getTailStream() {
+    public OutputStream getTailStream() throws FileNotFoundException {
+        if(tailStream==null) {
+            tailStream = new FlipFileOutputStream();
+        }  
         return tailStream;
     }
 
@@ -219,12 +227,15 @@ public class DiskByteQueue implements Serializable {
      * @throws IOException
      */
     public void connect() throws IOException {
-        initializeStreams(rememberedPosition);
+        // do nothing; streams created automatically as needed
+
+//        initializeStreams(rememberedPosition);
     }
 
     // custom serialization
     private void writeObject(ObjectOutputStream stream) throws IOException {
         tailStream.flush();
+        rememberedPosition = headStream.getReadPosition();
         stream.defaultWriteObject();
         // now, must snapshot constituent files and their current extents/positions
         // to allow equivalent restoral
@@ -233,8 +244,8 @@ public class DiskByteQueue implements Serializable {
         coostream.snapshotAppendOnlyFile(outFile);
         // save head (read) stream file & extent
         coostream.snapshotAppendOnlyFile(inFile);
-        // take note of current read position in read file
-        coostream.writeLong(headStream.getReadPosition());
+//        // take note of current read position in read file
+//        coostream.writeLong(headStream.getReadPosition());
     }
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
@@ -246,9 +257,9 @@ public class DiskByteQueue implements Serializable {
         coistream.restoreFile(outFile);
         // restore head (read) stream file & extent
         coistream.restoreFile(inFile);
-        // read position
-        long readPosition = coistream.readLong();
-        initializeStreams(readPosition);
+//        // read position
+//        long readPosition = coistream.readLong();
+//        initializeStreams(readPosition);
     }
 
 

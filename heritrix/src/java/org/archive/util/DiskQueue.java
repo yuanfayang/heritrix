@@ -123,10 +123,10 @@ public class DiskQueue implements Queue, Serializable {
         if(bytes==null) {
  //           if(prefix.equals("DMO.info")) System.out.println("(re)instantiating DiskQueue bytes "+prefix);
             bytes = new DiskByteQueue(scratchDir, this.prefix, reuse);
-            bytes.initializeStreams(0);
+//          bytes.initializeStreams(0);
         } else {
  //           if(prefix.equals("DMO.info")) System.out.println("reconnecting DiskQueue bytes "+prefix);
-            bytes.connect();
+ //           bytes.connect();
         }
         testStream = new ObjectOutputStream(new DevNull());
         tailStream = new HeaderlessObjectOutputStream(bytes.getTailStream());
