@@ -50,13 +50,21 @@ import com.sleepycat.je.OperationStatus;
  * the heap. See
  * <a href="http://crawler.archive.org/cgi-bin/wiki.pl?AlreadySeen">AlreadySeen</a>.
  * Its hardwired to grow to use 25% of JVM heap as cache (This can be changed).
+ * 
+ * <p>TODO: Make keys that have URIs from same server close to each other.  Mercator
+ * and 2.3.5 'Elminating Already-Visited URLs' in 'Mining the Web' by Soumen
+ * Chakrabarti talk of a two-level key with the first 24 bits a hash of the host plus
+ * port and with the last 40 as a hash of the path.  What should I do for dns entries?
+ * https?  Though the likelihood of a clash is low, wouldn't be good having one scheme
+ * for http/https and another scheme for dns.
+ * 
  * @author stack
  * @version $Date$, $Revision$
  */
 public class BdbUriUniqFilter implements UriUniqFilter {
     private static Logger logger =
         Logger.getLogger(BdbUriUniqFilter.class.getName());
-    protected transient FPGenerator fpgen = FPGenerator.std64;
+    protected transient FPGenerator fpgen64 = FPGenerator.std64;
     protected Environment environment = null;
     protected long lastCacheMiss = 0;
     protected long lastCacheMissDiff = 0;
@@ -80,8 +88,8 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      * @throws DatabaseException
      * @throws UnsupportedEncodingException
      */
-    protected BdbUriUniqFilter(Environment environment)
-    throws UnsupportedEncodingException, DatabaseException {
+    public BdbUriUniqFilter(Environment environment)
+    throws DatabaseException {
         super();
         initialize(environment);
     }
@@ -96,8 +104,8 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      * @throws DatabaseException
      * @throws UnsupportedEncodingException
      */
-    protected BdbUriUniqFilter(File bdbEnv,  int cacheSizePercentage)
-    throws DatabaseException, UnsupportedEncodingException {
+    public BdbUriUniqFilter(File bdbEnv, int cacheSizePercentage)
+    throws DatabaseException {
         super();
         if (!bdbEnv.exists()) {
             bdbEnv.mkdirs();
@@ -114,13 +122,13 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      * @throws UnsupportedEncodingException
      */
     protected void initialize(Environment environment)
-    throws DatabaseException, UnsupportedEncodingException {
+    throws DatabaseException {
         this.environment = environment;
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
         this.alreadySeen = this.environment.openDatabase(null, 
             DB_NAME, dbConfig);
-        this.value = new DatabaseEntry("".getBytes("UTF-8"));
+        this.value = new DatabaseEntry("".getBytes());
     }
     
     public synchronized void close() {
@@ -159,7 +167,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     }
     
     protected long createKey(String url) {
-    	return this.fpgen.fp(url);
+        return this.fpgen64.fp(url);
     }
     
     public long count() {
