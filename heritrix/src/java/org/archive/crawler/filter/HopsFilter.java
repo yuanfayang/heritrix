@@ -25,9 +25,9 @@ package org.archive.crawler.filter;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -53,37 +53,44 @@ public class HopsFilter extends Filter {
      * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
      */
     protected boolean innerAccepts(Object o) {
-    	if(! (o instanceof CandidateURI)) {
-    		return false;
-    	}
-    	String path = ((CandidateURI)o).getPathFromSeed();
-    	int linkCount = 0;
-    	int transCount = 0;
-    	for(int i=path.length()-1;i>=0;i--) {
-    		if(path.charAt(i)=='L') {
-    			linkCount++;
-    		} else if (linkCount==0) {
-    			transCount++;
-    		}
-    	}
+        if(! (o instanceof CandidateURI)) {
+            return false;
+        }
+        String path = ((CandidateURI)o).getPathFromSeed();
+        int linkCount = 0;
+        int transCount = 0;
+        for(int i=path.length()-1;i>=0;i--) {
+            if(path.charAt(i)=='L') {
+                linkCount++;
+            } else if (linkCount==0) {
+                transCount++;
+            }
+        }
         if (o instanceof CrawlURI) {
             CrawlURI curi = (CrawlURI) o;
-            Scope scope = (Scope) globalSettings().getModule(Scope.ATTR_NAME);
+            CrawlScope scope =
+                (CrawlScope) globalSettings().getModule(CrawlScope.ATTR_NAME);
             try {
-                maxLinkHops = ((Integer) scope.getAttribute(Scope.ATTR_MAX_LINK_HOPS, curi)).intValue();
-                maxTransHops = ((Integer) scope.getAttribute(Scope.ATTR_MAX_TRANS_HOPS, curi)).intValue();
+                maxLinkHops =
+                    ((Integer) scope
+                        .getAttribute(CrawlScope.ATTR_MAX_LINK_HOPS, curi))
+                        .intValue();
+                maxTransHops =
+                    ((Integer) scope
+                        .getAttribute(CrawlScope.ATTR_MAX_TRANS_HOPS, curi))
+                        .intValue();
             } catch (AttributeNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
 
-    	return (linkCount > maxLinkHops)|| (transCount>maxTransHops);
+        return (linkCount > maxLinkHops)|| (transCount>maxTransHops);
     }
 
 /*
     public void initialize(CrawlerSettings settings) {
-    	super.initialize(settings);
+        super.initialize(settings);
         Scope scope = (Scope) getSettingsHandler().getModule(Scope.ATTR_NAME);
         try {
             maxLinkHops = ((Integer) scope.getAttribute(settings, Scope.ATTR_MAX_LINK_HOPS)).intValue();

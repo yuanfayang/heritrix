@@ -29,7 +29,6 @@ import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.MapType;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -60,38 +59,25 @@ public class OrFilter extends Filter {
     }
 
     protected boolean innerAccepts(Object o) {
-    	if (isEmpty(o)) {
-    		return true;
-    	}
-    	Iterator iter = iterator(o);
-    	while(iter.hasNext()) {
-    		Filter f = (Filter)iter.next();
-    		if( f.accepts(o) ) {
-    			return true;
-    		}
-    	}
-    	return false;
+        if (isEmpty(o)) {
+            return true;
+        }
+        Iterator iter = iterator(o);
+        while(iter.hasNext()) {
+            Filter f = (Filter)iter.next();
+            if( f.accepts(o) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void addFilter(CrawlerSettings settings, Filter f) {
-    	try {
+        try {
             filters.addElement(settings, f);
         } catch (InvalidAttributeValueException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Filter#initialize()
-     */
-    public void initialize(CrawlController controller) {
-    	super.initialize(controller);
-
-        Iterator iter = iterator(null);
-        while(iter.hasNext()) {
-            Filter f = (Filter) iter.next();
-            f.initialize(controller);
         }
     }
 

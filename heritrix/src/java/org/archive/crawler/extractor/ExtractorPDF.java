@@ -59,53 +59,53 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
 
     protected void innerProcess(CrawlURI curi){
 
-    	if(! (curi.getAList().containsKey(A_HTTP_TRANSACTION)&&curi.getFetchStatus()==200)) {
-    		// TODO: generalize for when codes other than 200 might have good content
-    		return;
-    	}
+        if(! (curi.getAList().containsKey(A_HTTP_TRANSACTION)&&curi.getFetchStatus()==200)) {
+            // TODO: generalize for when codes other than 200 might have good content
+            return;
+        }
 
-    	GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+        GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
 
-    	Header contentType = get.getResponseHeader("Content-Type");
-    	if ((contentType==null)||(!contentType.getValue().startsWith("application/pdf"))) {
-    		// nothing to extract for other types here
-    		return;
-    	}
+        Header contentType = get.getResponseHeader("Content-Type");
+        if ((contentType==null)||(!contentType.getValue().startsWith("application/pdf"))) {
+            // nothing to extract for other types here
+            return;
+        }
 
         numberOfCURIsHandled++;
 
-    	File tempFile;
+        File tempFile;
 
-    	if(get.getHttpRecorder().getRecordedInput().getSize()>maxSizeToParse) {
-    		return;
-    	}
+        if(get.getHttpRecorder().getRecordedInput().getSize()>maxSizeToParse) {
+            return;
+        }
 
-    	int sn = ((ToeThread)Thread.currentThread()).getSerialNumber();
-    	tempFile = new File(controller.getScratchDisk(),"tt"+sn+"tmp.pdf");
+        int sn = ((ToeThread)Thread.currentThread()).getSerialNumber();
+        tempFile = new File(getController().getScratchDisk(),"tt"+sn+"tmp.pdf");
 
-    	PDFParser parser;
-    	ArrayList uris;
-    	try {
-    		get.getHttpRecorder().getRecordedInput().copyContentBodyTo(tempFile);
-    		parser = new PDFParser(tempFile.getAbsolutePath());
-    		uris = parser.extractURIs();
-    	} catch (IOException e) {
-    		curi.addLocalizedError(getName(), e, "ExtractorPDF IOException");
-    		return;
-    	} catch (RuntimeException e) {
-    		// truncated/corrupt  PDFs may generate ClassCast exceptions, or other problems
-    		curi.addLocalizedError(getName(), e, "ExtractorPDF RuntimeException");
-    		return;
-    	} finally {
-    		tempFile.delete();
-    	}
+        PDFParser parser;
+        ArrayList uris;
+        try {
+            get.getHttpRecorder().getRecordedInput().copyContentBodyTo(tempFile);
+            parser = new PDFParser(tempFile.getAbsolutePath());
+            uris = parser.extractURIs();
+        } catch (IOException e) {
+            curi.addLocalizedError(getName(), e, "ExtractorPDF IOException");
+            return;
+        } catch (RuntimeException e) {
+            // truncated/corrupt  PDFs may generate ClassCast exceptions, or other problems
+            curi.addLocalizedError(getName(), e, "ExtractorPDF RuntimeException");
+            return;
+        } finally {
+            tempFile.delete();
+        }
 
-    	if(uris!=null && uris.size()>0) {
+        if(uris!=null && uris.size()>0) {
             numberOfLinksExtracted += uris.size();
             curi.getAList().putObject("html-links", uris);
-    	}
+        }
 
-    	logger.fine(curi+" has "+uris.size()+" links.");
+        logger.fine(curi+" has "+uris.size()+" links.");
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
     }
 

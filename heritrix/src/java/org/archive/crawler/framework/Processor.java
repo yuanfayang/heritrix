@@ -63,7 +63,8 @@ public class Processor extends CrawlerModule {
     private MapType filters;
     private Processor defaultNextProcessor = null;
 
-    private static Logger logger = Logger.getLogger("org.archive.crawler.framework.Processor");
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.framework.Processor");
 
     /**
      * @param name
@@ -79,8 +80,6 @@ public class Processor extends CrawlerModule {
             "Filters", Filter.class));
     }
 
-    protected CrawlController controller;
-
     public final void process(CrawlURI curi) {
         // by default, arrange for curi to proceed to next processor
         curi.setNextProcessor(getDefaultNext(curi));
@@ -93,18 +92,18 @@ public class Processor extends CrawlerModule {
             logger.severe(e.getMessage());
         }
 
-    	if(filtersAccept(curi)) {
-    		innerProcess(curi);
-    	} else {
-    		innerRejectProcess(curi);
-    	}
+        if(filtersAccept(curi)) {
+            innerProcess(curi);
+        } else {
+            innerRejectProcess(curi);
+        }
     }
 
     /**
      * @param curi
      */
     protected void innerRejectProcess(CrawlURI curi) {
-    	// by default do nothing
+        // by default do nothing
     }
 
     /**
@@ -114,7 +113,7 @@ public class Processor extends CrawlerModule {
      * @param curi The CrawlURI being processed.
      */
     protected void innerProcess(CrawlURI curi) {
-    	// by default do nothing
+        // by default do nothing
     }
 
     /**
@@ -125,18 +124,18 @@ public class Processor extends CrawlerModule {
      */
     protected boolean filtersAccept(CrawlURI curi) {
         CrawlerSettings settings = getSettingsFromObject(curi);
-    	if (filters.isEmpty(settings)) {
-    		return true;
-    	}
-    	Iterator iter = filters.iterator(settings);
-    	while(iter.hasNext()) {
-    		Filter f = (Filter)iter.next();
-    		if( !f.accepts(curi) ) {
-    			logger.info(f+" rejected "+curi+" in Processor "+getName());
-    			return false;
-    		}
-    	}
-    	return true;
+        if (filters.isEmpty(settings)) {
+            return true;
+        }
+        Iterator iter = filters.iterator(settings);
+        while(iter.hasNext()) {
+            Filter f = (Filter)iter.next();
+            if( !f.accepts(curi) ) {
+                logger.info(f+" rejected "+curi+" in Processor "+getName());
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -164,22 +163,13 @@ public class Processor extends CrawlerModule {
         return processor;
     }
 
-    public void initialize(CrawlController c) throws AttributeNotFoundException {
-    	controller = c;
-        if (((Boolean) getAttribute(null, ATTR_POSTPROCESSOR)).booleanValue()) {
-            // I am the distinguished postprocessor earlier stage can skip to
-            controller.setPostprocessor(this);
-        }
-
-        Iterator iter = filters.iterator(null);
-        while (iter.hasNext()) {
-            ((Filter) iter.next()).initialize(c);
-        }
+    public CrawlController getController() {
+        return getSettingsHandler().getOrder().getController();
     }
 
     public Processor spawn(int serialNum) {
-    	Processor newInstance = null;
-    	try {
+        Processor newInstance = null;
+        try {
             Constructor co =
                 getClass().getConstructor(new Class[] { String.class });
             newInstance =
@@ -188,12 +178,11 @@ public class Processor extends CrawlerModule {
                     });
             getParent().setAttribute(newInstance);
             newInstance.setTransient(true);
-    		newInstance.initialize(controller);
-    	} catch (Exception e) {
-    		// TODO Auto-generated catch block
-    		e.printStackTrace();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
-    	return newInstance;
+        return newInstance;
     }
 
     /**

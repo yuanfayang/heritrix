@@ -127,104 +127,104 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
     /**
      */
     protected void processGeneralTag(CrawlURI curi, CharSequence element, CharSequence cs) {
-    	Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
+        Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
 
-    	// Just in case it's an OBJECT tag
-    	String codebase = null;
-    	ArrayList resources = null;
+        // Just in case it's an OBJECT tag
+        String codebase = null;
+        ArrayList resources = null;
 
-    	while (attr.find()) {
-    		int valueGroup =
-    			(attr.start(11) > -1) ? 11 : (attr.start(12) > -1) ? 12 : 13;
-    		CharSequence value =
-    			cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
-    		if (attr.start(2)>-1) {
-    			// HREF
-    			if(element.toString().equalsIgnoreCase("link")) {
-    				// <LINK> elements treated as embeds (css, ico, etc)
-    				processEmbed(curi, value);
-    			} else {
-    				// other HREFs treated as links
-    				processLink(curi, value);
-    			}
-    			if (element.toString().equalsIgnoreCase("base")) {
-    				curi.getAList().putString(A_HTML_BASE,value.toString());
-    			}
-    		} else if (attr.start(3)>-1) {
-    			// ACTION
-    			processLink(curi, value);
-    		} else if (attr.start(4)>-1) {
-    			// ON____
-    			processScriptCode(curi, value);
-    		} else if (attr.start(5)>-1) {
-    			processEmbed(curi, value);
-    		} else if (attr.start(6)>-1) {
-    			// CODEBASE
-    			//codebase = value.toString();
-    			//codebase = codebase.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-    			codebase = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-    			processEmbed(curi,codebase);
-    		} else if (attr.start(7)>-1) {
-    			// CLASSID,DATA
-    			if (resources==null) { resources = new ArrayList(); }
-    			resources.add(value.toString());
-    		} else if (attr.start(8)>-1) {
-    			// ARCHIVE
-    			if (resources==null) { resources = new ArrayList(); }
-    			//String[] multi = value.toString().split("\\s");
-    			String[] multi = TextUtils.split(WHITESPACE, value);
-    			for(int i = 0; i < multi.length; i++ ) {
-    				resources.add(multi[i]);
-    			}
-    		} else if (attr.start(9)>-1) {
-    			// VALUE
-    			if(TextUtils.matches(LIKELY_URI_PATH, value)) {
-    				processLink(curi,value);
-    			}
+        while (attr.find()) {
+            int valueGroup =
+                (attr.start(11) > -1) ? 11 : (attr.start(12) > -1) ? 12 : 13;
+            CharSequence value =
+                cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
+            if (attr.start(2)>-1) {
+                // HREF
+                if(element.toString().equalsIgnoreCase("link")) {
+                    // <LINK> elements treated as embeds (css, ico, etc)
+                    processEmbed(curi, value);
+                } else {
+                    // other HREFs treated as links
+                    processLink(curi, value);
+                }
+                if (element.toString().equalsIgnoreCase("base")) {
+                    curi.getAList().putString(A_HTML_BASE,value.toString());
+                }
+            } else if (attr.start(3)>-1) {
+                // ACTION
+                processLink(curi, value);
+            } else if (attr.start(4)>-1) {
+                // ON____
+                processScriptCode(curi, value);
+            } else if (attr.start(5)>-1) {
+                processEmbed(curi, value);
+            } else if (attr.start(6)>-1) {
+                // CODEBASE
+                //codebase = value.toString();
+                //codebase = codebase.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+                codebase = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
+                processEmbed(curi,codebase);
+            } else if (attr.start(7)>-1) {
+                // CLASSID,DATA
+                if (resources==null) { resources = new ArrayList(); }
+                resources.add(value.toString());
+            } else if (attr.start(8)>-1) {
+                // ARCHIVE
+                if (resources==null) { resources = new ArrayList(); }
+                //String[] multi = value.toString().split("\\s");
+                String[] multi = TextUtils.split(WHITESPACE, value);
+                for(int i = 0; i < multi.length; i++ ) {
+                    resources.add(multi[i]);
+                }
+            } else if (attr.start(9)>-1) {
+                // VALUE
+                if(TextUtils.matches(LIKELY_URI_PATH, value)) {
+                    processLink(curi,value);
+                }
 
-    		} else if (attr.start(10)>-1) {
-    			// any other attribute
-    			// ignore for now
-    			// could probe for path- or script-looking strings, but
-    			// those should be vanishingly rare in other attributes,
-    			// and/or symptomatic of page bugs
-    		}
-    	}
-    	TextUtils.freeMatcher(attr);
-    	attr = null;
+            } else if (attr.start(10)>-1) {
+                // any other attribute
+                // ignore for now
+                // could probe for path- or script-looking strings, but
+                // those should be vanishingly rare in other attributes,
+                // and/or symptomatic of page bugs
+            }
+        }
+        TextUtils.freeMatcher(attr);
+        attr = null;
 
-    	// handle codebase/resources
-    	if (resources == null) {
-    		return;
-    	}
-    	Iterator iter = resources.iterator();
-    	URI codebaseURI = null;
-    	String res = null;
-    	try {
-    		if (codebase != null) {
-    			codebaseURI = new URI(codebase);
-    		}
-    		while(iter.hasNext()) {
-    			res = iter.next().toString();
-    			//res = res.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-    			res = TextUtils.replaceAll(ESCAPED_AMP, res, "&");
-    			if (codebaseURI != null) {
-    				res = codebaseURI.resolve(res).toString();
-    			}
-    			processEmbed(curi,res);
-    		}
-    	} catch (URISyntaxException e) {
-    		//System.out.println("BAD CODEBASE "+codebase+" at "+curi);
-    		// e.printStackTrace();
-    		curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
-    	} catch (IllegalArgumentException e) {
-    		DevUtils.logger.log(
-    			Level.WARNING,
-    			"processGeneralTag()\n"+
-    			"codebase="+codebase+" res="+res+"\n"+
-    			DevUtils.extraInfo(),
-    			e);
-    	}
+        // handle codebase/resources
+        if (resources == null) {
+            return;
+        }
+        Iterator iter = resources.iterator();
+        URI codebaseURI = null;
+        String res = null;
+        try {
+            if (codebase != null) {
+                codebaseURI = new URI(codebase);
+            }
+            while(iter.hasNext()) {
+                res = iter.next().toString();
+                //res = res.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+                res = TextUtils.replaceAll(ESCAPED_AMP, res, "&");
+                if (codebaseURI != null) {
+                    res = codebaseURI.resolve(res).toString();
+                }
+                processEmbed(curi,res);
+            }
+        } catch (URISyntaxException e) {
+            //System.out.println("BAD CODEBASE "+codebase+" at "+curi);
+            // e.printStackTrace();
+            curi.addLocalizedError(getName(),e,"BAD CODEBASE "+codebase);
+        } catch (IllegalArgumentException e) {
+            DevUtils.logger.log(
+                Level.WARNING,
+                "processGeneralTag()\n"+
+                "codebase="+codebase+" res="+res+"\n"+
+                DevUtils.extraInfo(),
+                e);
+        }
     }
 
 
@@ -241,9 +241,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * @param cs
      */
     protected void processScriptCode(CrawlURI curi, CharSequence cs) {
-    	String code = cs.toString();
-    	//code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-    	code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
+        String code = cs.toString();
+        //code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+        code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
     	numberOfLinksExtracted += ExtractorJS.considerStrings(curi,code);
     }
 
@@ -254,17 +254,17 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * @param value
      */
     protected void processLink(CrawlURI curi, CharSequence value) {
-    	//String link = value.toString();
-    	//link = link.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-    	String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-    	//if(link.matches("(?i)^javascript:.*")) {
-    	if(TextUtils.matches(JAVASCRIPT, link)) {
-    		processScriptCode(curi,value.subSequence(11,value.length()));
-    	} else {
-    		logger.finest("link: "+link+ " from "+curi);
+        //String link = value.toString();
+        //link = link.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+        String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
+        //if(link.matches("(?i)^javascript:.*")) {
+        if(TextUtils.matches(JAVASCRIPT, link)) {
+            processScriptCode(curi,value.subSequence(11,value.length()));
+        } else {
+            logger.finest("link: "+link+ " from "+curi);
             numberOfLinksExtracted++;
-    		curi.addLink(link);
-    	}
+            curi.addLink(link);
+        }
     }
 
 
@@ -274,10 +274,10 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * @param value
      */
     protected void processEmbed(CrawlURI curi, CharSequence value) {
-    	//String embed = value.toString();
-    	//embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
-    	String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-    	logger.finest("embed: "+embed+ " from "+curi);
+        //String embed = value.toString();
+        //embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+        String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
+        logger.finest("embed: "+embed+ " from "+curi);
         numberOfLinksExtracted++;
         curi.addEmbed(embed);
     }
@@ -289,85 +289,85 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      */
     public void innerProcess(CrawlURI curi) {
 
-    	if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
-    		return;
-    	}
+        if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+            return;
+        }
 
-    	if(ignoreUnexpectedHTML) {
-    		if(!expectedHTML(curi)) {
-    			// HTML was not expected (eg a GIF was expected) so ignore
-    			// (as if a soft 404)
-    			return;
-    		}
-    	}
+        if(ignoreUnexpectedHTML) {
+            if(!expectedHTML(curi)) {
+                // HTML was not expected (eg a GIF was expected) so ignore
+                // (as if a soft 404)
+                return;
+            }
+        }
 
 
-    	GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
-    	Header contentType = get.getResponseHeader("Content-Type");
-    	if ((contentType==null)||(!contentType.getValue().startsWith("text/html"))) {
-    		// nothing to extract for other types here
-    		return;
-    	}
+        GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+        Header contentType = get.getResponseHeader("Content-Type");
+        if ((contentType==null)||(!contentType.getValue().startsWith("text/html"))) {
+            // nothing to extract for other types here
+            return;
+        }
 
         numberOfCURIsHandled++;
 
-    	CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
+        CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
 
-    	if (cs==null) {
-    		// TODO: note problem
-    		return;
-    	}
+        if (cs==null) {
+            // TODO: note problem
+            return;
+        }
 
-    	Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
-    	while(tags.find()) {
-    		if (tags.start(6) > 0) {
-    			// comment match
-    			// for now do nothing
-    		} else if (tags.start(5) > 0) {
-    		// <meta> match
-    			if (processMeta(curi,cs.subSequence(tags.start(3), tags.end(3)))) {
-    				// meta tag included NOFOLLOW; abort processing
-    				TextUtils.freeMatcher(tags);
-    				return;
-    			}
-    		} else if (tags.start(3) > 0) {
-    			// generic <whatever> match
-    			processGeneralTag(
-    				curi,
-    				cs.subSequence(tags.start(4),tags.end(4)),
-    				cs.subSequence(tags.start(3),tags.end(3)));
-    		} else if (tags.start(1) > 0) {
-    			// <script> match
-    			processScript(curi, cs.subSequence(tags.start(1), tags.end(1)), tags.end(2)-tags.start(1));
-    		}
-    	}
-    	TextUtils.freeMatcher(tags);
+        Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
+        while(tags.find()) {
+            if (tags.start(6) > 0) {
+                // comment match
+                // for now do nothing
+            } else if (tags.start(5) > 0) {
+            // <meta> match
+                if (processMeta(curi,cs.subSequence(tags.start(3), tags.end(3)))) {
+                    // meta tag included NOFOLLOW; abort processing
+                    TextUtils.freeMatcher(tags);
+                    return;
+                }
+            } else if (tags.start(3) > 0) {
+                // generic <whatever> match
+                processGeneralTag(
+                    curi,
+                    cs.subSequence(tags.start(4),tags.end(4)),
+                    cs.subSequence(tags.start(3),tags.end(3)));
+            } else if (tags.start(1) > 0) {
+                // <script> match
+                processScript(curi, cs.subSequence(tags.start(1), tags.end(1)), tags.end(2)-tags.start(1));
+            }
+        }
+        TextUtils.freeMatcher(tags);
 
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
     }
 
 
     static final String NON_HTML_PATH_EXTENSION =
-    	"(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
-    	"|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)";
+        "(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
+        "|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)";
 
     /**
      * @param curi
      * @return True if HTML.
      */
     protected boolean expectedHTML(CrawlURI curi) {
-    	String path = curi.getUURI().getPath();
-    	int dot = path.lastIndexOf('.');
-    	if (dot<0) {
-    		// no path extension, HTML is fine
-    		return true;
-    	}
-    	if(dot<(path.length()-5)) {
-    		// extension too long to recognize, HTML is fine
-    		return true;
-    	}
-    	String ext = path.substring(dot+1);
-    	return ! TextUtils.matches(NON_HTML_PATH_EXTENSION, ext);
+        String path = curi.getUURI().getPath();
+        int dot = path.lastIndexOf('.');
+        if (dot<0) {
+            // no path extension, HTML is fine
+            return true;
+        }
+        if(dot<(path.length()-5)) {
+            // extension too long to recognize, HTML is fine
+            return true;
+        }
+        String ext = path.substring(dot+1);
+        return ! TextUtils.matches(NON_HTML_PATH_EXTENSION, ext);
     }
 
     /**
@@ -375,62 +375,63 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * @param sequence
      */
     protected void processScript(CrawlURI curi, CharSequence sequence, int endOfOpenTag) {
-    	// for now, do nothing
-    	// TODO: best effort extraction of strings
+        // for now, do nothing
+        // TODO: best effort extraction of strings
 
-    	// first, get attributes of script-open tag
-    	// as per any other tag
-    	processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
+        // first, get attributes of script-open tag
+        // as per any other tag
+        processGeneralTag(curi,sequence.subSequence(0,6),sequence.subSequence(0,endOfOpenTag));
 
-    	// then, apply best-effort string-analysis heuristics
-    	// against any code present (false positives are OK)
-    	processScriptCode(curi,sequence.subSequence(endOfOpenTag,sequence.length()));
+        // then, apply best-effort string-analysis heuristics
+        // against any code present (false positives are OK)
+        processScriptCode(curi,sequence.subSequence(endOfOpenTag,sequence.length()));
     }
 
 
     /**
      */
     protected boolean processMeta(CrawlURI curi, CharSequence cs) {
-    	Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
+        Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
 
-    	String name = null;
-    	String httpEquiv = null;
-    	String content = null;
+        String name = null;
+        String httpEquiv = null;
+        String content = null;
 
-    	while (attr.find()) {
-    		int valueGroup =
-    			(attr.start(11) > -1) ? 11 : (attr.start(12) > -1) ? 12 : 13;
-    		CharSequence value =
-    			cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
-    		if (attr.group(1).equalsIgnoreCase("name")) {
-    			name = value.toString();
-    		} else if (attr.group(1).equalsIgnoreCase("http-equiv")) {
-    			httpEquiv = value.toString();
-    		} else if (attr.group(1).equalsIgnoreCase("content")) {
-    			content = value.toString();
-    		}
-    		// TODO: handle other stuff
-    	}
-    	TextUtils.freeMatcher(attr);
-    	attr = null;
+        while (attr.find()) {
+            int valueGroup =
+                (attr.start(11) > -1) ? 11 : (attr.start(12) > -1) ? 12 : 13;
+            CharSequence value =
+                cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
+            if (attr.group(1).equalsIgnoreCase("name")) {
+                name = value.toString();
+            } else if (attr.group(1).equalsIgnoreCase("http-equiv")) {
+                httpEquiv = value.toString();
+            } else if (attr.group(1).equalsIgnoreCase("content")) {
+                content = value.toString();
+            }
+            // TODO: handle other stuff
+        }
+        TextUtils.freeMatcher(attr);
+        attr = null;
 
-    	if("robots".equalsIgnoreCase(name) && content != null ) {
-    		curi.getAList().putString(A_META_ROBOTS,content);
-    		RobotsHonoringPolicy policy = controller.getOrder().getRobotsHonoringPolicy();
-    		if ((policy == null
-    			|| (!policy.isType(curi, RobotsHonoringPolicy.IGNORE)
-    				&& !policy.isType(curi, RobotsHonoringPolicy.CUSTOM)))
-    			&& (content.indexOf("nofollow") >= 0
-    				|| content.indexOf("none") >= 0)) {
-    			// if 'nofollow' or 'none' is specified and the
-    			// honoring policy is not IGNORE or CUSTOM, end html extraction
-    			logger.fine("HTML extraction skipped due to robots meta-tag for: " + curi.getURIString());
-    			return true;
-    		}
-    	} else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
-    		curi.addLink(content.substring(content.indexOf("=")+1));
-    	}
-    	return false;
+        if("robots".equalsIgnoreCase(name) && content != null ) {
+            curi.getAList().putString(A_META_ROBOTS,content);
+            RobotsHonoringPolicy policy =
+                getSettingsHandler().getOrder().getRobotsHonoringPolicy();
+            if ((policy == null
+                || (!policy.isType(curi, RobotsHonoringPolicy.IGNORE)
+                    && !policy.isType(curi, RobotsHonoringPolicy.CUSTOM)))
+                && (content.indexOf("nofollow") >= 0
+                    || content.indexOf("none") >= 0)) {
+                // if 'nofollow' or 'none' is specified and the
+                // honoring policy is not IGNORE or CUSTOM, end html extraction
+                logger.fine("HTML extraction skipped due to robots meta-tag for: " + curi.getURIString());
+                return true;
+            }
+        } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
+            curi.addLink(content.substring(content.indexOf("=")+1));
+        }
+        return false;
     }
 
     /* (non-Javadoc)

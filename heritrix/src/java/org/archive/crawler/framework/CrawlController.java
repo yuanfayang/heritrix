@@ -40,7 +40,6 @@ import javax.management.ReflectionException;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.basic.Frontier;
-import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -404,7 +403,7 @@ public class CrawlController extends Thread {
     private void setupCrawlModules() throws FatalConfigurationException,
              AttributeNotFoundException, InvalidAttributeValueException,
              MBeanException, ReflectionException {
-        scope = (CrawlScope) order.getAttribute(Scope.ATTR_NAME);
+        scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
         Object o = order.getAttribute(URIFrontier.ATTR_NAME);
         if (o instanceof URIFrontier) {
             frontier = (URIFrontier) o;
@@ -419,7 +418,7 @@ public class CrawlController extends Thread {
         }
 
         // try to initialize each scope and frontier from the config file
-        scope.initialize(this);
+        //scope.initialize(this);
         try {
             frontier.initialize(this);
         } catch (IOException e) {
@@ -440,7 +439,12 @@ public class CrawlController extends Thread {
                 previous.setDefaultNextProcessor(p);
             }
 
-            p.initialize(this);
+            if (((Boolean) p.getAttribute(null, Processor.ATTR_POSTPROCESSOR))
+                 .booleanValue()) {
+                // I am the distinguished postprocessor earlier stage can skip to
+                setPostprocessor(p);
+            }
+
             logger.info(
                 "Processor: " + p.getName() + " --> " + p.getClass().getName());
 
@@ -818,61 +822,61 @@ public class CrawlController extends Thread {
      */
     //    public void printStatistics(){
     //
-    //    	//System.out.println(":");
-    //    	//System.out.println("\t:\t" + statistics.);
+    //        //System.out.println(":");
+    //        //System.out.println("\t:\t" + statistics.);
     //
-    //    	System.out.println("Fetch Progress:");
-    //    	System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
+    //        System.out.println("Fetch Progress:");
+    //        System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
     //
-    //    	int kPerSec = statistics.currentProcessedKBPerSec()/1000;
-    //    	System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
+    //        int kPerSec = statistics.currentProcessedKBPerSec()/1000;
+    //        System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
     //
-    //    	System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
-    //    	System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
-    //    	System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
-    //    	System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
-    //    	//System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
+    //        System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
+    //        System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
+    //        System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
+    //        System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
+    //        //System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
     //
-    //    	System.out.println("Threads:");
+    //        System.out.println("Threads:");
     //
-    //    	System.out.println("\tTotal:\t" + statistics.threadCount());
-    //    	System.out.println("\tActive:\t" + statistics.activeThreadCount());
+    //        System.out.println("\tTotal:\t" + statistics.threadCount());
+    //        System.out.println("\tActive:\t" + statistics.activeThreadCount());
     //
     //
-    //    	HashMap dist = statistics.getFileDistribution();
+    //        HashMap dist = statistics.getFileDistribution();
     //
-    //    	if(dist.size() > 0){
-    //    		Iterator keyIterator = dist.keySet().iterator();
+    //        if(dist.size() > 0){
+    //            Iterator keyIterator = dist.keySet().iterator();
     //
-    //    		System.out.println("Fetched Resources MIME Distribution:");
+    //            System.out.println("Fetched Resources MIME Distribution:");
     //
-    //    		while(keyIterator.hasNext()){
-    //    			String key = (String)keyIterator.next();
-    //    			String val = ((Integer)dist.get(key)).toString();
+    //            while(keyIterator.hasNext()){
+    //                String key = (String)keyIterator.next();
+    //                String val = ((Integer)dist.get(key)).toString();
     //
-    //    			System.out.println("\t" + key + "\t" + val);
-    //    		}
-    //    	}else{
-    //    		System.out.println("No mime statistics");
-    //    	}
+    //                System.out.println("\t" + key + "\t" + val);
+    //            }
+    //        }else{
+    //            System.out.println("No mime statistics");
+    //        }
     //
-    //    	HashMap codeDist = statistics.getStatusCodeDistribution();
+    //        HashMap codeDist = statistics.getStatusCodeDistribution();
     //
-    //    	if(codeDist.size() > 0){
+    //        if(codeDist.size() > 0){
     //
-    //    		Iterator keyIterator = codeDist.keySet().iterator();
+    //            Iterator keyIterator = codeDist.keySet().iterator();
     //
-    //    		System.out.println("Status Code Distribution:");
+    //            System.out.println("Status Code Distribution:");
     //
-    //    		while(keyIterator.hasNext()){
-    //    			String key = (String)keyIterator.next();
-    //    			String val = ((Integer)codeDist.get(key)).toString();
+    //            while(keyIterator.hasNext()){
+    //                String key = (String)keyIterator.next();
+    //                String val = ((Integer)codeDist.get(key)).toString();
     //
-    //    			System.out.println("\t" + key + "\t" + val);
-    //    		}
-    //    	}else{
-    //    		System.out.println("No code distribution statistics.");
-    //    	}
+    //                System.out.println("\t" + key + "\t" + val);
+    //            }
+    //        }else{
+    //            System.out.println("No code distribution statistics.");
+    //        }
     //
     //
     //    }
@@ -981,7 +985,7 @@ public class CrawlController extends Thread {
      */
     public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
-        Iterator iter = getScope().getSeedsIterator();
+        Iterator iter = getScope().getSeedsIterator(false);
         while (iter.hasNext()) {
             UURI u = (UURI) iter.next();
             CandidateURI caUri = new CandidateURI(u);

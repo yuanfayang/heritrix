@@ -26,14 +26,18 @@ package org.archive.crawler.framework;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.util.SeedsInputIterator;
 import org.archive.util.DevUtils;
 
@@ -60,11 +64,17 @@ import org.archive.util.DevUtils;
  * @author gojomo
  *
  */
-public abstract class CrawlScope extends Filter {
+public class CrawlScope extends Filter {
+    public static final String ATTR_NAME = "scope";
     public static final String ATTR_SEEDS = "seedsfile";
+    public static final String ATTR_EXCLUDE_FILTER = "excludeFilter";
+    public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
+    public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 
     // a monotonically increasing version number, for scopes that may change
     int version = 0;
+    private List seeds;
+    private OrFilter excludeFilter;
 
     /**
      * @param name
@@ -72,11 +82,16 @@ public abstract class CrawlScope extends Filter {
     public CrawlScope(String name) {
         super(name, "Crawl scope");
         addElementToDefinition(new SimpleType(ATTR_SEEDS, "File from which to extract seeds", "seeds.txt"));
+        addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
+                "Max link hops to include", new Integer(25)));
+        addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS,
+                "Max transitive hops (embeds, referrals, preconditions) to include", new Integer(5)));
+        excludeFilter = (OrFilter) addElementToDefinition(
+                new OrFilter(ATTR_EXCLUDE_FILTER));
     }
 
-    public void initialize(CrawlController controller) {
-        super.initialize(controller);
-        // TODO let configuration info specify seedExtractor
+    public CrawlScope() {
+        this(ATTR_NAME);
     }
 
     /**
@@ -102,27 +117,45 @@ public abstract class CrawlScope extends Filter {
      *
      * @return An iterator of the seeds in this scope.
      */
-    public Iterator getSeedsIterator() {
-        try {
-            String fileName = controller.getSettingsHandler().getPathRelativeToWorkingDirectory((String)getAttribute(ATTR_SEEDS));
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
-            return new SeedsInputIterator(reader,
-                getController());
-        } catch (IOException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-            return null;
-        } catch (AttributeNotFoundException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-            return null;
-        } catch (MBeanException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-            e.printStackTrace();
-            return null;
-        } catch (ReflectionException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-            e.printStackTrace();
-            return null;
+    public Iterator getSeedsIterator(boolean shouldCache) {
+        Iterator seedIterator;
+
+        if (shouldCache) {
+            // seeds should be in memory for scope tests
+            if (seeds == null) {
+                seeds = new ArrayList();
+                Iterator iter = getSeedsIterator(false);
+                while (iter.hasNext()) {
+                    seeds.add(iter.next());
+                }
+            }
+            seedIterator = seeds.iterator();
+        } else {
+            seeds = null;
+            try {
+                String fileName = getSettingsHandler()
+                .getPathRelativeToWorkingDirectory(
+                        (String)getAttribute(ATTR_SEEDS));
+                BufferedReader reader = new BufferedReader(new FileReader(fileName));
+                seedIterator = new SeedsInputIterator(reader,
+                        getSettingsHandler().getOrder().getController());
+            } catch (IOException e) {
+                DevUtils.warnHandle(e, "problem reading seeds");
+                seedIterator = null;
+            } catch (AttributeNotFoundException e) {
+                DevUtils.warnHandle(e, "problem reading seeds");
+                seedIterator = null;
+            } catch (MBeanException e) {
+                DevUtils.warnHandle(e, "problem reading seeds");
+                e.printStackTrace();
+                seedIterator = null;
+            } catch (ReflectionException e) {
+                DevUtils.warnHandle(e, "problem reading seeds");
+                e.printStackTrace();
+                seedIterator = null;
+            }
         }
+        return seedIterator;
     }
 
     //    /**
@@ -132,10 +165,10 @@ public abstract class CrawlScope extends Filter {
     //     * @param u
     //     */
     //    public void addSeed(UURI u){
-    //    	seeds.add(u);
-    //    	CandidateURI caUri = new CandidateURI(u);
-    //    	caUri.setIsSeed(true);
-    //    	controller.getFrontier().schedule(caUri);
+    //        seeds.add(u);
+    //        CandidateURI caUri = new CandidateURI(u);
+    //        caUri.setIsSeed(true);
+    //        controller.getFrontier().schedule(caUri);
     //    }
 
     /**
@@ -150,15 +183,116 @@ public abstract class CrawlScope extends Filter {
      */
     public boolean accepts(Object o) {
         // expedited check
-        if (o instanceof CandidateURI
-            && ((CandidateURI) o).getScopeVersion() == version) {
-            return true;
-        }
+
+// Scope version is not updated at the moment, so skip check.
+//        if (o instanceof CandidateURI
+//            && ((CandidateURI) o).getScopeVersion() == version) {
+//            return true;
+//        }
+
+        // Check if Scope is enabled
         boolean result = super.accepts(o);
+
         // stamp with version for expedited check
         if (result == true && o instanceof CandidateURI) {
             ((CandidateURI) o).setScopeVersion(version);
         }
         return result;
     }
+
+    protected final boolean innerAccepts(Object o) {
+        return ((isSeed(o) || focusAccepts(o)) || transitiveAccepts(o))
+            && !excludeAccepts(o);
+    }
+
+    /** Check if there is too many hops
+     *
+     * @param o URI to check.
+     * @return true if too many hops.
+     */
+    private boolean exeedsMaxHops(Object o) {
+        if(! (o instanceof CandidateURI)) {
+            return false;
+        }
+
+        int maxLinkHops = 0;
+        int maxTransHops = 0;
+        CrawlerSettings settings = getSettingsFromObject(o);
+        CrawlScope scope =
+            (CrawlScope) globalSettings().getModule(CrawlScope.ATTR_NAME);
+
+        try {
+            maxLinkHops =
+                ((Integer) scope
+                    .getAttribute(settings, CrawlScope.ATTR_MAX_LINK_HOPS))
+                    .intValue();
+            maxTransHops =
+                ((Integer) scope
+                    .getAttribute(settings, CrawlScope.ATTR_MAX_TRANS_HOPS))
+                    .intValue();
+        } catch (AttributeNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        // Don't check if maxLinkHops is set to zero.
+        if (maxLinkHops == 0) {
+            return false;
+        }
+
+        String path = ((CandidateURI)o).getPathFromSeed();
+        int linkCount = 0;
+        int transCount = 0;
+        for(int i=path.length()-1;i>=0;i--) {
+            if(path.charAt(i)=='L') {
+                linkCount++;
+            } else if (linkCount==0) {
+                transCount++;
+            }
+        }
+
+        return (linkCount > maxLinkHops) || (transCount>maxTransHops);
+    }
+
+    /**
+     * @param o the URI to check.
+     * @return True if transitive filter accepts passed object.
+     */
+    protected boolean transitiveAccepts(Object o) {
+        return true;
+    }
+
+    /** Check if URI is accepted by the focus of this scope.
+     *
+     * This method should be overridden in subclasses.
+     *
+     * @param o the URI to check.
+     * @return True if focus filter accepts passed object.
+     */
+    protected boolean focusAccepts(Object o) {
+        return true;
+    }
+
+    /** Check if URI is excluded by any filters.
+     *
+     * @param o the URI to check.
+     * @return True if exclude filter accepts passed object.
+     */
+    private boolean excludeAccepts(Object o) {
+        if (excludeFilter.isEmpty(o)) {
+            return exeedsMaxHops(o);
+        } else {
+            return excludeFilter.accepts(o) || exeedsMaxHops(o);
+        }
+    }
+
+    /** Check if a URI is in the seeds.
+     *
+     * @param o the URI to check.
+     * @return true if URI is a seed.
+     */
+    private boolean isSeed(Object o) {
+        return o instanceof CandidateURI && ((CandidateURI) o).getIsSeed();
+    }
+
 }

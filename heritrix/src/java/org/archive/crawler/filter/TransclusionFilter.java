@@ -25,10 +25,10 @@ package org.archive.crawler.filter;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -39,7 +39,6 @@ import org.archive.crawler.framework.Filter;
  * @author Gordon Mohr
  */
 public class TransclusionFilter extends Filter {
-    //private static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
     private static final String ATTR_MAX_SPECULATIVE_HOPS = "max-speculative-hops";
     private static final String ATTR_MAX_REFERRAL_HOPS = "max-referral-hops";
     private static final String ATTR_MAX_EMBED_HOPS = "max-embed-hops";
@@ -71,57 +70,56 @@ public class TransclusionFilter extends Filter {
      * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
      */
     protected boolean innerAccepts(Object o) {
-//    	if(o instanceof CandidateURI) {
-//    		return ((CandidateURI)o).getPathFromSeed().matches(TRANSCLUSION_PATH);
-//    	}
-//    	return false;
-    	if(! (o instanceof CandidateURI)) {
-    		return false;
-    	}
-    	String path = ((CandidateURI)o).getPathFromSeed();
-    	int transCount = 0;
-    	int specCount = 0;
-    	int refCount = 0;
-    	int embedCount = 0;
-    	loop: for(int i=path.length()-1;i>=0;i--) {
-    		// everything except 'L' is considered transitive
-    		switch (path.charAt(i)) {
-    			case 'L': {
-    				break loop;
-    			}
-    			case 'X': {
-    				specCount++;
-    				break;
-    			}
-    			case 'R': {
-    				refCount++;
-    				break;
-    			}
-    			case 'E': {
-    				embedCount++;
-    				break;
-    			}
-    			// 'D's get a free pass
-    		}
-    		transCount++;
-    	}
+//        if(o instanceof CandidateURI) {
+//            return ((CandidateURI)o).getPathFromSeed().matches(TRANSCLUSION_PATH);
+//        }
+//        return false;
+        if(! (o instanceof CandidateURI)) {
+            return false;
+        }
+        String path = ((CandidateURI)o).getPathFromSeed();
+        int transCount = 0;
+        int specCount = 0;
+        int refCount = 0;
+        int embedCount = 0;
+        loop: for(int i=path.length()-1;i>=0;i--) {
+            // everything except 'L' is considered transitive
+            switch (path.charAt(i)) {
+                case 'L': {
+                    break loop;
+                }
+                case 'X': {
+                    specCount++;
+                    break;
+                }
+                case 'R': {
+                    refCount++;
+                    break;
+                }
+                case 'E': {
+                    embedCount++;
+                    break;
+                }
+                // 'D's get a free pass
+            }
+            transCount++;
+        }
 
         if (o instanceof CrawlURI) {
             readMaxValues((CrawlURI) o);
         }
 
-    	return (transCount > 0) // this is a case of possible transclusion
-    			&& (transCount <= maxTransHops) // and the overall number of hops isn't too high
-    			&& (specCount <= maxSpeculativeHops) // and the number of spec-hops isn't too high
-    			&& (refCount <= maxReferralHops)  // and the number of referral-hops isn't too high
-    			&& (embedCount <= maxEmbedHops);  // and the number of embed-hops isn't too high
+        return (transCount > 0) // this is a case of possible transclusion
+                && (transCount <= maxTransHops) // and the overall number of hops isn't too high
+                && (specCount <= maxSpeculativeHops) // and the number of spec-hops isn't too high
+                && (refCount <= maxReferralHops)  // and the number of referral-hops isn't too high
+                && (embedCount <= maxEmbedHops);  // and the number of embed-hops isn't too high
     }
 
     public void readMaxValues(CrawlURI curi) {
-    	try {
-            Scope scope = (Scope) globalSettings().getModule(Scope.ATTR_NAME);
-            maxTransHops = ((Integer) scope.getAttribute(Scope.ATTR_MAX_TRANS_HOPS, curi)).intValue();
-            //maxTransHops = ((Integer) getAttribute(ATTR_MAX_TRANS_HOPS, curi)).intValue();
+        try {
+            CrawlScope scope = (CrawlScope) globalSettings().getModule(CrawlScope.ATTR_NAME);
+            maxTransHops = ((Integer) scope.getAttribute(CrawlScope.ATTR_MAX_TRANS_HOPS, curi)).intValue();
             maxSpeculativeHops = ((Integer) getAttribute(ATTR_MAX_SPECULATIVE_HOPS, curi)).intValue();
             maxReferralHops = ((Integer) getAttribute(ATTR_MAX_REFERRAL_HOPS, curi)).intValue();
             maxEmbedHops = ((Integer) getAttribute(ATTR_MAX_EMBED_HOPS, curi)).intValue();
