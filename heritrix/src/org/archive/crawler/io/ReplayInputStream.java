@@ -13,6 +13,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * Replays the bytes recorded from a RecordingInputStream or
+ * RecordingOutputStream. 
+ * 
  * @author gojomo
  *
  */
@@ -25,15 +28,15 @@ public class ReplayInputStream extends InputStream {
 	protected String backingFilename;
 	
 	/**
-		 * @param buffer
-		 * @param size
-		 * @param responseBodyStart
-		 * @param backingFilename
-		 */
-		public ReplayInputStream(byte[] buffer, long size, long responseBodyStart, String backingFilename) throws IOException {
-			this(buffer,size,backingFilename);
-			this.responseBodyStart = responseBodyStart;
-		}
+	 * @param buffer
+	 * @param size
+	 * @param responseBodyStart
+	 * @param backingFilename
+	 */
+	public ReplayInputStream(byte[] buffer, long size, long responseBodyStart, String backingFilename) throws IOException {
+		this(buffer,size,backingFilename);
+		this.responseBodyStart = responseBodyStart;
+	}
 
 	/**
 	 * @param buffer
