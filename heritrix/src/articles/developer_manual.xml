@@ -4,6 +4,16 @@
 <article>
   <title>Heritrix developer documentation</title>
 
+  <articleinfo>
+    <date>$Date$</date>
+
+    <editor>
+      <firstname>John Erik</firstname>
+
+      <surname>Halse</surname>
+    </editor>
+  </articleinfo>
+
   <sect1>
     <title>Introduction</title>
 
@@ -69,6 +79,31 @@
       <emphasis>.project</emphasis> and <emphasis>.classpath</emphasis>
       configuration files that should make integrating the CVS checkout into
       your Eclipse development environment straight-forward.</para>
+    </sect2>
+
+    <sect2>
+      <title>Integration self test</title>
+
+      <para>Run the integration self test on the command line by doing the
+      following:<programlisting>% $HERITRIX_HOME/bin/heritrix --selftest</programlisting>This
+      will set the crawler going against itself, in particular, the selftest
+      webapp. When done, it runs an analsys of the produced arc files and logs
+      and dumps a ruling into <filename>heritrix_out.log</filename>. See the
+      <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/selftest/package-summary.html">org.archive.crawler.selftest</ulink>
+      package for more on how the selftest works. </para>
+    </sect2>
+
+    <sect2>
+      <title>cruisecontrol</title>
+
+      <para>See <ulink
+      url="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/cc">src/cc</ulink>
+      for a <filename>config.xml</filename> that will run the heritrix maven
+      build under <ulink
+      url="http://cruisecontrol.sourceforge.net/">cruisecontrol</ulink>. See
+      the <filename>README.txt</filename> in the same directory for how to set
+      up continuous building using cc.</para>
     </sect2>
   </sect1>
 
@@ -364,7 +399,7 @@ ${package_declaration}</programlisting></para>
       right context. When trying to override an attribute, you don't want the
       settings framework to traverse up to effective value for the attribute,
       but instead want to know that the attribute is not set on this level. To
-      achieve this there is <ulink
+      achieve this, there is <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getLocalAttribute(org.archive.crawler.settings.CrawlerSettings,%20java.lang.String)">getLocalAttribute(CrawlerSettings
       settings, String name)</ulink> and <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#setAttribute(org.archive.crawler.settings.CrawlerSettings,%20javax.management.Attribute)">setAttribute(CrawlerSettings
@@ -397,6 +432,89 @@ ${package_declaration}</programlisting></para>
           </imageobject>
         </mediaobject>
       </figure>
+
+      <para>The different attributes has a type. The allowed type all
+      subclasses the <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/Type.html">Type</ulink>
+      class. There are tree main Types:</para>
+
+      <orderedlist>
+        <listitem>
+          <para>SimpleType</para>
+        </listitem>
+
+        <listitem>
+          <para>ListType</para>
+        </listitem>
+
+        <listitem>
+          <para>ComplexType</para>
+        </listitem>
+      </orderedlist>
+
+      <para>Except for the SimpleType, the actual type used will be a subclass
+      of one of thes main types.</para>
+
+      <sect3>
+        <title>SimpleType</title>
+
+        <para>The <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/SimpleType.html">SimpleType</ulink>
+        is mainly for representing Java™ wrappers for the Java™ primitive
+        types. In addition it also handles the java.util.Date type and a
+        special Heritrix <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/TextField.html">TextField</ulink>
+        type. Overrides of a SimpleType must be of the same type as the
+        initial default value for the SimpleType.</para>
+      </sect3>
+
+      <sect3>
+        <title>ListType</title>
+
+        <para>The <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ListType.html">ListType</ulink>
+        is further subclassed into versions for some of the wrapped Java™
+        primitive types (<ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/DoubleList.html">DoubleList</ulink>,
+        <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/FloatList.html">FloatList</ulink>,
+        <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/IntegerList.html">IntegerList</ulink>,
+        <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/LongList.html">LongList</ulink>,
+        <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/StringList.html">StringList</ulink>).
+        A List holds values in the same order as they was added. If an
+        attribute of type ListType is overridden, then the complete list of
+        values is replaced at the override level.</para>
+      </sect3>
+
+      <sect3>
+        <title>ComplexType</title>
+
+        <para>The <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html">ComplexType</ulink>
+        is a map of name/value pairs. The values can be any Type including new
+        ComplexTypes. The ComplexType is defined abstract and you should use
+        one of the subclasses <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/MapType.html">MapType</ulink>
+        or <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ModuleType.html">ModuleType</ulink>.
+        The MapType allows adding of new name/value pairs at runtime, while
+        the ModuleType only allows the name/value pairs that it defines at
+        construction time. When overriding the MapType the options are either
+        override the value of an already existing attribute or add a new one.
+        It is not possible in an override to remove an existing attribute. The
+        ModuleType doesn't allow additions in overrides, but the predefined
+        attributes' values might be overridden. Since the ModuleType is
+        defined at construction time, it is possible to set more restrictions
+        on each attribute than in the MapType. An other consequence of
+        definition at construction time is that you would normally subclass
+        the ModuleType, while the MapType is usable as it is. It is possible
+        to restrict the MapType to only allow attributes of a certain type.
+        There is also a restriction that MapTypes can not contain nested
+        MapTypes.</para>
+      </sect3>
     </sect2>
   </sect1>
 
@@ -408,39 +526,45 @@ ${package_declaration}</programlisting></para>
     you should inherit from <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ModuleType.html">ModuleType</ulink>
     which is a subclass of ComplexType intended for be subclassed by all
-    modules in Heritrix. Heritrix knows how to handle a ComplexType and to get
-    the needed information to render the user interface part for it. To make
-    this happen your module has to obey some rules.</para>
-
-    <orderedlist>
-      <listitem>
-        <para>A module should always implement a constructor taking exactly
-        one argument - the name argument (<ulink
-        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ModuleType.html#ModuleType(java.lang.String)">see
-        ModuleType(String name)</ulink>).</para>
-      </listitem>
-
-      <listitem>
-        <para>All attributes you want to be configurable should be defined in
-        the constructor of the module.</para>
-      </listitem>
-    </orderedlist>
+    modules in Heritrix.</para>
 
     <sect2>
-      <title>The obligatory one argument constructor</title>
+      <title>Definition of a module</title>
 
-      <para>All modules needs to have a constructor taking a String argument.
-      This string is used to identify the module. In the case where a module
-      is of a type that is replacing an existing module of which there could
-      only be one, it is important that the same name is used. In this case
-      the constructor might choose to ignore the name string and substitute it
-      with a hardcoded one. This is for example the case with the Frontier.
-      The name of the Frontier should always be the string "frontier". For
-      this reason the URIFrontier interface that all Frontiers should
-      implement has a static variable:<programlisting>public static final String ATTR_NAME = "frontier";</programlisting>which
-      implementations of the Frontier use instead of the string argument
-      submitted to the constructor. Here is the part of the default Frontiers
-      constructor that shows how this should be done.<programlisting>public Frontier(String name) {
+      <para>Heritrix knows how to handle a ComplexType and to get the needed
+      information to render the user interface part for it. To make this
+      happen your module has to obey some rules.</para>
+
+      <orderedlist>
+        <listitem>
+          <para>A module should always implement a constructor taking exactly
+          one argument - the name argument (<ulink
+          url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ModuleType.html#ModuleType(java.lang.String)">see
+          ModuleType(String name)</ulink>).</para>
+        </listitem>
+
+        <listitem>
+          <para>All attributes you want to be configurable should be defined
+          in the constructor of the module.</para>
+        </listitem>
+      </orderedlist>
+
+      <sect3>
+        <title>The obligatory one argument constructor</title>
+
+        <para>All modules needs to have a constructor taking a String
+        argument. This string is used to identify the module. In the case
+        where a module is of a type that is replacing an existing module of
+        which there could only be one, it is important that the same name is
+        used. In this case the constructor might choose to ignore the name
+        string and substitute it with a hardcoded one. This is for example the
+        case with the Frontier. The name of the Frontier should always be the
+        string "frontier". For this reason the URIFrontier interface that all
+        Frontiers should implement has a static variable:<programlisting>public static final String ATTR_NAME = "frontier";</programlisting>which
+        implementations of the Frontier use instead of the string argument
+        submitted to the constructor. Here is the part of the default
+        Frontiers constructor that shows how this should be
+        done.<programlisting>public Frontier(String name) {
     //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
     //therefore we'll ignore the supplied parameter. 
     super(URIFrontier.ATTR_NAME, "Frontier. \nMaintains the internal" +
@@ -450,31 +574,33 @@ ${package_declaration}</programlisting></para>
         " CrawlURI of the same \'key\' (host) at once, and respects" +
         " minimum-delay and delay-factor specifications for" +
         " politeness.");</programlisting>As shown in this example, the
-      constructor must call the superclass's constructor. This example also
-      shows how to set the description of a module. The description is used by
-      the user interface to guide the user in configuring the crawl. If you
-      don't want to set a description (strongly discouraged), the ModuleType
-      also have a one argument constructor taking just the name.</para>
-    </sect2>
+        constructor must call the superclass's constructor. This example also
+        shows how to set the description of a module. The description is used
+        by the user interface to guide the user in configuring the crawl. If
+        you don't want to set a description (strongly discouraged), the
+        ModuleType also have a one argument constructor taking just the
+        name.</para>
+      </sect3>
 
-    <sect2>
-      <title>Defining attributes</title>
+      <sect3>
+        <title>Defining attributes</title>
 
-      <para>The attributes on a module you want to be configurable must be
-      defined in the modules constructor. For this purpose the ComplexType has
-      a method <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#addElementToDefinition(org.archive.crawler.settings.Type)">addElementToDefinition(Type
-      type)</ulink>. The argument given to this method is a definition of the
-      attribute. The <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/Type.html">Type</ulink>
-      class is the superclass of all the attribute definitions allowed for a
-      ModuleType. Since the ComplexType, which ModuleType inherits, is itself
-      a subclass of Type, you can add new ModuleTypes as attributes to your
-      module. The Type class implements configuration methods common for all
-      Types that defines an attribute on your module. The
-      addElementToDefinition method returns the added Type so that it is easy
-      to refine the configuration of the Type. Lets look at an example (also
-      from the default Frontier) of an attribute definiton.<programlisting>public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE = "total-bandwidth-usage-KB-sec";
+        <para>The attributes on a module you want to be configurable must be
+        defined in the modules constructor. For this purpose the ComplexType
+        has a method <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#addElementToDefinition(org.archive.crawler.settings.Type)">addElementToDefinition(Type
+        type)</ulink>. The argument given to this method is a definition of
+        the attribute. The <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/Type.html">Type</ulink>
+        class is the superclass of all the attribute definitions allowed for a
+        ModuleType. Since the ComplexType, which ModuleType inherits, is
+        itself a subclass of Type, you can add new ModuleTypes as attributes
+        to your module. The Type class implements configuration methods common
+        for all Types that defines an attribute on your module. The
+        addElementToDefinition method returns the added Type so that it is
+        easy to refine the configuration of the Type. Lets look at an example
+        (also from the default Frontier) of an attribute
+        definiton.<programlisting linenumbering="numbered">public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE = "total-bandwidth-usage-KB-sec";
 private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE = new Integer(0);
 ...
 
@@ -487,15 +613,200 @@ t = addElementToDefinition(
     "usage has been to high.\n0 means no bandwidth limitation.",
     DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE));
 t.setOverrideable(false);</programlisting>Here we add an attribute definition
-      of the SimpleType (which is a subclass of Type). The SimpleType's
-      constructor takes three arguments: name, description and a default
-      value. Usually the name and default value are defined as constants like
-      here, but this is of course optional. The line
-      <command>t.setOverrideable(false);</command> informs the settings
-      framework to not allow per overrides on this attribute. For a full list
-      of methods for configuring a Type see the <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/Type.html">Type</ulink>
-      class.</para>
+        of the SimpleType (which is a subclass of Type). The SimpleType's
+        constructor takes three arguments: name, description and a default
+        value. Usually the name and default value are defined as constants
+        like here, but this is of course optional. The line
+        <command>t.setOverrideable(false);</command> informs the settings
+        framework to not allow per overrides on this attribute. For a full
+        list of methods for configuring a Type see the <ulink
+        url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/Type.html">Type</ulink>
+        class.</para>
+      </sect3>
+    </sect2>
+
+    <sect2>
+      <title>Accessing attributes</title>
+
+      <para>In most cases when the module needs to access its own attributes,
+      a CrawlURI is available. The right way to make sure that all the
+      overrides and refinements is considered is then to use the method <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getAttribute(java.lang.String,%20org.archive.crawler.datamodel.CrawlURI)">getAttribute(String
+      name, CrawlURI uri)</ulink> to get the attribute. Sometimes the context
+      you are working in could be defined by other objects than the CrawlURI,
+      then use the <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getAttribute(java.lang.Object,%20java.lang.String)">getAttribute(Object
+      context, String name)</ulink> method to get the value. This method tries
+      its best at getting some useful context information out of an object.
+      What it does is checking if the context is any kind of URI or a settings
+      object. If it can't find anything useful, the global settings are used
+      as the context. If you don't have any context at all, which is the case
+      in some initialization code, the <ulink
+      url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getAttribute(java.lang.String)">getAttribute(String
+      name)</ulink> could be used.</para>
+    </sect2>
+
+    <sect2>
+      <title>Putting together a simple module</title>
+
+      <para>From what we learned so far, let's put together a module that
+      doesn't do anything useful, but show some of the concepts.</para>
+
+      <programlisting>package myModule;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.management.AttributeNotFoundException;
+import org.archive.crawler.settings.MapType;
+import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.RegularExpressionConstraint;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
+
+public class Foo extends ModuleType {
+  private static Logger logger = Logger.getLogger("myModule.Foo"); <co
+          id="simpleEx_logger" />
+
+  public Foo(String name) {
+    Type mySimpleType1 = new SimpleType("name1", "Description1", new Integer(10)); <co
+          id="simpleEx_addSimpleType" />
+    addElementToDefinition(mySimpleType1);
+
+    Type mySimpleType2 = new SimpleType("name2", "Description2", "defaultValue");
+    addElementToDefinition(mySimpleType2);
+    mySimpleType2.addConstraint(new RegularExpressionConstraint(".*Val.*", Level.WARNING, <co
+          id="simpleEx_addConstraint" />
+                "This field must contain 'Val' as part of the string."));
+
+    Type myMapType = new MapType("name3", "Description3", String.class); <co
+          id="simpleEx_addMap" />
+    addElementToDefinition(myMapType);
+  }
+
+  public void getMyTypeValue(CrawlURI curi) {
+    try {
+      int maxBandwidthKB = ((Integer) getAttribute("name1", curi)).intValue(); <co
+          id="simpleEx_getAttribute" />
+    } catch (AttributeNotFoundException e) {
+      logger.warning(e.getMessage());
+    }
+  }
+
+  public void playWithMap(CrawlURI curi) {
+    try {
+      MapType myMapType = (MapType) getAttribute("name3", curi);
+      myMapType.addElement(null, new SimpleType("name", "Description", "defaultValue")); <co
+          id="simpleEx_addElement" />
+      myMapType.setAttribute(new Atrribute("name", "newValue")); <co
+          id="simpleEx_setAttribute" />
+    } catch (Exception e) {
+      logger.warning(e.getMessage());
+    }
+  }
+}</programlisting>
+
+      <para>This example shows several things:<calloutlist>
+          <callout arearefs="simpleEx_logger">
+            <para>One thing that we have not mentioned before is how we do
+            general error logging. Heritrix uses the standard Java 1.4 logging
+            facility. The convention is to initialize it with the
+            classname.</para>
+          </callout>
+
+          <callout arearefs="simpleEx_addSimpleType">
+            <para>Here we define and add a SimpleType that takes an Integer as
+            the argument and setting it to '10' as the default value.</para>
+          </callout>
+
+          <callout arearefs="simpleEx_addConstraint">
+            <para>It is possible to add constraints on fields. In addition to
+            be constrained to only take strings, this field add a requirement
+            that the string should contain 'Val' as part of the string. The
+            constraint also has a level and a description. The description is
+            used by the user interface to give the user a fairly good
+            explanation if the submitted value doesn't fit in with the
+            constraint. Three levels are honored. Level.INFO</para>
+
+            <variablelist>
+              <varlistentry>
+                <term>Level.INFO</term>
+
+                <listitem>
+                  <para>Values are accepted even if they don't fullfill the
+                  constraint's requirement. This is used when you don't want
+                  to disallow the value, but warn the user that the value
+                  seems to be out of reasonable bounds.</para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term>Level.WARNING</term>
+
+                <listitem>
+                  <para>The value must be accepted by the constraint to be
+                  valid in crawl jobs, but is legal in profiles even if it
+                  don't. This is used to be able to put values into a profile
+                  that a user should change for every crawl job derived from
+                  the profile.</para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term>Level.SEVERE</term>
+
+                <listitem>
+                  <para>The value is not allowed whatsoever if it isn't
+                  accepted by the constraint.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+
+            <para>See the <ulink
+            url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/Constraint.html">Constraint</ulink>
+            class for more information.</para>
+          </callout>
+
+          <callout arearefs="simpleEx_addMap">
+            <para>This line defines a MapType allowing only Strings as
+            values.</para>
+          </callout>
+
+          <callout arearefs="simpleEx_getAttribute">
+            <para>An example of how to read an attribute.</para>
+          </callout>
+
+          <callout arearefs="simpleEx_addElement">
+            <para>Here we add a new element to the MapType. This element is
+            valid for this map because its default value is a String.</para>
+          </callout>
+
+          <callout arearefs="simpleEx_setAttribute">
+            <para>Now we change the value of the newly added attribute. JMX
+            requires that the new value is wrapped in an object of type
+            Attribute which holds both the name and the new value.</para>
+          </callout>
+        </calloutlist></para>
+
+      <para>If everything seems ok so far, then we are almost ready to write
+      some real modules.</para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Some notes on the URI classes</title>
+
+    <para></para>
+
+    <sect2>
+      <title>The CandidateURI's Attribute list</title>
+
+      <para></para>
+    </sect2>
+
+    <sect2>
+      <title>The content stream</title>
+
+      <para></para>
     </sect2>
   </sect1>
 
@@ -508,6 +819,25 @@ t.setOverrideable(false);</programlisting>Here we add an attribute definition
   <sect1>
     <title>Writing a Scope</title>
 
+    <para>A <ulink
+    url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/CrawlScope.html">CrawlScope</ulink><footnote
+        id="footnote_scope_problems">
+        <para>It has been identified problems with how the Scopes are defined.
+        Please see the user manual for a discussion of the <ulink
+        url="http://crawler.archive.org/articles/user_manual.html#scopeproblems">problems
+        with the current Scopes</ulink>. The propsed changes to the Scope will
+        affect the Filters as well.</para>
+      </footnote> instance defines which URIs are "in" a particular crawl. It
+    is essentially a Filter which determines, looking at the totality of
+    information available about a CandidateURI/CrawlURI instance, if that URI
+    should be scheduled for crawling. Dynamic information inherent in the
+    discovery of the URI, such as the path by which it was discovered, may be
+    considered. Dynamic information which requires the consultation of
+    external and potentially volatile information, such as current robots.txt
+    requests and the history of attempts to crawl the same URI, should NOT be
+    considered. Those potentially high-latency decisions should be made at
+    another step.</para>
+
     <para></para>
   </sect1>
 
@@ -515,18 +845,6 @@ t.setOverrideable(false);</programlisting>Here we add an attribute definition
     <title>Writing a Processor</title>
 
     <para></para>
-
-    <sect2>
-      <title>The URI's Attribute list</title>
-
-      <para></para>
-    </sect2>
-
-    <sect2>
-      <title>The URI's content stream</title>
-
-      <para></para>
-    </sect2>
   </sect1>
 
   <sect1>
@@ -586,7 +904,7 @@ t.setOverrideable(false);</programlisting>Here we add an attribute definition
   <appendix>
     <title>Making a Heritrix Release</title>
 
-    <para> Before initiating a release, its assumed that the current HEAD
+    <para>Before initiating a release, its assumed that the current HEAD
     version has been run through the integration self test, that all unit
     tests pass, that the (as yet non-existent) test suite has been exercised,
     and that general usage shows HEAD to be release worthy.</para>
@@ -678,6 +996,14 @@ t.setOverrideable(false);</programlisting>Here we add an attribute definition
         project ID).</para>
       </listitem>
     </orderedlist>
+  </appendix>
+
+  <appendix>
+    <title>Settings XML Schema</title>
+
+    <para>The XML Schema that describes the crawler job order file can be
+    viewed as xhtml here, <ulink
+    url="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/webapps/root/heritrix_settings.html?rev=1">heritrix_settings.html</ulink>.</para>
   </appendix>
 
   <bibliography>
