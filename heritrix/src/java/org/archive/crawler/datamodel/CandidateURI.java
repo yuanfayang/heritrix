@@ -283,4 +283,28 @@ public class CandidateURI implements Serializable, Lineable {
         return schedulingDirective == MEDIUM;
     }
 
+    /**
+     * Tally up the number of transitive (non-simple-link) hops at
+     * the end of this CandidateURI's pathFromSeed.
+     * 
+     * In some cases, URIs with greater than zero but less than some
+     * threshold such hops are treated specially. 
+     * 
+     * TODO: consider moving link-count in here as well, caching calculation, 
+     * and refactoring CrawlScope.exceedsMaxHops() to use this. 
+     * 
+     * @return
+     */
+    public int getTransHops() {
+        String path = getPathFromSeed();
+        int transCount = 0;
+        for(int i=path.length()-1;i>=0;i--) {
+            if(path.charAt(i)=='L') {
+                break;
+            } else {
+                transCount++;
+            }
+        }
+        return transCount;
+    }
 }
