@@ -53,6 +53,7 @@ public class SettingsCache {
      * @return the settings or null if not in cache.
      */
     public CrawlerSettings getSettings(String host) {
+        host = host == null ? "" : host;
         CrawlerSettings settings = hostToSettings.get(host);
         return settings;
     }
@@ -63,6 +64,7 @@ public class SettingsCache {
      * @return the settings object or null if not in cache.
      */
     public CrawlerSettings getSettingsObject(String scope) {
+        scope = scope == null ? "" : scope;
         CrawlerSettings settings = settingsCache.get(scope);
         return settings;
     }
@@ -73,8 +75,10 @@ public class SettingsCache {
      * @param settings the settings object.
      */
     public synchronized void putSettings(String host, CrawlerSettings settings) {
+        host = host == null ? "" : host;
         hostToSettings.put(host, settings);
-        settingsCache.put(settings.getScope(), settings);
+        String scope = settings.getScope() == null ? "" : settings.getScope();
+        settingsCache.put(scope, settings);
     }
     
     /** Delete a settings object from the cache.

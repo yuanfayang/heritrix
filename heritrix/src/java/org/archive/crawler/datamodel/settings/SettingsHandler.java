@@ -339,6 +339,7 @@ public abstract class SettingsHandler {
             // No existing settings object found, create one
             settings = new CrawlerSettings(this, scope);
             settingsCache.refreshHostToSettings();
+            settingsCache.putSettings(scope, settings);
         }
         return settings;
     }
