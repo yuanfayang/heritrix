@@ -18,6 +18,38 @@
     <para>This document lists known limitations by version number.
     It includes user and developer notes.</para>
   </sect1>
+  <sect1 id="1_2_0">
+    <title>Heritrix 1.2.0</title>
+    <sect2>
+        <title>IBM JVM</title>
+        <para>The IBM JVM generally is more performant than SUN JVMs.
+        It also emits more detailed heap dumps.  For these reasons we like
+        the IBM JVM.  That said, new Heritrix 1.2.0 features may not work
+        on the IBM JVM.</para>
+        <sect3 id="ibmhttps">
+            <title>HTTPS</title>
+            <para>Heritrix 1.2.0 uses the new HttpClient 3.0x library which
+            allows the setting of socket read timeouts.  Connections to
+            https sites fail if using the IBM JVM.</para>
+<para>The IBM JVM 141 (cxia321411-20030930) NPEs setting the NoTcpDelay.
+<programlisting>
+java.lang.NullPointerException
+   at com.ibm.jsse.bf.setTcpNoDelay(Unknown Source)
+   at org.apache.commons.httpclient.HttpConnection.open(HttpConnection.java:683)
+   at org.apache.commons.httpclient.MultiThreadedHttpConnectionManager$HttpConnectionAdapter.open(MultiThreadedHttpConnectionManager.java:1328)</programlisting>
+</para>
+<para>Using the IBM JVM 142, its saying SSL connection not open when we go to use inputstreams:
+<programlisting>
+java.net.SocketException: Socket is not connected
+   at java.net.Socket.getInputStream(Socket.java:726)     at com.ibm.jsse.bs.getInputStream(Unknown Source)
+   at org.apache.commons.httpclient.HttpConnection.open(HttpConnection.java:715)
+   at org.apache.commons.httpclient.MultiThreadedHttpConnectionManager$HttpConnectionAdapter.open(MultiThreadedHttpConnectionManager.java:1328)</programlisting>
+            </para>
+            <para>Newer versions of the httpclient library may address this
+            (Current version is alpha2).</para>
+        </sect3>
+    </sect2>
+  </sect1>
 
   <sect1 id="1_0_0">
     <title>Heritrix 1.0.0</title>
