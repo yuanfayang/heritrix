@@ -785,8 +785,8 @@
             </listitem>
 
             <listitem>
-              <para><emphasis role="bold">WaitEvaluator</emphasis> in the post
-              processing chain.</para>
+              <para><emphasis role="bold">WaitEvaluator</emphasis> needs to be
+              in the post processing chain.</para>
             </listitem>
           </itemizedlist>
 
@@ -806,7 +806,7 @@
             </listitem>
 
             <listitem>
-              <para>ncrease and decrease factors on unchanged and changed
+              <para>Increase and decrease factors on unchanged and changed
               documents respectively. Basically if a document has not changed
               between visits, it's wait time will be multiplied by the
               "unchanged-factor" and if it has changed, the wait time will be
@@ -815,9 +815,9 @@
             </listitem>
 
             <listitem>
-              <para>Finally, there is a 'default-wait-interval' this is for
-              URIs where it is not possible to judge changes in content.
-              Currently this applies only to DNS lookups. </para>
+              <para>Finally, there is a 'default-wait-interval' for URIs where
+              it is not possible to judge changes in content. Currently this
+              applies only to DNS lookups. </para>
             </listitem>
           </itemizedlist>
 
