@@ -126,6 +126,13 @@
 	<% if(iTime>0){ %>
 		<meta http-equiv=Refresh content="<%=iTime%> URL=logs.jsp?time=<%=iTime%>&log=<%=fileName%>">
 	<% } %>
+	
+	<% 
+		if(theJob == null){
+			out.println("<b>No job selected/availible</b>");
+			return;
+		} 
+	%>
 	<script type="text/javascript">
 		function viewLog(log)
 		{
