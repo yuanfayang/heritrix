@@ -27,13 +27,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
@@ -66,160 +63,160 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
         super(name, "DNS Fetcher");
     }
 
-      public void initialize(CrawlController c) throws AttributeNotFoundException{
-      	super.initialize(c);
+//      public void initialize(CrawlController c) throws AttributeNotFoundException{
+//          super.initialize(c);
 
-      	// lookup nameserver
-//    	String nameServer = FindServer.server();
+          // lookup nameserver
+//        String nameServer = FindServer.server();
 //
-//    	try {
-//    		// if we're local get something more useful than the loopback
-//    		if (nameServer.equals("127.0.0.1")) {
-//    			serverInetAddr = InetAddress.getLocalHost();
-//    		} else {
-//    			serverInetAddr = InetAddress.getByName(nameServer);
-//    		}
+//        try {
+//            // if we're local get something more useful than the loopback
+//            if (nameServer.equals("127.0.0.1")) {
+//                serverInetAddr = InetAddress.getLocalHost();
+//            } else {
+//                serverInetAddr = InetAddress.getByName(nameServer);
+//            }
 //
-//    		// create a dns host to attach to dns records
-//    		dnsServer = new CrawlServer(nameServer);
-//    		dnsServer.getHost().setIP(serverInetAddr);
+//            // create a dns host to attach to dns records
+//            dnsServer = new CrawlServer(nameServer);
+//            dnsServer.getHost().setIP(serverInetAddr);
 //
-//    	} catch (UnknownHostException e) {
-//    		e.printStackTrace();
-//    	}
-      }
+//        } catch (UnknownHostException e) {
+//            e.printStackTrace();
+//        }
+//      }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
      */
     protected void innerProcess(CrawlURI curi) {
 
-    	Record[] rrecordSet = null; 		// store retrieved dns records
-    	long now; 									// the time this operation happened
-    	CrawlServer targetServer = null;
-    	String dnsName = parseTargetDomain(curi);
+        Record[] rrecordSet = null;         // store retrieved dns records
+        long now;                                     // the time this operation happened
+        CrawlServer targetServer = null;
+        String dnsName = parseTargetDomain(curi);
 
-    	if (!curi.getUURI().getScheme().equals("dns")) {
-    		// only handles dns
-    		return;
-    	}
+        if (!curi.getUURI().getScheme().equals("dns")) {
+            // only handles dns
+            return;
+        }
 
-    	// curi.setServer(dnsServer);
+        // curi.setServer(dnsServer);
 
-    	// make sure we're in "normal operating mode", e.g. a cache + controller exist to assist us
-    	if (controller != null && controller.getServerCache() != null) {
-    		targetServer = controller.getServerCache().getServerFor(dnsName);
-    	} else {
-    		// standalone operation (mostly for test cases/potential other uses)
-    		targetServer = new CrawlServer(dnsName);
-    	}
+        // make sure we're in "normal operating mode", e.g. a cache + controller exist to assist us
+        if (getController() != null && getController().getServerCache() != null) {
+            targetServer = getController().getServerCache().getServerFor(dnsName);
+        } else {
+            // standalone operation (mostly for test cases/potential other uses)
+            targetServer = new CrawlServer(dnsName);
+        }
 
-    	// if it's an ip no need to do a lookup
-    	if (dnsName.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
-    		// ideally this branch would never be reached: no CrawlURI
-    		// would be created for numerical IPs
-    		logger.warning("unnecessary DNS CrawlURI created: "+curi);
+        // if it's an ip no need to do a lookup
+        if (dnsName.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+            // ideally this branch would never be reached: no CrawlURI
+            // would be created for numerical IPs
+            logger.warning("unnecessary DNS CrawlURI created: "+curi);
 
-    		try {
-    			String[] octets = dnsName.split("\\.");
+            try {
+                String[] octets = dnsName.split("\\.");
 
-    			targetServer.getHost().setIP(
-    				InetAddress.getByAddress(
-    					dnsName,
-    					new byte[] {
-    						(byte) (new Integer(octets[0])).intValue(),
-    						(byte) (new Integer(octets[1])).intValue(),
-    						(byte) (new Integer(octets[2])).intValue(),
-    						(byte) (new Integer(octets[3])).intValue()})
-    			);
+                targetServer.getHost().setIP(
+                    InetAddress.getByAddress(
+                        dnsName,
+                        new byte[] {
+                            (byte) (new Integer(octets[0])).intValue(),
+                            (byte) (new Integer(octets[1])).intValue(),
+                            (byte) (new Integer(octets[2])).intValue(),
+                            (byte) (new Integer(octets[3])).intValue()})
+                );
 
-//    			if(targetHost.getIP() == null){
-//    				System.out.println("crapped out creating ip address for " + dnsName);
-//    			}
+//                if(targetHost.getIP() == null){
+//                    System.out.println("crapped out creating ip address for " + dnsName);
+//                }
 
-    		} catch (UnknownHostException e) {
-    			// this should never happen as a dns lookup is not made
+            } catch (UnknownHostException e) {
+                // this should never happen as a dns lookup is not made
 
-    			e.printStackTrace();
-    		}
+                e.printStackTrace();
+            }
 
-    		// don't expire numeric IPs
-    		targetServer.getHost().setIpExpires(Long.MAX_VALUE);
-    		curi.setFetchStatus(S_DNS_SUCCESS);
+            // don't expire numeric IPs
+            targetServer.getHost().setIpExpires(Long.MAX_VALUE);
+            curi.setFetchStatus(S_DNS_SUCCESS);
 
-    		// no further lookup necessary
-    		return;
-    	}
+            // no further lookup necessary
+            return;
+        }
 
-//    	if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
-//    		curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-//    		return;
-//    	}
+//        if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
+//            curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+//            return;
+//        }
 
-    	// give it a go
-    	//curi.incrementFetchAttempts();
+        // give it a go
+        //curi.incrementFetchAttempts();
 
-    	//TODO add support for type and class specifications in query string, for now always use defaults
-    	/* if(SimpleDNSFetcher.DO_CLASS_TYPE_CHECKING){
-    	} */
+        //TODO add support for type and class specifications in query string, for now always use defaults
+        /* if(SimpleDNSFetcher.DO_CLASS_TYPE_CHECKING){
+        } */
 
-    	now = System.currentTimeMillis();
-    	curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
+        now = System.currentTimeMillis();
+        curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 
-    	// try to get the records for this host (assume domain name)
-    	rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
+        // try to get the records for this host (assume domain name)
+        rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
 
-    	targetServer.getHost().setHasBeenLookedUp();
+        targetServer.getHost().setHasBeenLookedUp();
 
-    	if (rrecordSet != null) {
-    		curi.setFetchStatus(S_DNS_SUCCESS);
-    		curi.getAList().putString(A_CONTENT_TYPE, "text/dns");
-    		curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
+        if (rrecordSet != null) {
+            curi.setFetchStatus(S_DNS_SUCCESS);
+            curi.getAList().putString(A_CONTENT_TYPE, "text/dns");
+            curi.getAList().putObject(A_RRECORD_SET_LABEL, rrecordSet);
 
-    		// get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
-    		// then update the CrawlServer
-    		for (int i = 0; i < rrecordSet.length; i++) {
+            // get TTL and IP info from the first A record (there may be multiple, e.g. www.washington.edu)
+            // then update the CrawlServer
+            for (int i = 0; i < rrecordSet.length; i++) {
 
-    			if (rrecordSet[i].getType() != Type.A) {
-    				continue;
-    			}
+                if (rrecordSet[i].getType() != Type.A) {
+                    continue;
+                }
 
-    			ARecord AsA = (ARecord) rrecordSet[i];
-    			targetServer.getHost().setIP(AsA.getAddress());
-    			targetServer.getHost().setIpExpires(1000 * (long) AsA.getTTL() + now);
-    			break; // only need to process one record
-    		}
-    	} else {
-    		curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-    	}
+                ARecord AsA = (ARecord) rrecordSet[i];
+                targetServer.getHost().setIP(AsA.getAddress());
+                targetServer.getHost().setIpExpires(1000 * (long) AsA.getTTL() + now);
+                break; // only need to process one record
+            }
+        } else {
+            curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+        }
 
-    	curi.getAList().putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
+        curi.getAList().putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
     }
 
     // TODO should throw some sort of exception if it's passed
     // a non-dns uri.  currently assumes the caller knows what he/she is doing
     public static String parseTargetDomain(CrawlURI curi){
 
-    	// should look like "dns:" [ "//" hostport "/" ] dnsname [ "?" dnsquery ]
-    	String uri = curi.getURIString();
+        // should look like "dns:" [ "//" hostport "/" ] dnsname [ "?" dnsquery ]
+        String uri = curi.getURIString();
 
-    	// if it's not a dns uri
-    	if(!uri.startsWith("dns:")){
-    		return null;
-    	}
+        // if it's not a dns uri
+        if(!uri.startsWith("dns:")){
+            return null;
+        }
 
-    	uri = uri.substring(4);						// drop "dns:" prefix
+        uri = uri.substring(4);                        // drop "dns:" prefix
 
-    	if(uri.startsWith("//")){						// drop hostport
-    		uri = uri.replaceFirst("//.+/", "");
-    	}
+        if(uri.startsWith("//")){                        // drop hostport
+            uri = uri.replaceFirst("//.+/", "");
+        }
 
-    	// drop query string
-    	if(uri.indexOf("?") > -1){
-    		uri = uri.substring(0, uri.indexOf("?"));
-    	}
+        // drop query string
+        if(uri.indexOf("?") > -1){
+            uri = uri.substring(0, uri.indexOf("?"));
+        }
 
-    	return uri;
+        return uri;
     }
 
 }

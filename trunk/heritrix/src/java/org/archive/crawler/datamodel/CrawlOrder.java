@@ -33,11 +33,11 @@ import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.basic.Scope;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.MapType;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.URIFrontier;
 
 /**
@@ -114,7 +114,7 @@ public class CrawlOrder extends CrawlerModule {
                 new Integer(100),
                 false));
 
-        addElementToDefinition(new Scope());
+        addElementToDefinition(new CrawlScope());
 
         httpHeaders =
             (MapType) addElementToDefinition(new MapType(ATTR_HTTP_HEADERS,

@@ -28,6 +28,7 @@ package org.archive.crawler.basic;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
@@ -37,7 +38,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
@@ -163,30 +163,36 @@ public class ARCWriterProcessor
             new Integer(poolMaximumWait)));
     }
 
-    public void initialize(CrawlController c) throws AttributeNotFoundException
-    {
-        super.initialize(c);
+    private boolean initialized = false;
+    public void initialize() {
+        if (!initialized) {
+            Logger logger = getSettingsHandler().getOrder().getController()
+                            .runtimeErrors;
 
-        // readConfiguration populates settings used creating ARCWriter.
-        try {
-            readConfiguration();
-        } catch (MBeanException e) {
-            throw new AttributeNotFoundException(e.getMessage());
-        } catch (ReflectionException e) {
-            throw new AttributeNotFoundException(e.getMessage());
-        }
+            // readConfiguration populates settings used creating ARCWriter.
+            try {
+                readConfiguration();
+            } catch (MBeanException e) {
+                logger.warning(e.getLocalizedMessage());
+            } catch (ReflectionException e) {
+                logger.warning(e.getLocalizedMessage());
+            } catch (AttributeNotFoundException e) {
+                logger.warning(e.getLocalizedMessage());
+            }
 
-        try
-        {
-            // Set up the pool of ARCWriters.
-            this.pool = new ARCWriterPool(new File(outputDir), this.arcPrefix,
-                this.useCompression, poolMaximumActive, poolMaximumWait);
-        }
-
-        catch (IOException e)
-        {
-            e.printStackTrace();
-            // TODO: This is critical failure.  Should be let out.
+            try {
+                // Set up the pool of ARCWriters.
+                this.pool =
+                    new ARCWriterPool(
+                        new File(outputDir),
+                        this.arcPrefix,
+                        this.useCompression,
+                        poolMaximumActive,
+                        poolMaximumWait);
+            } catch (IOException e) {
+                logger.warning(e.getLocalizedMessage());
+            }
+            initialized = true;
         }
     }
 
@@ -213,6 +219,7 @@ public class ARCWriterProcessor
      */
     protected void innerProcess(CrawlURI curi)
     {
+        initialize();
         // If failure, or we haven't fetched the resource yet, return
         if (curi.getFetchStatus() <= 0) {
             return;
@@ -353,7 +360,7 @@ public class ARCWriterProcessor
             buffer = new String(buffer + File.separator);
         }
 
-        File newDir = new File(controller.getDisk(), buffer);
+        File newDir = new File(getController().getDisk(), buffer);
 
         if (!newDir.exists()) {
             try {

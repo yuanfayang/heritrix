@@ -62,35 +62,35 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
      * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
      */
     protected void innerProcess(CrawlURI curi) {
-    	logger.finest(getName()+" processing "+curi);
+        logger.finest(getName()+" processing "+curi);
 
-    	// handle any prerequisites
-    	if (curi.getAList().containsKey(A_PREREQUISITE_URI)) {
-    		handlePrerequisites(curi);
-    		return;
-    	}
+        // handle any prerequisites
+        if (curi.getAList().containsKey(A_PREREQUISITE_URI)) {
+            handlePrerequisites(curi);
+            return;
+        }
 
-    	URI baseUri = getBaseURI(curi);
-    	// handle http headers
-    	if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
-    		handleHttpHeaders(curi, baseUri);
-    	}
-    	// handle embeds
-    	if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
-    		handleEmbeds(curi, baseUri);
-    	}
-    	// handle speculative embeds
-    	if (curi.getAList().containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
-    		handleSpeculativeEmbeds(curi, baseUri);
-    	}
-    	// handle links
-    	if (curi.getAList().containsKey(A_HTML_LINKS)) {
-    		handleLinks(curi, baseUri);
-    	}
-    	// handle css links
-    	if (curi.getAList().containsKey(A_CSS_LINKS)) {
-    		handleCSSLinks(curi, baseUri);
-    	}
+        URI baseUri = getBaseURI(curi);
+        // handle http headers
+        if (curi.getAList().containsKey(A_HTTP_HEADER_URIS)) {
+            handleHttpHeaders(curi, baseUri);
+        }
+        // handle embeds
+        if (curi.getAList().containsKey(A_HTML_EMBEDS)) {
+            handleEmbeds(curi, baseUri);
+        }
+        // handle speculative embeds
+        if (curi.getAList().containsKey(A_HTML_SPECULATIVE_EMBEDS)) {
+            handleSpeculativeEmbeds(curi, baseUri);
+        }
+        // handle links
+        if (curi.getAList().containsKey(A_HTML_LINKS)) {
+            handleLinks(curi, baseUri);
+        }
+        // handle css links
+        if (curi.getAList().containsKey(A_CSS_LINKS)) {
+            handleCSSLinks(curi, baseUri);
+        }
 
     }
 
@@ -99,80 +99,80 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
      * @param baseUri
      */
     private void handleSpeculativeEmbeds(CrawlURI curi, URI baseUri) {
-    	if (curi.getFetchStatus() >= 400) {
-    		// do not follow links of error pages
-    		return;
-    	}
-    	Collection embeds = (Collection)curi.getAList().getObject(A_HTML_SPECULATIVE_EMBEDS);
-    	Iterator iter = embeds.iterator();
-    	while(iter.hasNext()) {
-    		String e = (String)iter.next();
-    		try {
-    			UURI embed = UURI.createUURI(e,baseUri);
-    			CandidateURI caUri = new CandidateURI(embed);
-    			caUri.setVia(curi);
-    			char pathSuffix = /* caUri.sameDomainAs(curi) ? 'D' : */ 'X';
-    			caUri.setPathFromSeed(curi.getPathFromSeed()+pathSuffix);
-    			logger.finest("inserting speculative embed at head "+embed);
-    			schedule(caUri);
-    		} catch (URISyntaxException ex) {
-    			Object[] array = { curi, e };
-    			controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
-    		}
-    	}
+        if (curi.getFetchStatus() >= 400) {
+            // do not follow links of error pages
+            return;
+        }
+        Collection embeds = (Collection)curi.getAList().getObject(A_HTML_SPECULATIVE_EMBEDS);
+        Iterator iter = embeds.iterator();
+        while(iter.hasNext()) {
+            String e = (String)iter.next();
+            try {
+                UURI embed = UURI.createUURI(e,baseUri);
+                CandidateURI caUri = new CandidateURI(embed);
+                caUri.setVia(curi);
+                char pathSuffix = /* caUri.sameDomainAs(curi) ? 'D' : */ 'X';
+                caUri.setPathFromSeed(curi.getPathFromSeed()+pathSuffix);
+                logger.finest("inserting speculative embed at head "+embed);
+                schedule(caUri);
+            } catch (URISyntaxException ex) {
+                Object[] array = { curi, e };
+                getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
+            }
+        }
     }
 
     /**
      * @param curi
      */
     private URI getBaseURI(CrawlURI curi) {
-    	if (!curi.getAList().containsKey(A_HTML_BASE)) {
-    		return curi.getUURI().getRawUri();
-    	}
-    	String base = curi.getAList().getString(A_HTML_BASE);
-    	try {
-    		return UURI.createUURI(base).getRawUri();
-    	} catch (URISyntaxException e) {
-    		Object[] array = { curi, base };
-    		controller.uriErrors.log(Level.INFO,e.getMessage(), array );
-    		// next best thing: use self
-    		return curi.getUURI().getRawUri();
-    	}
+        if (!curi.getAList().containsKey(A_HTML_BASE)) {
+            return curi.getUURI().getRawUri();
+        }
+        String base = curi.getAList().getString(A_HTML_BASE);
+        try {
+            return UURI.createUURI(base).getRawUri();
+        } catch (URISyntaxException e) {
+            Object[] array = { curi, base };
+            getController().uriErrors.log(Level.INFO,e.getMessage(), array);
+            // next best thing: use self
+            return curi.getUURI().getRawUri();
+        }
     }
 
     protected void handlePrerequisites(CrawlURI curi) {
-    	try {
-    		if ( curi.getDeferrals() > maxDeferrals ) {
-    			// too many deferrals, equals failure
-    			curi.setFetchStatus(S_PREREQUISITE_FAILURE);
-    			//failureDisposition(curi);
-    			return;
-    		}
+        try {
+            if ( curi.getDeferrals() > maxDeferrals ) {
+                // too many deferrals, equals failure
+                curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+                //failureDisposition(curi);
+                return;
+            }
 
-    		UURI prereq = UURI.createUURI((String) curi.getPrerequisiteUri(),getBaseURI(curi));
-    		curi.setPrerequisiteUri(prereq); // convert to UURI for convenience of Frontier
-    		CandidateURI caUri = new CandidateURI(prereq);
-    		caUri.setVia(curi);
-    		caUri.setPathFromSeed(curi.getPathFromSeed()+"P");
+            UURI prereq = UURI.createUURI((String) curi.getPrerequisiteUri(),getBaseURI(curi));
+            curi.setPrerequisiteUri(prereq); // convert to UURI for convenience of Frontier
+            CandidateURI caUri = new CandidateURI(prereq);
+            caUri.setVia(curi);
+            caUri.setPathFromSeed(curi.getPathFromSeed()+"P");
 
-    		if(curi.hasForcedPrerequisiteUri()) {
-    			// This URI should be fetched even though it is in the
-    			// alreadyIncluded map.
-    			caUri.setForceFetch(true);
-    		}
+            if(curi.hasForcedPrerequisiteUri()) {
+                // This URI should be fetched even though it is in the
+                // alreadyIncluded map.
+                caUri.setForceFetch(true);
+            }
 
-    		if (!scheduleHigh(caUri)) {
-    			// prerequisite cannot be scheduled (perhaps excluded by scope)
-    			// must give up on
-    			curi.setFetchStatus(S_PREREQUISITE_FAILURE);
-    			//failureDisposition(curi);
-    			return;
-    		}
-    		// leave PREREQ in place so frontier can properly defer this curi
-    	} catch (URISyntaxException ex) {
-    		Object[] array = { curi, curi.getPrerequisiteUri() };
-    		controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
-    	}
+            if (!scheduleHigh(caUri)) {
+                // prerequisite cannot be scheduled (perhaps excluded by scope)
+                // must give up on
+                curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+                //failureDisposition(curi);
+                return;
+            }
+            // leave PREREQ in place so frontier can properly defer this curi
+        } catch (URISyntaxException ex) {
+            Object[] array = { curi, curi.getPrerequisiteUri() };
+            getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
+        }
     }
 
     /**
@@ -185,16 +185,16 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
      * @return true if CandidateURI was accepted by crawl scope, false otherwise
      */
     private boolean scheduleHigh(CandidateURI caUri) {
-    	if(controller.getScope().accepts(caUri)) {
-    		logger.finer("URI accepted: "+caUri);
-    		controller.getFrontier().batchScheduleHigh(caUri);
-    		return true;
-    	}
-    	logger.finer("URI rejected: "+caUri);
-    	//boolean test = ((Scope)controller.getScope()).getFocusFilter().accepts(caUri);
-    	//test = ((Scope)controller.getScope()).getTransitiveFilter().accepts(caUri);
-    	//test = ((Scope)controller.getScope()).getExcludeFilter().accepts(caUri);
-    	return false;
+        if(getController().getScope().accepts(caUri)) {
+            logger.finer("URI accepted: "+caUri);
+            getController().getFrontier().batchScheduleHigh(caUri);
+            return true;
+        }
+        logger.finer("URI rejected: "+caUri);
+        //boolean test = ((Scope)controller.getScope()).getFocusFilter().accepts(caUri);
+        //test = ((Scope)controller.getScope()).getTransitiveFilter().accepts(caUri);
+        //test = ((Scope)controller.getScope()).getExcludeFilter().accepts(caUri);
+        return false;
     }
 
     /**
@@ -205,112 +205,112 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
      * @return true if CandidateURI was accepted by crawl scope, false otherwise
      */
     private boolean schedule(CandidateURI caUri) {
-    	if(controller.getScope().accepts(caUri)) {
-    		logger.finer("URI accepted: "+caUri);
-    		controller.getFrontier().batchSchedule(caUri);
-    		return true;
-    	}
-    	logger.finer("URI rejected: "+caUri);
-    	//controller.getScope().accepts(caUri);
-    	return false;
+        if(getController().getScope().accepts(caUri)) {
+            logger.finer("URI accepted: "+caUri);
+            getController().getFrontier().batchSchedule(caUri);
+            return true;
+        }
+        logger.finer("URI rejected: "+caUri);
+        //controller.getScope().accepts(caUri);
+        return false;
     }
 
     /**
      * @param curi
      */
     private void handleHttpHeaders(CrawlURI curi, URI baseUri) {
-    	// treat roughly the same as embeds, with same distance-from-seed
-    	Collection uris = (Collection)curi.getAList().getObject(A_HTTP_HEADER_URIS);
-    	Iterator iter = uris.iterator();
-    	while(iter.hasNext()) {
-    		String r = (String)iter.next();
-    		try {
-    			UURI u = UURI.createUURI(r,baseUri);
-    			CandidateURI caUri = new CandidateURI(u);
-    			caUri.setVia(curi);
-    			caUri.setPathFromSeed(curi.getPathFromSeed()+"R");
-    			logger.finest("inserting header at head "+u);
-    			scheduleHigh(caUri);
-    		} catch (URISyntaxException ex) {
-    			Object[] array = { curi, r };
-    			controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
-    		}
-    	}
+        // treat roughly the same as embeds, with same distance-from-seed
+        Collection uris = (Collection)curi.getAList().getObject(A_HTTP_HEADER_URIS);
+        Iterator iter = uris.iterator();
+        while(iter.hasNext()) {
+            String r = (String)iter.next();
+            try {
+                UURI u = UURI.createUURI(r,baseUri);
+                CandidateURI caUri = new CandidateURI(u);
+                caUri.setVia(curi);
+                caUri.setPathFromSeed(curi.getPathFromSeed()+"R");
+                logger.finest("inserting header at head "+u);
+                scheduleHigh(caUri);
+            } catch (URISyntaxException ex) {
+                Object[] array = { curi, r };
+                getController().uriErrors.log(Level.INFO,ex.getMessage(), array );
+            }
+        }
     }
 
     protected void handleLinks(CrawlURI curi, URI baseUri) {
-    	if (curi.getFetchStatus() >= 400) {
-    		// do not follow links of error pages
-    		return;
-    	}
-    	Collection links = (Collection)curi.getAList().getObject(A_HTML_LINKS);
-    	Iterator iter = links.iterator();
-    	while(iter.hasNext()) {
-    		String l = (String)iter.next();
-    		try {
-    			UURI link = UURI.createUURI(l,baseUri);
-    			CandidateURI caUri = new CandidateURI(link);
-    			caUri.setVia(curi);
-    			caUri.setPathFromSeed(curi.getPathFromSeed()+"L");
-    			logger.finest("inserting link at head "+link);
-    			schedule(caUri);
-    		} catch (URISyntaxException ex) {
-    			Object[] array = { curi, l };
-    			controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
-    		}
-    	}
+        if (curi.getFetchStatus() >= 400) {
+            // do not follow links of error pages
+            return;
+        }
+        Collection links = (Collection)curi.getAList().getObject(A_HTML_LINKS);
+        Iterator iter = links.iterator();
+        while(iter.hasNext()) {
+            String l = (String)iter.next();
+            try {
+                UURI link = UURI.createUURI(l,baseUri);
+                CandidateURI caUri = new CandidateURI(link);
+                caUri.setVia(curi);
+                caUri.setPathFromSeed(curi.getPathFromSeed()+"L");
+                logger.finest("inserting link at head "+link);
+                schedule(caUri);
+            } catch (URISyntaxException ex) {
+                Object[] array = { curi, l };
+                getController().uriErrors.log(Level.INFO,ex.getMessage(), array );
+            }
+        }
     }
 
     protected void handleCSSLinks(CrawlURI curi, URI baseUri) {
-    	// treat same as embedded links
-    	if (curi.getFetchStatus() >= 400) {
-    		// do not follow links of error pages
-    		return;
-    	}
-    	Collection links = (Collection) curi.getAList().getObject(A_CSS_LINKS);
-    	if (links == null) {
-    		return;
-    	}
-    	Iterator iter = links.iterator();
-    	while (iter.hasNext()) {
-    		String e = (String) iter.next();
-    		try {
-    			UURI embed = UURI.createUURI(e, baseUri);
-    			CandidateURI caUri = new CandidateURI(embed);
-    			caUri.setVia(curi);
-    			char pathSuffix = /* caUri.sameDomainAs(curi) ? 'D' : */ 'E';
-    			caUri.setPathFromSeed(curi.getPathFromSeed() + pathSuffix);
-    			logger.finest("inserting embed at head " + embed);
-    			schedule(caUri);
-    		} catch (URISyntaxException ex) {
-    			Object[] array = { curi, e };
-    			controller.uriErrors.log(Level.INFO, ex.getMessage(), array);
-    		}
-    	}
+        // treat same as embedded links
+        if (curi.getFetchStatus() >= 400) {
+            // do not follow links of error pages
+            return;
+        }
+        Collection links = (Collection) curi.getAList().getObject(A_CSS_LINKS);
+        if (links == null) {
+            return;
+        }
+        Iterator iter = links.iterator();
+        while (iter.hasNext()) {
+            String e = (String) iter.next();
+            try {
+                UURI embed = UURI.createUURI(e, baseUri);
+                CandidateURI caUri = new CandidateURI(embed);
+                caUri.setVia(curi);
+                char pathSuffix = /* caUri.sameDomainAs(curi) ? 'D' : */ 'E';
+                caUri.setPathFromSeed(curi.getPathFromSeed() + pathSuffix);
+                logger.finest("inserting embed at head " + embed);
+                schedule(caUri);
+            } catch (URISyntaxException ex) {
+                Object[] array = { curi, e };
+                getController().uriErrors.log(Level.INFO, ex.getMessage(), array);
+            }
+        }
     }
 
     protected void handleEmbeds(CrawlURI curi, URI baseUri) {
-    	if (curi.getFetchStatus() >= 400) {
-    		// do not follow links of error pages
-    		return;
-    	}
-    	Collection embeds = (Collection)curi.getAList().getObject(A_HTML_EMBEDS);
-    	Iterator iter = embeds.iterator();
-    	while(iter.hasNext()) {
-    		String e = (String)iter.next();
-    		try {
-    			UURI embed = UURI.createUURI(e,baseUri);
-    			CandidateURI caUri = new CandidateURI(embed);
-    			caUri.setVia(curi);
-    			char pathSuffix = /* caUri.sameDomainAs(curi) ? 'D' : */ 'E';
-    			caUri.setPathFromSeed(curi.getPathFromSeed()+pathSuffix);
-    			logger.finest("inserting embed at head "+embed);
-    			schedule(caUri);
-    		} catch (URISyntaxException ex) {
-    			Object[] array = { curi, e };
-    			controller.uriErrors.log(Level.INFO,ex.getMessage(), array );
-    		}
-    	}
+        if (curi.getFetchStatus() >= 400) {
+            // do not follow links of error pages
+            return;
+        }
+        Collection embeds = (Collection)curi.getAList().getObject(A_HTML_EMBEDS);
+        Iterator iter = embeds.iterator();
+        while(iter.hasNext()) {
+            String e = (String)iter.next();
+            try {
+                UURI embed = UURI.createUURI(e,baseUri);
+                CandidateURI caUri = new CandidateURI(embed);
+                caUri.setVia(curi);
+                char pathSuffix = /* caUri.sameDomainAs(curi) ? 'D' : */ 'E';
+                caUri.setPathFromSeed(curi.getPathFromSeed()+pathSuffix);
+                logger.finest("inserting embed at head "+embed);
+                schedule(caUri);
+            } catch (URISyntaxException ex) {
+                Object[] array = { curi, e };
+                getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
+            }
+        }
     }
 
 

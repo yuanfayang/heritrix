@@ -28,7 +28,6 @@ import javax.management.AttributeNotFoundException;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Processor;
 
@@ -69,63 +68,49 @@ public class Preselector extends Processor implements FetchStatusCodes {
         } catch (AttributeNotFoundException e) {
             recheckScope = false;
         }
-    	if (recheckScope) {
-    		CrawlScope scope = controller.getScope();
-    		if (curi.getScopeVersion()==scope.getVersion()) {
-    			// already checked
-    			return;
-    		}
-    		if(scope.accepts(curi)) {
-    			curi.setScopeVersion(scope.getVersion());
-    			return;
-    		}
-    		// scope rejected
-    		curi.setFetchStatus(S_OUT_OF_SCOPE);
-    		curi.skipToProcessor(controller.getPostprocessor());
-    	}
+        if (recheckScope) {
+            CrawlScope scope = getController().getScope();
+            if (curi.getScopeVersion() == scope.getVersion()) {
+                // already checked
+                return;
+            }
+            if(scope.accepts(curi)) {
+                curi.setScopeVersion(scope.getVersion());
+                return;
+            }
+            // scope rejected
+            curi.setFetchStatus(S_OUT_OF_SCOPE);
+            curi.skipToProcessor(getController().getPostprocessor());
+        }
 
 
-//    	super.innerProcess(curi);
+//        super.innerProcess(curi);
 //
-//    	// check for too-deep
-//    	if(maxLinkDepth>=0 && curi.getLinkHopCount()>maxLinkDepth) {
-//    		curi.setFetchStatus(S_TOO_MANY_LINK_HOPS);
-//    		curi.cancelFurtherProcessing();
-//    		return;
-//    	}
-//    	if(maxEmbedDepth>=0 && curi.getEmbedHopCount()>maxEmbedDepth) {
-//    		curi.setFetchStatus(S_TOO_MANY_EMBED_HOPS);
-//    		curi.cancelFurtherProcessing();
-//    		return;
-//    	}
+//        // check for too-deep
+//        if(maxLinkDepth>=0 && curi.getLinkHopCount()>maxLinkDepth) {
+//            curi.setFetchStatus(S_TOO_MANY_LINK_HOPS);
+//            curi.cancelFurtherProcessing();
+//            return;
+//        }
+//        if(maxEmbedDepth>=0 && curi.getEmbedHopCount()>maxEmbedDepth) {
+//            curi.setFetchStatus(S_TOO_MANY_EMBED_HOPS);
+//            curi.cancelFurtherProcessing();
+//            return;
+//        }
     }
 
 //    /* (non-Javadoc)
 //     * @see org.archive.crawler.framework.Processor#innerRejectProcess(org.archive.crawler.datamodel.CrawlURI)
 //     */
 //    protected void innerRejectProcess(CrawlURI curi) {
-//    	super.innerRejectProcess(curi);
-//    	// filter-rejection means out-of-scope for everything but embeds
-//    	if (curi.getEmbedHopCount() < 1) {
-//    		curi.setFetchStatus(S_OUT_OF_SCOPE);
-//    		curi.cancelFurtherProcessing();
-//    	} else {
-//    		// never mind; scope filters don't apply
-//    	}
+//        super.innerRejectProcess(curi);
+//        // filter-rejection means out-of-scope for everything but embeds
+//        if (curi.getEmbedHopCount() < 1) {
+//            curi.setFetchStatus(S_OUT_OF_SCOPE);
+//            curi.cancelFurtherProcessing();
+//        } else {
+//            // never mind; scope filters don't apply
+//        }
 //    }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#initialize(org.archive.crawler.framework.CrawlController)
-     */
-    public void initialize(CrawlController c) throws AttributeNotFoundException {
-    	super.initialize(c);
-        //recheckScope = getBooleanAt("@scope",false);
-
-
-    	//maxLinkDepth = getIntAt(XP_MAX_LINK_DEPTH, maxLinkDepth);
-    	//maxEmbedDepth = getIntAt(XP_MAX_EMBED_DEPTH, maxEmbedDepth);
-
-    }
-
 
 }

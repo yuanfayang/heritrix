@@ -52,9 +52,6 @@ public class Filter extends CrawlerModule {
     private static final String ATTR_INVERTED = "inverted";
     private static final String ATTR_ENABLED = "enabled";
 
-    // associated CrawlController
-    protected CrawlController controller;
-
     /** Creates a new 'null' filter.
      *
      * @param name the name of the filter.
@@ -111,22 +108,11 @@ public class Filter extends CrawlerModule {
         return true;
     }
 
-    public void initialize(CrawlController controller) {
-        this.controller = controller;
-    }
-
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     public String toString() {
         return "Filter<" + getName() + ">";
-    }
-
-    /**
-     * @return The crawl controller.
-     */
-    public CrawlController getController() {
-        return controller;
     }
 
 }

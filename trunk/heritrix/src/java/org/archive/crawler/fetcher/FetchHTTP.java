@@ -42,7 +42,6 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.io.RecorderLengthExceededException;
@@ -121,88 +120,89 @@ public class FetchHTTP
      * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
      */
     protected void innerProcess(CrawlURI curi) {
+        initialize();
 
-    	if (!canFetch(curi)) {
+        if (!canFetch(curi)) {
             // cannot fetch this, due to protocol, retries, or other problems
             return;
         }
 
-    	// note begin time
-    	long now = System.currentTimeMillis();
-    	curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
+        // note begin time
+        long now = System.currentTimeMillis();
+        curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 
-    	// setup GET
-    	GetMethod get = new GetMethod(curi.getUURI().getUriString());
+        // setup GET
+        GetMethod get = new GetMethod(curi.getUURI().getUriString());
         setupGet(curi, get);
 
-    	// setup recording of data -- for subsequent processor modules
-    	HttpRecorder rec =
-    		((ToeThread) Thread.currentThread()).getHttpRecorder();
-    	get.setHttpRecorder(rec);
-    	try {
-    		// TODO: make this initial reading subject to the same
-    		// length/timeout limits; currently only the soTimeout
-    		// is effective here, once the connection succeeds
-    		http.executeMethod(get);
-    	} catch (IOException e) {
-    		curi.addLocalizedError(this.getName(), e, "executeMethod");
-    		curi.setFetchStatus(S_CONNECT_FAILED);
-    		rec.closeRecorders();
-    		get.releaseConnection();
-    		return;
-    	} catch (ArrayIndexOutOfBoundsException e) {
-    		// for weird windows-only ArrayIndex exceptions from native code
-    		// see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-    		// treating as if it were an IOException
-    		curi.addLocalizedError(this.getName(), e, "executeMethod");
-    		curi.setFetchStatus(S_CONNECT_FAILED);
-    		rec.closeRecorders();
-    		get.releaseConnection();
-    		return;
-    	}
+        // setup recording of data -- for subsequent processor modules
+        HttpRecorder rec =
+            ((ToeThread) Thread.currentThread()).getHttpRecorder();
+        get.setHttpRecorder(rec);
+        try {
+            // TODO: make this initial reading subject to the same
+            // length/timeout limits; currently only the soTimeout
+            // is effective here, once the connection succeeds
+            http.executeMethod(get);
+        } catch (IOException e) {
+            curi.addLocalizedError(this.getName(), e, "executeMethod");
+            curi.setFetchStatus(S_CONNECT_FAILED);
+            rec.closeRecorders();
+            get.releaseConnection();
+            return;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // for weird windows-only ArrayIndex exceptions from native code
+            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+            // treating as if it were an IOException
+            curi.addLocalizedError(this.getName(), e, "executeMethod");
+            curi.setFetchStatus(S_CONNECT_FAILED);
+            rec.closeRecorders();
+            get.releaseConnection();
+            return;
+        }
 
-    	try {
-    		// force read-to-end, so that any socket hangs occur here,
-    		// not in later modules
-    		rec.getRecordedInput().readFullyOrUntil(
-    			getMaxLength(curi),
-    			1000 * getTimeout(curi));
-    	} catch (RecorderTimeoutException ex) {
-    		curi.addAnnotation("timeTrunc");
-    	} catch (RecorderLengthExceededException ex) {
-    		curi.addAnnotation("lengthTrunc");
-    	} catch (IOException e) {
-    		curi.addLocalizedError(this.getName(), e, "readFully");
-    		curi.setFetchStatus(S_CONNECT_LOST);
-    		return;
-    	} catch (ArrayIndexOutOfBoundsException e) {
-    		// for weird windows-only ArrayIndex exceptions from native code
-    		// see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
-    		// treating as if it were an IOException
-    		curi.addLocalizedError(this.getName(),e,"readFully");
-    		curi.setFetchStatus(S_CONNECT_LOST);
-    		return;
-    	} finally {
-    		rec.closeRecorders();
-    		get.releaseConnection();
-    	}
+        try {
+            // force read-to-end, so that any socket hangs occur here,
+            // not in later modules
+            rec.getRecordedInput().readFullyOrUntil(
+                getMaxLength(curi),
+                1000 * getTimeout(curi));
+        } catch (RecorderTimeoutException ex) {
+            curi.addAnnotation("timeTrunc");
+        } catch (RecorderLengthExceededException ex) {
+            curi.addAnnotation("lengthTrunc");
+        } catch (IOException e) {
+            curi.addLocalizedError(this.getName(), e, "readFully");
+            curi.setFetchStatus(S_CONNECT_LOST);
+            return;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // for weird windows-only ArrayIndex exceptions from native code
+            // see http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
+            // treating as if it were an IOException
+            curi.addLocalizedError(this.getName(),e,"readFully");
+            curi.setFetchStatus(S_CONNECT_LOST);
+            return;
+        } finally {
+            rec.closeRecorders();
+            get.releaseConnection();
+        }
 
         // note completion time
         curi.getAList().putLong(
             A_FETCH_COMPLETED_TIME,
             System.currentTimeMillis());
 
-    	long contentSize = get.getHttpRecorder().getRecordedInput().getSize();
-    	logger.fine(
-    		curi.getUURI().getUriString()+": "+ get.getStatusCode()+" "+ contentSize);
+        long contentSize = get.getHttpRecorder().getRecordedInput().getSize();
+        logger.fine(
+            curi.getUURI().getUriString()+": "+ get.getStatusCode()+" "+ contentSize);
 
-    	curi.setFetchStatus(get.getStatusCode());
-    	curi.setContentSize(contentSize);
-    	curi.getAList().putObject(A_HTTP_TRANSACTION, get);
-    	Header ct = get.getResponseHeader("content-type");
-    	if (ct != null) {
-    		curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
-    	}
+        curi.setFetchStatus(get.getStatusCode());
+        curi.setContentSize(contentSize);
+        curi.getAList().putObject(A_HTTP_TRANSACTION, get);
+        Header ct = get.getResponseHeader("content-type");
+        if (ct != null) {
+            curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
+        }
     }
 
 
@@ -254,42 +254,53 @@ public class FetchHTTP
 
         String userAgent = curi.getUserAgent();
         if (userAgent == null) {
-            userAgent = controller.getOrder().getUserAgent(curi);
+            userAgent = getSettingsHandler().getOrder().getUserAgent(curi);
         }
         get.setRequestHeader("User-Agent", userAgent);
-        get.setRequestHeader("From", controller.getOrder().getFrom(curi));
+        get.setRequestHeader("From", getSettingsHandler().getOrder().getFrom(curi));
     }
+
+    private boolean initialized = false;
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#initialize(org.archive.crawler.framework.CrawlController)
      */
-    public void initialize(CrawlController c) throws AttributeNotFoundException {
-    	super.initialize(c);
-        soTimeout = getSoTimeout(null);
-    	CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
-    	MultiThreadedHttpConnectionManager connectionManager =
-    		new MultiThreadedHttpConnectionManager();
-    	// ensure there will be as many http connections available as worker threads
-    	connectionManager.setMaxTotalConnections(controller.getToeCount());
-    	http = new HttpClient(connectionManager);
+    public void initialize() {
+        if (!initialized) {
+            soTimeout = getSoTimeout(null);
+            CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
+            MultiThreadedHttpConnectionManager connectionManager =
+                new MultiThreadedHttpConnectionManager();
+            // ensure there will be as many http connections available as
+            // worker threads
+            connectionManager.setMaxTotalConnections(getController().getToeCount());
+            http = new HttpClient(connectionManager);
 
-    	    // load cookies from a file if specified in the order file.
+            // load cookies from a file if specified in the order file.
             try {
                 loadCookies((String) getAttribute(ATTR_LOAD_COOKIES));
             } catch (MBeanException e) {
-                throw new AttributeNotFoundException(e.getMessage());
+                logger.warning(e.getLocalizedMessage());
             } catch (ReflectionException e) {
-                throw new AttributeNotFoundException(e.getMessage());
+                logger.warning(e.getLocalizedMessage());
+            } catch (AttributeNotFoundException e) {
+                logger.warning(e.getLocalizedMessage());
             }
+        // TODO: When HTTPClient stops using a monitor 'waitingThread' thread to
 
-    	// Set connection timeout. Considered same as overall timeout, for now.
-    	// TODO: When HTTPClient stops using a monitor 'waitingThread' thread to
-        // watch over the getting of the socket from socket factory
-        // and instead supports the java.net.Socket#connect timeout.
-    	// http.setConnectionTimeout((int)timeout);
-    	// set per-read() timeout: overall timeout will be checked at least this
-    	// frequently
-    	http.setTimeout(soTimeout);
+            // Set connection timeout. Considered same as overall timeout, for
+            // now.
+            // TODO: When HTTPClient stops using a monitor 'waitingThread'
+            // thread to
+            // watch over the getting of the socket from socket factory
+            // and instead supports the java.net.Socket#connect timeout.
+            // http.setConnectionTimeout((int)timeout);
+            // set per-read() timeout: overall timeout will be checked at least
+            // this
+            // frequently
+            http.setTimeout(soTimeout);
+            initialized = true;
+        }
     }
 
     private boolean getStrict(CrawlURI curi) {
@@ -368,61 +379,61 @@ public class FetchHTTP
      * @param cookiesFile file in the Netscape's 'cookies.txt' format.
      */
     private void loadCookies(String cookiesFile) {
-    	// Do nothing if cookiesFile is not specified.
-    	if (cookiesFile == null) {
-    		return;
-    	}
-    	RandomAccessFile raf = null;
-    	try {
-    		raf = new RandomAccessFile(cookiesFile, "r");
-    		String[] cookieParts;
-    		String line;
-    		Cookie cookie = null;
-    		while ((line = raf.readLine()) != null) {
-    			// Line that starts with # is commented line, therefore skip it.
-    			if (!line.startsWith("#")) {
-    				cookieParts = line.split("\\t");
-    				if (cookieParts.length == 7) {
-    					// Create cookie with not expiration date (-1 value).
-    					// TODO: add this as an option.
-    					cookie =
-    						new Cookie(
-    							cookieParts[0],
-    							cookieParts[5],
-    							cookieParts[6],
-    							cookieParts[2],
-    							-1,
-    							(new Boolean(cookieParts[3])).booleanValue());
-    					if (cookieParts[1].toLowerCase().equals("true")) {
-    						cookie.setDomainAttributeSpecified(true);
-    					} else {
-    						cookie.setDomainAttributeSpecified(false);
-    					}
-    					this.http.getState().addCookie(cookie);
-    					logger.fine(
-    						"Adding cookie: " + cookie.toExternalForm());
-    				}
-    			}
-    		}
-    	} catch (FileNotFoundException e) {
-    		// We should probably throw FatalConfigurationException.
-    		System.out.println(
-    			"Could not find file: "
-    				+ cookiesFile
-    				+ " (Element: "
-    				+ ATTR_LOAD_COOKIES
-    				+ ")");
-    	} catch (IOException e) {
-    		// We should probably throw FatalConfigurationException.
-    		e.printStackTrace();
-    	} finally {
-    		try {
-    			if (raf != null) {
-    				raf.close();
-    			}
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
-    	}
+        // Do nothing if cookiesFile is not specified.
+        if (cookiesFile == null) {
+            return;
+        }
+        RandomAccessFile raf = null;
+        try {
+            raf = new RandomAccessFile(cookiesFile, "r");
+            String[] cookieParts;
+            String line;
+            Cookie cookie = null;
+            while ((line = raf.readLine()) != null) {
+                // Line that starts with # is commented line, therefore skip it.
+                if (!line.startsWith("#")) {
+                    cookieParts = line.split("\\t");
+                    if (cookieParts.length == 7) {
+                        // Create cookie with not expiration date (-1 value).
+                        // TODO: add this as an option.
+                        cookie =
+                            new Cookie(
+                                cookieParts[0],
+                                cookieParts[5],
+                                cookieParts[6],
+                                cookieParts[2],
+                                -1,
+                                (new Boolean(cookieParts[3])).booleanValue());
+                        if (cookieParts[1].toLowerCase().equals("true")) {
+                            cookie.setDomainAttributeSpecified(true);
+                        } else {
+                            cookie.setDomainAttributeSpecified(false);
+                        }
+                        this.http.getState().addCookie(cookie);
+                        logger.fine(
+                            "Adding cookie: " + cookie.toExternalForm());
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            // We should probably throw FatalConfigurationException.
+            System.out.println(
+                "Could not find file: "
+                    + cookiesFile
+                    + " (Element: "
+                    + ATTR_LOAD_COOKIES
+                    + ")");
+        } catch (IOException e) {
+            // We should probably throw FatalConfigurationException.
+            e.printStackTrace();
+        } finally {
+            try {
+                if (raf != null) {
+                    raf.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
