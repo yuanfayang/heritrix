@@ -170,7 +170,7 @@
   Usage: heritrix --nowui ORDER_FILE
   Usage: heritrix [--port=PORT] [--admin=LOGIN:PASSWORD] [--run] [ORDER_FILE]
   Usage: heritrix [--port=PORT] --selftest[=TESTNAME]
-  Version: @VERSION@
+  Version: 0.11.0
   Options:
    -a,--admin      Login and password for web user interface administration.
                    Default: admin/letmein.
@@ -1443,11 +1443,10 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
             <para>The initial user-agent template you see when you first start heritrix will
             look something like the following:</para>
-          <para><programlisting>Mozilla/5.0 (compatible; heritrix/@VERSION@ +PROJECT_URL_HERE</programlisting></para>
+          <para><programlisting>Mozilla/5.0 (compatible; heritrix/0.11.0 +PROJECT_URL_HERE</programlisting></para>
             <para>You must change at least the 'PROJECT_URL_HERE' and put in place a website
             that webmasters can go to to view information on the organization or person running
-            a crawl. The <literal>@VERSION@</literal> will be
-            interpolated with the heritrix version number if its left as is.</para>
+            a crawl.</para>
 
             <para>The <literal>user-agent</literal> string must adhere to the following
             format:</para>
