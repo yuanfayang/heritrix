@@ -878,7 +878,7 @@ public class CrawlController implements Serializable {
     }
 
     private void beginCrawlStop() {
-        logger.info("Starting crawl stopping...");
+        logger.info("Starting beginCrawlStop()...");
         synchronized (this.registeredCrawlStatusListeners) {
             this.state = STOPPING;
             frontier.terminate();
@@ -888,7 +888,7 @@ public class CrawlController implements Serializable {
                 ((CrawlStatusListener)i.next()).crawlEnding(sExit);
             }
         }
-        logger.info("Finished crawl stopping.");
+        logger.info("Finished beginCrawlStop()."); 
     }
 
     /**
