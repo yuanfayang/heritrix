@@ -1019,7 +1019,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             "Outputs record at this offset into arc file."));
         options.addOption(new Option("d","digest", true,
             "Calculate digest. Expensive. Default: true."));
-        options.addOption(new Option("s","strict", true,
+        options.addOption(new Option("s","strict", false,
             "Strict mode. Fails parse if incorrectly formatted ARC."));
         options.addOption(new Option("f","format", true,
             "Output options: 'cdx', 'dump', 'gzipdump'," +
