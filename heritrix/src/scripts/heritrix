@@ -10,7 +10,7 @@
 ##                  make an educated guess based of position relative to this
 ##                  script.
 ##
-## HERITRIX_LOG     Pathname to the Heritrix log file written when run in
+## HERITRIX_OUT     Pathname to the Heritrix log file written when run in
 ##                  daemon mode.
 ##                  Default setting is $HERITRIX_HOME/heritrix_out.log
 ##
@@ -92,11 +92,11 @@ then
 fi
 # Run heritrix as daemon.  Redirect stdout and stderr to a file.
 # Print start message with date, java version, java opts, ulimit, and uname.
-if [ -z "$HERITRIX_LOG" ]
+if [ -z "$HERITRIX_OUT" ]
 then
-  HERITRIX_LOG=${HERITRIX_HOME}/heritrix_out.log
+  HERITRIX_OUT=${HERITRIX_HOME}/heritrix_out.log
 fi
-stdouterrlog=${HERITRIX_LOG}
+stdouterrlog=${HERITRIX_OUT}
 echo "`date` Starting heritrix" >> $stdouterrlog
 uname -a >> $stdouterrlog 2>&1
 ${JAVACMD} -version >> $stdouterrlog 2>&1
@@ -108,10 +108,11 @@ main=org.archive.crawler.Heritrix
 if [ -n "$FOREGROUND" ]
 then
     CLASSPATH=${CP} $JAVACMD -Dheritrix.home=${HERITRIX_HOME} \
-        ${JAVA_OPTS} $main $@
+        -Dheritrix.out=${HERITRIX_OUT} ${JAVA_OPTS} $main $@
 else
     CLASSPATH=${CP} nohup $JAVACMD -Dheritrix.home=${HERITRIX_HOME} \
-        ${JAVA_OPTS} $main $@ >> ${stdouterrlog} 2>&1 &
+        -Dheritrix.out=${HERITRIX_OUT} ${JAVA_OPTS} \
+        $main $@ >> ${stdouterrlog} 2>&1 &
 
     # Wait for content in the heritrix_dmesg.log file.
     echo -n "`date` Starting heritrix"
