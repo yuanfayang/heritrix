@@ -278,12 +278,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * @param cs
      */
     protected void processScriptCode(CrawlURI curi, CharSequence cs) {
-        String code = cs.toString();
-        // Escaping is now done in UURI.normalize();
-        // code = TextUtils.replaceAll(ESCAPED_AMP, code, "&"); 
-        
         this.numberOfLinksExtracted +=
-            ExtractorJS.considerStrings(curi, code, false);
+            ExtractorJS.considerStrings(curi, cs.toString(), false);
     }
 
     static final String JAVASCRIPT = "(?i)^javascript:.*";
@@ -292,26 +288,24 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      * @param curi
      * @param value
      */
-    protected void processLink(CrawlURI curi, CharSequence link) {
-        // Escaping is now done in UURI.normalaize();
-        // String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
+    protected void processLink(CrawlURI curi, CharSequence value) {
+        String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
         
         if(TextUtils.matches(JAVASCRIPT, link)) {
-            processScriptCode(curi, link.subSequence(11, link.length()));
+            processScriptCode(curi,value.subSequence(11, value.length()));
         } else {
             logger.finest("link: " + link + " from " + curi);
             this.numberOfLinksExtracted++;
-            curi.addLinkToCollection(link.toString(), A_HTML_LINKS);
+            curi.addLinkToCollection(link, A_HTML_LINKS);
         }
     }
 
-    protected void processEmbed(CrawlURI curi, CharSequence embed) {
-        // Escaping is now done in UURI.normalaize();
-        // String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
+    protected void processEmbed(CrawlURI curi, CharSequence value) {
+        String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
         
-        logger.finest("embed: " + embed + " from "+curi);
+        logger.finest("embed: " + embed + " from " + curi);
         this.numberOfLinksExtracted++;
-        curi.addLinkToCollection(embed.toString(), A_HTML_EMBEDS);
+        curi.addLinkToCollection(embed, A_HTML_EMBEDS);
     }
 
     public void innerProcess(CrawlURI curi) {
