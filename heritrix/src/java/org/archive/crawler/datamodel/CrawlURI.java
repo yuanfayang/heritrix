@@ -1026,4 +1026,19 @@ public class CrawlURI extends CandidateURI
     public Object getContentDigest() {
         return contentDigest;
     }
+
+    Object holder;
+    /**
+     * @param q
+     */
+    public void noteHolder(Object obj) {
+        holder=obj;
+    }
+
+    /**
+     * @return
+     */
+    public Object getHolder() {
+        return holder;
+    }
 }
