@@ -27,7 +27,6 @@ package org.archive.util;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -88,7 +87,9 @@ public class DiskBackedQueueTest extends QueueTestBase {
      * Test which will overflow into disk backing,
      * trigger flip of write and read files.
      */
-    public void testIntoDiskBacking() {
+    public synchronized void testIntoDiskBacking() throws InterruptedException {
+        DiskBackedQueue queue = (DiskBackedQueue)this.queue;
+        
         queue.enqueue("foo1");
         queue.enqueue("foo2");
         queue.enqueue("foo3");
@@ -109,7 +110,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
         assertEquals("foo5 dequeued","foo5",queue.dequeue());
         // this next forces read of 5 into memory from disk, file flip
         assertEquals("foo6 dequeued","foo6",queue.dequeue());
-        
+       
         // these next 4 write to new file
         queue.enqueue("foo12");
         queue.enqueue("foo13");
@@ -125,7 +126,23 @@ public class DiskBackedQueueTest extends QueueTestBase {
         assertEquals("foo12 dequeued","foo12",queue.dequeue());
         assertEquals("foo13 dequeued","foo13",queue.dequeue());
         assertEquals("foo14 dequeued","foo14",queue.dequeue());
+        // Only one left. (less then or equal to a quarter of availible in
+        // memory cache. Files are deleted.
+        assertFalse("files released",queue.tailQ.isInitialized());
+        queue.enqueue("foo16");
+        queue.enqueue("foo17");
+        queue.enqueue("foo18");
+        queue.enqueue("foo19");
+        // Next two will be written to file again.
+        queue.enqueue("foo20");
+        queue.enqueue("foo21");
         assertEquals("foo15 dequeued","foo15",queue.dequeue());
+        assertEquals("foo16 dequeued","foo16",queue.dequeue());
+        assertEquals("foo17 dequeued","foo17",queue.dequeue());
+        assertEquals("foo18 dequeued","foo18",queue.dequeue());
+        assertEquals("foo19 dequeued","foo19",queue.dequeue());
+        assertEquals("foo20 dequeued","foo20",queue.dequeue());
+        assertEquals("foo21 dequeued","foo21",queue.dequeue());
         assertTrue("queue is empty", queue.isEmpty());    
     }
     
