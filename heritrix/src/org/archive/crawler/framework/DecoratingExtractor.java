@@ -8,7 +8,7 @@ package org.archive.crawler.framework;
 
 /**
  * A Processor which only decorates the CrawlURI with
- * extracted info. 
+ * extracted info, having no external effects. 
  * 
  * 
  * @author Gordon Mohr
