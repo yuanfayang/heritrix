@@ -86,8 +86,25 @@ public class RecordingInputStream extends InputStream {
 		while(read(buf)!=-1) {
 		}
 		return recordingOutputStream.getSize();
-		
 	}
+
+
+	/**
+	 * @param maxLength
+	 * @param timeout
+	 */
+	public boolean readFullyOrUntil(long maxLength, long timeout) throws IOException {
+		long startTime;
+		if(timeout>0) {
+			startTime = System.currentTimeMillis();
+		}
+		byte[] buf = new byte[4096];
+		while(read(buf)!=-1) {
+			// TODO check length and time limits
+		}
+		return false; // did not timeout or overflow
+	}
+
 
 	/**
 	 * @return
