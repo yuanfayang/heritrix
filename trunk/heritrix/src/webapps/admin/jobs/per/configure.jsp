@@ -259,7 +259,7 @@
 			if(theJob.isRunning()){
 				handler.kickUpdate();
 			}
-			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
+			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
 		}else if(request.getParameter("action").equals("filters")){
 			response.sendRedirect("/admin/jobs/per/filters.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
 		}

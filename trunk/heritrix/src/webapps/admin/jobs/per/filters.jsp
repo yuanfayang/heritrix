@@ -201,7 +201,7 @@
 			if(theJob.isRunning()){
 				handler.kickUpdate(); //Just to make sure.
 			}
-			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain);
+			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID()+"&currDomain="+currDomain+"&message=Override changes saved");
 			return;
 		}else if(action.equals("configure")){
 			// Go to configure settings.
