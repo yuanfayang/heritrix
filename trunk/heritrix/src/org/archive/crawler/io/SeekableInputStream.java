@@ -7,6 +7,7 @@
 package org.archive.crawler.io;
 
 import java.io.InputStream;
+import java.io.IOException;
 
 /**
  * An InputStream that is completely RandomAccess, as might be
@@ -15,12 +16,12 @@ import java.io.InputStream;
  * @author Gordon Mohr
  */
 public abstract class SeekableInputStream extends InputStream {
-	public abstract void seek(long loc);
-	public abstract long getPosition();
-	public void rewind() {
-		seek(0);
-	}
-	public SeekableInputSubstream excerpt(long s, long e) {
-		return new SeekableInputSubstream(this, s, e);
-	}
+  public abstract void seek(long loc) throws IOException;
+  public abstract long getPosition();
+  public void rewind() throws IOException {
+    seek(0);
+  }
+  public SeekableInputSubstream excerpt(long s, long e) throws IOException {
+    return new SeekableInputSubstream(this, s, e);
+  }
 }

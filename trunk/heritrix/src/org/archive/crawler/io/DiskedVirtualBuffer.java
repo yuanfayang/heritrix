@@ -9,6 +9,7 @@ package org.archive.crawler.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.File;
 import java.util.zip.Checksum;
 
 
@@ -124,7 +125,8 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * @return
   */
   public CharSequence getCharSequence() {
-  
+    // ToDo:
+    return null;
   }
   
   /**
@@ -137,7 +139,8 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * @return
   */
   public CharSequence getCharSequence(long start, long end) {
-  
+    // ToDo:
+    return null;
   }
   
   
@@ -149,7 +152,8 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * @return
   */
   public boolean isReadOnly() {
-  
+    // ToDo:
+    return true;
   }
   
   /**
@@ -157,7 +161,7 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * as long as the buffer remains writable. 
   * @return
   */
-  public int getSize() {
+  public long getSize() {
     // ToDo : This needs to be dynamic. If write is in progress,
     // then the length should be got from the output stream.
     return mLength;
@@ -169,7 +173,8 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
   * @return
   */
   public Checksum getChecksum() {
-  
+    // ToDo:
+    return null;
   }
 
   /**
@@ -190,7 +195,7 @@ public class DiskedVirtualBuffer extends VirtualBuffer {
    * OutputStream's close method calls this method.
    */
   void writeFinishCallBack(MemoryArea memArea, File file, 
-      byte[] augmentedDataArray, int length) {
+      byte[] augmentedDataArray, long length) {
     this.mMemArea = memArea;
     this.mSpillFile = file;
     this.mAugmentedDataArray = augmentedDataArray;

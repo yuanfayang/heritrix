@@ -70,6 +70,9 @@ class MemoryArea {
    * 3rd chunk, then the value would be (2 * 4K + 20) where 4k is 
    * assumed to be the chunk size.
    * 
+   * ToDo: Problem -- mLength here is more of a position rather than a size.
+   * So, if it is size, it has to one greater than the position. Take care.
+   * This influences a lot of code.
    */
   private int mLength;
 

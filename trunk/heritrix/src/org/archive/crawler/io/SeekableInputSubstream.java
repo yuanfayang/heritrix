@@ -14,44 +14,45 @@ import java.io.IOException;
  * @author Gordon Mohr
  */
 public class SeekableInputSubstream extends SeekableInputStream {
-	SeekableInputStream innerStream;
-	long start;
-	long end;
-	
-	/**
-	 * Create a "view" on the given stream, limited to the given range.
-	 * 
-	 * @param inner
-	 * @param s
-	 * @param e
-	 */
-	public SeekableInputSubstream(SeekableInputStream inner, long s, long e) {
-		innerStream = inner;
-		start = s;
-		end = e;
-		inner.seek(s);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.SeekableInputStream#seek(long)
-	 */
-	public void seek(long loc) {
-		innerStream.seek(start+loc);
-	}
+  SeekableInputStream innerStream;
+  long start;
+  long end;
+  
+  /**
+   * Create a "view" on the given stream, limited to the given range.
+   * 
+   * @param inner
+   * @param s
+   * @param e
+   */
+  public SeekableInputSubstream(SeekableInputStream inner, long s, long e) 
+      throws IOException {
+    innerStream = inner;
+    start = s;
+    end = e;
+    inner.seek(s);
+  }
+  
+  /* (non-Javadoc)
+   * @see org.archive.crawler.framework.SeekableInputStream#seek(long)
+   */
+  public void seek(long loc) throws IOException {
+    innerStream.seek(start+loc);
+  }
 
-	/* (non-Javadoc)
-	 * @see java.io.InputStream#read()
-	 */
-	public int read() throws IOException {
-		if ( innerStream.getPosition()>=end ) return -1;
-		return innerStream.read();
-	}
+  /* (non-Javadoc)
+   * @see java.io.InputStream#read()
+   */
+  public int read() throws IOException {
+    if ( innerStream.getPosition()>=end ) return -1;
+    return innerStream.read();
+  }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.SeekableInputStream#getPosition()
-	 */
-	public long getPosition() {
-		return innerStream.getPosition()-start;
-	}
+  /* (non-Javadoc)
+   * @see org.archive.crawler.framework.SeekableInputStream#getPosition()
+   */
+  public long getPosition() {
+    return innerStream.getPosition()-start;
+  }
 
 }

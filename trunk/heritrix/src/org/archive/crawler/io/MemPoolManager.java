@@ -34,6 +34,17 @@ public class MemPoolManager {
    * of unused blocks in the mDataPool.
    */
   private LinkedList mFreeBlocks;
+  
+  /**
+   * The block size in the upper region of the data pool.
+   */
+  int upperBlockSize;
+  
+  /**
+   * The block size in the lower region of the data pool.
+   */
+  int lowerBlockSize;
+  
 
   /**
    * Creates a memory pool manager with the specified buffer size and the
@@ -50,6 +61,8 @@ public class MemPoolManager {
     // Initialize the data pool ...
     int memSizeInBytes = memorySize * 1024 * 1024;
     mDataPool = new byte[memSizeInBytes];
+    this.upperBlockSize = upperBlockSize;
+    this.lowerBlockSize = lowerBlockSize;
     // ToDo: Should trim off the last reminder chunk.
     int numBlocks = memSizeInBytes / upperBlockSize;
     for (int i = 0; i < numBlocks; i++) {
