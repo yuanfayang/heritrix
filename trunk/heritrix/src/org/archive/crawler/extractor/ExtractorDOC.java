@@ -4,6 +4,7 @@
  */
 package org.archive.crawler.extractor;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -62,7 +63,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 		
 		// get the doc as a File
 		try{
-		  	documentStream = get.getHttpRecorder().getRecordedInput().getReplayInputStream();
+		  	documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
 		
 			if (documentStream==null) {
 				// TODO: note problem
@@ -78,6 +79,12 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
 		}catch(Exception e){
 			curi.addLocalizedError(getName(),e,"ExtractorDOC Exception");
 			return;
+		} finally {
+			try {
+				documentStream.close();
+			} catch (IOException ignored) {
+
+			}
 		}
 
 		// get doc text out of stream
