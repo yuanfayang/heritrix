@@ -2420,14 +2420,18 @@ public class SimpleExtractor extends Processor
 
     <para>The patchlevel number increments for small sets of changes,
     providing the most fine-grain time line of software evolution. Patchlevels
-    increment regularly for internal/development(odd minor level) work, but
+    increment regularly for internal/development (odd minor level) work, but
     only increment for external releases when an official update to the
     previous release version has been tested and packaged.</para>
 
-    <para>In the CVS HEAD, version numbers are applied as tags of the form
-    "heritrix-#_#_#". When a particular development-version is thought
+    <para>In CVS, version numbers are applied as tags of the form
+    "heritrix-#_#_#".  Branches occur at major transistions and are labeled
+    with the form "heritrix_#_#'.</para> 
+
+    <para>When a particular development-version is thought
     appropriate to become an external/"st able" release, it is considered a
-    "Release Candidate". If testing confirms it is suitable for release, it is
+    "Release Candidate" (No where is this written in versions). If testing
+    confirms it is suitable for release, it is
     assigned the next even minor/mode value (and a zero patchlevel), CVS
     version-labelled, and packaged for release. Immediately after release, and
     before additional coding occurs, the CVS HEAD is assigned the next odd
