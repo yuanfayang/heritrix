@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* MemLongSet
+ * 
+ * $Id$
+ * 
+ * Created on Oct 19, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * MemLongSet.java
- * Created on Oct 19, 2003
- *
- * $Header$
  */
 package org.archive.util;
 
@@ -39,7 +40,7 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	 * 
 	 */
 	public MemLongFPSet() {
-		this(DEFAULT_CAPACITY_POWER_OF_TWO, 0.75f);
+		this(DEFAULT_CAPACITY_POWER_OF_TWO, DEFAULT_LOAD_FACTOR);
 	}
 
 	/**
@@ -47,14 +48,12 @@ public class MemLongFPSet extends AbstractLongFPSet implements LongFPSet {
 	 * @param loadFactor
 	 */
 	public MemLongFPSet(int capacityPowerOfTwo, float loadFactor) {
-		this.capacityPowerOfTwo = capacityPowerOfTwo;
-		this.loadFactor = loadFactor;
+        super(capacityPowerOfTwo, loadFactor);
 		slots = new byte[1<<capacityPowerOfTwo];
 		for(int i = 0; i < (1<<capacityPowerOfTwo); i++) {
 			slots[i]=EMPTY; // flag value for unused
 		}
 		values = new long[1<<capacityPowerOfTwo];
-		count = 0;
 	}
 
 	protected void setAt(long i, long val) {

@@ -1,4 +1,10 @@
-/* Copyright (C) 2003 Internet Archive.
+/* AbstractLongFPSet
+ * 
+ * $Id$
+ * 
+ * Created on Oct 20, 2003
+ * 
+ * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -15,11 +21,6 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * AbstractLongFPSet.java
- * Created on Oct 20, 2003
- *
- * $Header$
  */
 package org.archive.util;
 
@@ -36,31 +37,52 @@ import java.util.logging.Logger;
  *
  */
 public abstract class AbstractLongFPSet implements LongFPSet {
-	private static Logger logger = Logger.getLogger("org.archive.util.AbstractLongFPSet");
-	// slot states
-	protected static byte EMPTY = -1;
-	// zero or positive means slot is filled
+	private static Logger logger =
+	    Logger.getLogger("org.archive.util.AbstractLongFPSet");
 
+    /** A constant used to indicate that a slot in the set storage is empty.
+     * A zero or positive value means slot is filled
+     */
+	protected static byte EMPTY = -1;
+
+    /** the capacity of this set, specified as the exponent of a power of 2 */
 	protected int capacityPowerOfTwo;
+
+    /** the load factor, as a fraction.  This gives the amount of free space
+     * to keep in the Set. */
 	protected float loadFactor;
+
+    /** The current number of elements in the set */
 	protected long count;
 
-	/**
-	 * @param val
-	 * @return True if contains passed value.
+    /** Create a new AbstractLongFPSet with a given capacity and load Factor
+     *
+     * @param capacityPowerOfTwo The capacity as the exponent of a power of 2.
+     *  e.g if the capacity is <code>4</code> this means <code>2^^4</code>
+     * entries
+     * @param loadFactor the load factor for the set
+     */
+    public AbstractLongFPSet(final int capacityPowerOfTwo, float loadFactor) {
+        this.capacityPowerOfTwo = capacityPowerOfTwo;
+        this.loadFactor = loadFactor;
+        this.count = 0;
+    }
+
+	/* @(non-Javadoc)
+     * @see org.archive.util.LongFPSet#contains(long)
 	 */
 	public boolean contains(long val) {
 		long i = indexFor(val);
-		if(i>=0) {
+		if(slotHasData(i)) {
 			noteAccess(i);
 			return true;
 		}
 		return false;
 	}
 
-	/**
+	/** Check the state of a slot in the storage.
 	 * 
-	 * @param i
+	 * @param i the index of the slot to check
 	 * @return -1 if slot is filled; nonegative if full. 
 	 */
 	protected abstract int getSlotState(long i);
@@ -74,40 +96,41 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 		// cache subclasses may use to update access counts, etc.	
 	}
 
-	/**
-	 * @return Number of values in the set.
+	/* @(non-Javadoc)
+     * @see org.archive.util.LongFPSet#count()
 	 */
 	public long count() {
 		return count;
 	}
 
-	/**
-	 * Add the given value. 
-	 * 
-	 * @param val
-	 * @return true if set has changed
+	/* @(non-Javadoc)
+     * @see org.archive.util.LongFPSet#add(long)
 	 */
 	public boolean add(long val) {
 		logger.finest("Adding "+val);
 		long i = indexFor(val);
-		if (i>=0) {
+		if (slotHasData(i)) {
 			// positive index indicates already in set
 			return false;
 		}
-		count++;
-		if(count>(loadFactor*(1<<capacityPowerOfTwo))) {
+        // we have a possible slot now, which is encoded asa negative number
+
+        // check for space, and grow if needed
+        count++;
+        if(count>(loadFactor*(1<<capacityPowerOfTwo))) {
 			makeSpace();
 			// find new i
 			i = indexFor(val);
 			assert i < 0 : "slot should be empty";
 		}
-		i = -(i + 1); // convert to positive index
-		setAt(i, val);
-		noteAccess(i);
-		return true;
+
+        i = asDataSlot(i); // convert to positive index
+        setAt(i, val);
+        noteAccess(i);
+        return true;
 	}
 
-	/**
+    /**
 	 * Make additional space to keep the load under the target
 	 * loadFactor level. Subclasses may grow or discard entries
 	 * to satisfy. 
@@ -118,30 +141,36 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	/**
 	 * Set the stored value at the given slot. 
 	 * 
-	 * @param i
-	 * @param l
+	 * @param i the slot index
+	 * @param l the value to set
 	 */
 	protected abstract void setAt(long i, long l);
 
 	/**
 	 * Get the stored value at the given slot. 
-	 * @param i
+	 * @param i the slot index
 	 * @return The stored value at the given slot. 
 	 */
 	protected abstract long getAt(long i);
 
-	/**
-	 * @param val
+	/** Given a value, check the store for it's existence. If it exists, it
+     * will return the index where the value resides.  Otherwise it return
+     * an encoded index, which is a possible storage location for the value.
+     *
+     * Note, if we have a loading factor < 1.0, there should always be an
+     * empty location where we can store the value
+     *
+	 * @param val the fingerprint value to check for
 	 * @return The (positive) index where the value already resides, 
 	 * or an empty index where it could be inserted (encoded as a
 	 * negative number). 
 	 */
-	protected long indexFor(long val) {
+	private long indexFor(long val) {
 		long candidateIndex = startIndexFor(val);
 		while (true) {
 			if (getSlotState(candidateIndex) < 0) {
 				// slot empty; return negative number encoding index
-				return -candidateIndex - 1;
+				return asEmptySlot(candidateIndex);
 			}
 			if (getAt(candidateIndex) == val) {
 				// already present; return positive index
@@ -154,7 +183,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 		}
 	}
 
-	/**
+    /**
 	 * Return the recommended storage index for the given value. 
 	 * Assumes values are already well-distributed; merely uses
 	 * high-order bits. 
@@ -162,19 +191,16 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	 * @param val
 	 * @return The recommended storage index for the given value. 
 	 */
-	protected long startIndexFor(long val) {
+	private long startIndexFor(long val) {
 		return (val >>> (64 - capacityPowerOfTwo));
 	}
 
-	/**
-	 * Remove the given value.
-	 * 
-	 * @param l
-	 * @return True if we removed given value.
+	/* @(non-Javadoc)
+     * @see org.archive.util.LongFPSet#remove(long)
 	 */
 	public boolean remove(long l) {
 		long i = indexFor(l);
-		if (i<0) {
+		if (!slotHasData(i)) {
 			// not present, not changed
 			return false;
 		}
@@ -204,14 +230,15 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 			long newIndex = indexFor(val);
 			if(newIndex!=probeIndex) {
 				// value must shift down
-				newIndex = -(newIndex+1); // positivize
+				newIndex = asDataSlot(newIndex); // positivize
 				relocate(val, probeIndex, newIndex);
 			}
 			probeIndex++;
 		}
 	}
 
-	/**
+
+    /**
 	 * @param index
 	 */
 	protected abstract void clearAt(long index);
@@ -219,7 +246,7 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 	/**
 	 * 
 	 */
-	abstract void relocate(long value, long fromIndex, long toIndex);
+	protected abstract void relocate(long value, long fromIndex, long toIndex);
 
 	/** 
 	 * Low-cost, non-definitive (except when true) contains
@@ -231,4 +258,39 @@ public abstract class AbstractLongFPSet implements LongFPSet {
 		return false;
 	}
 
+    /**
+     * given a slot index, which could or could not be empty, return it as
+     * a slot index indicating an non-empty slot
+     *
+     * @param index the slot index to convert
+     * @return the index, converted to represent an slot with data
+     */
+    private long asDataSlot(final long index) {
+        if(slotHasData(index)) { // slot already has data
+            return index;
+        }
+        return -(index + 1);
+    }
+
+    /** given a slot index, which could or could not be empty, return it as
+     * a slot index indicating an empty slot
+     * @param index the slot index to convert
+     * @return the index, converted to represent an empty slot
+     */
+    private long asEmptySlot(final long index) {
+        if(!slotHasData(index)) { // already empty slot
+            return index;
+        }
+        return -index - 1;
+    }
+
+    /** does this index represent a slot with data?
+     *
+     * @param index the index to check
+     * @return <code>true</code> if the slot has data
+     */
+    private boolean slotHasData(final long index) {
+
+        return index >= 0;
+    }
 }
