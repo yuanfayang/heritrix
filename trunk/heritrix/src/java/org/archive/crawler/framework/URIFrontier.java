@@ -430,7 +430,7 @@ public interface URIFrontier {
      * Notify Frontier that a CrawlURI has been deleted outside of the
      * normal next()/finished() lifecycle. 
      * 
-     * @param tmp
+     * @param curi Deleted CrawlURI.
      */
     public void deleted(CrawlURI curi);
 }
