@@ -34,7 +34,7 @@ or under the untarred
                                                                                 
 <p>Next run:
 <source>
-    % cd $HERITIRIX_HOME
+    % cd $HERITRIX_HOME
     % chmod u+x $HERITRIX_HOME/bin/heritrix.sh
     % $HERITRIX_HOME/bin/heritrix --help
 </source></p>
@@ -66,13 +66,25 @@ configuration that does a broad crawl (If there is no
 <em>docs/example-settings</em> in your built
 distribution, see <a href="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/xdocs/example-settings/broad-crawl/">crawler.archive.org</a>).
 </p>
-<p>Before you begin crawling you *MUST* at least change the default user agent
-in the <em>order.xml</em>.  You should set this to something meaningful that
-allows
-administrators of sites you'll be crawling to contact you.  Please do not leave
-the Archive Open Crawler project's contact information in this field, we do not
-have the time or the resources to field complaints about crawlers which we are
-not in control of.</p>
+<p>Before you begin crawling you *MUST* at least change the default 
+"User-Agent" and "From" header fields in the order.xml (or via the
+administrative interface).  You should set these to something meaningful 
+that allows administrators of sites you'll be crawling to contact you.
+The software requires that User-Agent value be of the form...</p>
+
+<source>
+	  [name] (+[http-url])[optional-etc]
+</source>
+
+<p>...where [name] is the crawler identifier and [http-url] is an URL 
+giving more information about your crawling efforts. If desired,
+additional info may be placed after the close-parenthesis.</p>
+
+<p>Also, the From value must be an email address.</p>
+   
+<p>(Please do not leave the Archive Open Crawler project's contact 
+information in these fields, we do not have the time or the resources to 
+field complaints about crawlers which we do not administer.)</p>
 
 <p>Once you have an order.xml file edited to your liking you can run the crawler
 by doing the following:
