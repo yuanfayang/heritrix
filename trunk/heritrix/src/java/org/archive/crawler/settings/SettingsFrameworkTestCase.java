@@ -31,7 +31,7 @@ import javax.management.Attribute;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
-import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.settings.Constraint.FailedCheck;
 import org.archive.util.TmpDirTestCase;
 
@@ -73,15 +73,15 @@ public class SettingsFrameworkTestCase extends TmpDirTestCase implements
         ServerCache serverCache = new ServerCache(getSettingsHandler());
 
         unMatchedURI = new CrawlURI(
-            new UURI("http://localhost.com/index.html"));
+            UURIFactory.getInstance("http://localhost.com/index.html"));
         unMatchedURI.setServer(serverCache.getServerFor(unMatchedURI));
 
         matchDomainURI = new CrawlURI(
-            new UURI("http://audio.archive.org/index.html"));
+            UURIFactory.getInstance("http://audio.archive.org/index.html"));
         matchDomainURI.setServer(serverCache.getServerFor(matchDomainURI));
 
         matchHostURI = new CrawlURI(
-            new UURI("http://www.archive.org/index.html"));
+            UURIFactory.getInstance("http://www.archive.org/index.html"));
         matchHostURI.setServer(serverCache.getServerFor(matchHostURI));
 
         // Write legit email and url so we avoid warnings if tests are reading

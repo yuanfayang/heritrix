@@ -56,6 +56,7 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
@@ -419,7 +420,7 @@ public class Frontier
         }
 
         if(caUri.isSeed() && caUri.getVia() != null
-                && caUri.flattenVia().length()>0){
+                && caUri.flattenVia().length() > 0){
             // The only way a seed can have a non-empty via is if it is the
             // result of a seed redirect.  Add it to the seeds list.
             //
@@ -1638,7 +1639,7 @@ public class Frontier
             if(read.startsWith(F_SUCCESS)) {
                 UURI u;
                 try {
-                    u = new UURI(read.substring(3));
+                    u = UURIFactory.getInstance(read.substring(3));
                     this.alreadyIncluded.add(u);
                 } catch (URIException e) {
                     e.printStackTrace();
@@ -1653,7 +1654,7 @@ public class Frontier
             if(read.startsWith(F_ADD)) {
                 UURI u;
                 try {
-                    u = new UURI(read.substring(3));
+                    u = UURIFactory.getInstance(read.substring(3));
                     if(!this.alreadyIncluded.contains(u)) {
                         CandidateURI caUri = new CandidateURI(u);
                         caUri.setVia(pathToLog);

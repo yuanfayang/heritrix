@@ -36,6 +36,7 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.HttpRecorder;
@@ -95,7 +96,7 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
     public void testInnerProcess() throws IOException {
         ExtractorHTML extractor = new ExtractorHTML("html extractor");
         extractor.earlyInitialize(this.globalSettings);
-        UURI uuri = new UURI("http://" + this.ARCHIVE_DOT_ORG);
+        UURI uuri = UURIFactory.getInstance("http://" + this.ARCHIVE_DOT_ORG);
         CrawlURI curi = setupCrawlURI(this.recorder, uuri.toString());
         extractor.innerProcess(curi);
         Set links = (Set)curi.getAList().
@@ -134,7 +135,7 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
     
     private CrawlURI setupCrawlURI(HttpRecorder rec, String url)
     		throws URIException {
-        CrawlURI curi = new CrawlURI(new UURI(url));
+        CrawlURI curi = new CrawlURI(UURIFactory.getInstance(url));
         curi.setContentSize(this.recorder.getRecordedInput().getSize());
         curi.setContentType("text/html");
         curi.setFetchStatus(200);
@@ -169,6 +170,11 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
 //        extractor.innerProcess(curi);
 //        Set links = (Set)curi.getAList().
 //            getObject(CoreAttributeConstants.A_HTML_LINKS);
+//        links = (Set)curi.getAList().
+//			  getObject(CoreAttributeConstants.A_HTML_EMBEDS);
+//        for (Iterator i = links.iterator(); i.hasNext();) {
+//            System.out.println((String)i.next());
+//        }
 //        UURI tmp = null;
 //        int size = links.size();
 //        for (Iterator i = links.iterator(); i.hasNext();) {
@@ -184,7 +190,8 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
      */
     public void testEmbedSrc() throws URIException {
         ExtractorHTML extractor = new ExtractorHTML("html extractor");
-        CrawlURI curi= new CrawlURI(new UURI("http://www.example.org"));
+        CrawlURI curi=
+            new CrawlURI(UURIFactory.getInstance("http://www.example.org"));
         // an example from http://www.records.pro.gov.uk/documents/prem/18/1/default.asp?PageId=62&qt=true
         CharSequence cs = "<embed src=\"/documents/prem/18/1/graphics/qtvr/hall.mov\" width=\"320\" height=\"212\" controller=\"true\" CORRECTION=\"FULL\" pluginspage=\"http://www.apple.com/quicktime/download/\" /> ";
         extractor.extract(curi,cs);
@@ -201,13 +208,14 @@ public class ExtractorHTMLTest extends TmpDirTestCase implements CoreAttributeCo
      */
     public void testHrefWhitespace() throws URIException {
         ExtractorHTML extractor = new ExtractorHTML("html extractor");
-        CrawlURI curi = new CrawlURI(new UURI("http://www.carsound.dk"));
+        CrawlURI curi =
+            new CrawlURI(UURIFactory.getInstance("http://www.carsound.dk"));
         CharSequence cs = "<a href=\"http://www.carsound.dk\n\n\n" +
         	"\"\ntarget=\"_blank\">C.A.R. Sound\n\n\n\n</a>";   
         extractor.extract(curi,cs);
         Collection c = (Collection)curi.getAList().getObject(A_HTML_LINKS);
         for (Iterator i = c.iterator(); i.hasNext();) {
-            UURI uuri = new UURI((String)i.next());
+            UURI uuri = UURIFactory.getInstance((String)i.next());
             assertTrue("Not stripping new lines",
                 uuri.toString().equals("http://www.carsound.dk/"));
         }

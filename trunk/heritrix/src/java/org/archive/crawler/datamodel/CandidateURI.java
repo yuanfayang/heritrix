@@ -174,7 +174,7 @@ public class CandidateURI implements Serializable, Lineable {
 
     /**
      * Method returns string version of this URI's referral URI.
-     * @return String verion of referral URI
+     * @return String version of referral URI
      */
     public String flattenVia() {
         if (via instanceof String) {

@@ -83,14 +83,14 @@ public class SeedListTest extends TmpDirTestCase {
         // First create array of seeds and add to treeset.
         SeedListTest.seeds = new TreeSet(SeedListTest.CMP);
         UURI [] tmp = {
-            new UURI("http://www.google.com"),
-            new UURI("https://www.google.com"),
-            new UURI("gopher://www.google.com"),
-            new UURI("news://www.google.com"),
-            new UURI("rss://www.google.com"),
-            new UURI("telnet://www.google.com"),
-            new UURI("ftp://myname@example.com/etc/motd"),
-            new UURI("ftp://example.com/etc/motd2")
+            UURIFactory.getInstance("http://www.google.com"),
+            UURIFactory.getInstance("https://www.google.com"),
+            UURIFactory.getInstance("gopher://www.google.com"),
+            UURIFactory.getInstance("news://www.google.com"),
+            UURIFactory.getInstance("rss://www.google.com"),
+            UURIFactory.getInstance("telnet://www.google.com"),
+            UURIFactory.getInstance("ftp://myname@example.com/etc/motd"),
+            UURIFactory.getInstance("ftp://example.com/etc/motd2")
         };
         SeedListTest.seeds.addAll(Arrays.asList(tmp));
 
@@ -147,7 +147,7 @@ public class SeedListTest extends TmpDirTestCase {
         // First make sure that I can the seed set from seed file.
         SeedList sl = checkContent(SeedListTest.seeds, caching);
         // Now do add and see if get set matches seed file content.
-        final UURI uuri = new UURI("http://one.two.three");
+        final UURI uuri = UURIFactory.getInstance("http://one.two.three");
         sl.add(uuri);
         Set set = new TreeSet(SeedListTest.CMP);
         set.addAll(SeedListTest.seeds);
