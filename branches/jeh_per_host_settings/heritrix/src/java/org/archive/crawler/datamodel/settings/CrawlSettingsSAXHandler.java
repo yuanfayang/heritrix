@@ -28,12 +28,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
-import javax.management.OperationsException;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -47,6 +46,10 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author John Erik Halse
  */
 public class CrawlSettingsSAXHandler extends DefaultHandler {
+    private static Logger logger =
+        Logger.getLogger(
+            "org.archive.crawler.datamodel.settings.XMLSettingsHandler");
+
     private Locator locator;
     private CrawlerSettings settings;
     private SettingsHandler settingsHandler;
@@ -109,7 +112,6 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
      */
     public void startDocument() throws SAXException {
         super.startDocument();
-        //state = STATE_ROOT;
     }
 
     /* (non-Javadoc)
@@ -135,9 +137,10 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
             handlerStack.push(handler);
             handler.startElement(qName, attributes);
         } else {
-            throw new SAXParseException(
-                "Unknown element '" + qName + "'",
-                locator);
+            logger.warning("Unknown element '" + qName
+               + "' in '" + locator.getSystemId()
+               + "', line: " + locator.getLineNumber()
+               + ", column: " + locator.getColumnNumber());
         }
     }
 
@@ -295,8 +298,16 @@ public class CrawlSettingsSAXHandler extends DefaultHandler {
                     ((ComplexType) container).setAttribute(
                         settings,
                         new Attribute(elementName, value));
-                } catch (OperationsException e) {
-                    throw new SAXException(e);
+                } catch (AttributeNotFoundException e) {
+                    logger.warning("Unknown attribute '" + elementName
+                       + "' in '" + locator.getSystemId()
+                       + "', line: " + locator.getLineNumber()
+                       + ", column: " + locator.getColumnNumber());
+                } catch (InvalidAttributeValueException e) {
+                    logger.warning("Illegal value for attribute '" + elementName
+                       + "' in '" + locator.getSystemId()
+                       + "', line: " + locator.getLineNumber()
+                       + ", column: " + locator.getColumnNumber());
                 }
             } else {
                 ((ListType) container).add(value);

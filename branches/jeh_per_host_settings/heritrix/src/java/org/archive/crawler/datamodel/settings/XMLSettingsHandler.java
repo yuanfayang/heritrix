@@ -28,7 +28,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -207,28 +206,30 @@ public class XMLSettingsHandler extends SettingsHandler {
                 InputStream file =
                     new BufferedInputStream(new FileInputStream(filename));
                 parser.setContentHandler(new CrawlSettingsSAXHandler(settings));
-                parser.parse(new InputSource(file));
+                InputSource source = new InputSource(file);
+                source.setSystemId(filename.toURL().toExternalForm());
+                parser.parse(source);
             } catch (SAXParseException e) {
-                System.out.println(
+                logger.warning(
                     e.getMessage()
-                        + " in file '"
-                        + filename.getAbsolutePath()
+                        + " in '"
+                        + e.getSystemId()
                         + "', line: "
                         + e.getLineNumber()
                         + ", column: "
                         + e.getColumnNumber());
-                //e.printStackTrace();
             } catch (SAXException e) {
-                System.out.println(e.getMessage());
-                e.printStackTrace();
+                logger.warning(e.getMessage() + ": "
+                         + e.getException().getMessage());
             } catch (ParserConfigurationException e) {
-                e.printStackTrace();
+                logger.warning(e.getMessage() + ": "
+                         + e.getCause().getMessage());
             } catch (FactoryConfigurationError e) {
-                e.printStackTrace();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                logger.warning(e.getMessage() + ": "
+                         + e.getException().getMessage());
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.warning("Could not access file '"
+                         + filename.getAbsolutePath() + "': " + e.getMessage());
             }
         } else {
             settings = null;
