@@ -28,10 +28,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.basic.URIStoreable;
 import org.archive.crawler.fetcher.FetchDNS;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.HttpRecorder;
 
 import st.ata.util.AList;
 import st.ata.util.HashtableAList;
@@ -89,6 +89,21 @@ public class CrawlURI extends CandidateURI
 
     private long contentSize = -1;
     private long contentLength = -1;
+    
+    /**
+     * Current http recorder. 
+     * 
+     * Gets set upon successful request.  Reset at start of processing chain.
+     */
+    private HttpRecorder httpRecorder = null;
+    
+    /**
+     * Content type of a successfully fetched URI.
+     * 
+     * May be null even on successfully fetched URI.
+     */
+    private String contentType = null;
+    
 
     /**
      * @param uuri
@@ -344,12 +359,22 @@ public class CrawlURI extends CandidateURI
         return "CrawlURI("+getUURI()+")";
     }
 
-    public String getContentType(){
-        if (getAList().containsKey(A_CONTENT_TYPE)) {
-             return getAList().getString(A_CONTENT_TYPE);
-        } else {
-            return null;
-        }
+    /**
+     * @return Fetched URIs content type.  May be null.
+     */
+    public String getContentType()
+    {
+        return this.contentType;
+    }
+    
+    /**
+     * Set a fetched uri's content type.
+     * 
+     * @param ct Contenttype.  May be null.
+     */
+    public void setContentType(String ct)
+    {
+        this.contentType = ct;
     }
 
     /**
@@ -562,16 +587,13 @@ public class CrawlURI extends CandidateURI
      * calculated).
      *
      */
-    public long getContentLength() {
-        if (contentLength<0) {
-            GetMethod get = (GetMethod) getAList().getObject(A_HTTP_TRANSACTION);
-            //if (get.getResponseHeader("Content-Length")!=null) {
-            //    contentLength = Integer.parseInt(get.getResponseHeader("Content-Length").getValue());
-            //} else {
-                contentLength = get.getHttpRecorder().getResponseContentLength();
-            //}
+    public long getContentLength()
+    {
+        if (this.contentLength < 0)
+        {
+            this.contentLength = getHttpRecorder().getResponseContentLength();
         }
-        return contentLength;
+        return this.contentLength;
     }
 
     /**
@@ -629,5 +651,27 @@ public class CrawlURI extends CandidateURI
         if (fetchAttempts>1) {
             addAnnotation(fetchAttempts+"t");
         }
+    }
+    
+    /**
+     * @return Returns the httpRecorder.  May be null.
+     */
+    public HttpRecorder getHttpRecorder() {
+        return httpRecorder;
+    }
+
+    /**
+     * @param httpRecorder The httpRecorder to set.
+     */
+    public void setHttpRecorder(HttpRecorder httpRecorder) {
+        this.httpRecorder = httpRecorder;
+    }
+    
+    /**
+     * @return True if this is a http transaction.
+     */
+    public boolean isHttpTransaction()
+    {
+        return getAList().containsKey(A_HTTP_TRANSACTION);
     }
 }

@@ -43,11 +43,10 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.framework.ToeThread;
-import org.archive.httpclient.ConfigurableX509TrustSSLProtocolSocketFactory;
-import org.archive.httpclient.ConfigurableX509TrustManager;
+import org.archive.httpclient.HttpRecorderSSLProtocolSocketFactory;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
+import org.archive.util.ConfigurableX509TrustManager;
 import org.archive.util.HttpRecorder;
 
 /**
@@ -148,29 +147,30 @@ public class FetchHTTP
         addElementToDefinition(trustLevel);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
-     */
     protected void innerProcess(CrawlURI curi) {
         initialize();
-
+        
+        // Clear any httpRecorder so subsequent processing doesn't mistakenly 
+        // think it current.
+        curi.setHttpRecorder(null);
+        
         if (!canFetch(curi)) {
             // cannot fetch this, due to protocol, retries, or other problems
             return;
         }
 
-        // note begin time
+        // Note begin time
         long now = System.currentTimeMillis();
         curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
 
-        // setup GET
+        // Get and configure a new GetMethod.
         GetMethod get = new GetMethod(curi.getUURI().getUriString());
-        setupGet(curi, get);
+        configureGetMethod(curi, get);
 
-        // setup recording of data -- for subsequent processor modules
-        HttpRecorder rec =
-            ((ToeThread) Thread.currentThread()).getHttpRecorder();
+        // Setup recording of data -- for subsequent processor modules
+        HttpRecorder rec = HttpRecorder.getHttpRecorder();
         get.setHttpRecorder(rec);
+        
         try {
             // TODO: make this initial reading subject to the same
             // length/timeout limits; currently only the soTimeout
@@ -219,22 +219,24 @@ public class FetchHTTP
             get.releaseConnection();
         }
 
-        // note completion time
-        curi.getAList().putLong(
-            A_FETCH_COMPLETED_TIME,
+        // Note completion time
+        curi.getAList().putLong(A_FETCH_COMPLETED_TIME,
             System.currentTimeMillis());
 
         long contentSize = get.getHttpRecorder().getRecordedInput().getSize();
         logger.fine(curi.getUURI().getUriString() + ": " +
             get.getStatusCode() + " " + contentSize);
-
-        curi.setFetchStatus(get.getStatusCode());
         curi.setContentSize(contentSize);
-        curi.getAList().putObject(A_HTTP_TRANSACTION, get);
+        curi.setFetchStatus(get.getStatusCode());
         Header ct = get.getResponseHeader("content-type");
-        if (ct != null) {
-            curi.getAList().putString(A_CONTENT_TYPE, ct.getValue());
-        }
+        curi.setContentType((ct == null)? null: ct.getValue());
+        
+        // Set current httpRecorder into curi for convenience of subsequent
+        // processors.
+        curi.setHttpRecorder(rec);
+
+        // Save off the GetMethod just in case needed by subsequent processors.
+        curi.getAList().putObject(A_HTTP_TRANSACTION, get);
     }
 
     /**
@@ -268,12 +270,13 @@ public class FetchHTTP
     }
 
     /**
-     * Configure the GetMethod as necessary, setting options and headers.
+     * Configure the GetMethod setting options and headers.
      *
-     * @param curi
-     * @param get
+     * @param curi CrawlURI from which we pull configuration.
+     * @param get The GetMethod to configure.
      */
-    private void setupGet(CrawlURI curi, GetMethod get) {
+    private void configureGetMethod(CrawlURI curi, GetMethod get)
+    {
         // don't auto-follow redirects
         get.setFollowRedirects(false);
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
@@ -283,7 +286,8 @@ public class FetchHTTP
         this.http.setStrictMode(getStrict(curi));
 
         String userAgent = curi.getUserAgent();
-        if (userAgent == null) {
+        if (userAgent == null)
+        {
             userAgent = getSettingsHandler().getOrder().getUserAgent(curi);
         }
         get.setRequestHeader("User-Agent", userAgent);
@@ -291,28 +295,32 @@ public class FetchHTTP
             getSettingsHandler().getOrder().getFrom(curi));
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#initialize(org.archive.crawler.framework.CrawlController)
-     */
     public void initialize()
     {
-        if (!this.initialized) {
+        if (!this.initialized)
+        {
             this.soTimeout = getSoTimeout(null);
             CookiePolicy.setDefaultPolicy(CookiePolicy.COMPATIBILITY);
             MultiThreadedHttpConnectionManager connectionManager =
                 new MultiThreadedHttpConnectionManager();
-            // ensure there will be as many http connections available as
+            // Ensure there will be as many http connections available as
             // worker threads
             connectionManager.setMaxTotalConnections(getController().
                 getToeCount());
             this.http = new HttpClient(connectionManager);
+            
+            // Register our own protocol handlers for http and https.
+            /*
+            Protocol.registerProtocol("http", new Protocol("http", 
+                new HttpRecorderProtocolSocketFactory(), 80));
+                */
             try
             {
                 // Register our heritrix sslsocketfactory.
                 String trustLevel = (String)getAttribute(ATTR_TRUST);
                 Protocol.registerProtocol("https", 
                     new Protocol("https", 
-                        new ConfigurableX509TrustSSLProtocolSocketFactory(trustLevel),
+                        new HttpRecorderSSLProtocolSocketFactory(trustLevel),
                     443));
             }
             

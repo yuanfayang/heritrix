@@ -229,4 +229,52 @@ public class HttpRecorder
             f.delete();
         }
     }
+    
+    /**
+     * Get the current threads' HttpRecorder.
+     * 
+     * Throws exception if no HttpReader in current context.
+     * Use hasHttpRecorder if you don't want exceptions.
+     * 
+     * @return This threads' HttpRecorder.
+     * @throws NullPointerException Recorder is null in current thread. 
+     * Assumption is that call on getRecorder is because client expects
+     * there to be a useable HttpRecorder in the context.
+     */
+    public static HttpRecorder getHttpRecorder()
+        throws NullPointerException 
+    {
+        Thread thread = Thread.currentThread();
+        if (!(thread instanceof HttpRecorderMarker))
+        {
+            throw new NullPointerException("Thread does not have a recorder");   
+        }
+        
+        HttpRecorder r = ((HttpRecorderMarker)thread).getHttpRecorder();
+        if (r == null)
+        {
+            throw new NullPointerException("No HttpRecorder in context");   
+        }
+        return r;
+    }
+    
+    /**
+     * Safe way of testing if context has a httpRecorder.
+     * 
+     * @return True if non-null recorder available in context.
+     */
+    public static boolean hasHttpRecorder()
+    {
+        boolean hasRecorder = false;
+        Thread thread = Thread.currentThread();
+        if (thread instanceof HttpRecorderMarker)
+        {
+            if(((HttpRecorderMarker)thread).getHttpRecorder() !=  null)
+            {
+                hasRecorder = true;
+            }
+        }
+        
+        return hasRecorder;
+    }
 }

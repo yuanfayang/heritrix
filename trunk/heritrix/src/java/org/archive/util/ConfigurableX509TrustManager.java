@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.httpclient;
+package org.archive.util;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -51,6 +51,9 @@ import javax.net.ssl.X509TrustManager;
  * and readings done in <a
  * href="http://java.sun.com/j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html#Introduction">JSSE
  * Guide</a>.
+ * 
+ * <p>TODO: Move to an ssl subpackage when we have other classes other than 
+ * just this one.
  * 
  * @author stack
  * @version $Id$
@@ -141,8 +144,10 @@ public class ConfigurableX509TrustManager implements X509TrustManager
         throws NoSuchAlgorithmException, KeyStoreException
     {
         super();
+        
         TrustManagerFactory factory = TrustManagerFactory.
             getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        
         // Pass in a null (Trust) KeyStore.  Null says use the 'default' 
         // 'trust' keystore (KeyStore class is used to hold keys and to hold
         // 'trusts' (certs)). See 'X509TrustManager Interface' in this doc: 
@@ -152,9 +157,8 @@ public class ConfigurableX509TrustManager implements X509TrustManager
         TrustManager[] trustmanagers = factory.getTrustManagers();
         if (trustmanagers.length == 0)
         {
-            throw new NoSuchAlgorithmException(
-                TrustManagerFactory.getDefaultAlgorithm() +
-                " trust manager not supported");
+            throw new NoSuchAlgorithmException(TrustManagerFactory.
+                getDefaultAlgorithm() + " trust manager not supported");
         }
         this.standardTrustManager = (X509TrustManager)trustmanagers[0];
         

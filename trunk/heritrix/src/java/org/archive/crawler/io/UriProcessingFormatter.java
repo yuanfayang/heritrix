@@ -27,7 +27,6 @@ import java.text.DecimalFormat;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -54,22 +53,23 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
         String length = NA;
         String mime = NA;
         String uri = curi.getUURI().getUriString();
-        if ( curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
-            GetMethod get = (GetMethod) curi.getAList().getObject(A_HTTP_TRANSACTION);
-
+        if (curi.isHttpTransaction())
+        {
             if(curi.getContentLength()>=0) {
                 length = Long.toString(curi.getContentLength());
             } else if (curi.getContentSize()>0) {
                 length = Long.toString(curi.getContentSize());
             }
 
-            if (get.getResponseHeader("Content-Type")!=null) {
-                mime = get.getResponseHeader("Content-Type").getValue();
+            if (curi.getContentType() != null)
+            {
+                mime = curi.getContentType();
             }
-        } else {
+        }
+        else
+        {
             if (curi.getContentSize()>0) {
                 length = Long.toString(curi.getContentSize());
-
             }
             if (curi.getContentType() != null) {
                 mime = curi.getContentType();
@@ -96,6 +96,7 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
 
         // allow get to be GC'd
         curi.getAList().remove(A_HTTP_TRANSACTION);
+        curi.setHttpRecorder(null);
 
         return ArchiveUtils.get17DigitDate(time)
             + " "
