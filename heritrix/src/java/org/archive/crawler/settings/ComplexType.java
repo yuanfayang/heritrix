@@ -433,45 +433,16 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         return getAttribute(uri, name);
     }
     
-    /** Obtain the value of a specific attribute that is valid for a
-     * specific CrawlURI, or null if the attribute does not exist.
+    /**
+     * Obtain the value of a specific attribute that is valid for a specific
+     * CrawlerSettings object.<p>
      * 
-     * @param name
-     * @param curi
-     * @return
-     */
-    public Object getAttributeOrNull(String name, CrawlURI curi) {
-        try {
-            return getAttribute(name,curi);   
-        } catch (AttributeNotFoundException anfe) {
-            return null;
-        }
-    }
-
-    /** Obtain the value of a specific attribute that is valid for a
-     * specific CrawlURI, or return the given default if the attribute 
-     * does not exist.
+     * This method will first try to get a settings object from the supplied
+     * context, then try to look up the attribute from this settings object. If
+     * it is not found it will traverse the settings up to the order and as a
+     * last resort deliver the default value.
      * 
-     * @param name
-     * @param curi
-     * @return
-     */
-    public Object getAttributeOrDefault(String name, CrawlURI curi, Object def) {
-        try {
-            return getAttribute(name,curi);   
-        } catch (AttributeNotFoundException anfe) {
-            return def;
-        }
-    }
-
-    /** Obtain the value of a specific attribute that is valid for a
-     * specific CrawlerSettings object.
-     *
-     * This method will try to get the attribute from the supplied host
-     * settings object. If it is not found it will traverse the settings
-     * up to the order and as a last resort deliver the default value.
-     *
-     * @param settings the CrawlerSettings object to search for this attribute.
+     * @param context the object to get the settings from.
      * @param name the name of the attribute to be retrieved.
      * @return The value of the attribute retrieved.
      * @see CrawlerSettings
@@ -492,6 +463,37 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         }
 
         return getDataContainerRecursive(ctxt, name).get(name);
+    }
+
+    /**
+     * Obtain the value of a specific attribute that is valid for a specific
+     * CrawlerSettings object.
+     * <p>
+     * 
+     * This method will first try to get a settings object from the supplied
+     * context, then try to look up the attribute from this settings object. If
+     * it is not found it will traverse the settings up to the order and as a
+     * last resort deliver the default value.
+     * <p>
+     * 
+     * The only difference from the {@link #getAttribute(Object, String)}is
+     * that this method doesn't throw any checked exceptions. If an undefined
+     * attribute is requested from a ComplexType, it is concidered a bug and a
+     * runtime exception is thrown instead.
+     * 
+     * @param context the object to get the settings from.
+     * @param name the name of the attribute to be retrieved.
+     * @return The value of the attribute retrieved.
+     * @see #getAttribute(Object, String)
+     * @see CrawlerSettings
+     * @throws IllegalArgumentException
+     */
+    public Object getUncheckedAttribute(Object context, String name) {
+        try {
+            return getAttribute(context, name);
+        } catch (AttributeNotFoundException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     /** Obtain the value of a specific attribute that is valid for a
