@@ -31,7 +31,7 @@
             xmlns:dc="http://purl.org/dc/elements/1.1/"
             xmlns:dcterms="http://purl.org/dc/terms/"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                xsi:schemaLocation="http://archive.org/arc/1.0/ http://archive.org/arc/1.0/arc.xsd">
+                xsi:schemaLocation="http://archive.org/arc/1.0/ http://www.archive.org/arc/1.0/arc.xsd">
             <xsl:call-template name="element-printer">
                 <xsl:with-param name="name" select="'dc:title'"/>
                 <xsl:with-param name="value" select="$title"/>
