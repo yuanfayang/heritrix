@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<crawl-order comment="A simple crawl for development/example purposes" name="default-crawl">
+<crawl-order comment="A simple crawl for development/example purposes." name="default-crawl">
 
- <scope class="org.archive.crawler.basic.Scope" max-link-hops="5" max-trans-hops="4" mode="broad">
+ <scope class="org.archive.crawler.basic.Scope" max-link-hops="5" max-trans-hops="5" mode="broad">
    
-  <seeds src="seedfile.txt">
+  <seeds>
   	http://www.archive.org
   </seeds>
  

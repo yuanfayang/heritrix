@@ -35,20 +35,20 @@
 <td><input 
 	type="text" 
 	size="{$width}" 
-	name="//comment" 
-	value="{//comment}" />
+	name="//@comment" 
+	value="{//@comment}" />
 </td>
 </tr>
  
-<xsl:for-each select="//http-headers/*">
+<xsl:for-each select="//behavior/http-headers/*">
 <tr>
 <td>
 <strong><xsl:value-of select="java:toUpperCase(name())" /> :</strong></td>
 <td><input 
 	type="text" 
 	size="{$width}" 
-	name="//http-headers/{name()}" 
-	value="{current()}" />
+	name="//behavior/http-headers/@User-Agent" 
+	value="{//behavior/http-headers/@User-Agent}" />
 </td>
 </tr>
 </xsl:for-each>
@@ -99,23 +99,23 @@
 
 <tr>
 <td>
-<strong>MAX-LINK-DEPTH :</strong></td>
+<strong>MAX-LINK-HOPS :</strong></td>
 <td><input 
 	type="text" 
 	size="{$width}" 
-	name="//params/@max-link-depth" 
-	value="{//params/@max-link-depth}" />
+	name="//@max-link-hops" 
+	value="{//@max-link-hops}" />
 </td>
 </tr>
 
 <tr>
 <td>
-<strong>MAX-EMBED-DEPTH :</strong></td>
+<strong>MAX-TRANS-HOPS :</strong></td>
 <td><input 
 	type="text" 
 	size="{$width}" 
-	name="//params/@max-embed-depth" 
-	value="{//params/@max-embed-depth}" />
+	name="//@max-trans-hops" 
+	value="{//@max-trans-hops}" />
 </td>
 </tr>
 
