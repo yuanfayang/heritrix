@@ -130,37 +130,10 @@ public class DiskBackedQueue implements Queue {
             // that the tailQ is a disk based structure
             return headQ.getIterator(true);
         } else {
-            final Iterator it1 = headQ.getIterator(false);
-            final Iterator it2 = tailQ.getIterator(false);
-            
-            // Create and return a compound iterator over the two queues.
-            Iterator it = new Iterator(){
-                
-                private boolean lastNextWasIt1 = true;
-                
-                public void remove() {
-                    if( lastNextWasIt1 ){
-                        it1.remove();
-                    } else {
-                        it2.remove();
-                    }
-                }
-
-                public boolean hasNext() {
-                    return it1.hasNext() || it2.hasNext();
-                }
-
-                public Object next() {
-                    if(it1.hasNext()){
-                        // Still have something left in it1
-                        return it1.next();
-                    } else {
-                        // Donw with it1, working on it2
-                        lastNextWasIt1 = false;
-                        return it2.next();
-                    }
-                }
-            };
+            // Create and return a composite iterator over the two queues.
+            Iterator it = new CompositeIterator(
+                    headQ.getIterator(false),
+                    tailQ.getIterator(false));
             
             return it;
         }

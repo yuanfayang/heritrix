@@ -169,7 +169,7 @@ public class KeyedQueue implements Queue, URIStoreable {
      * @see org.archive.util.Queue#length()
      */
     public long length() {
-        return innerQ.length();
+        return innerQ.length()+innerStack.size();
     }
 
     /**
