@@ -1127,4 +1127,12 @@ public class Frontier
 		long total = 0;
 		return total;		
 	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
+	 */
+	public void crawlPausing(String statusMessage) {
+		// TODO Auto-generated method stub
+		
+	}
 }

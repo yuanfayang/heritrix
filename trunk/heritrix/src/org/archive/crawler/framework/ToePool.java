@@ -112,7 +112,6 @@ public class ToePool implements CrawlListener {
 	{
 		return ((ToeThread)toes.get(toe)).report();
 	}
-	
 	/**
 	 * Change the number of availible ToeThreads. 
 	 * @param newsize The new number of availible ToeThreads. 
@@ -143,5 +142,12 @@ public class ToePool implements CrawlListener {
 				toes.remove(newsize);
 			}
 		}
+	}
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
+	 */
+	public void crawlPausing(String statusMessage) {
+		// TODO Auto-generated method stub
+		
 	}
 }

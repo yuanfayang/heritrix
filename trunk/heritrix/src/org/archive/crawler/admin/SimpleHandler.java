@@ -302,6 +302,14 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		}
 	}
 	
+	public void pauseJob() {
+		controller.pauseCrawl();
+	}
+	
+	public void resumeJob() {
+		controller.resumeCrawl();
+	}
+	
 	/**
 	 * 
 	 * @return A string informing the user as to the success or failure of the last action performed.
@@ -441,5 +449,13 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 			}
 		}
 		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
+	 */
+	public void crawlPausing(String statusMessage) {
+		// TODO Auto-generated method stub
+		
 	}
 }
