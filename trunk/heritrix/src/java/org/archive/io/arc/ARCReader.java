@@ -41,7 +41,7 @@ import java.util.zip.GZIPInputStream;
  *
  * ARC files are described here:
  * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
- * File Format</a>.  This class does version 1 of the ARC file format only.
+ * File Format</a>.
  *
  * <p>This class knows how to parse an ARC file and has accessors for all of
  * the ARC file content. It can parse ARC Version 1 and 2.
@@ -51,7 +51,7 @@ import java.util.zip.GZIPInputStream;
  * Worse, when its done, its taken the underlying input stream to EOF.  So, it
  * needs to be spoon fed GZIP members by the underlying stream.
  * This is what {@link GZIPMemberPushbackInputStream} does.  It knows if any
- * more GZIP members left in the file.  If there is, we make a new
+ * more GZIP members left in the file.  If there are, we make a new
  * instance of GZIPInputStream to consume (I had trouble developing a reliable
  * reset of an extant instance -- it seems to read the header in the
  * constructor only).
@@ -60,8 +60,6 @@ import java.util.zip.GZIPInputStream;
  * <ul>
  * <li>That the line delimiter character is '&lt;nl&gt; (0x0A) in ARC files
  * only (The alexa c-code does this so this should be safe assumption).</li>
- * <li>No multibyte content in ARC file record headers.  Assumption is
- * ASCII only.</li>
  * </ul>
  * <p>LIMITATIONS:
  * <ul>
@@ -90,12 +88,12 @@ import java.util.zip.GZIPInputStream;
  * holds the whole ARC file for sure makes the code simpler and the nice thing
  * about using memory-mapped buffers for reading is that the memory used is
  * allocated in the OS, not in the JVM.  I played around w/ this on a machine
- * w/ 512M of physical memory and a swap of 1G (/sbin/swapon -s) -- at least I
- * think its a gig.  I made a dumb program to use file channel memory-mapped
- * buffers to read a file.  I was able to read a file of 1.5G using default JVM
- * heap (64M on linux IIRC): i.e. I was able to allocate a buffer of 1.5G inside
- * inside in my small-heap program.  Anything bigger and I got complaints back
- * about  unable to allocate the memory.  So, a channel based reader would
+ * w/ 512M of physical memory and a swap of 1G (/sbin/swapon -s).  I made a
+ * dumb program to use file channel memory-mapped buffers to read a file.  I
+ * was able to read a file of 1.5G using default JVM heap (64M on linux IIRC):
+ * i.e. I was able to allocate a buffer of 1.5G inside inside in my
+ * small-heap program.  Anything bigger and I got complaints back
+ * about  unable to allocate the memory.  So, a channel based reader would be
  * limited only by memory characteristics of the machine its running on (swap
  * and physical memory -- not JVM heap size) ONLY, I discovered the following.
  *
@@ -118,7 +116,7 @@ import java.util.zip.GZIPInputStream;
  * to hold the total ARC content.  This buffer was then wrapped by a
  * ByteBufferInputStream and it managed the doling out of
  * GZIP members to the child GZIPInputStream.  It was finding GZIP boundaries
- * by scanning ahead which is probably less optimial than technique used below.
+ * by scanning ahead which is probably less optimal than technique used below.
  *
  * <p>TODO: Profiling of the two techniques -- java.io vs. memory-mapped
  * ByteBufferInputStream to see which is faster.  As is, ARCReader is SLOW.
