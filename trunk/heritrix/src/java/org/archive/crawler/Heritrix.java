@@ -1272,4 +1272,36 @@ public class Heritrix implements HeritrixMBean {
         }
         return scheduled;
     }
+
+    public String interrupt(String threadName) {
+        String result = "Thread " + threadName + " not found";
+        ThreadGroup group = Thread.currentThread().getThreadGroup();
+        if (group == null) {
+            return result;
+        }
+        // Back up to the root threadgroup before starting
+        // to iterate over threads.
+        ThreadGroup parent = null;
+        while((parent = group.getParent()) != null) {
+            group = parent;
+        }
+        // Do an array that is twice the size of active
+        // thread count.  That should be big enough.
+        final int max = group.activeCount() * 2;
+        Thread [] threads = new Thread[max];
+        int threadCount = group.enumerate(threads, true);
+        if (threadCount >= max) {
+            logger.info("Some threads not found...array too small: " +
+                max);
+        }
+        for (int j = 0; j < threadCount; j++) {
+            if (threads[j].getName().equals(threadName)) {
+                threads[j].interrupt();
+                result = "Interrupt sent to " + threadName;
+                break;
+            }
+        }
+        return result;
+    }
 }
+
