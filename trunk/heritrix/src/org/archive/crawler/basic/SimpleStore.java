@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.TreeSet;
 
-import org.archive.crawler.datamodel.AnnotatedURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
@@ -49,67 +48,12 @@ public class SimpleStore implements URIStore {
     // all per-class queues who are on hold until a certain time
 	TreeSet snoozeQueues = new TreeSet(); // of KeyedQueue, sorted by wakeTime
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIStore#enqueueTo(org.archive.crawler.datamodel.AnnotatedURI, java.lang.Object)
-	 */
-	public void enqueueTo(AnnotatedURI auri, Object key) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIStore#dequeueFrom(org.archive.crawler.datamodel.AnnotatedURI, java.lang.Object)
-	 */
-	public void dequeueFrom(AnnotatedURI auri, Object key) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIStore#pushTo(org.archive.crawler.datamodel.AnnotatedURI, java.lang.Object)
-	 */
-	public void pushTo(AnnotatedURI auri, Object key) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIStore#popFrom(org.archive.crawler.datamodel.AnnotatedURI, java.lang.Object)
-	 */
-	public void popFrom(AnnotatedURI auri, Object key) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIStore#peekFrom(org.archive.crawler.datamodel.AnnotatedURI, java.lang.Object)
-	 */
-	public void peekFrom(AnnotatedURI auri, Object key) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIStore#count(java.lang.Object)
-	 */
-	public long count(Object key) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.URIStore#countFrom(java.lang.Object)
-	 */
-	public long countFrom(Object key) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
 
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.URIStore#initialize(org.archive.crawler.framework.CrawlController)
 	 */
 	public void initialize(CrawlController c) {
-		// TODO Auto-generated method stub
+		// TODO load state from disk 
 
 	}
 
@@ -117,8 +61,12 @@ public class SimpleStore implements URIStore {
 	 * @param uuri
 	 */
 	public void insertAsSeed(UURI uuri) {
-		// TODO Auto-generated method stub
-		
+		if(allCuris.get(uuri)!=null) {
+			// already inserted
+			return;
+		}
+		CrawlURI curi = new CrawlURI(uuri);
+		curi.getAList().setInt("distance-from-seed",0);
 	}
 
 	/**

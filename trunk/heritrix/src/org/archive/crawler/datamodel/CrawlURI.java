@@ -24,19 +24,28 @@ import org.archive.crawler.framework.Processor;
  * @author Gordon Mohr
  */
 public class CrawlURI implements URIStoreable {
-	AttributeList alist;
+	AList alist;
 	UURI uuri; 
 	Processor nextProcessor;
 	CrawlHost host;
 	CrawlFetch fetch;
 
+
+	/**
+	 * @param uuri
+	 */
+	public CrawlURI(UURI uuri) {
+	
+		// TODO Auto-generated constructor stub
+	}
+	
 	/**
 	 * @return
 	 */
 	public UURI getUURI() {
-		// TODO Auto-generated method stub
-		return null;
+		return uuri;
 	}
+	
 	/**
 	 * 
 	 */
@@ -83,6 +92,14 @@ public class CrawlURI implements URIStoreable {
 	public void setWakeTime(long w) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	/**
+	 * 
+	 */
+	public AList getAList() {
+		// TODO Auto-generated method stub
+		return alist;
 	}
 	
 	

@@ -1,0 +1,11 @@
+Next few things to do:
+
+CrawlURI instantiation
+import AList
+create document of Alist keys/conventions
+ToeThread start/pause/stop cleanup
+noop politeness
+simple http fetcher
+VirtualBuffer (chained buffer, etc.) impl & cleanup
+link markup conventions
+simple link extractor

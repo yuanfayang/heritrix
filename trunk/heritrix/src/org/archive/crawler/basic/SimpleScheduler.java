@@ -7,6 +7,7 @@
 package org.archive.crawler.basic;
 
 import java.util.Iterator;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
@@ -19,6 +20,8 @@ import org.archive.crawler.framework.URIScheduler;
  *
  */
 public class SimpleScheduler implements URIScheduler {
+	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleScheduler");
+
 	CrawlController controller = null;
 	SimpleStore store;
 	
@@ -49,10 +52,6 @@ public class SimpleScheduler implements URIScheduler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
-		
-		
 		return null;
 	}
 
@@ -84,6 +83,7 @@ public class SimpleScheduler implements URIScheduler {
 	private void insertAsSeed(UURI uuri) {
 		// TODO implement
 		// must be harmless to redundantly add same UURI
+		logger.info("Scheduler inserting seed "+uuri);
 		store.insertAsSeed(uuri);
 	}
 

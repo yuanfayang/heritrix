@@ -46,7 +46,7 @@ public class CrawlScope extends XMLConfig {
 					reader.close();
 					reader = null;
 				} else {
-					seeds.add( UURI.createURI(read) );
+					seeds.add( UURI.createUURI(read) );
 				}
 			}
 		} catch (IOException e) {
