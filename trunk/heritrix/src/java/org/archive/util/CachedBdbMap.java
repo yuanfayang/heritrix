@@ -63,7 +63,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
     private static final Logger logger =
         Logger.getLogger(CachedBdbMap.class.getName());
 
-    /** The database name of the class definition catalog */
+    /** The database name of the class definition catalog.*/
     private static final String CLASS_CATALOG = "java_class_catalog";
 
     /**
@@ -105,6 +105,22 @@ public class CachedBdbMap extends AbstractMap implements Map {
     private long diskHit = 0;
 
     private static Field referent;
+    
+    static {
+        // We need access to the referent field in the PhantomReference.
+        // For more on this trick, see
+        // http://www.javaspecialists.co.za/archive/Issue098.html and for
+        // discussion:
+        // http://www.theserverside.com/tss?service=direct/0/NewsThread/threadViewer.markNoisy.link&sp=l29865&sp=l146901
+        try {
+            referent = Reference.class.getDeclaredField("referent");
+            referent.setAccessible(true);
+        } catch (SecurityException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Simple structure to keep needed information about a DB Environment.
@@ -171,22 +187,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
     }
     
     private void initialize() {
-        // We need access to the referent field in the PhantomReference.
-        // For more on this trick, see
-        // http://www.javaspecialists.co.za/archive/Issue098.html and for
-        // discussion:
-        // http://www.theserverside.com/tss?service=direct/0/NewsThread/threadViewer.markNoisy.link&sp=l29865&sp=l146901
-        // TODO: This should only happen once.  Currently happens on every
-        // construction.
-        try {
-            referent = Reference.class.getDeclaredField("referent");
-            referent.setAccessible(true);
-        } catch (SecurityException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-
         // Setup memory cache
         this.cache = Collections.synchronizedMap(new HashMap());
     }
