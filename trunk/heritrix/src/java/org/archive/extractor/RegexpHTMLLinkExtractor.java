@@ -33,7 +33,6 @@ import java.util.regex.Matcher;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
-import org.archive.crawler.extractor.ExtractorJS2;
 import org.archive.crawler.extractor.Link;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
@@ -309,8 +308,8 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
      * @param cs
      */
     protected void processScriptCode(CharSequence cs) {
-        ExtractorJS2.considerStrings(cs, base, next, extractErrorListener);
-        // TODO: pass in source and base?
+        RegexpJSLinkExtractor.extract(cs, source, base, next,
+                extractErrorListener);
     }
 
     static final String JAVASCRIPT = "(?i)^javascript:.*";
