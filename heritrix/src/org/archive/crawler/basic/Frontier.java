@@ -779,6 +779,8 @@ public class Frontier
 				// something unexpectedly bad happened
 			case S_UNFETCHABLE_URI :
 				// no chance to fetch
+			case S_TOO_MANY_RETRIES :
+				// no success after configurable number of retries
 
 // THESE NEXT FOUR AREN'T TRULY FAILURES
 //			case S_ROBOTS_PRECLUDED :
