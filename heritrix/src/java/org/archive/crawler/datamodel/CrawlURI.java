@@ -156,7 +156,7 @@ public class CrawlURI extends CandidateURI
     public static String fetchStatusCodesToString(int code){
         switch(code){
             // DNS
-            case 1    : return "DNS-1-OK"; 
+            case S_DNS_SUCCESS : return "DNS-1-OK"; 
             // HTTP Informational 1xx
             case 100  : return "HTTP-100-Info-Continue";
             case 101  : return "HTTP-101-Info-Switching Protocols";
@@ -202,6 +202,47 @@ public class CrawlURI extends CandidateURI
             case 503  : return "HTTP-503-ServerErr-Service Unavailable";
             case 504  : return "HTTP-504-ServerErr-Gateway Timeout";
             case 505  : return "HTTP-505-ServerErr-HTTP Version Not Supported";
+            // Heritrix internal codes (all negative numbers
+            case S_BLOCKED_BY_USER:
+                return "Heritrix(" + S_BLOCKED_BY_USER + ")-Blocked by user";
+            case S_CONNECT_FAILED:
+                return "Heritrix(" + S_CONNECT_FAILED + ")-Connection failed";
+            case S_CONNECT_LOST:
+                return "Heritrix(" + S_CONNECT_LOST + ")-Connection lost";
+            case S_DEEMED_CHAFF:
+                return "Heritrix(" + S_DEEMED_CHAFF + ")-Deemed chaff";
+            case S_DEFERRED:
+                return "Heritrix(" + S_DEFERRED + ")-Deferred";
+            case S_DOMAIN_UNRESOLVABLE:
+                return "Heritrix(" + S_DOMAIN_UNRESOLVABLE
+                        + ")-Domain unresolvable";
+            case S_OUT_OF_SCOPE:
+                return "Heritrix(" + S_OUT_OF_SCOPE + ")-Out of scope";
+            case S_PREREQUISITE_FAILURE:
+                return "Heritrix(" + S_PREREQUISITE_FAILURE
+                        + ")-Prerequisite failure";
+            case S_ROBOTS_PRECLUDED:
+                return "Heritrix(" + S_ROBOTS_PRECLUDED + ")-Robots precluded";
+            case S_RUNTIME_EXCEPTION:
+                return "Heritrix(" + S_RUNTIME_EXCEPTION
+                        + ")-Runtime exception";
+            case S_SERIOUS_ERROR:
+                return "Heritrix(" + S_SERIOUS_ERROR + ")-Serious error";
+            case S_TIMEOUT:
+                return "Heritrix(" + S_TIMEOUT + ")-Timeout";
+            case S_TOO_MANY_EMBED_HOPS:
+                return "Heritrix(" + S_TOO_MANY_EMBED_HOPS
+                        + ")-Too many embed hops";
+            case S_TOO_MANY_LINK_HOPS:
+                return "Heritrix(" + S_TOO_MANY_LINK_HOPS
+                        + ")-Too many link hops";
+            case S_TOO_MANY_RETRIES:
+                return "Heritrix(" + S_TOO_MANY_RETRIES + ")-Too many retries";
+            case S_UNATTEMPTED:
+                return "Heritrix(" + S_UNATTEMPTED + ")-Unattempted";
+            case S_UNFETCHABLE_URI:
+                return "Heritrix(" + S_UNFETCHABLE_URI + ")-Unfetchable URI";
+            // Unknown return code
             default : return Integer.toString(code);
         }
     }
