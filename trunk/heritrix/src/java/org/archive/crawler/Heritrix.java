@@ -780,11 +780,45 @@ public class Heritrix
      * prior to this method.
      *
      */
-    public static void performHeritrixShutDown(){
-        System.exit(0);
+    public static void performHeritrixShutDown()
+    {
+        performHeritrixShutDown(0);
     }
     
     /**
+     * Exit program. Recommended that prepareHeritrixShutDown() be invoked
+     * prior to this method.
+     * 
+     * @param exitCode Code to pass System.exit.
+     *
+     */
+    public static void performHeritrixShutDown(int exitCode)
+    {
+        System.exit(exitCode);
+    }
+    
+    /**
+     * Shutdown heritrix.
+     * 
+     * Stops crawling, shutsdown webserver and system exits.
+     */
+    public static void shutdown()
+    {
+    	shutdown(0);
+    }
+    
+    /**
+     * Shutdown heritrix.
+     * 
+	 * @param exitCode Exit code to pass system exit.
+	 */
+	public static void shutdown(int exitCode)
+    {
+        prepareHeritrixShutDown();
+        performHeritrixShutDown(exitCode);
+	}
+
+	/**
      * Add a new alert
      * @param alert the new alert
      */
