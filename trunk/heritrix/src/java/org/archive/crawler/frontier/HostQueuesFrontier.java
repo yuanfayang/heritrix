@@ -58,8 +58,8 @@ import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.ToeThread;
-import org.archive.crawler.framework.URIFrontier;
-import org.archive.crawler.framework.URIFrontierMarker;
+import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
@@ -94,15 +94,15 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
  *
  * @author Gordon Mohr
  */
-public class Frontier
+public class HostQueuesFrontier
     extends ModuleType
-    implements URIFrontier, FetchStatusCodes, CoreAttributeConstants,
+    implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         CrawlStatusListener, HasUriReceiver {
     // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(Frontier.class,1);
+    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(HostQueuesFrontier.class,1);
 
     private static final Logger logger =
-        Logger.getLogger(Frontier.class.getName());
+        Logger.getLogger(HostQueuesFrontier.class.getName());
 
     /** how many multiples of last fetch elapsed time to wait before recontacting same server */
     public final static String ATTR_DELAY_FACTOR = "delay-factor";
@@ -205,7 +205,7 @@ public class Frontier
     private boolean shouldPause = false;
     private boolean shouldTerminate = false;
   
-    public Frontier(String name){
+    public HostQueuesFrontier(String name){
         this(name,"Frontier. \nMaintains the internal" +
                 " state of the crawl. It dictates the order in which URIs" +
                 " will be scheduled. \nThis frontier is mostly a breadth-first"+
@@ -218,10 +218,10 @@ public class Frontier
     /**
      * @param name
      */
-    public Frontier(String name, String description) {
+    public HostQueuesFrontier(String name, String description) {
         //The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
         //therefore we'll ignore the supplied parameter.
-        super(URIFrontier.ATTR_NAME, description);
+        super(Frontier.ATTR_NAME, description);
         addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR,
             "How many multiples of last fetch elapsed time to wait before " +
             "recontacting same server", DEFAULT_DELAY_FACTOR));
@@ -296,7 +296,7 @@ public class Frontier
     /**
      * Initializes the Frontier, given the supplied CrawlController.
      *
-     * @see org.archive.crawler.framework.URIFrontier#initialize(org.archive.crawler.framework.CrawlController)
+     * @see org.archive.crawler.framework.Frontier#initialize(org.archive.crawler.framework.CrawlController)
      */
     public void initialize(CrawlController c)
         throws FatalConfigurationException, IOException {
@@ -388,7 +388,7 @@ public class Frontier
     }
 
     /**
-     * @see org.archive.crawler.framework.URIFrontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.framework.Frontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
      */
     protected void batchSchedule(CandidateURI caUri) {
         threadWaiting.getQueue().enqueue(caUri);
@@ -396,7 +396,7 @@ public class Frontier
 
     /**
      *
-     * @see org.archive.crawler.framework.URIFrontier#batchFlush()
+     * @see org.archive.crawler.framework.Frontier#batchFlush()
      */
     protected void batchFlush() {
         innerBatchFlush();
@@ -413,7 +413,7 @@ public class Frontier
      * Arrange for the given CandidateURI to be visited, if it is not
      * already scheduled/completed.
      *
-     * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
+     * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public void schedule(CandidateURI caUri) {
         batchSchedule(caUri);
@@ -481,7 +481,7 @@ public class Frontier
      *
      * @return next CrawlURI to be processed. Or null if none is available.
      *
-     * @see org.archive.crawler.framework.URIFrontier#next(int)
+     * @see org.archive.crawler.framework.Frontier#next(int)
      */
     synchronized public CrawlURI next() throws InterruptedException, EndedException {
         while(true) {
@@ -626,7 +626,7 @@ public class Frontier
      * via the next next() call, as a result of finished().
      *
      *  (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
+     * @see org.archive.crawler.framework.Frontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public synchronized void finished(CrawlURI curi) {
         long start = System.currentTimeMillis();
@@ -1282,58 +1282,58 @@ public class Frontier
     }
 
     /**  (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
+     * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
     public long discoveredUriCount(){
         return alreadyIncluded.count();
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#queuedUriCount()
+     * @see org.archive.crawler.framework.Frontier#queuedUriCount()
      */
     public long queuedUriCount(){
         return queuedCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#finishedUriCount()
+     * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
         return successCount+failedCount+disregardedCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
+     * @see org.archive.crawler.framework.Frontier#successfullyFetchedCount()
      */
     public long successfullyFetchedCount(){
         return successCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#failedFetchCount()
+     * @see org.archive.crawler.framework.Frontier#failedFetchCount()
      */
     public long failedFetchCount(){
        return failedCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#disregardedFetchCount()
+     * @see org.archive.crawler.framework.Frontier#disregardedFetchCount()
      */
     public long disregardedFetchCount() {
         return disregardedCount;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#totalBytesWritten()
+     * @see org.archive.crawler.framework.Frontier#totalBytesWritten()
      */
     public long totalBytesWritten() {
         return totalProcessedBytes;
     }
 
     /** (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(java.lang.String, boolean)
+     * @see org.archive.crawler.framework.Frontier#getInitialMarker(java.lang.String, boolean)
      */
-    public URIFrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
+    public FrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
         ArrayList keyqueueKeys = new ArrayList();
         if(allClassQueuesMap.size()!=0)
         {
@@ -1343,7 +1343,7 @@ public class Frontier
                 keyqueueKeys.add(q.next());
             }
         }
-        return new FrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
+        return new HostQueuesFrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
     }
 
     /** (non-Javadoc)
@@ -1354,13 +1354,13 @@ public class Frontier
      * @return List of URIS.
      * @throws InvalidURIFrontierMarkerException
      */
-    public ArrayList getURIsList(URIFrontierMarker marker, int numberOfMatches,
+    public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
             boolean verbose) throws InvalidURIFrontierMarkerException {
-        if(marker instanceof FrontierMarker == false){
+        if(marker instanceof HostQueuesFrontierMarker == false){
             throw new InvalidURIFrontierMarkerException();
         }
 
-        FrontierMarker mark = (FrontierMarker)marker;
+        HostQueuesFrontierMarker mark = (HostQueuesFrontierMarker)marker;
         ArrayList list = new ArrayList(numberOfMatches);
 
         // inspect the KeyedQueues
@@ -1400,7 +1400,7 @@ public class Frontier
     private int inspectQueue( KeyedQueue queue,
                               String queueName,
                               ArrayList list,
-                              FrontierMarker marker,
+                              HostQueuesFrontierMarker marker,
                               boolean verbose,
                               int numberOfMatches)
                           throws InvalidURIFrontierMarkerException{

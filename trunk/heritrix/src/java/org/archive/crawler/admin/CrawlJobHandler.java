@@ -49,7 +49,7 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.URIFrontierMarker;
+import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
@@ -1091,13 +1091,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *            Limit marker scope to 'cached' URIs.
      * @return a URIFrontierMarker for the current job.
      * @see #getPendingURIsList(URIFrontierMarker, int, boolean)
-     * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(String,
+     * @see org.archive.crawler.framework.Frontier#getInitialMarker(String,
      *      boolean)
-     * @see org.archive.crawler.framework.URIFrontierMarker
+     * @see org.archive.crawler.framework.FrontierMarker
      */
-    public URIFrontierMarker getInitialMarker(String regexpr,
+    public FrontierMarker getInitialMarker(String regexpr,
             boolean inCacheOnly) {
-        URIFrontierMarker tmp = null;
+        FrontierMarker tmp = null;
         if (controller != null && controller.isPaused()) {
             // Ok, get the marker.
             tmp = controller.getFrontier().getInitialMarker(regexpr,
@@ -1123,9 +1123,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *             When marker is inconsistent with the current state of the
      *             frontier.
      * @see #getInitialMarker(String, boolean)
-     * @see org.archive.crawler.framework.URIFrontierMarker
+     * @see org.archive.crawler.framework.FrontierMarker
      */
-    public ArrayList getPendingURIsList(URIFrontierMarker marker,
+    public ArrayList getPendingURIsList(FrontierMarker marker,
             int numberOfMatches, boolean verbose)
             throws InvalidURIFrontierMarkerException {
         ArrayList tmp = null;

@@ -38,7 +38,7 @@ import javax.management.ReflectionException;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.framework.URIFrontier;
+import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.ModuleType;
@@ -208,8 +208,8 @@ public class CrawlOrder extends ModuleType {
         addElementToDefinition(new RobotsHonoringPolicy());
 
         e = addElementToDefinition(new ModuleType(
-                URIFrontier.ATTR_NAME, "Frontier"));
-        e.setLegalValueType(URIFrontier.class);
+                Frontier.ATTR_NAME, "Frontier"));
+        e.setLegalValueType(Frontier.class);
 
         e = addElementToDefinition(new MapType(
                 ATTR_PRE_FETCH_PROCESSORS, "Processors to be run prior to" +

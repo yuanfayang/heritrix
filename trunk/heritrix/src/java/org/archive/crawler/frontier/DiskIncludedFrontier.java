@@ -48,7 +48,7 @@ import org.archive.util.CachingDiskLongFPSet;
  *
  * @author Kristinn Sigurdsson
  */
-public class DiskIncludedFrontier extends Frontier {
+public class DiskIncludedFrontier extends HostQueuesFrontier {
 
     /** The size of the already included's in memory cache. The cache
      *  capacity will be 2 to the power of this factor.

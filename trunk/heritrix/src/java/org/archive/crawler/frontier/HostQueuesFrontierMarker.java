@@ -28,17 +28,17 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.framework.URIFrontierMarker;
+import org.archive.crawler.framework.FrontierMarker;
 
 /**
  * An implementation of <code>URIFrontierMarker</code> suitible for the
  * <code>URIFrontier</code> implementation in this package.
  * @author Kristinn Sigurdsson
- * @see org.archive.crawler.framework.URIFrontierMarker
- * @see org.archive.crawler.framework.URIFrontier
- * @see org.archive.crawler.frontier.Frontier
+ * @see org.archive.crawler.framework.FrontierMarker
+ * @see org.archive.crawler.framework.Frontier
+ * @see org.archive.crawler.frontier.HostQueuesFrontier
  */
-public class FrontierMarker implements URIFrontierMarker {
+public class HostQueuesFrontierMarker implements FrontierMarker {
 
     String match;
     Pattern p;
@@ -52,7 +52,7 @@ public class FrontierMarker implements URIFrontierMarker {
     // queue to BEGIN.
     protected long absolutePositionInCurrentQueue;
 
-    public FrontierMarker(String match, boolean inCacheOnly, ArrayList keyqueues){
+    public HostQueuesFrontierMarker(String match, boolean inCacheOnly, ArrayList keyqueues){
         this.match = match;
         this.inCacheOnly = inCacheOnly;
         p = Pattern.compile(match);
