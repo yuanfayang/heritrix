@@ -415,11 +415,13 @@ public class Frontier
         long start = System.currentTimeMillis();
         innerSchedule(caUri);
         long duration = System.currentTimeMillis()-start;
-        if(duration>1000) {
-            System.err.println(
-                    "#"+((ToeThread)Thread.currentThread()).getSerialNumber()
-                    +" "+duration+"ms"
-                    +" schedule("+caUri.getURIString()+") via "+caUri.flattenVia());
+        if (duration > 1000) {
+            int serialNumber =
+                (!(Thread.currentThread() instanceof ToeThread))? -1:
+                    ((ToeThread)Thread.currentThread()).getSerialNumber();
+            System.err.println("#" + serialNumber + " " + duration + "ms" +
+                " schedule(" + caUri.getURIString() + ") via " +
+                caUri.flattenVia());
         }
     }
 
