@@ -21,15 +21,31 @@ public class CandidateURI {
 	UURI uuri;
 	/** Seed status */
 	boolean isSeed = false;
-	/** Latest version of the inScope definition met*/
+	/** Latest version of the inScope definition met; (zero if not)*/
 	int inScopeVersion = -1; 
 	/** String of letters indicating how this URI was reached from a seed */
 	// P precondition
 	// R redirection
 	// E embedded (as frame, src, link, codebase, etc.)
 	// L link
+	// for example LLLE (an embedded image on a page 3 links from seed)
 	String pathFromSeed; 
 	/** Where this URI was (presently) discovered */
 	UURI precursorUuri;
+	
+	
+	/**
+	 * @param u
+	 */
+	public CandidateURI(UURI u) {
+		uuri = u;
+	}
+	
+	/**
+	 * @param b
+	 */
+	public void setSeed(boolean b) {
+		isSeed=b;
+	}
 	
 }

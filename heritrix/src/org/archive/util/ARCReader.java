@@ -23,6 +23,8 @@ public class ARCReader {
 	protected InputStream inStream;
 	protected FileInputStream arcStream;
 	protected ARCResource lastResource;
+	protected int resourcePosition;
+	protected long filePosition;
 	
 	/**
 	 * 

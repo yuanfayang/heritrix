@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
-import org.archive.crawler.basic.CrawlerConfigurationConstants;
 import org.archive.crawler.basic.StatisticsTracker;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -33,11 +32,17 @@ import org.archive.crawler.io.UriProcessingFormatter;
  * 
  * @author Gordon Mohr
  */
-public class CrawlController implements CrawlerConfigurationConstants {
-	
+public class CrawlController {
+	private int timeout = 1000; // to wait for CrawlURI from frontier before spinning
+	private ToePool toePool;
+	private URIFrontier frontier;
+	private boolean shouldCrawl;
+
+	public static final int DEFAULT_STATISTICS_REPORT_INTERVAL = 60;
+
 	private File disk;
-	public Logger uriProcessing = Logger.getLogger("uri-processing");
-	public Logger crawlErrors = Logger.getLogger("crawl-errors");
+	public Logger uriProcessing = Logger.getLogger("crawl");
+	public Logger crawlErrors = Logger.getLogger("runtime-errors");
 	public Logger uriErrors = Logger.getLogger("uri-errors");
 	public Logger progressStats = Logger.getLogger("progress-statistics");
 	
@@ -45,6 +50,7 @@ public class CrawlController implements CrawlerConfigurationConstants {
 	protected StatisticsTracker statistics = null;
 
 	CrawlOrder order;
+	CrawlScope scope;
 	
 	URIScheduler scheduler;
 	URIStore store;
@@ -137,44 +143,29 @@ public class CrawlController implements CrawlerConfigurationConstants {
 		}
 		//statistics.setLogLevel(StatisticsTracker.VERBOSE_LOGGING);
 			
-		store = (URIStore) order.getBehavior().instantiate("//store");
-		scheduler = (URIScheduler) order.getBehavior().instantiate("//scheduler");
-		selector = (URISelector) order.getBehavior().instantiate("//selector");
-
+		scope = (CrawlScope) order.instantiate("//scope");
+		frontier = (URIFrontier) order.instantiate("//frontier");
+		
 		firstProcessor = (Processor) order.getBehavior().instantiateAllInto("//processors/processor",processors);
 		
-		// try to initialize each of the store, schduler, and selector from the config file
-		try{
-			store.initialize(this);
-		}catch(NullPointerException e){
+		// try to initialize each scope and frontier from the config file
+		try {
+			scope.initialize(this);
+		} catch (NullPointerException e) {
 			throw new FatalConfigurationException(
-				"Can't initialize store, class specified in configuration file not found", 
-				order.crawlOrderFilename, 
-				"//store"
-			);
+				"Can't initialize scope, class specified in configuration file not found",
+				order.crawlOrderFilename,
+				"//scope");
 		}
-		try{
-			scheduler.initialize(this);
-		}catch(NullPointerException e){
+		try {
+			frontier.initialize(this);
+		} catch (NullPointerException e) {
 			throw new FatalConfigurationException(
-				"Can't initialize scheduler, class specified in configuration file not found", 
-				order.crawlOrderFilename, 
-				"//scheduler"
-			);
-		}
-		try{
-			selector.initialize(this);
-		}catch(NullPointerException e){
-			throw new FatalConfigurationException(
-				"Can't initialize selector, class specified in configuration file not found", 
-				order.crawlOrderFilename, 
-				"//selector"
-			);
-		}
-			
+				"Can't initialize frontier, class specified in configuration file not found",
+				order.crawlOrderFilename,
+				"//frontier");
+		}			
 		hostCache = new ServerCache();
-		//kicker = new ThreadKicker();
-		//kicker.start();
 		
 		Iterator iter = processors.entrySet().iterator();
 		while (iter.hasNext()) {
@@ -233,28 +224,6 @@ public class CrawlController implements CrawlerConfigurationConstants {
 		return selector;
 	}
 
-
-	/**
-	 * @param thread
-	 * @return
-	 */
-	public CrawlURI crawlUriFor(ToeThread thread) {
-		if( paused ) {
-			thread.pauseAfterCurrent();
-			return null;
-		}
-		// TODO check global limits, etc to see if finished
-		if ( finished  ) {	
-			thread.stopAfterCurrent();
-			return null;
-		}
-		CrawlURI curi = scheduler.curiFor(thread);
-		if (curi != null) {
-			curi.setNextProcessor(firstProcessor);
-			curi.setThreadNumber(thread.getSerialNumber());
-		}
-		return curi;
-	}
 	
 	/** Return the object this controller is using to track crawl statistics
 	 */
@@ -267,50 +236,38 @@ public class CrawlController implements CrawlerConfigurationConstants {
 	 * 
 	 */
 	public void startCrawl() {
-		// assume scheduler/URIStore already loaded state
-		
-		// start toes
-		adjustToeCount();
-		Iterator iter = toes.iterator();
-		while(iter.hasNext()) {
-			((ToeThread)iter.next()).unpause();
+		// assume Frontier state already loaded
+		setupToePool();
+		shouldCrawl=true;
+		runCrawl();
+	}
+
+
+	public void runCrawl() {
+		while(shouldCrawl) {
+			 CrawlURI curi = frontier.next(timeout);
+			 if(curi != null) {
+				curi.setNextProcessor(firstProcessor);
+			 	toePool.available().crawl(curi);
+			 } 
 		}
 	}
 
 	public void stopCrawl() {
-			// stop toes
-			for (int i = 0; i < toes.size(); i++)
-				((ToeThread)toes.get(i)).stopAfterCurrent();
-		}	
+		shouldCrawl = false;
+	}	
 
 	
 	public int getActiveToeCount(){
-		List toes = getToes();
-		int active = 0;
-		
-		Iterator list = toes.listIterator();
-		
-		while(list.hasNext()){
-			ToeThread t = (ToeThread)list.next();
-			if(!t.isPaused()){
-				active++;
-			}
-		}
-		return active;	
+		return toePool.getActiveToeCount();
 	}
 	
 	public int getToeCount(){
 		return toes.size();
 	}
 	
-	private void adjustToeCount() {
-		while(toes.size()<order.getBehavior().getMaxToes()) {
-			// TODO make number of threads self-optimizing
-			ToeThread newThread = new ToeThread(this,nextToeSerialNumber);
-			nextToeSerialNumber++;
-			toes.add(newThread);
-			newThread.start();
-		}
+	private void setupToePool() {
+		toePool = new ToePool(this,order.getBehavior().getMaxToes());
 	}
 
 	/**
@@ -409,9 +366,17 @@ public class CrawlController implements CrawlerConfigurationConstants {
 				System.out.println("\t" + key + "\t" + val);	
 			}
 		}else{
-			System.out.println("No code sistribution statistics.");
+			System.out.println("No code distribution statistics.");
 		}
 
 
+	}
+
+
+	/**
+	 * 
+	 */
+	public URIFrontier getFrontier() {
+		return frontier;
 	}
 }

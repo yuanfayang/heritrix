@@ -24,7 +24,7 @@ import org.archive.util.HttpRecorder;
 public class ToeThread extends Thread implements CoreAttributeConstants, FetchStatusCodes {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
 
-	private boolean paused = false;
+	private ToePool pool;
 	private boolean shouldCrawl = true;
 	CrawlController controller;
 	int serialNumber;
@@ -32,17 +32,32 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	HashMap localProcessors = new HashMap();
 	
 	CrawlURI currentCuri;
+	long lastStartTime;
+	long lastFinishTime;
 	// in-process/on-hold curis? not for now
 	// a queue of curis to do next? not for now
 
 	/**
 	 * @param c
 	 */
-	public ToeThread(CrawlController c, int sn) {
+	public ToeThread(CrawlController c, ToePool p, int sn) {
 		controller = c;
+		pool = p;
 		serialNumber = sn;
 		setName("ToeThread #"+serialNumber);
 		httpRecorder = new HttpRecorder("tt"+sn+"http");
+	}
+
+
+	public synchronized void crawl(CrawlURI curi) {
+		assert currentCuri == null : "attempt to clobber crawlUri";
+		currentCuri = curi;
+		currentCuri.setThreadNumber(serialNumber);
+		notify();
+	}
+	
+	public boolean isAvailable() {
+		return currentCuri == null;
 	}
 
 	/* (non-Javadoc)
@@ -58,22 +73,11 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	}
 	
 	private synchronized void processingLoop() {
-		assert currentCuri == null;
-		
-		while ( paused ) {
-			try {
-				this.wait();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 		
 		try {
-			currentCuri = controller.crawlUriFor(this);
-			
 			if ( currentCuri != null ) {
-			
+				lastStartTime = System.currentTimeMillis();
+				
 				try {
 					while ( currentCuri.nextProcessor() != null ) {
 						getProcessor(currentCuri.nextProcessor()).process(currentCuri);
@@ -84,17 +88,19 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 					currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
 				}
 			
-				controller.getSelector().inter(currentCuri);
+				controller.getFrontier().finished(currentCuri);
 				currentCuri = null;
-			} else {
-				// self-pause, because there's nothing left to crawl
-				logger.warning(getName()+" pausing: nothing to crawl");
-				paused = true;
+				lastFinishTime = System.currentTimeMillis();
 			}
+			pool.noteAvailable(this);
+			wait();
 		} catch (OutOfMemoryError e) {
 			e.printStackTrace();
 			logger.warning(getName()+" pausing: out of memory error");
-			paused = true;
+			// TODO: hard stop? notify elsewhere?
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			logger.warning(getName()+" interrupted");
 		}
 	}
 
@@ -121,19 +127,6 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	private boolean shouldCrawl() {
 		return shouldCrawl;
 	}
-
-	/**
-	 * 
-	 */
-	public synchronized void unpause() {
-		if(!paused) return;
-		paused = false;
-		this.notify();
-	}
-	
-	public void pauseAfterCurrent() {
-		paused = true;
-	}
 	
 	public void stopAfterCurrent() {
 		shouldCrawl = false;
@@ -145,10 +138,7 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
 	public int getSerialNumber() {
 		return serialNumber;
 	}
-	
-	public boolean isPaused(){
-		return paused;
-	}
+
 	/**
 	 * @return
 	 */
