@@ -11,8 +11,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -371,7 +373,7 @@ public class XMLConfig {
 	 * @param node
 	 * @return
 	 */
-	private static String textOf(Node node) {
+	public static String textOf(Node node) {
 		if (node == null) {
 			return null;
 		}
@@ -393,6 +395,28 @@ public class XMLConfig {
 			return null;
 		}
 		return value;
+	}
+	
+	/**
+	 * Get a list of Strings from a set of nodes addressed by a xpath.
+	 * 
+	 * @param node base for the xpath expression
+	 * @param xpath expression to select a set of nodes
+	 * @return a List containing the strings in the nodeset
+	 */
+	public static List getTextNodesAt(Node node, String xpath) {
+		ArrayList result = new ArrayList();
+		try {
+			NodeIterator iter = XPathAPI.selectNodeIterator(node, xpath);
+			Node currentNode;
+			while ((currentNode = iter.nextNode()) != null) {
+				result.add(textOf(currentNode));
+			}
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
 	}
 
 	/**
