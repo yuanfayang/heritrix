@@ -4,18 +4,19 @@
  >
 
  <scope 
-   class="org.archive.crawler.basic.BasicScope"
-   max-link-depth="100"
-   max-transitive-depth="5">
+   class="org.archive.crawler.basic.Scope"
+   mode="domain"
+   max-link-hops="100"
+   max-trans-hops="3">
    
   <seeds>
    http://www.archive.org/movies/movies.php
-   http://dmoz.org
+   http://www.yahoo.com
   </seeds>
   
   <filter 
     name="domain-focus" 
-    class="SeedExtensionFilter"
+    class="org.archive.crawler.filter.SeedExtensionFilter"
     mode="domain" 
    /> 
    
@@ -32,8 +33,8 @@
    />
 
   <frontier 
-    class="org.archive.crawler.basic.SimpleFrontier"
-    delay-factor="1"
+    class="org.archive.crawler.basic.Frontier"
+    delay-factor="0"
     minimum-delay="0"
    />
   
@@ -41,26 +42,26 @@
    
     <processor 
       name="Preselector" 
-      class="org.archive.crawler.basic.SimplePreselector"
+      class="org.archive.crawler.basic.Preselector"
       next="Preprocessor"
       scope="yes"
      />
 
     <processor 
       name="Preprocessor" 
-      class="org.archive.crawler.basic.SimplePreconditionEnforcer"
+      class="org.archive.crawler.basic.PreconditionEnforcer"
       next="DNS"
      />
     
     <processor 
       name="DNS" 
-      class="org.archive.crawler.basic.FetcherDNS"
+      class="org.archive.crawler.fetcher.FetcherDNS"
       next="HTTP"
      />
     
     <processor 
       name="HTTP" 
-      class="org.archive.crawler.basic.FetcherHTTPSimple"
+      class="org.archive.crawler.fetcher.FetcherHTTPSimple"
       next="ExtractorHTTP"
       timeout-seconds="10"
      />
@@ -104,7 +105,7 @@
 	   <!--
 	   <filter 
 	     name="http-only"
-         class="org.archive.crawler.util.URIRegExpFilter"
+         class="org.archive.crawler.filter.URIRegExpFilter"
          regexp="^http://.*" 
 	   />
 	   -->
@@ -113,12 +114,13 @@
      <processor 
        name="Updater" 
        class="org.archive.crawler.basic.CrawlStateUpdater"
+       postprocessor="defined"
        next="Postselector"
       />
 
     <processor 
       name="Postselector" 
-      class="org.archive.crawler.basic.SimplePostselector"
+      class="org.archive.crawler.basic.Postselector"
      />
 
   </processors>
