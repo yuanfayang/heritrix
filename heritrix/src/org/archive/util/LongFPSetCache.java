@@ -37,19 +37,27 @@ public class LongFPSetCache extends MemLongFPSet {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.archive.util.AbstractLongFPSet#indexFor(long)
-	 */
-	protected int indexFor(long l) {
-		int i = super.indexFor(l);
-		if (i>)
-	}
-
-	/* (non-Javadoc)
 	 * @see org.archive.util.LongFPSet#remove(long)
 	 */
 	public boolean remove(long l) {
 		// TODO Auto-generated method stub
 		return super.remove(l);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.LongFPSet#add(long)
+	 */
+	public boolean add(long l) {
+		// TODO Auto-generated method stub
+		return super.add(l);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.AbstractLongFPSet#contains(long)
+	 */
+	public boolean contains(long l) {
+		// TODO Auto-generated method stub
+		return super.contains(l);
 	}
 
 }
