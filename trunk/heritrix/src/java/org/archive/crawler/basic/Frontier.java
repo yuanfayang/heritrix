@@ -525,10 +525,6 @@ public class Frontier
             forget(curi);
         } else {
             curi.setStoreState(URIStoreable.FINISHED);
-            if (curi.getDontRetryBefore() < 0) {
-                // if not otherwise set, retire this URI forever
-                curi.setDontRetryBefore(Long.MAX_VALUE);
-            }
             curi.stripToMinimal();
         }
         decrementScheduled();
@@ -606,10 +602,6 @@ public class Frontier
             forget(curi);
         } else {
             curi.setStoreState(URIStoreable.FINISHED);
-            if (curi.getDontRetryBefore() < 0) {
-                // if not otherwise set, retire this URI forever
-                curi.setDontRetryBefore(Long.MAX_VALUE);
-            }
         }
         controller.throwCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
         curi.stripToMinimal();
@@ -935,10 +927,6 @@ public class Frontier
             forget(curi);
         } else {
             curi.setStoreState(URIStoreable.FINISHED);
-            if (curi.getDontRetryBefore() < 0) {
-                // if not otherwise set, retire this URI forever
-                curi.setDontRetryBefore(Long.MAX_VALUE);
-            }
             curi.stripToMinimal();
         }
         decrementScheduled();
