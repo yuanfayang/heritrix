@@ -476,10 +476,6 @@ public class CrawlController implements Serializable {
              AttributeNotFoundException, InvalidAttributeValueException,
              MBeanException, ReflectionException, ClassNotFoundException,
              InstantiationException, IllegalAccessException {
-        
-        this.serverCache =
-            ServerCacheFactory.getServerCache(getSettingsHandler());
-
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
         	scope.initialize(this);
@@ -518,6 +514,12 @@ public class CrawlController implements Serializable {
                     "unable to initialize frontier: " + e);
             }
         }
+        
+        // Setup server cache after the frontier in case the frontier is using
+        // bdb.  If so, a bdb servercache will want to share the same bdb
+        // environment.
+        this.serverCache =
+            ServerCacheFactory.getServerCache(getSettingsHandler());
 
         // Setup processors
         if (processorChains == null) {
