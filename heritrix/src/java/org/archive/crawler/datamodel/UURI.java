@@ -251,10 +251,27 @@ public class UURI extends URI implements Serializable, HasUri {
         return surtForm;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter.HasUri#getUri()
-     */
     public String getUri() {
         return this.toString();
     }
+    
+    /**
+     * Return the authority minus userinfo (if any).
+     * 
+     * If no userinfo present, just returns the authority.
+     * 
+     * @return The authority stripped of any userinfo if present.
+     * @throws URIException
+     */
+	public String getAuthorityMinusUserinfo()
+    throws URIException {
+        String result = getAuthority();
+        if (result != null && result.length() > 0) {
+        	int index = result.indexOf('@');
+            if (index >= 0 && index < result.length()) {
+            	result = result.substring(index + 1);
+            }
+        }
+        return result;
+	}
 }

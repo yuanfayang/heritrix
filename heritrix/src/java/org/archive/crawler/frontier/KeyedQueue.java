@@ -30,6 +30,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.logging.Logger;
 
 import org.apache.commons.collections.Predicate;
 import org.archive.crawler.datamodel.CrawlServer;
@@ -78,8 +80,12 @@ import org.archive.util.ArchiveUtils;
  * @version $Date$ $Revision$
  */
 public class KeyedQueue implements Serializable, URIWorkQueue  {
+    private static final Logger logger =
+        Logger.getLogger(KeyedQueue.class.getName());
+    
     // be robust against trivial implementation changes
-    private static final long serialVersionUID = ArchiveUtils.classnameBasedUID(KeyedQueue.class,1);
+    private static final long serialVersionUID =
+        ArchiveUtils.classnameBasedUID(KeyedQueue.class,1);
     
     /** Associated CrawlServer instance, held to keep CrawlServer from being cache-flushed */
     CrawlServer crawlServer;
@@ -112,14 +118,17 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @param maxMemLoad Maximum number of items to keep in memory
      * @throws IOException When it fails to create disk based data structures.
      */
-    public KeyedQueue(String key, CrawlServer server, File scratchDir, int maxMemLoad)
-            throws IOException {
+    public KeyedQueue(String key, CrawlServer server, File scratchDir,
+            int maxMemLoad) throws IOException {
         super();
         this.classKey = key;
-        if(server!=null && !server.getName().startsWith(key)) {
-            // temp debugging output
-            System.err.println("KeyedQueue server<->key mismatch noted: "+server.getName()+"<->"+key);
-            // assert server.getHostname().startsWith(key) : "KeyedQueue server - key mismatch";
+        if (server != null && !server.getName().toLowerCase().
+                startsWith(key)) {
+            // Temp debugging output
+            logger.warning("KeyedQueue server<->key mismatch noted: " +
+                server.getName() + "<->" + key);
+            // assert server.getHostname().startsWith(key) :
+            //  "KeyedQueue server - key mismatch";
         }
         this.crawlServer = server;
         String tmpName = key;
@@ -339,7 +348,14 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
      * @return A crawl uri.
      */
     public CrawlURI dequeue() {
-        CrawlURI candidate = (CrawlURI) this.innerQ.dequeue();
+        CrawlURI candidate = null;
+        try {
+        	candidate = (CrawlURI) this.innerQ.dequeue();
+        } catch (NoSuchElementException e) {
+            logger.warning("NoSuchElementException dequeuing from queue " +
+                 getClassKey());
+            throw e;
+        }
         lastDequeued = candidate.getURIString();
         return candidate;
     }

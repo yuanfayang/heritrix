@@ -376,7 +376,7 @@ public class CrawlURI extends CandidateURI
      * what "class" this CrawlURI should be grouped with.
      */
     public String getClassKey() {
-        if(classKey==null) {
+        if(classKey == null) {
             classKey = calculateClassKey();
         }
         return classKey;
@@ -387,22 +387,23 @@ public class CrawlURI extends CandidateURI
         String candidate = null;
         try {
             if (scheme.equals("dns")){
-                if (via!=null) {
+                if (via != null) {
                     // Special handling for DNS: treat as being
-                    // of the same class as the triggering URI
+                    // of the same class as the triggering URI.
                     // When a URI includes a port, this ensures 
                     // the DNS lookup goes atop the host:port
                     // queue that triggered it, rather than 
                     // some other host queue
-                    candidate =
-                        UURIFactory.getInstance(flattenVia()).getAuthority();
+                    candidate = UURIFactory.getInstance(flattenVia()).
+                        getAuthorityMinusUserinfo();
                 } else {
                     candidate= FetchDNS.parseTargetDomain(this);
                 }
             } else {
-                candidate =  getUURI().getAuthority();
+                candidate =  getUURI().getAuthorityMinusUserinfo();
             }
-            if(candidate==null || candidate.length()==0) {
+            
+            if(candidate == null || candidate.length() == 0) {
                 candidate = DEFAULT_CLASS_KEY;
             }
         } catch (URIException e) {
@@ -410,7 +411,8 @@ public class CrawlURI extends CandidateURI
                     + e.getMessage() + " " + this);
             candidate = DEFAULT_CLASS_KEY;
         }
-        candidate.replace(':','#'); // ensure classKeys are safe as filenames on NTFS
+        // Ensure classKeys are safe as filenames on NTFS
+        candidate.replace(':','#');
         return candidate;
     }
 

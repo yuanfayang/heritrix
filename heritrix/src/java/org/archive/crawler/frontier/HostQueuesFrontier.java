@@ -511,7 +511,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             // TODO: (probably elsewhere) deactivate active queues that "have 
             // done enough for now" ("enough" to be defined)
             while(this.readyClassQueues.isEmpty() &&
-            		!inactiveClassQueues.isEmpty()) {
+                !inactiveClassQueues.isEmpty()) {
                 KeyedQueue kq = (KeyedQueue) inactiveClassQueues.removeFirst();
                 kq.activate();
                 assert kq.isEmpty() == false :
@@ -540,7 +540,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             
             if(alreadyIncluded.pending() > 0) {
                 if(alreadyIncluded.flush() > 0) {
-                	// Will go to the while(true) with fresh URIs
+                // Will go to the while(true) with fresh URIs
                     continue;
                 }
             } // Else
@@ -787,7 +787,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             allClassQueuesMap.isEmpty();
     }
 
-
     /**
      * Wake any snoozed queues whose snooze time is up.
      * @param now Current time in millisec.
@@ -892,14 +891,14 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             if (kq == null) {
                 try {
                     String key = curi.getClassKey();
-                    // the creation of disk directories makes this a potentially
+                    // The creation of disk directories makes this a potentially
                     // lengthy operation we don't want to hold full-frontier lock
                     // for 
-					kq = new KeyedQueue(key,
+                    kq = new KeyedQueue(key,
                         this.controller.getServerCache().getServerFor(curi),
-					    scratchDirFor(key),
-					    ((Integer) getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY
-                                ,curi)).intValue());
+						scratchDirFor(key),
+						((Integer)getAttribute(ATTR_HOST_QUEUES_MEMORY_CAPACITY,
+                            curi)).intValue());
                     kq.setValence(((Integer)getAttribute(ATTR_HOST_VALENCE,curi)).intValue());
                     this.allClassQueuesMap.put(kq.getClassKey(),kq);
                     if(((Boolean)getAttribute(ATTR_HOLD_QUEUES,curi)).booleanValue()) {
@@ -1218,7 +1217,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         boolean isPrereq = curi.isPrerequisite();
         curi.processingCleanup(); // This will reset prereq value.
         if (isPrereq == false) {
-        	curi.setSchedulingDirective(CandidateURI.MEDIUM);
+        curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }
         enqueueToKeyed(curi);
         queuedCount++;
@@ -1469,12 +1468,12 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * may be unwieldy. 
      */
     public String oneLineReport() {
-    	StringBuffer rep = new StringBuffer();
-    	rep.append(allClassQueuesMap.size()+" queues: ");
-    	rep.append(readyClassQueues.size()+" ready, ");
-    	rep.append(snoozeQueues.size()+" snoozed, ");
-    	rep.append(inactiveClassQueues.size()+" inactive");    	
-    	return rep.toString();
+    StringBuffer rep = new StringBuffer();
+    rep.append(allClassQueuesMap.size()+" queues: ");
+    rep.append(readyClassQueues.size()+" ready, ");
+    rep.append(snoozeQueues.size()+" snoozed, ");
+    rep.append(inactiveClassQueues.size()+" inactive");        
+    return rep.toString();
     }
     
     /**
@@ -1546,7 +1545,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         rep.append("     Length:        " + kq.length() + "\n");
 //        rep.append("     Is ready:  " + kq.shouldWake() + "\n");
         if(kq instanceof KeyedQueue){
-        	rep.append("     Status:        " +
+        rep.append("     Status:        " +
             ((KeyedQueue)kq).getState().toString() + "\n");
         }
         if(kq.getState()==URIWorkQueue.SNOOZED) {

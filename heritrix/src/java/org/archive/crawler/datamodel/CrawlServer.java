@@ -70,7 +70,8 @@ public class CrawlServer implements Serializable {
      */
     private transient Set avatars =  null;
 
-    /** Creates a new CrawlServer object.
+    /**
+     * Creates a new CrawlServer object.
      *
      * @param h the host string for the server.
      */
