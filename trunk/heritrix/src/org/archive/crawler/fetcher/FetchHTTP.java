@@ -43,7 +43,7 @@ public class FetchHTTP
 	private static int DEFAULT_TIMEOUT_SECONDS = 10;
 	private static int DEFAULT_SOTIMEOUT_MS = 5000;
 	private static long DEFAULT_MAX_LENGTH_BYTES = Long.MAX_VALUE;
-	private static int DEFAULT_MAX_FETCH_ATTEMPTS = 3;
+	private static int DEFAULT_MAX_FETCH_ATTEMPTS = 30;
 	
 	private static Logger logger = Logger.getLogger("org.archive.crawler.fetcher.FetchHTTP");
 	HttpClient http;
@@ -70,7 +70,7 @@ public class FetchHTTP
 //		}
 		
 		// only try so many times...
-		if(curi.getFetchAttempts() >= controller.getOrder().getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS)){
+		if(curi.getFetchAttempts() >= getIntAt(XP_MAX_FETCH_ATTEMPTS, DEFAULT_MAX_FETCH_ATTEMPTS)){
 			curi.setFetchStatus(S_TOO_MANY_RETRIES);
 			return; 
 		}
@@ -154,7 +154,7 @@ public class FetchHTTP
 		try {
 			// force read-to-end, so that any socket hangs occur here,
 			// not in later modules			
-			rec.getRecordedInput().readFullyOrUntil(controller.getOrder().getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES), 1000*controller.getOrder().getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS));
+			rec.getRecordedInput().readFullyOrUntil(getLongAt(XP_MAX_LENGTH_BYTES, DEFAULT_MAX_LENGTH_BYTES), 1000*getIntAt(XP_TIMEOUT_SECONDS, DEFAULT_TIMEOUT_SECONDS));
 		} catch (RecorderTimeoutException ex) {
 			logger.warning(curi.getUURI().getUriString()+": time limit exceeded");
 			// but, continue processing whatever was retrieved
