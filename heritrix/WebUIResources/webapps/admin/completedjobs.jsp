@@ -4,14 +4,13 @@
 
 <%
 	Vector jobs = handler.getCompletedJobs();
+
+	String title = "Completed job";
+	int navigation = 3;
 %>
 
-<html>
-	<head>
-		<title>Completed jobs</title>
-	</head>
-	<body>
-		<strong>Completed jobs</strong>
+<%@include file="/include/head.jsp"%>
+
 		<table border="0">
 			<tr>
 				<th>
@@ -36,8 +35,8 @@
 							<%=job.getStatus()%>
 						</td>
 						<td>
-							<a href="viewjob.jsp?job=<%=job.getUID()%>">View order</a>
-							<a href="viewstatistics.jsp?job=<%=job.getUID()%>">View statistics</a>
+							<a target="_blank" href="viewjob.jsp?job=<%=job.getUID()%>">View order</a>
+							<a href="viewstatistics.jsp?job=<%=job.getUID()%>&nav=3">View statistics</a>
 						</td>
 					</tr>
 			<%
@@ -45,9 +44,4 @@
 			%>
 		</table>
 		
-		<p>
-			<a href="newjob.jsp">New job</a>
-		<p>
-			<a href="main.jsp">Main page</a>
-	</body>
-</html>
+<%@include file="/include/foot.jsp"%>

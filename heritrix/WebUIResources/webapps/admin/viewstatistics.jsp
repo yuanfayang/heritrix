@@ -16,33 +16,34 @@
 	
 	if(job != null)
 	{
-		Vector jobs = handler.getCompletedJobs();
-		for(int i=0 ; i < jobs.size() ; i++)
-		{
-			cjob = (CrawlJob)jobs.get(i);
-			if(cjob.getUID().equals(job))
-			{
-				// Found it!
-				stats = (StatisticsTracker)cjob.getStatisticsTracking();
-			}
-		}
+		cjob = handler.getJob(job);
+		stats = (StatisticsTracker)cjob.getStatisticsTracking();
+		
 	}
+	else
+	{
+		// Assume current job.
+		cjob = handler.getCurrentJob();
+		stats = (StatisticsTracker)cjob.getStatisticsTracking();
+	}
+	
+	String title = "View job statistics";
 	
 %>
 
-<html>
-	<head>
-		<title>View statistics</title>
-	</head>
+<%@include file="/include/head.jsp"%>
 
-	<body>
 		<%
 			if(cjob == null)
 			{
 				// NO JOB SELECTED - ERROR
 		%>
-				<b>No job selected</b>
+				<b>Invalid job selected</b>
 		<%
+			}
+			else if(stats == null)
+			{
+				out.println("No statistics associated with job.</b>  Job status: " + cjob.getStatus());			
 			}
 			else
 			{
@@ -120,7 +121,7 @@
 										<b>Pending:</b>&nbsp;
 									</td>
 									<td>
-
+										<%=stats.urisInFrontierCount()%>
 									</td>
 								</tr>
 								<tr>
@@ -128,7 +129,7 @@
 										<b>Downloaded:</b>&nbsp;
 									</td>
 									<td>
-										<%=stats.uriFetchSuccessCount()%>
+										<%=stats.successfulFetchAttempts()%>
 									</td>
 								</tr>
 								<tr>
@@ -143,7 +144,7 @@
 						</td>
 					</tr>
 					<%
-						long begin = stats.uriFetchSuccessCount();
+						long begin = stats.successfulFetchAttempts();
 						long end = stats.urisEncounteredCount();
 						if(end < 1)
 							end = 1; 
@@ -183,23 +184,38 @@
 						<th>
 							Status code
 						</th>
-						<th>
+						<th width="200">
 							Number of occurances
+						</th>
+						<th>
 						</th>
 					</tr>
 					<%
 						HashMap statusCodeDistribution = stats.getStatusCodeDistribution();
 						Iterator statusCodes = statusCodeDistribution.keySet().iterator();
+						
+						
 						while(statusCodes.hasNext())
 						{
 							Object code = statusCodes.next();
+							long count = Integer.parseInt(statusCodeDistribution.get(code).toString());
+							double percent = ((double)count/stats.successfulFetchAttempts())*100;
 					%>
 							<tr>
 								<td>
 									<%=code%>
 								</td>
-								<td>
-									<%=statusCodeDistribution.get(code)%>
+								<td width="600" colspan="2">
+									<table width="600" cellspacing="0" cellpadding="0" border="0">
+										<tr>
+											<td bgcolor="blue" width="<%=percent%>%">&nbsp;
+											</td>
+											<td nowrap>
+												&nbsp;<%=count%>
+											</td>
+											<td width="<%=100-percent%>%"></td>
+										</tr>
+									</table>
 								</td>
 							</tr>
 					<%
@@ -209,11 +225,13 @@
 
 				<table>
 					<tr>
-						<th>
+						<th width="100">
 							File type
 						</th>
-						<th>
+						<th width="200">
 							Number of occurances
+						</th>
+						<th>
 						</th>
 					</tr>
 					<%
@@ -222,25 +240,61 @@
 						while(files.hasNext())
 						{
 							Object file = files.next();
+							long count = Integer.parseInt(fileDistribution.get(file).toString());
+							double percent = ((double)count/stats.successfulFetchAttempts())*100;
 					%>
 							<tr>
-								<td>
+								<td nowrap>
 									<%=file%>
 								</td>
-								<td>
-									<%=fileDistribution.get(file)%>
+								<td width="600" colspan="2">
+									<table width="600" cellspacing="0" cellpadding="0" border="0">
+										<tr>
+											<td bgcolor="blue" width="<%=percent%>%">&nbsp;
+											</td>
+											<td>
+												&nbsp;<%=count%>
+											</td>
+											<td width="<%=100-percent%>%"></td>
+										</tr>
+									</table>
 								</td>
 							</tr>
 					<%
 						}
 					%>				
 				</table>
-
-				<a href="completedjobs.jsp">Back</a><br>
+		<table>
+			<tr>
+				<th>
+					Hosts
+				</th>
+				<th>
+					Number of occurances
+				</th>
+			</tr>
+			<%
+				HashMap hostsDistribution = stats.getHostsDistribution();
+				Iterator hosts = hostsDistribution.keySet().iterator();
+				int i=0;
+				while(hosts.hasNext())
+				{
+					i++;
+					Object host = hosts.next();
+			%>
+					<tr>
+						<td>
+							<%=host%>
+						</td>
+						<td>
+							<%=hostsDistribution.get(host)%>
+						</td>
+					</tr>
+			<%
+				}
+			%>				
+		</table>
 		<%
 			} // End if(cjob==null)else clause
 		%>
-		<a href="main.jsp">Main page</a>
-	</body>
-
-</html>
+<%@include file="/include/foot.jsp"%>

@@ -1,9 +1,20 @@
+<%@include file="/include/handler.jsp"%>
+<%@include file="/include/secure.jsp"%>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.admin.SimpleCrawlJob" %>
+
+<%
+	/**
+	 * This page enables simple jobs to be scheduled (submitted to simplerequesthandler.jsp)
+	 * (order.xml is used for defaults)
+	 */
+%>
+
 <html>
 	<head>
 	</head>
 	<body>
-		<form name="frmProfiles" action="simplerequest.jsp" method="post">
-		a
+		<form name="frmProfiles" action="simplerequesthandler.jsp" method="post">
+
 		<table border="0" cellspacing="0" cellpadding="0">
 			<tr>
 				<td colspan="2">
@@ -22,7 +33,7 @@
 							sProfile = "1";
 						}
 					%>
-					<select name="cboProfile" onChange="document.frmProfiles.submit()">
+					<select name="cboProfile" onChange="document.frmProfiles.action='simplerequest.jsp';document.frmProfiles.submit()">
 						<option value="1" <%=(sProfile.equals("1")?"selected":"")%>>Page</option>
 						<option value="2" <%=(sProfile.equals("2")?"selected":"")%>>Page+1</option>
 						<option value="3" <%=(sProfile.equals("3")?"selected":"")%>>Path</option>
@@ -47,6 +58,7 @@
 								<option value="domain">Domain</option>
 								<option value="domain">Broad</option>
 							</select>
+							<input type="hidden" name="<%=handler.XP_CRAWL_ORDER_NAME%>" value="Simple crawl - manual">
 						</td>
 					</tr>
 					<tr>
@@ -54,7 +66,7 @@
 							<strong>Max embed depth:</strong>
 						</td>
 						<td>
-							<input> (max value: 8)
+							<input name="<%=handler.XP_MAX_TRANS_HOPS%>"> (max value: 8)
 						</td>
 					</tr>
 					<tr>
@@ -62,10 +74,10 @@
 							<strong>Max link depth:</strong>
 						</td>
 						<td>
-							<input> (max value: 8)
+							<input name="<%=handler.XP_MAX_LINK_HOPS%>"> (max value: 8)
 						</td>
 					</tr>
-					<tr>
+					<!--tr>
 						<td valign="top">
 							<strong>Max run time (min):</strong>
 						</td>
@@ -88,7 +100,7 @@
 						<td>
 							<input> (max value: 10,000 Mb)
 						</td>
-					</tr>
+					</tr-->
 			<%
 				}
 				else
@@ -96,11 +108,36 @@
 					out.println("<tr><td></td><td>");
 					switch(Integer.parseInt(sProfile))
 					{
-						case 1 : out.println("Description of a Page crawl");break;
-						case 2 : out.println("Description of a Page+1 crawl");break;
-						case 3 : out.println("Description of a Path crawl");break;
-						case 4 : out.println("Description of a Host crawl");break;
-						case 5 : out.println("Description of a Domain crawl");break;
+						case 1 : out.println("Description of a Page crawl");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - page\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"0\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"broad\">");
+								 break;
+						case 2 : out.println("Description of a Page+1 crawl");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - page+1\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"1\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"broad\">");
+								 break;
+						case 3 : out.println("Description of a Path crawl");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - path\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"3\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"path\">");
+								 break;
+						case 4 : out.println("Description of a Host crawl");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - host\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"5\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"host\">");
+						         break;
+						case 5 : out.println("Description of a Domain crawl");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_ORDER_NAME+"\" value=\"Simple crawl - domain\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_LINK_HOPS+"\" value=\"6\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_MAX_TRANS_HOPS+"\" value=\"5\">");
+								 out.println("<input type=\"hidden\" name=\""+handler.XP_CRAWL_MODE+"\" value=\"domain\">");
+							     break;
 					}
 					out.println("</td></tr>");
 				}
@@ -110,12 +147,12 @@
 					<strong>Seeds :</strong>
 				</td>
 				<td>
-					<textarea name="seeds" wrap="off" cols="48" rows="8">http://archive.org</textarea>
+					<textarea name="<%=handler.XP_SEEDS%>" wrap="off" cols="48" rows="8"><%=(request.getParameter(handler.XP_SEEDS)==null)?"http://archive.org":request.getParameter(handler.XP_SEEDS)%></textarea>
 				</td>
 			</tr>
 			<tr>
 				<td colspan="2" align="right">
-					<input type="button" value="Submit job">
+					<input type="submit" value="Submit job">
 				</td>
 			</tr>
 		</table>
