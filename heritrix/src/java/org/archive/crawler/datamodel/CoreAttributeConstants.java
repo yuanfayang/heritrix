@@ -60,7 +60,11 @@ public interface CoreAttributeConstants {
 	public static String A_HTTP_TRANSACTION = "http-transaction";
 
 	public static String A_RUNTIME_EXCEPTION = "runtime-exception";
-	public static String A_LOCALIZED_ERRORS = "localized-errors";
+    public static String A_LOCALIZED_ERRORS = "localized-errors";
+    
+    /** shorthand string tokens indicating notable occurences,
+     * separated by commas */
+    public static String A_ANNOTATIONS = "annotations";
 	
 	public static String A_PREREQUISITE_URI = "prerequisite-uri";
 	public static String A_FORCED_PREREQUISITE_URI = "forced-prerequisite-uri";
