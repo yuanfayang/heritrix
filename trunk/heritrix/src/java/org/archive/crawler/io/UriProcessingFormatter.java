@@ -96,10 +96,6 @@ public class UriProcessingFormatter
             via = ((UURI)via).getUriString();
         }
 
-        // Allow get to be GC'd.  TODO: Why is this being done here and not 
-        // in a more 'obvious' done-with-processors location?
-        curi.getAList().remove(A_HTTP_TRANSACTION);
-
         return ArchiveUtils.get17DigitDate(time)
             + " "
             + ArchiveUtils.padTo(curi.getFetchStatus(),5)

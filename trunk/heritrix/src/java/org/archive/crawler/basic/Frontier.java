@@ -455,14 +455,15 @@ public class Frontier
      * @see org.archive.crawler.framework.URIFrontier#finished(org.archive.crawler.datamodel.CrawlURI)
      */
     public synchronized void finished(CrawlURI curi) {
-        logger.fine("Frontier.finished: "+curi.getURIString());
+        logger.fine("Frontier.finished: " + curi.getURIString());
 
-        // catch up on scheduling
+        // Catch up on scheduling
         batchFlush();
 
         curi.incrementFetchAttempts();
 
-        try {
+        try
+        {
             noteProcessingDone(curi);
             // snooze queues as necessary
             updateScheduling(curi);
@@ -470,35 +471,40 @@ public class Frontier
 
             logLocalizedErrors(curi);
 
-            // Regard any status larger then 0 as meaning success.
-            if(curi.getFetchStatus() > 0){
-                // SUCCESS: note & log
+            if(curi.getFetchStatus() > 0)
+            {
+                // Regard any status larger then 0 as success.
                 successDisposition(curi);
-                return;
             }
-
-            // consider errors which can be retried
-            if (needsRetrying(curi)) {
+            else if (needsRetrying(curi))
+            {
+                // Consider errors which can be retried
                 scheduleForRetry(curi);
-                return;
             }
-
-            // Check for codes that mean that while we the crawler did manage to get it it
-            // must be disregarded for any reason.
-            if(isDisregarded(curi)){
+            else if(isDisregarded(curi))
+            {
+                // Check for codes that mean that while we the crawler did
+                // manage to get it it must be disregarded for any reason.
                 disregardDisposition(curi);
-                return;
             }
-
-            // In that case FAILURE, note & log
-            failureDisposition(curi);
+            else
+            {
+                // In that case FAILURE, note & log
+                failureDisposition(curi);
+            }
+            
         } catch (RuntimeException e) {
             curi.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
-            curi.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+            curi.getAList().putObject(A_RUNTIME_EXCEPTION, e);
             failureDisposition(curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
+        }
+        
+        finally
+        {
+            curi.processingCleanup();
         }
     }
 
