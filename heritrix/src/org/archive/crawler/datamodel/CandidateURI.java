@@ -9,6 +9,8 @@ package org.archive.crawler.datamodel;
 import java.io.IOException;
 import java.io.Serializable;
 
+import org.archive.util.Lineable;
+
 /**
  * A URI, discovered or passed-in, that may be scheduled (and
  * thus become a CrawlURI). Contains just the fields necessary
@@ -19,7 +21,9 @@ import java.io.Serializable;
  * 
  * @author Gordon Mohr
  */
-public class CandidateURI implements Serializable {
+public class CandidateURI implements Serializable, Lineable {
+	private static final long serialVersionUID = -7152937921526560388L;
+	
 	/** Usuable URI under consideration */
 	UURI uuri;
 	/** Seed status */
@@ -140,26 +144,34 @@ public class CandidateURI implements Serializable {
 	
 	private void writeObject(java.io.ObjectOutputStream out)
 		 throws IOException {
-		 flattenVia();
+		 via = flattenVia();
 		 out.defaultWriteObject();
 	}
 
 	/**
 	 * 
 	 */
-	private void flattenVia() {
+	private String flattenVia() {
 		if (via instanceof String) {
 			// already OK
-			return;
+			return (String) via;
 		}
 		if (via instanceof UURI) {
-			via = ((UURI)via).getUri().toString();
-			return;
+			return ((UURI)via).getUriString();
 		}
 		if (via instanceof CandidateURI) {
-			via = ((CandidateURI)via).getUURI().getUri().toString();
-			return;
+			return ((CandidateURI)via).getUURI().getUriString();
 		}
-		via = via.toString();
+		return via.toString();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.util.Lineable#getLine()
+	 */
+	public String getLine() {
+		return this.getClass().getName()
+		        +" "+getUURI().getUriString()
+		        +" "+pathFromSeed
+		        +" "+flattenVia();
 	}
 }
