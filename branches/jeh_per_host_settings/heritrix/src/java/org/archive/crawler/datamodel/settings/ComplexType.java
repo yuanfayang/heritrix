@@ -56,7 +56,7 @@ public abstract class ComplexType implements DynamicMBean, Type {
     protected final Map definitionMap = new HashMap();
     private boolean initialized = false;
     /** Should this ComplexType be serialized to persistent storage */
-    private boolean transitive = false;
+    private boolean isTransient = false;
 
     /**
      * Private constructor to make sure that no one 
@@ -447,15 +447,15 @@ public abstract class ComplexType implements DynamicMBean, Type {
     /**
      * @return
      */
-    public boolean isTransitive() {
-        return transitive;
+    public boolean isTransient() {
+        return isTransient;
     }
 
     /**
      * @param b
      */
-    public void setTransitive(boolean b) {
-        transitive = b;
+    public void setTransient(boolean b) {
+        isTransient = b;
     }
 
 }
