@@ -22,7 +22,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
  */
 public class CrawlHost {
 	public static long DEFAULT_ROBOTS_VALIDITY_DURATION = 1000*60*60*24; // one day 
-	String hostname; // actually, host+port in the http case
+	String server; // actually, host+port in the http case
 	InetAddress ip;
 	long ipExpires = -1;
 	RobotsExclusionPolicy robots;
@@ -35,7 +35,7 @@ public class CrawlHost {
 	 */
 	public CrawlHost(String h) {
 		// TODO: possibly check for illegal host string
-		hostname = h;
+		server = h;
 	}
 		
 	public boolean hasBeenLookedUp(){
@@ -78,7 +78,7 @@ public class CrawlHost {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "CrawlHost("+hostname+")";
+		return "CrawlHost("+server+")";
 	}
 
 	/**
@@ -150,12 +150,23 @@ public class CrawlHost {
 	 	return ip;
 	 }
 	 
-	 public String getHostname(){
-	 	return hostname;
+	 public String getServer(){
+	 	return server;
 	 }
 	 
 	 public long getIpExpires(){ 
 	 	return ipExpires;
 	 }
+
+	/**
+	 * @return
+	 */
+	public String getHostname() {
+		int colonIndex = server.indexOf(":");
+		if(colonIndex>-1) {
+			return server.substring(0,colonIndex);
+		}
+		return server;
+	}
 
 }

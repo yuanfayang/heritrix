@@ -9,7 +9,6 @@ package org.archive.crawler.datamodel;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -65,48 +64,15 @@ public class CrawlURI
 	public CrawlURI(UURI u) {
 		uuri=u;
 	}
-	
-	/** creates a minimal (this means incomplete) copy */
-	//TODO: make this copy do more (currently only does enough to support statistics)
-	public Object clone(){
-		CrawlURI copy = new CrawlURI(uuri);
 		
-		// alist.clone throws a "not implemented yet" exception		
-		//copy.setAList((AList)this.alist.clone());
-		
-		Iterator alistKeys = alist.getKeys();
-		while(alistKeys.hasNext()){
-			String current = (String)alistKeys.next();
-			copy.getAList().putObject(current, alist.getObject(current));
-		}
-		
-		copy.setContentSize(contentSize);
-		
-		return copy;
-	}
-	
 	/**
 	 * Set the time this curi is considered expired (and thus must be refetched)
-	 * to 'expires'.  This function will set the time to an arbitrary value, if you do not wish
-	 * to clobber an earlier expiration time (e.g. setting a robots expiration after a dns
-	 * expiration) use setDontRetrySmart().
+	 * to 'expires'.  This function will set the time to an arbitrary value.
 	 * @param expires
 	 */
 	public void setDontRetryBefore(long expires){
 		dontRetryBefore = expires;
 	}
-	
-//	/**
-//	 * Set the expire time.  This function only allows you to set a 
-//	 * nearer expire time, not to increase it.  To set an arbitrary
-//	 * expire time use setDontRetryBefore()
-//	 * @param expires
-//	 */
-//	public void setDontRetryBeforeSmart(long expires){
-//		if(expires < dontRetryBefore || dontRetryBefore < 0){
-//			dontRetryBefore = expires;
-//		}
-//	}
 	
 	public long getDontRetryBefore(){
 		return dontRetryBefore;
@@ -192,15 +158,17 @@ public class CrawlURI
 	 * @return
 	 */
 	public Object getClassKey() {
+		//return host.getHostname();
+		
 		String scheme = getUURI().getUri().getScheme();
 		if (scheme.equals("dns")){
 			return FetcherDNS.parseTargetDomain(this);
 		}
-		String authorityUsuallyHost = getUURI().getUri().getAuthority();
-		if (authorityUsuallyHost != null) {
-			return authorityUsuallyHost;
+		String host = getUURI().getUri().getHost();
+		if (host == null) {
+			return getUURI().getUri().getAuthority();
 		} else {
-			return null;
+			return host;
 		} 
 	}
 	
