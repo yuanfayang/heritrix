@@ -128,15 +128,15 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	private synchronized void logActivity() {
 		String delimiter = "-----------------------------------";
 		SimpleDateFormat timestamp = new SimpleDateFormat("yyyyMMddHHmmss");
-		int discoveredPages = urisEncounteredCount();
-		int pendingPages = urisInFrontierCount();
-		int downloadedPages = successfulFetchAttempts();
-		int uniquePages = uniquePagesCount();
+		long discoveredPages = urisEncounteredCount();
+		long pendingPages = urisInFrontierCount();
+		long downloadedPages = successfulFetchAttempts();
+		long uniquePages = uniquePagesCount();
 		int docsPerSecond = processedDocsPerSec();
 		int currentDocsPerSecond = currentProcessedDocsPerSec();
 		int currentKBPerSec = currentProcessedKBPerSec();
 		int totalKBPerSec = processedKBPerSec();
-		int downloadFailures = totalFetchAttempts() - successfulFetchAttempts();
+		long downloadFailures = failedFetchAttempts();
 		int pausedThreads = threadCount() - activeThreadCount(); 
 		Date now = new Date();
 		
@@ -266,7 +266,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	
 	/** Return the number of unique pages based on md5 calculations */
 	public int uniquePagesCount(){
-		//TODO implement md5 checksum comparisions
+		//TODO implement sha1 checksum comparisions
 		return 0;
 	}
 	
@@ -487,16 +487,16 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	 * Get the number of URIs in the frontier (found but not fetched)
 	 * @return
 	 */
-	public int urisInFrontierCount() {
+	public long urisInFrontierCount() {
 
-		return urisEncounteredCount() - totalFetchAttempts();
+		return controller.getFrontier().pendingUriCount();
 	}
 
 	/**
 	 * Get the number of successul page fetches.
 	 * @return
 	 */
-	public int uriFetchSuccessCount() {
+	public long uriFetchSuccessCount() {
 		return controller.getFrontier().successfullyFetchedCount();
 	}
 
@@ -505,8 +505,8 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	 * @return
 	 */
 	public int percentOfDiscoveredUrisCompleted() {
-		int completed = totalFetchAttempts();
-		int total = urisEncounteredCount();
+		long completed = totalFetchAttempts();
+		long total = urisEncounteredCount();
 
 		if (total == 0) {
 			return 0;
@@ -518,14 +518,14 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	/** Returns a count of all uris encountered.  This includes both the frontier 
 	 * (unfetched pages) and fetched pages/failed fetch attempts.
 	 */
-	public int urisEncounteredCount() {
+	public long urisEncounteredCount() {
 		return controller.getFrontier().discoveredUriCount();
 	}
 
 	/**
 	 * Get the total number of URIs where fetches have been attempted.
 	 */
-	public int totalFetchAttempts() {
+	public long totalFetchAttempts() {
 		return controller.getFrontier().successfullyFetchedCount()
 			+ controller.getFrontier().failedFetchCount();
 	}
@@ -533,7 +533,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	/** Get the total number of failed fetch attempts (404s, connection failures -> give up, etc)
 	 * @return int
 	 */
-	public int failedFetchAttempts() {
+	public long failedFetchAttempts() {
 		return controller.getFrontier().failedFetchCount();
 	}
 
@@ -541,7 +541,7 @@ public class StatisticsTracker implements Runnable, CoreAttributeConstants{
 	 *  that have been fetched to date.
 	 * @return int
 	 */
-	public int successfulFetchAttempts() {
+	public long successfulFetchAttempts() {
 		return controller.getFrontier().successfullyFetchedCount();
 	}
 
