@@ -8,23 +8,44 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.logging.Level;
 
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.AbstractTracker;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
 /**
+ * This is an implementation of the AbstractTracker.   
+ * <p>
+ * At the end of each snapshot a line is written to the progress-statistics.log file.
+ * <p>
+ * The header of that file is as follows:
+ * <pre> [timestamp] [discovered]    [queued] [downloaded] [doc/s(avg)]  [KB/s(avg)] [dl-failures] [busy-thread] [mem-use-KB]</pre>
+ * First there is a time stamp, accurate down to 1 second. 
+ * <p>
+ * <b>discovered</b>, <b>queued</b>, <b>downloaded</b> and <b>dl-failures</b> are (respectively) the discovered URI count, 
+ * pending URI count, successfully fetched count and failed fetch count from the frontier at 
+ * the time of the snapshot.
+ * <p>
+ * KB/s(avg) is the bandwidth usage.  We use the total bytes downloaded to calculate average 
+ * bandwidth usage (KB/sec). Since we also note the value each time a snapshot is made we can 
+ * calculate the average bandwidth usage during the last snapshot period to gain a "current" rate. 
+ * The first number is the current and the average is in parenthesis.
+ * <p>
+ * doc/s(avg) works the same way as doc/s except it show the number of documents (URIs) rather then 
+ * KB downloaded.
+ * <p>
+ * busy-threads is the total number of ToeThreads that are not available (and thus presumably busy processing a URI).  
+ * This information is extracted from the crawl controller.
+ * <p>
+ * Finally mem-use-KB is extracted from the run time environment (Runtime.getRuntime().totalMemory()).
+ * 
  * @author Parker Thompson
  * @author Kristinn Sigurdsson
  * 
- * This is an implementation of the AbstractTracker.  It logs the 
- * following information at intervals specified in the crawl order:
- * 
- * 
+ * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.framework.AbstractTracker
  */
-public class StatisticsTracker extends AbstractTracker implements CoreAttributeConstants{
+public class StatisticsTracker extends AbstractTracker{
 
 	protected long lastPagesFetchedCount = 0;
 	protected long lastProcessedBytesCount = 0;
@@ -35,7 +56,6 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 	protected long discoveredPages = 0;
 	protected long pendingPages = 0;
 	protected long downloadedPages = 0;
-	protected long uniquePages = 0;
 	protected int docsPerSecond = 0;
 	protected int currentDocsPerSecond = 0;
 	protected int currentKBPerSec = 0;
@@ -47,16 +67,20 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 	 * Cumulative data 
 	 */
 	protected long totalProcessedBytes = 0;
-	// keep track of the file types we see (mime type -> count)
-	protected HashMap fileTypeDistribution = new HashMap();
+	/** keep track of the file types we see (mime type -> count) */
+	protected HashMap mimeTypeDistribution = new HashMap();
 	// keep track of fetch status codes
 	protected HashMap statusCodeDistribution = new HashMap();
-
+	// keep track of hosts
+	protected HashMap hostsDistribution = new HashMap();
 	
 	public StatisticsTracker() {
 		super();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.AbstractTracker#logActivity()
+	 */
 	protected synchronized void logActivity() {
 		// This method loads "snapshot" data.
 		discoveredPages = urisEncounteredCount();
@@ -126,7 +150,6 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
              .raAppend(26,discoveredPages)
 			 .raAppend(38,pendingPages)
 			 .raAppend(51,downloadedPages)
-			 //.raAppend(64,uniquePages)
 			 .raAppend(64,currentDocsPerSecond+"("+docsPerSecond+")")
 			 .raAppend(77,currentKBPerSec+"("+totalKBPerSec+")")
 			 .raAppend(91,downloadFailures)
@@ -140,35 +163,43 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 	}
 	
 
-	/** Returns the number of documents that have been processed
-	 *  per second over the life of the crawl (as of last snapshot)
-	 * @return docsPerSec
+	/** 
+	 * Returns the number of documents that have been processed
+	 * per second over the life of the crawl (as of last snapshot)
+	 * 
+	 * @return  The rate per second of documents gathered so far
 	 */
 	public int processedDocsPerSec(){
 		return docsPerSecond;
 	}
 	
-	/** Returns an estimate of recent document download rates
-	 *  based on a queue of recently seen CrawlURIs (as of last snapshot.)
-	 * @return currentDocsPerSec
+	/** 
+	 * Returns an estimate of recent document download rates
+	 * based on a queue of recently seen CrawlURIs (as of last snapshot.)
+	 * 
+	 * @return The rate per second of documents gathered during the last snapshot
 	 */
 	public int currentProcessedDocsPerSec(){
 		return currentDocsPerSecond;
 	}
 	
-	/** Calculates the rate that data, in kb, has been processed
-	 *  over the life of the crawl (as of last snapshot.)
-	 * @return kbPerSec
+	/** 
+	 * Calculates the rate that data, in kb, has been processed
+	 * over the life of the crawl (as of last snapshot.)
+	 * 
+	 * @return The rate per second of KB gathered so far
 	 */ 
 	public long processedKBPerSec(){
 		return totalKBPerSec;
 	}
 	
-	/** Calculates an estimate of the rate, in kb, at which documents
-	 *  are currently being processed by the crawler.  For more 
-	 *  accurate estimates set a larger queue size, or get
-	 *  and average multiple values (as of last snapshot).
-	 * @return
+	/** 
+	 * Calculates an estimate of the rate, in kb, at which documents
+	 * are currently being processed by the crawler.  For more 
+	 * accurate estimates set a larger queue size, or get
+	 * and average multiple values (as of last snapshot).
+	 * 
+	 * @return The rate per second of KB gathered during the last snapshot
 	 */
 	public int currentProcessedKBPerSec(){
 		return currentKBPerSec;
@@ -177,60 +208,37 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 	/** Returns a HashMap that contains information about distributions of 
 	 *  encountered mime types.  Key/value pairs represent 
 	 *  mime type -> count.
-	 * @return fileTypeDistribution
+	 * @return mimeTypeDistribution
 	 */
 	public HashMap getFileDistribution() {
-		return fileTypeDistribution;
+		return mimeTypeDistribution;
 	}
 
-	/** Let modules store statistics about mime types they've
-	 *  encountered.  Note: these statistics are only as accurate
-	 *  as the logic concerned with storing them to this object.
-	 * @param mime
+
+	/** 
+	 * Increment a counter for a key in a given HashMap. Used for various
+	 * aggregate data.
+	 * 
+	 * @param map The HashMap
+	 * @param key The key for the counter to be incremented, if it does not 
+	 * 	          exist it will be added (set to 1).  If null it will 
+	 *            increment the counter "unknown".
 	 */
-	protected void incrementTypeCount(String mime) {
+	protected static void incrementMapCount(HashMap map, String key) {
 
-		if (mime == null) {
-			mime = "unknown";
+		if (key == null) {
+			key = "unknown";
 		}
 
-		// strip things like charset (e.g. text/html; charset=iso-blah-blah)	
-		int semicolonLoc = mime.indexOf(';');
-		if (semicolonLoc >= 0) {
-			mime = mime.substring(0, semicolonLoc);
-		}
+		if (map.containsKey(key)) {
 
-		if (fileTypeDistribution.containsKey(mime)) {
-
-			Integer matchValue = (Integer) fileTypeDistribution.get(mime);
+			Integer matchValue = (Integer) map.get(key);
 			matchValue = new Integer(matchValue.intValue() + 1);
-			fileTypeDistribution.put(mime, matchValue);
+			map.put(key, matchValue);
 
 		} else {
-			// if we didn't find this mime type add it
-			fileTypeDistribution.put(mime, new Integer(1));
-		}
-	}
-
-	/** Keeps a count of processed uri's status codes so that we can
-	 *  generate histograms.
-	 * @param code
-	 */
-	protected void incrementStatusCodeCount(String code) {
-
-		if (code == null) {
-			code = "unknown";
-		}
-
-		if (statusCodeDistribution.containsKey(code)) {
-
-			Integer matchValue = (Integer) statusCodeDistribution.get(code);
-			matchValue = new Integer(matchValue.intValue() + 1);
-			statusCodeDistribution.put(code, matchValue);
-
-		} else {
-			// if we didn't find this mime type add it
-			statusCodeDistribution.put(code, new Integer(1));
+			// if we didn't find this key add it
+			map.put(key, new Integer(1));
 		}
 	}
 
@@ -243,25 +251,43 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 		return statusCodeDistribution;
 	}
 
+	/** Return a HashMap representing the distribution of hosts for
+	 *  successfully fetched curis, as represented by a hashmap where
+	 *  key -> val represents (string)code -> (integer)count
+	 * @return Hosts distribution as a HashMap
+	 */
+	public HashMap getHostsDistribution() {
+		return hostsDistribution;
+	}
+
 	/**
-	 * Get the number of threads in process (sleeping and active)
-	 * @return
+	 * Get the total number of ToeThreads  (sleeping and active)
+	 * 
+	 * @return The total number of ToeThreads
 	 */
 	public int threadCount() {
 		return controller.getToeCount();
 	}
 
 	/**
-	 * Get the number of active (non-paused) threads.
-	 * @return
+	 * Get the number of active (non-paused) threads. 
+	 * <p>
+	 * If crawl not running (paused or stopped) this will return the value of the last snapshot.
+	 * 
+	 * @return The number of active (non-paused) threads
 	 */
 	public int activeThreadCount() {
 		return shouldrun ? controller.getActiveToeCount() : busyThreads;
 	}
 
 	/**
-	 * Get the number of URIs in the frontier (found but not fetched)
-	 * @return
+	 * Get the number of URIs in the frontier (found but not processed).
+	 * <p>
+	 * If crawl not running (paused or stopped) this will return the value of the last snapshot.
+	 * 
+	 * @return The number of URIs in the frontier (found but not processed)
+	 * 
+	 * @see org.archive.crawler.framework.URIFrontier#pendingUriCount()
 	 */
 	public long urisInFrontierCount() {
 
@@ -270,17 +296,12 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 		return shouldrun ? controller.getFrontier().pendingUriCount() : pendingPages;
 	}
 
-	/**
-	 * Get the number of successul page fetches.
-	 * @return
-	 */
-	public long uriFetchSuccessCount() {
-		return successfulFetchAttempts();
-	}
-
-	/** This returns the number of completed URIs as a percentage of the total
-	 *   number of URIs encountered (should be inverse to the discovery curve)
-	 * @return
+	/** 
+	 * This returns the number of completed URIs as a percentage of the total
+	 * number of URIs encountered (should be inverse to the discovery curve)
+	 * 
+	 * @return The number of completed URIs as a percentage of the total
+	 * number of URIs encountered
 	 */
 	public int percentOfDiscoveredUrisCompleted() {
 		long completed = totalFetchAttempts();
@@ -293,8 +314,15 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 		return (int) (100 * completed / total);
 	}
 
-	/** Returns a count of all uris encountered.  This includes both the frontier 
-	 * (unfetched pages) and fetched pages/failed fetch attempts.
+	/** 
+	 * Returns a count of all uris encountered.  This includes both the frontier 
+	 * (unfetched pages) and fetched pages/failed fetch attempts. 
+	 * <p>
+	 * If crawl not running (paused or stopped) this will return the value of the last snapshot.
+	 * 
+	 * @return A count of all uris encountered
+	 * 
+	 * @see org.archive.crawler.framework.URIFrontier#discoveredUriCount()
 	 */
 	public long urisEncounteredCount() {
 		// While shouldrun is true we can use info direct from the crawler.  
@@ -304,13 +332,18 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 
 	/**
 	 * Get the total number of URIs where fetches have been attempted.
+	 * 
+	 * @return Equal to the sum of {@link StatisticsTracker#successfulFetchAttempts() successfulFetchAttempts()} 
+	 * and {@link StatisticsTracker#failedFetchAttempts() failedFetchAttempts()}
 	 */
 	public long totalFetchAttempts() {
 		return successfulFetchAttempts() + failedFetchAttempts();
 	}
 
-	/** Get the total number of failed fetch attempts (404s, connection failures -> give up, etc)
-	 * @return int
+	/** 
+	 * Get the total number of failed fetch attempts (connection failures -> give up, etc)
+	 * 
+	 * @return The total number of failed fetch attempts
 	 */
 	public long failedFetchAttempts() {
 		// While shouldrun is true we can use info direct from the crawler.  
@@ -318,9 +351,14 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 		return shouldrun ? controller.getFrontier().failedFetchCount() : downloadFailures;
 	}
 
-	/** Returns the total number of successul resources (web pages, images, etc)
-	 *  that have been fetched to date.
-	 * @return int
+	/**
+	 * Get the number of successul document fetches.
+	 * <p>
+	 * If crawl not running (paused or stopped) this will return the value of the last snapshot.
+	 * 
+	 * @return The number of successul document fetches
+	 * 
+	 * @see org.archive.crawler.framework.URIFrontier#successfullyFetchedCount()
 	 */
 	public long successfulFetchAttempts() {
 		// While shouldrun is true we can use info direct from the crawler.  
@@ -328,9 +366,11 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 		return shouldrun ? controller.getFrontier().successfullyFetchedCount() : downloadedPages;
 	}
 
-	/** Returns the total number of uncompressed bytes written to disk.  This may 
-	 *  be different from the actual number if you are using compression.
-	 * @return byteCount
+	/** 
+	 * Returns the total number of uncompressed bytes written to disk.  This may 
+	 * be different from the actual number if you are using compression.
+	 * 
+	 * @return The total number of uncompressed bytes written to disk
 	 */
 	public long getTotalBytesWritten() {
 		return totalProcessedBytes;
@@ -341,8 +381,26 @@ public class StatisticsTracker extends AbstractTracker implements CoreAttributeC
 	 * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURISuccessful(org.archive.crawler.datamodel.CrawlURI)
 	 */
 	public void crawledURISuccessful(CrawlURI curi) {
-		incrementStatusCodeCount(Integer.toString(curi.getFetchStatus()));
-		incrementTypeCount(curi.getContentType());
+		// Save status codes
+		incrementMapCount(statusCodeDistribution,Integer.toString(curi.getFetchStatus()));
+		
+		// Save mime types
+		// strip things like charset (e.g. text/html; charset=iso-blah-blah)	
+		String mime = curi.getContentType();
+		if(mime!=null)
+		{
+			int semicolonLoc = mime.indexOf(';');
+			if (semicolonLoc >= 0) {
+		 		mime = mime.substring(0, semicolonLoc);
+			}
+			mime = mime.toLowerCase();
+		}
+		incrementMapCount(mimeTypeDistribution, mime);
+		
+		// Save hosts
+		incrementMapCount(hostsDistribution, curi.getServer().getHostname());
+		
+		// Save bytes
 		totalProcessedBytes += curi.getContentSize();
 	}
 
