@@ -74,7 +74,12 @@ public class LongFPSetCacheTest extends LongFPSetTestCase {
 
     public void testCount() {
         LongFPSet fpSet = new LongFPSetCache();
-        final int NUM = 1000;
+        // TODO: for some reason, when run in a debugger, 
+        // the cache-item-discard is glacially slow. It's
+        // reasonable when executing.) So, reducing the 
+        // number of past-saturation tests in order to let
+        // full-unit-tests complete more quickly. 
+        final int NUM = 800; // was 1000
         final int MAX_ENTRIES = 768;
 
         assertEquals("empty set to start", 0, fpSet.count());
