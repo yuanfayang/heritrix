@@ -50,9 +50,6 @@ import javax.management.MBeanServerFactory;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
-import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
-import javax.management.remote.JMXServiceURL;
 
 import org.apache.commons.cli.Option;
 import org.archive.crawler.admin.Alert;
@@ -106,8 +103,6 @@ public class Heritrix implements HeritrixMBean {
      * Read from properties file on startup and cached thereafter.
      */
     private static Properties properties = null;
-    
-    private static File jobsdir = null;
 
     /**
      * Instance of web server if one was started.
@@ -185,22 +180,6 @@ public class Heritrix implements HeritrixMBean {
      * Set to true if application is running from a command line.
      */
     private static boolean commandLine = false;
-    
-    /**
-     * JMX Server instance.
-     */
-    private static MBeanServer jmxserver =  null;
-
-    /** 
-     * Default port number for JMX server.
-     */
-    public static final int DEFAULT_JMX_SERVER_PORT = 8081;
-
-    /**
-     * Name used registering the Heritrix MBean with JMX server.
-     */
-    public static final String HERITRIX_JMX_NAME = CRAWLER_PACKAGE +
-        ":name=Heritrix,type=Service";
     
     /**
      * Set if we're running with a web UI.
@@ -284,10 +263,6 @@ public class Heritrix implements HeritrixMBean {
         Heritrix.noWui = getBooleanProperty("heritrix.cmdline.nowui");    
         boolean selfTest = false;
         String selfTestName = null;
-        boolean jmxServer = getBooleanProperty("heritrix.cmdline.jmxserver");
-        tmpStr = getPropertyOrNull("heritrix.cmdline.jmxserver.port");
-        int jmxServerPort = (tmpStr == null)?
-            DEFAULT_JMX_SERVER_PORT: Integer.parseInt(tmpStr);
         CommandLineParser clp = new CommandLineParser(args, Heritrix.out,
             getVersion());
         List arguments = clp.getCommandLineArguments();
@@ -314,8 +289,7 @@ public class Heritrix implements HeritrixMBean {
 
         // Now look at options passed.
         for (int i = 0; i < options.length; i++) {
-            switch(options[i].getId())
-            {
+            switch(options[i].getId()) {
                 case 'h':
                     clp.usage();
                     break;
@@ -356,24 +330,6 @@ public class Heritrix implements HeritrixMBean {
                     selfTestName = options[i].getValue();
                     selfTest = true;
                     break;
-                    
-                case 'j':
-                    try {
-                        if (options[i].getValue() != null &&
-                                options[i].getValue().length() > 0) {
-                            jmxServerPort =
-                                Integer.parseInt(options[i].getValue());
-                        }
-                    } catch (NumberFormatException e) {
-                        clp.usage("Failed parse of port number: " +
-                            options[i].getValue(), 1);
-                    }
-                    if (jmxServerPort <= 0) {
-                        clp.usage("Nonsensical port number: " +
-                            options[i].getValue(), 1);
-                    }
-                    jmxServer = true;
-                    break;
 
                 default:
                     assert false: options[i].getId();
@@ -396,7 +352,9 @@ public class Heritrix implements HeritrixMBean {
                 // No arguments accepted by selftest.
                 clp.usage(1);
             }
-            status = (new Heritrix()).selftest(selfTestName, port);
+            Heritrix h = new Heritrix();
+            registerHeritrixMBean(h);
+            status = h.selftest(selfTestName, port);
         } else if (Heritrix.noWui) {
             if (options.length > 1) {
                 // If more than just '--nowui' passed, then there is
@@ -404,16 +362,14 @@ public class Heritrix implements HeritrixMBean {
                 // rather than proceed.
                 clp.usage(1);
             }
-            if (jmxServer) {
-                startJmxServer(jmxServerPort);
-            }
-            status = (new Heritrix()).doOneCrawl(crawlOrderFile);
+            Heritrix h = new Heritrix();
+            registerHeritrixMBean(h);
+            status = h.doOneCrawl(crawlOrderFile);
         } else {
             status = startEmbeddedWebserver(port, adminLoginPassword);
-            if (jmxServer) {
-                startJmxServer(jmxServerPort);
-            }
-            String tmp = (new Heritrix()).launch(crawlOrderFile, runMode);
+            Heritrix h = new Heritrix();
+            registerHeritrixMBean(h);
+            String tmp = h.launch(crawlOrderFile, runMode);
             if (tmp != null) {
                 status += ('\n' + tmp);
             }
@@ -1111,28 +1067,58 @@ public class Heritrix implements HeritrixMBean {
     }
     
     /**
-     * Startup JMX server.
-     * @param port Port to put the JMX server up on.
+     * Register Heritrix MBean if an agent to register ourselves with.
+     * This method will only have effect if we're running in a 1.5.0
+     * JDK and command line options such as
+     * '-Dcom.sun.management.jmxremote.port=8082
+     * -Dcom.sun.management.jmxremote.authenticate=false
+     * -Dcom.sun.management.jmxremote.ssl=false' are supplied.
+     * See <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring
+     * and Management Using JMX</a>
+     * for more on the command line options and how to connect to the
+     * Heritrix bean using the JDK 1.5.0 jconsole tool.  Will only register
+     * with the JMX agent started by the JVM (i.e.
+     * com.sun.jmx.mbeanserver.JmxMBeanServer).
+     * @param h Instance of heritrix to register.
+     * @throws NotCompliantMBeanException
+     * @throws MBeanRegistrationException
+     * @throws InstanceAlreadyExistsException
      * @throws NullPointerException
      * @throws MalformedObjectNameException
      * @throws NotCompliantMBeanException
      * @throws MBeanRegistrationException
      * @throws InstanceAlreadyExistsException
-     * @throws IOException
+     * @throws MalformedObjectNameException
+     * @throws NullPointerException
      */
-    private static void startJmxServer(int port)
-    throws MalformedObjectNameException, NullPointerException,
-            InstanceAlreadyExistsException, MBeanRegistrationException,
-            NotCompliantMBeanException, IOException {
-        Heritrix.jmxserver = MBeanServerFactory.createMBeanServer();
-        ObjectName name =  new ObjectName(HERITRIX_JMX_NAME);
-        Heritrix.jmxserver.registerMBean(new Heritrix(), name);
-        // Create a JMXMP connector server
-        JMXServiceURL url = new JMXServiceURL("service:jmx:jmxmp://localhost:" +
-                Integer.toString(port));
-        JMXConnectorServer cs = JMXConnectorServerFactory.
-            newJMXConnectorServer(url, null, Heritrix.jmxserver);
-        cs.start();
+    static void registerHeritrixMBean(Heritrix h)
+    throws InstanceAlreadyExistsException, MBeanRegistrationException,
+            NotCompliantMBeanException, MalformedObjectNameException,
+            NullPointerException {
+        List servers = MBeanServerFactory.findMBeanServer(null);
+        if (servers != null) {
+            for (Iterator i = servers.iterator(); i.hasNext();) {
+                MBeanServer server = (MBeanServer)i.next();
+                if (server != null) {
+                    // Only register with the JMX agent started on cmdline.
+                    if ((System.getProperty("com.sun.management.jmxremote")
+                            != null) ||
+                        (System.getProperty("com.sun.management.jmxremote.port")
+                                != null)) {
+                            server.registerMBean(h,
+                                new ObjectName(getJmxName()));
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * @return Jmx ObjectName used by this Heritrix instance.
+     */
+    public static String getJmxName() {
+        return CRAWLER_PACKAGE + ":name=Heritrix,type=Service";
     }
     
     /**
