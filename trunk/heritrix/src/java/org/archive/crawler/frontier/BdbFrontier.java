@@ -188,13 +188,20 @@ implements Frontier,
         envConfig.setAllowCreate(true);
         int bdbCachePercent = ((Integer) getUncheckedAttribute(null,
 				ATTR_BDB_CACHE_PERCENT)).intValue();
-        if(bdbCachePercent>0) {
-        	// operator has expressed a preference; override BDB default or 
+        if(bdbCachePercent > 0) {
+        	// Operator has expressed a preference; override BDB default or 
         	// je.properties value
         	envConfig.setCachePercent(bdbCachePercent);
         }
         try {
             dbEnvironment = new Environment(c.getStateDisk(), envConfig);
+            if (logger.isLoggable(Level.INFO)) {
+                // Write out the bdb configuration.
+                envConfig = dbEnvironment.getConfig();
+                logger.info("BdbConfiguration: Cache percentage " +
+                    envConfig.getCachePercent() +
+                    ", cache size " + envConfig.getCacheSize());
+            }
             pendingUris = createMultiQueue();
             alreadyIncluded = createAlreadyIncluded();
         } catch (DatabaseException e) {
@@ -209,6 +216,7 @@ implements Frontier,
      * inside which all the other queues live. 
      * 
      * @return the created BdbMultiQueue
+     * @throws DatabaseException
      */
     private BdbMultiQueue createMultiQueue() throws DatabaseException {
         return new BdbMultiQueue(this.dbEnvironment);
@@ -248,6 +256,7 @@ implements Frontier,
      * Choose a per-classKey queue and enqueue it. If this
      * item has made an unready queue ready, place that 
      * queue on the readyClassQueues queue. 
+     * @param caUri CandidateURI.
      */
     public void receive(CandidateURI caUri) {
         CrawlURI curi = asCrawlUri(caUri);
@@ -344,15 +353,14 @@ implements Frontier,
                                 noteAboutToEmit(curi, readyQ);
                                 inProcessQueues.add(readyQ);
                                 return curi;
-                            } else {
-                                // URI's assigned queue has changed since it
-                                // was queued (eg because its IP has become
-                                // known). Requeue to new queue.
-                                curi.setClassKey(currentQueueKey);
-                                readyQ.dequeue();
-                                curi.setHolderKey(null);
-                                sendToQueue(curi);
                             }
+                            // URI's assigned queue has changed since it
+                            // was queued (eg because its IP has become
+                            // known). Requeue to new queue.
+                            curi.setClassKey(currentQueueKey);
+                            readyQ.dequeue();
+                            curi.setHolderKey(null);
+                            sendToQueue(curi);
                         } else {
                             // readyQ is empty and ready: release held, allowing
                             // subsequent enqueues to ready
@@ -586,7 +594,6 @@ implements Frontier,
      * @return A report on the current status of the frontier.
      */
     public synchronized String report() {
-        long now = System.currentTimeMillis();
         StringBuffer rep = new StringBuffer();
 
         rep.append("Frontier report - "
@@ -683,7 +690,8 @@ implements Frontier,
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setAllowCreate(true);
             pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
-            pendingUrisDB.truncate(null, false);
+            Environment e = pendingUrisDB.getEnvironment();
+            e.truncateDatabase(null, pendingUrisDB.getDatabaseName(), false);
             classCatalogDB = env.openDatabase(null, "classes", dbConfig);
             classCatalog = new StoredClassCatalog(classCatalogDB);
             crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
@@ -815,7 +823,7 @@ implements Frontier,
          * TODO: hold within a queue's range
          * 
          * @param headKey
-         * @return
+         * @return CrawlURI.
          * @throws DatabaseException
          */
         public CrawlURI get(DatabaseEntry headKey) throws DatabaseException {
