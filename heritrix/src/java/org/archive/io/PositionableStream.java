@@ -46,7 +46,7 @@ public interface PositionableStream {
     
     /** 
      * An implementation other than default
-     * {@link java.io.InputStream.available()} because that always returns 0.
+     * {@link java.io.InputStream#available()} because that always returns 0.
      * 
      * @return Number of bytes available.
      * @throws IOException
