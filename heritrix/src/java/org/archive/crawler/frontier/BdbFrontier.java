@@ -70,6 +70,7 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.DatabaseNotFoundException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.OperationStatus;
@@ -724,6 +725,15 @@ implements Frontier,
             // Open the database. Create it if it does not already exist. 
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setAllowCreate(true);
+            try {
+                // new preferred truncateDatabase() method cannot be used
+                // on an open (and thus certain to exist) database like 
+                // the deprecated method it replaces -- so use before
+                // opening the database and be ready if it doesn't exist
+                env.truncateDatabase(null, "pending", false);
+            } catch (DatabaseNotFoundException e) {
+                // ignored
+            }
             pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
             // The below truncate is a deprecated call but using the
             // suggested alternative method, Envionment#truncateDatabase,
@@ -733,9 +743,8 @@ implements Frontier,
             // is, close it and ask the environment to truncate (Asking
             // the Environment to truncate a non-existent DB throws
             // exceptions).
-            pendingUrisDB.truncate(null, false);
+            // pendingUrisDB.truncate(null, false);
             classCatalogDB = env.openDatabase(null, "classes", dbConfig);
-            pendingUrisDB.truncate(null, false);
             classCatalog = new StoredClassCatalog(classCatalogDB);
             crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
         }
