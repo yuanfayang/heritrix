@@ -213,10 +213,17 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
             "If the fetch is not completed in this number of seconds,"
-            + " give up.", DEFAULT_TIMEOUT_SECONDS));
+            + " give up (and retry later). For optimal configuration, " +
+            " ensure this value is > " + ATTR_TIMEOUT_SECONDS + ".",
+            DEFAULT_TIMEOUT_SECONDS));
         Type e = addElementToDefinition(new SimpleType(ATTR_SOTIMEOUT_MS,
-            "If the socket is unresponsive for this number of milliseconds, "
-            + "give up (and retry later).  Set to zero for no timeout.",
+            "If the socket is unresponsive for this number of milliseconds, " +
+            " give up.  Set to zero for no timeout (Not." +
+            " recommended. Could hang a thread on an unresponsive server)." +
+            " This timeout is used timing out socket opens " +
+            " and for timing out each socket read.  Make sure this " +
+            " value is < " + ATTR_TIMEOUT_SECONDS + " for optimal " +
+            " configuration: ensures at least one retry read.",
                 DEFAULT_SOTIMEOUT_MS));
         e.setExpertSetting(true);
         addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
