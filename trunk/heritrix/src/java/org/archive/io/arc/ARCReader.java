@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -120,11 +121,27 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     private String version = null;
 
     /**
+     * Array of field names.
+     * 
+     * Used to initialize <code>headerFieldNameKeys</code>.
+     */
+    private final String [] headerFieldNameKeysArray = {
+        ARCConstants.URL_HEADER_FIELD_KEY,
+        ARCConstants.IP_HEADER_FIELD_KEY,
+        ARCConstants.DATE_HEADER_FIELD_KEY,
+        ARCConstants.MIMETYPE_HEADER_FIELD_KEY,
+        ARCConstants.LENGTH_HEADER_FIELD_KEY
+    };
+    
+    /**
      * An array of the header field names found in the ARC file header on
      * the 3rd line.
+     * 
+     * We used to read these in from the arc file first record 3rd line but
+     * now we hardcode them for sake of improved performance.
      */
-    private ArrayList headerFieldNameKeys = null;
-    
+    private final List headerFieldNameKeys =
+        Arrays.asList(headerFieldNameKeysArray);
     
     /**
      * The file this arcreader is going against.
@@ -139,10 +156,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      */
     protected void initialize(File arcFile) throws IOException {
         this.arcFile = arcFile;
-        // Read in the first record so headerFieldNameKeys gets populated.
-        // Always do it even if we're creating ARCReader just to do a get
-        // to get a record at any old offset.
-        createARCRecord(this.in, 0).close();
     }
     
     /**
@@ -337,14 +350,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             bodyOffset += getTokenizedHeaderLine(is, secondLineValues);
             this.version = (String)secondLineValues.get(0) +
                 "." + (String)secondLineValues.get(1) ;
-            ArrayList thirdLineValues = new ArrayList(20);
-            bodyOffset += getTokenizedHeaderLine(is, thirdLineValues);
-            // Lowercase the field names found.
-            for (int i = 0; i < thirdLineValues.size(); i++) {
-                thirdLineValues.set(i,
-                    ((String)thirdLineValues.get(i)).toLowerCase());
-            }
-            this.headerFieldNameKeys = thirdLineValues;
+            // Just read over the 3rd line.  We used to parse it and use
+            // values found here but now we just hardcode them to avoid
+            // having to read this 3rd line even for random arc file accesses.
+            bodyOffset += getTokenizedHeaderLine(is, null);
         }
 
         return this.currentRecord = new ARCRecord(is,
@@ -383,16 +392,20 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             }
 
             if (c == LINE_SEPARATOR) {
-                if (list.size() == 0 && buffer.length() == 0) {
+                if (buffer.length() == 0) {
                     // Empty line at start of buffer.  Skip it and try again.
                     continue;
                 }
 
-                list.add(buffer.toString());
+                if (list != null) {
+                    list.add(buffer.toString());
+                }
                 // LOOP TERMINATION.
                 break;
             } else if (c == HEADER_FIELD_SEPARATOR) {
-                list.add(buffer.toString());
+                if (list != null) {
+                    list.add(buffer.toString());
+                }
                 buffer = new StringBuffer();
             } else {
                 buffer.append((char)c);
@@ -401,7 +414,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
         // List must have at least 3 elements in it and no more than 10.  If
         // it has other than this, then bogus parse.
-        if (list.size() < 3 || list.size() > 10) {
+        if (list != null && (list.size() < 3 || list.size() > 10)) {
             throw new IOException("Empty header line.");
         }
 
@@ -422,7 +435,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      *
      * @exception IOException  If no. of keys doesn't match no. of values.
      */
-    private ARCRecordMetaData computeMetaData(ArrayList headerFieldNameKeys,
+    private ARCRecordMetaData computeMetaData(List headerFieldNameKeys,
                 ArrayList values, String version, long offset)
             throws IOException {
         if (headerFieldNameKeys.size() != values.size()) {
@@ -538,36 +551,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     }
 
     /**
-     * @param rec ARCRecord.
-     * @param nohead Whether to output the header or just skip over.
-     * @throws IOException
-     */
-    private static void processRequestHeaders(ARCRecord rec, boolean nohead)
-            throws IOException {
-        int c = -1;
-        int lastChar = -1;
-        boolean newline = false;
-        for (boolean finished = false; !finished && ((c = rec.read()) != -1);) {
-            if ((byte)c == '\n' && (byte)lastChar == '\r') {
-                if (newline) {
-                    // If already a newline, then this is the second
-                    // newline and so we're at end of header.
-                    finished = true;
-                }
-                newline = true;
-            } else {
-                if ((byte)c != '\r') {
-                    newline = false;
-                }
-                lastChar = c;
-            }
-            if (!nohead) {
-                System.out.write(c & 0xff);
-            }
-        }
-    }
-
-    /**
      * Write the arc meta data in pseudo-CDX format.
      * 
      * @param f Arc file to read.
@@ -576,7 +559,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     protected static void index(File f) throws IOException {
         boolean compressed = ARCReaderFactory.isCompressed(f);
         ARCReader arc = ARCReaderFactory.get(f);
-        ARCRecord headerRecord = arc.getCurrentRecord();
+        // Get arc header record, the first record in the file.
+        ARCRecord headerRecord = arc.get(0);
         String arcFileName = headerRecord.getMetaData().getArcFile().getName();
         if (arcFileName.endsWith("." + COMPRESSED_FILE_EXTENSION)) {
             int stripLen = COMPRESSED_FILE_EXTENSION.length() + 1;
@@ -688,7 +672,9 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             ARCReader arc = ARCReaderFactory.
                 get(new File((String)cmdlineArgs.get(0)));
             ARCRecord rec = arc.get(offset);
-            processRequestHeaders(rec, nohead);
+            if (nohead) {
+                rec.skipHttpHeader();
+            }
             for (int c = -1; (c = rec.read()) != -1;) {
                 System.out.write(c & 0xff);
             }

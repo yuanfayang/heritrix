@@ -113,6 +113,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     private static final long MIN_HTTP_HEADER_LENGTH =
         "HTTP/1.1 200 OK\r\n".length();
+    
 
     /**
      * Constructor.
@@ -154,7 +155,31 @@ public class ARCRecord extends InputStream implements ARCConstants {
     }
     
     /**
+     * Skip over the the http header if one present.
+     * 
+     * Calling this method in the midst of reading the header
+     * will make for strange results.  Otherwise, safe to call
+     * at any time though before reading any of the arc record
+     * content is only time that it makes sense.
+     * 
+     * @throws IOException
+     */
+    public void skipHttpHeader() throws IOException {
+        if (this.httpHeaderStream != null) {
+            // Empty the httpHeaderStream.
+            for (int available = this.httpHeaderStream.available();
+            		(available = this.httpHeaderStream.available()) > 0;) {
+                // We should be in this loop once only we should only do this
+                // buffer allocation once.
+                byte [] buffer = new byte[available];
+                read(buffer, 0, available);
+            }
+        }
+    }
+    
+    /**
      * Read http header if present.
+     * Technique borrowed from HttpClient HttpParse class.
      * @return ByteArrayInputStream with the http header in it or null if no
      * http header.
      * @throws IOException
