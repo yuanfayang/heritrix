@@ -22,6 +22,8 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.xbill.DNS.Record;
 
+import org.archive.crawler.basic.InvalidRecordException;
+
 /**
  * Processor module for writing the results of any 
  * successful fetches (and perhaps someday, certain
@@ -63,14 +65,19 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
   			}else if(scheme.equals("http")){
 	  			writeHttp(curi);
   			}
-  					
+  			
+  		// catch disk write errors		
   		}catch(IOException e){
+  			e.printStackTrace();
+  			
+  		// catch errors where we're trying to write a bad record
+  		}catch(InvalidRecordException e){
   			e.printStackTrace();
   		}
   	}
 
 
-  	protected void writeMetaLine(CrawlURI curi, int recordLength){
+  	protected void writeMetaLine(CrawlURI curi, int recordLength) throws InvalidRecordException{
 
 		// TODO sanity check the passed curi before writing
 		if (true){	
@@ -82,15 +89,22 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			}else{
 				contentType = curi.getContentType();
 			}
-						
+			
+			String hostIP = curi.getHost().getIP().getHostAddress();
+			String dateStamp = get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME));			
+			
+			// fail if we're missing anythign critical
+			if(hostIP == null || dateStamp == null){
+				throw new InvalidRecordException("missing data elements");
+			}		
+			
 			String metaLineStr = "\n"
 					+ curi.getURIString()
 					+ " "
-					+ curi.getHost().getIP().getHostAddress()
+					+ hostIP
 					+ " "
-					+ curi.getAList().getLong(A_FETCH_BEGAN_TIME)
+					+ dateStamp
 					+ " "
-					// eliminate additonal args (e.g. "text/html; charset=iso-8859-1" => text/html)
 					+  contentType
 					+ " "
 					+ recordLength
@@ -143,7 +157,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		}
 	}		
 	
-	protected void writeHttp(CrawlURI curi) throws IOException {
+	protected void writeHttp(CrawlURI curi) throws IOException, InvalidRecordException {
 
 		GetMethod get =
 			(GetMethod) curi.getAList().getObject("http-transaction");
@@ -178,23 +192,35 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		out.write("\n".getBytes());
 	}
 	
-	public void writeDns(CrawlURI curi) throws IOException {
+	protected void writeDns(CrawlURI curi) throws IOException, InvalidRecordException {
 	
 		int recordLength = 0;
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		
+		// start the record with a 14-digit date per RFC 2540
+		byte[] fetchDate = get14DigitDate(curi.getAList().getLong(A_FETCH_BEGAN_TIME)).getBytes();
+		baos.write(fetchDate);
+		// don't forget the newline
+		baos.write("\n".getBytes());
+		recordLength = fetchDate.length + 1;  
+		
 		Record[] rrSet = (Record[]) curi.getAList().getObject(A_RRECORD_SET_LABEL);
 		
-		for(int i=0; i < rrSet.length; i++){
-			byte[] record = rrSet[i].rdataToString().getBytes();
-			recordLength += record.length;
+		if(rrSet != null){
+			for(int i=0; i < rrSet.length; i++){
+				byte[] record = rrSet[i].toString().getBytes();
+				recordLength += record.length;
 			
-			baos.write(record);
-		}
-		
+				baos.write(record);
+				
+				// add the newline between records back in 
+				baos.write("\n".getBytes());
+				recordLength += 1;	
+			}
+		}	
 		writeMetaLine(curi, recordLength);
-		
+	
 		baos.writeTo(out);
 	 	out.write("\n".getBytes());
 	}
@@ -259,5 +285,14 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmm");		
 		return sdf.format(new Date()); 
 	}
+	public static String get14DigitDate(long date){
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
+		return sdf.format(new Date(date));
+	}
+	public static String get12DigitDate(long date){
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmm");		
+		return sdf.format(new Date(date)); 
+	}	
+	
 	
 }

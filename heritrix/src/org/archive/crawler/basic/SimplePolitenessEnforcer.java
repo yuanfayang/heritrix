@@ -28,6 +28,13 @@ public class SimplePolitenessEnforcer extends Processor {
 	 */
 	public void process(CrawlURI curi) {
 		super.process(curi);
+		
+		// make sure we only process schemes we understand (i.e. not dns)
+		if(!curi.getUURI().getUri().getScheme().equals("http")){
+			logger.info("PolitenessEnforcer doesn't undersand uri's of type "+curi + " (ignoring)");
+			return;
+		}
+		
 		// for all curis, set appropriate delays
 		// TODOSOMEDAY: allow per-host factors
 		curi.setDelayFactor(getDelayFactorFor(curi));

@@ -16,12 +16,13 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 
 /**
  * @author gojomo
  *
  */
-public class SimpleHTTPFetcher extends Processor implements InstancePerThread, org.archive.crawler.datamodel.CoreAttributeConstants {
+public class SimpleHTTPFetcher extends Processor implements InstancePerThread, CoreAttributeConstants {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.SimpleHTTPFetcher");
 	HttpClient http = new HttpClient();
 	
@@ -35,10 +36,21 @@ public class SimpleHTTPFetcher extends Processor implements InstancePerThread, o
 			return;
 		}
 		
+		// if we haven't done a dns lookup shoot that off and defer further processing
+		if( ! curi.getHost().getHasBeenLookedUp() ){
+			logger.info("deferring processing of " + curi.toString() + " for dns lookup." );
+			
+			curi.setPrerequisiteUri("dns:" + curi.getHost().getHostname());
+			curi.cancelFurtherProcessing();
+			
+			return;
+		}
+		
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME,System.currentTimeMillis());
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
 		get.setFollowRedirects(false);
 		get.setRequestHeader("User-Agent",controller.getOrder().getBehavior().getUserAgent());
+		
 		try {
 			http.executeMethod(get);
 
