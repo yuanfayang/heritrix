@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.FileHandler;
@@ -166,7 +167,7 @@ public class CrawlController implements Serializable {
     transient private Map fileHandlers;
     
     /** suffix to use on active logs */
-    private static final String CURRENT_LOG_SUFFIX = ".log";
+    public static final String CURRENT_LOG_SUFFIX = ".log";
 
     /**
      * Crawl progress logger.
@@ -226,7 +227,7 @@ public class CrawlController implements Serializable {
      * concurrent modification exceptions.
      * See {@link java.util.Collections#synchronizedList(List)}.
      */
-    transient private final List registeredCrawlStatusListeners;
+    transient private List registeredCrawlStatusListeners;
     // Since there is a high probability that there will only ever by one
     // CrawlURIDispositionListner we will use this while there is only one:
     transient CrawlURIDispositionListener registeredCrawlURIDispositionListener;
@@ -648,6 +649,20 @@ public class CrawlController implements Serializable {
             fileHandlers.put(l, newGfh);
         }
     }
+    
+    /**
+     * Close all log files.
+     */
+    public void closeLogFiles() {
+        Iterator iter = fileHandlers.keySet().iterator();
+        while (iter.hasNext()) {
+            Logger l = (Logger) iter.next();
+            GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
+                    .get(l);
+            gfh.close();
+        }
+    }
+
 
     /**
      * @return Object this controller is using to track crawl statistics
@@ -695,6 +710,8 @@ public class CrawlController implements Serializable {
             this.registeredCrawlStatusListeners.
                 removeAll(this.registeredCrawlStatusListeners);
         }
+        
+        closeLogFiles();
         
         logger.info("exiting a crawl run");
 
@@ -1202,31 +1219,53 @@ public class CrawlController implements Serializable {
     // custom serialization
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
-//        ObjectPlusFilesOutputStream opfos = (ObjectPlusFilesOutputStream)stream;
+        ObjectPlusFilesOutputStream opfos = (ObjectPlusFilesOutputStream)stream;
         // TODO: snapshot logs
-//        opfos.pushAuxiliaryDirectory("logs");
-//        Iterator iter = fileHandlers.keySet().iterator();
-//        while (iter.hasNext()) {
-//            Logger l = (Logger) iter.next();
-//            GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
-//                    .get(l);
-//            Iterator logFiles = gfh.getFilenameSeries().iterator();
-//            while(logFiles.hasNext()) {
-//                opfos.snapshotAppendOnlyFile(new File((String) logFiles.next()));
-//            }
-//        }
-//        opfos.writeUTF(""); // signal that all logFiles are done
-//        opfos.popAuxiliaryDirectory();
+        opfos.pushAuxiliaryDirectory("logs");
+        List allLogs = getAllLogFilenames();
+        opfos.writeInt(allLogs.size());
+        Iterator iter = allLogs.iterator();
+        while (iter.hasNext()) {
+            opfos.snapshotAppendOnlyFile(new File((String) iter.next()));
+        }
+        opfos.popAuxiliaryDirectory();
         // TODO someday: snapshot on-disk settings/overrides/refinements
+    }
+
+    /**
+     * @return
+     */
+    private List getAllLogFilenames() {
+        LinkedList names = new LinkedList();
+        Iterator iter = fileHandlers.keySet().iterator();
+        while (iter.hasNext()) {
+            Logger l = (Logger) iter.next();
+            GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
+                    .get(l);
+            Iterator logFiles = gfh.getFilenameSeries().iterator();
+            while (logFiles.hasNext()) {
+                names.add(logFiles.next());
+            }
+        }
+        return names;
     }
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-//        ObjectPlusFilesInputStream opfis = (ObjectPlusFilesInputStream)stream;
-        // TODO: restore logs
-
+        ObjectPlusFilesInputStream opfis = (ObjectPlusFilesInputStream)stream;
+        // restore logs
+        int totalLogs = opfis.readInt();
+        opfis.pushAuxiliaryDirectory("logs");
+        for(int i = 1; i <= totalLogs; i++) {
+            opfis.restoreFileTo(logsDisk);
+        }
+        opfis.popAuxiliaryDirectory();
         // ensure disk CrawlerSettings data is loaded
-        settingsHandler.initialize();
+        // settingsHandler.initialize();
+        
+        // setup status listeners
+        this.registeredCrawlStatusListeners =
+            Collections.synchronizedList(new ArrayList());
     }
 
 }
