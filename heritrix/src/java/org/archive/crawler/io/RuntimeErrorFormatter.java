@@ -48,13 +48,13 @@ implements CoreAttributeConstants {
             // CrawlURI is always first parameter.
             CrawlURI curi = (CrawlURI)parameters[0];
             if (curi != null) {
-                Exception e = (Exception)curi.getObject(A_RUNTIME_EXCEPTION);
-                assert e != null : "Null exception";
+                Throwable t = (Throwable)curi.getObject(A_RUNTIME_EXCEPTION);
+                assert t != null : "Null throwable";
                 StringWriter sw = new StringWriter();
-                if (e == null) {
+                if (t == null) {
                     sw.write("No exception to report.");
                 } else {
-                    e.printStackTrace(new PrintWriter(sw));
+                    t.printStackTrace(new PrintWriter(sw));
                 }
                 stackTrace = sw.toString();
             }
