@@ -57,11 +57,20 @@
     <filter token="VERSION" value="${version}" />
     <mkdir dir="${confdir}">
     </mkdir>
-    <copy todir="${confdir}" filtering="true">
-      <fileset dir="${src.confdir}" >
-        <include name="**/*" />
-      </fileset>
-    </copy>
+        <!--Copy conf dir.  Be careful w/ filtering.  It ruins truststores so
+            exclude those when filtering and copy after w/ filtering off.
+         -->
+        <copy todir="${confdir}" filtering="true">
+          <fileset dir="${src.confdir}" >
+            <exclude name="*cacerts" />
+          </fileset>
+        </copy>
+        <copy todir="${confdir}">
+          <fileset dir="${src.confdir}" >
+            <include name="*cacerts" />
+          </fileset>
+        </copy>
+
     <mkdir dir="${webappsdir}">
     </mkdir>
     <!--Do the copy like this doing non-jpg first and then gif.
