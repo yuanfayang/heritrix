@@ -117,7 +117,7 @@ public class CrawlOrder extends ModuleType {
     /** Construct a CrawlOrder.
      */
     public CrawlOrder() {
-        super(ATTR_NAME, "Heritrix crawl order. \nThis forms the root of " +
+        super(ATTR_NAME, "Heritrix crawl order. This forms the root of " +
                 "the settings framework.");
         Type e;
 
@@ -188,7 +188,7 @@ public class CrawlOrder extends ModuleType {
         e = addElementToDefinition(new SimpleType(ATTR_MAX_TOE_THREADS,
                 "Maximum number of threads processing URIs at the same time.",
                 new Integer(100)));
-        e.setOverrideable(true);
+        e.setOverrideable(false);
 
         e = addElementToDefinition(new SimpleType(ATTR_RECORDER_OUT_BUFFER,
                 "Size in bytes of in-memory buffer to record outbound " +
