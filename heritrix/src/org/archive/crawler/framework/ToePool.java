@@ -47,7 +47,7 @@ public class ToePool implements CrawlListener {
 			}
 			// nothing available
 			try {
-				wait();
+				wait(200);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
