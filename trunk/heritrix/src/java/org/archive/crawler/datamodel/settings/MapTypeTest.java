@@ -24,7 +24,9 @@
  */
 package org.archive.crawler.datamodel.settings;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
@@ -216,14 +218,14 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         MBeanAttributeInfo atts[] = map.getMBeanInfo(settings).getAttributes();
         assertEquals("AttributeInfo wrong length", modules.length, atts.length);
         for(int i=0; i<atts.length; i++) {
-            assertSame("AttributeInfo in wrong order", modules[i],
+            assertEquals("AttributeInfo in wrong order", modules[i].getValue(),
                 map.getAttribute(settings, atts[i].getName()));
         }
 
         Iterator it = map.iterator(settings);
         int i = 0;
         while(it.hasNext()) {
-            assertSame("Iterator in wrong order", it.next(), modules[i]);
+            assertEquals("Iterator in wrong order", it.next(), modules[i].getValue());
             i++;
         }
         assertEquals("Iterator wrong length", modules.length, i);
@@ -279,4 +281,34 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
             // OK
         }
     }
+    
+    public void testListAttributes() throws AttributeNotFoundException,
+            MBeanException, ReflectionException, InvalidAttributeValueException {
+        MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
+                CrawlOrder.ATTR_HTTP_HEADERS);
+
+        List atts = new ArrayList();
+        for (Iterator it = map.iterator(null); it.hasNext();) {
+            atts.add(new SimpleType("", "", it.next()));
+        }
+        
+        SimpleType type1 = new SimpleType("testType1", "description", "value");
+        SimpleType type2 = new SimpleType("testType2", "description", "value");
+        map.addElement(getGlobalSettings(), type1);
+        map.addElement(getPerDomainSettings(), type2);
+        getSettingsHandler().writeSettingsObject(getGlobalSettings());
+        getSettingsHandler().writeSettingsObject(getPerDomainSettings());
+
+        atts.add(type1);
+        atts.add(type2);
+        Type modules[] = (Type[]) atts.toArray(new Type[0]);
+        checkOrder(getPerHostSettings(), modules, map);
+
+        XMLSettingsHandler newHandler = new XMLSettingsHandler(getOrderFile());
+        newHandler.initialize();
+        CrawlerSettings newPer = newHandler.getSettingsObject(getPerDomainSettings().getScope());
+
+        checkOrder(newPer, modules, map);
+    }
+
 }
