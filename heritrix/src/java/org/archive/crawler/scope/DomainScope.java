@@ -26,7 +26,6 @@ package org.archive.crawler.scope;
 import java.util.Iterator;
 import java.util.List;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
