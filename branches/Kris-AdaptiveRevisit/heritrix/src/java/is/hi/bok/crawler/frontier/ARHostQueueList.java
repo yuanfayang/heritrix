@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.TreeSet;
 
 import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.tuple.IntegerBinding;
@@ -61,6 +62,8 @@ import com.sleepycat.je.OperationStatus;
  */
 public class ARHostQueueList {
 
+    // TODO: Handle HQs becoming empty.
+    
     /** The Environment for the BerkleyDB databases in the HQs */
     protected Environment env;
     /** Contains host names for all HQs. Name is key, valence is value */
@@ -70,6 +73,8 @@ public class ARHostQueueList {
     
     /** A hash table of all the HQs, keyed by hostName */
     protected HashMap hostQueues; 
+    /** Contains the hostQueues sorted by their time of next fetch */
+    protected TreeSet sortedHostQueues;
     
     public ARHostQueueList(File locationDirectory) throws IOException{
         try{
@@ -84,6 +89,7 @@ public class ARHostQueueList {
             
             // Then initialize other data
             hostQueues = new HashMap();
+            sortedHostQueues = new TreeSet();
             
             // Open the hostNamesDB
             DatabaseConfig dbConfig = new DatabaseConfig();
@@ -159,6 +165,8 @@ public class ARHostQueueList {
             keyBinding.objectToEntry(hostName,keyEntry);
             valueBinding.objectToEntry(new Integer(valence),dataEntry);
             hostNamesDB.put(null,keyEntry,dataEntry);
+            hostQueues.put(hostName,hq);
+            sortedHostQueues.add(new ARHostQueueReference(hq));
         } catch (DatabaseException e) {
             IOException e2 = new IOException(e.getMessage());
             e2.setStackTrace(e.getStackTrace());
@@ -168,32 +176,48 @@ public class ARHostQueueList {
     }
     
     public ARHostQueue getTopHQ(){
-        // No actual list is maintained. Just find the lowest value.
-        Iterator it = hostQueues.keySet().iterator();
-        ARHostQueue top =  
-            (ARHostQueue)hostQueues.get(it.next());
-        while(it.hasNext()){
-            ARHostQueue tmp = 
-                (ARHostQueue)hostQueues.get(it.next());
-            if(tmp.compareTo(top)<0){
-                top = tmp;
-            }
-        }
-        return top;
+        ARHostQueueReference ref = 
+            (ARHostQueueReference)sortedHostQueues.first(); 
+        return (ARHostQueue)hostQueues.get(ref.hostName);
     }
     
     public int getSize(){
-        // TODO: Run through the list and remove any HQ where state is EMPTY
         return hostQueues.size(); 
     }
     
     /**
+     * This method reorders the host queues. Method is only called by the
+     * ARHostQueues that it 'owns' when their reported time of next ready is 
+     * being updated.
+     * @param hq The calling HQ
+     * @param oldvalue The old value of the HQs time of next ready which has
+     *                 now been overwritten. 
+     */
+    protected void reorder(ARHostQueue hq, long oldvalue){
+        // Create a 'comparably equal to the old value' ref.
+        ARHostQueueReference ref = 
+            new ARHostQueueReference(hq.getHostName(),oldvalue);
+        // Remove it from the sorted list
+        sortedHostQueues.remove(ref);
+        // Update the time on the ref.
+        ref.nextReadyTime = hq.getNextReadyTime();
+        // Readd to the list
+        sortedHostQueues.add(ref);
+    }
+    
+    /**
      * The total number of URIs queued in all the HQs belonging to this list.
+     * 
      * @return total number of URIs queued in all the HQs belonging to this list.
      */
     public long getUriCount(){
-        // TODO: Implement getUriCount();
-        return 0;
+        Iterator it = hostQueues.keySet().iterator();
+        long count = 0;
+        while(it.hasNext()){
+            ARHostQueue tmp = (ARHostQueue)hostQueues.get(it.next());
+            count += tmp.getSize();
+        }
+        return count;
     }
     
     public String report(){
@@ -205,5 +229,58 @@ public class ARHostQueueList {
     public String oneLineReport(){
         // TODO: Implmement one line report
         return "not implemented";
+    }
+    
+    /**
+     * Rather then store the actual ARHostQueue object in the sorted order,
+     * we store an instance of this 'reference' class. While this means 
+     * additional dereferencing when it comes time to get an elemented out of
+     * the sorted list, it does ensure that the values by which we sort them
+     * have not changed.
+     * <p>
+     * Without this class, by the time the call came to reorder an item, its
+     * values (on which the sort order is based) would already have changed,
+     * making it impossible to retrieve it from the sorted list.
+     *
+     * @author Kristinn Sigurdsson
+     */
+    private class ARHostQueueReference implements Comparable{
+        public String hostName;
+        public long nextReadyTime;
+        
+        public ARHostQueueReference(String hostName, long nextReadyTime){
+            this.hostName = hostName;
+            this.nextReadyTime = nextReadyTime;
+        }
+        
+        public ARHostQueueReference(ARHostQueue hq){
+            hostName = hq.getHostName();
+            nextReadyTime = hq.getNextReadyTime();
+        }
+        
+        /**
+         * Compares the this ARHQRef to the supplied one.
+         * 
+         * @param obj the HQ to compare to. If this object is not an instance
+         *             of ARHostQueueReference then the method will throw a 
+         *             ClassCastException.
+         * @return the value 0 if the argument HQRef's time of next ready
+         *         is equal to this HQRef's; a value less than 0 if this 
+         *         value is less than the argument HQRef's; and a value 
+         *         greater than 0 if this value is greater.
+         */
+        public int compareTo(Object obj){
+            ARHostQueueReference comp = (ARHostQueueReference)obj;
+
+            long compTime = comp.nextReadyTime;
+            if(nextReadyTime>compTime){
+                return 1;
+            } else if(nextReadyTime<compTime){
+                return -1;
+            } else {
+                // Equal time. Use hostnames
+                return hostName.compareTo(comp.hostName);
+            }
+        }
     }
 }
