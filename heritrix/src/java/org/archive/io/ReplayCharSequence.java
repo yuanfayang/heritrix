@@ -26,6 +26,7 @@ package org.archive.io;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.crawler.io.CharSubSequence;
 import org.archive.util.DevUtils;
@@ -41,81 +42,186 @@ import org.archive.util.DevUtils;
  * (So design any regexps pointed at these CharSequences to work within
  * that range!)
  *
- * When rereading of a location is necessary, the whole window is
+ * <p>Clients should call {@link #close()} when done so we can clean up our
+ * mess.
+ *
+ * <p>When rereading of a location is necessary, the whole window is
  * recentered around the location requested. (TODO: More research
  * into whether this is the best strategy.)
+ * 
+ * <p>An implementation of a ReplayCharSequence done with ByteBuffers -- one to
+ * wrap the passed prefix buffer and the second, a memory-mapped ByteBuffer
+ * view into the backing file -- was consistently slower: ~10%.  My tests did
+ * the following. Made a buffer filled w/ regular content.  This buffer was used
+ * as the prefix buffer.  The buffer content was written MULTIPLER times to 
+ * a backing file.  I then did accesses w/ the following pattern: Skip forward
+ * 32 bytes, then back 16 bytes, and then read forward from byte 16-32.  Repeat.
+ * Though I varied the size of the buffer to the size of the backing file,
+ * from 3-10, the difference of 10% or so seemed to persist.  Same if I tried
+ * to favor get() over get(index). I used a profiler, JMP, to study times taken
+ * (St.Ack did above comment).
  *
- * TODO determine in memory mapped files is better way to do this;
+ * <p>TODO determine in memory mapped files is better way to do this;
  * probably not -- they don't offer the level of control over
  * total memory used that this approach does.
- *
- * TODO consider character-encoding issues; right now single-byte
- * characters assumed
+ * 
  * @author Gordon Mohr
  */
 public class ReplayCharSequence implements CharSequence {
+    
+    /**
+     * Logger.
+     */
+    private static Logger logger =
+        Logger.getLogger("org.archive.io.ReplayCharSequence");
+    
+    /**
+     * Buffer that holds the first bit of content.
+     * 
+     * Once this is exhausted we go to the backing file.
+     */
     protected byte[] prefixBuffer;
-    protected long size;
-    protected long responseBodyStart; // where the response body starts, if marked
+    
+    /**
+     * Total length of stream to replay. Used to find EOS.
+     */
+    protected int length;
 
     protected byte[] wraparoundBuffer;
-    protected int wrapOrigin; // index in underlying bytestream where wraparound buffer starts
-    protected int wrapOffset; // index in wraparoundBuffer that corresponds to wrapOrigin
+    
+    /**
+     * Index in underlying bytestream where wraparound buffer starts
+     */
+    protected int wrapOrigin;
+    
+    /**
+     * Index in wraparoundBuffer that corresponds to wrapOrigin
+     */
+    protected int wrapOffset;
 
+    /**
+     * Name of backing file we go to when we've exhausted content from the 
+     * prefix buffer.
+     */
     protected String backingFilename;
+    
+    /**
+     * Random access to the backing file.
+     */
     protected RandomAccessFile raFile;
 
-    /**
-     * @param buffer
-     * @param size
-     * @param responseBodyStart
-     * @param backingFilename
-     * @throws IOException
-     */
-    public ReplayCharSequence(byte[] buffer, long size, long responseBodyStart, String backingFilename) throws IOException {
-        this(buffer,size,backingFilename);
-        this.responseBodyStart = responseBodyStart;
-    }
 
     /**
-     * @param buffer
-     * @param size
-     * @param backingFilename
+     * Constructor.
+     * 
+     * @param buffer In-memory buffer of recording.  We read from here first
+     * and will only go to the backing file if <code>size</code> requested
+     * is greater than <code>buffer.length</code>.
+     * @param size Total size of stream to replay in bytes.  Used to find EOS.
+     * This is total length of content including HTTP headers if present.
+     * @param backingFilename Name to use for backing randomaccessfile.
+     * 
      * @throws IOException
      */
-    public ReplayCharSequence(byte[] buffer, long size, String backingFilename) throws IOException {
-        this.prefixBuffer = buffer;
-        this.size = size;
-        if (size>buffer.length) {
+    public ReplayCharSequence(byte[] buffer, long size, String backingFilename)
+        throws IOException {
+        this(buffer, size, 0, backingFilename);
+    }
+    
+    /**
+     * Constructor.
+     * 
+     * @param buffer In-memory buffer of recording.  We read from here first
+     * and will only go to the backing file if <code>size</code> requested
+     * is greater than <code>buffer.length</code>.
+     * @param size Total size of stream to replay in bytes.  Used to find EOS.
+     * This is total length of content including HTTP headers if present.
+     * @param responseBodyStart Where the response body starts. Used to 
+     * skip over the HTTP headers if present.
+     * @param backingFilename Name to use for backing randomaccessfile.
+     * 
+     * @throws IOException
+     */
+    public ReplayCharSequence(byte[] buffer, long size, long responseBodyStart,
+            String backingFilename)
+        throws IOException {
+
+        if (responseBodyStart > size) {
+            throw new IllegalArgumentException("Illegal response body offset" +
+                " of " + responseBodyStart + " whereas size is only " + size);
+        }
+        
+        if (responseBodyStart > Integer.MAX_VALUE) {
+            // A value of this size will mess up math below.
+            throw new IllegalArgumentException("Response body start " +
+                " of " + responseBodyStart + " > Integer.MAX_VALUE.");
+        }
+        
+        if (responseBodyStart > buffer.length) {
+            throw new IllegalArgumentException("Unexpected response body" +
+                    " offset of " + responseBodyStart + ".  The way this class"+
+                    " works, it assumes the HTTP headers are in buffer: " +
+                    buffer.length);            
+        }
+        
+        if ((size - responseBodyStart) > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Length is bigger than we  can" +
+               " handle: " + (size - responseBodyStart));
+        }
+        
+        // This is how much content we're going to read.
+        this.length = (int)(size - responseBodyStart);
+                
+        if (responseBodyStart == 0) {
+            this.prefixBuffer = buffer;
+        } else {
+            // This copy is painful but alternative is carrying around the 
+            // responseBodyStart and doing lots of arithemetic in the below 
+            // ensuring we never read from before responseBodyStart.
+            int bufferSize = Math.min(this.length,
+                    buffer.length - (int)responseBodyStart);
+            this.prefixBuffer = new byte[bufferSize];
+            System.arraycopy(buffer, (int)responseBodyStart, this.prefixBuffer,
+                0, bufferSize);
+        }
+
+        // If amount to read is > than what is in our prefix buffer, then open
+        // the backing file.
+        if (this.length > this.prefixBuffer.length) {
             this.backingFilename = backingFilename;
-            raFile = new RandomAccessFile(backingFilename,"r");
-            wraparoundBuffer = new byte[buffer.length];
-            wrapOrigin = prefixBuffer.length;
-            wrapOffset = 0;
+            this.raFile = new RandomAccessFile(backingFilename, "r");
+            this.wraparoundBuffer = new byte[this.prefixBuffer.length];
+            this.wrapOrigin = this.prefixBuffer.length;
+            this.wrapOffset = 0;
             loadBuffer();
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.CharSequence#length()
+    /**
+     * @return Length of stream to replay.
      */
     public int length() {
-        return (int) size;
+        return this.length;
     }
 
     /* (non-Javadoc)
      * @see java.lang.CharSequence#charAt(int)
      */
-    public char charAt(int index) {
-//        if(index>size) {
-//            throw new IndexOutOfBoundsException();
-//        }
-        if(index < prefixBuffer.length) {
-            return (char) ((int)prefixBuffer[index]&0xFF); // mask to unsigned
+    public char charAt(int index)
+    {
+        if (index < this.prefixBuffer.length) {
+            // Mask to unsigned
+            return (char) (this.prefixBuffer[index] & 0xFF);
         }
-        if(index >= wrapOrigin && index-wrapOrigin < wraparoundBuffer.length) {
-            return (char) ((int)wraparoundBuffer[(index-wrapOrigin+wrapOffset) % wraparoundBuffer.length]&0xFF); // mask to unsigned
+        
+        if (index >= this.wrapOrigin &&
+            index - this.wrapOrigin < this.wraparoundBuffer.length) {
+            // Mask to unsigned
+            return (char)(this.wraparoundBuffer[
+                (index - this.wrapOrigin + this.wrapOffset) %
+                    this.wraparoundBuffer.length] & 0xFF);
         }
+        
         return faultCharAt(index);
     }
 
@@ -133,13 +239,14 @@ public class ReplayCharSequence implements CharSequence {
      * wraparound buffer, buffet is reset centered around
      * index
      *
-     * @param index
+     * @param index Index of character to fetch.
      * @return A character that's outside the current buffers
      */
     private char faultCharAt(int index) {
-        if(index>=wrapOrigin+wraparoundBuffer.length) {
-            // moving forward
-            while (index>=wrapOrigin+wraparoundBuffer.length){
+        if(index >= this.wrapOrigin + this.wraparoundBuffer.length) {
+            // Moving forward
+            while (index >= this.wrapOrigin + this.wraparoundBuffer.length)
+            {
                 // TODO optimize this
                 advanceBuffer();
             }
@@ -151,30 +258,39 @@ public class ReplayCharSequence implements CharSequence {
         }
     }
 
-
     private void recenterBuffer(int index) {
-        System.out.println("recentering around "+index+" in "+ backingFilename);
-        wrapOrigin = index - (wraparoundBuffer.length/2);
-        if(wrapOrigin<prefixBuffer.length) {
-            wrapOrigin = prefixBuffer.length;
+        logger.info("Recentering around " + index + " in " +
+            this.backingFilename);
+        this.wrapOrigin = index - (this.wraparoundBuffer.length / 2);
+        if(this.wrapOrigin < this.prefixBuffer.length) {
+            this.wrapOrigin = this.prefixBuffer.length;
         }
-        wrapOffset = 0;
+        this.wrapOffset = 0;
         loadBuffer();
     }
 
-    private void loadBuffer() {
+    private void loadBuffer()
+    {
         long len = -1;
         try {
-            len=raFile.length();
-            raFile.seek(wrapOrigin-prefixBuffer.length);
-            raFile.readFully(wraparoundBuffer,0,(int)Math.min(wraparoundBuffer.length, size-wrapOrigin ));
-        } catch (IOException e) {
+            len = this.raFile.length();
+            this.raFile.seek(this.wrapOrigin - this.prefixBuffer.length);
+            this.raFile.readFully(this.wraparoundBuffer, 0,
+                Math.min(this.wraparoundBuffer.length,
+                this.length - this.wrapOrigin));
+        } 
+        
+        catch (IOException e) {
             // TODO convert this to a runtime error?
-            DevUtils.logger.log(
+            DevUtils.logger.log (
                 Level.SEVERE,
-                "raFile.seek("+(wrapOrigin-prefixBuffer.length)+")\n"+
-                "raFile.readFully(wraparoundBuffer,0,"+((int)Math.min(wraparoundBuffer.length, size-wrapOrigin ))+")\n"+
-                "raFile.length()"+len+"\n"+
+                "raFile.seek(" + (this.wrapOrigin - this.prefixBuffer.length) +
+                ")\n" +
+                "raFile.readFully(wraparoundBuffer,0," +
+                (Math.min(this.wraparoundBuffer.length,
+                    this.length - this.wrapOrigin )) +
+                ")\n"+
+                "raFile.length()" + len + "\n" +
                 DevUtils.extraInfo(),
                 e);
         }
@@ -186,47 +302,44 @@ public class ReplayCharSequence implements CharSequence {
      */
     private void advanceBuffer() {
         try {
-            wraparoundBuffer[wrapOffset] = (byte)raFile.read();
-            wrapOffset++;
-            wrapOffset %= wraparoundBuffer.length;
-            wrapOrigin++;
+            this.wraparoundBuffer[this.wrapOffset] = (byte)this.raFile.read();
+            this.wrapOffset++;
+            this.wrapOffset %= this.wraparoundBuffer.length;
+            this.wrapOrigin++;
         } catch (IOException e) {
             // TODO convert this to a runtime error?
-            DevUtils.logger.log(Level.SEVERE,"advanceBuffer()"+DevUtils.extraInfo(),e);
+            DevUtils.logger.log(Level.SEVERE, "advanceBuffer()" +
+                DevUtils.extraInfo(), e);
         }
-
     }
 
     /* (non-Javadoc)
      * @see java.lang.CharSequence#subSequence(int, int)
      */
     public CharSequence subSequence(int start, int end) {
-        return new CharSubSequence(this,start,end);
+        return new CharSubSequence(this, start, end);
     }
-
-
-//    /* (non-Javadoc)
-//     * @see java.lang.Object#toString()
-//     */
-//    public String toString() {
-//        StringBuffer sb = new StringBuffer((int)size);
-//        for(int i=0; i<size; i++) {
-//            sb.append(charAt(i));
-//        }
-//        return sb.toString();
-//    }
+    
+    /**
+     * Cleanup resources.
+     * 
+     * @exception IOException Failed close of random access file.
+     */
+    public void close() throws IOException
+    {
+        this.prefixBuffer = null;
+        if (this.raFile != null) {
+            this.raFile.close();
+            this.raFile = null;
+        } 
+    }
 
     /* (non-Javadoc)
      * @see java.lang.Object#finalize()
      */
-    protected void finalize() throws Throwable {
+    protected void finalize() throws Throwable
+    {
         super.finalize();
-//        if(raFile.getFD().valid()) {
-//            System.out.println("finalize-closing raFile");
-//        }
-        if (raFile!=null) {
-            raFile.close();
-        }
+        close();
     }
-
 }
