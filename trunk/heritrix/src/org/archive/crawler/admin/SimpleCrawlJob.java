@@ -22,6 +22,7 @@ import org.w3c.dom.Node;
 
 public class SimpleCrawlJob implements CrawlJob
 {
+	protected int UID;
 	protected String sName;
 	protected String sFilename; //An XML file describing a crawl order (including path)
 	protected String sStatus;
@@ -34,8 +35,9 @@ public class SimpleCrawlJob implements CrawlJob
 
 
 	
-	public SimpleCrawlJob(String name, String crawlorderfile, int priority)
+	public SimpleCrawlJob(int UID, String name, String crawlorderfile, int priority)
 	{
+		this.UID = UID;
 		this.priority = priority;
 		sName = name;
 		sFilename = crawlorderfile;
@@ -44,10 +46,12 @@ public class SimpleCrawlJob implements CrawlJob
 	}
 	
 	/**
+	 * Implemented to return [UID] 'crawl name'
+	 * 
 	 * @return
 	 */
 	public String getJobName() {
-		return sName;
+		return "["+UID+"] " + sName;
 	}
 
 	/**
@@ -200,5 +204,12 @@ public class SimpleCrawlJob implements CrawlJob
 			}
 		}
 		orderTransform.serializeToXMLFile(AdminConstants.WEB_APP_PATH + filename);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.framework.CrawlJob#getUID()
+	 */
+	public int getUID() {
+		return UID;
 	}	
 }

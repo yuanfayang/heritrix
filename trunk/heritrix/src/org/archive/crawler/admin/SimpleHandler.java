@@ -149,7 +149,7 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 		return temp;		
 	}
 	
-	public int getNextJobSerial()
+	public int getNextJobUID()
 	{
 		return jobserial++;		
 	}
@@ -327,8 +327,17 @@ public class SimpleHandler implements AdminConstants, CrawlJobHandler, CrawlList
 	/* (non-Javadoc)
 	 * @see org.archive.crawler.framework.CrawlJobHandler#removeJob(org.archive.crawler.framework.CrawlJob)
 	 */
-	public boolean removeJob(CrawlJob job) {
-		// TODO Auto-generated method stub
+	public boolean removeJob(int jobUID) {
+		for(int i=0 ; i<pendingCrawlJobs.size() ; i++)
+		{
+			CrawlJob cj = (CrawlJob)pendingCrawlJobs.get(i);
+			if(cj.getUID()==jobUID)
+			{
+				// Found the one to remove.	
+				pendingCrawlJobs.remove(i);
+				return true;
+			}
+		}
 		return false;
 	}
 }

@@ -53,7 +53,7 @@ public interface CrawlJobHandler
 	 * @return false if the job is no longer in the queue - has begun running or was removed 
 	 * by another thread. The job is removed and true is returned otherwise.     
 	 */
-	public boolean removeJob(CrawlJob job);
+	public boolean removeJob(int jobUID);
 	
 	/**
 	 * Returns the default crawl order - all new crawl orders are based on this
@@ -61,4 +61,10 @@ public interface CrawlJobHandler
 	 * @return the default crawl order
 	 */
 	public CrawlOrder getDefaultCrawlOrder();
+	
+	/**
+	 * 
+	 * @return An unused UID for a job. No two calls to this method (for the same object) can ever return the same value until the integer overflows.
+	 */
+	public int getNextJobUID();
 }
