@@ -7,6 +7,7 @@
 package org.archive.crawler.basic;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
 import org.archive.crawler.datamodel.AnnotatedURI;
@@ -26,8 +27,8 @@ public class SimpleStore implements URIStore {
 	LinkedList pendingCuris = new LinkedList(); // of CrawlURIs 
 	HashMap processing = new HashMap(); // of String (queueKey) -> CrawlURI
 	HashMap allQueues = new HashMap(); // of String (queueKey) -> KeyedQueue
-	LinkedList readyQueues = new LinkedList(); // of KeyedQueues 
-	LinkedList snoozeQueues = new LinkedList(); // of KeyedQueues (prob should be Heap)
+	LinkedHashMap readyQueues = new LinkedHashMap(); // of String (queueKey) -> KeyedQueue 
+	LinkedHashMap snoozeQueues = new LinkedHashMap(); // of String (queueKey) -> KeyedQueue (maybe should be Heap)
 	
 	
 	
