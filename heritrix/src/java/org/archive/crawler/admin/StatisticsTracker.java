@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -94,11 +95,18 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.AbstractTracker
  */
 public class StatisticsTracker extends AbstractTracker
-                    implements CrawlURIDispositionListener{
-
+implements CrawlURIDispositionListener{
+    /**
+     * Messages from the StatisticsTracker.
+     */
+    private final static Logger logger =
+        Logger.getLogger(StatisticsTracker.class.getName());
+    
     // TODO: Class needs to be serializable.
-    // TODO: Need to be able to specify file where the object will be written once the CrawlEnded event occurs
-    // TODO: Need to be able to save object on Checkpointing as well as CrawlEnded.
+    // TODO: Need to be able to specify file where the object will be
+    // written once the CrawlEnded event occurs
+    // TODO: Need to be able to save object on Checkpointing as well
+    // as CrawlEnded.
 
     protected long lastPagesFetchedCount = 0;
     protected long lastProcessedBytesCount = 0;
@@ -164,17 +172,11 @@ public class StatisticsTracker extends AbstractTracker
                 "with the web UI and creates the progress-statistics log.");
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.StatisticsTracking#initalize(org.archive.crawler.framework.CrawlController)
-     */
     public void initialize(CrawlController c) {
         super.initialize(c);
         controller.addCrawlURIDispositionListener(this);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.AbstractTracker#logActivity()
-     */
     protected synchronized void logActivity() {
         // This method loads "snapshot" data.
         discoveredUriCount = discoveredUriCount();
@@ -193,17 +195,22 @@ public class StatisticsTracker extends AbstractTracker
             return; //Not enough time has passed for a decent snapshot.
         }
         else{
-            docsPerSecond = (double) downloadedUriCount / (double)(getCrawlerTotalElapsedTime() / 1000);
-            totalKBPerSec = (long)(((totalProcessedBytes / 1024) / ((getCrawlerTotalElapsedTime())    / 1000)) + .5 ); // round to nearest long
+            docsPerSecond = (double) downloadedUriCount /
+                (double)(getCrawlerTotalElapsedTime() / 1000);
+            // Round to nearest long.
+            totalKBPerSec = (long)(((totalProcessedBytes / 1024) /
+                 ((getCrawlerTotalElapsedTime()) / 1000)) + .5 );
         }
 
         busyThreads = activeThreadCount();
 
-        if(shouldrun || (System.currentTimeMillis() - lastLogPointTime) >= 1000)
+        if(shouldrun ||
+            (System.currentTimeMillis() - lastLogPointTime) >= 1000)
         {
-            // If shouldrun is false there is a chance that the time interval since
-            // last time is too small for a good sample.  We only want to update
-            // "current" data when the interval is long enough or shouldrun is true.
+            // If shouldrun is false there is a chance that the time interval
+            // since last time is too small for a good sample.  We only want
+            // to update "current" data when the interval is long enough or
+            // shouldrun is true.
             currentDocsPerSecond = 0;
             currentKBPerSec = 0;
 
@@ -211,10 +218,10 @@ public class StatisticsTracker extends AbstractTracker
             long currentTime = System.currentTimeMillis();
             long sampleTime = currentTime - lastLogPointTime;
 
-            // if we haven't done anyting or there isn't a reasonable sample size give up.
+            // if we haven't done anyting or there isn't a reasonable sample
+            // size give up.
             if(sampleTime >= 1000)
             {
-
                 // Update docs/sec snapshot
                 long currentPageCount = successfullyFetchedCount();
                 long samplePageCount = currentPageCount - lastPagesFetchedCount;
@@ -757,12 +764,9 @@ public class StatisticsTracker extends AbstractTracker
         return sortedSet.iterator();
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-     */
     public void crawlEnded(String sExitMessage) {
+        logger.info("Reporting started.");
         CrawlController controller = this.controller;
-
         Iterator tmp = getSeeds(); // Need this before we do super.crawlEnded()
 
         super.crawlEnded(sExitMessage);
@@ -995,7 +999,7 @@ public class StatisticsTracker extends AbstractTracker
                     Level.SEVERE));
             e.printStackTrace();
         }
-
+        logger.info("Reporting done.");
         // TODO: Save object to disk?
     }
 
