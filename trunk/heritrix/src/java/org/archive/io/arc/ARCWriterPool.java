@@ -27,6 +27,7 @@ package org.archive.io.arc;
 import java.io.File;
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import java.util.logging.Logger;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.ObjectPool;
@@ -55,6 +56,12 @@ public class ARCWriterPool
      * Pool instance.
      */
     private ObjectPool pool = null;
+    
+    /**
+     * Logger instance used by this class.
+     */
+    private static Logger logger =
+        Logger.getLogger("org.archive.io.arc.ARCWriterPool");
 
    
     /**
@@ -132,6 +139,7 @@ public class ARCWriterPool
         try
         {
             writer = (ARCWriter)this.pool.borrowObject();
+            logger.fine("Borrowed " + writer);
         }
         catch(NoSuchElementException e)
         {
@@ -178,6 +186,7 @@ public class ARCWriterPool
     {
         try
         {
+            logger.fine("Returned " + writer);
             this.pool.returnObject(writer);
         }
         catch(Exception e)
@@ -235,12 +244,7 @@ public class ARCWriterPool
          */
         public Object makeObject() throws Exception
         {
-            // Add to the prefix this objects index into the pool.
-            String prefix = this.prefix + Integer.toString(getNumActive()) +
-                "of" +
-                Integer.toString(((GenericObjectPool)pool).getMaxActive()) +
-                "_";
-            return new ARCWriter(this.arcsDir, prefix, this.compress, 
+            return new ARCWriter(this.arcsDir, this.prefix, this.compress, 
                 ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE);
         }
         
