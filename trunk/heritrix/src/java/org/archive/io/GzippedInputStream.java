@@ -27,6 +27,7 @@ package org.archive.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.zip.DataFormatException;
 import java.util.zip.GZIPInputStream;
 
 import org.archive.io.PositionableStream;
@@ -55,6 +56,11 @@ public class GzippedInputStream extends GZIPInputStream
      * -1 flags that we're on the first member.
      */
     private long currentMemberOffset = -1;
+    
+    /**
+     * Used to find next gzip member.
+     */
+    private GzipHeader gzipHeader = new GzipHeader();
     
     
     public GzippedInputStream(InputStream in) throws IOException {
@@ -101,14 +107,18 @@ public class GzippedInputStream extends GZIPInputStream
 		        // this.inf.getRemaining is off by one if the remaining is
 		        // zero.
 		        int read = -1;
-		        while (((PositionableStream)this.in).available() > 0 &&
-		                	!result &&
-		                	((read = this.in.read()) != -1)) {
-		            	if ((read & 0xff) ==
-		            	    	(0xff & GZIPInputStream.GZIP_MAGIC)) {
-		            	    // We've found gzip header start.  Backup stream one byte.
-		            	    seek(getFilePointer() - 1);
-		            	    result = true;
+		        while (((PositionableStream)this.in).available() > 2 &&
+		                !result) {
+		            // The testGzipMagic test reads two bytes.  If success,
+		            // need to back up stream two bytes so header is
+		            // intact when we go to read  next gzip member.  If
+		            // no success, then we need to back up one byte and
+		            // retry.
+		            if (!this.gzipHeader.testGzipMagic(this.in)) {
+		                seek(getFilePointer() - 1);
+		            } else {
+		                seek(getFilePointer() - 2);
+		            	result = true;
 		            }
 		        }
 		    } catch (IOException e) {
