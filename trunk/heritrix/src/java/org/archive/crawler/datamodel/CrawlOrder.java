@@ -169,18 +169,6 @@ public class CrawlOrder extends ModuleType {
                         + " much time has elapsed the crawler will stop.",
                 new Long(0)));
         e.setOverrideable(false);
-
-        e = addElementToDefinition(new SimpleType(ATTR_MAX_TOE_THREADS,
-                "Maximum number of threads processing URIs at the same time.",
-                new Integer(100)));
-        e.setOverrideable(false);
-      
-        e = (MapType) addElementToDefinition(new MapType(ATTR_RULES,
-            "Ordered list of url canonicalization rules.\n" +
-            "Rules are applied in the order listed from top to bottom.",
-            BaseRule.class));
-        e.setOverrideable(true);
-        e.setExpertSetting(true);
         
         e = addElementToDefinition(new SimpleType(ATTR_MAX_TOE_THREADS,
                 "Maximum number of threads processing URIs at the same time.",
@@ -225,6 +213,13 @@ public class CrawlOrder extends ModuleType {
                 Frontier.ATTR_NAME, "Frontier"));
         e.setLegalValueType(Frontier.class);
 
+        e = (MapType) addElementToDefinition(new MapType(ATTR_RULES,
+            "Ordered list of url canonicalization rules.\n" +
+            "Rules are applied in the order listed from top to bottom.",
+            BaseRule.class));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
+        
         e = addElementToDefinition(new MapType(
                 ATTR_PRE_FETCH_PROCESSORS, "Processors to be run prior to" +
                         " fetching anything from the network.",

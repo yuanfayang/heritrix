@@ -22,6 +22,9 @@
  */
 package org.archive.crawler.url.canonicalize;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.UURIFactory;
+
 import junit.framework.TestCase;
 
 /**
@@ -31,23 +34,23 @@ import junit.framework.TestCase;
  */
 public class FixupQueryStrTest extends TestCase {
 
-    public void testCanonicalize() {
+    public void testCanonicalize() throws URIException {
         final String url = "http://WWW.aRchive.Org/index.html";
         assertTrue("Managled " + url,
             url.equals((new FixupQueryStr("test")).
-                canonicalize(url)));
+                canonicalize(url, UURIFactory.getInstance(url))));
         assertTrue("Failed to strip '?' " + url,
             url.equals((new FixupQueryStr("test")).
-                canonicalize(url + "?")));
+                canonicalize(url + "?", UURIFactory.getInstance(url))));
         assertTrue("Failed to strip '?&' " + url,
             url.equals((new FixupQueryStr("test")).
-                canonicalize(url + "?&")));
+                canonicalize(url + "?&", UURIFactory.getInstance(url))));
         assertTrue("Failed to strip extraneous '&' " + url,
             (url + "?x=y").equals((new FixupQueryStr("test")).
-                canonicalize(url + "?&x=y")));
+                canonicalize(url + "?&x=y", UURIFactory.getInstance(url))));
         String tmp = url + "?x=y";
         assertTrue("Mangled x=y " + tmp,
             tmp.equals((new FixupQueryStr("test")).
-                canonicalize(tmp)));
+                canonicalize(tmp, UURIFactory.getInstance(url))));
     }
 }

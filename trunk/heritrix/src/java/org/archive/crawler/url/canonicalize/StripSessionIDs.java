@@ -72,7 +72,7 @@ extends BaseRule {
         super(name, DESCRIPTION);
     }
 
-    public String canonicalize(String url) {
+    public String canonicalize(String url, Object context) {
         url = doStripRegexMatch(url, BASE_PATTERN.matcher(url));
         url = doStripRegexMatch(url, SID_PATTERN.matcher(url));
         url = doStripRegexMatch(url, ASPSESSION_PATTERN.matcher(url));

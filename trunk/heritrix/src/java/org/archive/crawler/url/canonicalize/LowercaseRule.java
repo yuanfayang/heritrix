@@ -24,6 +24,7 @@ package org.archive.crawler.url.canonicalize;
 
 
 
+
 /**
  * Lowercases the URL.
  * @author stack
@@ -38,7 +39,7 @@ extends BaseRule {
         super(name, DESCRIPTION);
     }
 
-    public String canonicalize(String url) {
+    public String canonicalize(String url, Object context) {
         return url.toLowerCase();
     }
 }

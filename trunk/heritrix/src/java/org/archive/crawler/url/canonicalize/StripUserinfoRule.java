@@ -49,7 +49,7 @@ public class StripUserinfoRule extends BaseRule {
         super(name, DESCRIPTION);
     }
 
-    public String canonicalize(String url) {
+    public String canonicalize(String url, Object context) {
         return doStripRegexMatch(url, REGEX.matcher(url));
     }
 }

@@ -24,6 +24,7 @@ package org.archive.crawler.url.canonicalize;
 
 
 
+
 /**
  * Strip any trailing question mark.
  * @author stack
@@ -46,7 +47,7 @@ extends BaseRule {
         super(name, DESCRIPTION);
     }
 
-    public String canonicalize(String url) {
+    public String canonicalize(String url, Object context) {
         if (url == null || url.length() <= 0) {
             return url;
         }

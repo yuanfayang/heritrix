@@ -64,12 +64,12 @@ extends BaseRule {
             "Free-text comment on why this rule was added.", ""));
     }
 
-    public String canonicalize(String url) {
-        String regex = getNullOrAttribute(ATTR_REGEX);
+    public String canonicalize(String url, Object context) {
+        String regex = getNullOrAttribute(ATTR_REGEX, context);
         if (regex == null) {
             return url;
         }
-        String format = getNullOrAttribute(ATTR_FORMAT);
+        String format = getNullOrAttribute(ATTR_FORMAT, context);
         if (format == null) {
             return url;
         }
@@ -140,9 +140,9 @@ extends BaseRule {
         }
     }
 
-    protected String getNullOrAttribute(String name) {
+    protected String getNullOrAttribute(String name, Object context) {
         try {
-            return (String)getAttribute(name);
+            return (String)getAttribute(context, name);
         } catch (Exception e) {
             logger.severe(e.getMessage());
             return null;
