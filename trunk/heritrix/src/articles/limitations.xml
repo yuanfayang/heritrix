@@ -49,7 +49,10 @@
 
     <para>Heritrix fails to build on linux kernel 2.6.</para>
       <sect3><title>Workaround</title>
-        <para>Same as <ulink url="#984390">above</ulink>.
+        <para>Build fails unless you use a JDK in advance of pedigree 
+        1.5 beta 2.  See <ulink
+        url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=955975&amp;group_id=73833&amp;atid=539099">[ 955975 ] Build fails: JVM and kernel 2.6+ (Was 2 tests fail...)</ulink> and 
+        <ulink url="#984390">above</ulink>.
         </para>
       </sect3>
     </sect2>
