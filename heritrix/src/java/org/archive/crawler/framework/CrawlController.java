@@ -25,9 +25,12 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,6 +63,8 @@ import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.util.ArchiveUtils;
+
+import EDU.oswego.cs.dl.util.concurrent.Channel;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -94,6 +99,7 @@ public class CrawlController extends Thread {
     private Thread controlThread;
     private ToePool toePool;
     private URIFrontier frontier;
+    private Channel crawlUriChannel;
     private boolean shouldCrawl;
     private boolean shouldPause;
 
@@ -205,7 +211,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "FatalConfigurationException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                    message));
+                    message,Level.CONFIG));
             throw new FatalConfigurationException(message);
         }
 
@@ -216,7 +222,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "FatalConfigurationException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                    "Unable to setup disk: \n" + e.toString(),e));
+                    "Unable to setup disk: \n" + e.toString(),e,Level.CONFIG));
             throw new InitializationException(
                 "Unable to setup disk\n", e);
         } catch (AttributeNotFoundException e) {
@@ -224,7 +230,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "AttributeNotFoundException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                    "Unable to setup disk\n",e));
+                    "Unable to setup disk\n",e,Level.CONFIG));
             throw new InitializationException(
                 "Unable to setup disk\n", e);
         }
@@ -236,7 +242,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "IOException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to create log file(s)\n",e));
+                     "Unable to create log file(s)\n",e,Level.CONFIG));
             throw new InitializationException(
                 "Unable to create log file(s): " + e.toString(),
                 e);
@@ -249,7 +255,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "InvalidAttributeValueException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup statistics \n",e));
+                     "Unable to setup statistics \n",e,Level.CONFIG));
             throw new InitializationException(
                 "Unable to setup statistics: " + e.toString(), e);
         }
@@ -263,7 +269,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "FatalConfigurationException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n", e));
+                     "Unable to setup crawl modules \n", e,Level.CONFIG));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (AttributeNotFoundException e) {
@@ -271,7 +277,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "AttributeNotFoundException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n", e));
+                     "Unable to setup crawl modules \n", e,Level.CONFIG));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (InvalidAttributeValueException e) {
@@ -279,7 +285,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "InvalidAttributeValueException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n",e));
+                     "Unable to setup crawl modules \n",e,Level.CONFIG));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (MBeanException e) {
@@ -287,7 +293,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "MBeanException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n", e));
+                     "Unable to setup crawl modules \n", e,Level.CONFIG));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         } catch (ReflectionException e) {
@@ -295,7 +301,7 @@ public class CrawlController extends Thread {
                 new Alert(
                     "ReflectionException on crawl: " 
                     + settingsHandler.getSettingsObject(null).getName(),
-                     "Unable to setup crawl modules \n", e));
+                     "Unable to setup crawl modules \n", e,Level.CONFIG));
             throw new InitializationException(
                 "Unable to setup crawl modules: " + e.toString(), e);
         }
@@ -626,8 +632,6 @@ public class CrawlController extends Thread {
         controlThread.setName("crawlControl");
         controlThread.setPriority(DEFAULT_MASTER_THREAD_PRIORITY);
 
-        Iterator iterator = null;
-
         // start periodic background logging of crawl statistics
         Thread statLogger = new Thread(statistics);
         statLogger.setName("StatLogger");
@@ -635,52 +639,14 @@ public class CrawlController extends Thread {
 
         while (shouldCrawl()) {
             if (shouldPause) {
-                synchronized (this) {
-                    try {
-                        // Wait until all ToeThreads are finished with their work
-                        while (getActiveToeCount() > 0) {
-                            wait(200);
-                        }
-                        paused = true;
-
-                        // Tell everyone that we have paused
-                        logger.info("Crawl job paused");
-                        iterator = registeredCrawlStatusListeners.iterator();
-                        while (iterator.hasNext()) {
-                            ((CrawlStatusListener) iterator.next()).crawlPaused(
-                                CrawlJob.STATUS_PAUSED);
-                        }
-
-                        wait();
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    paused = false;
-                    logger.info("Crawl job resumed");
-
-                    // Tell everyone that we have resumed from pause
-                    iterator = registeredCrawlStatusListeners.iterator();
-                    while (iterator.hasNext()) {
-                        ((CrawlStatusListener) iterator.next()).crawlResuming(
-                            CrawlJob.STATUS_RUNNING);
-                    }
-                }
+                pauseCrawl();
             }
-
-            CrawlURI curi = frontier.next(timeout);
-            if (curi != null) {
-                curi.setNextProcessorChain(getFirstProcessorChain());
-                ToeThread toe = toePool.available();
-                //if (toe !=null) {
-                logger.fine(toe.getName() + " crawl: " + curi.getURIString());
-                toe.crawl(curi);
-                //}
-            }
+            // keep the channel full in batches
+            frontier.nextInto(10,crawlUriChannel,timeout);
         }
 
         // Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
-        iterator = registeredCrawlStatusListeners.iterator();
+        Iterator iterator = registeredCrawlStatusListeners.iterator();
         while (iterator.hasNext()) {
             ((CrawlStatusListener) iterator.next()).crawlEnding(sExit);
         }
@@ -698,7 +664,10 @@ public class CrawlController extends Thread {
         // Save processors report to file
         reports.info(reportProcessors());
 
-        logger.info("exitting run");
+        // Run processors' final tasks
+        runProcessorFinalTasks();
+
+        logger.info("exiting run");
 
         //Do cleanup to facilitate GC.
         controlThread = null;
@@ -713,6 +682,46 @@ public class CrawlController extends Thread {
         serverCache = null;
 
         logger.fine(getName() + " finished for order CrawlController");
+    }
+
+    private void pauseCrawl() {
+        synchronized (this) {
+            try {
+                // Wait until all ToeThreads are finished with their work
+                while (getActiveToeCount() > 0 && shouldPause) {
+                    wait(200);
+                }
+                if(shouldPause){
+                    paused = true;
+                    // Tell everyone that we have paused
+                    logger.info("Crawl job paused");
+                    Iterator iterator = registeredCrawlStatusListeners.iterator();
+                    while (iterator.hasNext()) {
+                        ((CrawlStatusListener) iterator.next()).crawlPaused(
+                            CrawlJob.STATUS_PAUSED);
+                    }
+
+                    wait(); // resumeCrawl() will wake us.
+                    paused = false;
+                } else{
+                    // Been given an order to resume while waiting
+                    // to pause
+                    paused = false;
+                }
+
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            logger.info("Crawl job resumed");
+
+            // Tell everyone that we have resumed from pause
+            Iterator iterator = registeredCrawlStatusListeners.iterator();
+            while (iterator.hasNext()) {
+                ((CrawlStatusListener) iterator.next()).crawlResuming(
+                    CrawlJob.STATUS_RUNNING);
+            }
+        }
     }
 
     private boolean shouldCrawl() {
@@ -773,7 +782,7 @@ public class CrawlController extends Thread {
     /**
      * Stop the crawl temporarly.
      */
-    public synchronized void pauseCrawl() {
+    public synchronized void requestCrawlPause() {
         if (shouldPause) {
             // Already about to pause
             return;
@@ -801,7 +810,7 @@ public class CrawlController extends Thread {
      * Resume crawl from paused state
      */
     public synchronized void resumeCrawl() {
-        if (!paused) {
+        if (shouldPause==false) {
             // Can't resume if not been told to pause
             return;
         }
@@ -833,68 +842,6 @@ public class CrawlController extends Thread {
         order = o;
     }
 
-    /** Print to stdout basic statistics about the crawl (for stat testing) * @return
-     */
-    //    public void printStatistics(){
-    //
-    //        //System.out.println(":");
-    //        //System.out.println("\t:\t" + statistics.);
-    //
-    //        System.out.println("Fetch Progress:");
-    //        System.out.println("\tCompleted:\t" + statistics.percentOfDiscoveredUrisCompleted() + "% (fetched/discovered)");
-    //
-    //        int kPerSec = statistics.currentProcessedKBPerSec()/1000;
-    //        System.out.println("\tDisk Write Rate:\t" + kPerSec + " kb/sec.");
-    //
-    //        System.out.println("\tDiscovered URIs:\t" + statistics.urisEncounteredCount());
-    //        System.out.println("\tFrontier (unfetched):\t" + statistics.urisInFrontierCount());
-    //        System.out.println("\tFetch Attempts:\t" + statistics.totalFetchAttempts());
-    //        System.out.println("\tSuccesses:\t" + statistics.successfulFetchAttempts());
-    //        //System.out.println("\tFailures:\t" + statistics.failedFetchAttempts());
-    //
-    //        System.out.println("Threads:");
-    //
-    //        System.out.println("\tTotal:\t" + statistics.threadCount());
-    //        System.out.println("\tActive:\t" + statistics.activeThreadCount());
-    //
-    //
-    //        HashMap dist = statistics.getFileDistribution();
-    //
-    //        if(dist.size() > 0){
-    //            Iterator keyIterator = dist.keySet().iterator();
-    //
-    //            System.out.println("Fetched Resources MIME Distribution:");
-    //
-    //            while(keyIterator.hasNext()){
-    //                String key = (String)keyIterator.next();
-    //                String val = ((Integer)dist.get(key)).toString();
-    //
-    //                System.out.println("\t" + key + "\t" + val);
-    //            }
-    //        }else{
-    //            System.out.println("No mime statistics");
-    //        }
-    //
-    //        HashMap codeDist = statistics.getStatusCodeDistribution();
-    //
-    //        if(codeDist.size() > 0){
-    //
-    //            Iterator keyIterator = codeDist.keySet().iterator();
-    //
-    //            System.out.println("Status Code Distribution:");
-    //
-    //            while(keyIterator.hasNext()){
-    //                String key = (String)keyIterator.next();
-    //                String val = ((Integer)codeDist.get(key)).toString();
-    //
-    //                System.out.println("\t" + key + "\t" + val);
-    //            }
-    //        }else{
-    //            System.out.println("No code distribution statistics.");
-    //        }
-    //
-    //
-    //    }
 
     /**
      * @return The frontier.
@@ -1031,5 +978,25 @@ public class CrawlController extends Thread {
     public SettingsHandler getSettingsHandler() {
         return settingsHandler;
     }
+    
+    /**
+     * This method iterates through processor chains to run processors' final 
+     * tasks.
+     *
+     */
+    private void runProcessorFinalTasks(){
+        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
+            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
+                    ip.hasNext(); ) {
+                ((Processor) ip.next()).finalTasks();
+            }
+        }
+    }
 
+    /**
+     * @return
+     */
+    public Channel getCrawlUriChannel() {
+        return crawlUriChannel;
+    }
 }

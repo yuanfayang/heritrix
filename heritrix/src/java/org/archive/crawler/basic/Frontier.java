@@ -40,6 +40,7 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
+import org.apache.commons.collections.BoundedFifoBuffer;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -62,6 +63,11 @@ import org.archive.util.MemQueue;
 import org.archive.util.PaddingStringBuffer;
 import org.archive.util.Queue;
 import org.archive.util.QueueItemMatcher;
+
+import EDU.oswego.cs.dl.util.concurrent.BoundedBuffer;
+import EDU.oswego.cs.dl.util.concurrent.BoundedChannel;
+import EDU.oswego.cs.dl.util.concurrent.Channel;
+import EDU.oswego.cs.dl.util.concurrent.Mutex;
 
 /**
  * A basic mostly breadth-first frontier, which refrains from
@@ -109,6 +115,9 @@ public class Frontier
 
     CrawlController controller;
 
+    Channel readyChannel;
+    Mutex wakerLock = new Mutex();
+    
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
     UURISet alreadyIncluded;
@@ -203,6 +212,8 @@ public class Frontier
     public void initialize(CrawlController c)
         throws FatalConfigurationException, IOException {
 
+        readyChannel = new BoundedBuffer(10);
+        
         pendingQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingQ",10000);
         //pendingHighQueue = new DiskBackedQueue(c.getScratchDisk(),"pendingHighQ",10000);
 
@@ -255,7 +266,7 @@ public class Frontier
 
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.framework.URIFrontier#batchSchedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public void batchSchedule(CandidateURI caUri) {
@@ -314,6 +325,81 @@ public class Frontier
         netUrisScheduled++;
     }
 
+    
+    public CrawlURI newNext(int timeout) throws InterruptedException {
+        CrawlURI result = (CrawlURI) readyChannel.poll(0);
+        if (result!=null) {
+            return result;
+        }
+        // am I specially deputized to wake
+        if(wakerLock.attempt(0)) {
+            try {
+                result = primeReadyChannel(timeout);
+            } finally {
+                wakerLock.release();
+            }
+        } 
+        // I'm normal; just try
+        return (CrawlURI) readyChannel.poll(timeout);
+    }
+    
+    /** 
+     * Fill the ready channel 
+     * 
+     * @see org.archive.crawler.framework.URIFrontier#nextInto(int, EDU.oswego.cs.dl.util.concurrent.Channel, int)
+     */
+    public synchronized void fillReady(int timeout) {
+        int batched = 0;
+        
+    }
+    /**
+     * Return the next CrawlURI to be processed (and presumably
+     * visited/fetched) by a a worker thread.
+     *
+     * First checks any "Ready" per-host queues, then the global 
+     * pending queue.
+     *
+     * @see org.archive.crawler.framework.URIFrontier#next(int)
+     */
+    public synchronized CrawlURI next() {
+        long now = System.currentTimeMillis();
+        long waitMax = 0;
+        CrawlURI curi = null;
+
+        // first, empty the high-priority queue
+        CandidateURI caUri;
+
+        // if enough time has passed to wake any snoozing queues, do it
+        wakeReadyQueues(now);
+
+        // now, see if any holding queues are ready with a CrawlURI
+        if (!readyClassQueues.isEmpty()) {
+            curi = dequeueFromReady();
+            return emitCuri(curi);
+        }
+
+        // if that fails to find anything, check the pending queue
+        while ((caUri = dequeueFromPending()) != null) {
+            curi = CrawlURI.from(caUri);
+            if (!enqueueIfNecessary(curi)) {
+                // OK to emit
+                return emitCuri(curi);
+            }
+        }
+
+        // consider if URIs exhausted
+        if(isEmpty()) {
+            // nothing left to crawl
+            logger.info("nothing left to crawl");
+            return null;
+        }
+
+        // nothing to return, but there are still URIs
+        // held for the future
+
+        return null;
+    }
+    
     /**
      * Return the next CrawlURI to be processed (and presumably
      * visited/fetched) by a a worker thread.
@@ -501,7 +587,9 @@ public class Frontier
             case S_TOO_MANY_EMBED_HOPS :
                  // too far from last true link
             case S_TOO_MANY_LINK_HOPS :
-                 // too far from seeds
+                // too far from seeds
+            case S_DELETED_BY_USER :
+                // user deleted
                 return true;
             default:
                 return false;
@@ -1148,15 +1236,7 @@ public class Frontier
         
         FrontierMarker mark = (FrontierMarker)marker;
         ArrayList list = new ArrayList(numberOfMatches);
-        
-        // inspect PendingHighQueue
-//        if(mark.currentQueue==-1){
-//            numberOfMatches -= inspectQueue(pendingHighQueue,"pendingHighQueue",list,mark,verbose, numberOfMatches);
-//            if(numberOfMatches>0){
-//                mark.nextQueue();
-//            }
-//        }
-        
+                
         // inspect the KeyedQueues
         while( numberOfMatches > 0 && mark.currentQueue != -2){
             String queueKey = (String)mark.keyqueues.get(mark.currentQueue);
@@ -1258,7 +1338,7 @@ public class Frontier
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#deleteURIsFromPending(java.lang.String)
      */
-    public void deleteURIsFromPending(String match) {
+    public long deleteURIsFromPending(String match) {
         // Create QueueItemMatcher
         QueueItemMatcher mat = new URIQueueMatcher(match,true,this);
         // Delete from pendingHigh
@@ -1275,6 +1355,7 @@ public class Frontier
         }
         // Delete from pendingQueue
         pendingQueue.deleteMatchedItems(mat);
+        return 0;
     }
 
 
@@ -1517,5 +1598,7 @@ public class Frontier
         reader.close();
 
     }
+
+
 
 }
