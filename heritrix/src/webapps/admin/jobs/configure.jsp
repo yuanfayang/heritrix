@@ -1,3 +1,13 @@
+<%
+  /**
+   * This pages allows the user to edit the configuration 
+   * of a crawl order. 
+   * That is set any af the 'values', but does not allow
+   * users to change which 'modules' are used.
+   *
+   * @author Kristinn Sigurdsson
+   */
+%>
 <%@include file="/include/handler.jsp"%>
 <%@include file="/include/secure.jsp"%>
 
@@ -5,20 +15,39 @@
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.datamodel.settings.*" %>
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
-
-<%@ page import="java.io.*,java.lang.Boolean" %>
-<%@ page import="javax.management.MBeanInfo, javax.management.Attribute, javax.management.MBeanAttributeInfo,javax.management.AttributeNotFoundException, javax.management.MBeanException,javax.management.ReflectionException"%>
+<%@ page import="java.io.File" %>
+<%@ page import="java.io.FileReader" %>
+<%@ page import="java.io.FileWriter" %>
+<%@ page import="java.io.BufferedReader" %>
+<%@ page import="java.io.BufferedWriter" %>
+<%@ page import="java.io.IOException" %>
+<%@ page import="javax.management.MBeanInfo"%>
+<%@ page import="javax.management.Attribute"%>
+<%@ page import="javax.management.MBeanAttributeInfo"%>
+<%@ page import="javax.management.AttributeNotFoundException"%>
+<%@ page import="javax.management.MBeanException"%>
+<%@ page import="javax.management.ReflectionException"%>
 
 <%!
-	StringBuffer lists = new StringBuffer();
-	public String printMBean(ComplexType mbean, String indent) throws Exception {
+	/**
+	 * Builds up the the HTML code to display any ComplexType attribute
+	 * of the settings in an editable form. Uses recursion.
+	 *
+	 * @param mbean The ComplexType to build a display
+	 * @param indent A string that will be added in front to indent the
+	 *               current type.
+	 * @param lists All 'lists' encountered will have their name added	 
+	 *              to this StringBuffer followed by a comma.
+	 * @returns The HTML code described above.
+	 */
+	public String printMBean(ComplexType mbean, String indent, StringBuffer lists) throws Exception {
 		if(mbean.isTransient()){
 			return "";
 		}
 		StringBuffer p = new StringBuffer();
 		MBeanInfo info = mbean.getMBeanInfo();
 
-		p.append("<tr><td colspan='2'><b>" + indent + mbean.getName() + "</b></td></tr>\n");
+		p.append("<tr><td><b>" + indent + mbean.getName() + "</b></td><td><a class='help' href=\"javascript:doPop('"+mbean.getDescription()+"')\">?</a></td></tr>\n");
 
 		MBeanAttributeInfo a[] = info.getAttributes();
 		
@@ -36,12 +65,12 @@
 				}
 
 				if(currentAttribute instanceof ComplexType) {
-			    	p.append(printMBean((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;"));
+			    	p.append(printMBean((ComplexType)currentAttribute,indent+"&nbsp;&nbsp;",lists));
 				}
 				else if(currentAttribute instanceof ListType){
 					// Some type of list.
 					ListType list = (ListType)currentAttribute;
-					p.append("<tr><td valign='top'>" + indent + att.getName() + ":&nbsp;</td>\n");
+					p.append("<tr><td valign='top'>" + indent + att.getName() + ":&nbsp;</td><td valign='top'><a class='help' href=\"javascript:doPop('"+att.getDescription()+"')\">?</a>&nbsp;</td>\n");
 					p.append("<td><table border='0' cellspacing='0' cellpadding='0'>\n");
 					p.append("<tr><td><select multiple name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
 					for(int i=0 ; i<list.size() ; i++){
@@ -58,7 +87,7 @@
 				else{
 					Object[] legalValues = att.getLegalValues();
 					
-					p.append("<tr><td>" + indent + att.getName() + ":&nbsp;</td><td>");
+					p.append("<tr><td>" + indent + att.getName() + ":&nbsp;</td><td><a class='help' href=\"javascript:doPop('"+att.getDescription()+"')\">?</a>&nbsp;</td><td>");
 					
 					if(legalValues != null && legalValues.length > 0){
 						//Have legal values. Build combobox.
@@ -91,6 +120,16 @@
 		return p.toString();
 	}
 	
+	/**
+	 * This methods updates a ComplexType with information passed to it
+	 * by a HttpServletRequest. It assumes that for every 'simple' type
+	 * there is a corrisponding parameter in the request. A recursive
+	 * call will be made for any nested ComplexTypes.
+	 * 
+	 * @param mbean The ComplexType to update
+	 * @param request The HttpServletRequest to use to update the 
+	 *                ComplexType
+	 */
 	public void writeNewOrderFile(ComplexType mbean, HttpServletRequest request){
 		if(mbean.isTransient()){
 			return;
@@ -127,21 +166,10 @@
 			}
 		}
 	}
-
 %>
-
-
 <%
-	/**
-	 * This page enables customized jobs to be scheduled.
-	 * (order.xml is used for default values)
-	 */
-	String message = "";
-
-	// Get the default settings.
-	
+	// Load the job to configure.
 	CrawlJob theJob = handler.getJob(request.getParameter("job"));
-	
 	
 	if(theJob == null)
 	{
@@ -154,13 +182,12 @@
 		return;
 	}
 
+	// Get the settings objects.
 	XMLSettingsHandler settingsHandler = theJob.getSettingsHandler();
-
-	boolean isNew = theJob.isNew();
-	
 	CrawlOrder crawlOrder = settingsHandler.getOrder();
     CrawlerSettings orderfile = settingsHandler.getSettingsObject(null);
 
+	// Check for actions.
 	if(request.getParameter("update") != null && request.getParameter("update").equals("true")){
 		// Update values with new ones in the request
 		writeNewOrderFile(crawlOrder,request);
@@ -204,117 +231,123 @@
 		return;
 	}	
 
-	String inputForm=printMBean(crawlOrder,"");
-	
+	// Get the HTML code to display the settigns.
+	StringBuffer listsBuffer = new StringBuffer();
+	String inputForm=printMBean(crawlOrder,"",listsBuffer);
+	// The listsBuffer will have a trailing comma if not empty. Strip it off.
+	String lists = listsBuffer.toString().substring(0,(listsBuffer.toString().length()>0?listsBuffer.toString().length()-1:0));
+
+	// Settings for the page header
 	String title = "Configure settings";
 	int tab = theJob.isProfile()?2:1;
 %>
 
 <%@include file="/include/head.jsp"%>
 
-		<script type="text/javascript">
-			function doAddList(listName)
-			{
-				newItem = document.getElementById(listName+"/add");
-				theList = document.getElementById(listName);
-				
-				if(newItem.value.length > 0)
-				{
-					insertLocation = theList.length;
-					theList.options[insertLocation] = new Option(newItem.value, newItem.value, false, false);
-					newItem.value = "";
+	<script type="text/javascript">
+		function doAddList(listName){
+			newItem = document.getElementById(listName+"/add");
+			theList = document.getElementById(listName);
+			
+			if(newItem.value.length > 0){
+				insertLocation = theList.length;
+				theList.options[insertLocation] = new Option(newItem.value, newItem.value, false, false);
+				newItem.value = "";
+			}
+		}
+		
+		function doDeleteList(listName){
+			theList = document.getElementById(listName);
+			theList.options[theList.selectedIndex] = null;
+		}
+		
+		function doSubmit(){
+			// Before the form can be submitted we must
+			// ensure that ALL elements in ALL lists
+			// are selected. Otherwise they will be lost.
+			lists = new Array(<%=lists%>);
+			for(i=0 ; i<lists.length ; i++){
+				theList = document.getElementById(lists[i]);
+				for(j=0 ; j < theList.length ; j++){
+					theList.options[j].selected = true;
 				}
 			}
-			
-			function doDeleteList(listName)
-			{
-				theList = document.getElementById(listName);
-				theList.options[theList.selectedIndex] = null;
-			}
-			
-			function doSubmit()
-			{
-				lists = new Array(<%=lists.toString().substring(0,(lists.toString().length()>0?lists.toString().length()-1:0))%>);
-				for(i=0 ; i<lists.length ; i++)
-				{
-					theList = document.getElementById(lists[i]);
-					for(j=0 ; j < theList.length ; j++)
-					{
-						theList.options[j].selected = true;
-					}
-				}
-				document.frmConfig.submit();
-			}
-			
-			function doGotoModules()
-			{
-				document.frmConfig.action.value="modules";
-				doSubmit();
-			}
-			
-			function doGotoFilters()
-			{
-				document.frmConfig.action.value="filters";
-				doSubmit();
-			}
-		</script>
-
-		<p><font color="red"><%=message%></font>
+			document.frmConfig.submit();
+		}
 		
-		<form name="frmConfig" method="post" action="configure.jsp">
-			<input type="hidden" name="update" value="true">		
-			<input type="hidden" name="action" value="done">
-			<input type="hidden" name="job" value="<%=theJob.getUID()%>">
-
-			<% if(theJob.isRunning() == false){ %>
-				<input type="button" value="Adjust modules" onClick="doGotoModules()">
-				<input type="button" value="Select filters" onClick="doGotoFilters()">
-			<% } %>
-			<input type="button" value="Done" onClick="doSubmit()">
-			<p>			
-			<table>
-				<tr>
-					<td colspan="2">
-						<b>Meta data</b>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						Description:
-					</td>
-					<td>
-						<input name="meta/description" value="<%=orderfile.getDescription()%>" style="width: 320px">
-					</td>
-				</tr>
-				<%=inputForm%>
-				<tr>
-					<td colspan="2">
-						<b>Seeds</b>
-					</td>
-				</tr>
-				<tr>
-					<td valign="top">
-						Seeds:
-					</td>
-					<td>
-						<textarea name="seeds" style="width: 320px" rows="8"><%
-							BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
-							String sout = seeds.readLine();
-							while(sout!=null){
-								out.println(sout);
-								sout = seeds.readLine();
-							}
-						%></textarea>
-					</td>
-				</tr>
-			</table>
-			<p>
-			<% if(theJob.isRunning() == false){ %>
-				<input type="button" value="Adjust modules" onClick="doGotoModules()">
-				<input type="button" value="Select filters" onClick="doGotoFilters()">
-			<% } %>
-			<input type="button" value="Done" onClick="doSubmit()">
+		function doGotoModules(){
+			document.frmConfig.action.value="modules";
+			doSubmit();
+		}
 		
-		</form>
+		function doGotoFilters(){
+			document.frmConfig.action.value="filters";
+			doSubmit();
+		}
+		
+		function doPop(text){
+			alert(text);
+		}
+	</script>
+	
+	<p>
+	
+	<form name="frmConfig" method="post" action="configure.jsp">
+		<input type="hidden" name="update" value="true">		
+		<input type="hidden" name="action" value="done">
+		<input type="hidden" name="job" value="<%=theJob.getUID()%>">
+	
+		<% if(theJob.isRunning() == false){ %>
+			<input type="button" value="Adjust modules" onClick="doGotoModules()">
+			<input type="button" value="Select filters" onClick="doGotoFilters()">
+		<% } %>
+		<input type="button" value="Done" onClick="doSubmit()">
+		<p>			
+		<table>
+			<tr>
+				<td colspan="3">
+					<b>Meta data</b>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Description:
+				</td>
+				<td></td>
+				<td>
+					<input name="meta/description" value="<%=orderfile.getDescription()%>" style="width: 320px">
+				</td>
+			</tr>
+			<%=inputForm%>
+			<tr>
+				<td colspan="3">
+					<b>Seeds</b>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top">
+					Seeds:
+				</td>
+				<td></td>
+				<td>
+					<textarea name="seeds" style="width: 320px" rows="8"><%
+						BufferedReader seeds = new BufferedReader(new FileReader(settingsHandler.getPathRelativeToWorkingDirectory((String)((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getAttribute("seedsfile"))));
+						String sout = seeds.readLine();
+						while(sout!=null){
+							out.println(sout);
+							sout = seeds.readLine();
+						}
+					%></textarea>
+				</td>
+			</tr>
+		</table>
+		<p>
+		<% if(theJob.isRunning() == false){ %>
+			<input type="button" value="Adjust modules" onClick="doGotoModules()">
+			<input type="button" value="Select filters" onClick="doGotoFilters()">
+		<% } %>
+		<input type="button" value="Done" onClick="doSubmit()">
+	
+	</form>
 		
 <%@include file="/include/foot.jsp"%>
