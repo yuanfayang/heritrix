@@ -57,8 +57,9 @@ public class ProcessorChainList {
     public ProcessorChainList(CrawlOrder order)
             throws FatalConfigurationException {
         try {
-            addProcessorMap(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS, (MapType) order
-                    .getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS));
+            addProcessorMap(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS,
+                (MapType) order.
+                    getAttribute(CrawlOrder.ATTR_PRE_FETCH_PROCESSORS));
             addProcessorMap(CrawlOrder.ATTR_FETCH_PROCESSORS, (MapType) order
                     .getAttribute(CrawlOrder.ATTR_FETCH_PROCESSORS));
             addProcessorMap(CrawlOrder.ATTR_EXTRACT_PROCESSORS, (MapType) order
@@ -68,14 +69,14 @@ public class ProcessorChainList {
             addProcessorMap(CrawlOrder.ATTR_POST_PROCESSORS, (MapType) order
                     .getAttribute(CrawlOrder.ATTR_POST_PROCESSORS));
         } catch (AttributeNotFoundException e) {
-            throw new FatalConfigurationException(
-                    "Could not get processors from crawl ordder.");
+            throw new FatalConfigurationException("Could not get processors" +
+                + " from crawl order: " + e.getMessage());
         } catch (MBeanException e) {
-            throw new FatalConfigurationException(
-                    "Could not get processors from crawl ordder.");
+            throw new FatalConfigurationException("Could not get processors" +
+                " from crawl order: " + e.getMessage());
         } catch (ReflectionException e) {
-            throw new FatalConfigurationException(
-                    "Could not get processors from crawl ordder.");
+            throw new FatalConfigurationException("Could not get processors" +
+                " from crawl order: " + e.getMessage());
         }
 
         if (processorCount() == 0) { throw new FatalConfigurationException(
