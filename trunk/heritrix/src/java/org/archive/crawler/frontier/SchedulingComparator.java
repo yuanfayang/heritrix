@@ -39,16 +39,16 @@ public class SchedulingComparator implements Comparator, Serializable {
         if(o1==o2) {
             return 0; // for exact identity only
         }
-        if (((KeyedQueue)o1).getWakeTime() > ((KeyedQueue)o2).getWakeTime()) {
+        if (((URIWorkQueue)o1).getWakeTime() > ((URIWorkQueue)o2).getWakeTime()) {
             return 1;
         }
-        if (((KeyedQueue)o1).getWakeTime() < ((KeyedQueue)o2).getWakeTime()) {
+        if (((URIWorkQueue)o1).getWakeTime() < ((URIWorkQueue)o2).getWakeTime()) {
             return -1;
         }
         // at this point, the ordering is arbitrary, but still
         // must be consistent/stable over time
 
-        return ((KeyedQueue)o1).getSortFallback().compareTo(((KeyedQueue)o2).getSortFallback());
+        return ((URIWorkQueue)o1).getSortFallback().compareTo(((URIWorkQueue)o2).getSortFallback());
     }
 
 }
