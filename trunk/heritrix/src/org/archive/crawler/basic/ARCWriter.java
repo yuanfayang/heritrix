@@ -25,6 +25,10 @@ import org.xbill.DNS.Record;
 import org.archive.crawler.basic.InvalidRecordException;
 import org.archive.crawler.datamodel.CrawlerBehavior;
 
+import java.util.zip.GZIPOutputStream;
+import org.archive.crawler.util.IAGzipOutputStream;
+import java.io.OutputStream;
+
 import org.w3c.dom.Node;
 
 /**
@@ -42,11 +46,13 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	private String arcPrefix = "archive";			// file prefix for arcs
 	private String outputDir = "";						// where should we put them?
 	private File file = null;								// file handle
-	private FileOutputStream out = null;		// for writing to files
+//	private OutputStream out = null;		// for writing to files
+	private IAGzipOutputStream out = null;	// compressed output stream
 	
 	//	append to arc files to assure uniqueness across threads. 
 	private static int arcId = 0;						
-
+	
+	
   	public void initialize(CrawlController c){
   		super.initialize(c);
   
@@ -54,7 +60,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		createNewArcFile();		  		
   	}
   	
-  	public void readConfiguration(){
+  	protected void readConfiguration(){
 		// set up output directory
 		CrawlOrder order = controller.getOrder();
 		CrawlerBehavior behavior = order.getBehavior();
@@ -143,6 +149,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 			}
 					
 			try{	
+			out.writeRecordHeader();
 			out.write(metaLineStr.getBytes());  		
 			}catch(IOException e){
 				e.printStackTrace();
@@ -155,7 +162,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		String date = get14DigitDate();
 		int uniqueIdentifier = getNextArcId();
 		
-		String fileName = outputDir + arcPrefix + date +  "-" + uniqueIdentifier + ".arc";
+		String fileName = outputDir + arcPrefix + date +  "-" + uniqueIdentifier + ".arc.gz";
 		
 		try {
 			if(out != null){
@@ -164,7 +171,8 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 							
 			file = new File(fileName);
 			//out = new FileOutputStream(file, true).getChannel();
-			out = new FileOutputStream(file);
+			//out = new FileOutputStream(file);
+			out = new IAGzipOutputStream(new FileOutputStream(file));
 			
 			String arcFileDesc =
 				"filedesc://"
@@ -174,7 +182,8 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 					+ " text/plain 77\n1 0 InternetArchive\nURL IP-address Archive-date Content-type Archive-length\n";
 			
 			out.write(arcFileDesc.getBytes());
-
+			out.finish();
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -221,6 +230,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 		out.write("\r\n".getBytes());
 		out.write(body);
 		out.write("\n".getBytes());
+		out.finish();
 	}
 	
 	protected void writeDns(CrawlURI curi) throws IOException, InvalidRecordException {
@@ -254,6 +264,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 	
 		baos.writeTo(out);
 	 	out.write("\n".getBytes());
+	 	out.finish();
 	}
 	
 	// getters and setters		
