@@ -218,7 +218,7 @@ public class ARCWriter extends Processor implements CoreAttributeConstants {
 					+ fileName
 					+ " 0.0.0.0 "
 					+ date
-					+ " text/plain 77\n1 0 InternetArchive\nURL IP-address Archive-date Content-type Archive-length\n\n";
+					+ " text/plain 77\n1 0 InternetArchive\nURL IP-address Archive-date Content-type Archive-length\n\n\n";
 			
 			out.write(arcFileDesc.getBytes());
 			
