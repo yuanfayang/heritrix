@@ -175,9 +175,10 @@ public class RecordingInputStream
 
         long timeoutTime;
         long totalBytes = 0;
+        long startTime = System.currentTimeMillis();
 
         if(timeout > 0) {
-            timeoutTime = System.currentTimeMillis() + timeout;
+            timeoutTime = startTime + timeout;
         } else {
             timeoutTime = Long.MAX_VALUE;
         }
@@ -199,7 +200,8 @@ public class RecordingInputStream
                 // an IOException.  If we have, it'll be picked up on by test
                 // done below.
                 if (System.currentTimeMillis() < timeoutTime) {
-                    throw new IOException("Socket timedout: " + e.getMessage());
+                    throw new IOException("Socket timed out after " +
+                        (timeoutTime - startTime) + "ms: " + e.getMessage());
                 }
             } catch (NullPointerException e) {
                 // [ 896757 ] NPEs in Andy's Th-Fri Crawl.
@@ -215,7 +217,8 @@ public class RecordingInputStream
                 throw new RecorderLengthExceededException();
             }
             if (System.currentTimeMillis() > timeoutTime) {
-                throw new RecorderTimeoutException();
+                throw new RecorderTimeoutException("Timedout after " +
+                    (timeoutTime - startTime) + "ms.");
             }
         }
     }

@@ -22,6 +22,8 @@
  */
 package org.archive.httpclient;
 
+import java.util.logging.Logger;
+
 import org.apache.commons.httpclient.HttpConnection;
 import org.archive.util.HttpRecorder;
 
@@ -36,6 +38,9 @@ import org.archive.util.HttpRecorder;
  * @version $Revision$, $Date$
  */
 public class HttpRecorderMethod {
+    protected static Logger logger =
+        Logger.getLogger(HttpRecorderMethod.class.getName());
+    
     /**
      * Instance of http recorder we're using recording this http get.
      */
@@ -54,21 +59,17 @@ public class HttpRecorderMethod {
         this.httpRecorder = recorder;
 	}
 
-	public void markContentBegin() {
+	public void markContentBegin(HttpConnection connection) {
+        if (connection != this.connection) {
+            // We're checking that we're not being asked to work on
+            // a connection that is other than the one we started
+            // this method#execute with.
+            throw new IllegalArgumentException("Connections differ: " +
+                this.connection + " " + connection + " " +
+                Thread.currentThread().getName());
+        }
 		this.httpRecorder.markContentBegin();
 	}
-    
-    public void closeConnection() {
-        // Calling isOpen, makes httpclient do a lookup on the connection.
-        // If something bad happened during connection use,
-        // it will usually call close itself inside in the isOpen --
-        // the close() won't get called but the wished-for effect will
-        // have occurred.
-        if (this.connection != null && this.connection.isOpen()) {
-            this.connection.close();
-            this.connection = null;
-        }
-    }
     
     /**
      * @return Returns the connection.
