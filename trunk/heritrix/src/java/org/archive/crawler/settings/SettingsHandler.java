@@ -255,26 +255,13 @@ public abstract class SettingsHandler {
     * This method passes around a URI that refinement are checked against.
     *
     * @param host the host or domain to get the settings for.
-     * @param uri
+    * @param uuri UURI for context.
     * @return settings object in effect for the host/domain.
     * @see #getSettingsObject(String)
     * @see #getOrCreateSettingsObject(String)
     */
-    public CrawlerSettings getSettings(String host, CrawlURI uri) {
-        return getRefinementsForSettings(getSettingsForHost(host), uri);
-    }
-    
-    /**
-     * Get CrawlerSettings object in effect for a host or domain.
-     * TODO: FIX THIS.
-     * @param host the host or domain to get the settings for.
-     * @param uuri
-     * @return settings object in effect for the host/domain.
-     * @deprecated Use {@link #getSettings(String, CrawlURI)} instead.
-     */
     public CrawlerSettings getSettings(String host, UURI uuri) {
-        return getRefinementsForSettings(getSettingsForHost(host),
-            new CrawlURI(uuri));
+        return getRefinementsForSettings(getSettingsForHost(host), uuri);
     }
 
     protected CrawlerSettings getSettingsForHost(String host) {
@@ -295,7 +282,7 @@ public abstract class SettingsHandler {
     }
 
     private CrawlerSettings getRefinementsForSettings(CrawlerSettings settings,
-            CrawlURI uri) {
+            UURI uri) {
         if (settings.hasRefinements()) {
             for(Iterator it = settings.refinementsIterator(); it.hasNext();) {
                 Refinement refinement = (Refinement) it.next();

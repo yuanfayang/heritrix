@@ -469,7 +469,7 @@ public class ToeThread extends Thread
      * Whether this thread should cleanly retire at the earliest 
      * opportunity. 
      * 
-     * @return
+     * @return True if should retire.
      */
     public boolean shouldRetire() {
         return shouldRetire;
