@@ -74,7 +74,7 @@ extends Filter {
 
     protected boolean innerAccepts(Object o) {
         String regexp = getRegexp(o);
-        String str = asString(o);
+        String str = o.toString();
         boolean result = (regexp == null)?
             false: TextUtils.matches(regexp, str);
         if (logger.isLoggable(Level.FINE)) {

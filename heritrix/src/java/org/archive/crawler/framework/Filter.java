@@ -28,9 +28,7 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.ModuleType;
@@ -147,27 +145,6 @@ public class Filter extends ModuleType {
 
     public String toString() {
         return "Filter<" + getName() + ">";
-    }
-    
-    /**
-     * Utility method to coerce a CandidateURI or UURI to 
-     * plain string.
-     * 
-     * @param o
-     * @return Passed object as string.
-     */
-    protected String asString(Object o) {
-        String input;
-        // TODO consider changing this to ask o for its matchString.
-        if(o instanceof CandidateURI) {
-            input = ((CandidateURI)o).getURIString();
-        } else if (o instanceof UURI ){
-            input = ((UURI)o).toString();
-        } else {
-            //TODO handle other inputs
-            input = o.toString();
-        }
-        return input;
     }
 
     public void kickUpdate() {

@@ -185,7 +185,7 @@ implements AdaptiveRevisitAttributeConstants {
         } catch (AttributeNotFoundException e1) {
             min = DEFAULT_MIN_WAIT_INTERVAL.longValue();
             logger.fine("Unable to load minimum wait interval for " + 
-                    curi.getURIString());
+                    curi.toString());
         }
 
         long max;
@@ -195,7 +195,7 @@ implements AdaptiveRevisitAttributeConstants {
         } catch (AttributeNotFoundException e1) {
             max = DEFAULT_MAX_WAIT_INTERVAL.longValue();
             logger.fine("Unable to load maximum wait interval for " + 
-                    curi.getURIString());
+                    curi.toString());
         }
 
         
@@ -208,7 +208,7 @@ implements AdaptiveRevisitAttributeConstants {
             } catch (AttributeNotFoundException e1) {
                 waitInterval = DEFAULT_DEFAULT_WAIT_INTERVAL.longValue();
                 logger.fine("Unable to load default wait interval for "
-                        + curi.getURIString());
+                        + curi.toString());
             }
         } else {
             /* Calculate curi's time of next processing */ 
@@ -226,7 +226,7 @@ implements AdaptiveRevisitAttributeConstants {
                 } catch (AttributeNotFoundException e1) {
                     useOverrideTime = DEFAULT_USE_OVERDUE_TIME.booleanValue();
                     logger.fine("Unable to load use-overdue-time for " + 
-                            curi.getURIString());
+                            curi.toString());
                 }
                 
                 if(useOverrideTime){
@@ -243,7 +243,7 @@ implements AdaptiveRevisitAttributeConstants {
                     } catch (AttributeNotFoundException e2) {
                         factor = DEFAULT_CHANGED_FACTOR.doubleValue();
                         logger.fine("Unable to load changed factor for " + 
-                                curi.getURIString());
+                                curi.toString());
                     }
                     waitInterval = (long)(waitInterval / factor);
                 } else if(curi.getInt(A_CONTENT_STATE_KEY) ==
@@ -256,7 +256,7 @@ implements AdaptiveRevisitAttributeConstants {
                     } catch (AttributeNotFoundException e2) {
                         factor = DEFAULT_UNCHANGED_FACTOR.doubleValue();
                         logger.fine("Unable to load unchanged factor for " + 
-                                curi.getURIString());
+                                curi.toString());
                     }
                     waitInterval = (long)(waitInterval*factor);
                 }
@@ -268,7 +268,7 @@ implements AdaptiveRevisitAttributeConstants {
                 } catch (AttributeNotFoundException e1) {
                     // If this fails use default (already set) and log error.
                     logger.fine("Unable to load initial wait interval for " + 
-                            curi.getURIString());
+                            curi.toString());
                 }        
             }
         }
@@ -280,7 +280,7 @@ implements AdaptiveRevisitAttributeConstants {
         }
         
         if (logger.isLoggable(Level.FINE)) {
-            logger.fine("URI " + curi.getURIString() + ", change: "
+            logger.fine("URI " + curi.toString() + ", change: "
                     + curi.getInt(A_CONTENT_STATE_KEY) + " new wait interval: "
                     + waitInterval);
         }

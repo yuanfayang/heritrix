@@ -72,7 +72,7 @@ public class URIQueueMatcher implements Predicate {
     public boolean evaluate(Object o) {
         if(o instanceof CandidateURI){
             CandidateURI CaURI = (CandidateURI)o;
-            Matcher m = p.matcher(CaURI.getURIString());
+            Matcher m = p.matcher(CaURI.toString());
             if(m.matches()){
                 if(delete && frontier != null){
                     CrawlURI tmp = new CrawlURI(CaURI,0);

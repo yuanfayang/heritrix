@@ -50,7 +50,7 @@ import com.sleepycat.je.OperationStatus;
  * per-grouping (per-classKey/per-Host) starting points allows
  * this to act as a collection of independent queues. 
  * 
- * <p>For how the bdb keys are made, see {@link #calculateInsertKey(CrawlURI}.
+ * <p>For how the bdb keys are made, see {@link #calculateInsertKey(CrawlURI)}.
  * 
  * TODO: refactor, improve naming.
  * @author gojomo
@@ -117,7 +117,7 @@ public class BdbMultipleWorkQueues {
                     // rolled into next queue; finished with this queue
                     break;
                 }
-                if (pattern.matcher(curi.getURIString()).matches()) {
+                if (pattern.matcher(curi.toString()).matches()) {
                     cursor.delete();
                     deletedCount++;
                 }
@@ -318,7 +318,7 @@ public class BdbMultipleWorkQueues {
          * @return whether the marker accepts the given CrawlURI
          */
         public boolean accepts(CrawlURI curi) {
-            boolean retVal = pattern.matcher(curi.getURIString()).matches();
+            boolean retVal = pattern.matcher(curi.toString()).matches();
             if(retVal==true) {
                 nextItemNumber++;
             }

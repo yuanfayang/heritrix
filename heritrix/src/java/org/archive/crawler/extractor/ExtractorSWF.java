@@ -77,7 +77,7 @@ implements CoreAttributeConstants {
             return;
         }
         if ((contentType.toLowerCase().indexOf("x-shockwave-flash") < 0)
-                && (!curi.getURIString().toLowerCase().endsWith(".swf"))) {
+                && (!curi.toString().toLowerCase().endsWith(".swf"))) {
             return;
         }
 

@@ -434,11 +434,11 @@ ARCWriterSettings, FetchStatusCodes {
         
         try {
             if (in instanceof ReplayInputStream) {
-                writer.write(curi.getURIString(), curi.getContentType(),
+                writer.write(curi.toString(), curi.getContentType(),
                     ip, curi.getLong(A_FETCH_BEGAN_TIME),
                     recordLength, (ReplayInputStream)in);
             } else {
-                writer.write(curi.getURIString(), curi.getContentType(),
+                writer.write(curi.toString(), curi.getContentType(),
                     ip, curi.getLong(A_FETCH_BEGAN_TIME),
                     recordLength, in);
             }

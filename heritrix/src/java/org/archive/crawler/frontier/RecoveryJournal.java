@@ -86,12 +86,12 @@ implements FrontierJournal {
     }
 
     public synchronized void added(CrawlURI curi) {
-        write("\n" + F_ADD + curi.getURIString() + " " 
+        write("\n" + F_ADD + curi.toString() + " " 
             + curi.getPathFromSeed() + " " + curi.flattenVia());
     }
 
     public void finishedSuccess(CrawlURI curi) {
-        finishedSuccess(curi.getURIString());
+        finishedSuccess(curi.toString());
     }
     
     public void finishedSuccess(UURI uuri) {
@@ -103,12 +103,12 @@ implements FrontierJournal {
     }
 
     public void emitted(CrawlURI curi) {
-        write("\n" + F_EMIT + curi.getURIString());
+        write("\n" + F_EMIT + curi.toString());
 
     }
 
     public void finishedFailure(CrawlURI curi) {
-        finishedFailure(curi.getURIString());
+        finishedFailure(curi.toString());
     }
     
     public void finishedFailure(UURI uuri) {
@@ -120,7 +120,7 @@ implements FrontierJournal {
     }
 
     public void rescheduled(CrawlURI curi) {
-        write("\n" + F_RESCHEDULE + curi.getURIString());
+        write("\n" + F_RESCHEDULE + curi.toString());
     }
 
     private void write(String string) {

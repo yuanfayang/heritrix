@@ -107,7 +107,7 @@ implements AdaptiveRevisitAttributeConstants {
             // Only handles HTTP
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("Error: Non HTTP CrawlURI was passed for evalution. "
-                    + curi.getURIString());
+                    + curi.toString());
             }
             return true;
         }
@@ -116,7 +116,7 @@ implements AdaptiveRevisitAttributeConstants {
             // Missing header info, can't do anything.
             if (logger.isLoggable(Level.INFO)) {
                 logger.info("Error: Missing HttpMethod object in CrawlURI. "
-                        + curi.getURIString());
+                        + curi.toString());
             }
             return true;
         }

@@ -228,9 +228,6 @@ implements Serializable, Lineable {
         this.alist = alist;
     }
 
-    /**
-     * @param object
-     */
     public void setVia(UURI via) {
         this.via = via;
     }
@@ -239,10 +236,10 @@ implements Serializable, Lineable {
      * @return This candidate URI as a string wrapped with 'CandidateURI(' +
      * ')'.
      */
-    public synchronized String toString() {
+    public synchronized String getCandidateURIString() {
         if (this.cachedCandidateURIString == null) {
             this.cachedCandidateURIString =
-                "CandidateURI(" + getURIString() + ")";
+                "CandidateURI(" + toString() + ")";
         }
         return this.cachedCandidateURIString;
     }
@@ -252,10 +249,7 @@ implements Serializable, Lineable {
      * @return String version of referral URI
      */
     public String flattenVia() {
-        if(via == null) {
-            return "";
-        }
-        return ((UURI)via).toString();
+        return (via == null)? "": via.toString();
     }
 
     public String getLine() {
@@ -264,9 +258,21 @@ implements Serializable, Lineable {
         return className + " " + getUURI().toString() + " " + pathFromSeed +
             " " + flattenVia();
     }
+    
+    /**
+     * @return The UURI this CandidateURI wraps as a string 
+     * (We used return what {@link #getCandidateURIString()}
+     * returns on a toString -- use that method if you still need
+     * this functionality).
+     * @see #getCandidateURIString()
+     */
+    public String toString() {
+        return getURIString();
+    }
 
     /**
      * @return URI String
+     * @deprecated Use {@link #toString()}.
      */
     public String getURIString() {
         return getUURI().toString();

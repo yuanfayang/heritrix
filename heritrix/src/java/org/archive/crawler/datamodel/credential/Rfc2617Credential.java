@@ -168,7 +168,7 @@ public class Rfc2617Credential extends Credential {
         	http.getState().setCredentials(new AuthScope(curi.getUURI().getHost(),
         	    curi.getUURI().getPort(), authRealm), upc);
         	logger.fine("Credentials for realm " + authRealm +
-        	    " for curi " + curi.toString() + " added to request: " +
+        	    " for CrawlURI " + curi.toString() + " added to request: " +
 				result);
         	result = true;
         } catch (AttributeNotFoundException e1) {

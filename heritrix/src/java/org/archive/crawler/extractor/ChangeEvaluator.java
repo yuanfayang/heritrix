@@ -68,7 +68,7 @@ implements AdaptiveRevisitAttributeConstants {
         if (curi.isSuccess() == false) {
             // Early return. No point in doing comparison on failed downloads.
             if (logger.isLoggable(Level.FINEST)) {
-                logger.finest("Not handling " + curi.getURIString()
+                logger.finest("Not handling " + curi.toString()
                         + ", did not " + "succeed.");
             }
             return;
@@ -93,7 +93,7 @@ implements AdaptiveRevisitAttributeConstants {
             if (currentDigest == null && oldDigest == null) {
                 // Both are null, can't do a thing
                 if (logger.isLoggable(Level.FINER)) {
-                    logger.finer("On " + curi.getURIString()
+                    logger.finer("On " + curi.toString()
                             + " both digest are null");
                 }
                 // NOTE! RETURN!
@@ -104,7 +104,7 @@ implements AdaptiveRevisitAttributeConstants {
                     && currentDigest.equals(oldDigest)) { 
                 // If equal, we have just downloaded a duplicate.
                 if (logger.isLoggable(Level.FINER)) {
-                    logger.finer("On " + curi.getURIString()
+                    logger.finer("On " + curi.toString()
                             + " both digest are " + "equal. Old: " + oldDigest
                             + ", new: " + currentDigest);
                 }
@@ -117,7 +117,7 @@ implements AdaptiveRevisitAttributeConstants {
             } else {
                 // Document has changed
                 if (logger.isLoggable(Level.FINER)) {
-                    logger.finer("On " + curi.getURIString()
+                    logger.finer("On " + curi.toString()
                             + " digest are not " + "equal. Old: "
                             + (oldDigest == null? "null": oldDigest)
                             + ", new: "
@@ -129,7 +129,7 @@ implements AdaptiveRevisitAttributeConstants {
             }
         } else {
             if (logger.isLoggable(Level.FINER)) {
-                logger.finer("On " + curi.getURIString()
+                logger.finer("On " + curi.toString()
                         + " content state was " + "already set as UNCHANGED.");
             }
         }

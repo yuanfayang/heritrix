@@ -36,7 +36,7 @@ import org.archive.util.Lineable;
 
 /**
  * Command-line tool that displays serialized object streams in a
- *line-oriented format.
+ * line-oriented format.
  *
  * @author gojomo
  */

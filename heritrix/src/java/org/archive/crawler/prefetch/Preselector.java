@@ -98,7 +98,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
         try {
             String regexp = (String) getAttribute(ATTR_BLOCK_BY_REGEXP, curi);
             if (regexp != null && !regexp.equals("")) {
-                if (TextUtils.matches(regexp, curi.getURIString())) {
+                if (TextUtils.matches(regexp, curi.toString())) {
                     curi.setFetchStatus(S_BLOCKED_BY_USER);
                     curi.skipToProcessorChain(getController().getPostprocessorChain());
                 }

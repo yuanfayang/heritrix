@@ -480,12 +480,12 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @return This crawl URI as a string wrapped with 'CrawlURI(' +
      * ')'.
      */
-    public String toString() {
+    public String getCrawlURIString() {
         if (this.cachedCrawlURIString == null) {
             synchronized (this) {
                 if (this.cachedCrawlURIString == null) {
                     this.cachedCrawlURIString =
-                        "CrawlURI(" + getURIString() + ")";
+                        "CrawlURI(" + toString() + ")";
                 }
             }
         }

@@ -221,7 +221,7 @@ public class PreconditionEnforcer
         if (ch == null || ch.hasBeenLookedUp() && ch.getIP() == null) {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine( "no dns for " + ch +
-                    " cancelling processing for " + curi.toString());
+                    " cancelling processing for CrawlURI " + curi.toString());
             }
             curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
             curi.skipToProcessorChain(getController().getPostprocessorChain());
@@ -231,7 +231,7 @@ public class PreconditionEnforcer
         // If we haven't done a dns lookup  and this isn't a dns uri
         // shoot that off and defer further processing
         if (isIpExpired(curi) && !curi.getUURI().getScheme().equals("dns")) {
-            logger.fine("Deferring processing of " + curi.toString()
+            logger.fine("Deferring processing of CrawlURI " + curi.toString()
                 + " for dns lookup.");
             String preq = "dns:" + ch.getHostName();
             try {

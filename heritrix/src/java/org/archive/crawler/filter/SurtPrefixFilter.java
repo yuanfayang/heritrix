@@ -65,7 +65,7 @@ public class SurtPrefixFilter extends Filter {
         if (surtPrefixes == null) {
             readPrefixes();
         }
-        String s = SURT.fromURI(asString(o));
+        String s = SURT.fromURI(o.toString());
         // also want to treat https as http
         if(s.startsWith("https:")) {
             s = "http:"+s.substring(6);
