@@ -40,7 +40,6 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.apache.commons.collections.BoundedFifoBuffer;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -49,10 +48,10 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
+import org.archive.crawler.framework.URIFrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 import org.archive.crawler.util.FPUURISet;
@@ -65,9 +64,7 @@ import org.archive.util.Queue;
 import org.archive.util.QueueItemMatcher;
 
 import EDU.oswego.cs.dl.util.concurrent.BoundedBuffer;
-import EDU.oswego.cs.dl.util.concurrent.BoundedChannel;
 import EDU.oswego.cs.dl.util.concurrent.Channel;
-import EDU.oswego.cs.dl.util.concurrent.Mutex;
 
 /**
  * A basic mostly breadth-first frontier, which refrains from
@@ -116,7 +113,7 @@ public class Frontier
     CrawlController controller;
 
     Channel readyChannel;
-    Mutex wakerLock = new Mutex();
+    CrawlURI onDeck;
     
     // those UURIs which are already in-process (or processed), and
     // thus should not be rescheduled
@@ -148,8 +145,46 @@ public class Frontier
     //LinkedList heldClassQueues = new LinkedList(); // of String (queueKey) -> KeyedQueue
 
     // all per-class queues who are on hold until a certain time
-    SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime
-
+    SortedSet snoozeQueues = new TreeSet(new SchedulingComparator()); // of KeyedQueue, sorted by wakeTime    
+    long wakeTime;
+    Thread wakerThread; 
+    private class Waker implements Runnable {
+            /** 
+             * @see java.lang.Runnable#run()
+             */
+            public void run() {
+                  while(true) {
+                      synchronized (Frontier.this) {
+                          long now = System.currentTimeMillis();
+                          wakeTime = earliestWakeTime();
+                          if (wakeTime<=now) {
+                              fillReadyChannel(now);
+                              wakeTime = earliestWakeTime();
+                          } // else: it was just a kick to reset
+                          try {
+                              Frontier.this.wait(wakeTime-now);
+                          } catch (InterruptedException e) {
+                              // e.printStackTrace();
+                              wakerThread=null;
+                              break; // just finish when interrupted
+                          }
+                      }
+                  }
+              }
+    }
+    
+//    private class Waker implements Runnable {
+//        public void run() {
+//            synchronized (Frontier.this) {
+//                long now = System.currentTimeMillis()
+//                fillReadyChannel(System.currentTimeMillis());
+//                wakeTime = earliestWakeTime();
+//                assert earliestWakeTime()>now : "fillReady didn't wake everyone";
+//                pendingWaker = scheduler.executeAfterDelay(wakeTime-now);
+//            }
+//        }
+//    }
+    
     // CrawlURIs held until some specific other CrawlURI is emitted
     //HashMap heldCuris = new HashMap(); // of UURI -> CrawlURI
 
@@ -200,6 +235,9 @@ public class Frontier
             DEFAULT_RETRY_DELAY));
     }
 
+    /**
+     * 
+     */
     public Frontier() {
         this(null);
     }
@@ -231,7 +269,10 @@ public class Frontier
 //                      0.75f,
 //                      20, // 1 million slots in cache (always)
 //                      0.75f));
-
+        wakerThread = new Thread(new Waker());
+        wakerThread.setName("Frontier.Waker");
+        wakerThread.start();
+        
         this.controller = c;
         controller.addCrawlStatusListener(this);
         loadSeeds(c);
@@ -300,7 +341,7 @@ public class Frontier
      * Arrange for the given CandidateURI to be visited, if it is not
      * already scheduled/completed.
      *
-     * @see org.archive.crawler.framework.URIFrontier#schedule(org.archive.crawler.datamodel.CandidateURI)
+     * @param caUri
      */
     protected void innerSchedule(CandidateURI caUri) {
         if(!caUri.forceFetch() && alreadyIncluded.contains(caUri)) {
@@ -326,32 +367,87 @@ public class Frontier
     }
 
     
+    /**
+     * @param timeout
+     * @return
+     * @throws InterruptedException
+     */
     public CrawlURI newNext(int timeout) throws InterruptedException {
-        CrawlURI result = (CrawlURI) readyChannel.poll(0);
-        if (result!=null) {
-            return result;
-        }
-        // am I specially deputized to wake
-        if(wakerLock.attempt(0)) {
-            try {
-                result = primeReadyChannel(timeout);
-            } finally {
-                wakerLock.release();
-            }
-        } 
-        // I'm normal; just try
         return (CrawlURI) readyChannel.poll(timeout);
+//        CrawlURI result = (CrawlURI) readyChannel.poll(0);
+//        if (result!=null) {
+//            return result;
+//        }
+//        fillReadyChannel();
+//        result = (CrawlURI) readyChannel.poll(0);
+//        if ( result!=null || isEmpty() ) {
+//            return result;
+//        }
+//        // non-empty but also nothing ready;
+//        return (CrawlURI) readyChannel.poll(timeout);
     }
     
     /** 
      * Fill the ready channel 
+     * @param now
      * 
-     * @see org.archive.crawler.framework.URIFrontier#nextInto(int, EDU.oswego.cs.dl.util.concurrent.Channel, int)
      */
-    public synchronized void fillReady(int timeout) {
-        int batched = 0;
-        
+    private void fillReadyChannel(long now) {
+        // unsnooze as necessary
+        wakeReadyQueues(now);
+        // try any leftovers
+        if(onDeck!=null) {
+            if(onDeckToReady()) {
+                return;
+            }
+        }
+        // try all ready queues
+        if (flushReadyQueuesToChannel()) {
+            return;
+        }
+        // try all pending
+        while(!pendingQueue.isEmpty()) {
+            CrawlURI curi = CrawlURI.from((CandidateURI)pendingQueue.dequeue());
+            enqueueToKeyed(curi);
+            if(flushReadyQueuesToChannel()) {
+                return;
+            }
+        }
+        // done as much as is ready; rely on waker or 
+        // future calls to do more
     }
+    
+    /**
+     * Move items from ready keyedqueues to the ready channel
+     * @return if channel is full
+     */
+    private boolean flushReadyQueuesToChannel() {
+        while(!readyClassQueues.isEmpty()) {
+            onDeck = dequeueFromReady();
+            emitCuri(onDeck);
+            if(onDeckToReady()) {
+                return true;
+            }
+        }
+        return false; // channel not filled; onDeck empty
+    }
+
+    private boolean onDeckToReady() {
+        try {
+            if (!readyChannel.offer(onDeck,0)) {
+                return true; // channel filled, onDeck set
+            } else {
+                onDeck=null;
+            }
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            System.err.println("onDeck "+onDeck);
+            e.printStackTrace();
+            return true; // pretend filled
+        }
+        return false;
+    }
+
     /**
      * Return the next CrawlURI to be processed (and presumably
      * visited/fetched) by a a worker thread.
@@ -360,6 +456,7 @@ public class Frontier
      * pending queue.
      *
      * @see org.archive.crawler.framework.URIFrontier#next(int)
+     * @return
      */
     public synchronized CrawlURI next() {
         long now = System.currentTimeMillis();
@@ -533,6 +630,8 @@ public class Frontier
         
         finally {
             curi.processingCleanup();
+            fillReadyChannel(System.currentTimeMillis()); 
+            // TODO see if time can be reused from elsewhere (ToeThread.lastFinishedTime?)
         }
     }
 
@@ -599,6 +698,7 @@ public class Frontier
     /**
      * Take note of any processor-local errors that have
      * been entered into the CrawlURI.
+     * @param curi
      *
      */
     private void logLocalizedErrors(CrawlURI curi) {
@@ -675,6 +775,7 @@ public class Frontier
 
     /**
      * Wake any snoozed queues whose snooze time is up.
+     * @param now
      *
      */
     protected void wakeReadyQueues(long now) {
@@ -804,14 +905,33 @@ public class Frontier
 //        }
 //    }
 
-    /**
-     *
-     */
     protected CandidateURI dequeueFromPending() {
         if (pendingQueue.isEmpty()) {
             return null;
         }
         return (CandidateURI)pendingQueue.dequeue();
+    }
+
+    /**
+     * Place curi on the queue for its class (server), if queue
+     * exists and contains other items
+     *
+     * @param curi
+     */
+    protected void enqueueToKeyed(CrawlURI curi) {
+        KeyedQueue kq = keyedQueueFor(curi);
+        assert kq.getStoreState() == URIStoreable.EMPTY 
+            || kq.getStoreState() == URIStoreable.READY 
+            || kq.getStoreState() == URIStoreable.SNOOZED 
+            || kq.getStoreState() == URIStoreable.IN_PROCESS 
+            : "unexpected keyedqueue state";
+
+        if(curi.needsImmediateScheduling()) {
+            kq.enqueueHigh(curi);
+        } else {
+            kq.enqueue(curi);
+        }
+        updateQueue(kq);
     }
 
     /**
@@ -898,6 +1018,7 @@ public class Frontier
     /**
      *
      * @param curi
+     * @throws AttributeNotFoundException
      */
     protected void noteProcessingDone(CrawlURI curi) throws AttributeNotFoundException {
         curi.incrementFetchAttempts();
@@ -921,6 +1042,7 @@ public class Frontier
      *
      * @param curi
      * @param kq 
+     * @throws AttributeNotFoundException
      */
     protected void updateScheduling(CrawlURI curi, KeyedQueue kq) throws AttributeNotFoundException {
         long durationToWait = 0;
@@ -1044,6 +1166,7 @@ public class Frontier
     /**
      * @param curi
      * @return True if we need to retry.
+     * @throws AttributeNotFoundException
      */
     private boolean needsPromptRetry(CrawlURI curi) throws AttributeNotFoundException {
         //
@@ -1061,6 +1184,7 @@ public class Frontier
     /**
      * @param curi
      * @return True if we need to retry.
+     * @throws AttributeNotFoundException
      */
     private boolean needsRetrying(CrawlURI curi) throws AttributeNotFoundException {
         //
@@ -1081,6 +1205,7 @@ public class Frontier
 
     /**
      * @param curi
+     * @throws AttributeNotFoundException
      */
     private void scheduleForRetry(CrawlURI curi) throws AttributeNotFoundException {
         long delay;
@@ -1129,6 +1254,13 @@ public class Frontier
         kq.setWakeTime(wake);
         snoozeQueues.add(kq);
         kq.setStoreState(URIStoreable.SNOOZED);
+        kickWakerIfNecessary();
+    }
+
+    private void kickWakerIfNecessary() {
+        if(wakeTime>earliestWakeTime()) {
+            notifyAll(); 
+        }
     }
 
     /**
@@ -1209,7 +1341,9 @@ public class Frontier
         return netUrisScheduled - (long)(alreadyIncluded.count() * duplicatesInPendingEstimate );
     }
 
-    /* (non-Javadoc)
+
+    /** 
+     * 
      * @see org.archive.crawler.framework.URIFrontier#getInitialMarker(java.lang.String, boolean)
      */
     public URIFrontierMarker getInitialMarker(String regexpr, boolean inCacheOnly) {
@@ -1226,7 +1360,7 @@ public class Frontier
         return new FrontierMarker(regexpr,inCacheOnly,keyqueueKeys);
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.framework.URIFrontier#getPendingURIsList(org.archive.crawler.framework.URIFrontierMarker, int, boolean)
      */
     public ArrayList getPendingURIsList(URIFrontierMarker marker, int numberOfMatches, boolean verbose) throws InvalidURIFrontierMarkerException {
@@ -1268,6 +1402,7 @@ public class Frontier
      * 
      * @param queue
      *            The queue to inspect
+     * @param queueName
      * @param list
      *            The list to add matched URIs to.
      * @param marker
@@ -1277,6 +1412,7 @@ public class Frontier
      * @param numberOfMatches
      *            maximum number of matches to add to list
      * @return the number of matches found
+     * @throws InvalidURIFrontierMarkerException
      */
     private int inspectQueue( Queue queue,
                               String queueName,
@@ -1335,7 +1471,8 @@ public class Frontier
         return foundMatches;
     }
 
-    /* (non-Javadoc)
+    /**
+     * 
      * @see org.archive.crawler.framework.URIFrontier#deleteURIsFromPending(java.lang.String)
      */
     public long deleteURIsFromPending(String match) {
@@ -1497,14 +1634,17 @@ public class Frontier
         }
     }
 
+    /**
+     * @return
+     */
     public long getAllClassQueuesMap()
     {
         long total = 0;
         return total;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.CrawlListener#crawlPausing(java.lang.String)
+    /**
+     * @param statusMessage
      */
     public void crawlPausing(String statusMessage) {
         // We are not interested in the crawlPausing event
@@ -1512,8 +1652,8 @@ public class Frontier
 
 
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.CrawlStatusListener#crawlPaused(java.lang.String)
+    /**
+     * @param statusMessage 
      */
     public void crawlPaused(String statusMessage) {
         // We are not interested in the crawlPaused event
@@ -1521,44 +1661,47 @@ public class Frontier
 
 
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.CrawlStatusListener#crawlResuming(java.lang.String)
+    /**
+     * @param statusMessage
      */
     public void crawlResuming(String statusMessage) {
         // We are not interested in the crawlResuming event
     }
 
 
-    /*    (non-Javadoc)
-     *  @see org.archive.crawler.framework.CrawlStatusListener#crawlEnding(java.lang.String)
+    /**
+     * @param sExitMessage
      */
     public void crawlEnding(String sExitMessage) {
         // We are not interested in the crawlEnding event
     }
 
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.CrawlStatusListener#crawlEnded(java.lang.String)
+    /**
+     * @param sExitMessage
      */
     public void crawlEnded(String sExitMessage) {
         // Ok, if the CrawlController is exiting we delete our reference to it to facilitate gc.
         controller = null;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#getTotalBytesWritten()
+    /**
+     * @return
      */
     public long totalBytesWritten() {
         return totalProcessedBytes;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see org.archive.crawler.framework.URIFrontier#disregardedFetchCount()
      */
     public long disregardedFetchCount() {
         return disregardedCount;
     }
     
+    /**
+     * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
+     */
     public void importRecoverLog(String pathToLog) throws IOException {
         // scan log for all 'Fs' lines: add as 'alreadyIncluded'
         BufferedReader reader = new BufferedReader(new FileReader(pathToLog));
@@ -1601,4 +1744,23 @@ public class Frontier
 
 
 
+    /**
+     * Let the wakerThread complete
+     * 
+     * @see java.lang.Object#finalize()
+     */
+    protected void finalize() throws Throwable {
+        super.finalize();
+        wakerThread.interrupt();
+    }
+
+    /** 
+     * Start the Frontier, by preloading the readyChannel
+     * with crawlable URIs.
+     * 
+     * @see org.archive.crawler.framework.URIFrontier#start()
+     */
+    public synchronized void start() {
+        fillReadyChannel(System.currentTimeMillis());
+    }
 }

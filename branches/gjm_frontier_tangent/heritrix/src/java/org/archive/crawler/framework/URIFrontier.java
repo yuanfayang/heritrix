@@ -31,8 +31,6 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidURIFrontierMarkerException;
 
-import EDU.oswego.cs.dl.util.concurrent.Channel;
-
 /**
  * An interface for URI Frontiers. A URI Frontier maintains the internal
  * state of a crawl, which URIs have been crawled, discovered etc.
@@ -40,8 +38,16 @@ import EDU.oswego.cs.dl.util.concurrent.Channel;
  */
 public interface URIFrontier {
 
+    /**
+     * Comment for <code>ATTR_NAME</code>
+     */
     final static String ATTR_NAME = "frontier";
 
+    /**
+     * @param c
+     * @throws FatalConfigurationException
+     * @throws IOException
+     */
     void initialize(CrawlController c) throws FatalConfigurationException,
             IOException;
 
@@ -144,6 +150,10 @@ public interface URIFrontier {
      */
     public String report();
 
+    /**
+     * @param pathToLog
+     * @throws IOException
+     */
     public void importRecoverLog(String pathToLog) throws IOException;
 
     /**
@@ -224,13 +234,19 @@ public interface URIFrontier {
      * 
      * @param match A regular expression, any URIs that matches it will be 
      *              deleted.
+     * @return
      */
     public long deleteURIsFromPending(String match);
 
     /**
-     * @param batchMax
-     * @param crawlUriChannel
      * @param timeout
+     * @return
+     * @throws InterruptedException
      */
-    void nextInto(int batchMax, Channel crawlUriChannel, int timeout);
+    CrawlURI newNext(int timeout) throws InterruptedException;
+
+    /**
+     * 
+     */
+    void start();
 }
