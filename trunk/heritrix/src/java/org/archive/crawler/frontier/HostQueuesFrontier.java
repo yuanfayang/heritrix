@@ -142,6 +142,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     public final static String ATTR_PREFERENCE_EMBED_HOPS = "preference-embed-hops";
     protected final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(1); 
 
+    /** whether to reassign URIs to IP-address based queues when IP known */
+    public final static String ATTR_IP_POLITENESS = "ip_politeness";
+    // TODO: change default to true once well-tested
+    protected final static Boolean DEFAULT_IP_POLITENESS = new Boolean(false); 
+    
     /** queue assignment to force onto CrawlURIs; intended to be overridden */
     public final static String ATTR_FORCE_QUEUE = "force-queue-assignment";
     protected final static String DEFAULT_FORCE_QUEUE = "";
@@ -167,6 +172,16 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     protected final static Integer DEFAULT_HOST_QUEUES_MEMORY_CAPACITY =
         new Integer(200);
 
+    /**
+     * True if we're to use the BDB already seen implementation
+     * in place of the in-memory already included set.
+     * 
+     * @see http://crawler.archive.org/cgi-bin/wiki.pl?AlreadySeen
+     */
+    private static String ATTR_USE_BDB_ALREADY_INCLUDED =
+        "use-bdb-already-included";
+    private static Boolean DEFAULT_USE_BDB_ALREADY_INCLUDED = Boolean.FALSE;
+    
     protected final static float KILO_FACTOR = 1.024F;
 
     protected CrawlController controller;
@@ -180,7 +195,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 
     /** Policy for assigning CrawlURIs to named queues */
-    protected QueueAssignmentPolicy queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
+    protected QueueAssignmentPolicy queueAssignmentPolicy = null;
 
     /** 
      * All per-class queues.
@@ -225,16 +240,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     // flags indicating operator-specified crawl pause/end 
     private boolean shouldPause = false;
     private boolean shouldTerminate = false;
-    
-    /**
-     * True if we're to use the BDB already seen implementation
-     * in place of the in-memory already included set.
-     * 
-     * @see http://crawler.archive.org/cgi-bin/wiki.pl?AlreadySeen
-     */
-    private static String ATTR_USE_BDB_ALREADY_INCLUDED =
-        "use-bdb-already-included";
-    private static Boolean DEFAULT_USE_BDB_ALREADY_INCLUDED = Boolean.FALSE;
     
     /**
      * Crawl replay logger.
@@ -304,6 +309,13 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 DEFAULT_HOST_VALENCE));
         t.setExpertSetting(true);
         
+        t = addElementToDefinition(new SimpleType(ATTR_IP_POLITENESS,
+                "Whether to assign URIs to IP-address based queues "+
+                "when possible, to remain polite on a per-IP-address "+
+                "basis.",
+                DEFAULT_IP_POLITENESS));
+        t.setExpertSetting(true);
+        t.setOverrideable(false);
         t = addElementToDefinition(
                 new SimpleType(ATTR_FORCE_QUEUE,
                 "EXPERT SETTING. The queue name into which to force URIs. Should " +
@@ -373,6 +385,13 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         this.controller = c;
         alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
             "alreadyIncluded");
+        
+        if(((Boolean)getUncheckedAttribute(null,ATTR_IP_POLITENESS)).booleanValue()) {
+            queueAssignmentPolicy = new IPQueueAssignmentPolicy();
+        } else {
+            queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
+        }
+        
         loadSeeds();
         // The below code is from the AbstractFrontier.
         File logsDisk = null;
@@ -583,9 +602,29 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             }
             
             // Now, see if any holding queues are ready with a CrawlURI
-            if (!this.readyClassQueues.isEmpty()) {
+            while (!this.readyClassQueues.isEmpty()) {
                 curi = dequeueFromReady();
-                return emitCuri(curi);
+                curi.setServer(getServer(curi));
+                // check if curi belongs in different queue
+                String currentQueueKey = getClassKey(curi);
+                if (currentQueueKey.equals(curi.getClassKey())) {
+                    // curi was in right queue, emit
+                    return emitCuri(curi);
+                } else {
+                    // URI's assigned queue has changed since it
+                    // was queued (eg because its IP has become
+                    // known). 
+                    // update old queue
+                    KeyedQueue kq = (KeyedQueue)curi.getHolder();
+                    if(kq.getState() == URIWorkQueue.EMPTY) {
+                        // source queue depleted
+                        readyClassQueues.removeFirst();
+                        updateQ(kq); // discard
+                    }
+                    // send to new queue
+                    curi.setClassKey(currentQueueKey);
+                    enqueueToKeyed(curi);
+                }
             }
     
             // See if URIs exhausted
@@ -901,8 +940,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     }
 
     protected CrawlURI dequeueFromReady() {
-        URIWorkQueue firstReadyQueue =
-            (URIWorkQueue)readyClassQueues.getFirst();
+        KeyedQueue firstReadyQueue =
+            (KeyedQueue)readyClassQueues.getFirst();
         assert firstReadyQueue.getState() == URIWorkQueue.READY:
             "Top ready queue not ready but " + firstReadyQueue.getState() +
             ": " + firstReadyQueue.getClassKey();
@@ -918,21 +957,13 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
 
     /**
      * Prepares a CrawlURI for crawling. Also marks it as 'being processed'.
+     * 
      * @param curi The CrawlURI
      * @return The CrawlURI
      * @see #noteInProcess(CrawlURI)
      */
     protected CrawlURI emitCuri(CrawlURI curi) {
-        if(curi != null) {
-            noteInProcess(curi);
-            if (this.controller == null ||
-                    this.controller.getServerCache() == null ) {
-                logger.warning("Controller or ServerCache is null processing " +
-                    curi);
-            } else {
-                curi.setServer(getServer(curi));
-            }
-        }
+        noteInProcess(curi);
         logger.finer(this + ".emitCuri(" + curi + ")");
         if (this.recover != null) {
             this.recover.emitted(curi);
@@ -947,7 +978,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @param curi The CrawlURI to mark.
      */
     protected void noteInProcess(CrawlURI curi) {
-        URIWorkQueue kq = (URIWorkQueue) curi.getHolder();
+        KeyedQueue kq = (KeyedQueue) curi.getHolder();
         if(kq==null){
             logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
@@ -1737,6 +1768,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     
     synchronized public void pause() { 
         shouldPause = true;
+        notifyAll();
     }
     synchronized public void unpause() { 
         shouldPause = false;
