@@ -36,23 +36,7 @@ import org.archive.crawler.settings.SettingsHandler;
  *
  * @author gojomo
  */
-public class MapServerCache
-implements ServerCache {
-    private static Logger logger =
-        Logger.getLogger(ServerCache.class.getName());
-    
-    private SettingsHandler settingsHandler = null;
-    
-    /**
-     * hostname[:port] -> CrawlServer
-     */
-    private HashMap servers = new HashMap();
-    
-    /**
-     * hostname -> CrawlHost
-     */
-    private HashMap hosts = new HashMap();
-
+public class MapServerCache extends ServerCache {
     /**
      * Constructor with default access.
      * Has default access so you have to go via the ServerCacheFactory
@@ -64,68 +48,7 @@ implements ServerCache {
     
     public void initialize(SettingsHandler handler) {
         this.settingsHandler = handler;
-    }
-
-    public synchronized CrawlServer getServerFor(String h) {
-        CrawlServer cserver = (CrawlServer)this.servers.get(h);
-        if (cserver == null) {
-            // Ensure key is private object
-            String skey = new String(h);
-            cserver = new CrawlServer(skey);
-            cserver.setSettingsHandler(settingsHandler);
-            servers.put(skey,cserver);
-        }
-        return cserver;
-    }
-
-    public CrawlServer getServerFor(CrawlURI curi) {
-        CrawlServer hostOrAuthority = null;
-        try {
-            String key = CrawlServer.getServerKey(curi);
-            // TODOSOMEDAY: make this robust against those rare cases
-            // where authority is not a hostname.
-            if (key != null) {
-                hostOrAuthority = getServerFor(key);
-            }
-        } catch (URIException e) {
-            e.printStackTrace();
-        } catch (NullPointerException npe) {
-            logger.severe("NullPointerException with " + curi);
-            npe.printStackTrace();
-        }
-        return hostOrAuthority;
-    }
-    
-    public synchronized CrawlHost getHostFor(String hostname) {
-        if (hostname == null || hostname.length() == 0) {
-            return null;
-        }
-        CrawlHost host = (CrawlHost)this.hosts.get(hostname);
-        if (host == null) {
-            String hkey = new String(hostname); 
-            host = new CrawlHost(hkey);
-            this.hosts.put(hkey, host);
-        }
-        return host;
-    }
-    
-    public CrawlHost getHostFor(CrawlURI curi) {
-        CrawlHost h = null;
-        try {
-            h = getHostFor(curi.getUURI().getReferencedHost());
-        } catch (URIException e) {
-            e.printStackTrace();
-        }
-        return h;
-    }
-    
-    public boolean containsServer(String serverKey) {
-        CrawlServer cserver = (CrawlServer) servers.get(serverKey);
-        return cserver != null; 
-    }
-    
-    public boolean containsHost(String hostKey) {
-        CrawlHost chost = (CrawlHost) hosts.get(hostKey);
-        return chost != null; 
+        this.servers = new HashMap();
+        this.hosts = new HashMap();
     }
 }
