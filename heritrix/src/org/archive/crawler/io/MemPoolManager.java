@@ -5,8 +5,8 @@
 
 package org.archive.crawler.io;
 
-import java.util.*;
-import java.io.*;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * The MemPoolManager manages a pool of memory blocks that would be

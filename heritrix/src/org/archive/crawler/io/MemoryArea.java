@@ -5,8 +5,7 @@
 
 package org.archive.crawler.io;
 
-import java.util.*;
-import java.io.*;
+import java.util.LinkedList;
 
 
 /**
