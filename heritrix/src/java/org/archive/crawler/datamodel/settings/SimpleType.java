@@ -33,6 +33,7 @@ public class SimpleType implements Type {
     private final String name;
     private final String description;
     private final Object defaultValue;
+    private Object[] legalValues = null;
     
     /**
      * 
@@ -41,6 +42,11 @@ public class SimpleType implements Type {
         this.name = name;
         this.description = description;
         this.defaultValue = defaultValue;
+    }
+    
+    public SimpleType(String name, String description, Object defaultValue, Object[] legalValues) {
+        this(name, description, defaultValue);
+        this.legalValues = legalValues;
     }
 
     /* (non-Javadoc)
@@ -62,5 +68,9 @@ public class SimpleType implements Type {
      */
     public Object getDefaultValue() {
         return defaultValue;
+    }
+
+    public Object[] getLegalValues() {
+        return legalValues;
     }
 }
