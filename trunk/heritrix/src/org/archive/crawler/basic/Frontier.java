@@ -23,6 +23,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURISet;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlListener;
 import org.archive.crawler.framework.URIFrontier;
 import org.archive.crawler.framework.XMLConfig;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -45,7 +46,7 @@ import org.archive.util.Queue;
  */
 public class Frontier
 	extends XMLConfig 
-	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants {
+	implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlListener {
 	private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 5;
 	private static String XP_DELAY_FACTOR = "@delay-factor";
 	private static String XP_MIN_DELAY = "@min-delay-ms";
@@ -144,6 +145,7 @@ public class Frontier
 //				0.75f));
 		
 		this.controller = c;
+		controller.addListener(this);
 		Iterator iter = c.getScope().getSeedsIterator();
 		while (iter.hasNext()) {
 			UURI u = (UURI) iter.next();
@@ -929,6 +931,17 @@ public class Frontier
 	public long pendingUriCount() {
 		float duplicatesInPendingEstimate = (totalUrisScheduled == 0) ? 0 : scheduledDuplicates / totalUrisScheduled;
 		return netUrisScheduled - (long)(alreadyIncluded.count() * duplicatesInPendingEstimate );
+	}
+
+
+
+	/** 
+	 *  The crawl controller invokes this method when it is exiting.
+	 *  The frontier should do cleanup to facilitate gc.
+	 *  No other object then the crawl controller should invoke this method. 
+	 */
+	public void crawlEnding(String sExitMessage) {
+		controller = null;			
 	}
 
 }
