@@ -43,6 +43,19 @@
     </section>
     <section name="News and Status">
 
+    <subsection name="Release 1.0.0 08/06/2004">
+        <p>Added new prefix ('SURT') scope and filter,
+        compression of recovery log,
+        mass adding of URIs to running crawler,
+        crawling via a http proxy, 
+        adding of headers to request,
+        improved out-of-the-box defaults,
+        hash of content to crawl log and to arcreader output,
+        and many bug fixes.
+        See <a href="/changes-report.html">Changes</a> log for detail
+        and <a href="articles/limitations.html">Known Limitations</a>.
+        </p>
+    </subsection>
     <subsection name="1.0.0 first release candidate, 0.10.0 06/04/2004">
         <p>Release for second heritrix workshop, Copenhagen 06/2004
         (1.0.0 first release candidate). Added site-first prioritization,

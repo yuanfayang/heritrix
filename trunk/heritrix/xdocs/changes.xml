@@ -5,6 +5,79 @@
   </properties>
   <body>
 
+    <release version="1.0.0" date="2004-08-06"
+        description="Added new prefix ('SURT') scope and filter,
+        compression of recovery log,
+        mass adding of URIs to running crawler,
+        crawling via a http proxy, 
+        adding of headers to request,
+        improved out-of-the-box defaults,
+        hash of content to crawl log and to arcreader output,
+        and many bug fixes.">
+
+
+<action dev="gojomo" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=939679">Mass-add URIs to running crawl and force reconsideration</a></action>
+<action dev="gojomo" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=986977">SurtPrefix scope (and filter)</a></action>
+<action dev="stack-sf" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=989816">Specification of default CharSequence charset</a></action>
+<action dev="stack-sf" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=983001">crawl.log entries all on one line</a></action>
+<action dev="gojomo" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=869584">Hash content-bodies, show in logs (and future ARCs)</a></action>
+<action dev="gojomo" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=964581">option to preference (quick-get) embeds</a></action>
+<action dev="nobody" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=964493">Compress recover.log</a></action>
+<action dev="stack-sf" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=988106">[UURI] 'http:///...' converted to 'http://...'</a></action>
+<action dev="mark williamson" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=926143">enable use through HTTP proxy</a></action>
+<action dev="Tom Emerson" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=945922">Allow adding (subtracting?) http headers</a></action>
+<action dev="andy boyko" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=983109">Improved out-of-the-box defaults</a></action>
+<action dev="stack-sf" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=982909">ARCWriter makes FAT gzip header</a></action>
+<action dev="gojomo" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=925734">exponential backoff URI/host retries</a></action>
+<action dev="stack-sf" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539102&amp;aid=899228">Add in a nedlib harvest file writing processor</a></action>
+
+
+
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Total data "written" isn't necessarily written (wording)</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">embeds within scope problem</a></action>
+<action dev="kristinn_sig" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">NPE clearing alerts</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">arcmetadata repeated once for every domain config</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">CCE deserializing diskqueue [Was: IllegalArgumentExcepti...]</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">no docs for recovery-journal feature</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Pause/Terminate ignored on 2.6 kernel 1.5 JVM</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Investigate "Relative URI but no base"</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">User-Agent should be able to mimic Mozilla (as does Google)</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">referral URL should be stored in recover.log</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">ToeThreads hung in FetchDNS after Pause</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">robots.txt lookup for different ports on same host</a></action>
+<action dev="Tom Emerson" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Empty log percentages displayed as NaN%</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">UURI doubly-encodes %XX sequences</a></action>
+<action dev="johnerik" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Single settings change causes two versions to be created</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">New IA debian image is 2.6 (Was: Build fails: JVM and ...)</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">NPE in PathDepthFilter</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">[investigate &amp; rule out] Thread report deadlock risks</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">jetty susceptible to DoS attack</a></action>
+<action dev="johnerik" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">'ignore' robots does not ignore meta nofollow</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">URI Syntax Errors stop page parsing.</a></action>
+<action dev="johnerik" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">NPE in ExtractorHTML/TextUtils.getMatcher()</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">ARCReader: Failed to find GZIP MAGIC</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">javascript embedded URLs</a></action>
+<action dev="ia_igor" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">NoClassDefFoundError when starting a job</a></action>
+<action dev="ia_igor" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Max number of deferrals hard-coded to 10.</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Frontier report thread safety problems?</a></action>
+<action dev="stack-sf" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">ARCReader hanging</a></action>
+<action dev="kristinn_sig" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">log-browsing by regexp outofmemoryerror</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Deferred URLs due the DNS problem -- Heritrix(-50)-Deferred</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Assertion failures shouldn't be more fatal than Runtime Exc.</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">min-interval is superfluous; remove</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">crawl doesn't end when using valence > 1</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">Giant (in # of files) state directory problematic</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">robots-expiration units, default wrong</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">NoSuchElementException in URI queues halts crawling</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">#anchor links not trimmed, and thus recrawled</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">arc's filedesc file name includes .gz</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">[denmark-workshop] Cookie mangling</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">HttpException: Unable to parse header</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">bogus ARC-header when no Content-type</a></action>
+<action dev="gojomo" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">paths when crawling without UI</a></action>
+<action dev="ia_igor" type="fix"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid">domain scope leakage</a></action>
+    </release>
+
     <release version="0.10.0" date="2004-06-04"
         description="Release for second heritrix workshop, Copenhagen 06/2004 (1.0.0 first release candidate). Added site-first prioritization, fixed link extraction of multibyte URIs, added metadata to arcs as xml, changed arc naming template, new user and developer manuals, added basic/digest auth and http post/get login facility, and added help to UI. Bug fixes.">
  <action dev="kristinn_sig-sf" type="add"><a href="http://sourceforge.net/tracker/index.php?func=detail&amp;group_id=73833&amp;atid=539099&amp;aid=896769">job report: show 'active' hosts, show more size totals</a></action>
