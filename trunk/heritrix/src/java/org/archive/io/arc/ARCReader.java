@@ -154,6 +154,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
     private boolean digest = true;
     
+    private boolean strict = false;
+    
     private static final byte [] outputBuffer = new byte[8 * 1024];
     
     private static final String CDX_OUTPUT = "cdx";
@@ -460,7 +462,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         try {
             this.currentRecord = new ARCRecord(is,
                 computeMetaData(this.headerFieldNameKeys, firstLineValues,
-                    this.version, offset), bodyOffset, this.digest);
+                    this.version, offset), bodyOffset, this.digest,
+                    isStrict());
         } catch (IOException e) {
             IOException newE = new IOException(e.getMessage() + " (Offset " +
                     offset + ").");
@@ -552,10 +555,12 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     throws IOException {
         if (keys.size() != values.size()) {
             List originalValues = values;
-            values = fixSpaceInMetadataLine(values, keys.size());
+            if (!isStrict()) {
+                values = fixSpaceInMetadataLine(values, keys.size());
+            }
             if (keys.size() != values.size()) {
                 throw new IOException("Size of field name keys does" +
-                        " not match count of field values: " + values);
+                    " not match count of field values: " + values);
             }
             // Note that field was fixed on stderr.
             logStdErr(Level.WARNING, "Fixed spaces in metadata URL." +
@@ -593,7 +598,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @param level Level to log message at.
      * @param message Message to log.
      */
-    protected void logStdErr(Level level, String message) {
+    public static void logStdErr(Level level, String message) {
         System.err.println(level.toString() + " " + message);
     }
     
@@ -733,6 +738,21 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     public ARCRecord getCurrentRecord() {
         return this.currentRecord;
     }
+    
+    /**
+     * @return Returns the strict.
+     */
+    public boolean isStrict() {
+        return strict;
+    }
+    /**
+     * @param strict The strict to set.
+     */
+    public void setStrict(boolean strict) {
+        this.strict = strict;
+    }
+    
+    // Static methods follow.
 
     /**
      *
@@ -745,7 +765,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         formatter.printHelp("java org.archive.io.arc.ARCReader" +
             " [--digest=true|false] \\\n" +
             " [--format=cdx|dump|gzipdump|nohead]" +
-            " [--offset=#] ARCFILE",
+            " [--offset=#] [--strict] ARCFILE",
                 options);
         System.exit(exitCode);
     }
@@ -762,15 +782,18 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * 
      * @param f Arc file to read.
      * @param digest Digest yes or no.
+     * @param strict True if we are to run in strict mode.
      * @param format Format to use outputting.
      * @throws IOException
      * @throws java.text.ParseException
      */
-    protected static void output(File f, boolean digest, String format)
+    protected static void output(File f, boolean digest, String format,
+        boolean strict)
     throws IOException, java.text.ParseException {
         // long start = System.currentTimeMillis();
         boolean compressed = ARCReaderFactory.isCompressed(f);
         ARCReader arc = ARCReaderFactory.get(f);
+        arc.setStrict(strict);
         // Clear cache of calculated arc file name.
         cachedShortArcFileName = null;
         
@@ -971,6 +994,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             "Outputs record at this offset into arc file."));
         options.addOption(new Option("d","digest", true,
             "Calculate digest. Expensive. Default: true."));
+        options.addOption(new Option("s","strict", true,
+            "Strict mode. Fails parse if incorrectly formatted ARC."));
         options.addOption(new Option("f","format", true,
             "Output options: 'cdx', 'dump', 'gzipdump'," +
             " or 'nohead'. Default: 'cdx'."));
@@ -988,6 +1013,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         // Now look at options passed.
         long offset = -1;
         boolean digest = true;
+        boolean strict = false;
         String format = "cdx";
         for (int i = 0; i < cmdlineOptions.length; i++) {
             switch(cmdlineOptions[i].getId()) {
@@ -998,6 +1024,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                 case 'o':
                     offset =
                         Long.parseLong(cmdlineOptions[i].getValue());
+                    break;
+                    
+                case 's':
+                    strict = true;
                     break;
                     
                 case 'd':
@@ -1037,6 +1067,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             }
             ARCReader arc = ARCReaderFactory.
                 get(new File((String)cmdlineArgs.get(0)));
+            arc.setStrict(strict);
             ARCRecord rec = arc.get(offset);
             outputARCRecord(rec, format);
         } else if (cmdlineOptions.length > 1) {
@@ -1046,7 +1077,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 File f = new File((String)i.next());
                 try {
-                    output(f, digest, format);
+                    output(f, digest, format, strict);
                 } catch (RuntimeException e) {
                     // Write out name of file we failed on to help with
                     // debugging.  Then print stack trace and try to keep
@@ -1076,4 +1107,5 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             super(message);
         }
     }
+
 }

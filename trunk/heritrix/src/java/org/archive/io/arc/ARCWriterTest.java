@@ -28,9 +28,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
@@ -46,28 +50,32 @@ import org.archive.util.TmpDirTestCase;
  * @author stack
  */
 public class ARCWriterTest
-    extends TmpDirTestCase
-    implements ARCConstants
-{
+extends TmpDirTestCase implements ARCConstants {
     /**
      * Prefix to use for ARC files made by JUNIT.
      */
     private static final String PREFIX = DEFAULT_ARC_FILE_PREFIX;
+    
+    private static final String SOME_PAGE =
+        "HTTP/1.1 200 OK\r\n" +
+        "Content-Type: text/html\r\n\r\n" +
+        "<html><head><title>Some Page" +
+        "</title></head>" +
+        "<body>Some Page" +
+        "</body></html>";
 
 
     /*
      * @see TestCase#setUp()
      */
-    protected void setUp() throws Exception
-    {
+    protected void setUp() throws Exception {
         super.setUp();
     }
 
     /*
      * @see TestCase#tearDown()
      */
-    protected void tearDown() throws Exception
-    {
+    protected void tearDown() throws Exception {
         super.tearDown();
     }
 
@@ -144,14 +152,12 @@ public class ARCWriterTest
     }
 
     public void testCheckARCFileSize()
-        throws IOException
-    {
+    throws IOException {
         runCheckARCFileSizeTest("checkARCFileSize", false);
     }
 
     public void testCheckARCFileSizeCompressed()
-        throws IOException
-    {
+    throws IOException {
         runCheckARCFileSizeTest("checkARCFileSize", true);
     }
 
@@ -179,5 +185,110 @@ public class ARCWriterTest
         for (int i = 0; i < files.length; i++) {
             validate(files[i], -1);
         }
+    }
+    
+    protected ARCWriter createARCWriter(String NAME, boolean compress) {
+        File [] files = {getTmpDir()};
+        return new ARCWriter(Arrays.asList(files), NAME,
+            compress, DEFAULT_MAX_ARC_FILE_SIZE);
+    }
+    
+    protected ByteArrayOutputStream getBaos(String str)
+    throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.write(str.getBytes());
+        return baos;
+    }
+    
+    protected void writeRecord(ARCWriter writer, String url, String type,
+        int len, ByteArrayOutputStream baos)
+    throws IOException {
+        writer.write(url, type, "192.168.1.1", (new Date()).getTime(), len,
+            baos);
+    }
+    
+    public void testLengthTooShortCompressed() throws IOException {
+        final String NAME = "testLengthTooShortCompressed-" + PREFIX;
+        ARCWriter writer = createARCWriter(NAME, true);
+        ByteArrayOutputStream baos = getBaos(SOME_PAGE);
+        // Add some bytes on the end to mess up the record.
+        baos.write("SOME TRAILING BYTES".getBytes());
+        writeRecord(writer, "http://one.two.three", "text/html",
+            SOME_PAGE.length(), baos);
+        writeRecord(writer, "http://one.two.three", "text/html",
+            SOME_PAGE.length(), getBaos(SOME_PAGE));
+        writer.close();
+        // Catch System.err.
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(os));
+        ARCReader r = ARCReaderFactory.get(writer.getArcFile());
+        int count = 0;
+        for(Iterator i = r.iterator(); i.hasNext();) {
+            count++;
+            ARCRecord rec = (ARCRecord)i.next();
+            rec.close();
+        }
+        // Make sure we get the warning string which complains about the
+        // trailing bytes.
+        String err = os.toString();
+        assertTrue("No message " + err, err.startsWith("WARNING") &&
+            (err.indexOf("Record ENDING at") > 0));
+        assertTrue("Count wrong " + count, count == 3);
+    }
+    
+    public void testLengthTooShortCompressedStrict()
+    throws IOException {
+        final String NAME = "testLengthTooShortCompressedStrict-" + PREFIX;
+        ARCWriter writer = createARCWriter(NAME, true);
+        ByteArrayOutputStream baos = getBaos(SOME_PAGE);
+        // Add some bytes on the end to mess up the record.
+        baos.write("SOME TRAILING BYTES".getBytes());
+        writeRecord(writer, "http://one.two.three", "text/html",
+            SOME_PAGE.length(), baos);
+        writeRecord(writer, "http://one.two.three", "text/html",
+            SOME_PAGE.length(), getBaos(SOME_PAGE));
+        writer.close();
+        ARCReader r = ARCReaderFactory.get(writer.getArcFile());
+        // Make the reader strict.
+        r.setStrict(true);
+        String eMessage = null;
+        try {
+            for(Iterator i = r.iterator(); i.hasNext();) {
+                ARCRecord rec = (ARCRecord)i.next();
+                rec.close();
+            }
+        } catch (NoSuchElementException e) {
+            eMessage = e.getMessage();
+        }
+        assertTrue("Didn't get expected exception: " + eMessage,
+                eMessage.indexOf("Record ENDING at") > 0);
+    }
+    
+    public void testLengthTooLongCompressed() throws IOException {
+        final String NAME = "testLengthTooLongCompressed-" + PREFIX;
+        ARCWriter writer = createARCWriter(NAME, true);
+        ByteArrayOutputStream baos = getBaos(SOME_PAGE);
+        // Pass in a length that is too long (+10).
+        writeRecord(writer, "http://one.two.three", "text/html",
+            SOME_PAGE.length() + 10, baos);
+        writeRecord(writer, "http://one.two.three", "text/html",
+            SOME_PAGE.length(), getBaos(SOME_PAGE));
+        writer.close();
+        // Catch System.err.
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(os));
+        ARCReader r = ARCReaderFactory.get(writer.getArcFile());
+        int count = 0;
+        for (Iterator i = r.iterator(); i.hasNext();) {
+            count++;
+            ARCRecord rec = (ARCRecord)i.next();
+            rec.close();
+        }
+        // Make sure we get the warning string which complains about the
+        // trailing bytes.
+        String err = os.toString();
+        assertTrue("No message " + err, 
+            err.startsWith("WARNING Premature EOF before end-of-record"));
+        assertTrue("Count wrong " + count, count == 3);
     }
 }
