@@ -404,6 +404,7 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @param settings the settings object to delete.
      */
     public void deleteSettingsObject(CrawlerSettings settings) {
+        super.deleteSettingsObject(settings);
         File settingsDirectory = getSettingsDirectory();
         File settingsFile = scopeToFile(settings.getScope());
         

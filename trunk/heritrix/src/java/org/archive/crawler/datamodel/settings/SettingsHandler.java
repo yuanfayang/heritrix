@@ -321,7 +321,9 @@ public abstract class SettingsHandler {
      * 
      * @param settings the settings object to delete.
      */
-    public abstract void deleteSettingsObject(CrawlerSettings settings);
+    public void deleteSettingsObject(CrawlerSettings settings) {
+        settingsCache.remove(settings.getScope());
+    }
 
     /** Get the CrawlOrder.
      * 
