@@ -27,6 +27,10 @@ import org.archive.util.TextUtils;
  *
  */
 public class UURI implements Serializable {
+	// for now, consider URIs too long for IE as illegal
+	// TODO: move this policy elsewhere
+	private static int DEFAULT_MAX_URI_LENGTH = 2083;
+	
 	private static Logger logger = Logger.getLogger("org.archive.crawler.datamodel.UURI");
 
 	protected java.net.URI uri;
@@ -39,9 +43,12 @@ public class UURI implements Serializable {
 	/**
 	 * @param u
 	 */
-	private UURI(URI u) {
+	private UURI(URI u) throws URISyntaxException {
 		uri = u;
 		uriString = u.toASCIIString();
+		if (uriString.length()>DEFAULT_MAX_URI_LENGTH) {
+			throw new URISyntaxException(uriString,"Too Long");
+		}
 	}
 
 
@@ -90,7 +97,7 @@ public class UURI implements Serializable {
 			}
 			u = parent.resolve(es);
 		}
-		if (u.getSchemeSpecificPart().startsWith("/")) {
+		if (u.getRawSchemeSpecificPart().startsWith("/")) {
 			// hierarchical URI
 			u = u.normalize(); // factor out path cruft, according to official spec
 			// now, go further and eliminate extra '..' segments
@@ -146,7 +153,7 @@ public class UURI implements Serializable {
 			u = new URI(u.getScheme().toLowerCase(), // case-flatten scheme
 			            canonizedAuthority, // case and port flatten
 			            fixedPath, // leave alone
-			            u.getQuery(), // leave alone
+			            u.getRawQuery(), // leave alone
 		                null); // drop fragment
 		} else {
 			// opaque URI
@@ -155,11 +162,7 @@ public class UURI implements Serializable {
 		                null); // drop fragment
 		}
 
-		try {
-			return u;
-		} catch (NullPointerException npe) {
-			throw new URISyntaxException(u.toString(),npe.toString());
-		}
+		return u;
 	}
 	
 	static final Pattern NBSP = Pattern.compile("\\xA0");
