@@ -62,7 +62,6 @@ import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.frontier.HostQueuesFrontier;
-import org.archive.crawler.frontier.RecoveryJournal;
 import org.archive.crawler.io.LocalErrorFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
@@ -115,7 +114,6 @@ public class CrawlController implements Serializable {
     private static final String LOGNAME_RUNTIME_ERRORS = "runtime-errors";
     private static final String LOGNAME_LOCAL_ERRORS = "local-errors";
     private static final String LOGNAME_CRAWL = "crawl";
-    private static final String LOGNAME_RECOVER = "recover";
 
     // key subcomponents which define and implement a crawl in progress
     private CrawlOrder order;
@@ -208,13 +206,6 @@ public class CrawlController implements Serializable {
      * Statistics tracker writes here at regular intervals.
      */
     transient public Logger progressStats;
-
-    /**
-     * Crawl replay logger.
-     *
-     * Currently captures Frontier/URI transitions but recovery is unimplemented.
-     */
-    transient public RecoveryJournal recover;
 
     /**
      * Logger to hold job summary report.
@@ -477,28 +468,30 @@ public class CrawlController implements Serializable {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
         	scope.initialize(this);
         }
+        
         if (frontier == null) {
             Object o = order.getAttribute(Frontier.ATTR_NAME);
             if (o instanceof Frontier) {
-                frontier = (Frontier) o;
+                frontier = (Frontier)o;
             } else {
                 frontier = new HostQueuesFrontier(Frontier.ATTR_NAME);
                 order.setAttribute((HostQueuesFrontier) frontier);
             }
 
-            // try to initialize frontier from the config file
+            // Try to initialize frontier from the config file
             try {
                 frontier.initialize(this);
                 frontier.pause(); // pause until begun
-
                 // TODO: make recover path relative to job root dir
-                String recoverPath = (String) order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
-                if(recoverPath.length()>0) {
+                String recoverPath =
+                    (String)order.getAttribute(CrawlOrder.ATTR_RECOVER_PATH);
+                if(recoverPath.length() > 0) {
                     try {
                         frontier.importRecoverLog(recoverPath);
                     } catch (IOException e1) {
                         e1.printStackTrace();
-                        throw new FatalConfigurationException("Recover.log problem: "+e1);
+                        throw new FatalConfigurationException(
+                            "Recover.log problem: " + e1);
                     }
                 }
             } catch (IOException e) {
@@ -547,7 +540,7 @@ public class CrawlController implements Serializable {
      * @return Full path to directory named by <code>key</code>.
      * @throws AttributeNotFoundException
      */
-    protected File getSettingsDir(String key)
+    public File getSettingsDir(String key)
     throws AttributeNotFoundException {
         String path = (String)order.getAttribute(null, key);
         File f = new File(path);
@@ -599,8 +592,6 @@ public class CrawlController implements Serializable {
             Logger.getLogger(LOGNAME_URI_ERRORS + "." + logsPath);
         progressStats =
             Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." + logsPath);
-        recover =
-            new RecoveryJournal(logsPath, LOGNAME_RECOVER);
 
         fileHandlers = new HashMap();
 
@@ -684,7 +675,6 @@ public class CrawlController implements Serializable {
                     .get(l);
             gfh.close();
         }
-        recover.close();
     }
 
 

@@ -127,7 +127,9 @@ public class ExperimentalFrontier
      * @see org.archive.crawler.framework.Frontier#initialize(org.archive.crawler.framework.CrawlController)
      */
     public void initialize(CrawlController c)
-        throws FatalConfigurationException, IOException {
+    throws FatalConfigurationException, IOException {
+        // Call the super method. It sets up frontier journalling.
+        super.initialize(c);
         this.controller = c;
         mainQueue = createMainQueue(c.getStateDisk(),"mainQ");
         alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
@@ -361,7 +363,7 @@ public class ExperimentalFrontier
         if (cs != null) {
             curi.setServer(cs);
         }
-        this.controller.recover.emitted(curi);        
+        doJournalEmitted(curi);        
     }
 
 
@@ -401,7 +403,7 @@ public class ExperimentalFrontier
                 }
             }
             controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
-            controller.recover.rescheduled(curi);
+            doJournalRescheduled(curi);
             return;
         } 
         
@@ -413,7 +415,7 @@ public class ExperimentalFrontier
             totalProcessedBytes += curi.getContentSize();
             incrementSucceededFetchCount();
             controller.fireCrawledURISuccessfulEvent(curi); //Let everyone know in case they want to do something before we strip the curi.
-            controller.recover.finishedSuccess(curi);        
+            doJournalFinishedSuccess(curi);        
         } else if(isDisregarded(curi)) {
             // Check for codes that mean that while we the crawler did
             // manage to try it, it must be disregarded for some reason.
@@ -443,7 +445,7 @@ public class ExperimentalFrontier
             }
 
             incrementFailedFetchCount();
-            this.controller.recover.finishedFailure(curi);
+            doJournalFinishedFailure(curi);
         }
         
         long delay_ms = politenessDelayFor(curi);

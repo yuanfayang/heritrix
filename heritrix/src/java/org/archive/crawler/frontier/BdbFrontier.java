@@ -166,6 +166,8 @@ implements Frontier,
      */
     public void initialize(CrawlController c)
             throws FatalConfigurationException, IOException {
+        // Call the super method. It sets up frontier journalling.
+        super.initialize(c);
         this.controller = c;
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
@@ -233,7 +235,7 @@ implements Frontier,
         incrementQueuedUriCount();
         sendToQueue(curi);
         // Update recovery log.
-        this.controller.recover.added(curi);
+        doJournalAdded(curi);
     }
 
     /**
@@ -410,7 +412,7 @@ implements Frontier,
             }
             // Let everyone interested know that it will be retried.
             controller.fireCrawledURINeedRetryEvent(curi);
-            controller.recover.rescheduled(curi);
+            doJournalRescheduled(curi);
             return;
         }
 
@@ -424,7 +426,7 @@ implements Frontier,
             incrementSucceededFetchCount();
             // Let everyone know in case they want to do something before we strip the curi.
             controller.fireCrawledURISuccessfulEvent(curi);
-            controller.recover.finishedSuccess(curi);
+            doJournalFinishedSuccess(curi);
         } else if (isDisregarded(curi)) {
             // Check for codes that mean that while we the crawler did
             // manage to schedule it, it must be disregarded for some reason.
@@ -450,7 +452,7 @@ implements Frontier,
             }
 
             incrementFailedFetchCount();
-            this.controller.recover.finishedFailure(curi);
+            doJournalFinishedFailure(curi);
         }
 
         long delay_ms = politenessDelayFor(curi);
@@ -631,9 +633,6 @@ implements Frontier,
         curi.processingCleanup();
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#considerIncluded(org.archive.crawler.datamodel.UURI)
-     */
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.note(canonicalize(u));
     }

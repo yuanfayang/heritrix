@@ -39,6 +39,7 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -46,6 +47,7 @@ import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.RegularExpressionConstraint;
@@ -131,6 +133,16 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
     protected QueueAssignmentPolicy queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
     
     /**
+     * Crawl replay logger.
+     *
+     * Currently captures Frontier/URI transitions.
+     */
+    transient private FrontierJournal recover = null;
+    
+    static final String LOGNAME_RECOVER = "recover";
+    
+    
+    /**
      * @param name
      * @param description
      */
@@ -201,9 +213,58 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
         shouldPause = false;
         notifyAll();
     }
+    
+    public void initialize(CrawlController c)
+            throws FatalConfigurationException, IOException {
+        File logsDisk = null;
+        try {
+            logsDisk = c.getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
+        } catch (AttributeNotFoundException e) {
+            logger.severe("Failed to get logs directory " + e);
+        }
+        if (logsDisk != null) {
+            String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
+            this.recover = new RecoveryJournal(logsPath, LOGNAME_RECOVER);
+        }
+    }
+    
     synchronized public void terminate() { 
         shouldTerminate = true;
+        if (this.recover != null) {
+            this.recover.close();
+            this.recover = null;
+        }
         unpause();
+    }
+    
+    protected void doJournalFinishedSuccess(CrawlURI c) {
+        if (this.recover != null) {
+            this.recover.finishedSuccess(c);
+        }
+    }
+    
+    protected void doJournalAdded(CrawlURI c) {
+        if (this.recover != null) {
+            this.recover.added(c);
+        }
+    }
+    
+    protected void doJournalRescheduled(CrawlURI c) {
+        if (this.recover != null) {
+            this.recover.added(c);
+        }
+    }
+    
+    protected void doJournalFinishedFailure(CrawlURI c) {
+        if (this.recover != null) {
+            this.recover.finishedFailure(c);
+        }
+    }
+    
+    protected void doJournalEmitted(CrawlURI c) {
+        if (this.recover != null) {
+            this.recover.emitted(c);
+        }
     }
     
     /**
@@ -409,7 +470,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
             // TODO: perhaps short-circuit the emit here, 
             // because URI will be rejected as unfetchable
         }
-        this.controller.recover.emitted(curi);
+        doJournalEmitted(curi);
     }
 
     /**
@@ -598,9 +659,6 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
         return false;
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#importRecoverLog(java.lang.String)
-     */
     public void importRecoverLog(String pathToLog) throws IOException {
         File source = new File(pathToLog);
         if (!source.isAbsolute()) {
@@ -709,5 +767,9 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
             queueKey = queueAssignmentPolicy.getClassKey(curi);
         }
         return queueKey;
+    }
+    
+    public FrontierJournal getFrontierJournal() {
+        return this.recover;
     }
 }

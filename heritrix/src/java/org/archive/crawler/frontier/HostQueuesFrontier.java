@@ -47,6 +47,7 @@ import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -234,6 +235,16 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     private static String ATTR_USE_BDB_ALREADY_INCLUDED =
         "use-bdb-already-included";
     private static Boolean DEFAULT_USE_BDB_ALREADY_INCLUDED = Boolean.FALSE;
+    
+    /**
+     * Crawl replay logger.
+     *
+     * Currently captures Frontier/URI transitions.
+     */
+    transient private FrontierJournal recover = null;
+    
+    static final String LOGNAME_RECOVER = "recover";
+    
   
     public HostQueuesFrontier(String name) {
         this(name,"HostQueuesFrontier. \nMaintains the internal" +
@@ -363,6 +374,17 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         alreadyIncluded = createAlreadyIncluded(c.getStateDisk(),
             "alreadyIncluded");
         loadSeeds();
+        // The below code is from the AbstractFrontier.
+        File logsDisk = null;
+        try {
+            logsDisk = c.getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
+        } catch (AttributeNotFoundException e) {
+            logger.severe("Failed to get logs directory " + e);
+        }
+        if (logsDisk != null) {
+            String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
+            this.recover = new RecoveryJournal(logsPath, LOGNAME_RECOVER);
+        }
     }
     
     /**
@@ -820,7 +842,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     protected void successDisposition(CrawlURI curi) {
         totalProcessedBytes += curi.getContentSize();
-
         curi.aboutToLog();
         Object array[] = { curi };
         controller.uriProcessing.log(
@@ -839,7 +860,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         // the curi.
         controller.fireCrawledURISuccessfulEvent(curi);
         curi.stripToMinimal();
-        controller.recover.finishedSuccess(curi);
+        finishedSuccess(curi);
     }
 
     /**
@@ -913,7 +934,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             }
         }
         logger.finer(this + ".emitCuri(" + curi + ")");
-        this.controller.recover.emitted(curi);
+        if (this.recover != null) {
+            this.recover.emitted(curi);
+        }
         // One less URI in the queue.
         this.queuedUriCount--;
         return curi;
@@ -1040,7 +1063,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         }
         this.queuedUriCount++;
         // Update recovery log.
-        this.controller.recover.added(curi);
+        if (this.recover != null) {
+            this.recover.added(curi);
+        }
         return;
     }
 
@@ -1172,7 +1197,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             this.failedFetchCount++;
             curi.stripToMinimal();
         }
-        this.controller.recover.finishedFailure(curi);
+        if (this.recover != null) {
+            this.recover.finishedFailure(curi);
+        }
     }
 
     /**
@@ -1263,7 +1290,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         reschedule(curi);
 
         controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
-        controller.recover.rescheduled(curi);
+        if (this.recover != null) {
+            this.recover.rescheduled(curi);
+        }
     }
 
     /**
@@ -1714,7 +1743,17 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     }
     synchronized public void terminate() { 
         shouldTerminate = true;
+        if (this.recover != null) {
+            this.recover.close();
+            this.recover = null;
+        }
     }  
+    
+    protected void finishedSuccess(CrawlURI c) {
+        if (this.recover != null) {
+            this.recover.finishedSuccess(c);
+        }
+    }
     
     /**
      * Canonicalize passed uuri.
@@ -1731,5 +1770,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     protected String canonicalize(UURI uuri) {
         return Canonicalizer.canonicalize(uuri, this.controller.getOrder());
+    }
+
+    public FrontierJournal getFrontierJournal() {
+        return this.recover;
     }
 }

@@ -191,6 +191,9 @@ public class DomainSensitiveFrontier extends HostQueuesFrontier {
         // the curi.
         controller.fireCrawledURISuccessfulEvent(curi);
         curi.stripToMinimal();
-        controller.recover.finishedSuccess(curi);
+        FrontierJournal j = getFrontierJournal();
+        if (j != null ) {
+            j.finishedSuccess(curi);
+        }
     }
 }
