@@ -321,7 +321,6 @@ public class CrawlerSettings {
             for(Iterator it = refinements.iterator(); it.hasNext();) {
                 Refinement tmp = (Refinement) it.next();
                 if (tmp.getReference().equals(reference)) {
-                    it.remove();
                     return tmp;
                 }
             }
