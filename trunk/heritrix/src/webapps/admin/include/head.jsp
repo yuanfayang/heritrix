@@ -113,9 +113,9 @@
                                         <td nowrap>
                                             <%=handler.getPendingJobs().size()%>
                                             jobs
-                                            <a style="color: #000000" href="<%=request.getContextPath()%>/jobs/pending.jsp">pending</a>,
+                                            <a style="color: #000000" href="<%=request.getContextPath()%>/jobs.jsp#pending">pending</a>,
                                             <%=handler.getCompletedJobs().size()%>
-                                            <a style="color: #000000" href="<%=request.getContextPath()%>/jobs/completed.jsp">completed</a>
+                                            <a style="color: #000000" href="<%=request.getContextPath()%>/jobs.jsp#completed">completed</a>
                                             &nbsp;
                                         </td>
                                         <td nowrap>
