@@ -23,6 +23,8 @@
  */
 package org.archive.crawler.filter;
 
+import java.util.logging.Logger;
+
 import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.URIException;
@@ -41,6 +43,8 @@ import org.archive.crawler.settings.SimpleType;
  *
  */
 public class PathDepthFilter extends Filter {
+    private static final Logger logger =
+        Logger.getLogger(PathDepthFilter.class.getName());
     public static final String ATTR_MATCH_RETURN_VALUE =
         "path-less-or-equal-return";
     public static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";

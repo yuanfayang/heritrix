@@ -26,6 +26,7 @@ package org.archive.crawler.framework;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
@@ -65,6 +66,8 @@ import org.archive.util.DevUtils;
  *
  */
 public class CrawlScope extends Filter {
+    private static final Logger logger =
+        Logger.getLogger(CrawlScope.class.getName());
     public static final String ATTR_NAME = "scope";
     public static final String ATTR_SEEDS = "seedsfile";
     public static final String ATTR_EXCLUDE_FILTER = "exclude-filter";
@@ -150,8 +153,8 @@ public class CrawlScope extends Filter {
      * @param c CrawlController
      * @param caching True if seed list created is to cache seeds.
      */
-    protected synchronized void createSeedlist(File seedfile, CrawlController c,
-            boolean caching) {
+    protected synchronized void createSeedlist(File seedfile,
+            CrawlController c, boolean caching) {
         if (this.seedlist == null) {
             this.seedlist = new SeedList(seedfile, caching);
         }
@@ -328,7 +331,6 @@ public class CrawlScope extends Filter {
      * @param a First UURI of compare.
      * @param b Second UURI of compare.
      * @return True if UURIs are of same host.
-     * @throws URIException
      */
     protected boolean isSameHost(UURI a, UURI b) {
         boolean isSameHost = false;

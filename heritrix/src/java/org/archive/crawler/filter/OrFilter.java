@@ -24,6 +24,7 @@
 package org.archive.crawler.filter;
 
 import java.util.Iterator;
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
@@ -44,6 +45,8 @@ import org.archive.crawler.settings.SimpleType;
  *
  */
 public class OrFilter extends Filter {
+    private static final Logger logger =
+        Logger.getLogger(OrFilter.class.getName());
     public static final String ATTR_MATCH_RETURN_VALUE = "if-matches-return";
     public static final String ATTR_FILTERS = "filters";
 

@@ -25,6 +25,7 @@ package org.archive.crawler.scope;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.UURI;
@@ -67,6 +68,8 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class DomainScope extends CrawlScope {
+    private static final Logger logger =
+        Logger.getLogger(DomainScope.class.getName());
 
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
     public static final String ATTR_ADDITIONAL_FOCUS_FILTER =

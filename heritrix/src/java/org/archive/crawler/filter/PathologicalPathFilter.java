@@ -24,6 +24,8 @@
  */
 package org.archive.crawler.filter;
 
+import java.util.logging.Logger;
+
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
@@ -41,6 +43,8 @@ import org.archive.crawler.settings.Type;
  * @author John Erik Halse
  */
 public class PathologicalPathFilter extends URIRegExpFilter {
+    private static final Logger logger =
+        Logger.getLogger(PathologicalPathFilter.class.getName());
 
     public static final String ATTR_REPETITIONS = "repetitions";
 
