@@ -24,6 +24,8 @@
  */
 package org.archive.crawler.fetcher;
 
+import it.unimi.dsi.mg4j.util.MutableString;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -1156,7 +1158,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             out.write(
                 "# This file is the Netscape cookies.txt format\n\n".getBytes());
             for (int i = 0; i < cookies.length; i++) {
-                StringBuffer line = new StringBuffer();
+                MutableString line =
+                    new MutableString(1024 * 2 /*Guess an initial size*/);
                 line.append(cookies[i].getDomain());
                 line.append(tab);
                 line.append(
