@@ -24,13 +24,13 @@
  */
 package org.archive.crawler.io;
 
+import it.unimi.dsi.mg4j.util.MutableString;
+
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Base32;
 import org.archive.util.MimetypeUtils;
@@ -41,17 +41,23 @@ import org.archive.util.MimetypeUtils;
  * @author gojomo
  */
 public class UriProcessingFormatter
-		extends Formatter implements CoreAttributeConstants {
-
-    final static String NA = "-";
-
+extends Formatter implements CoreAttributeConstants {
+    private final static String NA = "-";
+    /**
+     * Guess at line length (URIs are assumed avg. of 128 bytes).
+     * Used to preallocated the buffer we accumulate the log line
+     * in.  Hopefully we get it right most of the time and no need
+     * to enlarge except in the rare case.
+     */
+    private final static int GUESS_AT_LOG_LENGTH =
+        17 + 1 + 3 + 1 + 10 + 128 + + 1 + 10 + 1 + 128 + 1 + 10 + 1 + 3 +
+        14 + 1 + 32 + 4 + 1;
+    
     public String format(LogRecord lr) {
         CrawlURI curi = (CrawlURI)lr.getParameters()[0];
-
         String length = NA;
         String mime = null;
-        String uri = curi.getUURI().toString();
-        
+        MutableString uri = new MutableString(curi.getUURI());
         if (curi.isHttpTransaction()) {
             if(curi.getContentLength() >= 0) {
                 length = Long.toString(curi.getContentLength());
@@ -59,7 +65,6 @@ public class UriProcessingFormatter
                 length = Long.toString(curi.getContentSize());
             }
             mime = curi.getContentType();
-            
         } else {
             if (curi.getContentSize() > 0) {
                 length = Long.toString(curi.getContentSize());
@@ -82,35 +87,37 @@ public class UriProcessingFormatter
         String via = curi.flattenVia();
         
         Object digest = curi.getContentDigest();
-        if(digest!=null) {
-            digest = Base32.encode((byte[])digest);
+        if (digest != null) {
+            digest = Base32.encode((byte [])digest);
         }
 
-        return ArchiveUtils.getLog17Date(time)
-            + " "
-            + ArchiveUtils.padTo(curi.getFetchStatus(), 5)
-            + " "
-            + ArchiveUtils.padTo(length, 10)
-            + " "
-            + uri
-            + " "
-            + checkForNull(curi.getPathFromSeed())
-            + " "
-            + checkForNull(via)
-            + " "
-            + mime
-            + " "
-            + "#"
+        
+        MutableString sm = new MutableString(GUESS_AT_LOG_LENGTH);
+        return sm.append(ArchiveUtils.getLog17Date(time))
+            .append(" ")
+            .append(ArchiveUtils.padTo(curi.getFetchStatus(), 5))
+            .append(" ")
+            .append(ArchiveUtils.padTo(length, 10))
+            .append(" ")
+            .append(uri)
+            .append(" ")
+            .append(checkForNull(curi.getPathFromSeed()))
+            .append(" ")
+            .append(checkForNull(via))
+            .append(" ")
+            .append(mime)
+            .append(" ")
+            .append("#")
             // Pad threads to be 3 digits.  For Igor.
-            + ArchiveUtils.padTo(
-                    Integer.toString(curi.getThreadNumber()), 3, '0')
-        	+ " "
-            + arcTimeAndDuration
-            + " "
-            + checkForNull((String)digest)
-            + " "
-            + checkForNull(curi.getAnnotations())
-            + "\n";
+            .append(ArchiveUtils.padTo(
+                Integer.toString(curi.getThreadNumber()), 3, '0'))
+            .append(" ")
+            .append(arcTimeAndDuration)
+            .append(" ")
+            .append(checkForNull((String)digest))
+            .append(" ")
+            .append(checkForNull(curi.getAnnotations()))
+            .append("\n").toString();
     }
     
     /**
