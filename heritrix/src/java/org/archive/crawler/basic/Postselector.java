@@ -152,6 +152,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
             UURI prereq = UURI.createUURI((String) curi.getPrerequisiteUri(),getBaseURI(curi));
             curi.setPrerequisiteUri(prereq); // convert to UURI for convenience of Frontier
             CandidateURI caUri = new CandidateURI(prereq);
+            caUri.setSchedulingDirective(CandidateURI.HIGH);
             caUri.setVia(curi);
             caUri.setPathFromSeed(curi.getPathFromSeed()+"P");
 
@@ -161,7 +162,7 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
                 caUri.setForceFetch(true);
             }
 
-            if (!scheduleHigh(caUri)) {
+            if (!schedule(caUri)) {
                 // prerequisite cannot be scheduled (perhaps excluded by scope)
                 // must give up on
                 curi.setFetchStatus(S_PREREQUISITE_FAILURE);
@@ -173,28 +174,6 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
             Object[] array = { curi, curi.getPrerequisiteUri() };
             getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
         }
-    }
-
-    /**
-     * Schedule the given {@link CandidateURI CandidateURI} with the Frontier as a
-     * "high" priority item (such as a prerequisite or embedded resource which should
-     * be fetched in an expedited manner).
-     *
-     * @param caUri The CandidateURI to be scheduled
-     *
-     * @return true if CandidateURI was accepted by crawl scope, false otherwise
-     */
-    private boolean scheduleHigh(CandidateURI caUri) {
-        if(getController().getScope().accepts(caUri)) {
-            logger.finer("URI accepted: "+caUri);
-            getController().getFrontier().batchScheduleHigh(caUri);
-            return true;
-        }
-        logger.finer("URI rejected: "+caUri);
-        //boolean test = ((Scope)controller.getScope()).getFocusFilter().accepts(caUri);
-        //test = ((Scope)controller.getScope()).getTransitiveFilter().accepts(caUri);
-        //test = ((Scope)controller.getScope()).getExcludeFilter().accepts(caUri);
-        return false;
     }
 
     /**
@@ -227,10 +206,11 @@ public class Postselector extends Processor implements CoreAttributeConstants, F
             try {
                 UURI u = UURI.createUURI(r,baseUri);
                 CandidateURI caUri = new CandidateURI(u);
+                caUri.setSchedulingDirective(CandidateURI.HIGH);
                 caUri.setVia(curi);
                 caUri.setPathFromSeed(curi.getPathFromSeed()+"R");
                 logger.finest("inserting header at head "+u);
-                scheduleHigh(caUri);
+                schedule(caUri);
             } catch (URISyntaxException ex) {
                 Object[] array = { curi, r };
                 getController().uriErrors.log(Level.INFO,ex.getMessage(), array );
