@@ -794,6 +794,10 @@ public class CrawlController {
         sExit = CrawlJob.STATUS_ABORTED;
         shouldCrawl = false;
 
+        beginCrawlStop();
+    }
+
+    private void beginCrawlStop() {
         // Tell everyone that this crawl is ending (threads will take this to mean that they are to exit.
         Iterator iterator = registeredCrawlStatusListeners.iterator();
         while (iterator.hasNext()) {
@@ -1091,8 +1095,17 @@ public class CrawlController {
      * @param thread
      */
     public void toeFinished(ToeThread thread) {
-        if(!shouldCrawl && getActiveToeCount() == 0) {
+        if(!shouldCrawl() && getActiveToeCount() == 0) {
             completeStop();
+        }
+    }
+
+    /**
+     * 
+     */
+    public void checkFinish() {
+        if(!shouldCrawl()) {
+            beginCrawlStop();
         }
     }
 }

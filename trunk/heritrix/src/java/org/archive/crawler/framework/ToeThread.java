@@ -124,6 +124,9 @@ public class ToeThread extends Thread
                             return; 
                         }
                         processCrawlUri();
+                    } else {
+                        // null return from frontier; may need to wrap-up crawl
+                        controller.checkFinish();
                     }
                     where = 16;
                 } catch (InterruptedException e1) {
