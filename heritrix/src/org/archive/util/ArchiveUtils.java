@@ -83,7 +83,20 @@ public class ArchiveUtils {
 		}else{
 			return "./";
 		}
-		
-		
+	}
+	
+	public static boolean byteArrayEquals(byte[] lhs, byte[] rhs) {
+		if (lhs==rhs) {
+			return true;
+		}
+		if (lhs.length != rhs.length) {
+			return false;
+		}
+		for(int i = 0; i<lhs.length; i++) {
+			if (lhs[i]!=rhs[i]) {
+				return false;
+			}
+		}
+		return true;	
 	}
 }
