@@ -279,7 +279,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
      */
     protected void processScriptCode(CrawlURI curi, CharSequence cs) {
         this.numberOfLinksExtracted +=
-            ExtractorJS.considerStrings(curi, cs.toString(), false);
+            ExtractorJS.considerStrings(curi, cs, false);
     }
 
     static final String JAVASCRIPT = "(?i)^javascript:.*";
