@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 
 import st.ata.util.FPGenerator;
@@ -199,34 +200,36 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     	this.receiver = receiver;
     }
 
-    public void add(HasUri item) {
-    	add(item, true, false);
+    public void add(CandidateURI item, String canonical) {
+    	add(item, canonical, true, false);
     }
 
-    public void addNow(HasUri item) {
-    	add(item);
+    public void addNow(CandidateURI item, String canonical) {
+    	add(item, canonical);
     }
 
-    public void addForce(HasUri item) {
-    	add(item, true, true);
+    public void addForce(CandidateURI item, String canonical) {
+    	add(item, canonical, true, true);
     }
 
-    public void note(HasUri item) {
-        add(item, false, false);
+    public void note(String canonical) {
+        add(null, canonical, false, false);
     }
     
     /**
      * Add implementation.
      * @param item Item to add to already seen and to pass through to the
      * receiver.
+     * @param canonical Canonical representation of <code>item</code>.
      * @param passItOn True if we're to pass on the item IF it has not
      * been seen already.
      * @param force Override of <code>passItOn</code> forcing passing on
      * of <code>item</code> even if already seen.
      */
-    protected void add(HasUri item, boolean passItOn, boolean force) {
+    protected void add(CandidateURI item, String canonical, boolean passItOn,
+            boolean force) {
         DatabaseEntry key = new DatabaseEntry();
-        LongBinding.longToEntry(createKey(item.getUri()), key);
+        LongBinding.longToEntry(createKey(canonical), key);
         
         OperationStatus status = null;
         try {
@@ -243,9 +246,9 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         }
     }
 
-    public void forget(HasUri item) {
+    public void forget(String canonical) {
         DatabaseEntry key = new DatabaseEntry();
-        LongBinding.longToEntry(createKey(item.getUri()), key);
+        LongBinding.longToEntry(createKey(canonical), key);
     	OperationStatus status = null;
         try {
 			status = this.alreadySeen.delete(null, key);

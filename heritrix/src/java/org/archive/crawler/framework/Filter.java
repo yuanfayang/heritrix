@@ -68,9 +68,6 @@ public class Filter extends ModuleType {
         addElementToDefinition(
             new SimpleType(ATTR_ENABLED,
                 "Filter is enabled.", new Boolean(true)));
-//        addElementToDefinition(
-//            new SimpleType(ATTR_INVERTED,
-//                "Filter functionality should be inverted", new Boolean(false)));
     }
 
     /** Creates a new 'null' filter.

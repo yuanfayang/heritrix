@@ -65,6 +65,7 @@ import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.crawler.url.Canonicalizer;
 import org.archive.crawler.util.FPUriUniqFilter;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
@@ -418,9 +419,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     private void innerSchedule(CandidateURI caUri) {
         if(caUri.forceFetch()) {
-            alreadyIncluded.addForce(caUri);
+            alreadyIncluded.addForce(caUri, canonicalize(caUri.getUURI()));
         } else {
-            alreadyIncluded.add(caUri);
+            alreadyIncluded.add(caUri, canonicalize(caUri.getUURI()));
         }
     }
 
@@ -430,10 +431,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * 
      * This method is the implementation of the HasUriReceiver interface.
      * 
-     * @param huri An URI object that has not been seen before.
+     * @param caUri An URI object that has not been seen before.
      */
-    public void receive(UriUniqFilter.HasUri huri) {
-        CandidateURI caUri = (CandidateURI) huri;
+    public void receive(CandidateURI caUri) {
         CrawlURI curi = asCrawlUri(caUri);
         if(curi.isSeed() && curi.getVia() != null
                 && curi.flattenVia().length() > 0){
@@ -1291,7 +1291,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     protected void forget(CrawlURI curi) {
         logger.finer("Forgetting "+curi);
-        alreadyIncluded.forget(curi.getUURI());
+        alreadyIncluded.forget(canonicalize(curi.getUURI()));
     }
 
     /**  (non-Javadoc)
@@ -1650,16 +1650,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         RecoveryJournal.importRecoverLog(source,this);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#considerIncluded(org.archive.crawler.datamodel.UURI)
-     */
     public void considerIncluded(UURI u) {
-        this.alreadyIncluded.note(u);
+        this.alreadyIncluded.note(canonicalize(u));
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.URIFrontier#kickUpdate()
-     */
     public void kickUpdate() {
         loadSeeds();
     }
@@ -1673,6 +1667,22 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     }
     synchronized public void terminate() { 
         shouldTerminate = true;
+    }  
+    
+    /**
+     * Canonicalize passed uuri.
+     * Its would be sweeter if this canonicalize function was encapsulated
+     * by that which it canonicalizes but because settings change with
+     * context -- i.e. there may be overrides in operation for a
+     * particular URI -- its not so easy; Each CandidateURI would need
+     * a reference to the settings system.  That's awkward to pass in.
+     * Copied from {@link AbstractFrontier}.
+     * @param uuri Candidate URI to canonicalize.
+     * @return Canonicalized version of passed <code>caUri</code>.
+     * If a problem, no canonicalization is done and the
+     * CandidateURI#getURIString() is returned.
+     */
+    protected String canonicalize(UURI uuri) {
+        return Canonicalizer.canonicalize(uuri, this.controller.getOrder());
     }
-
 }

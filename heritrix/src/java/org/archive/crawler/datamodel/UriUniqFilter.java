@@ -24,13 +24,13 @@ package org.archive.crawler.datamodel;
 
 
 /**
- * A UriUniqFilter passes add()ed URI (HasUri) objects to a destination
- * (receiver) if the passed URI has not been previously seen.
+ * A UriUniqFilter passes URI objects to a destination
+ * (receiver) if the passed URI object has not been previously seen.
  * 
- * If already seen, the passed URI is dropped.
+ * If already seen, the passed URI object is dropped.
  *
  * <p>For efficiency in comparison against a large history of
- * seen URIs, HasUris may not be passed immediately, unless 
+ * seen URIs, URI objects may not be passed immediately, unless 
  * the addNow() is used or a flush() is forced.
  * 
  * @author gojomo
@@ -56,6 +56,7 @@ public interface UriUniqFilter {
 
     /**
      * Receiver of uniq URIs.
+     * 
      * Items that have not been seen before are pass through to this object.
      * @param receiver Object that will be passed items. Must implement
      * HasUriReceiver interface.
@@ -63,37 +64,50 @@ public interface UriUniqFilter {
     public void setDestination(HasUriReceiver receiver);
     
     /**
-     * Add given item, if not already present.
-     * @param item Item to add.
+     * Add given uri, if not already present.
+     * @param uri Item to add.
+     * @param canonical The canonicalized version of <code>uri</code>.
+     * This is the key used doing lookups, forgets and insertions on the
+     * already included list.
      */
-    public void add(HasUri item);
+    public void add(CandidateURI uri, String canonical);
     
     /**
-     * Immediately add item.
-     * @param item Item to add immediately.
+     * Immediately add uri.
+     * @param uri Uri item to add immediately.
+     * @param canonical The canonicalized version of <code>uri</code>.
+     * This is the key used doing lookups, forgets and insertions on the
+     * already included list.
      */
-    public void addNow(HasUri item);
+    public void addNow(CandidateURI uri, String canonical);
     
     /**
-     * Add given item, even if already present
+     * Add given uri, even if already present
      * 
      * TODO: What is this for?
      * 
-     * @param item Item to force add.
+     * @param uri Uri item to force add.
+     * @param canonical The canonicalized version of <code>uri</code>.
+     * This is the key used doing lookups, forgets and insertions on the
+     * already included list.
      */
-    public void addForce(HasUri hu);
+    public void addForce(CandidateURI uri, String canonical);
     
     /**
      * Note item as seen, without passing through to receiver.
-     * @param item Item to note as seen.
+     * @param canonical The canonicalized version of <code>uri</code>.
+     * This is the key used doing lookups, forgets and insertions on the
+     * already included list.
      */
-    public void note(HasUri item);
+    public void note(String canonical);
     
     /**
      * Forget item was seen
-     * @param item Item to forget.
+     * @param canonical The canonicalized version of <code>uri</code>.
+     * This is the key used doing lookups, forgets and insertions on the
+     * already included list.
      */
-    public void forget(HasUri item);
+    public void forget(String canonical);
     
     /**
      * Force pending items to be added/dropped.
@@ -108,20 +122,6 @@ public interface UriUniqFilter {
     public void close();
     
     /**
-     * Objects that have a URI implement this interface.
-     * 
-     * Implementers of this interface would include UURI.
-     * 
-     * @author gojomo
-     */
-    public interface HasUri {
-        /**
-         * @return Return contained URI as a String.
-         */
-        public String getUri();
-    }
-    
-    /**
      * URIs that have not been seen before 'visit' this 'Visitor'.
      * 
      * Usually implementations of Frontier implement this interface.
@@ -129,8 +129,8 @@ public interface UriUniqFilter {
      */
     public interface HasUriReceiver {
         /**
-         * @param item Item that is 'visiting'.
+         * @param item Candidate uri tem that is 'visiting'.
          */
-        public void receive(HasUri item);
+        public void receive(CandidateURI item);
     }
 }

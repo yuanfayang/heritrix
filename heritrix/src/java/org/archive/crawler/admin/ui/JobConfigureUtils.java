@@ -24,20 +24,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 package org.archive.crawler.admin.ui;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
+import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.admin.CrawlJob;
+import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.ListType;
+import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.ModuleAttributeInfo;
-
+import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.SettingsHandler;
+import org.archive.crawler.settings.XMLSettingsHandler;
 
 /**
  * Utility methods used configuring jobs in the admin UI.
@@ -48,116 +57,136 @@ import org.archive.crawler.settings.ModuleAttributeInfo;
  * @version $Date$, $Revision$
  */
 public class JobConfigureUtils {
-    private static Logger logger =
-        Logger.getLogger(JobConfigureUtils.class.getName());
+    private static Logger logger = Logger.getLogger(JobConfigureUtils.class
+            .getName());
+    public static final String ACTION = "action";
+    public static final String SUBACTION = "subaction";
+    public static final String FILTERS = "filters";
+    private static final String MAP = "map";
+    private static final String FILTER = "filter";
+    private static final Object ADD = "add";
+    private static final Object MOVEUP = "moveup";
+    private static final Object MOVEDOWN = "movedown";
+    private static final Object REMOVE = "remove";
+    private static final Object GOTO = "goto";
+    private static final Object DONE = "done";
 
     /**
-     * Check passed crawljob CrawlJob setting.
-     * Call this method at start of page.
-     * @param job Current CrawlJobHandler.
-     * @param request Http request.
-     * @param response Http response.
+     * Check passed crawljob CrawlJob setting. Call this method at start of
+     * page.
+     * 
+     * @param job
+     *            Current CrawlJobHandler.
+     * @param request
+     *            Http request.
+     * @param response
+     *            Http response.
      */
     protected static CrawlJob getAndCheckJob(CrawlJob job,
             HttpServletRequest request, HttpServletResponse response) {
         return job;
     }
-        
-	/**
-	 * This methods updates a ComplexType with information passed to it
-	 * by a HttpServletRequest. It assumes that for every 'simple' type
-	 * there is a corresponding parameter in the request. A recursive
-	 * call will be made for any nested ComplexTypes. For each attribute
-	 * it will check if the relevant override is set (name.override 
-	 * parameter equals 'true'). If so the attribute setting on the 
-	 * specified domain level (settings) will be rewritten. If it is not
-	 * we well ensure that it isn't being overridden.
-	 * 
-	 * @param mbean The ComplexType to update
-	 * @param settings CrawlerSettings for the domain to override setting
-	 *           for. null denotes the global settings.
-	 * @param request The HttpServletRequest to use to update the 
-	 *           ComplexType
-	 * @param expert if true expert settings will be updated, otherwise they
-	 *           will be ignored.     
-	 */
-	public static void writeNewOrderFile(ComplexType mbean,
-			CrawlerSettings settings, HttpServletRequest request,
-			boolean expert) {
+
+    /**
+     * This methods updates a ComplexType with information passed to it by a
+     * HttpServletRequest. It assumes that for every 'simple' type there is a
+     * corresponding parameter in the request. A recursive call will be made for
+     * any nested ComplexTypes. For each attribute it will check if the relevant
+     * override is set (name.override parameter equals 'true'). If so the
+     * attribute setting on the specified domain level (settings) will be
+     * rewritten. If it is not we well ensure that it isn't being overridden.
+     * 
+     * @param mbean
+     *            The ComplexType to update
+     * @param settings
+     *            CrawlerSettings for the domain to override setting for. null
+     *            denotes the global settings.
+     * @param request
+     *            The HttpServletRequest to use to update the ComplexType
+     * @param expert
+     *            if true expert settings will be updated, otherwise they will
+     *            be ignored.
+     */
+    public static void writeNewOrderFile(ComplexType mbean,
+            CrawlerSettings settings, HttpServletRequest request, boolean expert) {
         // If mbean is transient or a hidden expert setting.
-		if (mbean.isTransient() ||
-                (mbean.isExpertSetting() && expert == false)) {
-			return;
-		}
-        
-		MBeanAttributeInfo a[] = mbean.getMBeanInfo(settings).getAttributes();
-		for (int n = 0; n < a.length; n++) {
-            checkAttribute((ModuleAttributeInfo)a[n], mbean, settings, request,
-                expert);
+        if (mbean.isTransient() || (mbean.isExpertSetting() && expert == false)) {
+            return;
+        }
+
+        MBeanAttributeInfo a[] = mbean.getMBeanInfo(settings).getAttributes();
+        for (int n = 0; n < a.length; n++) {
+            checkAttribute((ModuleAttributeInfo) a[n], mbean, settings,
+                    request, expert);
         }
     }
-            
+
     /**
-     * Process passed attribute.
-     * Check if needs to be written and if so, write it.
+     * Process passed attribute. Check if needs to be written and if so, write
+     * it.
      * 
-     * @param att Attribute to process.
-     * @param mbean The ComplexType to update
-     * @param settings CrawlerSettings for the domain to override setting
-     *           for. null denotes the global settings.
-     * @param request The HttpServletRequest to use to update the 
-     *           ComplexType
-     * @param expert if true expert settings will be updated, otherwise they
-     *           will be ignored.
+     * @param att
+     *            Attribute to process.
+     * @param mbean
+     *            The ComplexType to update
+     * @param settings
+     *            CrawlerSettings for the domain to override setting for. null
+     *            denotes the global settings.
+     * @param request
+     *            The HttpServletRequest to use to update the ComplexType
+     * @param expert
+     *            if true expert settings will be updated, otherwise they will
+     *            be ignored.
      */
-	protected static void checkAttribute(ModuleAttributeInfo att,
-			ComplexType mbean, CrawlerSettings settings,
-			HttpServletRequest request, boolean expert) {
-		// The attributes of the current attribute.
-		Object currentAttribute = null;
-		try {
-			currentAttribute = mbean.getAttribute(settings, att.getName());
-		} catch (Exception e) {
-			logger.severe("Failed getting " + mbean.getAbsoluteName() +
-			    " attribute " + att.getName() + ": " + e.getMessage());
-			return;
-		}
-		
-		if (logger.isLoggable(Level.FINE)) {
-			logger.fine("MBEAN: " + mbean.getAbsoluteName() + " " +
-                att.getName() + " TRANSIENT " + att.isTransient() + " " +
-				att.isExpertSetting() + " " + expert);
-		}
-		
-		if (att.isTransient() == false &&
-                (att.isExpertSetting() == false || expert)) {
-			if (currentAttribute instanceof ComplexType) {
-				writeNewOrderFile((ComplexType) currentAttribute, settings,
-						request, expert);
-			} else {
-				String attName = att.getName();
-				// Have a 'setting'. Let's see if we need to update it (if
-				// settings == null update all, otherwise only if override
-				// is set.
-				String attAbsoluteName = mbean.getAbsoluteName() + "/" +
-				    attName;
-				boolean override = (request.getParameter(attAbsoluteName +
-				        ".override") != null) &&
-				    (request.getParameter(attAbsoluteName + ".override").
-						equals("true"));
-				if (settings == null || override) {
+    protected static void checkAttribute(ModuleAttributeInfo att,
+            ComplexType mbean, CrawlerSettings settings,
+            HttpServletRequest request, boolean expert) {
+        // The attributes of the current attribute.
+        Object currentAttribute = null;
+        try {
+            currentAttribute = mbean.getAttribute(settings, att.getName());
+        } catch (Exception e) {
+            logger.severe("Failed getting " + mbean.getAbsoluteName()
+                    + " attribute " + att.getName() + ": " + e.getMessage());
+            return;
+        }
+
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("MBEAN: " + mbean.getAbsoluteName() + " "
+                    + att.getName() + " TRANSIENT " + att.isTransient() + " "
+                    + att.isExpertSetting() + " " + expert);
+        }
+
+        if (att.isTransient() == false
+                && (att.isExpertSetting() == false || expert)) {
+            if (currentAttribute instanceof ComplexType) {
+                writeNewOrderFile((ComplexType) currentAttribute, settings,
+                        request, expert);
+            } else {
+                String attName = att.getName();
+                // Have a 'setting'. Let's see if we need to update it (if
+                // settings == null update all, otherwise only if override
+                // is set.
+                String attAbsoluteName = mbean.getAbsoluteName() + "/"
+                        + attName;
+                boolean override = (request.getParameter(attAbsoluteName
+                        + ".override") != null)
+                        && (request.getParameter(attAbsoluteName + ".override")
+                                .equals("true"));
+                if (settings == null || override) {
                     if (currentAttribute instanceof ListType) {
-                        ListType list = (ListType)currentAttribute;
+                        ListType list = (ListType) currentAttribute;
                         list.clear();
-                        String[] elems = request.getParameterValues(attAbsoluteName);
+                        String[] elems = request
+                                .getParameterValues(attAbsoluteName);
                         for (int i = 0; elems != null && i < elems.length; i++) {
                             list.add(elems[i]);
                         }
                     } else {
-                    	    writeAttribute(attName, attAbsoluteName, mbean, settings,
-                            request.getParameter(attAbsoluteName));
+                        writeAttribute(attName, attAbsoluteName, mbean,
+                                settings, request.getParameter(attAbsoluteName));
                     }
-                    
+
                 } else if (settings != null && override == false) {
                     // Is not being overridden. Need to remove possible
                     // previous overrides.
@@ -165,37 +194,146 @@ public class JobConfigureUtils {
                         mbean.unsetAttribute(settings, attName);
                     } catch (Exception e) {
                         e.printStackTrace();
-                        logger.severe("Unsetting attribute on " +
-                                attAbsoluteName + ": " + e.getMessage());
+                        logger.severe("Unsetting attribute on "
+                                + attAbsoluteName + ": " + e.getMessage());
                         return;
                     }
                 }
             }
         }
     }
-   
+
     /**
      * Write out attribute.
-     * @param attName Attribute short name.
-     * @param attAbsoluteName Attribute full name.
-     * @param mbean The ComplexType to update
-     * @param settings CrawlerSettings for the domain to override setting
-     *     for. null denotes the global settings.
-     * @param value Value to set into the attribute.
+     * 
+     * @param attName
+     *            Attribute short name.
+     * @param attAbsoluteName
+     *            Attribute full name.
+     * @param mbean
+     *            The ComplexType to update
+     * @param settings
+     *            CrawlerSettings for the domain to override setting for. null
+     *            denotes the global settings.
+     * @param value
+     *            Value to set into the attribute.
      */
-	protected static void writeAttribute(String attName,
+    protected static void writeAttribute(String attName,
             String attAbsoluteName, ComplexType mbean,
             CrawlerSettings settings, String value) {
-		try {
-			if (logger.isLoggable(Level.FINE)) {
-				logger.fine("MBEAN SET: " +  attAbsoluteName + " " + value);
-			}
-			mbean.setAttribute(settings, new Attribute(attName, value));
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.severe("Setting attribute value " + value + " on " +
-			    attAbsoluteName + ": " + e.getMessage());
-			return;
-		}
-	}
+        try {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("MBEAN SET: " + attAbsoluteName + " " + value);
+            }
+            mbean.setAttribute(settings, new Attribute(attName, value));
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.severe("Setting attribute value " + value + " on "
+                    + attAbsoluteName + ": " + e.getMessage());
+            return;
+        }
+    }
+
+    /**
+     * Handle job action.
+     * @param redirectBasePath Full path for where to go next if an error.
+     * E.g. "/admin/jobs/per/overview.jsp".
+     * @param domain Current domain.  Pass null for global domain.
+     * @return The crawljob configured.
+     * @throws IOException
+     * @throws AttributeNotFoundException
+     * @throws InvocationTargetException
+     * @throws InvalidAttributeValueException
+     */
+    public static CrawlJob handleJobAction(CrawlJobHandler handler,
+            HttpServletRequest request, HttpServletResponse response,
+            String redirectBasePath, String currDomain)
+    throws IOException, AttributeNotFoundException, InvocationTargetException,
+        InvalidAttributeValueException {
+
+        // Load the job to manipulate
+        CrawlJob theJob = handler.getJob(request.getParameter("job"));
+
+        if (theJob == null) {
+            // Didn't find any job with the given UID or no UID given.
+            response.sendRedirect(redirectBasePath +
+                "?message=No job selected");
+            return null;
+        } else if (theJob.isReadOnly()) {
+            // Can't edit this job.
+            response.sendRedirect(redirectBasePath +
+                "?job=" + theJob.getUID() +
+                ((currDomain != null && currDomain.length() > 0)?
+                    "&currDomain=" + currDomain: "") +
+                "&message=Can't edit a read only job");
+            return theJob;
+        }
+
+        XMLSettingsHandler settingsHandler = (XMLSettingsHandler)theJob
+            .getSettingsHandler();
+        // If currDomain is null, then we're at top-level.
+        CrawlerSettings settings = settingsHandler
+            .getSettingsObject(currDomain);
+
+        // See if we need to take any action
+        if (request.getParameter(ACTION) != null) {
+            // Need to take some action.
+            String action = request.getParameter(ACTION);
+            if (action.equals(FILTERS)) {
+                // Doing something with the filters.
+                String subaction = request.getParameter(SUBACTION);
+                String map = request.getParameter(MAP);
+                if (map != null && map.length() > 0) {
+                    String filter = request.getParameter(FILTER);
+                    MapType filterMap = (MapType) settingsHandler
+                        .getComplexTypeByAbsoluteName(settings, map);
+                    if (subaction.equals(ADD)) {
+                        // Add filter
+                        String className = request.getParameter(map + ".class");
+                        String typeName = request.getParameter(map + ".name");
+                        if (typeName != null && typeName.length() > 0 &&
+                                className != null && className.length() > 0) {
+                            ModuleType tmp = SettingsHandler
+                                .instantiateModuleTypeFromClassName(
+                                    typeName, className);
+                            filterMap.addElement(settings, tmp);
+                        }
+                    } else if (subaction.equals(MOVEUP)) {
+                        // Move a filter down in a map
+                        if (filter != null && filter.length() > 0) {
+                            filterMap.moveElementUp(settings, filter);
+                        }
+                    } else if (subaction.equals(MOVEDOWN)) {
+                        // Move a filter up in a map
+                        if (filter != null && filter.length() > 0) {
+                            filterMap.moveElementDown(settings, filter);
+                        }
+                    } else if (subaction.equals(REMOVE)) {
+                        // Remove a filter from a map
+                        if (filter != null && filter.length() > 0) {
+                            filterMap.removeElement(settings, filter);
+                        }
+                    }
+                }
+                // Finally save the changes to disk
+                settingsHandler.writeSettingsObject(settings);
+            } else if (action.equals(DONE)) {
+                // Ok, done editing. Back to overview.
+                if (theJob.isRunning()) {
+                    handler.kickUpdate(); //Just to make sure.
+                }
+                response.sendRedirect(redirectBasePath +
+                    "?job=" + theJob.getUID() +
+                    ((currDomain != null && currDomain.length() > 0)?
+                            "&currDomain=" + currDomain: "") +
+                     "&message=Override changes saved");
+            } else if (action.equals(GOTO)) {
+                // Goto another page of the job/profile settings
+                response.sendRedirect(request.getParameter(SUBACTION) +
+                    ((currDomain != null && currDomain.length() > 0)?
+                        "&currDomain=" + currDomain: ""));
+            }
+        }
+        return theJob;
+    }
 }

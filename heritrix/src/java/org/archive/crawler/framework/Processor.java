@@ -61,10 +61,6 @@ public class Processor extends ModuleType {
      */
     public final static String ATTR_ENABLED = "enabled";
 
-    /**
-     * Key to use asking settings for postprocessor value.
-     */
-
     private MapType filters;
     private Processor defaultNextProcessor = null;
 

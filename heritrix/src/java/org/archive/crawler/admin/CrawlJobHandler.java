@@ -102,6 +102,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /** path to file featuring list of options to offer in UI */
     public static final String MODULE_OPTIONS_FILE_FILTERS = "filters.options";
+
+    /** Path to file featuring list of url canonicalization rule 
+     * options to offer in UI 
+     */
+    public static final String MODULE_OPTIONS_URL_CANONICALIZATION_RULES =
+        "url-canonicalization-rules.options";
+
     /** path to file featuring list of options to offer in UI */
     public static final String MODULE_OPTIONS_FILE_PROCESSORS = "processors.options";
     /** path to file featuring list of options to offer in UI */

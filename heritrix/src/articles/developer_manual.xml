@@ -1552,7 +1552,7 @@ public class MyFrontier extends ModuleType implements Frontier,
       </calloutlist></para>
   </sect1>
 
-  <sect1>
+  <sect1 id="writefilter">
     <title>Writing a Filter</title>
 
     <para>Filters<footnoteref linkend="footnote_scope_problems" /> are modules
