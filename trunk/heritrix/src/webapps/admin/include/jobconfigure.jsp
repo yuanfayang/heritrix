@@ -72,9 +72,14 @@
             return "";
         }
         
-        p.append("<tr><td><b>" + indent + mbean.getName() + "</b></td>\n");
+        String descriptionForAttribute = 
+        	TextUtils.escapeForMarkupAttribute(mbean.getDescription());
+        String descriptionForJs = 
+        	TextUtils.escapeForJavascript(mbean.getDescription());
+        p.append("<tr><td title=\"" + descriptionForAttribute +"\">");
+        p.append("<b>" + indent + mbean.getName() + "</b></td>\n");
         p.append("<td><a class='help' href=\"javascript:doPop('");
-        p.append(TextUtils.escapeForJavascript(mbean.getDescription()));
+        p.append(descriptionForJs);
         p.append("')\">?</a>");
         p.append(checkError(mbean.getAbsoluteName(),errorHandler,settings));
         p.append("</td>");
@@ -86,8 +91,11 @@
         if(m.find()){
             shortDescription = m.group(0);
         }
+
         
-        p.append("<td colspan='" + (settings==null?"2":"3") + "'><font size='-2'>" + shortDescription + "</font></td></tr>\n");
+        p.append("<td title=\'"+ descriptionForAttribute + "\' colspan='" 
+             + (settings==null?"2":"3") + "'>" 
+        	 + shortDescription + "</td></tr>\n");
 
         for(int n=0; n<a.length; n++) {
             if(a[n] == null) {
@@ -124,9 +132,14 @@
                         String attAbsoluteName = mbean.getAbsoluteName() + "/" + att.getName();
                         Object[] legalValues = att.getLegalValues();
                         
-                        p.append("<tr><td valign='top'>" + indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
+                        descriptionForAttribute = 
+        					TextUtils.escapeForMarkupAttribute(att.getDescription());
+        				descriptionForJs = 
+        					TextUtils.escapeForJavascript(att.getDescription());
+                        p.append("<tr><td title=\"" + descriptionForAttribute +"\" valign='top'>");
+                        p.append(indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
                         p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
-                        p.append(TextUtils.escapeForJavascript(att.getDescription()));
+                        p.append(descriptionForJs);
                         p.append("')\">?</a>&nbsp;");
                         p.append(checkError(attAbsoluteName,errorHandler,settings));
                         p.append("</td>");
