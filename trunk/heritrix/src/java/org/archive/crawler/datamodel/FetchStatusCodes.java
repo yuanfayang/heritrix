@@ -84,7 +84,6 @@ public interface FetchStatusCodes {
 
     /** DNS success */
     public static final int S_DNS_SUCCESS = 1;
-
 }
 
 

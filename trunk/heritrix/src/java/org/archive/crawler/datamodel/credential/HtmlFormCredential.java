@@ -36,6 +36,14 @@ import org.archive.crawler.datamodel.settings.Type;
  */
 public class HtmlFormCredential extends Credential {
     
+    /**
+     * Constructor.
+     * 
+     * A constructor that takes name of the credential is required by settings
+     * framework.
+     * 
+     * @param name Name of this credential.
+     */
     public HtmlFormCredential(String name)
     {
         super(name, "Credential that has all necessary" +

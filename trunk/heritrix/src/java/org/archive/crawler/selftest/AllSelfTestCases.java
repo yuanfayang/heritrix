@@ -55,7 +55,8 @@ public class AllSelfTestCases
                 BackgroundImageExtractionSelfTestCase.class,
                 FramesSelfTestCase.class,
                 MaxLinkHopsSelfTest.class,
-                CharsetSelfTest.class
+                CharsetSelfTest.class,
+                AuthSelfTest.class
             };
         AllSelfTestCases.allKnownSelftests = 
             Collections.unmodifiableList(Arrays.asList(tmp));

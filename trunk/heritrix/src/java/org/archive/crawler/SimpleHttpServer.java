@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.mortbay.http.DigestAuthenticator;
 import org.mortbay.http.HttpServer;
 import org.mortbay.http.NCSARequestLog;
 import org.mortbay.http.SocketListener;
@@ -215,6 +216,9 @@ public class SimpleHttpServer
             throw new NullPointerException("No contexts available.");
         }
 
+        if (!contextName.startsWith("/")) {
+            contextName = '/' + contextName;
+        }
         for (Iterator i = this.contexts.iterator(); i.hasNext();)
         {
             WebApplicationContext c = (WebApplicationContext)i.next();

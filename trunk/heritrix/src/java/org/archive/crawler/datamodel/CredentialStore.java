@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
@@ -54,7 +55,10 @@ import org.archive.crawler.datamodel.settings.Type;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CredentialStore extends ModuleType{
+public class CredentialStore extends ModuleType {
+    
+    private static Logger logger = Logger.getLogger(
+        "org.archive.crawler.datamodel.CredentialStore");
     
     public static final String ATTR_NAME = "credential-store";
     
@@ -176,9 +180,17 @@ public class CredentialStore extends ModuleType{
     /**
      * @return Iterator over the credentials in this CredentialStore.
      */
-    public Iterator iterator(Object context) throws AttributeNotFoundException {
+    public Iterator iterator(Object context) {
         
-        return get(context).iterator(context);
+        Iterator result =  null;
+        try
+        {
+            result = get(context).iterator(context);
+        } catch (AttributeNotFoundException e) {
+            logger.severe("Failed getting iterator: " + e.getMessage());
+        }
+        
+        return result;
     }
     
     /**
@@ -191,8 +203,7 @@ public class CredentialStore extends ModuleType{
      * credentials.
      * @return Unmodifable sublist of all elements of passed type.
      */
-    public List sublist(Object context, Class type)
-        throws AttributeNotFoundException {
+    public List sublist(Object context, Class type) {
         
         List result = new ArrayList();
         for (Iterator i = iterator(context); i.hasNext();) {

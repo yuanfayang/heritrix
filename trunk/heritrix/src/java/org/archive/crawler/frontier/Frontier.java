@@ -40,6 +40,7 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
+import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
@@ -498,8 +499,7 @@ public class Frontier
                 noteProcessingDone(curi);
             }
             
-            if (curi.getFetchStatus() > 0) {
-                // Regard any status larger then 0 as success.
+            if (curi.isSuccess()) {
                 successDisposition(curi);
             } else if (needsPromptRetry(curi)) {
                 // Consider statuses which allow nearly-immediate retry
@@ -1017,13 +1017,22 @@ public class Frontier
      * @throws AttributeNotFoundException If problems occur trying to read the
      *            maximum number of retries from the settings framework.
      */
-    private boolean needsPromptRetry(CrawlURI curi) throws AttributeNotFoundException {
-        if (curi.getFetchAttempts()>= ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
+    private boolean needsPromptRetry(CrawlURI curi)
+            throws AttributeNotFoundException {
+        if (curi.getFetchAttempts() >=
+                ((Integer)getAttribute(ATTR_MAX_RETRIES, curi)).intValue() ) {
             return false;
         }
+        
         switch (curi.getFetchStatus()) {
             case S_DEFERRED:
                 return true;
+            case HttpStatus.SC_UNAUTHORIZED:
+                // Check to see if we should let this 401 go around again?
+                // If any rfc2617 credential present, assume it got loaded in 
+                // FetchHTTP on expectation that we're to go around again.
+                return curi.hasRfc2617Credentials();
+            
             default:
                 return false;
         }
@@ -1082,10 +1091,15 @@ public class Frontier
         controller.recover.info("\n"+F_RESCHEDULE+curi.getURIString());
     }
 
+    /**
+     * Put near top of relevant keyedqueue (but behind anything recently
+     * scheduled 'high')
+     * 
+     * @param curi CrawlURI to reschedule.
+     */
     private void reschedule(CrawlURI curi) {
-        // put near top of relevant keyedqueue (but behind anything
-        // recently scheduled 'high')
-        curi.processingCleanup(); // eliminate state related to only prior processing passthrough
+        // Eliminate state related to only prior processing passthrough.
+        curi.processingCleanup();
         enqueueMedium(curi);
         queuedCount++;
     }
