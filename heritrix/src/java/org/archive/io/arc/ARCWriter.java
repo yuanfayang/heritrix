@@ -437,9 +437,9 @@ public class ARCWriter implements ARCConstants {
             // Set the GZIP FLG header to '4' which says that the GZIP header
             // has extra fields.  Then insert the alex {'L', 'X', '0', '0', '0,
             // '0'} 'extra' field.  The IA GZIP header will also set byte
-            // 9, the OS byte, to 3 (Unix).  We won't do that since its java
-            // that is doing the gzipping.
+            // 9 (zero-based), the OS byte, to 3 (Unix).  We'll do the same.
             gzippedMetaData[3] = 4;
+            gzippedMetaData[9] = 3;
             byte [] assemblyBuffer = new byte[gzippedMetaData.length +
                 ARC_GZIP_EXTRA_FIELD.length];
             // '10' in the below is a pointer past the following bytes of the
