@@ -164,6 +164,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     private MapType midfetchfilters = null;
     
+    /**
+     * What to log if midfetch abort.
+     */
+    private static final String MIDFETCH_ABORT_LOG = "midFetchAbort";
+    
 
     /**
      * Constructor.
@@ -269,7 +274,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
                     super.readResponseBody(state, connection);
                     addResponseContent(this, curi);
         			if(!filtersAccept(midfetchfilters, curi)) {
-                        curi.addAnnotation("midFetchAabort");
+                        curi.addAnnotation(MIDFETCH_ABORT_LOG);
+                        releaseConnection();
         				abort();
         			}
         		}
@@ -282,7 +288,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
                     super.readResponseBody(state, connection);
                     addResponseContent(this, curi);
                 	if(!filtersAccept(midfetchfilters, curi)) {
-                        curi.addAnnotation("midFetchAbort");
+                        curi.addAnnotation(MIDFETCH_ABORT_LOG);
+                        releaseConnection();
                         abort();
                     }
                 }
@@ -299,7 +306,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	this.http.executeMethod(method);
         } catch (IOException e) {
         	failedExecuteCleanup(method, curi, e);
-            method.releaseConnection();
         	return;
         } catch (ArrayIndexOutOfBoundsException e) {
         	// For weird windows-only ArrayIndex exceptions in native
@@ -307,8 +313,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
         	// http://forum.java.sun.com/thread.jsp?forum=11&thread=378356
         	// treating as if it were an IOException
         	failedExecuteCleanup(method, curi, e);
-            method.releaseConnection();
         	return;
+        } finally {
+            if (!((HttpMethodBase)method).isAborted()) {
+                method.releaseConnection();
+            }
         }
 
         try {
@@ -318,9 +327,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 1000 * getTimeout(curi));
         } catch (RecorderTimeoutException ex) {
             curi.addAnnotation("timeTrunc");
+            method.releaseConnection();
             method.abort();
         } catch (RecorderLengthExceededException ex) {
             curi.addAnnotation("lenTrunc");
+            method.releaseConnection();
             method.abort();
         } catch (IOException e) {
             cleanup(method, curi, e, "readFully", S_CONNECT_LOST);
@@ -824,8 +835,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
         
         MultiThreadedHttpConnectionManager cm =
             new MultiThreadedHttpConnectionManager();
-        // TODO: Tie this to host valence in frontier.
+        // TODO: Tie this to host valence in frontier (When its made
+        // work properly).
         cm.getParams().setDefaultMaxConnectionsPerHost(10);
+        
         // Multiply toethread max by 2 in case one is occupied when
         // we go to get another (Allow some slack).
         cm.getParams().setMaxTotalConnections(getController().
