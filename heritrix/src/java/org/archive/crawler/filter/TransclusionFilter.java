@@ -68,7 +68,7 @@ public class TransclusionFilter extends Filter {
 		int refCount = 0;
 		int embedCount = 0;
 		loop: for(int i=path.length()-1;i>=0;i--) {
-			// everything except 'L' is consider transitive
+			// everything except 'L' is considered transitive
 			switch (path.charAt(i)) {
 				case 'L': {
 					break loop;
