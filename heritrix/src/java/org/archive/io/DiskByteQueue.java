@@ -183,11 +183,15 @@ public class DiskByteQueue implements Serializable {
      * @throws IOException
      */
     public void close() throws IOException {
-        headStream.close();
-        rememberedPosition = headStream.position;
-        headStream = null;
-        tailStream.close();
-        tailStream = null;
+        if (headStream != null) {
+            rememberedPosition = headStream.position;
+            headStream.close();
+            headStream = null;
+        }
+        if (tailStream != null) {
+            tailStream.close();
+            tailStream = null;
+        }
     }
 
     /**
@@ -196,8 +200,12 @@ public class DiskByteQueue implements Serializable {
      */
     public void discard() throws IOException {
         close();
-        inFile.delete();
-        outFile.delete();
+        if(!inFile.delete()) {
+            throw new IOException("unable to delete "+inFile);
+        }
+        if(!outFile.delete()) {
+            throw new IOException("unable to delete "+outFile);
+        }
     }
 
     /**
