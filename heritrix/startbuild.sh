@@ -54,19 +54,14 @@ fi
 
 export PATH=$PATH:${ANT_HOME}/bin
 export CVSREAD=1
-export CVSROOT=/cvsroot/archive-crawler
+export CVSROOT=/home/cvs
 
-## build it, for they've already come
-if [ ! $2 ] 
+## run ant with the first target passed (e.g. clean, all, nightly)
+## or nightly if no arg is given
+if [ $1 ]
 then
-	ant -f $1 -logger org.apache.tools.ant.listener.MailLogger $2 
-elif [ $2 = "build-by-tag" ]
-then
-	if [ $3 ]; then
-		ant -f $1 -logger org.apache.tools.ant.listener.MailLogger $2 -DcvsTag=$3
-	else
-		echo "build-by-tag usage: $0 <build file> build-by-tag <build-label>"
-	fi
-else
 	ant -f $1 -logger org.apache.tools.ant.listener.MailLogger $2
+else
+	echo "executing default build (localbuild)"
+	ant -f $1 -logger org.apache.tools.ant.listener.MailLogger localbuild
 fi
