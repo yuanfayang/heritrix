@@ -42,14 +42,6 @@ import org.archive.crawler.datamodel.CrawlOrder;
  */
 public class MapTypeTest extends SettingsFrameworkTestCase {
 
-    /**
-     * Constructor for MapTypeTest.
-     * @param arg0
-     */
-    public MapTypeTest(String arg0) {
-        super(arg0);
-    }
-
     /*
      * @see TmpDirTestCase#setUp()
      */

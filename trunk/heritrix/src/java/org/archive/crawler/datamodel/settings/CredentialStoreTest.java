@@ -20,9 +20,8 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.datamodel;
+package org.archive.crawler.datamodel.settings;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -31,10 +30,9 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.settings.Credential;
-import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
-import org.archive.util.TmpDirTestCase;
 
 /**
  * Test add, edit, delete from credential store.
@@ -42,52 +40,40 @@ import org.archive.util.TmpDirTestCase;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CredentialStoreTest extends TmpDirTestCase {
-    
-    protected static Logger logger =
-        Logger.getLogger("org.archive.crawler.datamodel.CredentialStoreTest");
-    
-    private static final String TMP_FILE_PREFIX = "CREDENTIALS_";
-    private XMLSettingsHandler settingsHandler = null;
-    private CredentialStore store = null;
-    
-    protected void setUp() throws Exception {
-        super.setUp();
-        File orderFile = new File(getTmpDir(), TMP_FILE_PREFIX + "order.xml");
-        this.settingsHandler = new XMLSettingsHandler(orderFile);
-        this.settingsHandler.initialize();
-        this.store = (CredentialStore)this.settingsHandler.
-            getModule(CredentialStore.ATTR_NAME);
-        assertTrue("Store is null", this.store != null);
-    }
+public class CredentialStoreTest extends SettingsFrameworkTestCase {
 
-    protected void tearDown() throws Exception {
-        super.tearDown();
-        cleanUpOldFiles(TMP_FILE_PREFIX);
-    }
+    protected static Logger logger =
+        Logger.getLogger("org.archive.crawler.datamodel.CredentialTest");
     
     final public void testCredentials()
-        throws InvalidAttributeValueException, AttributeNotFoundException,
-            IllegalArgumentException, InstantiationException,
-            IllegalAccessException, InvocationTargetException {
+        throws InvalidAttributeValueException, IllegalArgumentException, 
+        InvocationTargetException, AttributeNotFoundException, MBeanException,
+        ReflectionException {
+        
+        CredentialStore store = (CredentialStore)this.settingsHandler.
+            getOrder().getAttribute(CredentialStore.ATTR_NAME);
         List types = CredentialStore.getCredentialTypes();
         for (Iterator i = types.iterator(); i.hasNext();) {
             Class cl = (Class)i.next();
-            Credential c = this.store.create(null, cl.getName(), cl);
+            Credential c = store.create(null, cl.getName(), cl);
             assertNotNull("Failed create of " + cl, c);
             logger.info("Created " + c.getName());
         }
         List names = new ArrayList(types.size());
-        for (Iterator i = this.store.iterator(null); i.hasNext();) {
+        for (Iterator i = store.iterator(null); i.hasNext();) {
             names.add(((Credential)i.next()).getName());
         }
+        
+        // Write out the file so can get a look at it.
+        getSettingsHandler().writeSettingsObject(getGlobalSettings());
+        
         assertTrue("Creds are empty", names.size() > 0);
         assertTrue("Creds and types don't match", names.size() == types.size());
         for (Iterator i = names.iterator(); i.hasNext();) {
-            this.store.remove(null, (String)i.next());
+            store.remove(null, (String)i.next());
         }
         int count = 0;
-        for (Iterator i = this.store.iterator(null); i.hasNext(); count++) {
+        for (Iterator i = store.iterator(null); i.hasNext(); count++) {
             i.next();
         }
         assertTrue("Creds not empty", count == 0);

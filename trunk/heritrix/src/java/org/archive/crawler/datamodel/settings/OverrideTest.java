@@ -55,18 +55,10 @@ public class OverrideTest extends SettingsFrameworkTestCase {
         super.tearDown();
     }
 
-    /**
-     * Constructor for OverrideTest.
-     * 
-     * @param arg0
-     */
-    public OverrideTest(String arg0) {
-        super(arg0);
-    }
-
     public void testOverridingOfGlobalAttribute()
             throws AttributeNotFoundException, MBeanException,
             ReflectionException, InvalidAttributeValueException {
+        
         final String MODULE_NAME = "module1";
         ModuleType module1 = new ModuleType(MODULE_NAME);
         ModuleType module2 = new Processor(MODULE_NAME, "Descr");
