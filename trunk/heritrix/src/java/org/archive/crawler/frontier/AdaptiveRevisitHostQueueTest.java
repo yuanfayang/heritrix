@@ -50,7 +50,8 @@ implements AdaptiveRevisitAttributeConstants {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setTransactional(true); 
         envConfig.setAllowCreate(true);    
-        File envDir = new File(getTmpDir() + File.separator + "AR" + File.separator);
+        File envDir = new File(getTmpDir() + File.separator + "AR" +
+            File.separator);
         envDir.mkdirs();
         Environment env = new Environment(envDir, envConfig);
         // Open the class catalog database. Create it if it does not

@@ -408,12 +408,9 @@ CoreAttributeConstants {
      * @see org.archive.crawler.framework.CrawlController#kickUpdate()
      */
     public void loadSeeds() {
-        // Get the seeds to refresh and then get an iterator inside a
-        // synchronization block.  The seeds list may get updated during our
-        // iteration. This will throw a concurrentmodificationexception unless
-        // we synchronize.
-        Iterator iter = this.controller.getScope().seedsIterator();
-        while(iter.hasNext()) {
+        // Get the seeds to refresh.
+        for (Iterator iter = this.controller.getScope().seedsIterator();
+                iter.hasNext();) {
             UURI u = (UURI)iter.next();
             CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
             caUri.setSchedulingDirective(CandidateURI.MEDIUM);
