@@ -198,9 +198,6 @@ public class XMLSettingsHandler extends SettingsHandler {
         return file;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.SettingsHandler#writeSettingsObject(org.archive.crawler.settings.CrawlerSettings)
-     */
     public final void writeSettingsObject(CrawlerSettings settings) {
         File filename = settingsToFilename(settings);
         writeSettingsObject(settings, filename);
@@ -222,16 +219,16 @@ public class XMLSettingsHandler extends SettingsHandler {
         filename.getParentFile().mkdirs();
 
         try {
+            long lastSaved = 0L;
+            File backup = null;
             if (getOrder().getController() != null && filename.exists()) {
                 // The crawler is running and file exists - make backup first.
                 String name = filename.getName();
-                //name = name.substring(0, name.lastIndexOf('.'));
-                name = name.substring(0, name.lastIndexOf('.'))
-                        + '_'
-                        + ArchiveUtils.get14DigitDate(settings
-                                .getLastSavedTime().getTime()) + "."
+                lastSaved = settings.getLastSavedTime().getTime();
+                name = name.substring(0, name.lastIndexOf('.')) + '_'
+                        + ArchiveUtils.get14DigitDate(lastSaved) + "."
                         + settingsFilenameSuffix;
-                File backup = new File(filename.getParentFile(), name);
+                backup = new File(filename.getParentFile(), name);
                 FileUtils.copyFiles(filename, backup);
             }
 
@@ -242,6 +239,14 @@ public class XMLSettingsHandler extends SettingsHandler {
                 TransformerFactory.newInstance().newTransformer();
             Source source = new CrawlSettingsSAXSource(settings);
             transformer.transform(source, result);
+
+            // Hack to get rid of unnesessary backupfiles.
+            // What happens is that the WUI often saves settings files
+            // several times during a settings change. This code removes the
+            // last backup file if its no more than 2 minutes old.
+            if (lastSaved > (System.currentTimeMillis() - 2 * 60 * 1000)) {
+                backup.delete();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -292,12 +297,6 @@ public class XMLSettingsHandler extends SettingsHandler {
         return settings;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.archive.crawler.settings.SettingsHandler#readSettingsObject(org.archive.crawler.settings.CrawlerSettings,
-     *      java.lang.String)
-     */
     protected final CrawlerSettings readSettingsObject(CrawlerSettings settings) {
         File filename = settingsToFilename(settings);
         return readSettingsObject(settings, filename);
@@ -364,9 +363,6 @@ public class XMLSettingsHandler extends SettingsHandler {
         return f;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.SettingsHandler#getDomainOverrides(java.lang.String)
-     */
     public ArrayList getDomainOverrides(String rootDomain) {
         File settingsDir = getSettingsDirectory();
 
@@ -425,7 +421,8 @@ public class XMLSettingsHandler extends SettingsHandler {
                     return true;
                 }
             }
-        } else if(f.getName().equals(settingsFilename + "." + settingsFilenameSuffix)){
+        } else if (f.getName().equals(
+                settingsFilename + "." + settingsFilenameSuffix)) {
             // This is an override file (or sure looks like one in any case).
             return true;
         }
