@@ -74,7 +74,8 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
             (build 1.4.2, J2RE 1.4.2 IBM build cxia32142sr1a-20050209
             (JIT enabled: jitc)))</literal> using Heritrix 1.4.0, the SSL
             problem described in <xref linkend="ibmjvm" /> is no longer
-            present.</para>
+            present (All of our crawling of the last couple of
+            months has been done on the latest SUN 1.5.0 JVMs).</para>
         </sect3>
 
     </sect2>
