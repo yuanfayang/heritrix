@@ -5,12 +5,19 @@
 <%@page import="org.archive.crawler.settings.XMLSettingsHandler"%>
 
 <%
-    if(request.getParameter("default")!=null){
+    if(request.getParameter("default") != null) {
         CrawlJob defaultJob = handler.getJob(request.getParameter("default"));
         if(defaultJob != null && defaultJob.isProfile()){
             handler.setDefaultProfile(defaultJob);
         }
     }
+    if(request.getParameter("delete") != null) {
+        CrawlJob defaultJob = handler.getJob(request.getParameter("delete"));
+        if(defaultJob != null && defaultJob.isProfile()) {
+            handler.deleteProfile(defaultJob);
+        }
+    }
+
     String title = "Profiles";
     int tab = 2;
 %>
@@ -53,7 +60,7 @@
                     <%if(defaultProfile.getJobName().equals(profile.getJobName())==false){%>
                         <a href="<%=request.getContextPath()%>/profiles.jsp?default=<%=profile.getUID()%>" style="color: #003399;" class="underLineOnHover">Set as default</a>
                         &nbsp;
-                        <!--a href="">Delete</a-->
+                        <a href="<%=request.getContextPath()%>/profiles.jsp?delete=<%=profile.getUID()%>" style="color: #003399;" class="underLineOnHover">Delete</a>
                     <%}%>
                 </td>
             </tr>
