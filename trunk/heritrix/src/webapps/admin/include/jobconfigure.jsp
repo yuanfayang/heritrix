@@ -74,7 +74,9 @@
         p.append("<tr><td><b>" + indent + mbean.getName() + "</b></td>\n");
         p.append("<td><a class='help' href=\"javascript:doPop('");
         p.append(TextUtils.escapeForJavascript(mbean.getDescription()));
-        p.append("')\">?</a></td>");
+        p.append("')\">?</a>");
+        p.append(checkError(mbean.getAbsoluteName(),errorHandler,settings));
+        p.append("</td>");
 
         String shortDescription = mbean.getDescription();
         // Need to cut off everything after the first sentance.
