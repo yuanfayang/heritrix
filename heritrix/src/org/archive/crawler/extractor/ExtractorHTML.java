@@ -60,7 +60,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	  "(?is)\\s((href)|(action)|(on\\w*)"
 	 +"|((?:src)|(?:background)|(?:cite)|(?:longdesc)"
 	 +"|(?:usemap)|(?:profile)|(?:datasrc)|(?:for))"
-	 +"|(codebase)|((?:classid)|(?:data))|(?:archive)"
+	 +"|(codebase)|((?:classid)|(?:data))|(archive)"
 	 +"|(\\w+))"
 	 +"\\s*=\\s*"
 	 +"(?:(?:\"(.+?)(?:\"|$))"
@@ -247,7 +247,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 				}
 			} else if (tags.start(1) > 0) {
 				// <script> match
-				processScript(curi, cs.subSequence(tags.start(1), tags.end(1)), tags.end(2));
+				processScript(curi, cs.subSequence(tags.start(1), tags.end(1)), tags.end(2)-tags.start(1));
 			}
 		}
 	}
