@@ -56,6 +56,16 @@ select
 	color: #0000FF; font-weight: bold; text-decoration: none;
 }
 
+.tab_inactive
+{
+	background-color: #EEEEEE; padding-left: 5; padding-right: 5; 
+}
+
+.tab_text_inactive
+{
+	color: #FFFFFF; font-weight: bold; text-decoration: none;
+}
+
 .tab_seperator
 {
 	background-color: #FFFFFF; color: #000000; font-weight: bold; padding-left: 2; padding-right: 2; 

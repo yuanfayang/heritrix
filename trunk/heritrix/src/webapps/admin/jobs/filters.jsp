@@ -197,12 +197,17 @@
 			// Go to modules
 			response.sendRedirect("/admin/jobs/modules.jsp?job="+theJob.getUID());
 			return;
+		}else if(action.equals("per")){
+			// Go to modules
+			response.sendRedirect("/admin/jobs/per/overview.jsp?job="+theJob.getUID());
+			return;
 		}
 	}
 
 	// Set page header.
 	String title = "Adjust modules";
 	int tab = theJob.isProfile()?2:1;
+	int jobtab = 1;
 %>
 
 <%@include file="/include/head.jsp"%>
@@ -218,6 +223,11 @@
 	
 	function doGotoModules(){
 		document.frmFilters.action.value="modules";
+		doSubmit();
+	}
+	
+	function doGotoPer(){
+		document.frmFilters.action.value="per";
 		doSubmit();
 	}
 	
@@ -252,26 +262,21 @@
 		doSubmit();
 	}
 </script>
-<p>
-<form name="frmFilters" method="post" action="filters.jsp">
-	<input type="hidden" name="job" value="<%=theJob.getUID()%>">
-	<input type="hidden" name="action" value="done">
-	<input type="hidden" name="subaction" value="">
-	<input type="hidden" name="map" value="">
-	<input type="hidden" name="filter" value="">
-	<input type="button" value="Adjust modules" onClick="doGotoModules()">
-	<input type="button" value="Configure settings" onClick="doGotoConfigure()">
-	<input type="button" value="Done" onClick="doSubmit()">
-
-<p>
-<table>
-	<%=printFilters(theJob.getSettingsHandler().getOrder(),"",false,false,false,null,false)%>
-</table>
-<p>	
-	<input type="button" value="Adjust modules" onClick="doGotoModules()">
-	<input type="button" value="Configure settings" onClick="doGotoConfigure()">
-	<input type="button" value="Done" onClick="doSubmit()">
-</form>
+	<p>
+		<%@include file="/include/jobnav.jsp"%>
+	<p>
+	<form name="frmFilters" method="post" action="filters.jsp">
+		<input type="hidden" name="job" value="<%=theJob.getUID()%>">
+		<input type="hidden" name="action" value="done">
+		<input type="hidden" name="subaction" value="">
+		<input type="hidden" name="map" value="">
+		<input type="hidden" name="filter" value="">
+		<table>
+			<%=printFilters(theJob.getSettingsHandler().getOrder(),"",false,false,false,null,false)%>
+		</table>
+	</form>
+	<p>
+		<%@include file="/include/jobnav.jsp"%>
 <%@include file="/include/foot.jsp"%>
 
 

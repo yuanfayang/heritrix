@@ -13,7 +13,7 @@
 	 * int tab - Which to display as 'selected'.
 	 *           0 - Console
 	 *           1 - Jobs
-	 *           2 - Settings
+	 *           2 - Profiles
 	 *           3 - Logs
 	 *           4 - Reports
 	 *           5 - About
