@@ -218,7 +218,7 @@ scenario once the current job has completed, the next job will not be started.
    'Settings' page is provided. The main difference is that each input field is
     preceded by a checkbox. If a box is checked, the value being displayed
     overrides the global configuration.
-    If not, the setting being displayed is inherited fromt he current 
+    If not, the setting being displayed is inherited from the current 
     domains' super domain.  Therefore, to override a setting, remember to 
     add a check in front of it.
     Removing a check effectively removes the override. Changes made to
@@ -262,7 +262,7 @@ scenario once the current job has completed, the next job will not be started.
 <p>
     Every single page in the admin interface displays the same info header. It
     tells you if the crawler is running or crawling a job (i.e.
-    the state of teh crawler). If a job is being
+    the state of the crawler). If a job is being
     crawled it's name is displayed as well as some minimal progress statistics.
     Information about the number of pending and completed jobs is also provided.
 </p>
