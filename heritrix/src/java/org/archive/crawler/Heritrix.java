@@ -92,6 +92,12 @@ public class Heritrix
      * Name of the heritrix properties file.
      */
     private static final String PROPERTIES = "heritrix.properties";
+    
+    /**
+     * Name of the key to use specifying alternate heritrix properties on
+     * command line.
+     */
+    private static final String PROPERTIES_KEY = PROPERTIES;
 
     /**
      * Name of the heritrix version property.
@@ -464,8 +470,19 @@ public class Heritrix
         }
     }
     
-    private static File getPropertiesFile() {
-        return new File(getConfdir(), PROPERTIES);
+    private static File getPropertiesFile() throws FileNotFoundException {
+        File result = null;
+        String alternateProperties = System.getProperty(PROPERTIES_KEY);
+        if (alternateProperties != null && alternateProperties.length() > 0) {
+            result = new File(alternateProperties);
+        }
+        if (result == null || !result.exists()) {
+            result = new File(getConfdir(), PROPERTIES);
+        }
+        if (!result.exists()) {
+            throw new FileNotFoundException(result.getAbsolutePath());
+        }
+        return result;
     }
 
     /**

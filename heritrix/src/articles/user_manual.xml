@@ -246,6 +246,17 @@
         to change/set these properties.</para>
 
         <sect4>
+          <title>heritrix.properties</title>
+
+          <para>Set this property on the command-line (i.e.
+          "-Dheritrix.properties" or include as part of
+          <literal>JAVA_OPTS</literal> environment value) when you want heritrix
+          to use a properties file other than that found at 
+          <literal>conf/heritrix.properties</literal>.
+          </para>
+        </sect4>
+
+        <sect4>
           <title>heritrix.development</title>
 
           <para>Set this property on the command-line (i.e.
