@@ -123,6 +123,7 @@ public class ARCWriterPool
      * @throws IOException Problem getting ARCWriter from pool (Converted
      * from Exception to IOException so this pool can live as a good 
      * citizen down in depths of ARCSocketFactory).
+     * @throws NoSuchElementException If we time out waiting on a pool member.
      */
     public ARCWriter borrowARCWriter()
         throws IOException
@@ -134,12 +135,12 @@ public class ARCWriterPool
         }
         catch(NoSuchElementException e)
         {
-            // Let this exception out.
+            // Let this exception out.  Unit test at least depends on it.
             throw e;
         }
         catch(Exception e)
         {
-            
+            // Convert.
             throw new IOException("Failed getting ARCWriter from pool: " +
                 e.getMessage());
         }
@@ -160,7 +161,8 @@ public class ARCWriterPool
      * @return Number of ARCWriters still in the ARCWriter pool.
      * @throws java.lang.UnsupportedOperationException
      */
-    public int getNumIdle() throws UnsupportedOperationException
+    public int getNumIdle()
+        throws UnsupportedOperationException
     {
         return this.pool.getNumIdle();
     }
@@ -233,7 +235,12 @@ public class ARCWriterPool
          */
         public Object makeObject() throws Exception
         {
-            return new ARCWriter(this.arcsDir, this.prefix, this.compress, 
+            // Add to the prefix this objects index into the pool.
+            String prefix = this.prefix + Integer.toString(getNumActive()) +
+                "of" +
+                Integer.toString(((GenericObjectPool)pool).getMaxActive()) +
+                "_";
+            return new ARCWriter(this.arcsDir, prefix, this.compress, 
                 ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE);
         }
         

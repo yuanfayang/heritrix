@@ -24,6 +24,7 @@
  */
 package org.archive.io.arc;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Date;
 import java.util.NoSuchElementException;
 
@@ -46,10 +47,15 @@ public class ARCWriterPoolTest extends TmpDirTestCase
         ARCWriterPool pool = new ARCWriterPool(getTmpDir(), "TEST", 
             true, MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
         ARCWriter [] writers = new ARCWriter[MAX_ACTIVE];
+        final String CONTENT = "Any old content";
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.write(CONTENT.getBytes());
         for (int i = 0; i < MAX_ACTIVE; i++)
         {
             writers[i] = pool.borrowARCWriter();
             assertEquals("Number active", i + 1, pool.getNumActive());
+            writers[i].write("http://one.two.three", "no-type", "0.0.0.0",
+                1234567890, CONTENT.length(), baos);
         }
         
         // Pool is maxed out.  Try and get a new ARCWriter.  We'll block for
