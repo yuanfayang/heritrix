@@ -31,7 +31,8 @@ import javax.management.MBeanAttributeInfo;
  * @author John Erik Halse
  */
 public class ModuleAttributeInfo extends MBeanAttributeInfo {
-    private final boolean overridable;
+    private String type;
+    private final boolean overrideable;
     private final Object defaultValue;
     private final Object legalValueLists[];
     private boolean complexType = false;
@@ -53,8 +54,9 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
         Object[] legalValues,
         Object defaultValue)
         throws InvalidAttributeValueException {
-        super(name, type.getClass().getName(), description, true, true, false);
-        overridable = isOverrideable;
+        super(name, null, description, true, true, false);
+        setType(type);
+        overrideable = isOverrideable;
         legalValueLists = legalValues;
         this.defaultValue = checkValue(defaultValue);
         if (type instanceof ComplexType) {
@@ -69,11 +71,12 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     public boolean isComplexType() {
         return complexType;
     }
+    
     /**
      * @return
      */
-    public boolean isOverridable() {
-        return overridable;
+    public boolean isOverrideable() {
+        return overrideable;
     }
 
     /**
@@ -89,15 +92,13 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
             try {
                 if (!(Class.forName(getType()).isInstance(value))
                     && value instanceof String) {
-                    value = SettingsHandler.StringToType((String) value, SettingsHandler.getTypeName(getType()));
+                    value = SettingsHandler.StringToType(
+                       (String) value, SettingsHandler.getTypeName(getType()));
                 }
             } catch (Exception e) {
                 throw new InvalidAttributeValueException(
-                    "Unable to decode string '"
-                        + value
-                        + "' into type '"
-                        + getType()
-                        + "'");
+                    "Unable to decode string '" + value
+                        + "' into type '" + getType() + "'");
             }
 
         // If it still isn't a legal type throw an error
@@ -133,15 +134,15 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
 
         return value;
     }
+    
     /* (non-Javadoc)
      * @see javax.management.MBeanAttributeInfo#getType()
      */
     public String getType() {
-        if (complexType) {
-            return defaultValue.getClass().getName();
-        } else {
-            return super.getType();
-        }
+        return type;
     }
 
+    protected void setType(Object type) {
+        this.type = type.getClass().getName();
+    }
 }
