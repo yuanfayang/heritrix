@@ -43,6 +43,13 @@
         <p>See the <a href="articles/user_manual.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+    <subsection name="Release 1.0.4 09/22/2004">
+        <p>Bug fix. Crawl.log and ARC metadata lines could have whitespace
+        in URIs and mimetype fields.  See
+        <a href="/changes-report.html">Changes</a> log for detail
+        and <a href="articles/limitations.html">Known Limitations</a>.
+        </p>
+    </subsection>
 
     <subsection name="Release 1.0.2 09/14/2004">
         <p>Bug fixes. 
@@ -50,6 +57,7 @@
         and <a href="articles/limitations.html">Known Limitations</a>.
         </p>
     </subsection>
+
     <subsection name="Release 1.0.0 08/06/2004">
         <p>Added new prefix ('SURT') scope and filter,
         compression of recovery log,
