@@ -72,7 +72,8 @@ public class FetcherHTTPSimple extends Processor implements InstancePerThread, C
 		
 		curi.getAList().putLong(A_FETCH_BEGAN_TIME,now);
 		GetMethod get = new GetMethod(curi.getUURI().getUri().toASCIIString());
-		get.setFollowRedirects(false);
+		get.setFollowRedirects(false); // don't auto-follow redirects
+		get.setHttp11(false); // use only HTTP/1.0 (to avoid receiving chunked responses)
 		get.setRequestHeader("User-Agent",controller.getOrder().getBehavior().getUserAgent());
 		get.setRequestHeader("From",controller.getOrder().getBehavior().getFrom());
 		
