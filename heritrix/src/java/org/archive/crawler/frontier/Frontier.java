@@ -481,18 +481,22 @@ public class Frontier
         // TODO: have inactive queues sorted by priority
         // TODO: (probably elsewhere) deactivate active queues that "have 
         // done enough for now" ("enough" to be defined)
-        while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
-            URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
-            kq.activate();
-            kq.setMaximumMemoryLoad(((Integer) getAttributeOrNull(ATTR_HOST_QUEUES_MEMORY_CAPACITY
-                    ,curi)).intValue());
-            updateQ(kq);
+        while(curi == null && (inactiveClassQueues.isEmpty() == false || readyClassQueues.isEmpty() == false)){
+            while(this.readyClassQueues.isEmpty() && !inactiveClassQueues.isEmpty()) {
+                URIWorkQueue kq = (URIWorkQueue) inactiveClassQueues.removeFirst();
+                kq.activate();
+                kq.setMaximumMemoryLoad(((Integer) getAttributeOrNull(ATTR_HOST_QUEUES_MEMORY_CAPACITY
+                        ,curi)).intValue());
+                updateQ(kq);
+            }
+            
+            // now, see if any holding queues are ready with a CrawlURI
+            while (!this.readyClassQueues.isEmpty() && curi == null) {
+                curi = dequeueFromReady();
+            }
         }
         
-        // now, see if any holding queues are ready with a CrawlURI
-        while (!this.readyClassQueues.isEmpty() && curi == null) {
-            curi = dequeueFromReady();
-
+        if (curi != null) {
             try {
                 return emitCuri(curi);
             }
@@ -790,9 +794,9 @@ public class Frontier
         try {
             readyCuri = firstReadyQueue.dequeue();
         } catch (NoSuchElementException e) {
-            firstReadyQueue.freeze(); // Do not want to do anything more with the queue
             StringBuffer alertbody = new StringBuffer();
-            alertbody.append("A NoSuchElementException occured while trying to dequeue " +
+            alertbody.append("A NoSuchElementException occured while thread " + 
+                    Thread.currentThread().getName() + " tried to dequeue " +
                     "an item from " +firstReadyQueue.getClassKey() + "\n" +
                     "Queue report follows:\n");
             appendKeyedQueue(alertbody,(KeyedQueue)firstReadyQueue,System.currentTimeMillis());
@@ -802,6 +806,8 @@ public class Frontier
                             alertbody.toString(),
                             e,
                             Level.SEVERE));
+            firstReadyQueue.freeze(); // Do not want to do anything more with the queue
+            readyClassQueues.remove(firstReadyQueue);
         }
         firstReadyQueue.checkEmpty();
         return readyCuri;
