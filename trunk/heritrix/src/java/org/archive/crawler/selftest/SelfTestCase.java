@@ -191,7 +191,7 @@ public class SelfTestCase extends TestCase
     public static synchronized void initialize(final String url,
             final CrawlJob job, final File jobDir, final File docs)
         throws IOException, AttributeNotFoundException, MBeanException,
-            ReflectionException
+            ReflectionException, InterruptedException
     {
         testNonNullNonEmpty(url);
         SelfTestCase.selftestURL = url.endsWith("/")? url: url + "/";
@@ -242,6 +242,7 @@ public class SelfTestCase extends TestCase
                 // The arc has been renamed.  Its safe to leave this loop.
                 break;
             }
+            Thread.sleep(1000);
         }
         SelfTestCase.readReader = ARCReaderFactory.get(arcFile);
         SelfTestCase.metaDatas = SelfTestCase.readReader.validate();
