@@ -61,6 +61,9 @@ public class CrawlURI extends CandidateURI
 	private int linkHopCount = -1; // from seeds
 	private int embedHopCount = -1; // from a sure link; reset upon any link traversal
 
+	// User agent to masquerade as when crawling this URI. If null, globals should be used
+	private String userAgent = null;
+	
 ////////////////////////////////////////////////////////////////////
 	CrawlServer server;
 
@@ -428,6 +431,28 @@ public class CrawlURI extends CandidateURI
 	public void markAsSeed() {
 		linkHopCount = 0;
 		embedHopCount = 0;
+	}
+
+	/**
+	 * Get the user agent to use for crawling this URI.
+	 * 
+	 * If null the global setting should be used.
+	 * 
+	 * @return user agent or null
+	 */
+	public String getUserAgent() {
+		return userAgent;
+	}
+
+	/**
+	 * Set the user agent to use when crawling this URI.
+	 * 
+	 * If not set the global settings should be used.
+	 * 
+	 * @param string user agent to use
+	 */
+	public void setUserAgent(String string) {
+		userAgent = string;
 	}
 
 	/**
