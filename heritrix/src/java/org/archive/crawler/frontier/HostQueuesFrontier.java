@@ -209,11 +209,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     long processedBytesAfterLastEmittedURI = 0;
     int lastMaxBandwidthKB = 0;
 
-    // ration memory usage by inactive queues
-    private int inactiveQueuesMemoryLoadTotal = 0;
-    private int inactiveQueuesMemoryLoadTarget = 10000;
-    private int inactivePerQueueLoadThreshold = 1000;
-
     // flags indicating operator-specified crawl pause/end 
     private boolean shouldPause = false;
     private boolean shouldTerminate = false;
