@@ -19,9 +19,11 @@ import java.util.ArrayList;
 
 import org.archive.crawler.admin.AdminConstants;
 import org.archive.crawler.admin.StatisticsTracker;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.io.LocalErrorFormatter;
@@ -514,25 +516,18 @@ public class CrawlController extends Thread{
 	 * 
 	 * @return
 	 */
-	public String reportThreads()
-	{
+	public String reportThreads(){
 		StringBuffer rep = new StringBuffer();	
 		
 		rep.append("Toe threads report - " + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
 		rep.append(" Job being crawled:         " + getOrder().getStringAt(AdminConstants.XP_CRAWL_ORDER_NAME)+"\n");
 		
 		rep.append(" Number of toe threads in pool: " + toePool.getToeCount() + " (" + toePool.getActiveToeCount() + " active)\n");
-		for(int i=0 ; i < toePool.getToeCount() ; i++)
-		{
+		for(int i=0 ; i < toePool.getToeCount() ; i++){
 			rep.append("   ToeThread #"+(i+1)+"\n");
 			rep.append(toePool.getReport(i));
 			rep.append("\n");
 		}
-		
-		rep.append("\n");
-		rep.append("\n");
-		
-		
 		
 		return rep.toString();
 	}
@@ -541,10 +536,24 @@ public class CrawlController extends Thread{
 	 * Set's a new CrawlOrder for this controller.  Objects that do not cache the values they
 	 * read from the CrawlOrder will be updated automatically.  
 	 * 
+	 * Some changes may not take effect until the Crawl is stopped and restarted.
+	 * 
+	 * The following changes will by applied immediately:
+	 *  - Max link hops
+	 *  - Max trans hops
+	 *  - Crawl mode
+	 *  - All politeness rules
+	 *  - All HTTP Fetch rules except sotimeout
+	 *  - All request header settings
+	 *  - Number of worker threads
+	 *  - Logging interval for crawl statistics
+	 *  - Seeds (Any seeds that have been already crawled - regardless of wether 
+	 *    they are old seeds or were simply encountered - will be ignored. Other 
+	 *    valid seeds will be scheduled high.)
+	 * 
 	 * @param o The new CrawlOrder
 	 */
-	public void updateOrder(CrawlOrder o)
-	{
+	public void updateOrder(CrawlOrder o){
 		// Prepare the new CrawlOrder
 		o.initialize();
 		// Replace the old CrawlOrder
@@ -556,5 +565,13 @@ public class CrawlController extends Thread{
 		newscope.initialize(this);
 		// Replace the old CrawlScope		
 		scope = newscope;
+		// Update the seed list in the frontier
+		Iterator iter = getScope().getSeedsIterator();
+		while (iter.hasNext()) {
+			UURI u = (UURI) iter.next();
+			CandidateURI caUri = new CandidateURI(u);
+			caUri.setIsSeed(true);
+			frontier.scheduleHigh(caUri);
+		}
 	}
 }
