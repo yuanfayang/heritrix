@@ -58,16 +58,21 @@ public class DiskBackedQueue implements Queue, Serializable {
      * @param dir
      * @param name
      * @param reuse whether to reuse any existing backing files
+     * @param compress whether to compress data written to disk
      * @param headMax
      * @throws IOException
      *
      */
-    public DiskBackedQueue(File dir, String name, boolean reuse, int headMax)
+    public DiskBackedQueue(File dir, 
+                           String name, 
+                           boolean reuse, 
+                           boolean compress, 
+                           int headMax)
             throws IOException {
         this.headMax = headMax;
         this.name = name;
         this.headQ = new LinkedList();
-        this.tailQ = new DiskQueue(dir, name, reuse);
+        this.tailQ = new DiskQueue(dir, name, reuse, compress);
     }
 
     /**
