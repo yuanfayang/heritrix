@@ -44,6 +44,7 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
+import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
@@ -87,7 +88,11 @@ import org.archive.util.QueueItemMatcher;
  */
 public class Frontier
     extends ModuleType
-    implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlStatusListener {
+    implements URIFrontier, FetchStatusCodes, CoreAttributeConstants,
+        CrawlStatusListener {
+    
+    private static final Logger logger =
+        Logger.getLogger(Frontier.class.getName());
 
     private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
     /** how many multiples of last fetch elapsed time to wait before recontacting same server */
@@ -123,9 +128,6 @@ public class Frontier
     private final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
         new Integer(0);
     private final static float KILO_FACTOR = 1.024F;
-    
-    private static Logger logger =
-        Logger.getLogger("org.archive.crawler.basic.Frontier");
 
     private final static String F_ADD = "F+ ";
     private final static String F_EMIT = "Fe ";
@@ -720,9 +722,19 @@ public class Frontier
     private CrawlURI emitCuri(CrawlURI curi) throws URIException {
         if(curi != null) {
             noteInProcess(curi);
-            curi.setServer(this.controller.getServerCache().getServerFor(curi));
+            if (this.controller == null ||
+                    this.controller.getServerCache() == null ) {
+                logger.warning("Controller or ServerCache is null processing " +
+                    curi);
+            } else {
+                CrawlServer cs = this.controller.getServerCache().
+                    getServerFor(curi);
+                if (cs != null) {
+                    curi.setServer(cs);
+                }
+            }
         }
-        logger.finer(this+".emitCuri("+curi+")");
+        logger.finer(this + ".emitCuri(" + curi + ")");
         this.controller.recover.info("\n"+F_EMIT+curi.getURIString());
         // One less URI in the queue.
         this.queuedCount--;
