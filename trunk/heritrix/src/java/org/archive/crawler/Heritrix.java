@@ -714,11 +714,14 @@ public class Heritrix
     }
     
     /**
-     * Shuts the program down. This method does it's best to terminate any crawl
-     * normally before shutting the program down, but it will not wait more then
-     * 1 second for threads to finish before calling <code>System.exit(0)</code>.
+     * Prepars for program shutdown. This method does it's best to prepare the
+     * program so that it can exit normally. It will kill the httpServer and
+     * terminate any running job.<br> 
+     * It is advisible to wait a few (~1000) millisec after calling this method
+     * and before calling performHeritrixShutDown() to allow as many threads as
+     * possible to finish what they are doing.
      */
-    public static void shutHeritrixDown(){
+    public static void prepareHeritrixShutDown(){
         if(httpServer!=null){
             // Shut down the web access.
             try {
@@ -733,25 +736,18 @@ public class Heritrix
             // Shut down the jobHandler.
             if(jobHandler.isCrawling()){
                 jobHandler.deleteJob(jobHandler.getCurrentJob().getUID());
-                try {
-                    jobHandler.wait(1000); // Give most of the threads time to exit.
-                } catch (InterruptedException e) {
-                    // Generally this can be ignored, but we'll print a stack trace 
-                     // just in case.
-                    e.printStackTrace();
-                } 
             }
         } else if(controller != null) {
             controller.stopCrawl();
-            try {
-                controller.wait(1000); // Give most of the threads time to exit.
-            } catch (InterruptedException e) {
-                // Generally this can be ignored, but we'll print a stack trace 
-                 // just in case.
-                e.printStackTrace();
-            } 
         }
-        
+    }
+    
+    /**
+     * Exit program. Recommended that prepareHeritrixShutDown() be invoked
+     * prior to this method.
+     *
+     */
+    public static void performHeritrixShutDown(){
         System.exit(0);
     }
 }
