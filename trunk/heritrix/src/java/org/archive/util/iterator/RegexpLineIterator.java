@@ -22,12 +22,9 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */ 
-package org.archive.util;
+package org.archive.util.iterator;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,37 +42,26 @@ import java.util.regex.Pattern;
  * 
  * @author gojomo
  */
-public class LineReadingIterator implements Iterator {
+public class RegexpLineIterator extends TransformingIteratorWrapper {
     private static final Logger logger =
-        Logger.getLogger(LineReadingIterator.class.getName());
+        Logger.getLogger(RegexpLineIterator.class.getName());
 
     public static final String COMMENT_LINE = "\\s*(#.*)?";
     public static final String NONWHITESPACE_ENTRY_TRAILING_COMMENT = 
         "^\\s*(\\S+)\\s*(#.*)?$";
     public static final String ENTRY = "$1";
 
-    protected BufferedReader reader = null;
     protected Matcher ignoreLine = null;
     protected Matcher extractLine = null;
     protected String outputTemplate = null;
 
     private String next;
 
-    public LineReadingIterator(BufferedReader r, String ignore, String extract, String replace) {
-        reader = r;
+    public RegexpLineIterator(Iterator inner, String ignore, String extract, String replace) {
+        this.inner = inner;
         ignoreLine = Pattern.compile(ignore).matcher("");
         extractLine = Pattern.compile(extract).matcher("");
         outputTemplate = replace;
-    }
-
-    /** 
-     * Test whether any items remain; loads next item into
-     * holding 'next' field. 
-     * 
-     * @see java.util.Iterator#hasNext()
-     */
-    public boolean hasNext() {
-        return (this.next != null)? true: loadNext();
     }
 
     /**
@@ -86,57 +72,22 @@ public class LineReadingIterator implements Iterator {
      * 
      * @return whether any item was loaded into next field
      */
-    private boolean loadNext() {
-        try {
-            String read;
-            while ((read = this.reader.readLine()) != null) {
-                // comments/etc
-                ignoreLine.reset(read);
-                if(ignoreLine.matches()) {
-                    continue; // read next line
-                }
-                extractLine.reset(read);
-                if(extractLine.matches()) {
-                    StringBuffer output = new StringBuffer();
-                    // TODO: consider if a loop that find()s all is more 
-                    // generally useful here
-                    extractLine.appendReplacement(output,outputTemplate);
-                    next = output.toString();
-                    return true;
-                }
-                // no match; possibly error
-                logger.info("nonsense line: "+read);
-            }
-            // no more seeds
-            return false;
-        } catch (IOException e) {
-            logger.warning(e.toString());
-            return false;
+    protected Object transform(Object obj) {
+        String line = (String)obj;
+        ignoreLine.reset(line);
+        if(ignoreLine.matches()) {
+            return null; 
         }
-    }
-
-    /** 
-     * Return the next item.
-     * 
-     * @see java.util.Iterator#next()
-     */
-    public Object next() {
-        if (!hasNext()) {
-            throw new NoSuchElementException();
+        extractLine.reset(line);
+        if(extractLine.matches()) {
+            StringBuffer output = new StringBuffer();
+            // TODO: consider if a loop that find()s all is more 
+            // generally useful here
+            extractLine.appendReplacement(output,outputTemplate);
+            return output.toString();
         }
-        // Next is guaranteed set by a hasNext() which returned true
-        String retVal = this.next;
-        this.next = null;
-        return retVal;
+        // no match; possibly error
+        logger.info("nonsense line: "+line);
+        return null;
     }
-
-    /**
-     * Not supported.
-     * 
-     * @see java.util.Iterator#remove()
-     */
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
-
 }
