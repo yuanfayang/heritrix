@@ -270,7 +270,7 @@ public class SimpleStore implements URIStore, FetchStatusCodes, CoreAttributeCon
 			// curi already exists;
 			
 			// if curi is still locked out, ignore request to schedule
-			if(curi.dontFetchYet()){
+			if(curi.getStoreState() != URIStoreable.FINISHED || curi.dontFetchYet()){
 				return;
 			} 
 			// yank URI back into scheduling if necessary
