@@ -4,20 +4,6 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.logging.Level;
-
-import org.archive.crawler.basic.FetcherDNS;
-import org.archive.crawler.basic.URIStoreable;
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.Processor;
-
-import st.ata.util.AList;
-import st.ata.util.HashtableAList;
 
 /** When a CrawlURI has been processed a ProcessedCrawlURIRecord
  *  can be created to store meta-data about the URI that can be extracted
