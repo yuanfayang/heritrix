@@ -93,11 +93,13 @@ public class CrawlHost {
 			robots = RobotsExclusionPolicy.ALLOWALL;
 			return;
 		}
-		if (get.getStatusCode()>=400) {
-			// other errors = all deny
+		if ((get.getStatusCode() >= 401) && (get.getStatusCode() <= 403)) {
+			// authorization/allowed errors = all deny
 			robots = RobotsExclusionPolicy.DENYALL;
 			return;
 		}
+		// TODO: handle other errors, perhaps redirects
+		// note that akamai will return 400 for some "not founds"
 		try {
 			BufferedReader reader = new BufferedReader(
 					new InputStreamReader(
