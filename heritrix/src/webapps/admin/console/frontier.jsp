@@ -130,9 +130,9 @@
 	                   regexpr = marker.getMatchExpression();
 	                } else if(action.equals("delete")){
 	                   // Delete based on regexpr.
-	                   handler.deleteURIsFromPending(regexpr);
+	                   long numberOfDeletes = handler.deleteURIsFromPending(regexpr);
                        out.println("<tr><td height='5'></td></tr>");
-	                   out.println("<tr><td colspan='7'><b>All URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
+	                   out.println("<tr><td colspan='7'><b>All " + numberOfDeletes + " URIs matching</b> <code>" + regexpr + "</code> <b>were deleted.</b></td></tr>");
                        out.println("<tr><td height='5'></td></tr>");
 	                }
 	                

@@ -85,6 +85,7 @@ public interface Queue {
      * Making other changes to the queue while this method is being 
      * processed is not safe. 
      * @param matcher a queue item matcher
+     * @return the number of deleted items
      */
-    void deleteMatchedItems(QueueItemMatcher matcher);
+    long deleteMatchedItems(QueueItemMatcher matcher);
 }

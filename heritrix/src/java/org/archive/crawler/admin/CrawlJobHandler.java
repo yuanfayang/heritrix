@@ -904,11 +904,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * the specified regular expression. If the current job is not paused (or
      * there is no current job) nothing will be done.
      * @param regexpr Regular expression to delete URIs by.
+     * @return the number of URIs deleted
      */
-    public void deleteURIsFromPending(String regexpr){
+    public long deleteURIsFromPending(String regexpr){
         if(controller != null && controller.isPaused()){
-            controller.getFrontier().deleteURIsFromPending(regexpr);
+            return controller.getFrontier().deleteURIsFromPending(regexpr);
         }
+        return 0;
     }
 
 }

@@ -235,6 +235,7 @@ public interface URIFrontier {
      * 
      * @param match A regular expression, any URIs that matches it will be 
      *              deleted.
+     * @return the number of URIs deleted
      */
-    public void deleteURIsFromPending(String match);
+    public long deleteURIsFromPending(String match);
 }

@@ -1283,11 +1283,12 @@ public class Frontier
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#deleteURIsFromPending(java.lang.String)
      */
-    public void deleteURIsFromPending(String match) {
+    public long deleteURIsFromPending(String match) {
+        long numberOfDeletes = 0;
         // Create QueueItemMatcher
         QueueItemMatcher mat = new URIQueueMatcher(match, true, this);
         // Delete from pendingHigh
-        pendingHighQueue.deleteMatchedItems(mat);
+        numberOfDeletes += pendingHighQueue.deleteMatchedItems(mat);
         // Delete from all KeyedQueues
         if(allClassQueuesMap.size()!=0)
         {
@@ -1295,11 +1296,12 @@ public class Frontier
             int i = 1;
             while(q.hasNext())
             {
-                ((KeyedQueue)allClassQueuesMap.get(q.next())).deleteMatchedItems(mat);
+                numberOfDeletes += (((KeyedQueue)allClassQueuesMap.get(q.next())).deleteMatchedItems(mat));
             }
         }
         // Delete from pendingQueue
-        pendingQueue.deleteMatchedItems(mat);
+        numberOfDeletes += pendingQueue.deleteMatchedItems(mat);
+        return numberOfDeletes;
     }
 
 

@@ -75,13 +75,16 @@ public class MemQueue extends LinkedList implements Queue {
     /* (non-Javadoc)
      * @see org.archive.util.Queue#deleteMatchedItems(org.archive.util.QueueItemMatcher)
      */
-    public void deleteMatchedItems(QueueItemMatcher matcher) {
+    public long deleteMatchedItems(QueueItemMatcher matcher) {
         Iterator it = listIterator();
+        long numberOfDeletes = 0;
         while(it.hasNext()){
             if(matcher.match(it.next())){
                 it.remove();
+                numberOfDeletes++;
             }
         }
+        return numberOfDeletes;
     }
     
     
