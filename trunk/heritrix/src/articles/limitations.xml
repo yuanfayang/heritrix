@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<article>
+  <title>Known Limitations</title>
+
+  <articleinfo>
+    <date>$Date$</date>
+
+    <authorgroup>
+      <corpauthor>Internet Archive</corpauthor>
+    </authorgroup>
+  </articleinfo>
+
+  <sect1>
+    <title>Introduction</title>
+
+    <para>This document lists known limitations by version number.
+    It includes user and developer notes.</para>
+  </sect1>
+
+  <sect1 id="1_0_0">
+    <title>1.0.0</title>
+
+    <sect2 id="958055">
+      <title><ulink url="https://sourceforge.net/tracker/?func=detail&amp;aid=958055&amp;group_id=73833&amp;atid=539099">[ 958055 ] Seed ConcurrentModificationException</ulink>
+      </title>
+
+      <para>Its possible to get ConcurrentModificationsException editing options on 
+      a running crawl.</para>
+      <sect3><title>Workaround</title>
+        <para>Pause the crawl when making changes to crawl options.</para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="984390">
+      <title><ulink url="https://sourceforge.net/tracker/?func=detail&amp;aid=984390&amp;group_id=73833&amp;atid=539099">[ 984390 ] Build fails: "rws" mode and Mac OS X interact badly</ulink></title>
+
+    <para>On macintoshes and linux kernel version 2.6, heritrix fails to build
+    (unit tests fail).</para>
+      <sect3><title>Workaround</title>
+        <para>See issue, <ulink url="https://sourceforge.net/tracker/?func=detail&amp;aid=984390&amp;group_id=73833&amp;atid=539099">[ 984390 ] Build fails: "rws" mode and Mac OS X interact badly</ulink>, for source code workaround edit.</para>
+      </sect3>
+    </sect2>
+
+
+    <sect2 id="955975">
+      <title><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=955975&amp;group_id=73833&amp;atid=539099">[ 955975 ] Build fails: JVM and kernel 2.6+ (Was 2 tests fail...)</ulink></title>
+
+    <para>Heritrix fails to build on linux kernel 2.6.</para>
+      <sect3><title>Workaround</title>
+        <para>Same as <ulink url="#984390">above</ulink>.
+        </para>
+      </sect3>
+    </sect2>
+
+    </sect1>
+</article>
