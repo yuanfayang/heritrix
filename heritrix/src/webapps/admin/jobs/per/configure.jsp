@@ -157,6 +157,12 @@
 							p.append("<option value='True'"+ (currentAttribute.equals(new Boolean(true))?" selected":"") +">True</option>\n");
 							p.append("</select>\n");
 						}
+						else if(currentAttribute instanceof TextField){
+							// Text area
+							p.append("<textarea name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' style='width: 320px' rows='4'>");
+							p.append(currentAttribute);
+							p.append("</textarea>\n");
+						}
 						else{
 							//Input box
 							p.append("<input name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' value='" + currentAttribute + "' style='width: 320px'>\n");

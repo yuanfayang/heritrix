@@ -65,6 +65,7 @@ public abstract class SettingsHandler {
     final static String DOUBLE = "double";
     final static String BOOLEAN = "boolean";
     final static String STRING = "string";
+    final static String TEXT = "text";
     final static String OBJECT = "object";
     final static String TIMESTAMP = "timestamp";
     final static String MAP = "map";
@@ -73,26 +74,23 @@ public abstract class SettingsHandler {
     final static String FLOAT_LIST = "floatList";
     final static String DOUBLE_LIST = "doubleList";
     final static String STRING_LIST = "stringList";
-    private final static String names[][] =
-        new String[][] { { INTEGER, "java.lang.Integer" }, {
-            LONG, "java.lang.Long" }, {
-            FLOAT, "java.lang.Float" }, {
-            DOUBLE, "java.lang.Double" }, {
-            BOOLEAN, "java.lang.Boolean" }, {
-            STRING, "java.lang.String" }, {
-            OBJECT, "org.archive.crawler.datamodel.settings.CrawlerModule" }, {
-            TIMESTAMP, "java.util.Date" }, {
-            MAP, "org.archive.crawler.datamodel.settings.MapType" }, {
-            INTEGER_LIST,
-                "org.archive.crawler.datamodel.settings.IntegerList" },
-                {
-            LONG_LIST, "org.archive.crawler.datamodel.settings.LongList" }, {
-            FLOAT_LIST, "org.archive.crawler.datamodel.settings.FloatList" }, {
-            DOUBLE_LIST,
-                "org.archive.crawler.datamodel.settings.DoubleList" },
-                {
-            STRING_LIST, "org.archive.crawler.datamodel.settings.StringList" }
-    };
+    private final static String names[][] = new String[][] {
+            { INTEGER, "java.lang.Integer"},
+            { LONG, "java.lang.Long"},
+            { FLOAT, "java.lang.Float"},
+            { DOUBLE, "java.lang.Double"},
+            { BOOLEAN, "java.lang.Boolean"},
+            { STRING, "java.lang.String"},
+            { TEXT, "org.archive.crawler.datamodel.settings.TextField"},
+            { OBJECT, "org.archive.crawler.datamodel.settings.CrawlerModule"},
+            { TIMESTAMP, "java.util.Date"},
+            { MAP, "org.archive.crawler.datamodel.settings.MapType"},
+            { INTEGER_LIST,
+                    "org.archive.crawler.datamodel.settings.IntegerList"},
+            { LONG_LIST, "org.archive.crawler.datamodel.settings.LongList"},
+            { FLOAT_LIST, "org.archive.crawler.datamodel.settings.FloatList"},
+            { DOUBLE_LIST, "org.archive.crawler.datamodel.settings.DoubleList"},
+            { STRING_LIST, "org.archive.crawler.datamodel.settings.StringList"}};
     private final static Map name2class = new HashMap();
     private final static Map class2name = new HashMap();
     static {
@@ -196,6 +194,8 @@ public abstract class SettingsHandler {
         Object value;
         if (typeName == SettingsHandler.STRING) {
             value = stringValue;
+        } else if (typeName == SettingsHandler.TEXT) {
+            value = new TextField(stringValue);
         } else if (typeName == SettingsHandler.INTEGER) {
             value = Integer.decode(stringValue);
         } else if (typeName == SettingsHandler.LONG) {

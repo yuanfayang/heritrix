@@ -30,6 +30,7 @@ import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.datamodel.settings.StringList;
+import org.archive.crawler.datamodel.settings.TextField;
 
 /**
  * This class represent the policy to which Robots.txt files is
@@ -86,7 +87,7 @@ public class RobotsHonoringPolicy  extends CrawlerModule {
         addElementToDefinition(new SimpleType(ATTR_MASQUERADE,
                 "Should we masquerade as another user agent", new Boolean(false)));
         addElementToDefinition(new SimpleType(ATTR_CUSTOM_ROBOTS,
-                "Custom robots to use if type is custom", ""));
+                "Custom robots to use if type is custom", new TextField("")));
         addElementToDefinition(new StringList(ATTR_USER_AGENTS, "User agents"));
     }
 
