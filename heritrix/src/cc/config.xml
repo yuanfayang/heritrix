@@ -19,13 +19,11 @@
         <!--Configures the actual build loop, how often and which build 
             file/target.
          -->
-        <schedule interval="3600">
-            <!--Looks like you can only do a maven target and nothing else so 
-                put all of the maven targets here on the one invocation.
-             -->
-            <maven mavenscript="/home/stack/software/maven-1.0-rc1/bin/maven"
-                projectfile="checkout/ArchiveOpenCrawler/project.xml"
-                goal="clean dist site:generate site:update-sourceforge" />
+        <schedule interval="310">
+            <ant buildfile="build-ArchiveOpenCrawler.xml" 
+                target="build"
+                uselogger="true" 
+                usedebug="false"/>
         </schedule>
 
         <!--Directory to write build logs to.-->
@@ -36,7 +34,8 @@
             <currentbuildstatuspublisher
                 file="logs/ArchiveOpenCrawler/buildstatus.txt"/>
 
-            <artifactspublisher dir="checkout/ArchiveOpenCrawler/target/docs"
+            <artifactspublisher 
+                dir="checkout/ArchiveOpenCrawler/target/distributions"
                 dest="artifacts/ArchiveOpenCrawler"/>
 
             <email mailhost="mail-dev.archive.org"
@@ -47,7 +46,7 @@
                 <failure address="developers" />
                 <map alias="buildmasters" address="stack" />
                 <map alias="developers" address="stack" />
-                <map alias="stack" address="stack@archive.org" />
+                <map alias="stack" address="stack at archive dot org" />
             </email>
         </publishers>
 
