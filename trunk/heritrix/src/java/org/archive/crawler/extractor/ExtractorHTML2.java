@@ -204,7 +204,6 @@ public class ExtractorHTML2 extends ExtractorHTML {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorHTML2\n");
         ret.append("  Function:          Link extraction on HTML documents (including embedded CSS)\n");
-        ret.append("                     - Embedded JavaScript handled by ExtractorJS\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
         
