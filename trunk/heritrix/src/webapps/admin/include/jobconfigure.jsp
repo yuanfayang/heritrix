@@ -340,12 +340,12 @@
     CrawlJob theJob = handler.getJob(request.getParameter("job"));
     if (theJob == null) {
         // Didn't find any job with the given UID or no UID given.
-        response.sendRedirect("/admin/jobs.jsp?message=" +
+        response.sendRedirect(request.getContextPath() + "/jobs.jsp?message=" +
             "No job selected " + request.getParameter("job"));
         return;
     } else if(theJob.isReadOnly()) {
         // Can't edit this job.
-        response.sendRedirect("/admin/jobs.jsp?message=" +
+        response.sendRedirect(request.getContextPath() + "/jobs.jsp?message=" +
             "Can't configure a read only job");
         return;
     }

@@ -72,7 +72,7 @@
                             &nbsp;<font color="<%=statusColor%>"><%=statusCode%></font>&nbsp;
                         </td>
                         <td>
-                            <a href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=UriString%>&grep=true" style="text-decoration: none;"><%=disposition%></a>
+                            <a href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=UriString%>&grep=true" style="text-decoration: none;"><%=disposition%></a>
                         </td>
                     </tr>
             <%

@@ -155,9 +155,11 @@
                 <td colspan="6">
                     <table>
                         <tr>
-                            <td valign="center" ><img src="/admin/images/blue.jpg" height="1" width="40"></td>
+                            <td valign="center" ><img 
+                            src="<%=request.getContextPath()%>/images/blue.jpg" height="1" width="40"></td>
                             <td align="center"><i>URIs</i></td>
-                            <td valign="center" ><img src="/admin/images/blue.jpg" height="1" width="300"></td>
+                            <td valign="center" ><img 
+                            src="<%=request.getContextPath()%>/images/blue.jpg" height="1" width="300"></td>
                         </tr>
                     </table>
                 </td>
@@ -260,12 +262,12 @@
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
-                            <a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=entry.getKey()%>&grep=true">
+                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=entry.getKey()%>&grep=true">
                                 <%=CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)entry.getKey()))%>
                             </a>&nbsp;
                         </td>
                         <td colspan="2" nowrap>
-                            <img src="/admin/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
+                            <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;
                         </td>
                     </tr>
             <%
@@ -304,10 +306,10 @@
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
-                            <a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=file.getKey()%>&grep=true"><%=file.getKey()%></a>&nbsp;&nbsp;
+                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=file.getKey()%>&grep=true"><%=file.getKey()%></a>&nbsp;&nbsp;
                         </td>
                         <td nowrap>
-                            <img src="/admin/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;&nbsp;
+                            <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;&nbsp;
                         </td>
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerFileType((String)file.getKey()))%>
@@ -350,7 +352,7 @@
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
-                            <a style="text-decoration: none;" href="/admin/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=host.getKey()%>&grep=true"><%=host.getKey()%></a>&nbsp;
+                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=host.getKey()%>&grep=true"><%=host.getKey()%></a>&nbsp;
                         </td>
                         <td nowrap>
                             <%=((LongWrapper)host.getValue()).longValue%>&nbsp;
