@@ -43,7 +43,7 @@ public class IATagParser extends TagWriter {
      * @param tags
      */
     public IATagParser(SWFTags tags) {
-    	super(tags);
+        super(tags);
     }
 
     /**
@@ -52,7 +52,7 @@ public class IATagParser extends TagWriter {
      */
     protected SWFActions factorySWFActions()
     {
-    	return new ActionURLExtractor( this, version );
+        return new ActionURLExtractor( this, version );
     }
 
     /** Return a list of all links (ArrayList of strings) that action parser's
@@ -60,7 +60,7 @@ public class IATagParser extends TagWriter {
      * @return links
      */
        public ArrayList getLinks(){
-       	return links;
+           return links;
        }
 
        /** Store links to other documents that are enountered in
@@ -68,7 +68,7 @@ public class IATagParser extends TagWriter {
         * @param link
         */
        public void putLink(String link){
-       	links.add(link);
+           links.add(link);
        }
 
 
@@ -83,23 +83,23 @@ public class IATagParser extends TagWriter {
      * @throws IOException
      */
     public SWFActions tagDefineButton2( int id,
-    									boolean trackAsMenu,
-    									Vector buttonRecord2s )
-    	throws IOException
+                                        boolean trackAsMenu,
+                                        Vector buttonRecord2s )
+        throws IOException
     {
-    	startTag( TAG_DEFINEBUTTON2, id, true );
-    	out.writeUI8( trackAsMenu ? 1 : 0 );
+        startTag( TAG_DEFINEBUTTON2, id, true );
+        out.writeUI8( trackAsMenu ? 1 : 0 );
 
-    	return new ButtonActionWriter( this, version, buttonRecord2s );
+        return new ButtonActionWriter( this, version, buttonRecord2s );
     }
 
     // override inner class so the created super() is an ActionURLExtractor
     protected static class ButtonActionWriter extends ActionURLExtractor
     {
-    	public ButtonActionWriter( TagWriter tagWriter, int flashVersion, Vector buttonRecs )
-    		throws IOException
-    	{
-    		super( (IATagParser)tagWriter, flashVersion );
-    	}
+        public ButtonActionWriter( TagWriter tagWriter, int flashVersion, Vector buttonRecs )
+            throws IOException
+        {
+            super( (IATagParser)tagWriter, flashVersion );
+        }
     }
 }

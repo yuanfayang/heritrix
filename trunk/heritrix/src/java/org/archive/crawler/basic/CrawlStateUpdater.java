@@ -58,54 +58,54 @@ public class CrawlStateUpdater extends Processor implements CoreAttributeConstan
      */
     protected void innerProcess(CrawlURI curi) {
 
-    	// if it's a dns entry set the expire time
-    	if(curi.getUURI().getScheme().equals("dns")){
+        // if it's a dns entry set the expire time
+        if(curi.getUURI().getScheme().equals("dns")){
 
-    		// if we've looked up the host update the expire time
-    		if(curi.getServer().getHost().hasBeenLookedUp()){
-    			long expires = curi.getServer().getHost().getIpExpires();
+            // if we've looked up the host update the expire time
+            if(curi.getServer().getHost().hasBeenLookedUp()){
+                long expires = curi.getServer().getHost().getIpExpires();
 
-    			if(expires > 0){
-    				curi.setDontRetryBefore(expires);
-    			}
+                if(expires > 0){
+                    curi.setDontRetryBefore(expires);
+                }
 
-    		}else{
+            }else{
 
-    			// TODO: resolve several issues here:
-    			//   (1) i don't think this else clause is ever reached;
-    			//       won't every DNS uri that gets this far imply
-    			//       hasBeenLookedUp will have been set?
-    			//   (2) we don't want repeated successful attempts to
-    			//       refetch a domain name, each time it expires,
-    			//       to eventually exhaust the retries... so in
-    			//       fact the retry count needs to be reset somewhere,
-    			//       maybe at each success
+                // TODO: resolve several issues here:
+                //   (1) i don't think this else clause is ever reached;
+                //       won't every DNS uri that gets this far imply
+                //       hasBeenLookedUp will have been set?
+                //   (2) we don't want repeated successful attempts to
+                //       refetch a domain name, each time it expires,
+                //       to eventually exhaust the retries... so in
+                //       fact the retry count needs to be reset somewhere,
+                //       maybe at each success
 
 
 
-    			// if we've tried too many times give up
-    			if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
-    				curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-    			}
-    		}
+                // if we've tried too many times give up
+                if(curi.getFetchAttempts() >= MAX_DNS_FETCH_ATTEMPTS){
+                    curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+                }
+            }
 
-    	// if it's not dns make sure it's http, 'cause we don't know nuthin' else
-    	}else if(curi.getUURI().getScheme().equals("http")){
+        // if it's not dns make sure it's http, 'cause we don't know nuthin' else
+        }else if(curi.getUURI().getScheme().equals("http")){
 
-    		if ( curi.getFetchStatus()>0 && (curi.getUURI().getPath() != null) && curi.getUURI().getPath().equals("/robots.txt")) {
-    			// update host with robots info
-    			if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
-    				GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
-    				try {
-    					curi.getServer().updateRobots(get);
-    				} catch (IOException e) {
-    					curi.addLocalizedError(getName(),e,"robots.txt parsing IOException");
-    				}
+            if ( curi.getFetchStatus()>0 && (curi.getUURI().getPath() != null) && curi.getUURI().getPath().equals("/robots.txt")) {
+                // update host with robots info
+                if(curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+                    GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+                    try {
+                        curi.getServer().updateRobots(get);
+                    } catch (IOException e) {
+                        curi.addLocalizedError(getName(),e,"robots.txt parsing IOException");
+                    }
 
-    				// curi can be refetched once robots data expires
-    				curi.setDontRetryBefore(curi.getServer().getRobotsExpires());
-    			}
-    		}
-    	}
+                    // curi can be refetched once robots data expires
+                    curi.setDontRetryBefore(curi.getServer().getRobotsExpires());
+                }
+            }
+        }
     }
 }

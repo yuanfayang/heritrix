@@ -82,37 +82,37 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
      */
     public void innerProcess(CrawlURI curi) {
 
-    	if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
-    		return;
-    	}
+        if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+            return;
+        }
 
-    	GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
-    	Header contentType = get.getResponseHeader("Content-Type");
-    	if ((contentType==null)) {
-    		return;
-    	}
-    	String mimeType = contentType.getValue();
-    	if((mimeType.indexOf("javascript")<0)
-    	    &&(mimeType.indexOf("jscript")<0)
-    	    &&(mimeType.indexOf("ecmascript")<0)) {
-    		return;
-    	}
+        GetMethod get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+        Header contentType = get.getResponseHeader("Content-Type");
+        if ((contentType==null)) {
+            return;
+        }
+        String mimeType = contentType.getValue();
+        if((mimeType.indexOf("javascript")<0)
+            &&(mimeType.indexOf("jscript")<0)
+            &&(mimeType.indexOf("ecmascript")<0)) {
+            return;
+        }
 
         numberOfCURIsHandled++;
 
-    	CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
+        CharSequence cs = get.getHttpRecorder().getRecordedInput().getCharSequence();
 
-    	if (cs==null) {
-    		// TODO: note problem
-    		return;
-    	}
+        if (cs==null) {
+            // TODO: note problem
+            return;
+        }
 
-    	try {
+        try {
             numberOfLinksExtracted += considerStrings(curi, cs);
-    	} catch (StackOverflowError e) {
-    		// TODO Auto-generated catch block
-    		DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
-    	}
+        } catch (StackOverflowError e) {
+            // TODO Auto-generated catch block
+            DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
+        }
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
     }
 

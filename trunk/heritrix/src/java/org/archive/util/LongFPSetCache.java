@@ -39,7 +39,7 @@ public class LongFPSetCache extends MemLongFPSet {
      *
      */
     public LongFPSetCache() {
-    	super();
+        super();
     }
 
     /**
@@ -47,37 +47,37 @@ public class LongFPSetCache extends MemLongFPSet {
      * @param loadFactor
      */
     public LongFPSetCache(int capacityPowerOfTwo, float loadFactor) {
-    	super(capacityPowerOfTwo, loadFactor);
+        super(capacityPowerOfTwo, loadFactor);
     }
 
     protected void noteAccess(long index) {
-    	if(slots[(int)index]<Byte.MAX_VALUE) {
-    		slots[(int)index]++;
-    	}
+        if(slots[(int)index]<Byte.MAX_VALUE) {
+            slots[(int)index]++;
+        }
     }
 
     protected void makeSpace() {
-    	discard(1);
+        discard(1);
     }
 
     /**
      * @param i
      */
     private void discard(int i) {
-    	int toDiscard = i;
-    	while(toDiscard>0) {
-    		if(slots[(int)sweepHand]==0) {
-    			removeAt(sweepHand);
-    			toDiscard--;
-    		} else {
-    			if (slots[(int)sweepHand]>0) {
-    				slots[(int)sweepHand]--;
-    			}
-    		}
-    		sweepHand++;
-    		if (sweepHand==slots.length) {
-    			sweepHand = 0;
-    		}
-    	}
+        int toDiscard = i;
+        while(toDiscard>0) {
+            if(slots[(int)sweepHand]==0) {
+                removeAt(sweepHand);
+                toDiscard--;
+            } else {
+                if (slots[(int)sweepHand]>0) {
+                    slots[(int)sweepHand]--;
+                }
+            }
+            sweepHand++;
+            if (sweepHand==slots.length) {
+                sweepHand = 0;
+            }
+        }
     }
 }

@@ -58,8 +58,8 @@ public class CrawlServer implements Serializable {
      * @param h
      */
     public CrawlServer(String h) {
-    	// TODO: possibly check for illegal host string
-    	server = h;
+        // TODO: possibly check for illegal host string
+        server = h;
         int colonIndex = server.lastIndexOf(":");
         if(colonIndex < 0) {
             port = -1;
@@ -73,32 +73,32 @@ public class CrawlServer implements Serializable {
     }
 
     public long getRobotsExpires() {
-    	return robotsExpires;
+        return robotsExpires;
     }
 
     /**
      * @param l
      */
     public void setRobotsExpires(long l) {
-    	robotsExpires = l;
+        robotsExpires = l;
     }
 
     public RobotsExclusionPolicy getRobots() {
-    	return robots;
+        return robots;
     }
 
     /**
      * @param policy
      */
     public void setRobots(RobotsExclusionPolicy policy) {
-    	robots = policy;
+        robots = policy;
     }
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     public String toString() {
-    	return "CrawlServer("+server+")";
+        return "CrawlServer("+server+")";
     }
 
     /**
@@ -112,24 +112,24 @@ public class CrawlServer implements Serializable {
         RobotsHonoringPolicy honoringPolicy =
             settingsHandler.getOrder().getRobotsHonoringPolicy();
 
-    	robotsExpires = System.currentTimeMillis()
+        robotsExpires = System.currentTimeMillis()
             + DEFAULT_ROBOTS_VALIDITY_DURATION;
-    	if (get.getStatusCode()!=200 || honoringPolicy.getType(getSettings())
+        if (get.getStatusCode()!=200 || honoringPolicy.getType(getSettings())
             == RobotsHonoringPolicy.IGNORE) {
-    		// not found or other errors == all ok for now
-    		// TODO: consider handling server errors, redirects differently
-    		robots = RobotsExclusionPolicy.ALLOWALL;
-    		return;
-    	}
+            // not found or other errors == all ok for now
+            // TODO: consider handling server errors, redirects differently
+            robots = RobotsExclusionPolicy.ALLOWALL;
+            return;
+        }
 //    PREVAILING PRACTICE PER GOOGLE: treat these errors as all-allowed,
 //  since they're usually indicative of a mistake
 // Thus these lines are commented out:
 //      if ((get.getStatusCode() >= 401) && (get.getStatusCode() <= 403)) {
-//    		// authorization/allowed errors = all deny
-//    		robots = RobotsExclusionPolicy.DENYALL;
-//    		return;
-//    	}
-    	ReplayInputStream contentBodyStream = null;
+//            // authorization/allowed errors = all deny
+//            robots = RobotsExclusionPolicy.DENYALL;
+//            return;
+//        }
+        ReplayInputStream contentBodyStream = null;
         try {
             BufferedReader reader;
             if (honoringPolicy.getType(getSettings())
@@ -166,10 +166,10 @@ public class CrawlServer implements Serializable {
 
 
     public boolean isRobotsExpired() {
-    	if (robotsExpires >= 0 && robotsExpires < System.currentTimeMillis()) {
-    		return true;
-    	}
-    	return false;
+        if (robotsExpires >= 0 && robotsExpires < System.currentTimeMillis()) {
+            return true;
+        }
+        return false;
     }
 
     /** Get the server string which might include a port number.
@@ -186,7 +186,7 @@ public class CrawlServer implements Serializable {
      * @return host
      */
     public CrawlHost getHost() {
-    	return host;
+        return host;
     }
 
     /** Set the CrawlHost for which this server is a service.
@@ -194,7 +194,7 @@ public class CrawlServer implements Serializable {
      * @param host the CrawlHost.
      */
     public void setHost(CrawlHost host) {
-    	this.host = host;
+        this.host = host;
     }
 
     /** Get the hostname for this server.
@@ -202,11 +202,11 @@ public class CrawlServer implements Serializable {
      * @return the hostname without any port numbers.
      */
     public String getHostname() {
-    	int colonIndex = server.indexOf(":");
-    	if(colonIndex < 0) {
-    		return server;
-    	}
-    	return server.substring(0,colonIndex);
+        int colonIndex = server.indexOf(":");
+        if(colonIndex < 0) {
+            return server;
+        }
+        return server.substring(0,colonIndex);
     }
 
     /** Get the port number for this server.
@@ -225,20 +225,20 @@ public class CrawlServer implements Serializable {
      * @throws ObjectStreamException
      */
     protected Object writeReplace() throws ObjectStreamException {
-    	return null;
+        return null;
     }
 
 //    private void writeObject(ObjectOutputStream stream)
 //     throws IOException {
-//     	ObjectOutputStream.PutField puts = stream.putFields();
-//     	puts.put("server",server);
-//     	stream.writeFields();
+//         ObjectOutputStream.PutField puts = stream.putFields();
+//         puts.put("server",server);
+//         stream.writeFields();
 //     }
 //
 //    private void readObject(ObjectInputStream stream)
 //     throws IOException, ClassNotFoundException {
-//     	ObjectInputStream.GetField reads = stream.readFields();
-//     	server = (String)reads.get("server",null);
+//         ObjectInputStream.GetField reads = stream.readFields();
+//         server = (String)reads.get("server",null);
 //     }
 
     /** Get the settings handler.

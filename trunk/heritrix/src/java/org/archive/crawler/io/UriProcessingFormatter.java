@@ -49,76 +49,76 @@ public class UriProcessingFormatter extends Formatter implements CoreAttributeCo
      * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
      */
     public String format(LogRecord lr) {
-    	CrawlURI curi = (CrawlURI) lr.getParameters()[0];
+        CrawlURI curi = (CrawlURI) lr.getParameters()[0];
 
-    	String length = NA;
-    	String mime = NA;
-    	String uri = curi.getUURI().getUriString();
-    	if ( curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
-    		GetMethod get = (GetMethod) curi.getAList().getObject(A_HTTP_TRANSACTION);
+        String length = NA;
+        String mime = NA;
+        String uri = curi.getUURI().getUriString();
+        if ( curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+            GetMethod get = (GetMethod) curi.getAList().getObject(A_HTTP_TRANSACTION);
 
-    		if(curi.getContentLength()>=0) {
-    			length = Long.toString(curi.getContentLength());
-    		} else if (curi.getContentSize()>0) {
-    			length = Long.toString(curi.getContentSize());
-    		}
+            if(curi.getContentLength()>=0) {
+                length = Long.toString(curi.getContentLength());
+            } else if (curi.getContentSize()>0) {
+                length = Long.toString(curi.getContentSize());
+            }
 
-    		if (get.getResponseHeader("Content-Type")!=null) {
-    			mime = get.getResponseHeader("Content-Type").getValue();
-    		}
-    	} else {
-    		if (curi.getContentSize()>0) {
-    			length = Long.toString(curi.getContentSize());
+            if (get.getResponseHeader("Content-Type")!=null) {
+                mime = get.getResponseHeader("Content-Type").getValue();
+            }
+        } else {
+            if (curi.getContentSize()>0) {
+                length = Long.toString(curi.getContentSize());
 
-    		}
-    		if (curi.getContentType() != null) {
-    			mime = curi.getContentType();
-    		}
-    	}
-    	long time;
-    	String duration;
-    	if(curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
-    		time = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
-    		duration = Long.toString(time-curi.getAList().getLong(A_FETCH_BEGAN_TIME));
-    	} else {
-    		time = System.currentTimeMillis();
-    		duration = NA;
-    	}
+            }
+            if (curi.getContentType() != null) {
+                mime = curi.getContentType();
+            }
+        }
+        long time;
+        String duration;
+        if(curi.getAList().containsKey(A_FETCH_COMPLETED_TIME)) {
+            time = curi.getAList().getLong(A_FETCH_COMPLETED_TIME);
+            duration = Long.toString(time-curi.getAList().getLong(A_FETCH_BEGAN_TIME));
+        } else {
+            time = System.currentTimeMillis();
+            duration = NA;
+        }
 
 
-    	Object via = curi.getVia();
-    	if (via instanceof CandidateURI) {
-    		via = ((CandidateURI)via).getUURI().getUriString();
-    	}
-    	if (via instanceof UURI) {
-    		via = ((UURI)via).getUriString();
-    	}
+        Object via = curi.getVia();
+        if (via instanceof CandidateURI) {
+            via = ((CandidateURI)via).getUURI().getUriString();
+        }
+        if (via instanceof UURI) {
+            via = ((UURI)via).getUriString();
+        }
 
-    	// allow get to be GC'd
-    	curi.getAList().remove(A_HTTP_TRANSACTION);
+        // allow get to be GC'd
+        curi.getAList().remove(A_HTTP_TRANSACTION);
 
-    	return ArchiveUtils.get17DigitDate(time)
-    		+ " "
-    		+ ArchiveUtils.padTo(curi.getFetchStatus(),5)
-    		+ " "
-    		+ ArchiveUtils.padTo(length,10)
-    		+ " "
-    		+ "#"
-    		+ curi.getThreadNumber()
-    		+ " "
-    		+ uri
-    		+ " "
-    		+ duration
-    		+ " "
-    		+ mime
+        return ArchiveUtils.get17DigitDate(time)
+            + " "
+            + ArchiveUtils.padTo(curi.getFetchStatus(),5)
+            + " "
+            + ArchiveUtils.padTo(length,10)
+            + " "
+            + "#"
+            + curi.getThreadNumber()
+            + " "
+            + uri
+            + " "
+            + duration
+            + " "
+            + mime
             + " "
             + curi.getAnnotations()
-    		+ "\n"
-    		+ "  "
-    		+ curi.getPathFromSeed()
-    		+ " "
-    		+ via
-    		+ "\n";
+            + "\n"
+            + "  "
+            + curi.getPathFromSeed()
+            + " "
+            + via
+            + "\n";
     }
 
 }

@@ -244,7 +244,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         String code = cs.toString();
         //code = code.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
         code = TextUtils.replaceAll(ESCAPED_AMP, code, "&");
-    	numberOfLinksExtracted += ExtractorJS.considerStrings(curi,code);
+        numberOfLinksExtracted += ExtractorJS.considerStrings(curi,code);
     }
 
     static final String JAVASCRIPT = "(?i)^javascript:.*";

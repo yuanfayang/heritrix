@@ -45,20 +45,20 @@ public class ServerCache {
     }
 
     public CrawlServer getServerFor(String h) {
-    	CrawlServer cserver = (CrawlServer) servers.get(h);
-    	if (cserver==null) {
-    		cserver = new CrawlServer(h);
+        CrawlServer cserver = (CrawlServer) servers.get(h);
+        if (cserver==null) {
+            cserver = new CrawlServer(h);
             cserver.setSettingsHandler(settingsHandler);
-    		servers.put(h,cserver);
-    	}
-    	String hostname = cserver.getHostname();
-    	CrawlHost host = (CrawlHost) hosts.get(hostname);
-    	if (host==null) {
-    		host = new CrawlHost(hostname);
-    		hosts.put(hostname,host);
-    	}
-    	cserver.setHost(host);
-    	return cserver;
+            servers.put(h,cserver);
+        }
+        String hostname = cserver.getHostname();
+        CrawlHost host = (CrawlHost) hosts.get(hostname);
+        if (host==null) {
+            host = new CrawlHost(hostname);
+            hosts.put(hostname,host);
+        }
+        cserver.setHost(host);
+        return cserver;
     }
 
     /**
@@ -66,26 +66,26 @@ public class ServerCache {
      * @return CrawlServer
      */
     public CrawlServer getServerFor(CrawlURI curi) {
-    	String scheme = curi.getUURI().getUri().getScheme();
-    	if (scheme.equals("dns")) {
-    		// set crawlhost to default nameserver
-    		String primaryDns = FindServer.server();
-    		if (primaryDns == null) {
+        String scheme = curi.getUURI().getUri().getScheme();
+        if (scheme.equals("dns")) {
+            // set crawlhost to default nameserver
+            String primaryDns = FindServer.server();
+            if (primaryDns == null) {
                 settingsHandler.getOrder().getController()
                     .runtimeErrors.warning("Could not get primary DNS server.");
-    			return null;
-    		} else {
-    			return getServerFor(primaryDns);
-    		}
-    	}
+                return null;
+            } else {
+                return getServerFor(primaryDns);
+            }
+        }
 
-    	String hostOrAuthority = curi.getUURI().getUri().getAuthority();
-    	if (hostOrAuthority != null) {
-    		return getServerFor(hostOrAuthority);
-    		// TODOSOMEDAY: make this robust against those rare cases
-    		// where authority is not a hostname
-    	} else {
-    		return null;
-    	}
+        String hostOrAuthority = curi.getUURI().getUri().getAuthority();
+        if (hostOrAuthority != null) {
+            return getServerFor(hostOrAuthority);
+            // TODOSOMEDAY: make this robust against those rare cases
+            // where authority is not a hostname
+        } else {
+            return null;
+        }
     }
 }

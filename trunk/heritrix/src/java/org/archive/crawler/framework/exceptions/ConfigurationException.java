@@ -41,14 +41,14 @@ public class ConfigurationException extends InitializationException {
     protected String element = null;
 
     public ConfigurationException() {
-    	super();
+        super();
     }
 
     /** Create a ConfigurationException
      * @param message
      */
     public ConfigurationException(String message) {
-    	super(message);
+        super(message);
     }
 
     /**
@@ -56,15 +56,15 @@ public class ConfigurationException extends InitializationException {
      * @param cause
      */
     public ConfigurationException(String message, Throwable cause) {
-    	super(message, cause);
-    	// TODO Auto-generated constructor stub
+        super(message, cause);
+        // TODO Auto-generated constructor stub
     }
 
     /** Create a ConfigurationException
      * @param cause
      */
     public ConfigurationException(Throwable cause) {
-    	super(cause);
+        super(cause);
     }
 
     /** Create ConfigurationException
@@ -73,9 +73,9 @@ public class ConfigurationException extends InitializationException {
      * @param elementname
      */
     public ConfigurationException(String message, String filename, String elementname){
-    	super(message);
-    	file = filename;
-    	element = elementname;
+        super(message);
+        file = filename;
+        element = elementname;
     }
 
     /**  Create ConfigurationException
@@ -85,9 +85,9 @@ public class ConfigurationException extends InitializationException {
      * @param elementname
      */
     public ConfigurationException(String message, Throwable cause, String filename, String elementname){
-    	super(message, cause);
-    	file = filename;
-    	element = elementname;
+        super(message, cause);
+        file = filename;
+        element = elementname;
     }
 
     /** Create ConfigurationException
@@ -96,9 +96,9 @@ public class ConfigurationException extends InitializationException {
      * @param elementname
      */
     public ConfigurationException(Throwable cause, String filename, String elementname){
-    	super(cause);
-    	file = filename;
-    	element = elementname;
+        super(cause);
+        file = filename;
+        element = elementname;
     }
 
     /** Store the name of the configuration file that was being parsed
@@ -106,10 +106,10 @@ public class ConfigurationException extends InitializationException {
      * @param name
      */
     public void setFile(String name){
-    	file = name;
+        file = name;
     }
     public String getFile(){
-    	return file;
+        return file;
     }
 
     /** Set the name of the element that was being parsed
@@ -117,10 +117,10 @@ public class ConfigurationException extends InitializationException {
      * @param target
      */
     public void setElement(String target){
-    	element = target;
+        element = target;
     }
     public String getElement(){
-    	return element;
+        return element;
     }
 
 }

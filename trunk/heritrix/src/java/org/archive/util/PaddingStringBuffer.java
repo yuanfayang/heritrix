@@ -49,7 +49,7 @@ public final class PaddingStringBuffer {
      *
      */
     public PaddingStringBuffer() {
-    	buffer = new StringBuffer();
+        buffer = new StringBuffer();
         linePos=0;
     }
 
@@ -58,7 +58,7 @@ public final class PaddingStringBuffer {
      * @return This wrapped buffer w/ the passed string appended.
      */
     public PaddingStringBuffer append(String string) {
-    	buffer.append(string);
+        buffer.append(string);
         if ( string.indexOf('\n') == -1 ){
             linePos+=string.length();
         } else {
@@ -67,7 +67,7 @@ public final class PaddingStringBuffer {
             }
             linePos=string.length();
         }
-    	return this;
+        return this;
     }
 
     /**
@@ -81,9 +81,9 @@ public final class PaddingStringBuffer {
      * given column.
      */
     public PaddingStringBuffer raAppend(int col, String string) {
-    	padTo(col-string.length());
+        padTo(col-string.length());
         append(string);
-    	return this;
+        return this;
     }
 
     /** Pad to a given column.  If the buffer size is already greater than the
@@ -92,11 +92,11 @@ public final class PaddingStringBuffer {
      * @return The buffer padded to <code>i</code>.
      */
     public PaddingStringBuffer padTo(int col) {
-    	while(linePos<col) {
-    		buffer.append(" ");
+        while(linePos<col) {
+            buffer.append(" ");
             linePos++;
-    	}
-    	return this;
+        }
+        return this;
     }
 
     /** append an <code>int</code> to the buffer.
@@ -104,8 +104,8 @@ public final class PaddingStringBuffer {
      * @return This wrapped buffer with <code>i</code> appended.
      */
     public PaddingStringBuffer append(int i) {
-    	append(Integer.toString(i));
-    	return this;
+        append(Integer.toString(i));
+        return this;
     }
 
 
@@ -120,7 +120,7 @@ public final class PaddingStringBuffer {
      *         given column.
      */
     public PaddingStringBuffer raAppend(int col, int i) {
-    	return raAppend(col,Integer.toString(i));
+        return raAppend(col,Integer.toString(i));
     }
 
     /** append a <code>long</code> to the buffer.
@@ -128,8 +128,8 @@ public final class PaddingStringBuffer {
      * @return This wrapped buffer w/ appended long.
      */
     public PaddingStringBuffer append(long lo) {
-    	append(Long.toString(lo));
-    	return this;
+        append(Long.toString(lo));
+        return this;
     }
 
     /**Append a <code>long</code>, right-aligned to the given column.  If the
@@ -141,7 +141,7 @@ public final class PaddingStringBuffer {
      * given column.
      */
     public PaddingStringBuffer raAppend(int col, long lo) {
-    	return raAppend(col,Long.toString(lo));
+        return raAppend(col,Long.toString(lo));
     }
 
     /** reset the buffer back to empty */
@@ -154,7 +154,7 @@ public final class PaddingStringBuffer {
      * @see java.lang.Object#toString()
      */
     public String toString() {
-    	return buffer.toString();
+        return buffer.toString();
     }
 
     /**

@@ -39,9 +39,9 @@ public class LocalizedError {
      * @param message
      */
     public LocalizedError(String processorName, Exception ex, String message) {
-    	this.processorName = processorName;
-    	this.exception = ex;
-    	this.message = message;
+        this.processorName = processorName;
+        this.exception = ex;
+        this.message = message;
     }
 
 }

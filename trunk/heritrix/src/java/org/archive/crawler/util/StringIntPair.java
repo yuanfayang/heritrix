@@ -34,30 +34,30 @@ public class StringIntPair {
     private int intValue;
 
     public StringIntPair(String s, int i){
-    	stringValue = s;
-    	intValue = i;
+        stringValue = s;
+        intValue = i;
     }
 
     public int getIntValue() {
-    	return intValue;
+        return intValue;
     }
 
     public String getStringValue() {
-    	return stringValue;
+        return stringValue;
     }
 
     /**
      * @param i
      */
     public void setIntValue(int i) {
-    	intValue = i;
+        intValue = i;
     }
 
     /**
      * @param string
      */
     public void setStringValue(String string) {
-    	stringValue = string;
+        stringValue = string;
     }
 
 }

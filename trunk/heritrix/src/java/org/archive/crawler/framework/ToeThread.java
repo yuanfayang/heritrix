@@ -62,136 +62,136 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
      * @param sn
      */
     public ToeThread(CrawlController c, ToePool p, int sn) {
-    	controller = c;
-    	pool = p;
-    	serialNumber = sn;
-    	setName("ToeThread #"+serialNumber);
-    	httpRecorder = new HttpRecorder(controller.getScratchDisk(),"tt"+sn+"http");
-    	lastFinishTime = System.currentTimeMillis();
+        controller = c;
+        pool = p;
+        serialNumber = sn;
+        setName("ToeThread #"+serialNumber);
+        httpRecorder = new HttpRecorder(controller.getScratchDisk(),"tt"+sn+"http");
+        lastFinishTime = System.currentTimeMillis();
     }
 
 
     public synchronized void crawl(CrawlURI curi) {
-    	assert currentCuri == null : "attempt to clobber crawlUri";
-    	currentCuri = curi;
-    	currentCuri.setThreadNumber(serialNumber);
-    	notify();
+        assert currentCuri == null : "attempt to clobber crawlUri";
+        currentCuri = curi;
+        currentCuri.setThreadNumber(serialNumber);
+        notify();
     }
 
     public boolean isAvailable() {
-    	return currentCuri == null;
+        return currentCuri == null;
     }
 
     /* (non-Javadoc)
      * @see java.lang.Runnable#run()
      */
     public void run() {
-    	String name = controller.getOrder().getCrawlOrderName();
-    	logger.fine(getName()+" started for order '"+name+"'");
-    	// OutOfMemory catch might interfere with usual IBM JVM
-    	// heapdump: so commenting out. memory problems will be fatal
-    	// try {
-    		while ( shouldCrawl ) {
-    			processingLoop();
-    		}
-    		controller.toeFinished(this);
-    	//} catch (OutOfMemoryError e) {
-    	//	e.printStackTrace();
-    	//	logger.warning(getName()+" exitting: out of memory error");
-    	//	shouldCrawl = false;
-    	//}
+        String name = controller.getOrder().getCrawlOrderName();
+        logger.fine(getName()+" started for order '"+name+"'");
+        // OutOfMemory catch might interfere with usual IBM JVM
+        // heapdump: so commenting out. memory problems will be fatal
+        // try {
+            while ( shouldCrawl ) {
+                processingLoop();
+            }
+            controller.toeFinished(this);
+        //} catch (OutOfMemoryError e) {
+        //    e.printStackTrace();
+        //    logger.warning(getName()+" exitting: out of memory error");
+        //    shouldCrawl = false;
+        //}
 
-    	// Do cleanup so that objects can be GC.
-    	pool = null;
-    	controller = null;
-    	httpRecorder.closeRecorders();
-    	httpRecorder = null;
-    	localProcessors = null;
+        // Do cleanup so that objects can be GC.
+        pool = null;
+        controller = null;
+        httpRecorder.closeRecorders();
+        httpRecorder = null;
+        localProcessors = null;
 
-    	logger.fine(getName()+" finished for order '"+name+"'");
+        logger.fine(getName()+" finished for order '"+name+"'");
     }
 
     private synchronized void processingLoop() {
-    	if ( currentCuri != null ) {
-    		lastStartTime = System.currentTimeMillis();
+        if ( currentCuri != null ) {
+            lastStartTime = System.currentTimeMillis();
 
-    		try {
-    			while ( currentCuri.nextProcessor() != null ) {
-    				Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
-    				currentProcessor.process(currentCuri);
-    			}
-    		} catch (RuntimeException e) {
-    			currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
-    			// store exception temporarily for logging
-    			currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
-    		} catch (Error err) {
-    			// OutOfMemory & StackOverflow & etc.
-    			System.err.println(err);
-    			System.err.println(DevUtils.extraInfo());
-    			err.printStackTrace(System.err);
-    			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
-    		}
+            try {
+                while ( currentCuri.nextProcessor() != null ) {
+                    Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
+                    currentProcessor.process(currentCuri);
+                }
+            } catch (RuntimeException e) {
+                currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
+                // store exception temporarily for logging
+                currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+            } catch (Error err) {
+                // OutOfMemory & StackOverflow & etc.
+                System.err.println(err);
+                System.err.println(DevUtils.extraInfo());
+                err.printStackTrace(System.err);
+                currentCuri.setFetchStatus(S_SERIOUS_ERROR);
+            }
 
-    		controller.getFrontier().finished(currentCuri);
-    		synchronized(pool) {
-    			currentCuri = null;
+            controller.getFrontier().finished(currentCuri);
+            synchronized(pool) {
+                currentCuri = null;
                 lastFinishTime = System.currentTimeMillis();
-    			pool.noteAvailable(this);
-    		}
-    	}
+                pool.noteAvailable(this);
+            }
+        }
 
-    	try {
-    		wait(); // until master thread gives a new work URI
-    	} catch (InterruptedException e) {
-    		e.printStackTrace();
-    		logger.warning(getName()+" interrupted");
-    	}
+        try {
+            wait(); // until master thread gives a new work URI
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            logger.warning(getName()+" interrupted");
+        }
     }
 
     /**
      * @param processor
      */
     private Processor getProcessor(Processor processor) {
-    	if(!(processor instanceof InstancePerThread)) {
-    		// just use the shared Processor
-    		 return processor;
-    	}
-    	// must use local copy of processor
-    	Processor localProcessor = (Processor) localProcessors.get(
+        if(!(processor instanceof InstancePerThread)) {
+            // just use the shared Processor
+             return processor;
+        }
+        // must use local copy of processor
+        Processor localProcessor = (Processor) localProcessors.get(
                     processor.getClass().getName());
-    	if (localProcessor == null) {
-    		localProcessor = processor.spawn(this.getSerialNumber());
-    		localProcessors.put(processor.getClass().getName(),localProcessor);
-    	}
-    	return localProcessor;
+        if (localProcessor == null) {
+            localProcessor = processor.spawn(this.getSerialNumber());
+            localProcessors.put(processor.getClass().getName(),localProcessor);
+        }
+        return localProcessor;
     }
 
     private boolean shouldCrawl() {
-    	return shouldCrawl;
+        return shouldCrawl;
     }
 
     public synchronized void stopAfterCurrent() {
-    	logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
-    	shouldCrawl = false;
-    	if(isAvailable())
-    	{
-    		notify();
-    	}
+        logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
+        shouldCrawl = false;
+        if(isAvailable())
+        {
+            notify();
+        }
     }
 
     public int getSerialNumber() {
-    	return serialNumber;
+        return serialNumber;
     }
 
     public HttpRecorder getHttpRecorder() {
-    	return httpRecorder;
+        return httpRecorder;
     }
 
     /**
      * @param recorder
      */
     public void setHttpRecorder(HttpRecorder recorder) {
-    	httpRecorder = recorder;
+        httpRecorder = recorder;
     }
 
     /**
@@ -199,9 +199,9 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
      */
     public String report()
     {
-    	PaddingStringBuffer rep = new PaddingStringBuffer();
+        PaddingStringBuffer rep = new PaddingStringBuffer();
 
-    	rep.append("     #"+serialNumber);
+        rep.append("     #"+serialNumber);
         rep.padTo(11);
 
         if(currentCuri!=null)
@@ -218,28 +218,28 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
         rep.newline();
         rep.padTo(8);
 
-    	long now = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
         long time = 0;
 
         if(lastFinishTime > lastStartTime)
-    	{
-    		// That means we finished something after we last started something
-    		// or in other words we are not working on anything.
-    		rep.append("WAITING for ");
+        {
+            // That means we finished something after we last started something
+            // or in other words we are not working on anything.
+            rep.append("WAITING for ");
 
-    		time = now-lastFinishTime;
-    	}
-    	else if(lastStartTime > 0)
-    	{
-    		// We are working on something
-    		rep.append("ACTIVE  for ");
+            time = now-lastFinishTime;
+        }
+        else if(lastStartTime > 0)
+        {
+            // We are working on something
+            rep.append("ACTIVE  for ");
 
-    		time = now-lastStartTime;
-    	}
+            time = now-lastStartTime;
+        }
         appendTime(rep, time);
-    	rep.newline();
+        rep.newline();
 
-    	return rep.toString();
+        return rep.toString();
     }
 
 

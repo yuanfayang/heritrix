@@ -56,13 +56,13 @@ public class ArchiveUtils {
 
     // Initialize fomatters with pattern and time zone
     static {
-    	TimeZone TZ = TimeZone.getTimeZone("GMT");
-    	TIMESTAMP12 = new SimpleDateFormat("yyyyMMddHHmm");
-    	TIMESTAMP12.setTimeZone(TZ);
-    	TIMESTAMP14 = new SimpleDateFormat("yyyyMMddHHmmss");
-    	TIMESTAMP14.setTimeZone(TZ);
-    	TIMESTAMP17 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-    	TIMESTAMP17.setTimeZone(TZ);
+        TimeZone TZ = TimeZone.getTimeZone("GMT");
+        TIMESTAMP12 = new SimpleDateFormat("yyyyMMddHHmm");
+        TIMESTAMP12.setTimeZone(TZ);
+        TIMESTAMP14 = new SimpleDateFormat("yyyyMMddHHmmss");
+        TIMESTAMP14.setTimeZone(TZ);
+        TIMESTAMP17 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        TIMESTAMP17.setTimeZone(TZ);
     }
 
     /**
@@ -72,7 +72,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get17DigitDate(){
-    	return TIMESTAMP17.format(new Date());
+        return TIMESTAMP17.format(new Date());
     }
 
     /**
@@ -82,7 +82,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get14DigitDate(){
-    	return TIMESTAMP14.format(new Date());
+        return TIMESTAMP14.format(new Date());
     }
 
     /**
@@ -92,7 +92,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get12DigitDate(){
-    	return TIMESTAMP12.format(new Date());
+        return TIMESTAMP12.format(new Date());
     }
 
     /**
@@ -104,7 +104,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get17DigitDate(long date){
-    	return TIMESTAMP17.format(new Date(date));
+        return TIMESTAMP17.format(new Date(date));
     }
 
     /**
@@ -116,7 +116,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get14DigitDate(long date){
-    	return TIMESTAMP14.format(new Date(date));
+        return TIMESTAMP14.format(new Date(date));
     }
 
     /**
@@ -128,7 +128,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get12DigitDate(long date){
-    	return TIMESTAMP12.format(new Date(date));
+        return TIMESTAMP12.format(new Date(date));
     }
 
     /**
@@ -142,7 +142,7 @@ public class ArchiveUtils {
      * @throws ParseException if the inputstring was malformed
      */
     public static Date parse17DigitDate(String date) throws ParseException{
-    	return TIMESTAMP17.parse(date);
+        return TIMESTAMP17.parse(date);
     }
 
     /**
@@ -156,7 +156,7 @@ public class ArchiveUtils {
      * @throws ParseException if the inputstring was malformed
      */
     public static Date parse14DigitDate(String date) throws ParseException{
-    	return TIMESTAMP14.parse(date);
+        return TIMESTAMP14.parse(date);
     }
 
     /**
@@ -170,7 +170,7 @@ public class ArchiveUtils {
      * @throws ParseException if the inputstring was malformed
      */
     public static Date parse12DigitDate(String date) throws ParseException{
-    	return TIMESTAMP12.parse(date);
+        return TIMESTAMP12.parse(date);
     }
 
     /** Convert an <code>int</code> to a <code>String</code>, and pad it to
@@ -180,8 +180,8 @@ public class ArchiveUtils {
      * @return String w/ padding.
      */
     public static String padTo(final int i, final int pad) {
-    	String n = Integer.toString(i);
-    	return padTo(n,pad);
+        String n = Integer.toString(i);
+        return padTo(n,pad);
     }
 
     /** Pad the given <code>String</code> to <code>pad</code> characters wide
@@ -194,14 +194,14 @@ public class ArchiveUtils {
      * @return String w/ padding.
      */
     public static String padTo(final String s, final int pad) {
-    	int l = s.length();
-    	StringBuffer sb = new StringBuffer();
-    	while(l<pad) {
-    		sb.append(" ");
-    		l++;
-    	}
-    	sb.append(s);
-    	return sb.toString();
+        int l = s.length();
+        StringBuffer sb = new StringBuffer();
+        while(l<pad) {
+            sb.append(" ");
+            l++;
+        }
+        sb.append(s);
+        return sb.toString();
     }
 
     /** check that two byte arrays are equal.  They may be <code>null</code>.
@@ -215,18 +215,18 @@ public class ArchiveUtils {
         if (lhs == null && rhs != null || lhs != null && rhs == null) {
             return false;
         }
-    	if (lhs==rhs) {
-    		return true;
-    	}
-    	if (lhs.length != rhs.length) {
-    		return false;
-    	}
-    	for(int i = 0; i<lhs.length; i++) {
-    		if (lhs[i]!=rhs[i]) {
-    			return false;
-    		}
-    	}
-    	return true;
+        if (lhs==rhs) {
+            return true;
+        }
+        if (lhs.length != rhs.length) {
+            return false;
+        }
+        for(int i = 0; i<lhs.length; i++) {
+            if (lhs[i]!=rhs[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

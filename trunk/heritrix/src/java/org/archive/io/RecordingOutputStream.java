@@ -99,8 +99,8 @@ public class RecordingOutputStream extends OutputStream {
      */
     public RecordingOutputStream(int bufferSize, String backingFilename)
     {
-    	this.buffer = new byte[bufferSize];
-    	this.backingFilename = backingFilename;
+        this.buffer = new byte[bufferSize];
+        this.backingFilename = backingFilename;
     }
 
     /**
@@ -128,13 +128,13 @@ public class RecordingOutputStream extends OutputStream {
         throws IOException
    {
         assert this.out == null : "RecordingOutputStream still has old 'out' stream";
-    	this.out = wrappedStream;
-    	this.position = 0;
-    	this.size = 0;
-    	// Always begins false; must use startDigest() to begin
+        this.out = wrappedStream;
+        this.position = 0;
+        this.size = 0;
+        // Always begins false; must use startDigest() to begin
         this.shouldDigest = false;
         this.diskStream = null;
-    	lateOpen();
+        lateOpen();
     }
 
 
@@ -142,17 +142,17 @@ public class RecordingOutputStream extends OutputStream {
         throws FileNotFoundException
     {
         // TODO: Fix so we only make file when its actually needed.
-    	if (diskStream == null) {
-    		FileOutputStream fis = new FileOutputStream(backingFilename);
-    		this.diskStream = new BufferedOutputStream(fis, 4096);
-    	}
+        if (diskStream == null) {
+            FileOutputStream fis = new FileOutputStream(backingFilename);
+            this.diskStream = new BufferedOutputStream(fis, 4096);
+        }
     }
 
     /* (non-Javadoc)
      * @see java.io.OutputStream#write(int)
      */
     public void write(int b) throws IOException {
-    	record(b);
+        record(b);
         if (this.out != null)
         {
             this.out.write(b);
@@ -163,7 +163,7 @@ public class RecordingOutputStream extends OutputStream {
      * @see java.io.OutputStream#write(byte[])
      */
     public void write(byte[] b) throws IOException {
-    	record(b, 0, b.length);
+        record(b, 0, b.length);
         if (this.out != null)
         {
             this.out.write(b);
@@ -174,7 +174,7 @@ public class RecordingOutputStream extends OutputStream {
      * @see java.io.OutputStream#write(byte[], int, int)
      */
     public void write(byte[] b, int off, int len) throws IOException {
-    	record(b, off, len);
+        record(b, off, len);
         if (this.out != null)
         {
             this.out.write(b, off, len);
@@ -216,21 +216,21 @@ public class RecordingOutputStream extends OutputStream {
         if(shouldDigest) {
             digest.update(b, off, len);
         }
-    	if(position >= buffer.length){
+        if(position >= buffer.length){
             // lateOpen()
             // TODO: Its possible to call write w/o having first opened a
             // stream.  Lets protect ourselves against this.
-    		diskStream.write(b, off, len);
-    		position += len;
-    	} else {
-    		int toCopy = (int)Math.min(buffer.length - position, len);
-    		System.arraycopy(b, off, buffer, (int)position, toCopy);
-    		position += toCopy;
-    		// TODO verify these are +1 -1 right
-    		if (toCopy < len) {
-    			record(b, off + toCopy, len - toCopy);
-    		}
-    	}
+            diskStream.write(b, off, len);
+            position += len;
+        } else {
+            int toCopy = (int)Math.min(buffer.length - position, len);
+            System.arraycopy(b, off, buffer, (int)position, toCopy);
+            position += toCopy;
+            // TODO verify these are +1 -1 right
+            if (toCopy < len) {
+                record(b, off + toCopy, len - toCopy);
+            }
+        }
     }
 
     /* (non-Javadoc)
@@ -239,9 +239,9 @@ public class RecordingOutputStream extends OutputStream {
     public void close()
         throws IOException
     {
-    	if (this.out != null)
+        if (this.out != null)
         {
-    	    this.out.close();
+            this.out.close();
             this.out = null;
         }
         closeRecorder();
@@ -271,9 +271,9 @@ public class RecordingOutputStream extends OutputStream {
         {
             this.out.flush();
         }
-    	if (diskStream != null) {
-    		diskStream.flush();
-    	}
+        if (diskStream != null) {
+            diskStream.flush();
+        }
     }
 
     public ReplayInputStream getReplayInputStream() throws IOException {
@@ -281,7 +281,7 @@ public class RecordingOutputStream extends OutputStream {
         // stream is closed (If it ain't, then the stream gotten won't work
         // -- the size will zero so any attempt at a read will get back EOF.
         assert this.out == null: "Stream is still open.";
-    	return new ReplayInputStream(buffer, size, contentBeginMark,
+        return new ReplayInputStream(buffer, size, contentBeginMark,
             backingFilename);
     }
 
@@ -292,13 +292,13 @@ public class RecordingOutputStream extends OutputStream {
      * @return An RIS.
      */
     public ReplayInputStream getContentReplayInputStream() throws IOException {
-    	ReplayInputStream replay = getReplayInputStream();
-    	replay.skip(contentBeginMark);
-    	return replay;
+        ReplayInputStream replay = getReplayInputStream();
+        replay.skip(contentBeginMark);
+        return replay;
     }
 
     public long getSize() {
-    	return size;
+        return size;
     }
 
     /**
@@ -307,7 +307,7 @@ public class RecordingOutputStream extends OutputStream {
      * replays after the headers.
      */
     public void markContentBegin() {
-    	contentBeginMark = position;
+        contentBeginMark = position;
     }
 
     /**
@@ -360,17 +360,17 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     public CharSequence getReplayCharSequence() {
-    	try {
-    		return new ReplayCharSequence(buffer, size, contentBeginMark,
+        try {
+            return new ReplayCharSequence(buffer, size, contentBeginMark,
                 backingFilename);
-    	} catch (IOException e) {
-    		// TODO convert to runtime exception?
-    		e.printStackTrace();
-    	}
-    	return null;
+        } catch (IOException e) {
+            // TODO convert to runtime exception?
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public long getResponseContentLength() {
-    	return size-contentBeginMark;
+        return size-contentBeginMark;
     }
 }
