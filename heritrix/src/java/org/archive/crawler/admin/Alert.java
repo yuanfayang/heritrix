@@ -27,14 +27,21 @@ package org.archive.crawler.admin;
 import java.io.StringWriter;
 import java.util.Date;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.util.ArchiveUtils;
 
 /**
- * A simple data class that captures one alert. An alert is a message to a human
- * operator created by Heritrix when exceptional conditions occur that can not
- * be reported in any other way except through logs. All condition that cause
- * alerts should also cause similar info to be written to an appropriate log.
+ * A simple data class that captures one alert. 
+ * 
+ * <p>An alert is a message to a human operator created by Heritrix when 
+ * exceptional conditions occur that can not be reported in any other way except 
+ * through logs. 
+ * 
+ * <p>In general all condition that cause alerts should also cause similar info 
+ * to be written to an appropriate log. To aid this the class offers a method 
+ * that will dump the alert to a specified log. Also each alert has a Level
+ * attribute, same as log entries.
  * 
  * @author Kristinn Sigurdsson
  * 
@@ -150,5 +157,14 @@ public class Alert {
      */
     public Level getLevel() {
         return level;
+    }
+
+
+    /**
+     * Write the alert to a log
+     * @param logger The log to write to
+     */
+    public void print(Logger logger) {
+        logger.log(level,alertBody);        
     }
 }

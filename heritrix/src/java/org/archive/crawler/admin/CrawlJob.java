@@ -35,13 +35,14 @@ import org.archive.crawler.framework.StatisticsTracking;
 
 /**
  * A CrawlJob encapsulates a 'crawl order' with any and all information and
- * methods needed by a CrawlJobHandler to accept and execute them. A given crawl
- * job may also be a 'profile' for a crawl. In that case it should not be 
- * executed as a crawl but can be edited and used as a template for creating new
- * CrawlJobs.
- * <p>
- * All of it's constructors are protected since only the CrawlJobHander (or it's
- * subclasses) should construct new CrawlJobs.
+ * methods needed by a CrawlJobHandler to accept and execute them. 
+ * 
+ * <p>A given crawl job may also be a 'profile' for a crawl. In that case it 
+ * should not be executed as a crawl but can be edited and used as a template 
+ * for creating new CrawlJobs.
+ * 
+ * <p>All of it's constructors are protected since only a CrawlJobHander  
+ * should construct new CrawlJobs.
  *
  * @author Kristinn Sigurdsson
  *
@@ -110,39 +111,56 @@ public class CrawlJob
     private String errorMessage = null;
     
     private File jobDir = null;
+    
+    private CrawlJobErrorHandler errorHandler = null;
 
     protected XMLSettingsHandler settingsHandler;
 
     /**
-     * A constructor for jobs. Create, ready to crawl, jobs.
-     * @param UID A unique ID for this job. Typically emitted by the CrawlJobHandler.
+     * A constructor for jobs. 
+     * 
+     * <p> Create, ready to crawl, jobs.
+     * @param UID A unique ID for this job. Typically emitted by the 
+     *            CrawlJobHandler.
      * @param name The name of the job
      * @param settingsHandler The associated settings
+     * @param errorHandler The crawl jobs settings error handler. 
+     *           <tt>null</tt> means none is set
      * @param priority job priority.
+     * @param dir The directory that is considered this jobs working directory. 
      */
-    public CrawlJob(String UID, String name, XMLSettingsHandler settingsHandler, int priority, File dir) {
+    public CrawlJob(String UID, String name, XMLSettingsHandler settingsHandler, 
+            CrawlJobErrorHandler errorHandler, int priority, File dir) {
         this.UID = UID;
         this.name = name;
         this.settingsHandler = settingsHandler;
         this.priority = priority;
         jobDir = dir;
+        this.errorHandler = errorHandler;
     }
 
     /**
-     * A constructor for profiles. Any job created with this constructor will be
+     * A constructor for profiles. 
+     * 
+     * <p> Any job created with this constructor will be
      * considered a profile. Profiles are not stored on disk (only their 
      * settings files are stored on disk). This is because their data is 
      * predictible given any settings files.
-     * @param UIDandName A unique ID for this job. For profiles this is the same as name
-     * @param settingsHandler
+     * @param UIDandName A unique ID for this job. For profiles this is the same 
+     *           as name
+     * @param settingsHandler The associated settings
+     * @param errorHandler The crawl jobs settings error handler.
+     *           <tt>null</tt> means none is set
      */
-    protected  CrawlJob(String UIDandName, XMLSettingsHandler settingsHandler) {
+    protected CrawlJob(String UIDandName, XMLSettingsHandler settingsHandler,
+            CrawlJobErrorHandler errorHandler) {
         this.UID = UIDandName;
         this.name = UIDandName;
         this.settingsHandler = settingsHandler;
         isProfile = true;
         isNew = false;
         status = STATUS_PROFILE;
+        this.errorHandler = errorHandler;
     }
     
     /**
@@ -165,10 +183,14 @@ public class CrawlJob
      * 
      * @param jobFile
      *            a file containing information about the job to load.
+     * @param errorHandler The crawl jobs settings error handler.
+     *            null means none is set
      * @throws InvalidJobFileException
-     *             if the specified file does not refer to a valid job file.
+     *            if the specified file does not refer to a valid job file.
      */
-    protected CrawlJob(File jobFile) throws InvalidJobFileException, IOException{
+    protected CrawlJob(File jobFile, CrawlJobErrorHandler errorHandler) 
+            throws InvalidJobFileException, IOException {
+        this.errorHandler = errorHandler;
         // Open file
         // Read data and set up class variables accordingly...
         BufferedReader jobReader = new BufferedReader(new FileReader(jobFile),4096);
@@ -239,6 +261,9 @@ public class CrawlJob
         tmp = jobReader.readLine();
         try {
             settingsHandler = new XMLSettingsHandler(new File(tmp));
+            if(this.errorHandler != null){
+                settingsHandler.registerValueErrorHandler(errorHandler);
+            }
             settingsHandler.initialize();
         } catch (InvalidAttributeValueException e1) {
             throw new InvalidJobFileException("Problem reading from settings " +
@@ -502,11 +527,19 @@ public class CrawlJob
     public int getNumberOfJournalEntries() {
         return numberOfJournalEntries;
     }
+    
     /**
      * @param numberOfJournalEntries The number of journal entries to set.
      */
     public void setNumberOfJournalEntries(int numberOfJournalEntries) {
         this.numberOfJournalEntries = numberOfJournalEntries;
         writeJobFile();
+    }
+    
+    /**
+     * @return Returns the error handler for this crawl job
+     */
+    public CrawlJobErrorHandler getErrorHandler() {
+        return errorHandler;
     }
 }

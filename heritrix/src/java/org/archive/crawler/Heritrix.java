@@ -115,6 +115,7 @@ public class Heritrix
 
     private static File confdir = null;
     private static File jobsdir = null;
+    private static boolean noWui = false;
 
     /**
      * Where to find WAR files to deploy under servlet container.
@@ -277,7 +278,6 @@ public class Heritrix
     private static void doStart(String [] args)
         throws Exception
     {
-        boolean noWui = false;
         int port = SimpleHttpServer.DEFAULT_PORT;
         String crawlOrderFile = null;
         String adminLoginPassword = "admin:letmein";
@@ -561,7 +561,7 @@ public class Heritrix
         Heritrix.getSelftestURL =
             "http://127.0.0.1:" + Integer.toString(port) + "/selftest/";
         job = Heritrix.jobHandler.newJob(job, "selftest",
-            "Integration self test", getSelftestURL);
+            "Integration self test", getSelftestURL, CrawlJob.PRIORITY_CRITICAL);
         Heritrix.jobHandler.addJob(job);
         Heritrix.jobHandler.startCrawler();
         out.println((new Date()).toString() + " Heritrix " + getVersion() +
@@ -666,7 +666,7 @@ public class Heritrix
         }
         XMLSettingsHandler settings = new XMLSettingsHandler(crawlOrderFile);
         settings.initialize();
-        return new CrawlJob(handler.getNextJobUID(), descriptor, settings,
+        return new CrawlJob(handler.getNextJobUID(), descriptor, settings, null,
             CrawlJob.PRIORITY_HIGH,
             crawlOrderFile.getAbsoluteFile().getParentFile());
     }
@@ -824,6 +824,9 @@ public class Heritrix
      * @param alert the new alert
      */
     public static void addAlert(Alert alert){   
+        if(noWui){
+            alert.print(logger);
+        }
         alerts.add(alert); 
     }
     

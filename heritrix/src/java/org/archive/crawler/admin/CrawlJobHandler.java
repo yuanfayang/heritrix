@@ -47,6 +47,7 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.settings.ComplexType;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SettingsHandler;
+import org.archive.crawler.datamodel.settings.ValueErrorHandler;
 import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
@@ -238,7 +239,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         CrawlJob cjob = null;
         try {
             // Load the CrawlJob
-            cjob = new CrawlJob(job);
+            cjob = new CrawlJob(job, new CrawlJobErrorHandler());
         } catch (InvalidJobFileException e) {
             Heritrix.addAlert( new Alert(
                     "InvalidJobFileException for " + job.getName(),
@@ -298,8 +299,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     try {
                         // The directory name denotes the profiles UID and name.
                         XMLSettingsHandler newSettingsHandler = new XMLSettingsHandler(profile);
+                        CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE); 
+                        newSettingsHandler.setErrorReportingLevel(cjseh.getLevel());
                         newSettingsHandler.initialize();
-                        addProfile(new CrawlJob(profiles[i].getName(),newSettingsHandler));
+                        addProfile(new CrawlJob(profiles[i].getName(),newSettingsHandler,cjseh));
                     } catch (InvalidAttributeValueException e) {
                         System.err.println(
                             "Failed to load profile '"
@@ -580,14 +583,21 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param name
      *            The name of the new job.
      * @param description
+     *            Descriptions of the job.
      * @param seeds
+     *            The contents of the new settings' seed file.
+     * @param priority
+     *            The priority of the new job.
+     *            
      * @return The new crawl job.
-     * @throws FatalConfigurationException
+     * @throws FatalConfigurationException If a problem occurs creating the 
+     *             settings.
      */
     public CrawlJob newJob(CrawlJob baseOn, 
                            String name, 
                            String description,
-                           String seeds) 
+                           String seeds,
+                           int priority) 
                     throws FatalConfigurationException {
         if (newJob != null) {
             //There already is a new job. Discard it.
@@ -595,15 +605,18 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         String UID = getNextJobUID();
         File jobDir = new File(Heritrix.getJobsdir(), name + "-" + UID);
+        CrawlJobErrorHandler errorHandler = new CrawlJobErrorHandler();
         newJob = new CrawlJob(UID, name,
                 makeNew(baseOn, 
                         name, 
                         description, 
                         seeds, 
-                        jobDir, 
+                        jobDir,
+                        errorHandler,
                         "job-" + name + ".xml", 
                         "seeds-" + name + ".txt"),
-                CrawlJob.PRIORITY_AVERAGE, jobDir);
+                errorHandler,
+                priority, jobDir);
         return newJob;
     }
 
@@ -631,14 +644,19 @@ public class CrawlJobHandler implements CrawlStatusListener {
                         throws FatalConfigurationException {
         File profileDir = new File(getProfilesDirectory().getAbsoluteFile()
                 + File.separator + name);
+        
+        CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE); 
+        
         CrawlJob newProfile = new CrawlJob(name, 
                 makeNew(baseOn, 
                         name,
                         description, 
                         seeds, 
-                        profileDir, 
+                        profileDir,
+                        cjseh,
                         "order.xml", 
-                        "seeds.txt"));
+                        "seeds.txt"),
+                cjseh);
         addProfile(newProfile);
         return newProfile;
     }
@@ -670,6 +688,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                                        String description, 
                                        String seeds, 
                                        File newSettingsDir,
+                                       CrawlJobErrorHandler errorHandler,
                                        String filename, 
                                        String seedfile)
                                 throws FatalConfigurationException {
@@ -678,6 +697,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
         try {
             newHandler = new XMLSettingsHandler(baseOn.getSettingsHandler()
                     .getOrderFile());
+            if(errorHandler != null){
+                newHandler.registerValueErrorHandler(errorHandler);
+            }
+            newHandler.setErrorReportingLevel(errorHandler.getLevel());
             newHandler.initialize();
         } catch (InvalidAttributeValueException e2) {
             throw new FatalConfigurationException(
