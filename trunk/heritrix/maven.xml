@@ -55,6 +55,7 @@
         <copy todir="${maven.dist.bin.assembly.dir}/bin">
           <fileset dir="${maven.src.dir}/scripts">
             <include name="*heritrix"/>
+            <include name="arcreader"/>
           </fileset>
         </copy>
 
