@@ -81,6 +81,7 @@ import org.archive.util.QueueItemMatcher;
  * period of time, to either enforce politeness policies or allow
  * a configurable amount of time between error retries. 
  * 
+ * 
  * @author Gordon Mohr
  */
 public class Frontier
@@ -88,21 +89,25 @@ public class Frontier
     implements URIFrontier, FetchStatusCodes, CoreAttributeConstants, CrawlStatusListener {
 
     private static final int DEFAULT_CLASS_QUEUE_MEMORY_HEAD = 200;
-    // how many multiples of last fetch elapsed time to wait before recontacting same server
+    /** how many multiples of last fetch elapsed time to wait before recontacting same server */
     public final static String ATTR_DELAY_FACTOR = "delay-factor";
-    // always wait this long after one completion before recontacting same server, regardless of multiple
+    /** always wait this long after one completion before recontacting 
+     * same server, regardless of multiple */
     public final static String ATTR_MIN_DELAY = "min-delay-ms";
-    // never wait more than this long, regardless of multiple
+    /** never wait more than this long, regardless of multiple */
     public final static String ATTR_MAX_DELAY = "max-delay-ms";
-    // always wait at least this long between request *starts*
-    // (contrasted with min-delay: if min-interval time has already elapsed during last
-    // fetch, then next fetch may occur immediately; it constrains starts not off-cycles)
+    /** always wait at least this long between request *starts*
+     * (contrasted with min-delay: if min-interval time has already elapsed during last
+     * fetch, then next fetch may occur immediately; it constrains starts not off-cycles) */
     public final static String ATTR_MIN_INTERVAL = "min-interval-ms";
-
+    /** maximum times to emit a CrawlURI without final disposition */
     public final static String ATTR_MAX_RETRIES = "max-retries";
+    /** for retryable problems, seconds to wait before a retry */
     public final static String ATTR_RETRY_DELAY = "retry-delay-seconds";
+    /** maximum overall bandwidth usage */
     public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
         "total-bandwidth-usage-KB-sec";
+    /** maximum per-host bandwidth usage */
     public final static String ATTR_MAX_HOST_BANDWIDTH_USAGE =
         "max-per-host-bandwidth-usage-KB-sec";
 
@@ -362,6 +367,42 @@ public class Frontier
         long waitMax = 0;
         CrawlURI curi = null;
 
+        enforceBandwidthThrottle(now);
+        
+        CandidateURI caUri;
+
+        // Check for snoozing queues who are ready to wake up.
+        wakeReadyQueues(now);
+
+        // now, see if any holding queues are ready with a CrawlURI
+        if (!readyClassQueues.isEmpty()) {
+            curi = dequeueFromReady();
+            return emitCuri(curi);
+        }
+
+        // if that fails to find anything, check the pending queue
+        while ((caUri = dequeueFromPending()) != null) {
+            curi = CrawlURI.from(caUri);
+            enqueueToKeyed(curi);
+            if (!readyClassQueues.isEmpty()) {
+                curi = dequeueFromReady();
+                return emitCuri(curi);
+            }
+        }
+
+        // consider if URIs exhausted
+        if(isEmpty()) {
+            // nothing left to crawl
+            logger.info("nothing left to crawl");
+            return null;
+        } else {
+            // nothing to return now, but there are still URIs
+            // held for the future
+            return null;
+        }
+    }
+    
+    private void enforceBandwidthThrottle(long now) {
         int maxBandwidthKB;
         try {
             maxBandwidthKB = ((Integer) getAttribute(
@@ -402,41 +443,8 @@ public class Frontier
                 }
             }
         }
-        
-        CandidateURI caUri;
-
-        // Check for snoozing queues who are ready to wake up.
-        wakeReadyQueues(now);
-
-        // now, see if any holding queues are ready with a CrawlURI
-        if (!readyClassQueues.isEmpty()) {
-            curi = dequeueFromReady();
-            return emitCuri(curi);
-        }
-
-        // if that fails to find anything, check the pending queue
-        while ((caUri = dequeueFromPending()) != null) {
-            curi = CrawlURI.from(caUri);
-            enqueueToKeyed(curi);
-            if (!readyClassQueues.isEmpty()) {
-                curi = dequeueFromReady();
-                return emitCuri(curi);
-            }
-        }
-
-        // consider if URIs exhausted
-        if(isEmpty()) {
-            // nothing left to crawl
-            logger.info("nothing left to crawl");
-            return null;
-        }
-
-        // nothing to return, but there are still URIs
-        // held for the future
-
-        return null;
     }
-    
+
     /** 
      * Return the next CrawlURI eligible for processing.
      * 
@@ -645,24 +653,15 @@ public class Frontier
                 logger.severe("first() item couldn't be remove()d! - "+awoken+" - " + snoozeQueues.contains(awoken));
                 logger.severe(report());
             }
-            if (awoken instanceof KeyedQueue) {
-                KeyedQueue awokenKQ = (KeyedQueue)awoken;
-                assert awokenKQ.getInProcessItem() == null : "false ready: class peer still in process";
-                if(((KeyedQueue)awoken).isEmpty()) {
-                    // just drop queue
-                    discardQueue(awoken);
-                    return;
-                }
-                readyQueue((KeyedQueue)awoken); 
-            } else {
-                assert false : "something evil has awoken!";
-            }
+            assert awoken.getInProcessItem() == null : "false ready: class peer still in process";
+            awoken.wake();
+            updateQ(awoken);
         }
     }
 
     private void discardQueue(KeyedQueue q) {
         allClassQueuesMap.remove(((KeyedQueue)q).getClassKey());
-        q.setStoreState(KeyedQueue.FINISHED);
+        q.discard();
         ((KeyedQueue)q).release();
         //assert !heldClassQueues.contains(q) : "heldClassQueues holding dead q";
         assert !readyClassQueues.contains(q) : "readyClassQueues holding dead q";
@@ -672,11 +671,8 @@ public class Frontier
 
     private CrawlURI dequeueFromReady() {
         KeyedQueue firstReadyQueue = (KeyedQueue)readyClassQueues.getFirst();
-        assert firstReadyQueue.getStoreState() == KeyedQueue.READY : "top ready queue not ready";
+        assert firstReadyQueue.getState() == KeyedQueue.READY : "top ready queue not ready";
         CrawlURI readyCuri = (CrawlURI) firstReadyQueue.dequeue();
-        if (firstReadyQueue.isEmpty()) {
-            firstReadyQueue.setStoreState(KeyedQueue.EMPTY); 
-        }
         return readyCuri;
     }
 
@@ -710,14 +706,11 @@ public class Frontier
             
         assert kq.getInProcessItem() == null : "two CrawlURIs with same classKey in process";
 
-        kq.setInProcessItem(curi);
- 
-        assert kq.getStoreState() == KeyedQueue.READY || kq.getStoreState() == KeyedQueue.EMPTY : 
-            "odd state "+ kq.getStoreState() + " for classQueue "+ kq + "of to-be-emitted CrawlURI";
+        assert kq.getState() == KeyedQueue.READY || kq.getState() == KeyedQueue.EMPTY : 
+            "odd state "+ kq.getState() + " for classQueue "+ kq + "of to-be-emitted CrawlURI";
+
+        kq.noteInProcess(curi);
         readyClassQueues.remove(kq);
-        //enqueueToHeld(classQueue);
-        kq.setStoreState(KeyedQueue.IN_PROCESS);
-        //releaseHeld(curi);
     }
 
     /**
@@ -732,7 +725,7 @@ public class Frontier
         if (kq==null) {
             try {
                 kq = new KeyedQueue(curi.getClassKey(),controller.getScratchDisk(),DEFAULT_CLASS_QUEUE_MEMORY_HEAD);
-                kq.setStoreState(KeyedQueue.EMPTY);
+                kq.activate(); // TODO: have only a subset of queues by active at any one time
                 allClassQueuesMap.put(kq.getClassKey(),kq);
             } catch (IOException e) {
                 // An IOException occured trying to make new KeyedQueue.
@@ -765,114 +758,68 @@ public class Frontier
     protected void enqueueToKeyed(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
         if(kq==null){
+            logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
         }
-            
-        assert kq.getStoreState() == KeyedQueue.EMPTY 
-            || kq.getStoreState() == KeyedQueue.READY 
-            || kq.getStoreState() == KeyedQueue.SNOOZED 
-            || kq.getStoreState() == KeyedQueue.IN_PROCESS 
-            : "unexpected keyedqueue state";
-
         if(curi.needsImmediateScheduling()) {
             kq.enqueueHigh(curi);
         } else {
             kq.enqueue(curi);
         }
-        updateQueue(kq);
+        if(kq.checkEmpty()) {
+            // if kq state changed, update frontier's internals
+            updateQ(kq);
+        }
     }
 
     /**
-     * Place CrawlURI on a queue for its class (server), if queue
-     * exists and contains other items
-     *
-     * @param curi The CrawlURI
-     * @return true if enqueued
-     */
-    protected boolean enqueueIfNecessary(CrawlURI curi) {
-        KeyedQueue kq = keyedQueueFor(curi);
-        if(kq==null){
-            return false; // Couldn't find/create kq.
-        }
-            
-        assert kq.getStoreState() == KeyedQueue.EMPTY 
-            || kq.getStoreState() == KeyedQueue.READY 
-            || kq.getStoreState() == KeyedQueue.SNOOZED 
-            || kq.getStoreState() == KeyedQueue.IN_PROCESS 
-            || kq.getStoreState() == KeyedQueue.FROZEN 
-            : "unexpected keyedqueue state";
-        if((kq.getInProcessItem()!=null)
-                || kq.getStoreState()==KeyedQueue.SNOOZED
-                || !kq.isEmpty()) {
-            // must enqueue
-            if(curi.needsImmediateScheduling()) {
-                kq.enqueueHigh(curi);
-            } else {
-                kq.enqueue(curi);
-            }
-            updateQueue(kq);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * If an empty queue has become ready, add to ready queues
+     * If an empty queue has become ready, add to ready queues.
+     * Should only be called after state has changed. 
+     * 
      * @param kq
      */
-    private void updateQueue(KeyedQueue kq) {
-        Object initialState = kq.getStoreState();
-        if(kq.getStoreState()==KeyedQueue.FROZEN) {
-            // only explicit operator action my unfreeze a queue
-            return;
-        }
-        if (kq.isEmpty() && initialState!=KeyedQueue.SNOOZED) {
+    private void updateQ(KeyedQueue kq) {
+        Object state = kq.getState();
+        if (kq.isDiscardable()) {
             // empty & ready; discard
             discardQueue(kq);
             return;
         }
-        if (initialState == KeyedQueue.EMPTY && !kq.isEmpty()) {
+        if (state == KeyedQueue.READY ) {
             // has become ready
-            readyQueue(kq);
+            readyClassQueues.add(kq);
+            notify(); // wake a waiting thread
             return;
         } 
         // otherwise, no need to change whatever state it's in
         // TODO: verify this in only reached in sensible situations
     }
-
-    private void readyQueue(KeyedQueue kq) {
-        if(kq.getStoreState()==KeyedQueue.FROZEN) {
-            // only explicit operator action my unfreeze a queue
-            return;
-        }
-        if(kq.isEmpty()) {
-            discardQueue(kq);
-            return;
-        }
-        readyClassQueues.add(kq);
-        kq.setStoreState(KeyedQueue.READY);
-        notify(); // wake a waiting thread
-    }
-    
-    // stop this queue from being actively scheduled
-    // essentially: a reaction to a serious connectivity
-    // problem or operator request
-    private void freezeQueue(KeyedQueue kq) {
-        if(kq.getStoreState()== KeyedQueue.SNOOZED) {
+        
+    /**
+     * stop this queue from being actively scheduled
+     * essentially: a reaction to a serious connectivity
+     * problem or operator request
+     * 
+     * @param kq
+     */ 
+    public synchronized void freezeQueue(KeyedQueue kq) {
+        if(kq.getState()== KeyedQueue.SNOOZED) {
             snoozeQueues.remove(kq);
-        } else if (kq.getStoreState() == KeyedQueue.READY ) {
+        } else if (kq.getState() == KeyedQueue.READY ) {
             readyClassQueues.remove(kq);
         }
-        kq.setStoreState(KeyedQueue.FROZEN);
+        kq.freeze();
     }
     
-    // stop this queue from being actively scheduled
-    // essentially: a reaction to a serious connectivity
-    // problem or operator request
-    private void unfreezeQueue(KeyedQueue kq) {
-        assert kq.getStoreState() == KeyedQueue.FROZEN : "can't unfreeze unfrozen queue";
-        kq.setStoreState(KeyedQueue.READY); // temp to fo
-        readyQueue(kq);
+    /**
+     * allow this queue to be actively scheduled
+     * (by operator request)
+     * 
+     * @param kq
+     */
+    public synchronized void unfreezeQueue(KeyedQueue kq) {
+        kq.unfreeze();
+        kq.activate(); // TODO: implement active/inactive distinctions
     }
 
     
@@ -882,11 +829,14 @@ public class Frontier
     private void enqueueMedium(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
         if(kq==null){
+            logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
         }
             
         kq.enqueueMedium(curi);
-        updateQueue(kq);
+        if(kq.checkEmpty()) {
+            updateQ(kq);
+        }
     }
 
     /**
@@ -895,11 +845,14 @@ public class Frontier
     private void enqueueHigh(CrawlURI curi) {
         KeyedQueue kq = keyedQueueFor(curi);
         if(kq==null){
+            logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
         }
             
         kq.enqueueHigh(curi);
-        updateQueue(kq);
+        if(kq.checkEmpty()) {
+            updateQ(kq);
+        }
     }
 
     protected long earliestWakeTime() {
@@ -917,18 +870,14 @@ public class Frontier
     protected void noteProcessingDone(CrawlURI curi) throws AttributeNotFoundException {
         curi.incrementFetchAttempts();
         logLocalizedErrors(curi);
-
         KeyedQueue kq = keyedQueueFor(curi);
         if(kq==null){
+            logger.severe("No workQueue found for "+curi);
             return; // Couldn't find/create kq.
         }
-
-        assert kq.getInProcessItem() == curi : "CrawlURI done wasn't inProcess";
-        assert kq.getStoreState()
-            == KeyedQueue.IN_PROCESS : "odd state for classQueue of remitted CrawlURI";
-        
-        kq.setInProcessItem(null);
+        kq.noteProcessDone(curi);
         updateScheduling(curi, kq);
+        updateQ(kq);
     }
 
     /**
@@ -995,8 +944,6 @@ public class Frontier
                 return;
             } 
         }
-        // otherwise, just ready
-        readyQueue(kq);
     }
 
     /**
@@ -1140,13 +1087,8 @@ public class Frontier
     private void reschedule(CrawlURI curi) {
         // put near top of relevant keyedqueue (but behind anything
         // recently scheduled 'high')
-        KeyedQueue kq = keyedQueueFor(curi);
-        if(kq==null){
-            return; // Couldn't find/create kq.
-        }
-            
         curi.processingCleanup(); // eliminate state related to only prior processing passthrough
-        kq.enqueueMedium(curi);
+        enqueueMedium(curi);
         queuedCount++;
     }
 
@@ -1158,19 +1100,19 @@ public class Frontier
      */
     protected void snoozeQueueUntil(KeyedQueue kq, long wake) {
         //assert kq.getStoreState() != KeyedQueue.IN_PROCESS : "snoozing queue should have been READY, EMPTY, or SNOOZED";
-        if(kq.getStoreState()==KeyedQueue.FROZEN) {
+        if(kq.getState()==KeyedQueue.FROZEN) {
             // only explicit operator action my unfreeze a queue
             return;
         }
-        if(kq.getStoreState()== KeyedQueue.SNOOZED) {
+        if(kq.getState()== KeyedQueue.SNOOZED) {
             // must be removed before time may be mutated
             snoozeQueues.remove(kq);
-        } else if (kq.getStoreState() == KeyedQueue.READY ) {
+        } else if (kq.getState() == KeyedQueue.READY ) {
             readyClassQueues.remove(kq);
         }
         kq.setWakeTime(wake);
         snoozeQueues.add(kq);
-        kq.setStoreState(KeyedQueue.SNOOZED);
+        kq.snooze();
     }
 
     /**
@@ -1417,17 +1359,7 @@ public class Frontier
                  
                 // If our deleting has emptied the KeyedQueue then update it's
                 // state.
-                if(kq.isEmpty()){
-                    if(kq.getStoreState() == KeyedQueue.READY){
-                        readyClassQueues.remove(kq);
-                    } else if(kq.getStoreState() == KeyedQueue.SNOOZED){
-                        snoozeQueues.remove(kq);
-                    }
-                    if (kq.getStoreState()!=KeyedQueue.FROZEN) {
-                        // leave frozen queues FROZEN rather than EMPTY
-                        kq.setStoreState(KeyedQueue.EMPTY);
-                    }
-                }
+                kq.checkEmpty();
             }
         }
         // Delete from pendingQueue
@@ -1499,12 +1431,12 @@ public class Frontier
     private void appendKeyedQueue(StringBuffer rep, KeyedQueue kq, long now) {
         rep.append("    KeyedQueue  " + kq.getClassKey() + "\n");
         rep.append("     Length:    " + kq.length() + "\n");
-        rep.append("     Is ready:  " + kq.isReady() + "\n");
+//        rep.append("     Is ready:  " + kq.shouldWake() + "\n");
         rep.append("     Status:    " + kq.state.toString() + "\n");
-        if(kq.getStoreState()==KeyedQueue.SNOOZED) {
+        if(kq.getState()==KeyedQueue.SNOOZED) {
             rep.append("     Wakes in:  " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
         }
-        if(kq.getStoreState()==KeyedQueue.IN_PROCESS) {
+        if(kq.getState()==KeyedQueue.IN_PROCESS) {
             rep.append("     InProcess: " + kq.getInProcessItem() + "\n");
         }
         if(!kq.isEmpty()) {
@@ -1563,7 +1495,6 @@ public class Frontier
                     u = UURI.createUURI(read.substring(3));
                     alreadyIncluded.add(u);
                 } catch (URISyntaxException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
@@ -1583,7 +1514,6 @@ public class Frontier
                         schedule(caUri);
                     }
                 } catch (URISyntaxException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
