@@ -621,7 +621,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         // get a CrawlURI for override context purposes
         CrawlURI contextUri = queue.peek(this.pendingUris); 
         // TODO: consider confusing cross-effects of this and IP-based politeness
-        queue.incrementSessionBalance(((Integer) getUncheckedAttribute(contextUri,
+        queue.setSessionBalance(((Integer) getUncheckedAttribute(contextUri,
                 ATTR_BALANCE_REPLENISH_AMOUNT)).intValue());
         queue.unpeek(); // don't insist on that URI being next released
     }
@@ -989,6 +989,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.note(canonicalize(u));
+        CrawlURI temp = new CrawlURI(u);
+        temp.setClassKey(getClassKey(temp));
+        getQueueFor(temp).expend(getCost(temp));
     }
 }
 
