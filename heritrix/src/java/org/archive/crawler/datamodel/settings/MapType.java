@@ -32,23 +32,28 @@ import javax.management.MBeanAttributeInfo;
 
 import org.archive.crawler.datamodel.CrawlURI;
 
-/**
+/** This class represents a container of settings.
+ * 
+ * This class is usually used to make it possible to have a dynamic number
+ * of CrawlerModules like for instance a list of filters of different type.
  * 
  * @author John Erik Halse
- *
  */
 public class MapType extends ComplexType {
 
-    /**
-     * @param name
-     * @param description
+    /** Construct a new MapType object.
+     * 
+     * @param name the name of this element.
+     * @param description the description of the attribute.
      */
     public MapType(String name, String description) {
         super(name, description);
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.settings.ComplexType#addElement(org.archive.crawler.datamodel.settings.CrawlerSettings, org.archive.crawler.datamodel.settings.Type)
+    /** Add a new element to this map.
+     * 
+     * @param settings the settings object for this method to have effect.
+     * @param type the element to be added.
      */
     public Type addElement(CrawlerSettings settings, Type type) throws InvalidAttributeValueException {
         settings = settings == null ? globalSettings() : settings;
@@ -59,7 +64,7 @@ public class MapType extends ComplexType {
         }
     }
     
-    class It implements Iterator {
+    private class It implements Iterator {
         CrawlerSettings settings;
         Iterator atts;
                         
@@ -87,6 +92,11 @@ public class MapType extends ComplexType {
         }
     };
 
+    /** Get an Iterator over all the elements in this map.
+     * 
+     * @param uri the URI for which this set of elements are valid.
+     * @return an iterator over all the elements in this map.
+     */
     public Iterator iterator(CrawlURI uri) {
         CrawlerSettings settings;
         try {
@@ -97,6 +107,11 @@ public class MapType extends ComplexType {
         return new It(settings);
     }
     
+    /** Returns true if this map is empty.
+     * 
+     * @param uri the URI for which this set of elements are valid.
+     * @return true if this map is empty.
+     */
     public boolean isEmpty(CrawlURI uri) {
         CrawlerSettings settings;
         try {
@@ -105,5 +120,20 @@ public class MapType extends ComplexType {
             settings = globalSettings();
         }
         return !settings.getData(getAbsoluteName()).hasAttributes();
+    }
+    
+    /** Get the number of elements in this map.
+     * 
+     * @param uri the URI for which this set of elements are valid.
+     * @return the number of elements in this map.
+     */
+    public int size(CrawlURI uri) {
+        CrawlerSettings settings;
+        try {
+            settings = uri.getServer().getSettings();
+        } catch (NullPointerException e) {
+            settings = globalSettings();
+        }
+        return settings.getData(getAbsoluteName()).size();
     }
 }
