@@ -28,12 +28,16 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -41,6 +45,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
 /**
@@ -159,8 +165,19 @@ public class XMLSettingsHandler extends AbstractSettingsHandler {
                 InputStream file = new BufferedInputStream(new FileInputStream(filename));
                 parser.setContentHandler(new CrawlSettingsSAXHandler(settings));             
                 parser.parse(new InputSource(file));
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
+            } catch (SAXParseException e) {
+                System.out.println(e.getMessage() + " in file '" + filename.getAbsolutePath() + "', line: " + e.getLineNumber() + ", column: " + e.getColumnNumber());
+                //e.printStackTrace();
+            } catch (SAXException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            } catch (ParserConfigurationException e) {
+                e.printStackTrace();
+            } catch (FactoryConfigurationError e) {
+                e.printStackTrace();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
