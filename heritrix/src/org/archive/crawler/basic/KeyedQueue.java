@@ -17,13 +17,9 @@ import java.util.logging.Logger;
  * @author gojomo
  *
  */
-public class KeyedQueue extends LinkedList implements URIStoreable, Comparable {
+public class KeyedQueue extends LinkedList implements URIStoreable {
 	private static Logger logger = Logger.getLogger("org.archive.crawler.basic.KeyedQueue");
 
-	
-	public static Object READY = new Object();
-	public static Object HOLDING = new Object();
-	public static Object SLEEPING = new Object();
 	long wakeTime;
 	Object classKey;
 	Object state;
@@ -80,33 +76,17 @@ public class KeyedQueue extends LinkedList implements URIStoreable, Comparable {
 	}
 
 	/* (non-Javadoc)
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	public int compareTo(Object other) {
-		if(this==other) {
-			return 0; // for exact identity only
-		}
-		if (((URIStoreable)other).getWakeTime()> wakeTime) {
-			return -1;
-		} 
-		if (((URIStoreable)other).getWakeTime()< wakeTime) {
-			return 1;
-		} 
-		// at this point, the ordering is arbitrary, but still
-		// must be consistent/stable over time
-		if(((KeyedQueue)other).getClassKey().equals(this.getClassKey())) {
-			logger.severe("KeyedQueue classKey collision");
-		}
-		return ((String)((KeyedQueue)other).getClassKey()).compareTo(this.getClassKey());	
-	}
-	
-	
-
-	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
 		return "KeyedQueue[classKey="+getClassKey()+"]";
+	}
+
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.basic.URIStoreable#getSortFallback()
+	 */
+	public String getSortFallback() {
+		return classKey.toString();
 	}
 
 }
