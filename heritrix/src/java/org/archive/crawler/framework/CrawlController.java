@@ -384,7 +384,7 @@ public class CrawlController extends Thread {
                 "unable to initialize frontier: " + e);
         }
 
-        serverCache = new ServerCache(this);
+        serverCache = new ServerCache(getSettingsHandler());
 
         Processor previous = null;
         Iterator it = processors.iterator(null);
