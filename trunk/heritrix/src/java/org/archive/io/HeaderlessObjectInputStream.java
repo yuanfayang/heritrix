@@ -29,6 +29,17 @@ import java.io.ObjectInputStream;
 import java.io.StreamCorruptedException;
 
 
+/**
+ * Block read of java serialization stream header.
+ *
+ * Default java serialization writes a header of magic bytes, version and
+ * length at start of a serialization stream.  This class matches the
+ * {@link HeaderlessObjectOutputStream} which blocks the writing of the
+ * serialization header; without it the default implementation would complain
+ * about the header absence.
+ *
+ * <p>Used when want more control of serialization stream.
+ */
 public class HeaderlessObjectInputStream extends ObjectInputStream {
 
 	public HeaderlessObjectInputStream(InputStream in) throws IOException {
