@@ -90,6 +90,8 @@ public class RecordingInputStream
             Thread.currentThread().getName();
         int b = this.in.read();
         if (b != -1) {
+            assert this.recordingOutputStream != null: "ROS is null " +
+                Thread.currentThread().getName();
             this.recordingOutputStream.write(b);
         }
         return b;
@@ -103,6 +105,8 @@ public class RecordingInputStream
             Thread.currentThread().getName();
         int count = this.in.read(b,off,len);
         if (count > 0) {
+            assert this.recordingOutputStream != null: "ROS is null " +
+                Thread.currentThread().getName();
             this.recordingOutputStream.write(b,off,count);
         }
         return count;
@@ -116,6 +120,8 @@ public class RecordingInputStream
             Thread.currentThread().getName();
         int count = this.in.read(b);
         if (count > 0) {
+            assert this.recordingOutputStream != null: "ROS is null " +
+                Thread.currentThread().getName();
             this.recordingOutputStream.write(b,0,count);
         }
         return count;

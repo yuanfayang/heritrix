@@ -50,7 +50,7 @@ import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.util.MultiHttpConnectionProvider;
 import org.archive.httpclient.ConfigurableTrustManagerProtocolSocketFactory;
-import org.archive.httpclient.HttpRecorderGetMethod;
+import org.archive.httpclient.HeritrixGetMethod;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ConfigurableX509TrustManager;
@@ -173,7 +173,7 @@ public class FetchHTTP extends Processor
             return;
         }
 
-        curisHandled++;
+        this.curisHandled++;
         // Note begin time
         long now = System.currentTimeMillis();
         curi.getAList().putLong(A_FETCH_BEGAN_TIME, now);
@@ -182,8 +182,8 @@ public class FetchHTTP extends Processor
         HttpRecorder rec = HttpRecorder.getHttpRecorder();
         
         // Get and configure a new GetMethod.
-        HttpRecorderGetMethod get =
-            new HttpRecorderGetMethod(curi.getUURI().getURIString(), rec);
+        HeritrixGetMethod get =
+            new HeritrixGetMethod(curi.getUURI().getURIString(), rec);
         configureGetMethod(curi, get);
 
         int immediateRetries = 0;
@@ -196,21 +196,19 @@ public class FetchHTTP extends Processor
                 break;
             } catch (HttpRecoverableException e) {
                 if (immediateRetries < getMaxImmediateRetries()) {
-                    recoveryRetries++;
+                    this.recoveryRetries++;
                     immediateRetries++;
                     continue;
                 } else {
                     // treat as connect failed
                     curi.addLocalizedError(this.getName(), e, "executeMethod");
                     curi.setFetchStatus(S_CONNECT_FAILED);
-                    rec.closeRecorders();
                     get.releaseConnection();
                     return;
                 }
             } catch (IOException e) {
                 curi.addLocalizedError(this.getName(), e, "executeMethod");
                 curi.setFetchStatus(S_CONNECT_FAILED);
-                rec.closeRecorders();
                 get.releaseConnection();
                 return;
             } catch (ArrayIndexOutOfBoundsException e) {
@@ -220,7 +218,6 @@ public class FetchHTTP extends Processor
                 // treating as if it were an IOException
                 curi.addLocalizedError(this.getName(), e, "executeMethod");
                 curi.setFetchStatus(S_CONNECT_FAILED);
-                rec.closeRecorders();
                 get.releaseConnection();
                 return;
             }
@@ -248,7 +245,6 @@ public class FetchHTTP extends Processor
             curi.setFetchStatus(S_CONNECT_LOST);
             return;
         } finally {
-            rec.closeRecorders();
             get.releaseConnection();
         }
 
@@ -526,8 +522,8 @@ public class FetchHTTP extends Processor
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.fetcher.FetchHTTP\n");
         ret.append("  Function:          Fetch HTTP URIs\n");
-        ret.append("  CrawlURIs handled: " + curisHandled + "\n");
-        ret.append("  Recovery retries:   " + recoveryRetries + "\n\n");
+        ret.append("  CrawlURIs handled: " + this.curisHandled + "\n");
+        ret.append("  Recovery retries:   " + this.recoveryRetries + "\n\n");
 
         return ret.toString();
     }
@@ -599,7 +595,7 @@ public class FetchHTTP extends Processor
         FileOutputStream out = null;        
         try {
             out = new FileOutputStream(new File(saveCookiesFile));
-            Cookie cookies[] = http.getState().getCookies();
+            Cookie cookies[] = this.http.getState().getCookies();
             String tab ="\t";
             out.write("# Heritrix Cookie File\n".getBytes());
             out.write(
