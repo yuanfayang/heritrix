@@ -81,8 +81,8 @@ public class FetcherDNS extends Processor implements CoreAttributeConstants, Fet
 		// curi.setServer(dnsServer);
 		
 		// make sure we're in "normal operating mode", e.g. a cache + controller exist to assist us
-		if (controller != null && controller.getHostCache() != null) {
-			targetServer = controller.getHostCache().getServerFor(dnsName);
+		if (controller != null && controller.getServerCache() != null) {
+			targetServer = controller.getServerCache().getServerFor(dnsName);
 		} else {
 			// standalone operation (mostly for test cases/potential other uses)
 			targetServer = new CrawlServer(dnsName);

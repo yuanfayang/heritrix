@@ -75,7 +75,7 @@ public class CrawlController {
 	List toes = new LinkedList(); /* of ToeThreads */;
 	int nextToeSerialNumber = 0;
 	
-	ServerCache hostCache;
+	ServerCache serverCache;
 	//ThreadKicker kicker;
 	
 	private boolean paused = false;
@@ -146,7 +146,7 @@ public class CrawlController {
 				XP_FRONTIER);
 		}
 			
-		hostCache = new ServerCache();
+		serverCache = new ServerCache();
 		
 		Iterator iter = processors.entrySet().iterator();
 		while (iter.hasNext()) {
@@ -317,8 +317,8 @@ public class CrawlController {
 	/**
 	 * 
 	 */
-	public ServerCache getHostCache() {
-		return hostCache;
+	public ServerCache getServerCache() {
+		return serverCache;
 	}
 
 	/**

@@ -378,7 +378,7 @@ public class Frontier
 			assert curi.getStoreState() != URIStoreable.FINISHED : "state "+curi.getStoreState()+" instead of ready for "+ curi; 
 			//assert curi.getAList() != null : "null alist in curi " + curi + " state "+ curi.getStoreState();
 			noteInProcess(curi);
-			curi.setServer(controller.getHostCache().getServerFor(curi));
+			curi.setServer(controller.getServerCache().getServerFor(curi));
 		}
 		logger.fine(this+".emitCuri("+curi+")");
 		return curi;
