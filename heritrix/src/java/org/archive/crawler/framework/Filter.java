@@ -30,7 +30,6 @@ import javax.management.AttributeNotFoundException;
 import org.archive.crawler.datamodel.settings.CrawlerModule;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
-import org.archive.crawler.filter.OrFilter;
 
 /**
  * 
@@ -105,17 +104,6 @@ public abstract class Filter extends CrawlerModule {
      */
     public String toString() {
         return "Filter<" + getName() + ">";
-    }
-
-    /**
-     * @param other
-     * @return Filter.
-     */
-    public Filter orWith(Filter other) {
-        OrFilter orF = new OrFilter();
-        orF.addFilter(this);
-        orF.addFilter(other);
-        return orF;
     }
 
     /**
