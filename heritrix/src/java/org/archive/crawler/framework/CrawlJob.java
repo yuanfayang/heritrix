@@ -18,18 +18,20 @@
  */
 package org.archive.crawler.framework;
 
-import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.settings.SettingsHandler;
+import org.archive.crawler.datamodel.settings.XMLSettingsHandler;
+
 
 /**
- * A CrawlJob encapsulates a CrawlOrder with any and all information and methods needed
- * by a CrawlJobHandler to accept and execute them.
+ * A CrawlJob encapsulates a 'crawl order' with any and all information and 
+ * methods needed by a CrawlJobHandler to accept and execute them.
  * 
  * @author Kristinn Sigurdsson
  * 
  * @see CrawlJobHandler
  */
 
-public interface CrawlJob
+public class CrawlJob
 {
 	/*
 	 * Possible values for Priority
@@ -39,7 +41,7 @@ public interface CrawlJob
 	public static final int PRIORITY_AVERAGE = 2;
 	public static final int PRIORITY_HIGH = 3;
 	public static final int PRIORITY_CRITICAL = 4;
-
+    
 	/*
 	 * Possible states for a Job.
 	 */
@@ -66,104 +68,167 @@ public interface CrawlJob
 	/** Job is going to be temporarly stopped after active threads are finished. */
 	public static final String STATUS_WAITING_FOR_PAUSE = "Pausing - Waiting for threads to finish";
 	/** Job was temporarly stopped. State is kept so it can be resumed */
-	public static final String STATUS_PAUSED = "Paused";
-	
+    public static final String STATUS_PAUSED = "Paused";
+    /** Job could not be launced due to an InitializationException */
+    public static final String STATUS_MISCONFIGURED = "Could not launch job - Fatal InitializationException";
+
+    // Class variables	
+    protected String UID;       //A UID issued by the CrawlJobHandler.
+    protected String name;
+    protected String status;
+    protected boolean isReadOnly = false;
+    protected StatisticsTracking stats;
+    protected int priority;
+    protected int orderVersion;
+    
+    protected SettingsHandler settingsHandler;
+
+    /**
+     * Simple constructor. Settings need to be added seperately before a job created
+     * with this constructor can be submitted to the CrawlJobHandler.
+     * 
+     * @param UID A unique ID for this job. Typically emitted by the CrawlJobHandler.
+     * 
+     * @see CrawlJobHandler#getNextJobUID()
+     */
+    public CrawlJob(String UID){
+        this.UID = UID;
+        isReadOnly = false;
+    }
+
+    /**
+     * Advanced constructor. If given proper values this will create a CrawlJob
+     * that is ready to be crawled at once.
+     * @param UID A unique ID for this job. Typically emitted by the CrawlJobHandler.
+     * @param name
+     * @param settingsHandler
+     * @param priority
+     */
+    public CrawlJob(String UID, String name, XMLSettingsHandler settingsHandler, int priority) {
+        this.UID = UID;
+        this.name = name;
+        this.settingsHandler = settingsHandler;
+        this.priority = priority;
+    }
+
+
+    
 	/**
-	 * Each job needs to be assigned a ID.
+	 * Returns this jobs unique ID (UID) that was issued by the CrawlJobHandler()
+     * when this job was first created.
 	 *
-	 * @return Job uid.
+	 * @return Job This jobs UID.
+     * @see CrawlJobHandler#getNextJobUID()
 	 */
-	public String getUID();
+	public String getUID(){
+        return UID;
+	}
 	
 	/**
+     * Set the 'name' of this job. The name corrisponds to the 'name' tag in the
+     * 'meta' section of the settings file.
 	 * 
-	 * @param jobname should be equal to the crawl-order xml's name attribute
+	 * @param The 'name' of the job.
 	 */
-	public void setJobName(String jobname);
+	protected void setJobName(String jobname){
+        this.name = jobname; 
+	}
 	
 	/**
-	 * @return JobName should be equal to the crawl-order xml's name attribute 
+     * Returns this job's 'name'. The name comes from the settings for this job,
+     * need not be unique and may change. For a unique identifier use 
+     * {@link #getUID() getUID()}.
+     * <p>
+     * The name corrisponds to the value of the 'name' tag in the 'meta' section
+     * of the settings file.
+     *  
+	 * @return This job's 'name' 
 	 */
-	public String getJobName();
+	public String getJobName(){
+        return name;
+	}
 	
 	/**
-	 * @return this object's CrawlOrder
-	 */
-	public CrawlOrder getCrawlOrder();
-	
-	/**
-	 * Set the file containing this job's crawl order (a properly formatted XML)
-	 * This method respects the ReadOnly property.
-	 *  
-	 * @param crawlOrderFile The filename with full (relative or absolute) path.
-	 * 
-	 * @return if isReadOnly() returns true then no action will be taken and this 
-	 * method returns false.  Otherwise the relevant change is applied and true is returned.
-	 */
-	public boolean setCrawlOrder(String crawlOrderFile);
-	
-	/**
-	 * 
-	 * @return the filename (with path) of the crawl order file.
-	 */
-	public String getCrawlOrderFile();
-	
-	/**
-	 * 
+	 * Set this job's level of priority.
+     * 
 	 * @param priority The level of priority 
 	 *        
-	 * @see CrawlJob#PRIORITY_MINIMAL
-	 * @see CrawlJob#PRIORITY_LOW
-	 * @see CrawlJob#PRIORITY_AVERAGE
-	 * @see CrawlJob#PRIORITY_HIGH
-	 * @see CrawlJob#PRIORITY_CRITICAL
+     * @see #getJobPriority()
+	 * @see #PRIORITY_MINIMAL
+	 * @see #PRIORITY_LOW
+	 * @see #PRIORITY_AVERAGE
+	 * @see #PRIORITY_HIGH
+	 * @see #PRIORITY_CRITICAL
 	 */
-	public void setJobPriority(int priority);
+	public void setJobPriority(int priority){
+        this.priority = priority;
+	}
 	
 	/**
+     * Get this job's level of priority.
 	 * 
 	 * @return this job's set priority
+     * @see #setJobPriority(int)
+     * @see #PRIORITY_MINIMAL
+     * @see #PRIORITY_LOW
+     * @see #PRIORITY_AVERAGE
+     * @see #PRIORITY_HIGH
+     * @see #PRIORITY_CRITICAL
 	 */
-	public int getJobPriority();
+	public int getJobPriority(){
+        return priority;
+	}
 	
 	/**
-	 * Called by the CrawlJobHandler when the job is sent to the crawler.  
-	 * Once called no changes can be made to the crawl order file.
+	 * Once called no changes can be made to the settings for this job.
 	 * Typically this is done once a crawl is completed and further changes
 	 * to the crawl order are therefor meaningless.
 	 */
-	public void setReadOnly();  
+	public void setReadOnly(){
+        isReadOnly = true;  
+	}
 
 	/**
 	 * 
 	 * @return false until setReadOnly has been invoked, after that it returns true.
 	 */	
-	public boolean isReadOnly();
+	public boolean isReadOnly(){
+        return isReadOnly;
+	}
 	
 	/**
-	 * 
-	 * @param status Current status of CrawlJob 
-	 * 		  (see constants defined here beginning with STATUS)
+	 * Set the status of this CrawlJob.
+     * 
+	 * @param status Current status of CrawlJob
+     *         (see constants defined here beginning with STATUS)
 	 */
-	public void setStatus(String status);
+	public void setStatus(String status){
+        this.status = status;
+	}
 	
 	/**
-	 * 
+	 * Get the current status of this CrawlJob  
+     * 
 	 * @return The current status of this CrawlJob 
 	 *         (see constants defined here beginning with STATUS)
 	 */
-	public String getStatus();
+	public String getStatus(){
+        return status;
+	}
 	
-	/**
-	 * Returns the current version of the order file 
-	 * (this should be initially set to 1 and then 
-	 * incremented each time setCrawlOrder() is called.
-	 * 
-	 * @return The version number of the current order file. 
-	 */
-	public int getOrderVersion();
-	
-	// TODO: Do JavaDoc for these
-	public void setStatisticsTracking(StatisticsTracking tracker);
-	public StatisticsTracking getStatisticsTracking();
+	public void setStatisticsTracking(StatisticsTracking tracker){
+        this.stats = tracker;
+	}
+    
+	public StatisticsTracking getStatisticsTracking(){
+        return stats;
+	}
+    
+    public void setSettingsHandler(SettingsHandler settingsHandler){
+        this.settingsHandler = settingsHandler;
+    }
+    
+    public SettingsHandler getSettingsHandler(){
+        return settingsHandler;
+    }
 }
