@@ -221,10 +221,10 @@ implements Comparable, Serializable {
     }
     
     /**
-     * @return classKey
+     * @return classKey, the 'identifier', for this queue.
      */
     public String getClassKey() {
-        return classKey;
+        return this.classKey;
     }
     
     /**
