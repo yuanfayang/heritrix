@@ -41,7 +41,7 @@
     <faq id="arc_closed">
       <question>How do I know when heritrix is done with an ARC file?</question>
       <answer>See
-      <a href="http://www.dreamersrealm.net/tree/blog/2004/08/19/#html_only">[988277] [Need feedback] "Done with ARC file" event</a> for a description for 
+      <a href="https://sourceforge.net/tracker/?func=detail&aid=988277&group_id=73833&atid=539102">[988277] [Need feedback] "Done with ARC file" event</a> for a description for 
       how to enalbe logging of opening and closing of arcs.</answer>
     </faq>
     <faq id="html_only">
