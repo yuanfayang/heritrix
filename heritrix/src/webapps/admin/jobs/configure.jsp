@@ -15,6 +15,7 @@
 <%@ page import="org.archive.crawler.datamodel.CrawlOrder" %>
 <%@ page import="org.archive.crawler.datamodel.settings.*" %>
 <%@ page import="org.archive.crawler.framework.CrawlController" %>
+<%@ page import="org.archive.util.TextUtils" %>
 <%@ page import="java.io.File" %>
 <%@ page import="java.io.FileReader" %>
 <%@ page import="java.io.FileWriter" %>
@@ -47,7 +48,7 @@
 		StringBuffer p = new StringBuffer();
 		MBeanInfo info = mbean.getMBeanInfo();
 
-		p.append("<tr><td><b>" + indent + mbean.getName() + "</b></td><td><a class='help' href=\"javascript:doPop('"+mbean.getDescription()+"')\">?</a></td></tr>\n");
+		p.append("<tr><td><b>" + indent + mbean.getName() + "</b></td><td><a class='help' href=\"javascript:doPop('"+TextUtils.escape(mbean.getDescription())+"')\">?</a></td></tr>\n");
 
 		MBeanAttributeInfo a[] = info.getAttributes();
 		
@@ -70,7 +71,7 @@
 				else if(currentAttribute instanceof ListType){
 					// Some type of list.
 					ListType list = (ListType)currentAttribute;
-					p.append("<tr><td valign='top'>" + indent + att.getName() + ":&nbsp;</td><td valign='top'><a class='help' href=\"javascript:doPop('"+att.getDescription()+"')\">?</a>&nbsp;</td>\n");
+					p.append("<tr><td valign='top'>" + indent + att.getName() + ":&nbsp;</td><td valign='top'><a class='help' href=\"javascript:doPop('"+TextUtils.escape(att.getDescription())+"')\">?</a>&nbsp;</td>\n");
 					p.append("<td><table border='0' cellspacing='0' cellpadding='0'>\n");
 					p.append("<tr><td><select multiple name='" + mbean.getAbsoluteName() + "/" + att.getName() + "' id='" + mbean.getAbsoluteName() + "/" + att.getName() + "' size='4' style='width: 320px'>\n");
 					for(int i=0 ; i<list.size() ; i++){
@@ -87,7 +88,7 @@
 				else{
 					Object[] legalValues = att.getLegalValues();
 					
-					p.append("<tr><td>" + indent + att.getName() + ":&nbsp;</td><td><a class='help' href=\"javascript:doPop('"+att.getDescription()+"')\">?</a>&nbsp;</td><td>");
+					p.append("<tr><td>" + indent + att.getName() + ":&nbsp;</td><td><a class='help' href=\"javascript:doPop('"+TextUtils.escape(att.getDescription())+"')\">?</a>&nbsp;</td><td>");
 					
 					if(legalValues != null && legalValues.length > 0){
 						//Have legal values. Build combobox.
