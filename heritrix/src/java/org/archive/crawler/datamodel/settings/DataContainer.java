@@ -82,7 +82,7 @@ public class DataContainer extends HashMap {
             e.printStackTrace();
         }
     }
-
+    
     public MBeanInfo getMBeanInfo() {
         MBeanAttributeInfo attrs[] =
             (MBeanAttributeInfo[]) attributes.toArray(
@@ -103,9 +103,11 @@ public class DataContainer extends HashMap {
     }
 
     protected void copyAttributeInfo(String name, DataContainer destination) {
-        Object attribute = attributeNames.get(name);
-        destination.attributes.add(attribute);
-        destination.attributeNames.put(name, attribute);
+        if (this != destination) {
+            Object attribute = attributeNames.get(name);
+            destination.attributes.add(attribute);
+            destination.attributeNames.put(name, attribute);
+        }
     }
 
     public Object put(Object key, Object value) {
