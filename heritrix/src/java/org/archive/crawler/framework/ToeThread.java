@@ -59,7 +59,6 @@ public class ToeThread extends Thread
     private static final String STEP_DONE_WITH_PROCESSORS = "DONE_WITH_PROCESSORS";
     private static final String STEP_HANDLING_RUNTIME_EXCEPTION = "HANDLING_RUNTIME_EXCEPTION";
     private static final String STEP_ABOUT_TO_RETURN_URI = "ABOUT_TO_RETURN_URI";
-//    private static final String STEP_HANDLING_SERIOUS_ERROR = "HANDLING_SERIOUS_ERROR";
     private static final String STEP_FINISHING_PROCESS = "FINISHING_PROCESS";
 
 
@@ -301,10 +300,6 @@ public class ToeThread extends Thread
         logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
         shouldCrawl = false;
         notify();
-//        if(isIdleOrDead())
-//        {
-//            notify();
-//        }
     }
 
     /**
@@ -438,7 +433,7 @@ public class ToeThread extends Thread
      * other parts of crawler and will terminate as soon as control is
      * established.
      *
-     * <p> Method should only be invoked by it's ToePool. Otherwise the pool
+     * <p> Method should only be invoked by its ToePool. Otherwise the pool
      * will become out of sync with the threads currently alive.
      *
      * @param newSerial New serial (id) for the thread.
