@@ -193,6 +193,19 @@ public class RecordingInputStream
                     throw new InterruptedException("interrupted during IO");
                 }
             } catch (SocketTimeoutException e) {
+                // FIXME: I don't think an IOException should be thrown here;
+                // it will cause the entire fetch to be aborted, as a connection
+                // lost (up in FetchHTTP). A socket timeout is just a transient
+                // problem, meaning nothing was available in the configured 
+                // timeout period, but something else might become available
+                // later. Unless we are constantly resetting the socket timeout
+                // to reflect the 'time remaining', the socket timeout should 
+                // be some constant interval at which we check the overall 
+                // timeout (below). Any given socket timeout is not a fatal
+                // problem, just a reminder to check the overall timeout and
+                // continue. (The below was added in rev 1.7, 20040218, perhaps
+                // to assist in debugging another problem.)
+                
                 // Socket timed out. If we  haven't exceeded the timeout, throw
                 // an IOException.  If we have, it'll be picked up on by test
                 // done below.
