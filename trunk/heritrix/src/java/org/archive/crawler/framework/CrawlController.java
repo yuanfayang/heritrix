@@ -661,13 +661,22 @@ public class CrawlController extends Thread {
             ((CrawlStatusListener) iterator.next()).crawlEnding(sExit);
         }
 
+        // Wait for all ToeThreads to exit.
+        while (getActiveToeCount() > 0 ) {
+            synchronized(this){
+                try {
+                    wait(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         // Ok, now we are ready to exit.
         while (registeredCrawlStatusListeners.size() > 0) {
             // Let the listeners know that the crawler is finished.
-            (
-                (CrawlStatusListener) registeredCrawlStatusListeners.get(
-                    0)).crawlEnded(
-                sExit);
+            ((CrawlStatusListener)
+                registeredCrawlStatusListeners.get(0)).crawlEnded(sExit);
             registeredCrawlStatusListeners.remove(0);
         }
 

@@ -365,7 +365,7 @@ public class CrawlURI extends CandidateURI
      * @see java.lang.Object#toString()
      */
     public String toString() {
-        return "CrawlURI("+getUURI()+")";
+        return "CrawlURI("+getURIString()+")";
     }
 
     /**

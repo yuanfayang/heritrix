@@ -367,7 +367,9 @@ public class StatisticsTracker extends AbstractTracker
                 return firstKey.compareTo(secondKey);
             }
         });
-        sortedSet.addAll(map.entrySet());
+        synchronized(map){
+            sortedSet.addAll(map.entrySet());
+        }
         return sortedSet;
     }
     

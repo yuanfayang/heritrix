@@ -520,10 +520,9 @@ public class Frontier
             }
         }
         
-        // first, empty the high-priority queue
         CandidateURI caUri;
 
-        // if enough time has passed to wake any snoozing queues, do it
+        // Check for snoozing queues who are ready to wake up.
         wakeReadyQueues(now);
 
         // now, see if any holding queues are ready with a CrawlURI
@@ -555,15 +554,19 @@ public class Frontier
         return null;
     }
     
-    /**
-     * Return the next CrawlURI to be processed (and presumably
-     * visited/fetched) by a a worker thread, within a certain
-     * timeout.
-     *
+    /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#next(int)
      */
     public synchronized CrawlURI next(int timeout) throws InterruptedException {
-        
+        // TODO: Maybe the method should check every XXXms until timeout
+        //       is reached. As is we might sleep far too long.
+        //       Alternately we can probably check for the time when (probably)
+        //       a CrawlURI will be availible and sleep until then.
+        // TODO: As this is a synchronized method it will block
+        //       other threads from reporting new link extractions that might
+        //       contain new URIs that we can get to work on right away since
+        //       they are on a new host.  Ideally we would not want that.
+        //       As next() is also synchronized maybe this one need not be?
         long now = System.currentTimeMillis();
         long until = now + timeout;
         while(now<until) {
@@ -582,14 +585,10 @@ public class Frontier
         // block until something changes, or timeout occurs
         waitMax = Math.min(earliestWakeTime()-now,timeout);
         try {
-            if(waitMax<1) {
-                // ignore
-                // logger.warning("negative or zero wait "+waitMax+" ignored");
-            } else {
+            if ( waitMax > 0 ) {
                 wait(waitMax);
             }
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -599,6 +598,8 @@ public class Frontier
      * duplicate.
      */
     private void noteScheduledDuplicate() {
+        // TODO: No longer needed? If we are adding to alreadyIncluded on
+        //       first schedule then this will not occur.
         netUrisScheduled--;
         scheduledDuplicates++;
     }
@@ -621,48 +622,31 @@ public class Frontier
         batchFlush();
 
         try {
-            // update queues/snoozes as necessary
             // no need to update queues if user deleted items since they
             // can not possibly have been in processing and do not affect
             // politeness
             if(curi.getFetchStatus() != S_DELETED_BY_USER){
                 noteProcessingDone(curi);
-            } else {
-                // If queue is now empty then update it's state and remove it
-                // from ready or snooze if needed.
-                KeyedQueue kq = keyedQueueFor(curi);
-                if(kq.isEmpty()){
-                    if(kq.getStoreState() == URIStoreable.READY){
-                        readyClassQueues.remove(kq);
-                    } else if(kq.getStoreState() == URIStoreable.SNOOZED){
-                        snoozeQueues.remove(kq);
-                    }
-                    kq.setStoreState(URIStoreable.EMPTY);
-                }
             }
 
             notify(); // new items might be available
 
 
-            if(curi.getFetchStatus() > 0) {
+            if (curi.getFetchStatus() > 0) {
                 // Regard any status larger then 0 as success.
                 successDisposition(curi);
-            }
-            else if (needsPromptRetry(curi)) {
+            } else if (needsPromptRetry(curi)) {
                 // Consider statuses which allow nearly-immediate retry
                 // (like deferred to allow precondition to be fetched)
                 reschedule(curi);
-            }
-            else if (needsRetrying(curi)) {
+            } else if (needsRetrying(curi)) {
                 // Consider errors which can be retried
                 scheduleForRetry(curi);
-            }
-            else if(isDisregarded(curi)) {
+            } else if(isDisregarded(curi)) {
                 // Check for codes that mean that while we the crawler did
                 // manage to get it it must be disregarded for any reason.
                 disregardDisposition(curi);
-            }
-            else {
+            } else {
                 // In that case FAILURE, note & log
                 failureDisposition(curi);
             }
@@ -690,7 +674,8 @@ public class Frontier
         // release any other curis that were waiting for this to finish
         //releaseHeld(curi);
 
-        controller.throwCrawledURIFailureEvent(curi); //Let interested listeners know of disregard disposition.
+        //Let interested listeners know of disregard disposition.
+        controller.throwCrawledURIDisregardEvent(curi);
 
         // send to basic log
         curi.aboutToLog();
@@ -719,18 +704,12 @@ public class Frontier
 
     private boolean isDisregarded(CrawlURI curi) {
         switch (curi.getFetchStatus()) {
-            case S_ROBOTS_PRECLUDED :
-                 // they don't want us to have it
-            case S_OUT_OF_SCOPE :
-                 // filtered out by scope
-            case S_BLOCKED_BY_USER :
-                 // filtered out by user
-            case S_TOO_MANY_EMBED_HOPS :
-                 // too far from last true link
-            case S_TOO_MANY_LINK_HOPS :
-                // too far from seeds
-            case S_DELETED_BY_USER :
-                // user deleted
+            case S_ROBOTS_PRECLUDED :     // they don't want us to have it
+            case S_OUT_OF_SCOPE :         // filtered out by scope
+            case S_BLOCKED_BY_USER :      // filtered out by user
+            case S_TOO_MANY_EMBED_HOPS :  // too far from last true link
+            case S_TOO_MANY_LINK_HOPS :   // too far from seeds
+            case S_DELETED_BY_USER :      // user deleted
                 return true;
             default:
                 return false;
@@ -769,6 +748,7 @@ public class Frontier
         completionCount++;
         totalProcessedBytes += curi.getContentSize();
 
+        // TODO: Is there any use for this log anymore? The UI has up to date info
         if ( (completionCount % 500) == 0) {
             logger.info("==========> " +
                 completionCount+" <========== HTTP URIs completed");
@@ -1510,7 +1490,7 @@ public class Frontier
         return foundMatches;
     }
 
-    /** (non-Javadoc)
+    /* (non-Javadoc)
      * @see org.archive.crawler.framework.URIFrontier#deleteURIsFromPending(java.lang.String)
      */
     public long deleteURIsFromPending(String match) {
@@ -1524,7 +1504,19 @@ public class Frontier
             int i = 1;
             while(q.hasNext())
             {
-                numberOfDeletes += (((KeyedQueue)allClassQueuesMap.get(q.next())).deleteMatchedItems(mat));
+                KeyedQueue kq = (KeyedQueue)allClassQueuesMap.get(q.next());
+                numberOfDeletes += kq.deleteMatchedItems(mat);
+                 
+                // If our deleting has emptied the KeyedQueue then update it's
+                // state.
+                if(kq.isEmpty()){
+                    if(kq.getStoreState() == URIStoreable.READY){
+                        readyClassQueues.remove(kq);
+                    } else if(kq.getStoreState() == URIStoreable.SNOOZED){
+                        snoozeQueues.remove(kq);
+                    }
+                    kq.setStoreState(URIStoreable.EMPTY);
+                }
             }
         }
         // Delete from pendingQueue
@@ -1588,18 +1580,18 @@ public class Frontier
 
 
     private void appendKeyedQueue(StringBuffer rep, KeyedQueue kq, long now) {
-        rep.append("    KeyedQueue " + kq.getClassKey() + "\n");
-        rep.append("     Length:   " + kq.length() + "\n");
-        rep.append("     Is ready: " + kq.isReady() + "\n");
-        rep.append("     Status:   " + kq.state.toString() + "\n");
+        rep.append("    KeyedQueue  " + kq.getClassKey() + "\n");
+        rep.append("     Length:    " + kq.length() + "\n");
+        rep.append("     Is ready:  " + kq.isReady() + "\n");
+        rep.append("     Status:    " + kq.state.toString() + "\n");
         if(kq.getStoreState()==URIStoreable.SNOOZED) {
-            rep.append("     Wakes in: " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
+            rep.append("     Wakes in:  " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
         }
         if(kq.getStoreState()==URIStoreable.IN_PROCESS) {
-            rep.append("     InProcess:" + kq.getInProcessItem() + "\n");
+            rep.append("     InProcess: " + kq.getInProcessItem() + "\n");
         }
         if(!kq.isEmpty()) {
-            rep.append("     Top URI:  " + ((CrawlURI)kq.peek()).getURIString()+"\n");
+            rep.append("     Top URI:   " + ((CrawlURI)kq.peek()).getURIString()+"\n");
 
         }
     }

@@ -40,6 +40,7 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.settings.CrawlerSettings;
 import org.archive.crawler.datamodel.settings.SimpleType;
+import org.archive.crawler.datamodel.settings.Type;
 import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.util.SeedsInputIterator;
 import org.archive.util.DevUtils;
@@ -84,8 +85,11 @@ public class CrawlScope extends Filter {
      */
     public CrawlScope(String name) {
         super(ATTR_NAME, "Crawl scope");
-        addElementToDefinition(new SimpleType(ATTR_SEEDS,
-                "File from which to extract seeds", "seeds.txt"));
+        Type t;
+        t = addElementToDefinition(new SimpleType(ATTR_SEEDS,
+                "File from which to extract seeds.", "seeds.txt"));
+        t.setOverrideable(false);
+        t.setExpertSetting(true);
         addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
                 "Max link hops to include", new Integer(25)));
         addElementToDefinition(new SimpleType(
