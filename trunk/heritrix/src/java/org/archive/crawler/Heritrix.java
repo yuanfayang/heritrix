@@ -519,7 +519,7 @@ public class Heritrix
         // Pass as a seed a pointer to the webserver we just put up.
         CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
         Heritrix.getSelftestURL =
-            "http://localhost:" + Integer.toString(port) + "/selftest/";
+            "http://127.0.0.1:" + Integer.toString(port) + "/selftest/";
         job = Heritrix.jobHandler.newJob(job, "selftest",
             "Integration self test", getSelftestURL);
         Heritrix.jobHandler.addJob(job);
