@@ -123,14 +123,6 @@ public class KeyedQueue implements Serializable, URIWorkQueue  {
             int maxMemLoad) throws IOException {
         super();
         this.classKey = key;
-        if (server != null && !server.getName().toLowerCase().
-                startsWith(key)) {
-            // Temp debugging output
-            logger.warning("KeyedQueue server<->key mismatch noted: " +
-                server.getName() + "<->" + key);
-            // assert server.getHostname().startsWith(key) :
-            //  "KeyedQueue server - key mismatch";
-        }
         this.crawlServer = server;
         String tmpName = key;
         this.innerQ = new TieredQueue(4);

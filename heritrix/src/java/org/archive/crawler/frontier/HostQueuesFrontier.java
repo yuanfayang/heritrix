@@ -861,9 +861,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         URIWorkQueue firstReadyQueue =
             (URIWorkQueue)readyClassQueues.getFirst();
         assert firstReadyQueue.getState() == URIWorkQueue.READY:
-            "Top ready queue not ready but" + firstReadyQueue.getState();
+            "Top ready queue not ready but " + firstReadyQueue.getState() +
+            ": " + firstReadyQueue.getClassKey();
         assert firstReadyQueue.isEmpty() == false :
-            "Top ready queue inexplicably empty";
+            "Top ready queue inexplicably empty: " +
+                firstReadyQueue.getClassKey();
         CrawlURI readyCuri = firstReadyQueue.dequeue();
         // For future convenient reference.
         readyCuri.setHolder(firstReadyQueue);
@@ -959,10 +961,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                     // An IOException occured trying to make new KeyedQueue.
                     curi.getAList().putObject(A_RUNTIME_EXCEPTION,e);
                     Object array[] = { curi };
-                    this.controller.runtimeErrors.log(
-                            Level.SEVERE,
-                            curi.getUURI().toString(),
-                            array);
+                    this.controller.runtimeErrors.log(Level.SEVERE,
+                        curi.getUURI().toString(), array);
                 }
             }
         }
@@ -1008,7 +1008,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             failureDisposition(curi);
             return; // Couldn't find/create kq.
         }
-
         kq.enqueue(curi);
         if(kq.getState() != URIWorkQueue.INACTIVE) {
             // Active queue: may effect scheduling
