@@ -74,9 +74,7 @@ public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
             candidate = DEFAULT_CLASS_KEY;
         }
         // Ensure classKeys are safe as filenames on NTFS
-        candidate.replace(':','#');
-        return candidate;
-
+        return candidate.replace(':','#');
     }
 
 }
