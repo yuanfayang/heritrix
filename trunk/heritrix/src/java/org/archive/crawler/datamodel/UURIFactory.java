@@ -24,6 +24,7 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.io.Serializable;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -507,7 +508,7 @@ public class UURIFactory extends URI {
     /**
      * Implementation of UURI protected class used by enclosing factory.
      */
-    private class UURIImpl extends UURI {
+    private class UURIImpl extends UURI  implements Serializable {
         /**
          * @param uri String representation of an absolute URI.
          * @throws org.apache.commons.httpclient.URIException

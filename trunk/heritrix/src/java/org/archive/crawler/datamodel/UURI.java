@@ -24,6 +24,8 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.io.Serializable;
+
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
 import org.archive.util.SURT;
@@ -52,7 +54,7 @@ import org.archive.util.TextUtils;
  *
  * @see org.apache.commons.httpclient.URI
  */
-public class UURI extends URI {
+public class UURI extends URI implements Serializable {
     
     public static final String MASSAGEHOST_PATTERN = "^www\\d*\\.";
 
