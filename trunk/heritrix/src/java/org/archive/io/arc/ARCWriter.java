@@ -649,7 +649,7 @@ public class ARCWriter implements ARCConstants {
      */
     private String processContentType(String contentType)
     {
-        if (contentType == null)
+        if (contentType == null || contentType.length() == 0)
         {
             contentType = NO_TYPE_MIMETYPE;
         }
@@ -701,11 +701,11 @@ public class ARCWriter implements ARCConstants {
             throw new IOException("URI is empty: " + uri);
         }
 
-        String metaLineStr = uri + HEADER_FIELD_SEPERATOR + hostIP +
-            HEADER_FIELD_SEPERATOR +
+        String metaLineStr = uri + HEADER_FIELD_SEPARATOR + hostIP +
+            HEADER_FIELD_SEPARATOR +
             ArchiveUtils.get14DigitDate(fetchBeginTimeStamp) +
-            HEADER_FIELD_SEPERATOR + processContentType(contentType) +
-            HEADER_FIELD_SEPERATOR + recordLength + LINE_SEPARATOR;
+            HEADER_FIELD_SEPARATOR + processContentType(contentType) +
+            HEADER_FIELD_SEPARATOR + recordLength + LINE_SEPARATOR;
         this.out.write(metaLineStr.getBytes("UTF-8"));
      }
 
