@@ -134,7 +134,7 @@ public class PreconditionEnforcer extends Processor implements CoreAttributeCons
 			// the choice to not attempt (here).  Eventually these will probably have to be treated seperately
 			// to allow us to treat dns failures and connections failures (downed hosts, route failures, etc) seperately.
 			curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
-			curi.incrementFetchAttempts();
+			//curi.incrementFetchAttempts();
 			curi.skipToProcessor(controller.getPostprocessor());
 			return true;
 		}

@@ -131,7 +131,7 @@ public class FetchDNS extends Processor implements CoreAttributeConstants, Fetch
 //		}
 					
 		// give it a go    
-		curi.incrementFetchAttempts();
+		//curi.incrementFetchAttempts();
 
 		//TODO add support for type and class specifications in query string, for now always use defaults
 		/* if(SimpleDNSFetcher.DO_CLASS_TYPE_CHECKING){
