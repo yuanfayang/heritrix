@@ -13,14 +13,16 @@
                 code layout, core technologies and key technical decisions.</p>
         </section>
         <section name="Obtaining Heritrix">
-            <p>There are three ways to obtain Heritrix: packaged binary or
-            packaged source downloaded from the crawler <a 
+            <p>Heritrix can be obtained as packaged binary or source
+                downloaded from the crawler <a 
             href="http://sourceforge.net/projects/archive-crawler">sourceforge 
-                home page</a> or via CVS checkout. See the crawler <a 
+                home page</a>, or via CVS checkout from cvs.sourceforge.net.
+                See the crawler <a 
                 href="http://sourceforge.net/cvs/?group_id=73833">sourceforge 
                 cvs page</a> for how to fetch from CVS (Note, anonymous access 
                 does not give you the current HEAD but a snapshot that can
-                some times be up to 24 hours behind HEAD). The packaged binary
+                some times be up to 24 hours behind HEAD). 
+                The packaged binary
                 is named <em>heritrix-?.?.?.tar.gz</em> (or 
                 <em>heritrix-?.?.?.zip</em>) and the packaged source is
                 named <em>heritrix-?.?.?-src.tar.gz</em> (or 
@@ -28,33 +30,12 @@
                 heritrix release version. </p>
         </section>
         <section name="Building Heritrix">
-            <p>You can build Heritrix from source using Ant or Maven. The Maven 
-                build is more comprehensive and will generate everything from
-                either 
-                the packaged source or from a CVS checkout. The Ant build is 
-                less so in that it doesn't generate the distribution 
-                documentation but it does produce everything else needed to run 
-                Heritrix.</p>
+            <p>You can build Heritrix from source using Maven.
+            The Heritrix build uses maven 1.0-rc1.  
+            See maven.apache.org for how to obtain the binary and 
+            setup of your maven environment. </p>
 
-                <p>If you are building Heritrix with Ant, you must have Ant 1.5 
-                    installed.  Make sure the Ant optional.jar file 
-                    sits beside the junit.jar. See <a 
-                    href="http://ant.apache.org/manual/OptionalTasks/junit.html">JUnit 
-                    Task</a> for what you must do to set up Ant to run junit 
-                    tests (The build requires junit).</p>
-                    <p>The Heritrix maven build was developed using 
-                    1.0-rc1. See maven.apache.org. </p>
-
-	<subsection name="Building Heritrix with Ant">
-	    <p>If you obtained the packaged source, here is how you build with Ant: 
-<source>% tar xfz heritrix-?.?.?-src.tar.gz 
-% cd heritrix-?.?.? % $ANT_HOME/bin/ant dist </source> </p>
-            <p>In the <em>dist</em> subdir, you have all you need to run the 
-                Heritrix crawler. To learn more about the ant build, type 
-                <em>ant -projecthelp</em>. </p>
-	</subsection>
-            
-            <subsection name="Building Heritrix with Maven">
+        <subsection name="Building Heritrix with Maven">
             <p>To build a CVS source checkout with Maven:
 <source>% cd CVS_CHECKOUT_DIR 
 % $MAVEN_HOME/bin/maven dist</source> </p>
@@ -235,8 +216,8 @@ ${package_declaration}</source></p>
                 committed.  Download the src and binary latest builds from 
                 under the cruisecontrol 'build artifacts' link.</li>
 
-                <li>Build the cruisecontrol produced src distribution version
-                    using both maven and ant to ensure both builds work.</li>
+                <li>Build the cruisecontrol produced src distribution version.
+                </li>
 
                 <li>Run both the binary and src-built product through the
                     integration self test
