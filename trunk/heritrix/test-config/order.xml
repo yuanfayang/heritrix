@@ -90,6 +90,12 @@
 
 </crawler-behavior>
 
+<loggers>
+  <crawl-statistics>
+    <interval>30</interval>
+  </crawl-statistics>
+</loggers>
+
  <disk path="arcs/" />
  <arc-file prefix="archive-" />
 </crawl-order>
