@@ -26,6 +26,7 @@ package org.archive.crawler.frontier;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.util.DevUtils;
 
@@ -56,8 +57,10 @@ public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
                     // the DNS lookup goes atop the host:port
                     // queue that triggered it, rather than 
                     // some other host queue
-                    candidate = UURIFactory.getInstance(curi.flattenVia()).
-                        getAuthorityMinusUserinfo();
+                	UURI viaUuri = UURIFactory.getInstance(curi.flattenVia());
+                    candidate = viaUuri.getAuthorityMinusUserinfo();
+                    // adopt scheme of triggering URI
+                    scheme = viaUuri.getScheme();
                 } else {
                     candidate= curi.getUURI().getReferencedHost();
                 }
@@ -72,6 +75,13 @@ public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
             DevUtils.warnHandle(e, "Failed to get class key: " +
                 e.getMessage() + " " + this);
             candidate = DEFAULT_CLASS_KEY;
+        }
+        if (scheme != null && scheme.equals(UURIFactory.HTTPS)) {
+            // If https and no port specified, add default https port to
+            // distinguish https from http server without a port.
+            if (!candidate.matches(".+:[0-9]+")) {
+                candidate += UURIFactory.HTTPS_PORT;
+            }
         }
         // Ensure classKeys are safe as filenames on NTFS
         return candidate.replace(':','#');
