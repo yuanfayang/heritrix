@@ -25,6 +25,28 @@ Mercator, the frequency with which the background thread performs a checkpoint
 is user-configurable; we typically checkpoint anywhere from 1 to 4 times per
 day.</source></p>
     </subsection>
+
+
+
+    <subsection name="Transclusion">
+    <p>Heritrix has a transclusion filter.  A 
+        <b>transclusion</i> is the reuse in whole or in part of another node in
+        one node's rendering. That is, one node including another node when it
+        is being displayed. A transclusion is different from pure copying,
+        however, in that only a reference to the foreign material is stored.
+        The reader's client software is expected to fetch the foreign material
+        and place it inline with the main material.  For instance, if I wrote
+        a report on wheat farming and I was talking
+        about the relative price of wheat around the world, I'd want to place a
+        chart of those prices on my site. Instead of creating the chart myself,
+        I could just transclude the chart from the World Trade Organization
+        directly in my report.  Definition from <a 
+       href="http://www.usemod.com/cgi-bin/mb.pl?TransClusion">TransClusion</a>.
+        </p>
+        <p>In the heritrix context, the transclusion filter makes 
+        judgements based on dynamic counters keeping account of
+        embeded/included links.</p>
+    </subsection>
     </section>
   </body>
 </document>
