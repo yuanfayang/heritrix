@@ -191,6 +191,15 @@
         <email>me at jamesc dot net</email>
         <url>http://www.jamesc.net</url>
     </contributor>
+    <contributor>
+        <name>Parker Thompson</name>
+        <email>parkert at archive dot org</email>
+    </contributor>
+    <contributor>
+        <name>Judy Ma</name>
+        <email>jma at archive dot org</email>
+    </contributor>
+
   </contributors>
 
     <licenses>
@@ -445,7 +454,7 @@
         <include>**/*Test.java</include>
       </includes>
       <excludes>
-        <exclude>**/NaughtyTest.java</exclude>
+        <exclude>**/SelfTest.java</exclude>
       </excludes>
     </unitTest>
 
