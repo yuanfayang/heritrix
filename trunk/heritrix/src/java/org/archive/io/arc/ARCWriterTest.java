@@ -152,9 +152,33 @@ public class ARCWriterTest
     public void testCheckARCFileSizeCompressed()
         throws IOException
     {
-        runCheckARCFileSizeTest("checkARCFileSize", false);
+        runCheckARCFileSizeTest("checkARCFileSize", true);
     }
 
+
+    public void testWriteRecord() throws IOException {
+        final int recordCount = 2;
+        File arcFile = writeRecords("writeRecord", false,
+                DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
+        validate(arcFile, recordCount  + 1); // Header record.
+    }
+    
+
+    public void testGetOutputDir() throws IOException {
+        ARCWriter arcWriter = new ARCWriter(getTmpDir(),
+            "getOutputDir-" + PREFIX, null, false, DEFAULT_MAX_ARC_FILE_SIZE,
+            null);
+        assertEquals(getTmpDir(), arcWriter.getArcsDir());
+        arcWriter.close();
+    }
+
+    public void testWriteRecordCompressed() throws IOException {
+        final int recordCount = 2;
+        File arcFile = writeRecords("writeRecordCompressed", true,
+                DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
+        validate(arcFile, recordCount + 1 /*Header record*/);
+    }
+    
     private void runCheckARCFileSizeTest(String baseName, boolean compress)
         throws FileNotFoundException, IOException
     {
@@ -164,27 +188,5 @@ public class ARCWriterTest
         for (int i = 0; i < files.length; i++) {
             validate(files[i], -1);
         }
-    }
-
-    public void testWriteRecord() throws IOException {
-        final int recordCount = 2;
-        File arcFile = writeRecords("writeRecord", false,
-                DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
-        validate(arcFile, recordCount  + 1 /*Header record*/);
-    }
-
-    public void testWriteRecordCompressed() throws IOException {
-        final int recordCount = 2;
-        File arcFile = writeRecords("writeRecordCompressed", true,
-                DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
-        validate(arcFile, recordCount + 1 /*Header record*/);
-    }
-
-    public void testGetOutputDir() throws IOException {
-        ARCWriter arcWriter = new ARCWriter(getTmpDir(),
-            "getOutputDir-" + PREFIX, null, false, DEFAULT_MAX_ARC_FILE_SIZE,
-            null);
-        assertEquals(getTmpDir(), arcWriter.getArcsDir());
-        arcWriter.close();
     }
 }

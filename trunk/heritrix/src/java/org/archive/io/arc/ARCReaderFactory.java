@@ -30,11 +30,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.NoSuchElementException;
-import java.util.zip.GZIPInputStream;
 
-import org.archive.io.GZIPMemberInputStream;
-import org.archive.io.MappedByteBufferInputStream;
-import org.archive.io.PositionableStream;
+import org.archive.io.GzipHeader;
+import org.archive.io.GzippedInputStream;
+
 
 /**
  * Return an ARCReader.
@@ -95,25 +94,24 @@ public class ARCReaderFactory implements ARCConstants {
             .endsWith(COMPRESSED_ARC_FILE_EXTENSION)) {
         	
             FileInputStream fis = new FileInputStream(arcFile);
-            int readLength = DEFAULT_GZIP_HEADER_LENGTH +
-                ARC_GZIP_EXTRA_FIELD.length;
-            byte [] b = new byte[readLength];
-            int read = fis.read(b, 0, readLength);
-            fis.close();
-            if (read == readLength) {
-                if (b[0] == GZIP_HEADER_BEGIN[0]
-                     && b[1] == GZIP_HEADER_BEGIN[1]
-                     && b[2] == GZIP_HEADER_BEGIN[2]) {
-                    // Now make sure following bytes are IA GZIP comment.
+            try {
+                GzipHeader gh = new GzipHeader(new FileInputStream(arcFile));
+                byte [] fextra = gh.getFextra();
+                // Now make sure following bytes are IA GZIP comment.
+                // First check length.  ARC_GZIP_EXTRA_FIELD includes length
+                // so subtract two and start compare to ARC_GZIP_EXTRA_FIELD
+                // at +2.
+                if (ARC_GZIP_EXTRA_FIELD.length - 2 == fextra.length) {
                     compressedARCFile = true;
-                    for (int i = 0; i < ARC_GZIP_EXTRA_FIELD.length; i++) {
-                        if (b[DEFAULT_GZIP_HEADER_LENGTH + i] !=
-                            		ARC_GZIP_EXTRA_FIELD[i]) {
+                    for (int i = 0; i < fextra.length; i++) {
+                        if (fextra[i] != ARC_GZIP_EXTRA_FIELD[i + 2]) {
                             compressedARCFile = false;
                             break;
                         }
                     }
                 }
+            } finally {
+                fis.close();
             }
         }
 
@@ -137,19 +135,24 @@ public class ARCReaderFactory implements ARCConstants {
         isReadable(arcFile);
         if(arcFile.getName().toLowerCase().endsWith(ARC_FILE_EXTENSION)) {
             FileInputStream fis = new FileInputStream(arcFile);
-            byte [] b = new byte[ARC_MAGIC_NUMBER.length()];
-            int read = fis.read(b, 0, ARC_MAGIC_NUMBER.length());
-            fis.close();
-            if (read == ARC_MAGIC_NUMBER.length()) {
-                StringBuffer beginStr
+            try {
+                byte [] b = new byte[ARC_MAGIC_NUMBER.length()];
+                int read = fis.read(b, 0, ARC_MAGIC_NUMBER.length());
+                fis.close();
+                if (read == ARC_MAGIC_NUMBER.length()) {
+                    StringBuffer beginStr
                     = new StringBuffer(ARC_MAGIC_NUMBER.length());
-                for (int i = 0; i < ARC_MAGIC_NUMBER.length(); i++) {
-                    beginStr.append((char)b[i]);
+                    for (int i = 0; i < ARC_MAGIC_NUMBER.length(); i++) {
+                        beginStr.append((char)b[i]);
+                    }
+                    
+                    if (beginStr.toString().
+                            equalsIgnoreCase(ARC_MAGIC_NUMBER)) {
+                        uncompressedARCFile = true;
+                    }
                 }
-
-                if (beginStr.toString().equalsIgnoreCase(ARC_MAGIC_NUMBER)) {
-                    uncompressedARCFile = true;
-                }
+            } finally {
+                fis.close();
             }
         }
 
@@ -186,9 +189,7 @@ public class ARCReaderFactory implements ARCConstants {
 		public UncompressedARCReader(File arcfile) throws IOException {
 			// Arc file has been tested for existence by time it has come
 			// to here.
-            this.in = new MappedByteBufferInputStream(initialize(arcfile));
-			// Read in the arcfile header.
-            createARCRecord(this.in, ((PositionableStream)this.in).getFilePointer());
+            this.in = getInputStream(arcfile);
 		}
 	}
 	
@@ -200,31 +201,16 @@ public class ARCReaderFactory implements ARCConstants {
 
 		/**
 		 * Constructor.
-		 * @param arcfile Uncompressed arcfile to read.
+		 * @param arcfile Compressed arcfile to read.
          * @throws IOException
 		 */
 		public CompressedARCReader(File arcfile) throws IOException {
 			// Arc file has been tested for existence by time it has come
 			// to here.
-			this.in = new GZIPMemberInputStream(initialize(arcfile));
-            // Read in arcfile header record.
-            createARCRecord(this.in, ((PositionableStream)this.in).getFilePointer());
+			this.in = new GzippedInputStream(getInputStream(arcfile));
 		}
-
-        /**
-         * Return the next record.
-         *
-         * Override so can move the underlying stream on to the next gzip
-         * member.
-         *
-         * <p>Its unpredictable what will happen if you do not call hasNext
-         * before you come in here for another record (This method does not
-         * call hasNext for you).
-         *
-         * @return Next ARCRecord else null if no more records left.  You need to
-         * cast result to ARCRecord.
-         */
-        public Object next() {
+		
+        public boolean hasNext() {
             if (this.currentRecord != null) {
                 // Call close on any extant record.  This will scoot us past
                 // any content not yet read.
@@ -234,14 +220,21 @@ public class ARCReaderFactory implements ARCConstants {
                     throw new NoSuchElementException(e.getMessage());
                 }
             }
-
-            // Here, move the underlying gzip member input stream on to
-            // the next record.
-            ((GZIPMemberInputStream)this.in).next();
+            return ((GzippedInputStream)this.in).hasNext();
+        }
+        
+        /**
+         * Return the next record.
+         *
+         * @return Next ARCRecord else null if no more records left.  You need to
+         * cast result to ARCRecord.
+         */
+        public Object next() {
+            this.in = (InputStream)((GzippedInputStream)this.in).next();
 
             try {
                 return createARCRecord(this.in,
-                    ((PositionableStream)this.in).getFilePointer());
+                    ((GzippedInputStream)this.in).getMemberOffset());
             } catch (IOException e) {
                 throw new NoSuchElementException(e.getClass() + ": " +
                     e.getMessage());
@@ -267,7 +260,7 @@ public class ARCReaderFactory implements ARCConstants {
          */
 		protected ARCRecord createARCRecord(InputStream is, long offset)
 				throws IOException {
-			return super.createARCRecord(new GZIPInputStream(is), offset);
+			return super.createARCRecord(is, offset);
 		}
 	}
 }

@@ -195,7 +195,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     private void skip() throws IOException {
         if (!this.eor) {
-            // Read to the end of the body of the record.  Exhauste the stream.
+            // Read to the end of the body of the record.  Exhaust the stream.
             // Can't skip to end because underlying stream may be compressed.
             if (available() > 0) {
                 skip(available());

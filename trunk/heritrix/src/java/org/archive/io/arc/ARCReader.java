@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,6 +41,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.archive.io.MappedByteBufferInputStream;
 import org.archive.io.PositionableStream;
 
 /**
@@ -61,72 +61,12 @@ import org.archive.io.PositionableStream;
  * 1 0 InternetArchive
  * URL IP-address Archive-date Content-type Archive-length</pre>
  *
- * <p>Assumptions is that the one arcfile reference supports iterator and
- * random access.  Also, underlying our access is a memory mapped byte
- * buffer both for compressed and for uncompressed arcfile.
- *
  * <p>Iterator returns ARCRecords (though {@link #next()} returns
  * java.lang.Object).  Cast the return.
  *
- * <p>{@link java.util.zip.GZIPInputStream} can't deal w/ a GZIP file made of
- * multiple GZIP members.   An instance finds the first GZIP member only.
- * Worse, when its done, its taken the underlying input stream to EOF.  So, it
- * needs to be spoon fed GZIP members by the underlying stream.
- * This is what {@link org.archive.io.GZIPMemberInputStream} does.  It knows if
- * any more GZIP members left in the file.  If there are, we make a new
- * instance of GZIPInputStream to consume (I had trouble developing a reliable
- * reset of an extant instance -- it reads the header in the constructor only
- * -- so we make an instance per new GZIP member).
- *
-  * <p>I wanted to use java.nio memory-mapped files rather than old-school
- * java.io because:
- *
- * "Accessing a file through the memory-mapping mechanism can be far more
- * efficient than reading or writing data by conventional means, even when
- * using channels. No explicit system calls need to be made, which can be
- * time-consuming. More importantly, the virtual memory system of the operating
- * system automatically caches memory pages. These pages will be cached using
- * system memory and will not consume space from the JVM's memory heap.
- * Once a memory page has been made valid (brought in from disk), it can be
- * accessed again at full hardware speed without the need to make another
- * system call to get the data. Large, structured files that contain indexes or
- * other sections that are referenced or updated frequently can benefit
- * tremendously from memory mapping....", from the OReilly Java NIO By Ron
- * Hitchens.
- *
- * <p>Needing to manage buffers for the spoon feeding of GZIP members to
- * GZIPInputStream made me look at java.nio.  Using a ByteBuffer that
- * holds the whole ARC file for sure makes the code simpler and the nice thing
- * about using memory-mapped buffers for reading is that the memory used is
- * allocated in the OS, not in the JVM.  I played around w/ this on a machine
- * w/ 512M of physical memory and a swap of 1G (/sbin/swapon -s).  I made a
- * dumb program to use file channel memory-mapped buffers to read a file.  I
- * was able to read a file of 1.5G using default JVM heap (64M on linux IIRC):
- * i.e. I was able to allocate a buffer of 1.5G inside inside in my
- * small-heap program.  Anything bigger and I got complaints back
- * about  unable to allocate the memory.  So, a channel based reader would be
- * limited only by memory characteristics of the machine its running on (swap
- * and physical memory -- not JVM heap size) ONLY, I discovered the following.
- *
- * <p>Really big files generated complaint out of FileChannel.map saying the
- * size parameter was > Integer.MAX_VALUE which is also odd considering the
- * type is long.  This must be an nio bug.  Means there is an upperbound of
- * Integer.MAX_VALUE (about 2.1G or so).  This is unfortunate -- particularly
- * as the c-code tools for ARC manipulations, see alexa/common/a_arcio.c,
- * support > 2.1G -- but its good enough for now (ARC files are usually
- * 100M).
- *
- * <p>The committee seems to still be out regards general nio
- * performance.  See <a
- * href="http://forum.java.sun.com/thread.jsp?forum=4&thread=227539&message=806443">NIO
- * ByteBuffer slower than BufferedInputStream</a>.  It can be 4 times slower
- * than java.io or 40% faster.  For sure its 3x to 4x slower than reading from
- * a buffer: http://jroller.com/page/cpurdy/20040405#raw_nio_performance.
- *
- * <p>TODO: Profiling java.io vs. memory-mapped ByteBufferInputStream.  As is,
- * ARCReader is SLOW.  Should be able to just swap out the underlying input
- * stream putting in place a java.io version that supports position rollback
- * and marking.
+ * <p>Profiling java.io vs. memory-mapped ByteBufferInputStream shows the
+ * latter slightly slower -- but not by much.  TODO: Test more.  Just
+ * change {@link getInputStream()}.
  *
  * <p>TODO: Testing of this reader class against ARC files harvested out in
  * the wilds.  This class has only been tested to date going against small
@@ -158,11 +98,12 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 	protected ARCRecord currentRecord = null;
 	
     /**
-     * ARC file memory mapped byte buffer input stream.
+     * ARC file input stream.
      *
      * Keep it around so we can close it when done.
      *
-     * <p>Set in constructor.
+     * <p>Set in constructor.  Must support the 
+     * PositionableStream interface.  Constructor should check.
      */
     protected InputStream in = null;
 	
@@ -170,8 +111,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 	 * Channel we got the memory mapped byte buffer from.
 	 *
 	 * Keep around so can close when done.
-	 *
-     * <p>Set in constructor.
 	 */
 	protected FileChannel channel = null;
 	
@@ -188,31 +127,19 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
 
 	/**
+	 * Iterator can be used once only.
+	 * 
+	 * Get new instance of class if want to do a new iteration.
+	 * 
 	 * @return An iterator over the total arcfile.
 	 */
 	public Iterator iterator() {
-		if (this.currentRecord != null) {
-			try {
-                cleanupCurrentRecord();
-			} catch (IOException e) {
-				throw new RuntimeException(e.getClass().getName() + ": " +
-                    e.getMessage());
-			}
-		}
-        if (this.in.markSupported()) {
-            try {
-                ((PositionableStream)this.in).seek(0);
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e.getClass().getName() + ": " +
-                    e.getMessage());
-            }
-        }
-		return (Iterator)this;
+	    return (Iterator)this;
 	}
 	
 	/**
 	 * Get record at passed <code>offset</code>.
+	 * 
 	 * @param offset Byte index into arcfile at which a record starts.
 	 * @return An ARCRecord reference.
      * @throws IOException
@@ -226,16 +153,19 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 	
 	/**
 	 * Convenience method for constructors.
+	 * 
 	 * @param arcfile File to read.
-     * @return Memory mapped buffer onto the arcfile.
+     * @return InputStream to read from.
 	 * @throws IOException If failed open or fail to get a memory
 	 * mapped byte buffer on file.
 	 */
-	protected MappedByteBuffer initialize(File arcfile) throws IOException {
+	protected InputStream getInputStream(File arcfile) throws IOException {
 		FileInputStream fis = new FileInputStream(arcfile);
 		this.channel = fis.getChannel();
-        return this.channel.map(FileChannel.MapMode.READ_ONLY, 0,
-                this.channel.size());
+        return new MappedByteBufferInputStream(
+                this.channel.map(FileChannel.MapMode.READ_ONLY, 0,
+                        this.channel.size()));
+                       
 	}
 
     /**
@@ -283,10 +213,6 @@ public abstract class ARCReader implements ARCConstants, Iterator {
 
     /**
      * Return the next record.
-     *
-     * Its unpredictable what will happen if you do not call hasNext before
-     * you come in here for another record (This method does not call
-     * hasNext for you).
      *
      * @return Next ARCRecord else null if no more records left.  You need to
      * cast result to ARCRecord.
@@ -668,6 +594,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             usage(formatter, options, 1);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
+                long start = System.currentTimeMillis();
                 ARCReader arc =
                     ARCReaderFactory.get(new File((String)i.next()));
                 for (Iterator ii = arc.iterator(); ii.hasNext();) {
@@ -682,6 +609,8 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                     r.close();
                     System.out.flush();
                 }
+
+                // System.out.println(System.currentTimeMillis() - start);
             }
         }
     }
