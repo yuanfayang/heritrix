@@ -196,6 +196,11 @@
         </fileset>
         <pathelement location="target/${final.name}.jar">
         </pathelement>
+        <!--Our reference to our external libs.-->
+        <fileset dir="${srclibdir}">
+          <include name="*.jar">
+          </include>
+        </fileset>
       </classpath>
     </javadoc>
   </target>
