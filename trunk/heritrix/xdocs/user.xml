@@ -25,7 +25,7 @@
 
     <section name="For those who have little patience...">
         <p>To run Heritrix, first do the following:
-        <source>% export $HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</source></p>
+        <source>% export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</source></p>
 <p>...where <em>$HERITRIX_HOME</em> is the location of your built Heritrix
 (i.e.  under the <em>dist</em> dir if you built w/ Ant, or under the untarred
 <em>target/distribution/heritrix.?.?.?.tar.gz</em> dir if you built w/ Maven,

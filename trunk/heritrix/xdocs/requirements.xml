@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <document>
   <properties>
-    <title>System Requirements</title>
+    <title>System Runtime Requirements</title>
     <author email="stack at archive dot org">St.Ack</author>
     <revision>$Id$</revision>
   </properties>
 
   <body>
-  <section name="System Requirements">
+  <section name="System Runtime Requirements">
 
     <subsection name="Java Runtime Environment">
 <p>The Heritrix crawler is implemented purely in java.  This means that the
@@ -15,26 +15,10 @@ only true requirement for running it is that you have a JRE installed.  The
 Heritrix crawler makes use of 1.4 features so your JRE must be at least
 of a 1.4.0 pedigree.</p>
     </subsection>
-    <subsection name="Ant and Maven">
-<p>You can build Heritrix from source using Ant or Maven.  The Maven build is
-more comprehensive and will generate all from either the packaged source or
-from a CVS checkout.  The Ant build is less so in that they doesn't generate
-the distribution documentation but it does produce all else needed to run
-Heritrix.</p>
-<p>
-If you are building Heritrix w/ Ant, you must have Ant 1.5 installed.  If you
-want to run the Heritrix unit tests from Ant, you will have to make sure the
-Ant optional.jar file sits beside the junit.jar.  See
-http://ant.apache.org/manual/OptionalTasks/junit.html for what you must do
-setting up Ant to run junit tests.
-</p>
-<p>The Heritrix maven build was developed using 1.0-rc1.  See maven.apache.org.
-</p>
-    </subsection>
-
+   
     <subsection name="Linux">
         <p>The Heritrix crawler has been built and tested on Linux only. 
-        We'll eventually get to other platforms but thats all that we're run
+        We'll eventually get to other platforms but thats all that we've run
         on to date.</p>
     </subsection>
     </section>

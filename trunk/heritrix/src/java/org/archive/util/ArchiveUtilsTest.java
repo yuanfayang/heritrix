@@ -108,7 +108,9 @@ public class ArchiveUtilsTest extends TestCase {
         assertEquals("first fourteen digits same as date14", date14, date17.substring(0, 14));
     }
 
-    /** check that parseXXDigitDate() works
+    /** 
+     * Check that parseXXDigitDate() works
+     * 
      * @throws ParseException
      */
     public void testParseXXDigitDate() throws ParseException {
