@@ -180,7 +180,7 @@ public class ARCWriterProcessor
         {
             // Set up the pool of ARCWriters.
             this.pool = new ARCWriterPool(new File(outputDir), this.arcPrefix,
-                this.useCompression);
+                this.useCompression, poolMaximumActive, poolMaximumWait);
         }
         
         catch (IOException e) 
