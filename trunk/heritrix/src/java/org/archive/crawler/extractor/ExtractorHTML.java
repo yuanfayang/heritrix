@@ -341,10 +341,29 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
             return;
         }
 
+        // extract all links from the charsequence
+        extract(curi, cs);
+
+        // Set flag to indicate that link extraction is completed.
+        curi.linkExtractorFinished();
+        
+        // Done w/ the ReplayCharSequence.  Close it.
+        if (cs != null) {
+            try {
+                cs.close();
+            } catch (IOException ioe) {
+                logger.warning(DevUtils.format(
+                    "Failed close of ReplayCharSequence.", ioe));
+            }
+        }
+    }
+
+    // this method extracted, pacakage visible to ease testing
+    void extract(CrawlURI curi, CharSequence cs) {
         Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
         while(tags.find()) {
             if(Thread.interrupted()){
-                return;
+                break;
             }
             if (tags.start(8) > 0) {
                 // comment match
@@ -360,7 +379,7 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
                           
                     // meta tag included NOFOLLOW; abort processing
                     TextUtils.freeMatcher(tags);
-                    return;
+                    break;
                 }
             } else if (tags.start(5) > 0) {
                 // generic <whatever> match
@@ -401,20 +420,8 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
         }
 
         TextUtils.freeMatcher(tags);
-
-        // Set flag to indicate that link extraction is completed.
-        curi.linkExtractorFinished();
-        
-        // Done w/ the ReplayCharSequence.  Close it.
-        if (cs != null) {
-            try {
-                cs.close();
-            } catch (IOException ioe) {
-                logger.warning(DevUtils.format(
-                    "Failed close of ReplayCharSequence.", ioe));
-            }
-        }
     }
+
 
     static final String NON_HTML_PATH_EXTENSION =
         "(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
