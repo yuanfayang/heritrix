@@ -8,11 +8,11 @@
 
 
 ## path to java home (not java executible)
-export JAVA_HOME=<PUT_JAVA_HOME_HERE>
+JAVA_HOME=<PUT_JAVA_HOME_HERE>
 
 
 ## path to ant (for builds)
-export ANT_HOME=<PUT ANT HOME HERE>
+ANT_HOME=<PUT ANT HOME HERE>
 
 ## do you want to use authenticated CVS?  If so uncomment
 #CVS_RSH=ssh
