@@ -35,8 +35,8 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.basic.Preselector;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.prefetch.Preselector;
 
 /** JUnit tests for MapType
  *

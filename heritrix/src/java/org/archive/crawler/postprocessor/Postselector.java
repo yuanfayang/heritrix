@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.basic;
+package org.archive.crawler.postprocessor;
 
 import java.net.URI;
 import java.net.URISyntaxException;

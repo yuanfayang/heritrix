@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.basic;
+package org.archive.crawler.prefetch;
 
 import javax.management.AttributeNotFoundException;
 

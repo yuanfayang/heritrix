@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.basic;
+package org.archive.crawler.prefetch;
 
 import java.util.Iterator;
 import java.util.Set;

@@ -59,7 +59,7 @@
       <integer name="max-per-host-bandwidth-usage-KB-sec">0</integer>
     </newObject>
     <map name="pre-fetch-processors">
-      <newObject name="Preselector" class="org.archive.crawler.basic.Preselector">
+      <newObject name="Preselector" class="org.archive.crawler.prefetch.Preselector">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
@@ -67,7 +67,7 @@
         <boolean name="block-all">false</boolean>
         <string name="block-by-regexp"/>
       </newObject>
-      <newObject name="Preprocessor" class="org.archive.crawler.basic.PreconditionEnforcer">
+      <newObject name="Preprocessor" class="org.archive.crawler.prefetch.PreconditionEnforcer">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
@@ -126,12 +126,12 @@
       </newObject>
     </map>
     <map name="post-processors">
-      <newObject name="Updater" class="org.archive.crawler.basic.CrawlStateUpdater">
+      <newObject name="Updater" class="org.archive.crawler.postprocessor.CrawlStateUpdater">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
       </newObject>
-      <newObject name="Postselector" class="org.archive.crawler.basic.Postselector">
+      <newObject name="Postselector" class="org.archive.crawler.postprocessor.Postselector">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
