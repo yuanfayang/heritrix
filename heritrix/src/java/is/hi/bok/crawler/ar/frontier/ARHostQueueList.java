@@ -192,9 +192,19 @@ public class ARHostQueueList {
             (ARHostQueueWrapper)sortedHostQueues.first(); 
         return wrapper.hq;
     }
-    
+
+    /**
+     * Returns the number of URIs in all the HQs in this list
+     * @return the number of URIs in all the HQs in this list
+     */
     public int getSize(){
-        return hostQueues.size(); 
+        int size = 0;
+        Iterator it = sortedHostQueues.iterator();
+        while(it.hasNext()){
+            ARHostQueue hq = ((ARHostQueueWrapper)it.next()).hq;
+            size += hq.getSize();
+        }
+        return size;
     }
     
     /**
@@ -310,6 +320,34 @@ public class ARHostQueueList {
                 // Equal time. Use hostnames
                 return hq.getHostName().compareTo(comp.hq.getHostName());
             }
+        }
+    }
+    
+    /**
+     * Closes all HQs and the Environment. 
+     */
+    public void close(){
+        Iterator it = sortedHostQueues.iterator();
+        while(it.hasNext()){
+            ARHostQueue hq = ((ARHostQueueWrapper)it.next()).hq;
+            try {
+                hq.close();
+            } catch (IOException e) {
+                logger.severe("IOException while closing " + hq.getHostName() +
+                        "\n" + e.getMessage());
+            }
+        }
+        try {
+            hostNamesDB.close();
+        } catch (DatabaseException e) {
+            logger.severe("IOException while closing hostNamesDB" +
+                    "\n" + e.getMessage());
+        }
+        try {
+            env.close();
+        } catch (DatabaseException e) {
+            logger.severe("IOException while closing Environment" +
+                    "\n" + e.getMessage());
         }
     }
 }
