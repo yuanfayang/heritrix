@@ -66,7 +66,7 @@ extends AbstractList implements Serializable {
      * Regexp for identifying URIs in seed input data
      */
     static final Pattern DEFAULT_SEED_EXTRACTOR =
-        Pattern.compile("(?i:((([a-z]+)://[a-zA-Z0-9-@]+)|" +
+        Pattern.compile("(?i:((([a-z]+)://[a-zA-Z0-9-@:]+)|" +
             "(([a-z]+):[a-zA-Z0-9-@]+)|" +
             "([a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+))" +
             "(\\.[a-zA-Z0-9-]+)*(:\\d+)?(/\\S*)?)");
@@ -193,7 +193,7 @@ extends AbstractList implements Serializable {
             if (i != null) {
                 synchronized (this.cache) {
                     this.cache.clear();
-                    while(i. hasNext()) {
+                    while(i.hasNext()) {
                         this.cache.add(i.next());
                     }
                 }
