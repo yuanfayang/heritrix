@@ -42,8 +42,8 @@
 	<body>
 		<table border="0" cellspacing="0" cellpadding="0" width="100%" height="100%">
 			<tr>
-				<td width="155" height="60" valign="top" nowrap>
-					<table border="0" cellspacing="0" cellpadding="0" height="60">
+				<td height="60" width="155" valign="top" nowrap>
+					<table border="0" width="155" cellspacing="0" cellpadding="0" height="60">
 						<tr>
 							<td align="center" height="40" valign="bottom">
 								<a border="0" href="/admin/main.jsp"><img border="0" src="/admin/images/logo.gif" height="37" width="145"></a>
@@ -56,13 +56,13 @@
 						</tr>
 					</table>
 				</td>
-				<td width="5">
+				<td width="5" nowrap>
 					&nbsp;&nbsp;
 				</td>
-				<td align="left">
+				<td width="460" align="left" nowrap>
 					<table border="0" cellspacing="0" cellpadding="0" height="60">
 						<tr>
-							<td colspan="2">
+							<td colspan="2" nowrap>
 								<%
 									java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM. d, yyyy HH:mm:ss");
 									sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
@@ -74,7 +74,7 @@
 							<td nowrap>
 								<%=handler.isRunning()?"Crawler is running":"Crawler is not running"%>
 							</td>
-							<td>
+							<td nowrap>
 								<%
 									if(handler.isRunning() || handler.isCrawling())
 									{
@@ -91,7 +91,7 @@
 							</td>
 						</tr>
 						<tr>
-							<td>
+							<td nowrap>
 								<%=handler.getPendingJobs().size()%>
 								jobs
 								<a style="color: #000000" href="/admin/jobs/pending.jsp">pending</a>,
@@ -99,7 +99,7 @@
 								<a style="color: #000000" href="/admin/jobs/completed.jsp">completed</a>
 								&nbsp;
 							</td>
-							<td>
+							<td nowrap>
 								<% if(handler.isCrawling()){ %>
 										Downloaded <%=head_stats.successfulFetchAttempts()%> documents in 
 								<%
@@ -125,13 +125,16 @@
 						</tr>
 					</table>
 				</td>
-			</tr>
-			<tr>
-				<td bgcolor="#0000FF" height="1" colspan="3">
+				<td width="100%">
+					&nbsp;
 				</td>
 			</tr>
 			<tr>
-				<td colspan="3" height="20">
+				<td bgcolor="#0000FF" height="1" colspan="4">
+				</td>
+			</tr>
+			<tr>
+				<td colspan="4" height="20">
 					<table border="0" cellspacing="0" cellpadding="0" width="100%" height="20">
 						<tr>
 							<td class="tab_seperator">&nbsp;</td>
@@ -165,9 +168,9 @@
 				</td>
 			</tr>
 			<tr>
-				<td bgcolor="#0000FF" height="1" colspan="3">
+				<td bgcolor="#0000FF" height="1" colspan="4">
 				</td>
 			</tr>
 			<tr>
-				<td colspan="3" height="100%" valign="top" class="main">
+				<td colspan="4" height="100%" valign="top" class="main">
 					<!-- MAIN BODY -->

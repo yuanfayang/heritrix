@@ -148,7 +148,7 @@
 	</script>
 
 	<form method="get" action="logs.jsp" name="frmLogs">
-		<input type="hidden" name="job" value="<%=theJob.getUID()%>"
+		<input type="hidden" name="job" value="<%=theJob.getUID()%>">
 		<table border="0" cellspacing="0" cellpadding="0">
 			<tr>
 				<td height="3"></td>
@@ -262,7 +262,7 @@
 			</tr>
 		</table>
 	</form>
-	<p>	
+	<p>
 	<table border="0" cellspacing="0" cellpadding="0">
 		<tr>
 			<td colspan="2"></td>
