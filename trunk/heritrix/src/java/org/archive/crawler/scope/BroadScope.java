@@ -23,9 +23,6 @@
  */
 package org.archive.crawler.scope;
 
-import java.io.File;
-
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 
 /**
@@ -64,19 +61,6 @@ public class BroadScope extends CrawlScope {
         " with this scope will not be limited to the hosts or domains of" +
         " its seeds. NOTE: BroadScoped crawls will eventually run out of" +
         " memory (See Release Notes).");
-    }
-
-    /**
-     * Override so can intercept creation of seed list making it be a
-     * non-caching seed list.
-     *
-     * @param seedfile Seedfile to use as seed source.
-     * @param c CrawlController.
-     * @param caching True if seed list created is to cache seeds.
-     */
-    protected synchronized void createSeedlist(File seedfile,
-            CrawlController c, boolean caching) {
-        super.createSeedlist(seedfile, c, false);
     }
 
     /**

@@ -24,7 +24,6 @@
 package org.archive.crawler.scope;
 
 import java.util.Iterator;
-import java.util.List;
 
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
@@ -109,16 +108,11 @@ public class HostScope extends CrawlScope {
         if (u == null) {
             return false;
         }
-        // Get the seeds to refresh and then get an iterator inside a
-        // synchronization block.  The seeds list may get updated during our
-        // iteration. This will throw a concurrentmodificationexception unless
-        // we synchronize.
-        List seeds = getSeedlist();
-        synchronized(seeds) {
-            for (Iterator i = seeds.iterator(); i.hasNext();) {
-                if (isSameHost((UURI)i.next(), u)) {
-                    return true;
-                }
+        // Get the seeds to refresh 
+        Iterator iter = seedsIterator();
+        while(iter.hasNext()) {
+            if (isSameHost((UURI)iter.next(), u)) {
+                return true;
             }
         }
         // if none found, fail
