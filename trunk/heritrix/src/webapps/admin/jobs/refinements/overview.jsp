@@ -150,6 +150,7 @@
         <% if (global) { %>
             <%@include file="/include/jobnav.jsp"%>
         <% } else { %>
+            <b>Override for the <%=theJob.isProfile()?"profile":"job"%> <%=theJob.getJobName()%> on domain '<%=currDomain%>'</b>
             <%@include file="/include/jobpernav.jsp"%>
         <% } %>
     <p>
@@ -168,7 +169,7 @@
             <%
 				ListIterator refinements = localSettings.refinementsIterator();
 				boolean alt = true;
-				while(refinements != null && refinements.hasNext()){
+				while(refinements.hasNext()){
 				    Refinement ref = (Refinement)refinements.next();
             %>
                     <tr <%=alt?"bgcolor='#EEEEFF'":""%>>
