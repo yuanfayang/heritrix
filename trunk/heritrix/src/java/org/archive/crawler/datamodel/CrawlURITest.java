@@ -50,7 +50,8 @@ public class CrawlURITest extends TmpDirTestCase {
         this.seed.setIsSeed(true);
         // Force caching of string.
         this.seed.toString();
-        this.seed.setVia(url);
+        // TODO: should this via really be itself?
+        this.seed.setVia(UURIFactory.getInstance(url));
     }
 
     /**

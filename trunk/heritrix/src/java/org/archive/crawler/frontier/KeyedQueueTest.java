@@ -45,7 +45,7 @@ public class KeyedQueueTest extends TmpDirTestCase {
         // Let this be the original 'seed' object.
         UURI uuri = UURIFactory.getInstance("http://www.dh.gov.uk/Home/fs/en");
         CrawlURI seed = new CrawlURI(uuri);
-        seed.setVia("");
+        seed.setVia(null);
         seed.setIsSeed(true);
         seed.setSchedulingDirective(CrawlURI.HIGH);
         
@@ -69,7 +69,7 @@ public class KeyedQueueTest extends TmpDirTestCase {
             // marking seed as done and requeueing.
             CrawlURI dns =
                 new CrawlURI(UURIFactory.getInstance("dns:www.dh.gov.uk"));
-            dns.setVia("");
+            dns.setVia(null);
             dns.setPrerequisite(true);
             dns.setSchedulingDirective(CrawlURI.HIGH);
             
@@ -92,7 +92,7 @@ public class KeyedQueueTest extends TmpDirTestCase {
             // And after marking seed as done, requeue.
             CrawlURI robotsCuri = new CrawlURI(UURIFactory.
                     getInstance("http://www.dh.gov.uk/robots.txt"));
-            robotsCuri.setVia("");
+            robotsCuri.setVia(null);
             robotsCuri.setPrerequisite(true);
             robotsCuri.setSchedulingDirective(CrawlURI.HIGH);
             

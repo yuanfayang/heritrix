@@ -24,14 +24,17 @@
 package org.archive.crawler.datamodel;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
+import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
 import org.archive.util.HttpRecorder;
@@ -165,12 +168,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param o
      */
     public CrawlURI(CandidateURI caUri, long o) {
-        super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia());
+        super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(), caUri.getViaContext());
         ordinal = o;
         setIsSeed(caUri.isSeed());
         setSchedulingDirective(caUri.getSchedulingDirective());
         setAList(caUri.getAList());
-        
     }
 
     /**
@@ -393,10 +395,12 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param lastProcessorChain Last processor chain reference.  This chain is
      * where this <code>CrawlURI</code> goes next.
      * @param stringOrUURI Object to set a prerequisite.
+     * @throws URIException
      */
-    public void markPrerequisite(Object stringOrUURI,
-            ProcessorChain lastProcessorChain) {
-        setPrerequisiteUri(stringOrUURI);
+    public void markPrerequisite(String preq,
+            ProcessorChain lastProcessorChain) throws URIException {
+        Link link = createLink(preq,Link.PREREQ_MISC,Link.PREREQ_HOP);
+        setPrerequisiteUri(link);
         incrementDeferrals();
         setFetchStatus(S_DEFERRED);
         skipToProcessorChain(lastProcessorChain);
@@ -410,8 +414,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *
      * @param stringOrUURI Either a string or a URI representation of a URI.
      */
-    protected void setPrerequisiteUri(Object stringOrUURI) {
-        getAList().putObject(A_PREREQUISITE_URI, stringOrUURI);
+    protected void setPrerequisiteUri(Link link) {
+        putObject(A_PREREQUISITE_URI, link);
     }
 
     /**
@@ -422,8 +426,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *
      * @return the prerequisite for this URI or null if no prerequisite.
      */
-    public Object getPrerequisiteUri() {
-        return getAList().getObject(A_PREREQUISITE_URI);
+    public Link getPrerequisiteUri() {
+        return (Link) getObject(A_PREREQUISITE_URI);
     }
 
     /**
@@ -522,18 +526,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
         clearAList();
     }
 
-    private void addToNamedSet(String key, Object o) {
-        Set s;
-        if(!getAList().containsKey(key)) {
-            s = new HashSet();
-            getAList().putObject(key, s);
-        } else {
-            s = (Set)getAList().getObject(key);
-        }
-        s.add(o);
-    }
-
-
     /** Get the size in bytes of this URI's content.
      * This may be set at any time by any class and therefore should not be
      * trusted. Primarily it exists to ease the calculation of statistics.
@@ -559,11 +551,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
     public void addLocalizedError(String processorName, Exception ex,
         	String message) {
         List localizedErrors;
-        if(getAList().containsKey(A_LOCALIZED_ERRORS)) {
-            localizedErrors = (List)getAList().getObject(A_LOCALIZED_ERRORS);
+        if(containsKey(A_LOCALIZED_ERRORS)) {
+            localizedErrors = (List)getObject(A_LOCALIZED_ERRORS);
         } else {
             localizedErrors = new ArrayList();
-            getAList().putObject(A_LOCALIZED_ERRORS,localizedErrors);
+            putObject(A_LOCALIZED_ERRORS,localizedErrors);
         }
 
         localizedErrors.add(new LocalizedError(processorName, ex, message));
@@ -576,14 +568,14 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public void addAnnotation(String annotation) {
         String annotations;
-        if(getAList().containsKey(A_ANNOTATIONS)) {
-            annotations = getAList().getString(A_ANNOTATIONS);
+        if(containsKey(A_ANNOTATIONS)) {
+            annotations = getString(A_ANNOTATIONS);
             annotations += ","+annotation;
         } else {
             annotations = annotation;
         }
 
-        getAList().putString(A_ANNOTATIONS,annotations);
+        putString(A_ANNOTATIONS,annotations);
     }
 
     /**
@@ -592,8 +584,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @return the annotations set for this uri.
      */
     public String getAnnotations() {
-        return (getAList().containsKey(A_ANNOTATIONS))?
-            getAList().getString(A_ANNOTATIONS): null;
+        return (containsKey(A_ANNOTATIONS))?
+            getString(A_ANNOTATIONS): null;
     }
 
     /**
@@ -689,16 +681,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     /**
-     * Add string version of the link to specified collection.
-     *
-     * @param link Link to be added to collection.
-     * @param collectionName Name of the collection.
-     */
-    public void addLinkToCollection(String link, String collectionName) {
-        addToNamedSet(collectionName, link);
-    }
-
-    /**
      * If true then a link extractor has already claimed this CrawlURI and
      * performed link extraction on the document content. This does not
      * preclude other link extractors that may have an interest in this
@@ -773,7 +755,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @return True if this is a http transaction.
      */
     public boolean isHttpTransaction() {
-        return getAList().containsKey(A_HTTP_TRANSACTION);
+        return containsKey(A_HTTP_TRANSACTION);
     }
 
     /**
@@ -789,9 +771,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
         // Clear 'links extracted' flag.
         this.linkExtractorFinished = false;
         // Let current get method to be GC'd.
-        getAList().remove(A_HTTP_TRANSACTION);
+        remove(A_HTTP_TRANSACTION);
         // Discard any ideas of prereqs -- may no longer be valid.
-        getAList().remove(A_PREREQUISITE_URI);
+        remove(A_PREREQUISITE_URI);
     }
 
     /**
@@ -813,14 +795,14 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param avatars Credential avatars to save off.
      */
     private void setCredentialAvatars(Set avatars) {
-        getAList().putObject(A_CREDENTIAL_AVATARS_KEY, avatars);
+        putObject(A_CREDENTIAL_AVATARS_KEY, avatars);
     }
 
     /**
      * @return Credential avatars.  Null if none set.
      */
     public Set getCredentialAvatars() {
-        return (Set)getAList().getObject(A_CREDENTIAL_AVATARS_KEY);
+        return (Set)getObject(A_CREDENTIAL_AVATARS_KEY);
     }
 
     /**
@@ -852,7 +834,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public void removeCredentialAvatars() {
         if (hasCredentialAvatars()) {
-            getAList().remove(A_CREDENTIAL_AVATARS_KEY);
+            remove(A_CREDENTIAL_AVATARS_KEY);
         }
     }
 
@@ -1026,5 +1008,111 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public void setHolderCost(int cost) {
         holderCost = cost;
+    }
+
+    /** all discovered outbound Links (navlinks, embeds, etc.) */
+    HashSet outLinks = new HashSet();
+    
+    /**
+     * @return Collection of all discovered outbound Links
+     */
+    public Collection getOutLinks() {
+        return outLinks;
+    }
+    
+    /**
+     * Add a discovered Link. 
+     * 
+     * @param link the Link to add
+     */
+    public void addOutLink(Link link) {
+        outLinks.add(link);
+    }
+
+    /**
+     * Convenience method for creating a Link discovered at this URI
+     * with the given string and context
+     * 
+     * @param url
+     *            String to use to create Link
+     * @param context
+     *            CharSequence context to use
+     * @throws URIException
+     *             if Link UURI cannot be constructed
+     */
+    public Link createLink(String url, CharSequence context,
+            char hopType) throws URIException {
+        return new Link(getUURI(), UURIFactory.getInstance(getUURI(),
+                url), context, hopType);
+    }
+    
+    /**
+     * Convenience method for creating a Link with the given string and
+     * context
+     * 
+     * @param url
+     *            String to use to create Link
+     * @param context
+     *            CharSequence context to use
+     * @throws URIException
+     *             if Link UURI cannot be constructed
+     */
+    public void createAndAddLink(String url, CharSequence context,
+            char hopType) throws URIException {
+        Link link = createLink(url,context,hopType);
+        addOutLink(link);
+    }
+
+    /**
+     * Convenience method for creating a Link with the given string and
+     * context, relative to a previously set base HREF
+     * 
+     * @param url
+     * @param context
+     * @throws URIException
+     */
+    public void createAndAddLinkRelativeToBase(String url,
+            CharSequence context, char hopType) throws URIException {
+        Link link = new Link(getUURI(), UURIFactory.getInstance(
+                getBaseURI(), url), context, hopType);
+        addOutLink(link);
+    }
+    
+    /**
+     * Convenience method for creating a Link with the given string and
+     * context, relative to this CrawlURI's via UURI
+     * 
+     * @param url
+     * @param context
+     * @throws URIException
+     */
+    public void createAndAddLinkRelativeToVia(String url,
+            CharSequence context, char hopType) throws URIException {
+        Link link = new Link(getUURI(), UURIFactory.getInstance(
+                getVia(), url), context, hopType);
+        addOutLink(link);
+    }
+    
+    /**
+     * Set the (HTML) Base URI used for derelativizing internal URIs. 
+     * 
+     * @param baseHref String base href to use
+     * @throws URIException if supplied string cannot be interpreted as URI
+     */
+    public void setBaseURI(String baseHref) throws URIException {
+        UURI base = UURIFactory.getInstance(baseHref);
+        putObject(A_HTML_BASE,base);
+    }
+      
+    /**
+     * Get the (HTML) Base URI used for derelativizing internal URIs. 
+     *
+     * @return UURI base URI previously set 
+     */  
+    public UURI getBaseURI() throws URIException {
+        if (!containsKey(A_HTML_BASE)) {
+            return getUURI();
+        }
+        return (UURI)getObject(A_HTML_BASE);
     }
 }
