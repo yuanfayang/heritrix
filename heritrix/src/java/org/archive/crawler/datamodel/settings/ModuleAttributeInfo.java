@@ -27,7 +27,7 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
 
 /**
- * 
+ *
  * @author John Erik Halse
  */
 public class ModuleAttributeInfo extends MBeanAttributeInfo {
@@ -72,7 +72,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
     public boolean isComplexType() {
         return complexType;
     }
-    
+
     /**
      * @return True if overrideable.
      */
@@ -136,7 +136,7 @@ public class ModuleAttributeInfo extends MBeanAttributeInfo {
 
         return value;
     }
-    
+
     /* (non-Javadoc)
      * @see javax.management.MBeanAttributeInfo#getType()
      */

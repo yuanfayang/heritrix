@@ -21,7 +21,7 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * 
+ *
  * File: MemLongFPSetTest.java
  */
 
@@ -32,14 +32,14 @@ import junit.framework.TestSuite;
 
 /**
  * JUnit test suite for MemLongFPSet
- * 
+ *
  * @author <a href="mailto:me@jamesc.net">James Casey</a>
  * @version $ Id:$
  */
 public class MemLongFPSetTest extends LongFPSetTestCase {
         /**
          * Create a new MemLongFPSetTest object
-         * 
+         *
          * @param testName the name of the test
          */
         public MemLongFPSetTest(final String testName) {
@@ -48,7 +48,7 @@ public class MemLongFPSetTest extends LongFPSetTestCase {
 
         /**
          * run all the tests for MemLongFPSetTest
-         * 
+         *
          * @param argv the command line arguments
          */
         public static void main(String argv[]) {
@@ -57,7 +57,7 @@ public class MemLongFPSetTest extends LongFPSetTestCase {
 
         /**
          * return the suite of tests for MemLongFPSetTest
-         * 
+         *
          * @return the suite of test
          */
         public static Test suite() {

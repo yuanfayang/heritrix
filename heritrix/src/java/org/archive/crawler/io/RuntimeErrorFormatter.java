@@ -35,19 +35,19 @@ import org.archive.crawler.datamodel.CrawlURI;
  *
  */
 public class RuntimeErrorFormatter extends UriProcessingFormatter implements CoreAttributeConstants {
-	
-	/* (non-Javadoc)
-	 * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
-	 */
-	public String format(LogRecord lr) {
-		CrawlURI curi = (CrawlURI) lr.getParameters()[0];
-		RuntimeException e = (RuntimeException)curi.getAList().getObject(A_RUNTIME_EXCEPTION);
-		assert e != null : "null exception";
-		StringWriter sw = new StringWriter();
-		e.printStackTrace(new PrintWriter(sw));
 
-		return super.format(lr) + " " + sw.toString();
-	}
+    /* (non-Javadoc)
+     * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
+     */
+    public String format(LogRecord lr) {
+    	CrawlURI curi = (CrawlURI) lr.getParameters()[0];
+    	RuntimeException e = (RuntimeException)curi.getAList().getObject(A_RUNTIME_EXCEPTION);
+    	assert e != null : "null exception";
+    	StringWriter sw = new StringWriter();
+    	e.printStackTrace(new PrintWriter(sw));
+
+    	return super.format(lr) + " " + sw.toString();
+    }
 }
 
 

@@ -1,7 +1,7 @@
 /* DiskQueueTest
- * 
+ *
  * Created Tue Jan 20 14:17:59 PST 2004
- * 
+ *
  * $Id$
  *
  * Copyright (C) 2004 Internet Archive.
@@ -33,7 +33,7 @@ import junit.framework.TestSuite;
 
 /**
  * JUnit test suite for DiskQueue
- * 
+ *
  * @author <a href="mailto:me@jamesc.net">James Casey</a>
  * @version $Id$
  */
@@ -42,7 +42,7 @@ public class DiskQueueTest extends QueueTestBase {
 
     /**
      * Create a new DiskQueueTest object
-     * 
+     *
      * @param testName the name of the test
      */
     public DiskQueueTest(final String testName) {
@@ -51,7 +51,7 @@ public class DiskQueueTest extends QueueTestBase {
 
     /**
      * run all the tests for DiskQueueTest
-     * 
+     *
      * @param argv the command line arguments
      */
     public static void main(String argv[]) {
@@ -60,7 +60,7 @@ public class DiskQueueTest extends QueueTestBase {
 
     /**
      * return the suite of tests for DiskQueueTest
-     * 
+     *
      * @return the suite of test
      */
     public static Test suite() {

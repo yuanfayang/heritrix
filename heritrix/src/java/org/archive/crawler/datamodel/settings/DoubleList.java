@@ -1,5 +1,5 @@
 /* DoubleList
- * 
+ *
  * $Id$
  * Created on Dec 18, 2003
  *
@@ -24,13 +24,13 @@
 package org.archive.crawler.datamodel.settings;
 
 /** List of Double values
- * 
+ *
  * @author John Erik Halse
  */
 public class DoubleList extends ListType {
 
     /** Creates a new DoubleList.
-     * 
+     *
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      *        in a user interface.
@@ -41,7 +41,7 @@ public class DoubleList extends ListType {
 
     /** Creates a new DoubleList and initializes it with the values from
      * another DoubleList.
-     * 
+     *
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      *        in a user interface.
@@ -54,7 +54,7 @@ public class DoubleList extends ListType {
 
     /** Creates a new DoubleList and initializes it with the values from
      * an array of Doubles.
-     * 
+     *
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      *        in a user interface.
@@ -67,7 +67,7 @@ public class DoubleList extends ListType {
 
     /** Creates a new DoubleList and initializes it with the values from
      * an double array.
-     * 
+     *
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      *        in a user interface.
@@ -79,7 +79,7 @@ public class DoubleList extends ListType {
     }
 
     /** Add a new {@link java.lang.Double} at the specified index to this list.
-     * 
+     *
      * @param index index at which the specified element is to be inserted.
      * @param element the value to be added.
      */
@@ -88,7 +88,7 @@ public class DoubleList extends ListType {
     }
 
     /** Add a new <code>double</code> at the specified index to this list.
-     * 
+     *
      * @param index index at which the specified element is to be inserted.
      * @param element the value to be added.
      */
@@ -97,7 +97,7 @@ public class DoubleList extends ListType {
     }
 
     /** Add a new {@link java.lang.Double} at the end of this list.
-     * 
+     *
      * @param element the value to be added.
      */
     public void add(Double element) {
@@ -105,7 +105,7 @@ public class DoubleList extends ListType {
     }
 
     /** Add a new double at the end of this list.
-     * 
+     *
      * @param element the value to be added.
      */
     public void add(double element) {
@@ -115,7 +115,7 @@ public class DoubleList extends ListType {
     /** Appends all of the elements in the specified list to the end of this
      * list, in the order that they are returned by the specified lists's
      * iterator.
-     * 
+     *
      * The behavior of this operation is unspecified if the specified
      * collection is modified while the operation is in progress.
      *
@@ -127,7 +127,7 @@ public class DoubleList extends ListType {
 
     /** Appends all of the elements in the specified array to the end of this
      * list, in the same order that they are in the array.
-     * 
+     *
      * @param l array whose elements are to be added to this list.
      */
     public void addAll(Double[] l) {
@@ -138,7 +138,7 @@ public class DoubleList extends ListType {
 
     /** Appends all of the elements in the specified array to the end of this
      * list, in the same order that they are in the array.
-     * 
+     *
      * @param l array whose elements are to be added to this list.
      */
     public void addAll(double[] l) {
@@ -149,7 +149,7 @@ public class DoubleList extends ListType {
 
     /** Replaces the element at the specified position in this list with the
      *  specified element.
-     * 
+     *
      * @param index index at which the specified element is to be inserted.
      * @param element element to be inserted.
      * @return the element previously at the specified position.
@@ -159,10 +159,10 @@ public class DoubleList extends ListType {
     }
 
     /** Check if element is of right type for this list.
-     * 
+     *
      * If this method gets a String, it tries to convert it to
      * the an Double before eventually throwing an exception.
-     * 
+     *
      * @param element element to check.
      * @return element of the right type.
      * @throws ClassCastException is thrown if the element was of wrong type

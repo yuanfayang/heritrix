@@ -8,12 +8,12 @@ package org.archive.util;
 
 /**
  * Utility functions to escape or unescape Java literal strings.
- * 
+ *
  * @author gojomo
  *
  */
 public class JavaLiterals {
-  
+
   public static String escape(String raw) {
     StringBuffer escaped = new StringBuffer();
     for(int i = 0; i<raw.length(); i++) {
@@ -54,17 +54,17 @@ public class JavaLiterals {
             escaped.append(c);
           }
       }
-        
+
     }
     return escaped.toString();
   }
-  
+
   public static String unescape(String escaped) {
     StringBuffer raw = new StringBuffer();
     for(int i = 0; i<escaped.length(); i++) {
       char c = escaped.charAt(i);
       if (c!='\\') {
-        raw.append(c); 
+        raw.append(c);
       } else {
         i++;
         if(i>=escaped.length()) {

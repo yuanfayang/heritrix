@@ -1,7 +1,7 @@
 /* MapType
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Jan 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -33,10 +33,10 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
 
 /** This class represents a container of settings.
- * 
+ *
  * This class is usually used to make it possible to have a dynamic number
  * of CrawlerModules like for instance a list of filters of different type.
- * 
+ *
  * When this type is overridden on a per domain basis, the following
  * restrictions apply:
  * <ul>
@@ -45,11 +45,11 @@ import javax.management.MBeanAttributeInfo;
  *       necessary to be able to remove an element, this has to be done by
  *       adding some disable feature to the modules referenced by the map. An
  *       example of this is the enabled attribute on the
- *       {@link org.archive.crawler.framework.Filter} class. 
+ *       {@link org.archive.crawler.framework.Filter} class.
  *   <li>All elements defined in maps that this map overrides might have their
  *       settings changed, but the order can not be changed.
  * </ul>
- * 
+ *
  * @author John Erik Halse
  */
 public class MapType extends ComplexType {
@@ -57,7 +57,7 @@ public class MapType extends ComplexType {
     private final Class contentType;
 
     /** Construct a new MapType object.
-     * 
+     *
      * @param name the name of this element.
      * @param description the description of the attribute.
      */
@@ -66,7 +66,7 @@ public class MapType extends ComplexType {
     }
 
     /** Construct a new MapType object.
-     * 
+     *
      * @param name the name of this element.
      * @param description the description of the attribute.
      * @param type the type allowed for this map
@@ -77,7 +77,7 @@ public class MapType extends ComplexType {
     }
 
     /** Add a new element to this map.
-     * 
+     *
      * @param settings the settings object for this method to have effect.
      * @param element the element to be added.
      * @return Element added.
@@ -86,7 +86,7 @@ public class MapType extends ComplexType {
     public Type addElement(CrawlerSettings settings, Type element)
         throws InvalidAttributeValueException {
         settings = settings == null ? globalSettings() : settings;
-        
+
         if (settings != globalSettings()) {
             try {
                 getAttribute(settings, element.getName());
@@ -98,16 +98,16 @@ public class MapType extends ComplexType {
                 // Element doesn't exist, ok to add
             }
         }
-        
+
         if (!(element instanceof MapType) && (contentType.isInstance(element))) {
             return super.addElement(settings, element);
         } else {
             throw new IllegalArgumentException("Nested maps are not allowed.");
         }
     }
-    
+
     /** Remove an attribute from the map.
-     * 
+     *
      * @param settings the settings object for which this method has effect.
      * @param name name of the attribute to remove.
      * @return the element that was removed.
@@ -119,9 +119,9 @@ public class MapType extends ComplexType {
         settings = settings == null ? globalSettings() : settings;
         return settings.getData(this).removeElement(name);
     }
-    
-    /** Move an attribute up one place in the list. 
-     * 
+
+    /** Move an attribute up one place in the list.
+     *
      * @param settings the settings object for which this method has effect.
      * @param name name of attribute to move.
      * @return true if attribute was moved, false if attribute was already
@@ -135,8 +135,8 @@ public class MapType extends ComplexType {
         return settings.getData(this).moveElementUp(name);
     }
 
-    /** Move an attribute down one place in the list. 
-     * 
+    /** Move an attribute down one place in the list.
+     *
      * @param settings the settings object for which this method has effect.
      * @param name name of attribute to move.
      * @return true if attribute was moved, false if attribute was already
@@ -163,7 +163,7 @@ public class MapType extends ComplexType {
                 attributeStack.push(data.getLocalAttributeInfoList().iterator());
                 data = getDataContainerRecursive(data.getSettings().getParent());
             }
-            
+
             currentIterator = (Iterator) attributeStack.pop();
         }
 
@@ -199,7 +199,7 @@ public class MapType extends ComplexType {
     };
 
     /** Get an Iterator over all the elements in this map.
-     * 
+     *
      * @param settings the settings object for which this set of elements
      *                 are valid.
      * @return an iterator over all the elements in this map.
@@ -210,7 +210,7 @@ public class MapType extends ComplexType {
     }
 
     /** Returns true if this map is empty.
-     * 
+     *
      * @param settings the settings object for which this set of elements
      *                 are valid.
      * @return true if this map is empty.
@@ -227,9 +227,9 @@ public class MapType extends ComplexType {
         }
         return true;
     }
-    
+
     /** Get the number of elements in this map.
-     * 
+     *
      * @param settings the settings object for which this set of elements
      *                 are valid.
      * @return the number of elements in this map.
@@ -245,9 +245,9 @@ public class MapType extends ComplexType {
         }
         return size;
     }
-    
+
     /** Get the content type allowed for this map.
-     * 
+     *
      * @return the content type allowed for this map.
      */
     public Class getContentType() {

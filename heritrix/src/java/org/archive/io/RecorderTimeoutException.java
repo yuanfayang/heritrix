@@ -25,7 +25,7 @@ package org.archive.io;
 
 /**
  * Indicates a timeout thrown by the RecordingInputStream.
- * 
+ *
  * @author Gordon Mohr
  */
 public class RecorderTimeoutException extends RecorderIOException {

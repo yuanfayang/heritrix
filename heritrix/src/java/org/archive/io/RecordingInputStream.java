@@ -1,9 +1,9 @@
 /* RecordingInputStream
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Sep 24, 2003
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -35,167 +35,167 @@ import java.security.MessageDigest;
 /**
  * Stream which records all data read from it, which it acquires from a wrapped
  * input stream.
- * 
+ *
  * Makes use of a RecordingOutputStream for recording because of its being
  * file backed so we can write massive amounts of data w/o worrying about
  * overflowing memory.
- * 
+ *
  * @author gojomo
  *
  */
 public class RecordingInputStream
-    extends InputStream 
-{   
+    extends InputStream
+{
     /**
      * Where we are recording to.
      */
-	private RecordingOutputStream recordingOutputStream;
-    
+    private RecordingOutputStream recordingOutputStream;
+
     /**
      * Stream to record.
      */
     private InputStream in = null;
 
 
-	/**
-	 * Create a new RecordingInputStream.
-	 * 
-	 * @param bufferSize Size of buffer to use.
-	 * @param backingFilename Name of backing file.
-	 */
-	public RecordingInputStream(int bufferSize, String backingFilename)
+    /**
+     * Create a new RecordingInputStream.
+     *
+     * @param bufferSize Size of buffer to use.
+     * @param backingFilename Name of backing file.
+     */
+    public RecordingInputStream(int bufferSize, String backingFilename)
     {
-		recordingOutputStream = new RecordingOutputStream(bufferSize,
+    	recordingOutputStream = new RecordingOutputStream(bufferSize,
             backingFilename);
-	}
+    }
 
-	public void open(InputStream wrappedStream) throws IOException {
+    public void open(InputStream wrappedStream) throws IOException {
         assert this.in == null;
-		this.in = wrappedStream;
-		recordingOutputStream.open(); 
-	}
+    	this.in = wrappedStream;
+    	recordingOutputStream.open();
+    }
 
-	/* (non-Javadoc)
-	 * @see java.io.InputStream#read()
-	 */
-	public int read() throws IOException {
-		int b = this.in.read();
-		if (b != -1) {
-			recordingOutputStream.write(b);
-		}
-		return b;
-	}
-	
-	/* (non-Javadoc)
-	 * @see java.io.InputStream#read(byte[], int, int)
-	 */
-	public int read(byte[] b, int off, int len) throws IOException {
-		int count = this.in.read(b,off,len);
-		if (count > 0) {
-			recordingOutputStream.write(b,off,count);
-		} 
-		return count;
-	}
+    /* (non-Javadoc)
+     * @see java.io.InputStream#read()
+     */
+    public int read() throws IOException {
+    	int b = this.in.read();
+    	if (b != -1) {
+    		recordingOutputStream.write(b);
+    	}
+    	return b;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.io.InputStream#read(byte[])
-	 */
-	public int read(byte[] b) throws IOException {
-		int count = this.in.read(b);
-		if (count > 0) {
-			recordingOutputStream.write(b,0,count);
-		} 
-		return count;
-	}
-	
-	/* (non-Javadoc)
-	 * @see java.io.OutputStream#close()
-	 */
-	public void close() throws IOException {
+    /* (non-Javadoc)
+     * @see java.io.InputStream#read(byte[], int, int)
+     */
+    public int read(byte[] b, int off, int len) throws IOException {
+    	int count = this.in.read(b,off,len);
+    	if (count > 0) {
+    		recordingOutputStream.write(b,off,count);
+    	}
+    	return count;
+    }
+
+    /* (non-Javadoc)
+     * @see java.io.InputStream#read(byte[])
+     */
+    public int read(byte[] b) throws IOException {
+    	int count = this.in.read(b);
+    	if (count > 0) {
+    		recordingOutputStream.write(b,0,count);
+    	}
+    	return count;
+    }
+
+    /* (non-Javadoc)
+     * @see java.io.OutputStream#close()
+     */
+    public void close() throws IOException {
         if (this.in != null)
         {
             this.in.close();
             this.in = null;
         }
-		recordingOutputStream.close();
-	}
-	
-	public ReplayInputStream getReplayInputStream() throws IOException {
-		return recordingOutputStream.getReplayInputStream();
-	}
+    	recordingOutputStream.close();
+    }
 
-	public ReplayInputStream getContentReplayInputStream() throws IOException {
-		return recordingOutputStream.getContentReplayInputStream();
-	}
+    public ReplayInputStream getReplayInputStream() throws IOException {
+    	return recordingOutputStream.getReplayInputStream();
+    }
 
-	public long readFully() throws IOException {
-		byte[] buf = new byte[4096];
-		while(read(buf)!=-1) {
-		}
-		return recordingOutputStream.getSize();
-	}
-	
-	/**
-	 * @param maxLength
-	 * @param timeout
-	 * @throws IOException
-	 */
-	public void readFullyOrUntil(long maxLength, long timeout)
+    public ReplayInputStream getContentReplayInputStream() throws IOException {
+    	return recordingOutputStream.getContentReplayInputStream();
+    }
+
+    public long readFully() throws IOException {
+    	byte[] buf = new byte[4096];
+    	while(read(buf)!=-1) {
+    	}
+    	return recordingOutputStream.getSize();
+    }
+
+    /**
+     * @param maxLength
+     * @param timeout
+     * @throws IOException
+     */
+    public void readFullyOrUntil(long maxLength, long timeout)
         throws IOException
     {
-		long timeoutTime;
-		long totalBytes = 0;
-		if(timeout>0) {
-			timeoutTime = System.currentTimeMillis() + timeout;
-		} else {
-			timeoutTime = Long.MAX_VALUE;
-		}
-		byte[] buf = new byte[4096];
-		long bytesRead;
-		while(true) {
-			try {
-				bytesRead = read(buf);
-				if (bytesRead==-1) {
-					break;
-				}
-				totalBytes += bytesRead;
-			} catch (SocketTimeoutException e) {
-				// DO NOTHING; just want to check overall timeout
-			}
-			if (totalBytes>maxLength) {
-				throw new RecorderLengthExceededException();
-			}
-			if (System.currentTimeMillis() > timeoutTime) {
-				throw new RecorderTimeoutException();
-			}
-		}
-	}
+    	long timeoutTime;
+    	long totalBytes = 0;
+    	if(timeout>0) {
+    		timeoutTime = System.currentTimeMillis() + timeout;
+    	} else {
+    		timeoutTime = Long.MAX_VALUE;
+    	}
+    	byte[] buf = new byte[4096];
+    	long bytesRead;
+    	while(true) {
+    		try {
+    			bytesRead = read(buf);
+    			if (bytesRead==-1) {
+    				break;
+    			}
+    			totalBytes += bytesRead;
+    		} catch (SocketTimeoutException e) {
+    			// DO NOTHING; just want to check overall timeout
+    		}
+    		if (totalBytes>maxLength) {
+    			throw new RecorderLengthExceededException();
+    		}
+    		if (System.currentTimeMillis() > timeoutTime) {
+    			throw new RecorderTimeoutException();
+    		}
+    	}
+    }
 
-	public long getSize() {
-		return recordingOutputStream.getSize();
-	}
+    public long getSize() {
+    	return recordingOutputStream.getSize();
+    }
 
-	public void markContentBegin() {
-		recordingOutputStream.markContentBegin();
-	}
-    
+    public void markContentBegin() {
+    	recordingOutputStream.markContentBegin();
+    }
+
     public void startDigest() {
         recordingOutputStream.startDigest();
     }
 
     /**
-     * Convenience method for setting SHA1 digest. 
+     * Convenience method for setting SHA1 digest.
      */
     public void setSha1Digest() {
         recordingOutputStream.setSha1Digest();
     }
-    
+
     /**
      * Sets a digest function which may be applied to recorded data.
      * As usually only a subset of the recorded data should
      * be fed to the digest, you must also call startDigest()
-     * to begin digesting. 
-     * 
+     * to begin digesting.
+     *
      * @param md
      */
     public void setDigest(MessageDigest md) {
@@ -205,35 +205,35 @@ public class RecordingInputStream
     /**
      * Return the digest value for any recorded, digested data. Call
      * only after all data has been recorded; otherwise, the running
-     * digest state is ruined.  
-     * 
+     * digest state is ruined.
+     *
      * @return the digest final value
      */
     public byte[] getDigestValue() {
         return recordingOutputStream.getDigestValue();
     }
-    
-	public CharSequence getCharSequence() {
-		return recordingOutputStream.getReplayCharSequence();
-	}
 
-	public long getResponseContentLength() {
-		return recordingOutputStream.getResponseContentLength();
-	}
+    public CharSequence getCharSequence() {
+    	return recordingOutputStream.getReplayCharSequence();
+    }
 
-	public void closeRecorder() throws IOException {
-		recordingOutputStream.closeRecorder();
-	}
+    public long getResponseContentLength() {
+    	return recordingOutputStream.getResponseContentLength();
+    }
 
-	/**
-	 * @param tempFile
-	 * @throws IOException
-	 */
-	public void copyContentBodyTo(File tempFile) throws IOException {
-		FileOutputStream fos = new FileOutputStream(tempFile);
-		ReplayInputStream ris = getContentReplayInputStream();
-		ris.readFullyTo(fos);
-		fos.close();
-		ris.close();
-	}
+    public void closeRecorder() throws IOException {
+    	recordingOutputStream.closeRecorder();
+    }
+
+    /**
+     * @param tempFile
+     * @throws IOException
+     */
+    public void copyContentBodyTo(File tempFile) throws IOException {
+    	FileOutputStream fos = new FileOutputStream(tempFile);
+    	ReplayInputStream ris = getContentReplayInputStream();
+    	ris.readFullyTo(fos);
+    	fos.close();
+    	ris.close();
+    }
 }

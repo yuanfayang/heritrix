@@ -35,22 +35,22 @@ import org.archive.util.ArchiveUtils;
  *
  */
 public class UriErrorFormatter extends Formatter implements CoreAttributeConstants {
-	
-	/* (non-Javadoc)
-	 * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
-	 */
-	public String format(LogRecord lr) {
-		CrawlURI curi = (CrawlURI) lr.getParameters()[0];
-		String problem = (String) lr.getParameters()[1];
-				
-		return ArchiveUtils.get17DigitDate()
-		+ " "
-		+ ( (curi ==null) ? "n/a" : curi.getURIString() )
-		+ " \""
-		+ lr.getMessage()
-		+ "\" "
-		+ problem
-		+ "\n";
-	}
+
+    /* (non-Javadoc)
+     * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
+     */
+    public String format(LogRecord lr) {
+    	CrawlURI curi = (CrawlURI) lr.getParameters()[0];
+    	String problem = (String) lr.getParameters()[1];
+
+    	return ArchiveUtils.get17DigitDate()
+    	+ " "
+    	+ ( (curi ==null) ? "n/a" : curi.getURIString() )
+    	+ " \""
+    	+ lr.getMessage()
+    	+ "\" "
+    	+ problem
+    	+ "\n";
+    }
 }
 

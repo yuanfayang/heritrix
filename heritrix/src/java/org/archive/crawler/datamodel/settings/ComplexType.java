@@ -1,7 +1,7 @@
 /* ComplexType
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 17, 2003
  *
  * Copyright (C) 2004 Internet Archive.
@@ -45,21 +45,21 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 
 /** Superclass of all configurable modules.
- * 
+ *
  * This class is in many ways the heart of the settings framework. All modules
  * that should be configurable extends this class or one of its subclasses.
- * 
+ *
  * All subclasses of this class will automatically conform to the
  * JMX DynamicMBean. You could then use the {@link #getMBeanInfo()} method to
  * investigate which attributes this module supports and then use the
  * {@link #getAttribute(String)} and {@link #setAttribute(Attribute)} methods to
  * alter the attributes values.
- * 
+ *
  * Because the settings framework supports per domain/host settings there is
  * also available context sensitive versions of the DynamicMBean methods.
  * If you use the non context sensitive methods, it is the global settings
  * that will be altered.
- * 
+ *
  * @author John Erik Halse
  */
 public abstract class ComplexType extends Type implements DynamicMBean {
@@ -74,7 +74,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     private boolean isTransient = false;
 
     /**
-     * Private constructor to make sure that no one 
+     * Private constructor to make sure that no one
      * instantiates this class with the empty constructor.
      */
     private ComplexType() {
@@ -82,7 +82,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Creates a new instance of ComplexType.
-     * 
+     *
      * @param name the name of the element.
      * @param description the description of the element.
      */
@@ -101,7 +101,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Get the global settings object (aka order).
-     * 
+     *
      * @return the global settings object.
      */
     public CrawlerSettings globalSettings() {
@@ -125,7 +125,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     private ComplexType addComplexType(
             CrawlerSettings settings, ComplexType object)
             throws InvalidAttributeValueException {
-                
+
         if (this.settingsHandler == null) {
             throw new IllegalStateException("Can't add ComplexType to 'free' ComplexType");
         }
@@ -147,20 +147,20 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** Get the active data container for this ComplexType for a specific
      * settings object.
-     * 
+     *
      * If no value has been overridden on the settings object for this
      * ComplexType, then it traverses up until it find a DataContainer with
      * values for this ComplexType.
-     * 
+     *
      * This method should probably not be called from user code. It is a helper
      * method for the settings framework.
-     * 
+     *
      * @param settings the settings object for which the {@link DataContainer}
      *                 is active.
      * @return the active DataContainer.
      */
     protected DataContainer getDataContainerRecursive(CrawlerSettings settings) {
-                
+
         if (settings == null) {
             return null;
         }
@@ -176,14 +176,14 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** Get the active data container for this ComplexType for a specific
      * settings object.
-     * 
+     *
      * If the key has not been overridden on the settings object for this
      * ComplexType, then it traverses up until it find a DataContainer with
      * the key for this ComplexType.
      *
      * This method should probably not be called from user code. It is a helper
      * method for the settings framework.
-     * 
+     *
      * @param settings the settings object for which the {@link DataContainer}
      *                 is active.
      * @param key the key to look for.
@@ -192,7 +192,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     protected DataContainer getDataContainerRecursive(
             CrawlerSettings settings, String key)
             throws AttributeNotFoundException {
-                
+
         DataContainer data = getDataContainerRecursive(settings);
         while (data != null) {
             if (data.containsKey(key)) {
@@ -205,10 +205,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Sets up some variables for a new complex type.
-     * 
+     *
      * The complex type is set up to be an attribute of
      * this complex type.
-     * 
+     *
      * @param object to be set up.
      */
     private void setupVaiables(ComplexType object) {
@@ -222,7 +222,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Get the absolute name of this ComplexType.
-     * 
+     *
      * The absolute name is like a file path with the name of the element
      * prepended by all the parents names separated by slashes.
      * @return Absolute name.
@@ -232,11 +232,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Get settings object valid for a URI.
-     * 
+     *
      * This method takes an object, try to convert it into a {@link CrawlURI}
      * and then tries to get the settings object from it. If this fails, then
      * the global settings object is returned.
-     * 
+     *
      * @param o possible {@link CrawlURI}.
      * @return the settings object valid for the URI.
      */
@@ -257,7 +257,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
         settings = settings == null ? globalSettings() : settings;
         return settings;
     }
-    
+
     /** Returns true if an element is overridden for this settings object.
      *
      * @param settings the settings object to investigate.
@@ -280,10 +280,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Obtain the value of a specific attribute from the crawl order.
-     * 
+     *
      * If the attribute doesn't exist in the crawl order, the default
      * value will be returned.
-     * 
+     *
      * @param name the name of the attribute to be retrieved.
      * @return The value of the attribute retrieved.
      * @throws AttributeNotFoundException
@@ -297,13 +297,13 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** Obtain the value of a specific attribute that is valid for a
      * specific CrawlURI.
-     * 
+     *
      * This method will try to get the attribute from the host settings
      * valid for the CrawlURI. If it is not found it will traverse the
      * settings up to the order and as a last resort deliver the default
      * value. This is also the case if the CrawlURI is null or if the CrawlURI
      * hasn't been assigned a CrawlServer.
-     * 
+     *
      * @param name the name of the attribute to be retrieved.
      * @param uri the CrawlURI that this attribute should be valid for.
      * @return The value of the attribute retrieved.
@@ -324,11 +324,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** Obtain the value of a specific attribute that is valid for a
      * specific CrawlerSettings object.
-     * 
+     *
      * This method will try to get the attribute from the supplied host
      * settings object. If it is not found it will traverse the settings
      * up to the order and as a last resort deliver the default value.
-     * 
+     *
      * @param settings the CrawlerSettings object to search for this attribute.
      * @param name the name of the attribute to be retrieved.
      * @return The value of the attribute retrieved.
@@ -344,11 +344,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** Obtain the value of a specific attribute that is valid for a
      * specific CrawlerSettings object.
-     * 
+     *
      * This method will try to get the attribute from the supplied host
      * settings object. If it is not found it will return <code>null</code>
-     * and not try to investigate the hierarchy of settings.  
-     *  
+     * and not try to investigate the hierarchy of settings.
+     *
      * @param settings the CrawlerSettings object to search for this attribute.
      * @param name the name of the attribute to be retrieved.
      * @return The value of the attribute retrieved or null if its not set.
@@ -373,9 +373,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Set the value of a specific attribute of the ComplexType.
-     * 
+     *
      * This method sets the specific attribute for the order file.
-     * 
+     *
      * @param attribute The identification of the attribute to be set and the
      *                  value it is to be set to.
      * @throws AttributeNotFoundException is thrown if there is no attribute
@@ -400,11 +400,11 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Set the value of a specific attribute of the ComplexType.
-     * 
+     *
      * This method is an extension to the Dynamic MBean specification so that
      * it is possible to set the value for a CrawlerSettings object other than
      * the settings object representing the order.
-     * 
+     *
      * @param settings the settings object for which this attributes value is valid
      * @param attribute The identification of the attribute to be set and the
      *                  value it is to be set to.
@@ -427,9 +427,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
             addComplexType(settings, complex);
         }
     }
-    
+
     /** Unset an attribute on a per host level.
-     * 
+     *
      * This methods removes an override on a per host or per domain level.
      *
      * @param settings the settings object for which the attribute should be
@@ -575,9 +575,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Get the description of this type
-     * 
+     *
      * The description should be suitable for showing in a user interface.
-     * 
+     *
      * @return this type's description
      */
     public String getDescription() {
@@ -585,7 +585,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Get the parent of this ComplexType.
-     * 
+     *
      * @return the parent of this ComplexType.
      */
     public ComplexType getParent() {
@@ -593,9 +593,9 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Set the description of this ComplexType
-     * 
+     *
      * The description should be suitable for showing in a user interface.
-     * 
+     *
      * @param string the description to set for this type.
      */
     public void setDescription(String string) {
@@ -610,7 +610,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Add a new attribute to the definition of this ComplexType.
-     * 
+     *
      * @param type the type to add.
      * @return the newly added type.
      */
@@ -621,7 +621,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** Initializes this ComplexType with it's defined attributes and
      * default values.
-     * 
+     *
      * @param settings the CrawlerSettings object for which this
      *        complex type is defined.
      * @throws InvalidAttributeValueException is thrown if default values
@@ -643,12 +643,12 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** This method can be overridden in subclasses to do local
      * initialisation.
-     * 
+     *
      * This method is run before the class has been updated with
      * information from settings files. That implies that if you
      * call getAttribute inside this method you will only get the
      * default values.
-     * 
+     *
      * @param settings the CrawlerSettings object for which this
      *        complex type is defined.
      */
@@ -656,7 +656,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Returns true if this ComplexType is initialized.
-     * 
+     *
      * @return true if this ComplexType is initialized.
      */
     public boolean isInitialized() {
@@ -668,7 +668,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Returns true if this ComplexType should be saved to persistent storage.
-     * 
+     *
      * @return true if this ComplexType should be saved to persistent storage.
      */
     public boolean isTransient() {
@@ -677,7 +677,7 @@ public abstract class ComplexType extends Type implements DynamicMBean {
 
     /** Set to false if this attribute should not be serialized to persistent
      * storage.
-     * 
+     *
      * @param b if false this complexType will not be saved to persistent
      *          storage.
      */
@@ -686,10 +686,10 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     }
 
     /** Returns this object.
-     * 
+     *
      * This method is implemented to be able to treat the ComplexType as an
      * subclass of {@link javax.management.Attribute}.
-     * 
+     *
      * @return this object.
      * @see javax.management.Attribute#getValue()
      */

@@ -1,7 +1,7 @@
 /* SimpleType
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Jan 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -25,7 +25,7 @@
 package org.archive.crawler.datamodel.settings;
 
 /**
- * 
+ *
  * @author John Erik Halse
  *
  */
@@ -33,12 +33,12 @@ public class SimpleType extends Type {
     private final String description;
     private Object[] legalValues = null;
     private boolean overrideable;
-    
+
     /**
      * @param name
      * @param description
      * @param defaultValue
-     * 
+     *
      */
     public SimpleType(String name, String description, Object defaultValue) {
         super(name, defaultValue);
@@ -51,7 +51,7 @@ public class SimpleType extends Type {
         this.description = description;
         overrideable = isOverrideable;
     }
-    
+
     public SimpleType(String name, String description, Object defaultValue, Object[] legalValues) {
         this(name, description, defaultValue);
         this.legalValues = legalValues;
@@ -81,7 +81,7 @@ public class SimpleType extends Type {
     public Object[] getLegalValues() {
         return legalValues;
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.settings.Type#getOverrideable()
      */

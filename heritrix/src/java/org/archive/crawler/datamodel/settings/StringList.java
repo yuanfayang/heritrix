@@ -1,5 +1,5 @@
 /* StringList
- * 
+ *
  * $Id$
  * Created on Dec 18, 2003
  *
@@ -24,13 +24,13 @@
 package org.archive.crawler.datamodel.settings;
 
 /** List of String values.
- * 
+ *
  * @author John Erik Halse
  */
 public class StringList extends ListType {
 
     /** Creates a new StringList.
-     * 
+     *
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      *        in a user interface.
@@ -41,7 +41,7 @@ public class StringList extends ListType {
 
     /** Creates a new StringList and initializes it with the values from
      * another StringList.
-     * 
+     *
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      *        in a user interface.
@@ -54,7 +54,7 @@ public class StringList extends ListType {
 
     /** Creates a new StringList and initializes it with the values from
      * an array of Strings.
-     * 
+     *
      * @param name of the list.
      * @param description of the list. This string should be suitable for using
      * in a user interface.
@@ -66,7 +66,7 @@ public class StringList extends ListType {
     }
 
     /** Add a new {@link java.lang.String} at the specified index to this list.
-     * 
+     *
      * @param index index at which the specified element is to be inserted.
      * @param element the value to be added.
      */
@@ -75,7 +75,7 @@ public class StringList extends ListType {
     }
 
     /** Add a new {@link java.lang.String} at the end of this list.
-     * 
+     *
      * @param element the value to be added.
      */
     public void add(String element) {
@@ -85,7 +85,7 @@ public class StringList extends ListType {
     /** Appends all of the elements in the specified list to the end of this
      * list, in the order that they are returned by the specified lists's
      * iterator.
-     * 
+     *
      * The behavior of this operation is unspecified if the specified
      * collection is modified while the operation is in progress.
      *
@@ -97,7 +97,7 @@ public class StringList extends ListType {
 
     /** Appends all of the elements in the specified array to the end of this
      * list, in the same order that they are in the array.
-     * 
+     *
      * @param l array whose elements are to be added to this list.
      */
     public void addAll(String[] l) {
@@ -108,7 +108,7 @@ public class StringList extends ListType {
 
     /** Replaces the element at the specified position in this list with the
      *  specified element.
-     * 
+     *
      * @param index index at which the specified element is to be inserted.
      * @param element element to be inserted.
      * @return the element previously at the specified position.
@@ -118,7 +118,7 @@ public class StringList extends ListType {
     }
 
     /** Check if element is of right type for this list.
-     * 
+     *
      * @param element element to check.
      * @return element of the right type.
      * @throws ClassCastException is thrown if the element was of wrong type

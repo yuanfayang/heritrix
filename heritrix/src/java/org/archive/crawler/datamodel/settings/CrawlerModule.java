@@ -1,7 +1,7 @@
 /* CrawlerModule
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 17, 2003
  *
  * Copyright (C) 2004 Internet Archive.
@@ -28,16 +28,16 @@ import javax.management.InvalidAttributeValueException;
 
 /**
  * Superclass of all modules that should be configurable.
- * 
+ *
  * @author John Erik Halse
  */
 public class CrawlerModule extends ComplexType {
     /** Creates a new CrawlerModule.
-     * 
+     *
      * This constructor is made to help implementors of subclasses. It is an
      * requirement that subclasses at the very least implements a constructor
      * that takes only the name as an argument.
-     * 
+     *
      * @param name the name of the module.
      * @param description the description of the module.
      */
@@ -46,7 +46,7 @@ public class CrawlerModule extends ComplexType {
     }
 
     /** Every subclass should implement this constructor
-     * 
+     *
      * @param name of the module
      */
     public CrawlerModule(String name) {

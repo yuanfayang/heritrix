@@ -1,7 +1,7 @@
 /* XMLSettingsHandler
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 18, 2003
  *
  * Copyright (C) 2004 Internet Archive.
@@ -56,7 +56,7 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
 /** A SettingsHandler which uses XML files as persistent storage.
- * 
+ *
  * @author John Erik Halse
  */
 public class XMLSettingsHandler extends SettingsHandler {
@@ -83,7 +83,7 @@ public class XMLSettingsHandler extends SettingsHandler {
     private final static String settingsFilename = "settings.xml";
 
     /** Create a new XMLSettingsHandler object.
-     * 
+     *
      * @param orderFile where the order file is located.
      * @throws InvalidAttributeValueException
      */
@@ -94,7 +94,7 @@ public class XMLSettingsHandler extends SettingsHandler {
     }
 
     /** Initialize the SettingsHandler.
-     * 
+     *
      * This method builds the settings data structure and initializes it with
      * settings from the order file given to the constructor.
      */
@@ -103,11 +103,11 @@ public class XMLSettingsHandler extends SettingsHandler {
     }
 
     /** Initialize the SettingsHandler from a source.
-     * 
+     *
      * This method builds the settings data structure and initializes it with
      * settings from the order file given as a parameter. The intended use is
      * to create a new order file based on a default (template) order file.
-     * 
+     *
      * @param source the order file to initialize from.
      */
     public void initialize(File source) {
@@ -133,12 +133,12 @@ public class XMLSettingsHandler extends SettingsHandler {
 
         return new File(getPathRelativeToWorkingDirectory(settingsDirectoryName));
     }
-    
+
     /** Resolves a scope (host/domain) into a file path.
-     * 
+     *
      * It will also create the directory structure leading to this file
-     * if it doesn't exist. 
-     * 
+     * if it doesn't exist.
+     *
      * @param scope the host or domain to get file path for.
      * @return the file path for this scope.
      */
@@ -153,7 +153,7 @@ public class XMLSettingsHandler extends SettingsHandler {
             if (elements.length == 0) {
                 return orderFile;
             }
-            
+
             StringBuffer path = new StringBuffer();
             for (int i = elements.length - 1; i > 0; i--) {
                 path.append(elements[i]);
@@ -162,7 +162,7 @@ public class XMLSettingsHandler extends SettingsHandler {
             path.append(elements[0]);
             file = new File(settingsDirectory, path.toString());
         }
-        
+
         file = new File(file, settingsFilename);
         return file;
     }
@@ -176,17 +176,17 @@ public class XMLSettingsHandler extends SettingsHandler {
     }
 
     /** Write a CrawlerSettings object to a specified file.
-     * 
+     *
      * This method is similar to {@link #writeSettingsObject(CrawlerSettings)}
      * except that it uses the submitted File object instead of trying to
      * resolve where the file should be written.
-     * 
+     *
      * @param settings the settings object to be serialized.
      * @param filename the file to which the settings object should be written.
      */
     public final void writeSettingsObject(
             CrawlerSettings settings, File filename) {
-                
+
         logger.fine("Writing " + filename.getAbsolutePath());
         filename.getParentFile().mkdirs();
         try {
@@ -203,7 +203,7 @@ public class XMLSettingsHandler extends SettingsHandler {
     }
 
     /** Read the CrawlerSettings object from a specific file.
-     * 
+     *
      * @param settings the settings object to be updated with data from the
      *                 persistent storage.
      * @param filename the file to read from.
@@ -265,20 +265,20 @@ public class XMLSettingsHandler extends SettingsHandler {
     }
 
     /** Get the <code>File</code> object pointing to the order file.
-     * 
+     *
      * @return File object for the order file.
      */
     public File getOrderFile() {
         return orderFile;
     }
 
-    /** Creates a replica of the settings file structure in another directory 
+    /** Creates a replica of the settings file structure in another directory
      * (fully recursive, includes all per host settings). The SettingsHandler
      * will then refer to the new files.
-     * 
+     *
      * Observe that this method should only be called after the SettingsHandler
      * has been initialized.
-     * 
+     *
      * @param newOrderFileName where the new order file should be saved.
      * @param newSettingsDirectory the top level directory of the per host/domain
      *                          settings files.
@@ -287,7 +287,7 @@ public class XMLSettingsHandler extends SettingsHandler {
     public void copySettings(File newOrderFileName, String newSettingsDirectory)
       throws IOException {
         File oldSettingsDirectory = getSettingsDirectory();
-        
+
         // Write new orderfile and point the settingshandler to it
         orderFile = newOrderFileName;
         try {
@@ -299,18 +299,18 @@ public class XMLSettingsHandler extends SettingsHandler {
                 + e.getMessage());
         }
         writeSettingsObject(getSettingsObject(null));
-        
+
         File newDir = new File(
             getPathRelativeToWorkingDirectory(newSettingsDirectory));
-        
+
         // Copy the per host files
         FileUtils.copyFiles(oldSettingsDirectory, newDir);
     }
-    
+
     /**
-     * Transforms a relative path so that it is relative to the location of the 
+     * Transforms a relative path so that it is relative to the location of the
      * order file. If an absolute path is given, it will be returned unchanged.<p>
-     * The location of it's order file is always considered as the 'working' 
+     * The location of it's order file is always considered as the 'working'
      * directory for any given settings.
      * @param path A relative path to a file (or directory)
      * @return The same path modified so that it is relative to the file level
@@ -324,7 +324,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         // If path is not absolute, set f's directory
         // relative to the path of the order file
         if (!f.isAbsolute()) {
-            return ArchiveUtils.getFilePath(this.getOrderFile().getAbsolutePath()) 
+            return ArchiveUtils.getFilePath(this.getOrderFile().getAbsolutePath())
                    + f.toString();
         }
         // If path is absolute, we return it itself.
@@ -336,7 +336,7 @@ public class XMLSettingsHandler extends SettingsHandler {
      */
     public ArrayList getDomainOverrides(String rootDomain) {
         File settingsDir = getSettingsDirectory();
-        
+
         //Find the right start directory.
         ArrayList domains = new ArrayList();
         //First we deconstruct the rootDomain string
@@ -377,11 +377,11 @@ public class XMLSettingsHandler extends SettingsHandler {
 
     /**
      * Checks if a file is a a 'per host' override or if it's a directory if it
-     * or it's subdirectories  contains a 'per host' override file. 
+     * or it's subdirectories  contains a 'per host' override file.
      * @param f The file or directory to check
      * @return True if the file is an override or it's a directory that contains
      *         such a file.
-     */    
+     */
     private boolean isOverride(File f){
         if(f.isDirectory()){
             // Have a directory, check it's contents.
@@ -401,17 +401,17 @@ public class XMLSettingsHandler extends SettingsHandler {
     }
 
     /** Delete a settings object from persistent storage.
-     * 
+     *
      * Deletes the file represented by the submitted settings object. All empty
      * directories that are parents to the files path are also deleted.
-     * 
+     *
      * @param settings the settings object to delete.
      */
     public void deleteSettingsObject(CrawlerSettings settings) {
         super.deleteSettingsObject(settings);
         File settingsDirectory = getSettingsDirectory();
         File settingsFile = scopeToFile(settings.getScope());
-        
+
         settingsFile.delete();
         settingsFile = settingsFile.getParentFile();
         while (settingsFile.isDirectory() && settingsFile.list().length == 0 && !settingsFile.equals(settingsDirectory)) {

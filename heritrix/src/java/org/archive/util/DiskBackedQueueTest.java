@@ -1,9 +1,9 @@
 /* DiskBackedQueueTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created Tue Jan 20 14:17:59 PST 2004
- * 
+ *
  * Copyright (C) 2004 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
@@ -32,14 +32,14 @@ import junit.framework.TestSuite;
 
 /**
  * JUnit test suite for DiskBackedQueue
- * 
+ *
  * @author <a href="mailto:me@jamesc.net">James Casey</a>
  * @version $Id$
  */
 public class DiskBackedQueueTest extends QueueTestBase {
     /**
      * Create a new DiskBackedQueueTest object
-     * 
+     *
      * @param testName the name of the test
      */
     public DiskBackedQueueTest(final String testName) {
@@ -48,7 +48,7 @@ public class DiskBackedQueueTest extends QueueTestBase {
 
     /**
      * run all the tests for DiskBackedQueueTest
-     * 
+     *
      * @param argv the command line arguments
      */
     public static void main(String argv[]) {
@@ -57,14 +57,14 @@ public class DiskBackedQueueTest extends QueueTestBase {
 
     /**
      * return the suite of tests for DiskBackedQueueTest
-     * 
+     *
      * @return the suite of test
      */
     public static Test suite() {
         return new TestSuite(DiskBackedQueueTest.class);
     }
 
-    
+
     protected Queue makeQueue() {
         try {
             return new DiskBackedQueue(getTmpDir(), "foo", 10);

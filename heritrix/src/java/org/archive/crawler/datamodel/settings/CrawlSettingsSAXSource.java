@@ -1,7 +1,7 @@
 /* CrawlSettingsSAXSource
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 5, 2003
  *
  * Copyright (C) 2004 Internet Archive.
@@ -46,9 +46,9 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 
 /** Class that takes a CrawlerSettings object and create SAXEvents from it.
- * 
+ *
  * This is a helper class for XMLSettingsHandler.
- * 
+ *
  * @author John Erik Halse
  */
 public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
@@ -60,7 +60,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
     private boolean orderFile = false;
 
     /** Constructs a new CrawlSettingsSAXSource.
-     * 
+     *
      * @param settings the settings object to create SAX events from.
      */
     public CrawlSettingsSAXSource(CrawlerSettings settings) {
@@ -240,7 +240,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
     }
 
     /** Create SAX events from a {@link ComplexType}.
-     * 
+     *
      * @param complexType the object to creat SAX events from.
      * @param indent the indentation amount for prettyprinting XML.
      * @throws SAXException is thrown if an error occurs.
@@ -250,7 +250,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
         if (complexType.isTransient()) {
             return;
         }
-        
+
         MBeanInfo mbeanInfo = complexType.getMBeanInfo(settings);
         String objectElement = resolveElementName(complexType);
 
@@ -351,7 +351,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
     }
 
     /** Create SAX events for the content of a {@link ListType}.
-     * 
+     *
      * @param value the ListType whose content we create SAX events for.
      * @param indent the indentation amount for prettyprinting XML.
      * @throws SAXException is thrown if an error occurs.
@@ -372,7 +372,7 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
     }
 
     /** Resolve the XML element name of a {@link ComplexType}.
-     * 
+     *
      * @param complexType the object to investigate.
      * @return the name of the XML element.
      */
@@ -402,10 +402,10 @@ public class CrawlSettingsSAXSource extends SAXSource implements XMLReader {
     }
 
     /** Create SAX events for a simple element.
-     * 
+     *
      * Creates all the SAX events needed for prettyprinting an XML element
      * with a simple value and possible attributes.
-     * 
+     *
      * @param elementName the name of the XML element.
      * @param value the value to pu inside the XML element.
      * @param atts the attributes for the XML element.

@@ -35,16 +35,16 @@ import org.archive.crawler.framework.Filter;
 /**
  * OrFilter allows any number of other filters to be set up
  * inside it, as <filter> child elements. If any of those
- * children accept a presented object, the OrFilter will 
- * also accept it. 
- * 
+ * children accept a presented object, the OrFilter will
+ * also accept it.
+ *
  * @author gojomo
  *
  */
 public class OrFilter extends Filter {
     private MapType filters;
 
-	/**
+    /**
      * @param name
      */
     public OrFilter(String name) {
@@ -59,46 +59,46 @@ public class OrFilter extends Filter {
         addElementToDefinition(filters);
     }
 
-	protected boolean innerAccepts(Object o) {
-		if (isEmpty(o)) {
-			return true;
-		}
-		Iterator iter = iterator(o);
-		while(iter.hasNext()) {
-			Filter f = (Filter)iter.next();
-			if( f.accepts(o) ) {
-				return true; 
-			}
-		}
-		return false;
-	}
+    protected boolean innerAccepts(Object o) {
+    	if (isEmpty(o)) {
+    		return true;
+    	}
+    	Iterator iter = iterator(o);
+    	while(iter.hasNext()) {
+    		Filter f = (Filter)iter.next();
+    		if( f.accepts(o) ) {
+    			return true;
+    		}
+    	}
+    	return false;
+    }
 
-	public void addFilter(CrawlerSettings settings, Filter f) {
-		try {
+    public void addFilter(CrawlerSettings settings, Filter f) {
+    	try {
             filters.addElement(settings, f);
         } catch (InvalidAttributeValueException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-	}
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.crawler.framework.Filter#initialize()
-	 */
-	public void initialize(CrawlController controller) {
-		super.initialize(controller);
-        
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Filter#initialize()
+     */
+    public void initialize(CrawlController controller) {
+    	super.initialize(controller);
+
         Iterator iter = iterator(null);
         while(iter.hasNext()) {
             Filter f = (Filter) iter.next();
             f.initialize(controller);
         }
-	}
-    
+    }
+
     public boolean isEmpty(Object o) {
         return filters.isEmpty(getSettingsFromObject(o));
     }
-    
+
     public Iterator iterator(Object o) {
         return filters.iterator(getSettingsFromObject(o));
     }

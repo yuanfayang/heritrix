@@ -1,23 +1,23 @@
 /* RecordingOutputStreamTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Jan 21, 2004
  *
  * Copyright (C) 2004 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,7 +34,7 @@ import org.archive.util.TmpDirTestCase;
 
 /**
  * Test casesfor RecordingOutputStream.
- * 
+ *
  * @author stack
  */
 public class RecordingOutputStreamTest extends TmpDirTestCase
@@ -43,13 +43,13 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
      * Size of buffer used in tests.
      */
     private static final int BUFFER_SIZE = 5;
-    
+
     /**
      * How much to write total to testing RecordingOutputStream.
      */
     private static final int WRITE_TOTAL = 10;
 
-    
+
     /*
      * @see TmpDirTestCase#setUp()
      */
@@ -60,8 +60,8 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
 
     /**
      * Test reusing instance of RecordingOutputStream.
-     * 
-     * @throws IOException Failed open of backing file or opening of 
+     *
+     * @throws IOException Failed open of backing file or opening of
      * input streams verifying recording.
      */
     public void testReuse()
@@ -69,31 +69,31 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
     {
         final String BASENAME = "testReuse";
         cleanUpOldFiles(BASENAME);
-        RecordingOutputStream ros = new RecordingOutputStream(BUFFER_SIZE, 
+        RecordingOutputStream ros = new RecordingOutputStream(BUFFER_SIZE,
             (new File(getTmpDir(), BASENAME + "Bkg.txt")).getAbsolutePath());
         for (int i = 0; i < 3; i++)
         {
             reuse(BASENAME, ros, i);
         }
     }
-    
+
     private void reuse(String baseName, RecordingOutputStream ros, int index)
         throws IOException
     {
         final String BASENAME = baseName + Integer.toString(index);
         File f = writeIntRecordedFile(ros, BASENAME, WRITE_TOTAL);
         verifyRecording(ros, f, WRITE_TOTAL);
-        // Do again to test that I can get a new ReplayInputStream on same 
+        // Do again to test that I can get a new ReplayInputStream on same
         // RecordingOutputStream.
         verifyRecording(ros, f, WRITE_TOTAL);
     }
-    
+
     /**
      * Method to test for void write(int).
-     * 
+     *
      * Uses small buffer size and small write size.  Test mark and reset too.
-     * 
-     * @throws IOException Failed open of backing file or opening of 
+     *
+     * @throws IOException Failed open of backing file or opening of
      * input streams verifying recording.
      */
     public void testWriteint()
@@ -101,21 +101,21 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
     {
         final String BASENAME = "testWriteint";
         cleanUpOldFiles(BASENAME);
-        RecordingOutputStream ros = new RecordingOutputStream(BUFFER_SIZE, 
+        RecordingOutputStream ros = new RecordingOutputStream(BUFFER_SIZE,
            (new File(getTmpDir(), BASENAME + "Backing.txt")).getAbsolutePath());
         File f = writeIntRecordedFile(ros, BASENAME, WRITE_TOTAL);
         verifyRecording(ros, f, WRITE_TOTAL);
-        // Do again to test that I can get a new ReplayInputStream on same 
+        // Do again to test that I can get a new ReplayInputStream on same
         // RecordingOutputStream.
         verifyRecording(ros, f, WRITE_TOTAL);
     }
-    
+
     /**
      * Method to test for void write(byte []).
-     * 
+     *
      * Uses small buffer size and small write size.
-     * 
-     * @throws IOException Failed open of backing file or opening of 
+     *
+     * @throws IOException Failed open of backing file or opening of
      * input streams verifying recording.
      */
     public void testWritebytearray()
@@ -123,15 +123,15 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
     {
         final String BASENAME = "testWritebytearray";
         cleanUpOldFiles(BASENAME);
-        RecordingOutputStream ros = new RecordingOutputStream(BUFFER_SIZE, 
+        RecordingOutputStream ros = new RecordingOutputStream(BUFFER_SIZE,
            (new File(getTmpDir(), BASENAME + "Backing.txt")).getAbsolutePath());
         File f = writeByteRecordedFile(ros, BASENAME, WRITE_TOTAL);
         verifyRecording(ros, f, WRITE_TOTAL);
-        // Do again to test that I can get a new ReplayInputStream on same 
+        // Do again to test that I can get a new ReplayInputStream on same
         // RecordingOutputStream.
         verifyRecording(ros, f, WRITE_TOTAL);
     }
-    
+
     /**
      * Test mark and reset.
      * @throws IOException
@@ -140,7 +140,7 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
     {
         final String BASENAME = "testMarkReset";
         cleanUpOldFiles(BASENAME);
-        RecordingOutputStream ros = new RecordingOutputStream(BUFFER_SIZE, 
+        RecordingOutputStream ros = new RecordingOutputStream(BUFFER_SIZE,
                 (new File(getTmpDir(), BASENAME + "Backing.txt")).getAbsolutePath());
         File f = writeByteRecordedFile(ros, BASENAME, WRITE_TOTAL);
         verifyRecording(ros, f, WRITE_TOTAL);
@@ -162,18 +162,18 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
         ris.reset();
         assertEquals("Reset to zero char 3", ris.read(), 3);
     }
-    
+
     /**
      * Record a file write.
-     * 
+     *
      * Write a file w/ characters that start at null and ascend to
      * <code>filesize</code>.  Record the writing w/ passed <code>ros</code>
      * recordingoutputstream. Return the file recorded as result of method.
      * The file  output stream that is recorded is named
      * <code>basename</code> + ".txt".
-     * 
+     *
      * <p>This method writes a character at a time.
-     * 
+     *
      * @param ros RecordingOutputStream to record with.
      * @param basename Basename of file.
      * @param size How many characters to write.
@@ -191,23 +191,23 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
             ros.write(i);
         }
         ros.close();
-        fos.close();   
+        fos.close();
         assertEquals("Content-Length test", size,
             ros.getResponseContentLength());
         return f;
     }
-    
+
     /**
      * Record a file byte array write.
-     * 
+     *
      * Write a file w/ characters that start at null and ascend to
      * <code>filesize</code>.  Record the writing w/ passed <code>ros</code>
      * recordingoutputstream. Return the file recorded as result of method.
      * The file  output stream that is recorded is named
      * <code>basename</code> + ".txt".
-     * 
+     *
      * <p>This method writes using a byte array.
-     * 
+     *
      * @param ros RecordingOutputStream to record with.
      * @param basename Basename of file.
      * @param size How many characters to write.
@@ -227,24 +227,24 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
         }
         ros.write(b);
         ros.close();
-        fos.close();   
+        fos.close();
         assertEquals("Content-Length test", size,
                 ros.getResponseContentLength());
         return f;
     }
-    
+
     /**
-     * Verify what was written is both in the file written to and in the 
+     * Verify what was written is both in the file written to and in the
      * recording stream.
-     * 
+     *
      * @param ros Stream to check.
      * @param f File that was recorded.  Stream should have its content
      * exactly.
      * @param size Amount of bytes written.
-     * 
+     *
      * @exception IOException Failure reading streams.
      */
-    private void verifyRecording(RecordingOutputStream ros, File f, 
+    private void verifyRecording(RecordingOutputStream ros, File f,
          int size) throws IOException
     {
         assertEquals("Recorded file size.", size, f.length());
@@ -259,7 +259,7 @@ public class RecordingOutputStreamTest extends TmpDirTestCase
             assertEquals("Recorded file content verification", i,
                     fis.read());
         }
-        assertEquals("ReplayInputStream at EOF", -1, ris.read());  
+        assertEquals("ReplayInputStream at EOF", -1, ris.read());
         fis.close();
         ris.close();
     }

@@ -30,14 +30,14 @@ import junit.framework.TestSuite;
 
 /**
  * JUnit test suite for LongFPSetCache
- * 
+ *
  * @author <a href="mailto:me@jamesc.net">James Casey</a>
  * @version $ Id:$
  */
 public class LongFPSetCacheTest extends LongFPSetTestCase {
     /**
      * Create a new LongFPSetCacheTest object
-     * 
+     *
      * @param testName the name of the test
      */
     public LongFPSetCacheTest(final String testName) {
@@ -46,7 +46,7 @@ public class LongFPSetCacheTest extends LongFPSetTestCase {
 
     /**
      * run all the tests for LongFPSetCacheTest
-     * 
+     *
      * @param argv the command line arguments
      */
     public static void main(String argv[]) {
@@ -55,7 +55,7 @@ public class LongFPSetCacheTest extends LongFPSetTestCase {
 
     /**
      * return the suite of tests for LongFPSetCacheTest
-     * 
+     *
      * @return the suite of test
      */
     public static Test suite() {

@@ -37,7 +37,7 @@ import org.archive.crawler.framework.Processor;
 
 /**
  *  This class allows the caller to extract href style links from word97-format word documents.
- * 
+ *
  * @author Parker Thompson
  *
  */
@@ -55,89 +55,89 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
         super(name, "DOC Extractor");
     }
 
-	/**
-	 *  Processes a word document and extracts any hyperlinks from it.
-	 *  This only extracts href style links, and does not examine the actual
-	 *  text for valid URIs.
-	 */
-	protected void innerProcess(CrawlURI curi){
-		
-		ArrayList links  = new ArrayList();
-		GetMethod get = null;
-		InputStream documentStream = null;
-		Writer out = null;
-		
-		// assumes docs will be coming in through http
-		//TODO make htis more general (currently we're only fetching via http so it doesn't matter)
-		if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
-			return;
-		}
-		 get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+    /**
+     *  Processes a word document and extracts any hyperlinks from it.
+     *  This only extracts href style links, and does not examine the actual
+     *  text for valid URIs.
+     */
+    protected void innerProcess(CrawlURI curi){
 
-		Header contentType = get.getResponseHeader("Content-Type");		
-		if ((contentType==null)||(!contentType.getValue().startsWith("application/msword"))) {
-			// nothing to extract for other types here
-			return; 
-		}
-        
-        numberOfCURIsHandled++;		
-		
+    	ArrayList links  = new ArrayList();
+    	GetMethod get = null;
+    	InputStream documentStream = null;
+    	Writer out = null;
+
+    	// assumes docs will be coming in through http
+    	//TODO make htis more general (currently we're only fetching via http so it doesn't matter)
+    	if(! curi.getAList().containsKey(A_HTTP_TRANSACTION)) {
+    		return;
+    	}
+    	 get = (GetMethod)curi.getAList().getObject(A_HTTP_TRANSACTION);
+
+    	Header contentType = get.getResponseHeader("Content-Type");
+    	if ((contentType==null)||(!contentType.getValue().startsWith("application/msword"))) {
+    		// nothing to extract for other types here
+    		return;
+    	}
+
+        numberOfCURIsHandled++;
+
         // get the doc as a File
-		try{
-		  	documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
-		
-			if (documentStream==null) {
-				// TODO: note problem
-				return;
-			}	
-			// extract the text from the doc and write it to a stream we
-			// can then process
-			out = new StringWriter();
-			WordDocument w = null;
+    	try{
+    	  	documentStream = get.getHttpRecorder().getRecordedInput().getContentReplayInputStream();
 
-			w = new WordDocument( documentStream );
-			w.writeAllText(out);
-		}catch(Exception e){
-			curi.addLocalizedError(getName(),e,"ExtractorDOC Exception");
-			return;
-		} finally {
-			try {
-				documentStream.close();
-			} catch (IOException ignored) {
+    		if (documentStream==null) {
+    			// TODO: note problem
+    			return;
+    		}
+    		// extract the text from the doc and write it to a stream we
+    		// can then process
+    		out = new StringWriter();
+    		WordDocument w = null;
 
-			}
-		}
+    		w = new WordDocument( documentStream );
+    		w.writeAllText(out);
+    	}catch(Exception e){
+    		curi.addLocalizedError(getName(),e,"ExtractorDOC Exception");
+    		return;
+    	} finally {
+    		try {
+    			documentStream.close();
+    		} catch (IOException ignored) {
 
-		// get doc text out of stream
-		String page = out.toString();
-		
-		// find HYPERLINKs
-		int currentPos = -1;
-		int linkStart = -1;
-		int linkEnd = -1;
-		char quote = '\"';
-		
-		currentPos = page.indexOf("HYPERLINK");
-		while(currentPos >= 0){
+    		}
+    	}
 
-			linkStart = page.indexOf(quote, currentPos) + 1;
-			linkEnd = page.indexOf(quote, linkStart);
-			
-			String hyperlink = page.substring(linkStart, linkEnd);
-			
-			//System.out.println("link: '" + hyperlink + "'");	
-			links.add(hyperlink);
-			currentPos = page.indexOf("HYPERLINK", linkEnd + 1);
-		}
-		
-		// if we found any links add them to the curi for later processing
-		if(links.size()>0) {
+    	// get doc text out of stream
+    	String page = out.toString();
+
+    	// find HYPERLINKs
+    	int currentPos = -1;
+    	int linkStart = -1;
+    	int linkEnd = -1;
+    	char quote = '\"';
+
+    	currentPos = page.indexOf("HYPERLINK");
+    	while(currentPos >= 0){
+
+    		linkStart = page.indexOf(quote, currentPos) + 1;
+    		linkEnd = page.indexOf(quote, linkStart);
+
+    		String hyperlink = page.substring(linkStart, linkEnd);
+
+    		//System.out.println("link: '" + hyperlink + "'");
+    		links.add(hyperlink);
+    		currentPos = page.indexOf("HYPERLINK", linkEnd + 1);
+    	}
+
+    	// if we found any links add them to the curi for later processing
+    	if(links.size()>0) {
             numberOfLinksExtracted += links.size();
             curi.getAList().putObject(A_HTML_LINKS, links);
-		}
-		curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
-		logger.fine(curi + " has " + links.size() + " links.");
-	}
+    	}
+    	curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
+    	logger.fine(curi + " has " + links.size() + " links.");
+    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#report()
@@ -148,7 +148,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
         ret.append("  Function:          Link extraction on MS Word documents (.doc)\n");
         ret.append("  CrawlURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
-        
+
         return ret.toString();
     }
 }

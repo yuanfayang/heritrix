@@ -26,7 +26,7 @@ package org.archive.util;
 import java.util.LinkedList;
 
 /** An im-memory implementation of a {@link Queue}.
- * 
+ *
  * @author gojomo
  *
  */
@@ -40,29 +40,29 @@ public class MemQueue extends LinkedList implements Queue {
      * @see org.archive.util.Queue#enqueue()
 
      */
-	public void enqueue(Object o) {
-		add(o);
-	}
+    public void enqueue(Object o) {
+    	add(o);
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.util.Queue#dequeue()
-	 */
-	public Object dequeue() {
-		return removeFirst();
-	}
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#dequeue()
+     */
+    public Object dequeue() {
+    	return removeFirst();
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.util.Queue#length()
-	 */
-	public long length() {
-		return (long)size();
-	}
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#length()
+     */
+    public long length() {
+    	return (long)size();
+    }
 
-	/* (non-Javadoc)
-	 * @see org.archive.util.Queue#release()
-	 */
-	public void release() {
-		// nothing to release
-	}
+    /* (non-Javadoc)
+     * @see org.archive.util.Queue#release()
+     */
+    public void release() {
+    	// nothing to release
+    }
 
 }

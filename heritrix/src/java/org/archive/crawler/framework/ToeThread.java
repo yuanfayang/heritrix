@@ -35,175 +35,175 @@ import org.archive.util.HttpRecorder;
 import org.archive.util.PaddingStringBuffer;
 
 /**
- * One "worker thread"; asks for CrawlURIs, processes them, 
- * repeats unless told otherwise. 
- * 
+ * One "worker thread"; asks for CrawlURIs, processes them,
+ * repeats unless told otherwise.
+ *
  * @author Gordon Mohr
  */
 public class ToeThread extends Thread implements CoreAttributeConstants, FetchStatusCodes {
-	private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
+    private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
 
-	private ToePool pool;
-	private boolean shouldCrawl = true;
-	CrawlController controller;
-	int serialNumber;
-	HttpRecorder httpRecorder;
-	HashMap localProcessors = new HashMap();
-	
-	CrawlURI currentCuri;
-	long lastStartTime;
-	long lastFinishTime;
-	// in-process/on-hold curis? not for now
-	// a queue of curis to do next? not for now
+    private ToePool pool;
+    private boolean shouldCrawl = true;
+    CrawlController controller;
+    int serialNumber;
+    HttpRecorder httpRecorder;
+    HashMap localProcessors = new HashMap();
 
-	/**
-	 * @param c
-	 * @param p
-	 * @param sn
-	 */
-	public ToeThread(CrawlController c, ToePool p, int sn) {
-		controller = c;
-		pool = p;
-		serialNumber = sn;
-		setName("ToeThread #"+serialNumber);
-		httpRecorder = new HttpRecorder(controller.getScratchDisk(),"tt"+sn+"http");
-		lastFinishTime = System.currentTimeMillis();
-	}
+    CrawlURI currentCuri;
+    long lastStartTime;
+    long lastFinishTime;
+    // in-process/on-hold curis? not for now
+    // a queue of curis to do next? not for now
+
+    /**
+     * @param c
+     * @param p
+     * @param sn
+     */
+    public ToeThread(CrawlController c, ToePool p, int sn) {
+    	controller = c;
+    	pool = p;
+    	serialNumber = sn;
+    	setName("ToeThread #"+serialNumber);
+    	httpRecorder = new HttpRecorder(controller.getScratchDisk(),"tt"+sn+"http");
+    	lastFinishTime = System.currentTimeMillis();
+    }
 
 
-	public synchronized void crawl(CrawlURI curi) {
-		assert currentCuri == null : "attempt to clobber crawlUri";
-		currentCuri = curi;
-		currentCuri.setThreadNumber(serialNumber);
-		notify();
-	}
-	
-	public boolean isAvailable() {
-		return currentCuri == null;
-	}
+    public synchronized void crawl(CrawlURI curi) {
+    	assert currentCuri == null : "attempt to clobber crawlUri";
+    	currentCuri = curi;
+    	currentCuri.setThreadNumber(serialNumber);
+    	notify();
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Runnable#run()
-	 */
-	public void run() {
-		String name = controller.getOrder().getCrawlOrderName();
-		logger.fine(getName()+" started for order '"+name+"'");
-		// OutOfMemory catch might interfere with usual IBM JVM
-		// heapdump: so commenting out. memory problems will be fatal
-		// try {
-			while ( shouldCrawl ) {
-				processingLoop();
-			} 
-			controller.toeFinished(this);
-		//} catch (OutOfMemoryError e) {
-		//	e.printStackTrace();
-		//	logger.warning(getName()+" exitting: out of memory error");
-		//	shouldCrawl = false;
-		//}
-		
-		// Do cleanup so that objects can be GC.
-		pool = null;
-		controller = null;
-		httpRecorder.closeRecorders();
-		httpRecorder = null;
-		localProcessors = null;
-		
-		logger.fine(getName()+" finished for order '"+name+"'");
-	}
-	
-	private synchronized void processingLoop() {
-		if ( currentCuri != null ) {
-			lastStartTime = System.currentTimeMillis();
-			
-			try {
-				while ( currentCuri.nextProcessor() != null ) {
-					Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
-					currentProcessor.process(currentCuri);
-				}
-			} catch (RuntimeException e) {
-				currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
-				// store exception temporarily for logging
-				currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
-			} catch (Error err) {
-				// OutOfMemory & StackOverflow & etc.
-				System.err.println(err);
-				System.err.println(DevUtils.extraInfo());
-				err.printStackTrace(System.err);
-				currentCuri.setFetchStatus(S_SERIOUS_ERROR);
-			}
-		
-			controller.getFrontier().finished(currentCuri);
-			synchronized(pool) {
-				currentCuri = null;
+    public boolean isAvailable() {
+    	return currentCuri == null;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Runnable#run()
+     */
+    public void run() {
+    	String name = controller.getOrder().getCrawlOrderName();
+    	logger.fine(getName()+" started for order '"+name+"'");
+    	// OutOfMemory catch might interfere with usual IBM JVM
+    	// heapdump: so commenting out. memory problems will be fatal
+    	// try {
+    		while ( shouldCrawl ) {
+    			processingLoop();
+    		}
+    		controller.toeFinished(this);
+    	//} catch (OutOfMemoryError e) {
+    	//	e.printStackTrace();
+    	//	logger.warning(getName()+" exitting: out of memory error");
+    	//	shouldCrawl = false;
+    	//}
+
+    	// Do cleanup so that objects can be GC.
+    	pool = null;
+    	controller = null;
+    	httpRecorder.closeRecorders();
+    	httpRecorder = null;
+    	localProcessors = null;
+
+    	logger.fine(getName()+" finished for order '"+name+"'");
+    }
+
+    private synchronized void processingLoop() {
+    	if ( currentCuri != null ) {
+    		lastStartTime = System.currentTimeMillis();
+
+    		try {
+    			while ( currentCuri.nextProcessor() != null ) {
+    				Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
+    				currentProcessor.process(currentCuri);
+    			}
+    		} catch (RuntimeException e) {
+    			currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
+    			// store exception temporarily for logging
+    			currentCuri.getAList().putObject(A_RUNTIME_EXCEPTION,(Object)e);
+    		} catch (Error err) {
+    			// OutOfMemory & StackOverflow & etc.
+    			System.err.println(err);
+    			System.err.println(DevUtils.extraInfo());
+    			err.printStackTrace(System.err);
+    			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
+    		}
+
+    		controller.getFrontier().finished(currentCuri);
+    		synchronized(pool) {
+    			currentCuri = null;
                 lastFinishTime = System.currentTimeMillis();
-				pool.noteAvailable(this);
-			}
-		}
-		
-		try {
-			wait(); // until master thread gives a new work URI
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			logger.warning(getName()+" interrupted");
-		}
-	}
+    			pool.noteAvailable(this);
+    		}
+    	}
 
-	/**
-	 * @param processor
-	 */
-	private Processor getProcessor(Processor processor) {
-		if(!(processor instanceof InstancePerThread)) {
-			// just use the shared Processor
-			 return processor;
-		}
-		// must use local copy of processor
-		Processor localProcessor = (Processor) localProcessors.get(
+    	try {
+    		wait(); // until master thread gives a new work URI
+    	} catch (InterruptedException e) {
+    		e.printStackTrace();
+    		logger.warning(getName()+" interrupted");
+    	}
+    }
+
+    /**
+     * @param processor
+     */
+    private Processor getProcessor(Processor processor) {
+    	if(!(processor instanceof InstancePerThread)) {
+    		// just use the shared Processor
+    		 return processor;
+    	}
+    	// must use local copy of processor
+    	Processor localProcessor = (Processor) localProcessors.get(
                     processor.getClass().getName());
-		if (localProcessor == null) {
-			localProcessor = processor.spawn(this.getSerialNumber());
-			localProcessors.put(processor.getClass().getName(),localProcessor);
-		}
-		return localProcessor;
-	}
+    	if (localProcessor == null) {
+    		localProcessor = processor.spawn(this.getSerialNumber());
+    		localProcessors.put(processor.getClass().getName(),localProcessor);
+    	}
+    	return localProcessor;
+    }
 
-	private boolean shouldCrawl() {
-		return shouldCrawl;
-	}
-	
-	public synchronized void stopAfterCurrent() {
-		logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
-		shouldCrawl = false;
-		if(isAvailable())
-		{
-			notify();
-		}
-	}
+    private boolean shouldCrawl() {
+    	return shouldCrawl;
+    }
 
-	public int getSerialNumber() {
-		return serialNumber;
-	}
+    public synchronized void stopAfterCurrent() {
+    	logger.info("ToeThread " + serialNumber + " has been told to stopAfterCurrent()");
+    	shouldCrawl = false;
+    	if(isAvailable())
+    	{
+    		notify();
+    	}
+    }
 
-	public HttpRecorder getHttpRecorder() {
-		return httpRecorder;
-	}
+    public int getSerialNumber() {
+    	return serialNumber;
+    }
 
-	/**
-	 * @param recorder
-	 */
-	public void setHttpRecorder(HttpRecorder recorder) {
-		httpRecorder = recorder;
-	}
-	
-	/**
-	 * @return Compiles and returns a report on its status.
-	 */
-	public String report()
-	{
-		PaddingStringBuffer rep = new PaddingStringBuffer();
-		
-		rep.append("     #"+serialNumber);
+    public HttpRecorder getHttpRecorder() {
+    	return httpRecorder;
+    }
+
+    /**
+     * @param recorder
+     */
+    public void setHttpRecorder(HttpRecorder recorder) {
+    	httpRecorder = recorder;
+    }
+
+    /**
+     * @return Compiles and returns a report on its status.
+     */
+    public String report()
+    {
+    	PaddingStringBuffer rep = new PaddingStringBuffer();
+
+    	rep.append("     #"+serialNumber);
         rep.padTo(11);
-        
+
         if(currentCuri!=null)
         {
             rep.append(currentCuri.getURIString());
@@ -214,51 +214,51 @@ public class ToeThread extends Thread implements CoreAttributeConstants, FetchSt
         {
             rep.append("[no CrawlURI]");
         }
-        
+
         rep.newline();
         rep.padTo(8);
-    
-		long now = System.currentTimeMillis();
+
+    	long now = System.currentTimeMillis();
         long time = 0;
-		
+
         if(lastFinishTime > lastStartTime)
-		{
-			// That means we finished something after we last started something
-			// or in other words we are not working on anything.
-			rep.append("WAITING for ");
+    	{
+    		// That means we finished something after we last started something
+    		// or in other words we are not working on anything.
+    		rep.append("WAITING for ");
 
-			time = now-lastFinishTime;
-		}
-		else if(lastStartTime > 0)
-		{
-			// We are working on something
-			rep.append("ACTIVE  for ");
+    		time = now-lastFinishTime;
+    	}
+    	else if(lastStartTime > 0)
+    	{
+    		// We are working on something
+    		rep.append("ACTIVE  for ");
 
-			time = now-lastStartTime;
-		}
+    		time = now-lastStartTime;
+    	}
         appendTime(rep, time);
-		rep.newline();
-        
-		return rep.toString();		
-	}
+    	rep.newline();
+
+    	return rep.toString();
+    }
 
 
     private void appendTime(PaddingStringBuffer rep, long time) {
         if(time>3600000)
         {
-        	//got hours.
-        	rep.append(time/3600000 + "h");
-        	time = time % 3600000;
+            //got hours.
+            rep.append(time/3600000 + "h");
+            time = time % 3600000;
         }
         if(time > 60000)
         {
-        	rep.append(time/60000 + "m");
-        	time = time % 60000;
+            rep.append(time/60000 + "m");
+            time = time % 60000;
         }
         if(time > 1000)
         {
-        	rep.append(time/1000 + "s");
-        	time = time % 60;
+            rep.append(time/1000 + "s");
+            time = time % 60;
         }
         rep.append(time + "ms");
     }

@@ -1,7 +1,7 @@
 /* Type
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Jan 8, 2004
  *
  * Copyright (C) 2004 Internet Archive.
@@ -27,7 +27,7 @@ package org.archive.crawler.datamodel.settings;
 import javax.management.Attribute;
 
 /** Interface implemented by all element types.
- * 
+ *
  * @author John Erik Halse
  */
 public abstract class Type extends Attribute {
@@ -40,21 +40,21 @@ public abstract class Type extends Attribute {
     }
 
     /** Get the description of this type
-     * 
+     *
      * The description should be suitable for showing in a user interface.
-     * 
+     *
      * @return this type's description
      */
     abstract String getDescription();
 
     /** The default value for this type
-     *  
+     *
      * @return this type's default value
      */
     abstract Object getDefaultValue();
 
     /** Get the legal values for this type.
-     * 
+     *
      * @return the legal values for this type or null if there are no
      *         restrictions.
      */
@@ -62,7 +62,7 @@ public abstract class Type extends Attribute {
 
     /** Is this an 'overrideable' setting. All settings are overrideable by
      * default.
-     *  
+     *
      * @return True if this is an an overrideable setting.
      */
     public boolean getOverrideable(){

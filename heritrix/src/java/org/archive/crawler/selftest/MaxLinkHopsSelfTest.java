@@ -34,7 +34,7 @@ import org.archive.crawler.basic.Scope;
 
 /**
  * Test the max-link-hops setting.
- * 
+ *
  * @author stack
  * @version $Id$
  */

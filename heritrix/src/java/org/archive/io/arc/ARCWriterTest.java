@@ -1,23 +1,23 @@
 /* ARCWriterTest
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 31, 2003.
- * 
+ *
  * Copyright (C) 2003 Internet Archive.
- * 
+ *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
- * 
+ *
  * Heritrix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser Public License as published by
  * the Free Software Foundation; either version 2.1 of the License, or
  * any later version.
- * 
- * Heritrix is distributed in the hope that it will be useful, 
+ *
+ * Heritrix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,10 +36,10 @@ import org.archive.util.TmpDirTestCase;
 
 /**
  * Test ARCWriter class.
- * 
- * This code exercises ARCWriter AND ARCReader.  First it writes ARCs w/ 
+ *
+ * This code exercises ARCWriter AND ARCReader.  First it writes ARCs w/
  * ARCWriter.  Then it validates what was written w/ ARCReader.
- * 
+ *
  * @author stack
  */
 public class ARCWriterTest
@@ -50,8 +50,8 @@ public class ARCWriterTest
      * Prefix to use for ARC files made by JUNIT.
      */
     private static final String PREFIX = DEFAULT_ARC_FILE_PREFIX;
-  
-    
+
+
     /*
      * @see TestCase#setUp()
      */
@@ -59,7 +59,7 @@ public class ARCWriterTest
     {
         super.setUp();
     }
-    
+
     /*
      * @see TestCase#tearDown()
      */
@@ -67,18 +67,18 @@ public class ARCWriterTest
     {
         super.tearDown();
     }
-    
+
     protected int writeRandomHTTPRecord(ARCWriter arcWriter, int index)
         throws IOException
     {
         String indexStr = Integer.toString(index);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();   
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // Start the record with an arbitrary 14-digit date per RFC2540
         String now = ArchiveUtils.get14DigitDate();
         byte[] fetchDate = now.getBytes();
         baos.write(fetchDate);
         baos.write("\n".getBytes());
-        int recordLength = fetchDate.length + 1; 
+        int recordLength = fetchDate.length + 1;
         byte[] record = ("HTTP/1.1 200 OK\n" +
             "Content-Type: text/html\n" +
             "<html><head><title>Page #" + indexStr +
@@ -87,14 +87,14 @@ public class ARCWriterTest
             "</body></html>").getBytes();
         recordLength += record.length;
         baos.write(record);
-        // Add the newline between records back in 
+        // Add the newline between records back in
         baos.write("\n".getBytes());
-        recordLength += 1;    
+        recordLength += 1;
         arcWriter.write("http://www.one.net/id=" + indexStr, "text/html",
             "0.1.2.3", Long.parseLong(now), recordLength, baos);
         return recordLength;
     }
-    
+
     private File writeRecords(String baseName, boolean compress,
             int maxSize, int recordCount)
         throws IOException
@@ -112,7 +112,7 @@ public class ARCWriterTest
         arcWriter.close();
         return arcFile;
     }
-        
+
     private void validate(File arcFile, int recordCount)
         throws FileNotFoundException, IOException
     {
@@ -134,13 +134,13 @@ public class ARCWriterTest
     {
         runCheckARCFileSizeTest("checkARCFileSize", false);
     }
-    
+
     public void testCheckARCFileSizeCompressed()
         throws IOException
     {
         runCheckARCFileSizeTest("checkARCFileSize", false);
     }
-    
+
     private void runCheckARCFileSizeTest(String baseName, boolean compress)
         throws FileNotFoundException, IOException
     {
@@ -150,7 +150,7 @@ public class ARCWriterTest
         for (int i = 0; i < files.length; i++)
         {
             validate(files[i], -1);
-        }        
+        }
     }
 
     public void testWriteRecord()
@@ -161,7 +161,7 @@ public class ARCWriterTest
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
         validate(arcFile, recordCount);
     }
-    
+
     public void testWriteRecordCompressed()
         throws IOException
     {
@@ -170,7 +170,7 @@ public class ARCWriterTest
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
         validate(arcFile, recordCount);
     }
-    
+
     public void testGetOutputDir()
         throws IOException
     {

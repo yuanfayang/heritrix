@@ -28,8 +28,8 @@ import java.util.logging.LogRecord;
 
 /**
  * Formatter which merely prints the passed-in message, with no other
- * adornment. 
- * 
+ * adornment.
+ *
  * @author gojomo
  *
  * To change the template for this generated type comment go to
@@ -37,11 +37,11 @@ import java.util.logging.LogRecord;
  */
 public class PassthroughFormatter extends Formatter {
 
-	/* (non-Javadoc)
-	 * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
-	 */
-	public String format(LogRecord record) {
-		return record.getMessage();
-	}
+    /* (non-Javadoc)
+     * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
+     */
+    public String format(LogRecord record) {
+    	return record.getMessage();
+    }
 
 }

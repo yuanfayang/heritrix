@@ -1,6 +1,6 @@
-/* 
+/*
  * SimpleHttpServer
- * 
+ *
  * $Id$
  *
  * Created on Jul 11, 2003
@@ -37,25 +37,25 @@ import org.mortbay.jetty.servlet.WebApplicationContext;
 
 /**
  * Wrapper for embedded Jetty server.
- * 
+ *
  * Loads up all webapps under webapp directory.
- * 
+ *
  */
-public class SimpleHttpServer 
-{   
+public class SimpleHttpServer
+{
     private int port;
     private Server server = null;
-    
+
     /**
      * Default web port.
      */
     public static final int DEFAULT_PORT = 8080;
-    
+
     /**
      * Webapp contexts returned out of a server start.
      */
     private WebApplicationContext [] contexts = null;
-    
+
 
     public SimpleHttpServer() throws Exception
     {
@@ -71,7 +71,7 @@ public class SimpleHttpServer
         this.server.addListener(listener);
         this.server.setRootWebApp("root");
         this.contexts = server.addWebApplications(null, getWARSPath(), true);
-        
+
         // Have accesses go into the stdout/stderr log for now.  Later, if
         // demand, we'll have accesses go into their own file.
         NCSARequestLog a = new NCSARequestLog(Heritrix.getHERITRIX_OUT_FILE());
@@ -83,10 +83,10 @@ public class SimpleHttpServer
         a.start();
         this.server.setRequestLog(a);
     }
-    
+
     /**
      * Return the directory that holds the WARs we're to deploy.
-     * 
+     *
      * @return Return webapp path (Path returned has a trailing '/').
      */
     private static String getWARSPath()
@@ -98,10 +98,10 @@ public class SimpleHttpServer
         }
         return webappsPath;
     }
-    
+
     /**
      * Start the server.
-     * 
+     *
      * @throws Exception if problem starting server or if server already
      * started.
      */
@@ -110,10 +110,10 @@ public class SimpleHttpServer
     {
         this.server.start();
     }
-    
+
     /**
      * Stop the running server.
-     * 
+     *
      * @throws Exception
      */
     public synchronized void stopServer() throws InterruptedException
@@ -123,7 +123,7 @@ public class SimpleHttpServer
             this.server.stop();
         }
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#finalize()
      */
@@ -149,22 +149,22 @@ public class SimpleHttpServer
     {
         return this.server;
     }
-    
+
     /**
-     * @param contextName Name of context to look for.  Possible names would be 
+     * @param contextName Name of context to look for.  Possible names would be
      * '/admin', '/', or '/selftest'.
-     * 
+     *
      * @return named context.
      */
     private WebApplicationContext getContext(String contextName)
     {
         WebApplicationContext context = null;
-        
+
         if (this.contexts == null)
         {
             throw new NullPointerException("No contexts available.");
         }
-        
+
         for (int i = 0; i < contexts.length; i++)
         {
             if (contexts[i].getHttpContextName().equals(contextName))
@@ -173,20 +173,20 @@ public class SimpleHttpServer
                 break;
             }
         }
-        
+
         if (context == null)
         {
             throw new NoSuchElementException("Unknown webapp: " + contextName);
         }
-        
+
         return context;
     }
-    
+
     /**
      * Get path to named webapp.
-     * 
+     *
      * @param name Name of webpp.  Possible names are 'admin' or 'garden'.
-     * 
+     *
      * @return Path to deployed webapp.
      */
     public File getWebappPath(String name)

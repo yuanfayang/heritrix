@@ -65,8 +65,8 @@ package org.apache.commons.httpclient;
 
 import java.io.IOException;
 import java.net.URL;
-import java.security.Security; 
-import java.security.Provider;  
+import java.security.Security;
+import java.security.Provider;
 
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.logging.Log;
@@ -89,7 +89,7 @@ import org.apache.commons.logging.LogFactory;
  * @author Sam Maloney
  * @author Laura Werner
  * @author <a href="mailto:oleg@ural.ru">Oleg Kalnichevski</a>
- * 
+ *
  * @version $Revision$ $Date$
  */
 public class HttpClient {
@@ -114,7 +114,7 @@ public class HttpClient {
                 for (int i = 0; i < providers.length; i++) {
                     Provider provider = providers[i];
                     LOG.debug(provider.getName() + " " + provider.getVersion()
-                       + ": " + provider.getInfo());   
+                       + ": " + provider.getInfo());
                 }
             } catch(SecurityException ignore) {
             }
@@ -125,7 +125,7 @@ public class HttpClient {
     /**
      * Creates an instance of HttpClient using a
      * {@link SimpleHttpConnectionManager simple HTTP connection manager}.
-     * 
+     *
      * @see SimpleHttpConnectionManager
      */
     public HttpClient() {
@@ -136,25 +136,25 @@ public class HttpClient {
      * Creates an instance of HttpClient with a user specified connection manager.
      * @param httpConnectionManager The {@link HttpConnectionManager connection manager}
      * to use.
-     * 
+     *
      * @since 2.0
      */
     public HttpClient(HttpConnectionManager httpConnectionManager) {
 
         if (httpConnectionManager == null) {
-            throw new IllegalArgumentException("httpConnectionManager cannot be null");  
+            throw new IllegalArgumentException("httpConnectionManager cannot be null");
         }
 
         this.state = new HttpState();
         this.httpConnectionManager = httpConnectionManager;
 
         this.hostConfiguration = new HostConfiguration();
-        
+
     }
-    
+
     // ----------------------------------------------------- Instance Variables
 
-    /** 
+    /**
      * The {@link HttpConnectionManager connection manager} being used to manage
      * connections for this HttpClient
      */
@@ -165,30 +165,30 @@ public class HttpClient {
      */
     private HttpState state;
 
-    /** 
-     * The timout in milliseconds when waiting for a connection from the 
-     * {@link HttpConnectionManager connection manager} 
+    /**
+     * The timout in milliseconds when waiting for a connection from the
+     * {@link HttpConnectionManager connection manager}
      */
     private long httpConnectionTimeout = 0;
 
-    /** 
+    /**
      * The socket timeout in milliseconds.
      */
     private int timeoutInMilliseconds = 0;
 
-    /** 
-     * The connection timeout in milliseconds. 
+    /**
+     * The connection timeout in milliseconds.
      */
     private int connectionTimeout = 0;
 
-    /** 
+    /**
      * The {@link HostConfiguration host configuration} associated with
      * the HttpClient
      */
     private HostConfiguration hostConfiguration;
-    
-    /** 
-     * True if strict mode is enabled. 
+
+    /**
+     * True if strict mode is enabled.
      */
     private boolean strictMode = false;
 
@@ -215,16 +215,16 @@ public class HttpClient {
     }
 
     /**
-     * Defines how strictly the method follows the HTTP protocol specification  
-     * (see RFC 2616 and other relevant RFCs). 
-     * 
+     * Defines how strictly the method follows the HTTP protocol specification
+     * (see RFC 2616 and other relevant RFCs).
+     *
      * In the strict mode the method precisely
-     * implements the requirements of the specification, whereas in non-strict mode 
-     * it attempts to mimic the exact behaviour of commonly used HTTP agents, 
+     * implements the requirements of the specification, whereas in non-strict mode
+     * it attempts to mimic the exact behaviour of commonly used HTTP agents,
      * which many HTTP servers expect.
-     * 
+     *
      * @param strictMode <tt>true</tt> for strict mode, <tt>false</tt> otherwise
-     * 
+     *
      * @see #isStrictMode()
      */
     public synchronized void setStrictMode(boolean strictMode) {
@@ -235,7 +235,7 @@ public class HttpClient {
      * Returns the value of the strict mode flag.
      *
      * @return <tt>true</tt> if strict mode is enabled, <tt>false</tt> otherwise
-     * 
+     *
      * @see #setStrictMode(boolean)
      */
     public synchronized boolean isStrictMode() {
@@ -243,8 +243,8 @@ public class HttpClient {
     }
 
     /**
-     * Sets the socket timeout (<tt>SO_TIMEOUT</tt>) in milliseconds which is the 
-     * timeout for waiting for data. A timeout value of zero is interpreted as an 
+     * Sets the socket timeout (<tt>SO_TIMEOUT</tt>) in milliseconds which is the
+     * timeout for waiting for data. A timeout value of zero is interpreted as an
      * infinite timeout.
      *
      * @param newTimeoutInMilliseconds Timeout in milliseconds
@@ -254,12 +254,12 @@ public class HttpClient {
     }
 
     /**
-     * Sets the timeout in milliseconds used when retrieving an 
+     * Sets the timeout in milliseconds used when retrieving an
      * {@link HttpConnection HTTP connection} from the
      * {@link HttpConnectionManager HTTP connection manager}.
-     * 
+     *
      * @param timeout the timeout in milliseconds
-     * 
+     *
      * @see HttpConnectionManager#getConnection(HostConfiguration, long)
      */
     public synchronized void setHttpConnectionFactoryTimeout(long timeout) {
@@ -267,11 +267,11 @@ public class HttpClient {
     }
 
     /**
-     * Sets the timeout until a connection is etablished. A timeout value of 
+     * Sets the timeout until a connection is etablished. A timeout value of
      * zero means the timeout is not used. The default value is zero.
-     * 
+     *
      * @param newTimeoutInMilliseconds Timeout in milliseconds.
-     * 
+     *
      * @see HttpConnection#setConnectionTimeout(int)
      */
     public synchronized void setConnectionTimeout(int newTimeoutInMilliseconds) {
@@ -283,12 +283,12 @@ public class HttpClient {
     /**
      * Sets the host, port and default protocol (http) to be used when executing a
      * method.
-     * 
+     *
      * @param host the host to connect to
      * @param port the port to connect to
      *
      * @see #getHostConfiguration()
-     * 
+     *
      * @deprecated use {@link HostConfiguration}
      */
     public void startSession(String host, int port) {
@@ -298,15 +298,15 @@ public class HttpClient {
 
     /**
      * Sets the host, port and protocol to be used when executing a method.
-     * 
+     *
      * @param host the host to connect to
      * @param port the port to connect to
      * @param https when <code>true</code>, create an HTTPS session
      *
      * @see #getHostConfiguration()
-     * 
+     *
      * @deprecated use {@link HostConfiguration}
-     */    
+     */
     public void startSession(String host, int port, boolean https) {
         LOG.trace("enter HttpClient.startSession(String, int, boolean)");
 
@@ -314,7 +314,7 @@ public class HttpClient {
             LOG.debug("HttpClient.startSession(String,int,boolean): Host:"
                 + host + " Port:" + port + " HTTPS:" + https);
         }
-        
+
         this.hostConfiguration.setHost(host, port, https ? "https" : "http");
     }
 
@@ -329,8 +329,8 @@ public class HttpClient {
      * @see #getHostConfiguration()
      * @see #getState()
      * @see #startSession(String, int, Credentials, boolean)
-     * 
-     * @deprecated use {@link HostConfiguration} and {@link HttpState} 
+     *
+     * @deprecated use {@link HostConfiguration} and {@link HttpState}
      */
     public void startSession(String host, int port, Credentials creds) {
         LOG.trace("enter HttpClient.startSession(String, int, Credentials)");
@@ -348,8 +348,8 @@ public class HttpClient {
      *
      * @see #getHostConfiguration()
      * @see #getState()
-     * 
-     * @deprecated use {@link HostConfiguration} and {@link HttpState} 
+     *
+     * @deprecated use {@link HostConfiguration} and {@link HttpState}
      */
     public void startSession(String host, int port, Credentials creds, boolean https) {
         LOG.trace("enter HttpClient.startSession(String, int, Credentials, boolean)");
@@ -382,14 +382,14 @@ public class HttpClient {
      *
      * @throws IllegalStateException not enough information to process
      * @throws URIException If the URI is bad.
-     * 
+     *
      * @see #getHostConfiguration()
-     * 
-     * @deprecated use {@link HostConfiguration} 
+     *
+     * @deprecated use {@link HostConfiguration}
      */
-    public void startSession(URI uri) 
+    public void startSession(URI uri)
         throws URIException, IllegalStateException {
-            
+
         LOG.trace("enter HttpClient.startSession(URI)");
 
         String scheme = uri.getScheme();
@@ -427,12 +427,12 @@ public class HttpClient {
      * </p>
      * @param url the {@link URL URL} from which the protocol, host, and port of
      * the session are determined
-     * 
+     *
      * @exception IllegalArgumentException if the protocol is not http or https
      *
      * @see #getHostConfiguration()
-     * 
-     * @deprecated use {@link HostConfiguration} 
+     *
+     * @deprecated use {@link HostConfiguration}
      */
     public void startSession(URL url) throws IllegalArgumentException {
         LOG.trace("enter HttpClient.startSession(String, int, Credentials, boolean)");
@@ -453,17 +453,17 @@ public class HttpClient {
      * @param url the {@link URL URL} from which the protocol, host, and port of
      * the session are determined
      * @param creds the default credentials to use
-     *  
+     *
      * @exception IllegalArgumentException if the protocol is not http or https
      *
-     * @see #getHostConfiguration()   
+     * @see #getHostConfiguration()
      * @see #getState()
-     * 
-     * @deprecated use {@link HostConfiguration} and {@link HttpState} 
+     *
+     * @deprecated use {@link HostConfiguration} and {@link HttpState}
      */
-    public void startSession(URL url, Credentials creds) 
+    public void startSession(URL url, Credentials creds)
         throws IllegalArgumentException {
-            
+
         LOG.trace("enter HttpClient.startSession(URL, Credentials)");
         getState().setCredentials(null, creds);
         startSession(url);
@@ -472,15 +472,15 @@ public class HttpClient {
     /**
      * Sets the host, port, protocol(http) and proxy to be used when executing a
      * method.
-     * 
+     *
      * @param host the host to connect to
      * @param port the port to connect to
      * @param proxyhost the proxy host to connect via
      * @param proxyport the proxy port to connect via
      *
      * @see #getHostConfiguration()
-     * 
-     * @deprecated use {@link HostConfiguration} 
+     *
+     * @deprecated use {@link HostConfiguration}
      */
     public void startSession(String host, int port, String proxyhost, int proxyport) {
         LOG.trace("enter HttpClient.startSession(String, int, String, int)");
@@ -490,20 +490,20 @@ public class HttpClient {
     /**
      * Sets the host, port, protocol and proxy to be used when executing a
      * method.
-     * 
+     *
      * @param host the host to connect to
      * @param port the port to connect to
      * @param proxyhost the proxy host to connect via
      * @param proxyport the proxy port to connect via
      * @param secure whether or not to connect using HTTPS
-     * 
+     *
      * @see #getHostConfiguration()
-     * 
-     * @deprecated use {@link HostConfiguration} 
+     *
+     * @deprecated use {@link HostConfiguration}
      */
-    public void startSession(String host, int port, 
+    public void startSession(String host, int port,
         String proxyhost, int proxyport, boolean secure) {
-            
+
         LOG.trace("enter HttpClient.startSession("
             + "String, int, String, int, boolean)");
         this.hostConfiguration.setHost (host, port, secure ? "https" : "http");
@@ -518,26 +518,26 @@ public class HttpClient {
      *
      * @throws IOException If an I/O (transport) error occurs. Some transport exceptions
      *                     can be recovered from.
-     * @throws HttpException  If a protocol exception occurs. Usually protocol exceptions 
+     * @throws HttpException  If a protocol exception occurs. Usually protocol exceptions
      *                    cannot be recovered from.
      */
     public int executeMethod(HttpMethod method)
         throws IOException, HttpException  {
-            
+
         LOG.trace("enter HttpClient.executeMethod(HttpMethod)");
         // execute this method and use its host configuration, if it has one
         return executeMethod(
-            method.getHostConfiguration() != null 
+            method.getHostConfiguration() != null
             ? method.getHostConfiguration()
-            : getHostConfiguration(), 
+            : getHostConfiguration(),
             method,
             null
         );
-        
+
     }
 
     /**
-    * Executes the given {@link HttpMethod HTTP method} using custom 
+    * Executes the given {@link HttpMethod HTTP method} using custom
     * {@link HostConfiguration host configuration}.
     *
     * @param hostConfiguration The {@link HostConfiguration host configuration} to use.
@@ -546,23 +546,23 @@ public class HttpClient {
     *
     * @throws IOException If an I/O (transport) error occurs. Some transport exceptions
     *                     can be recovered from.
-    * @throws HttpException  If a protocol exception occurs. Usually protocol exceptions 
+    * @throws HttpException  If a protocol exception occurs. Usually protocol exceptions
     *                    cannot be recovered from.
     * @since 2.0
     */
     public int executeMethod(HostConfiguration hostConfiguration, HttpMethod method)
         throws IOException, HttpException {
-    
-        LOG.trace("enter HttpClient.executeMethod(HostConfiguration,HttpMethod)");
-    
-        return executeMethod(hostConfiguration, method, null); 
-    }
-    
 
-    
+        LOG.trace("enter HttpClient.executeMethod(HostConfiguration,HttpMethod)");
+
+        return executeMethod(hostConfiguration, method, null);
+    }
+
+
+
     /**
-     * Executes the given {@link HttpMethod HTTP method} using the given custom 
-     * {@link HostConfiguration host configuration} with the given custom 
+     * Executes the given {@link HttpMethod HTTP method} using the given custom
+     * {@link HostConfiguration host configuration} with the given custom
      * {@link HttpState HTTP state}.
      *
      * @param hostConfiguration The {@link HostConfiguration host configuration} to use.
@@ -574,14 +574,14 @@ public class HttpClient {
      *
      * @throws IOException If an I/O (transport) error occurs. Some transport exceptions
      *                     can be recovered from.
-     * @throws HttpException  If a protocol exception occurs. Usually protocol exceptions 
+     * @throws HttpException  If a protocol exception occurs. Usually protocol exceptions
      *                    cannot be recovered from.
      * @since 2.0
      */
-    public int executeMethod(HostConfiguration hostConfiguration, 
+    public int executeMethod(HostConfiguration hostConfiguration,
         HttpMethod method, HttpState state)
         throws IOException, HttpException  {
-            
+
         LOG.trace("enter HttpClient.executeMethod(HostConfiguration,HttpMethod,HttpState)");
 
         if (method == null) {
@@ -609,9 +609,9 @@ public class HttpClient {
             defaultHostConfiguration = getHostConfiguration();
         }
 
-        HostConfiguration methodConfiguration 
+        HostConfiguration methodConfiguration
             = new HostConfiguration(hostConfiguration);
-        
+
         if (hostConfiguration != defaultHostConfiguration) {
             // we may need to apply some defaults
             if (!methodConfiguration.isHostSet()) {
@@ -622,21 +622,21 @@ public class HttpClient {
                     defaultHostConfiguration.getProtocol()
                 );
             }
-            if (!methodConfiguration.isProxySet() 
+            if (!methodConfiguration.isProxySet()
                 && defaultHostConfiguration.isProxySet()) {
-                    
+
                 methodConfiguration.setProxy(
                     defaultHostConfiguration.getProxyHost(),
-                    defaultHostConfiguration.getProxyPort() 
-                );   
+                    defaultHostConfiguration.getProxyPort()
+                );
             }
             if (methodConfiguration.getLocalAddress() == null
                 && defaultHostConfiguration.getLocalAddress() != null) {
-                    
+
                 methodConfiguration.setLocalAddress(defaultHostConfiguration.getLocalAddress());
             }
         }
-        
+
         HttpConnectionManager connmanager = this.httpConnectionManager;
         HttpConnection connection = connmanager.getConnection(
             methodConfiguration,
@@ -644,13 +644,13 @@ public class HttpClient {
         );
 
         try {
-            // Catch all possible exceptions to make sure to release the 
-            // connection, as although the user may call 
+            // Catch all possible exceptions to make sure to release the
+            // connection, as although the user may call
             // Method->releaseConnection(), the method doesn't know about the
             // connection until HttpMethod.execute() is called.
-            
+
             method.setStrictMode(strictMode);
-        
+
             if (!connection.isOpen()) {
                 connection.setSoTimeout(soTimeout);
                 connection.setConnectionTimeout(connectionTimeout);
@@ -671,14 +671,14 @@ public class HttpClient {
             connection.releaseConnection();
             throw e;
         }
-        
+
         return method.execute(state, connection);
     }
 
     /**
      * @deprecated this method has no effect. {@link HttpMethod#releaseConnection()}
      * should be used to release resources after a HttpMethod has been executed.
-     * 
+     *
      * @see HttpMethod#releaseConnection()
      */
     public void endSession() throws IOException {
@@ -703,13 +703,13 @@ public class HttpClient {
      public int getPort() {
          return hostConfiguration.getPort();
      }
-     
+
     /**
-     * Returns the {@link HostConfiguration host configuration} associated with the 
+     * Returns the {@link HostConfiguration host configuration} associated with the
      * HttpClient.
-     * 
+     *
      * @return {@link HostConfiguration host configuration}
-     * 
+     *
      * @since 2.0
      */
     public synchronized HostConfiguration getHostConfiguration() {
@@ -719,9 +719,9 @@ public class HttpClient {
     /**
      * Assigns the {@link HostConfiguration host configuration} to use with the
      * HttpClient.
-     * 
+     *
      * @param hostConfiguration The {@link HostConfiguration host configuration} to set
-     * 
+     *
      * @since 2.0
      */
     public synchronized void setHostConfiguration(HostConfiguration hostConfiguration) {
@@ -729,11 +729,11 @@ public class HttpClient {
     }
 
     /**
-     * Returns the {@link HttpConnectionManager HTTP connection manager} associated 
+     * Returns the {@link HttpConnectionManager HTTP connection manager} associated
      * with the HttpClient.
-     * 
+     *
      * @return {@link HttpConnectionManager HTTP connection manager}
-     * 
+     *
      * @since 2.0
      */
     public synchronized HttpConnectionManager getHttpConnectionManager() {
@@ -743,10 +743,10 @@ public class HttpClient {
     /**
      * Assigns the {@link HttpConnectionManager HTTP connection manager} to use with
      * the HttpClient.
-     * 
+     *
      * @param httpConnectionManager The {@link HttpConnectionManager HTTP connection manager}
      *  to set
-     * 
+     *
      * @since 2.0
      */
     public synchronized void setHttpConnectionManager(

@@ -31,7 +31,7 @@ import junit.framework.TestCase;
  * JUnit test suite for LongFPSet.  This is an abstract class which defines
  * the generic tests that test the {@link LongFPSet} interface.  Subclasses
  * may test specifics of {@link LongFPSet} subclass implementations
- * 
+ *
  * @author <a href="mailto:me@jamesc.net">James Casey</a>
  * @version $ Id:$
  */
@@ -42,7 +42,7 @@ abstract public class LongFPSetTestCase extends TestCase {
 
     /**
      * Create a new LongFPSetTest object
-     * 
+     *
      * @param testName the name of the test
      */
     public LongFPSetTestCase(final String testName) {

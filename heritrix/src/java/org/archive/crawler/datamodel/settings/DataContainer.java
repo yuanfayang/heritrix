@@ -1,7 +1,7 @@
 /* DataContainer
- * 
+ *
  * $Id$
- * 
+ *
  * Created on Dec 17, 2003
  *
  * Copyright (C) 2003 Internet Archive.
@@ -21,7 +21,7 @@
  * You should have received a copy of the GNU Lesser Public License
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * 
+ *
  */
 package org.archive.crawler.datamodel.settings;
 
@@ -36,28 +36,28 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 
 /** This class holds the data for a ComplexType for a settings object.
- * 
+ *
  * @author John Erik Halse
  */
 public class DataContainer extends HashMap {
     /** The ComplexType for which this DataContainer keeps data */
     private ComplexType complexType;
-    
+
     /** The Settings object for which this data is valid */
     private CrawlerSettings settings;
-    
+
     /** The attributes defined for this DataContainers combination of
      * ComplexType and CrawlerSettings.
      */
     private List attributes;
-    
+
     /** All attributes that have their value set for this DataContainers
      * combination of ComplexType and CrawlerSettings. This includes overrides.
      */
     private Map attributeNames;
 
     /** Create a data container for a module.
-     * 
+     *
      * @param settings Settings to use.
      * @param module the module to create the data container for.
      */
@@ -70,7 +70,7 @@ public class DataContainer extends HashMap {
     }
 
     /** Add a new element to the data container.
-     * 
+     *
      * @param name name of the element to add.
      * @param description description ef the element to add.
      * @param overrideable should this element be overrideable.
@@ -119,7 +119,7 @@ public class DataContainer extends HashMap {
     }
 
     /** Appends the specified element to the end of this data container.
-     * 
+     *
      * @param name name of the element to add.
      * @param description description ef the element to add.
      * @param overrideable should this element be overrideable.
@@ -229,9 +229,9 @@ public class DataContainer extends HashMap {
         }
         return res;
     }
-    
-    /** Move an attribute up one place in the list. 
-     * 
+
+    /** Move an attribute up one place in the list.
+     *
      * @param key name of attribute to move.
      * @return true if attribute was moved, false if attribute was already
      *              at the top.
@@ -248,15 +248,15 @@ public class DataContainer extends HashMap {
         if (prevIndex == 0) {
             return false;
         }
-        
+
         attributes.remove(prevIndex);
         attributes.add(prevIndex-1, element);
-        
+
         return true;
     }
-    
-    /** Move an attribute down one place in the list. 
-     * 
+
+    /** Move an attribute down one place in the list.
+     *
      * @param key name of attribute to move.
      * @return true if attribute was moved, false if attribute was already
      *              at bottom.
@@ -273,15 +273,15 @@ public class DataContainer extends HashMap {
         if (prevIndex == attributes.size()-1) {
             return false;
         }
-        
+
         attributes.remove(prevIndex);
         attributes.add(prevIndex+1, element);
-        
+
         return true;
     }
 
     /** Remove an attribute from the DataContainer.
-     * 
+     *
      * @param key name of the attribute to remove.
      * @return the element that was removed.
      * @throws AttributeNotFoundException is thrown if there is no attribute
@@ -295,11 +295,11 @@ public class DataContainer extends HashMap {
 
         attributes.remove(element);
         attributeNames.remove(element.getName());
-        return super.remove(element.getName()); 
+        return super.remove(element.getName());
     }
-    
+
     /** Get the ComplexType for which this DataContainer keeps data.
-     * 
+     *
      * @return the ComplexType for which this DataContainer keeps data.
      */
     protected ComplexType getComplexType() {
@@ -307,7 +307,7 @@ public class DataContainer extends HashMap {
     }
 
     /** Get the settings object for which this DataContainers data are valid.
-     * 
+     *
      * @return the settings object for which this DataContainers data are valid.
      */
     protected CrawlerSettings getSettings() {

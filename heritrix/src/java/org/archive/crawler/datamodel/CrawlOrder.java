@@ -1,8 +1,8 @@
-/* 
+/*
  * CrawlOrder
  *
- * $Header$ 
- * 
+ * $Header$
+ *
  * Created on May 15, 2003
  *
  * Copyright (C) 2003 Internet Archive.
@@ -40,11 +40,11 @@ import org.archive.crawler.datamodel.settings.SimpleType;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.URIFrontier;
 
-/** 
+/**
  * Represents the 'root' of the settings hierarchy. Contains those settings that
- * do not belong to any specific module, but rather relate to the crawl as a 
+ * do not belong to any specific module, but rather relate to the crawl as a
  * whole (much of this is used by the CrawlController directly or indirectly).
- * 
+ *
  * @see org.archive.crawler.datamodel.settings.CrawlerModule
  */
 public class CrawlOrder extends CrawlerModule {
@@ -69,10 +69,10 @@ public class CrawlOrder extends CrawlerModule {
     private MapType httpHeaders;
     private MapType processors;
     private MapType loggers;
-    
+
     private CrawlController controller;
 
-    /** Construct a CrawlOrder. 
+    /** Construct a CrawlOrder.
      */
     public CrawlOrder() {
         super(ATTR_NAME, "Heritrix crawl order");
@@ -115,7 +115,7 @@ public class CrawlOrder extends CrawlerModule {
                 false));
 
         addElementToDefinition(new Scope());
-        
+
         httpHeaders =
             (MapType) addElementToDefinition(new MapType(ATTR_HTTP_HEADERS,
                 "HTTP headers"));
@@ -183,7 +183,7 @@ public class CrawlOrder extends CrawlerModule {
 
     /**
      * This method gets the RobotsHonoringPolicy object from the orders file.
-     * 
+     *
      * @return the new RobotsHonoringPolicy
      */
     public RobotsHonoringPolicy getRobotsHonoringPolicy() {
@@ -202,13 +202,13 @@ public class CrawlOrder extends CrawlerModule {
     }
 
     /** Get the name of the order file.
-     * 
+     *
      * @return the name of the order file.
      */
     public String getCrawlOrderName() {
         return getSettingsHandler().getSettingsObject(null).getName();
     }
-    
+
     /**
      * @return The crawl controller.
      */
@@ -222,16 +222,16 @@ public class CrawlOrder extends CrawlerModule {
     public void setController(CrawlController controller) {
         this.controller = controller;
     }
-    
+
     /**
-     * Returns the Map of the StatisticsTracking modules that are included in the 
+     * Returns the Map of the StatisticsTracking modules that are included in the
      * configuration that the current instance of this class is representing.
      * @return Map of the StatisticsTracking modules
      */
     public MapType getLoggers() {
         return loggers;
     }
-    
+
     /**
      * Returns the Map of the URI Processor series as defined by the configuration
      * that the current instance of this class is representing.
