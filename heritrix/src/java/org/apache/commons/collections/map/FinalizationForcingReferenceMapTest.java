@@ -1,4 +1,4 @@
-/* IdentityCachingMapTest
+/* FinalizationForcingReferenceMap
  *
  * $Id$
  *
@@ -25,12 +25,11 @@
 
 package org.apache.commons.collections.map;
 
-import java.lang.ref.SoftReference;
-import java.util.LinkedList;
-
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+
+import org.archive.util.TestUtils;
 
 /**
  * JUnit test suite for FinalizationForcingReferenceMap
@@ -108,27 +107,9 @@ public class FinalizationForcingReferenceMapTest extends TestCase {
         assertTrue("map not holding test item", map.get("test") == value);
         assertFalse("finalization noted prematurely", flag.isNoted());
         value = null;
-        forceScarceMemory();
+        TestUtils.forceScarceMemory();
         assertTrue("map not cleared as expected", map.get("test") == null);
         assertTrue("value not finalized yet", flag.isNoted());
-    }
-
-    /**
-     * Temporarily exhaust memory, forcing weak/soft references to
-     * be broken. 
-     */
-    private void forceScarceMemory() {
-        // force soft references to be broken
-        LinkedList hog = new LinkedList();
-        long blocks = Runtime.getRuntime().maxMemory() / 1000000;
-        for(long l = 0; l <= blocks; l++) {
-            try {
-                hog.add(new SoftReference(new byte[1000000]));
-            } catch (OutOfMemoryError e) {
-                hog = null;
-                break;
-            }
-        }
     }
 }
 

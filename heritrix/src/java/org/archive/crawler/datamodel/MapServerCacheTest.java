@@ -22,12 +22,10 @@
 */
 package org.archive.crawler.datamodel;
 
-import java.lang.ref.SoftReference;
-import java.util.LinkedList;
+import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
-
-import junit.framework.TestCase;
+import org.archive.util.TestUtils;
 
 /**
  * Test the MapServerCache
@@ -43,7 +41,6 @@ public class MapServerCacheTest extends TestCase {
         String hostKey = "www.example.com";
         servers.getServerFor(serverKey);
         servers.getHostFor(hostKey);
-        forceScarceMemory();
         assertTrue("cache lost server", servers.containsServer(serverKey));
         assertTrue("cache lost host", servers.containsHost(hostKey));
     }
@@ -63,24 +60,9 @@ public class MapServerCacheTest extends TestCase {
         CrawlURI curi = new CrawlURI(uuri);
         servers.getServerFor(curi);
         servers.getHostFor(curi);
-        forceScarceMemory();
         assertTrue("cache lost server",
             servers.containsServer(CrawlServer.getServerKey(curi)));
         assertTrue("cache lost host",
             servers.containsHost(curi.getUURI().getHost()));
-    }
-
-    private void forceScarceMemory() {
-        // Force soft references to be broken
-        LinkedList hog = new LinkedList();
-        long blocks = Runtime.getRuntime().maxMemory() / 1000000;
-        for(long l = 0; l <= blocks; l++) {
-            try {
-                hog.add(new SoftReference(new byte[1000000]));
-            } catch (OutOfMemoryError e) {
-                hog = null;
-                break;
-            }
-        }
     }
 }
