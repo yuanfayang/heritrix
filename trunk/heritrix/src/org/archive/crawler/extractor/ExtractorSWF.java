@@ -87,6 +87,9 @@ public class ExtractorSWF extends Processor implements CoreAttributeConstants {
 		try{
 			reader.readFile();		
 		}catch(IOException e){
+			// TODO: this should logged somehow, so that if it
+			// a bug or crawler limitation, rather than true
+			// network/io problem, it can be noted and/or corrected
 			e.printStackTrace();	
 		}
 		

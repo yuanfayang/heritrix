@@ -142,7 +142,6 @@ public class SimpleSelector extends XMLConfig implements URISelector, CoreAttrib
 		switch (curi.getFetchStatus()) {
 			case S_CONNECT_FAILED:					
 			case S_CONNECT_LOST:
-			case S_INTERNAL_ERROR:
 			case S_UNATTEMPTED:
 			case S_TIMEOUT:
 				// these are all worth a retry
