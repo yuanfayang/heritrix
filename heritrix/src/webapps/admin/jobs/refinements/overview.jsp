@@ -168,7 +168,7 @@
             <%
 				ListIterator refinements = localSettings.refinementsIterator();
 				boolean alt = true;
-				while(refinements.hasNext()){
+				while(refinements != null && refinements.hasNext()){
 				    Refinement ref = (Refinement)refinements.next();
             %>
                     <tr <%=alt?"bgcolor='#EEEEFF'":""%>>

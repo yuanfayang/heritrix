@@ -10,6 +10,8 @@
     /**
      * This include page contains methods used by the job configuration pages,
      * global, override and refinements.
+     * 
+     * @author Kristinn Sigurdsson
      */
      
     /**
@@ -128,7 +130,11 @@
                             if(localAttribute != null){
                                 p.append(" checked");
                             }
-                            p.append(" type='checkbox'>");
+                            if(att.isOverrideable() == false && localAttribute != null){
+                                p.append(" type='hidden'>");
+                            } else {
+                                p.append(" type='checkbox'>");
+                            }
                             p.append("</td>\n");
                         } else if (settings != null){
                             allowEdit = false;

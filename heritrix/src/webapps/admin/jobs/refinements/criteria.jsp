@@ -131,6 +131,9 @@
             <font color="red"><b><%=message%></b></font>
     <% } %>
     <p>
+        <b>Refinement '<%=refinement.getReference()%>' on '<%=global?"global settings":currDomain%>' of
+        <%=theJob.isProfile()?"profile":"job"%>
+        <%=theJob.getJobName()%>:</b>
         <%@include file="/include/jobrefinementnav.jsp"%>
     <p>
     <form name="frmCriteria" method="post" action="criteria.jsp">
@@ -139,12 +142,12 @@
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
         <input type="hidden" name="currDomain" value="<%=currDomain%>">
         <input type="hidden" name="reference" value="<%=reference%>">
-        <b>
-            Existing criteria for refinement '<%=refinement.getReference()%>' on '<%=global?"global settings":currDomain%>' of
-            <%=theJob.isProfile()?"profile":"job"%>
-            <%=theJob.getJobName()%>:
-        </b>
-        <table border="0" cellpadding="0" cellspacing="0" width="450">
+        <table border="0" cellpadding="1" cellspacing="0" width="450">
+            <tr>
+                <td colspan="2" style="background-color: #0000FF; color: #FFFFFF">
+                    &nbsp;<b>Existing criteria</b>
+                </td>
+            </tr>
             <%
                 ListIterator criteria = refinement.criteriaIterator();
                 boolean alt = true;
@@ -189,8 +192,8 @@
           
         <table border="0" cellpadding="1" cellspacing="0" width="450">
             <tr>
-                <td colspan="6" bgcolor="#EEEEFF">
-                    <b>Add Criteria</b>
+                <td colspan="6" style="background-color: #0000FF; color: #FFFFFF">
+                    &nbsp;<b>Add Criteria</b>
                 </td>
             </tr>
             <tr>
@@ -244,5 +247,7 @@
                 </td>
             </tr>
         </table>
+        <p>
+            <%@include file="/include/jobrefinementnav.jsp"%>
     </form>
 <%@include file="/include/foot.jsp"%>
