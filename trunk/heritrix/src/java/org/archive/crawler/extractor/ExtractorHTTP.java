@@ -66,7 +66,6 @@ implements CoreAttributeConstants {
                 Link.REFER_HOP);
             numberOfLinksExtracted++;
         } catch (URIException e) {
-            e.printStackTrace();
             getController().logUriError(e,curi.getUURI(),loc.getValue());
         }
 
