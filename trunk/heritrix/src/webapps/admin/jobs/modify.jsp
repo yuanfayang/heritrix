@@ -1,11 +1,12 @@
 <%@include file="/include/secure.jsp"%>
 <%@include file="/include/handler.jsp"%>
-<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlJob,java.io.*,org.archive.util.ArchiveUtils" %>
+<%@ page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.framework.CrawlController,org.archive.crawler.framework.CrawlJob,java.io.*,org.archive.util.ArchiveUtils" %>
 
 <%
 	CrawlJob job;
 	String jobUID = request.getParameter("job");
-out.println(jobUID);	
+	String message = "";
+
 	if(jobUID != null && jobUID.length() > 0){
 		job = handler.getJob(jobUID);
 	}else{
@@ -19,20 +20,29 @@ out.println(jobUID);
 		return;
 	}
 	
-	handler.getCurrentJob(); 
-
 	if(request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME) != null && job != null){
 		// Got something in the request.  Let's update!
 		String filename = ArchiveUtils.getFilePath(job.getCrawlOrderFile())+"job-"+request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME)+"-"+(job.getOrderVersion()+1)+".xml";
 		handler.createCrawlOrderFile(request,filename,"seeds-"+request.getParameter(SimpleHandler.XP_CRAWL_ORDER_NAME)+".txt",true);
 		job.setCrawlOrder(filename);
-		if(handler.getCurrentJob()!=null && job.getUID().equals(handler.getCurrentJob().getUID()))
+
+		if(CrawlController.checkUserAgentAndFrom(job.getCrawlOrder()))
 		{
-			// Just updated a running job, must notify handler.
-			handler.updateCrawlOrder();
+			if(handler.getCurrentJob()!=null && job.getUID().equals(handler.getCurrentJob().getUID()))
+			{
+				// Just updated a running job, must notify handler.
+				handler.updateCrawlOrder();
+			}
+			response.sendRedirect("/admin/jobs.jsp?message=Crawl job modified");
+			return;
 		}
-		response.sendRedirect("/admin/jobs.jsp?message=Crawl job modified");
-		return;
+		else
+		{
+			message = "<pre>You must set the User-Agent and From HTTP header values " +
+								"to acceptable strings before proceeding. \n" +
+								" User-Agent: [software-name](+[info-url])[misc]\n" +
+								" From: [email-address]</pre>";
+		}
 	}
 	
 	CrawlOrder crawlOrder = null;
@@ -51,6 +61,7 @@ out.println(jobUID);
 			crawlOrder = job.getCrawlOrder();
 			seeds = new BufferedReader(new FileReader(new File(crawlOrder.getStringAt(SimpleHandler.XP_SEEDS_FILE))));
 	%>
+		<p><font color="red"><%=message%></font>
 
 		<form xmlns:java="java" xmlns:ext="http://org.archive.crawler.admin.TextUtils" name="frmConfig" method="post" action="modify.jsp">
 

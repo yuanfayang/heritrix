@@ -5,7 +5,6 @@
 
 <%
 	String sAction = request.getParameter("action");
-
 	if(sAction != null)
 	{
 		// Need to handle an action	

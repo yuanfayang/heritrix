@@ -25,6 +25,7 @@
 		<li><a href="/admin/reports/crawljob.jsp">View crawl report</a>
 		<li><a target="_blank" href="/admin/jobs/vieworder.jsp?job=<%=handler.getCurrentJob().getUID()%>">View crawl order (xml file)</a>
 		<li><a href="/admin/jobs/modify.jsp">Modify crawl order</a>
+		<li><a href="/admin/jobs/poweredit.jsp">Power edit crawl order</a>
 	</ul>
 <% } %>
 
