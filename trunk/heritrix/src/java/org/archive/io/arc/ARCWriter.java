@@ -348,9 +348,9 @@ public class ARCWriter implements ARCConstants {
         try {
             IoUtils.ensureWriteableDirectory(d);
         } catch(IOException e) {
-            d = null;
             logger.warning("Directory " + d.getPath() + " is not" +
                 " writeable or cannot be created: " + e.getMessage());
+            d = null;
         }
         return d;
     }
@@ -685,8 +685,8 @@ public class ARCWriter implements ARCConstants {
             try {
                 ris.readFullyTo(this.out);
                 long remaining = ris.remaining();
-                if (remaining != 0) // should be zero
-                {
+                // Should be zero
+                if (remaining != 0) {
                     // TODO: Move this DevUtils out of this class so no
                     // dependency upon it.
                     String message = "Gap between expected and actual: "

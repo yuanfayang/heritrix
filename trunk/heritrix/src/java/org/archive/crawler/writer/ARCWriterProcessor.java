@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -53,6 +54,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.archive.crawler.Heritrix;
+import org.archive.crawler.admin.Alert;
 import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -331,6 +333,8 @@ ARCWriterSettings, FetchStatusCodes {
             }
         } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e, "WriteARCRecord");
+            Heritrix.addAlert(new Alert("Failed write of ARC Record",
+                e.getMessage(), e, Level.SEVERE));
         }
     }
 
