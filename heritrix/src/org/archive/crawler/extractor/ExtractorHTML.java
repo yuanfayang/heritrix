@@ -204,10 +204,12 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param value
 	 */
 	private void processLink(CrawlURI curi, CharSequence value) {
-		if(value.toString().matches("(?i)^javascript:.*")) {
+		String link = value.toString();
+		link = link.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+		if(link.matches("(?i)^javascript:.*")) {
 			processScriptCode(curi,value.subSequence(11,value.length()));
 		} else {
-			curi.addLink(value.toString());
+			curi.addLink(link);
 		}
 	}
 
@@ -218,7 +220,9 @@ public class ExtractorHTML extends Processor implements CoreAttributeConstants {
 	 * @param value
 	 */
 	private void processEmbed(CrawlURI curi, CharSequence value) {
-		curi.addEmbed(value.toString());
+		String embed = value.toString();
+		embed = embed.replaceAll("&amp;","&"); // TODO: more HTML deescaping?
+		curi.addEmbed(embed);
 	}
 
 
