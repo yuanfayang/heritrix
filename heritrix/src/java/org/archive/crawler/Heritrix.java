@@ -163,7 +163,7 @@ public class Heritrix
     /**
      * Name of the file to which heritrix logs stdout and stderr.
      */
-    private static final String HERITRIX_OUT_FILE = "heritrix_out.log";
+    public static final String HERITRIX_OUT_FILE = "heritrix_out.log";
 
     /**
      * When running selftest, we set in here the URL for the selftest.
@@ -705,14 +705,6 @@ public class Heritrix
     public static File getWarsdir()
     {
         return warsdir;
-    }
-
-    /**
-     * @return Returns the HERITRIX_OUT_FILE.
-     */
-    public static String getHERITRIX_OUT_FILE()
-    {
-        return HERITRIX_OUT_FILE;
     }
 
     /**
