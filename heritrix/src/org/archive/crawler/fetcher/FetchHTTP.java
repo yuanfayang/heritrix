@@ -146,11 +146,11 @@ public class FetchHTTP
 		} catch (RecorderTimeoutException ex) {
 			logger.info(curi.getUURI().getUriString()+": time limit exceeded");
 			// but, continue processing whatever was retrieved
-			// TODO: set indicator in curi
+			// TODO: set indicator in curi and/or otherwise log
 		} catch (RecorderLengthExceededException ex) {
 			logger.info(curi.getUURI().getUriString()+": length limit exceeded");
 			// but, continue processing whatever was retrieved
-			// TODO: set indicator in curi
+			// TODO: set indicator in curi and/or otherwise log
 		} catch (IOException e) {
 			readFullyRead = rec.getRecordedInput().getSize();
 			curi.addLocalizedError(
@@ -207,6 +207,8 @@ public class FetchHTTP
 		
 		MultiThreadedHttpConnectionManager connectionManager = 
 					new MultiThreadedHttpConnectionManager();
+		// ensure there will be as many http connections available as worker threads
+		connectionManager.setMaxTotalConnections(controller.getToeCount());
 		http = new HttpClient(connectionManager);
 		// set connection timeout: considered same as overall timeout, for now
 		// TODO: restore this when HTTPClient stops using monitor thread
