@@ -48,7 +48,6 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.frontier.BdbFrontier.BdbWorkQueue;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
