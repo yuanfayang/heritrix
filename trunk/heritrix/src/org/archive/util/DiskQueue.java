@@ -47,6 +47,7 @@ public class DiskQueue implements Queue {
 		logger.finest(name+"("+length+"): "+o);
 		try {
 			tailStream.writeObject(o);
+			tailStream.reset(); // forget state with each enqueue
 		} catch (IOException e) {
 			// TODO convert to runtime exception
 			e.printStackTrace();
