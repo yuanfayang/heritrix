@@ -2640,6 +2640,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         (if pertinent) the number of times the URI had to be tried. If never
         retried (i.e. just 1 try) then this is '-'.</para>
 
+      </sect3>
       <sect3>
         <title>local-errors.log</title>
 
