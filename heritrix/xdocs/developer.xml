@@ -205,30 +205,41 @@ ${package_declaration}</source></p>
                     the same version number. (See <em>Version and Release 
                     Numbering</em> on this page for guidance on what version 
                     number to use)</li>
+                <li>Update <em>xdocs/changes.xml</em> with bugs and RFEs 
+                closed since last release.
+                </li>
+                <li>(TODO: Changelog based off CVS history).</li>
+                <li>Add news of the new release to the site main home page.</li>
                 <li>Generate the site.  Review all documentation making
                 sure it remains applicable. Fix at least the 
                 embarrassing.  Make issues to have all that remains
                 addressed.</li>
-
-                <li>Make the maven distributions: % $MAVEN_HOME/bin/maven dist</li>
-                <li>Build the maven produced src distribution version using 
-                    both maven and ant to ensure both builds work.</li>
-                <li>Run both the binary and src-built product through the
-                    integration self test suite: % $HERITRIX_HOME/bin/heritrix --selftest</li>
-                <li>Update <em>xdocs/changes.xml</em>.</li>
-                <li>(TODO: Changelog based off CVS history).</li>
                 <li>Update the README.txt.  Do html2txt on maven generated
                 xdocs (I did 'cat PAGE.html| w3m -dump -T text/html > PAGE.txt',
                 catted the product together and then did vi regex'ing to 
                 clean out website navigations and extra whitespace).</li>
-                <li> Tag the CVS repository: % cvs -q tag heritrix-?_?_?</li>
+                <li>Commit all changes made above all in the one commit with
+                a log message about new release.  Commit files with the 
+                new version -- the build.xml and project.xml -- as well 
+                as the README.txt, home page, and all changes in documentation
+                including the changelog additions.<li>
+                <li>Wait on a cruisecontrol successful build of all just 
+                committed.  Download the src and binary latest builds from 
+                under the cruisecontrol 'build artifacts' link.</li>
+
+                <li>Build the cruisecontrol produced src distribution version
+                    using both maven and ant to ensure both builds work.</li>
+                <li>Run both the binary and src-built product through the
+                    integration self test
+                    suite: % $HERITRIX_HOME/bin/heritrix --selftest</li>
+                <li>Tag the CVS repository: % cvs -q tag heritrix-?_?_?</li>
                 <li>Update the <em>project.xml</em>'currentVersion' and 
                     <em>build.xml</em> 'version' property to both be a version 
                     number beyond that of the release currently being made (If 
                     we're releasing 0.2.0, then increment to 0.3.0).</li>
-                <li> Login and upload the maven 'dist' product to sourceforge 
+                <li>Login and upload the maven 'dist' product to sourceforge 
                     into the admin->File releases section. </li>
-                <li> Update news on website, send announcement to mailinglist 
+                <li>Send announcement to mailinglist 
                     -- and give an all-clear that commits may resume -- and 
                     update our release state on freshmeat site (Here is the URL 
                     I used creating our freshmeat project: 
