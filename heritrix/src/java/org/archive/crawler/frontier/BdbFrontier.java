@@ -735,15 +735,6 @@ implements Frontier,
                 // ignored
             }
             pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
-            // The below truncate is a deprecated call but using the
-            // suggested alternative method, Envionment#truncateDatabase,
-            // gives out complaints about unable to lock. I'm guessing this
-            // is because db is empty.  Investigate.  The alternative would
-            // be to get the database stats and ask if the db is empty; If it
-            // is, close it and ask the environment to truncate (Asking
-            // the Environment to truncate a non-existent DB throws
-            // exceptions).
-            // pendingUrisDB.truncate(null, false);
             classCatalogDB = env.openDatabase(null, "classes", dbConfig);
             classCatalog = new StoredClassCatalog(classCatalogDB);
             crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
