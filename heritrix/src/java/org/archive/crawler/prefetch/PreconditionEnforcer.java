@@ -182,7 +182,7 @@ public class PreconditionEnforcer
         } else {
             // No valid robots found => Attempt to get robots.txt failed
             curi.skipToProcessorChain(getController().getPostprocessorChain());
-            curi.setFetchStatus(S_PREREQUISITE_FAILURE);
+            curi.setFetchStatus(S_ROBOTS_PREREQUISITE_FAILURE);
             curi.getAList().putString("error","robots.txt prerequisite failed");
             logger.fine("robots.txt prerequisite failed " + curi);
             return true;
@@ -207,7 +207,7 @@ public class PreconditionEnforcer
                 && curi.getServer().getHost().getIP() == null) {
             logger.fine( "no dns for " + curi.getServer().toString()
                 + " cancelling processing for " + curi.toString());
-            curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+            curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
             curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }

@@ -244,9 +244,18 @@ public class CrawlURI extends CandidateURI
                         + ")-Domain unresolvable";
             case S_OUT_OF_SCOPE:
                 return "Heritrix(" + S_OUT_OF_SCOPE + ")-Out of scope";
-            case S_PREREQUISITE_FAILURE:
-                return "Heritrix(" + S_PREREQUISITE_FAILURE
-                        + ")-Prerequisite failure";
+            case S_DOMAIN_PREREQUISITE_FAILURE:
+                return "Heritrix(" + S_DOMAIN_PREREQUISITE_FAILURE
+                        + ")-Domain prerequisite failure";
+            case S_ROBOTS_PREREQUISITE_FAILURE:
+                return "Heritrix(" + S_ROBOTS_PREREQUISITE_FAILURE
+                        + ")-Robots prerequisite failure";
+            case S_OTHER_PREREQUISITE_FAILURE:
+                return "Heritrix(" + S_OTHER_PREREQUISITE_FAILURE
+                        + ")-Other prerequisite failure";
+            case S_PREREQUISITE_UNSCHEDULABLE_FAILURE:
+                return "Heritrix(" + S_PREREQUISITE_UNSCHEDULABLE_FAILURE
+                        + ")-Prerequisite unschedulable failure";
             case S_ROBOTS_PRECLUDED:
                 return "Heritrix(" + S_ROBOTS_PRECLUDED + ")-Robots precluded";
             case S_RUNTIME_EXCEPTION:

@@ -484,7 +484,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
          // make sure the dns lookup succeeded
          if (curi.getServer().getHost().getIP() == null
              && curi.getServer().getHost().hasBeenLookedUp()) {
-             curi.setFetchStatus(S_DOMAIN_UNRESOLVABLE);
+             curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
              return false;
          }
         return true;

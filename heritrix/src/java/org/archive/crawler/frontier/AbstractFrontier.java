@@ -274,7 +274,6 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
      * @return True if queues are empty.
      */
     public synchronized boolean isEmpty() {
-        // TODO: consider synchronizing on something (allClassQueuesMap?)
         return queuedUriCount == 0;
     }
     
@@ -732,6 +731,7 @@ public abstract class AbstractFrontier extends ModuleType implements Frontier,
             case S_DEFERRED:
             case S_CONNECT_FAILED:
             case S_CONNECT_LOST:
+            case S_DOMAIN_UNRESOLVABLE:
                 // these are all worth a retry
                 // TODO: consider if any others (S_TIMEOUT in some cases?) deserve retry
                 return true;
