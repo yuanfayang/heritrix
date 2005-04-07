@@ -172,8 +172,8 @@ implements CrawlURIDispositionListener {
         "Seed has not been processed";
 
     public StatisticsTracker(String name) {
-        super( name, "A statistics tracker that's been designed to work well " +
-            "with the web UI and creates the progress-statistics log.");
+        super( name, "A statistics tracker thats integrated into " +
+            "the web UI and that creates the progress-statistics log.");
     }
 
     public void initialize(CrawlController c)

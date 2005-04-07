@@ -75,7 +75,7 @@ public class OrFilter extends Filter {
                 new Boolean(true)));
 
         addElementToDefinition(new MapType(ATTR_FILTERS,
-                "This is a list of filters whose functionality should be" +
+                "List of filters whose functionality should be" +
                 " logically or'ed together by the OrFilter.", Filter.class));
     }
 
