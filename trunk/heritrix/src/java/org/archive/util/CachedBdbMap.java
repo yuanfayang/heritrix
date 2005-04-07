@@ -267,7 +267,9 @@ public class CachedBdbMap extends AbstractMap implements Map {
     }
 
     public synchronized void close() throws DatabaseException {
-        db.close();
+        if( db != null) {
+            db.close();
+        }
         if (dbEnvironment != null) {
             dbEnvironment.openDbCount--;
             if (dbEnvironment.openDbCount <= 0) {
