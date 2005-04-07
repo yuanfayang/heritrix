@@ -119,7 +119,43 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
         return surtPrefixes;
     }
 
-    private void readPrefixes() {
+    protected void readPrefixes() {
+        buildSurtPrefixSet();
+        dumpSurtPrefixSet();
+    }
+    
+    /**
+     * Dump the current prefixes in use to configured dump file (if any)
+     */
+    protected void dumpSurtPrefixSet() {
+        // dump surts to file, if appropriate
+        String dumpPath = (String) getUncheckedAttribute(null,
+                ATTR_SURTS_DUMP_FILE);
+        if(dumpPath.length()>0) {
+            File dump = new File(dumpPath);
+            if (!dump.isAbsolute()) {
+                dump = new File(getSettingsHandler().getOrder()
+                        .getController().getDisk(), dumpPath);
+            }
+            try {
+                FileWriter fw = new FileWriter(dump);
+                try {
+                    surtPrefixes.exportTo(fw);
+                } finally {
+                    fw.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
+     * Construct the set of prefixes to use, from the seed list (
+     * which may include both URIs and '+'-prefixed directives).
+     */
+    protected void buildSurtPrefixSet() {
         SurtPrefixSet newSurtPrefixes = new SurtPrefixSet(); 
         FileReader fr = null;
         
@@ -160,30 +196,10 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
             e.printStackTrace();
             throw new RuntimeException(e);
         }  
-
-        // dump surts to file, if appropriate
-        String dumpPath = (String) getUncheckedAttribute(null,
-                ATTR_SURTS_DUMP_FILE);
-        if(dumpPath.length()>0) {
-            File dump = new File(dumpPath);
-            if (!dump.isAbsolute()) {
-                dump = new File(getSettingsHandler().getOrder()
-                        .getController().getDisk(), dumpPath);
-            }
-            try {
-                FileWriter fw = new FileWriter(dump);
-                try {
-                    newSurtPrefixes.exportTo(fw);
-                } finally {
-                    fw.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }
+        
         surtPrefixes = newSurtPrefixes;
     }
+
     /**
      * Re-read prefixes after an update. 
      * 
