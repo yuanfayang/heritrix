@@ -479,7 +479,10 @@ ARCWriterSettings, FetchStatusCodes {
         InetAddress a = h.getIP();
         if (a == null) {
             throw new NullPointerException("Address is null for " +
-                curi + " " + curi.getVia());
+                curi + " " + curi.getVia() + ". Address was set " +
+                h.getSetIpCalled() + " times and last time it was " +
+                " set was " + (System.currentTimeMillis() - h.getIpFetched()) +
+                " ms ago.");
         }
         return h.getIP().getHostAddress();
     }

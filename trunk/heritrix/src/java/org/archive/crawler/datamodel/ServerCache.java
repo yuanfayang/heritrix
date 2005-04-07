@@ -23,6 +23,7 @@
 package org.archive.crawler.datamodel;
 
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
@@ -88,6 +89,9 @@ public class ServerCache {
         cserver = new CrawlServer(skey);
         cserver.setSettingsHandler(settingsHandler);
         servers.put(skey,cserver);
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer("Created server " + s);
+        }
         return cserver;
     }
 
@@ -139,6 +143,9 @@ public class ServerCache {
         String hkey = new String(hostname); 
         host = new CrawlHost(hkey);
         this.hosts.put(hkey, host);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Created host " + hostname);
+        }
         return host;
     }
     

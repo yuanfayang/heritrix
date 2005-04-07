@@ -44,6 +44,9 @@ public class CrawlHost implements Serializable {
     private String hostname;
     private InetAddress ip;
     private long ipFetched = IP_NEVER_LOOKED_UP;
+    
+    // DEBUGGING: REMOVE.
+    private int setIpCalled = 0;
 
     /**
      * TTL gotten from dns record.
@@ -98,6 +101,8 @@ public class CrawlHost implements Serializable {
         // a caller decides to set this (even to null)
         this.ipFetched = System.currentTimeMillis();
         this.ipTTL = ttl;
+        // DEBUGGING: REMOVE.
+        this.setIpCalled++;
     }
 
     /** Get the IP address for this host.
@@ -156,5 +161,13 @@ public class CrawlHost implements Serializable {
      */
     public void setEarliestNextURIEmitTime(long earliestNextURIEmitTime) {
         this.earliestNextURIEmitTime = earliestNextURIEmitTime;
+    }
+    
+    /**
+     * DEBUGGING: REMOVE.
+     * @return Returns the setIpCalled.
+     */
+    public int getSetIpCalled() {
+        return this.setIpCalled;
     }
 }
