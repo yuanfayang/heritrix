@@ -811,6 +811,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
             newHandler.copySettings(newFile, (String)newHandler.getOrder()
                 .getAttribute(CrawlOrder.ATTR_SETTINGS_DIRECTORY));
         } catch (IOException e3) {
+            // Print stack trace to help debug issue where cannot create
+            // new job from an old that has overrides.
+            e3.printStackTrace();
             throw new FatalConfigurationException(
                     "IOException occured while writing new settings files" +
                     " for new job/profile\n" + e3.getMessage());

@@ -55,9 +55,9 @@ public class FileUtils
      * @param dest file or directory to copy to.
      * @throws IOException
      */
-    public static void copyFiles(File src, File dest) throws IOException {
+    public static void copyFiles(File src, File dest)
+    throws IOException {
         // TODO: handle failures at any step
-
         if (!src.exists()) {
             return;
         }
@@ -69,9 +69,7 @@ public class FileUtils
             // Go trough the contents of the directory
             String list[] = src.list();
             for (int i = 0; i < list.length; i++) {
-                File src1 = new File(src, list[i]);
-                File dest1 = new File(dest, list[i]);
-                copyFiles(src1 , dest1);
+                copyFiles(new File(src, list[i]) , new File(dest, list[i]));
             }
 
         } else {
@@ -84,6 +82,7 @@ public class FileUtils
      *
      * @param src
      * @param dest
+     * @return True if the extent was greater than actual bytes copied.
      * @throws FileNotFoundException
      * @throws IOException
      */
@@ -97,14 +96,14 @@ public class FileUtils
      *
      * @param src
      * @param dest
-     * @param extent
-     *            maximum number of bytes to copy
+     * @param extent Maximum number of bytes to copy
+	 * @return True if the extent was greater than actual bytes copied.
      * @throws FileNotFoundException
      * @throws IOException
      */
     public static boolean copyFile(File src, File dest, long extent)
             throws FileNotFoundException, IOException {
-
+        boolean result = false;
         if (dest.exists()) {
             dest.delete();
         }
@@ -113,12 +112,11 @@ public class FileUtils
         FileChannel fcin = null;
         FileChannel fcout = null;
         try {
-            // get channels
+            // Get channels
             fis = new FileInputStream(src);
             fos = new FileOutputStream(dest);
             fcin = fis.getChannel();
             fcout = fos.getChannel();
-
             if (extent < 0) {
                 extent = fcin.size();
             }
@@ -126,10 +124,17 @@ public class FileUtils
             // do the file copy
             long trans = fcin.transferTo(0, extent, fcout);
             if (trans < extent) {
-                return false;
+                result = false;
             }
-            return true;
-
+            result = true; 
+        } catch (IOException e) {
+            // Add more info to the exception. Preserve old stacktrace.
+            IOException newE =
+                new IOException("Copying " + src.getAbsolutePath() +
+                " to " + dest.getAbsolutePath() + " with extent " +
+                extent + " got IOE: " + e.getMessage());
+            newE.setStackTrace(e.getStackTrace());
+            throw newE;
         } finally {
             // finish up
             if (fcin != null) {
@@ -145,6 +150,7 @@ public class FileUtils
                 fos.close();
             }
         }
+        return result;
     }
 
 	/** Deletes all files and subdirectories under dir.
@@ -172,8 +178,8 @@ public class FileUtils
      * Utility method to read an entire file as a String.
      *
      * @param file
-     * @return @throws
-     *         IOException
+     * @return File as String.
+     * @throws IOException
      */
     public static String readFileAsString(File file) throws IOException {
         StringBuffer sb = new StringBuffer((int) file.length());
