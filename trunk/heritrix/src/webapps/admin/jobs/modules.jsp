@@ -197,6 +197,16 @@
         <input type="hidden" name="subaction" value="done">
         <input type="hidden" name="item" value="">
         <input type="hidden" name="subitem" value="">
+        
+        <p>
+            <b>Select Crawl Scope</b>
+        <p>
+            <%=JobConfigureUtils.buildModuleSetter(
+                settingsHandler.getOrder().getAttributeInfo("scope"),
+                CrawlScope.class,
+                "Scope",
+                ((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getMBeanInfo().getDescription())%>
+                
         <p>
             <b>Select URI Frontier</b>
         <p>
@@ -208,16 +218,8 @@
 
     
         <p>
-            <b>Select crawl scope</b>
-        <p>
-            <%=JobConfigureUtils.buildModuleSetter(
-                settingsHandler.getOrder().getAttributeInfo("scope"),
-                CrawlScope.class,
-                "Scope",
-                ((ComplexType)settingsHandler.getOrder().getAttribute("scope")).getMBeanInfo().getDescription())%>
-                
-        <p>
-            <b>Select Pre Processors</b> <i>Processors that should be run before any fetching occurs</i>
+            <b>Select Pre Processors</b> 
+            <i>Processors that should run before any fetching</i>
         <p>
             <%=JobConfigureUtils.buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
@@ -225,7 +227,8 @@
                     Processor.class,
                     "PreFetchProcessors")%>
         <p>
-            <b>Select Fetchers</b> <i>Processors that fetch documents from various protocols</i>
+            <b>Select Fetchers</b> 
+            <i>Processors that fetch documents using various protocols</i>
         <p>
             <%=JobConfigureUtils.buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
@@ -233,7 +236,8 @@
                     Processor.class,
                     "Fetchers")%>
         <p>
-            <b>Select Extractors</b> <i>Processors that extracts links from URIs</i>
+            <b>Select Extractors</b> 
+            <i>Processors that extracts links from URIs</i>
         <p>
             <%=JobConfigureUtils.buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
@@ -241,7 +245,8 @@
                     Processor.class,
                     "Extractors")%>
         <p>
-            <b>Select Writers</b> <i>Processors that write documents to archive files</i>
+            <b>Select Writers</b> 
+            <i>Processors that write documents to archive files</i>
         <p>
             <%=JobConfigureUtils.buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
@@ -249,7 +254,8 @@
                     Processor.class,
                     "Writers")%>
         <p>
-            <b>Select Post Processors</b> <i>Processors that do cleanup and feeds the frontier with new URIs</i>
+            <b>Select Post Processors</b> 
+            <i>Processors that do cleanup and feed the Frontier with new URIs</i>
         <p>
             <%=JobConfigureUtils.buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
