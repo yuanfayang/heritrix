@@ -89,6 +89,7 @@ public class JobConfigureUtils {
     private static final Object REMOVE = "remove";
     private static final Object GOTO = "goto";
     private static final Object DONE = "done";
+    private static final Object CONTINUE = "continue"; // keep editting
 
     /**
      * Check passed crawljob CrawlJob setting. Call this method at start of
@@ -317,9 +318,9 @@ public class JobConfigureUtils {
         if (request.getParameter(ACTION) != null) {
             // Need to take some action.
             String action = request.getParameter(ACTION);
+            String subaction = request.getParameter(SUBACTION);
             if (action.equals(FILTERS)) {
                 // Doing something with the filters.
-                String subaction = request.getParameter(SUBACTION);
                 String map = request.getParameter(MAP);
                 if (map != null && map.length() > 0) {
                     String filter = request.getParameter(FILTER);
@@ -356,15 +357,36 @@ public class JobConfigureUtils {
                 // Finally save the changes to disk
                 settingsHandler.writeSettingsObject(settings);
             } else if (action.equals(DONE)) {
-                // Ok, done editing. Back to overview.
-                if (theJob.isRunning()) {
-                    handler.kickUpdate(); //Just to make sure.
+                // Ok, done editing.
+                if(subaction.equals(CONTINUE)) {
+                    // was editting an override, simply continue
+                    if (theJob.isRunning()) {
+                        handler.kickUpdate(); //Just to make sure.
+                    }
+                    response.sendRedirect(redirectBasePath +
+                        "?job=" + theJob.getUID() +
+                        ((currDomain != null && currDomain.length() > 0)?
+                                "&currDomain=" + currDomain: "") +
+                         "&message=Override changes saved");
+                } else {
+                    // on main, truly 'done'
+                    if (theJob.isNew()) {
+                        handler.addJob(theJob);
+                        response.sendRedirect(redirectBasePath
+                                + "?message=Job created");
+                    } else {
+                        if (theJob.isRunning()) {
+                            handler.kickUpdate();
+                        }
+                        if (theJob.isProfile()) {
+                            response.sendRedirect(redirectBasePath
+                                    + "?message=Profile modified");
+                        } else {
+                            response.sendRedirect(redirectBasePath
+                                    + "?message=Job modified");
+                        }
+                    }
                 }
-                response.sendRedirect(redirectBasePath +
-                    "?job=" + theJob.getUID() +
-                    ((currDomain != null && currDomain.length() > 0)?
-                            "&currDomain=" + currDomain: "") +
-                     "&message=Override changes saved");
             } else if (action.equals(GOTO)) {
                 // Goto another page of the job/profile settings
                 response.sendRedirect(request.getParameter(SUBACTION) +
