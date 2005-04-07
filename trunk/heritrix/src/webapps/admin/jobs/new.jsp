@@ -187,14 +187,22 @@
                         %></textarea>
                     </td>
                 </tr>
+                <tr>
+                <td colspan="2" align="right">
+<input type="button" value="Modules"
+   onClick="document.frmNew.action.value='modules';document.frmNew.submit()">
+<input type="button" value="Submodules"
+   onClick="document.frmNew.action.value='submodules';document.frmNew.submit()">
+<input type="button" value="Settings"
+    onClick="document.frmNew.action.value='configure';document.frmNew.submit()">
+<input type="button" value="Overrides"
+    onClick="document.frmNew.action.value='override';document.frmNew.submit()">
+<% if(isProfile == false){ %>
+    <input type="submit" value="Submit job">
+<% } %>
+                </td>
+                </tr>
             </table>
-            <input type="button" value="Modules" onClick="document.frmNew.action.value='modules';document.frmNew.submit()">
-            <input type="button" value="Submodules" onClick="document.frmNew.action.value='submodules';document.frmNew.submit()">
-            <input type="button" value="Settings" onClick="document.frmNew.action.value='configure';document.frmNew.submit()">
-            <input type="button" value="Overrides" onClick="document.frmNew.action.value='override';document.frmNew.submit()">
-            <% if(isProfile == false){ %>
-                <input type="submit" value="Submit job">
-            <% } %>
         </form>
         
 <%@include file="/include/foot.jsp"%>

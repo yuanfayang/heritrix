@@ -94,8 +94,8 @@
 
         
         p.append("<td title=\'"+ descriptionForAttribute + "\' colspan='" 
-             + (settings==null?"2":"3") + "'>" 
-        	 + shortDescription + "</td></tr>\n");
+             + (settings==null?"2":"3") + "'><font size=\"-1\">" 
+        	 + shortDescription + "</font></td></tr>\n");
 
         for(int n=0; n<a.length; n++) {
             if(a[n] == null) {
