@@ -1,4 +1,4 @@
-/* NotMatchesRegExpDecideRule
+/* NotMatchesFilePatternDecideRule
 *
 * $Id$
 *
@@ -30,11 +30,11 @@ import java.util.logging.Logger;
 
 /**
  * Rule applies configured decision to any URIs which do *not*
- * match the supplied regexp.
+ * match the supplied (file-pattern) regexp.
  *
  * @author gojomo
  */
-public class NotMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
+public class NotMatchesFilePatternDecideRule extends MatchesFilePatternDecideRule {
     private static final Logger logger =
         Logger.getLogger(NotMatchesRegExpDecideRule.class.getName());
 
@@ -43,12 +43,13 @@ public class NotMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
      * Usual constructor. 
      * @param name
      */
-    public NotMatchesRegExpDecideRule(String name) {
+    public NotMatchesFilePatternDecideRule(String name) {
         super(name);
-        setDescription("NotMatchesRegExpDecideRule: Applies the configured " +
-        "decision to URIs *not* matching the supplied regular expression.");
+        setDescription("NotMatchesFilePatternDecideRule: Applies the configured " +
+        "decision to URIs *not* matching the configured (file-pattern)" +
+        "regular expression.");
     }
-
+    
     /**
      * Evaluate whether given object's string version does not match 
      * configured regexp (by reversing the superclass's answer).
