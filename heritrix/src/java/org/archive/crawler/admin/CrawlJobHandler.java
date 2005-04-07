@@ -110,26 +110,6 @@ import org.archive.util.iterator.RegexpLineIterator;
 public class CrawlJobHandler implements CrawlStatusListener {
     private static final Logger logger =
         Logger.getLogger(CrawlJobHandler.class.getName());
-    
-    /** path to file featuring list of options to offer in UI */
-    public static final String MODULE_OPTIONS_FILE_FILTERS = "filters.options";
-
-    /** Path to file featuring list of url canonicalization rule 
-     * options to offer in UI 
-     */
-    public static final String MODULE_OPTIONS_URL_CANONICALIZATION_RULES =
-        "url-canonicalization-rules.options";
-
-    /** path to file featuring list of options to offer in UI */
-    public static final String MODULE_OPTIONS_FILE_PROCESSORS = "processors.options";
-    /** path to file featuring list of options to offer in UI */
-    public static final String MODULE_OPTIONS_FILE_SCOPES = "scopes.options";
-    /** path to file featuring list of options to offer in UI */
-    public static final String MODULE_OPTIONS_FILE_TRACKERS = "trackers.options";
-    /** path to file featuring list of options to offer in UI */
-    public static final String MODULE_OPTIONS_FILE_FRONTIERS = "urifrontiers.options";
-	/** path to directory featuring lists of options to offer in UI */
-
 
     /**
      * Name of system property whose specification overrides default profile
