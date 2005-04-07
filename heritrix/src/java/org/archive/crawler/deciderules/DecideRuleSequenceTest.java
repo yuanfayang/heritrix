@@ -219,18 +219,23 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
         addDecideRule(new PathologicalPathDecideRule("PATHOLOGICAL"));
         final int max =
             PathologicalPathDecideRule.DEFAULT_REPETITIONS.intValue();
-        final String baseUri = "http://archive.org/abc/";
-        UURI uuri = UURIFactory.getInstance(baseUri);
+        String uri = "http://archive.org/";
+        final String segment = "abc/";
+        for (int i = 1; i < max; i++) {
+            uri = uri + segment;
+        }
+        final String baseUri = uri;
+        UURI uuri = UURIFactory.getInstance(uri);
         CandidateURI candidate = new CandidateURI(uuri);
         Object decision = this.rule.decisionFor(candidate);
         assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
             decision == DecideRule.PASS);
-        uuri = UURIFactory.getInstance(baseUri + "abc/");
+        uuri = UURIFactory.getInstance(baseUri + segment);
         candidate = new CandidateURI(uuri);
         decision = this.rule.decisionFor(candidate);
         assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
             decision == DecideRule.PASS);
-        uuri = UURIFactory.getInstance(baseUri + "abc/abc/");
+        uuri = UURIFactory.getInstance(baseUri + segment + segment);
         candidate = new CandidateURI(uuri);
         decision = this.rule.decisionFor(candidate);
         assertTrue("Expect " + DecideRule.REJECT + " but got " + decision,
