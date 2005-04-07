@@ -55,7 +55,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
+import org.archive.crawler.framework.CrawlScope;
+import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.framework.ProcessorChain;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.ListType;
@@ -651,6 +654,7 @@ public class JobConfigureUtils {
         StringBuffer p = new StringBuffer();
         
         boolean subMap = false;
+        boolean processorsMap = false; 
         MapType thisMap = null;
         List availableOptions = Collections.EMPTY_LIST;
         if (mbean instanceof MapType) {
@@ -660,6 +664,8 @@ public class JobConfigureUtils {
                 // multiple options, and not Processor, will this 
                 // get map treatment
                 subMap = true;
+            } else {
+                processorsMap = true; 
             }
             if (ModuleType.class.isAssignableFrom(thisMap.getContentType())) {
                 availableOptions = getOptionsForType(thisMap.getContentType());
@@ -669,7 +675,7 @@ public class JobConfigureUtils {
             }
         }
         
-        
+        String description = TextUtils.escapeForMarkupAttribute(mbean.getDescription());
         if(inMap) {
             p.append("<tr><td>"+mbean.getName()+"</td>");
             p.append("<td nowrap><a href=\"javascript:doMoveUp('" +
@@ -678,12 +684,21 @@ public class JobConfigureUtils {
                 mbean.getName() + "','" + parent + "')\">Move down</a></td> ");
             p.append("<td><a href=\"javascript:doRemove('" +
                 mbean.getName() + "','" + parent + "')\">Remove</a></td>");
-
-            p.append("<td><i>" + mbean.getClass().getName() +
-                "</i></td</tr>\n");
+            p.append("<td title='"+description+"'>");
+            p.append("<i>" + mbean.getClass().getName()+"</i>");
+            p.append("<a href='javascript:alert(\""+description+"\")'> ? </a>");
+            p.append("</td></tr>\n");
         } else {
             p.append("<div class='SettingsBlock'>\n");
-            p.append("<b>" + mbean.getName() + "</b><br/>\n");
+            p.append("<b title='"+description+"'>" + mbean.getName());
+            p.append("</b>\n");
+            Class type = mbean.getLegalValueType();
+            if(CrawlScope.class.isAssignableFrom(type) 
+                    || Frontier.class.isAssignableFrom(type) 
+                    || processorsMap) {
+                p.append(description + " Change on 'Modules' tab.");
+            }
+            p.append("<br/>\n");
         }
 
         
@@ -968,7 +983,7 @@ public class JobConfigureUtils {
             }
             ret.append("<td><a href=\"javascript:doRemoveMapItem('" + name + "','"+att.getName()+"')\">Remove</a></td>");
             ret.append("<td><a href=\"javascript:alert('");
-            ret.append(TextUtils.escapeForJavascript(att.getDescription()));
+            ret.append(TextUtils.escapeForMarkupAttribute(att.getDescription()));
             ret.append("')\">Info</a></td>\n");
             ret.append("</tr>");
             alt = !alt;
