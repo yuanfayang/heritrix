@@ -234,5 +234,57 @@ public class SurtPrefixSet extends TreeSet {
         }
     }
 
+    /**
+     * Changes all prefixes so that they enforce an exact host. For
+     * prefixes that already include a ')', this means discarding 
+     * anything after ')' (path info). For prefixes that don't include
+     * a ')' -- domain prefixes open to subdomains -- add the closing
+     * ')' (or ",)").  
+     */
+    public void convertAllPrefixesToHosts() {
+        SurtPrefixSet iterCopy = (SurtPrefixSet) this.clone();
+        Iterator iter = iterCopy.iterator();
+        while (iter.hasNext()) {
+            String prefix = (String) iter.next();
+            if(prefix.endsWith(")")) {
+                continue; // no change necessary
+            }
+            this.remove(prefix);
+            if(prefix.indexOf(')')<0) {
+                // open-ended domain prefix
+                if(!prefix.endsWith(",")) {
+                    prefix += ",";
+                }
+                prefix += ")";
+            } else {
+                // prefix with excess path-info
+                prefix = prefix.substring(0,prefix.indexOf(')')+1);
+            }
+            this.add(prefix);
+        }
+    }
 
+    /**
+     * Changes all prefixes so that they only enforce a general
+     * domain (allowing subdomains).For prefixes that don't include
+     * a ')', no change is necessary. For others, truncate everything
+     * from the ')' onward. Additionally, truncate off "www," if it
+     * appears.
+     */
+    public void convertAllPrefixesToDomains() {
+        SurtPrefixSet iterCopy = (SurtPrefixSet) this.clone();
+        Iterator iter = iterCopy.iterator();
+        while (iter.hasNext()) {
+            String prefix = (String) iter.next();
+            if(prefix.indexOf(')')<0) {
+                continue; // no change necessary
+            }
+            this.remove(prefix);
+            prefix = prefix.substring(0,prefix.indexOf(')'));
+            if(prefix.endsWith("www,")) {
+                prefix = prefix.substring(0,prefix.length()-4);
+            }
+            this.add(prefix);
+        } 
+    }
 }
