@@ -29,14 +29,23 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.MapType;
+import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.HttpRecorder;
 import org.archive.util.TmpDirTestCase;
@@ -128,10 +137,15 @@ implements CoreAttributeConstants {
      * Test single net or local filesystem page parse.
      * Set the uuri to be a net url or instead put in place a file
      * named for this class under the unit test directory.
-     * 
      * @throws IOException
+     * @throws ReflectionException
+     * @throws MBeanException
+     * @throws AttributeNotFoundException
+     * @throws InvalidAttributeValueException
      */
-    public void testPageParse() throws IOException {
+    public void testPageParse()
+    throws InvalidAttributeValueException, AttributeNotFoundException,
+    MBeanException, ReflectionException, IOException {
         UURI uuri = null;
         
 // DO
@@ -159,27 +173,39 @@ implements CoreAttributeConstants {
         return UURIFactory.getInstance(url);
     }
     
-    protected void runExtractor(UURI baseUURI) throws IOException {
+    protected void runExtractor(UURI baseUURI)
+    throws InvalidAttributeValueException, AttributeNotFoundException,
+    MBeanException, ReflectionException, IOException {
         runExtractor(baseUURI, null);
     }
     
     protected void runExtractor(UURI baseUURI, String encoding)
-    throws IOException {
+    throws IOException, InvalidAttributeValueException,
+    AttributeNotFoundException, MBeanException, ReflectionException {
         if (baseUURI == null) {
         	return;
         }
-        ExtractorHTML extractor = new ExtractorHTML("html extractor");
-// FYI: if target doc requires consulting settings (eg has meta robots),
-// must hack in assignment of extractor's settingsHandler, which requires
-// changes to ExtractorHTML and ComplexType. 
-//        extractor.applySettingsHandlerForTesting(this.settingsHandler);
-        extractor.earlyInitialize(this.globalSettings);
+        // Hack in a settings handler.  Do this by adding this extractor
+        // to the order file (I'm adding it to a random MapType; seemingly
+        // can only add to MapTypes post-construction). This takes care
+        // of setting a valid SettingsHandler into the ExtractorHTML (This
+        // shouldn't be so difficult).  Of note, the order file below is
+        // not written to disk.
+        final String name = this.getClass().getName();
+        SettingsHandler handler = new XMLSettingsHandler(
+            new File(getTmpDir(), name + ".order.xml"));
+        settingsHandler.initialize();
+        ExtractorHTML extractor = (ExtractorHTML)((MapType)handler.getOrder().
+            getAttribute(CrawlOrder.ATTR_RULES)).addElement(handler.
+                getSettingsObject(null), new ExtractorHTML(name));
+        
         URL url = new URL(baseUURI.toString());
         this.recorder = HttpRecorder.
             wrapInputStreamWithHttpRecord(getTmpDir(),
             this.getClass().getName(), url.openStream(), encoding);
         CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
         extractor.innerProcess(curi);
+        
         System.out.println("+" + extractor.report());
         int count = 0; 
         Collection links = curi.getOutLinks();
