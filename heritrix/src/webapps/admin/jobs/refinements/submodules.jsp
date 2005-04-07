@@ -37,7 +37,7 @@
             action="submodules.jsp">
         <input type="hidden" name="job" value="<%=theJob.getUID()%>">
         <input type="hidden" name="action" value="done">
-        <input type="hidden" name="subaction" value="">
+        <input type="hidden" name="subaction" value="continue">
         <input type="hidden" name="map" value="">
         <input type="hidden" name="filter" value="">
 
