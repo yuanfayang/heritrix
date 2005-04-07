@@ -257,13 +257,13 @@ public class CrawlOrder extends ModuleType {
         e.setExpertSetting(true);
         
         e = addElementToDefinition(new MapType(
-                ATTR_PRE_FETCH_PROCESSORS, "Processors to be run prior to" +
+                ATTR_PRE_FETCH_PROCESSORS, "Processors to run prior to" +
                         " fetching anything from the network.",
                         Processor.class));
         e.setOverrideable(false);
 
         e = addElementToDefinition(new MapType(
-                ATTR_FETCH_PROCESSORS, "Processors that fetches documents."
+                ATTR_FETCH_PROCESSORS, "Processors that fetch documents."
                 , Processor.class));
         e.setOverrideable(false);
 
@@ -278,12 +278,12 @@ public class CrawlOrder extends ModuleType {
         e.setOverrideable(false);
 
         e = addElementToDefinition(new MapType(
-                ATTR_POST_PROCESSORS, "Processors that do cleanup and feeds" +
+                ATTR_POST_PROCESSORS, "Processors that do cleanup and feed" +
                         " the frontier with new URIs.", Processor.class));
         e.setOverrideable(false);
 
         loggers = (MapType) addElementToDefinition(new MapType(ATTR_LOGGERS,
-                "Statistics tracking modules. \nAny number of specialised " +
+                "Statistics tracking modules. \nAny number of specialized " +
                 "statistics tracker that monitor a crawl and write logs, " +
                 "reports and/or provide information to the user interface."));
 
