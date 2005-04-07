@@ -24,7 +24,9 @@ package org.archive.httpclient;
 
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpConnection;
+import org.apache.commons.httpclient.HttpMethod;
 import org.archive.util.HttpRecorder;
 
 
@@ -59,13 +61,13 @@ public class HttpRecorderMethod {
         this.httpRecorder = recorder;
 	}
 
-	public void markContentBegin(HttpConnection connection) {
-        if (connection != this.connection) {
+	public void markContentBegin(HttpConnection c) {
+        if (c != this.connection) {
             // We're checking that we're not being asked to work on
             // a connection that is other than the one we started
             // this method#execute with.
             throw new IllegalArgumentException("Connections differ: " +
-                this.connection + " " + connection + " " +
+                this.connection + " " + c + " " +
                 Thread.currentThread().getName());
         }
 		this.httpRecorder.markContentBegin();
@@ -89,5 +91,21 @@ public class HttpRecorderMethod {
      */
     public HttpRecorder getHttpRecorder() {
         return httpRecorder;
+    }
+
+    /**
+     * If a 'Proxy-Connection' header has been added to the request,
+     * it'll be of a 'keep-alive' type.  Until we support 'keep-alives',
+     * override the Proxy-Connection setting and instead pass a 'close'
+     * (Otherwise every request has to timeout before we notice
+     * end-of-document).
+     * @param method Method to find proxy-connection header in.
+     */
+    public void handleAddProxyConnectionHeader(HttpMethod method) {
+        Header h = method.getRequestHeader("Proxy-Connection");
+        if (h != null) {
+            h.setValue("close");
+            method.setRequestHeader(h);
+        }
     }
 }

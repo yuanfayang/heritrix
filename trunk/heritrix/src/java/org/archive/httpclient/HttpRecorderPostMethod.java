@@ -77,4 +77,10 @@ public class HttpRecorderPostMethod extends PostMethod {
         this.httpRecorderMethod.setConnection(conn);
         return super.execute(state, conn);
     }
+    
+    protected void addProxyConnectionHeader(HttpState state, HttpConnection conn)
+            throws IOException, HttpException {
+        super.addProxyConnectionHeader(state, conn);
+        this.httpRecorderMethod.handleAddProxyConnectionHeader(this);
+    }
 }
