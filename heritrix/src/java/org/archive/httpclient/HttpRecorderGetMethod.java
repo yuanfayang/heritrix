@@ -25,6 +25,7 @@ package org.archive.httpclient;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpState;
@@ -114,5 +115,11 @@ public class HttpRecorderGetMethod extends GetMethod {
         // after itself).
         this.httpRecorderMethod.setConnection(conn);
         return super.execute(state, conn);
+    }
+    
+    protected void addProxyConnectionHeader(HttpState state, HttpConnection conn)
+            throws IOException, HttpException {
+        super.addProxyConnectionHeader(state, conn);
+        this.httpRecorderMethod.handleAddProxyConnectionHeader(this);
     }
 }
