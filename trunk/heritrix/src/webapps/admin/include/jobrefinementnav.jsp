@@ -8,10 +8,11 @@
      *
      * String theJob - The CrawlJob being manipulated.
      * int jobtab - Which to display as 'selected'.
-     *          1 - Filters
+     *          SUPERCEDED BY SUBMODULES 1 - Filters
      *          2 - Settings
-     *          4 - Credentials
+     *          SUPERCEDED BY SUBMODULES 4 - Credentials
      *          5 - Criteria
+     *          7 - Submodules 
      *
      * @author Kristinn Sigurdsson
      */
@@ -33,16 +34,6 @@
                         </td>
                         <td class="tab<%=jobtab==7?"_selected":""%>" nowrap>
                             <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/refinements/submodules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==7?"_selected":""%>">Submodules</a>
-                        </td>
-                        <td class="tab_seperator">
-                        </td>
-                        <td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/refinements/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
-                        </td>
-                        <td class="tab_seperator">
-                        </td>
-                        <td class="tab<%=jobtab==4?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/refinements/credentials.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==4?"_selected":""%>">Credentials</a>
                         </td>
                         <td class="tab_seperator">
                         </td>

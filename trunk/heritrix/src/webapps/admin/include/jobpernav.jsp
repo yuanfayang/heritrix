@@ -8,11 +8,12 @@
      *
      * String theJob - The CrawlJob being manipulated.
      * int jobtab - Which to display as 'selected'.
-     *          1 - Filters
+     *          SUPERCEDED BY SUBMODULES 1 - Filters
      *          2 - Settings
-     *          4 - Credentials
+     *          SUPERCEDED BY SUBMODULES 4 - Credentials
      *          5 - Refinements
-     *
+     *          7 - Submodules 
+     
      * @author Kristinn Sigurdsson
      */
 %>
@@ -33,21 +34,6 @@
                         </td>
                         <td class="tab<%=jobtab==7?"_selected":""%>" nowrap>
                             <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/per/submodules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==7?"_selected":""%>">Submodules</a>
-                        </td>
-                        <td class="tab_seperator">
-                        </td>
-                        <td class="tab<%=jobtab==1?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/per/filters.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==1?"_selected":""%>">Filters</a>
-                        </td>
-                        <td class="tab_seperator">
-                        </td>
-                        <td class="tab<%=jobtab==6?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('url-canonicalization-rules.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==6?"_selected":""%>">URL</a>
-                        </td>
-                        <td class="tab_seperator">
-                        </td>
-                        <td class="tab<%=jobtab==4?"_selected":""%>" nowrap>
-                            <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/per/credentials.jsp?job=<%=theJob.getUID()%>')" class="tab_text<%=jobtab==4?"_selected":""%>">Credentials</a>
                         </td>
                         <td class="tab_seperator">
                         </td>
