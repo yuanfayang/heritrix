@@ -191,6 +191,14 @@ to <literal>stringList</literal>):
         The issue includes description of a workaround.
         </para>
       </sect3>
+      <sect3 id="1178102">
+
+        <title>FatalConfigurationException creating new job based on old</title>
+        <para>Older SUN JVMS -- pre-beta3 versions of the SUN JVM 1.5.0 for
+        instance -- had an issue using nio copying files.
+        Try upgrading your JVM.  See <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1178102&amp;group_id=73833&amp;atid=539099">[1178102] FCE on creation of new job based on job w/ overrides</ulink> for more on this.
+        </para>
+      </sect3>
     </sect2>
   </sect1>
 
