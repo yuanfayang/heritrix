@@ -38,7 +38,7 @@
         <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=theJob.getUID()%>')">Settings</a>
         page to complete configuration of added submodules (e.g. To
         add the particular regex to an added canonicalization RegexRule
-        or to fillin the authentication information into an added
+        or to fill in the authentication information into an added
         RFC2617 credential).</p>
 
     <form name="frmFilters" method="post" 
