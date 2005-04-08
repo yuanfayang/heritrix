@@ -32,6 +32,12 @@
         <p>
             <b>Add/Remove/Order Submodules</b>
         <p>
+        <p>Use this page to add/remove/order submodules. Go to the
+        <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=theJob.getUID()%>')">Settings</a>
+        page to complete configuration of added submodules (e.g. To
+        add the particular regex to an added canonicalization RegexRule
+        or to fillin the authentication information into an added
+        RFC2617 credential).</p>
 
     <form name="frmFilters" method="post" 
             action="submodules.jsp">
@@ -41,8 +47,8 @@
         <input type="hidden" name="map" value="">
         <input type="hidden" name="filter" value="">
 
-            <%=JobConfigureUtils.printAllMaps(theJob.getSettingsHandler().getOrder(),
-                   false, null)%>
+    <%=JobConfigureUtils.printAllMaps(theJob.getSettingsHandler().getOrder(),
+            false, null)%>
     </form>
     <p>
 <%@include file="/include/jobnav.jsp"%>

@@ -529,14 +529,16 @@ public class JobConfigureUtils {
      * ComplexType belongs to a Map)
      * @param first True if mbean is the first element of a Map.
      * @param last True if mbean is the last element of a Map.
+     * @param parent
      * @parent The absolute name of the ComplexType that contains the
      * current ComplexType (i.e. parent).
      * @param alt If true and mbean is a filter then an alternate background
      * color is used for displaying it.
      * @param type Class to check for.
-     * @param printAtttributeNames True if we're to print out attribute names
+     * @param printAttributeNames True if we're to print out attribute names
      * as we recurse.
      * @return The variable part of the HTML code for selecting filters.
+     * @throws Exception
      */
     public static String printOfType(ComplexType mbean, String indent,
             boolean possible, boolean first, boolean last, String parent,
@@ -643,12 +645,12 @@ public class JobConfigureUtils {
      * current ComplexType (i.e. parent).
      * @return The variable part of the HTML code for selecting filters.
      */
-    public static String printAllMaps(ComplexType mbean, boolean inMap, String parent)
+    public static String printAllMaps(ComplexType mbean, boolean inMap,
+            String parent)
     throws Exception {
         if(mbean.isTransient()){
             return "";
         }
-
         MBeanInfo info = mbean.getMBeanInfo();
         MBeanAttributeInfo a[] = info.getAttributes();
         StringBuffer p = new StringBuffer();
@@ -677,7 +679,7 @@ public class JobConfigureUtils {
         
         String description = TextUtils.escapeForMarkupAttribute(mbean.getDescription());
         if(inMap) {
-            p.append("<tr><td>"+mbean.getName()+"</td>");
+            p.append("<tr><td>" + mbean.getName() + "</td>");
             p.append("<td nowrap><a href=\"javascript:doMoveUp('" +
                 mbean.getName() + "','" + parent + "')\">Move up</a></td>");
             p.append("<td nowrap><a href=\"javascript:doMoveDown('" +
@@ -696,7 +698,9 @@ public class JobConfigureUtils {
             if(CrawlScope.class.isAssignableFrom(type) 
                     || Frontier.class.isAssignableFrom(type) 
                     || processorsMap) {
-                p.append(description + " Change on 'Modules' tab.");
+                p.append("<font size=\"-1\">" + description +
+                    "To change " + mbean.getName() + ", go to the " +
+                    "<i>Modules</i> tab.</font>");
             }
             p.append("<br/>\n");
         }
