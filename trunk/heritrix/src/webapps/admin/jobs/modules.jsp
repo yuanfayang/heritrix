@@ -198,6 +198,14 @@
         <input type="hidden" name="item" value="">
         <input type="hidden" name="subitem" value="">
         
+       <p><b>Select Modules and Add/Remove/Order Processors</b>
+       </p>
+       <p>Use this page to choose the main modules Heritrix should
+       using crawling and to add/remove/order processors in each step
+       of the processing chain.  Go to the
+        <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=theJob.getUID()%>')">Settings</a>
+        page to complete configuration of chosen modules 
+        and procesors.</p>
         <p>
             <b>Select Crawl Scope</b>
         <p>
