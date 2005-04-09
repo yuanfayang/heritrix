@@ -204,7 +204,7 @@
         <property name="web.fragment" value="${jspc}/web-fragment.xml" />
         <property name="jspc.src" value="${jspc}/src" />
         <property name="jspc.classes" value="${jspc}/classes" />
-        <property name="webapp.src.dir" value="${maven.src.dir}/webapps" />
+        <property name="webapp.src.dir" value="${maven.build.dir}/webapps" />
         <property name="webinf"
             value="${maven.build.dir}/webapps/${webapp.name}/WEB-INF" />
         <!--Make a couple of dirs.-->

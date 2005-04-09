@@ -34,4 +34,6 @@
 	<b><a href="http://crawler.archive.org/mail-lists.html" target="_blank">Mailing Lists</a></b><br />
 	For general discussion on Heritrix, use our <a href="http://groups.yahoo.com/group/archive-crawler/" target="_blank">Crawler Discussion List</a>.
 </p>
+<hr />
+<font size="-1">Heritrix version @VERSION@</font>
 <%@include file="/include/foot.jsp"%>
