@@ -374,7 +374,8 @@ public class ARCRecord extends InputStream implements ARCConstants {
             if (available() > 0) {
                 c = this.in.read();
                 if (c == -1) {
-                    throw new IOException("Premature EOF before end-of-record.");
+                    throw new IOException("Premature EOF before " +
+                        "end-of-record.");
                 }
                 if (this.digest != null) {
                     this.digest.update((byte)c);
@@ -414,9 +415,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
                     if (isStrict()) {
                         throw new IOException(msg);
                     }
-                    // Set read == 0 rather than -1 so rest of this method
-                    // will work.  Caller treats 0 as EOS.
-                    read = 0;
+                    this.eor = true;
                     ARCReader.logStdErr(Level.WARNING, msg);
                 }
                 if (this.digest != null && read >= 0) {
