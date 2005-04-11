@@ -53,7 +53,7 @@
                                 <b>Current job:</b>&nbsp;
                             </td>
                             <td nowrap>
-                                <%=handler.isCrawling()?handler.getCurrentJob().getJobName():"None"%>
+                                <%=handler.getCurrentJob()!=null?handler.getCurrentJob().getJobName():"None"%>
                             </td>
                         </tr>
                         <tr>
@@ -116,7 +116,7 @@
                 </td>
             </tr>
             <%
-                if(handler.isCrawling())
+                if(handler.getCurrentJob() != null)
                 {
             %>
                     <tr>
@@ -134,6 +134,10 @@
                                         <%=handler.getCurrentJob().getStatus()%>
                                     </td>
                                 </tr>
+                                <%
+                                  if(handler.isCrawling() && stats != null)
+                                  {
+                                %>
                                 <tr>
                                     <td>
                                         <b>Processed docs/sec:</b>&nbsp;
@@ -169,9 +173,16 @@
                                         %>
                                     </td>
                                 </tr>
+                                <%
+                                  }
+                                %>
                             </table>
                         </td>
                         <td valign="top">
+                        	<%
+                                  if(stats != null)
+                                  {
+                            %>
                             <table border="0" cellspacing="0" cellpadding="0">
                                 <tr>
                                     <td height="5" colspan="2">
@@ -194,11 +205,14 @@
                                     </td>
                                 </tr>
                             </table>
+                        	<%
+                                  }
+                            %>
                         </td>
                     </tr>
             <%    
                 }
-                if(handler.isCrawling())
+                if(stats != null)
                 {
                     long begin = stats.successfullyFetchedCount();
                     long end = stats.queuedUriCount() + stats.activeThreadCount() + stats.successfullyFetchedCount();

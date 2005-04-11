@@ -95,7 +95,7 @@
                                             <%
                                                 if(handler.isRunning() || handler.isCrawling())
                                                 {
-                                                    if(handler.isCrawling())
+                                                    if(handler.getCurrentJob() != null)
                                                     {
                                                         out.println("<b>Current job:</b> " + handler.getCurrentJob().getJobName());
                                                     }

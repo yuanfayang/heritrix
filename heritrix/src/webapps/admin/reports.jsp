@@ -1,13 +1,10 @@
-<%@include file="/include/handler.jsp"%>
+<%@ include file="/include/handler.jsp" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob,java.util.List" %>
-
 <%
     String title = "Reports";
     int tab = 4;
 %>
-
 <%@include file="/include/head.jsp"%>
-
 <%
     String message = null;
     boolean crawling = handler.isCrawling();
@@ -37,19 +34,36 @@
 <b><font color=red><%=message%></font></b>
 <%}%>
 </p>
-<% if(crawling) { %>
 <p>
-<b>Reports on ongoing crawl</b><br>
+<b>Reports on ongoing crawl/current status</b><br>
 <ul>
+	<% if(handler.getCurrentJob() != null) { %>
     <li><a href="<%=request.getContextPath()%>/reports/crawljob.jsp?job=<%=handler.getCurrentJob().getUID()%>">Crawl report</a></li>
     <li><a href="<%=request.getContextPath()%>/reports/seeds.jsp?job=<%=handler.getCurrentJob().getUID()%>">Seed report</a></li>
-    <li><a href="<%=request.getContextPath()%>/reports/processors.jsp">Processors report</a></li>
+    <% } else { %>
+    <li>Crawl report (unavailable)</li>
+    <li>Seed report (unavailable)</li>
+    <% } %>
+	<% if(handler.getCurrentJob() != null) { %>
     <li><a href="<%=request.getContextPath()%>/reports/frontier.jsp">Frontier report</a> <%= handler.getFrontierOneLine() %></li>
-    <li><a href="<%=request.getContextPath()%>/reports/threads.jsp">Thread report</a> <%= handler.getThreadOneLine() %></li>
+    <% } else { %>
+    <li>Frontier report (unavailable)</li>
+    <% } %>
+    <% if(handler.isCrawling()) { %>
+    <li><a href="<%=request.getContextPath()%>/reports/processors.jsp">Processors report</a></li>
+    <% } else { %>
+    <li>Processors report (unavailable)</li>
+    <% } %>
+    <% if(handler.isCrawling()) { %>
+    <li><a href="<%=request.getContextPath()%>/reports/threads.jsp">ToeThread report</a> <%= handler.getThreadOneLine() %></li>
+    <% } else { %>
+    <li>ToeThread report (unavailable)</li>
+    <% } %>
+    <li><a href="<%=request.getContextPath()%>/reports/stacktraces.jsp">Dump stack traces</a> <%= Thread.activeCount() %> active Java Threads</li>
 </ul>
+<% if(handler.getCurrentJob() != null) { %>
 <p>The crawler generates reports when it finishes a job.  Clicking here on <a href="<%=request.getContextPath()%>/reports.jsp?<%=ACTION%>=<%=FORCE%>">Force generation of end-of-crawl Reports</a> will force the writing of reports to disk.  Clicking this link will return you to this page. Look to the disk for the generated reports.  Each click overwrites previously generated reports. Use this facility when the crawler has hung threads that can't be interrupted.</p>
 <% } %>
-
 
 <table border="0" cellspacing="0" cellpadding="1">
     <tr>
