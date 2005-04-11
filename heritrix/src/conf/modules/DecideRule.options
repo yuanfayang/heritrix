@@ -15,3 +15,5 @@ org.archive.crawler.deciderules.OnHostsDecideRule
 org.archive.crawler.deciderules.NotOnHostsDecideRule
 org.archive.crawler.deciderules.OnDomainsDecideRule
 org.archive.crawler.deciderules.NotOnDomainsDecideRule
+org.archive.crawler.deciderules.MatchesFilePatternDecideRule
+org.archive.crawler.deciderules.NotMatchesFilePatternDecideRule
