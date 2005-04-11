@@ -141,6 +141,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     private CrawlJob newJob = null;
 
+	/**
+	 * Thread to start the next job in background
+     */    
+    private Thread startingNextJob = null;
+
     /**
      * A list of pending CrawlJobs.
      */
@@ -994,12 +999,31 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *
      * If a is job already running this method will do nothing.
      */
-    protected void startNextJob() {
+    protected final void startNextJob() {
+        synchronized (this) {
+            if(startingNextJob != null) {
+                try {
+                    startingNextJob.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+            startingNextJob = new Thread(new Runnable() {
+                public void run() {
+                    startNextJobInternal();
+                }
+            }, "StartNextJob");
+            startingNextJob.start();
+        }
+    }
+    
+    protected void startNextJobInternal() {
         if (pendingCrawlJobs.size() == 0 || isCrawling()) {
             // No job ready or already crawling.
             return;
         }
-
+        
         this.currentJob = (CrawlJob) pendingCrawlJobs.first();
         assert pendingCrawlJobs.contains(currentJob) :
             "pendingCrawlJobs is in an illegal state";
@@ -1020,6 +1044,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             // Register as listener to get job finished notice.
             controller.addCrawlStatusListener(this);
             SettingsHandler settingsHandler = currentJob.getSettingsHandler();
+
             controller.initialize(settingsHandler);
         } catch (InitializationException e) {
             // Can't load current job since it is misconfigured.
@@ -1032,7 +1057,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             e.printStackTrace();
             currentJob = null;
             controller = null;
-            startNextJob(); //Load the next job if there is one.
+            startNextJobInternal(); //Load the next job if there is one.
             return;
         }
         this.crawling = true;

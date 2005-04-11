@@ -107,6 +107,8 @@ public class CrawlJob {
     public static final String STATUS_MISCONFIGURED = "Could not launch job - Fatal InitializationException";
     /** Job is actually a profile */
     public static final String STATUS_PROFILE = "Profile";
+    
+    public static final String STATUS_PREPARING = "Preparing";
 
     // Class variables
     private String UID;       //A UID issued by the CrawlJobHandler.
@@ -236,7 +238,8 @@ public class CrawlJob {
                 && status.equals(STATUS_PAUSED)==false
                 && status.equals(STATUS_PENDING)==false
                 && status.equals(STATUS_RUNNING)==false
-                && status.equals(STATUS_WAITING_FOR_PAUSE)==false){
+                && status.equals(STATUS_WAITING_FOR_PAUSE)==false
+                && status.equals(STATUS_PREPARING)==false){
             // status is invalid. Must be one of the above
             throw new InvalidJobFileException("Status (line 3) in job file " +
                     "is not valid: '" + status + "'");

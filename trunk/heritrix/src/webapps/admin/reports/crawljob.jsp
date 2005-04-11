@@ -360,7 +360,7 @@
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)host.getKey()))%>&nbsp;
                         </td>
-                        <% if (cjob.getStatus().equals(CrawlJob.STATUS_RUNNING) ||
+                        <% if (cjob.getStatus().equalsIgnoreCase(CrawlJob.STATUS_RUNNING) ||
                                  cjob.getStatus().equals(CrawlJob.STATUS_PAUSED) ||
                                  cjob.getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE)){ %>
                             <td align="right">

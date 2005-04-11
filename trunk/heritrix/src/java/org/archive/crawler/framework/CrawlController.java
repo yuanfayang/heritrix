@@ -163,6 +163,7 @@ public class CrawlController implements Serializable {
     private static final Object STOPPING = "STOPPING".intern();
     private static final Object FINISHED = "FINISHED".intern();
     private static final Object STARTED = "STARTED".intern();
+    private static final Object PREPARING = "PREPARING".intern();
 
     transient private Object state = NASCENT;
 
@@ -293,7 +294,9 @@ public class CrawlController implements Serializable {
      * @throws InitializationException
      */
     public void initialize(SettingsHandler sH)
-            throws InitializationException {
+    throws InitializationException {
+        sendCrawlStateChangeEvent(PREPARING, CrawlJob.STATUS_PREPARING);
+        
         this.settingsHandler = sH;
         this.order = settingsHandler.getOrder();
         this.order.setController(this);
@@ -322,21 +325,20 @@ public class CrawlController implements Serializable {
 
             onFailMessage = "Unable to create log file(s)";
             setupLogs();
-            
+
             onFailMessage = "Unable to setup bdb environment.";
             setupBdb();
-
+            
             onFailMessage = "Unable to setup statistics";
             setupStatTracking();
 
             onFailMessage = "Unable to setup crawl modules";
             setupCrawlModules();
-
         } catch (Exception e) {
             String extendedMessage = onFailMessage + ": " + e.toString();
             Heritrix.addAlert(
                 new Alert(
-                    e.getClass().getName() + "on crawl: "
+                    e.getClass().getName() + " on crawl: "
                     + settingsHandler.getSettingsObject(null).getName(),
                     extendedMessage,e,Level.CONFIG));
             throw new InitializationException(extendedMessage, e);
@@ -580,8 +582,8 @@ public class CrawlController implements Serializable {
                         frontier.importRecoverLog(recoverPath,retainFailures);
                     } catch (IOException e1) {
                         e1.printStackTrace();
-                        throw new FatalConfigurationException(
-                            "Recover.log problem: " + e1);
+                        throw (FatalConfigurationException) new FatalConfigurationException(
+                            "Recover.log problem: " + e1).initCause(e1);
                     }
                 }
             } catch (IOException e) {
@@ -787,7 +789,7 @@ public class CrawlController implements Serializable {
      * @return Object this controller is using to track crawl statistics
      */
     public StatisticsTracking getStatistics() {
-        return statistics;
+        return statistics==null?new StatisticsTracker("crawl-statistics"):statistics;
     }
     
     protected void sendCrawlStateChangeEvent(Object newState, String message) {
@@ -808,8 +810,10 @@ public class CrawlController implements Serializable {
                     l.crawlEnding(message);
                 } else if (newState.equals(FINISHED)) {
                     l.crawlEnded(message);
+                } else if (newState.equals(PREPARING)) {
+                    l.crawlResuming(message);
                 } else {
-                    throw new RuntimeException("Unknown state");
+                    throw new RuntimeException("Unknown state: "+newState);
                 }
 
                 logger.fine("Sent " + newState + " to " + l);
@@ -828,6 +832,7 @@ public class CrawlController implements Serializable {
 
         // Assume Frontier state already loaded.
         logger.info("Starting crawl.");
+
         sendCrawlStateChangeEvent(STARTED, CrawlJob.STATUS_PENDING);
         String jobState;
         if(beginPaused) {
@@ -982,7 +987,7 @@ public class CrawlController implements Serializable {
         frontier.unpause();
         logger.info("Finished beginCrawlStop()."); 
     }
-
+    
     /**
      * Stop the crawl temporarly.
      */
