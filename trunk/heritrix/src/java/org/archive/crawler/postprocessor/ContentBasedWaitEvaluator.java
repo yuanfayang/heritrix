@@ -114,8 +114,7 @@ public class ContentBasedWaitEvaluator extends WaitEvaluator {
             logger.warning("Regular expression for content type not found");
             return;
         }
-System.out.println("Content: " + content_type);
-System.out.println("Regexpr: " + regexpr);
+
         if(TextUtils.matches(regexpr, content_type) == false){
             // Content type does not match reg.expr. Exit
             return;

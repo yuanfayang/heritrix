@@ -1,4 +1,4 @@
-/* TextWaitEvaluator
+/* ImageWaitEvaluator
  * 
  * $Id$
  * 
@@ -26,7 +26,7 @@ package org.archive.crawler.postprocessor;
 
 /**
  * A specialized ContentBasedWaitEvaluator. Comes preset with a regular 
- * expression that matches text documents. <code>^image/*.*$</code>
+ * expression that matches text documents. <code>^image/.*$</code>
  *
  * @author Kristinn Sigurdsson
  * 
@@ -36,7 +36,7 @@ public class ImageWaitEvaluator extends ContentBasedWaitEvaluator {
     protected final static Long DEFAULT_INITIAL_WAIT_INTERVAL =
         new Long(172800); // 2 days
 
-    protected final static String DEFAULT_CONTENT_REGEXPR = "^image/*.*$"; //Text
+    protected final static String DEFAULT_CONTENT_REGEXPR = "^image/.*$"; //Text
 
     /**
      * Constructor
