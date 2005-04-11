@@ -79,7 +79,7 @@ public class ServerCache {
         return (cserver != null)? cserver: createServerFor(serverKey);
     }
     
-    private CrawlServer createServerFor(String s) {
+    protected CrawlServer createServerFor(String s) {
         CrawlServer cserver = (CrawlServer)this.servers.get(s);
         if (cserver != null) {
             return cserver;
@@ -132,7 +132,7 @@ public class ServerCache {
         return (host != null)? host: createHostFor(hostname);
     }
     
-    public CrawlHost createHostFor(String hostname) {
+    protected CrawlHost createHostFor(String hostname) {
         if (hostname == null || hostname.length() == 0) {
             return null;
         }
