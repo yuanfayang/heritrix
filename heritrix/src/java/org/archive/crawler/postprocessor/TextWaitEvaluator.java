@@ -26,7 +26,7 @@ package org.archive.crawler.postprocessor;
 
 /**
  * A specialized ContentBasedWaitEvaluator. Comes preset with a regular 
- * expression that matches text documents. <code>^text/*.*$</code>
+ * expression that matches text documents. <code>^text/.*$</code>
  *
  * @author Kristinn Sigurdsson
  * 
@@ -36,7 +36,7 @@ public class TextWaitEvaluator extends ContentBasedWaitEvaluator {
     protected final static Long DEFAULT_INITIAL_WAIT_INTERVAL =
         new Long(43200); // 12 hours
 
-    protected final static String DEFAULT_CONTENT_REGEXPR = "^text/*.*$"; //Text
+    protected final static String DEFAULT_CONTENT_REGEXPR = "^text/.*$"; //Text
 
     /**
      * Constructor
