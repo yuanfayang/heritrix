@@ -120,8 +120,7 @@ public class RecordingOutputStream extends OutputStream {
      * @param bufferSize Buffer size to use.
      * @param backingFilename Name of backing file to use.
      */
-    public RecordingOutputStream(int bufferSize, String backingFilename)
-    {
+    public RecordingOutputStream(int bufferSize, String backingFilename) {
         this.buffer = new byte[bufferSize];
         this.backingFilename = backingFilename;
     }
@@ -152,7 +151,9 @@ public class RecordingOutputStream extends OutputStream {
         this.size = 0;
         // Always begins false; must use startDigest() to begin
         this.shouldDigest = false;
-        this.diskStream = null;
+        if (this.diskStream != null) {
+            closeDiskStream();
+        }
         lateOpen();
     }
 
@@ -165,35 +166,23 @@ public class RecordingOutputStream extends OutputStream {
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.io.OutputStream#write(int)
-     */
     public void write(int b) throws IOException {
         record(b);
-        if (this.out != null)
-        {
+        if (this.out != null) {
             this.out.write(b);
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.io.OutputStream#write(byte[])
-     */
     public void write(byte[] b) throws IOException {
         record(b, 0, b.length);
-        if (this.out != null)
-        {
+        if (this.out != null) {
             this.out.write(b);
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.io.OutputStream#write(byte[], int, int)
-     */
     public void write(byte[] b, int off, int len) throws IOException {
         record(b, off, len);
-        if (this.out != null)
-        {
+        if (this.out != null) {
             this.out.write(b, off, len);
         }
     }
@@ -253,7 +242,7 @@ public class RecordingOutputStream extends OutputStream {
             // TODO: Its possible to call write w/o having first opened a
             // stream.  Lets protect ourselves against this.
             if (this.diskStream == null) {
-            	    throw new IOException("diskstream is null");
+                throw new IOException("diskstream is null");
             }
             this.diskStream.write(b, off, len);
             this.position += len;
@@ -270,9 +259,6 @@ public class RecordingOutputStream extends OutputStream {
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.io.OutputStream#close()
-     */
     public void close() throws IOException {
         if (this.out != null) {
             this.out.close();
@@ -280,12 +266,17 @@ public class RecordingOutputStream extends OutputStream {
         }
         closeRecorder();
     }
-
-    public void closeRecorder() throws IOException {
+    
+    protected synchronized void closeDiskStream()
+    throws IOException {
         if (this.diskStream != null) {
             this.diskStream.close();
             this.diskStream = null;
         }
+    }
+
+    public void closeRecorder() throws IOException {
+        closeDiskStream();
 
         // This setting of size is important.  Its passed to ReplayInputStream
         // on creation.  It uses it to know EOS.
