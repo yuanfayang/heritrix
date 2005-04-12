@@ -339,11 +339,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         // Now add in the default profile.  Its on the CLASSPATH and needs
         // special handling.  Don't add if already a default present.
+        String parent = File.separator + PROFILES_DIR_NAME + File.separator;
         if (!loadedDefault) {
-            String parent = File.separator + PROFILES_DIR_NAME +
-                File.separator + DEFAULT_PROFILE;
-            loadProfile(new File(parent, ORDER_FILE_NAME));
+            loadProfile(new File(parent + DEFAULT_PROFILE, ORDER_FILE_NAME));
         }
+        // Load the deciding-default profile from classpath (TODO: Figure
+        // how to get a listing of all that is in /profiles on classpath).
+        loadProfile(new File(parent + "deciding-default", ORDER_FILE_NAME));
         
         // Look to see if a default profile system property has been
         // supplied. If so, use it instead.
@@ -366,16 +368,16 @@ public class CrawlJobHandler implements CrawlStatusListener {
             CrawlJobErrorHandler cjseh =
                 new CrawlJobErrorHandler(Level.SEVERE);
             newSettingsHandler.
-            setErrorReportingLevel(cjseh.getLevel());
+                setErrorReportingLevel(cjseh.getLevel());
             newSettingsHandler.initialize();
             addProfile(new CrawlJob(profile.getParentFile().getName(),
-                    newSettingsHandler, cjseh));
+                newSettingsHandler, cjseh));
             loadedDefault = profile.getParentFile().getName().
                 equals(DEFAULT_PROFILE);
         } catch (InvalidAttributeValueException e) {
             System.err.println("Failed to load profile '" +
                     profile.getParentFile().getName() +
-            "'. InvalidAttributeValueException.");
+                    "'. InvalidAttributeValueException.");
         }
         return loadedDefault;
     }
