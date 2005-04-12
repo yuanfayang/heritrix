@@ -135,7 +135,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
     /**
      * Constructor for subclasses to use.
      */
-    public CachedBdbMap() {
+    protected CachedBdbMap() {
         super();
         initialize();
     }
@@ -299,25 +299,24 @@ public class CachedBdbMap extends AbstractMap implements Map {
     public Object get(Object key) {
         getCount++;
         expungeStaleEntries();
-
-        if (logger.isLoggable(Level.FINE) && getCount % 1000 == 0) {
+        if (logger.isLoggable(Level.FINE) && getCount % 10000 == 0) {
             try {
                 long notInMapCount = (getCount - (cacheHit + diskHit));
                 long cacheHitPercent = (cacheHit * 100) / (cacheHit + diskHit);
                 logger.fine("DB name: " + db.getDatabaseName()
-                                + ", Cache Hit: " + cacheHitPercent
-                                + "%, Not in map: " + notInMapCount
-                                + ", Total number of gets: " + getCount);
+                    + ", Cache Hit: " + cacheHitPercent
+                    + "%, Not in map: " + notInMapCount
+                    + ", Total number of gets: " + getCount);
             } catch (DatabaseException e) {
                 // This is just for logging so ignore DB Exceptions
             }
         }
-
         SoftEntry tmp = (SoftEntry) cache.get(key);
         if (tmp != null && tmp.get() != null) {
             cacheHit++;
             return tmp.get();
         }
+
         Object o = diskMap.get(key);
         if (o != null) {
             diskHit++;
@@ -328,17 +327,10 @@ public class CachedBdbMap extends AbstractMap implements Map {
         return o;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.util.Map#put(java.lang.Object, java.lang.Object)
-     */
     public synchronized Object put(Object key, Object value) {
         expungeStaleEntries();
         Object returnValue = null;
-
         SoftEntry prevValue = (SoftEntry) cache.get(key);
-
         if (prevValue != null && prevValue.get() != value) {
             SoftEntry newEntry = new SoftEntry(key, value, refQueue);
             newEntry.phantom.onDisk = true;
@@ -386,9 +378,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
     public boolean containsKey(Object key) {
         if (quickContainsKey(key)) {
             return true;
-        } else {
-            return diskMap.containsKey(key);
         }
+        return diskMap.containsKey(key);
     }
 
     public boolean quickContainsKey(Object key) {
@@ -399,9 +390,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
     public boolean containsValue(Object value) {
         if (quickContainsValue(value)) {
             return true;
-        } else {
-            return diskMap.containsValue(value);
         }
+        return diskMap.containsValue(value);
     }
 
     public boolean quickContainsValue(Object value) {
@@ -409,11 +399,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
         return cache.containsValue(value);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.util.Map#size()
-     */
     public int size() {
         return (int) (diskMapSize + cacheOnlySize);
     }
@@ -467,12 +452,10 @@ public class CachedBdbMap extends AbstractMap implements Map {
         }
 
         public boolean hasNext() {
-            // TODO Auto-generated method stub
             return false;
         }
 
         public Object next() {
-            // TODO Auto-generated method stub
             return null;
         }
 
@@ -488,10 +471,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
 
         private boolean onDisk = false;
 
-        /**
-         * @param referent
-         * @param q
-         */
         public PhantomEntry(Object key, Object referent) {
             super(referent, null);
             this.key = key;
@@ -513,18 +492,20 @@ public class CachedBdbMap extends AbstractMap implements Map {
     }
 
     private class SoftEntry extends SoftReference {
-
         private PhantomEntry phantom;
 
-        /**
-         * @param referent
-         * @param q
-         */
         public SoftEntry(Object key, Object referent, ReferenceQueue q) {
             super(referent, q);
             this.phantom = new PhantomEntry(key, referent);
         }
 
     }
-
+    
+    /**
+     * Used by unit test.
+     * @return This classes logger.
+     */
+    Logger getLogger() {
+        return logger;
+    }
 }
