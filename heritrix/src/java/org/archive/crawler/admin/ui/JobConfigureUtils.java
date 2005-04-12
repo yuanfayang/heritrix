@@ -561,17 +561,17 @@ public class JobConfigureUtils {
                 "</td><td nowrap>");
             if(first==false){
                 p.append("<a href=\"javascript:doMoveUp('" +
-                    mbean.getName() + "','" + parent + "')\">Move up</a>");
+                    mbean.getName() + "','" + parent + "')\">Up</a>");
             }
             p.append("</td><td nowrap>");
             if(last==false){
                 p.append("<a href=\"javascript:doMoveDown('" +
-                    mbean.getName() + "','" + parent + "')\">Move down</a>");
+                    mbean.getName() + "','" + parent + "')\">Down</a>");
             }
             p.append("</td><td><a href=\"javascript:doRemove('" +
                 mbean.getName() + "','" + parent + "')\">Remove</a></td>");
-            p.append("<td><i>" + mbean.getClass().getName() +
-                "</i></td></tr>\n");
+            p.append("<td><i><font size=\"-1\">" + mbean.getClass().getName() +
+                "</font></i></td></tr>\n");
         } else if (printAttributeNames) {
             p.append("<tr><td colspan='5'><b>" + indent + mbean.getName() +
                 "</b></td></tr>\n");
@@ -641,76 +641,81 @@ public class JobConfigureUtils {
      *
      * @param mbean The ComplexType representing the crawl order or one
      * of it's subcomponents.
+     * @param inMap
      * @param parent The absolute name of the ComplexType that contains the
      * current ComplexType (i.e. parent).
      * @return The variable part of the HTML code for selecting filters.
+     * @throws Exception
      */
     public static String printAllMaps(ComplexType mbean, boolean inMap,
-            String parent)
-    throws Exception {
-        if(mbean.isTransient()){
+            String parent) throws Exception {
+        if (mbean.isTransient()) {
             return "";
         }
         MBeanInfo info = mbean.getMBeanInfo();
         MBeanAttributeInfo a[] = info.getAttributes();
         StringBuffer p = new StringBuffer();
-        
+
         boolean subMap = false;
-        boolean processorsMap = false; 
+        boolean processorsMap = false;
         MapType thisMap = null;
         List availableOptions = Collections.EMPTY_LIST;
         if (mbean instanceof MapType) {
-            thisMap = (MapType) mbean;
+            thisMap = (MapType)mbean;
             if (thisMap.getContentType() != Processor.class) {
                 // only if a maptype, with moduletype entries, with
-                // multiple options, and not Processor, will this 
+                // multiple options, and not Processor, will this
                 // get map treatment
                 subMap = true;
             } else {
-                processorsMap = true; 
+                processorsMap = true;
             }
             if (ModuleType.class.isAssignableFrom(thisMap.getContentType())) {
                 availableOptions = getOptionsForType(thisMap.getContentType());
             }
-            if(availableOptions.size()==0) {
+            if (availableOptions.size() == 0) {
                 subMap = false;
             }
         }
-        
-        String description = TextUtils.escapeForMarkupAttribute(mbean.getDescription());
-        if(inMap) {
+
+        String description = TextUtils.escapeForMarkupAttribute(mbean
+                .getDescription());
+        if (inMap) {
             p.append("<tr><td>" + mbean.getName() + "</td>");
-            p.append("<td nowrap><a href=\"javascript:doMoveUp('" +
-                mbean.getName() + "','" + parent + "')\">Move up</a></td>");
-            p.append("<td nowrap><a href=\"javascript:doMoveDown('" +
-                mbean.getName() + "','" + parent + "')\">Move down</a></td> ");
-            p.append("<td><a href=\"javascript:doRemove('" +
-                mbean.getName() + "','" + parent + "')\">Remove</a></td>");
-            p.append("<td title='"+description+"'>");
-            p.append("<i>" + mbean.getClass().getName()+"</i>");
-            p.append("<a href='javascript:alert(\""+description+"\")'> ? </a>");
+            p.append("<td nowrap><a href=\"javascript:doMoveUp('"
+                    + mbean.getName() + "','" + parent
+                    + "')\">Up</a></td>");
+            p.append("<td nowrap><a href=\"javascript:doMoveDown('"
+                    + mbean.getName() + "','" + parent
+                    + "')\">Down</a></td> ");
+            p.append("<td><a href=\"javascript:doRemove('" + mbean.getName()
+                    + "','" + parent + "')\">Remove</a></td>");
+            p.append("<td title='" + description + "'>");
+            p.append("<i><font size=\"-1\">" + mbean.getClass().getName() +
+                    "</font></i>");
+            p.append("<a href='javascript:alert(\"" + description
+                    + "\")'> ? </a>");
             p.append("</td></tr>\n");
         } else {
             p.append("<div class='SettingsBlock'>\n");
-            p.append("<b title='"+description+"'>" + mbean.getName());
+            p.append("<b title='" + description + "'>" + mbean.getName());
             p.append("</b>\n");
             Class type = mbean.getLegalValueType();
-            if(CrawlScope.class.isAssignableFrom(type) 
-                    || Frontier.class.isAssignableFrom(type) 
-                    || processorsMap) {
-                p.append("<font size=\"-1\">" + description +
-                    "To change " + mbean.getName() + ", go to the " +
-                    "<i>Modules</i> tab.</font>");
+            if (CrawlScope.class.isAssignableFrom(type)
+                    || Frontier.class.isAssignableFrom(type) || processorsMap) {
+                p.append("<font size=\"-1\">" + description + "To change "
+                        + mbean.getName() + ", go to the "
+                        + "<i>Modules</i> tab.</font>");
             }
             p.append("<br/>\n");
         }
 
-        
-        if(subMap) {
+        if (subMap) {
             p.append("<table>\n");
         }
-        for(int n = 0; n < a.length; n++) {
-            if(a[n] == null) {
+
+        for (int n = 0; n < a.length; n++) {
+            if (a[n] == null) {
                 p.append("  ERROR: null attribute");
             } else {
                 Object currentAttribute = null;
@@ -722,54 +727,48 @@ public class JobConfigureUtils {
                     String error = e1.toString() + " " + e1.getMessage();
                     return error;
                 }
-                if(currentAttribute instanceof ComplexType) {
-                    if(inMap) {
+                if (currentAttribute instanceof ComplexType) {
+                    if (inMap) {
                         p.append("<tr><td colspan='5'>");
                     }
                     p.append(printAllMaps((ComplexType)currentAttribute,
-                        subMap,  mbean.getAbsoluteName()));
-                    if(inMap) {
+                            subMap, mbean.getAbsoluteName()));
+                    if (inMap) {
                         p.append("</td></tr>\n");
                     }
                 }
             }
         }
-        if(subMap) {
+        if (subMap) {
             p.append("</table>\n");
         }
 
-        if(subMap) {
+        if (subMap) {
             // ordered list of options; append add controls
-            String name = thisMap.getName();
             if (availableOptions != null) {
-                p.append("Name: <input size='8' name='" +
-                    mbean.getAbsoluteName() +
-                    ".name' id='" + mbean.getAbsoluteName() + ".name'>\n");
-                p.append("Type: <select name='" +
-                    mbean.getAbsoluteName() + ".class'>\n");
-                for(int i=0 ; i<availableOptions.size() ; i++) {
-                    p.append("<option value='" +
-                        availableOptions.get(i) + "'>" +
-                        availableOptions.get(i) + "</option>\n");
+                p.append("Name: <input size='8' name='"
+                        + mbean.getAbsoluteName() + ".name' id='"
+                        + mbean.getAbsoluteName() + ".name'>\n");
+                p.append("Type: <select name='" + mbean.getAbsoluteName()
+                        + ".class'>\n");
+                for (int i = 0; i < availableOptions.size(); i++) {
+                    p.append("<option value='" + availableOptions.get(i) + "'>"
+                            + availableOptions.get(i) + "</option>\n");
                 }
                 p.append("</select>\n");
-                p.append("<input type='button' value='Add'" +
-                    " onClick=\"doAdd('" + mbean.getAbsoluteName() +
-                    "')\">\n");
+                p.append("<input type='button' value='Add'"
+                        + " onClick=\"doAdd('" + mbean.getAbsoluteName()
+                        + "')\">\n");
                 p.append("<br/>");
             }
         }
 
-        if(!inMap) {
+        if (!inMap) {
             p.append("\n</div>\n");
         }
         return p.toString();
     }
-
-    /**
-     * @param type
-     * @return
-     */
+    
     private static List getOptionsForType(Class type) {
         String typeName = type.getName();
         String simpleName = typeName.substring(typeName.lastIndexOf(".")+1);
@@ -841,14 +840,15 @@ public class JobConfigureUtils {
                 alt = !alt;
                 p.append("><td nowrap><b>" + indent + "</b>" + mbean.getName() + "</td><td nowrap>");
                 if(first==false){
-                    p.append("<a href=\"javascript:doMoveUp('"+mbean.getName()+"','"+parent+"')\">Move up</a>");
+                    p.append("<a href=\"javascript:doMoveUp('"+mbean.getName()+"','"+parent+"')\">Up</a>");
                 }
                 p.append("</td><td nowrap>");
                 if(last==false){
-                    p.append("<a href=\"javascript:doMoveDown('"+mbean.getName()+"','"+parent+"')\">Move down</a>");
+                    p.append("<a href=\"javascript:doMoveDown('"+mbean.getName()+"','"+parent+"')\">Down</a>");
                 }
                 p.append("</td><td><a href=\"javascript:doRemove('"+mbean.getName()+"','"+parent+"')\">Remove</a></td>");
-                p.append("<td><i>"+mbean.getClass().getName()+"</i></td></tr>\n");
+                p.append("<td><i><font size=\"-1\">" + mbean.getClass().getName() +
+                        "</font></i></td></tr>\n");
             }
         } else if (printAttributeNames) {
             // Not a filter, or an inherited filter.
@@ -947,13 +947,13 @@ public class JobConfigureUtils {
      *
      * MOVED FROM webapps/admin/jobs/modules.jsp
      * @param map The map to edit
-     * @param availibleOptions List of availible modules that can be added to the map
-     *                         (full class names as Strings)
+     * @param allowableType
      * @param name A short name for the map (only alphanumeric chars.)
      *
      * @return the HTML to edit the specified modules map
      */
-    public static String buildModuleMap(ComplexType map, Class allowableType, String name){
+    public static String buildModuleMap(ComplexType map,
+            Class allowableType, String name){
         StringBuffer ret = new StringBuffer();
 
         List availableOptions = getOptionsForType(allowableType);
@@ -967,7 +967,6 @@ public class JobConfigureUtils {
         // Printout modules in map.
         boolean alt = false;
         for(int n=0; n<m.length; n++) {
-            Object currentAttribute = null;
             ModuleAttributeInfo att = (ModuleAttributeInfo)m[n]; //The attributes of the current attribute.
 
             ret.append("<tr");
@@ -976,12 +975,12 @@ public class JobConfigureUtils {
             }
             ret.append("><td>&nbsp;"+att.getType()+"</td>");
             if(n!=0){
-                ret.append("<td><a href=\"javascript:doMoveMapItemUp('" + name + "','"+att.getName()+"')\">Move up</a></td>");
+                ret.append("<td><a href=\"javascript:doMoveMapItemUp('" + name + "','"+att.getName()+"')\">Up</a></td>");
             } else {
                 ret.append("<td></td>");
             }
             if(n!=m.length-1){
-                ret.append("<td><a href=\"javascript:doMoveMapItemDown('" + name + "','"+att.getName()+"')\">Move down</a></td>");
+                ret.append("<td><a href=\"javascript:doMoveMapItemDown('" + name + "','"+att.getName()+"')\">Down</a></td>");
             } else {
                 ret.append("<td></td>");
             }
@@ -998,11 +997,10 @@ public class JobConfigureUtils {
             boolean isIncluded = false;
 
             for(int n=0; n<m.length; n++) {
-                Object currentAttribute = null;
                 ModuleAttributeInfo att = (ModuleAttributeInfo)m[n]; //The attributes of the current attribute.
 
                 try {
-                    currentAttribute = map.getAttribute(att.getName());
+                    map.getAttribute(att.getName());
                 } catch (Exception e1) {
                     ret.append(e1.toString() + " " + e1.getMessage());
                 }
@@ -1040,5 +1038,4 @@ public class JobConfigureUtils {
         ret.append("</table>");
         return ret.toString();
     }
-
 }
