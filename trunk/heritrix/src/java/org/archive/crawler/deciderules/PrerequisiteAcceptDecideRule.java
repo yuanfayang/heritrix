@@ -38,7 +38,7 @@ import org.archive.crawler.extractor.Link;
 public class PrerequisiteAcceptDecideRule extends AcceptDecideRule {
     public PrerequisiteAcceptDecideRule(String name) {
         super(name);
-        setDescription("PrerequisiteAcceptDecideRule: ACCEPTs " +
+        setDescription("PrerequisiteAcceptDecideRule. ACCEPTs " +
                 "all CrawlURIs discovered via a prerequisite " +
                 "'link'.");
     }

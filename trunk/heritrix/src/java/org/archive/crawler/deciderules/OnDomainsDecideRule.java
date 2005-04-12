@@ -43,7 +43,7 @@ public class OnDomainsDecideRule extends SurtPrefixedDecideRule {
     public OnDomainsDecideRule(String name) {
         super(name);
         setDescription(
-                 "OnDomainsDecideRule: Makes the configured decision " +
+                 "OnDomainsDecideRule. Makes the configured decision " +
                  "for any URI which is inside one of the domains in the " +
                  "configured set of domains (derived from the seed" +
                  "list, with \"www\" removed when present).");

@@ -65,7 +65,7 @@ public class TransclusionDecideRule extends PredicatedDecideRule {
      */
     public TransclusionDecideRule(String name) {
         super(name);
-        setDescription("TransclusionDecideRule: ACCEPTs URIs whose path " +
+        setDescription("TransclusionDecideRule. ACCEPTs URIs whose path " +
                 "from the seed ends with up to (but not more than) the " +
                 "configured '" + ATTR_MAX_TRANS_HOPS +
                 "' number of non-navlink ('L') hops.");
