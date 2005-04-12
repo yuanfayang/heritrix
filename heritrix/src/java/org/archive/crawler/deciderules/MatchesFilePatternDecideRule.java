@@ -69,17 +69,19 @@ public class MatchesFilePatternDecideRule extends MatchesRegExpDecideRule {
      */
     public MatchesFilePatternDecideRule(String name) {
         super(name);
-        setDescription("MathesFilePatternDecideRule. Applies its decision " +
-            "to all URIs that end with the specified pattern(s). " +
-            " Default file patterns are:\n.avi, .bmp, " +
+        setDescription("MatchesFilePatternDecideRule. Applies its decision " +
+            "to all URIs that end with the specified pattern(s). Anything " +
+            " that doese not match is let PASS. " +
+            " Default file patterns are: .avi, .bmp, " +
             ".doc, .gif, .jp(e)g, .mid, .mov, .mp2, .mp3, .mp4, .mpeg, " +
-            ".pdf, .png, .ppt, .ram, .rm,.smil, .swf, .tif(f), .wav, .wmv\n" +
+            ".pdf, .png, .ppt, .ram, .rm,.smil, .swf, .tif(f), .wav, .wmv. " +
             "It is also possible to specify a custom regular expression, " +
             "in which case this behaves exactly like the " +
-            " MatchesRegExpDecideRule.");
+            " MatchesRegExpDecideRule. See also " +
+            "NotMatchesFilePatternDecideRule.");
 
         String[] options = new String[] {ALL, IMAGES, AUDIO, VIDEO, MISC,
-                                            CUSTOM};
+            CUSTOM};
 
         addElementToDefinition(
             new SimpleType(ATTR_USE_PRESET, "URIs that match selected file " +
@@ -95,24 +97,25 @@ public class MatchesFilePatternDecideRule extends MatchesRegExpDecideRule {
                 "All", options));
 
         addElementToDefinition(
-            new SimpleType(ATTR_REGEXP, "Custom java regular expression.+n " +
+            new SimpleType(ATTR_REGEXP, "Custom java regular expression. " +
                     "This regular expression will be used instead of the " +
-                    "supplied pattern groups for matching.\nAn example " +
-                    "of such a regular expression (Miscellaneous):\n" +
-                    ".*(?i)(\\.(doc|pdf|ppt|swf))$\n" +
+                    "supplied pattern groups for matching. An example " +
+                    "of such a regular expression (Miscellaneous): " +
+                    ".*(?i)(\\.(doc|pdf|ppt|swf))$ " +
                     "Any arbitrary regular expression may be entered and " +
                     "will be applied to the URI.", ""));
     }
 
     /**
      * Use a preset if configured to do so.
+     * @param o Context
+     * @return Regex to use.
      * 
-     * @see org.archive.crawler.filter.URIRegExpFilter#getRegexp(java.lang.Object)
+     * @see org.archive.crawler.filter.URIRegExpFilter#getRegexp(Object)
      */
     protected String getRegexp(Object o) {
         try {
             String patternType = (String) getAttribute(o, ATTR_USE_PRESET);
-
             if (patternType.equals(ALL)) {
                 return ALL_DEFAULT_PATTERNS;
             } else if (patternType.equals(IMAGES)) {

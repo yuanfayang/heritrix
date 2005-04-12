@@ -265,6 +265,38 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
             decision == DecideRule.REJECT);
     }
     
+    public void testMatchesFilePattern()
+    throws InvalidAttributeValueException, URIException {
+        addDecideRule(new MatchesFilePatternDecideRule("FILE_PATTERN"));
+        StringBuffer baseUri = new StringBuffer("http://archive.org/");
+        UURI uuri = UURIFactory.getInstance(baseUri.toString() + "ms.doc");
+        CandidateURI candidate = new CandidateURI(uuri);
+        Object decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.ACCEPT + " but got " + decision,
+            decision == DecideRule.ACCEPT);
+        uuri = UURIFactory.getInstance(baseUri.toString() + "index.html");
+        candidate = new CandidateURI(uuri);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
+            decision == DecideRule.PASS);
+    }
+    
+    public void testNotMatchesFilePattern()
+    throws InvalidAttributeValueException, URIException {
+        addDecideRule(new NotMatchesFilePatternDecideRule("NOT_FILE_PATTERN"));
+        StringBuffer baseUri = new StringBuffer("http://archive.org/");
+        UURI uuri = UURIFactory.getInstance(baseUri.toString() + "ms.doc");
+        CandidateURI candidate = new CandidateURI(uuri);
+        Object decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.PASS + " but got " + decision,
+            decision == DecideRule.PASS);
+        uuri = UURIFactory.getInstance(baseUri.toString() + "index.html");
+        candidate = new CandidateURI(uuri);
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Expect " + DecideRule.ACCEPT + " but got " + decision,
+            decision == DecideRule.ACCEPT);
+    }
+    
     protected void testHopLimit(final int max, final char pathExpansion,
         final String defaultDecision, final String overLimitDecision)
     throws URIException {
