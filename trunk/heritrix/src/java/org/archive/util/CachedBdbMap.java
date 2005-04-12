@@ -31,10 +31,9 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.util.AbstractMap;
-import java.util.AbstractSet;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -85,8 +84,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
     private Map cache;
 
     protected ReferenceQueue refQueue = new ReferenceQueue();
-
-    private EntrySet entrySet = new EntrySet(this);
 
     /** The number of objects stored in the BDB JE database. */
     private int diskMapSize = 0;
@@ -286,14 +283,30 @@ public class CachedBdbMap extends AbstractMap implements Map {
         super.finalize();
     }
 
+    
+    /**
+     * As this keySet is a union of the cache and diskMap KeySets,
+     * it does not support the remove operations typical of keySet views
+     * on underlying maps.
+     * 
+     * @see java.util.Map#keySet()
+     */
+    public Set keySet() {
+        // return unmodifiable union of cache and diskMap keySets
+        HashSet allKeys = new HashSet(cache.keySet());
+        allKeys.addAll(diskMap.keySet());
+        return Collections.unmodifiableSet(allKeys);
+    }
+    
     /*
      * (non-Javadoc)
      * 
      * @see java.util.Map#entrySet()
      */
     public Set entrySet() {
-        expungeStaleEntries();
-        return entrySet;
+        // would require complicated implementation to 
+        // maintain identity guarantees, so skipping
+        throw new UnsupportedOperationException();
     }
 
     public Object get(Object key) {
@@ -422,47 +435,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
                 // Just for logging so ignore Exceptions
             }
         }
-    }
-
-    // Internal structures
-    private class EntrySet extends AbstractSet implements Set {
-
-        private final CachedBdbMap map;
-
-        public EntrySet(CachedBdbMap map) {
-            this.map = map;
-        }
-
-        public Iterator iterator() {
-            return new EntrySetIterator(map);
-        }
-
-        public int size() {
-            return map.size();
-        }
-
-    }
-
-    private class EntrySetIterator implements Iterator {
-
-        private final CachedBdbMap map;
-
-        public EntrySetIterator(CachedBdbMap map) {
-            this.map = map;
-        }
-
-        public boolean hasNext() {
-            return false;
-        }
-
-        public Object next() {
-            return null;
-        }
-
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-
     }
 
     private class PhantomEntry extends PhantomReference {
