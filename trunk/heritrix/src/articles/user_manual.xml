@@ -654,27 +654,31 @@
       <listitem>
         <para>Modules (<xref linkend="modules" />)</para>
 
-        <para>Add/remove/set configurable modules</para>
+        <para>Add/remove/set configurable modules, such as the crawl Scope
+        (<xref linkend="scopes" />), Frontier (<xref linkend="frontier" />), 
+        or Processors (<xref linkend="processors" />).</para>
       </listitem>
       
       <listitem>
-        <para>URL (<xref linkend="urlcanon" />)</para>
+        <para>Submodules (<xref linkend="submodules" />)</para>
 
-        <para>Add/remove/reorder URL canonicalization rules.</para>
+        <para>Here you can:</para>
+        
+        <itemizedlist>
+         <listitem>
+          <para>Add/remove/reorder URL canonicalization rules 
+          (<xref linkend="urlcanon" />)</para>
+         </listitem>
+         <listitem>
+          <para>Add/remove/reorder filters (<xref linkend="filters" />)</para>
+         </listitem>
+         <listitem>
+          <para>Add/remove login credentials 
+          (<xref linkend="credentials" />)</para>
+         </listitem>
+        </itemizedlist>
       </listitem>
-
-      <listitem>
-        <para>Filters (<xref linkend="filters" />)</para>
-
-        <para>Add/remove/reorder filters</para>
-      </listitem>
-
-      <listitem>
-        <para>Credentials (<xref linkend="credentials" />)</para>
-
-        <para>Add/remove login credentials</para>
-      </listitem>
-
+      
       <listitem>
         <para>Settings (<xref linkend="settings" />)</para>
 
@@ -715,16 +719,18 @@
     undone.</para>
 
     <sect2 id="modules">
-      <title>Modules</title>
+      <title>Modules (Scope, Frontier, and Processors)</title>
 
       <para>Heritrix has several types of pluggable modules. These modules,
       while having a fixed interface usually have a number of provided
-      implementations. They can also be third party plugins. This page allows
+      implementations. They can also be third party plugins. The "Modules"
+      tab allows
       the user to set several types of these pluggable modules.</para>
 
       <para>Once modules have been added to the configuration they can be
-      configured in greater detail on the Settings page (<xref
-      linkend="settings" />).</para>
+      configured in greater detail on the Settings tab (<xref
+      linkend="settings" />). If a module can contain within it multiple
+      other modules, these can be configured on the Submodules tab.</para>
 
       <para><note>
           <para>Modules are referred to by their Java class names
@@ -734,117 +740,6 @@
       url="http://crawler.archive.org/articles/developer_manual.html">Developer's
       Manual</ulink> for information about creating and adding custom modules
       to Heritrix.</para>
-
-      <sect3 id="frontier">
-        <title>Frontier</title>
-
-        <para>The Frontier is a pluggable module that maintains the internal
-        state
-        of the crawl. What URIs have been discovered, crawled etc. As such its
-        selection greatly affects for instance the order in which discovered
-        URIs are crawled.</para>
-
-        <para>There is only one Frontier per crawl job.</para>
-
-        <para>Multiple Frontiers are provided with Heritrix, each of a 
-        particular character.
-        </para>
-
-        <sect4 id="bdbfrontier"><title>BdbFrontier</title>
-        <para>The default Frontier in Heritrix as of 1.4.0 and later is the
-        BdbFrontier(Previously, the default was the 
-        <xref linkend="hqf" />).
-        The BdbFrontier visits URIs and sites
-        discovered in a generally breadth-first manner, it offers
-        configuration options controlling how it throttles its activity
-        against particular hosts, and whether it has a bias towards
-        finishing hosts in progress ('site-first' crawling) or cycling among
-        all hosts with pending URIs.
-        </para>
-        <para>Discovered URIs are only crawled once, except that robots.txt
-        and DNS information can be configured so that it is refreshed at
-        specified intervals for each host.</para>
-        <para>The main difference between the BdbFrontier and its precursor,
-        <xref linkend="hqf" />, is that its queues are disk-based rather than
-        memory-based.
-        </para>
-        </sect4>
-        <sect4 id="hqf"><title>HostQueuesFrontier</title>
-        <para>The forerunner of the <xref linkend="bdbfrontier" />. Now
-        deprecated mostly because it kept queues in memory.
-        Has same general characteristics as the
-        <xref linkend="bdbfrontier" />.
-        </para>
-        </sect4>
-        <sect4 id="dsf"><title>DomainSensitveFrontier</title>
-          <para>A subclass of the <xref linkend="hqf" /> written by 
-          Oskar Grenholm. 
-          The DSF
-          allows specifying an upper-bound on the number of
-          documents downloaded per-site.  It does this by
-          exploiting <xref linkend="overrides" /> adding a filter
-          to block further fetching once the crawler has attained
-          per-site limits.  </para>
-        </sect4>
-
-        <sect4 id="arf">
-        <title>AdaptiveRevisitingFrontier</title>
-        <para>The AdaptiveRevisitingFrontier -- a.k.a <emphasis>AR</emphasis>
-        Frontier -- will repeatedly visit all encountered URIs.  
-        Wait time between visits is configurable and varies based on wait
-        intervals specified by a WaitEvaluator processor.
-        It was written by Kristinn Sigurdsson.
-        <note>
-        <para>This Frontier is still experimental, in active development and
-        has not been tested extensively.</para>
-        </note>
-        </para>
-        <para>In addition to the WaitEvaluator (or similar processor) a
-        crawl using this Frontier will also need to use the ChangeEvaluator
-        processor: i.e. this Frontier requires that ChangeEvaluator 
-        and WaitEvaluator or equivalents are present in the processing
-        chain.</para>
-        <para>ChangeEvaluator should be
-        at the very top of the extractor chain.</para>
-        <para>WaitEvaluator -- or an equivalent -- needs to be
-        in the post processing chain.</para>
-
-        <para>The ChangeEvaluator has no configurable settings. The
-        WaitEvaluator however has numerous settings to adjust the revisit
-        policy.
-        <itemizedlist>
-        <listitem>
-        <para>Initial wait. A waiting period before revisiting the first
-        time.</para>
-        </listitem>
-        <listitem>
-        <para>Increase and decrease factors on unchanged and changed
-        documents respectively. Basically if a document has not changed
-        between visits, it's wait time will be multiplied by the
-        "unchanged-factor" and if it has changed, the wait time will be
-        divided by the "changed-factor". Both values accept real
-        numbers, not just integers.</para>
-        </listitem>
-        <listitem>
-        <para>Finally, there is a 'default-wait-interval' for URIs where
-        it is not possible to judge changes in content. Currently this
-        applies only to DNS lookups. </para>
-        </listitem>
-        </itemizedlist>
-        <para>If you want to specify different wait times and factors for
-        URIs based on their mime types, this is possible. You have to create
-        a Refinement (<xref linkend="refinements" />) and use the
-        ContentType criteria. Simply use a regular expression that matches
-        the desired mime type as it's parameter and then override the
-        applicable parameters in the refinement.</para>
-        <para>By setting the 'state' directory to the same location that
-        another AR crawl used, it should resume that crawl (minus some
-        stats).</para>
-        </para>
-        </sect4>
-
-
-      </sect3>
 
       <sect3 id="scopes">
         <title>Crawl Scope</title>
@@ -1107,12 +1002,214 @@
             </orderedlist></para>
 
           <para>As a result of these problems, the SurtPrefixScope was added,
-          and further major changes are planed in post 1.0.0 versions of
-          Heritrix. The concept of scope will remain but how they are defined
-          and configured will change drastically . Those changes will also
-          greatly affect the filters (see <xref linkend="filters" />).</para>
+          and further major changes are planned. The first steps are 
+          described in the next section, <xref linkend="decidingscope" />.
+          These changes will also affect whether and how filters (see 
+          <xref linkend="filters" />) are used.</para>
         </sect4>
+        
+        <sect4 id="decidingscope">
+         <title>Experimental: DecidingScope</title>
+         
+         <para>To address the shortcomings above, and generally make alternate 
+         scope choices more understandable and flexible, a new mechanism for
+         scoping and filtering has been introduced in Heritrix 1.4. This new 
+         approach is somewhat like (and inspired by) HTTrack's 'scan 
+         rules'/filters, Alexa's mask/ignore/void syntax for adjusting 
+         recurring crawls, or the Nutch 'regex-urlfilter' facility, but  may be
+         a bit more general than any of those.
+         </para>
+         
+         <para>This new approach is available as a DecidingScope, which is 
+         modelled as a series of DecideRules. Each DecideRule, when presented 
+         with an Object (most often a URI of some form), may respond with one 
+         of three decisions:<para>
+         
+         <itemizedlist>
+          <listitem>ACCEPT: the object is ruled in</listitem>
+          <listitem>REJECT: the object is ruled out</listitem>
+          <listitem>PASS: the rule has no opinion; retain whatever previous 
+          decision was made</listitem>
+         </itemizedlist>
+
+         <para>To define a Scope, the operator configures an ordered series 
+         of DecideRules. A URI under consideration begins with no assumed 
+         status. Each rule is applied in turn to the candidate URI. If the 
+         rule decides ACCEPT or REJECT, the URI's status is set accordingly. 
+         After all rules have been applied, if the URI's status is ACCEPT it 
+         is "in scope" and scheduled for crawling; if its status is REJECT it 
+         is discarded.</para>
+
+         <para>There are no branches, but much of what nested conditionals 
+         can achieve is possible, in a form that should be be easier to follow 
+         than arbitrary expressions.</para>
+         
+         <para>The current list of available DecideRules includes:</para>
+         
+         <itemizedlist>
+         
+         </itemizedlist>
+         
+         <para>...covering just about everything our previous focus- and filter- 
+         based classes did. By ordering exclude and include actions, 
+         combinations that were awkward before -- or even impossible without
+         writing custom code -- become straightforward.</para>
+         
+         <para>For example, a previous request that was hard for us to 
+         accomodate was the idea: "crawl exactly these X hosts, and get offsite 
+         images if only on the same domains." That is, don't wander off the 
+         exact hosts to follow navigational links -- only to get offsite 
+         resources that share the same domain.</para>
+
+		<para>Our relevant function-of-seeds tests -- host-based and 
+		domain-based -- were exclusive of each other (at the 'focus' level) 
+		and difficult to mix-in with path-based criteria (at the 'transitive' 
+		level).</para>
+
+        <para>As a series of DecideRules, the above request can be easily 
+        achieved as:</para>
+
+        <computeroutput>
+        RejectDecideRule
+        OnHostsDecideRule(use-seeds=true)
+        TranscludedDecideRule(extra-hops=2)
+        NotOnDomainsDecideRule(REJECT,use-seeds=true);
+        </computeroutput>
+
+        <para>A good default set of DecideRules for many purposes would 
+        be...</para>
+
+        <computeroutput>
+        RejectDecideRule               // reject by default
+        SurtPrefixedDecideRule         // accept within SURT prefixes established by seeds
+        TooManyHopsDecideRule          // but reject if too many hops from seeds
+        TransclusionDecideRule         // notwithstanding above, accept if within a few transcluding hops (frames/imgs/redirects)
+        PathologicalPathDecideRule     // but reject if pathological repetitions
+        TooManyPathSegmentsDecideRule  // ...or if too many path-segments
+        PrerequisiteAcceptDecideRule   // but always accept a prerequisite of other URI
+        </computeroutput>
+        
+        <para>A predefined Profile with this set of DecideRules is available
+        under the name "deciding-default".</para>
+        
+        <para>The naming, behavior, and user-interface for DecideRule-based 
+        scoping is subject to significant change based on feedback and 
+        experience in future releases.</para>
+        </sect4>
+        
       </sect3>
+
+      <sect3 id="frontier">
+        <title>Frontier</title>
+
+        <para>The Frontier is a pluggable module that maintains the internal
+        state
+        of the crawl. What URIs have been discovered, crawled etc. As such its
+        selection greatly affects for instance the order in which discovered
+        URIs are crawled.</para>
+
+        <para>There is only one Frontier per crawl job.</para>
+
+        <para>Multiple Frontiers are provided with Heritrix, each of a 
+        particular character.
+        </para>
+
+        <sect4 id="bdbfrontier"><title>BdbFrontier</title>
+        <para>The default Frontier in Heritrix as of 1.4.0 and later is the
+        BdbFrontier(Previously, the default was the 
+        <xref linkend="hqf" />).
+        The BdbFrontier visits URIs and sites
+        discovered in a generally breadth-first manner, it offers
+        configuration options controlling how it throttles its activity
+        against particular hosts, and whether it has a bias towards
+        finishing hosts in progress ('site-first' crawling) or cycling among
+        all hosts with pending URIs.
+        </para>
+        <para>Discovered URIs are only crawled once, except that robots.txt
+        and DNS information can be configured so that it is refreshed at
+        specified intervals for each host.</para>
+        <para>The main difference between the BdbFrontier and its precursor,
+        <xref linkend="hqf" />, is that its queues are disk-based rather than
+        memory-based.
+        </para>
+        </sect4>
+        <sect4 id="hqf"><title>HostQueuesFrontier</title>
+        <para>The forerunner of the <xref linkend="bdbfrontier" />. Now
+        deprecated mostly because it kept queues in memory.
+        Has same general characteristics as the
+        <xref linkend="bdbfrontier" />.
+        </para>
+        </sect4>
+        <sect4 id="dsf"><title>DomainSensitveFrontier</title>
+          <para>A subclass of the <xref linkend="hqf" /> written by 
+          Oskar Grenholm. 
+          The DSF
+          allows specifying an upper-bound on the number of
+          documents downloaded per-site.  It does this by
+          exploiting <xref linkend="overrides" /> adding a filter
+          to block further fetching once the crawler has attained
+          per-site limits.  </para>
+        </sect4>
+
+        <sect4 id="arf">
+        <title>AdaptiveRevisitingFrontier</title>
+        <para>The AdaptiveRevisitingFrontier -- a.k.a <emphasis>AR</emphasis>
+        Frontier -- will repeatedly visit all encountered URIs.  
+        Wait time between visits is configurable and varies based on wait
+        intervals specified by a WaitEvaluator processor.
+        It was written by Kristinn Sigurdsson.
+        <note>
+        <para>This Frontier is still experimental, in active development and
+        has not been tested extensively.</para>
+        </note>
+        </para>
+        <para>In addition to the WaitEvaluator (or similar processor) a
+        crawl using this Frontier will also need to use the ChangeEvaluator
+        processor: i.e. this Frontier requires that ChangeEvaluator 
+        and WaitEvaluator or equivalents are present in the processing
+        chain.</para>
+        <para>ChangeEvaluator should be
+        at the very top of the extractor chain.</para>
+        <para>WaitEvaluator -- or an equivalent -- needs to be
+        in the post processing chain.</para>
+
+        <para>The ChangeEvaluator has no configurable settings. The
+        WaitEvaluator however has numerous settings to adjust the revisit
+        policy.
+        <itemizedlist>
+        <listitem>
+        <para>Initial wait. A waiting period before revisiting the first
+        time.</para>
+        </listitem>
+        <listitem>
+        <para>Increase and decrease factors on unchanged and changed
+        documents respectively. Basically if a document has not changed
+        between visits, it's wait time will be multiplied by the
+        "unchanged-factor" and if it has changed, the wait time will be
+        divided by the "changed-factor". Both values accept real
+        numbers, not just integers.</para>
+        </listitem>
+        <listitem>
+        <para>Finally, there is a 'default-wait-interval' for URIs where
+        it is not possible to judge changes in content. Currently this
+        applies only to DNS lookups. </para>
+        </listitem>
+        </itemizedlist>
+        <para>If you want to specify different wait times and factors for
+        URIs based on their mime types, this is possible. You have to create
+        a Refinement (<xref linkend="refinements" />) and use the
+        ContentType criteria. Simply use a regular expression that matches
+        the desired mime type as it's parameter and then override the
+        applicable parameters in the refinement.</para>
+        <para>By setting the 'state' directory to the same location that
+        another AR crawl used, it should resume that crawl (minus some
+        stats).</para>
+        </para>
+        </sect4>
+
+
+      </sect3>
+
 
       <sect3 id="processors">
         <title id="processingchains">Processing Chains</title>
@@ -1206,8 +1303,16 @@
         running with the WUI use this module.</para>
       </sect3>
     </sect2>
-    <sect2 id="urlcanon">
-        <title>URL Canonicalization Rules</title>
+    <sect2 id="submodules">
+     <title>Submodules</title>
+     
+     <para>On the Submodules tab, components which are added in variable-sized
+     lists are added, ordered, and removed. Once submodules are added here, 
+     values which control their operation are configured on the Settings 
+     tab.</para>
+    
+     <sect3 id="urlcanon">
+       <title>URL Canonicalization Rules</title>
         <para>Heritrix keeps a list of already seen URLs and before
         fetching, does a look up into this 'already seen' or
         'already included' list to see if the URL has already been crawled.  
@@ -1260,7 +1365,7 @@
         seen. If we always ran canonicalization rules regardless, we wouldn't
         ever crawl 'www.archive.org'.
         </para>
-        <sect3 id="urlcanonexample">
+        <sect4 id="urlcanonexample">
             <title>URL Canonicalization Use Case: Stripping
             Site-Particular Session IDs</title>
             <para>Say site x.y.z is returning URLs with a session ID key of
@@ -1269,7 +1374,7 @@
             for simplicity's sake, that it always appears on the end of the
             URL.
             </para>
-            <sect4 id="urlcanonexamplesoln">
+            <sect5 id="urlcanonexamplesoln">
             <title>Solution</title>
                 <para>Add a RegexRule override for the domain x.y.z.
                 To do this, pause the crawl, add an override for x.y.z by
@@ -1301,11 +1406,11 @@
                 </para>
                 <para>See also <ulink 
                 url="http://groups.yahoo.com/group/archive-crawler/message/1611">msg1611</ulink> for another's experience getting regext to work.</para>
-            </sect4>
-        </sect3>
-    </sect2>
+            </sect5>
+        </sect4>
+     </sect3>
 
-    <sect2 id="filters">
+     <sect3 id="filters">
       <title>Filters</title>
 
       <para>Filters are modules that take a <xref linkend="crawluri" /> and
@@ -1329,7 +1434,7 @@
       <para>This can be useful to disable (for instance) link extraction on
       documents coming from a specific section of a given website.</para>
 
-      <sect3>
+      <sect4>
         <title>Adding, removing and reordering filters</title>
 
         <para>The filters page of the configuration section of the WUI
@@ -1348,28 +1453,28 @@
         <para>Since filters can in turn contain other filters (the OrFilter
         being the best example of this) these lists can become quite complex
         and at times confusing.</para>
-      </sect3>
+      </sect4>
 
-      <sect3>
+      <sect4>
         <title>Provided filters</title>
 
         <para>The following is an overview of the most useful of the filters
         provided with Heritrix.</para>
 
-        <sect4>
+        <sect5>
           <title>org.archive.crawler.filter.OrFilter</title>
 
           <para>Contains any number of filters and returns true if any of them
           returns true. A logical OR on its filters basically.</para>
-        </sect4>
+        </sect5>
 
-        <sect4>
+        <sect5>
           <title>org.archive.crawler.filter.URIRegExpFilter</title>
           <para>Returns true if a URI matches the regular expression set for
           it. See <xref linkend="regexpr" /> for more about regular
           expressions in Heritrix.</para>
-        </sect4>
-        <sect4>
+        </sect5>
+        <sect5>
           <title>org.archive.crawler.filter.ContentTypeRegExpFilter</title>
           <para>
           This filter runs a regular expression against the
@@ -1381,31 +1486,31 @@
           is the writer step in processing.
           See <xref linkend="regexpr" /> for more about regular
           expressions in Heritrix.</para>
-        </sect4>
+        </sect5>
 
-        <sect4>
+        <sect5>
           <title>org.archive.crawler.filter.SurtPrefixFilter</title>
 
           <para>Returns true if a URI is prefixed by one of the <xref
           linkend="surtprefix" />es supplied by an external file. </para>
-        </sect4>
+        </sect5>
 
-        <sect4>
+        <sect5>
           <title>org.archive.crawler.filter.FilePatternFilter</title>
 
           <para>Compares suffix of a passed URI against a regular expression
           pattern, returns true for matches.</para>
-        </sect4>
+        </sect5>
 
-        <sect4>
+        <sect5>
           <title>org.archive.crawler.filter.PathDepthFilter</title>
 
           <para>Returns true for all <xref linkend="crawluri" /> passed in
           with a path depth less or equal to its
           <literal>max-path-depth</literal> value.</para>
-        </sect4>
+        </sect5>
 
-        <sect4>
+        <sect5>
           <title>org.archive.crawler.filter.PathologicalPathFilter</title>
 
           <para>Checks if a URI contains a repeated pattern.</para>
@@ -1419,9 +1524,9 @@
           <para>Returns true if such a pattern is found. Sometimes used on a
           processor but is primarily of use in the exclude section of
           scopes.</para>
-        </sect4>
+        </sect5>
 
-        <sect4>
+        <sect5>
           <title>org.archive.crawler.filter.HopsFilter</title>
 
           <para>Returns true for all URIs passed in with a <xref
@@ -1429,21 +1534,21 @@
           <literal>max-link-hops</literal> value.</para>
 
           <para>Generally only used in scopes.</para>
-        </sect4>
+        </sect5>
 
-        <sect4>
+        <sect5>
           <title>org.archive.crawler.filter.TransclusionFilter</title>
           <para>Filter which returns true for <xref linkend="crawluri" />
           instances which contain more than zero but fewer than
           <literal>max-trans-hops</literal> embed entries at the end of their
           <xref linkend="discoverypath" />.</para>
           <para>Generally only used in scopes.</para>
-        </sect4>
+        </sect5>
 
-      </sect3>
-    </sect2>
+      </sect4>
+     </sect3>
 
-    <sect2 id="credentials">
+     <sect3 id="credentials">
       <title>Credentials</title>
 
       <para>In this section you can add login credentials that will allow
@@ -1480,7 +1585,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         linkend="heritrix.properties" />.</para>
       </note>
 
-      <sect3>
+      <sect4>
         <title><ulink
         url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink> (BASIC and
         DIGEST Auth)</title>
@@ -1503,7 +1608,7 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         credential fails -- we get another 401 -- then the URI is let die a
         natural 401 death.</para>
 
-        <sect4 id="cd">
+        <sect5 id="cd">
           <title>credential-domain</title>
 
           <para>This equates to the canonical root URI of RFC2617;
@@ -1512,28 +1617,28 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
           authority</ulink> (domain plus port if other than port 80).
           Examples of credential-domain would be: 'www.archive.org' or
           'www.archive.org:8080', etc.</para>
-        </sect4>
+        </sect5>
 
-        <sect4 id="realm">
+        <sect5 id="realm">
           <title>realm</title>
 
           <para>Realm as per <ulink
           url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink>. The
           realm string must match exactly the realm name presented in the
           authentication challenge served up by the web server</para>
-        </sect4>
+        </sect5>
 
-        <sect4>
+        <sect5>
           <title>Known Limitations</title>
 
-          <sect5>
+          <sect6>
             <title>One Realm per Credential Domain Only</title>
 
             <para>Currently, you can only have one realm per credential
             domain.</para>
-          </sect5>
+          </sect6>
 
-          <sect5>
+          <sect6>
             <title>Digest Auth works for Apache</title>
 
             <para>... but your mileage may vary going up against other servers
@@ -1541,11 +1646,11 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
             url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=914301&amp;group_id=73833&amp;atid=539102">[
             914301 ] Logging in (HTTP POST, Basic Auth, etc.)</ulink> to learn
             more).</para>
-          </sect5>
-        </sect4>
-      </sect3>
+          </sect6>
+        </sect5>
+      </sect4>
 
-      <sect3>
+      <sect4>
         <title>HTML Form POST or GET</title>
 
         <para>Supply <ulink url="#cdh">credential-domain</ulink>, <ulink
@@ -1564,31 +1669,31 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
         Form Credential login-uri field is scheduled as a precondition for the
         site, after the fetching of the dns and robots preconditions.</para>
 
-        <sect4 id="cdh">
+        <sect5 id="cdh">
           <title>credential-domain</title>
 
           <para>Same as the Rfc22617 Credential <ulink
           url="#cd">credential-domain</ulink>.</para>
-        </sect4>
+        </sect5>
 
-        <sect4 id="loginuri">
+        <sect5 id="loginuri">
           <title>login-url</title>
 
           <para>Relative or absolute URI to the page that the HTML Form
           submits to (Not the page that contains the HTML Form).</para>
-        </sect4>
+        </sect5>
 
-        <sect4 id="formitems">
+        <sect5 id="formitems">
           <title>form-items</title>
 
           <para>Listing of HTML Form key/value pairs. Don't forget to include
           the form submit button.</para>
-        </sect4>
+        </sect5>
 
-        <sect4>
+        <sect5>
           <title>Known Limitations</title>
 
-          <sect5>
+          <sect6>
             <title>Site is crawled logged in or not; cannot do both</title>
 
             <para>If a site has an HTML Form Credential associated, the next
@@ -1600,9 +1705,9 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
             crawl the site 'non-logged-in' and then, when done, log in and
             crawl the site anew only this time from the 'logged-in'
             perspective (At least, not as part of the one crawl job).</para>
-          </sect5>
+          </sect6>
 
-          <sect5>
+          <sect6>
             <title>No means of verifying or rerunning login</title>
 
             <para>The login is run once only and the crawler continues whether
@@ -1611,11 +1716,11 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
             means for the crawler to report success or otherwise (The operator
             is expected to study logs to see whether authentication ran
             successfully).</para>
-          </sect5>
-        </sect4>
-      </sect3>
-    </sect2>
-
+          </sect6>
+        </sect5>
+      </sect4>
+     </sect3>
+    </sect2> 
     <sect2 id="settings">
       <title>Settings</title>
 
