@@ -69,9 +69,8 @@ public class MatchesFilePatternDecideRule extends MatchesRegExpDecideRule {
      */
     public MatchesFilePatternDecideRule(String name) {
         super(name);
-        setDescription("MatchesFilePatternDecideRule. Applies its decision " +
-            "to all URIs that end with the specified pattern(s). Anything " +
-            " that doese not match is let PASS. " +
+        setDescription("MatchesFilePatternDecideRule. Applies its decision " +            "to all URIs that end with the specified pattern(s). Anything " +
+            " that does not match is let PASS. " +
             " Default file patterns are: .avi, .bmp, " +
             ".doc, .gif, .jp(e)g, .mid, .mov, .mp2, .mp3, .mp4, .mpeg, " +
             ".pdf, .png, .ppt, .ram, .rm,.smil, .swf, .tif(f), .wav, .wmv. " +
