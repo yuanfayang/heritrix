@@ -52,12 +52,14 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
         Logger.getLogger(SurtPrefixedDecideRule.class.getName());
     
     public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
-    public static final String ATTR_SEEDS_AS_SURT_PREFIXES = "seeds-as-surt-prefixes";
+    public static final String ATTR_SEEDS_AS_SURT_PREFIXES =
+        "seeds-as-surt-prefixes";
     public static final String ATTR_SURTS_DUMP_FILE = "surts-dump-file";
     
-    private static final Boolean DEFAULT_SEEDS_AS_SURT_PREFIXES = new Boolean(true);
+    private static final Boolean DEFAULT_SEEDS_AS_SURT_PREFIXES =
+        new Boolean(true);
 
-    SurtPrefixSet surtPrefixes = null;
+    protected SurtPrefixSet surtPrefixes = null;
 
     /**
      * Usual constructor. 
@@ -65,32 +67,24 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
      */
     public SurtPrefixedDecideRule(String name) {
         super(name);
-        setDescription(
-                 "SurtPrefixedDecideRule: Makes the configured decision " +
-                 "for any URI which, when expressed in SURT form, begins " +
-                 "with the established prefixes (from either seeds " +
-                 "specification or an external file).");
-        addElementToDefinition(
-                new SimpleType(ATTR_SURTS_SOURCE_FILE, 
-                        "Source file from which to read SURT prefixes.", 
-                        ""));
-        addElementToDefinition(
-                new SimpleType(ATTR_SEEDS_AS_SURT_PREFIXES, 
-                        "Should seeds also be interpreted as SURT prefixes.", 
-                        DEFAULT_SEEDS_AS_SURT_PREFIXES));
-        
-        Type t = addElementToDefinition(
-                new SimpleType(ATTR_SURTS_DUMP_FILE, 
-                        "Dump file to save SURT prefixes actually used.", 
-                        ""));
+        setDescription("SurtPrefixedDecideRule: Makes the configured decision "
+                + "for any URI which, when expressed in SURT form, begins "
+                + "with the established prefixes (from either seeds "
+                + "specification or an external file).");
+        addElementToDefinition(new SimpleType(ATTR_SURTS_SOURCE_FILE,
+                "Source file from which to read SURT prefixes.", ""));
+        addElementToDefinition(new SimpleType(ATTR_SEEDS_AS_SURT_PREFIXES,
+                "Should seeds also be interpreted as SURT prefixes.",
+                DEFAULT_SEEDS_AS_SURT_PREFIXES));
+        Type t = addElementToDefinition(new SimpleType(ATTR_SURTS_DUMP_FILE,
+                "Dump file to save SURT prefixes actually used.", ""));
         t.setExpertSetting(true);
     }
 
     /**
-     * Evaluate whether given object's URI is in the SURT
-     * prefix set
+     * Evaluate whether given object's URI is in the SURT prefix set
      * 
-     * @param object
+     * @param object Item to evaluate.
      * @return true if regexp is matched
      */
     protected boolean evaluate(Object object) {
@@ -101,8 +95,8 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
         }
         String candidateSurt = u.getSurtForm();
         // also want to treat https as http
-        if(candidateSurt.startsWith("https:")) {
-            candidateSurt = "http:"+candidateSurt.substring(6);
+        if (candidateSurt.startsWith("https:")) {
+            candidateSurt = "http:" + candidateSurt.substring(6);
         }
         return set.containsPrefixOf(candidateSurt);
     }
@@ -113,7 +107,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
      * @return SurtPrefixSet to use for check
      */
     private synchronized SurtPrefixSet getPrefixes() {
-        if(surtPrefixes==null) {
+        if (surtPrefixes == null) {
             readPrefixes();
         }
         return surtPrefixes;
@@ -129,13 +123,13 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
      */
     protected void dumpSurtPrefixSet() {
         // dump surts to file, if appropriate
-        String dumpPath = (String) getUncheckedAttribute(null,
-                ATTR_SURTS_DUMP_FILE);
-        if(dumpPath.length()>0) {
+        String dumpPath = (String)getUncheckedAttribute(null,
+            ATTR_SURTS_DUMP_FILE);
+        if (dumpPath.length() > 0) {
             File dump = new File(dumpPath);
             if (!dump.isAbsolute()) {
-                dump = new File(getSettingsHandler().getOrder()
-                        .getController().getDisk(), dumpPath);
+                dump = new File(getSettingsHandler().getOrder().getController()
+                    .getDisk(), dumpPath);
             }
             try {
                 FileWriter fw = new FileWriter(dump);
@@ -156,17 +150,17 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
      * which may include both URIs and '+'-prefixed directives).
      */
     protected void buildSurtPrefixSet() {
-        SurtPrefixSet newSurtPrefixes = new SurtPrefixSet(); 
+        SurtPrefixSet newSurtPrefixes = new SurtPrefixSet();
         FileReader fr = null;
-        
-        // read SURTs from file, if appropriate 
-        String sourcePath = (String) getUncheckedAttribute(null,
+
+        // read SURTs from file, if appropriate
+        String sourcePath = (String)getUncheckedAttribute(null,
                 ATTR_SURTS_SOURCE_FILE);
-        if(sourcePath.length()>0) {
+        if (sourcePath.length() > 0) {
             File source = new File(sourcePath);
             if (!source.isAbsolute()) {
                 source = new File(getSettingsHandler().getOrder()
-                        .getController().getDisk(), sourcePath);
+                    .getController().getDisk(), sourcePath);
             }
             try {
                 fr = new FileReader(source);
@@ -178,30 +172,29 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
             } catch (IOException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
-            } 
+            }
         }
         
         // interpret seeds as surts, if appropriate
-        boolean deduceFromSeeds = 
-            ((Boolean) getUncheckedAttribute(null, ATTR_SEEDS_AS_SURT_PREFIXES))
-            .booleanValue();
+        boolean deduceFromSeeds = ((Boolean)getUncheckedAttribute(null,
+                ATTR_SEEDS_AS_SURT_PREFIXES)).booleanValue();
         try {
             fr = new FileReader(getSeedfile());
             try {
-                newSurtPrefixes.importFromMixed(fr,deduceFromSeeds);
+                newSurtPrefixes.importFromMixed(fr, deduceFromSeeds);
             } finally {
                 fr.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
-        }  
-        
+        }
+
         surtPrefixes = newSurtPrefixes;
     }
 
     /**
-     * Re-read prefixes after an update. 
+     * Re-read prefixes after an update.
      * 
      * @see org.archive.crawler.framework.CrawlScope#kickUpdate()
      */
@@ -217,6 +210,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
      * @return Seed list file
      */
     protected File getSeedfile() {
-        return getSettingsHandler().getOrder().getController().getScope().getSeedfile();
+        return getSettingsHandler().getOrder().getController().getScope()
+                .getSeedfile();
     }
 }
