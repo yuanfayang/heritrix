@@ -872,9 +872,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     public long deleteURIs(String match) {
         long count = 0;
-        Iterator iter = allQueues.values().iterator();
+        Iterator iter = allQueues.keySet().iterator();
         while(iter.hasNext()) {
-            BdbWorkQueue wq = (BdbWorkQueue)iter.next();
+            BdbWorkQueue wq = (BdbWorkQueue)allQueues.get(iter.next());
             wq.unpeek();
             count += wq.deleteMatching(this.pendingUris, match);
         }
