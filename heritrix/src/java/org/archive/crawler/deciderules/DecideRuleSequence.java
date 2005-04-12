@@ -52,7 +52,7 @@ public class DecideRuleSequence extends DecideRule {
     public DecideRuleSequence(String name) {
         super(name);
         setDescription("DecideRuleSequence. Multiple DecideRules applied in " +
-                "order, with the last non-PASS having final say.");
+            "order with last non-PASS the resulting 'decision'.");
         
         addElementToDefinition(new MapType(ATTR_RULES,
                 "This is a list of DecideRules to be applied in sequence.", 

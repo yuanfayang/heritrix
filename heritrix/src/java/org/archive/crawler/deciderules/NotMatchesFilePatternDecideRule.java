@@ -44,7 +44,7 @@ extends MatchesFilePatternDecideRule {
      */
     public NotMatchesFilePatternDecideRule(String name) {
         super(name);
-        setDescription("NotMatchesFilePatternDecideRule: Applies the " +
+        setDescription("NotMatchesFilePatternDecideRule. Applies the " +
             "configured decision to URIs *not* matching the configured " +
             "(file-pattern) regular expression (Those that match are " +
             "let PASS).");

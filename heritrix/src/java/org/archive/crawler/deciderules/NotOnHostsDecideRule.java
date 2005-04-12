@@ -45,7 +45,7 @@ public class NotOnHostsDecideRule extends SurtPrefixedDecideRule {
     public NotOnHostsDecideRule(String name) {
         super(name);
         setDescription(
-                "NotOnHostsDecideRule: Makes the configured decision " +
+                "NotOnHostsDecideRule. Makes the configured decision " +
                 "for any URI which is *not* on one of the hosts in the " +
                 "configured set of hostnames (derived from the seed" +
                 "list).");

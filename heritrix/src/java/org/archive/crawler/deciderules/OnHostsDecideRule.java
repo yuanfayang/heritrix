@@ -45,7 +45,7 @@ public class OnHostsDecideRule extends SurtPrefixedDecideRule {
     public OnHostsDecideRule(String name) {
         super(name);
         setDescription(
-                 "OnHostsDecideRule: Makes the configured decision " +
+                 "OnHostsDecideRule. Makes the configured decision " +
                  "for any URI which is on one of the hosts in the " +
                  "configured set of hostnames (derived from the seed" +
                  "list).");

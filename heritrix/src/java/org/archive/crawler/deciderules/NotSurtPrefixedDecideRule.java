@@ -48,7 +48,7 @@ public class NotSurtPrefixedDecideRule extends SurtPrefixedDecideRule {
     public NotSurtPrefixedDecideRule(String name) {
         super(name);
         setDescription(
-                 "NotSurtPrefixedDecideRule: Makes the configured decision " +
+                 "NotSurtPrefixedDecideRule. Makes the configured decision " +
                  "for any URI which, when expressed in SURT form, does *not* " +
                  "begin with the established prefixes (from either seeds " +
                  "specification or an external file).");

@@ -51,7 +51,7 @@ public class TooManyHopsDecideRule extends PredicatedDecideRule {
      */
     public TooManyHopsDecideRule(String name) {
         super(name);
-        setDescription("TooManyHopsDecideRule: REJECTs URIs discovered " +
+        setDescription("TooManyHopsDecideRule. REJECTs URIs discovered " +
                 "after too many hops (followed links of any type) from seed.");
         addElementToDefinition(new SimpleType(ATTR_MAX_HOPS, "Max path" +
                 " depth for which this filter will match", DEFAULT_MAX_HOPS));

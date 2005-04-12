@@ -52,7 +52,7 @@ public class TooManyPathSegmentsDecideRule extends PredicatedDecideRule {
      */
     public TooManyPathSegmentsDecideRule(String name) {
         super(name);
-        setDescription("TooManyPathSegmentsDecideRule: REJECTs URIs with " +
+        setDescription("TooManyPathSegmentsDecideRule. REJECTs URIs with " +
                 "more total path-segments (as indicated by '/' characters) " +
                 "than the configured '" + ATTR_MAX_PATH_DEPTH + "'.");
         

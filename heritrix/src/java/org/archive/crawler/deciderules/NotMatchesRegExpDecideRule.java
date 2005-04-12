@@ -45,7 +45,7 @@ public class NotMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
      */
     public NotMatchesRegExpDecideRule(String name) {
         super(name);
-        setDescription("NotMatchesRegExpDecideRule: Applies the configured " +
+        setDescription("NotMatchesRegExpDecideRule. Applies the configured " +
         "decision to URIs *not* matching the supplied regular expression.");
     }
 

@@ -52,10 +52,10 @@ public class MatchesRegExpDecideRule extends PredicatedDecideRule {
      */
     public MatchesRegExpDecideRule(String name) {
         super(name);
-        setDescription("MatchesRegExpDecideRule: Applies the configured " +
-                "decision to URIs matching the supplied regular expression.");
+        setDescription("MatchesRegExpDecideRule. Applies the configured " +
+            "decision to URIs matching the supplied regular expression.");
         addElementToDefinition(new SimpleType(ATTR_REGEXP, "Java regular" +
-                "expression to match against URIs", ""));
+            "expression to match against URIs", ""));
     }
 
     /**

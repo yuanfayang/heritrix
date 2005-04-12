@@ -45,7 +45,7 @@ public class NotOnDomainsDecideRule extends SurtPrefixedDecideRule {
     public NotOnDomainsDecideRule(String name) {
         super(name);
         setDescription(
-                "NotOnDomainsDecideRule: Makes the configured decision " +
+                "NotOnDomainsDecideRule. Makes the configured decision " +
                 "for any URI which is *not* inside one of the domains in the " +
                 "configured set of domains (derived from the seed" +
                 "list, with \"www\" removed when present).");

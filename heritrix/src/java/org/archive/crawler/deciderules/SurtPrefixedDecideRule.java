@@ -67,7 +67,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
      */
     public SurtPrefixedDecideRule(String name) {
         super(name);
-        setDescription("SurtPrefixedDecideRule: Makes the configured decision "
+        setDescription("SurtPrefixedDecideRule. Makes the configured decision "
                 + "for any URI which, when expressed in SURT form, begins "
                 + "with the established prefixes (from either seeds "
                 + "specification or an external file).");
