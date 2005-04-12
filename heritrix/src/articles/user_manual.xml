@@ -1023,7 +1023,7 @@
          <para>This new approach is available as a DecidingScope, which is 
          modelled as a series of DecideRules. Each DecideRule, when presented 
          with an Object (most often a URI of some form), may respond with one 
-         of three decisions:<para>
+         of three decisions:</para>
          
          <itemizedlist>
           <listitem>ACCEPT: the object is ruled in</listitem>
