@@ -147,30 +147,32 @@ public class BdbMultipleWorkQueues {
         DatabaseEntry key = marker.getStartKey();
         DatabaseEntry value = new DatabaseEntry();
         
-        Cursor cursor = null;
-        OperationStatus result = null;
-        try {
-            cursor = pendingUrisDB.openCursor(null,null);
-            result = cursor.getSearchKey(key, value, null);
-            
-            while(matches<maxMatches && result == OperationStatus.SUCCESS) {
-                CrawlURI curi = (CrawlURI) crawlUriBinding.entryToObject(value);
-                if(marker.accepts(curi)) {
-                    results.add(curi);
-                    matches++;
+        if (key != null) {
+            Cursor cursor = null;
+            OperationStatus result = null;
+            try {
+                cursor = pendingUrisDB.openCursor(null,null);
+                result = cursor.getSearchKey(key, value, null);
+                
+                while(matches<maxMatches && result == OperationStatus.SUCCESS) {
+                    CrawlURI curi = (CrawlURI) crawlUriBinding.entryToObject(value);
+                    if(marker.accepts(curi)) {
+                        results.add(curi);
+                        matches++;
+                    }
+                    tries++;
+                    result = cursor.getNext(key,value,null);
                 }
-                tries++;
-                result = cursor.getNext(key,value,null);
+            } finally {
+                if (cursor !=null) {
+                    cursor.close();
+                }
             }
-        } finally {
-            if (cursor !=null) {
-                cursor.close();
+            
+            if(result != OperationStatus.SUCCESS) {
+                // end of scan
+                marker.setStartKey(null);
             }
-        }
-        
-        if(result != OperationStatus.SUCCESS) {
-            // end of scan
-            marker.setStartKey(null);
         }
         return results;
     }
@@ -199,9 +201,13 @@ public class BdbMultipleWorkQueues {
         DatabaseEntry key = new DatabaseEntry();
         DatabaseEntry value = new DatabaseEntry();
         Cursor cursor = pendingUrisDB.openCursor(null,null);
-        cursor.getNext(key,value,null);
+        OperationStatus status = cursor.getNext(key,value,null);
         cursor.close();
-        return key;
+        if(status == OperationStatus.SUCCESS) {
+            return key;
+        } else {
+            return null;
+        }
     }
     
     /**
