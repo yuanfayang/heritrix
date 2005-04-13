@@ -55,7 +55,7 @@ import org.archive.crawler.settings.XMLSettingsHandler;
  *
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.admin.CrawlJobHandler#newJob(CrawlJob, String, String, String, int)
+ * @see org.archive.crawler.admin.CrawlJobHandler#newJob(CrawlJob, boolean, String, String, String, int)
  * @see org.archive.crawler.admin.CrawlJobHandler#newProfile(CrawlJob, String, String, String)
  */
 
