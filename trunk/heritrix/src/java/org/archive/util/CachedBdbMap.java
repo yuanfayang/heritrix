@@ -34,6 +34,7 @@ import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -41,6 +42,7 @@ import java.util.logging.Logger;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
+import com.sleepycat.collections.StoredIterator;
 import com.sleepycat.collections.StoredMap;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
@@ -292,19 +294,20 @@ public class CachedBdbMap extends AbstractMap implements Map {
      * @see java.util.Map#keySet()
      */
     public Set keySet() {
-        // return unmodifiable union of cache and diskMap keySets
+        // Return unmodifiable union of cache and diskMap keySets
         HashSet allKeys = new HashSet(cache.keySet());
-        allKeys.addAll(diskMap.keySet());
+        // Bdb iterators have to be closed so can't use addAll w/o
+        // getting annoying complaints about cursors being left open.
+        Iterator i = diskMap.keySet().iterator();
+        for (; i.hasNext();) {
+            allKeys.add(i.next());
+        }
+        ((StoredIterator)i).close();
         return Collections.unmodifiableSet(allKeys);
     }
     
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.util.Map#entrySet()
-     */
     public Set entrySet() {
-        // would require complicated implementation to 
+        // Would require complicated implementation to 
         // maintain identity guarantees, so skipping
         throw new UnsupportedOperationException();
     }
