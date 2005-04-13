@@ -30,6 +30,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -395,46 +396,57 @@ implements CrawlURIDispositionListener {
     }
 
     /**
-     * Sort the entries of the given HashMap in descending order by their values,
-     * which must be longs wrapped with <code>LongWrapper</code>.
+     * Sort the entries of the given HashMap in descending order by their
+     * values, which must be longs wrapped with <code>LongWrapper</code>.
      * <p>
      * Elements are sorted by value from largest to smallest. Equal values are
      * sorted in an arbitrary, but consistent manner by their keys. Only items
      * with identical value and key are considered equal.
      *
-     * @param map
+     * @param mapOfLongWrapperValues
      *            Assumes values are wrapped with LongWrapper.
      * @return a sorted set containing the same elements as the map.
      */
-    public TreeSet getSortedByValue(Map map) {
-        TreeSet sortedSet = new TreeSet(new Comparator() {
-
+    public TreeMap getReverseSortedCopy(final Map mapOfLongWrapperValues) {
+        TreeMap sortedMap = new TreeMap(new Comparator() {
             public int compare(Object e1, Object e2) {
-                long firstVal = ((LongWrapper) ((Map.Entry) e1).getValue()).
+                long firstVal = ((LongWrapper)mapOfLongWrapperValues.get(e1)).
                     longValue;
-                long secondVal = ((LongWrapper) ((Map.Entry) e2).getValue()).
+                long secondVal = ((LongWrapper)mapOfLongWrapperValues.get(e2)).
                     longValue;
-                if (firstVal < secondVal) { return 1; }
-                if (secondVal < firstVal) { return -1; }
+                if (firstVal < secondVal) {
+                    return 1;
+                }
+                if (secondVal < firstVal) {
+                    return -1;
+                }
                 // If the values are the same, sort by keys.
-                String firstKey = (String) ((Map.Entry) e1).getKey();
-                String secondKey = (String) ((Map.Entry) e2).getKey();
-                return firstKey.compareTo(secondKey);
+                return ((String)e1).compareTo((String)e2);
             }
         });
-        synchronized(map){
-            sortedSet.addAll(map.entrySet());
+        synchronized (mapOfLongWrapperValues) {
+            try {
+                sortedMap.putAll(mapOfLongWrapperValues);
+            } catch (UnsupportedOperationException e) {
+                Iterator i = mapOfLongWrapperValues.keySet().iterator();
+                for (;i.hasNext();) {
+                    // Ok. Try doing it the slow way then.
+                    Object key = i.next();
+                    sortedMap.put(key, mapOfLongWrapperValues.get(key));
+                }
+            }
         }
-        return sortedSet;
+        return sortedMap;
     }
 
     /**
      * Return a HashMap representing the distribution of status codes for
-     * successfully fetched curis, as represented by a hashmap where
-     * key -&gt; val represents (string)code -&gt; (integer)count.
-     *
-     * <b>Note:</b> All the values are wrapped with a
+     * successfully fetched curis, as represented by a hashmap where key -&gt;
+     * val represents (string)code -&gt; (integer)count.
+     * 
+     * <b>Note: </b> All the values are wrapped with a
      * {@link LongWrapper LongWrapper}
+     * 
      * @return statusCodeDistribution
      */
     public Hashtable getStatusCodeDistribution() {
@@ -849,15 +861,14 @@ implements CrawlURIDispositionListener {
     }
     
     /**
-     * @param i Iterator instance.
+     * @param i Iterator over map keys.
      * @return Get longest map entry key.
      */
     protected int getLongestMapEntryKey(Iterator i) {
         int max = 0;
         for (; i.hasNext();) {
-            Map.Entry mapEntry = (Map.Entry)i.next();
-            String key = mapEntry.getKey().toString();
-            if(key != null && key.length() > max) {
+            String key = i.next().toString();
+            if (key != null && key.length() > max) {
                 max = key.length();
             }
         }
@@ -902,73 +913,67 @@ implements CrawlURIDispositionListener {
     }
     
     protected void writeHostsReport(CrawlController c) {
-        // Get longest host name.
         int maxHostLength = getLongestMapEntryKey(getHostsDistribution().
-            entrySet().iterator());
-        
+            keySet().iterator());
         // Ok, we now know how much space to allocate the seed name colum
         PaddingStringBuffer rep = new PaddingStringBuffer();
-        
         // Build header.
         rep.append("[host]");
         rep.raAppend(maxHostLength + 13, "[#urls]");
         rep.raAppend(maxHostLength + 26, "[#bytes]");
         rep.newline();
-        
-        TreeSet hostsDistribution = getSortedByValue(getHostsDistribution());
-        for (Iterator i = hostsDistribution.iterator(); i.hasNext();) {
-            Map.Entry host = (Map.Entry)i.next();
-            rep.append(host.getKey().toString());
+        TreeMap hd = getReverseSortedCopy(getHostsDistribution());
+        for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
+            // Key is 'host'.
+            Object key = i.next();
+            rep.append((String)key);
             rep.raAppend(maxHostLength + 13,
-                ((LongWrapper)host.getValue()).longValue);
-            rep.raAppend(maxHostLength + 26,
-                getBytesPerHost((String)host.getKey()));
+                    ((LongWrapper)hd.get(key)).longValue);
+            rep.raAppend(maxHostLength + 26, getBytesPerHost((String)key));
             rep.newline();
         }
-        
+
         writeReport(c, "hosts-report.txt", rep.toString());
     }
     
     protected void writeMimetypesReport(CrawlController c) {
-        int maxMimeLength = getLongestMapEntryKey(
-            getFileDistribution().entrySet().iterator());
-             
+        int maxMimeLength = getLongestMapEntryKey(getFileDistribution().
+            keySet().iterator());
 
-        //Ok, we now know how much space to allocate the seed name colum
+        // Ok, we now know how much space to allocate the seed name colum
         PaddingStringBuffer rep = new PaddingStringBuffer();
 
-        //Build header.
+        // Build header.
         rep.append("[mime-types]");
-        rep.raAppend(maxMimeLength+13, "[#urls]");
-        rep.raAppend(maxMimeLength+26, "[#bytes]");
+        rep.raAppend(maxMimeLength + 13, "[#urls]");
+        rep.raAppend(maxMimeLength + 26, "[#bytes]");
         rep.newline();
-
-        TreeSet filesDistribution = getSortedByValue(getFileDistribution());
-        for (Iterator i = filesDistribution.iterator(); i.hasNext();) {
-            Map.Entry host = (Map.Entry)i.next();
-            rep.append(host.getKey().toString());
-            rep.raAppend(maxMimeLength+13,((LongWrapper)host.getValue()).longValue);
-            rep.raAppend(maxMimeLength+26,getBytesPerFileType((String)host.getKey()));
+        TreeMap fd = getReverseSortedCopy(getFileDistribution());
+        for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
+            Object key = i.next();
+            // Key is 'host'.
+            rep.append((String)key);
+            rep.raAppend(maxMimeLength + 13,
+                    ((LongWrapper)fd.get(key)).longValue);
+            rep.raAppend(maxMimeLength + 26, getBytesPerFileType((String)key));
             rep.newline();
         }
-        
         writeReport(c, "mimetype-report.txt", rep.toString());
     }
     
     protected void writeResponseCodeReport(CrawlController c) {
         int maxCodeLength = 10;
         PaddingStringBuffer rep = new PaddingStringBuffer();
-
-        //Build header.
+        // Build header.
         rep.append("[rescode]");
         rep.raAppend(maxCodeLength+13, "[#urls]");
         rep.newline();
-
-        TreeSet statusCodeDistribution = getSortedByValue(getStatusCodeDistribution());
-        for (Iterator i = statusCodeDistribution.iterator(); i.hasNext(); ) {
-            Map.Entry host = (Map.Entry)i.next();
-            rep.append(host.getKey().toString());
-            rep.raAppend(maxCodeLength+13, ((LongWrapper)host.getValue()).longValue);
+        TreeMap scd = getReverseSortedCopy(getStatusCodeDistribution());
+        for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
+            Object key = i.next();
+            rep.append((String)key);
+            rep.raAppend(maxCodeLength + 13,
+                ((LongWrapper)scd.get(key)).longValue);
             rep.newline();
         }
         
