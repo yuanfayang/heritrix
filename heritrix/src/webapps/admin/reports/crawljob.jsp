@@ -244,14 +244,13 @@
                 </th>
             </tr>
             <%
-                TreeSet statusCodeDistribution = stats.getSortedByValue(stats.getStatusCodeDistribution());
-                Iterator statusCodes = statusCodeDistribution.iterator();
-                
                 boolean alt = true;
-                while(statusCodes.hasNext())
-                {
-                    Map.Entry entry = (Map.Entry)statusCodes.next();
-                    long count = ((LongWrapper)(entry.getValue())).longValue;
+                TreeMap scd = stats.getReverseSortedCopy(stats.
+                    getStatusCodeDistribution());
+                for (Iterator i = scd.keySet().iterator();
+                        i.hasNext();) {
+                    Object key = i.next();
+                    long count = ((LongWrapper)scd.get(key)).longValue;
                     long displaybarwidth = 0;
                     if(stats.successfullyFetchedCount()/6>0){
                        displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
@@ -262,8 +261,8 @@
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
-                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=entry.getKey()%>&grep=true">
-                                <%=CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)entry.getKey()))%>
+                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=(String)key%>&grep=true">
+                                <%=CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)key))%>
                             </a>&nbsp;
                         </td>
                         <td colspan="2" nowrap>
@@ -289,13 +288,12 @@
                 </th>
             </tr>
             <%
-                TreeSet fileDistribution = stats.getSortedByValue(stats.getFileDistribution());
-                Iterator files = fileDistribution.iterator();
                 alt=true;
-                while(files.hasNext())
-                {
-                    Map.Entry file = (Map.Entry)files.next();
-                    long count = ((LongWrapper)file.getValue()).longValue;
+                TreeMap fd = stats.getReverseSortedCopy(stats.
+                        getFileDistribution());
+                for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
+                    Object key = i.next();
+                    long count = ((LongWrapper)fd.get(key)).longValue;
                     long displaybarwidth = 0;
                     if(stats.successfullyFetchedCount()/6>0){
                        displaybarwidth = count*100/(stats.successfullyFetchedCount()/6);
@@ -306,13 +304,13 @@
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
-                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=file.getKey()%>&grep=true"><%=file.getKey()%></a>&nbsp;&nbsp;
+                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=(String)key%>&grep=true"><%=key%></a>&nbsp;&nbsp;
                         </td>
                         <td nowrap>
                             <img src="<%=request.getContextPath()%>/images/blue.jpg" height="10" width="<%=displaybarwidth%>"> <%=count%> &nbsp;&nbsp;
                         </td>
                         <td align="right" nowrap>
-                            <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerFileType((String)file.getKey()))%>
+                            <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerFileType((String)key))%>
                         </td>
                     </tr>
             <%
@@ -343,28 +341,27 @@
                 <% } %>
             </tr>
             <%
-                TreeSet hostsDistribution = stats.getSortedByValue(stats.getHostsDistribution());
-                Iterator hosts = hostsDistribution.iterator();
                 alt = true;
-                while(hosts.hasNext())
-                {
-                    Map.Entry host = (Map.Entry)hosts.next();
+                TreeMap hd = stats.getReverseSortedCopy(stats.
+                    getHostsDistribution());
+                for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
+                    Object key = i.next();
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
-                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=host.getKey()%>&grep=true"><%=host.getKey()%></a>&nbsp;
+                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=(String)key%>&grep=true"><%=(String)key%></a>&nbsp;
                         </td>
                         <td nowrap>
-                            <%=((LongWrapper)host.getValue()).longValue%>&nbsp;
+                            <%=((LongWrapper)hd.get(key)).longValue%>&nbsp;
                         </td>
                         <td align="right" nowrap>
-                            <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)host.getKey()))%>&nbsp;
+                            <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)key))%>&nbsp;
                         </td>
                         <% if (cjob.getStatus().equalsIgnoreCase(CrawlJob.STATUS_RUNNING) ||
                                  cjob.getStatus().equals(CrawlJob.STATUS_PAUSED) ||
                                  cjob.getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE)){ %>
                             <td align="right">
-                                <%=ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-stats.getHostLastFinished((String)host.getKey()))%>
+                                <%=ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-stats.getHostLastFinished((String)key))%>
                             </td>
                         <% } %>
                     </tr>
