@@ -110,11 +110,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     /** Number of hops of embeds (ERX) to bump to front of host queue */
     public final static String ATTR_PREFERENCE_EMBED_HOPS =
         "preference-embed-hops";
-    private final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(1); 
-
-    /** Default wait time after initial visit. */
-    public final static String ATTR_INITIAL_WAIT_INTERVAL =
-        "initial-wait-interval-seconds";
+    private final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(0); 
 
     private CrawlController controller;
     
