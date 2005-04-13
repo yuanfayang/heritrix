@@ -226,7 +226,7 @@ public class RobotsExclusionPolicy implements Serializable {
                     break;
                 }
                 try {
-                    String p = curi.getUURI().getPath();
+                    String p = curi.getUURI().getPathQuery();
                     if (p != null && p.startsWith(disallowedPath) ) {
                         // the user agent tested isn't allowed to get this uri
                         disallow = true;
