@@ -39,12 +39,11 @@
     <para>This document explains how to create, configure and run crawls using
     Heritrix. It is intended for users of the software and presumes that they
     possess at least a general familiarity with the concept of web
-    crawling.</para>  
-    
-    <para>For a general overview on Heritrix, see
-    <ulink url="/An Introduction to Heritrix.pdf">An Introduction to
-    Heritrix</ulink>.
-    </para>
+    crawling.</para>
+
+    <para>For a general overview on Heritrix, see <ulink
+    url="/An Introduction to Heritrix.pdf">An Introduction to
+    Heritrix</ulink>.</para>
 
     <para>If you want to build Heritrix from source or if you'd like to make
     contributions and would like to know about contribution conventions, etc.,
@@ -524,8 +523,8 @@
 
           <para>This option allows the user to create a job by basing it on
           any existing job, regardless of whether it has been crawled or not.
-          Can be useful for repeating crawls or recovering a crawl that 
-          had problems. (See <xref linkend="recover" /></para>
+          Can be useful for repeating crawls or recovering a crawl that had
+          problems. (See <xref linkend="recover" /></para>
         </listitem>
       </orderedlist>
 
@@ -655,30 +654,33 @@
         <para>Modules (<xref linkend="modules" />)</para>
 
         <para>Add/remove/set configurable modules, such as the crawl Scope
-        (<xref linkend="scopes" />), Frontier (<xref linkend="frontier" />), 
+        (<xref linkend="scopes" />), Frontier (<xref linkend="frontier" />),
         or Processors (<xref linkend="processors" />).</para>
       </listitem>
-      
+
       <listitem>
         <para>Submodules (<xref linkend="submodules" />)</para>
 
         <para>Here you can:</para>
-        
+
         <itemizedlist>
-         <listitem>
-          <para>Add/remove/reorder URL canonicalization rules 
-          (<xref linkend="urlcanon" />)</para>
-         </listitem>
-         <listitem>
-          <para>Add/remove/reorder filters (<xref linkend="filters" />)</para>
-         </listitem>
-         <listitem>
-          <para>Add/remove login credentials 
-          (<xref linkend="credentials" />)</para>
-         </listitem>
+          <listitem>
+            <para>Add/remove/reorder URL canonicalization rules (<xref
+            linkend="urlcanon" />)</para>
+          </listitem>
+
+          <listitem>
+            <para>Add/remove/reorder filters (<xref
+            linkend="filters" />)</para>
+          </listitem>
+
+          <listitem>
+            <para>Add/remove login credentials (<xref
+            linkend="credentials" />)</para>
+          </listitem>
         </itemizedlist>
       </listitem>
-      
+
       <listitem>
         <para>Settings (<xref linkend="settings" />)</para>
 
@@ -723,19 +725,18 @@
 
       <para>Heritrix has several types of pluggable modules. These modules,
       while having a fixed interface usually have a number of provided
-      implementations. They can also be third party plugins. The "Modules"
-      tab allows
-      the user to set several types of these pluggable modules.</para>
+      implementations. They can also be third party plugins. The "Modules" tab
+      allows the user to set several types of these pluggable modules.</para>
 
       <para>Once modules have been added to the configuration they can be
       configured in greater detail on the Settings tab (<xref
-      linkend="settings" />). If a module can contain within it multiple
-      other modules, these can be configured on the Submodules tab.</para>
+      linkend="settings" />). If a module can contain within it multiple other
+      modules, these can be configured on the Submodules tab.</para>
 
       <para><note>
           <para>Modules are referred to by their Java class names
-          (org.archive.crawler.frontier.BdbFrontier). This is done because these
-          are the only names we can be assured of being unique.</para>
+          (org.archive.crawler.frontier.BdbFrontier). This is done because
+          these are the only names we can be assured of being unique.</para>
         </note>See <ulink
       url="http://crawler.archive.org/articles/developer_manual.html">Developer's
       Manual</ulink> for information about creating and adding custom modules
@@ -761,88 +762,86 @@
           <listitem id="surtprefixscope">
             <para><emphasis role="bold">SurtPrefixScope</emphasis></para>
 
-            <para>A highly flexible and fairly efficient scope which can crawl 
-            within defined domains, individual hosts, or path-defined areas of 
-            hosts, or any mixture of those, depending on the configuration.
-            </para>
-            
-            <para>It considers whether any URI is inside the primary focus
-            of the scope by converting the URI to its <xref linkend="surt" />
-            form, and then seeing if that SURT form begins with any of a number
-            of <xref linkend="surtprefix" />es. (See the glossary definitions
-            for detailed information about the SURT form of a URI and SURT
-            prefix comparisons.)</para>
-            
+            <para>A highly flexible and fairly efficient scope which can crawl
+            within defined domains, individual hosts, or path-defined areas of
+            hosts, or any mixture of those, depending on the
+            configuration.</para>
+
+            <para>It considers whether any URI is inside the primary focus of
+            the scope by converting the URI to its <xref linkend="surt" />
+            form, and then seeing if that SURT form begins with any of a
+            number of <xref linkend="surtprefix" />es. (See the glossary
+            definitions for detailed information about the SURT form of a URI
+            and SURT prefix comparisons.)</para>
+
             <para>The operator may establish the set of SURT prefixes used
-            either by letting the SURT prefixes be implied from the supplied 
+            either by letting the SURT prefixes be implied from the supplied
             seed URIs, specifying an external file with a listing of SURT
             prefixes, or both.</para>
-            
+
             <para>When you use this scope, it adds 3 hard-to-find-in-the-UI
-            attributes -- <literal>surts-source-file</literal>, 
+            attributes -- <literal>surts-source-file</literal>,
             <literal>seeds-as-surt-prefixes</literal>, and
             <literal>surts-dump-file</literal> -- to the end of the scope
-            section, just after
-            <literal>transitiveFilter</literal> but before
+            section, just after <literal>transitiveFilter</literal> but before
             <literal>http-headers</literal>.</para>
-            
-            <para>Use the <literal>surts-source-file</literal> setting to 
-            supply an external file with a list of SURT prefixes, if desired.
-            Use the <literal>seeds-as-surt-prefixes</literal> setting to 
-            establish whether SURT prefixes should be deduced from the seeds,
-            in accordance with the rules given at the 
-            <xref linkend="surtprefix" /> glossary entry. (The default is 
-            'true', to deduce SURT prefixes from seeds.)</para>
-            
-            <para>To see what SURT prefixes were actually used -- perhaps
-            merged from seed-deduced and externally-supplied -- you can specify
-            a file path in the <literal>surts-dump-file</literal> setting. The
-            sorted list of actual SURT prefixes used will be written to that 
-            file  for reference. (Note that redundant entries will be removed
-            from this dump. If you have SURT prefixes &lt;http://(org,&gt; and
-            &lt;http://(org,archive,&gt;, only the former will actually be
-            used, because all SURT form URIs prefixed by the latter are also
-            prefixed by the former.)</para>
 
-            <para>See also the crawler wiki on 
-            <ulink 
+            <para>Use the <literal>surts-source-file</literal> setting to
+            supply an external file with a list of SURT prefixes, if desired.
+            Use the <literal>seeds-as-surt-prefixes</literal> setting to
+            establish whether SURT prefixes should be deduced from the seeds,
+            in accordance with the rules given at the <xref
+            linkend="surtprefix" /> glossary entry. (The default is 'true', to
+            deduce SURT prefixes from seeds.)</para>
+
+            <para>To see what SURT prefixes were actually used -- perhaps
+            merged from seed-deduced and externally-supplied -- you can
+            specify a file path in the <literal>surts-dump-file</literal>
+            setting. The sorted list of actual SURT prefixes used will be
+            written to that file for reference. (Note that redundant entries
+            will be removed from this dump. If you have SURT prefixes
+            &lt;http://(org,&gt; and &lt;http://(org,archive,&gt;, only the
+            former will actually be used, because all SURT form URIs prefixed
+            by the latter are also prefixed by the former.)</para>
+
+            <para>See also the crawler wiki on <ulink
             url="http://crawler.archive.org/cgi-bin/wiki.pl?SurtScope">SurtScope</ulink>.</para>
           </listitem>
-          
+
           <listitem>
             <para><emphasis role="bold">FilterScope</emphasis></para>
 
             <para>A highly configurable scope. By adding different filters in
             different combinations this scope can be configured to provide a
             wide variety of behaviour.</para>
-            <para>After selecting this filter, you must then go to the
-            <emphasis>Filters</emphasis> tab and add the filters you want to 
-            run as part of your scope. Add the filters at the
-            <emphasis>focusFilter</emphasis> label and give them a
-            meaningful name.  The URIRegexFilter probably makes
-            most sense in this context (The ContentTypeRegexFilter won't
-            work at scope time because we don't know the content-type till
-            after we've fetched the document).
-            </para>
-            <para>After adding the filter(s), return to the
-            <emphasis>Settings</emphasis> tab and fill in any
-            configuration required of the filters.  For example, say you
-            added the URIRegexFilter, and you wanted only 'www.archive.org'
-            hosts to be in focus, fill in a regex like the following:
-            <literal>^(?:http|dns)www.archve.org/\.*</literal> (Be careful
-            you don't rule out prerequisites such as dns or robots.txt
-            when specifying your scope filter).</para>
-          </listitem>
 
+            <para>After selecting this filter, you must then go to the
+            <emphasis>Filters</emphasis> tab and add the filters you want to
+            run as part of your scope. Add the filters at the
+            <emphasis>focusFilter</emphasis> label and give them a meaningful
+            name. The URIRegexFilter probably makes most sense in this context
+            (The ContentTypeRegexFilter won't work at scope time because we
+            don't know the content-type till after we've fetched the
+            document).</para>
+
+            <para>After adding the filter(s), return to the
+            <emphasis>Settings</emphasis> tab and fill in any configuration
+            required of the filters. For example, say you added the
+            URIRegexFilter, and you wanted only 'www.archive.org' hosts to be
+            in focus, fill in a regex like the following:
+            <literal>^(?:http|dns)www.archve.org/\.*</literal> (Be careful you
+            don't rule out prerequisites such as dns or robots.txt when
+            specifying your scope filter).</para>
+          </listitem>
         </itemizedlist>
 
-		<para>The following scopes are available, but the same effects can 
-        be achieved more efficiently, and in combination, with SurtPrefixScope.
+        <para>The following scopes are available, but the same effects can be
+        achieved more efficiently, and in combination, with SurtPrefixScope.
         When SurtPrefixScope can be more easily understood and configured,
         these scopes may be removed entirely.</para>
-		
-		<itemizedlist>
-		  <listitem>
+
+        <itemizedlist>
+          <listitem>
             <para><emphasis role="bold">DomainScope</emphasis></para>
 
             <para>This scope limits discovered URIs to the set of domains
@@ -850,11 +849,11 @@
             belonging to a domain from which one of the seed came is within
             scope. Like always it is possible to apply depth
             restrictions.</para>
-            <para>Using the seed 'archive.org', a domain scope will
-            fetch 'audio.archive.org', 'movies.archive.org', etc.
-            It will fetch all discovered URIs from 'archive.org' and from
-            any subdomain of 'archive.org'.
-            </para>
+
+            <para>Using the seed 'archive.org', a domain scope will fetch
+            'audio.archive.org', 'movies.archive.org', etc. It will fetch all
+            discovered URIs from 'archive.org' and from any subdomain of
+            'archive.org'.</para>
           </listitem>
 
           <listitem>
@@ -862,10 +861,10 @@
 
             <para>This scope limits discovered URIs to the set of hosts
             defined by the provided seeds.</para>
+
             <para>If the seed is 'www.archive.org', then we'll only fetch
             items discovered on this host. The crawler will not go to
-            'audio.archive.org' or 'movies.archive.org'.
-            </para>
+            'audio.archive.org' or 'movies.archive.org'.</para>
           </listitem>
 
           <listitem>
@@ -879,21 +878,21 @@
             <literal>www.sample2.com/path/index.html</literal> will be limited
             to URIs under <literal>/path/</literal>.</para>
 
-            <note>Internally Heritrix defines everything up to the right most
-            slash as the <literal>path</literal> when doing path scope so 
-            for example, the URLs 
-            <literal>http://members.aol.com/bigbird</literal> and 
-            <literal>http://members.aol.com/~bigbird</literal> will treat
-            as in scope any URL that begins 
-            <literal>members.aol.com</literal>.  If your intent is to only
-            include all below the path <literal>bigbird</literal>, add a
-            slash on the end, using a form such as
-            <literal>http://members.aol.com/bigbird/</literal> or 
-            <literal>http://members.aol.com/bigbird/index.html</literal>
-            instead.
+            <note>
+              <para>Internally Heritrix defines everything up to the right
+              most slash as the <literal>path</literal> when doing path scope
+              so for example, the URLs
+              <literal>http://members.aol.com/bigbird</literal> and
+              <literal>http://members.aol.com/~bigbird</literal> will treat as
+              in scope any URL that begins <literal>members.aol.com</literal>.
+              If your intent is to only include all below the path
+              <literal>bigbird</literal>, add a slash on the end, using a form
+              such as <literal>http://members.aol.com/bigbird/</literal> or
+              <literal>http://members.aol.com/bigbird/index.html</literal>
+              instead. </para>
             </note>
           </listitem>
-		</itemizedlist>
+        </itemizedlist>
 
         <para>Scopes usually allow for some flexibility in defining depth and
         possible transitive includes (that is getting items that would usually
@@ -935,7 +934,7 @@
           DomainScope, BroadScope -- all could be thought of as fitting a
           specific pattern: A URI is included if and only if:</para>
 
-    <para><programlisting>protected final boolean innerAccepts(Object o) {
+          <para><programlisting>protected final boolean innerAccepts(Object o) {
     return ((isSeed(o) || focusAccepts(o)) || additionalFocusAccepts(o) ||
             transitiveAccepts(o)) &amp;&amp; !excludeAccepts(o);
 }</programlisting></para>
@@ -1002,84 +1001,107 @@
             </orderedlist></para>
 
           <para>As a result of these problems, the SurtPrefixScope was added,
-          and further major changes are planned. The first steps are 
-          described in the next section, <xref linkend="decidingscope" />.
-          These changes will also affect whether and how filters (see 
-          <xref linkend="filters" />) are used.</para>
+          and further major changes are planned. The first steps are described
+          in the next section, <xref linkend="decidingscope" />. These changes
+          will also affect whether and how filters (see <xref
+          linkend="filters" />) are used.</para>
         </sect4>
-        
+
         <sect4 id="decidingscope">
-         <title>Experimental: DecidingScope</title>
-         
-         <para>To address the shortcomings above, and generally make alternate 
-         scope choices more understandable and flexible, a new mechanism for
-         scoping and filtering has been introduced in Heritrix 1.4. This new 
-         approach is somewhat like (and inspired by) HTTrack's 'scan 
-         rules'/filters, Alexa's mask/ignore/void syntax for adjusting 
-         recurring crawls, or the Nutch 'regex-urlfilter' facility, but  may be
-         a bit more general than any of those.
-         </para>
-         
-         <para>This new approach is available as a DecidingScope, which is 
-         modelled as a series of DecideRules. Each DecideRule, when presented 
-         with an Object (most often a URI of some form), may respond with one 
-         of three decisions:</para>
-         
-         <itemizedlist>
-          <listitem>ACCEPT: the object is ruled in</listitem>
-          <listitem>REJECT: the object is ruled out</listitem>
-          <listitem>PASS: the rule has no opinion; retain whatever previous 
-          decision was made</listitem>
-         </itemizedlist>
+          <title>Experimental: DecidingScope</title>
 
-         <para>To define a Scope, the operator configures an ordered series 
-         of DecideRules. A URI under consideration begins with no assumed 
-         status. Each rule is applied in turn to the candidate URI. If the 
-         rule decides ACCEPT or REJECT, the URI's status is set accordingly. 
-         After all rules have been applied, if the URI's status is ACCEPT it 
-         is "in scope" and scheduled for crawling; if its status is REJECT it 
-         is discarded.</para>
+          <para>To address the shortcomings above, and generally make
+          alternate scope choices more understandable and flexible, a new
+          mechanism for scoping and filtering has been introduced in Heritrix
+          1.4. This new approach is somewhat like (and inspired by) HTTrack's
+          'scan rules'/filters, Alexa's mask/ignore/void syntax for adjusting
+          recurring crawls, or the Nutch 'regex-urlfilter' facility, but may
+          be a bit more general than any of those.</para>
 
-         <para>There are no branches, but much of what nested conditionals 
-         can achieve is possible, in a form that should be be easier to follow 
-         than arbitrary expressions.</para>
-         
-         <para>The current list of available DecideRules includes:</para>
-         
-         <itemizedlist>
-         
-         </itemizedlist>
-         
-         <para>...covering just about everything our previous focus- and filter- 
-         based classes did. By ordering exclude and include actions, 
-         combinations that were awkward before -- or even impossible without
-         writing custom code -- become straightforward.</para>
-         
-         <para>For example, a previous request that was hard for us to 
-         accomodate was the idea: "crawl exactly these X hosts, and get offsite 
-         images if only on the same domains." That is, don't wander off the 
-         exact hosts to follow navigational links -- only to get offsite 
-         resources that share the same domain.</para>
+          <para>This new approach is available as a DecidingScope, which is
+          modelled as a series of DecideRules. Each DecideRule, when presented
+          with an Object (most often a URI of some form), may respond with one
+          of three decisions:</para>
 
-		<para>Our relevant function-of-seeds tests -- host-based and 
-		domain-based -- were exclusive of each other (at the 'focus' level) 
-		and difficult to mix-in with path-based criteria (at the 'transitive' 
-		level).</para>
+          <itemizedlist>
+            <listitem>
+              <para>ACCEPT: the object is ruled in</para>
+            </listitem>
 
-        <para>As a series of DecideRules, the above request can be easily 
-        achieved as:</para>
+            <listitem>
+              <para>REJECT: the object is ruled out</para>
+            </listitem>
 
-        <computeroutput>
+            <listitem>
+              <para>PASS: the rule has no opinion; retain whatever previous
+              decision was made</para>
+            </listitem>
+          </itemizedlist>
+
+          <para>To define a Scope, the operator configures an ordered series
+          of DecideRules. A URI under consideration begins with no assumed
+          status. Each rule is applied in turn to the candidate URI. If the
+          rule decides ACCEPT or REJECT, the URI's status is set accordingly.
+          After all rules have been applied, if the URI's status is ACCEPT it
+          is "in scope" and scheduled for crawling; if its status is REJECT it
+          is discarded.</para>
+
+          <para>There are no branches, but much of what nested conditionals
+          can achieve is possible, in a form that should be be easier to
+          follow than arbitrary expressions.</para>
+
+          <para>The current list of available DecideRules includes:</para>
+
+          <para><programlisting>   
+    AcceptDecideRule -- ACCEPTs all (establishing an early default)
+    RejectDecideRule -- REJECTs all (establishing an early default)
+    TooManyHopsDecideRule(max-hops=N) -- REJECTS all with hopsPath.length()&gt;N, PASSes otherwise
+    PrerequisiteAcceptDecideRule -- ACCEPTs any with 'P' as last hop, PASSes otherwise (allowing prerequisites of items within other limits to also be included
+    MatchesRegExpDecideRule(regexp=pattern) -- ACCEPTs (or REJECTs) all matching a regexp, PASSing otherwise
+    NotMatchesRegExpDecideRule(regexp=pattern) -- ACCEPTs (or REJECTs) all *not* matching a regexp, PASSing otherwise. 
+    PathologicalPathDecideRule(max-reps=N) -- REJECTs all mathing problem patterns
+    TooManyPathSegmentsDecideRule(max-segs=N) -- REJECTs all with too many path-segments ('/'s)
+    TransclusionDecideRule(extra-hops=N) -- ACCEPTs anything with up to N non-navlink (non-'L')hops at end
+    SurtPrefixedDecideRule(use-seeds=bool;use-file=path) -- ACCEPTs (or REJECTs) anything matched by SURT prefix set generated from supplied seeds/files/etc.
+    NotSurtPrefixedDecideRule(use-seeds=bool;use-file=path) -- ACCEPTs (or REJECTs) anything *not* matched by SURT prefix set generated from supplied seeds/files/etc.
+    OnHostsDecideRule(use-seeds=bool;use-file=path) -- ACCEPTs (or REJECTs) anything on same hosts as deduced from supplied seeds/files/etc.
+    NotOnHostsDecideRule(use-seeds=bool;use-file=path) -- ACCEPTs (or REJECTs) anything on *not* same hosts as deduced from supplied seeds/files/etc.
+    OnDomainsDecideRule(use-seeds=bool;use-file=path) -- ACCEPTs (or REJECTs) anything on same domains as deduced from supplied seeds/files/etc.
+    NotOnDomainsSetDecideRule(use-seeds=bool;use-file=path) -- ACCEPTs (or REJECTs) anything *not* on same domains as deduced from supplied seeds/files/etc.
+    MatchesFilePatternDecideRule -- ACCEPTs (or REJECTs) URIs matching a chosen predefined convenience regexp pattern (such as common file-extensions)
+    NotMatchesFilePatternDecideRule -- ACCEPTs (or REJECTs) URIs *not* matching a chosen predefined convenience regexp pattern
+        </programlisting></para>
+
+          <para>...covering just about everything our previous focus- and
+          filter- based classes did. By ordering exclude and include actions,
+          combinations that were awkward before -- or even impossible without
+          writing custom code -- become straightforward.</para>
+
+          <para>For example, a previous request that was hard for us to
+          accomodate was the idea: "crawl exactly these X hosts, and get
+          offsite images if only on the same domains." That is, don't wander
+          off the exact hosts to follow navigational links -- only to get
+          offsite resources that share the same domain.</para>
+
+          <para>Our relevant function-of-seeds tests -- host-based and
+          domain-based -- were exclusive of each other (at the 'focus' level)
+          and difficult to mix-in with path-based criteria (at the
+          'transitive' level).</para>
+
+          <para>As a series of DecideRules, the above request can be easily
+          achieved as:</para>
+
+          <para><programlisting>
         RejectDecideRule
         OnHostsDecideRule(use-seeds=true)
         TranscludedDecideRule(extra-hops=2)
         NotOnDomainsDecideRule(REJECT,use-seeds=true);
-        </computeroutput>
+        </programlisting></para>
 
-        <para>A good default set of DecideRules for many purposes would 
-        be...</para>
+          <para>A good default set of DecideRules for many purposes would
+          be...</para>
 
-        <computeroutput>
+          <para><programlisting>
         RejectDecideRule               // reject by default
         SurtPrefixedDecideRule         // accept within SURT prefixes established by seeds
         TooManyHopsDecideRule          // but reject if too many hops from seeds
@@ -1087,129 +1109,128 @@
         PathologicalPathDecideRule     // but reject if pathological repetitions
         TooManyPathSegmentsDecideRule  // ...or if too many path-segments
         PrerequisiteAcceptDecideRule   // but always accept a prerequisite of other URI
-        </computeroutput>
-        
-        <para>A predefined Profile with this set of DecideRules is available
-        under the name "deciding-default".</para>
-        
-        <para>The naming, behavior, and user-interface for DecideRule-based 
-        scoping is subject to significant change based on feedback and 
-        experience in future releases.</para>
+        </programlisting></para>
+
+          <para>A predefined Profile with this set of DecideRules is available
+          starting in 1.4 under the profile name "deciding-default".</para>
+
+          <para>The naming, behavior, and user-interface for DecideRule-based
+          scoping is subject to significant change based on feedback and
+          experience in future releases.</para>
         </sect4>
-        
       </sect3>
 
       <sect3 id="frontier">
         <title>Frontier</title>
 
         <para>The Frontier is a pluggable module that maintains the internal
-        state
-        of the crawl. What URIs have been discovered, crawled etc. As such its
-        selection greatly affects for instance the order in which discovered
-        URIs are crawled.</para>
+        state of the crawl. What URIs have been discovered, crawled etc. As
+        such its selection greatly affects for instance the order in which
+        discovered URIs are crawled.</para>
 
         <para>There is only one Frontier per crawl job.</para>
 
-        <para>Multiple Frontiers are provided with Heritrix, each of a 
-        particular character.
-        </para>
+        <para>Multiple Frontiers are provided with Heritrix, each of a
+        particular character.</para>
 
-        <sect4 id="bdbfrontier"><title>BdbFrontier</title>
-        <para>The default Frontier in Heritrix as of 1.4.0 and later is the
-        BdbFrontier(Previously, the default was the 
-        <xref linkend="hqf" />).
-        The BdbFrontier visits URIs and sites
-        discovered in a generally breadth-first manner, it offers
-        configuration options controlling how it throttles its activity
-        against particular hosts, and whether it has a bias towards
-        finishing hosts in progress ('site-first' crawling) or cycling among
-        all hosts with pending URIs.
-        </para>
-        <para>Discovered URIs are only crawled once, except that robots.txt
-        and DNS information can be configured so that it is refreshed at
-        specified intervals for each host.</para>
-        <para>The main difference between the BdbFrontier and its precursor,
-        <xref linkend="hqf" />, is that its queues are disk-based rather than
-        memory-based.
-        </para>
+        <sect4 id="bdbfrontier">
+          <title>BdbFrontier</title>
+
+          <para>The default Frontier in Heritrix as of 1.4.0 and later is the
+          BdbFrontier(Previously, the default was the <xref linkend="hqf" />).
+          The BdbFrontier visits URIs and sites discovered in a generally
+          breadth-first manner, it offers configuration options controlling
+          how it throttles its activity against particular hosts, and whether
+          it has a bias towards finishing hosts in progress ('site-first'
+          crawling) or cycling among all hosts with pending URIs.</para>
+
+          <para>Discovered URIs are only crawled once, except that robots.txt
+          and DNS information can be configured so that it is refreshed at
+          specified intervals for each host.</para>
+
+          <para>The main difference between the BdbFrontier and its precursor,
+          <xref linkend="hqf" />, is that its queues are disk-based rather
+          than memory-based.</para>
         </sect4>
-        <sect4 id="hqf"><title>HostQueuesFrontier</title>
-        <para>The forerunner of the <xref linkend="bdbfrontier" />. Now
-        deprecated mostly because it kept queues in memory.
-        Has same general characteristics as the
-        <xref linkend="bdbfrontier" />.
-        </para>
+
+        <sect4 id="hqf">
+          <title>HostQueuesFrontier</title>
+
+          <para>The forerunner of the <xref linkend="bdbfrontier" />. Now
+          deprecated mostly because it kept queues in memory. Has same general
+          characteristics as the <xref linkend="bdbfrontier" />.</para>
         </sect4>
-        <sect4 id="dsf"><title>DomainSensitveFrontier</title>
-          <para>A subclass of the <xref linkend="hqf" /> written by 
-          Oskar Grenholm. 
-          The DSF
-          allows specifying an upper-bound on the number of
-          documents downloaded per-site.  It does this by
-          exploiting <xref linkend="overrides" /> adding a filter
-          to block further fetching once the crawler has attained
-          per-site limits.  </para>
+
+        <sect4 id="dsf">
+          <title>DomainSensitveFrontier</title>
+
+          <para>A subclass of the <xref linkend="hqf" /> written by Oskar
+          Grenholm. The DSF allows specifying an upper-bound on the number of
+          documents downloaded per-site. It does this by exploiting <xref
+          linkend="overrides" /> adding a filter to block further fetching
+          once the crawler has attained per-site limits.</para>
         </sect4>
 
         <sect4 id="arf">
-        <title>AdaptiveRevisitingFrontier</title>
-        <para>The AdaptiveRevisitingFrontier -- a.k.a <emphasis>AR</emphasis>
-        Frontier -- will repeatedly visit all encountered URIs.  
-        Wait time between visits is configurable and varies based on wait
-        intervals specified by a WaitEvaluator processor.
-        It was written by Kristinn Sigurdsson.
-        <note>
-        <para>This Frontier is still experimental, in active development and
-        has not been tested extensively.</para>
-        </note>
-        </para>
-        <para>In addition to the WaitEvaluator (or similar processor) a
-        crawl using this Frontier will also need to use the ChangeEvaluator
-        processor: i.e. this Frontier requires that ChangeEvaluator 
-        and WaitEvaluator or equivalents are present in the processing
-        chain.</para>
-        <para>ChangeEvaluator should be
-        at the very top of the extractor chain.</para>
-        <para>WaitEvaluator -- or an equivalent -- needs to be
-        in the post processing chain.</para>
+          <title>AdaptiveRevisitingFrontier</title>
 
-        <para>The ChangeEvaluator has no configurable settings. The
-        WaitEvaluator however has numerous settings to adjust the revisit
-        policy.
-        <itemizedlist>
-        <listitem>
-        <para>Initial wait. A waiting period before revisiting the first
-        time.</para>
-        </listitem>
-        <listitem>
-        <para>Increase and decrease factors on unchanged and changed
-        documents respectively. Basically if a document has not changed
-        between visits, it's wait time will be multiplied by the
-        "unchanged-factor" and if it has changed, the wait time will be
-        divided by the "changed-factor". Both values accept real
-        numbers, not just integers.</para>
-        </listitem>
-        <listitem>
-        <para>Finally, there is a 'default-wait-interval' for URIs where
-        it is not possible to judge changes in content. Currently this
-        applies only to DNS lookups. </para>
-        </listitem>
-        </itemizedlist>
-        <para>If you want to specify different wait times and factors for
-        URIs based on their mime types, this is possible. You have to create
-        a Refinement (<xref linkend="refinements" />) and use the
-        ContentType criteria. Simply use a regular expression that matches
-        the desired mime type as it's parameter and then override the
-        applicable parameters in the refinement.</para>
-        <para>By setting the 'state' directory to the same location that
-        another AR crawl used, it should resume that crawl (minus some
-        stats).</para>
-        </para>
+          <para>The AdaptiveRevisitingFrontier -- a.k.a
+          <emphasis>AR</emphasis> Frontier -- will repeatedly visit all
+          encountered URIs. Wait time between visits is configurable and
+          varies based on wait intervals specified by a WaitEvaluator
+          processor. It was written by Kristinn Sigurdsson. <note>
+              <para>This Frontier is still experimental, in active development
+              and has not been tested extensively.</para>
+            </note></para>
+
+          <para>In addition to the WaitEvaluator (or similar processor) a
+          crawl using this Frontier will also need to use the ChangeEvaluator
+          processor: i.e. this Frontier requires that ChangeEvaluator and
+          WaitEvaluator or equivalents are present in the processing
+          chain.</para>
+
+          <para>ChangeEvaluator should be at the very top of the extractor
+          chain.</para>
+
+          <para>WaitEvaluator -- or an equivalent -- needs to be in the post
+          processing chain.</para>
+
+          <para>The ChangeEvaluator has no configurable settings. The
+          WaitEvaluator however has numerous settings to adjust the revisit
+          policy. <itemizedlist>
+              <listitem>
+                <para>Initial wait. A waiting period before revisiting the
+                first time.</para>
+              </listitem>
+
+              <listitem>
+                <para>Increase and decrease factors on unchanged and changed
+                documents respectively. Basically if a document has not
+                changed between visits, it's wait time will be multiplied by
+                the "unchanged-factor" and if it has changed, the wait time
+                will be divided by the "changed-factor". Both values accept
+                real numbers, not just integers.</para>
+              </listitem>
+
+              <listitem>
+                <para>Finally, there is a 'default-wait-interval' for URIs
+                where it is not possible to judge changes in content.
+                Currently this applies only to DNS lookups.</para>
+              </listitem>
+            </itemizedlist> </para>
+
+          <para>If you want to specify different wait times and factors for
+          URIs based on their mime types, this is possible. You have to create
+          a Refinement (<xref linkend="refinements" />) and use the
+          ContentType criteria. Simply use a regular expression that matches
+          the desired mime type as it's parameter and then override the
+          applicable parameters in the refinement.</para>
+
+          <para>By setting the 'state' directory to the same location that
+          another AR crawl used, it should resume that crawl (minus some
+          stats).</para>
         </sect4>
-
-
       </sect3>
-
 
       <sect3 id="processors">
         <title id="processingchains">Processing Chains</title>
@@ -1303,424 +1324,428 @@
         running with the WUI use this module.</para>
       </sect3>
     </sect2>
+
     <sect2 id="submodules">
-     <title>Submodules</title>
-     
-     <para>On the Submodules tab, components which are added in variable-sized
-     lists are added, ordered, and removed. Once submodules are added here, 
-     values which control their operation are configured on the Settings 
-     tab.</para>
-    
-     <sect3 id="urlcanon">
-       <title>URL Canonicalization Rules</title>
-        <para>Heritrix keeps a list of already seen URLs and before
-        fetching, does a look up into this 'already seen' or
-        'already included' list to see if the URL has already been crawled.  
-        Often an URL can be written in multiple ways but the
-        page fetched is the same in each case.  For example, the page that
-        is at <literal>http://www.archive.org/index.html</literal>
-        is the same page as is at 
-        <literal>http//WWW.ARCHIVE.ORG/</literal> though the URLs differ 
-        (In this case by case only).
-        Before going to the 'already included' list, Heritrix makes an effort
-        at equating the likes of 
-        <literal>http://www.archive.org/index.html</literal>
-        and <literal>http://ARCHIVE.ORG/</literal> by running each URL through
-        a set of canonicalization rules.  Heritrix uses the result of this
+      <title>Submodules</title>
+
+      <para>On the Submodules tab, components which are added in
+      variable-sized lists are added, ordered, and removed. Once submodules
+      are added here, values which control their operation are configured on
+      the Settings tab.</para>
+
+      <sect3 id="urlcanon">
+        <title>URL Canonicalization Rules</title>
+
+        <para>Heritrix keeps a list of already seen URLs and before fetching,
+        does a look up into this 'already seen' or 'already included' list to
+        see if the URL has already been crawled. Often an URL can be written
+        in multiple ways but the page fetched is the same in each case. For
+        example, the page that is at
+        <literal>http://www.archive.org/index.html</literal> is the same page
+        as is at <literal>http//WWW.ARCHIVE.ORG/</literal> though the URLs
+        differ (In this case by case only). Before going to the 'already
+        included' list, Heritrix makes an effort at equating the likes of
+        <literal>http://www.archive.org/index.html</literal> and
+        <literal>http://ARCHIVE.ORG/</literal> by running each URL through a
+        set of canonicalization rules. Heritrix uses the result of this
         canonicalization process when it goes to test if an URL has already
-        been seen.</para>  
-        <para>An example of a canonicalization
-            rule would lowercase all URLs.  Another might strip the
-            'www' prefix from domains.</para>
+        been seen.</para>
+
+        <para>An example of a canonicalization rule would lowercase all URLs.
+        Another might strip the 'www' prefix from domains.</para>
+
         <para>The <literal>URL Canonicalization Rules</literal> screen allows
         you to specify canonicalization rules and the order in which they are
-        run.  A default set lowercases, strips wwws, removes sessionids and
-        does other types of fixup such as removal of any userinfo.
-        The URL page works in the same manner as the 
-        <xref linkend="filters" /> page.
-        </para>
+        run. A default set lowercases, strips wwws, removes sessionids and
+        does other types of fixup such as removal of any userinfo. The URL
+        page works in the same manner as the <xref linkend="filters" />
+        page.</para>
+
         <para>To watch the canonicalization process, enable
-        <literal>org.archive.crawler.url.Canonicalizer</literal>
-        logging in <literal>heritrix.properties</literal> (There should
-        already be a commented out directive in the properties file.  
-        Search for it).   Output
-        will show in <literal>heritrix_out.log</literal>.
-        Set the logging level to INFO to see just before and after
-        the transform.  Set level to FINE to see the result of each 
-        rule's transform.
-        </para>
+        <literal>org.archive.crawler.url.Canonicalizer</literal> logging in
+        <literal>heritrix.properties</literal> (There should already be a
+        commented out directive in the properties file. Search for it). Output
+        will show in <literal>heritrix_out.log</literal>. Set the logging
+        level to INFO to see just before and after the transform. Set level to
+        FINE to see the result of each rule's transform.</para>
+
         <para>Canonicalization rules can be added as an override so an added
-        rule only works in the overridden domain.
-        </para>
+        rule only works in the overridden domain.</para>
+
         <para>Canonicalization rules are NOT run if the URI-to-check is the
-        fruit of a redirect. We do this for the
-        following reason. Lets say the www canonicalization rule is in place
-        (the rule that equates 'archive.org' and 'www.archive.org').  If the
-        crawler first encournters 'archive.org' but the server at archive.org
-        wants us to come in via 'www.archive.org', it will redirect us to
-        'www.archive.org'. The alreadyseen database will have been marked with
-        'archive.org' on the original access of 'archive.org'.  The www
-        canonicalization rule runs and makes 'archive.org' of
-        'www.archive.org' which has already been
+        fruit of a redirect. We do this for the following reason. Lets say the
+        www canonicalization rule is in place (the rule that equates
+        'archive.org' and 'www.archive.org'). If the crawler first encournters
+        'archive.org' but the server at archive.org wants us to come in via
+        'www.archive.org', it will redirect us to 'www.archive.org'. The
+        alreadyseen database will have been marked with 'archive.org' on the
+        original access of 'archive.org'. The www canonicalization rule runs
+        and makes 'archive.org' of 'www.archive.org' which has already been
         seen. If we always ran canonicalization rules regardless, we wouldn't
-        ever crawl 'www.archive.org'.
-        </para>
+        ever crawl 'www.archive.org'.</para>
+
         <sect4 id="urlcanonexample">
-            <title>URL Canonicalization Use Case: Stripping
-            Site-Particular Session IDs</title>
-            <para>Say site x.y.z is returning URLs with a session ID key of
-            <literal>cid</literal> as in
-            <literal>http://x.y.z/index.html?cid=XYZ123112232112229BCDEFFA0000111</literal>.  Say the session ID value is always 32 characters.  Say also, 
-            for simplicity's sake, that it always appears on the end of the
-            URL.
-            </para>
-            <sect5 id="urlcanonexamplesoln">
+          <title>URL Canonicalization Use Case: Stripping Site-Particular
+          Session IDs</title>
+
+          <para>Say site x.y.z is returning URLs with a session ID key of
+          <literal>cid</literal> as in
+          <literal>http://x.y.z/index.html?cid=XYZ123112232112229BCDEFFA0000111</literal>.
+          Say the session ID value is always 32 characters. Say also, for
+          simplicity's sake, that it always appears on the end of the
+          URL.</para>
+
+          <sect5 id="urlcanonexamplesoln">
             <title>Solution</title>
-                <para>Add a RegexRule override for the domain x.y.z.
-                To do this, pause the crawl, add an override for x.y.z by
-                clicking on the <literal>overrides</literal> tab in the
-                main menu bar and filling in the domain x.y.z.  Once in the
-                override screen, click on the <literal>URL</literal> tab
-                in the override menu bar -- the new bar that appears below
-                the main bar when in override mode -- and add a
-                <literal>RegexRule</literal> canonicalization rule.  Name it
-                <literal>cidStripper</literal>.  Adjust where you'd like
-                it to appear in the running of canonicalization rules (Towards
-                the end should be fine).  Now browse back to the
-                override settings.  The new canonicalization rule 
-                <literal>cidStripper</literal> should appear in the 
-                settings page list of canonicalization rules. Fill in
-                the RegexRule
-                <literal>matching-regex</literal> with 
-                something like the following:
-              <literal>^(.+)(?:cid=[0-9a-zA-Z]{32})?$</literal>
-              (Match a tail of 'cid=SOME_32_CHAR_STR' grouping all that comes
-              before this tail).  Fill into the <literal>format</literal>
-              field <literal>${1}</literal> (This will copy the first
-              group from the regex if the regex matched).
-                To see the rule in operation, set the logging level for
-                <literal>org.archive.crawler.url.Canonicalizer</literal>
-                in <literal>heritrix.properties</literal> (Try 
-                uncommenting the line <literal>org.archive.crawler.url.Canonicalizer.level = INFO</literal>). Study the output and adjust your
-                regex accordingly. 
-                </para>
-                <para>See also <ulink 
-                url="http://groups.yahoo.com/group/archive-crawler/message/1611">msg1611</ulink> for another's experience getting regext to work.</para>
-            </sect5>
+
+            <para>Add a RegexRule override for the domain x.y.z. To do this,
+            pause the crawl, add an override for x.y.z by clicking on the
+            <literal>overrides</literal> tab in the main menu bar and filling
+            in the domain x.y.z. Once in the override screen, click on the
+            <literal>URL</literal> tab in the override menu bar -- the new bar
+            that appears below the main bar when in override mode -- and add a
+            <literal>RegexRule</literal> canonicalization rule. Name it
+            <literal>cidStripper</literal>. Adjust where you'd like it to
+            appear in the running of canonicalization rules (Towards the end
+            should be fine). Now browse back to the override settings. The new
+            canonicalization rule <literal>cidStripper</literal> should appear
+            in the settings page list of canonicalization rules. Fill in the
+            RegexRule <literal>matching-regex</literal> with something like
+            the following: <literal>^(.+)(?:cid=[0-9a-zA-Z]{32})?$</literal>
+            (Match a tail of 'cid=SOME_32_CHAR_STR' grouping all that comes
+            before this tail). Fill into the <literal>format</literal> field
+            <literal>${1}</literal> (This will copy the first group from the
+            regex if the regex matched). To see the rule in operation, set the
+            logging level for
+            <literal>org.archive.crawler.url.Canonicalizer</literal> in
+            <literal>heritrix.properties</literal> (Try uncommenting the line
+            <literal>org.archive.crawler.url.Canonicalizer.level =
+            INFO</literal>). Study the output and adjust your regex
+            accordingly.</para>
+
+            <para>See also <ulink
+            url="http://groups.yahoo.com/group/archive-crawler/message/1611">msg1611</ulink>
+            for another's experience getting regext to work.</para>
+          </sect5>
         </sect4>
-     </sect3>
+      </sect3>
 
-     <sect3 id="filters">
-      <title>Filters</title>
+      <sect3 id="filters">
+        <title>Filters</title>
 
-      <para>Filters are modules that take a <xref linkend="crawluri" /> and
-      determine if it matches the criteria of the filter. If so it returns
-      true, otherwise it returns false.</para>
+        <para>Filters are modules that take a <xref linkend="crawluri" /> and
+        determine if it matches the criteria of the filter. If so it returns
+        true, otherwise it returns false.</para>
 
-      <para>Filters are used in a couple of different contexts in
-      Heritrix.</para>
+        <para>Filters are used in a couple of different contexts in
+        Heritrix.</para>
 
-      <para>Their use in scopes has already been discussed in <xref
-      linkend="scopes" /> and the problems with using them that in <xref
-      linkend="scopeproblems" />. Along with the planned overhaul of the
-      scopes (as discussed in <xref linkend="scopeproblems" />) the filters
-      will likely change significantly.</para>
+        <para>Their use in scopes has already been discussed in <xref
+        linkend="scopes" /> and the problems with using them that in <xref
+        linkend="scopeproblems" />. Along with the planned overhaul of the
+        scopes (as discussed in <xref linkend="scopeproblems" />) the filters
+        will likely change significantly.</para>
 
-      <para>Aside from scopes filters are also used in processors. Filters
-      applied to processors always filter URIs <emphasis>out</emphasis>. That
-      is to say that any URI matching a filter on a processor will effectively
-      skip over that processor.</para>
+        <para>Aside from scopes filters are also used in processors. Filters
+        applied to processors always filter URIs <emphasis>out</emphasis>.
+        That is to say that any URI matching a filter on a processor will
+        effectively skip over that processor.</para>
 
-      <para>This can be useful to disable (for instance) link extraction on
-      documents coming from a specific section of a given website.</para>
+        <para>This can be useful to disable (for instance) link extraction on
+        documents coming from a specific section of a given website.</para>
 
-      <sect4>
-        <title>Adding, removing and reordering filters</title>
+        <sect4>
+          <title>Adding, removing and reordering filters</title>
 
-        <para>The filters page of the configuration section of the WUI
-        presents a semi treelike structure of the crawl configuration.
-        Wherever filters can be added a listing of existing filters is
-        provided along with the options to remove them or move them up or down
-        that list. Below each list is the option to add a new filter to that
-        list.</para>
+          <para>The filters page of the configuration section of the WUI
+          presents a semi treelike structure of the crawl configuration.
+          Wherever filters can be added a listing of existing filters is
+          provided along with the options to remove them or move them up or
+          down that list. Below each list is the option to add a new filter to
+          that list.</para>
 
-        <para>Adding a new filters requires giving it a unique name (for that
-        list), selecting the class type of the filter from a combobox and
-        clicking the associated add button. After the filter is added, its
-        custom settings, if any, will appear in the Settings page of the
-        configuration UI.</para>
+          <para>Adding a new filters requires giving it a unique name (for
+          that list), selecting the class type of the filter from a combobox
+          and clicking the associated add button. After the filter is added,
+          its custom settings, if any, will appear in the Settings page of the
+          configuration UI.</para>
 
-        <para>Since filters can in turn contain other filters (the OrFilter
-        being the best example of this) these lists can become quite complex
-        and at times confusing.</para>
-      </sect4>
+          <para>Since filters can in turn contain other filters (the OrFilter
+          being the best example of this) these lists can become quite complex
+          and at times confusing.</para>
+        </sect4>
 
-      <sect4>
-        <title>Provided filters</title>
+        <sect4>
+          <title>Provided filters</title>
 
-        <para>The following is an overview of the most useful of the filters
-        provided with Heritrix.</para>
+          <para>The following is an overview of the most useful of the filters
+          provided with Heritrix.</para>
 
-        <sect5>
-          <title>org.archive.crawler.filter.OrFilter</title>
+          <sect5>
+            <title>org.archive.crawler.filter.OrFilter</title>
 
-          <para>Contains any number of filters and returns true if any of them
-          returns true. A logical OR on its filters basically.</para>
-        </sect5>
+            <para>Contains any number of filters and returns true if any of
+            them returns true. A logical OR on its filters basically.</para>
+          </sect5>
 
-        <sect5>
-          <title>org.archive.crawler.filter.URIRegExpFilter</title>
-          <para>Returns true if a URI matches the regular expression set for
-          it. See <xref linkend="regexpr" /> for more about regular
-          expressions in Heritrix.</para>
-        </sect5>
-        <sect5>
-          <title>org.archive.crawler.filter.ContentTypeRegExpFilter</title>
-          <para>
-          This filter runs a regular expression against the
-          response <literal>Content-Type</literal> header.
-          Returns true if content type  matches the regular expression.
-          ContentType regexp filter cannot be used until after fetcher
-          processors have run.  Only then is the
-          Content-Type of the response known. A good place for this filter
-          is the writer step in processing.
-          See <xref linkend="regexpr" /> for more about regular
-          expressions in Heritrix.</para>
-        </sect5>
+          <sect5>
+            <title>org.archive.crawler.filter.URIRegExpFilter</title>
 
-        <sect5>
-          <title>org.archive.crawler.filter.SurtPrefixFilter</title>
+            <para>Returns true if a URI matches the regular expression set for
+            it. See <xref linkend="regexpr" /> for more about regular
+            expressions in Heritrix.</para>
+          </sect5>
 
-          <para>Returns true if a URI is prefixed by one of the <xref
-          linkend="surtprefix" />es supplied by an external file. </para>
-        </sect5>
+          <sect5>
+            <title>org.archive.crawler.filter.ContentTypeRegExpFilter</title>
 
-        <sect5>
-          <title>org.archive.crawler.filter.FilePatternFilter</title>
+            <para>This filter runs a regular expression against the response
+            <literal>Content-Type</literal> header. Returns true if content
+            type matches the regular expression. ContentType regexp filter
+            cannot be used until after fetcher processors have run. Only then
+            is the Content-Type of the response known. A good place for this
+            filter is the writer step in processing. See <xref
+            linkend="regexpr" /> for more about regular expressions in
+            Heritrix.</para>
+          </sect5>
 
-          <para>Compares suffix of a passed URI against a regular expression
-          pattern, returns true for matches.</para>
-        </sect5>
+          <sect5>
+            <title>org.archive.crawler.filter.SurtPrefixFilter</title>
 
-        <sect5>
-          <title>org.archive.crawler.filter.PathDepthFilter</title>
+            <para>Returns true if a URI is prefixed by one of the <xref
+            linkend="surtprefix" />es supplied by an external file.</para>
+          </sect5>
 
-          <para>Returns true for all <xref linkend="crawluri" /> passed in
-          with a path depth less or equal to its
-          <literal>max-path-depth</literal> value.</para>
-        </sect5>
+          <sect5>
+            <title>org.archive.crawler.filter.FilePatternFilter</title>
 
-        <sect5>
-          <title>org.archive.crawler.filter.PathologicalPathFilter</title>
+            <para>Compares suffix of a passed URI against a regular expression
+            pattern, returns true for matches.</para>
+          </sect5>
 
-          <para>Checks if a URI contains a repeated pattern.</para>
+          <sect5>
+            <title>org.archive.crawler.filter.PathDepthFilter</title>
 
-          <para>This filter checks if a if a pattern is repeated a specific
-          number of times. The use is to avoid crawler traps where the server
-          adds the same pattern to the requested URI like:</para>
+            <para>Returns true for all <xref linkend="crawluri" /> passed in
+            with a path depth less or equal to its
+            <literal>max-path-depth</literal> value.</para>
+          </sect5>
 
-          <para><programlisting>  http://host/img/img/img/img....</programlisting></para>
+          <sect5>
+            <title>org.archive.crawler.filter.PathologicalPathFilter</title>
 
-          <para>Returns true if such a pattern is found. Sometimes used on a
-          processor but is primarily of use in the exclude section of
-          scopes.</para>
-        </sect5>
+            <para>Checks if a URI contains a repeated pattern.</para>
 
-        <sect5>
-          <title>org.archive.crawler.filter.HopsFilter</title>
+            <para>This filter checks if a if a pattern is repeated a specific
+            number of times. The use is to avoid crawler traps where the
+            server adds the same pattern to the requested URI like:</para>
 
-          <para>Returns true for all URIs passed in with a <xref
-          linkend="link-hop-count" /> greater than the
-          <literal>max-link-hops</literal> value.</para>
+            <para><programlisting>  http://host/img/img/img/img....</programlisting></para>
 
-          <para>Generally only used in scopes.</para>
-        </sect5>
+            <para>Returns true if such a pattern is found. Sometimes used on a
+            processor but is primarily of use in the exclude section of
+            scopes.</para>
+          </sect5>
 
-        <sect5>
-          <title>org.archive.crawler.filter.TransclusionFilter</title>
-          <para>Filter which returns true for <xref linkend="crawluri" />
-          instances which contain more than zero but fewer than
-          <literal>max-trans-hops</literal> embed entries at the end of their
-          <xref linkend="discoverypath" />.</para>
-          <para>Generally only used in scopes.</para>
-        </sect5>
+          <sect5>
+            <title>org.archive.crawler.filter.HopsFilter</title>
 
-      </sect4>
-     </sect3>
+            <para>Returns true for all URIs passed in with a <xref
+            linkend="link-hop-count" /> greater than the
+            <literal>max-link-hops</literal> value.</para>
 
-     <sect3 id="credentials">
-      <title>Credentials</title>
+            <para>Generally only used in scopes.</para>
+          </sect5>
 
-      <para>In this section you can add login credentials that will allow
-      Heritrix to gain access to areas of websites requiring authentication.
-      As with all modules they are only added here (supplying a unique name
-      for each credential) and then configured on the settings page (<xref
-      linkend="settings" />).</para>
+          <sect5>
+            <title>org.archive.crawler.filter.TransclusionFilter</title>
 
-      <para>One of the settings for each credential is it's
-      <literal>credential-domain</literal> and thus it is possible to create
-      all credentials on the global level. However since this can cause
-      excessive unneeded checking of credentials it is recommended that
-      credentials be added to the appropriate domain override (see <xref
-      linkend="overrides" /> for details). That way the credential is only
-      checked when the relevant domain is being crawled.</para>
+            <para>Filter which returns true for <xref linkend="crawluri" />
+            instances which contain more than zero but fewer than
+            <literal>max-trans-hops</literal> embed entries at the end of
+            their <xref linkend="discoverypath" />.</para>
 
-      <para>Heritrix can do two types of authentication: <ulink
-      url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink> (BASIC and
-      DIGEST Auth) and POST and GET of an HTML Form.</para>
+            <para>Generally only used in scopes.</para>
+          </sect5>
+        </sect4>
+      </sect3>
 
-      <note>
-        <title>Logging</title>
+      <sect3 id="credentials">
+        <title>Credentials</title>
 
-        <para>To enable console logging of authentication interactions (for
-        example for debugging), set the FetchHTTP and PrconditionEnforcer log
-        levels to fine</para>
+        <para>In this section you can add login credentials that will allow
+        Heritrix to gain access to areas of websites requiring authentication.
+        As with all modules they are only added here (supplying a unique name
+        for each credential) and then configured on the settings page (<xref
+        linkend="settings" />).</para>
 
-        <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level = FINE
+        <para>One of the settings for each credential is it's
+        <literal>credential-domain</literal> and thus it is possible to create
+        all credentials on the global level. However since this can cause
+        excessive unneeded checking of credentials it is recommended that
+        credentials be added to the appropriate domain override (see <xref
+        linkend="overrides" /> for details). That way the credential is only
+        checked when the relevant domain is being crawled.</para>
+
+        <para>Heritrix can do two types of authentication: <ulink
+        url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink> (BASIC and
+        DIGEST Auth) and POST and GET of an HTML Form.</para>
+
+        <note>
+          <title>Logging</title>
+
+          <para>To enable console logging of authentication interactions (for
+          example for debugging), set the FetchHTTP and PrconditionEnforcer
+          log levels to fine</para>
+
+          <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level = FINE
 org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting></para>
 
-        <para>This is done by editing the
-        <filename>heritrix.properties</filename> file under the
-        <filename>conf</filename> directory as described in <xref
-        linkend="heritrix.properties" />.</para>
-      </note>
+          <para>This is done by editing the
+          <filename>heritrix.properties</filename> file under the
+          <filename>conf</filename> directory as described in <xref
+          linkend="heritrix.properties" />.</para>
+        </note>
 
-      <sect4>
-        <title><ulink
-        url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink> (BASIC and
-        DIGEST Auth)</title>
+        <sect4>
+          <title><ulink
+          url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink> (BASIC
+          and DIGEST Auth)</title>
 
-        <para>Supply <ulink url="#cd">credential-domain</ulink>, <ulink
-        url="realm">realm</ulink>, login, and password.</para>
+          <para>Supply <ulink url="#cd">credential-domain</ulink>, <ulink
+          url="realm">realm</ulink>, login, and password.</para>
 
-        <para>The way that the RFC2617 authentication works in Heritrix is
-        that in response to a 401 response code (Unauthorized), Heritrix will
-        use a key made up of the Credential Domain plus Realm to do a lookup
-        into its Credential Store. If a match is found, then the credential is
-        loaded into the CrawlURI and the CrawlURI is marked for immediate
-        retry.</para>
+          <para>The way that the RFC2617 authentication works in Heritrix is
+          that in response to a 401 response code (Unauthorized), Heritrix
+          will use a key made up of the Credential Domain plus Realm to do a
+          lookup into its Credential Store. If a match is found, then the
+          credential is loaded into the CrawlURI and the CrawlURI is marked
+          for immediate retry.</para>
 
-        <para>When the requeued CrawlURI comes around again, this time
-        through, the found credentials are added to the request. If the
-        request succeeds -- result code of 200 -- the credentials are promoted
-        to the CrawlServer and all subsequent requests made against this
-        CrawlServer will preemptively volunteer the credential. If the
-        credential fails -- we get another 401 -- then the URI is let die a
-        natural 401 death.</para>
+          <para>When the requeued CrawlURI comes around again, this time
+          through, the found credentials are added to the request. If the
+          request succeeds -- result code of 200 -- the credentials are
+          promoted to the CrawlServer and all subsequent requests made against
+          this CrawlServer will preemptively volunteer the credential. If the
+          credential fails -- we get another 401 -- then the URI is let die a
+          natural 401 death.</para>
 
-        <sect5 id="cd">
-          <title>credential-domain</title>
+          <sect5 id="cd">
+            <title>credential-domain</title>
 
-          <para>This equates to the canonical root URI of RFC2617;
-          effectively, in our case, its the CrawlServer name or <ulink
-          url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">URI
-          authority</ulink> (domain plus port if other than port 80).
-          Examples of credential-domain would be: 'www.archive.org' or
-          'www.archive.org:8080', etc.</para>
-        </sect5>
+            <para>This equates to the canonical root URI of RFC2617;
+            effectively, in our case, its the CrawlServer name or <ulink
+            url="http://java.sun.com/j2se/1.4.2/docs/api/java/net/URI.html">URI
+            authority</ulink> (domain plus port if other than port 80).
+            Examples of credential-domain would be: 'www.archive.org' or
+            'www.archive.org:8080', etc.</para>
+          </sect5>
 
-        <sect5 id="realm">
-          <title>realm</title>
+          <sect5 id="realm">
+            <title>realm</title>
 
-          <para>Realm as per <ulink
-          url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink>. The
-          realm string must match exactly the realm name presented in the
-          authentication challenge served up by the web server</para>
-        </sect5>
+            <para>Realm as per <ulink
+            url="http://www.faqs.org/rfcs/rfc2617.html">RFC2617</ulink>. The
+            realm string must match exactly the realm name presented in the
+            authentication challenge served up by the web server</para>
+          </sect5>
 
-        <sect5>
-          <title>Known Limitations</title>
+          <sect5>
+            <title>Known Limitations</title>
 
-          <sect6>
-            <title>One Realm per Credential Domain Only</title>
+            <simplesect>
+              <title>One Realm per Credential Domain Only</title>
 
-            <para>Currently, you can only have one realm per credential
-            domain.</para>
-          </sect6>
+              <para>Currently, you can only have one realm per credential
+              domain.</para>
+            </simplesect>
 
-          <sect6>
-            <title>Digest Auth works for Apache</title>
+            <simplesect>
+              <title>Digest Auth works for Apache</title>
 
-            <para>... but your mileage may vary going up against other servers
-            (See <ulink
-            url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=914301&amp;group_id=73833&amp;atid=539102">[
-            914301 ] Logging in (HTTP POST, Basic Auth, etc.)</ulink> to learn
-            more).</para>
-          </sect6>
-        </sect5>
-      </sect4>
+              <para>... but your mileage may vary going up against other
+              servers (See <ulink
+              url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=914301&amp;group_id=73833&amp;atid=539102">[
+              914301 ] Logging in (HTTP POST, Basic Auth, etc.)</ulink> to
+              learn more).</para>
+            </simplesect>
+          </sect5>
+        </sect4>
 
-      <sect4>
-        <title>HTML Form POST or GET</title>
+        <sect4>
+          <title>HTML Form POST or GET</title>
 
-        <para>Supply <ulink url="#cdh">credential-domain</ulink>, <ulink
-        url="httpmethod">http-method</ulink>, <ulink
-        url="loginuri">login-uri</ulink>, and <ulink
-        url="formitems">form-items</ulink>, .</para>
+          <para>Supply <ulink url="#cdh">credential-domain</ulink>, <ulink
+          url="httpmethod">http-method</ulink>, <ulink
+          url="loginuri">login-uri</ulink>, and <ulink
+          url="formitems">form-items</ulink>, .</para>
 
-        <para>Before a <literal>uri</literal> is scheduled, we look for
-        preconditions. Examples of preconditions are the getting of the the
-        dns record for the server that hosts the <literal>uri</literal> and
-        the fetching of the <literal>robots.txt</literal>: i.e. we don't fetch
-        any <literal>uri</literal> unless we first have gotten the
-        <literal>robots.txt</literal> file. The HTML Form Credentials are done
-        as a precondition. If there are HTML Form Credentials for a particular
-        crawlserver in the credential store, the uri specified in the HTML
-        Form Credential login-uri field is scheduled as a precondition for the
-        site, after the fetching of the dns and robots preconditions.</para>
+          <para>Before a <literal>uri</literal> is scheduled, we look for
+          preconditions. Examples of preconditions are the getting of the the
+          dns record for the server that hosts the <literal>uri</literal> and
+          the fetching of the <literal>robots.txt</literal>: i.e. we don't
+          fetch any <literal>uri</literal> unless we first have gotten the
+          <literal>robots.txt</literal> file. The HTML Form Credentials are
+          done as a precondition. If there are HTML Form Credentials for a
+          particular crawlserver in the credential store, the uri specified in
+          the HTML Form Credential login-uri field is scheduled as a
+          precondition for the site, after the fetching of the dns and robots
+          preconditions.</para>
 
-        <sect5 id="cdh">
-          <title>credential-domain</title>
+          <sect5 id="cdh">
+            <title>credential-domain</title>
 
-          <para>Same as the Rfc22617 Credential <ulink
-          url="#cd">credential-domain</ulink>.</para>
-        </sect5>
+            <para>Same as the Rfc22617 Credential <ulink
+            url="#cd">credential-domain</ulink>.</para>
+          </sect5>
 
-        <sect5 id="loginuri">
-          <title>login-url</title>
+          <sect5 id="loginuri">
+            <title>login-url</title>
 
-          <para>Relative or absolute URI to the page that the HTML Form
-          submits to (Not the page that contains the HTML Form).</para>
-        </sect5>
+            <para>Relative or absolute URI to the page that the HTML Form
+            submits to (Not the page that contains the HTML Form).</para>
+          </sect5>
 
-        <sect5 id="formitems">
-          <title>form-items</title>
+          <sect5 id="formitems">
+            <title>form-items</title>
 
-          <para>Listing of HTML Form key/value pairs. Don't forget to include
-          the form submit button.</para>
-        </sect5>
+            <para>Listing of HTML Form key/value pairs. Don't forget to
+            include the form submit button.</para>
+          </sect5>
 
-        <sect5>
-          <title>Known Limitations</title>
+          <sect5>
+            <title>Known Limitations</title>
 
-          <sect6>
-            <title>Site is crawled logged in or not; cannot do both</title>
+            <simplesect>
+              <title>Site is crawled logged in or not; cannot do both</title>
 
-            <para>If a site has an HTML Form Credential associated, the next
-            thing done after the getting of the dns record and the robots.txt
-            is that a login is performed against all listed HTML Form
-            Credential login-uris. This means that the crawler will only ever
-            view sites that have HTML Form Credentials from the 'logged-in'
-            perspective. There is no way currently of telling the crawler to
-            crawl the site 'non-logged-in' and then, when done, log in and
-            crawl the site anew only this time from the 'logged-in'
-            perspective (At least, not as part of the one crawl job).</para>
-          </sect6>
+              <para>If a site has an HTML Form Credential associated, the next
+              thing done after the getting of the dns record and the
+              robots.txt is that a login is performed against all listed HTML
+              Form Credential login-uris. This means that the crawler will
+              only ever view sites that have HTML Form Credentials from the
+              'logged-in' perspective. There is no way currently of telling
+              the crawler to crawl the site 'non-logged-in' and then, when
+              done, log in and crawl the site anew only this time from the
+              'logged-in' perspective (At least, not as part of the one crawl
+              job).</para>
+            </simplesect>
 
-          <sect6>
-            <title>No means of verifying or rerunning login</title>
+            <simplesect>
+              <title>No means of verifying or rerunning login</title>
 
-            <para>The login is run once only and the crawler continues whether
-            the login succeeded or not. There is no means of telling the
-            crawler retry upon unsuccessful authentication. Neither is there a
-            means for the crawler to report success or otherwise (The operator
-            is expected to study logs to see whether authentication ran
-            successfully).</para>
-          </sect6>
-        </sect5>
-      </sect4>
-     </sect3>
-    </sect2> 
+              <para>The login is run once only and the crawler continues
+              whether the login succeeded or not. There is no means of telling
+              the crawler retry upon unsuccessful authentication. Neither is
+              there a means for the crawler to report success or otherwise
+              (The operator is expected to study logs to see whether
+              authentication ran successfully).</para>
+            </simplesect>
+          </sect5>
+        </sect4>
+      </sect3>
+    </sect2>
+
     <sect2 id="settings">
       <title>Settings</title>
 
@@ -1970,10 +1995,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
             <para>Maximum number of non link hops at the end of the current
             URI's <xref linkend="discoverypath" />. Generally we don't want to
             follow embeds, redirects and the like for more then a few (default
-            5) hops in a row. Such deep embedded structures are usually crawler
-            traps. Since embeds are usually treated with higher priority then
-            links, getting stuck in this type of trap can be particularly
-            harmful to the crawl.</para>
+            5) hops in a row. Such deep embedded structures are usually
+            crawler traps. Since embeds are usually treated with higher
+            priority then links, getting stuck in this type of trap can be
+            particularly harmful to the crawl.</para>
           </listitem>
         </itemizedlist>
 
@@ -2147,16 +2172,16 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
               practice.</para>
             </listitem>
           </itemizedlist>
+
           <para id="midfetch">Its also possible to add in filters that are
-          checked after
-          the download of the HTTP response headers but before the response
-          content is read.  Use <literal>midfetch-filters</literal> to
-          abort the download of content-types other than those wanted (Aborted
-          fetches have an annotation <literal>midFetchAbort</literal>
-          appended to the <literal>crawl.log</literal> entry).  Note
-          that unless the same filters are applied at the writer processing
-          step, the response headers -- but not the content -- will show in
-          ARC files.</para>
+          checked after the download of the HTTP response headers but before
+          the response content is read. Use
+          <literal>midfetch-filters</literal> to abort the download of
+          content-types other than those wanted (Aborted fetches have an
+          annotation <literal>midFetchAbort</literal> appended to the
+          <literal>crawl.log</literal> entry). Note that unless the same
+          filters are applied at the writer processing step, the response
+          headers -- but not the content -- will show in ARC files.</para>
         </sect4>
 
         <sect4>
@@ -2271,13 +2296,11 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <listitem>
           <para><emphasis role="bold">URL</emphasis></para>
 
-          <para>Add URL Canonicalization Rules to the override. 
-          It is not possible to remove
-          inherited filters or interject new filters among them. New filters
-          will be added after existing filters. 
-          </para>
-
+          <para>Add URL Canonicalization Rules to the override. It is not
+          possible to remove inherited filters or interject new filters among
+          them. New filters will be added after existing filters.</para>
         </listitem>
+
         <listitem>
           <para><emphasis role="bold">Filters</emphasis></para>
 
@@ -2661,7 +2684,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <para>Takes the user to a page that allows him to lookup URIs in the
           frontier and to delete them by using a regular expression, or add
           URIs to the crawl from an external file (even URIs that have already
-          been processed). </para>
+          been processed).</para>
         </sect4>
 
         <sect4>
@@ -3064,9 +3087,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <para>View a section of a log that starts at a given time stamp and
           the next X lines following it. X is configurable, is 50 by default.
           The format of the time stamp is the same as in the logs
-          (YYYY-MM-DDTHH:MM:SS.SSS). It is not necessary to add more detail to 
-          this then is desired. For instance the entry 2004-04-25T08 will match 
-          the first entry made after 8 am on the 25 of April, 2004.</para>
+          (YYYY-MM-DDTHH:MM:SS.SSS). It is not necessary to add more detail to
+          this then is desired. For instance the entry 2004-04-25T08 will
+          match the first entry made after 8 am on the 25 of April,
+          2004.</para>
         </listitem>
 
         <listitem>
@@ -3101,50 +3125,45 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 2004-07-21T23:29:40.502Z   200        225 http://127.0.0.1:9999/selftest/MaxLinkHops/5.html LLLLL http://127.0.0.1:9999/selftest/MaxLinkHops/4.html text/html #000 20040721232940481+12 M77KNTBZH2IU6V2SIG5EEG45EJICNQNM -</programlisting></para>
 
         <para>The <emphasis rule="bold">first</emphasis> column is a timestamp
-        in ISO8601 format, to millisecond resolution. The time is the instant of
-        logging. 
-        The <emphasis rule="bold">second</emphasis> column is the fetch status
-        code.  Usually this is the
-        HTTP status code but it can also be a negative number if
-        URL processing was unexpectedly terminated.  
-        See <xref linkend="statuscodes" /> for a listing of possible
-        values.</para>
-        <para>The <emphasis rule="bold">third</emphasis> column is the size of
-        the downloaded
-        document in bytes.  For HTTP, Size is the size of the content-only.
-        It excludes the size of the HTTP response headers. For DNS, its
-        the total size of the DNS response.
-        The <emphasis rule="bold">fourth</emphasis> column
-        is the URI of the document
-        downloaded.  The <emphasis rule="bold">fifth</emphasis> column holds
-        breadcrumb codes showing
-        the trail of downloads that got us to the current URI.
-        See <xref linkend="discoverypath" /> for description of possible
-        code values.  The <emphasis rule="bold">sixth</emphasis> column
-        holds the URI that immediately referenced this URI ('referrer').
-        Both of the latter two fields -- the discovery path and the referrer
-        URL -- will be empty for such as the seed URIs.</para>
+        in ISO8601 format, to millisecond resolution. The time is the instant
+        of logging. The <emphasis rule="bold">second</emphasis> column is the
+        fetch status code. Usually this is the HTTP status code but it can
+        also be a negative number if URL processing was unexpectedly
+        terminated. See <xref linkend="statuscodes" /> for a listing of
+        possible values.</para>
 
-        <para>The <emphasis rule="bold">seventh</emphasis> holds the
-        document mime type, the <emphasis rule="bold">eighth</emphasis> column
-        has the id of the worker thread that downloaded this document,
-        the <emphasis rule="bold">ninth</emphasis> column holds a timestamp 
-        (in RFC2550/ARC condensed digits-only format) indicating when a network 
-        fetch was begun, and if appropriate, the millisecond duration of the
-        fetch, separated from the begin-time by a '+' character.</para>
-        
-        <para>The <emphasis rule="bold">tenth</emphasis> fields is a sha-1 
-        digest of the content only (headers are not digested), and finally
-        (if pertinent), the <emphasis rule="bold">eleventh</emphasis>
-        column holds 
-        <quote>annotations</quote>.  Possible annontations include:
-        The number of times the URI had to be tried (This field is '-' if 
-        the download was never retried); The literal
-        <literal>lenTrunc</literal> if the download was truncated because it
-        exceeded configured limits; <literal>timeTrunc</literal> if the
-        download was truncated because the download time exceeded configured
-        limits; or <literal>midFetchTrunc</literal> if a midfetch filter
-        determined the download should be truncated.</para>
+        <para>The <emphasis rule="bold">third</emphasis> column is the size of
+        the downloaded document in bytes. For HTTP, Size is the size of the
+        content-only. It excludes the size of the HTTP response headers. For
+        DNS, its the total size of the DNS response. The <emphasis
+        rule="bold">fourth</emphasis> column is the URI of the document
+        downloaded. The <emphasis rule="bold">fifth</emphasis> column holds
+        breadcrumb codes showing the trail of downloads that got us to the
+        current URI. See <xref linkend="discoverypath" /> for description of
+        possible code values. The <emphasis rule="bold">sixth</emphasis>
+        column holds the URI that immediately referenced this URI
+        ('referrer'). Both of the latter two fields -- the discovery path and
+        the referrer URL -- will be empty for such as the seed URIs.</para>
+
+        <para>The <emphasis rule="bold">seventh</emphasis> holds the document
+        mime type, the <emphasis rule="bold">eighth</emphasis> column has the
+        id of the worker thread that downloaded this document, the <emphasis
+        rule="bold">ninth</emphasis> column holds a timestamp (in RFC2550/ARC
+        condensed digits-only format) indicating when a network fetch was
+        begun, and if appropriate, the millisecond duration of the fetch,
+        separated from the begin-time by a '+' character.</para>
+
+        <para>The <emphasis rule="bold">tenth</emphasis> fields is a sha-1
+        digest of the content only (headers are not digested), and finally (if
+        pertinent), the <emphasis rule="bold">eleventh</emphasis> column holds
+        <quote>annotations</quote>. Possible annontations include: The number
+        of times the URI had to be tried (This field is '-' if the download
+        was never retried); The literal <literal>lenTrunc</literal> if the
+        download was truncated because it exceeded configured limits;
+        <literal>timeTrunc</literal> if the download was truncated because the
+        download time exceeded configured limits; or
+        <literal>midFetchTrunc</literal> if a midfetch filter determined the
+        download should be truncated.</para>
       </sect3>
 
       <sect3>
@@ -3499,9 +3518,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>The <literal>prefix</literal> is set by the user when he
         configures the ARCWriter processor. By default it is IAH.</para>
+
         <para>If you see an ARC file with an extra <literal>.open</literal>
-        suffix, this means the ARC is currently in use being written to
-        by Heritrix (It usually has more than one ARC open at a time).</para>
+        suffix, this means the ARC is currently in use being written to by
+        Heritrix (It usually has more than one ARC open at a time).</para>
 
         <para>For more on ARC files refer to the <ulink
         url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCWriter.html">ARCwriter
@@ -3579,29 +3599,31 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>The L in the above example refers to the type of link followed
         (see <xref linkend="discoverypath" />).</para>
       </sect3>
-    <sect3 id="recoverylogmapper"><title>RecoverLogMapper</title>
-        <para><literal>org.archive.crawler.util.RecoveryLogMapper</literal>
-        is similar to <xref linkend="hoppath" />.  It was contributed by
-        Mike Schwartz. RecoverLogMapper parses a Heritrix recovery log file,
-(See <xref linkend="recover" />), and builds maps that allow a caller to look
-up any seed URL and get back an Iterator of all URLs successfully crawled from
-given seed.
-It also allows lookup on any crawled URL to find the seed URL from which the
-crawler reached that URL (through 1 or more discovered URL hops, which are
-collapsed in this lookup).</para>
-    </sect3>
 
+      <sect3 id="recoverylogmapper">
+        <title>RecoverLogMapper</title>
 
-    <sect3 id="jmxclient"><title>cmdline-jmxclient</title>
-        <para>This jar file is checked in as a script.  It enables command-line
-        control of Heritrix if Heritrix has been started up inside of a
-        SUN 1.5.0 JDK. See the <ulink
-        url="http://crawler.archive.org/cmdline-jmxclient/">cmdline-jmxclient project</ulink> to learn more about this
-        script's capabilities and how to use it.
-        See also <xref linkend="mon_com" />.
-        </para>
-    </sect3>
+        <para><literal>org.archive.crawler.util.RecoveryLogMapper</literal> is
+        similar to <xref linkend="hoppath" />. It was contributed by Mike
+        Schwartz. RecoverLogMapper parses a Heritrix recovery log file, (See
+        <xref linkend="recover" />), and builds maps that allow a caller to
+        look up any seed URL and get back an Iterator of all URLs successfully
+        crawled from given seed. It also allows lookup on any crawled URL to
+        find the seed URL from which the crawler reached that URL (through 1
+        or more discovered URL hops, which are collapsed in this
+        lookup).</para>
+      </sect3>
 
+      <sect3 id="jmxclient">
+        <title>cmdline-jmxclient</title>
+
+        <para>This jar file is checked in as a script. It enables command-line
+        control of Heritrix if Heritrix has been started up inside of a SUN
+        1.5.0 JDK. See the <ulink
+        url="http://crawler.archive.org/cmdline-jmxclient/">cmdline-jmxclient
+        project</ulink> to learn more about this script's capabilities and how
+        to use it. See also <xref linkend="mon_com" />.</para>
+      </sect3>
     </sect2>
 
     <sect2 id="recover">
@@ -3615,32 +3637,32 @@ collapsed in this lookup).</para>
       but is usually much quicker then repeating a crawl.</para>
 
       <para>To run the recovery process, relaunch the crashed crawler. Create
-      a new crawl order job based on the crawl that crashed. If you choose
-      the "Recover" link after the job in the completed job list, the new
-      job will automatically be set up to use the original job's recovery 
-      journal to bootstrap its Frontier state (of completed and queued URIs).
-      Further, if the recovered job attempts to reuse any already-full 'logs'
-      or 'state' directories, new paths for these directories will be chosen
-      with as many '-R' suffixes as are necessary to specify a new empty 
-      directory.</para>
-      
-      <para>(If you simply base your new job on the old job without using 
-      the 'Recover' link, you must manually enter the full path of the original
-      crawl's recovery journal into the <literal>recover-path</literal> setting,
-      near the end of all settings. You must also adjust the 'logs' and 'state'
-      directory settings, if they were specified using absolute paths that would
-      cause the new crawl to reuse the directories of the original job.)</para>
-      
-      <para>After making any further adjustments to the crawl settings, submit 
-      the new job. The submission will hang a long time as the
-      recover.gz file is read in its entirety by the frontier. (This can take
-      hours for a crawl that has run for a long time, and during this time
-      the crawler control panel will appear idle, with no job pending or
-      in progress, but the machine will be busy.) Eventually the submit and
-      crawl job launche should complete. The crawl should pick up from close to 
-      where the crash occurred. There is no marking in the logs that this crawl 
-      was started by reading a recover log (Be sure to mark this was done in the 
-      crawl journal).</para>
+      a new crawl order job based on the crawl that crashed. If you choose the
+      "Recover" link after the job in the completed job list, the new job will
+      automatically be set up to use the original job's recovery journal to
+      bootstrap its Frontier state (of completed and queued URIs). Further, if
+      the recovered job attempts to reuse any already-full 'logs' or 'state'
+      directories, new paths for these directories will be chosen with as many
+      '-R' suffixes as are necessary to specify a new empty directory.</para>
+
+      <para>(If you simply base your new job on the old job without using the
+      'Recover' link, you must manually enter the full path of the original
+      crawl's recovery journal into the <literal>recover-path</literal>
+      setting, near the end of all settings. You must also adjust the 'logs'
+      and 'state' directory settings, if they were specified using absolute
+      paths that would cause the new crawl to reuse the directories of the
+      original job.)</para>
+
+      <para>After making any further adjustments to the crawl settings, submit
+      the new job. The submission will hang a long time as the recover.gz file
+      is read in its entirety by the frontier. (This can take hours for a
+      crawl that has run for a long time, and during this time the crawler
+      control panel will appear idle, with no job pending or in progress, but
+      the machine will be busy.) Eventually the submit and crawl job launche
+      should complete. The crawl should pick up from close to where the crash
+      occurred. There is no marking in the logs that this crawl was started by
+      reading a recover log (Be sure to mark this was done in the crawl
+      journal).</para>
 
       <para>The recovery log is gzipped because it gets very large otherwise
       and because of the reptition of terms, it compresses very well. On
@@ -3653,26 +3675,27 @@ collapsed in this lookup).</para>
       gzipped data).</para>
     </sect2>
 
-    <sect2 id="mon_com"><title>Remote Monitoring and Control</title>
-        <para>As of release 1.4.0, Heritrix will start up the JVM's
-        JMX Agent if deployed in a SUN 1.5.0 JVM.  It password protects the
-        JMX Agent using whatever was specified as the Heritrix admin password
-        so to login, you'll used 'monitorRole' or 'controlRole' for login and
-        the Heritrix admin password as password.  By default, the JMX Agent is
-        started up on port 8849 (To change any of the JMX settings,
-        set the JMX_OPTS environment variable). After starting up the 
-        JMX agent, Heritrix will then register itself with the JVM JMX Agent 
-        publishing attributes and operations that can be run remotely.
-        To see whats available via JMX, use the SUN 1.5.0 JDK jconsole
-        application -- its in $JAVA_HOME/bin -- or use
-        <xref linkend="jmxclient" />.  To learn more about the SUN 1.5.0 JDK
-        JMX managements and jconsole, see <ulink
-        url="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring and Management Using JMX</ulink>.  This O'Reilly article is also 
-        a good place for getting started : 
-        <ulink url="http://www.onjava.com/pub/a/onjava/2004/09/29/tigerjmx.html">Monitoring Local and Remote Applications Using JMX 1.2 and JConsole</ulink>.
-        </para>
-    </sect2>
+    <sect2 id="mon_com">
+      <title>Remote Monitoring and Control</title>
 
+      <para>As of release 1.4.0, Heritrix will start up the JVM's JMX Agent if
+      deployed in a SUN 1.5.0 JVM. It password protects the JMX Agent using
+      whatever was specified as the Heritrix admin password so to login,
+      you'll used 'monitorRole' or 'controlRole' for login and the Heritrix
+      admin password as password. By default, the JMX Agent is started up on
+      port 8849 (To change any of the JMX settings, set the JMX_OPTS
+      environment variable). After starting up the JMX agent, Heritrix will
+      then register itself with the JVM JMX Agent publishing attributes and
+      operations that can be run remotely. To see whats available via JMX, use
+      the SUN 1.5.0 JDK jconsole application -- its in $JAVA_HOME/bin -- or
+      use <xref linkend="jmxclient" />. To learn more about the SUN 1.5.0 JDK
+      JMX managements and jconsole, see <ulink
+      url="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring
+      and Management Using JMX</ulink>. This O'Reilly article is also a good
+      place for getting started : <ulink
+      url="http://www.onjava.com/pub/a/onjava/2004/09/29/tigerjmx.html">Monitoring
+      Local and Remote Applications Using JMX 1.2 and JConsole</ulink>.</para>
+    </sect2>
   </sect1>
 
   <glossary id="glossary">
@@ -3786,9 +3809,9 @@ collapsed in this lookup).</para>
         </glossdef>
       </glossentry>
 
-
       <glossentry id="glossary_frontier">
         <glossterm>Frontier</glossterm>
+
         <glossdef>
           <para>A Frontier is a plug-able module in Heritrix that maintains
           the internal state of the crawl. See <xref
@@ -3838,9 +3861,9 @@ collapsed in this lookup).</para>
           <para>Number of URIs that are awaiting detailed processing.</para>
 
           <para>Number of discovered URIs that have not been inspected for
-          scope or duplicates. Depending on the implementation of the
-          Frontier this might always be zero. It may also be an adjusted
-          number that tries to account for duplicates by estimation.</para>
+          scope or duplicates. Depending on the implementation of the Frontier
+          this might always be zero. It may also be an adjusted number that
+          tries to account for duplicates by estimation.</para>
         </glossdef>
       </glossentry>
 
@@ -3978,33 +4001,33 @@ collapsed in this lookup).</para>
         <glossdef>
           <para>SURT stands for Sort-friendly URI Reordering Transform, and is
           a transformation applied to URIs which makes their left-to-right
-          representation better match the natural hierarchy of domain names.
-          </para>
-          
+          representation better match the natural hierarchy of domain
+          names.</para>
+
           <para>A URI &lt;scheme://domain.tld/path?query&gt; has SURT form
           &lt;scheme://(tld,domain,)/path?query&gt;.</para>
-          
+
           <para>Conversion to SURT form also involves making all characters
-          lowercase, and changing the 'https' scheme to 'http'. Further, the 
-          '/' after a URI authority component -- for example, the third slash 
-          in a regular HTTP URI -- will only appear in the SURT form if it 
-          appeared in the plain URI form. (This convention proves important 
+          lowercase, and changing the 'https' scheme to 'http'. Further, the
+          '/' after a URI authority component -- for example, the third slash
+          in a regular HTTP URI -- will only appear in the SURT form if it
+          appeared in the plain URI form. (This convention proves important
           when using real URIs as a shorthand for SURT prefixes, as described
           below.)</para>
-          
-          <para>SURT form URIs are typically not used to specify exact URIs
-          for fetching. Rather, SURT form is useful when comparing or sorting 
-          URIs. For example, URIs in SURT format sort into natural groups -- 
-          all 'archive.org' URIs will be adjacent, regardless of what subdomains 
-          like 'books.archive.org' or 'movies.archive.org' are used.</para>
-          
-          <para>Most importantly, a SURT form URI, or a truncated version of
-          a SURT form URI, can be used as a <xref linkend="surtprefix" />.
-          A SURT prefix will often correspond to all URIs within a
-          common 'area' of interest for crawling. For example, the prefix 
-          &lt;http://(is,&gt; will be shared by all URIs in the '.is' top-level 
-          domain. </para>
 
+          <para>SURT form URIs are typically not used to specify exact URIs
+          for fetching. Rather, SURT form is useful when comparing or sorting
+          URIs. For example, URIs in SURT format sort into natural groups --
+          all 'archive.org' URIs will be adjacent, regardless of what
+          subdomains like 'books.archive.org' or 'movies.archive.org' are
+          used.</para>
+
+          <para>Most importantly, a SURT form URI, or a truncated version of a
+          SURT form URI, can be used as a <xref linkend="surtprefix" />. A
+          SURT prefix will often correspond to all URIs within a common 'area'
+          of interest for crawling. For example, the prefix
+          &lt;http://(is,&gt; will be shared by all URIs in the '.is'
+          top-level domain.</para>
         </glossdef>
       </glossentry>
 
@@ -4012,72 +4035,76 @@ collapsed in this lookup).</para>
         <glossterm>SURT prefix</glossterm>
 
         <glossdef>
-          <para>A URI in <xref linkend="surt" /> form, especially if truncated,
-          may be of use as a "SURT prefix", a shared prefix string of all SURT 
-          form URIs in the same 'area' of interest for web crawling.
-          </para>
-          
-          <para>For example, the prefix 
-          &lt;http://(is,&gt; will be shared by all SURT form URIs in the '.is' 
-          top-level domain. The prefix &lt;http://(org,archive,www,)/movies&gt; 
-          (which is also a valid full SURT form URI) will be shared by all URIs at 
-          www.archive.org with a path beginning '/movies'.</para>
-          
+          <para>A URI in <xref linkend="surt" /> form, especially if
+          truncated, may be of use as a "SURT prefix", a shared prefix string
+          of all SURT form URIs in the same 'area' of interest for web
+          crawling.</para>
+
+          <para>For example, the prefix &lt;http://(is,&gt; will be shared by
+          all SURT form URIs in the '.is' top-level domain. The prefix
+          &lt;http://(org,archive,www,)/movies&gt; (which is also a valid full
+          SURT form URI) will be shared by all URIs at www.archive.org with a
+          path beginning '/movies'.</para>
+
           <para>A collection of sorted SURT prefixes is an efficient way to
           specify a desired crawl scope: any URI whose SURT form starts with
           any of the prefixes should be included.</para>
-          
-          <para>A small set of conventions can be also be used to calculate an
-          "implied SURT prefix" from a regular URI, such as a URI supplied as a
-          crawl seed.  These conventions are:</para>
-          
-          <orderedlist>
-          <listitem>Convert the URI to its SURT form. 
-          </listitem>
-          <listitem>If there are at least 3 slashes ('/') in the SURT form, 
-          remove everything after the last slash. As examples, 
-          &lt;http://(org,example,www,)/main/subsection/&gt; is unchanged;
-          &lt;http://(org,example,www,)/main/subsection&gt; is truncated to 
-          &lt;http://(org,example,www,)/main/&gt;; 
-          &lt;http://(org,example,www,)/&gt; is unchanged; and 
-          &lt;http://(org,example,www,)&gt; is unchanged.
-          </listitem>
-          <listitem>If the resulting form ends in an off-parenthesis (')'),
-          remove the off-parenthesis. So each of the above examples except for 
-          the last is unchanged, while the last 
-          &lt;http://(org,example,www,)&gt; becomes
-          &lt;http://(org,example,www,&gt;.
-          </listitem>
-          </orderedlist>
-          
-          <para>This allows many seed URIs, in their usual form, to
-          imply the most useful SURT prefixes for crawling related URIs --
-          with the presence or absence of a trailing '/' on URIs without 
-          further path-info being a subtle indicator as to whether subdomains
-          of the supplied domain should be included.</para>
-          
-          <para>For example, seed &lt;http://www.archive.org/&gt; will become 
-          SURT form and implied SURT prefix &lt;http://(org,archive,www,)/&gt;, 
-          and is the prefix of all SURT form URIs on www.archive.org. However, 
-          any subdomain URI like 
-          &lt;http://homepages.www.archive.org/directory&gt; would be ruled out, 
-          because its SURT form 
-          &lt;http://(org,archive,www,homepages,)/directory&gt; does not
-          begin with the full SURT prefix, including the ')/', deduced from 
-          the seed.</para>
-          
-          <para>In contrast, seed &lt;http://www.archive.org&gt; (note the
-          lack of trailing slash) will become SURT form 
-          &lt;http://(org,archive,www,)&gt;, and implied SURT prefix
-          &lt;http://(org,archive,www,&gt; (note the lack of trailing ')'). 
-          This will be the prefix of all URIs on www.archive.org, as well as
-          any subdomain URIs like 
-          &lt;http://homepages.www.archive.org/directory&gt;, because the
-          full SURT prefix appears in subdomain URI SURT forms.</para>
 
+          <para>A small set of conventions can be also be used to calculate an
+          "implied SURT prefix" from a regular URI, such as a URI supplied as
+          a crawl seed. These conventions are:</para>
+
+          <orderedlist>
+            <listitem>
+              <para>Convert the URI to its SURT form. </para>
+            </listitem>
+
+            <listitem>
+              <para>If there are at least 3 slashes ('/') in the SURT form,
+              remove everything after the last slash. As examples,
+              &lt;http://(org,example,www,)/main/subsection/&gt; is unchanged;
+              &lt;http://(org,example,www,)/main/subsection&gt; is truncated
+              to &lt;http://(org,example,www,)/main/&gt;;
+              &lt;http://(org,example,www,)/&gt; is unchanged; and
+              &lt;http://(org,example,www,)&gt; is unchanged. </para>
+            </listitem>
+
+            <listitem>
+              <para>If the resulting form ends in an off-parenthesis (')'),
+              remove the off-parenthesis. So each of the above examples except
+              for the last is unchanged, while the last
+              &lt;http://(org,example,www,)&gt; becomes
+              &lt;http://(org,example,www,&gt;. </para>
+            </listitem>
+          </orderedlist>
+
+          <para>This allows many seed URIs, in their usual form, to imply the
+          most useful SURT prefixes for crawling related URIs -- with the
+          presence or absence of a trailing '/' on URIs without further
+          path-info being a subtle indicator as to whether subdomains of the
+          supplied domain should be included.</para>
+
+          <para>For example, seed &lt;http://www.archive.org/&gt; will become
+          SURT form and implied SURT prefix
+          &lt;http://(org,archive,www,)/&gt;, and is the prefix of all SURT
+          form URIs on www.archive.org. However, any subdomain URI like
+          &lt;http://homepages.www.archive.org/directory&gt; would be ruled
+          out, because its SURT form
+          &lt;http://(org,archive,www,homepages,)/directory&gt; does not begin
+          with the full SURT prefix, including the ')/', deduced from the
+          seed.</para>
+
+          <para>In contrast, seed &lt;http://www.archive.org&gt; (note the
+          lack of trailing slash) will become SURT form
+          &lt;http://(org,archive,www,)&gt;, and implied SURT prefix
+          &lt;http://(org,archive,www,&gt; (note the lack of trailing ')').
+          This will be the prefix of all URIs on www.archive.org, as well as
+          any subdomain URIs like
+          &lt;http://homepages.www.archive.org/directory&gt;, because the full
+          SURT prefix appears in subdomain URI SURT forms.</para>
         </glossdef>
       </glossentry>
-      
+
       <glossentry id="toethreads">
         <glossterm>Toe Threads</glossterm>
 
