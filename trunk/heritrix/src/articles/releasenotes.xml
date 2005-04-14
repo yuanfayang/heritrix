@@ -42,10 +42,21 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
             there was no recording of the dnsserver IP.
             </para>
         </sect3>
+
         <sect3 id="arf" ><title>AdaptiveRevisitFrontier</title>
             <para>A new, experimental Frontier with configurable revisiting
             policy and tools for noticing page change, etc.</para>
         </sect3>
+        <sect3 id="dr" ><title>DecidingScope and DecidingFilter</title>
+            <subtitle>A.K.A New Scoping Model</subtitle>
+            <para>A new, experimental scope and filter that allow the user
+            to pick and choose from an assortment of ready-made decision
+            rules and have each rule applied in an orderable sequence.
+            The last non-PASS decision stands as the
+            aggregate decision for the decide rule sequence.
+            </para>
+        </sect3>
+
         <sect3 id="mem_improvements">
             <title>Crawl Size Upper Bounds Update</title>
         <para>Memory usage has been improved in this release.
