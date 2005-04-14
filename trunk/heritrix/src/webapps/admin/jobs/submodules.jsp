@@ -7,6 +7,7 @@
    */
 %>
 <%@include file="/include/handler.jsp"%>
+<%@include file="/include/modules.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
@@ -46,9 +47,7 @@
         <input type="hidden" name="subaction" value="">
         <input type="hidden" name="map" value="">
         <input type="hidden" name="filter" value="">
-
-    <%=JobConfigureUtils.printAllMaps(theJob.getSettingsHandler().getOrder(),
-            false, null)%>
+        <%=printAllMaps(theJob.getSettingsHandler().getOrder(), false, null)%>
     </form>
     <p>
 <%@include file="/include/jobnav.jsp"%>
