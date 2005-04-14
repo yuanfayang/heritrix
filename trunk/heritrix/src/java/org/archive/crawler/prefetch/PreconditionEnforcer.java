@@ -82,14 +82,14 @@ public class PreconditionEnforcer
 
         e = addElementToDefinition(new SimpleType(ATTR_IP_VALIDITY_DURATION,
                 "The minimum interval for which a dns-record will be considered " +
-                "valid (in seconds). \n" +
+                "valid (in seconds). " +
                 "If the record's DNS TTL is larger, that will be used instead.",
                 DEFAULT_IP_VALIDITY_DURATION));
         e.setExpertSetting(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_ROBOTS_VALIDITY_DURATION,
                 "The time in seconds that fetched robots.txt information is " +
-                "considered to be valid.\n" +
+                "considered to be valid. " +
                 "If the value is set to '0', then the robots.txt information" +
                 " will never expire.",
                 DEFAULT_ROBOTS_VALIDITY_DURATION));

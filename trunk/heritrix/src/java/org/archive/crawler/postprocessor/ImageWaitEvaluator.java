@@ -46,7 +46,7 @@ public class ImageWaitEvaluator extends ContentBasedWaitEvaluator {
     public ImageWaitEvaluator(String name) {
         super(name,"Evaluates how long to wait before fetching a URI again. " +
                 "Only handles CrawlURIs whose content type indicates a " +
-                "image document (^image/.*$).\n" +
+                "image document (^image/.*$). " +
                 "Typically, this processor should be in the post processing " +
                 "chain. It will pass if another wait evaluator has already " +
                 "processed the CrawlURI.", 

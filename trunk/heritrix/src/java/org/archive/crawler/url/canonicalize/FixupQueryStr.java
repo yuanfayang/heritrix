@@ -33,7 +33,7 @@ package org.archive.crawler.url.canonicalize;
 public class FixupQueryStr
 extends BaseRule {
     private static final String DESCRIPTION =
-        "Fixup the question mark that leads off the query string.\n" +
+        "Fixup the question mark that leads off the query string. " +
         "This rule returns 'http://www.archive.org/index.html' if passed" +
         " 'http://www.archive.org/index.html?'.  It will also strip '?&'" +
         " if '?&' is all that comprises the query string.  Also strips" +

@@ -56,7 +56,7 @@ public class Preselector extends Processor implements FetchStatusCodes {
      * @param name
      */
     public Preselector(String name) {
-        super(name, "Preselector. \nDoes one last bit of checking to make " +
+        super(name, "Preselector. Does one last bit of checking to make " +
                 "sure that the current URI should be fetched.");
         Type e;
         e = addElementToDefinition(new SimpleType(ATTR_RECHECK_SCOPE,
