@@ -46,7 +46,8 @@ public class DecidingScope extends CrawlScope {
     public DecidingScope(String name) {
         super(name);
         setDescription(
-                "DecidingScope. A Scope that applies one or more " +
+                "DecidingScope (Experimental).A Scope that applies one or " +
+                "more " +
                 "DecideRules to determine whether a URI is accepted " +
                 "or rejected (returns false).");
     
