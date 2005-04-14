@@ -156,59 +156,57 @@ CoreAttributeConstants {
     public AbstractFrontier(String name, String description) {
         super(name, description);
         addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR,
-                "How many multiples of last fetch elapsed time to wait before " +
-                "recontacting same server", DEFAULT_DELAY_FACTOR));
+            "How many multiples of last fetch elapsed time to wait before " +
+            "recontacting same server", DEFAULT_DELAY_FACTOR));
         addElementToDefinition(new SimpleType(ATTR_MAX_DELAY,
-            "Never wait more than this long, regardless of multiple",
-            DEFAULT_MAX_DELAY));
+            "Never wait more than this long.", DEFAULT_MAX_DELAY));
         addElementToDefinition(new SimpleType(ATTR_MIN_DELAY,
             "Always wait this long after one completion before recontacting " +
-            "same server, regardless of multiple", DEFAULT_MIN_DELAY));
+            "same server.", DEFAULT_MIN_DELAY));
          addElementToDefinition(new SimpleType(ATTR_MAX_RETRIES,
-            "How often to retry fetching a URI that failed to be retrieved.\n" +
+            "How often to retry fetching a URI that failed to be retrieved. " +
             "If zero, the crawler will get the robots.txt only.",
             DEFAULT_MAX_RETRIES));
         addElementToDefinition(new SimpleType(ATTR_RETRY_DELAY,
-                    "How long to wait by default until we retry fetching a" +
-                " URI that failed to be retrieved (seconds). ",
-                DEFAULT_RETRY_DELAY));
+            "How long to wait by default until we retry fetching a" +
+            " URI that failed to be retrieved (seconds). ",
+            DEFAULT_RETRY_DELAY));
         addElementToDefinition(new SimpleType(ATTR_PREFERENCE_EMBED_HOPS,
-                "Number of embedded (or redirected) hops up to which " +
-                "a URI has higher priority scheduling. For example, if set" +
-                "to 1 (the default), items such as inline images (1-hop" +
-                "embedded resources) will be scheduled ahead of all regular" +
-                "links (or many-hop resources, like nested frames). If set to" +
-                "zero, no preferencing will occur, and embeds/redirects are" +
-                "scheduled the same as regular links.",
-                DEFAULT_PREFERENCE_EMBED_HOPS));
+            "Number of embedded (or redirected) hops up to which " +
+            "a URI has higher priority scheduling. For example, if set " +
+            "to 1 (the default), items such as inline images (1-hop " +
+            "embedded resources) will be scheduled ahead of all regular " +
+            "links (or many-hop resources, like nested frames). If set to " +
+            "zero, no preferencing will occur, and embeds/redirects are " +
+            "scheduled the same as regular links.",
+            DEFAULT_PREFERENCE_EMBED_HOPS));
         Type t;
         t = addElementToDefinition(
             new SimpleType(ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
-            "The maximum average bandwidth the crawler is allowed to use. \n" +
-            "The actual readspeed is not affected by this setting, it only " +
+            "The maximum average bandwidth the crawler is allowed to use. " +
+            "The actual read speed is not affected by this setting, it only " +
             "holds back new URIs from being processed when the bandwidth " +
-            "usage has been to high.\n0 means no bandwidth limitation.",
+            "usage has been to high. 0 means no bandwidth limitation.",
             DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE));
         t.setOverrideable(false);
         t = addElementToDefinition(
             new SimpleType(ATTR_MAX_HOST_BANDWIDTH_USAGE,
             "The maximum average bandwidth the crawler is allowed to use per " +
-            "host. \nThe actual readspeed is not affected by this setting, " +
+            "host. The actual readspeed is not affected by this setting, " +
             "it only holds back new URIs from being processed when the " +
-            "bandwidth usage has been to high.\n0 means no bandwidth " +
+            "bandwidth usage has been to high. 0 means no bandwidth " +
             "limitation.",
             DEFAULT_MAX_HOST_BANDWIDTH_USAGE));
         t.setExpertSetting(true);
         t = addElementToDefinition(new SimpleType(ATTR_IP_POLITENESS,
-                "Whether to assign URIs to IP-address based queues "+
-                "when possible, to remain polite on a per-IP-address "+
-                "basis.",
-                DEFAULT_IP_POLITENESS));
+            "Whether to assign URIs to IP-address based queues "+
+            "when possible, to remain polite on a per-IP-address "+
+            "basis.", DEFAULT_IP_POLITENESS));
         t.setExpertSetting(true);
         t.setOverrideable(false);
         t = addElementToDefinition(
             new SimpleType(ATTR_FORCE_QUEUE,
-            "The queue name into which to force URIs.\nShould " +
+            "The queue name into which to force URIs. Should " +
             "be left blank at global level.  Specify a " +
             "per-domain/per-host override to force URIs into " +
             "a particular named queue, regardless of the assignment " +
@@ -222,19 +220,16 @@ CoreAttributeConstants {
         t.setOverrideable(true);
         t.setExpertSetting(true);
         t.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FORCE_QUEUE,
-                Level.WARNING, "This field must contain only alphanumeric " +
-                        "characters plus period, dash, or underscore."));
+            Level.WARNING, "This field must contain only alphanumeric " +
+            "characters plus period, dash, or underscore."));
         t = addElementToDefinition(new SimpleType(ATTR_PAUSE_AT_FINISH,
-                "Whether to pause when the crawl appears finished, rather " +
-                "than immediately end the crawl. This gives the operator an " +
-                "opportunity to view crawl results, and possibly add URIs or " +
-                "adjust settings, while the crawl state is still available. " +
-                "Default is false.",
-                DEFAULT_PAUSE_AT_FINISH));
+            "Whether to pause when the crawl appears finished, rather " +
+            "than immediately end the crawl. This gives the operator an " +
+            "opportunity to view crawl results, and possibly add URIs or " +
+            "adjust settings, while the crawl state is still available. " +
+            "Default is false.", DEFAULT_PAUSE_AT_FINISH));
         t.setOverrideable(false);
-
     }
-    
     
     synchronized public void pause() { 
         shouldPause = true;

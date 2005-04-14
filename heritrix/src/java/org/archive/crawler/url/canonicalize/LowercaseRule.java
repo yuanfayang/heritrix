@@ -32,7 +32,7 @@ package org.archive.crawler.url.canonicalize;
  */
 public class LowercaseRule
 extends BaseRule {
-    private static final String DESCRIPTION = "Lowercase the URL.\n" +
+    private static final String DESCRIPTION = "Lowercase the URL. " +
         "Use this rule to lowercase the url.  Operates on all schemes.";
 
     public LowercaseRule(String name) {

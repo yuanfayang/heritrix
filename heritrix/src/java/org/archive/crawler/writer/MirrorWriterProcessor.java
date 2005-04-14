@@ -205,17 +205,17 @@ extends Processor implements CoreAttributeConstants {
      * @param name Name of this processor.
      */
     public MirrorWriterProcessor(String name) {
-        super(name, "MirrorWriter processor.\n" +
+        super(name, "MirrorWriter processor. " +
             "A writer that writes each URL to a file on disk named for " +
             "a derivative of the URL.");
         Type e; // Current element.
         addElementToDefinition(new SimpleType(ATTR_CASE_SENSITIVE,
-            "True if the file system is case-sensitive, like UNIX.\n"
+            "True if the file system is case-sensitive, like UNIX. "
             + "False if the file system is case-insensitive, "
             + "like Macintosh HFS+ and Windows.",
             Boolean.TRUE));
         addElementToDefinition(new StringList(ATTR_CHAR_MAP,
-            "This list is grouped in pairs.\n"
+            "This list is grouped in pairs. "
             + "The first string in each pair must have a length of one. "
             + "If it occurs in a URI path, "
             + "it is replaced by the second string in the pair. "
@@ -225,7 +225,7 @@ extends Processor implements CoreAttributeConstants {
             + "[' ' %%20  &quot; %%22  * %%2A  : %%3A  < %%3C "
             + "\\> %%3E ? %%3F  \\\\ %%5C  ^ %%5E  | %%7C]."));
         addElementToDefinition(new StringList(ATTR_CONTENT_TYPE_MAP,
-            "This list is grouped in pairs.\n"
+            "This list is grouped in pairs. "
             + "If the content type of a resource begins (case-insensitive) "
             + "with the first string in a pair, the suffix is set to "
             + "the second string in the pair, replacing any suffix that may "
@@ -248,7 +248,7 @@ extends Processor implements CoreAttributeConstants {
             + "For Windows, %%2E is recommended.",
             "."));
         addElementToDefinition(new StringList(ATTR_HOST_MAP,
-            "This list is grouped in pairs.\n"
+            "This list is grouped in pairs. "
             + "If a host name matches (case-insensitive) the first string "
             + "in a pair, it is replaced by the second string in the pair.  "
             + "This can be used for consistency when several names are used "

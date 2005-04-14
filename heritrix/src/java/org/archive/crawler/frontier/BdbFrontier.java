@@ -178,30 +178,27 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         // therefore we'll ignore the supplied parameter.
         super(Frontier.ATTR_NAME, description);
         Type t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
-                "Whether to hold newly-created per-host URI work" +
-                " queues until needed to stay busy.\n If false (default)," +
-                " all queues may contribute URIs for crawling at all" +
-                " times. If true, queues begin (and collect URIs) in" +
-                " an 'inactive' state, and only when the Frontier needs" +
-                " another queue to keep all ToeThreads busy will new" +
-                " queues be activated.",
-                DEFAULT_HOLD_QUEUES));
+            "Whether to hold newly-created per-host URI work" +
+            " queues until needed to stay busy. If false (default)," +
+            " all queues may contribute URIs for crawling at all" +
+            " times. If true, queues begin (and collect URIs) in" +
+            " an 'inactive' state, and only when the Frontier needs" +
+            " another queue to keep all ToeThreads busy will new" +
+            " queues be activated.", DEFAULT_HOLD_QUEUES));
         t.setExpertSetting(true);
         t.setOverrideable(false);
         t = addElementToDefinition(new SimpleType(ATTR_BALANCE_REPLENISH_AMOUNT,
-                "Amount to replenish a queue's activity balance when it becomes " +
-                "active. Larger amounts mean more URIs will be tried from the " +
-                "queue before it is deactivated in favor of waiting queues. " +
-                "Default is 3000",
-                DEFAULT_BALANCE_REPLENISH_AMOUNT));
+            "Amount to replenish a queue's activity balance when it becomes " +
+            "active. Larger amounts mean more URIs will be tried from the " +
+            "queue before it is deactivated in favor of waiting queues. " +
+            "Default is 3000", DEFAULT_BALANCE_REPLENISH_AMOUNT));
         t.setExpertSetting(true);
         t.setOverrideable(true);
         t = addElementToDefinition(new SimpleType(ATTR_QUEUE_TOTAL_BUDGET,
-                "Total activity expenditure allowable to a single queue; queues " +
-                "over this expenditure will be 'retired' and crawled no more. " +
-                "Default of -1 means no ceiling on activity expenditures is " +
-                "enforced.",
-                DEFAULT_QUEUE_TOTAL_BUDGET));
+            "Total activity expenditure allowable to a single queue; queues " +
+            "over this expenditure will be 'retired' and crawled no more. " +
+            "Default of -1 means no ceiling on activity expenditures is " +
+            "enforced.", DEFAULT_QUEUE_TOTAL_BUDGET));
         t.setExpertSetting(true);
         t.setOverrideable(true);
 

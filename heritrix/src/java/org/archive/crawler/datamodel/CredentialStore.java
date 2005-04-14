@@ -92,7 +92,7 @@ public class CredentialStore extends ModuleType {
     public CredentialStore(String name)
     {
         super(name, "Credentials used by heritrix" +
-            " authenticating.\nSee http://crawler.archive.org/proposals/auth/" +
+            " authenticating. See http://crawler.archive.org/proposals/auth/" +
             " for background.");
 
         Type t = addElementToDefinition(new MapType(ATTR_CREDENTIALS,

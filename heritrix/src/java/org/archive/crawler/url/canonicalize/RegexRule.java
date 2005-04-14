@@ -37,7 +37,7 @@ public class RegexRule
 extends BaseRule {
     protected static Logger logger =
         Logger.getLogger(BaseRule.class.getName());
-    private static final String DESCRIPTION = "General regex rule.\n" +
+    private static final String DESCRIPTION = "General regex rule. " +
         "Specify a matching regex and a format string used outputting" +
         " result if a match was found.  If problem compiling regex or" +
         " interpreting format, problem is logged, and this rule does" +
@@ -54,12 +54,12 @@ extends BaseRule {
             String defaultFormat) {
         super(name, DESCRIPTION);
         addElementToDefinition(new SimpleType(ATTR_REGEX,
-            "Java regular expression.\nIf the regex matches, we'll rewrite" +
+            "Java regular expression. If the regex matches, we'll rewrite" +
             " the passed url using the specified format pattern.",
             defaultRegex));
         addElementToDefinition(
             new SimpleType(ATTR_FORMAT, "Pattern to use rewriting matched" +
-                "url.\nUse '${1}' to match first regex group, '${2}' for" +
+                "url. Use '${1}' to match first regex group, '${2}' for" +
                 "next group, etc.", defaultFormat));
         addElementToDefinition(new SimpleType(ATTR_COMMENT,
             "Free-text comment on why this rule was added.", ""));

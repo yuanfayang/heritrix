@@ -183,7 +183,7 @@ ARCWriterSettings, FetchStatusCodes {
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_PREFIX, 
-                "ARC file prefix.\n" +
+                "ARC file prefix. " +
                 "The text supplied here will be used as a prefix naming " +
                 "ARC files.  For example if the prefix is 'IAH', then " +
                 "ARC names will look like " +
@@ -191,7 +191,7 @@ ARCWriterSettings, FetchStatusCodes {
                 "(The prefix will be separated from the date by a hyphen).",
                 DEFAULT_ARC_FILE_PREFIX));
         e = addElementToDefinition(
-            new SimpleType(ATTR_SUFFIX, "Suffix to tag onto ARC files.\n" +
+            new SimpleType(ATTR_SUFFIX, "Suffix to tag onto ARC files. " +
                 "If value is '${HOSTNAME}', will use hostname for suffix." +
                 " If empty, no suffix will be added.",
                 DEFAULT_SUFFIX));
@@ -201,7 +201,7 @@ ARCWriterSettings, FetchStatusCodes {
                 new Integer(DEFAULT_MAX_ARC_FILE_SIZE)));
         e.setOverrideable(false);
         e = addElementToDefinition(
-            new StringList(ATTR_PATH, "Where to store ARC files.\n" +
+            new StringList(ATTR_PATH, "Where to store ARC files. " +
                 "Supply absolute or relative path.  If relative, ARCs will" +
                 " will be written relative to the 'disk-path' setting." +
                 " If more than one path specified, we'll round-robin" +
@@ -210,20 +210,20 @@ ARCWriterSettings, FetchStatusCodes {
                 " as the crawler progresses).", DEFAULT_PATH));
         e.setOverrideable(false);
         e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
-            "Maximum active ARC writers in pool.\n" +
+            "Maximum active ARC writers in pool. " +
             "This setting cannot be varied over the life of a crawl.",
             new Integer(ARCWriterPool.DEFAULT_MAX_ACTIVE)));
         e.setOverrideable(false);
         e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_WAIT,
             "Maximum time to wait on ARC writer pool element" +
-            " (milliseconds).\nThis setting cannot be varied over the life" +
+            " (milliseconds). This setting cannot be varied over the life" +
             " of a crawl.",
             new Integer(ARCWriterPool.DEFAULT_MAXIMUM_WAIT)));
         e.setOverrideable(false);
         e = addElementToDefinition(new SimpleType(ATTR_MAX_BYTES_WRITTEN,
             "Total ARC bytes to write to disk." +
             " Once the size of all ARCs on disk has exceeded this limit," +
-            " this processor will stop the crawler.\n" +
+            " this processor will stop the crawler. " +
             "A value of zero means no upper limit.", new Long(0)));
         e.setOverrideable(false);
         e.setExpertSetting(true);

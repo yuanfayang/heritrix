@@ -355,7 +355,7 @@ implements CoreAttributeConstants {
      * @param name The name of the module.
      */
     public ExtractorUniversal(String name) {
-        super(name, "Link extraction on unknown file types. \nA best effort" +
+        super(name, "Link extraction on unknown file types. A best effort" +
                 " extractor that looks at the raw byte code of any file " +
                 "that has not been handled by another extractor and tries" +
                 " to find URIs. Will only match absolute URIs.");

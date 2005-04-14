@@ -77,7 +77,8 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
                 "Should seeds also be interpreted as SURT prefixes.",
                 DEFAULT_SEEDS_AS_SURT_PREFIXES));
         Type t = addElementToDefinition(new SimpleType(ATTR_SURTS_DUMP_FILE,
-                "Dump file to save SURT prefixes actually used.", ""));
+                "Dump file to save SURT prefixes actually used: " +
+                "Useful debugging SURTs.", ""));
         t.setExpertSetting(true);
     }
 

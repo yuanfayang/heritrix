@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  */
 public class StripSessionIDs
 extends BaseRule {
-    private static final String DESCRIPTION = "Strip known session IDs.\n" +
+    private static final String DESCRIPTION = "Strip known session IDs. " +
         "Use this rule to remove all of a set of known session IDs." +
         " For example, this rule will strip JSESSIONID and its value from" +
         " 'http://archive.org/index.html?" +

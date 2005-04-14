@@ -54,7 +54,7 @@ public class ContentBasedWaitEvaluator extends WaitEvaluator {
     public ContentBasedWaitEvaluator(String name) {
         this(name,"Evaluates how long to wait before fetching a URI again. " +
                 "Only handles CrawlURIs whose content type matches the " +
-                "regular expression set.\n" +
+                "regular expression set. " +
                 "Typically, this processor should be in the post processing " +
                 "chain. It will pass if another wait evaluator has already " +
                 "processed the CrawlURI.", DEFAULT_CONTENT_REGEXPR,

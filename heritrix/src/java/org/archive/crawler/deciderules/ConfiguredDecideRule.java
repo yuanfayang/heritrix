@@ -41,7 +41,8 @@ public class ConfiguredDecideRule extends DecideRule {
         super(name);
         setDescription("FRAMEWORK: Should not appear as choice");
         addElementToDefinition(new SimpleType(ATTR_DECISION,
-            "Decision to be applied", ACCEPT, ALLOWED_TYPES));
+            "Decision applied if this rule is triggered. " +
+            "Otherwise PASS.", ACCEPT, ALLOWED_TYPES));
     }
 
     public Object decisionFor(Object object) {

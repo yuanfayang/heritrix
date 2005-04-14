@@ -41,7 +41,7 @@ implements CoreAttributeConstants {
 
     public ExtractorHTTP(String name) {
         super(name,
-            "HTTP extractor. \nExtracts URIs from HTTP response headers.");
+            "HTTP extractor. Extracts URIs from HTTP response headers.");
     }
 
     public void innerProcess(CrawlURI curi) {

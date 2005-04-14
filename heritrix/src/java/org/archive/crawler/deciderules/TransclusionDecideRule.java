@@ -73,7 +73,7 @@ public class TransclusionDecideRule extends PredicatedDecideRule {
         Type type = getElementFromDefinition(ATTR_DECISION);
         type.setTransient(true);
         addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS,
-            "Maximum number of non-navelink ('L') hops.", 
+            "Maximum number of non-navlink ('L') hops.", 
             DEFAULT_MAX_TRANS_HOPS));
         // TODO: add expert settings for further penalizing certain hop types,
         // eg: make speculative hops ('X') count 3x, etc.

@@ -122,11 +122,11 @@ public class CrawlOrder extends ModuleType {
         Type e;
 
         e = addElementToDefinition(new SimpleType(ATTR_SETTINGS_DIRECTORY,
-                "Directory where override settings are kept. \nThe settings " +
+                "Directory where override settings are kept. The settings " +
                 "for many modules can be overridden based on the domain or " +
                 "subdomain of the URI being processed. This setting specifies" +
                 " a file level directory to store those settings. The path" +
-                " is relative to the location of the global settings, unless" +
+                " is relative to 'disk-path' unless" +
                 " an absolute path is provided.", "settings"));
         e.setOverrideable(false);
         e.setExpertSetting(true);
@@ -168,18 +168,18 @@ public class CrawlOrder extends ModuleType {
 
         e = addElementToDefinition(new SimpleType(ATTR_MAX_BYTES_DOWNLOAD,
                 "Maximum number of bytes to download. Once this number is" +
-                " exceeded the crawler will stop.\n" +
+                " exceeded the crawler will stop. " +
                 "A value of zero means no upper limit.", new Long(0)));
         e.setOverrideable(false);
 
         e = addElementToDefinition(new SimpleType(ATTR_MAX_DOCUMENT_DOWNLOAD,
                 "Maximum number of documents to download. Once this number" +
-                " is exceeded the crawler will stop.\n" +
+                " is exceeded the crawler will stop. " +
                 "A value of zero means no upper limit.", new Long(0)));
         e.setOverrideable(false);
 
         e = addElementToDefinition(new SimpleType(ATTR_MAX_TIME_SEC,
-                "Maximum amount of time to crawl (in seconds).\nOnce this" +
+                "Maximum amount of time to crawl (in seconds). Once this" +
                 " much time has elapsed the crawler will stop. A value of" +
                 " zero means no upper limit.",
                 new Long(0)));
@@ -214,12 +214,12 @@ public class CrawlOrder extends ModuleType {
         addElementToDefinition(new CrawlScope());
 
         httpHeaders = (MapType) addElementToDefinition(new MapType(
-                ATTR_HTTP_HEADERS, "HTTP headers. \nInformation that will " +
+                ATTR_HTTP_HEADERS, "HTTP headers. Information that will " +
                         "be used when constructing the HTTP headers of " +
                         "the crawler's HTTP requests."));
 
         e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_USER_AGENT,
-                "User agent to act as.\n Field must contain valid URL " +
+                "User agent to act as. Field must contain valid URL " +
                 "that links to website of person or organization " +
                 "running the crawl. Replace 'PROJECT_URL_HERE' in " +
                 "initial template. E.g. If organization " +
@@ -234,7 +234,7 @@ public class CrawlOrder extends ModuleType {
                 "of the person or organization responsible for this crawl."));
 
         e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_FROM,
-                "Contact information. \nThis field must contain a valid " +
+                "Contact information. This field must contain a valid " +
                 "e-mail address for the person or organization responsible" +
                 "for this crawl: e.g. 'webmaster@loc.gov'",
                 "CONTACT_EMAIL_ADDRESS_HERE"));
@@ -250,7 +250,7 @@ public class CrawlOrder extends ModuleType {
         e.setLegalValueType(Frontier.class);
 
         e = (MapType) addElementToDefinition(new MapType(ATTR_RULES,
-            "Ordered list of url canonicalization rules.\n" +
+            "Ordered list of url canonicalization rules. " +
             "Rules are applied in the order listed from top to bottom.",
             BaseRule.class));
         e.setOverrideable(true);
@@ -283,12 +283,12 @@ public class CrawlOrder extends ModuleType {
         e.setOverrideable(false);
 
         loggers = (MapType) addElementToDefinition(new MapType(ATTR_LOGGERS,
-                "Statistics tracking modules. \nAny number of specialized " +
+                "Statistics tracking modules. Any number of specialized " +
                 "statistics tracker that monitor a crawl and write logs, " +
                 "reports and/or provide information to the user interface."));
 
         e = addElementToDefinition(new SimpleType(ATTR_RECOVER_PATH,
-                "Optional recover.log to preload Frontier.\n A recover log " +
+                "Optional recover.log to preload Frontier. A recover log " +
                 "is automatically generated during a crawl. If a crawl " +
                 "crashes it can be used to recreate the status of the crawler" +
                 " at the time of the crash. This can take a long" +
@@ -298,7 +298,7 @@ public class CrawlOrder extends ModuleType {
         e.setExpertSetting(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_RECOVER_RETAIN_FAILURES,
-                "When recovering via the recover.log, should failures" +
+                "When recovering via the recover.log, should failures " +
                 "in the log be retained in the recovered crawl, " +
                 "preventing the corresponding URIs from being retried. " +
                 "Default is false, meaning failures are forgotten, and " +

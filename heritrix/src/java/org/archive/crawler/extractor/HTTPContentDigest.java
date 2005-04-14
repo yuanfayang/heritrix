@@ -116,7 +116,7 @@ public class HTTPContentDigest extends Processor {
         addElementToDefinition(new SimpleType(ATTR_MAX_SIZE_BYTES,
                 "Maximum size of of documents to recalculate the digest for." +
                 " Documents that exceed this value (bytes) will be ignored." +
-                " Defaults to 1048576 bytes, or 1 MB.\n" +
+                " Defaults to 1048576 bytes, or 1 MB. " +
                 "-1 denotes unlimited size. A setting of 0 will effectively " +
                 "disable the processor.",
                 DEFAULT_MAX_SIZE_BYTES));
