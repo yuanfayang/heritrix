@@ -55,14 +55,15 @@
   <sect1>
     <title>Installing and running Heritrix</title>
 
-    <para>This chapter will explain how to set up Heritrix. Some basic Linux
-    administration skills are needed.</para>
+    <para>This chapter will explain how to set up Heritrix.
+    </para>
 
     <para>Because Heritrix is a pure Java program it can (in theory anyway) be
     run on any platform that has a Java 1.4 VM. However we are only committed
     to supporting its operation on Linux and so this chapter only covers setup
-    on that platform. Other chapters in the user manual are platform
-    agnostic.</para>
+    on that platform.  Because of this, what follows assumes
+    basic Linux administration skills.  Other chapters in the user manual are
+    platform agnostic.</para>
 
     <para>This chapter also only covers installing and running the prepackaged
     binary distributions of Heritrix. For information about downloading and
@@ -130,10 +131,6 @@
               </listitem>
             </itemizedlist>
 
-            <para>It has been our experience that running on Linux with the
-            IBM Java virtual machine Heritrix performs better then with the
-            Sun JavaVM (Java version 1.4.2). This may change in the future.
-            There are no known problems with using either of the two.</para>
           </sect5>
         </sect4>
 
@@ -161,7 +158,8 @@
     <sect2>
       <title>Running Heritrix</title>
 
-      <para>To run Heritrix, first do the following:<programlisting>  % export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</programlisting>...where
+      <para>To run Heritrix, first do the following:
+      <programlisting>  % export HERITRIX_HOME=/PATH/TO/BUILT/HERITRIX</programlisting>...where
       <literal>$HERITRIX_HOME</literal> is the location of your untarred
       <filename>heritrix.?.?.?.tar.gz</filename>.</para>
 
@@ -234,6 +232,8 @@
 
       <sect3>
         <title>Environment variables</title>
+        <para>Below are environment variables that effect Heritrix operation.
+        </para>
 
         <sect4>
           <title>HERITRIX_HOME</title>
@@ -306,7 +306,7 @@
           <para>Heritrix has its own trust store at
           <literal>conf/heritrix.cacerts</literal> that it uses if the
           <literal>FetcherHTTP</literal> is configured to use a trust level of
-          other than <emphasis>open</emphasis> ( open is the default setting).
+          other than <emphasis>open</emphasis> (open is the default setting).
           In the unusual case where you'd like to have Heritrix use an
           alternate truststore, point at the alternate by supplying the JSSE
           <literal>javax.net.ssl.trustStore</literal> property on the command
@@ -373,12 +373,8 @@
     problems.</para>
 
     <para>The initial login page takes the standard username/password
-    combination discussed above. In addition users can opt to have the WUI
-    remember their login by checking the appropriate box. If that is done then
-    the login information will be stored in a cookie and read from it during
-    future login attempts. If this option is not checked then the login is
-    only valid as long as the server's session. Once it times you out, the
-    user will need to login again.</para>
+    combination discussed above.  Logins are valid for 24 hours.
+    Once it times you out, the user will need to login again.</para>
 
     <caution>
       <para>The access control to the WUI is not encrypted! Passwords will be
@@ -398,7 +394,7 @@
 
     <para>To create a new job choose the Jobs tab, this will take you to the
     Jobs page. Once there you are presented with three options for creating a
-    new job. Select the top one 'Create new crawl job'. This will create a new
+    new job. Select 'With defaults'. This will create a new
     job based on the default profile (see <xref linkend="profile" />).</para>
 
     <para>On the screen that comes next you will be asked to supply a name,
@@ -407,8 +403,7 @@
     <para>For a name supply a short text with no special characters or spaces
     (except dash and underscore). You can skip the description if you like. In
     the seeds list type in the URL of the sites you are interested in
-    harvesting. One URL to a line. They can be with or without the protocol
-    prefix (<literal>http://</literal>).</para>
+    harvesting. One URL to a line.</para>
 
     <para>Creating a job is covered in greater detail in <xref
     linkend="creating" />.</para>
@@ -473,7 +468,7 @@
     configuring.</para>
 
     <para>The Console will update to display progress information about the
-    ongoing crawl. Click the <emphasis>Refresh</emphasis> option to update
+    on-going crawl. Click the <emphasis>Refresh</emphasis> option to update
     this information.</para>
 
     <para>For more information about running a job see <xref
@@ -502,34 +497,33 @@
       jobs by choosing of the following three options:</para>
 
       <orderedlist>
-        <listitem>
-          <para><emphasis role="bold">Create new crawl job</emphasis></para>
 
-          <para>This option creates a new crawl job based on the default
-          profile.</para>
-        </listitem>
 
         <listitem>
-          <para><emphasis role="bold">Create new crawl job based on a
-          profile</emphasis></para>
-
-          <para>This option allows the user to create a job by basing it on
-          any existing profiles.</para>
-        </listitem>
-
-        <listitem>
-          <para><emphasis role="bold">Create new crawl job based on an
-          existing job</emphasis></para>
+          <para><emphasis role="bold">Based on existing job</emphasis></para>
 
           <para>This option allows the user to create a job by basing it on
           any existing job, regardless of whether it has been crawled or not.
           Can be useful for repeating crawls or recovering a crawl that had
           problems. (See <xref linkend="recover" /></para>
         </listitem>
+        <listitem>
+          <para><emphasis role="bold">Based on a profile</emphasis></para>
+
+          <para>This option allows the user to create a job by basing it on
+          any existing profiles.</para>
+        </listitem>
+        <listitem>
+          <para><emphasis role="bold">With defaults</emphasis></para>
+
+          <para>This option creates a new crawl job based on the default
+          profile.</para>
+        </listitem>
+
       </orderedlist>
 
-      <para>Options 2 and 3 will display a list of available options.
-      Initially there is only one profile and no existing jobs.</para>
+      <para>Options 1 and 2 will display a list of available options.
+      Initially there are two profiles and no existing jobs.</para>
 
       <para>All crawl jobs are created by basing them on profiles (see <xref
       linkend="profile" />) or existing jobs.</para>
@@ -594,7 +588,7 @@
       <para>A common example is leaving the HTTP headers
       (<literal>user-agent</literal>, <literal>from</literal>) in an illegal
       state in a profile to force the user to input valid data. This applies
-      to the default (<emphasis>Simple</emphasis>) profile that comes with
+      to the default (<emphasis>default</emphasis>) profile that comes with
       Heritrix. Other examples would be leaving the seeds list empty, not
       specifying some processors (such as the writer/indexer) etc.</para>
 
@@ -635,7 +629,7 @@
     ones are being edited. The interface is almost entirely the same, only the
     <emphasis>Submit job</emphasis> / <emphasis>Finished</emphasis> button
     will vary.<note>
-        <para>Editing options for jobs being crawled are somewhat limted. See
+        <para>Editing options for jobs being crawled are somewhat limited. See
         <xref linkend="editrun" /> for more.</para>
       </note></para>
 
@@ -836,7 +830,7 @@
         </itemizedlist>
 
         <para>The following scopes are available, but the same effects can be
-        achieved more efficiently, and in combination, with SurtPrefixScope.
+        achieved more efficently, and in combination, with SurtPrefixScope.
         When SurtPrefixScope can be more easily understood and configured,
         these scopes may be removed entirely.</para>
 
@@ -929,7 +923,6 @@
 
         <sect4 id="scopeproblems">
           <title>Problems with the current Scopes</title>
-
           <para>Our original Scope classes -- PathScope, HostScope,
           DomainScope, BroadScope -- all could be thought of as fitting a
           specific pattern: A URI is included if and only if:</para>
@@ -1075,7 +1068,7 @@
           <para>...covering just about everything our previous focus- and
           filter- based classes did. By ordering exclude and include actions,
           combinations that were awkward before -- or even impossible without
-          writing custom code -- become straightforward.</para>
+          writing custom code -- becomes straightforward.</para>
 
           <para>For example, a previous request that was hard for us to
           accomodate was the idea: "crawl exactly these X hosts, and get
