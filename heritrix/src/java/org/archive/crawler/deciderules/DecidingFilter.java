@@ -49,7 +49,8 @@ public class DecidingFilter extends Filter {
 
     public DecidingFilter(String name) {
         super(name,
-            "DecidingFilter. A filter that applies one or more DecideRules " +
+            "DecidingFilter (Experimental).A filter that applies one or " +
+            "more DecideRules " +
             "to determine whether a URI is accepted (returns true) or " +
             "rejected (returns false).");
         addElementToDefinition(
