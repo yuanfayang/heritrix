@@ -137,8 +137,8 @@ implements AdaptiveRevisitAttributeConstants {
     
     // Berkeley DB - All class member variables related to BDB JE
     // Databases
-    /** Database containing the URI priority queue, indexed by a 64 bit 
-     *  fingerprint of the URI. */
+    /** Database containing the URI priority queue, indexed by the the 
+      * URI string. */
     protected Database primaryUriDB;
     /** Secondary index into {@link #primaryUriDB the primary DB}, URIs indexed
      *  by the time when they can next be processed again. */
@@ -368,7 +368,7 @@ implements AdaptiveRevisitAttributeConstants {
     throws DatabaseException{
         DatabaseEntry keyEntry = new DatabaseEntry();
         DatabaseEntry dataEntry = new DatabaseEntry();
-        StringBinding.stringToEntry(curi.toString(), keyEntry);
+        primaryKeyBinding.objectToEntry(curi.toString(), keyEntry);
         crawlURIBinding.objectToEntry(curi, dataEntry);
         OperationStatus opStatus = null;
         if(overrideDuplicates){
@@ -722,7 +722,7 @@ implements AdaptiveRevisitAttributeConstants {
             addInProcessing(curi);
             
             // Delete it from the primaryUriDB
-            StringBinding.stringToEntry(curi.toString(),keyEntry);
+            primaryKeyBinding.objectToEntry(curi.toString(),keyEntry);
             OperationStatus opStatus = primaryUriDB.delete(null,keyEntry);
             
             if(opStatus != OperationStatus.SUCCESS){
