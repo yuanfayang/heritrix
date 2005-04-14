@@ -1,4 +1,5 @@
 <%@include file="/include/handler.jsp"%>
+<%@include file="/include/modules.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
@@ -209,7 +210,7 @@
         <p>
             <b>Select Crawl Scope</b>
         <p>
-            <%=JobConfigureUtils.buildModuleSetter(
+            <%=buildModuleSetter(
                 settingsHandler.getOrder().getAttributeInfo("scope"),
                 CrawlScope.class,
                 "Scope",
@@ -218,7 +219,7 @@
         <p>
             <b>Select URI Frontier</b>
         <p>
-            <%=JobConfigureUtils.buildModuleSetter(
+            <%=buildModuleSetter(
                 settingsHandler.getOrder().getAttributeInfo("frontier"),
                 Frontier.class,
                 "Frontier",
@@ -229,7 +230,7 @@
             <b>Select Pre Processors</b> 
             <i>Processors that should run before any fetching</i>
         <p>
-            <%=JobConfigureUtils.buildModuleMap(
+            <%=buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
                     CrawlOrder.ATTR_PRE_FETCH_PROCESSORS),
                     Processor.class,
@@ -238,7 +239,7 @@
             <b>Select Fetchers</b> 
             <i>Processors that fetch documents using various protocols</i>
         <p>
-            <%=JobConfigureUtils.buildModuleMap(
+            <%=buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
                     CrawlOrder.ATTR_FETCH_PROCESSORS),
                     Processor.class,
@@ -247,7 +248,7 @@
             <b>Select Extractors</b> 
             <i>Processors that extracts links from URIs</i>
         <p>
-            <%=JobConfigureUtils.buildModuleMap(
+            <%=buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
                     CrawlOrder.ATTR_EXTRACT_PROCESSORS),
                     Processor.class,
@@ -256,7 +257,7 @@
             <b>Select Writers</b> 
             <i>Processors that write documents to archive files</i>
         <p>
-            <%=JobConfigureUtils.buildModuleMap(
+            <%=buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
                     CrawlOrder.ATTR_WRITE_PROCESSORS),
                     Processor.class,
@@ -265,7 +266,7 @@
             <b>Select Post Processors</b> 
             <i>Processors that do cleanup and feed the Frontier with new URIs</i>
         <p>
-            <%=JobConfigureUtils.buildModuleMap(
+            <%=buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute(
                     CrawlOrder.ATTR_POST_PROCESSORS),
                     Processor.class,
@@ -274,7 +275,7 @@
         <p>
             <b>Select Statistics Tracking</b>
         <p>
-            <%=JobConfigureUtils.buildModuleMap(
+            <%=buildModuleMap(
                 (ComplexType)settingsHandler.getOrder().getAttribute("loggers"),
                 StatisticsTracking.class,
                 "StatisticsTracking")

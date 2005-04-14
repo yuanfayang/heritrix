@@ -9,6 +9,7 @@
    */
 %>
 <%@include file="/include/handler.jsp"%>
+<%@include file="/include/modules.jsp"%>
 
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
@@ -34,6 +35,7 @@
         <p>
             <b>Add/Remove/Order Submodules</b>
         <p>
+
         <p>Use this page to add/remove/order submodules. Go to the
         <a href="javascript:doGoto('<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=theJob.getUID()%>')">Settings</a>
         page to complete configuration of added submodules (e.g. To
@@ -48,9 +50,7 @@
         <input type="hidden" name="subaction" value="continue">
         <input type="hidden" name="map" value="">
         <input type="hidden" name="filter" value="">
-
-    <%=JobConfigureUtils.printAllMaps(theJob.getSettingsHandler().getOrder(),
-            false, null)%>
+        <%=printAllMaps(theJob.getSettingsHandler().getOrder(), false, null)%>
     </form>
     <p>
 <%@include file="/include/jobnav.jsp"%>
