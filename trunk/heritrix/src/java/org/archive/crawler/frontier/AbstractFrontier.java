@@ -803,10 +803,6 @@ CoreAttributeConstants {
      * alreadyseen.
      */
     protected String conditionalCanonicalize(CandidateURI cauri) {
-        if (cauri.isSeed()) {
-            // Don't run canonicalization on seeds.
-            return cauri.toString();
-        }
         String c = canonicalize(cauri.getUURI());
         if (!cauri.isLocation()) {
             // If not result of a redirect, return canonicalized version.
