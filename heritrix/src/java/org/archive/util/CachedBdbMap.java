@@ -55,6 +55,12 @@ import com.sleepycat.je.EnvironmentConfig;
  * holding a cache of soft referenced objects. That is objects are not written
  * to disk until they are not refrenced by any other object and therefore can be
  * Garbage Collected.
+ * <p>
+ * Requires external synchronization. 
+ * <p>
+ * An entry will exist in the memMap, or on disk, but not in both places. So,
+ * a resume from disk state (for example for checkpointing/crash-recovery) is
+ * not well-supported. This behavior could be revisited to enable such use. 
  * 
  * @author John Erik Halse
  *  
@@ -83,19 +89,13 @@ public class CachedBdbMap extends AbstractMap implements Map {
     protected StoredMap diskMap;
 
     /** The softreferenced cache */
-    private Map cache;
+    private Map memMap;
 
     protected ReferenceQueue refQueue = new ReferenceQueue();
 
-    /** The number of objects stored in the BDB JE database. */
-    private int diskMapSize = 0;
-
-    /**
-     * The number of objects only in memory. The cache might be bigger cause to
-     * GCed objects reloaded from the BDB JE database, thus being both on disk
-     * and in memory.
-     */
-    private long cacheOnlySize = 0;
+    /** The number of objects stored in the BDB JE database. 
+     *  (Package access for unit testing.) */
+    int diskMapSize = 0;
 
     private long cacheHit = 0;
 
@@ -187,7 +187,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
     
     private void initialize() {
         // Setup memory cache
-        this.cache = Collections.synchronizedMap(new HashMap());
+        this.memMap = new HashMap();
     }
     
     protected StoredMap createDiskMap(Database database,
@@ -295,7 +295,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
      */
     public Set keySet() {
         // Return unmodifiable union of cache and diskMap keySets
-        HashSet allKeys = new HashSet(cache.keySet());
+        HashSet allKeys = new HashSet(memMap.keySet());
         // Bdb iterators have to be closed so can't use addAll w/o
         // getting annoying complaints about cursors being left open.
         Iterator i = diskMap.keySet().iterator();
@@ -316,79 +316,93 @@ public class CachedBdbMap extends AbstractMap implements Map {
         getCount++;
         expungeStaleEntries();
         if (logger.isLoggable(Level.FINE) && getCount % 10000 == 0) {
-            try {
-                long notInMapCount = (getCount - (cacheHit + diskHit));
-                long cacheHitPercent = (cacheHit * 100) / (cacheHit + diskHit);
-                logger.fine("DB name: " + db.getDatabaseName()
-                    + ", Cache Hit: " + cacheHitPercent
-                    + "%, Not in map: " + notInMapCount
-                    + ", Total number of gets: " + getCount);
-            } catch (DatabaseException e) {
-                // This is just for logging so ignore DB Exceptions
+            logCacheSummary();
+        }
+        SoftEntry tmp = (SoftEntry) memMap.get(key);
+        if (tmp != null) {
+            Object val = tmp.get(); // get & hold, so not cleared pre-return
+            if (val != null) {
+                cacheHit++;
+                return val;
             }
         }
-        SoftEntry tmp = (SoftEntry) cache.get(key);
-        if (tmp != null && tmp.get() != null) {
-            cacheHit++;
-            return tmp.get();
-        }
-
-        Object o = diskMap.get(key);
+        expungeStaleEntries(); // in case ref was cleared after last expunge
+        // we remove so that any key is either in memory, or on disk, but 
+        // not both
+        Object o = diskMap.remove(key);
         if (o != null) {
             diskHit++;
+            diskMapSize--;
             tmp = new SoftEntry(key, o, refQueue);
-            tmp.phantom.onDisk = true;
-            cache.put(key, tmp);
+            memMap.put(key, tmp);
         }
         return o;
     }
 
+    /**
+     * Info to log, if at FINE level, on every get()
+     */
+    private void logCacheSummary() {
+        try {
+            long notInMapCount = (getCount - (cacheHit + diskHit));
+            long cacheHitPercent = (cacheHit * 100) / (cacheHit + diskHit);
+            logger.fine("DB name: " + db.getDatabaseName()
+                + ", Cache Hit: " + cacheHitPercent
+                + "%, Not in map: " + notInMapCount
+                + ", Total number of gets: " + getCount);
+        } catch (DatabaseException e) {
+            // This is just for logging so ignore DB Exceptions
+        }
+    }
+    
     public synchronized Object put(Object key, Object value) {
         expungeStaleEntries();
-        Object returnValue = null;
-        SoftEntry prevValue = (SoftEntry) cache.get(key);
-        if (prevValue != null && prevValue.get() != value) {
-            SoftEntry newEntry = new SoftEntry(key, value, refQueue);
-            newEntry.phantom.onDisk = true;
-            cache.put(key, newEntry);
-            returnValue = prevValue.get();
-        } else if (prevValue == null) {
-            cache.put(key, new SoftEntry(key, value, refQueue));
-            cacheOnlySize++;
-        } else {
-            returnValue = prevValue.get();
-        }
-
-        return returnValue;
+        Object prevVal = null;
+        SoftEntry prevEntry = (SoftEntry) memMap.get(key);
+        if (prevEntry != null) {
+            prevVal = prevEntry.get();
+            if (prevVal!=null) {
+                SoftEntry newEntry = new SoftEntry(key, value, refQueue);
+                memMap.put(key, newEntry);
+                return prevVal;
+            }
+        } 
+        // to maintain contract of Map.put(), get old value if any from disk
+        // and as long as we're accessing, remove it (to maintain each-key-only-
+        // in-one-place property)
+        prevVal = diskMap.remove(key); 
+        diskMapSize--;
+        memMap.put(key, new SoftEntry(key, value, refQueue));
+        return prevVal;
     }
 
     public void clear() {
-        throw new UnsupportedOperationException();
+        memMap.clear();
+        diskMap.clear();
+        diskMapSize = 0;
     }
 
     public Object remove(Object key) {
         expungeStaleEntries();
-        Object returnValue;
-        SoftEntry entry = (SoftEntry) cache.get(key);
-        if (entry != null) {
-            if (entry.phantom.onDisk) {
-                diskMap.remove(key);
-                diskMapSize--;
+        Object prevValue;
+        SoftEntry entry = (SoftEntry) memMap.get(key);
+        while (entry != null) {
+            prevValue = entry.get();
+            if(prevValue != null) {
+                // key is in-mem (and nowhere else)
+                memMap.remove(key);
+                return prevValue;
             } else {
-                cacheOnlySize--;
-            }
-            entry.phantom = null;
-            cache.remove(key);
-            returnValue = entry.get();
-        } else {
-            returnValue = diskMap.get(key);
-            if (returnValue != null) {
-                diskMap.remove(key);
-                diskMapSize--;
+                // entry cleared, but not yet expunged
+                expungeStaleEntries();
+                entry = (SoftEntry) memMap.get(key);
             }
         }
-
-        return returnValue;
+        prevValue = diskMap.remove(key);
+        if(prevValue != null) {
+            diskMapSize--;
+        }
+        return prevValue;
     }
 
     public boolean containsKey(Object key) {
@@ -400,7 +414,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
 
     public boolean quickContainsKey(Object key) {
         expungeStaleEntries();
-        return cache.containsKey(key);
+        return memMap.containsKey(key);
     }
 
     public boolean containsValue(Object value) {
@@ -412,18 +426,18 @@ public class CachedBdbMap extends AbstractMap implements Map {
 
     public boolean quickContainsValue(Object value) {
         expungeStaleEntries();
-        return cache.containsValue(value);
+        return memMap.containsValue(value);
     }
 
     public int size() {
-        return (int) (diskMapSize + cacheOnlySize);
+        return (int) (diskMapSize + memMap.size());
     }
 
     private void expungeStaleEntries() {
         int c = 0;
         SoftEntry entry;
         while ((entry = (SoftEntry) refQueue.poll()) != null) {
-            cache.remove(entry.phantom.key);
+            memMap.remove(entry.phantom.key);
             entry.phantom.clear();
             entry.phantom = null;
             c++;
@@ -432,19 +446,16 @@ public class CachedBdbMap extends AbstractMap implements Map {
             try {
                 logger.finer("DB: " + db.getDatabaseName() + ",  Expunged: "
                         + c + ", Diskmap size: " + diskMapSize
-                        + ", Cache size: " + cache.size()
-                        + ", Objects only in cache: " + cacheOnlySize);
+                        + ", Cache size: " + memMap.size());
             } catch (DatabaseException e) {
                 // Just for logging so ignore Exceptions
             }
         }
     }
-
+    
     private class PhantomEntry extends PhantomReference {
 
         private final Object key;
-
-        private boolean onDisk = false;
 
         public PhantomEntry(Object key, Object referent) {
             super(referent, null);
@@ -455,10 +466,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
             try {
                 Object o = referent.get(this);
                 diskMap.put(key, o);
-                if (!onDisk) {
-                    diskMapSize++;
-                    cacheOnlySize--;
-                }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
