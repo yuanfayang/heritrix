@@ -466,6 +466,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
             try {
                 Object o = referent.get(this);
                 diskMap.put(key, o);
+                diskMapSize++;
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
