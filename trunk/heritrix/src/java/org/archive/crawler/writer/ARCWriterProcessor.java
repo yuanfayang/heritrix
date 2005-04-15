@@ -451,11 +451,11 @@ ARCWriterSettings, FetchStatusCodes {
             writer = null;
             throw e;
         } finally {
+            this.totalBytesWritten += (writer.getPosition() - position);
             if (writer != null) {
                 this.pool.returnARCWriter(writer);
             }
         }
-        this.totalBytesWritten += (writer.getPosition() - position);
         checkBytesWritten();
     }
     
