@@ -480,9 +480,11 @@ ARCWriterSettings, FetchStatusCodes {
         if (a == null) {
             throw new NullPointerException("Address is null for " +
                 curi + " " + curi.getVia() + ". Address was set " +
-                h.getSetIpCalled() + " times and last time it was " +
-                " set was " + (System.currentTimeMillis() - h.getIpFetched()) +
-                " ms ago.");
+                h.getSetIpCalled() + " times and " +
+                ((h.getIpFetched() == CrawlHost.IP_NEVER_LOOKED_UP)?
+                     "was never looked up.":
+                     (System.currentTimeMillis() - h.getIpFetched()) +
+                     " ms ago."));
         }
         return h.getIP().getHostAddress();
     }
