@@ -97,10 +97,20 @@ public class CachedBdbMap extends AbstractMap implements Map {
      *  (Package access for unit testing.) */
     int diskMapSize = 0;
 
+    /**
+     * Count of times we got an object from in-memory cache.
+     */
     private long cacheHit = 0;
 
-    private long getCount = 0;
+    /**
+     * Count of times the {@link CachedBdbMap#get(Object)} method was called.
+     */
+    private long countOfGets = 0;
 
+    /**
+     * Count of every time we went to the disk-based map AND we found an
+     * object (Doesn't include accesses that came back null).
+     */
     private long diskHit = 0;
 
     private static Field referent;
@@ -313,9 +323,9 @@ public class CachedBdbMap extends AbstractMap implements Map {
     }
 
     public Object get(Object key) {
-        getCount++;
+        countOfGets++;
         expungeStaleEntries();
-        if (logger.isLoggable(Level.FINE) && getCount % 10000 == 0) {
+        if (countOfGets % 10000 == 0) {
             logCacheSummary();
         }
         SoftEntry tmp = (SoftEntry) memMap.get(key);
@@ -326,15 +336,16 @@ public class CachedBdbMap extends AbstractMap implements Map {
                 return val;
             }
         }
-        expungeStaleEntries(); // in case ref was cleared after last expunge
+        
+        // In case ref was cleared after last expunge
         // we remove so that any key is either in memory, or on disk, but 
         // not both
+        expungeStaleEntries();
         Object o = diskMap.remove(key);
         if (o != null) {
             diskHit++;
             diskMapSize--;
-            tmp = new SoftEntry(key, o, refQueue);
-            memMap.put(key, tmp);
+            memMap.put(key, new SoftEntry(key, o, refQueue));
         }
         return o;
     }
@@ -343,13 +354,15 @@ public class CachedBdbMap extends AbstractMap implements Map {
      * Info to log, if at FINE level, on every get()
      */
     private void logCacheSummary() {
+        if (!logger.isLoggable((Level.FINE))) {
+            return;
+        }
         try {
-            long notInMapCount = (getCount - (cacheHit + diskHit));
             long cacheHitPercent = (cacheHit * 100) / (cacheHit + diskHit);
             logger.fine("DB name: " + db.getDatabaseName()
                 + ", Cache Hit: " + cacheHitPercent
-                + "%, Not in map: " + notInMapCount
-                + ", Total number of gets: " + getCount);
+                + "%, Not in map: " + (countOfGets - (cacheHit + diskHit))
+                + ", Total number of gets: " + countOfGets);
         } catch (DatabaseException e) {
             // This is just for logging so ignore DB Exceptions
         }
@@ -361,19 +374,21 @@ public class CachedBdbMap extends AbstractMap implements Map {
         SoftEntry prevEntry = (SoftEntry) memMap.get(key);
         if (prevEntry != null) {
             prevVal = prevEntry.get();
-            if (prevVal!=null) {
-                SoftEntry newEntry = new SoftEntry(key, value, refQueue);
-                memMap.put(key, newEntry);
+            if (prevVal != null) {
+                memMap.put(key, new SoftEntry(key, value, refQueue));
                 return prevVal;
             }
         } 
-        // to maintain contract of Map.put(), get old value if any from disk
+        
+        // To maintain contract of Map.put(), get old value if any from disk
         // and as long as we're accessing, remove it (to maintain each-key-only-
         // in-one-place property)
-        prevVal = diskMap.remove(key); 
-        diskMapSize--;
+        prevVal = diskMap.remove(key);
+        if (prevVal != null) {
+            diskMapSize--;
+        }
         memMap.put(key, new SoftEntry(key, value, refQueue));
-        return prevVal;
+        return value;
     }
 
     public void clear() {
@@ -388,18 +403,17 @@ public class CachedBdbMap extends AbstractMap implements Map {
         SoftEntry entry = (SoftEntry) memMap.get(key);
         while (entry != null) {
             prevValue = entry.get();
-            if(prevValue != null) {
+            if (prevValue != null) {
                 // key is in-mem (and nowhere else)
                 memMap.remove(key);
                 return prevValue;
-            } else {
-                // entry cleared, but not yet expunged
-                expungeStaleEntries();
-                entry = (SoftEntry) memMap.get(key);
             }
+            // Entry cleared, but not yet expunged
+            expungeStaleEntries();
+            entry = (SoftEntry) memMap.get(key);
         }
         prevValue = diskMap.remove(key);
-        if(prevValue != null) {
+        if (prevValue != null) {
             diskMapSize--;
         }
         return prevValue;
@@ -430,7 +444,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
     }
 
     public int size() {
-        return (int) (diskMapSize + memMap.size());
+        return diskMapSize + memMap.size();
     }
 
     private void expungeStaleEntries() {
@@ -481,7 +495,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
             super(referent, q);
             this.phantom = new PhantomEntry(key, referent);
         }
-
     }
     
     /**
