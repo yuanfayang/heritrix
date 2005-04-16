@@ -105,7 +105,8 @@ public class CrawlHost implements Serializable {
         this.ipFetched = System.currentTimeMillis();
         this.ipTTL = ttl;
         if (logger.isLoggable(Level.FINE)) {
-            logger.fine(hostname + ": " + address.toString());
+            logger.fine(hostname + ": " +
+                ((address != null)? address.toString(): "null"));
         }
         // DEBUGGING: REMOVE.
         this.setIpCalled++;
