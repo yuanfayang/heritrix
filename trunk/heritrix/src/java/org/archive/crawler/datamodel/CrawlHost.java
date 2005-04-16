@@ -25,6 +25,8 @@ package org.archive.crawler.datamodel;
 
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.util.InetAddressUtil;
 
@@ -37,6 +39,7 @@ import org.archive.util.InetAddressUtil;
  * @author gojomo
  */
 public class CrawlHost implements Serializable {
+    private static final Logger logger = Logger.getLogger(CrawlHost.class.getName());
     /** Flag value indicating always-valid IP */
     public static final long IP_NEVER_EXPIRES = -1;
     /** Flag value indicating an IP has not yet been looked up */
@@ -101,6 +104,9 @@ public class CrawlHost implements Serializable {
         // a caller decides to set this (even to null)
         this.ipFetched = System.currentTimeMillis();
         this.ipTTL = ttl;
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(hostname + ": " + address.toString());
+        }
         // DEBUGGING: REMOVE.
         this.setIpCalled++;
     }
