@@ -49,6 +49,9 @@ public class PathologicalPathFilter extends URIRegExpFilter {
     public static final String ATTR_REPETITIONS = "repetitions";
 
     public static final Integer DEFAULT_REPETITIONS = new Integer(3);
+    
+    private final String REGEX_PREFIX = ".*/(.*/)\\1{";
+    private final String REGEX_SUFFIX = ",}.*";
 
     /** Constructs a new PathologicalPathFilter.
      *
@@ -88,7 +91,7 @@ public class PathologicalPathFilter extends URIRegExpFilter {
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
-        return rep == 0? null: ".*/(.*/)\\1{" + (rep - 1) + ",}.*";
+        return rep == 0? null: REGEX_PREFIX + (rep - 1) + REGEX_SUFFIX;
     }
     
     protected boolean getFilterOffPosition(CrawlURI curi) {

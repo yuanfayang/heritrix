@@ -513,8 +513,16 @@ public class UURIFactory extends URI {
             validateEscaping(uriPath);
         }
 
-        // Preallocate big.
-        MutableString s = new MutableString(UURI.MAX_URL_LENGTH);
+        // Preallocate.  The '1's and '2's in below are space for ':',
+        // '//', etc. URI characters.
+        MutableString s = new MutableString(
+            ((uriScheme != null)? uriScheme.length(): 0) +
+            1 +
+            ((uriAuthority != null)? uriAuthority.length(): 0) +
+            2 +
+            ((uriPath != null)? uriPath.length(): 0) +
+            1 +
+            ((uriQuery != null)? uriQuery.length(): 0));
         appendNonNull(s, uriScheme, ":", true);
         appendNonNull(s, uriAuthority, "//", false);
         appendNonNull(s, uriPath, "", false);
@@ -562,11 +570,12 @@ public class UURIFactory extends URI {
         // a character at a time.  Only create buffer first time
         // we find a space.
         MutableString buffer = null;
-        for(int i = 0; i < uri.length(); i++) {
+        for (int i = 0; i < uri.length(); i++) {
             char c = uri.charAt(i);
             if (Character.isWhitespace(c)) {
                 if (buffer == null) {
-                    buffer = new MutableString(2 * uri.length());
+                    buffer = new MutableString(uri.length() +
+                        2 /*If space, two extra characters (at least)*/);
                     buffer.append(uri.substring(0, i));
                 }
                 buffer.append("%");

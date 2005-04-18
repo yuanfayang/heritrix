@@ -25,6 +25,7 @@
 package org.archive.crawler.frontier;
 
 import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+import it.unimi.dsi.mg4j.util.MutableString;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -34,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -66,16 +68,27 @@ implements FrontierJournal {
     /**
      * Stream on which we record frontier events.
      */
-    private OutputStreamWriter out = null;
+    private Writer out = null;
 
     public static final String GZIP_SUFFIX = ".gz";
+    
+    /**
+     * Allocate a buffer for accumulating lines to write and reuse it.
+     */
+    private MutableString accumulatingBuffer =
+        new MutableString(1 + F_ADD.length() +
+                128 /*curi.toString().length()*/ +
+                1 +
+                8 /*curi.getPathFromSeed().length()*/ +
+                1 +
+                128 /*curi.flattenVia().length()*/);
 
     
     /**
      * Create a new recovery journal at the given location
      * 
-     * @param path
-     * @param filename
+     * @param path Directory to make the recovery  journal in.
+     * @param filename Name to use for recovery journal file.
      * @throws IOException
      */
     public RecoveryJournal(String path, String filename)
@@ -86,8 +99,19 @@ implements FrontierJournal {
     }
 
     public synchronized void added(CrawlURI curi) {
-        write("\n" + F_ADD + curi.toString() + " " 
-            + curi.getPathFromSeed() + " " + curi.flattenVia());
+        accumulatingBuffer.length(0);
+        this.accumulatingBuffer.append('\n').
+            append(F_ADD).
+            append(curi.toString()).
+            append(" "). 
+            append(curi.getPathFromSeed()).
+            append(" ").
+            append(curi.flattenVia());
+        try {
+            accumulatingBuffer.write(this.out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void finishedSuccess(CrawlURI curi) {

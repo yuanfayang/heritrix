@@ -126,6 +126,6 @@ public class Link implements Serializable {
      * @return CharSequence context
      */
     public static CharSequence elementContext(CharSequence element, CharSequence attribute) {
-        return element + ((attribute == null) ? "" : "/@" + attribute);
+        return attribute == null? "": element + "/@" + attribute;
     }
 }

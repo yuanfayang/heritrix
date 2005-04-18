@@ -63,17 +63,13 @@ public class PathDepthFilter extends Filter {
                 " depth. \n", new Boolean(true)));
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Filter#innerAccepts(java.lang.Object)
-     */
     protected boolean innerAccepts(Object o) {
         String path = null;
-        
         if (o == null) {
             return false;
         }
         
-        if(o instanceof CandidateURI) {
+        if (o instanceof CandidateURI) {
             try {
                 if (((CandidateURI)o).getUURI() != null) {
                     path = ((CandidateURI)o).getUURI().getPath();
@@ -83,12 +79,12 @@ public class PathDepthFilter extends Filter {
                 logger.severe("Failed getpath for " +
                     ((CandidateURI)o).getUURI());
             }
-        } else if (o instanceof UURI ){
+        } else if (o instanceof UURI) {
             try {
                 path = ((UURI)o).getPath();
             }
             catch (URIException e) {
-                logger.severe("Failed getpath for " + ((UURI)o));
+                logger.severe("Failed getpath for " + o);
             }
         }
 

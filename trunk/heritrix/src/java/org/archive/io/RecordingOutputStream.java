@@ -162,7 +162,9 @@ public class RecordingOutputStream extends OutputStream {
         // TODO: Fix so we only make file when its actually needed.
         if (this.diskStream == null) {
             FileOutputStream fis = new FileOutputStream(this.backingFilename);
-            this.diskStream = new FastBufferedOutputStream(fis);
+            // FastBufferedOutputStream default buffer is 16k.  Probably too
+            // big for our usage here.
+            this.diskStream = new FastBufferedOutputStream(fis, 4 * 1024);
         }
     }
 
