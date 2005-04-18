@@ -206,7 +206,7 @@
         <p>
             <b>Quick override:</b><br>
             Domain: <input name="newDomain" value="<%=currDomain%>">
-            <input type="button" value="Create/Edit" onClick="doCreateEdit()">
+            <input type="submit" value="Create/Edit" onClick="doCreateEdit()">
             <% if(theJob.isRunning()==false){ %>
                 <input type="button" value="Delete" onClick="doDelete()">
             <% } %>

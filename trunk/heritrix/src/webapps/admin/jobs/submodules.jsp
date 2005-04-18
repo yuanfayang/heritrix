@@ -47,7 +47,7 @@
         <input type="hidden" name="subaction" value="">
         <input type="hidden" name="map" value="">
         <input type="hidden" name="filter" value="">
-        <%=printAllMaps(theJob.getSettingsHandler().getOrder(), false, null)%>
+        <%=printAllMaps(theJob.getSettingsHandler().getOrder(), null, false, true, null)%>
     </form>
     <p>
 <%@include file="/include/jobnav.jsp"%>
