@@ -29,6 +29,7 @@ import it.unimi.dsi.mg4j.io.RepositionableStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -1154,9 +1155,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
                     // going.  We do this for case where we're being fed
                     // a bunch of ARCs; just note the bad one and move
                     // on to the next.
-                    System.err.println("Exception processing " + f);
-                    System.exit(1);
+                    System.err.println("Exception processing " + f + ": " +
+                        e.getMessage());
                     e.printStackTrace(System.err);
+                    System.exit(1);
                 }
             }
         }
