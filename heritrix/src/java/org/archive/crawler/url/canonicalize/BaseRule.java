@@ -88,12 +88,9 @@ implements CanonicalizationRule {
      * and group 2.
      */
     protected String doStripRegexMatch(String url, Matcher matcher) {
-        if (matcher != null && matcher.matches()) {
-            String g1 = matcher.group(1);
-            String g2 = matcher.group(2);
-            url = checkForNull(matcher.group(1)) + checkForNull(matcher.group(2));
-        }
-        return url;
+        return (matcher != null && matcher.matches())?
+            checkForNull(matcher.group(1)) + checkForNull(matcher.group(2)):
+            url;
     }
 
     /**
