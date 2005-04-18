@@ -30,12 +30,13 @@
      * @return The variable part of the HTML code for selecting filters.
      * @throws Exception
      */
-    public static String printAllMaps(ComplexType mbean, boolean inMap,
-            String parent) throws Exception {
+    public static String printAllMaps(ComplexType mbean,
+            CrawlerSettings settings, boolean inMap,
+            boolean edittable, String parent) throws Exception {
         if (mbean.isTransient()) {
             return "";
         }
-        MBeanInfo info = mbean.getMBeanInfo();
+        MBeanInfo info = mbean.getMBeanInfo(settings);
         MBeanAttributeInfo a[] = info.getAttributes();
         StringBuffer p = new StringBuffer();
 
@@ -65,19 +66,23 @@
                 .getDescription());
         if (inMap) {
             p.append("<tr><td>" + mbean.getName() + "</td>");
-            p.append("<td nowrap><a href=\"javascript:doMoveUp('"
-                    + mbean.getName() + "','" + parent
-                    + "')\">Up</a></td>");
-            p.append("<td nowrap><a href=\"javascript:doMoveDown('"
-                    + mbean.getName() + "','" + parent
-                    + "')\">Down</a></td> ");
-            p.append("<td><a href=\"javascript:doRemove('" + mbean.getName()
-                    + "','" + parent + "')\">Remove</a></td>");
+            if(edittable) {
+	            p.append("<td nowrap><a href=\"javascript:doMoveUp('"
+	                    + mbean.getName() + "','" + parent
+	                    + "')\">Up</a></td>");
+	            p.append("<td nowrap><a href=\"javascript:doMoveDown('"
+	                    + mbean.getName() + "','" + parent
+	                    + "')\">Down</a></td> ");
+	            p.append("<td><a href=\"javascript:doRemove('" + mbean.getName()
+	                    + "','" + parent + "')\">Remove</a></td>");
+	        } else {
+	            p.append("<td colspan=\"3\">(inherited)</td>");
+	        }
             p.append("<td title='" + description + "'>");
             p.append("<i><font size=\"-1\">" + mbean.getClass().getName() +
                     "</font></i>");
-            p.append("<a href='javascript:alert(\"" + description
-                    + "\")'> ? </a>");
+            p.append("&nbsp;<a href='javascript:alert(\"" + description
+                    + "\")'>?</a>");
             p.append("</td></tr>\n");
         } else {
             p.append("<div class='SettingsBlock'>\n");
@@ -102,20 +107,24 @@
                 p.append("  ERROR: null attribute");
             } else {
                 Object currentAttribute = null;
+                Object localAttribute = null;
                 //The attributes of the current attribute.
                 ModuleAttributeInfo att = (ModuleAttributeInfo)a[n];
                 try {
-                    currentAttribute = mbean.getAttribute(att.getName());
+                    currentAttribute = mbean.getAttribute(settings, att.getName());
+                    localAttribute = mbean.getLocalAttribute(settings, att.getName());
                 } catch (Exception e1) {
                     String error = e1.toString() + " " + e1.getMessage();
                     return error;
                 }
+                boolean locallyEdittable = (localAttribute != null);
                 if (currentAttribute instanceof ComplexType) {
                     if (inMap) {
                         p.append("<tr><td colspan='5'>");
                     }
                     p.append(printAllMaps((ComplexType)currentAttribute,
-                            subMap, mbean.getAbsoluteName()));
+                            settings, subMap, locallyEdittable,
+                            mbean.getAbsoluteName()));
                     if (inMap) {
                         p.append("</td></tr>\n");
                     }
