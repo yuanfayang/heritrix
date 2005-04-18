@@ -12,11 +12,17 @@
 <%@ page import="org.archive.crawler.admin.ui.JobConfigureUtils" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.url.canonicalize.BaseRule" %>
+<%@ page import="org.archive.crawler.settings.XMLSettingsHandler" %>
 
 <%
     CrawlJob theJob = JobConfigureUtils.handleJobAction(handler, request,
             response, request.getContextPath() + "/jobs.jsp", null);
-    int tab = theJob.isProfile()?2:1;
+    XMLSettingsHandler settingsHandler =
+        (XMLSettingsHandler)theJob.getSettingsHandler();
+    String currDomain = request.getParameter("currDomain");
+    CrawlerSettings localSettings =
+        settingsHandler.getSettingsObject(currDomain);
+    int tab = theJob.isProfile()? 2: 1;
 %>
 
 <%
@@ -41,7 +47,8 @@
         <input type="hidden" name="subaction" value="continue">
         <input type="hidden" name="map" value="">
         <input type="hidden" name="filter" value="">
-        <%=printAllMaps(theJob.getSettingsHandler().getOrder(), false, null)%>
+        <%=printAllMaps(theJob.getSettingsHandler().getOrder(), localSettings,
+            false, true, null)%>
     </form>
     <p>
 <%@include file="/include/jobnav.jsp"%>
