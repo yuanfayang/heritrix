@@ -113,8 +113,10 @@ public class CachedBdbMap extends AbstractMap implements Map {
      */
     private long diskHit = 0;
 
-    private static Field referent;
-    
+    /**
+     * Reference to the Reference#referent Field.
+     */
+    protected static Field referentField;
     static {
         // We need access to the referent field in the PhantomReference.
         // For more on this trick, see
@@ -122,8 +124,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
         // discussion:
         // http://www.theserverside.com/tss?service=direct/0/NewsThread/threadViewer.markNoisy.link&sp=l29865&sp=l146901
         try {
-            referent = Reference.class.getDeclaredField("referent");
-            referent.setAccessible(true);
+            referentField = Reference.class.getDeclaredField("referent");
+            referentField.setAccessible(true);
         } catch (SecurityException e) {
             throw new RuntimeException(e);
         } catch (NoSuchFieldException e) {
@@ -192,7 +194,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
         super();
         initialize();
         this.db = openDatabase(environment, dbName);
-        this.diskMap = createDiskMap(this.db, classCatalog, keyClass, valueClass);
+        this.diskMap = createDiskMap(this.db, classCatalog, keyClass,
+            valueClass);
     }
     
     private void initialize() {
@@ -202,8 +205,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
     
     protected StoredMap createDiskMap(Database database,
             StoredClassCatalog classCatalog, Class keyClass, Class valueClass) {
-        return new StoredMap(database, new SerialBinding(classCatalog, keyClass),
-                new SerialBinding(classCatalog, valueClass), true);
+        return new StoredMap(database, new SerialBinding(classCatalog,
+            keyClass), new SerialBinding(classCatalog, valueClass), true);
     }
 
     public CachedBdbMap(File dbDir, String dbName, Map map, Class keyClass,
@@ -322,26 +325,28 @@ public class CachedBdbMap extends AbstractMap implements Map {
         throw new UnsupportedOperationException();
     }
 
-    public Object get(Object key) {
+    public Object get(final Object key) {
         countOfGets++;
         expungeStaleEntries();
         if (countOfGets % 10000 == 0) {
             logCacheSummary();
         }
-        SoftEntry tmp = (SoftEntry) memMap.get(key);
-        if (tmp != null) {
-            Object val = tmp.get(); // get & hold, so not cleared pre-return
+        SoftEntry entry = (SoftEntry)memMap.get(key);
+        if (entry != null) {
+            Object val = entry.get(); // get & hold, so not cleared pre-return
             if (val != null) {
                 cacheHit++;
                 return val;
             }
+            // Explicitly clear this entry from referencequeue since its
+            // value is null.
+            expungeStaleEntry(entry);
         }
-        
+
         // In case ref was cleared after last expunge
         // we remove so that any key is either in memory, or on disk, but 
-        // not both
-        expungeStaleEntries();
-        Object o = diskMap.remove(key);
+        // not both.
+        Object o = this.diskMap.remove(key);
         if (o != null) {
             diskHit++;
             diskMapSize--;
@@ -369,26 +374,9 @@ public class CachedBdbMap extends AbstractMap implements Map {
     }
     
     public synchronized Object put(Object key, Object value) {
-        expungeStaleEntries();
-        Object prevVal = null;
-        SoftEntry prevEntry = (SoftEntry) memMap.get(key);
-        if (prevEntry != null) {
-            prevVal = prevEntry.get();
-            if (prevVal != null) {
-                memMap.put(key, new SoftEntry(key, value, refQueue));
-                return prevVal;
-            }
-        } 
-        
-        // To maintain contract of Map.put(), get old value if any from disk
-        // and as long as we're accessing, remove it (to maintain each-key-only-
-        // in-one-place property)
-        prevVal = diskMap.remove(key);
-        if (prevVal != null) {
-            diskMapSize--;
-        }
+        Object prevVal = get(key);
         memMap.put(key, new SoftEntry(key, value, refQueue));
-        return value;
+        return prevVal;
     }
 
     public void clear() {
@@ -397,25 +385,9 @@ public class CachedBdbMap extends AbstractMap implements Map {
         diskMapSize = 0;
     }
 
-    public Object remove(Object key) {
-        expungeStaleEntries();
-        Object prevValue;
-        SoftEntry entry = (SoftEntry) memMap.get(key);
-        while (entry != null) {
-            prevValue = entry.get();
-            if (prevValue != null) {
-                // key is in-mem (and nowhere else)
-                memMap.remove(key);
-                return prevValue;
-            }
-            // Entry cleared, but not yet expunged
-            expungeStaleEntries();
-            entry = (SoftEntry) memMap.get(key);
-        }
-        prevValue = diskMap.remove(key);
-        if (prevValue != null) {
-            diskMapSize--;
-        }
+    public Object remove(final Object key) {
+        Object prevValue = get(key);
+        memMap.remove(key);
         return prevValue;
     }
 
@@ -449,11 +421,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
 
     private void expungeStaleEntries() {
         int c = 0;
-        SoftEntry entry;
-        while ((entry = (SoftEntry) refQueue.poll()) != null) {
-            memMap.remove(entry.phantom.key);
-            entry.phantom.clear();
-            entry.phantom = null;
+        for(SoftEntry entry; (entry = (SoftEntry)refQueue.poll()) != null;) {
+            expungeStaleEntry(entry);
             c++;
         }
         if (c > 0 && logger.isLoggable(Level.FINER)) {
@@ -467,8 +436,27 @@ public class CachedBdbMap extends AbstractMap implements Map {
         }
     }
     
+    private void expungeStaleEntry(SoftEntry entry) {
+        // If phantom already null, its already expunged -- probably
+        // because it was purged directly first from inside in
+        // {@link #get(String)} and then it went on the poll queue and
+        // when it came off inside in expungeStaleEntries, this method
+        // was called again.
+        if (entry.getPhantom() == null) {
+            return;
+        }
+        // If the object that is in memMap is not the one passed here, then
+        // memMap has been changed -- probably by a put on top of this entry.
+        if (memMap.get(entry.getPhantom().getKey()) == entry) {
+            memMap.remove(entry.getPhantom().getKey());
+            diskMap.put(entry.getPhantom().getKey(),
+                entry.getPhantom().doctoredGet());
+            diskMapSize++;
+        }
+        entry.clearPhantom();
+    }
+    
     private class PhantomEntry extends PhantomReference {
-
         private final Object key;
 
         public PhantomEntry(Object key, Object referent) {
@@ -476,15 +464,28 @@ public class CachedBdbMap extends AbstractMap implements Map {
             this.key = key;
         }
 
-        public void clear() {
+        /**
+         * @return Return the referent. The contract for {@link #get()}
+         * always returns a null referent.  We've cheated and doctored
+         * PhantomReference to return the actual referent value.  See notes
+         * at {@link #referentField};
+         */
+        public Object doctoredGet() {
             try {
-                Object o = referent.get(this);
-                diskMap.put(key, o);
-                diskMapSize++;
+                // Here we use the referentField saved off on static
+                // initialization of this class to get at this References'
+                // private referent field.
+                return referentField.get(this);
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
-            super.clear();
+        }
+
+        /**
+         * @return Returns the key.
+         */
+        public Object getKey() {
+            return this.key;
         }
     }
 
@@ -494,6 +495,19 @@ public class CachedBdbMap extends AbstractMap implements Map {
         public SoftEntry(Object key, Object referent, ReferenceQueue q) {
             super(referent, q);
             this.phantom = new PhantomEntry(key, referent);
+        }
+
+        /**
+         * @return Returns the phantom reference.
+         */
+        public PhantomEntry getPhantom() {
+            return this.phantom;
+        }
+        
+        public void clearPhantom() {
+            this.phantom.clear();
+            this.phantom = null;
+            super.clear();
         }
     }
     
