@@ -15,7 +15,7 @@
 
 <%
     CrawlJob theJob = JobConfigureUtils.handleJobAction(handler, request,
-            response, request.getContextPath() + "/jobs.jsp", null);
+            response, request.getContextPath() + "/jobs.jsp", null, null);
     int tab = theJob.isProfile()?2:1;
 %>
 

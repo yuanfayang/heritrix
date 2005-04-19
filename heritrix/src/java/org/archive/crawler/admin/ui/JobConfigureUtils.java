@@ -37,9 +37,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,17 +45,12 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.MBeanInfo;
 import javax.management.ReflectionException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
-import org.archive.crawler.framework.CrawlScope;
-import org.archive.crawler.framework.Frontier;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.framework.ProcessorChain;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.ListType;
@@ -67,8 +59,8 @@ import org.archive.crawler.settings.ModuleAttributeInfo;
 import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.util.IoUtils;
-import org.archive.util.TextUtils;
 
 /**
  * Utility methods used configuring jobs in the admin UI.
@@ -303,7 +295,7 @@ public class JobConfigureUtils {
      */
     public static CrawlJob handleJobAction(CrawlJobHandler handler,
             HttpServletRequest request, HttpServletResponse response,
-            String redirectBasePath, String currDomain)
+            String redirectBasePath, String currDomain, String reference)
     throws IOException, AttributeNotFoundException, InvocationTargetException,
         InvalidAttributeValueException {
 
@@ -316,6 +308,12 @@ public class JobConfigureUtils {
         // If currDomain is null, then we're at top-level.
         CrawlerSettings settings = settingsHandler
             .getSettingsObject(currDomain);
+        
+        if(reference != null) {
+            // refinement
+            Refinement refinement = settings.getRefinement(reference);
+            settings = refinement.getSettings();
+        }
 
         // See if we need to take any action
         if (request.getParameter(ACTION) != null) {
@@ -362,15 +360,24 @@ public class JobConfigureUtils {
             } else if (action.equals(DONE)) {
                 // Ok, done editing.
                 if(subaction.equals(CONTINUE)) {
-                    // was editting an override, simply continue
+                    // was editting an override/refinement, simply continue
                     if (theJob.isRunning()) {
                         handler.kickUpdate(); //Just to make sure.
                     }
+                    String overParam = ((currDomain != null && currDomain
+                            .length() > 0) ? "&currDomain=" + currDomain : "");
+                    String refParam = 
+                        ((reference != null && reference.length() > 0) 
+                                ? "&reference=" + reference
+                                : "");
+                    String messageParam = (refParam.length() > 0) 
+                         ? "&message=Refinement changes saved"
+                         : "&message=Override changes saved";
                     response.sendRedirect(redirectBasePath +
                         "?job=" + theJob.getUID() +
-                        ((currDomain != null && currDomain.length() > 0)?
-                                "&currDomain=" + currDomain: "") +
-                         "&message=Override changes saved");
+                         overParam +
+                         refParam + 
+                         messageParam);
                 } else {
                     // on main, truly 'done'
                     if (theJob.isNew()) {
@@ -392,9 +399,14 @@ public class JobConfigureUtils {
                 }
             } else if (action.equals(GOTO)) {
                 // Goto another page of the job/profile settings
+                String overParam = ((currDomain != null && currDomain
+                        .length() > 0) ? "&currDomain=" + currDomain : "");
+                String refParam = 
+                    ((reference != null && reference.length() > 0) 
+                            ? "&reference=" + reference
+                            : "");
                 response.sendRedirect(request.getParameter(SUBACTION) +
-                    ((currDomain != null && currDomain.length() > 0)?
-                        "&currDomain=" + currDomain: ""));
+                    overParam + refParam);
             }
         }
         return theJob;
