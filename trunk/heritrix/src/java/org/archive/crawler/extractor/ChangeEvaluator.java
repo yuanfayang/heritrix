@@ -112,6 +112,8 @@ implements AdaptiveRevisitAttributeConstants {
                 // TODO: In the future processors should take note of the content
                 // state, removing the need for the following 'skip'
                 curi.skipToProcessorChain(getController().getPostprocessorChain());
+                // Make not in log
+                curi.addAnnotation("unchanged");
                 // Set content size to zero, we are not going to 'write it to disk'
                 curi.setContentSize(0);
             } else {
