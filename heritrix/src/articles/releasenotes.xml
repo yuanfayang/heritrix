@@ -14,86 +14,6 @@
 
   <sect1 id="1_4_0">
     <title>Release 1.4.0 - NOT YET RELEASED</title>
-    <sect2 id="1_4_0_changes">
-        <title>Changes</title>
-        <sect3 id="bdbfrontier">
-        <title>Berkeley DB Based Frontier</title>
-        <para>The BdbFrontier -- a frontier that keeps its queues of
-        URIs in
-        <ulink url="http://www.sleepycat.com/products/je.shtml">Berkeley
-        DB Java Edition</ulink> databases -- has been made the default
-        Frontier.  Other core datastructures such as the queue of 
-        'alreadyseen' URIs have also been moved into bdbje databases.
-        </para>
-        </sect3>
-        <sect3 id="dns_arc_ip">
-            <title>The IP in dns ARC Records</title>
-            <para>Dns entries in ARCs look like this:
-<programlisting>dns:www.archive.org 207.241.238.254 20050310233154 text/dns 58 20050310233154
-www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
-            The above record is for the lookup of www.archive.org.</para>
-
-            
-            <para>Previous to 1.4.0, the IP used on the ARC Record metaline
-            -- the first line of an ARC Record entry (207.241.238.254 in the
-            above example) -- was the IP of
-            the host looked up.  As of 1.4.0, we write the IP of the dns
-            server that returned us the address looked up.  Previous to this
-            there was no recording of the dnsserver IP.
-            </para>
-        </sect3>
-
-        <sect3 id="arf" ><title>AdaptiveRevisitFrontier</title>
-            <para>A new, experimental Frontier with configurable revisiting
-            policy and tools for noticing page change, etc.</para>
-        </sect3>
-        <sect3 id="dr" ><title>DecidingScope and DecidingFilter</title>
-            <subtitle>A.K.A New Scoping Model</subtitle>
-            <para>A new, experimental scope and filter that allow the user
-            to pick and choose from an assortment of ready-made decision
-            rules and have each rule applied in an orderable sequence.
-            The last non-PASS decision stands as the
-            aggregate decision for the decide rule sequence.
-            </para>
-        </sect3>
-
-        <sect3 id="mem_improvements">
-            <title>Crawl Size Upper Bounds Update</title>
-        <para>Memory usage has been improved in this release.
-        Previously RAM-based datastructures that
-        grew without bound now are disk-backed kept in berkeley db 
-        databases.
-        Where previous, see <xref linkend="upper_bounds" />,
-        Heritrix was unsuited for broad crawling, while still experimental,
-        using default memory settings
-        -- a heap of 256m -- broad-crawls of 5 to 6 days before
-        encountering OutOfMemoryErrors (OOMEs) are now possible; longer
-        if more heap is
-        assigned.  Where 10k hosts was an upper bound on narrow domain- or
-        host-scoped crawls, now, using the default heap size, it should now be
-        possible to do 500k+ hosts.
-        </para>
-        <para>
-        Long-running crawls that encounter hundreds-of-thousands of hosts over
-        the life of a crawl, or crawls started with hundreds-of-thousands of
-        seeds, continue to throw OutOfMemoryErrors
-        because there are still a few RAM-based datastructures that grow
-        without bound left in Heritrix; the lists of queue names and internal
-        structures inside 3rd party libraries used by Heritrix. These last few
-        items we intend to address in a later release.</para>
-
-        </sect3>
-
-        <sect3 id="ibmjvmredux"><title>IBM JVM Redux</title>
-            <para>Testing with <literal>IBM JVM 1.4.2 (Classic VM
-            (build 1.4.2, J2RE 1.4.2 IBM build cxia32142sr1a-20050209
-            (JIT enabled: jitc)))</literal> using Heritrix 1.4.0, the SSL
-            problem described in <xref linkend="ibmjvm" /> is no longer
-            present (All of our crawling of the last couple of
-            months has been done on the latest SUN 1.5.0 JVMs).</para>
-        </sect3>
-
-    </sect2>
     <sect2 id="1_4_0_limitations">
       <title>Known Limitations/Issues</title>
       <sect3 id="glibc2_3_2"><title>Glibc 2.3.2 and NPTL</title>
@@ -210,6 +130,86 @@ to <literal>stringList</literal>):
         Try upgrading your JVM.  See <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1178102&amp;group_id=73833&amp;atid=539099">[1178102] FCE on creation of new job based on job w/ overrides</ulink> for more on this.
         </para>
       </sect3>
+    </sect2>
+    <sect2 id="1_4_0_changes">
+        <title>Changes</title>
+        <sect3 id="bdbfrontier">
+        <title>Berkeley DB Based Frontier</title>
+        <para>The BdbFrontier -- a frontier that keeps its queues of
+        URIs in
+        <ulink url="http://www.sleepycat.com/products/je.shtml">Berkeley
+        DB Java Edition</ulink> databases -- has been made the default
+        Frontier.  Other core datastructures such as the queue of 
+        'alreadyseen' URIs have also been moved into bdbje databases.
+        </para>
+        </sect3>
+        <sect3 id="dns_arc_ip">
+            <title>The IP in dns ARC Records</title>
+            <para>Dns entries in ARCs look like this:
+<programlisting>dns:www.archive.org 207.241.238.254 20050310233154 text/dns 58 20050310233154
+www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
+            The above record is for the lookup of www.archive.org.</para>
+
+            
+            <para>Previous to 1.4.0, the IP used on the ARC Record metaline
+            -- the first line of an ARC Record entry (207.241.238.254 in the
+            above example) -- was the IP of
+            the host looked up.  As of 1.4.0, we write the IP of the dns
+            server that returned us the address looked up.  Previous to this
+            there was no recording of the dnsserver IP.
+            </para>
+        </sect3>
+
+        <sect3 id="arf" ><title>AdaptiveRevisitFrontier</title>
+            <para>A new, experimental Frontier with configurable revisiting
+            policy and tools for noticing page change, etc.</para>
+        </sect3>
+        <sect3 id="dr" ><title>DecidingScope and DecidingFilter</title>
+            <subtitle>A.K.A New Scoping Model</subtitle>
+            <para>A new, experimental scope and filter that allow the user
+            to pick and choose from an assortment of ready-made decision
+            rules and have each rule applied in an orderable sequence.
+            The last non-PASS decision stands as the
+            aggregate decision for the decide rule sequence.
+            </para>
+        </sect3>
+
+        <sect3 id="mem_improvements">
+            <title>Crawl Size Upper Bounds Update</title>
+        <para>Memory usage has been improved in this release.
+        Previously RAM-based datastructures that
+        grew without bound now are disk-backed kept in berkeley db 
+        databases.
+        Where previous, see <xref linkend="upper_bounds" />,
+        Heritrix was unsuited for broad crawling, while still experimental,
+        using default memory settings
+        -- a heap of 256m -- broad-crawls of 5 to 6 days before
+        encountering OutOfMemoryErrors (OOMEs) are now possible; longer
+        if more heap is
+        assigned.  Where 10k hosts was an upper bound on narrow domain- or
+        host-scoped crawls, now, using the default heap size, it should now be
+        possible to do 500k+ hosts.
+        </para>
+        <para>
+        Long-running crawls that encounter hundreds-of-thousands of hosts over
+        the life of a crawl, or crawls started with hundreds-of-thousands of
+        seeds, continue to throw OutOfMemoryErrors
+        because there are still a few RAM-based datastructures that grow
+        without bound left in Heritrix; the lists of queue names and internal
+        structures inside 3rd party libraries used by Heritrix. These last few
+        items we intend to address in a later release.</para>
+
+        </sect3>
+
+        <sect3 id="ibmjvmredux"><title>IBM JVM Redux</title>
+            <para>Testing with <literal>IBM JVM 1.4.2 (Classic VM
+            (build 1.4.2, J2RE 1.4.2 IBM build cxia32142sr1a-20050209
+            (JIT enabled: jitc)))</literal> using Heritrix 1.4.0, the SSL
+            problem described in <xref linkend="ibmjvm" /> is no longer
+            present (All of our crawling of the last couple of
+            months has been done on the latest SUN 1.5.0 JVMs).</para>
+        </sect3>
+
     </sect2>
   </sect1>
 
