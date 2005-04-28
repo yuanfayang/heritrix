@@ -1118,7 +1118,7 @@
 
         <para>The Frontier is a pluggable module that maintains the internal
         state of the crawl. What URIs have been discovered, crawled etc. As
-        such its selection greatly affects for instance the order in which
+        such its selection greatly effects, for instance, the order in which
         discovered URIs are crawled.</para>
 
         <para>There is only one Frontier per crawl job.</para>
@@ -3516,10 +3516,16 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         suffix, this means the ARC is currently in use being written to by
         Heritrix (It usually has more than one ARC open at a time).</para>
 
+        <para id="invalid">Files with a <literal>.invalid</literal> are files
+        Heritrix had trouble writing to (Disk full, bad disk, etc.).  On IOException,
+        Heritrix closes the problematic ARC and gives it the
+        <literal>.invalid</literal> suffix. These files need to be
+        checked for coherence.</para>
+
         <para>For more on ARC files refer to the <ulink
         url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCWriter.html">ARCwriter
         Javadoc</ulink> and to the <ulink
-        url="http://crawler.archive.org/articles/user_manual.html#logs">ARC
+        url="http://crawler.archive.org/articles/developer_manual.html#arcs">ARC
         Writer developer documentation</ulink>.</para>
       </sect3>
     </sect2>

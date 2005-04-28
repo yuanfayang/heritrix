@@ -130,6 +130,19 @@ to <literal>stringList</literal>):
         Try upgrading your JVM.  See <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1178102&amp;group_id=73833&amp;atid=539099">[1178102] FCE on creation of new job based on job w/ overrides</ulink> for more on this.
         </para>
       </sect3>
+        </sect3>
+        <sect3 id="oome142">
+            <title>OutOfMemoryErrors (OOMEs)</title>
+        <para>Unusual pages -- pages of unorthodox structure (lines that
+        are megabytes long) or pages that contain thousands upon thousands of
+        links -- will on occasion produce OOMEs.</para>
+        <para>There have been improvements regards memory usage running
+        multiple jobs in series,
+    <xref  linkend="oome_pending_jobs" />, but starting up a new job after
+        a long-running job can prompt OOMEs.
+        Workaround for now is to restart Heritrix between the running of
+        big jobs.</para>
+        </sect3>
     </sect2>
     <sect2 id="1_4_0_changes">
         <title>Changes</title>
@@ -179,8 +192,7 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
         <para>Memory usage has been improved in this release.
         Previously RAM-based datastructures that
         grew without bound now are disk-backed kept in berkeley db 
-        databases.
-        Where previous, see <xref linkend="upper_bounds" />,
+        databases. Where previous, see <xref linkend="upper_bounds" />,
         Heritrix was unsuited for broad crawling, while still experimental,
         using default memory settings
         -- a heap of 256m -- broad-crawls of 5 to 6 days before
@@ -199,7 +211,7 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
         structures inside 3rd party libraries used by Heritrix. These last few
         items we intend to address in a later release.</para>
 
-        </sect3>
+
 
         <sect3 id="ibmjvmredux"><title>IBM JVM Redux</title>
             <para>Testing with <literal>IBM JVM 1.4.2 (Classic VM
