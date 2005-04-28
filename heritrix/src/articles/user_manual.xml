@@ -1110,6 +1110,11 @@
           <para>The naming, behavior, and user-interface for DecideRule-based
           scoping is subject to significant change based on feedback and
           experience in future releases.</para>
+          
+          <para>Enable FINE logging on the class
+          <literal>org.archive.crawler.deciderules.DecideRuleSequence</literal>
+          to watch each deciderules finding on each processed URI.
+          </para>
         </sect4>
       </sect3>
 
@@ -1260,7 +1265,7 @@
         <para>Most of the processors are fairly self explanatory, however the
         first and last two merit a little bit more attention.</para>
 
-        <para>In the <literal>Pre Processing</literal> chain the following two
+        <para>In the <literal>Pre-processing</literal> chain the following two
         processors should be included (or replacement modules that perform
         similar operations):</para>
 
@@ -1270,7 +1275,7 @@
 
             <para>Last check if the URI should indeed be crawled. Can for
             example recheck scope. Useful if scope has been changed after the
-            crawl starts.(This processor is not strictly necessary.)</para>
+            crawl starts (This processor is not strictly necessary).</para>
           </listitem>
 
           <listitem>
@@ -1321,10 +1326,17 @@
     <sect2 id="submodules">
       <title>Submodules</title>
 
-      <para>On the Submodules tab, components which are added in
-      variable-sized lists are added, ordered, and removed. Once submodules
-      are added here, values which control their operation are configured on
-      the Settings tab.</para>
+
+      <para>On the Submodules tab, 
+      configuration points that take variable-sized listings of components
+      can be configured. Components can be added, ordered, and removed.
+      Examples of such components are listings of canonicalization rules to
+      run against each URL discovered, <xref linkend="filters" />
+      on processors, and
+      credentials.  Once submodules
+      are added under the Submodules tab, they will show in subsequent 
+      redrawings of the Settings tab.  Values which control their operation
+      are configured over under the Settings tab.</para>
 
       <sect3 id="urlcanon">
         <title>URL Canonicalization Rules</title>
@@ -1368,7 +1380,7 @@
         <para>Canonicalization rules are NOT run if the URI-to-check is the
         fruit of a redirect. We do this for the following reason. Lets say the
         www canonicalization rule is in place (the rule that equates
-        'archive.org' and 'www.archive.org'). If the crawler first encournters
+        'archive.org' and 'www.archive.org'). If the crawler first encounters
         'archive.org' but the server at archive.org wants us to come in via
         'www.archive.org', it will redirect us to 'www.archive.org'. The
         alreadyseen database will have been marked with 'archive.org' on the
@@ -1418,7 +1430,7 @@
 
             <para>See also <ulink
             url="http://groups.yahoo.com/group/archive-crawler/message/1611">msg1611</ulink>
-            for another's experience getting regext to work.</para>
+            for another's experience getting regex to work.</para>
           </sect5>
         </sect4>
       </sect3>
@@ -1435,11 +1447,22 @@
 
         <para>Their use in scopes has already been discussed in <xref
         linkend="scopes" /> and the problems with using them that in <xref
-        linkend="scopeproblems" />. Along with the planned overhaul of the
-        scopes (as discussed in <xref linkend="scopeproblems" />) the filters
-        will likely change significantly.</para>
+        linkend="scopeproblems" />.  
+        </para>
 
-        <para>Aside from scopes filters are also used in processors. Filters
+        <note><para>An experimental
+        DecidingFilter was added in 1.4.0 to address problems with current 
+        filter model.  DecideRules can be added into
+        a DecidingFilter with the filter decision the result of all
+        included DecideRule set processing. There are DecideRule equivalents
+        for all Filter-types mentioned below.
+        See <xref linkend="decidingscope" /> for more on
+        the particulars of DecideRules and on the new Deciding model in
+        general.
+        </para>
+        </note>
+
+        <para>Aside from scopes, filters are also used in processors. Filters
         applied to processors always filter URIs <emphasis>out</emphasis>.
         That is to say that any URI matching a filter on a processor will
         effectively skip over that processor.</para>
@@ -1450,12 +1473,10 @@
         <sect4>
           <title>Adding, removing and reordering filters</title>
 
-          <para>The filters page of the configuration section of the WUI
-          presents a semi treelike structure of the crawl configuration.
-          Wherever filters can be added a listing of existing filters is
-          provided along with the options to remove them or move them up or
-          down that list. Below each list is the option to add a new filter to
-          that list.</para>
+          <para>The Submodules page of the configuration section of the WUI
+          lists existing filters
+          along with the option to remove, add, or move Filters up or
+          down in the listing.</para>
 
           <para>Adding a new filters requires giving it a unique name (for
           that list), selecting the class type of the filter from a combobox
@@ -1742,9 +1763,12 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
     <sect2 id="settings">
       <title>Settings</title>
 
-      <para>This page presents a semi treelike representation of all the
+      <para>This page presents a semi-treelike representation of all the
       modules (fixed and pluggable alike) that make up the current
-      configuration and allows the user to edit any of their settings.</para>
+      configuration and allows the user to edit any of their settings.
+      Go to the Modules and SubModules tabs to add, remove, replace modules
+      mentioned here in the Settings page.
+      </para>
 
       <para>The first option presented directly under the top tabs is whether
       to hide or display 'expert settings'. Expert settings are those settings
@@ -1893,7 +1917,8 @@ org.archive.crawler.prefetch.PreconditionEnforcer.level = FINE</programlisting><
 
             <para><programlisting>Mozilla/5.0 (compatible; heritrix/0.11.0 +PROJECT_URL_HERE</programlisting></para>
 
-            <para>You must change at least the 'PROJECT_URL_HERE' and put in
+            <para>You must change at least the 
+            <literal>PROJECT_URL_HERE</literal> and put in
             place a website that webmasters can go to to view information on
             the organization or person running a crawl.</para>
 
@@ -1970,7 +1995,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       <sect3>
         <title>Scope settings</title>
 
-        <para>The different scopesdo share a few common settings. (See <xref
+        <para>The different scopes do share a few common settings. (See <xref
         linkend="scopes" /> for more on scopes provided with Heritrix.)</para>
 
         <itemizedlist>
@@ -2024,9 +2049,11 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
               multiple of the amount of time it took to fetch the last URI
               downloaded from that host.</para>
 
-              <para>For example if it took 800 millisec to fetch the last URI
+              <para>For example if it took 800 milliseconds
+              to fetch the last URI
               from a host and the delay-factor is 5 (a very high value) then
-              the Frontier will wait 4000 millisec (4 sec) before allowing
+              the Frontier will wait 4000 milliseconds (4 seconds)
+              before allowing
               another URI from that host to be processed.</para>
 
               <para>This value can be set to 0 for maximum impoliteness. It is
@@ -2039,7 +2066,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
               <para>This setting allows the user to set a maximum upper limit
               on the 'in between URIs' wait created by the delay factor. If
-              set to 1000 millisec then in the example used above the Frontier
+              set to 1000 milliseconds
+              then in the example used above the Frontier
               would only hold URIs from that host for 1 second instead of 4
               since the delay factor exceeded this ceiling value.</para>
             </listitem>
@@ -2049,9 +2077,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
               <para>Similar to the maximum limit, this imposes a minimum limit
               to the politeness. This can be useful to ensure, for example,
-              that at last 100 millisec elapse between connections to the same
+              that at least 100 milliseconds elapse
+              between connections to the same
               host. In a case where the delay factor is 2 and it only took 20
-              millisec to get a URI this would come into effect.</para>
+              milliseconds to get a URI this would come into effect.</para>
             </listitem>
 
             <listitem>
@@ -2141,9 +2170,6 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <sect4>
           <title>HTTP Fetcher</title>
 
-          <para>The HTTP Fetcher processors has a number of settings that
-          merit some attention.</para>
-
           <itemizedlist>
             <listitem>
               <para><emphasis role="bold">timeout-seconds</emphasis></para>
@@ -2216,10 +2242,12 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
             <listitem>
               <para><emphasis role="bold">path</emphasis></para>
 
-              <para>Path where ARC files should be written. Can be an absolute
-              path. If a relative path is specified it will be relative to the
-              <literal>job</literal>directory. The disk directory is an expert
-              setting. It can be left empty.</para>
+              <para>Path where ARC files should be written. Can be a list
+              of absolute paths. If relative paths, will be relative to the
+              <literal>job</literal>directory.  It can be safely
+              configured mid-crawl to point elsewhere if current location is
+              close to full. If multiple paths, then we'll choose from the list
+              of paths in a round-robin fashion.</para>
             </listitem>
 
             <listitem>
@@ -2255,9 +2283,9 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       <para>It is best to think of the general global settings as the root of
       the settings hierarchy and they are then overridden by top level domains
       (com, net, org, etc) who are in turn overridden by domains (yahoo.com,
-      archive.org, etc.) who can further be overridden by sub domains
-      (crawler.archive.org). There is no limit for how deep into the sub
-      domains the overrides can go.</para>
+      archive.org, etc.) who can further be overridden by subdomains
+      (crawler.archive.org). There is no limit for how deep into the
+      subdomains the overrides can go.</para>
 
       <para>When a URI is being processed the settings for its host is first
       looked up. If the needed setting is not available there, its super
@@ -2623,7 +2651,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         paused or not.</para>
 
         <sect4>
-          <title>Start / Stop crawling pending job</title>
+          <title>Start/Stop crawling pending job</title>
 
           <para>If the crawler is running the option to start it is afforded.
           If it is already running the option to stop is provided.</para>
@@ -2779,7 +2807,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <sect4>
           <title>Frontier report</title>
 
-          <para>A report on the internal state of the frontier.Can be unweildy
+          <para>A report on the internal state of the frontier.Can be unwieldy
           in size or the amount of time/memory it takes to compose in large
           crawls (with thousands of hosts with pending URIs).</para>
         </sect4>
@@ -3517,7 +3545,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         Heritrix (It usually has more than one ARC open at a time).</para>
 
         <para id="invalid">Files with a <literal>.invalid</literal> are files
-        Heritrix had trouble writing to (Disk full, bad disk, etc.).  On IOException,
+        Heritrix had trouble writing to (Disk full, bad disk, etc.). 
+        On IOException,
         Heritrix closes the problematic ARC and gives it the
         <literal>.invalid</literal> suffix. These files need to be
         checked for coherence.</para>
@@ -3812,7 +3841,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <glossterm>Frontier</glossterm>
 
         <glossdef>
-          <para>A Frontier is a plug-able module in Heritrix that maintains
+          <para>A Frontier is a pluggable module in Heritrix that maintains
           the internal state of the crawl. See <xref
           linkend="frontier" />.</para>
         </glossdef>
