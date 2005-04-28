@@ -86,7 +86,7 @@
     <faq id="midfetch">
       <question>I only want to download <code>text/html</code> and nothing else.  Can I do it?</question>
       <answer>Tom Emerson describes one technique here, 
-      <a href="http://www.dreamersrealm.net/~tree/blog/?s=text%2Fhtml&submit=GO">Focusing on HTML</a>.</answer>
+      <a href="http://www.dreamersrealm.net/~tree/blog/?s=text%2Fhtml&amp;submit=GO">Focusing on HTML</a>.</answer>
       <answer>You can also add a filter that excludes all filters that end
       in other than 'html|htm', etc., or, if you want to instead
       look at document mimetypes, you can Add a 
