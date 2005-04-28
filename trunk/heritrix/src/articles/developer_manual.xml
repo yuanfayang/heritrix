@@ -80,15 +80,17 @@
       the binary and setup of your maven environment.</para>
 
       <para>In addition to the base maven build, you will need to add the
-      maven sdocbook plugin which can be found on <ulink
-      url="http://sourceforge.net/projects/maven-plugins/">this page</ulink>.
+      maven sdocbook plugin which can be found at
+      <ulink
+      url="http://maven-plugins.sourceforge.net/maven-sdocbook-plugin/downloads.html">this page</ulink>.
       Be careful. Do not confuse the 'sdocbook' plugin with the similarly
       named 'docbook' plugin. This latter converts docbook to xdocs where
-      what's wanted is the former, which converts docbook xml to html. This
+      what's wanted is the former, convert docbook xml to html. This
       'sdocbook' plugin is used to generate the user
 	and developer documentation.</para> 
-	<para>Download the plugin jar -- currently its called 
-    maven-sdocbook-plugin-1.4-SNAPSHOT.jar --
+
+	<para>Download the plugin jar -- currently, as of this writing, its
+    maven-sdocbook-plugin-1.4.1.jar --
     and put it into your maven repository plugins directory, usually      
                at <literal>${MAVEN_HOME}/plugins/</literal> (in earlier
                versions of maven, pre 1.0.2, plugins are at
@@ -113,7 +115,8 @@
                </para>
 
 
-      <para>To build a CVS source checkout with Maven:<programlisting>% cd CVS_CHECKOUT_DIR 
+      <para>To build a CVS source checkout
+      with Maven:<programlisting>% cd CVS_CHECKOUT_DIR 
 % $MAVEN_HOME/bin/maven dist</programlisting>In the target/distribution
       subdir, you will find packaged source and binary builds. Run
       $MAVEN_HOME/bin/maven -g for other Maven possibilities.</para>
@@ -130,7 +133,7 @@
       <title>Eclipse</title>
 
       <para>The development team uses Eclipse as the development environment.
-      This is of course optional, but for those who want to use Eclipse you
+      This is of course optional, but for those who want to use Eclipse, you
       can, at the head of the CVS tree, find Eclipse
       <emphasis>.project</emphasis> and <emphasis>.classpath</emphasis>
       configuration files that should make integrating the CVS checkout into
@@ -178,7 +181,7 @@
   <sect1 id="conventions">
     <title>Coding conventions</title>
 
-    <para>Heritrix baselines on SUN's Code Conventions for the Java™
+    <para>Heritrix baselines on SUN's Code Conventions for the Java
     Programming Language <xref linkend="sun_code_conventions" />. It'd be hard
     not to they say so little. They at least say <ulink
     url="http://java.sun.com/docs/codeconv/html/CodeConventions.doc3.html#313">maximum
@@ -292,7 +295,7 @@ ${package_declaration}</programlisting></para>
 
     <para>The rest of this document assumes you have a basic understanding of
     how to run a crawl (see: <xref linkend="heritrix_user_manual" />). Since
-    the crawler is written in the Java™ programming language, you also need a
+    the crawler is written in the Java programming language, you also need a
     fairly good understanding of Java.</para>
 
     <para>The crawler consists of <emphasis>core classes</emphasis> and
@@ -377,7 +380,7 @@ ${package_declaration}</programlisting></para>
       to the next Processor until the URI has been processed by all the
       Processors. A processor has the option of telling the URI to skip to a
       particular chain. Also if a processor throws a fatal error, the
-      processing skipps to the Post-processing chain.</para>
+      processing skips to the Post-processing chain.</para>
 
       <figure id="processor_chains">
         <title>Processor chains</title>
@@ -395,13 +398,13 @@ ${package_declaration}</programlisting></para>
       <sect3>
         <title>Pre-fetch processing chain</title>
 
-        <para>The first chain is responsible for investigate if the URI could
+        <para>The first chain is responsible for investigating if the URI could
         be crawled at this point. That includes checking if all preconditions
         are met (DNS-lookup, fetching robots.txt, authentication). It is also
         possible to completely block the crawling of URIs that have passed
         through the scope check.</para>
 
-        <para>In the <literal>Pre Processing</literal> chain the following two
+        <para>In the <literal>Pre-Processing</literal> chain the following two
         processors should be included (or replacement modules that perform
         similar operations):<itemizedlist>
             <listitem>
@@ -484,7 +487,7 @@ ${package_declaration}</programlisting></para>
     <title>Settings</title>
 
     <para>The settings framework is designed to be a flexible way to configure
-    a crawl with special treatment for subparts of the web without adding to
+    a crawl with special treatment for subparts of the web without adding too
     much performance overhead. If you want to write a module which should be
     configurable through the user interface, it is important to have a basic
     understanding of the Settings framework (for the impatient, have a look at
@@ -492,12 +495,13 @@ ${package_declaration}</programlisting></para>
     settings framework is a way to keep persistent, context sensitive
     configuration settings for any class in the crawler.</para>
 
-    <para>All classes in the crawler that has configurable settings subclasses
+    <para>All classes in the crawler that have configurable settings,
+    subclass
     <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html">ComplexType</ulink>
     or one of its descendants. The ComplexType implements the
     javax.management.DynamicMBean interface. This gives you a way to ask the
-    object for what attributes it supports and standard methods for getting
+    object for what attributes it supports the standard methods for getting
     and setting these attributes.</para>
 
     <para>The entry point into the settings framework is the <ulink
@@ -522,7 +526,7 @@ ${package_declaration}</programlisting></para>
       hierarchy is built by <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/CrawlerSettings.html">CrawlerSettings</ulink>
       objects. On the top there is a settings object representing the global
-      settings. This consist of all the settings that a crawl job needs for
+      settings. This consists of all the settings that a crawl job needs for
       running. Beneath this global object there is one "per" settings object
       for each host/domain which has settings that should override the order
       for that particular host or domain.</para>
@@ -530,7 +534,7 @@ ${package_declaration}</programlisting></para>
       <para>When the settings framework is asked for an attribute for a
       specific host, it will first try to see if this attribute is set for
       this particular host. If it is, the value will be returned. If not, it
-      will go up one level recursively until it eventually reach the order
+      will go up one level recursively until it eventually reaches the order
       object and returns the global value. If no value is set here either
       (normally it would be), a hard coded default value is returned.</para>
 
@@ -557,13 +561,14 @@ ${package_declaration}</programlisting></para>
       values are stored in an instance of DataContainer. The DataContainer is
       never accessed directly from user code. Instead the user accesses the
       attributes through methods in the ComplexType. The attributes are
-      accessed in different ways depending if it is from the user interface or
+      accessed in different ways depending on
+      if it is from the user interface or
       from inside a running crawl.</para>
 
       <para>When an attribute is accessed from the URI (either reading or
       writing) you want to make sure that you are editing the attribute in the
       right context. When trying to override an attribute, you don't want the
-      settings framework to traverse up to effective value for the attribute,
+      settings framework to traverse up to an effective value for the attribute,
       but instead want to know that the attribute is not set on this level. To
       achieve this, there is <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ComplexType.html#getLocalAttribute(org.archive.crawler.settings.CrawlerSettings,%20java.lang.String)">getLocalAttribute(CrawlerSettings
@@ -598,10 +603,10 @@ ${package_declaration}</programlisting></para>
         </mediaobject>
       </figure>
 
-      <para>The different attributes has a type. The allowed type all
-      subclasses the <ulink
+      <para>The different attributes each have a type. The allowed types all
+      subclass the <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/Type.html">Type</ulink>
-      class. There are tree main Types:</para>
+      class. There are tree main types:</para>
 
       <orderedlist>
         <listitem>
@@ -625,8 +630,9 @@ ${package_declaration}</programlisting></para>
 
         <para>The <ulink
         url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/SimpleType.html">SimpleType</ulink>
-        is mainly for representing Java™ wrappers for the Java™ primitive
-        types. In addition it also handles the java.util.Date type and a
+        is mainly for representing Java wrappers for the Java primitive
+        types. In addition it also handles the 
+        <literal>java.util.Date</literal> type and a
         special Heritrix <ulink
         url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/TextField.html">TextField</ulink>
         type. Overrides of a SimpleType must be of the same type as the
@@ -638,7 +644,7 @@ ${package_declaration}</programlisting></para>
 
         <para>The <ulink
         url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/ListType.html">ListType</ulink>
-        is further subclassed into versions for some of the wrapped Java™
+        is further subclassed into versions for some of the wrapped Java
         primitive types (<ulink
         url="http://crawler.archive.org/apidocs/org/archive/crawler/settings/DoubleList.html">DoubleList</ulink>,
         <ulink
@@ -725,20 +731,22 @@ ${package_declaration}</programlisting></para>
         substitute it with a hard coded one. This is for example the case with
         the Frontier. The name of the Frontier should always be the string
         "frontier". For this reason the Frontier interface that all
-        Frontiers should implement has a static variable:<programlisting>public static final String ATTR_NAME = "frontier";</programlisting>which
+        Frontiers should implement has a static variable:
+        <programlisting>public static final String ATTR_NAME = "frontier";</programlisting> which
         implementations of the Frontier use instead of the string argument
         submitted to the constructor. Here is the part of the default
-        Frontiers constructor that shows how this should be
-        done.<programlisting>public Frontier(String name) {
+        Frontiers' constructor that shows how this should be
+        done. <programlisting>public Frontier(String name) {
     //The 'name' of all frontiers should be the same (Frontier.ATTR_NAME)
     //therefore we'll ignore the supplied parameter. 
-    super(Frontier.ATTR_NAME, "HostQueuesFrontier. \nMaintains the internal" +
+    super(Frontier.ATTR_NAME, "HostQueuesFrontier. Maintains the internal" +
         " state of the crawl. It dictates the order in which URIs" +
         " will be scheduled. \nThis frontier is mostly a breadth-first" +
         " frontier, which refrains from emitting more than one" +
         " CrawlURI of the same \'key\' (host) at once, and respects" +
         " minimum-delay and delay-factor specifications for" +
-        " politeness.");</programlisting>As shown in this example, the
+        " politeness.");</programlisting>
+        As shown in this example, the
         constructor must call the superclass's constructor. This example also
         shows how to set the description of a module. The description is used
         by the user interface to guide the user in configuring the crawl. If
@@ -774,12 +782,12 @@ private final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
 Type t;
 t = addElementToDefinition(
     new SimpleType(ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
-    "The maximum average bandwidth the crawler is allowed to use. \n" +
+    "The maximum average bandwidth the crawler is allowed to use. " +
     "The actual readspeed is not affected by this setting, it only " +
     "holds back new URIs from being processed when the bandwidth " +
     "usage has been to high.\n0 means no bandwidth limitation.",
     DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE));
-t.setOverrideable(false);</programlisting>Here we add an attribute definition
+t.setOverrideable(false);</programlisting> Here we add an attribute definition
         of the SimpleType (which is a subclass of Type). The SimpleType's
         constructor takes three arguments: name, description and a default
         value. Usually the name and default value are defined as constants
@@ -962,6 +970,15 @@ public class Foo extends ModuleType {
           </callout>
         </calloutlist></para>
 
+    <note>
+      <para>To make your module known to Heritrix, you need to make mention of
+      it in the appropriate <filename>src/conf/modules</filename> file: i.e.
+      if your module is a Processor, it needs to be mentioned in the 
+          <filename>Processor.options</filename> file.
+          The options files get built into the Heritrix jar.
+      </para>
+      </note>
+
       <para>If everything seems ok so far, then we are almost ready to write
       some real modules.</para>
     </sect2>
@@ -1046,11 +1063,8 @@ public class Foo extends ModuleType {
       <para>The CrawlURI offers a flexible attribute list which is used to
       keep arbitrary information about the URI while crawling. If you are
       going to write a processor you almost certainly will use the attribute
-      list. The attribute list is a key/value-pair list accessed by the
-      methods <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getAList()">getAList()</ulink>
-      and <ulink
-      url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#setAList(st.ata.util.AList)">setAList(st.ata.util.AList)</ulink>.
+      list. The attribute list is a key/value-pair list accessed by
+      typed accessors/setters.
       By convention the key values are picked from the <ulink
       url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CoreAttributeConstants.html">CoreAttributeConstants</ulink>
       interface which all processors implement. If you use other keys than
@@ -1084,7 +1098,8 @@ public class Foo extends ModuleType {
     internal state which in turn can be used for logging and reporting. Even
     though the responsibilities of the Frontier might not look overwhelming,
     it is one of the hardest modules to write well. You should really
-    investigate if your needs could not be met by the existing Frontier. With
+    investigate if your needs could not be met by the existing Frontier, or
+    at least mostly met by subclassing an existing Frontier. With
     these warnings in mind, let's go ahead and create a really simple
     Frontier.</para>
 
@@ -1280,7 +1295,9 @@ public class MyFrontier extends ModuleType implements Frontier,
     <para><note>
         <para>To test this new Frontier you must add it to the classpath. Then
         to let the user interface be aware of it, you must add the fully
-        qualified classname to the frontier.options file in the conf/modules
+        qualified classname to the 
+        <filename>Frontier.options</filename> file in the 
+        <literal>conf/modules</literal>
         directory.</para>
       </note></para>
 
@@ -1390,7 +1407,7 @@ public class MyFrontier extends ModuleType implements Frontier,
 
         <callout arearefs="frontierNextEx_wait" id="frontierNextEx_txt_wait">
           <para>In this simple example, we are not being aware of the fact
-          that Heritrix is multi threaded. We just let the method wait the
+          that Heritrix is multithreaded. We just let the method wait the
           timeout time and the return null if no URIs where ready. The
           intention of the timeout is that if no URI could be handed out at
           this time, we should wait the timeout before returning null. But if
@@ -1579,7 +1596,7 @@ public class MyFrontier extends ModuleType implements Frontier,
     not provide a extensive example of how to create a filter at this point.
     It should be pretty easy though to follow the directions in the
     javadoc. For your filter to show in the application interface, you'll need
-    to edit <filename>src/conf/modules/filters.options</filename></para>
+    to edit <filename>src/conf/modules/Filter.options</filename></para>
 
   </sect1>
 
@@ -1768,7 +1785,10 @@ public class MyFrontier extends ModuleType implements Frontier,
           <para><ulink
           url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CrawlURI.html#getAList()">getAlist()</ulink></para>
 
-          <para>This method returns the CrawlURI's 'AList'. The AList is
+          <para>This method returns the CrawlURI's 'AList'. 
+          <note><para><literal>getAlist()</literal> has been deprecated.
+          Use the typed accessors/setters instead.</para></note>
+          The AList is
           basically a hash map. It is used instead of the Java HashMap or
           Hashtable because it is more efficient (especially when it comes to
           serializing it). It also has typed methods for adding and getting
@@ -1854,10 +1874,6 @@ public class MyFrontier extends ModuleType implements Frontier,
           url="http://crawler.archive.org/apidocs/org/archive/crawler/datamodel/CoreAttributeConstants.html">Javadoc</ulink>
           for CoreAttributeConstants for more.</para>
 
-          <note>
-            <para>The AList may be subject to API changes. See <xref
-            linkend="alist" />.</para>
-          </note>
         </listitem>
 
         <listitem>
@@ -2176,7 +2192,8 @@ public class SimpleExtractor extends Processor
     information is gathered passively) simply implement the run() method as an
     empty method.<note>
         <para>For new statistics tracking modules to be available in the web
-        user interface their class name must be added to the tracker.options
+        user interface their class name must be added to the
+        <filename>StatisticsTracking.options</filename>
         file under the conf/modules directory. The classes' full name (with
         package info) should be written in its own line, followed by a '|' and
         a descriptive name (containing only [a-z,A-z]).</para>
@@ -2364,31 +2381,6 @@ public class SimpleExtractor extends Processor
     <para>This appendix lists issues in the API that needs investigation and
     eventually changes to be made. Read this so that you could avoid locking
     yourself to dependencies that is likely to change.</para>
-
-    <sect1 id="alist">
-      <title>The org.archive.crawler.datamodel.CrawlURI class</title>
-
-      <para>The attribute list of the CrawlURI, manipulated trough the
-      getAList() and setAList(st.ata.util.AList) methods, might change. These
-      methods gives directly access to an implementation of st.ata.util.AList.
-      Two changes are possible:</para>
-
-      <orderedlist>
-        <listitem>
-          <para>Convenience methods for setting and getting elements in the
-          AList could be added to the CrawlURI.</para>
-        </listitem>
-
-        <listitem>
-          <para>The Alist could be moved somewhere into the org.archive
-          package tree.</para>
-        </listitem>
-      </orderedlist>
-
-      <para>The Alist is an import part of many modules. It is therefore not
-      possible to avoid changes to modules if the API is changed in any of the
-      ways described.</para>
-    </sect1>
 
     <sect1 id="refactor_HTTPRecorder">
       <title>The org.archive.util.HTTPRecorder class</title>
@@ -2614,7 +2606,7 @@ public class SimpleExtractor extends Processor
 
       <title><ulink
       url="http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html">Code
-      Conventions for the Java™ Programming Language</ulink></title>
+      Conventions for the Java Programming Language</ulink></title>
 
       <publisher>
         <publishername>Sun Microsystems, Inc.</publishername>
