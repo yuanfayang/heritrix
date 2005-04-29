@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<cruisecontrol>
+  <project name="HEAD-heritrix" buildafterfailed="true">
+    <!--Bootstrappers are run every time the build runs, *before* the
+        modification checks
+     -->
+    <bootstrappers>
+      <currentbuildstatusbootstrapper 
+        file="logs/HEAD-heritrix/buildstatus.txt"/>
+    </bootstrappers>
+    <modificationset quietperiod="60" >
+      <cvs localworkingcopy="checkout/HEAD-heritrix"/>
+    </modificationset>
+    <schedule interval="300" >
+      <ant buildfile="build-HEAD-heritrix.xml" 
+        target="build" 
+        uselogger="true" 
+        usedebug="true"/>
+    </schedule>
+
+    <log dir="logs/HEAD-heritrix">
+      <merge dir="checkout/HEAD-heritrix/target/test-reports/"/>
+    </log>
+
+    <!--Publishers are run *after* a build completes.-->
+    <publishers>
+      <currentbuildstatuspublisher 
+        file="logs/HEAD-heritrix/buildstatus.txt"/>
+      <artifactspublisher 
+        dir="checkout/HEAD-heritrix/target/distributions" 
+        dest="artifacts/HEAD-heritrix"/>
+      <artifactspublisher 
+        file="checkout/HEAD-heritrix/target/heritrix.war"
+        dest="artifacts/HEAD-heritrix"/>
+      <htmlemail mailhost="mail-dev.archive.org" 
+        returnaddress="stack@archive.org" 
+        defaultsuffix="@archive.org" 
+        buildresultsurl="http://crawltools.archive.org:8080/cruisecontrol/buildresults/HEAD-heritrix" 
+        css="/0/cruisecontrol/bin/cruisecontrol/reporting/jsp/css/cruisecontrol.css"    xsldir="/0/cruisecontrol/bin/cruisecontrol/reporting/jsp/xsl" 
+        logdir="logs/HEAD-heritrix">
+        <always address="buildmasters"/>
+        <failure address="buildmasters"/>
+        <map alias="buildmasters" 
+            address="stack@archive.org gojomo@archive.org"/>
+      </htmlemail>
+    </publishers>
+    <!-- External cruise "plugins" used by this project (none needed) -->
+    <plugin name="artifactspublisher" 
+       classname="net.sourceforge.cruisecontrol.publishers.ArtifactsPublisher"/>
+  </project>
+
+  <project name="BRANCH-heritrix_1_0" buildafterfailed="true">
+    <!--Bootstrappers are run every time the build runs, *before* the
+        modification checks
+     -->
+    <bootstrappers>
+      <currentbuildstatusbootstrapper 
+        file="logs/BRANCH-heritrix_1_0/buildstatus.txt"/>
+    </bootstrappers>
+    <modificationset quietperiod="60" >
+      <cvs 
+        localworkingcopy="checkout/BRANCH-heritrix_1_0" tag="heritrix_1_0"/>
+    </modificationset>
+    <schedule interval="300" >
+      <ant buildfile="build-BRANCH-heritrix_1_0.xml" 
+        target="build" 
+        uselogger="true" 
+        usedebug="true"/>
+    </schedule>
+
+    <log dir="logs/BRANCH-heritrix_1_0">
+      <merge dir="checkout/BRANCH-heritrix_1_0/target/test-reports/"/>
+    </log>
+
+    <!--Publishers are run *after* a build completes.-->
+    <publishers>
+      <currentbuildstatuspublisher 
+        file="logs/BRANCH-heritrix_1_0/buildstatus.txt"/>
+      <artifactspublisher 
+        dir="checkout/BRANCH-heritrix_1_0/target/distributions" 
+        dest="artifacts/BRANCH-heritrix_1_0"/>
+      <htmlemail mailhost="mail-dev.archive.org" 
+        returnaddress="stack@archive.org" 
+        defaultsuffix="@archive.org" 
+        buildresultsurl="http://crawltools.archive.org:8080/cruisecontrol/buildresults/BRANCH-heritrix_1_0" 
+        css="/0/cruisecontrol/bin/cruisecontrol/reporting/jsp/css/cruisecontrol.css"    xsldir="/0/cruisecontrol/bin/cruisecontrol/reporting/jsp/xsl" 
+        logdir="logs/BRANCH-heritrix_1_0">
+        <always address="buildmasters"/>
+        <failure address="buildmasters"/>
+        <map alias="buildmasters" 
+            address="stack@archive.org gojomo@archive.org"/>
+      </htmlemail>
+    </publishers>
+    <!-- External cruise "plugins" used by this project (none needed) -->
+    <plugin name="artifactspublisher" 
+       classname="net.sourceforge.cruisecontrol.publishers.ArtifactsPublisher"/>
+  </project>
+</cruisecontrol>
