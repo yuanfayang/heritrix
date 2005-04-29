@@ -2547,7 +2547,8 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Tag the CVS repository: % cvs -q tag heritrix-?_?_?</para>
+        <para>Tag the CVS repository (Add the '-b' flag if 
+        not a bugfix release): % cvs -q tag heritrix-?_?_?</para>
       </listitem>
 
       <listitem>
