@@ -63,9 +63,16 @@
       page</ulink>, or via CVS checkout from cvs.sourceforge.net. See the
       crawler <ulink
       url="http://sourceforge.net/cvs/?group_id=73833">sourceforge cvs
-      page</ulink> for how to fetch from CVS (Note, anonymous access does not
+      page</ulink> for how to fetch from CVS. The <literal>Module Name</literal>
+      name to use checking out heritrix is
+      <literal>ArchiveOpenCrawler</literal>, the name Heritrix had before it
+      was called Heritrix.
+      </para>
+      <note><para>Note, anonymous access does not
       give you the current HEAD but a snapshot that can some times be up to 24
-      hours behind HEAD). The packaged binary is named heritrix-?.?.?.tar.gz
+      hours behind HEAD.</para>
+      </note>
+      <para>The packaged binary is named heritrix-?.?.?.tar.gz
       (or heritrix-?.?.?.zip) and the packaged source is named
       heritrix-?.?.?-src.tar.gz (or heritrix-?.?.?-src.zip) where ?.?.? is the
       heritrix release version.</para>
