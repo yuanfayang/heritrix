@@ -252,7 +252,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             + " complete header, e.g., 'Accept-Language: en'"));
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_HTTP_PROXY_HOST,
-            "Proxy hostname (set only if needed)", ""));
+            "Proxy host IP (set only if needed).", ""));
         e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_HTTP_PROXY_PORT,
             "Proxy port (set only if needed)", ""));
