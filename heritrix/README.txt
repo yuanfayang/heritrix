@@ -87,14 +87,14 @@ distribution, see below in section '8.0 Dependencies'.
 8.0 Dependencies
 
 8.1. bdb
-Version: 1.5.3
+Version: 1.7.1
 Url: http://www.sleepycat.com/products/je.shtml
 Description: Berkeley DB Java Edition. Copyright (c) 1990-2004 Sleepycat
 Software. All rights reserved. See above link for how to obtain source.
 License: http://www.sleepycat.com/download/jeoslicense.html
 
 8.2. commons-httpclient
-Version: 3.0-alpha2
+Version: 3.0-beta1
 Url: http://jakarta.apache.org/commons/httpclient/
 Description: This package is used for fetching URIs via http.
 License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0
@@ -102,14 +102,14 @@ License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0
 8.3. commons-logging
 Version: 1.0.4
 Url: http://jakarta.apache.org/commons/logging.html
-Description: Provides logging adapters.
+Description: Provides logging adapters. 
 License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0
 
 8.4. commons-codec
 Version: 1.3
 Url: http://jakarta.apache.org/commons/codec/
-Description: Commons Codec provides implementations of common encoders
-and decoders such as Base64, Hex, various phonetic encodings, and URLs.
+Description: Commons Codec provides implementations of common encoders and
+decoders such as Base64, Hex, various phonetic encodings, and URLs.
 License: Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0
 
 8.5. dnsjava
@@ -119,7 +119,7 @@ Description: DNS Lookups.
 License: BSD
 
 8.6. jetty
-Version: 4.2.21
+Version: 4.2.23
 Url: http://jetty.mortbay.com/jetty/
 Description: The Jetty servlet container.
 License: Jetty license, http://jetty.mortbay.org/jetty/LICENSE.html
@@ -171,39 +171,39 @@ License: Apache 1.1 http://www.apache.org/LICENSE.txt
 Version: 
 Url: http://www.anotherbigidea.com/javaswf
 Description: JavaSWF2 is a set of Java packages that enable the parsing,
-manipulation and generation of the Macromedia Flash(TM) file format
-known as SWF ("swiff"). Added jar was made by unzipping
-javaswf-CVS-SNAPSHOT-1.zip download, compiling the java classes therein,
-and then making a jar of the product.
+manipulation and generation of the Macromedia Flash(TM) file format known as
+SWF ("swiff"). Added jar was made by unzipping javaswf-CVS-SNAPSHOT-1.zip
+download, compiling the java classes therein, and then making a jar of the
+product.
 License: The JavaSWF BSD License, http://anotherbigidea.com/javaswf/JavaSWF2-BSD.LICENSE.html
 
 8.15. itext
-Version: 1.0
-Url: http://www.lowagie.com/iText/
-Description: A library for parsing PDF files.
-License: MPL and LGPL
+version: 1.2
+url: http://www.lowagie.com/iText/
+truedescription: A library for parsing PDF files.
+license: MPL (http://www.lowagie.com/iText/MPL-1.1.txt)
 
 8.16. ant
-Version: 1.5.4
+Version: 1.6.2
 Url: http://ant.apache.org
-Description: Build tool. An ant task is used to compile the jspc pages
-at build time and then for the selftest at runtime.
+Description: Build tool. An ant task is used to compile the jspc pages at
+build time and then for the selftest at runtime.
 License: Apache 1.1. http://ant.apache.org/license.html
 
 8.17. junit
 Version: 3.8.1
 Url: http://www.junit.org/
-Description: A framework for implimenting the unit testing methology.
+Description: A framework for implimenting the unit testing methology. 
 License: IBM's Common Public License Version 0.5.
 
 8.18. commons-pool
-Version: 1.1
+Version: 1.2
 Url: http://jakarta.apache.org/site/binindex.cgi#commons-pool
 Description: For object pooling.
 License: Apache 1.1 http://www.apache.org/LICENSE.txt
 
 8.19. commons-collections
-Version: 2.1
+Version: 3.1
 Url: http://jakarta.apache.org/site/binindex.cgi#commons-collections
 Description: Needed by commons-pool.
 License: Apache 1.1 http://www.apache.org/LICENSE.txt
@@ -223,9 +223,20 @@ License: Public Domain
 8.22. commons-net
 Version: 1.1.0
 Url: http://jakarta.apache.org/commons/net/
-Description: This is an Internet protocol suite Java library originally
-developed by ORO, Inc. This version supports Finger, Whois, TFTP,
-Telnet, POP3, FTP, NNTP, SMTP, and some miscellaneous protocols like
-Time and Echo as well as BSD R command support. Heritrix uses its FTP
-implementation.
+Description: This is an Internet protocol suite Java library originally 
+developed by ORO, Inc. This version supports Finger, Whois, TFTP, Telnet,
+POP3, FTP, NNTP, SMTP, and some miscellaneous protocols like Time and Echo as
+well as BSD R command support. Heritrix uses its FTP implementation.
 License: Apache 1.1 http://www.apache.org/LICENSE.txt
+
+8.23. dsi-unimi-it
+Version: 0.9.1
+Url: http://mg4j.dsi.unimi.it/
+Description: This JAR supplies alternatives to String, StringBuffer, and
+unsynchronized I/0. This JAR was made from subsets of mg4j-0.9.1 and from
+fastutil-4.4.0 -- two jars that came out of the ubicrawler project,
+http://ubi0.iit.cnr.it/projects/ubi/ -- using autojar. Here is how I made this
+jar: % java -jar autojar-1.2.2/autojar-1.2.2.jar -v -o \
+    dsi.unimi.it-mg4j-0.9.1_fastutil-4.4.0.jar -c \
+    mg4j-0.9.1/mg4j-0.9.1.jar:fastutil-4.4.0/fastutil-4.4.0.jar it.unimi.dsi.mg4j.util.MutableString.class it.unimi.dsi.mg4j.io.FastBufferedInputStream.class it.unimi.dsi.mg4j.io.FastBufferedOutputStream.class it.unimi.dsi.mg4j.io.FastBufferedReader.class it.unimi.dsi.mg4j.io.FastByteArrayInputStream.class it.unimi.dsi.mg4j.io.FastByteArrayOutputStream.class it.unimi.dsi.mg4j.io.FastMultiByteArrayInputStream.class
+License: Both MG4J and fastutils are LGPL

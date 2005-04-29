@@ -43,6 +43,16 @@
         <p>See the <a href="articles/user_manual.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+
+    <subsection name="Release 1.4.0 04/28/2005">
+      <p>Much improved memory usage, new experimental
+      scoping/filter model, and a new revisiting frontier.
+      Over 90 bugs fixed. See
+        <a href="articles/releasenotes.html#1_4_0">Heritrix Release Notes</a> 
+        for detail and <a href="articles/releasenotes.html#1-4_0_limitations">Known Limitations</a>: e.g. You cannot use your old order files with the new
+            release.</p>
+    </subsection>
+
     <subsection name="Release 1.2.0 11/16/2004">
         <p>Added IP-based politeness, configurable URI-canonicalization,
         and mid-fetch abort.  Lots of Bug fixes.  See
