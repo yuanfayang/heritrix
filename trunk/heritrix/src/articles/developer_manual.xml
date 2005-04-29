@@ -2486,7 +2486,8 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Update xdocs/changes.xml with bugs and RFEs closed since last
+        <para>Update releasenotes.xml
+       bugs and RFEs closed since last
         release (Looking at CVS history to figure what's changed is too
         hard; All major changes should have associated BUG and RFE).</para>
       </listitem>
