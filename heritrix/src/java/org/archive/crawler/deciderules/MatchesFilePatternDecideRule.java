@@ -45,16 +45,17 @@ public class MatchesFilePatternDecideRule extends MatchesRegExpDecideRule {
     private static final Logger logger =
         Logger.getLogger(MatchesFilePatternDecideRule.class.getName());
     public static final String ATTR_USE_PRESET = "use-preset-pattern";
-    public static final String IMAGES_PATTERNS = ".*(?i)(\\.(bmp|gif|jpe?g" +
-        "|png|tiff?))$";
-    public static final String AUDIO_PATTERNS = ".*(?i)(\\.(mid|mp2|mp3|mp4" +
-        "|wav))$";
-    public static final String VIDEO_PATTERNS = ".*(?i)(\\.(avi|mov|mpeg|ram" +
-        "|rm|smil|wmv))$";
-    public static final String MISC_PATTERNS = ".*(?i)(\\.(doc|pdf|ppt|swf))$";
-    public static final String ALL_DEFAULT_PATTERNS = ".*(?i)(\\.(bmp|gif" +
-        "|jpe?g|png|tiff?|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|rm|smil|wmv" +
-        "|doc|pdf|ppt|swf))$";
+    public static final String IMAGES_PATTERNS = 
+        ".*(?i)(\\.(bmp|gif|jpe?g|png|tiff?))$";
+    public static final String AUDIO_PATTERNS = 
+        ".*(?i)(\\.(mid|mp2|mp3|mp4|wav))$";
+    public static final String VIDEO_PATTERNS = 
+        ".*(?i)(\\.(avi|mov|mpeg|ram|rm|smil|wmv))$";
+    public static final String MISC_PATTERNS = 
+        ".*(?i)(\\.(doc|pdf|ppt|swf))$";
+    public static final String ALL_DEFAULT_PATTERNS = 
+        ".*(?i)(\\.(bmp|gif|jpe?g|png|tiff?|mid|mp2|mp3|mp4|wav|avi|mov|mpeg" +
+        "|ram|rm|smil|wmv|doc|pdf|ppt|swf))$";
 
     public static final String ALL = "All";
     public static final String IMAGES = "Images";

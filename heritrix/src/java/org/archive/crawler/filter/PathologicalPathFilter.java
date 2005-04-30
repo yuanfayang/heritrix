@@ -50,7 +50,7 @@ public class PathologicalPathFilter extends URIRegExpFilter {
 
     public static final Integer DEFAULT_REPETITIONS = new Integer(3);
     
-    private final String REGEX_PREFIX = ".*/(.*/)\\1{";
+    private final String REGEX_PREFIX = ".*?/(.*?/)\\1{";
     private final String REGEX_SUFFIX = ",}.*";
 
     /** Constructs a new PathologicalPathFilter.
