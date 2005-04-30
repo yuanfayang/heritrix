@@ -104,7 +104,7 @@ public class PathologicalPathDecideRule extends MatchesRegExpDecideRule {
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
         }
-        return (rep == 0) ? null : ".*/(.*/)\\1{" + rep + ",}.*";
+        return (rep == 0) ? null : ".*?/(.*?/)\\1{" + rep + ",}.*";
     }
     
     
