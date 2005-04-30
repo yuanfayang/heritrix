@@ -49,6 +49,7 @@ implements BigMap {
     }
     
     public void clear() {
+        super.clear();
         // Close out my bdb db.
         if (this.db != null) {
             try {
