@@ -103,24 +103,7 @@
         <url>http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler</url>
     </repository>
 
-    <versions>
-        <version>
-            <id>0.4.1</id>
-            <name>0.4.0</name>
-            <tag>heritrix-0_4_1</tag>
-        </version>
-        <version>
-            <id>0.4.0</id>
-            <name>0.4.0</name>
-            <tag>heritrix-0_4_0</tag>
-        </version>
-        <version>
-            <id>0.2.0</id>
-            <name>0.2.0</name>
-            <tag>heritrix-0_2_0</tag>
-        </version>
-    </versions>
-  
+    <versions />
 
     <!-- any mailing lists for the project -->
     <mailingLists>
