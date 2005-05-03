@@ -221,7 +221,10 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
                 seeks++;
             }
         }
-        logger.info(rcs + " seeks count " + seeks + " in " +
+        // Note that printing out below breaks cruisecontrols drawing
+        // of the xml unit test results because it outputs disallowed
+        // xml characters.
+        logger.fine(rcs + " seeks count " + seeks + " in " +
             ((new Date().getTime()) - timestamp) + " milliseconds.");
     }
 
