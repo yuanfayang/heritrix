@@ -96,7 +96,9 @@ extends Filter {
             return (String) getAttribute(o, ATTR_REGEXP);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
-            return null;  // Basically the filter is inactive if this occurs.
+            // Basically the filter is inactive if this occurs
+            // (The caller should be returning false when regexp is null).
+            return null;  
         }
     }
 

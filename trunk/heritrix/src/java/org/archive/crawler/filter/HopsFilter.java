@@ -87,7 +87,8 @@ public class HopsFilter extends Filter {
                         .intValue();
             } catch (AttributeNotFoundException e) {
                 logger.severe(e.getMessage());
-                return true; // Basically the filter is inactive if this occurs.
+                // Basically, true means the filter is PASSing this URI.
+                return true; 
             }
         }
 
