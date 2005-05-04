@@ -411,7 +411,7 @@ ${package_declaration}</programlisting></para>
         possible to completely block the crawling of URIs that have passed
         through the scope check.</para>
 
-        <para>In the <literal>Pre-Processing</literal> chain the following two
+        <para>In the <literal>Pre-fetch processing</literal> chain the following two
         processors should be included (or replacement modules that perform
         similar operations):<itemizedlist>
             <listitem>
