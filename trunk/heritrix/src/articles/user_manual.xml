@@ -1147,15 +1147,17 @@
           specified intervals for each host.</para>
 
           <para>The main difference between the BdbFrontier and its precursor,
-          <xref linkend="hqf" />, is that its queues are disk-based rather
-          than memory-based.</para>
+          <xref linkend="hqf" />, is that BdbFrontier uses BerkeleyDB Java
+          Edition to shift more running Frontier state to disk.</para>
         </sect4>
 
         <sect4 id="hqf">
           <title>HostQueuesFrontier</title>
 
           <para>The forerunner of the <xref linkend="bdbfrontier" />. Now
-          deprecated mostly because it kept queues in memory. Has same general
+          deprecated mostly because its custom disk-based data structures
+          could not move as much Frontier state out of main memory as the
+          BerkeleyDB Java Edition approach. Has same general
           characteristics as the <xref linkend="bdbfrontier" />.</para>
         </sect4>
 
