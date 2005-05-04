@@ -196,6 +196,14 @@
          <url>http://www.archive.org</url>
          <timezone>-8</timezone>
     </developer>
+    <developer>
+        <name>Karl Thiessen</name>
+        <id>karl</id>
+        <email>karl at archive dot org</email>
+         <organization>Internet Archive</organization>
+         <url>http://www.archive.org</url>
+         <timezone>-8</timezone>
+    </developer>
   </developers>
 
   <contributors>
