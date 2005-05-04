@@ -12,6 +12,23 @@
     </authorgroup>
   </articleinfo>
 
+  <sect1 id="1_6_0">
+    <title>Release 1.6.0 - NOT YET RELEASED</title>
+    <abstract>
+      <para>TODO</para>
+    </abstract>
+
+    <sect2 id="1_6_0_limitations">
+      <title>Known Limitations/Issues</title>
+      <sect3 id="bdb_nfs"><title>java.io.IOException: No locks available</title>
+        <para>Bdb will complain 'No locks available' when crawler is being
+        built/run on an NFS mount. Workaround is not run on an NFS-mounted
+        volume.
+        </para>
+        </sect3>
+    </sect2>
+    </sect1>
+
   <sect1 id="1_4_0">
     <title>Release 1.4.0 - 04/28/2005</title>
     <abstract>
