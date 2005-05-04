@@ -138,6 +138,10 @@ public class CrawlJob {
 
     // Checkpoint to resume
     private Checkpoint resumeFrom = null;
+    
+    public CrawlJob() {
+        super();
+    }
 
     /**
      * A constructor for jobs.
@@ -216,6 +220,9 @@ public class CrawlJob {
     protected CrawlJob(File jobFile, CrawlJobErrorHandler errorHandler)
             throws InvalidJobFileException, IOException {
         this.errorHandler = errorHandler;
+        
+        jobDir = jobFile.getParentFile();
+        
         // Open file
         // Read data and set up class variables accordingly...
         BufferedReader jobReader =
@@ -287,7 +294,9 @@ public class CrawlJob {
         // settingsHandler
         tmp = jobReader.readLine();
         try {
-            settingsHandler = new XMLSettingsHandler(new File(tmp));
+            File f = new File(tmp);
+            settingsHandler = new XMLSettingsHandler((f.isAbsolute())?
+                f: new File(jobDir, f.getName()));
             if(this.errorHandler != null){
                 settingsHandler.registerValueErrorHandler(errorHandler);
             }
@@ -311,7 +320,6 @@ public class CrawlJob {
             // Empty error message should be null
             errorMessage = null;
         }
-        jobDir = jobFile.getParentFile();
         // TODO: Load stattrack if needed.
 
         // TODO: This should be inside a finally block.
@@ -328,14 +336,22 @@ public class CrawlJob {
             return;
         }
         
+        final String jobDirAbsolute = jobDir.getAbsolutePath();
+
         FileWriter jobWriter = null;
         if (!jobDir.exists() || !jobDir.canWrite()) {
             logger.warning("Can't update status on " +
-                jobDir.getAbsolutePath() + " because file does not" +
+                jobDirAbsolute + " because file does not" +
                 " exist (or is unwriteable)");
             return;
         }
-        File f = new File(jobDir.getAbsolutePath(), "state.job");
+        File f = new File(jobDirAbsolute, "state.job");
+
+        String settingsFile = getSettingsDirectory();
+        // Make settingsFile's path relative if order.xml is somewhere in the job's directory tree
+        if(settingsFile.startsWith(jobDirAbsolute.concat(File.separator))) {
+            settingsFile = settingsFile.substring(jobDirAbsolute.length()+1);
+        }
         
         try {
             jobWriter = new FileWriter(f, false);
@@ -347,7 +363,7 @@ public class CrawlJob {
                 jobWriter.write(isRunning+"\n");
                 jobWriter.write(priority+"\n");
                 jobWriter.write(numberOfJournalEntries+"\n");
-                jobWriter.write(getSettingsDirectory()+"\n");
+                jobWriter.write(settingsFile+"\n");
                 jobWriter.write(statisticsFileSave+"\n");// TODO: Is this right?
                 // Can be multiple lines so we keep it last
                 jobWriter.write(errorMessage==null?"":errorMessage+"\n");
