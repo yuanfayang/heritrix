@@ -71,6 +71,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
     public static final String ATTR_LOG_REJECT_FILTERS =
         "scope-rejected-uri-log-filters";
     
+    public static final String ATTR_SCHEDULE_EMBEDDED_LINKS =
+        "schedule-embedded-links";
+    private final static Boolean DEFAULT_SCHEDULE_EMBEDDED_LINKS =
+        new Boolean(true);
+    
     /**
      * Instance of rejected uris log filters.
      */
@@ -80,27 +85,34 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param name Name of this filter.
      */
     public Postselector(String name) {
-        super(name, "Post selector. \nDetermines which extracted links and " +
+        super(name, "Post selector. Determines which extracted links and " +
                 "other related information gets fed back to the Frontier.");
         Type t;
-        t = addElementToDefinition(new SimpleType(ATTR_SEED_REDIRECTS_NEW_SEEDS,
+        t = addElementToDefinition(
+                new SimpleType(ATTR_SEED_REDIRECTS_NEW_SEEDS,
                 "If enabled, any URL found because a seed redirected to it " +
                 "(seed returned 301 or 302) will be treated as a seed.",
                 DEFAULT_SEED_REDIRECTS_NEW_SEEDS));
         t.setExpertSetting(true);
+        
         t = addElementToDefinition(new SimpleType(ATTR_LOG_REJECTS_ENABLED,
             "If enabled, all logging goes to a file named for this class in" +
             " the job log" +
-            " directory.\nSet the logging level in heritrix.properites." +
+            " directory. Set the logging level in heritrix.properites." +
             " Logging at level INFO will log URIs rejected by scope.",
             new Boolean(true)));
         t.setExpertSetting(true);
         this.rejectLogFilters = (MapType)addElementToDefinition(
             new MapType(ATTR_LOG_REJECT_FILTERS, "Filters applied after" +
-                " an URI has been rejected\n.  If any filter returns" +
+                " an URI has been rejected. If any filter returns" +
                " TRUE, the URI is logged if the logging level is INFO.",
             Filter.class));
         this.rejectLogFilters.setExpertSetting(true);
+        
+        t = addElementToDefinition(new SimpleType(ATTR_SCHEDULE_EMBEDDED_LINKS,
+            "If enabled, embeded links (images etc.) are scheduled for " +
+            "crawling.", DEFAULT_SCHEDULE_EMBEDDED_LINKS));
+        t.setExpertSetting(true);
     }
    
     protected void initialTasks() {
@@ -141,7 +153,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
     }
 
-    protected void innerProcess(CrawlURI curi) {
+    protected void innerProcess(final CrawlURI curi) {
         if (logger.isLoggable(Level.FINEST)) {
             logger.finest(getName() + " processing " + curi);
         }
@@ -157,41 +169,58 @@ implements CoreAttributeConstants, FetchStatusCodes {
             return;
         }
 
-        for (Iterator iter = curi.getOutLinks().iterator(); iter.hasNext();) {
-            Link wref = (Link)iter.next();
+        final boolean scheduleEmbeds = ((Boolean)getUncheckedAttribute(curi,
+            ATTR_SCHEDULE_EMBEDDED_LINKS)).booleanValue();
+        final boolean redirectsNewSeeds = ((Boolean)getUncheckedAttribute(curi,
+            ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue();
+            
+        for (final Iterator iter = curi.getOutLinks().iterator();
+                iter.hasNext();) {
+            final Link wref = (Link)iter.next();
             try {
-                CandidateURI caURI = createCandidateURI(curi, wref);
-                caURI.setSchedulingDirective(getSchedulingFor(wref));
-                caURI.setIsSeed(considerAsSeed(curi, wref));
-                schedule(caURI);
+                final int directive = getSchedulingFor(wref, scheduleEmbeds);
+                if(directive != CandidateURI.DONT_SCHEDULE) {
+                    final CandidateURI caURI = createCandidateURI(curi, wref);
+                    caURI.setSchedulingDirective(directive);
+                    caURI.setIsSeed(considerAsSeed(curi, wref,
+                        redirectsNewSeeds));
+                    schedule(caURI);
+                }
             } catch (URIException e) {
                 getController().logUriError(e,curi.getUURI(),wref.getDestination().toString());
             }
-            
         }
     }
     
-    private boolean considerAsSeed(CrawlURI curi, Link wref) {
+    private boolean considerAsSeed(final CrawlURI curi, final Link wref, final boolean redirectsNewSeeds) {
         // Check if this is a seed with a 301 or 302.
         if (curi.isSeed()
                 && (curi.getFetchStatus() == 301 || curi.getFetchStatus() == 302)
-                && wref.getHopType() == 'R') {
+                && wref.getHopType() == Link.REFER_HOP) {
+            
             // Check if redirects from seeds should be treated as seeds.
-            if (((Boolean) getUncheckedAttribute(curi,
-                    ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue()) {
+            if (redirectsNewSeeds) {
                 return true;
             }
         }
         return false;
     }
 
-    private int getSchedulingFor(Link wref) {
-        if(wref.getHopType()=='R') {
-            // treat redirects somewhat urgently
-            return CandidateURI.MEDIUM;
+    private int getSchedulingFor(final Link wref,
+            final boolean scheduleEmbeds) {
+        final char c = wref.getHopType();
+        switch (c) {
+            case Link.REFER_HOP:
+                // treat redirects somewhat urgently
+                return CandidateURI.MEDIUM;
+            case Link.EMBED_HOP:
+                if(!scheduleEmbeds) {
+                    return CandidateURI.DONT_SCHEDULE;
+                }
+            default:
+                // everything else normal (at least for now)
+                return CandidateURI.NORMAL;
         }
-        // everything else normal (at least for now)
-        return CandidateURI.NORMAL;
     }
 
     protected void handlePrerequisites(CrawlURI curi) {

@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.extractor.Link;
 import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.settings.SimpleType;
@@ -39,11 +40,12 @@ import org.archive.crawler.settings.SimpleType;
  * Roughly, its logic is captured in innerAccept(). A URI is 
  * included if:
  * <pre>
- *    ((isSeed(uri) 
- *       || focusAccepts(uri)) 
- *       || additionalFocusAccepts(uri) 
- *       || transitiveAccepts(uri))
- *     && !excludeAccepts(uri);</pre>
+ *    forceAccepts(uri)
+ *    || (((isSeed(uri) 
+ *         || focusAccepts(uri)) 
+ *         || additionalFocusAccepts(uri) 
+ *         || transitiveAccepts(uri))
+ *       && !excludeAccepts(uri));</pre>
  *
  * Subclasses should override focusAccepts, additionalFocusAccepts,
  * and transitiveAccepts. 
@@ -60,12 +62,14 @@ public class ClassicScope extends CrawlScope {
             .getName());
 
     public static final String ATTR_EXCLUDE_FILTER = "exclude-filter";
+    public static final String ATTR_FORCE_ACCEPT_FILTER = "force-accept-filter";
 
     public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
 
     public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 
     private OrFilter excludeFilter;
+    private OrFilter forceAcceptFilter;
 
     /**
      * @param name
@@ -85,13 +89,17 @@ public class ClassicScope extends CrawlScope {
             "in-focus site. (Such determination does not preclude later " +
             " inclusion if a shorter path is later discovered.)", 
             new Integer(5)));
-        this.excludeFilter = (OrFilter) addElementToDefinition(new OrFilter(
-                ATTR_EXCLUDE_FILTER));
+        this.excludeFilter = (OrFilter)addElementToDefinition(new OrFilter(
+            ATTR_EXCLUDE_FILTER));
+        this.forceAcceptFilter = (OrFilter)addElementToDefinition(
+            new OrFilter(ATTR_FORCE_ACCEPT_FILTER));
+        this.forceAcceptFilter.setExpertSetting(true);
 
         // Try to preserve the values of these attributes when we exchange
         // scopes.
         setPreservedFields(new String[] { ATTR_SEEDS, ATTR_MAX_LINK_HOPS,
-                ATTR_MAX_TRANS_HOPS, ATTR_EXCLUDE_FILTER });
+            ATTR_MAX_TRANS_HOPS, ATTR_EXCLUDE_FILTER,
+            ATTR_FORCE_ACCEPT_FILTER });
     }
 
     /**
@@ -111,8 +119,9 @@ public class ClassicScope extends CrawlScope {
      *         this scope.
      */
     protected final boolean innerAccepts(Object o) {
-        return ((isSeed(o) || focusAccepts(o)) || additionalFocusAccepts(o) ||
-                transitiveAccepts(o)) && !excludeAccepts(o);
+        return forceAccepts(o) || (((isSeed(o) || focusAccepts(o)) ||
+            additionalFocusAccepts(o) || transitiveAccepts(o)) &&
+            !excludeAccepts(o));
     }
 
     /**
@@ -137,6 +146,14 @@ public class ClassicScope extends CrawlScope {
         return false;
     }
 
+    /**
+     * @param o the URI to check.
+     * @return True if force-accepts filter accepts passed object.
+     */
+    protected boolean forceAccepts(Object o) {
+        return false;
+    }
+    
     /**
      * Check if URI is accepted by the focus of this scope.
      * 
@@ -194,7 +211,7 @@ public class ClassicScope extends CrawlScope {
         int linkCount = 0;
         int transCount = 0;
         for (int i = path.length() - 1; i >= 0; i--) {
-            if (path.charAt(i) == 'L') {
+            if (path.charAt(i) == Link.NAVLINK_HOP) {
                 linkCount++;
             } else if (linkCount == 0) {
                 transCount++;

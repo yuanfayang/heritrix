@@ -29,6 +29,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.scope.ClassicScope;
@@ -66,7 +67,7 @@ public class HopsFilter extends Filter {
         int linkCount = 0;
         int transCount = 0;
         for(int i=path.length()-1;i>=0;i--) {
-            if(path.charAt(i)=='L') {
+            if(path.charAt(i)==Link.NAVLINK_HOP) {
                 linkCount++;
             } else if (linkCount==0) {
                 transCount++;

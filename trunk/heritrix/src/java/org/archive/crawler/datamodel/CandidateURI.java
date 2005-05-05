@@ -71,6 +71,13 @@ implements Serializable, Lineable {
      */
     public static final int NORMAL = 3;
     
+    /**
+     * Marks URI as not schedulable.
+     * 
+     * @see org.archive.crawler.postprocessor.Postselector
+     */
+    public static final int DONT_SCHEDULE = -1;
+    
     private int schedulingDirective = NORMAL;
     
     /** Usuable URI under consideration */
@@ -374,7 +381,7 @@ implements Serializable, Lineable {
         String path = getPathFromSeed();
         int transCount = 0;
         for(int i=path.length()-1;i>=0;i--) {
-            if(path.charAt(i)=='L') {
+            if(path.charAt(i)==Link.NAVLINK_HOP) {
                 break;
             }
             transCount++;
