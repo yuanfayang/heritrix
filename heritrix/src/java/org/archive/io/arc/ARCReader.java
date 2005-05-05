@@ -29,7 +29,6 @@ import it.unimi.dsi.mg4j.io.RepositionableStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -75,7 +74,7 @@ import org.archive.util.TextUtils;
  * 1 0 InternetArchive
  * URL IP-address Archive-date Content-type Archive-length</pre>
  *
- * <p>Iterator returns ARCRecords (though {@link #next()} returns
+ * <p>Iterator returns ARCRecords (though {@link Iterator#next()} returns
  * java.lang.Object).  Cast the return.
  *
  * <p>Profiling java.io vs. memory-mapped ByteBufferInputStream shows the
@@ -89,7 +88,8 @@ import org.archive.util.TextUtils;
  *
  * @author stack
  */
-public abstract class ARCReader implements ARCConstants, Iterator {
+public abstract class ARCReader
+implements ARCConstants {
     Logger logger = Logger.getLogger(ARCReader.class.getName());
     
     /**
@@ -149,7 +149,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * now we hardcode them for sake of improved performance.
      */
     private final List headerFieldNameKeys =
-        Arrays.asList(headerFieldNameKeysArray);
+        Arrays.asList(this.headerFieldNameKeysArray);
     
     /**
      * The file this arcreader is going against.
@@ -251,15 +251,15 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     private class RepositionableBufferedInputStream extends BufferedInputStream
     		implements RepositionableStream {
 
-        public RepositionableBufferedInputStream(InputStream in)
+        public RepositionableBufferedInputStream(InputStream is)
         		throws IOException {
-            super(in);
+            super(is);
             doStreamCheck();
         }
 
-        public RepositionableBufferedInputStream(InputStream in, int size)
+        public RepositionableBufferedInputStream(InputStream is, int size)
         		throws IOException {
-            super(in, size);
+            super(is, size);
             doStreamCheck();
         }
         
@@ -356,8 +356,70 @@ public abstract class ARCReader implements ARCConstants, Iterator {
         close();
     }
     
+    protected InputStream getInputStream() {
+        return this.in;
+    }
+    
+    protected Logger getLogger() {
+        return this.logger;
+    }
+    
     /**
-     * @return An iterator over the total arcfile.
+     * Inner ARCRecord Iterator class.
+     * @author stack
+     */
+    protected class ARCRecordIterator implements Iterator {
+        /**
+         * @return True if we have more ARC records to read.
+         */
+        public boolean hasNext() {
+            // Call close on any extant record.  This will scoot us past
+            // any content not yet read.
+            try {
+                cleanupCurrentRecord();
+            } catch (IOException e) {
+                throw new NoSuchElementException(e.getMessage());
+            }
+            return innerHasNext();
+        }
+        
+        protected boolean innerHasNext() {
+            try {
+                return getInputStream().available() > 0;
+            } catch (IOException e) {
+                throw new RuntimeException("Failed: " + e.getMessage());
+            }
+        }
+
+        /**
+         * Return the next record.
+         *
+         * @return Next ARCRecord else null if no more records left.
+         * You need to cast result to ARCRecord.
+         */
+        public Object next() {
+            try {
+                return get(((RepositionableStream)getInputStream())
+                    .position());
+            } catch (RecoverableIOException e) {
+                getLogger().warning("Recoverable error: " + e.getMessage());
+                if (hasNext()) {
+                    return next();
+                }
+                return null;
+            } catch (IOException e) {
+                throw new NoSuchElementException(e.getClass() + ": " +
+                    e.getMessage());
+            }
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+    
+    /**
+     * @return An iterator over ARC records.
      */
     public Iterator iterator() {
         // Eat up any record outstanding.
@@ -375,51 +437,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
             throw new RuntimeException(e.getClass().getName() + ": " +
                     e.getMessage());
         }
-        return this;
-    }
-    
-    /**
-     * @return True if we have more ARC records to read.
-     */
-    public boolean hasNext() {
-        // Call close on any extant record.  This will scoot us past
-        // any content not yet read.
-        try {
-            cleanupCurrentRecord();
-        } catch (IOException e) {
-            throw new NoSuchElementException(e.getMessage());
-        }
-        
-        try {
-            return this.in.available() > 0;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Return the next record.
-     *
-     * @return Next ARCRecord else null if no more records left.  You need to
-     * cast result to ARCRecord.
-     */
-    public Object next() {
-        try {
-            return get(((RepositionableStream)this.in).position());
-        } catch (RecoverableIOException e) {
-            logger.warning("Recoverable error: " + e.getMessage());
-            if (hasNext()) {
-                return next();
-            }
-            return null;
-        } catch (IOException e) {
-            throw new NoSuchElementException(e.getClass() + ": " +
-                e.getMessage());
-        }
-    }
-
-    public void remove() {
-        throw new UnsupportedOperationException();
+        return new ARCRecordIterator();
     }
     
     /**
@@ -707,7 +725,7 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     public List validate(int noRecords) throws IOException {
         List metaDatas = new ArrayList();
         int count = 0;
-        for (Iterator i = iterator(); hasNext();) {
+        for (Iterator i = iterator(); i.hasNext();) {
             count++;
             ARCRecord r = (ARCRecord)i.next();
             if (r.getMetaData().getLength() <= 0
@@ -760,13 +778,13 @@ public abstract class ARCReader implements ARCConstants, Iterator {
      * @return Returns the strict.
      */
     public boolean isStrict() {
-        return strict;
+        return this.strict;
     }
     /**
-     * @param strict The strict to set.
+     * @param s The strict to set.
      */
-    public void setStrict(boolean strict) {
-        this.strict = strict;
+    public void setStrict(boolean s) {
+        this.strict = s;
     }
     
     // Static methods follow.
@@ -1016,10 +1034,10 @@ public abstract class ARCReader implements ARCConstants, Iterator {
     }
     
     /**
-     * @param parseHttpHeaders The parseHttpHeaders to set.
+     * @param parse The parseHttpHeaders to set.
      */
-    public void setParseHttpHeaders(boolean parseHttpHeaders) {
-        this.parseHttpHeaders = parseHttpHeaders;
+    public void setParseHttpHeaders(boolean parse) {
+        this.parseHttpHeaders = parse;
     }
 
     /**

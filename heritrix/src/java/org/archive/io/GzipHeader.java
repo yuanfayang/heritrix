@@ -94,6 +94,7 @@ public class GzipHeader {
      * This constructor advances the stream past any gzip header found.
      * 
      * @param in InputStream to read from.
+     * @throws IOException
      */
     public GzipHeader(InputStream in) throws IOException {
         super();
@@ -104,19 +105,17 @@ public class GzipHeader {
      * Read in gzip header.
      * 
      * Advances the stream past the gzip header.
+     * @param in InputStream.
      * 
      * @throws IOException
      */
     public void readHeader(InputStream in) throws IOException {
-        
         CRC32 crc = new CRC32();
         crc.reset();
-   
         if (!testGzipMagic(in, crc)) {
             throw new IOException("Failed to find GZIP MAGIC");
         }
         this.length += 2;
-   
         if (readByte(in, crc) != Deflater.DEFLATED) {
             throw new IOException("Unknown compression");
         }

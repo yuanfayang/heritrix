@@ -33,52 +33,75 @@ import java.util.Iterator;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.Inflater;
 
 
 /**
  * Subclass of GZIPInputStream that can handle a stream made of multiple
- * concatenatd GZIP members/records.
+ * concatenated GZIP members/records.
  * 
  * This class is needed because GZIPInputStream only finds the first GZIP
  * member in the file even if the file is made up of multiple GZIP members.
  * 
  * <p>Takes an InputStream streams that implements
  * {@link RepositionableStream} interface so it can backup overreads done
- * by the zlib Inflater class.  Also implements this interface so can
- * compressed and uncompressed streams alike.
+ * by the zlib Inflater class.
  * 
- * <p>If you need to know start of a gzip header, call {@link #position()}
- * just after a call to {@link #hasNext()} and before you call {@link #next()}.
+ * <p>Use the {@link #iterator()} method to get a gzip member iterator.
+ * Calls to {@link Iterator#next()} returns the next gzip member in the
+ * stream.  Cast return from {@link Iterator#next()} to InputStream.
+ * 
+ * <p>Use {@link #gzipMemberSeek(long)} to position stream before reading
+ * a gzip member if doing random accessing of gzip members.  Pass it offset
+ * at which gzip member starts.
+ * 
+ * <p>If you need to know position at which a gzip member starts, call
+ * {@link #position()} just after a call to {@link Iterator#hasNext()}
+ * and before you call {@link Iterator#next()}.
  * 
  * @author stack
  */
-public class GzippedInputStream extends GZIPInputStream
-    implements Iterator, RepositionableStream {
+public class GzippedInputStream
+extends GZIPInputStream
+implements RepositionableStream {
     
     /**
-     * Length of minimual 'default GZIP header.
+     * Length of minimal GZIP header.
      *
      * See RFC1952 for explaination of value of 10.
      */
     public static final int MINIMAL_GZIP_HEADER_LENGTH = 10;
     
     /**
-     * Used to find next gzip member.
+     * Tail on gzip members (The CRC).
+     */
+    private static final int GZIP_TRAILER_LENGTH = 8;
+    
+    /**
+     * Utility class used probing for gzip members in stream.
+     * We need this instance to get at the readByte method.
      */
     private GzipHeader gzipHeader = new GzipHeader();
     
+    /**
+     * Buffer size used skipping over gzip members.
+     */
     private static final int LINUX_PAGE_SIZE = 4 * 1024;
 
+    /**
+     * Buffer used skipping over gzip members.
+     */
     private static final byte [] SKIP_BUFFER = new byte [LINUX_PAGE_SIZE];
     
     
-    public GzippedInputStream(InputStream in) throws IOException {
+    public GzippedInputStream(InputStream is) throws IOException {
         // Have buffer match linux page size.
-        this(in, LINUX_PAGE_SIZE);
+        this(is, LINUX_PAGE_SIZE);
     }
     
-    public GzippedInputStream(InputStream in, int size) throws IOException {
-        super(in, size);
+    public GzippedInputStream(InputStream is, int size)
+    throws IOException {
+        super(is, size);
         if (!(this.in instanceof RepositionableStream)) {
             throw new IOException("Passed stream does not" +
                     " implement PositionableStream");
@@ -121,7 +144,8 @@ public class GzippedInputStream extends GZIPInputStream
      */
     public long gotoEOR() throws IOException {
         long bytesSkipped = 0;
-        if (this.inf.getTotalIn() <= 0) {
+        // If at start of file, we ain't setup to read.
+        if (position() == 0) {
             return bytesSkipped;
         }
         if (!this.inf.finished()) {
@@ -133,50 +157,97 @@ public class GzippedInputStream extends GZIPInputStream
         return bytesSkipped;
     }
     
-    public boolean hasNext() {
-        if (this.inf.getTotalIn() == 0) {
-            // We haven't read anything yet.  Must be at start of file.
-            return true;
+    public Iterator iterator() {
+        try {
+            // Reset.
+            position(0);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed seeking to 0: " +
+                e.getMessage());
         }
+        // Need pointer to compressed stream to pass the Iterator.
+        final GzippedInputStream gis = this;
         
+        // Return an anonymous iterator instance.
+        return new Iterator() {
+            private GzippedInputStream compressedStream = gis;
+            public boolean hasNext() {
+                try {
+                    gotoEOR();
+                } catch (IOException e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+                return moveToNextGzipMember();
+            }
+            
+            /**
+             * @return An InputStream.
+             */
+            public Object next() {
+                try {
+                    gzipMemberSeek();
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed move to EOR or " +
+                        "failed header read: " + e.getMessage());
+                }
+                return this.compressedStream;
+            }
+            
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };   
+    }
+    
+    /**
+     * @return True if we found another record in the stream.
+     */
+    protected boolean moveToNextGzipMember() {
         boolean result = false;
         // Move to the next gzip member, if there is one, positioning
         // ourselves by backing up the stream so we reread any inflater
-        // remaining bytes.  Then add 8 bytes to get us past the GZIP
+        // remaining bytes. Then add 8 bytes to get us past the GZIP
         // CRC trailer block that ends all gzip members.
         try {
-            RepositionableStream ps = (RepositionableStream)this.in;
-            // 8 is sizeof gzip CRC block thats on tail of gzipped record.
-            // If remaining is < 8 then experience indicates we're seeking past
-            // the gzip header -- don't backup the stream.
-            if (this.inf.getRemaining() > 8) {
-                ps.position(position() - this.inf.getRemaining() + 8);
+            RepositionableStream ps =
+                (RepositionableStream)getInputStream();
+            // 8 is sizeof gzip CRC block thats on tail of gzipped
+            // record. If remaining is < 8 then experience indicates
+            // we're seeking past the gzip header -- don't backup the
+            // stream.
+            if (getInflater().getRemaining() > GZIP_TRAILER_LENGTH) {
+                ps.position(position() - getInflater().getRemaining() +
+                    GZIP_TRAILER_LENGTH);
             }
-            // If at least MINIMAL_GZIP_HEADER_LENGTH available
-            // assume possible other gzip member. Move the
-            // stream on checking as we go to be sure of another record.
-            // We do this slow poke ahead because the calculation using
+            // If at least MINIMAL_GZIP_HEADER_LENGTH available assume
+            // possible other gzip member. Move the stream on checking
+            // as we go to be sure of another record. We do this slow
+            // poke ahead because the calculation using
             // this.inf.getRemaining can be off by a couple if the
-            // remaining is zero.  There seems to be
-            // nothing in gzipinputstream nor in the inflater that can be
-            // relied upon:  this.eos = false, this.inf.finished = false,
+            // remaining is zero.  There seems to be nothing in
+            // gzipinputstream nor in the inflater that can be relied
+            // upon:  this.eos = false, this.inf.finished = false,
             // this.inf.readEOF is true. I don't know why its messed up
-            // like this.  Study the core zlib and see if can figure where
-            // inflater is going wrong.
+            // like this.  Study the core zlib and see if can figure
+            // where inflater is going wrong.
             int read = -1;
             int headerRead = 0;
-            while (this.in.available() > MINIMAL_GZIP_HEADER_LENGTH) {
-                read = this.gzipHeader.readByte(this.in);
+            while (getInputStream().available() >
+                    MINIMAL_GZIP_HEADER_LENGTH) {
+                read = getGzipHeader().readByte(getInputStream());
                 if ((byte)read == (byte)GZIPInputStream.GZIP_MAGIC) {
                     headerRead++;
-                    read = this.gzipHeader.readByte(this.in);
-                    if((byte)read == (byte)(GZIPInputStream.GZIP_MAGIC >> 8)) {
+                    read = getGzipHeader().readByte(getInputStream());
+                    if((byte)read ==
+                            (byte)(GZIPInputStream.GZIP_MAGIC >> 8)) {
                         headerRead++;
-                        read = this.gzipHeader.readByte(this.in);
+                        read =
+                            getGzipHeader().readByte(getInputStream());
                         if ((byte)read == Deflater.DEFLATED) {
                             headerRead++;
-                            // Found gzip header.  Backup the stream the
-                            // two bytes we just found and set result true.
+                            // Found gzip header. Backup the stream the
+                            // two bytes we just found and set result
+                            // true.
                             ps.position(position() - headerRead);
                             result = true;
                             break;
@@ -190,39 +261,21 @@ public class GzippedInputStream extends GZIPInputStream
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed i/o: " +
-                    e.getMessage());
+            throw new RuntimeException("Failed i/o: " + e.getMessage());
         }
-        
         return result;
     }
-    
-    /**
-     * @return An InputStream.
-     */
-    public Object next() {
-        // Assume inflater has been reset.  Read in header.
-        try {
-            readHeader();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed header read: " +
-                    e.getMessage());
-        }
-        return this;
+  
+    protected Inflater getInflater() {
+        return this.inf;
     }
     
-    public void remove() {
-        throw new UnsupportedOperationException();
+    protected InputStream getInputStream() {
+        return this.in;
     }
     
-    public Iterator iterator() {
-        try {
-            position(0);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed seeking to 0: " +
-                e.getMessage());
-        }
-        return this;   
+    protected GzipHeader getGzipHeader() {
+        return this.gzipHeader;
     }
     
     /**
@@ -247,8 +300,11 @@ public class GzippedInputStream extends GZIPInputStream
      * Seek to passed offset.
      * 
      * After positioning the stream, it resets the inflater.
+     * Assumption is that public use of this method is only
+     * to position stream at start of a gzip member.
      * 
      * @param position Absolute position of a gzip member start.
+     * @throws IOException
      */
     public void position(long position) throws IOException {
         ((RepositionableStream)this.in).position(position);
@@ -266,10 +322,15 @@ public class GzippedInputStream extends GZIPInputStream
      * header ready for subsequent calls to read.
      * 
      * @param position Absolute position of a gzip member start.
+     * @throws IOException
      */
     public void gzipMemberSeek(long position) throws IOException {
         position(position);
         readHeader();
+    }
+    
+    public void gzipMemberSeek() throws IOException {
+        gzipMemberSeek(position());
     }
     
     /**

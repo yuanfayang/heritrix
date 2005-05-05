@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
@@ -192,15 +194,15 @@ public class ARCReaderFactory implements ARCConstants {
     private class UncompressedARCReader extends ARCReader {
         /**
          * Constructor.
-         * @param arcFile Uncompressed arcfile to read.
+         * @param f Uncompressed arcfile to read.
          * @throws IOException
          */
-        public UncompressedARCReader(File arcFile)
+        public UncompressedARCReader(File f)
         throws IOException {
             // Arc file has been tested for existence by time it has come
             // to here.
-            this.in = getInputStream(arcFile);
-            initialize(arcFile);
+            this.in = getInputStream(f);
+            initialize(f);
         }
     }
     
@@ -211,15 +213,15 @@ public class ARCReaderFactory implements ARCConstants {
     private class CompressedARCReader extends ARCReader {
         /**
          * Constructor.
-         * @param arcFile Compressed arcfile to read.
+         * @param f Compressed arcfile to read.
          * @throws IOException
          */
-        public CompressedARCReader(File arcFile)
+        public CompressedARCReader(File f)
         throws IOException {
             // Arc file has been tested for existence by time it has come
             // to here.
-            this.in = new GzippedInputStream(getInputStream(arcFile));
-            initialize(arcFile);
+            this.in = new GzippedInputStream(getInputStream(f));
+            initialize(f);
         }
         
         /**
@@ -235,14 +237,35 @@ public class ARCReaderFactory implements ARCConstants {
             return createARCRecord(this.in, offset);
         }
         
-        public boolean hasNext() {
-            try {
-                cleanupCurrentRecord();
-            } catch (IOException e) {
-                throw new NoSuchElementException(e.getMessage());
-            }
-            
-            return ((GzippedInputStream)this.in).hasNext();
+        public Iterator iterator() {
+            // Override ARCRecordIterator so can base returned iterator
+            // on GzippedInputStream iterator.
+            return new ARCRecordIterator() {
+                private GzippedInputStream gis =
+                    (GzippedInputStream)getInputStream();
+                private Iterator gzipIterator = this.gis.iterator();
+                
+                protected boolean innerHasNext() {
+                    return this.gzipIterator.hasNext();
+                }
+
+                public Object next() {
+                    try {
+                        long offset = this.gis.position();
+                        return createARCRecord((InputStream)this.gzipIterator.
+                            next(), offset);
+                    } catch (RecoverableIOException e) {
+                        getLogger().warning("Recoverable error: " + e.getMessage());
+                        if (hasNext()) {
+                            return next();
+                        }
+                        return null;
+                    } catch (IOException e) {
+                        throw new NoSuchElementException(e.getClass() + ": "
+                                + e.getMessage());
+                    }
+                }
+            };
         }
         
         protected void gotoEOR(ARCRecord rec) throws IOException {
