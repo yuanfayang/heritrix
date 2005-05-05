@@ -178,7 +178,7 @@ implements CoreAttributeConstants {
         String codebase = null;
         ArrayList resources = null;
         
-        final boolean framesAsEmbeds = ((Boolean) getUncheckedAttribute(curi,
+        final boolean framesAsEmbeds = ((Boolean)getUncheckedAttribute(curi,
             ATTR_TREAT_FRAMES_AS_EMBED_LINKS)).booleanValue();
         
         final String elementStr = element.toString();

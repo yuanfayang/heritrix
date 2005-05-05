@@ -60,23 +60,32 @@ import org.archive.util.TmpDirTestCase;
 public class ExtractorHTMLTest
 extends TmpDirTestCase
 implements CoreAttributeConstants {
-    private File orderFile = null;
-    private CrawlerSettings globalSettings = null;
-    private XMLSettingsHandler settingsHandler = null;
     private final String ARCHIVE_DOT_ORG = "archive.org";
     private final String LINK_TO_FIND = "http://www.hewlett.org/";
     private HttpRecorder recorder = null;
-
-    /*
-     * @see TestCase#setUp()
-     */
+    private ExtractorHTML extractor = null;
+    
+    protected ExtractorHTML createExtractor()
+    throws InvalidAttributeValueException, AttributeNotFoundException,
+    MBeanException, ReflectionException {
+        // Hack in a settings handler.  Do this by adding this extractor
+        // to the order file (I'm adding it to a random MapType; seemingly
+        // can only add to MapTypes post-construction). This takes care
+        // of setting a valid SettingsHandler into the ExtractorHTML (This
+        // shouldn't be so difficult).  Of note, the order file below is
+        // not written to disk.
+        final String name = this.getClass().getName();
+        SettingsHandler handler = new XMLSettingsHandler(
+            new File(getTmpDir(), name + ".order.xml"));
+        handler.initialize();
+        return (ExtractorHTML)((MapType)handler.getOrder().
+            getAttribute(CrawlOrder.ATTR_RULES)).addElement(handler.
+                getSettingsObject(null), new ExtractorHTML(name));
+    }
+    
     protected void setUp() throws Exception {
         super.setUp();
-        this.orderFile = new File(getTmpDir(),
-            this.getClass().getName() + "_order.xml");
-        this.settingsHandler = new XMLSettingsHandler(this.orderFile);
-        this.settingsHandler.initialize();
-        this.globalSettings = this.settingsHandler.getSettingsObject(null);
+        this.extractor = createExtractor();
         final boolean USE_NET = false;
         URL url = null;
         if (USE_NET) {
@@ -103,11 +112,9 @@ implements CoreAttributeConstants {
     }
 
     public void testInnerProcess() throws IOException {
-        ExtractorHTML extractor = new ExtractorHTML("html extractor");
-        extractor.earlyInitialize(this.globalSettings);
         UURI uuri = UURIFactory.getInstance("http://" + this.ARCHIVE_DOT_ORG);
         CrawlURI curi = setupCrawlURI(this.recorder, uuri.toString());
-        extractor.innerProcess(curi);
+        this.extractor.innerProcess(curi);
         Collection links = curi.getOutLinks();
         boolean foundLinkToHewlettFoundation = false;
         for (Iterator i = links.iterator(); i.hasNext();) {
@@ -185,28 +192,15 @@ implements CoreAttributeConstants {
         if (baseUURI == null) {
         	return;
         }
-        // Hack in a settings handler.  Do this by adding this extractor
-        // to the order file (I'm adding it to a random MapType; seemingly
-        // can only add to MapTypes post-construction). This takes care
-        // of setting a valid SettingsHandler into the ExtractorHTML (This
-        // shouldn't be so difficult).  Of note, the order file below is
-        // not written to disk.
-        final String name = this.getClass().getName();
-        SettingsHandler handler = new XMLSettingsHandler(
-            new File(getTmpDir(), name + ".order.xml"));
-        settingsHandler.initialize();
-        ExtractorHTML extractor = (ExtractorHTML)((MapType)handler.getOrder().
-            getAttribute(CrawlOrder.ATTR_RULES)).addElement(handler.
-                getSettingsObject(null), new ExtractorHTML(name));
-        
+        this.extractor = createExtractor();
         URL url = new URL(baseUURI.toString());
         this.recorder = HttpRecorder.
             wrapInputStreamWithHttpRecord(getTmpDir(),
             this.getClass().getName(), url.openStream(), encoding);
         CrawlURI curi = setupCrawlURI(this.recorder, url.toString());
-        extractor.innerProcess(curi);
+        this.extractor.innerProcess(curi);
         
-        System.out.println("+" + extractor.report());
+        System.out.println("+" + this.extractor.report());
         int count = 0; 
         Collection links = curi.getOutLinks();
         System.out.println("+HTML Links (hopType="+Link.NAVLINK_HOP+"):");
@@ -264,7 +258,6 @@ implements CoreAttributeConstants {
      * @throws URIException
      */
     public void testEmbedSrc() throws URIException {
-        ExtractorHTML extractor = new ExtractorHTML("html extractor");
         CrawlURI curi=
             new CrawlURI(UURIFactory.getInstance("http://www.example.org"));
         // An example from http://www.records.pro.gov.uk/documents/prem/18/1/default.asp?PageId=62&qt=true
@@ -272,7 +265,7 @@ implements CoreAttributeConstants {
             "hall.mov\" width=\"320\" height=\"212\" controller=\"true\" " +
             "CORRECTION=\"FULL\" pluginspage=\"http://www.apple.com/" +
             "quicktime/download/\" /> ";
-        extractor.extract(curi,cs);
+        this.extractor.extract(curi,cs);
         assertTrue(CollectionUtils.exists(curi.getOutLinks(), new Predicate() {
             public boolean evaluate(Object object) {
                 return ((Link) object).getDestination().toString().indexOf(
@@ -290,13 +283,12 @@ implements CoreAttributeConstants {
      * @throws URIException
      */
     public void testHrefWhitespace() throws URIException {
-        ExtractorHTML extractor = new ExtractorHTML("html extractor");
         CrawlURI curi =
             new CrawlURI(UURIFactory.getInstance("http://www.carsound.dk"));
         CharSequence cs = "<a href=\"http://www.carsound.dk\n\n\n" +
         	"\"\ntarget=\"_blank\">C.A.R. Sound\n\n\n\n</a>";   
-        extractor.extract(curi,cs);
-        Collection c = curi.getOutLinks();
+        this.extractor.extract(curi,cs);
+        curi.getOutLinks();
         assertTrue("Not stripping new lines", CollectionUtils.exists(curi
                 .getOutLinks(), new Predicate() {
             public boolean evaluate(Object object) {
