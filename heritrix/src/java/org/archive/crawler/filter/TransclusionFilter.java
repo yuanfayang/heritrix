@@ -26,6 +26,7 @@ package org.archive.crawler.filter;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.scope.ClassicScope;
@@ -116,10 +117,10 @@ public class TransclusionFilter extends Filter {
         loop: for(int i=path.length()-1;i>=0;i--) {
             // everything except 'L' is considered transitive
             switch (path.charAt(i)) {
-                case 'L': {
+                case Link.NAVLINK_HOP: {
                     break loop;
                 }
-                case 'P': {
+                case Link.PREREQ_HOP: {
                     if(transCount==0) {
                         // always consider a trailing P as a 1-hop trans inclusion; disregard previous hops
                         transCount++;
@@ -128,18 +129,19 @@ public class TransclusionFilter extends Filter {
                     // otherwise, just count as another regular trans hop
                     break;
                 }
-                case 'X': {
+                case Link.SPECULATIVE_HOP: {
                     specCount++;
                     break;
                 }
-                case 'R': {
+                case Link.REFER_HOP: {
                     refCount++;
                     break;
                 }
-                case 'E': {
+                case Link.EMBED_HOP: {
                     embedCount++;
                     break;
                 }
+                // FIXME: what is 'D'?
                 // 'D's get a free pass
             }
             transCount++;

@@ -37,10 +37,12 @@ import org.archive.crawler.datamodel.RobotsHonoringPolicy;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 import org.archive.io.ReplayCharSequence;
 import org.archive.util.DevUtils;
-import org.archive.util.TextUtils;
 import org.archive.util.HttpRecorder;
+import org.archive.util.TextUtils;
 
 /**
  * Basic link-extraction, from an HTML content-body,
@@ -51,8 +53,8 @@ import org.archive.util.HttpRecorder;
  */
 public class ExtractorHTML extends Processor
 implements CoreAttributeConstants {
-
-    protected boolean ignoreUnexpectedHTML = true; // TODO: add config param to change
+    //  TODO: add config param to change
+    protected boolean ignoreUnexpectedHTML = true;
 
     private static Logger logger =
         Logger.getLogger(ExtractorHTML.class.getName());
@@ -142,7 +144,12 @@ implements CoreAttributeConstants {
     static final String APPLET = "applet";
     static final String BASE = "base";
     static final String LINK = "link";
+    static final String FRAME = "frame";
+    static final String IFRAME = "iframe";
 
+    public static final String ATTR_TREAT_FRAMES_AS_EMBED_LINKS =
+        "treat-frames-as-embed-links";
+    
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
@@ -154,6 +161,12 @@ implements CoreAttributeConstants {
     
     public ExtractorHTML(String name, String description) {
         super(name, description);
+        Type t = addElementToDefinition(
+            new SimpleType(ATTR_TREAT_FRAMES_AS_EMBED_LINKS,
+            "If enabled, FRAME/IFRAME SRC-links are treated as embedded " +
+            "resources (IMG etc.), otherwise they are treated as " +
+            "navigational links", Boolean.TRUE));
+        t.setExpertSetting(true);
     }
 
     protected void processGeneralTag(CrawlURI curi, CharSequence element,
@@ -164,6 +177,11 @@ implements CoreAttributeConstants {
         // Just in case it's an OBJECT or APPLET tag
         String codebase = null;
         ArrayList resources = null;
+        
+        final boolean framesAsEmbeds = ((Boolean) getUncheckedAttribute(curi,
+            ATTR_TREAT_FRAMES_AS_EMBED_LINKS)).booleanValue();
+        
+        final String elementStr = element.toString();
 
         while (attr.find()) {
             int valueGroup =
@@ -175,23 +193,24 @@ implements CoreAttributeConstants {
             CharSequence value = cs.subSequence(start, end);
             if (attr.start(2) > -1) {
                 // HREF
-                CharSequence context = Link.elementContext(element, attr.group(2));
-                if(element.toString().equalsIgnoreCase(LINK)) {
+                CharSequence context =
+                    Link.elementContext(element, attr.group(2));
+                if(elementStr.equalsIgnoreCase(LINK)) {
                     // <LINK> elements treated as embeds (css, ico, etc)
                     processEmbed(curi, value, context);
                 } else {
                     // other HREFs treated as links
                     processLink(curi, value, context);
                 }
-                if (element.toString().equalsIgnoreCase(BASE)) {
+                if (elementStr.equalsIgnoreCase(BASE)) {
                     try {
                         curi.setBaseURI(value.toString());
                     } catch (URIException e) {
                         if (getController() != null) {
                             // Controller can be null: e.g. when running
                             // ExtractorTool.
-                            getController().
-                                logUriError(e, curi.getUURI(), value.toString());
+                            getController().logUriError(e, curi.getUURI(),
+                                value.toString());
                         } else {
                             logger.info("Failed set base uri: " +
                                 curi + ", " + value.toString() + ": " +
@@ -201,20 +220,34 @@ implements CoreAttributeConstants {
                 }
             } else if (attr.start(3) > -1) {
                 // ACTION
-                CharSequence context = Link.elementContext(element, attr.group(3));
+                CharSequence context = Link.elementContext(element,
+                    attr.group(3));
                 processLink(curi, value, context);
             } else if (attr.start(4) > -1) {
                 // ON____
                 processScriptCode(curi, value); // TODO: context?
             } else if (attr.start(5) > -1) {
                 // SRC etc.
-                CharSequence context = Link.elementContext(element, attr.group(5));
-                processEmbed(curi, value, context);
+                CharSequence context = Link.elementContext(element,
+                    attr.group(5));
+                
+                // true, if we expect another HTML page instead of an image etc.
+                final char hopType;
+                
+                if(!framesAsEmbeds
+                    && (elementStr.equalsIgnoreCase(FRAME) || elementStr
+                        .equalsIgnoreCase(IFRAME))) {
+                    hopType = Link.NAVLINK_HOP;
+                } else {
+                    hopType = Link.EMBED_HOP;
+                }
+                processEmbed(curi, value, context, hopType);
             } else if (attr.start(6) > -1) {
                 // CODEBASE
                 // TODO: more HTML deescaping?
                 codebase = TextUtils.replaceAll(ESCAPED_AMP, value, AMP);
-                CharSequence context = Link.elementContext(element,attr.group(6));
+                CharSequence context = Link.elementContext(element,
+                    attr.group(6));
                 processEmbed(curi,codebase, context);
             } else if (attr.start(7) > -1) {
                 // CLASSID, DATA
@@ -238,7 +271,7 @@ implements CoreAttributeConstants {
                 }
                 // If element is applet and code value does not end with
                 // '.class' then append '.class' to the code value.
-                if (element.toString().toLowerCase().equals(APPLET) &&
+                if (elementStr.equalsIgnoreCase(APPLET) &&
                         !value.toString().toLowerCase().endsWith(CLASSEXT)) {
                     resources.add(value.toString() + CLASSEXT);
                 } else {
@@ -248,7 +281,8 @@ implements CoreAttributeConstants {
             } else if (attr.start(10) > -1) {
                 // VALUE
                 if(TextUtils.matches(LIKELY_URI_PATH, value)) {
-                    CharSequence context = Link.elementContext(element, attr.group(10));
+                    CharSequence context = Link.elementContext(element,
+                        attr.group(10));
                     processLink(curi,value, context);
                 }
 
@@ -294,7 +328,6 @@ implements CoreAttributeConstants {
         }
     }
 
-
     // finds strings in javascript likely to be URIs/paths
     // guessing based on '.' in string, so if highly likely to
     // get gifs/etc, unable to get many other paths
@@ -330,7 +363,7 @@ implements CoreAttributeConstants {
             if (logger.isLoggable(Level.FINEST)) {
                 logger.finest("link: " + link + " from " + curi);
             }
-            addLinkFromString(curi, link, context, 'L');
+            addLinkFromString(curi, link, context, Link.NAVLINK_HOP);
             this.numberOfLinksExtracted++;
         }
     }
@@ -355,13 +388,18 @@ implements CoreAttributeConstants {
         }
     }
 
-    protected void processEmbed(CrawlURI curi, CharSequence value,
+    protected final void processEmbed(CrawlURI curi, CharSequence value,
             CharSequence context) {
+        processEmbed(curi, value, context, Link.EMBED_HOP);
+    }
+    protected void processEmbed(CrawlURI curi, CharSequence value,
+            CharSequence context, char hopType) {
         String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
         if (logger.isLoggable(Level.FINEST)) {
-            logger.finest("embed: " + embed + " from " + curi);
+            logger.finest("embed (" + hopType + "): " + embed + " from " +
+                curi);
         }
-        addLinkFromString(curi, embed, context, Link.EMBED_HOP);
+        addLinkFromString(curi, embed, context, hopType);
         this.numberOfLinksExtracted++;
     }
 
