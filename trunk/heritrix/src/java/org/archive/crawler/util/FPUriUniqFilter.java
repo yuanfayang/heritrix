@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.LongFPSet;
+import org.archive.util.fingerprint.LongFPSet;
 
 import st.ata.util.FPGenerator;
 

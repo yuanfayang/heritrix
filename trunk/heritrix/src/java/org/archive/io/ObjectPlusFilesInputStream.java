@@ -22,7 +22,7 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.checkpoint;
+package org.archive.io;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +54,8 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
      * @param storeDir
      * @throws IOException
      */
-    public ObjectPlusFilesInputStream(InputStream in, File storeDir) throws IOException {
+    public ObjectPlusFilesInputStream(InputStream in, File storeDir)
+    throws IOException {
         super(in);
         auxiliaryDirectoryStack.addFirst(storeDir);
     }
@@ -66,7 +67,8 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
      * @param dir
      */
     public void pushAuxiliaryDirectory(String dir) {
-        auxiliaryDirectoryStack.addFirst(new File(getAuxiliaryDirectory(),dir));
+        auxiliaryDirectoryStack.
+            addFirst(new File(getAuxiliaryDirectory(), dir));
     }
 
     /**

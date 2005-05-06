@@ -25,7 +25,8 @@
  * File: MemLongFPSetTest.java
  */
 
-package org.archive.util;
+package org.archive.util.fingerprint;
+
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

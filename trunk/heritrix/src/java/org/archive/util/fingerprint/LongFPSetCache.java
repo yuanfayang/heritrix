@@ -21,7 +21,8 @@
  *
  * $Header$
  */
-package org.archive.util;
+package org.archive.util.fingerprint;
+
 
 
 /**

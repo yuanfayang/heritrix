@@ -677,12 +677,9 @@ public class ARCWriter implements ARCConstants {
                 // Should be zero at this stage.  If not, something is
                 // wrong.
                 if (remaining != 0) {
-                    // TODO: Move this DevUtils out of this class so no
-                    // dependency upon it.
                     String message = "Gap between expected and actual: " +
-                    remaining + LINE_SEPARATOR + DevUtils.extraInfo() +
-                    " writing arc " +
-                    this.getArcFile().getAbsolutePath();
+                        remaining + LINE_SEPARATOR + DevUtils.extraInfo() +
+                        " writing arc " + this.getArcFile().getAbsolutePath();
                     DevUtils.warnHandle(new Throwable(message), message);
                     throw new IOException(message);
                 }

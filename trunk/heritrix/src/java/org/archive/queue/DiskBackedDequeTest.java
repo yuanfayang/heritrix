@@ -33,8 +33,8 @@ import java.io.IOException;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
-import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
+import org.archive.io.ObjectPlusFilesInputStream;
+import org.archive.io.ObjectPlusFilesOutputStream;
 
 /**
  * JUnit test suite for DiskBackedQueue

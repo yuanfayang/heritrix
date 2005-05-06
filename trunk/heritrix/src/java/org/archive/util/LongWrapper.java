@@ -20,15 +20,15 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.admin;
+package org.archive.util;
 
 import java.io.Serializable;
 
 /**
  * Wraps a long. Used in place of Long so that when we extract it from a
- * Collection we can modify the long value without creating a new object. This way
- * we don't have to rewrite the Collection to update one of the stored longs.
- *
+ * Collection we can modify the long value without creating a new object.
+ * This way we don't have to rewrite the Collection to update one of the
+ * stored longs.
  * @author Kristinn Sigurdsson
  */
 public class LongWrapper implements Serializable {

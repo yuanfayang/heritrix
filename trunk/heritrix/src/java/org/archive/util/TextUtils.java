@@ -18,6 +18,8 @@
  */
 package org.archive.util;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -194,5 +196,23 @@ public class TextUtils {
         escaped = escaped.replaceAll("\'","&apos;");
         escaped = escaped.replaceAll("\"","&quot;");
         return escaped; 
+    }
+    
+
+    /**
+     * @param message Message to put at top of the string returned. May be
+     * null.
+     * @param e Exception to write into a string.
+     * @return Return formatted string made of passed message and stack trace
+     * of passed exception.
+     */
+    public static String exceptionToString(String  message, Throwable e) {
+        StringWriter sw = new StringWriter();
+        if (message == null || message.length() == 0) {
+            sw.write(message);
+            sw.write("\n");
+        }
+        e.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
     }
 }

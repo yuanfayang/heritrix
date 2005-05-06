@@ -24,11 +24,8 @@
 package org.archive.util;
 
 /**
- * Interface for objects which offer their own single-line
- * summary text.
- *
+ * Interface for objects which offer their own single-line summary text.
  * @author gojomo
- *
  */
 public interface Lineable {
     /**

@@ -36,8 +36,6 @@ import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
-import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.io.*;
 import org.archive.io.RandomAccessInputStream;
 import org.archive.io.RandomAccessOutputStream;

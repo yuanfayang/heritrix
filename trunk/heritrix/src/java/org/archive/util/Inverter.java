@@ -28,26 +28,17 @@ import org.apache.commons.collections.Predicate;
 
 /**
  * A predicate that inverts another.
- *
  * @author gojomo
  */
 public class Inverter implements Predicate {
     Predicate innerPredicate;
 
-    /**
-     *
-     */
     public Inverter(Predicate p) {
         super();
         this.innerPredicate = p;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.commons.collections.Predicate#evaluate(java.lang.Object)
-     */
     public boolean evaluate(Object arg0) {
         return !innerPredicate.evaluate(arg0);
     }
-
-
 }
