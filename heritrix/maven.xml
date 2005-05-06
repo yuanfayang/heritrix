@@ -233,7 +233,10 @@
                 <exclude name="**/include/*.jsp"/>
         </jspc>
         <javac sourcepath="" srcdir="${jspc.src}" destdir="${jspc.classes}" 
-            classpathref="jspc.classpath" />
+            classpathref="jspc.classpath"
+            source="${maven.compile.source}"
+            target="${maven.compile.target}"
+            />
         <loadfile srcFile="${web.fragment}" property="fragment"
             failonerror="true" />
         <replace file="${webinf}/web.xml"
