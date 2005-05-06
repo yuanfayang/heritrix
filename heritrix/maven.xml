@@ -327,6 +327,18 @@
           </j:forEach>
         </j:otherwise>
       </j:choose>
+
+      <!--Am unable to exclude *Test.java from javadoc using excludes/includes
+      in a fileset passed to the javadoc task. Seems to be broken. As a
+      workaround, copy src files minus *Test.java files to a new location and
+      run javadoc cmd against the copy.
+      -->
+        <property name="javadoc.src" value="${maven.build.dir}/javadoc-src" />
+        <copy todir="${javadoc.src}" filtering="true">
+          <fileset dir="${pom.build.sourceDirectory}" >
+            <exclude name="**/*Test.java"/>
+          </fileset>
+        </copy>
                                                                                 
       <j:set var="maxMemory" value="${maven.javadoc.maxmemory}" />
                                                                                 
@@ -346,7 +358,7 @@
         bottom="${copyright}"
         additionalparam="${maven.javadoc.additionalparam}"
         useexternalfile="${maven.javadoc.useexternalfile}"
-            sourcepath="${pom.build.sourceDirectory}" 
+            sourcepath="${javadoc.src}" 
             overview="${pom.build.sourceDirectory}/overview.html" 
             source="${maven.javadoc.source}" >
                                                                                 
