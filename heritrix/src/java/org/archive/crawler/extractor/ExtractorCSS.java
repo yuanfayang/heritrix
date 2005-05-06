@@ -122,7 +122,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
             try {
                 cs.close();
             } catch (IOException ioe) {
-                logger.warning(DevUtils.format(
+                logger.warning(TextUtils.exceptionToString(
                     "Failed close of ReplayCharSequence.", ioe));
             }
         }
