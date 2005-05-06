@@ -40,6 +40,7 @@ import org.archive.util.DevUtils;
 import org.archive.util.HttpRecorder;
 import org.archive.util.HttpRecorderMarker;
 import org.archive.util.PaddingStringBuffer;
+import org.archive.util.Reporter;
 
 /**
  * One "worker thread"; asks for CrawlURIs, processes them,
@@ -48,8 +49,8 @@ import org.archive.util.PaddingStringBuffer;
  * @author Gordon Mohr
  */
 public class ToeThread extends Thread
-    implements CoreAttributeConstants, FetchStatusCodes, HttpRecorderMarker
-{
+implements CoreAttributeConstants, FetchStatusCodes, HttpRecorderMarker,
+Reporter {
     private static final String STEP_NASCENT = "NASCENT";
     private static final String STEP_PAUSING = "PAUSING";
     private static final String STEP_ABOUT_TO_GET_URI = "ABOUT_TO_GET_URI";

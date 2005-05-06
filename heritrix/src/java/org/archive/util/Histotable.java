@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
-import org.archive.crawler.admin.LongWrapper;
 
 /**
  * Collect and report frequency information. 

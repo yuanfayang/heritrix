@@ -42,8 +42,6 @@ import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.HttpStatus;
-import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
-import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
@@ -69,10 +67,12 @@ import org.archive.crawler.settings.Type;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.crawler.util.FPUriUniqFilter;
+import org.archive.io.ObjectPlusFilesInputStream;
+import org.archive.io.ObjectPlusFilesOutputStream;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.MemLongFPSet;
+import org.archive.util.fingerprint.MemLongFPSet;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 

@@ -24,7 +24,6 @@
  */
 package org.archive.io.arc;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,13 +35,10 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.logging.Logger;
 
-import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
-import org.archive.util.HttpRecorder;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -56,9 +52,6 @@ import org.archive.util.TmpDirTestCase;
  */
 public class ARCWriterTest
 extends TmpDirTestCase implements ARCConstants {
-    private static final Logger logger =
-        Logger.getLogger(ARCWriterTest.class.getName());
-    
     /**
      * Prefix to use for ARC files made by JUNIT.
      */

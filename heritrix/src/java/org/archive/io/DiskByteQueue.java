@@ -39,8 +39,6 @@ import java.io.OutputStream;
 import java.io.SequenceInputStream;
 import java.io.Serializable;
 
-import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
-import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
 
 /**
  * FIFO byte queue, using disk space as needed.

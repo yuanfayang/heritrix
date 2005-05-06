@@ -30,6 +30,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import org.archive.io.ObjectPlusFilesInputStream;
+import org.archive.io.ObjectPlusFilesOutputStream;
 import org.archive.util.FileUtils;
 
 /**

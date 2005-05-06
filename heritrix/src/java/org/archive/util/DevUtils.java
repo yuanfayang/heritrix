@@ -22,11 +22,7 @@
  */
 package org.archive.util;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.logging.Logger;
-
-import org.archive.crawler.framework.ToeThread;
 
 
 /**
@@ -36,7 +32,8 @@ import org.archive.crawler.framework.ToeThread;
  * @version $Revision$ $Date$
  */
 public class DevUtils {
-    public static Logger logger = Logger.getLogger("org.archive.util.DevUtils");
+    public static Logger logger =
+        Logger.getLogger(DevUtils.class.getName());
 
     /**
      * Log a warning message to the logger 'org.archive.util.DevUtils' made of
@@ -46,30 +43,15 @@ public class DevUtils {
      * @param note Message to print ahead of the stacktrace.
      */
     public static void warnHandle(Throwable ex, String note) {
-        logger.warning(format(note, ex));
+        logger.warning(TextUtils.exceptionToString(note, ex));
     }
 
     /**
-     * @return Return formatted string made of passed message and stack trace
-     * of passed exception.
-     */
-    public static String format(String  message, Throwable e) {
-        StringWriter sw = new StringWriter();
-        sw.write(message);
-        sw.write("\n");
-        e.printStackTrace(new PrintWriter(sw));
-        return sw.toString();
-    }
-
-    /**
-     * @return Extra information gotten from current ToeThread.  May not
+     * @return Extra information gotten from current Thread.  May not
      * always be available in which case we return empty string.
      */
     public static String extraInfo() {
-        Thread current = Thread.currentThread();
-        if (current instanceof ToeThread) {
-            return ((ToeThread)current).report();
-        }
-        return "";
+        final Thread current = Thread.currentThread();
+        return (current instanceof Reporter)? ((Reporter)current).report(): "";
     }
 }

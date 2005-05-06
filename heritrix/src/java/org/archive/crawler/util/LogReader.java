@@ -16,7 +16,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.util;
+package org.archive.crawler.util;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,6 +34,7 @@ import java.util.regex.PatternSyntaxException;
 
 import org.archive.crawler.framework.CrawlController;
 import org.archive.io.CompositeFileReader;
+import org.archive.util.ArchiveUtils;
 
 /**
  * This class contains a variety of methods for reading log files (or other text 

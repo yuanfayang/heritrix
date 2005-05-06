@@ -45,6 +45,7 @@ import org.archive.crawler.framework.AbstractTracker;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.LongWrapper;
 import org.archive.util.PaddingStringBuffer;
 
 /**

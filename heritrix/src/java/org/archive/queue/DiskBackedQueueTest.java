@@ -30,8 +30,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
-import org.archive.crawler.checkpoint.ObjectPlusFilesOutputStream;
+import org.archive.io.ObjectPlusFilesInputStream;
+import org.archive.io.ObjectPlusFilesOutputStream;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

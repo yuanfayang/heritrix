@@ -27,6 +27,8 @@ package org.archive.util;
 import java.io.Serializable;
 import java.util.logging.Logger;
 
+import org.archive.util.fingerprint.LongFPSet;
+
 /**
  * Shell of functionality for a Set of primitive long fingerprints, held
  * in an array of possibly-empty slots.
@@ -87,7 +89,7 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
     /**
      * Does this set contain the given value?
      *
-     * @see org.archive.util.LongFPSet#contains(long)
+     * @see org.archive.util.fingerprint.LongFPSet#contains(long)
      */
     public boolean contains(long val) {
         long i = indexFor(val);
@@ -119,7 +121,7 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
     /**
      * Return the number of entries in this set.
      *
-     * @see org.archive.util.LongFPSet#count()
+     * @see org.archive.util.fingerprint.LongFPSet#count()
      */
     public long count() {
         return count;
@@ -128,7 +130,7 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
     /**
      * Add the given value to this set
      *
-     * @see org.archive.util.LongFPSet#add(long)
+     * @see org.archive.util.fingerprint.LongFPSet#add(long)
      */
     public boolean add(long val) {
         logger.finest("Adding " + val);
@@ -268,7 +270,7 @@ public abstract class AbstractLongFPSet implements LongFPSet, Serializable {
      * Low-cost, non-definitive (except when true) contains
      * test. Default answer of false is acceptable.
      *
-     * @see org.archive.util.LongFPSet#quickContains(long)
+     * @see org.archive.util.fingerprint.LongFPSet#quickContains(long)
      */
     public boolean quickContains(long fp) {
         return false;

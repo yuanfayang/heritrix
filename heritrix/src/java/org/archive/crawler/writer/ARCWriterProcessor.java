@@ -57,7 +57,6 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.Alert;
-import org.archive.crawler.checkpoint.ObjectPlusFilesInputStream;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -68,6 +67,7 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
