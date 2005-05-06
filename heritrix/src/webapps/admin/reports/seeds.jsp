@@ -1,6 +1,6 @@
 <%@include file="/include/handler.jsp"%>
 
-<%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,org.archive.crawler.admin.LongWrapper,java.util.*" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,org.archive.util.LongWrapper,java.util.*" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 
 <%
