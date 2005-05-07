@@ -19,6 +19,28 @@
         <attainGoal name="sdocbook:generate-html"/>
     </goal>
 
+    <goal name="autojar"
+        prereqs="jar"
+        description="Use autojar to make subjars from heritrix jar." >
+        <!--Needs to be able to find the autojar jar file. Define its
+        location in the variable autojar.executable.  Do this in a
+        build.properties rather than in maven.properties so that
+        support for this task is optional rather than core to the build.
+        -->
+        <ant:exec dir="${JAVA_HOME}/bin" executable="java" >
+            <ant:arg value="-jar" />
+            <ant:arg value="${autojar.location}" />
+            <ant:arg value="-v" />
+            <ant:arg value="-o" />
+            <ant:arg
+             value="${maven.build.dir}/arc-${pom.currentVersion}.jar" />
+            <ant:arg value="-c" />
+            <ant:arg value="${maven.build.dir}/heritrix*jar" />
+            <ant:arg value="org.archive.io.arc.ARCReader.class" />
+            <ant:arg value="org.archive.io.arc.ARCWriter.class" />
+        </ant:exec>
+    </goal>
+
     <preGoal name="java:jar-resources"> 
         <!--Copy the conf dirs content to build dir so it can
             be run through filters and have the version number interpolated.
