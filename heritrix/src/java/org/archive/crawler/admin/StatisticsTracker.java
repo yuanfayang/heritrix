@@ -606,6 +606,16 @@ implements CrawlURIDispositionListener {
         return shouldrun ?
             controller.getFrontier().succeededFetchCount() : downloadedUriCount;
     }
+    
+    /**
+     * Total number of URIs (processed + queued + currently being processed)
+     *  
+     * @return The total number of  
+     */
+    public long totalCount() {
+        return queuedUriCount() + activeThreadCount() +
+            successfullyFetchedCount();
+    }
 
     /**
      * Number of URIs <i>queued</i> up and waiting for processing.
