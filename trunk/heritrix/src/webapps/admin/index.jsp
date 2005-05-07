@@ -3,8 +3,26 @@
 <%@ page import="org.archive.crawler.Heritrix" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 <%@ page import="org.archive.util.ArchiveUtils" %>
-
+<%@ page import="javax.servlet.jsp.JspWriter" %>
+<%!
+	private void printTime(final JspWriter out,long time)
+    throws java.io.IOException {
+	    if(time > 3600) {
+	        //got hours.
+	        out.println(time/3600 + " h., ");
+	        time = time % 3600;
+	    }
+	    
+	    if(time > 60) {
+	        out.println(time/60 + " min. and ");
+	        time = time % 60;
+	    }
+	
+	    out.println(time + " sec.");
+	}
+%>
 <%
+
     String sAction = request.getParameter("action");
     if(sAction != null) {
         if(sAction.equalsIgnoreCase("logout")) {
@@ -116,8 +134,32 @@
                 </td>
             </tr>
             <%
+            	long begin, end;
+	            if(stats != null) {
+	                begin = stats.successfullyFetchedCount();
+	                end = stats.totalCount();
+	                if(end < 1) {
+	                    end = 1;
+	                }
+	            } else {
+                    begin = 0;
+                    end = 1;
+	            }
+                
                 if(handler.getCurrentJob() != null)
                 {
+                    final long timeElapsed, timeRemain;
+                    if(stats == null) {
+                        timeElapsed= 0;
+                        timeRemain = -1;
+                    } else {
+	                    timeElapsed = (stats.getCrawlerTotalElapsedTime())/1000;
+	                    if(begin == 0) {
+	                        timeRemain = -1;
+	                    } else {
+	                        timeRemain = ((long)(timeElapsed*end/(double)begin))-timeElapsed;
+	                    }
+                    }
             %>
                     <tr>
                         <td valign="top">
@@ -154,27 +196,12 @@
                                     </td>
                                     <td>
                                         <%
-                                            long time = (stats.getCrawlerTotalElapsedTime())/1000;
-                                            
-                                            if(time>3600)
-                                            {
-                                                //got hours.
-                                                out.println(time/3600 + " h., ");
-                                                time = time % 3600;
-                                            }
-                                            
-                                            if(time > 60)
-                                            {
-                                                out.println(time/60 + " min. and ");
-                                                time = time % 60;
-                                            }
-    
-                                            out.println(time + " sec.");
+                                        	printTime(out,timeElapsed);
                                         %>
                                     </td>
                                 </tr>
                                 <%
-                                  }
+                                }
                                 %>
                             </table>
                         </td>
@@ -204,6 +231,23 @@
                                         <%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%>
                                     </td>
                                 </tr>
+                                <%
+                                   if(timeRemain != -1)
+                                   {
+                                %>
+                                <tr>
+                                    <td>
+                                        <b>Remaining (estimated):</b>&nbsp;
+                                    </td>
+                                    <td>
+                                        <%
+                                        	printTime(out,timeRemain);
+                                        %>
+                                    </td>
+                                </tr>
+                                <%
+                                   }
+                                %>
                             </table>
                         	<%
                                   }
@@ -214,11 +258,7 @@
                 }
                 if(stats != null)
                 {
-                    long begin = stats.successfullyFetchedCount();
-                    long end = stats.queuedUriCount() + stats.activeThreadCount() + stats.successfullyFetchedCount();
-                    if(end < 1)
-                        end = 1; 
-                    int ratio = (int) (100 * begin / end);
+	                int ratio = (int) (100 * begin / end);
             %>
                     <tr>
                         <td colspan="2" height="5"> 
@@ -254,8 +294,7 @@
     </td></tr>
     <tr><td>
     <%
-        if(handler.isRunning())
-        {
+        if(handler.isRunning()) {
             out.println("<a href=\"");
             out.println(request.getContextPath());
             out.println("/console/action.jsp?action=stop\">Stop crawling pending jobs</a>");
@@ -265,11 +304,9 @@
             out.println("/console/action.jsp?action=start\">Start crawling pending jobs</a>");
         }
 
-        if(handler.isCrawling())
-        {
+        if(handler.isCrawling()) {
             out.println(" | <a href='javascript:doTerminateCurrentJob()'>Terminate current job</a> | ");
-            if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) || handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE))
-            {
+            if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) || handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE)) {
                 out.println("<a href='/console/action.jsp?action=resume'>Resume current job</a>");
                 if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED))
                 {
@@ -278,9 +315,7 @@
                     out.println("/console/frontier.jsp\">View or Edit Frontier URIs</a> ");
 
                 }
-            }
-            else
-            {
+            } else {
                 out.println("<a href=\"");
                 out.println(request.getContextPath());
                 out.println("/console/action.jsp?action=pause\">Pause current job</a> ");
@@ -299,6 +334,8 @@
             // Print the shutdown only if we were started from command line.
             // It makes no sense when in webcontainer mode.
          %>
-        <a href="<%=request.getContextPath()%>/console/shutdown.jsp">Shut down Heritrix software</a> | <% } %><a href="<%=request.getContextPath()%>/index.jsp?action=logout">Logout</a>
+        <a href="<%=request.getContextPath()%>/console/shutdown.jsp">Shut down Heritrix software</a> |
+        <% } %>
+        <a href="<%=request.getContextPath()%>/index.jsp?action=logout">Logout</a>
     </td></tr></table>
 <%@include file="/include/foot.jsp"%>
