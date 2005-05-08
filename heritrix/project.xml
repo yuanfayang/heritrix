@@ -89,7 +89,8 @@
      -->
     <siteDirectory>/home/groups/a/ar/archive-crawler/htdocs/</siteDirectory>
 
-    <!--TODO: See what these configurations do.-->
+    <!--TODO: See what these configurations do.
+    -->
     <distributionSite>http://shell.sourceforge.net</distributionSite>
     <distributionDirectory>/home/users/s/st/${maven.username}
     </distributionDirectory>
