@@ -23,9 +23,10 @@
         prereqs="jar"
         description="Use autojar to make subjars from heritrix jar." >
         <!--Needs to be able to find the autojar jar file. Define its
-        location in the variable autojar.executable.  Do this in a
+        location in the variable autojar.location.  Do this in a
         build.properties rather than in maven.properties so that
-        support for this task is optional rather than core to the build.
+        support for this task is optional rather than core to the
+        heritrix build.
         -->
         <ant:exec dir="${JAVA_HOME}/bin" executable="java" >
             <ant:arg value="-jar" />
