@@ -51,6 +51,9 @@ import org.archive.crawler.settings.Type;
  * that many docs instead, whether it is higher or lower.
  * 
  * @author Oskar Grenholm <oskar dot grenholm at kb dot se>
+ * @deprecated Use {@link YetAnotherDomainSensitiveFrontier} instead (YADSF
+ * will be renamed as DSF when this frontier is removed. Awaiting feedback
+ * from Rob Eger that new YADSF does as this frontier does).
  */
 public class DomainSensitiveFrontier extends HostQueuesFrontier {
 
