@@ -201,6 +201,23 @@
                                     </td>
                                 </tr>
                                 <%
+                                   if(timeRemain != -1)
+                                   {
+                                %>
+                                <tr>
+                                    <td>
+                                        <b>Remaining (estimated):</b>&nbsp;
+                                    </td>
+                                    <td>
+                                        <%
+                                        	printTime(out,timeRemain);
+                                        %>
+                                    </td>
+                                </tr>
+                                <%
+                                   }
+                                %>
+                                <%
                                 }
                                 %>
                             </table>
@@ -231,23 +248,6 @@
                                         <%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%>
                                     </td>
                                 </tr>
-                                <%
-                                   if(timeRemain != -1)
-                                   {
-                                %>
-                                <tr>
-                                    <td>
-                                        <b>Remaining (estimated):</b>&nbsp;
-                                    </td>
-                                    <td>
-                                        <%
-                                        	printTime(out,timeRemain);
-                                        %>
-                                    </td>
-                                </tr>
-                                <%
-                                   }
-                                %>
                             </table>
                         	<%
                                   }
