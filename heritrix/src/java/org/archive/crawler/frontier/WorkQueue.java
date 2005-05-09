@@ -59,7 +59,7 @@ public abstract class WorkQueue implements Comparable, Serializable {
 
     /**
      * Delete URIs matching the given pattern from this queue. 
-     * @param queues WorkQueues manager.
+     * @param frontier
      * @param match
      * @return count of deleted URIs
      */
