@@ -24,6 +24,8 @@
  */
 package org.archive.crawler;
 
+import it.unimi.dsi.mg4j.util.MutableString;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -1184,26 +1186,30 @@ public class Heritrix implements HeritrixMBean {
         if (Heritrix.getJobHandler() != null) {
             buffer.append("isRunning=");
             buffer.append(Heritrix.getJobHandler().isRunning());
-            buffer.append(", isCrawling=");
+            buffer.append(" isCrawling=");
             buffer.append(Heritrix.getJobHandler().isCrawling());
-            buffer.append(", newAlertCount=");
+            buffer.append(" newAlertCount=");
             buffer.append(Heritrix.getNewAlerts());
             CrawlJob job = getCurrentJob();
-            buffer.append(", isCurrentJob=");
+            buffer.append(" isCurrentJob=");
             buffer.append((job != null)? true: false);
             if (job != null) {
-                buffer.append(", currentJob=");
+                buffer.append(" currentJob=");
                 buffer.append(job.getJobName());
-                buffer.append(", jobStatus=");
+                buffer.append(" jobStatus=");
                 buffer.append(job.getStatus());
-                buffer.append(", frontierReport=\"");
-                buffer.append(Heritrix.jobHandler.getFrontierOneLine());
-                buffer.append("\", Threads Report=\"");
-                buffer.append(Heritrix.jobHandler.getThreadOneLine());
-                buffer.append("\"");
             }
         }
         return buffer.toString();
+    }
+    
+    public String getShortReport() {
+        MutableString ms = new MutableString("frontierReport=\"");
+        ms.append(Heritrix.jobHandler.getFrontierOneLine());
+        ms.append("\" threadsReport=\"");
+        ms.append(Heritrix.jobHandler.getThreadOneLine());
+        ms.append("\"");
+        return ms.toString();
     }
     
     private CrawlJob getCurrentJob() {
@@ -1239,6 +1245,11 @@ public class Heritrix implements HeritrixMBean {
         Heritrix.prepareHeritrixShutDown();
     }
 
+    /**
+     * @return True if we sent the pause message (We send the message
+     * if we're crawling.  May send the pause -- thus returning true
+     * -- if we already paused.
+     */
     public boolean pause() {
         boolean paused = false;
         if (Heritrix.getJobHandler() != null && getCurrentJob() != null &&
@@ -1249,10 +1260,15 @@ public class Heritrix implements HeritrixMBean {
         return paused;
     }
 
+    /**
+     * @return True if we sent the resume message (We send the message
+     * if we're crawling.  May send the -- thus returning true
+     * -- if we already resumed.
+     */
     public boolean resume() {
         boolean resumed = false;
         if (Heritrix.getJobHandler() != null && getCurrentJob() != null &&
-                !Heritrix.getJobHandler().isCrawling()) {
+                Heritrix.getJobHandler().isCrawling()) {
             Heritrix.getJobHandler().resumeJob();
             resumed = true;
         }

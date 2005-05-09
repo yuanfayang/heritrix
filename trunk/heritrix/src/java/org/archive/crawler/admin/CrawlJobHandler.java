@@ -603,7 +603,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * Cause the current job to pause. If no current job is crawling this method
      * will have to effect. If the job is already paused it may cause the status
-     * of the job to be incorrectly states as 'Waiting to pause'.
+     * of the job to be incorrectly 'Waiting to pause'.
      */
     public void pauseJob() {
         if (controller != null && controller.isPaused()==false) {
@@ -1338,7 +1338,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
             extractor = "\\S+\\s+((\\S+)(?:\\s+\\S+\\s+\\S+)?)\\s*";
             output = "$1";
         } else {
-            extractor = RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT;
+            extractor =
+                RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT;
             output = RegexpLineIterator.ENTRY;
         }
         File source = new File(file);

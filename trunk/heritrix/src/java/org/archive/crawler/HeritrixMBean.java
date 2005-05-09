@@ -30,6 +30,7 @@ package org.archive.crawler;
 public interface HeritrixMBean {
     public void start();
     public String getStatus();
+    public String getShortReport();
     public void stop();
     public boolean pause();
     public boolean resume();
