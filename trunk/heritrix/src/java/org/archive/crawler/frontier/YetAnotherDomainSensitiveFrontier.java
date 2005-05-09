@@ -88,6 +88,8 @@ implements CrawlURIDispositionListener {
      * If so, delete the rest of the URIs for this host or domain waiting in the
      * queue. Then add an URIRegExpFilter for this host or domain, so we won't
      * get any more URIs from this one later on.
+     * @param curi CrawlURI.
+     * @return True if discarded queue.
      */
     private synchronized boolean checkDownloadLimits(CrawlURI curi) {
         long thisMaxDocs = 0;
@@ -109,9 +111,9 @@ implements CrawlURIDispositionListener {
                 logger.fine("Discarding Queue: " + host + " ");
                 if (!discarded) {
                     long count = 0;
-                    BdbWorkQueue wq = getQueueFor(curi);
+                    WorkQueue wq = getQueueFor(curi);
                     wq.unpeek();
-                    count += wq.deleteMatching(this.pendingUris, ".*");
+                    count += wq.deleteMatching(this, ".*");
                     decrementQueuedCount(count);
                     discarded = true;
                     // I tried adding annotation but we're past log time for

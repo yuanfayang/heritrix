@@ -107,8 +107,8 @@ public class BdbFrontier extends WorkQueueFrontier {
      * @param curi CrawlURI to base queue on
      * @return the found or created BdbWorkQueue
      */
-    protected BdbWorkQueue getQueueFor(CrawlURI curi) {
-        BdbWorkQueue wq;
+    protected WorkQueue getQueueFor(CrawlURI curi) {
+        WorkQueue wq;
         String classKey = curi.getClassKey();
         synchronized (allQueues) {
             wq = (WorkQueue)allQueues.get(classKey);
