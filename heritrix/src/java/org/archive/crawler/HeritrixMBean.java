@@ -38,7 +38,22 @@ public interface HeritrixMBean {
     public boolean schedule(String url);
     public boolean scheduleForceFetch(String url);
     public boolean scheduleSeed(String url);
-    public String scheduleFile(String path);
-    public String scheduleFileForceFetch(String path);
+    
+    /**
+     * Schedule a file of URLs for crawling.
+     * @param pathOrUrl Path or URL to get seeds from.
+     * @return Message on success or failure.
+     */
+    public String scheduleFile(String pathOrUrl);
+    
+    /**
+     * Schedule a file of URLs for crawling.
+     * All URLs will be forcefetched: i.e. they'll be fetched though they
+     * may have already been seen by the crawler.
+     * @param pathOrUrl Path or URL to get seeds from.
+     * @return Message on success or failure.
+     */
+    public String scheduleFileForceFetch(String pathOrUrl);
+    
     public String interrupt(String threadName);
 }
