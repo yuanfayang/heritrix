@@ -318,6 +318,8 @@ implements AdaptiveRevisitAttributeConstants {
                 }
                 if(update){
                     opStatus = strictAdd(curiExisting,true); //Override
+                } else {
+                    return;
                 }
             } else if(opStatus == OperationStatus.SUCCESS) {
                 // Just inserted a brand new CrawlURI into the queue.
