@@ -713,7 +713,7 @@ public class Heritrix implements HeritrixMBean {
         // selftest output to show under the jobs directory.
         // Pass as a seed a pointer to the webserver we just put up.
         final String ROOTURI = "127.0.0.1:" + Integer.toString(port);
-        CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
+        CrawlJob job = addCrawlJob(jobHandler, crawlOrderFile, "Template");
         Heritrix.selftestURL = "http://" + ROOTURI + '/';
         if (oneSelfTestName != null && oneSelfTestName.length() > 0) {
             selftestURL += (oneSelfTestName + '/');
@@ -811,7 +811,7 @@ public class Heritrix implements HeritrixMBean {
         Heritrix.jobHandler = new CrawlJobHandler();
         String status = null;
         if (crawlOrderFile != null) {
-            CrawlJob job = createCrawlJob(jobHandler, new File(crawlOrderFile),
+            CrawlJob job = addCrawlJob(jobHandler, new File(crawlOrderFile),
                 "Auto launched");
             jobHandler.addJob(job);
             if(runMode) {
@@ -882,7 +882,7 @@ public class Heritrix implements HeritrixMBean {
         return buffer.toString();
     }
 
-    protected static CrawlJob createCrawlJob(CrawlJobHandler handler,
+    protected static CrawlJob addCrawlJob(CrawlJobHandler handler,
             File crawlOrderFile, String descriptor)
     throws InvalidAttributeValueException {
         XMLSettingsHandler settings = new XMLSettingsHandler(crawlOrderFile);
@@ -1311,20 +1311,21 @@ public class Heritrix implements HeritrixMBean {
         return scheduled;
     }
     
-    public String scheduleFile(final String path) {
-        return scheduleFile(path, false);
+    public String scheduleFile(final String fileOrUrl) {
+        return scheduleFile(fileOrUrl, false);
     }
     
-    public String scheduleFileForceFetch(final String path) {
-        return scheduleFile(path, true);
+    public String scheduleFileForceFetch(final String fileOrUrl) {
+        return scheduleFile(fileOrUrl, true);
     }
     
-    private String scheduleFile(final String path, final boolean forceFetch) {
+    private String scheduleFile(final String fileOrUrl,
+            final boolean forceFetch) {
         String scheduled = "0";
         if (Heritrix.getJobHandler() != null &&
                 Heritrix.getJobHandler().isCrawling()) {
             scheduled = Heritrix.getJobHandler().
-                importUris(path, "NoStyle", forceFetch);
+                importUris(fileOrUrl, "NoStyle", forceFetch);
         }
         return scheduled;
     }

@@ -25,11 +25,13 @@ package org.archive.crawler.admin;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -69,6 +71,7 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
+
 
 /**
  * This class manages CrawlJobs. Submitted crawl jobs are queued up and run
@@ -1321,12 +1324,88 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         return 0;
     }
+    
+    /**
+     * Get input stream.
+     * This method looks at passed string and tries to judge it a
+     * filesystem path or an URL.  It then gets an InputStream on to
+     * the file or URL.
+     * 
+     * <p>ASSUMPTION: Scheme on any url will probably only ever be 'file' 
+     * or 'http'.
+     * @param fileOrUrl Pass path to a file on disk or pass in a URL.
+     * @return An input stream.
+     */
+    protected InputStream getInputStream(String fileOrUrl) {
+        InputStream is = null;
+        // Do a little preliminary fact-finding. See if passed string
+        // looks like it could be an URI (Do this to save there being
+        // a URI parse exception the majority of the times this method
+        // is called). ASSUMPTION: Scheme on any url will probably
+        // only ever be 'file' or 'http'.
+        final int index = fileOrUrl.indexOf(':');
+        URL url = null;
+        if (index > 0 && index < 5) {
+            try {
+                // Its a likely URL.
+                url = new URL(fileOrUrl);
+            } catch (MalformedURLException e) {
+                // This is probably not an URL.
+            }
+        }
+        if (url != null) {
+            
+            try {
+                is = url.openStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            // Assume its not an URI or we failed the parse.
+            // Try it as a file.
+            File source = new File(fileOrUrl);
+            if (!source.isAbsolute()) {
+                source = new File(this.controller.getDisk(), fileOrUrl);
+            }
+            try {
+                is = new FileInputStream(fileOrUrl);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return is;
+    }
 
     public String importUris(String file, String style, String force) {
         return importUris(file, style, "true".equals(force));
     }
 
-    public String importUris(String file, String style, boolean forceRevisit) {
+    /**
+     * @param fileOrUrl Name of file w/ seeds.
+     * @param style What style of seeds -- crawl log, recovery journal, or
+     * seeds file.
+     * @param forceRevisit Should we revisit even if seen before?
+     * @return A display string that has a count of all added.
+     */
+    public String importUris(final String fileOrUrl, final String style,
+            final boolean forceRevisit) {
+        InputStream is = getInputStream(fileOrUrl);
+        String message = null;
+        // Do we have an inputstream?
+        if (is == null) {
+            message = "Failed to get inputstream from " + fileOrUrl;
+            logger.severe(message);
+        } else {
+            int addedCount = importUris(is, style, forceRevisit);
+            message = Integer.toString(addedCount) + " URIs added from " +
+                fileOrUrl;
+        }
+        return message;
+    }
+    
+    protected int importUris(InputStream is, String style,
+            boolean forceRevisit) {
+        // Figure the regex to use parsing each line of input stream.
         String extractor;
         String output;
         if("crawlLog".equals(style)) {
@@ -1342,19 +1421,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT;
             output = RegexpLineIterator.ENTRY;
         }
-        File source = new File(file);
-        if (!source.isAbsolute()) {
-            source = new File(controller.getDisk(), file);
-        }
+        
+        // Read the input stream.
         BufferedReader br = null;
         int addedCount = 0;
         try {
-            br = new BufferedReader(new FileReader(source));
-            Iterator iter = new RegexpLineIterator(
-                    new LineReadingIterator(br),
-                    RegexpLineIterator.COMMENT_LINE,
-                    extractor,
-                    output);
+            br = new BufferedReader(new InputStreamReader(is));
+            Iterator iter = new RegexpLineIterator(new LineReadingIterator(br),
+                RegexpLineIterator.COMMENT_LINE, extractor, output);
             while(iter.hasNext()) {
                 try {
                     importUri((String)iter.next(), forceRevisit, false, false);
@@ -1367,10 +1441,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
             doFlush();
         } catch (IOException e) {
             e.printStackTrace();
-            return e.toString();
         }
-
-        return addedCount +" URIs added from "+ file;
+        return addedCount;
     }
     
     /**
