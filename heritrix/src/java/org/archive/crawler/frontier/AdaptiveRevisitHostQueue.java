@@ -115,7 +115,7 @@ implements AdaptiveRevisitAttributeConstants {
     long[] wakeUpTime;
     /** Number of simultanious connections permitted to this host. I.e. this 
      *  many URIs can be issued before state of HQ becomes busy until one of 
-     *  the is returned via the update method. */
+     *  them is returned via the update method. */
     int valence;
     /**
      * Size of queue. That is, the number of CrawlURIs that have been added to
@@ -213,7 +213,7 @@ implements AdaptiveRevisitAttributeConstants {
             
             // Create a primitive binding for the primary key (URI string) 
             primaryKeyBinding = TupleBinding.getPrimitiveBinding(String.class);
-            // Create a serial binding for the CrawlURIARWrapper object 
+            // Create a serial binding for the CrawlURI object 
             crawlURIBinding = new SerialBinding(classCatalog, CrawlURI.class);
     
             // Open a secondary database to allow accessing the primary
@@ -290,8 +290,8 @@ implements AdaptiveRevisitAttributeConstants {
             if (opStatus == OperationStatus.KEYEXIST){ 
                 // Override an existing URI
                 // We need to extract the old CrawlURI (it contains vital
-                // info on past crawls), check it's scheduling directive
-                // and (possibly) it's time of next fetch and update if it
+                // info on past crawls), check its scheduling directive
+                // and (possibly) its time of next fetch and update if it
                 // will promote the URI to an earlier processing time.
                 boolean update = false;
                 CrawlURI curiExisting = getCrawlURI(curi.toString());
@@ -318,8 +318,6 @@ implements AdaptiveRevisitAttributeConstants {
                 }
                 if(update){
                     opStatus = strictAdd(curiExisting,true); //Override
-                } else {
-                    return;
                 }
             } else if(opStatus == OperationStatus.SUCCESS) {
                 // Just inserted a brand new CrawlURI into the queue.
@@ -434,6 +432,8 @@ implements AdaptiveRevisitAttributeConstants {
      * @throws DatabaseException
      */
     protected long countCrawlURIs() throws DatabaseException{
+        // TODO: Instead of all this, the value should be simply read from the
+        //       database.
         long count = 0;
         
         DatabaseEntry keyEntry = new DatabaseEntry();
@@ -706,7 +706,6 @@ implements AdaptiveRevisitAttributeConstants {
      * @throws IOException if an error occurs reading from the database
      */
     public CrawlURI next() throws IllegalStateException, IOException{
-        logger.finest("Entered method");
         try{
             // Ok, lets issue a URI, first check state and reserve slot.
             if(getState()!=HQSTATE_READY || useWakeUpTimeSlot()==false){
