@@ -226,20 +226,26 @@ public class AdaptiveRevisitQueueList {
         // Find the wrapper
         AdaptiveRevisitHostQueueWrapper wrapper = 
             (AdaptiveRevisitHostQueueWrapper)hostQueues.get(hq.getHostName());
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer("reorder(" + hq.getHostName() + ") was "
-                    + wrapper.nextReadyTime);
+        
+        long newTime = hq.getNextReadyTime();
+        
+        if(newTime != wrapper.nextReadyTime){
+            // Ok, the time has changed, move the queue around.
+            if (logger.isLoggable(Level.FINER)) {
+                logger.finer("reorder(" + hq.getHostName() + ") was "
+                        + wrapper.nextReadyTime);
+            }
+            // Remove it from the sorted list
+            sortedHostQueues.remove(wrapper);
+            // Update the time on the ref.
+            wrapper.nextReadyTime = newTime;
+            if (logger.isLoggable(Level.FINER)) {
+                logger.finer("reorder(" + hq.getHostName() + ") is "
+                        + wrapper.nextReadyTime);
+            }
+            // Readd to the list
+            sortedHostQueues.add(wrapper);
         }
-        // Remove it from the sorted list
-        sortedHostQueues.remove(wrapper);
-        // Update the time on the ref.
-        wrapper.nextReadyTime = hq.getNextReadyTime();
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer("reorder(" + hq.getHostName() + ") is "
-                    + wrapper.nextReadyTime);
-        }
-        // Readd to the list
-        sortedHostQueues.add(wrapper);
     }
     
     /**
