@@ -272,8 +272,9 @@ implements AdaptiveRevisitAttributeConstants {
      */
     public void add(CrawlURI curi, boolean overrideSetTimeOnDups) 
             throws IOException{
-        logger.finer("Adding " + curi.toString());
-        long oldValue = getNextReadyTime();
+        if(logger.isLoggable(Level.FINER)){
+            logger.finer("Adding " + curi.toString());
+        }
         try{
             if(inProcessing(curi.toString())){
                 // If it is currently being processed, then it is already been 
@@ -348,7 +349,7 @@ implements AdaptiveRevisitAttributeConstants {
             e2.setStackTrace(e.getStackTrace()); //preserve original stacktrace
             throw e2; 
         }
-        reorder(oldValue); // May need a reorder.
+        reorder(); // May need a reorder.
     }
     
     /**
@@ -864,26 +865,23 @@ implements AdaptiveRevisitAttributeConstants {
      * @param newTime the new value of nextReady Time;
      */
     protected void setNextReadyTime(long newTime){
-        long old = getNextReadyTime(); // store the old 'publish' value;
-        logger.finest("Setting next ready to new value " + newTime + " from " + 
-                old);
+        if(logger.isLoggable(Level.FINEST)){
+            logger.finest("Setting next ready to new value " + newTime + 
+                    " from " + getNextReadyTime());
+        }
         nextReadyTime=newTime;
-        reorder(old);
+        reorder();
     }
     
     /**
      * Method is called whenever something has been done that might have
-     * changed the value of the 'published' time of next ready. If the current
-     * value differs from the supplied 'old value' then the owner will be 
-     * notified.
-     * @param oldValue next ready time prior to whatever change that was made.
+     * changed the value of the 'published' time of next ready. If an owner 
+     * has been specified it will be notified that the value may have changed..
      */
-    protected void reorder(long oldValue){
-        if(owner == null){
-            return; // Early return when no owner is set.
+    protected void reorder(){
+        if(owner != null){
+            owner.reorder(this);
         }
-        getNextReadyTime(); // current 'published' value;
-        owner.reorder(this);
     }
 
 
@@ -968,13 +966,12 @@ implements AdaptiveRevisitAttributeConstants {
      * @param newVal
      */
     private void updateWakeUpTimeSlot(long newVal){
-        long old = getNextReadyTime();
         for(int i=0 ; i < valence ; i++){
             if(wakeUpTime[i]==-1){
                 wakeUpTime[i]=newVal;
             }
         }
-        reorder(old);
+        reorder();
     }
     
     /**
@@ -983,14 +980,13 @@ implements AdaptiveRevisitAttributeConstants {
      * @return true if a slot was successfully reserved. False otherwise.
      */
     private boolean useWakeUpTimeSlot(){
-        long old = getNextReadyTime();
         for(int i=0 ; i < valence ; i++){
             if(wakeUpTime[i]>-1 && wakeUpTime[i]<=System.currentTimeMillis()){
                 wakeUpTime[i]=-1;
                 return true;
             }
         }
-        reorder(old);
+        reorder();
         return false;
     }
     
