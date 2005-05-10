@@ -24,8 +24,6 @@
  */
 package org.archive.crawler;
 
-import it.unimi.dsi.mg4j.util.MutableString;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -34,6 +32,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -61,12 +60,14 @@ import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobErrorHandler;
 import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.datamodel.CredentialStore;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.util.TextUtils;
 
 
 /**
@@ -186,7 +187,6 @@ public class Heritrix implements HeritrixMBean {
      * Set if we're running with a web UI.
      */
     private static boolean noWui = false;
-    
     
     /**
      * Constructor.
@@ -713,11 +713,11 @@ public class Heritrix implements HeritrixMBean {
         // selftest output to show under the jobs directory.
         // Pass as a seed a pointer to the webserver we just put up.
         final String ROOTURI = "127.0.0.1:" + Integer.toString(port);
-        CrawlJob job = addCrawlJob(jobHandler, crawlOrderFile, "Template");
         Heritrix.selftestURL = "http://" + ROOTURI + '/';
         if (oneSelfTestName != null && oneSelfTestName.length() > 0) {
             selftestURL += (oneSelfTestName + '/');
         }
+        CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
         job = Heritrix.jobHandler.newJob(job, false, SELFTEST,
             "Integration self test", Heritrix.selftestURL,
             CrawlJob.PRIORITY_CRITICAL);
@@ -811,9 +811,7 @@ public class Heritrix implements HeritrixMBean {
         Heritrix.jobHandler = new CrawlJobHandler();
         String status = null;
         if (crawlOrderFile != null) {
-            CrawlJob job = addCrawlJob(jobHandler, new File(crawlOrderFile),
-                "Auto launched");
-            jobHandler.addJob(job);
+            addCrawlJob(crawlOrderFile, "Auto launched.");
             if(runMode) {
                 jobHandler.startCrawler();
                 status = "Job being crawled: " + crawlOrderFile;
@@ -882,7 +880,7 @@ public class Heritrix implements HeritrixMBean {
         return buffer.toString();
     }
 
-    protected static CrawlJob addCrawlJob(CrawlJobHandler handler,
+    protected static CrawlJob createCrawlJob(CrawlJobHandler handler,
             File crawlOrderFile, String descriptor)
     throws InvalidAttributeValueException {
         XMLSettingsHandler settings = new XMLSettingsHandler(crawlOrderFile);
@@ -891,6 +889,49 @@ public class Heritrix implements HeritrixMBean {
             new CrawlJobErrorHandler(Level.SEVERE),
             CrawlJob.PRIORITY_HIGH,
             crawlOrderFile.getAbsoluteFile().getParentFile());
+    }
+
+    public String addCrawlJob(String pathOrUrl) {
+        // This single argument method is for JMX.
+        return addCrawlJob(pathOrUrl, "JMX added " +
+            (new Date()).toString() + ".");
+    }
+    
+    public String addCrawlJob(String pathOrUrl, String description) {
+        if (UURIFactory.isUrl(pathOrUrl)) {
+            throw new UnsupportedOperationException("Order as URL " +
+                "not yet supported.");
+        }
+        if (Heritrix.jobHandler == null) {
+            throw new NullPointerException("Heritrix jobhandler is null.");
+        }
+        CrawlJob job = null;
+        try {
+            job = createCrawlJob(jobHandler, new File(pathOrUrl),
+                description);
+            Heritrix.jobHandler.addJob(job);
+            return "Added " + pathOrUrl;
+        } catch (InvalidAttributeValueException e) {
+            e.printStackTrace();
+            return "InvalidAttributeValueException on " + pathOrUrl +
+                ": " + e.getMessage();
+        }
+    }
+    
+    public String startCrawling() {
+        if (Heritrix.jobHandler == null) {
+            throw new NullPointerException("Heritrix jobhandler is null.");
+        }
+        Heritrix.jobHandler.startCrawler();
+        return "Set crawler into crawl mode.";
+    }
+
+    public String stopCrawling() {
+        if (Heritrix.jobHandler == null) {
+            throw new NullPointerException("Heritrix jobhandler is null.");
+        }
+        Heritrix.jobHandler.stopCrawler();
+        return "Set crawler into NOT crawl mode.";
     }
 
     /**
@@ -910,8 +951,7 @@ public class Heritrix implements HeritrixMBean {
      * heritrix.properties.  May be null if we failed initial read of
      * 'heritrix.properties'.
      */
-    public static Properties getProperties()
-    {
+    public static Properties getProperties() {
         return properties;
     }
 
@@ -1194,22 +1234,21 @@ public class Heritrix implements HeritrixMBean {
             buffer.append(" isCurrentJob=");
             buffer.append((job != null)? true: false);
             if (job != null) {
-                buffer.append(" currentJob=");
-                buffer.append(job.getJobName());
                 buffer.append(" jobStatus=");
-                buffer.append(job.getStatus());
+                // Job status can have spaces in it.
+                buffer.append(TextUtils.
+                    getFirstWord(job.getStatus().trim()));
             }
         }
         return buffer.toString();
     }
     
-    public String getShortReport() {
-        MutableString ms = new MutableString("frontierReport=\"");
-        ms.append(Heritrix.jobHandler.getFrontierOneLine());
-        ms.append("\" threadsReport=\"");
-        ms.append(Heritrix.jobHandler.getThreadOneLine());
-        ms.append("\"");
-        return ms.toString();
+    public String getFrontierShortReport() {
+        return Heritrix.jobHandler.getFrontierOneLine();
+    }
+    
+    public String getThreadsShortReport() {
+        return Heritrix.jobHandler.getThreadOneLine();
     }
     
     private CrawlJob getCurrentJob() {

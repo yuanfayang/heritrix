@@ -30,11 +30,25 @@ package org.archive.crawler;
 public interface HeritrixMBean {
     public void start();
     public String getStatus();
-    public String getShortReport();
+    public String getFrontierShortReport();
+    public String getThreadsShortReport();
     public void stop();
     public boolean pause();
     public boolean resume();
     public boolean terminateCurrentJob();
+    
+    /**
+     * Set the crawler into 'crawling' mode.
+     * @return Status
+     */
+    public String startCrawling();
+    
+    /**
+     * Set the crawler mode to not crawl.
+    * @return Status
+     */
+    public String stopCrawling();
+    
     public boolean schedule(String url);
     public boolean scheduleForceFetch(String url);
     public boolean scheduleSeed(String url);
@@ -54,6 +68,13 @@ public interface HeritrixMBean {
      * @return Message on success or failure.
      */
     public String scheduleFileForceFetch(String pathOrUrl);
+    
+    /**
+     * Add a crawl job.
+     * @param pathOrUrl Path or URL to get order from.
+     * @return Message on success or failure.
+     */
+    public String addCrawlJob(String pathOrUrl);
     
     public String interrupt(String threadName);
 }

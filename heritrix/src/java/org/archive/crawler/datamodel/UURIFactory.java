@@ -262,6 +262,20 @@ public class UURIFactory extends URI {
     		throws URIException {
         return UURIFactory.factory.create(base, relative);
     }
+    
+    
+    /**
+     * @param possibleUrl URL string to examine.
+     * @return True if passed string looks like it could be an URL.
+     */
+    public static boolean isUrl(String possibleUrl) {
+        final int index = possibleUrl.indexOf(':');
+        if (index <= 0) {
+            return false;
+        }
+        String tmpStr = possibleUrl.substring(0, index).toLowerCase();
+        return UURIFactory.factory.schemes.contains(tmpStr);
+    }
 
     /**
      * @param uri URI as string.
