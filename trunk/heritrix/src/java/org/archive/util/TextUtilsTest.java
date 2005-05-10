@@ -78,5 +78,15 @@ public class TextUtilsTest extends TestCase {
         assertTrue("matcher against 'fuggedaboutit' problem",m3.matches());
         assertTrue("matcher not recycled", m1==m3);
     }
+    
+    public void testGetFirstWord() {
+        final String firstWord = "one";
+        String tmpStr = TextUtils.getFirstWord(firstWord + " two three");
+        assertTrue("Failed to get first word 1 " + tmpStr,
+            tmpStr.equals(firstWord));
+        tmpStr = TextUtils.getFirstWord(firstWord);
+        assertTrue("Failed to get first word 2 " + tmpStr,
+            tmpStr.equals(firstWord));       
+    }
 }
 

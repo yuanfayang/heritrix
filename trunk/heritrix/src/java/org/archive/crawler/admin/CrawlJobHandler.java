@@ -54,6 +54,7 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
@@ -1338,24 +1339,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     protected InputStream getInputStream(String fileOrUrl) {
         InputStream is = null;
-        // Do a little preliminary fact-finding. See if passed string
-        // looks like it could be an URI (Do this to save there being
-        // a URI parse exception the majority of the times this method
-        // is called). ASSUMPTION: Scheme on any url will probably
-        // only ever be 'file' or 'http'.
-        final int index = fileOrUrl.indexOf(':');
-        URL url = null;
-        if (index > 0 && index < 5) {
+        if (UURIFactory.isUrl(fileOrUrl)) {
             try {
-                // Its a likely URL.
-                url = new URL(fileOrUrl);
-            } catch (MalformedURLException e) {
-                // This is probably not an URL.
-            }
-        }
-        if (url != null) {
-            
-            try {
+                URL url = new URL(fileOrUrl);
                 is = url.openStream();
             } catch (IOException e) {
                 e.printStackTrace();

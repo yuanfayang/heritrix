@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 public class TextUtils {
+    private static final String FIRSTWORD = "^([^\\s]*).*$";
+    
     /** PatternMatcherRecycler objects with reusable Pattern and Matcher
      * instaces, indexed on pattern string.
      * Profiling has this Map growing to ~18 elements total circa
@@ -153,6 +155,16 @@ public class TextUtils {
     public static String[] split(String pattern, CharSequence input) {
         return getRecycler(pattern).getPattern().split(input); 
     }
+    
+    /**
+     * @param s String to find first word in (Words are delimited by
+     * whitespace).
+     * @return First word in the passed string else null if no word found.
+     */
+    public static String getFirstWord(String s) {
+        Matcher m = getMatcher(FIRSTWORD, s);
+        return (m != null && m.matches())? m.group(1): null;
+    }
 
     /**
      * Escapes a string so that it can be passed as an argument to a javscript
@@ -197,7 +209,6 @@ public class TextUtils {
         escaped = escaped.replaceAll("\"","&quot;");
         return escaped; 
     }
-    
 
     /**
      * @param message Message to put at top of the string returned. May be
