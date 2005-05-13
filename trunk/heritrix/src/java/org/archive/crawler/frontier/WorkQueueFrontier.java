@@ -23,6 +23,7 @@
 package org.archive.crawler.frontier;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -114,7 +115,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     protected LinkedQueue retiredQueues = new LinkedQueue();
     
     /** all per-class queues from whom a URI is outstanding */
-    protected Bag inProcessQueues = BagUtils.synchronizedBag(new HashBag()); // of ClassKeyQueue
+    protected Bag inProcessQueues = 
+        BagUtils.synchronizedBag(new HashBag()); // of ClassKeyQueue
 
     /** all per-class queues held in snoozed state, sorted by wake time */
     protected SortedSet snoozedClassQueues =
@@ -809,6 +811,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         int activeCount = inProcessCount + readyCount + snoozedCount;
         int inactiveCount = inactiveQueues.getCount();
         int retiredCount = retiredQueues.getCount();
+        int exhaustedCount = 
+            allCount - activeCount - inactiveCount - retiredCount;
         StringBuffer rep = new StringBuffer();
         rep.append(allCount + " queues: " + 
                 activeCount + " active (" + 
@@ -816,7 +820,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                 readyCount + " ready; " + 
                 snoozedCount + " snoozed); " +
                 inactiveCount +" inactive; " +
-                retiredCount + " retired");
+                retiredCount + " retired; " +
+                exhaustedCount + " exhausted");
         return rep.toString();
     }
 
@@ -834,6 +839,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         int activeCount = inProcessCount + readyCount + snoozedCount;
         int inactiveCount = inactiveQueues.getCount();
         int retiredCount = retiredQueues.getCount();
+        int exhaustedCount = 
+            allCount - activeCount - inactiveCount - retiredCount;
         StringBuffer rep =
             new StringBuffer(10 * 1024 /*SWAG at final report size.*/);
 
@@ -858,9 +865,15 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         rep.append(  "                       Snoozed: " + snoozedCount + "\n");
         rep.append(  "           Inactive queues: " + inactiveCount + "\n");
         rep.append(  "            Retired queues: " + retiredCount + "\n");
+        rep.append(  "          Exhuasted queues: " + exhaustedCount + "\n");
         
         rep.append("\n -----===== IN-PROCESS QUEUES =====-----\n");
-        appendQueueReports(rep, this.inProcessQueues.iterator(),
+        ArrayList inProcessQueuesCopy;
+        synchronized(this.inProcessQueues) {
+            // grab a copy that will be stable against mods for report duration 
+            inProcessQueuesCopy = new ArrayList(this.inProcessQueues);
+        }
+        appendQueueReports(rep, inProcessQueuesCopy.iterator(),
             this.inProcessQueues.size(), REPORT_MAX_QUEUES);
         
         rep.append("\n -----===== READY QUEUES =====-----\n");
