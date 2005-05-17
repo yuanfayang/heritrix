@@ -87,7 +87,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     /** cost assignment policy to use (by class name) */
     public final static String ATTR_COST_POLICY = "cost-policy";
     protected final static String DEFAULT_COST_POLICY =
-        ZeroCostAssignmentPolicy.class.getName();
+        UnitCostAssignmentPolicy.class.getName();
 
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
@@ -209,6 +209,17 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             throw (FatalConfigurationException)new FatalConfigurationException(e.getMessage()).initCause(e);
         }
         
+        initCostPolicy();
+        
+        loadSeeds();
+    }
+    
+    /**
+     * Set (or reset after configuration change) the cost policy in effect.
+     * 
+     * @throws FatalConfigurationException
+     */
+    private void initCostPolicy() throws FatalConfigurationException {
         try {
             costAssignmentPolicy = (CostAssignmentPolicy) Class.forName(
                     (String) getUncheckedAttribute(null, ATTR_COST_POLICY))
@@ -217,10 +228,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             e.printStackTrace();
             throw new FatalConfigurationException(e.getMessage());
         }
-        
-        loadSeeds();
     }
-    
+
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
      */
@@ -391,6 +400,11 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     public void kickUpdate() {
         super.kickUpdate();
+        try {
+            initCostPolicy();
+        } catch (FatalConfigurationException fce) {
+            throw new RuntimeException(fce);
+        }
         try {
             // The rules for a 'retired' queue may have changed; so,
             // unretire all queues to 'inactive'. If they still qualify
