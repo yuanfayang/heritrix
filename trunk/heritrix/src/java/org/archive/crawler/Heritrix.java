@@ -556,7 +556,7 @@ public class Heritrix implements HeritrixMBean {
             file = new File(alternateProperties);
         }
         // Get properties from conf directory if one available.
-        if ((file == null || !file.exists()) && getConfdir() != null) {
+        if ((file == null || !file.exists()) && getConfdir(false) != null) {
             file = new File(getConfdir(), PROPERTIES);
         }
         // If not on the command-line, there is no conf dir. Then get the
@@ -617,7 +617,7 @@ public class Heritrix implements HeritrixMBean {
         String value = getProperty(TRUSTSTORE_KEY);
         File confdir = null;
         try {
-			confdir = getConfdir();
+			confdir = getConfdir(false);
 		} catch (IOException e) {
 			logger.warning("Failed to get confdir.");
 		}
@@ -972,7 +972,20 @@ public class Heritrix implements HeritrixMBean {
      */
     public static File getConfdir()
     throws IOException {
-        return getSubDir("conf");
+        return getConfdir(true);
+    }
+
+    /**
+     * Get the configuration directory.
+     * @param fail Throw IOE if can't find directory if true, else just
+     * return null.
+     * @return The conf directory under HERITRIX_HOME or null (or an IOE) if
+     * can't be found.
+     * @throws IOException
+     */
+    public static File getConfdir(final boolean fail)
+    throws IOException {
+        return getSubDir("conf", fail);
     }
 
     /**

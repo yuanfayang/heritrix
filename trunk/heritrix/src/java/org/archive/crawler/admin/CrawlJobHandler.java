@@ -306,7 +306,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @throws IOException
      */
     private File getProfilesDirectory() throws IOException {
-        return (Heritrix.getConfdir() == null)? null:
+        return (Heritrix.getConfdir(false) == null)? null:
             new File(Heritrix.getConfdir().getAbsolutePath(),
                 PROFILES_DIR_NAME);
     }
