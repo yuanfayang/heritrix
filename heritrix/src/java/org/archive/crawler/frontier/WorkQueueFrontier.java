@@ -137,7 +137,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     
     /** all policies available to be chosen */
     String[] AVAILABLE_COST_POLICIES = new String[] {
-            DEFAULT_COST_POLICY,
+            ZeroCostAssignmentPolicy.class.getName(),
             UnitCostAssignmentPolicy.class.getName(),
             WagCostAssignmentPolicy.class.getName(),
             AntiCalendarCostAssignmentPolicy.class.getName()};
