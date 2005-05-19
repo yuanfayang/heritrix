@@ -1182,9 +1182,6 @@ public class CrawlController implements Serializable {
      */
     public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
-//        if (this.frontier instanceof Frontier) {
-//            ((Frontier)this.frontier).loadSeeds();
-//        }
         
         this.scope.kickUpdate();
         this.frontier.kickUpdate();
