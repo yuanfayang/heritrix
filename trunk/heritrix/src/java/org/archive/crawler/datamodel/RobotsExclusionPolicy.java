@@ -189,7 +189,8 @@ public class RobotsExclusionPolicy implements Serializable {
 
         // In the common case with policy=Classic, the useragent is remembered from uri to uri on
         // the same server
-        if(honoringPolicy.isType(curi, RobotsHonoringPolicy.CLASSIC)
+        if((honoringPolicy.isType(curi, RobotsHonoringPolicy.CLASSIC) 
+                || honoringPolicy.isType(curi, RobotsHonoringPolicy.CUSTOM))
             && (lastUsedUserAgent == null
             || !lastUsedUserAgent.equals(userAgent))) {
 

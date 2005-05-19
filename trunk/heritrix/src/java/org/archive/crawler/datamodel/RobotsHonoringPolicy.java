@@ -138,7 +138,7 @@ public class RobotsHonoringPolicy  extends ModuleType {
     public String getCustomRobots(CrawlerSettings settings) {
         if(isType(settings, RobotsHonoringPolicy.CUSTOM)) {
             try {
-                return (String) getAttribute(settings, ATTR_CUSTOM_ROBOTS);
+                return getAttribute(settings, ATTR_CUSTOM_ROBOTS).toString();
             } catch (AttributeNotFoundException e) {
                 logger.severe(e.getMessage());
             }
