@@ -266,7 +266,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         }
     }
 
-    public void forget(String canonical) {
+    public void forget(String canonical, CandidateURI item) {
         DatabaseEntry key = new DatabaseEntry();
         LongBinding.longToEntry(createKey(canonical), key);
     	OperationStatus status = null;

@@ -63,7 +63,7 @@ implements UriUniqFilter {
         super.add(canonical);
     }
     
-    public void forget(String canonical) {
+    public void forget(String canonical, CandidateURI curi) {
         super.remove(canonical);
     }
     

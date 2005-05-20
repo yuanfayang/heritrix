@@ -37,7 +37,6 @@ package org.archive.crawler.datamodel;
  * @version $Date$, $Revision$
  */
 public interface UriUniqFilter {
-    
     /**
      * @return Count of already seen URIs.
      */
@@ -68,7 +67,7 @@ public interface UriUniqFilter {
      * @param key Usually a canonicalized version of <code>value</code>.
      * This is the key used doing lookups, forgets and insertions on the
      * already included list.
-     * @param value Item to add.
+     * @param value item to add.
      */
     public void add(String key, CandidateURI value);
     
@@ -77,7 +76,7 @@ public interface UriUniqFilter {
      * @param key Usually a canonicalized version of <code>uri</code>.
      * This is the key used doing lookups, forgets and insertions on the
      * already included list.
-     * @param value Item to add.
+     * @param value item to add.
      */
     public void addNow(String key, CandidateURI value);
     
@@ -93,7 +92,7 @@ public interface UriUniqFilter {
      * @param key Usually a canonicalized version of <code>uri</code>.
      * This is the key used doing lookups, forgets and insertions on the
      * already included list.
-     * @param value Item to add.
+     * @param value item to add.
      */
     public void addForce(String key, CandidateURI value);
     
@@ -110,8 +109,9 @@ public interface UriUniqFilter {
      * @param key Usually a canonicalized version of an <code>URI</code>.
      * This is the key used doing lookups, forgets and insertions on the
      * already included list.
+     * @param value item to add.
      */
-    public void forget(String key);
+    public void forget(String key, CandidateURI value);
     
     /**
      * Force pending items to be added/dropped.
