@@ -120,8 +120,9 @@ implements UriUniqFilter.HasUriReceiver {
         assertFalse("Receiver was called", this.received);
     }
     
-    public void testForget() {
-        this.filter.forget(this.getUri());
+    public void testForget() throws URIException {
+        this.filter.forget(this.getUri(),
+                new CandidateURI(UURIFactory.getInstance(this.getUri())));
         assertTrue("Didn't forget", this.filter.count() == 0);
     }
     

@@ -787,7 +787,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     protected void forget(CrawlURI curi) {
         logger.finer("Forgetting " + curi);
-        alreadyIncluded.forget(canonicalize(curi.getUURI()));
+        alreadyIncluded.forget(canonicalize(curi.getUURI()), curi);
     }
 
     /**  (non-Javadoc)

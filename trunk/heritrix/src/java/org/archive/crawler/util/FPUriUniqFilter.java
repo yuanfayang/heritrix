@@ -95,7 +95,8 @@ implements UriUniqFilter, Serializable {
         fpAdd(getFp(canonical));        
     }
     
-    public synchronized void forget(String canonical) {
+    public synchronized void forget(String canonical,
+            CandidateURI curi) {
         fpset.remove(getFp(canonical));        
     }
 
