@@ -54,10 +54,13 @@ public class SurtPrefixSet extends TreeSet {
      * @return True if contains prefix.
      */
     public boolean containsPrefixOf(String s) {
-        SortedSet sub = headSet(s+"\0");
+        SortedSet sub = headSet(s);
         // because redundant prefixes have been eliminated,
         // only a single test is necessary
-        return !sub.isEmpty() && s.startsWith((String)sub.last());
+        if (!sub.isEmpty() && s.startsWith((String)sub.last())) {
+            return true; // prefix substring exists
+        } // else: might still exist (headSet does not contain boundary)
+        return contains(s); // exact string exists, or no prefix is there
     }
     
     /** 

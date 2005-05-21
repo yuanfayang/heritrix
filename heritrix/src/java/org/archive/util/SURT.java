@@ -57,7 +57,7 @@ import java.util.regex.Pattern;
  * @author gojomo
  */
 public class SURT {
-    static String DOT = ".";
+    static char DOT = '.';
     static String BEGIN_TRANSFORMED_AUTHORITY = "(";
     static String TRANSFORMED_HOST_DELIM = ",";
     static String END_TRANSFORMED_AUTHORITY = ")";
@@ -68,32 +68,39 @@ public class SURT {
     // 4: host
     // 5: :port
     // 6: path
-    static Pattern URI_SPLITTER = Pattern.compile(
-            "^(\\w+://)(?:(\\S+?)(@))?(\\S+?)(:\\d+)?(/\\S*)?$");
+    static String URI_SPLITTER = 
+            "^(\\w+://)(?:(\\S+?)(@))?(\\S+?)(:\\d+)?(/\\S*)?$";
     
     public static String fromURI(String s) {
-        Matcher m = URI_SPLITTER.matcher(s);
+        Matcher m = TextUtils.getMatcher(URI_SPLITTER,s);
         if(!m.matches()) {
             // not an authority-based URI scheme; return unchanged
             return s;
         }
-        String scheme = m.group(1);
-        String host = m.group(4);
+        StringBuffer builder = new StringBuffer(s.length()+2);
+        PreJ15Utils.append(builder,s,m.start(1),m.end(1)); // scheme://
+        builder.append(BEGIN_TRANSFORMED_AUTHORITY); // '('
         
-        String reorderedHost = "";
-        StringTokenizer stk = new StringTokenizer(host,DOT);
-        while(stk.hasMoreTokens()) {
-            reorderedHost = stk.nextToken() + TRANSFORMED_HOST_DELIM  + reorderedHost;
+        int hostSegEnd = m.end(4);
+        int hostStart = m.start(4); 
+        for(int i = m.end(4)-1; i>=hostStart; i--) {
+            if(s.charAt(i-1)!=DOT && i > hostStart) {
+                continue;
+            }
+            PreJ15Utils.append(builder,s,i,hostSegEnd); // rev host segment
+            builder.append(TRANSFORMED_HOST_DELIM);     // ','
+            hostSegEnd = i-1;
         }
-        String port = emptyIfNull(m.group(5));
-        String userinfo = emptyIfNull(m.group(2));
-        String at = emptyIfNull(m.group(3));
-        String path = emptyIfNull(m.group(6)); 
-        String composed = scheme + BEGIN_TRANSFORMED_AUTHORITY + reorderedHost 
-            + port + at
-            + userinfo + END_TRANSFORMED_AUTHORITY 
-            + path;
-        return composed.toLowerCase();
+
+        PreJ15Utils.append(builder,s,m.start(5),m.end(5)); // :port
+        PreJ15Utils.append(builder,s,m.start(3),m.end(3)); // at
+        PreJ15Utils.append(builder,s,m.start(2),m.end(2)); // userinfo
+        builder.append(END_TRANSFORMED_AUTHORITY); // ')'
+        PreJ15Utils.append(builder,s,m.start(6),m.end(6)); // path
+        for(int i = 0; i < builder.length(); i++) {
+            builder.setCharAt(i,Character.toLowerCase(builder.charAt((i))));
+        }
+        return builder.toString();
     }
     
     private static String emptyIfNull(String string) {
