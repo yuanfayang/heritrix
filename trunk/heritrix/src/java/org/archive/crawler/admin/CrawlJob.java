@@ -26,21 +26,40 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
+import javax.management.DynamicMBean;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanNotificationInfo;
+import javax.management.MBeanOperationInfo;
 import javax.management.ReflectionException;
+import javax.management.RuntimeOperationsException;
+import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
+import javax.management.openmbean.OpenMBeanConstructorInfoSupport;
+import javax.management.openmbean.OpenMBeanInfoSupport;
+import javax.management.openmbean.OpenMBeanOperationInfoSupport;
+import javax.management.openmbean.OpenMBeanParameterInfo;
+import javax.management.openmbean.OpenMBeanParameterInfoSupport;
+import javax.management.openmbean.SimpleType;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.util.ArchiveUtils;
+import org.archive.util.JmxUtils;
 
 /**
  * A CrawlJob encapsulates a 'crawl order' with any and all information and
@@ -59,7 +78,7 @@ import org.archive.crawler.settings.XMLSettingsHandler;
  * @see org.archive.crawler.admin.CrawlJobHandler#newProfile(CrawlJob, String, String, String)
  */
 
-public class CrawlJob {
+public class CrawlJob implements DynamicMBean {
     private static final Logger logger =
         Logger.getLogger(CrawlJob.class.getName());
     /*
@@ -139,7 +158,51 @@ public class CrawlJob {
     // Checkpoint to resume
     private Checkpoint resumeFrom = null;
     
-    public CrawlJob() {
+    // OpenMBean support.
+    /**
+     * The MBean we've registered ourselves with (May be null
+     * throughout life of Heritrix).
+     */
+    private OpenMBeanInfoSupport openMBeanInfo;
+    
+    private final static String NAME_ATTR = "Name";
+    private final static String UID_ATTR = "UID";
+    private final static String STATUS_ATTR = "Status";
+    private final static String FRONTIER_SHORT_REPORT_ATTR =
+        "FrontierShortReport";
+    private final static String FRONTIER_REPORT_ATTR = "FrontierReport";
+    private final static String THREADS_SHORT_REPORT_ATTR =
+        "ThreadsShortReport";
+    private final static String THREADS_REPORT_ATTR = "ThreadsReport";
+    private final static String TOTAL_DATA_ATTR = "TotalData";
+    private final static String CRAWL_TIME_ATTR = "CrawlTime";
+    private final static String DOC_RATE_ATTR = "DocRate";
+    private final static String CURRENT_DOC_RATE_ATTR = "CurrentDocRate";
+    private final static String KB_RATE_ATTR = "KbRate";
+    private final static String CURRENT_KB_RATE_ATTR = "CurrentKbRate";
+    private final static String THREAD_COUNT_ATTR = "ThreadCount";
+    private final static List ATTRIBUTE_LIST;
+    static {
+        ATTRIBUTE_LIST = Arrays.asList(new String [] {NAME_ATTR, UID_ATTR,
+                STATUS_ATTR, FRONTIER_REPORT_ATTR, FRONTIER_SHORT_REPORT_ATTR,
+                THREADS_SHORT_REPORT_ATTR, THREADS_REPORT_ATTR,
+                TOTAL_DATA_ATTR, CRAWL_TIME_ATTR, DOC_RATE_ATTR,
+                CURRENT_DOC_RATE_ATTR, KB_RATE_ATTR, CURRENT_KB_RATE_ATTR,
+                THREAD_COUNT_ATTR});
+    }
+
+    private final static String IMPORT_URI_OPER = "importUri";
+    private final static String IMPORT_URIS_OPER = "importUris";
+    private final static String PAUSE_OPER = "pause";
+    private final static String RESUME_OPER = "resume";
+    private final static String TERMINATE_OPER = "terminate";
+    private final static List OPERATION_LIST;
+    static {
+        OPERATION_LIST = Arrays.asList(new String [] {IMPORT_URI_OPER,
+            IMPORT_URIS_OPER, PAUSE_OPER, RESUME_OPER, TERMINATE_OPER});
+    }
+    
+    protected CrawlJob() {
         super();
     }
 
@@ -164,6 +227,7 @@ public class CrawlJob {
         this.priority = priority;
         jobDir = dir;
         this.errorHandler = errorHandler;
+        this.openMBeanInfo = buildMBeanInfo();
     }
 
     /**
@@ -324,6 +388,8 @@ public class CrawlJob {
 
         // TODO: This should be inside a finally block.
         jobReader.close();
+
+        this.openMBeanInfo = buildMBeanInfo();
     }
 
     /**
@@ -703,5 +769,304 @@ public class CrawlJob {
             f = new File(disk.getPath(), f.getPath());
         }
         return f.getAbsolutePath();
+    }
+
+    // OpenMBean implementation.
+    
+    /**
+     * @return True if there is a current job and
+     * its this crawl job instance.
+     */
+    protected boolean isCurrentJob() {
+        if (Heritrix.getJobHandler() == null) {
+            return false;
+        }
+        CrawlJob job = Heritrix.getJobHandler().getCurrentJob();
+        return job != null && job == this;
+    }
+    
+    /**
+     * Build up the MBean info for Heritrix main.
+     * @return Return created mbean info instance.
+     */
+    protected OpenMBeanInfoSupport buildMBeanInfo() {
+        OpenMBeanAttributeInfoSupport[] attributes =
+            new OpenMBeanAttributeInfoSupport[ATTRIBUTE_LIST.size()];
+        OpenMBeanConstructorInfoSupport[] constructors =
+            new OpenMBeanConstructorInfoSupport[0];
+        OpenMBeanOperationInfoSupport[] operations =
+            new OpenMBeanOperationInfoSupport[OPERATION_LIST.size()];
+        MBeanNotificationInfo[] notifications =
+            new MBeanNotificationInfo[0];
+
+        // Attributes.
+        attributes[0] = new OpenMBeanAttributeInfoSupport(NAME_ATTR,
+            "Crawl job name", SimpleType.STRING, true, false, false);
+        attributes[1] = new OpenMBeanAttributeInfoSupport(STATUS_ATTR,
+            "Short basic status message", SimpleType.STRING, true, false,
+            false);
+        attributes[2] =
+            new OpenMBeanAttributeInfoSupport(FRONTIER_SHORT_REPORT_ATTR,
+                "Short frontier report", SimpleType.STRING, true,
+                false, false);
+        attributes[3] =
+            new OpenMBeanAttributeInfoSupport(FRONTIER_REPORT_ATTR,
+                "Frontier report", SimpleType.STRING, true,
+                false, false);
+        attributes[4] =
+            new OpenMBeanAttributeInfoSupport(THREADS_SHORT_REPORT_ATTR,
+                "Short threads report", SimpleType.STRING, true,
+                false, false);
+        attributes[5] = new OpenMBeanAttributeInfoSupport(THREADS_REPORT_ATTR,
+            "Threads report", SimpleType.STRING, true, false, false);
+        attributes[6] = new OpenMBeanAttributeInfoSupport(UID_ATTR,
+            "Crawl job UID", SimpleType.STRING, true, false, false);  
+        attributes[7] = new OpenMBeanAttributeInfoSupport(TOTAL_DATA_ATTR,
+            "Total data received", SimpleType.STRING, true, false, false);
+        attributes[8] = new OpenMBeanAttributeInfoSupport(CRAWL_TIME_ATTR,
+            "Crawl time", SimpleType.STRING, true, false, false);
+        attributes[9] =
+            new OpenMBeanAttributeInfoSupport(CURRENT_DOC_RATE_ATTR,
+            "Current crawling rate (Docs/sec)", SimpleType.STRING,
+            true, false, false);
+        attributes[10] =
+            new OpenMBeanAttributeInfoSupport(CURRENT_KB_RATE_ATTR,
+            "Current crawling rate (Kb/sec)", SimpleType.STRING,
+            true, false, false);
+        attributes[11] = new OpenMBeanAttributeInfoSupport(THREAD_COUNT_ATTR,
+            "Active thread count", SimpleType.STRING, true, false, false);
+        attributes[12] = new OpenMBeanAttributeInfoSupport(DOC_RATE_ATTR,
+            "Crawling rate (Docs/sec)", SimpleType.STRING,
+            true, false, false);
+        attributes[13] = new OpenMBeanAttributeInfoSupport(KB_RATE_ATTR,
+            "Current crawling rate (Kb/sec)", SimpleType.STRING,
+            true, false, false);
+
+        // Operations.
+        OpenMBeanParameterInfo[] args = new OpenMBeanParameterInfoSupport[3];
+        args[0] = new OpenMBeanParameterInfoSupport("url",
+            "URL to add to the frontier", SimpleType.STRING);
+        args[1] = new OpenMBeanParameterInfoSupport("forceFetch",
+            "True if URL is to be force fetched", SimpleType.BOOLEAN);
+        args[2] = new OpenMBeanParameterInfoSupport("seed",
+            "True if URL is a seed", SimpleType.BOOLEAN);
+        operations[0] = new OpenMBeanOperationInfoSupport(IMPORT_URI_OPER,
+            "Add passed URL to the frontier", args, SimpleType.VOID,
+                MBeanOperationInfo.ACTION);
+        
+        args = new OpenMBeanParameterInfoSupport[2];
+        args[0] = new OpenMBeanParameterInfoSupport("pathOrUrl",
+            "Path or URL to file of URLs to add to the frontier",
+            SimpleType.STRING);
+        args[1] = new OpenMBeanParameterInfoSupport("forceFetch",
+            "True if URLs are to be force fetched", SimpleType.BOOLEAN);
+        operations[1] = new OpenMBeanOperationInfoSupport(IMPORT_URIS_OPER,
+            "Add file of passed URLs to the frontier", args, SimpleType.VOID,
+                MBeanOperationInfo.ACTION);
+        
+        operations[2] = new OpenMBeanOperationInfoSupport(PAUSE_OPER,
+            "Pause crawling (noop if already paused)", null, SimpleType.VOID,
+            MBeanOperationInfo.ACTION);
+        
+        operations[3] = new OpenMBeanOperationInfoSupport(RESUME_OPER,
+            "Resume crawling (noop if already resumed)", null,
+            SimpleType.VOID, MBeanOperationInfo.ACTION);
+        
+        operations[4] = new OpenMBeanOperationInfoSupport(TERMINATE_OPER,
+            "Terminate this crawl job", null, SimpleType.VOID,
+            MBeanOperationInfo.ACTION);
+        
+        // Build the info object.
+        return new OpenMBeanInfoSupport(this.getClass().getName(),
+            "Current Crawl Job as OpenMBean", attributes, constructors,
+            operations, notifications);
+    }
+    
+    public Object getAttribute(String attribute_name)
+    throws AttributeNotFoundException, MBeanException, ReflectionException {
+        if (attribute_name == null) {
+            throw new RuntimeOperationsException(
+                 new IllegalArgumentException("Attribute name cannot be null"),
+                 "Cannot call getAttribute with null attribute name");
+        }
+        if (!ATTRIBUTE_LIST.contains(attribute_name)) {
+            throw new AttributeNotFoundException("Attribute " +
+                 attribute_name + " is unimplemented.");
+        }
+        // The pattern in the below is to match an attribute and when found
+        // do a return out of if clause.  Doing it this way, I can fall
+        // on to the AttributeNotFoundException for case where we've an
+        // attribute but no handler.
+        if (attribute_name.equals(STATUS_ATTR)) {
+            return getStatus();
+        }
+        if (attribute_name.equals(NAME_ATTR)) {
+            return getJobName();
+        }
+        if (attribute_name.equals(UID_ATTR)) {
+            return getUID();
+        }
+        if (attribute_name.equals(TOTAL_DATA_ATTR)) {
+            return ArchiveUtils.
+                formatBytesForDisplay(this.stats.totalBytesWritten());
+        }
+        if (attribute_name.equals(CRAWL_TIME_ATTR)) {
+            return Long.toString(
+                this.stats.getCrawlerTotalElapsedTime()/1000);
+        }
+        if (attribute_name.equals(CURRENT_DOC_RATE_ATTR)) {
+            return ArchiveUtils.doubleToString(
+                this.stats.currentProcessedDocsPerSec(), 2);
+        }
+        if (attribute_name.equals(DOC_RATE_ATTR)) {
+            return ArchiveUtils.doubleToString(
+                this.stats.processedDocsPerSec(), 2);
+        }
+        if (attribute_name.equals(KB_RATE_ATTR)) {
+            return Long.toString(this.stats.currentProcessedKBPerSec());
+        }
+        if (attribute_name.equals(CURRENT_KB_RATE_ATTR)) {
+            return Long.toString(this.stats.processedKBPerSec());
+        }
+        if (attribute_name.equals(THREAD_COUNT_ATTR)) {
+            return Integer.toString(this.stats.activeThreadCount());
+        }       
+        if (attribute_name.equals(FRONTIER_SHORT_REPORT_ATTR)) {
+            return Heritrix.getJobHandler().getFrontierOneLine();
+        }
+        if (attribute_name.equals(THREADS_SHORT_REPORT_ATTR)) {
+            return Heritrix.getJobHandler().getThreadOneLine();
+        }
+        if (attribute_name.equals(FRONTIER_REPORT_ATTR)) {
+            return Heritrix.getJobHandler().getFrontierReport();
+        }
+        if (attribute_name.equals(THREADS_REPORT_ATTR)) {
+            return Heritrix.getJobHandler().getThreadsReport();
+        }
+        
+        throw new AttributeNotFoundException("Attribute " +
+            attribute_name + " not found.");
+    }
+
+    public void setAttribute(Attribute attribute)
+    throws AttributeNotFoundException, InvalidAttributeValueException,
+            MBeanException, ReflectionException {
+        throw new AttributeNotFoundException("No attribute can be set in " +
+            "this MBean");
+    }
+
+    public AttributeList getAttributes(String [] attributeNames) {
+        if (attributeNames == null) {
+            throw new RuntimeOperationsException(
+                new IllegalArgumentException("attributeNames[] cannot be " +
+                "null"), "Cannot call getAttributes with null attribute " +
+                "names");
+        }
+        AttributeList resultList = new AttributeList();
+        if (attributeNames.length == 0) {
+            return resultList;
+        }
+        for (int i = 0; i < attributeNames.length; i++) {
+            try {
+                Object value = getAttribute(attributeNames[i]);
+                resultList.add(new Attribute(attributeNames[i], value));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return(resultList);
+    }
+
+    public AttributeList setAttributes(AttributeList attributes) {
+        return new AttributeList(); // always empty
+    }
+
+    public Object invoke(String operationName, Object[] params,
+        String[] signature)
+    throws MBeanException, ReflectionException {
+        if (operationName == null) {
+            throw new RuntimeOperationsException(
+                new IllegalArgumentException("Operation name cannot be null"),
+                "Cannot call invoke with null operation name");
+        }
+        // The pattern in the below is to match an operation and when found
+        // do a return out of if clause.  Doing it this way, I can fall
+        // on to the MethodNotFoundException for case where we've an
+        // attribute but no handler.
+        if (operationName.equals(IMPORT_URI_OPER)) {
+            JmxUtils.checkParamsCount(IMPORT_URI_OPER, params, 3);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            try {
+                Heritrix.getJobHandler().importUri((String)params[0],
+                    ((Boolean)params[1]).booleanValue(),
+                    ((Boolean)params[2]).booleanValue());
+            } catch (URIException e) {
+                throw new RuntimeOperationsException(
+                    new RuntimeException(e.getMessage()), e.getMessage());
+            }
+            return null;
+        }
+        
+        if (operationName.equals(IMPORT_URIS_OPER)) {
+            JmxUtils.checkParamsCount(IMPORT_URIS_OPER, params, 2);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            Heritrix.getJobHandler().importUris((String)params[0],
+                ((Boolean)params[1]).booleanValue());
+            return null;
+        }
+        
+        if (operationName.equals(PAUSE_OPER)) {
+            JmxUtils.checkParamsCount(PAUSE_OPER, params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            Heritrix.getJobHandler().pauseJob();
+            return null;
+        }
+        
+        if (operationName.equals(RESUME_OPER)) {
+            JmxUtils.checkParamsCount(RESUME_OPER, params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            Heritrix.getJobHandler().resumeJob();
+            return null;
+        }
+        
+        if (operationName.equals(TERMINATE_OPER)) {
+            JmxUtils.checkParamsCount(TERMINATE_OPER, params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            Heritrix.getJobHandler().deleteJob(getUID());
+            return null;
+        }
+        
+        throw new ReflectionException(
+            new NoSuchMethodException(operationName),
+                "Cannot find the operation " + operationName);
+    }
+    
+    public MBeanInfo getMBeanInfo() {
+        return this.openMBeanInfo;
     }
 }

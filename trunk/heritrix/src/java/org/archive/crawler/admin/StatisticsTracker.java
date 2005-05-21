@@ -299,45 +299,18 @@ implements CrawlURIDispositionListener {
         lastLogPointTime = System.currentTimeMillis();
     }
 
-
-    /**
-     * Returns the number of documents that have been processed
-     * per second over the life of the crawl (as of last snapshot)
-     *
-     * @return  The rate per second of documents gathered so far
-     */
     public double processedDocsPerSec(){
         return docsPerSecond;
     }
 
-    /**
-     * Returns an estimate of recent document download rates
-     * based on a queue of recently seen CrawlURIs (as of last snapshot.)
-     *
-     * @return The rate per second of documents gathered during the last snapshot
-     */
     public double currentProcessedDocsPerSec(){
         return currentDocsPerSecond;
     }
 
-    /**
-     * Calculates the rate that data, in kb, has been processed
-     * over the life of the crawl (as of last snapshot.)
-     *
-     * @return The rate per second of KB gathered so far
-     */
     public long processedKBPerSec(){
         return totalKBPerSec;
     }
 
-    /**
-     * Calculates an estimate of the rate, in kb, at which documents
-     * are currently being processed by the crawler.  For more
-     * accurate estimates set a larger queue size, or get
-     * and average multiple values (as of last snapshot).
-     *
-     * @return The rate per second of KB gathered during the last snapshot
-     */
     public int currentProcessedKBPerSec(){
         return currentKBPerSec;
     }
@@ -509,11 +482,6 @@ implements CrawlURIDispositionListener {
         return controller.getToeCount();
     }
 
-    /**
-     * Get the number of active (non-paused) threads.
-     * 
-     * @return The number of active (non-paused) threads
-     */
     public int activeThreadCount() {
         return controller.getActiveToeCount();
         // note: reuse of old busy value seemed misleading: anyone asking
@@ -634,12 +602,6 @@ implements CrawlURIDispositionListener {
             controller.getFrontier().queuedUriCount() : queuedUriCount;
     }
 
-    /**
-     * Returns the total number of uncompressed bytes written to disk.  This may
-     * be different from the actual number if you are using compression.
-     *
-     * @return The total number of uncompressed bytes written to disk
-     */
     public long totalBytesWritten() {
         return shouldrun ?
             controller.getFrontier().totalBytesWritten() : totalProcessedBytes;

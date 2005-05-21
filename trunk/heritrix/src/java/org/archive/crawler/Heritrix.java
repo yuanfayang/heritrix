@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -44,17 +45,35 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.AttributeNotFoundException;
+import javax.management.DynamicMBean;
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanNotificationInfo;
+import javax.management.MBeanOperationInfo;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectInstance;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
+import javax.management.RuntimeOperationsException;
+import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
+import javax.management.openmbean.OpenMBeanConstructorInfoSupport;
+import javax.management.openmbean.OpenMBeanInfoSupport;
+import javax.management.openmbean.OpenMBeanOperationInfoSupport;
+import javax.management.openmbean.OpenMBeanParameterInfo;
+import javax.management.openmbean.OpenMBeanParameterInfoSupport;
+import javax.management.openmbean.SimpleType;
 
 import org.apache.commons.cli.Option;
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobErrorHandler;
@@ -67,7 +86,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
-import org.archive.util.TextUtils;
+import org.archive.util.JmxUtils;
 
 
 /**
@@ -86,7 +105,7 @@ import org.archive.util.TextUtils;
  * @author Kristinn Sigurdsson
  *
  */
-public class Heritrix implements HeritrixMBean {
+public class Heritrix implements DynamicMBean {
     /**
      * Heritrix logging instance.
      */
@@ -188,12 +207,43 @@ public class Heritrix implements HeritrixMBean {
      */
     private static boolean noWui = false;
     
+    // OpenMBean support.
+    /**
+     * The MBean we've registered ourselves with (May be null
+     * throughout life of Heritrix).
+     */
+    private static MBeanServer mbeanServer = null;
+    private final OpenMBeanInfoSupport openMBeanInfo;
+    
+    private final static String STATUS_ATTR = "Status";
+    private final static List ATTRIBUTE_LIST;
+    static {
+        ATTRIBUTE_LIST = Arrays.asList(new String [] {STATUS_ATTR});
+    }
+    
+    private final static String START_OPER = "start";
+    private final static String STOP_OPER = "stop";
+    private final static String INTERRUPT_OPER = "interrupt";
+    private final static String START_CRAWLING_OPER = "startCrawling";
+    private final static String STOP_CRAWLING_OPER = "stopCrawling";
+    private final static String ADD_CRAWL_JOB_OPER = "addJob";
+    private final static String ALERT_OPER = "alert";
+    private final static String NEW_ALERT_OPER = "newAlert";
+    private final static List OPERATION_LIST;
+    static {
+        OPERATION_LIST = Arrays.asList(new String [] {START_OPER, STOP_OPER,
+            INTERRUPT_OPER, START_CRAWLING_OPER, STOP_CRAWLING_OPER,
+            ADD_CRAWL_JOB_OPER, ALERT_OPER, NEW_ALERT_OPER});
+    }
+    
     /**
      * Constructor.
      * @throws IOException
      */
-    public Heritrix() throws IOException {
+    public Heritrix()
+    throws IOException {
         super();
+        this.openMBeanInfo = buildMBeanInfo();
         Heritrix.loadProperties();
         Heritrix.patchLogging();
         // Register a shutdownHook so we get called on JVM KILL SIGNAL
@@ -893,7 +943,7 @@ public class Heritrix implements HeritrixMBean {
 
     public String addCrawlJob(String pathOrUrl) {
         // This single argument method is for JMX.
-        return addCrawlJob(pathOrUrl, "JMX added " +
+        return addCrawlJob(pathOrUrl, "Job JMX added " +
             (new Date()).toString() + ".");
     }
     
@@ -918,20 +968,18 @@ public class Heritrix implements HeritrixMBean {
         }
     }
     
-    public String startCrawling() {
+    public void startCrawling() {
         if (Heritrix.jobHandler == null) {
             throw new NullPointerException("Heritrix jobhandler is null.");
         }
         Heritrix.jobHandler.startCrawler();
-        return "Set crawler into crawl mode.";
     }
 
-    public String stopCrawling() {
+    public void stopCrawling() {
         if (Heritrix.jobHandler == null) {
             throw new NullPointerException("Heritrix jobhandler is null.");
         }
         Heritrix.jobHandler.stopCrawler();
-        return "Set crawler into NOT crawl mode.";
     }
 
     /**
@@ -1107,18 +1155,52 @@ public class Heritrix implements HeritrixMBean {
     }
 
     /**
+     * Returns an alert with the given ID. If no alert is found for given ID
+     * null is returned
+     * @param alertID the ID of the alert
+     * @return an alert with the given ID
+     */
+    public static Alert getAlert(String alertID){
+        if(alertID == null){
+            // null will never match any alert
+            return null;
+        }
+        for( int i = 0 ; i < alerts.size() ; i++ ){
+            Alert tmp = (Alert)alerts.get(i);
+            if(alertID.equals(tmp.getID())){
+                return tmp;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get the number of new alerts.
      * @return the number of new alerts
      */
-    public static int getNewAlerts(){
+    public static int getNewAlertsCount() {
         int n = 0;
-        for( int i = 0 ; i < alerts.size() ; i++ ){
+        for(int i = 0 ; i < alerts.size() ; i++ ) {
             Alert tmp = (Alert)alerts.get(i);
             if(tmp.isNew()){
                 n++;
             }
         }
         return n;
+    }
+    
+    public static Vector getNewAlerts() {
+        Vector newAlerts = null;
+        for(int i = 0 ; i < alerts.size(); i++ ) {
+            Alert tmp = (Alert)alerts.get(i);
+            if(tmp.isNew()) {
+                if (newAlerts == null) {
+                    newAlerts = new Vector();
+                }
+                newAlerts.add(tmp);
+            }
+        }
+        return newAlerts;
     }
 
     /**
@@ -1145,26 +1227,6 @@ public class Heritrix implements HeritrixMBean {
                 tmp.setAlertSeen();
             }
         }
-    }
-
-    /**
-     * Returns an alert with the given ID. If no alert is found for given ID
-     * null is returned
-     * @param alertID the ID of the alert
-     * @return an alert with the given ID
-     */
-    public static Alert getAlert(String alertID){
-        if(alertID == null){
-            // null will never match any alert
-            return null;
-        }
-        for( int i = 0 ; i < alerts.size() ; i++ ){
-            Alert tmp = (Alert)alerts.get(i);
-            if(alertID.equals(tmp.getID())){
-                return tmp;
-            }
-        }
-        return null;
     }
     
     /**
@@ -1203,12 +1265,51 @@ public class Heritrix implements HeritrixMBean {
         for (Iterator i = servers.iterator(); i.hasNext();) {
             MBeanServer server = (MBeanServer)i.next();
             if (server != null) {
-                // Only register with the JMX agent started on cmdline.
-                if ((System.getProperty("com.sun.management.jmxremote.port")
-                        != null)) {
-                    server.registerMBean(h, new ObjectName(getJmxName()));
-                    break;
+                ObjectName on = new ObjectName(getJmxName());
+                boolean registeredAlready = true;
+                try {
+                    server.getObjectInstance(on);
+                } catch (InstanceNotFoundException e) {
+                    registeredAlready = false;
                 }
+                if (!registeredAlready) {
+                    server.registerMBean(h, on);
+                }
+                Heritrix.mbeanServer = server;
+                break;
+            }
+        }
+    }
+    
+    public static ObjectInstance registerMBean(Object objToRegister,
+            String type) {
+        ObjectInstance result = null;
+        try {
+            result = (Heritrix.mbeanServer == null)? null:
+                Heritrix.mbeanServer.registerMBean(objToRegister,
+                    new ObjectName(getJmxName(type)));
+        } catch (InstanceAlreadyExistsException e) {
+            e.printStackTrace();
+        } catch (MBeanRegistrationException e) {
+            e.printStackTrace();
+        } catch (NotCompliantMBeanException e) {
+            e.printStackTrace();
+        } catch (MalformedObjectNameException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+    
+    public static void unregisterMBean(ObjectInstance obj) {
+        if (Heritrix.mbeanServer != null && obj !=  null) {
+            try {
+                Heritrix.mbeanServer.unregisterMBean(obj.getObjectName());
+            } catch (InstanceNotFoundException e) {
+                e.printStackTrace();
+            } catch (MBeanRegistrationException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -1217,7 +1318,11 @@ public class Heritrix implements HeritrixMBean {
      * @return Jmx ObjectName used by this Heritrix instance.
      */
     public static String getJmxName() {
-        return CRAWLER_PACKAGE + ":name=Heritrix,type=Service";
+        return getJmxName("Service");
+    }
+    
+    public static String getJmxName(String type) {
+        return CRAWLER_PACKAGE + ":name=Heritrix,type=" + type;
     }
     
     /**
@@ -1241,27 +1346,12 @@ public class Heritrix implements HeritrixMBean {
             buffer.append(Heritrix.getJobHandler().isRunning());
             buffer.append(" isCrawling=");
             buffer.append(Heritrix.getJobHandler().isCrawling());
+            buffer.append(" alertCount=");
+            buffer.append((getAlerts() == null)? 0: getAlerts().size());
             buffer.append(" newAlertCount=");
-            buffer.append(Heritrix.getNewAlerts());
-            CrawlJob job = getCurrentJob();
-            buffer.append(" isCurrentJob=");
-            buffer.append((job != null)? true: false);
-            if (job != null) {
-                buffer.append(" jobStatus=");
-                // Job status can have spaces in it.
-                buffer.append(TextUtils.
-                    getFirstWord(job.getStatus().trim()));
-            }
+            buffer.append(Heritrix.getNewAlertsCount());
         }
         return buffer.toString();
-    }
-    
-    public String getFrontierShortReport() {
-        return Heritrix.jobHandler.getFrontierOneLine();
-    }
-    
-    public String getThreadsShortReport() {
-        return Heritrix.jobHandler.getThreadOneLine();
     }
     
     private CrawlJob getCurrentJob() {
@@ -1281,6 +1371,8 @@ public class Heritrix implements HeritrixMBean {
         // Don't start if already started.
         if (!Heritrix.isCommandLine() && !isStarted()) {
             try {
+                // Register ourselves w/ any agent that might be running.
+                registerHeritrixMBean(this);
                 launch();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1292,94 +1384,16 @@ public class Heritrix implements HeritrixMBean {
      * Stop Heritrix.
      * 
      * Used by JMX and webapp initialization for stopping Heritrix.
+     * Starts up a shutdown thread rather than synchronously waiting
+     * so returns immediately.
      */
     public void stop() {
-        Heritrix.prepareHeritrixShutDown();
-    }
-
-    /**
-     * @return True if we sent the pause message (We send the message
-     * if we're crawling.  May send the pause -- thus returning true
-     * -- if we already paused.
-     */
-    public boolean pause() {
-        boolean paused = false;
-        if (Heritrix.getJobHandler() != null && getCurrentJob() != null &&
-                Heritrix.getJobHandler().isCrawling()) {
-            Heritrix.getJobHandler().pauseJob();
-            paused = true;
-        }
-        return paused;
-    }
-
-    /**
-     * @return True if we sent the resume message (We send the message
-     * if we're crawling.  May send the -- thus returning true
-     * -- if we already resumed.
-     */
-    public boolean resume() {
-        boolean resumed = false;
-        if (Heritrix.getJobHandler() != null && getCurrentJob() != null &&
-                Heritrix.getJobHandler().isCrawling()) {
-            Heritrix.getJobHandler().resumeJob();
-            resumed = true;
-        }
-        return resumed;
-    }
-
-    public boolean terminateCurrentJob() {
-        boolean terminated = false;
-        if (Heritrix.getJobHandler() != null && getCurrentJob() != null) {
-            Heritrix.getJobHandler().deleteJob(getCurrentJob().getUID());
-            terminated = true;
-        }
-        return terminated;
-    }
-
-    public boolean schedule(final String url) {
-        return schedule(url, false, false);
-    }
-    
-    public boolean scheduleForceFetch(final String url) {
-        return schedule(url, true, false);
-    }
-    
-    public boolean scheduleSeed(final String url) {
-        return schedule(url, true, true);
-    }
-    
-    private boolean schedule(final String url, final boolean forceFetch,
-            final boolean isSeed) {
-        boolean scheduled = false;
-        if (Heritrix.getJobHandler() != null &&
-                Heritrix.getJobHandler().isCrawling()) {
-            try {
-                Heritrix.getJobHandler().importUri(url, forceFetch, isSeed);
-                scheduled = true;
-            } catch (URIException e) {
-                e.printStackTrace();
+        Thread t = new Thread() {
+            public void run() {
+                Heritrix.prepareHeritrixShutDown();
             }
-        }
-        return scheduled;
-    }
-    
-    public String scheduleFile(final String fileOrUrl) {
-        return scheduleFile(fileOrUrl, false);
-    }
-    
-    public String scheduleFileForceFetch(final String fileOrUrl) {
-        return scheduleFile(fileOrUrl, true);
-    }
-    
-    private String scheduleFile(final String fileOrUrl,
-            final boolean forceFetch) {
-        String scheduled = "0";
-        if (Heritrix.getJobHandler() != null &&
-                Heritrix.getJobHandler().isCrawling()) {
-            scheduled = Heritrix.getJobHandler().
-                importUris(fileOrUrl, "NoStyle", forceFetch);
-        }
-        return scheduled;
+        };
+        t.start();
     }
 
     public String interrupt(String threadName) {
@@ -1411,6 +1425,221 @@ public class Heritrix implements HeritrixMBean {
             }
         }
         return result;
+    }
+
+    // OpenMBean implementation.
+    
+    /**
+     * Build up the MBean info for Heritrix main.
+     * @return Return created mbean info instance.
+     */
+    protected OpenMBeanInfoSupport buildMBeanInfo() {
+        OpenMBeanAttributeInfoSupport[] attributes =
+            new OpenMBeanAttributeInfoSupport[Heritrix.ATTRIBUTE_LIST.size()];
+        OpenMBeanConstructorInfoSupport[] constructors =
+            new OpenMBeanConstructorInfoSupport[1];
+        OpenMBeanOperationInfoSupport[] operations =
+            new OpenMBeanOperationInfoSupport[Heritrix.OPERATION_LIST.size()];
+        MBeanNotificationInfo[] notifications =
+            new MBeanNotificationInfo[0];
+
+        // Attributes.
+        attributes[0] =
+            new OpenMBeanAttributeInfoSupport(Heritrix.STATUS_ATTR,
+                "Short basic status message", SimpleType.STRING, true,
+                false, false);
+
+        // Constructors.
+        constructors[0] = new OpenMBeanConstructorInfoSupport(
+            "HeritrixOpenMBean", "Constructs Heritrix OpenMBean instance ",
+            new OpenMBeanParameterInfoSupport[0]);
+
+        // Operations.
+        operations[0] = new OpenMBeanOperationInfoSupport(
+            Heritrix.START_OPER, "Start Heritrix instance", null,
+                SimpleType.VOID, MBeanOperationInfo.ACTION);
+        
+        operations[1] = new OpenMBeanOperationInfoSupport(
+            Heritrix.STOP_OPER, "Stop Heritrix instance", null,
+                SimpleType.VOID, MBeanOperationInfo.ACTION);
+        
+        OpenMBeanParameterInfo[] args = new OpenMBeanParameterInfoSupport[1];
+        args[0] = new OpenMBeanParameterInfoSupport("threadName",
+            "Name of thread to send interrupt to", SimpleType.STRING);
+        operations[2] = new OpenMBeanOperationInfoSupport(
+            Heritrix.INTERRUPT_OPER, "Send thread an interrupt " +
+                "(Used debugging)", args, SimpleType.STRING,
+                MBeanOperationInfo.ACTION_INFO);
+        
+        operations[3] = new OpenMBeanOperationInfoSupport(
+            Heritrix.START_CRAWLING_OPER, "Set Heritrix instance " +
+                "into crawling mode", null, SimpleType.VOID,
+                MBeanOperationInfo.ACTION);
+        
+        operations[4] = new OpenMBeanOperationInfoSupport(
+            Heritrix.STOP_CRAWLING_OPER, "Unset Heritrix instance " +
+                " crawling mode", null, SimpleType.VOID,
+                MBeanOperationInfo.ACTION);
+        
+        args = new OpenMBeanParameterInfoSupport[1];
+        args[0] = new OpenMBeanParameterInfoSupport("pathOrUrl",
+            "A filesystem path or a URL", SimpleType.STRING);
+        operations[5] = new OpenMBeanOperationInfoSupport(
+            Heritrix.ADD_CRAWL_JOB_OPER, "Add a new crawl job", args,
+                SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
+        
+        args = new OpenMBeanParameterInfoSupport[1];
+        args[0] = new OpenMBeanParameterInfoSupport("index",
+            "Zero-based index into array of NEW alerts", SimpleType.STRING);
+        operations[6] = new OpenMBeanOperationInfoSupport(
+            Heritrix.NEW_ALERT_OPER, "Return NEW alert at passed index", args,
+                SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
+        
+        args = new OpenMBeanParameterInfoSupport[1];
+        args[0] = new OpenMBeanParameterInfoSupport("index",
+            "Zero-based index into array of alerts", SimpleType.STRING);
+        operations[7] = new OpenMBeanOperationInfoSupport(
+            Heritrix.ALERT_OPER, "Return alert at passed index", args,
+                SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
+
+        // Build the info object.
+        return new OpenMBeanInfoSupport(this.getClass().getName(),
+            "Heritrix Main OpenMBean", attributes, constructors, operations,
+            notifications);
+    }
+    
+    public Object getAttribute(String attribute_name)
+    throws AttributeNotFoundException, MBeanException, ReflectionException {
+        if (attribute_name == null) {
+            throw new RuntimeOperationsException(
+                 new IllegalArgumentException("Attribute name cannot be null"),
+                 "Cannot call getAttribute with null attribute name");
+        }
+        if (!Heritrix.ATTRIBUTE_LIST.contains(attribute_name)) {
+            throw new AttributeNotFoundException("Attribute " +
+                 attribute_name + " is unimplemented.");
+        }
+        // The pattern in the below is to match an attribute and when found
+        // do a return out of if clause.  Doing it this way, I can fall
+        // on to the AttributeNotFoundException for case where we've an
+        // attribute but no handler.
+        if (attribute_name.equals(STATUS_ATTR)) {
+            return getStatus();
+        }
+        throw new AttributeNotFoundException("Attribute " +
+            attribute_name + " not found.");
+    }
+
+    public void setAttribute(Attribute attribute)
+    throws AttributeNotFoundException, InvalidAttributeValueException,
+            MBeanException, ReflectionException {
+        throw new AttributeNotFoundException("No attribute can be set in " +
+            "this MBean");
+    }
+
+    public AttributeList getAttributes(String [] attributeNames) {
+        if (attributeNames == null) {
+            throw new RuntimeOperationsException(
+                new IllegalArgumentException("attributeNames[] cannot be " +
+                "null"), "Cannot call getAttributes with null attribute " +
+                "names");
+        }
+        AttributeList resultList = new AttributeList();
+        if (attributeNames.length == 0) {
+            return resultList;
+        }
+        for (int i = 0; i < attributeNames.length; i++) {
+            try {
+                Object value = getAttribute(attributeNames[i]);
+                resultList.add(new Attribute(attributeNames[i], value));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return(resultList);
+    }
+
+    public AttributeList setAttributes(AttributeList attributes) {
+        return new AttributeList(); // always empty
+    }
+
+    public Object invoke(String operationName, Object[] params,
+        String[] signature)
+    throws MBeanException, ReflectionException {
+        if (operationName == null) {
+            throw new RuntimeOperationsException(
+                new IllegalArgumentException("Operation name cannot be null"),
+                "Cannot call invoke with null operation name");
+        }
+        // The pattern in the below is to match an operation and when found
+        // do a return out of if clause.  Doing it this way, I can fall
+        // on to the MethodNotFoundException for case where we've an
+        // attribute but no handler.
+        if (operationName.equals(START_OPER)) {
+            JmxUtils.checkParamsCount(START_OPER, params, 0);
+            start();
+            return null;
+        }
+        if (operationName.equals(STOP_OPER)) {
+            JmxUtils.checkParamsCount(STOP_OPER, params, 0);
+            stop();
+            return null;
+        }
+        if (operationName.equals(INTERRUPT_OPER)) {
+            JmxUtils.checkParamsCount(INTERRUPT_OPER, params, 1);
+            return interrupt((String)params[0]);
+        }       
+        if (operationName.equals(START_CRAWLING_OPER)) {
+            JmxUtils.checkParamsCount(START_CRAWLING_OPER, params, 0);
+            startCrawling();
+            return null;
+        }
+        if (operationName.equals(STOP_CRAWLING_OPER)) {
+            JmxUtils.checkParamsCount(STOP_CRAWLING_OPER, params, 0);
+            stopCrawling();
+            return null;
+        }
+        if (operationName.equals(ADD_CRAWL_JOB_OPER)) {
+            JmxUtils.checkParamsCount(ADD_CRAWL_JOB_OPER, params, 1);
+            return addCrawlJob((String)params[0]);
+        }
+        if (operationName.equals(ALERT_OPER)) {
+            JmxUtils.checkParamsCount(ALERT_OPER, params, 1);
+            Vector v = getAlerts();
+            if (v == null) {
+                throw new RuntimeOperationsException(
+                    new NullPointerException("There are no alerts"),
+                        "Empty alerts vector");
+            }
+            return getAlertStringRepresentation(((Alert)v.
+                get(Integer.parseInt((String)params[0]))));
+        }
+        if (operationName.equals(NEW_ALERT_OPER)) {
+            JmxUtils.checkParamsCount(NEW_ALERT_OPER, params, 1);
+            Vector v = getNewAlerts();
+            if (v == null) {
+                throw new RuntimeOperationsException(
+                    new NullPointerException("There are no new alerts"),
+                        "Empty new alerts vector");
+            }
+            return getAlertStringRepresentation(((Alert)v.
+                    get(Integer.parseInt((String)params[0]))));
+        }
+        
+        throw new ReflectionException(
+            new NoSuchMethodException(operationName),
+                "Cannot find the operation " + operationName);
+    }
+    
+    protected String getAlertStringRepresentation(Alert a) {
+        if (a.isNew()) {
+            a.setAlertSeen();
+        }
+        return a.getID() + "\n" + a.getBody();
+    }
+
+    public MBeanInfo getMBeanInfo() {
+        return this.openMBeanInfo;
     }
 }
 

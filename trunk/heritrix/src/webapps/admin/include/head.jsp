@@ -80,10 +80,10 @@
                                             </b>
                                             <% if(Heritrix.getAlerts().size()==0) { %>
                                                 <a style="color: #000000; text-decoration: none" href="<%=request.getContextPath()%>/console/alerts.jsp">no alerts</a>
-                                            <% } else if(Heritrix.getNewAlerts()>0){ %>
-                                                <b><a href="<%=request.getContextPath()%>/console/alerts.jsp"><%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlerts()%> new)</a></b>
+                                            <% } else if(Heritrix.getNewAlertsCount()>0){ %>
+                                                <b><a href="<%=request.getContextPath()%>/console/alerts.jsp"><%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlertsCount()%> new)</a></b>
                                             <% } else { %>
-                                                <a style="color: #000000" href="<%=request.getContextPath()%>/console/alerts.jsp"><%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlerts()%> new)</a>
+                                                <a style="color: #000000" href="<%=request.getContextPath()%>/console/alerts.jsp"><%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlertsCount()%> new)</a>
                                             <% } %>
                                         </td>
                                     </tr>

@@ -127,7 +127,7 @@
                             <td>
                                 <a style="color: #000000" 
                                     href="<%=request.getContextPath()%>/console/alerts.jsp">
-                                    <%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlerts()%> new)
+                                    <%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlertsCount()%> new)
                                 </a>
                             </td>
                     </table>
