@@ -81,4 +81,65 @@ public interface StatisticsTracking extends Runnable {
      * Start the tracker's crawl timing. 
      */
     public void noteStart();
+    
+
+    /**
+     * Returns the total number of uncompressed bytes written to disk.  This may
+     * be different from the actual number if you are using compression.
+     *
+     * @return The total number of uncompressed bytes written to disk
+     */
+    public long totalBytesWritten();
+    
+    /**
+     * Total amount of time spent actively crawling so far.<p>
+     * Returns the total amount of time (in milliseconds) that has elapsed from
+     * the start of the crawl and until the current time or if the crawl has
+     * ended until the the end of the crawl <b>minus</b> any
+     * time spent paused.
+     * @return Total amount of time (in msec.) spent crawling so far.
+     */
+    public long getCrawlerTotalElapsedTime();
+    
+    /**
+     * Returns an estimate of recent document download rates
+     * based on a queue of recently seen CrawlURIs (as of last snapshot).
+     *
+     * @return The rate per second of documents gathered during the last
+     * snapshot
+     */
+    public double currentProcessedDocsPerSec();
+    
+    /**
+     * Returns the number of documents that have been processed
+     * per second over the life of the crawl (as of last snapshot)
+     *
+     * @return  The rate per second of documents gathered so far
+     */
+    public double processedDocsPerSec();
+    
+    /**
+     * Calculates the rate that data, in kb, has been processed
+     * over the life of the crawl (as of last snapshot.)
+     *
+     * @return The rate per second of KB gathered so far
+     */
+    public long processedKBPerSec();
+
+    /**
+     * Calculates an estimate of the rate, in kb, at which documents
+     * are currently being processed by the crawler.  For more
+     * accurate estimates set a larger queue size, or get
+     * and average multiple values (as of last snapshot).
+     *
+     * @return The rate per second of KB gathered during the last snapshot
+     */
+    public int currentProcessedKBPerSec();
+    
+    /**
+     * Get the number of active (non-paused) threads.
+     * 
+     * @return The number of active (non-paused) threads
+     */
+    public int activeThreadCount();
 }

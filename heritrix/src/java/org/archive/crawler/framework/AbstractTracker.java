@@ -222,15 +222,6 @@ implements StatisticsTracking, CrawlStatusListener {
         return crawlerPauseStarted;
     }
 
-    /**
-     * Total amount of time spent actively crawling so far.<p>
-     * Returns the total amount of time (in milliseconds) that has elapsed from
-     * the start of the crawl {@link #getCrawlStartTime() getCrawlStartTime()}
-     * and until the current time or if the crawl has ended until the the end
-     * of the crawl {@link #getCrawlEndTime() getCrawlEndTime()} <b>minus</b> any
-     * time spent paused {@link #getCrawlTotalPauseTime() getCrawlTotalPauseTime()}.
-     * @return Total amount of time (in msec.) spent crawling so far.
-     */
     public long getCrawlerTotalElapsedTime() {
         return getCrawlPauseStartedTime() != 0?
             //Are currently paused, calculate time up to last pause

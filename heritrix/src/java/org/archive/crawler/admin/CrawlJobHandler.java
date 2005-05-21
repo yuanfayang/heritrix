@@ -31,7 +31,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -47,6 +46,7 @@ import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
+import javax.management.ObjectInstance;
 import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
@@ -140,6 +140,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     private CrawlJob currentJob = null;
 
+    /**
+     * ObjectInstance registered w/ JMX agent.
+     * Null if no current job and if no JMX agent to register against.
+     * Keep around the reference as long as there is a current job.
+     * Updated everytime there is a current job.
+     */
+    private ObjectInstance currentJobRegisteredMBeanInstance = null;
+    
     /**
      * A new job that is being created/configured. Not yet ready for crawling.
      */
@@ -1070,6 +1078,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
         this.currentJob.setStatus(CrawlJob.STATUS_RUNNING);
         this.currentJob.setRunning(true);
         this.currentJob.setStatisticsTracking(controller.getStatistics());
+        // Register the current job w/ the JMX agent, if there is one.
+        this.currentJobRegisteredMBeanInstance =
+            Heritrix.registerMBean(this.currentJob, "CurrentJob");
         controller.requestCrawlStart();
     }
 
@@ -1179,6 +1190,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
         currentJob.setStatus(sExitMessage);
         currentJob.setReadOnly(); //Further changes have no meaning
         currentJob.setRunning(false);
+        // Unregister current job from JMX agent, if there one.
+        Heritrix.unregisterMBean(this.currentJobRegisteredMBeanInstance);
+        this.currentJobRegisteredMBeanInstance = null;
         completedCrawlJobs.add(currentJob);
         currentJob = null;
         // Remove the reference so that the old controller can be gc.
@@ -1362,6 +1376,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
         return is;
     }
 
+    public String importUris(final String file, final boolean force) {
+        return importUris(file, "default", force);
+    }
+    
     public String importUris(String file, String style, String force) {
         return importUris(file, style, "true".equals(force));
     }
