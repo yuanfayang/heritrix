@@ -33,7 +33,7 @@ import java.io.Serializable;
  */
 public class LongWrapper implements Serializable {
     public long longValue;
-    public LongWrapper(int initial){
-        longValue = initial;
+    public LongWrapper(long initial){
+        this.longValue = initial;
     }
 }
