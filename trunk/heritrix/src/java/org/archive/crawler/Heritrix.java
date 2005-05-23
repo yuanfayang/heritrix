@@ -608,6 +608,11 @@ public class Heritrix implements DynamicMBean {
         // Get properties from conf directory if one available.
         if ((file == null || !file.exists()) && getConfdir(false) != null) {
             file = new File(getConfdir(), PROPERTIES);
+            if (!file.exists()) {
+                // If no properties file in the conf dir, set file back to
+                // null so we go looking for heritrix.properties on classpath.
+                file = null;
+            }
         }
         // If not on the command-line, there is no conf dir. Then get the
         // properties from the CLASSPATH (Classpath file separator is always
