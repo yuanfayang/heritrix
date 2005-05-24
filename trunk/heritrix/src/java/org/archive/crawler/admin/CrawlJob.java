@@ -170,10 +170,8 @@ public class CrawlJob implements DynamicMBean {
     private final static String STATUS_ATTR = "Status";
     private final static String FRONTIER_SHORT_REPORT_ATTR =
         "FrontierShortReport";
-    private final static String FRONTIER_REPORT_ATTR = "FrontierReport";
     private final static String THREADS_SHORT_REPORT_ATTR =
         "ThreadsShortReport";
-    private final static String THREADS_REPORT_ATTR = "ThreadsReport";
     private final static String TOTAL_DATA_ATTR = "TotalData";
     private final static String CRAWL_TIME_ATTR = "CrawlTime";
     private final static String DOC_RATE_ATTR = "DocRate";
@@ -181,14 +179,17 @@ public class CrawlJob implements DynamicMBean {
     private final static String KB_RATE_ATTR = "KbRate";
     private final static String CURRENT_KB_RATE_ATTR = "CurrentKbRate";
     private final static String THREAD_COUNT_ATTR = "ThreadCount";
+    private final static String DOWNLOAD_COUNT_ATTR = "DownloadedCount";
+    private final static String DISCOVERED_COUNT_ATTR = "DiscoveredCount";
     private final static List ATTRIBUTE_LIST;
     static {
         ATTRIBUTE_LIST = Arrays.asList(new String [] {NAME_ATTR, UID_ATTR,
-                STATUS_ATTR, FRONTIER_REPORT_ATTR, FRONTIER_SHORT_REPORT_ATTR,
-                THREADS_SHORT_REPORT_ATTR, THREADS_REPORT_ATTR,
+                STATUS_ATTR, FRONTIER_SHORT_REPORT_ATTR,
+                THREADS_SHORT_REPORT_ATTR,
                 TOTAL_DATA_ATTR, CRAWL_TIME_ATTR, DOC_RATE_ATTR,
                 CURRENT_DOC_RATE_ATTR, KB_RATE_ATTR, CURRENT_KB_RATE_ATTR,
-                THREAD_COUNT_ATTR});
+                THREAD_COUNT_ATTR, DOWNLOAD_COUNT_ATTR,
+                DISCOVERED_COUNT_ATTR});
     }
 
     private final static String IMPORT_URI_OPER = "importUri";
@@ -196,10 +197,13 @@ public class CrawlJob implements DynamicMBean {
     private final static String PAUSE_OPER = "pause";
     private final static String RESUME_OPER = "resume";
     private final static String TERMINATE_OPER = "terminate";
+    private final static String FRONTIER_REPORT_OPER = "frontierReport";
+    private final static String THREADS_REPORT_OPER = "threadsReport";
     private final static List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {IMPORT_URI_OPER,
-            IMPORT_URIS_OPER, PAUSE_OPER, RESUME_OPER, TERMINATE_OPER});
+            IMPORT_URIS_OPER, PAUSE_OPER, RESUME_OPER, TERMINATE_OPER,
+            FRONTIER_REPORT_OPER, THREADS_REPORT_OPER});
     }
     
     protected CrawlJob() {
@@ -810,37 +814,38 @@ public class CrawlJob implements DynamicMBean {
                 "Short frontier report", SimpleType.STRING, true,
                 false, false);
         attributes[3] =
-            new OpenMBeanAttributeInfoSupport(FRONTIER_REPORT_ATTR,
-                "Frontier report", SimpleType.STRING, true,
-                false, false);
-        attributes[4] =
             new OpenMBeanAttributeInfoSupport(THREADS_SHORT_REPORT_ATTR,
                 "Short threads report", SimpleType.STRING, true,
                 false, false);
-        attributes[5] = new OpenMBeanAttributeInfoSupport(THREADS_REPORT_ATTR,
-            "Threads report", SimpleType.STRING, true, false, false);
-        attributes[6] = new OpenMBeanAttributeInfoSupport(UID_ATTR,
+        attributes[4] = new OpenMBeanAttributeInfoSupport(UID_ATTR,
             "Crawl job UID", SimpleType.STRING, true, false, false);  
-        attributes[7] = new OpenMBeanAttributeInfoSupport(TOTAL_DATA_ATTR,
+        attributes[5] = new OpenMBeanAttributeInfoSupport(TOTAL_DATA_ATTR,
             "Total data received", SimpleType.STRING, true, false, false);
-        attributes[8] = new OpenMBeanAttributeInfoSupport(CRAWL_TIME_ATTR,
+        attributes[6] = new OpenMBeanAttributeInfoSupport(CRAWL_TIME_ATTR,
             "Crawl time", SimpleType.STRING, true, false, false);
-        attributes[9] =
+        attributes[7] =
             new OpenMBeanAttributeInfoSupport(CURRENT_DOC_RATE_ATTR,
             "Current crawling rate (Docs/sec)", SimpleType.STRING,
             true, false, false);
-        attributes[10] =
+        attributes[8] =
             new OpenMBeanAttributeInfoSupport(CURRENT_KB_RATE_ATTR,
             "Current crawling rate (Kb/sec)", SimpleType.STRING,
             true, false, false);
-        attributes[11] = new OpenMBeanAttributeInfoSupport(THREAD_COUNT_ATTR,
+        attributes[9] = new OpenMBeanAttributeInfoSupport(THREAD_COUNT_ATTR,
             "Active thread count", SimpleType.STRING, true, false, false);
-        attributes[12] = new OpenMBeanAttributeInfoSupport(DOC_RATE_ATTR,
+        attributes[10] = new OpenMBeanAttributeInfoSupport(DOC_RATE_ATTR,
             "Crawling rate (Docs/sec)", SimpleType.STRING,
             true, false, false);
-        attributes[13] = new OpenMBeanAttributeInfoSupport(KB_RATE_ATTR,
+        attributes[11] = new OpenMBeanAttributeInfoSupport(KB_RATE_ATTR,
             "Current crawling rate (Kb/sec)", SimpleType.STRING,
             true, false, false);
+        attributes[12] = new OpenMBeanAttributeInfoSupport(DOWNLOAD_COUNT_ATTR,
+                "Count of downloaded documents", SimpleType.STRING,
+                true, false, false);
+        attributes[13] = new OpenMBeanAttributeInfoSupport(
+                DISCOVERED_COUNT_ATTR,
+                "Count of discovered documents", SimpleType.STRING,
+                true, false, false);
 
         // Operations.
         OpenMBeanParameterInfo[] args = new OpenMBeanParameterInfoSupport[3];
@@ -875,6 +880,12 @@ public class CrawlJob implements DynamicMBean {
         operations[4] = new OpenMBeanOperationInfoSupport(TERMINATE_OPER,
             "Terminate this crawl job", null, SimpleType.VOID,
             MBeanOperationInfo.ACTION);
+        operations[5] = new OpenMBeanOperationInfoSupport(FRONTIER_REPORT_OPER,
+                "Full frontier report", null, SimpleType.VOID,
+                MBeanOperationInfo.INFO);
+        operations[6] = new OpenMBeanOperationInfoSupport(THREADS_REPORT_OPER,
+                "Full thread report", null, SimpleType.VOID,
+                MBeanOperationInfo.INFO);
         
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
@@ -937,13 +948,12 @@ public class CrawlJob implements DynamicMBean {
         if (attribute_name.equals(THREADS_SHORT_REPORT_ATTR)) {
             return Heritrix.getJobHandler().getThreadOneLine();
         }
-        if (attribute_name.equals(FRONTIER_REPORT_ATTR)) {
-            return Heritrix.getJobHandler().getFrontierReport();
+        if (attribute_name.equals(DISCOVERED_COUNT_ATTR)) {
+            return Long.toString(this.stats.totalCount());
         }
-        if (attribute_name.equals(THREADS_REPORT_ATTR)) {
-            return Heritrix.getJobHandler().getThreadsReport();
+        if (attribute_name.equals(DOWNLOAD_COUNT_ATTR)) {
+            return Long.toString(this.stats.successfullyFetchedCount());
         }
-        
         throw new AttributeNotFoundException("Attribute " +
             attribute_name + " not found.");
     }
@@ -1059,6 +1069,28 @@ public class CrawlJob implements DynamicMBean {
             }
             Heritrix.getJobHandler().deleteJob(getUID());
             return null;
+        }
+        
+        if (operationName.equals(FRONTIER_REPORT_OPER)) {
+            JmxUtils.checkParamsCount(FRONTIER_REPORT_OPER, params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            return Heritrix.getJobHandler().getFrontierReport();
+        }
+        
+        if (operationName.equals(THREADS_REPORT_OPER)) {
+            JmxUtils.checkParamsCount(THREADS_REPORT_OPER, params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            return Heritrix.getJobHandler().getThreadsReport();
         }
         
         throw new ReflectionException(
