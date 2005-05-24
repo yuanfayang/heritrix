@@ -71,7 +71,6 @@
       <integer name="preference-embed-hops">1</integer>
       <integer name="total-bandwidth-usage-KB-sec">0</integer>
       <integer name="max-per-host-bandwidth-usage-KB-sec">0</integer>
-      <boolean name="ip-politeness">false</boolean>
       <string name="force-queue-assignment"></string>
       <boolean name="pause-at-finish">false</boolean>
       <boolean name="hold-queues">true</boolean>
