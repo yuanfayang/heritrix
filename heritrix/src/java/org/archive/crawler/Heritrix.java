@@ -213,6 +213,8 @@ public class Heritrix implements DynamicMBean {
      * throughout life of Heritrix).
      */
     private static MBeanServer mbeanServer = null;
+    private static ObjectInstance registeredHeritrixObjectInstance =
+        null;
     private final OpenMBeanInfoSupport openMBeanInfo;
     
     private final static String STATUS_ATTR = "Status";
@@ -1091,13 +1093,19 @@ public class Heritrix implements DynamicMBean {
             }
         }
         
-        if(Heritrix.jobHandler != null) {
+        if (Heritrix.jobHandler != null) {
             // Shut down the jobHandler.
             if(jobHandler.isCrawling()){
                 jobHandler.deleteJob(jobHandler.getCurrentJob().getUID());
             }
             jobHandler.requestCrawlStop();
             Heritrix.jobHandler = null;
+        }
+        
+        // Unregister MBean.
+        if (Heritrix.registeredHeritrixObjectInstance != null) {
+            unregisterMBean(Heritrix.registeredHeritrixObjectInstance);
+            Heritrix.registeredHeritrixObjectInstance = null;
         }
     }
 
@@ -1273,13 +1281,18 @@ public class Heritrix implements DynamicMBean {
                 ObjectName on = new ObjectName(getJmxName());
                 boolean registeredAlready = true;
                 try {
-                    server.getObjectInstance(on);
+                    Heritrix.registeredHeritrixObjectInstance =
+                        server.getObjectInstance(on);
                 } catch (InstanceNotFoundException e) {
                     registeredAlready = false;
                 }
                 if (!registeredAlready) {
-                    server.registerMBean(h, on);
+                    Heritrix.registeredHeritrixObjectInstance =
+                        server.registerMBean(h, on);
                 }
+                System.out.println(on.getCanonicalName() +
+                    (registeredAlready? " (already)": "") +
+                    " registered to " + server.toString());
                 Heritrix.mbeanServer = server;
                 break;
             }
@@ -1288,11 +1301,16 @@ public class Heritrix implements DynamicMBean {
     
     public static ObjectInstance registerMBean(Object objToRegister,
             String type) {
+        if (Heritrix.mbeanServer == null) {
+            return null;
+        }
+        
         ObjectInstance result = null;
         try {
-            result = (Heritrix.mbeanServer == null)? null:
-                Heritrix.mbeanServer.registerMBean(objToRegister,
-                    new ObjectName(getJmxName(type)));
+            String name = getJmxName(type);
+            result = Heritrix.mbeanServer.registerMBean(objToRegister,
+                new ObjectName(name));
+            logger.info("Registered bean " + name);
         } catch (InstanceAlreadyExistsException e) {
             e.printStackTrace();
         } catch (MBeanRegistrationException e) {
@@ -1311,6 +1329,7 @@ public class Heritrix implements DynamicMBean {
         if (Heritrix.mbeanServer != null && obj !=  null) {
             try {
                 Heritrix.mbeanServer.unregisterMBean(obj.getObjectName());
+                logger.info("Unregistered bean " + obj.getObjectName());
             } catch (InstanceNotFoundException e) {
                 e.printStackTrace();
             } catch (MBeanRegistrationException e) {
@@ -1359,12 +1378,6 @@ public class Heritrix implements DynamicMBean {
         return buffer.toString();
     }
     
-    private CrawlJob getCurrentJob() {
-        return (Heritrix.getJobHandler() != null)?
-            Heritrix.getJobHandler().getCurrentJob():
-            null;
-    }
-    
     /**
      * Start Heritrix.
      * 
@@ -1395,9 +1408,10 @@ public class Heritrix implements DynamicMBean {
     public void stop() {
         Thread t = new Thread() {
             public void run() {
-                Heritrix.prepareHeritrixShutDown();
+                shutdown();
             }
         };
+        t.setDaemon(true);
         t.start();
     }
 

@@ -362,7 +362,7 @@ implements CrawlURIDispositionListener {
         synchronized (map) {
             LongWrapper lw = (LongWrapper)map.get(key);
             if(lw == null) {
-                map.put(key, new LongWrapper(1));
+                map.put(key, new LongWrapper((long)1));
             } else {
                 lw.longValue += increment;
             }
@@ -558,16 +558,6 @@ implements CrawlURIDispositionListener {
         return shouldrun ? controller.getFrontier().disregardedUriCount() : downloadDisregards;
     }
 
-    /**
-     * Number of <i>successfully</i> processed URIs.
-     *
-     * <p>If crawl not running (paused or stopped) this will return the value
-     * of the last snapshot.
-     *
-     * @return The number of successully fetched URIs
-     *
-     * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
-     */
     public long successfullyFetchedCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
@@ -575,11 +565,6 @@ implements CrawlURIDispositionListener {
             controller.getFrontier().succeededFetchCount() : downloadedUriCount;
     }
     
-    /**
-     * Total number of URIs (processed + queued + currently being processed)
-     *  
-     * @return The total number of  
-     */
     public long totalCount() {
         return queuedUriCount() + activeThreadCount() +
             successfullyFetchedCount();

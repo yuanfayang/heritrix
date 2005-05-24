@@ -142,4 +142,22 @@ public interface StatisticsTracking extends Runnable {
      * @return The number of active (non-paused) threads
      */
     public int activeThreadCount();
+    
+    /**
+     * Number of <i>successfully</i> processed URIs.
+     *
+     * <p>If crawl not running (paused or stopped) this will return the value
+     * of the last snapshot.
+     *
+     * @return The number of successully fetched URIs
+     *
+     * @see org.archive.crawler.framework.Frontier#succeededFetchCount()
+     */
+    public long successfullyFetchedCount();
+    
+    /**
+     * @return Total number of URIs (processed + queued +
+     * currently being processed)
+     */
+    public long totalCount();
 }
