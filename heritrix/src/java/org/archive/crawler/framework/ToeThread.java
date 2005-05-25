@@ -400,10 +400,19 @@ Reporter {
         }
         rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
         rep.newline();
+        
         rep.padTo(8);
         rep.append("Where: "+step+" for "+(System.currentTimeMillis()-atStepSince)+"ms");
         rep.newline();
 
+        StackTraceElement[] ste = de.kohlschuetter.j5compat.Instances.STACKTRACES.getStackTrace(this);
+        for(int i=0;i<ste.length;i++) {
+            rep.padTo(12);
+            rep.append(ste[i].toString());
+            rep.newline();
+        }
+        rep.newline();
+        
         return rep.toString();
     }
 
