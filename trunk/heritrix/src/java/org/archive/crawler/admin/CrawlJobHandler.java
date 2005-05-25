@@ -190,6 +190,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     private CrawlController controller = null;
 
+    // Default access so available to CrawlJob.
+    static final String RECOVERY_JOURNAL_STYLE = "recoveryJournal";
+    static final String CRAWL_LOG_STYLE = "crawlLog";
+
     /**
      * Constructor.
      * @throws IOException
@@ -1375,10 +1379,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         return is;
     }
-
-    public String importUris(final String file, final boolean force) {
-        return importUris(file, "default", force);
-    }
     
     public String importUris(String file, String style, String force) {
         return importUris(file, style, "true".equals(force));
@@ -1412,11 +1412,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
         // Figure the regex to use parsing each line of input stream.
         String extractor;
         String output;
-        if("crawlLog".equals(style)) {
+        if(CRAWL_LOG_STYLE.equals(style)) {
             // skip first 3 fields
             extractor = "\\S+\\s+\\S+\\s+\\S+\\s+(\\S+\\s+\\S+\\s+\\S+\\s+).*";
             output = "$1";
-        } else if ("recoveryJournal".equals(style)) {
+        } else if (RECOVERY_JOURNAL_STYLE.equals(style)) {
             // skip the begin-of-line directive
             extractor = "\\S+\\s+((\\S+)(?:\\s+\\S+\\s+\\S+)?)\\s*";
             output = "$1";
