@@ -4019,6 +4019,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
   -7000 Processing thread was killed by the operator (perhaps because of a
         hung condition)
   -9998 Robots.txt rules precluded fetch</programlisting></para>
+  <note>
+    <para>Codes and explainations are also available under the Help link in the
+    web UI.
+  <note>
 
           <para>Please note that status codes defined by Heritrix may be
           subject to change between versions, especially new codes may be
