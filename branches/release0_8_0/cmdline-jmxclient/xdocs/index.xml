@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<document>
+  <properties>
+    <title>Home Page</title>
+    <author email="stack at archive dot org">St.Ack</author>
+    <revision>$Id$</revision>
+  </properties>
+
+
+  <body>
+    <section name="Command-line control of Remote JMX Agent">
+    <p>A command-line JMX client. Requires SUN JDK1.5.0 otherwise no
+    dependencies on other jars.
+To use, do the following to obtain usage: 
+<code>% java -jar cmdline-jmxclient.jar</code>. 
+Here is what usage currently looks like:
+    <pre>Usage: java -jar cmdline-jmxclient.jar USER:PASS HOST:PORT [BEAN] [COMMAND]
+Options:
+ USER:PASS Username and password. Required. If none, pass '-'.
+           E.g. 'controlRole:secret'
+ HOST:PORT Hostname and port to connect to. Required. E.g. localhost:8081.
+           Lists registered beans if only USER:PASS and this argument.
+ BEANNAME  Optional target bean name. If present we list available operations
+           and attributes.
+ COMMAND   Optional operation to run or attribute to fetch. If none supplied,
+           all operations and attributes are listed. Attributes begin with a
+           capital letter: e.g. 'Status' or 'Started'. Operations do not.
+           Operations can take arguments.
+Requirements:
+ JDK1.5.0. If connecting to a SUN 1.5.0 JDK JMX Agent, remote side must be
+ started with system properties such as the following:
+     -Dcom.sun.management.jmxremote.port=PORT
+     -Dcom.sun.management.jmxremote.authenticate=false
+     -Dcom.sun.management.jmxremote.ssl=false
+ The above will start the remote server with no password. See
+ http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html for more on
+ 'Monitoring and Management via JMX'.
+Client Use Examples:
+ To list MBeans on a non-password protected remote agent:
+     % java -jar cmdline-jmxclient-X.X.jar - localhost:8081 \
+         org.archive.crawler:name=Heritrix,type=Service
+ To list attributes and attributes of the Heritrix MBean:
+     % java -jar cmdline-jmxclient-X.X.jar - localhost:8081 \
+         org.archive.crawler:name=Heritrix,type=Service \
+         schedule=http://www.archive.org
+ To set logging level to FINE on a password protected JVM:
+     % java -jar cmdline-jmxclient-X.X.jar controlRole:secret localhost:8081 \
+         java.util.logging:type=Logging \
+         setLoggingLevel=org.archive.crawler.Heritrix,FINE</pre></p>
+
+<p>This cmdline-jmxclient can be used to connect to the SUN JVM JDK 1.5.0
+JMX Agent to set logging levels remotely and to get
+information on the running JVM.  It can also be used to remotely control
+<a href="http://crawler.archive.org">Heritrix</a> (Heritrix starts
+the SUN JVM JDK 1.5.0 JMX Agent when its run under SUN JDK 1.5.0 and then
+attaches Management Beans for control and monitoring).  This command-client
+can probably be gotten to talk to other JMX Agents but its only been tried
+against the JDK JMX Agent.</p>
+</section>
+
+<section name="Limitations">
+<ul>
+    <li>SUN JDK1.5.0.</li>
+
+    <li>Not only does the designated remote server port need to be accessible
+to the client -- i.e. no firewall blocking -- but, because the communication
+uses RMI and RMI works by returning to the client an arbitrarily chosen port
+for it to use in subsequent communications, unless some kind of tunnelling is
+setup, you'll need to have arbitrary port access to the server machine from
+the client (IA Peoples: Run from homeserver).</li>
+    <li>Doesn't (yet) return info on notifications and constrctors
+    available.</li>
+    <li>Not yet tested over SSL.</li>
+
+</ul>
+</section>
+  </body>
+</document>
