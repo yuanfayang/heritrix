@@ -24,9 +24,7 @@
 */ 
 package org.archive.util;
 
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Sort-friendly URI Reordering Transform.
@@ -71,6 +69,17 @@ public class SURT {
     static String URI_SPLITTER = 
             "^(\\w+://)(?:(\\S+?)(@))?(\\S+?)(:\\d+)?(/\\S*)?$";
     
+    /**
+     * Utility method for creating the SURT form of the URI in the
+     * given String.
+     * 
+     * If it appears a bit convoluted in its approach, note that it was
+     * optimized to minimiz object-creation after allocation-sites profiling 
+     * indicated this method was a top source of garbage in long-running crawls.
+     * 
+     * @param s String URI to be converted to SURT form
+     * @return SURT form 
+     */
     public static String fromURI(String s) {
         Matcher m = TextUtils.getMatcher(URI_SPLITTER,s);
         if(!m.matches()) {
