@@ -157,21 +157,6 @@ implements CrawlURIDispositionListener {
      */
     protected List allSeeds = new Vector();
 
-    /** Seed successfully crawled */
-    public static final String SEED_DISPOSITION_SUCCESS =
-        "Seed successfully crawled";
-    /** Failed to crawl seed */
-    public static final String SEED_DISPOSITION_FAILURE =
-        "Failed to crawl seed";
-    /** Failed to crawl seed, will retry */
-    public static final String SEED_DISPOSITION_RETRY =
-        "Failed to crawl seed, will retry";
-    /** Seed was disregarded */
-    public static final String SEED_DISPOSITION_DISREGARD =
-        "Seed was disregarded";
-    /** Seed has not been processed */
-    public static final String SEED_DISPOSITION_NOT_PROCESSED =
-        "Seed has not been processed";
 
     public StatisticsTracker(String name) {
         super( name, "A statistics tracker thats integrated into " +
@@ -592,18 +577,6 @@ implements CrawlURIDispositionListener {
             controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
     }
 
-    /**
-     * Returns the disposition of any seed. If the supplied URL is not a seed
-     * it will always return 'not processed'
-     * @param UriString The URI of the seed
-     * @return the disposition of the seed
-     *
-     * @see #SEED_DISPOSITION_NOT_PROCESSED
-     * @see #SEED_DISPOSITION_SUCCESS
-     * @see #SEED_DISPOSITION_FAILURE
-     * @see #SEED_DISPOSITION_DISREGARD
-     * @see #SEED_DISPOSITION_RETRY
-     */
     public String getSeedDisposition(String UriString){
         String ret = SEED_DISPOSITION_NOT_PROCESSED;
         if(processedSeedsDisposition.containsKey(UriString)){
@@ -728,21 +701,6 @@ implements CrawlURIDispositionListener {
         return seedsCopy;
     }
 
-    /**
-     * Get a seed iterator for the job being monitored. If job is no longer
-     * running, stored values will be returned. If job is running, current
-     * seed iterator will be fetched and stored values will be updated.
-     * <p>
-     * Sort order is:<br>
-     * No status code (not processed)<br>
-     * Status codes smaller then 0 (largest to smallest)<br>
-     * Status codes larger then 0 (largest to smallest)<br>
-     * <p>
-     * <b>Note:</b> This iterator will iterate over a list of <i>strings</i> not
-     * UURIs like the Scope seed iterator. The strings are equal to the URIs'
-     * getURIString() values.
-     * @return the seed iterator
-     */
     public Iterator getSeedsSortedByStatusCode() {
         return getSeedsSortedByStatusCode(getSeeds());
     }

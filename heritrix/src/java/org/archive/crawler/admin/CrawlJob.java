@@ -20,6 +20,8 @@
  */
 package org.archive.crawler.admin;
 
+import it.unimi.dsi.mg4j.util.MutableString;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -28,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -56,6 +59,7 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.ArchiveUtils;
@@ -181,16 +185,12 @@ public class CrawlJob implements DynamicMBean {
     private final static String THREAD_COUNT_ATTR = "ThreadCount";
     private final static String DOWNLOAD_COUNT_ATTR = "DownloadedCount";
     private final static String DISCOVERED_COUNT_ATTR = "DiscoveredCount";
-    private final static List ATTRIBUTE_LIST;
-    static {
-        ATTRIBUTE_LIST = Arrays.asList(new String [] {NAME_ATTR, UID_ATTR,
-                STATUS_ATTR, FRONTIER_SHORT_REPORT_ATTR,
-                THREADS_SHORT_REPORT_ATTR,
-                TOTAL_DATA_ATTR, CRAWL_TIME_ATTR, DOC_RATE_ATTR,
-                CURRENT_DOC_RATE_ATTR, KB_RATE_ATTR, CURRENT_KB_RATE_ATTR,
-                THREAD_COUNT_ATTR, DOWNLOAD_COUNT_ATTR,
-                DISCOVERED_COUNT_ATTR});
-    }
+    private final static String [] ATTRIBUTE_ARRAY = {NAME_ATTR, UID_ATTR,
+        STATUS_ATTR, FRONTIER_SHORT_REPORT_ATTR, THREADS_SHORT_REPORT_ATTR,
+        TOTAL_DATA_ATTR, CRAWL_TIME_ATTR, DOC_RATE_ATTR,
+        CURRENT_DOC_RATE_ATTR, KB_RATE_ATTR, CURRENT_KB_RATE_ATTR,
+        THREAD_COUNT_ATTR, DOWNLOAD_COUNT_ATTR, DISCOVERED_COUNT_ATTR};
+    private final static List ATTRIBUTE_LIST = Arrays.asList(ATTRIBUTE_ARRAY);
 
     private final static String IMPORT_URI_OPER = "importUri";
     private final static String IMPORT_URIS_OPER = "importUris";
@@ -199,11 +199,12 @@ public class CrawlJob implements DynamicMBean {
     private final static String TERMINATE_OPER = "terminate";
     private final static String FRONTIER_REPORT_OPER = "frontierReport";
     private final static String THREADS_REPORT_OPER = "threadsReport";
+    private final static String SEEDS_REPORT_OPER = "seedsReport";
     private final static List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {IMPORT_URI_OPER,
             IMPORT_URIS_OPER, PAUSE_OPER, RESUME_OPER, TERMINATE_OPER,
-            FRONTIER_REPORT_OPER, THREADS_REPORT_OPER});
+            FRONTIER_REPORT_OPER, THREADS_REPORT_OPER, SEEDS_REPORT_OPER});
     }
     
     protected CrawlJob() {
@@ -859,11 +860,14 @@ public class CrawlJob implements DynamicMBean {
             "Add passed URL to the frontier", args, SimpleType.VOID,
                 MBeanOperationInfo.ACTION);
         
-        args = new OpenMBeanParameterInfoSupport[2];
+        args = new OpenMBeanParameterInfoSupport[3];
         args[0] = new OpenMBeanParameterInfoSupport("pathOrUrl",
             "Path or URL to file of URLs to add to the frontier",
             SimpleType.STRING);
-        args[1] = new OpenMBeanParameterInfoSupport("forceFetch",
+        args[1] = new OpenMBeanParameterInfoSupport("style",
+            "File format (default|crawlLog|recoveryJournal)",
+            SimpleType.STRING);
+        args[2] = new OpenMBeanParameterInfoSupport("forceFetch",
             "True if URLs are to be force fetched", SimpleType.BOOLEAN);
         operations[1] = new OpenMBeanOperationInfoSupport(IMPORT_URIS_OPER,
             "Add file of passed URLs to the frontier", args, SimpleType.VOID,
@@ -880,12 +884,17 @@ public class CrawlJob implements DynamicMBean {
         operations[4] = new OpenMBeanOperationInfoSupport(TERMINATE_OPER,
             "Terminate this crawl job", null, SimpleType.VOID,
             MBeanOperationInfo.ACTION);
+        
         operations[5] = new OpenMBeanOperationInfoSupport(FRONTIER_REPORT_OPER,
-                "Full frontier report", null, SimpleType.VOID,
-                MBeanOperationInfo.INFO);
+             "Full frontier report", null, SimpleType.VOID,
+             MBeanOperationInfo.INFO);
+        
         operations[6] = new OpenMBeanOperationInfoSupport(THREADS_REPORT_OPER,
-                "Full thread report", null, SimpleType.VOID,
-                MBeanOperationInfo.INFO);
+             "Full thread report", null, SimpleType.VOID,
+             MBeanOperationInfo.INFO);
+        
+        operations[7] = new OpenMBeanOperationInfoSupport(SEEDS_REPORT_OPER,
+             "Seeds report", null, SimpleType.VOID, MBeanOperationInfo.INFO);  
         
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
@@ -1023,7 +1032,7 @@ public class CrawlJob implements DynamicMBean {
         }
         
         if (operationName.equals(IMPORT_URIS_OPER)) {
-            JmxUtils.checkParamsCount(IMPORT_URIS_OPER, params, 2);
+            JmxUtils.checkParamsCount(IMPORT_URIS_OPER, params, 3);
             if (!isCurrentJob()) {
                 throw new RuntimeOperationsException(
                     new IllegalArgumentException("Empty job handler or not " +
@@ -1031,7 +1040,8 @@ public class CrawlJob implements DynamicMBean {
                     "Not current crawling job?");
             }
             Heritrix.getJobHandler().importUris((String)params[0],
-                ((Boolean)params[1]).booleanValue());
+                ((String)params[1]).toString(),
+                ((Boolean)params[2]).booleanValue());
             return null;
         }
         
@@ -1091,6 +1101,28 @@ public class CrawlJob implements DynamicMBean {
                     "Not current crawling job?");
             }
             return Heritrix.getJobHandler().getThreadsReport();
+        }
+        
+        if (operationName.equals(SEEDS_REPORT_OPER)) {
+            JmxUtils.checkParamsCount(SEEDS_REPORT_OPER, params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            MutableString ms = new MutableString("Seed report - " +
+                    ArchiveUtils.get14DigitDate());
+            for(Iterator i = this.stats.getSeedsSortedByStatusCode();
+                    i.hasNext();) {
+                ms.append("\n");
+                String UriString = (String)i.next();
+                ms.append(UriString).append(" ");
+                int code = this.stats.getSeedStatusCode(UriString);
+                ms.append(CrawlURI.fetchStatusCodesToString(code)).append(" ");
+                ms.append(stats.getSeedDisposition(UriString));
+            }
+            return ms.toString();
         }
         
         throw new ReflectionException(

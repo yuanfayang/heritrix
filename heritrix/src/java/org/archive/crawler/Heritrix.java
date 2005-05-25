@@ -1509,14 +1509,14 @@ public class Heritrix implements DynamicMBean {
         
         args = new OpenMBeanParameterInfoSupport[1];
         args[0] = new OpenMBeanParameterInfoSupport("index",
-            "Zero-based index into array of NEW alerts", SimpleType.STRING);
+            "Zero-based index into array of NEW alerts", SimpleType.INTEGER);
         operations[6] = new OpenMBeanOperationInfoSupport(
             Heritrix.NEW_ALERT_OPER, "Return NEW alert at passed index", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
         
         args = new OpenMBeanParameterInfoSupport[1];
         args[0] = new OpenMBeanParameterInfoSupport("index",
-            "Zero-based index into array of alerts", SimpleType.STRING);
+            "Zero-based index into array of alerts", SimpleType.INTEGER);
         operations[7] = new OpenMBeanOperationInfoSupport(
             Heritrix.ALERT_OPER, "Return alert at passed index", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
@@ -1631,7 +1631,7 @@ public class Heritrix implements DynamicMBean {
                         "Empty alerts vector");
             }
             return getAlertStringRepresentation(((Alert)v.
-                get(Integer.parseInt((String)params[0]))));
+                get(((Integer)params[0]).intValue())));
         }
         if (operationName.equals(NEW_ALERT_OPER)) {
             JmxUtils.checkParamsCount(NEW_ALERT_OPER, params, 1);
@@ -1642,7 +1642,7 @@ public class Heritrix implements DynamicMBean {
                         "Empty new alerts vector");
             }
             return getAlertStringRepresentation(((Alert)v.
-                    get(Integer.parseInt((String)params[0]))));
+                    get(((Integer)params[0]).intValue())));
         }
         
         throw new ReflectionException(
