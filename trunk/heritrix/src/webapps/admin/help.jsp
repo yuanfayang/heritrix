@@ -31,8 +31,11 @@
 	</ul>
 </p>
 <p>
-	<b><a href="http://crawler.archive.org/mail-lists.html" target="_blank">Mailing Lists</a></b><br />
-	For general discussion on Heritrix, use our <a href="http://groups.yahoo.com/group/archive-crawler/" target="_blank">Crawler Discussion List</a>.
+    <b><a href="http://crawler.archive.org/mail-lists.html" target="_blank">Mailing Lists</a></b><br />
+    For general discussion on Heritrix, use our <a href="http://groups.yahoo.com/group/archive-crawler/" target="_blank">Crawler Discussion List</a>.
+<p>
+    <b><a href="<%=request.getContextPath()%>/help/regexpr.jsp">Regular Expressions</a></b><br />
+    Information about the regular expressions used in Heritrix and a handy tool to double check that your regular expressions are valid and that they correctly identify the desired strings.
 </p>
 <hr />
 <font size="-1">Heritrix version @VERSION@</font>
