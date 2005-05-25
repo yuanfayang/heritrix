@@ -194,6 +194,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     public static final String RANGE_PREFIX = "bytes=0-";
     public static final String HTTP_SCHEME = "http";
     public static final String HTTPS_SCHEME = "https";
+    
+    public static final String ATTR_IGNORE_COOKIES = "ignore-cookies";
 
     /**
      * Constructor.
@@ -230,6 +232,10 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             "Maximum length in bytes to fetch.\n" +
             "Fetch is truncated at this length. A value of 0 means no limit.",
             DEFAULT_MAX_LENGTH_BYTES));
+        e = addElementToDefinition(new SimpleType(ATTR_IGNORE_COOKIES,
+            "Disable cookie-handling.", new Boolean(false)));
+        e.setOverrideable(true);
+        e.setExpertSetting(true);
         e = addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
             "File to preload cookies from", ""));
         e.setExpertSetting(true);
@@ -298,7 +304,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
               "generate '416 Request Range Not Satisfiable' response.",
               new Boolean(false)));
            e.setOverrideable(true);
-           e.setExpertSetting(true); 
+           e.setExpertSetting(true);
     }
 
     protected void innerProcess(final CrawlURI curi)
@@ -568,7 +574,11 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         method.setFollowRedirects(false);
         
         // Set cookie policy.
-        method.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
+        method.getParams().setCookiePolicy(
+            (((Boolean)getUncheckedAttribute(curi, ATTR_IGNORE_COOKIES)).
+                booleanValue())?
+                    CookiePolicy.IGNORE_COOKIES:
+                CookiePolicy.BROWSER_COMPATIBILITY);
 
         // Configure how we want the method to act.
         this.http.getParams().setParameter(
