@@ -207,7 +207,8 @@ public class CrawlOrder extends ModuleType {
         e = addElementToDefinition(new SimpleType(ATTR_BDB_CACHE_PERCENT,
                 "Percentage of heap to allocate to BerkeleyDB JE cache. " +
                 "Default of zero means no preference (accept BDB's default" +
-                "or properties setting).", DEFAULT_BDB_CACHE_PERCENT));
+                "or properties setting. This is usually 60%).",
+                DEFAULT_BDB_CACHE_PERCENT));
         e.setExpertSetting(true);
         e.setOverrideable(false);
         
