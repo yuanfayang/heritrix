@@ -23,6 +23,9 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1065,7 +1068,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     /** all discovered outbound Links (navlinks, embeds, etc.) */
-    HashSet outLinks = new HashSet();
+    transient HashSet outLinks = new HashSet();
     
     /**
      * @return Collection of all discovered outbound Links
@@ -1186,5 +1189,32 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public static boolean removeAlistPersistentMember(Object key) {
         return alistPersistentMember.remove(key);
+    }
+
+    /**
+     * Custom serialization writing an empty 'outLinks' as null. Estimated
+     * to save ~20 bytes in serialized form. 
+     * 
+     * @param stream
+     * @throws IOException
+     */
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        stream.defaultWriteObject();
+        stream.writeObject((outLinks.isEmpty()) ? null : outLinks);
+    }
+
+    /**
+     * Custom deserialization recreating empty HashSet from null in 'outLinks'
+     * slot. 
+     * 
+     * @param stream
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void readObject(ObjectInputStream stream) throws IOException,
+            ClassNotFoundException {
+        stream.defaultReadObject();
+        HashSet ol = (HashSet) stream.readObject();
+        outLinks = (ol == null) ? new HashSet() : ol;
     }
 }
