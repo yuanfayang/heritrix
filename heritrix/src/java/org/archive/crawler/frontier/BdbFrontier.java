@@ -174,5 +174,9 @@ public class BdbFrontier extends WorkQueueFrontier {
     protected BdbMultipleWorkQueues getWorkQueues() {
         return pendingUris;
     }
+
+    protected boolean workQueueDataOnDisk() {
+        return true;
+    }
 }
 

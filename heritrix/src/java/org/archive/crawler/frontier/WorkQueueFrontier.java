@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedSet;
@@ -66,6 +67,14 @@ public abstract class WorkQueueFrontier extends AbstractFrontier
 implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     /** truncate reporting of queues at some large but not unbounded number */
     private static final int REPORT_MAX_QUEUES = 5000;
+    
+    /**
+     * If we know that only a small amount of queues is held in memory,
+     * we can avoid using a disk-based BigMap.
+     * This only works efficiently if the WorkQueue does not hold its
+     * entries in memory as well.
+     */ 
+    private static final int MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY = 3000;
 
     private static final Logger logger =
         Logger.getLogger(WorkQueueFrontier.class.getName());
@@ -195,8 +204,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         super.initialize(c);
         this.controller = c;
         try {
-            this.allQueues = BigMapFactory.getBigMap(this.getSettingsHandler(),
-               "allqueues", String.class, WorkQueue.class);
+            if(workQueueDataOnDisk()
+                && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
+                && queueAssignmentPolicy.maximumNumberOfKeys() <=
+                    MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
+                this.allQueues = new HashMap();
+            } else {
+                this.allQueues = BigMapFactory.getBigMap(this
+                    .getSettingsHandler(), "allqueues", String.class,
+                    WorkQueue.class);
+            }
 
             alreadyIncluded = createAlreadyIncluded();
 
@@ -961,5 +978,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     
     protected abstract void initQueue() throws IOException;
     protected abstract void closeQueue() throws IOException;
+    
+    /**
+     * Returns <code>true</code> if the WorkQueue implementation of this
+     * Frontier stores its workload on disk instead of relying
+     * on serialization mechanisms.
+     * 
+     * @return a constant boolean value for this class/instance
+     */
+    protected abstract boolean workQueueDataOnDisk();
 }
 

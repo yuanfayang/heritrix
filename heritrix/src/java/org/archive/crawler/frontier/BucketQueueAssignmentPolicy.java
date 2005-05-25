@@ -51,4 +51,8 @@ extends HostnameQueueAssignmentPolicy {
                 % DEFAULT_QUEUES_HOSTS_MODULO);
         }
     }
+
+    public int maximumNumberOfKeys() {
+        return DEFAULT_NOIP_BITMASK + DEFAULT_QUEUES_HOSTS_MODULO + 2;
+    }
 }

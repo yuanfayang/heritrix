@@ -33,7 +33,6 @@ import org.archive.crawler.framework.CrawlController;
  * @author gojomo
  */
 public abstract class QueueAssignmentPolicy {
-    
     /** 
      * Get the String key (name) of the queue to which the 
      * CrawlURI should be assigned. 
@@ -48,4 +47,14 @@ public abstract class QueueAssignmentPolicy {
      */
     public abstract String getClassKey(CrawlController controller,
         CrawlURI curi);
+    
+    /**
+     * Returns the maximum number of different keys this policy
+     * can create. If there is no maximum, -1 is returned (default).
+     * 
+     * @return  Maximum number of different keys, or -1 if unbounded.
+     */
+    public int maximumNumberOfKeys() {
+        return -1;
+    }
 }
