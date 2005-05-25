@@ -32,7 +32,6 @@ import org.archive.util.ArchiveUtils;
 
 import st.ata.util.FPGenerator;
 
-import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
@@ -59,7 +58,7 @@ public class BdbMultipleWorkQueues {
     /** database holding all pending URIs, grouped in virtual queues */
     protected Database pendingUrisDB = null;
     /**  Supporting bdb serialization of CrawlURIs*/
-    protected SerialBinding crawlUriBinding;
+    protected RecyclingSerialBinding crawlUriBinding;
 
     /**
      * Create the multi queue in the given environment. 
@@ -84,7 +83,7 @@ public class BdbMultipleWorkQueues {
             // ignored
         }
         pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
-        crawlUriBinding = new SerialBinding(classCatalog, CrawlURI.class);
+        crawlUriBinding = new RecyclingSerialBinding(classCatalog, CrawlURI.class);
     }
 
     /**
@@ -187,7 +186,6 @@ public class BdbMultipleWorkQueues {
         try {
             return new BdbFrontierMarker(getFirstKey(), regexpr);
         } catch (DatabaseException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return null; 
         }
@@ -248,9 +246,34 @@ public class BdbMultipleWorkQueues {
         }
         DatabaseEntry value = new DatabaseEntry();
         crawlUriBinding.objectToEntry(curi, value);
+//      tallyAverageEntrySize(curi, value);
         pendingUrisDB.put(null, insertKey, value);
     }
     
+//    long entryCount = 0;
+//    long entrySizeSum = 0;
+//    int largestEntry = 0;
+//    
+//    /**
+//     * @param value
+//     */
+//    private synchronized void tallyAverageEntrySize(CrawlURI curi, DatabaseEntry value) {
+//        entryCount++;
+//        int length = value.getData().length;
+//        entrySizeSum += length;
+//        int avg = (int) (entrySizeSum/entryCount);
+//        if(entryCount % 1000 == 0) {
+//           System.out.println("Average entry size at "+entryCount+": "+avg);
+//        }
+//        if (length>largestEntry) {
+//            largestEntry = length; 
+//            System.out.println("Largest entry: "+length+" "+curi);
+//            if(length>(2*avg)) {
+//                System.out.println("excessive?");
+//            }
+//        }
+//    }
+
     /**
      * Calculate the insertKey that places a CrawlURI in the
      * desired spot. First 60 bits are always host (classKey)
