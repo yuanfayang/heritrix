@@ -204,15 +204,15 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         super.initialize(c);
         this.controller = c;
         try {
-            if(workQueueDataOnDisk()
-                && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
-                && queueAssignmentPolicy.maximumNumberOfKeys() <=
-                    MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
-                this.allQueues = new HashMap();
+            if (workQueueDataOnDisk()
+                    && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
+                    && queueAssignmentPolicy.maximumNumberOfKeys() <= 
+                        MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
+                this.allQueues = Collections.synchronizedMap(new HashMap());
             } else {
-                this.allQueues = BigMapFactory.getBigMap(this
-                    .getSettingsHandler(), "allqueues", String.class,
-                    WorkQueue.class);
+                this.allQueues = Collections.synchronizedMap(BigMapFactory
+                        .getBigMap(this.getSettingsHandler(), "allqueues",
+                                String.class, WorkQueue.class));
             }
 
             alreadyIncluded = createAlreadyIncluded();
