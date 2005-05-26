@@ -86,7 +86,10 @@ public class SURT {
             // not an authority-based URI scheme; return unchanged
             return s;
         }
-        StringBuffer builder = new StringBuffer(s.length()+2);
+        // preallocate enough space for SURT form, which includes
+        // 3 extra characters ('(', ')', and one more ',' than '.'s
+        // in original)
+        StringBuffer builder = new StringBuffer(s.length()+3);
         PreJ15Utils.append(builder,s,m.start(1),m.end(1)); // scheme://
         builder.append(BEGIN_TRANSFORMED_AUTHORITY); // '('
         
