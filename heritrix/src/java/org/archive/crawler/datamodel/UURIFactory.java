@@ -294,7 +294,7 @@ public class UURIFactory extends URI {
      */
     private UURI create(String uri, String charset) throws URIException {
         boolean e = isEscaped(uri);
-        UURI uuri  = new UURIImpl(fixup(uri, null, e), e, charset);
+        UURI uuri  = new UURI(fixup(uri, null, e), e, charset);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("URI " + uri +
                 " PRODUCT " + uuri.toString() +
@@ -312,7 +312,7 @@ public class UURIFactory extends URI {
      */
     private UURI create(UURI base, String relative) throws URIException {
         boolean e = isEscaped(relative);
-        UURI uuri = new UURIImpl(base, new UURI(fixup(relative, base, e),
+        UURI uuri = new UURI(base, new UURI(fixup(relative, base, e),
             e, base.getProtocolCharset()));
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(" URI " + relative +
@@ -716,32 +716,5 @@ public class UURIFactory extends URI {
     private String checkUriElementAndLowerCase(String element) {
         String tmp = checkUriElement(element);
         return (tmp != null)? tmp.toLowerCase(): tmp;
-    }
-    
-    /**
-     * Implementation of UURI protected class used by enclosing factory.
-     */
-    private class UURIImpl extends UURI implements Serializable {
-        /**
-         * @param uri String representation of an absolute URI.
-         * @param escaped True if URI is already escaped.
-         * @param charset Charset the <code>uri</code> uses.
-         * @throws org.apache.commons.httpclient.URIException
-         */
-        protected UURIImpl(String uri, boolean escaped, String charset)
-        throws URIException {
-            super(uri, escaped, charset);
-            normalize();
-        }
-        
-        /**
-         * @param relative String representation of URI.
-         * @param base Parent UURI to use derelativizing.
-         * @throws org.apache.commons.httpclient.URIException
-         */
-        protected UURIImpl(UURI base, UURI relative) throws URIException {
-            super(base, relative);
-            normalize();
-        }
     }
 }
