@@ -279,7 +279,8 @@ implements CrawlURIDispositionListener {
                 .raAppend(85, currentKBPerSec + "(" + totalKBPerSec + ")")
                 .raAppend(99, downloadFailures)
                 .raAppend(113, busyThreads)
-                .raAppend(126, Runtime.getRuntime().totalMemory()/1024)
+                .raAppend(126, (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)
+                .raAppend(140, Runtime.getRuntime().totalMemory()/1024)
                 .toString());
         lastLogPointTime = System.currentTimeMillis();
     }

@@ -125,7 +125,7 @@ implements StatisticsTracking, CrawlStatusListener {
         controller.progressStats.log(Level.INFO, "           timestamp" +
             "  discovered   " +
             "   queued   downloaded       doc/s(avg)  KB/s(avg) " +
-            "  dl-failures   busy-thread   mem-use-KB");
+            "  dl-failures   busy-thread   mem-use-KB  heap-size-KB");
         lastLogPointTime = System.currentTimeMillis(); // The first interval begins now.
 
         // keep logging until someone calls stop()
