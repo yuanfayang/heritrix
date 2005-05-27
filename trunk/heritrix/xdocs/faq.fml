@@ -372,7 +372,8 @@ threads to "crawl", but 'WorkerThread' or 'CrawlThread' seem mundane.</p>
 <p>Below is listing of users of Heritrix (To qualify for inclusion in the
 list below, send a description of a couple of lines to the mailing list).
 <ul>
-    <li><b>The National and University Library of Iceland</b>: Crawls the
+    <li><a href="http://www.bok.hi.is/">The National and University Library of
+    Iceland</a>: Crawls the
     entire <i>.is</i> domain (~11,000 domains) using Heritrix. Has performed
     complete snapshot using Heritrix 1.0.4 (35million URIs) and plans on
     running three more snapshots in 2005. See <a href="http://groups.yahoo.com/group/archive-crawler/message/1385">1385</a>.</li>
@@ -383,6 +384,15 @@ list below, send a description of a couple of lines to the mailing list).
     2004 was of Finnish university sites (~4million URLs).
     Kaisa supplies more detail on how this larger crawl was done: <a 
     href="http://groups.yahoo.com/group/archive-crawler/message/1406">1406</a>.
+    </li>
+    <li><a href="http://www.geometa.info">metainfo</a>: 
+    Geometa.info is a search machine for spatially related geo-data,
+    geo-services and geo-news for Switzerland, Germany and Austria. We use
+    Heritrix with specialised plugins to find geo-relevant datas and
+    websites. This are formats like Geotiff-, GML-, Interlis-, ESRI-files,
+    WFS- or WMS-services and other sites with georelevant content.
+    Geometabot (Heritrix) is the feeder for the Lucene search engine which
+    provides the coresearchservice for geometa.info.
     </li>
 </ul>
 </p>
