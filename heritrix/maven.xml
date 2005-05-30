@@ -16,7 +16,50 @@
     </preGoal> 
 
     <goal name="docbook">
+    <!--Check that the jimi jars are present.  If not, skip docbook.
+     -->
+    <j:set var="sDocbookSupportPresent" value="false" />
+       <util:available file="${maven.repo.local}/jimi/jars" >
+        <j:set var="sDocbookSupportPresent" value="true"/>
+       </util:available>
+       <j:if test="${sDocbookSupportPresent == 'true'}">
         <attainGoal name="sdocbook:generate-html"/>
+        <!--<attainGoal name="sdocbook:generate-pdf"/>
+         -->
+       </j:if>
+       <!-- else -->
+       <j:if test="${sDocbookSupportPresent != 'true'}">
+        <echo
+         message="sdocbook SUN jimi jar not present. Skipping docbook build." />
+       </j:if>
+    </goal>
+    <goal name="copy_docbook">
+    <!--Copies docbooks under dist docs and under webapps. This goal runs
+        after these dirs have been setup.
+     -->
+    <property name="docbook.assembled"
+        value="${maven.dist.bin.assembly.dir}/docs/articles/" />
+    <j:set var="docbookPresent" value="false" />
+       <util:available file="${docbook.assembled}" >
+        <j:set var="docbookPresent" value="true"/>
+       </util:available>
+       <j:if test="${docbookPresent == 'true'}">
+       <!--Copy under docs in dist-->
+        <mkdir dir="${docbook.assembled}" />
+        <copy todir="${docbook.assembled}">
+          <fileset dir="${maven.build.dir}/docs/articles/" />
+        </copy>
+        <!--Copy into webapps dir-->
+        <mkdir dir="${maven.build.dir}/webapps/admin/docs/articles/" />
+        <copy todir="${maven.build.dir}/webapps/admin/docs/articles/">
+          <fileset dir="${maven.build.dir}/docs/articles/" />
+        </copy>
+       </j:if>
+       <!-- else -->
+       <j:if test="${sDocbookSupportPresent != 'true'}">
+        <echo
+         message="Docbook copy skipped (Nothing to copy -- not  built?)." />
+       </j:if>
     </goal>
 
     <goal name="autojar"
@@ -131,10 +174,6 @@
 
         <!--Copy articles to the docs dir.-->
         <attainGoal name="docbook"/>
-        <mkdir dir="${maven.dist.bin.assembly.dir}/docs/articles/" />
-        <copy todir="${maven.dist.bin.assembly.dir}/docs/articles/">
-          <fileset dir="${maven.build.dir}/docs/articles/" />
-        </copy>
 
         <!--Copy webapps to build directory w/ filtering enabled.
             Do the copy like this doing non-jpg first and then gif.
@@ -158,11 +197,10 @@
           </fileset>
         </copy>
 
-        <!--Copy docs into the admin webapp so available to UI.-->
-        <mkdir dir="${maven.build.dir}/webapps/admin/docs/articles/" />
-        <copy todir="${maven.build.dir}/webapps/admin/docs/articles/">
-          <fileset dir="${maven.build.dir}/docs/articles/" />
-        </copy>
+        <!--Copy docs into the admin webapp so available to UI and to dist dir
+         -->
+        <attainGoal name="copy_docbook"/>
+
         <!--Compile jsp pages into a jar.
             TODO: Make this conditional.
          -->

@@ -82,14 +82,16 @@
       <title>Building Heritrix</title>
 
       <para>You can build Heritrix from source using Maven. Heritrix build has
-      been tested against maven-1.0.2 (and all previous versions). See <ulink
+      been tested against maven-1.0.2. See <ulink
       url="http://maven.apache.org">maven.apache.org</ulink> for how to obtain
       the binary and setup of your maven environment.</para>
 
-      <para>In addition to the base maven build, you will need to add the
+      <para>In addition to the base maven build, if you want to generate the
+      docbook user and developer manuals, you will need to add the
       maven sdocbook plugin which can be found at
       <ulink
-      url="http://maven-plugins.sourceforge.net/maven-sdocbook-plugin/downloads.html">this page</ulink>.
+      url="http://maven-plugins.sourceforge.net/maven-sdocbook-plugin/downloads.html">this page</ulink> (If the sdocbook plugin is not present, the build
+      skips the docbook manual generation).
       Be careful. Do not confuse the 'sdocbook' plugin with the similarly
       named 'docbook' plugin. This latter converts docbook to xdocs where
       what's wanted is the former, convert docbook xml to html. This
@@ -103,7 +105,6 @@
                versions of maven, pre 1.0.2, plugins are at
                <literal>${HOME}/.maven/plugins/</literal>).
                </para>
-
 
 	<para>The sdocbook plugin has a dependency on the <ulink
       url="http://java.sun.com/products/jimi/">jimi jar from sun</ulink> which
