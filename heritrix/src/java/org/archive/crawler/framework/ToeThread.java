@@ -42,6 +42,8 @@ import org.archive.util.HttpRecorderMarker;
 import org.archive.util.PaddingStringBuffer;
 import org.archive.util.Reporter;
 
+import com.sleepycat.util.RuntimeExceptionWrapper;
+
 /**
  * One "worker thread"; asks for CrawlURIs, processes them,
  * repeats unless told otherwise.
@@ -275,6 +277,12 @@ Reporter {
             }
             setStep(STEP_DONE_WITH_PROCESSORS);
             currentProcessorName = "";
+        } catch (RuntimeExceptionWrapper e) {
+            // Workaround to get cause from BDB
+            if(e.getCause() == null) {
+                e.initCause(e.getDetail());
+            }
+            recoverableProblem(e);
         } catch (AssertionError ae) {
             // This risks leaving crawl in fatally inconsistent state, 
             // but is often reasonable for per-Processor assertion problems 
