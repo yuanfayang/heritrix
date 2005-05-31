@@ -26,7 +26,6 @@ package org.archive.crawler.datamodel;
 
 import it.unimi.dsi.mg4j.util.MutableString;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -346,6 +345,7 @@ public class UURIFactory extends URI {
     /**
      * If first <code>%</code> found is URI encoded, then its
      * escaped.
+     * @param uri URI to check.
      * @return True if the passed URI exhibits 'escapedness'.
      */
     public static boolean isEscaped(String uri) {
@@ -634,6 +634,7 @@ public class UURIFactory extends URI {
      *
      * @param uriAuthority
      * @return Null or an amended port number.
+     * @throws URIException
      */
     private String checkPort(String uriAuthority)
     throws URIException {
@@ -682,6 +683,7 @@ public class UURIFactory extends URI {
     /**
      * @param str String to work on.
      * @param prefix Prefix to strip if present.
+     * @return <code>str</code> w/o <code>prefix</code>.
      */
     private String stripPrefix(String str, String prefix) {
         return str.startsWith(prefix)?
@@ -692,6 +694,7 @@ public class UURIFactory extends URI {
     /**
      * @param str String to work on.
      * @param tail Tail to strip if present.
+     * @return <code>str</code> w/o <code>tail</code>.
      */
     private static String stripTail(String str, String tail) {
         return str.endsWith(tail)?
