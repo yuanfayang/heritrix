@@ -20,25 +20,26 @@ package org.archive.util;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 public class TextUtils {
     private static final String FIRSTWORD = "^([^\\s]*).*$";
     
-    /** PatternMatcherRecycler objects with reusable Pattern and Matcher
-     * instaces, indexed on pattern string.
-     * Profiling has this Map growing to ~18 elements total circa
-     * 1.3.0 Heritrix.
-     */
-    private final static ConcurrentReaderHashMap recyclers =
-        new ConcurrentReaderHashMap(50);
+    private static final ThreadLocal TL_MATCHER_MAP = new ThreadLocal() {
+        protected Object initialValue() {
+            return new HashMap(50);
+        }
+    };
 
     /**
      * Get a matcher object for a precompiled regex pattern.
      * This method tries to reuse Matcher objects for efficiency.
+     * It returns one Matcher per pattern per thread. Calling
+     * this method recursively with different inputs will invalidate
+     * any previous input.
      * 
      * This method is a hotspot frequently accessed.
      *
@@ -47,45 +48,18 @@ public class TextUtils {
      * @return a matcher object loaded with the submitted character sequence
      */
     public static Matcher getMatcher(String pattern, CharSequence input) {
-        return getRecycler(pattern).getMatcher(input);
-    }
-
-    /**
-     * Get a preexisting PatternMatcherRecycler for the given String pattern, 
-     * or create (and remember) a new one if necessary. 
-     * 
-     * @param pattern String pattern 
-     */
-    private static PatternMatcherRecycler getRecycler(String pattern) {
         if (pattern == null) {
             throw new IllegalArgumentException("String 'pattern' must not be null");
         }
-        PatternMatcherRecycler pmr = (PatternMatcherRecycler)recyclers.get(pattern);
-        if (pmr == null) {
-            /* harmless timing issue here:
-             * ---> <---
-             * if another thread sneaks in and beats this one to 
-             * create and populate recyclers map, only effect is that
-             * a redundant PatternMatcherRecycler is created and 
-             * clobbers the first
-             */
-            Pattern p = Pattern.compile(pattern);
-            pmr = new PatternMatcherRecycler(p);
-            recyclers.put(pattern, pmr);
+        final Map matchers = (Map)TL_MATCHER_MAP.get();
+        Matcher m = (Matcher)matchers.get(pattern);
+        if(m == null) {
+            m = Pattern.compile(pattern).matcher(input);
+            matchers.put(pattern, m);
+        } else {
+            m.reset(input);
         }
-        return pmr; 
-    }
-
-    /**
-     * Use this method to indicate that you are finnished with a Matcher object
-     * so that it can be recycled. It is up to the user to make sure that this
-     * object really isn't used anymore. If used after it is marked as freed
-     * behaviour is unknown since the Matcher object is not thread safe.
-     * 
-     * @param m the Matcher object that is no longer needed.
-     */
-    public static void freeMatcher(Matcher m) {
-        getRecycler(m.pattern().pattern()).freeMatcher(m);
+        return m;
     }
 
     /**
@@ -103,7 +77,6 @@ public class TextUtils {
             String pattern, CharSequence input, String replacement) {
         Matcher m = getMatcher(pattern, input);
         String res = m.replaceAll(replacement);
-        freeMatcher(m);
         return res;
     }
 
@@ -122,7 +95,6 @@ public class TextUtils {
             String pattern, CharSequence input, String replacement) {
         Matcher m = getMatcher(pattern, input);
         String res = m.replaceFirst(replacement);
-        freeMatcher(m);
         return res;
     }
 
@@ -139,7 +111,6 @@ public class TextUtils {
     public static boolean matches(String pattern, CharSequence input) {
         Matcher m = getMatcher(pattern, input);
         boolean res = m.matches();
-        freeMatcher(m);
         return res;
     }
 
@@ -153,7 +124,7 @@ public class TextUtils {
      * @return array of Strings split by pattern
      */
     public static String[] split(String pattern, CharSequence input) {
-        return getRecycler(pattern).getPattern().split(input); 
+        return getMatcher(pattern,input).pattern().split(input); 
     }
     
     /**

@@ -294,7 +294,6 @@ implements CoreAttributeConstants {
                 // and/or symptomatic of page bugs
             }
         }
-        TextUtils.freeMatcher(attr);
         attr = null;
 
         // handle codebase/resources
@@ -527,8 +526,6 @@ implements CoreAttributeConstants {
                     tags.end(4) - start);
             }
         }
-
-        TextUtils.freeMatcher(tags);
     }
 
 
@@ -606,7 +603,6 @@ implements CoreAttributeConstants {
             }
             // TODO: handle other stuff
         }
-        TextUtils.freeMatcher(attr);
         attr = null;
 
         // Look for the 'robots' meta-tag

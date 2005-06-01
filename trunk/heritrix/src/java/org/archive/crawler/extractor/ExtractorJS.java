@@ -164,9 +164,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
                foundLinks += considerStrings(curi, subsequence,
                    controller, handlingJSFile);
             }
-            TextUtils.freeMatcher(uri);
         }
-        TextUtils.freeMatcher(strings);
         return foundLinks;
     }
 
