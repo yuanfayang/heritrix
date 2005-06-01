@@ -26,6 +26,7 @@ package org.archive.extractor;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.UURI;
@@ -51,28 +52,27 @@ public class RegexpJSLinkExtractor extends CharSequenceLinkExtractor {
     // finds whitespace-free strings in Javascript
     // (areas between paired ' or " characters, possibly backslash-quoted
     // on the ends, but not in the middle)
-    static final String JAVASCRIPT_STRING_EXTRACTOR =
-        "(\\\\*(?:\"|\'))(.+?)(?:\\1)";
+    static final Pattern JAVASCRIPT_STRING_EXTRACTOR = Pattern.compile(
+        "(\\\\*(?:\"|\'))(.+?)(?:\\1)");
 
     // determines whether a string is likely URI
     // (no whitespace or '<' '>',  has an internal dot or some slash,
     // begins and ends with either '/' or a word-char)
-    static final String STRING_URI_DETECTOR =
-        "(?:\\w|[\\.]{0,2}/)[\\S&&[^<>]]*(?:\\.|/)[\\S&&[^<>]]*(?:\\w|/)";
+    static final Pattern STRING_URI_DETECTOR = Pattern.compile(
+        "(?:\\w|[\\.]{0,2}/)[\\S&&[^<>]]*(?:\\.|/)[\\S&&[^<>]]*(?:\\w|/)");
 
     Matcher strings;
     LinkedList matcherStack = new LinkedList();
 
     protected boolean findNextLink() {
         if(strings==null) {
-             strings = TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, sourceContent);
+             strings = JAVASCRIPT_STRING_EXTRACTOR.matcher(sourceContent);
         }
         while(strings!=null) {
             while(strings.find()) {
                 CharSequence subsequence =
                     sourceContent.subSequence(strings.start(2), strings.end(2));
-                Matcher uri =
-                    TextUtils.getMatcher(STRING_URI_DETECTOR, subsequence);
+                Matcher uri = STRING_URI_DETECTOR.matcher(subsequence);
                 if ((subsequence.length() <= UURI.MAX_URL_LENGTH) && uri.matches()) {
                     String string = uri.group();
                     string = TextUtils.replaceAll(ESCAPED_AMP, string, AMP);
@@ -84,17 +84,13 @@ public class RegexpJSLinkExtractor extends CharSequenceLinkExtractor {
                     } catch (URIException e) {
                         extractErrorListener.noteExtractError(e,source,string);
                     }
-                    TextUtils.freeMatcher(uri);
                 } else {
-                   TextUtils.freeMatcher(uri);
                    //  push current range
                    matcherStack.addFirst(strings);
                    // start looking inside string
-                   strings = TextUtils.getMatcher(JAVASCRIPT_STRING_EXTRACTOR, subsequence);
+                   strings = JAVASCRIPT_STRING_EXTRACTOR.matcher(subsequence);
                 }
             }
-            // free current range
-            TextUtils.freeMatcher(strings);
             // continue at enclosing range, if available
             strings = (Matcher) (matcherStack.isEmpty() ? null : matcherStack.removeFirst());
         }
@@ -107,13 +103,8 @@ public class RegexpJSLinkExtractor extends CharSequenceLinkExtractor {
      */
     public void reset() {
         super.reset();
-        while(!matcherStack.isEmpty()) {
-            TextUtils.freeMatcher((Matcher) matcherStack.removeFirst());
-        }
-        if(strings != null) {
-            TextUtils.freeMatcher(strings);
-            strings = null;
-        }
+        matcherStack.clear();
+        strings = null;
     }
 
     protected static CharSequenceLinkExtractor newDefaultInstance() {

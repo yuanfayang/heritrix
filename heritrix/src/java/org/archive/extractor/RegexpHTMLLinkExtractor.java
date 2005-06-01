@@ -271,7 +271,6 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
                 // and/or symptomatic of page bugs
             }
         }
-        TextUtils.freeMatcher(attr);
         attr = null;
 
         // handle codebase/resources
@@ -386,7 +385,6 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
             }
             // TODO: handle other stuff
         }
-        TextUtils.freeMatcher(attr);
         attr = null;
 
         // Look for the 'robots' meta-tag

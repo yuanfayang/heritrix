@@ -97,8 +97,6 @@ public class RegexpCSSLinkExtractor extends CharSequenceLinkExtractor {
             }
         } catch (StackOverflowError e) {
             DevUtils.warnHandle(e, "RegexpCSSLinkExtractor StackOverflowError");
-        } finally {
-            TextUtils.freeMatcher(uris);
         }
         return false;
     }
