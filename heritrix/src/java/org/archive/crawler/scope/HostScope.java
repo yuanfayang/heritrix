@@ -111,10 +111,12 @@ public class HostScope extends SeedCachingScope {
         Iterator iter = seedsIterator();
         while(iter.hasNext()) {
             if (isSameHost((UURI)iter.next(), u)) {
+                checkClose(iter);
                 return true;
             }
         }
         // if none found, fail
+        checkClose(iter);
         return false;
     }
 

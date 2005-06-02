@@ -49,7 +49,16 @@ public abstract class TransformingIteratorWrapper extends LookaheadIterator {
                 return true;
             }
         }
+        noteExhausted();
         return false;
+    }
+
+    /**
+     * Any cleanup to occur when hasNext() is about to return false
+     */
+    protected void noteExhausted() {
+        // by default, do nothing
+        
     }
 
     /**

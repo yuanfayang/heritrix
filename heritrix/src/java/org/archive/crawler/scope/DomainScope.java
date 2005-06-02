@@ -148,6 +148,7 @@ public class DomainScope extends SeedCachingScope {
 
             // Check if stripped hosts are same.
             if (seedDomain.equals(candidateDomain)) {
+                checkClose(iter);
                 return true;
             }
 
@@ -158,10 +159,12 @@ public class DomainScope extends SeedCachingScope {
                 candidateDomain.length() - seedDomain.length(),
                 seedDomain.length())) {
                 // Domain suffix congruence
+                checkClose(iter);
                 return true;
             } // Else keep trying other seeds
         }
         // if none found, fail
+        checkClose(iter);
         return false;
     }
 

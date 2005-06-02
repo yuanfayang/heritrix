@@ -134,6 +134,7 @@ public class PathScope extends SeedCachingScope {
                     if (s.getPath().regionMatches(0, u.getPath(), 0,
                         s.getPath().lastIndexOf('/'))) {
                         // matches up to last '/'
+                        checkClose(iter);
                         return true;
                     } else {
                         // no match; try next seed
@@ -147,6 +148,7 @@ public class PathScope extends SeedCachingScope {
             }
         }
         // if none found, fail
+        checkClose(iter);
         return false;
     }
 

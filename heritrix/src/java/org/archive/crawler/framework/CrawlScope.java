@@ -24,8 +24,8 @@
 package org.archive.crawler.framework;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -75,6 +75,7 @@ public class CrawlScope extends Filter {
         Logger.getLogger(CrawlScope.class.getName());
     public static final String ATTR_NAME = "scope";
     public static final String ATTR_SEEDS = "seedsfile";
+//    private static final String IGNORED_SUFFIX = ".ignored";
 
     /** Constructs a new CrawlScope.
      *
@@ -226,12 +227,28 @@ public class CrawlScope extends Filter {
      */
     public Iterator seedsIterator() {
         BufferedReader br;
+//        BufferedWriter ignoreWriter; 
         try {
             br = new BufferedReader(new FileReader(getSeedfile()));
-        } catch (FileNotFoundException e) {
+//            ignoreWriter = 
+//                new BufferedWriter(
+//                   new FileWriter(
+//                        getSeedfile().getAbsolutePath() + IGNORED_SUFFIX));
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return new SeedFileIterator(br);
+    }
+    
+    /**
+     * Convenience method to close SeedFileIterator, if appropriate.
+     * 
+     * @param iter Iterator to check if SeedFileIterator needing closing
+     */
+    protected void checkClose(Iterator iter) {
+        if(iter instanceof SeedFileIterator) {
+            ((SeedFileIterator)iter).close();
+        }
     }
 
     /**
