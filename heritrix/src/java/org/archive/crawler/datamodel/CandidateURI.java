@@ -530,10 +530,40 @@ implements Serializable, Lineable {
     private void readObject(ObjectInputStream stream)
         throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        uuri = UURIFactory.getInstance(stream.readUTF());
-        String v = (String) stream.readObject();
-        via = (v == null) ? null : UURIFactory.getInstance(v);
+        uuri = readUuri(stream.readUTF());
+        via = readUuri((String)stream.readObject());
         alist = (AList) stream.readObject();
+    }
+
+    /**
+     * Read a UURI from a String, handling a null or URIException
+     * 
+     * @param u String or null from which to create UURI
+     * @return the best UURI instance creatable
+     */
+    protected UURI readUuri(String u) {
+        if (u == null) {
+            return null;
+        }
+        try {
+            return UURIFactory.getInstance(u);
+        } catch (URIException ux) {
+            // simply continue to next try
+        }
+        try {
+            // try adding an junk scheme
+            return UURIFactory.getInstance("invalid:" + u);
+        } catch (URIException ux) {
+            ux.printStackTrace();
+            // ignored; method continues
+        }
+        try {
+            // return total junk
+            return UURIFactory.getInstance("invalid:");
+        } catch (URIException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 }
