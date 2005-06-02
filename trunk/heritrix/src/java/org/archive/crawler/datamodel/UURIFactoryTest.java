@@ -33,9 +33,10 @@ import junit.framework.TestCase;
 import org.apache.commons.httpclient.URIException;
 
 /**
- * Test UURI's normalize method.
+ * Test UURIFactory for proper UURI creation across variety of
+ * important/tricky cases.
  *
- * @author Igor Ranitovic
+ * @author igor stack gojomo
  */
 public class UURIFactoryTest extends TestCase {
 	
@@ -97,19 +98,29 @@ public class UURIFactoryTest extends TestCase {
             uuri.toString().equals("http://archive.org/"));
     }
     
-    public final void testBadPath() {
-        String message = null;
-        try {
-            UURIFactory.getInstance("http://ads.as4x.tmcs.net/" +
-                "html.ng/site=cs&pagepos=102&page=home&adsize=1x1&context=" +
-                "generic&Params.richmedia=yes%26city%3Dseattle%26" +
-                "rstid%3D2415%26market_id%3D86%26brand%3Dcitysearch" +
-                "%6state%3DWA");
-        } catch (URIException e) {
-            message = e.getMessage();
-        }
-        assertNotNull("Didn't get expected exception.", message);
-    }   
+// DISABLING TEST AS PRECURSOR TO ELIMINATION
+// the problematic input given -- specifically the "%6s" incomplete uri-escape,
+// shouldn't necessarily be rejected as a bad URI. IE and Firefox, at least, 
+// will  attempt to fetch such an URL (getting, in this case against that ad 
+// server, a bad-request error). Ideally, we'd generate exactly the same 
+// request against the server as they do. However, with the most recent 
+// fixup for stray '%' signs, we come close, but not exactly. That's enough
+// to cause this test to fail (it's not getting the expected exception) but
+// our almost-URI, which might be what was intended, is better than trying 
+// nothing.
+//    public final void testBadPath() {
+//        String message = null;
+//        try {
+//            UURIFactory.getInstance("http://ads.as4x.tmcs.net/" +
+//                "html.ng/site=cs&pagepos=102&page=home&adsize=1x1&context=" +
+//                "generic&Params.richmedia=yes%26city%3Dseattle%26" +
+//                "rstid%3D2415%26market_id%3D86%26brand%3Dcitysearch" +
+//                "%6state%3DWA");
+//        } catch (URIException e) {
+//            message = e.getMessage();
+//        }
+//        assertNotNull("Didn't get expected exception.", message);
+//    }   
     
     public final void testEscapeEncoding() throws URIException {
         UURI uuri = UURIFactory.getInstance("http://www.y1y1.com/" +
@@ -633,4 +644,67 @@ public class UURIFactoryTest extends TestCase {
 		assertEquals("Not equal", "http://www.example.com/path?query",
 				uuri.toString());
 	}
+    
+
+    /**
+     * Ensure that URI strings beginning with a colon are treated
+     * the same as browsers do (as relative, rather than as absolute
+     * with zero-length scheme). 
+     * 
+     * @throws URIException
+     */
+    public void testStartsWithColon() throws URIException {
+        UURI base = UURIFactory.getInstance("http://www.example.com/path/page");
+        UURI uuri = UURIFactory.getInstance(base,":foo");
+        assertEquals("derelativize starsWithColon",
+                uuri.getURI(),
+                "http://www.example.com/path/:foo");
+    }
+    
+    /**
+     * Ensure that stray trailing '%' characters do not prevent
+     * UURI instances from being created, and are reasonably 
+     * escaped when encountered. 
+     *
+     * @throws URIException
+     */
+    public void testTrailingPercents() throws URIException {
+        String plainPath = "http://www.example.com/path%";
+        UURI plainPathUuri = UURIFactory.getInstance(plainPath);
+        assertEquals("plainPath getURI", plainPath, plainPathUuri.getURI());
+        assertEquals("plainPath getEscapedURI", 
+                "http://www.example.com/path%25",
+                plainPathUuri.getEscapedURI());
+        
+        String partiallyEscapedPath = "http://www.example.com/pa%20th%";
+        UURI partiallyEscapedPathUuri = UURIFactory.getInstance(
+                partiallyEscapedPath);
+        assertEquals("partiallyEscapedPath getURI", 
+                "http://www.example.com/pa th%", 
+                partiallyEscapedPathUuri.getURI());
+        assertEquals("partiallyEscapedPath getEscapedURI", 
+                "http://www.example.com/pa%20th%25",
+                partiallyEscapedPathUuri.getEscapedURI());
+        
+        String plainQueryString = "http://www.example.com/path?q=foo%";
+        UURI plainQueryStringUuri = UURIFactory.getInstance(
+                plainQueryString);
+        assertEquals("plainQueryString getURI", 
+                plainQueryString,
+                plainQueryStringUuri.getURI());
+        assertEquals("plainQueryString getEscapedURI", 
+                "http://www.example.com/path?q=foo%25",
+                plainQueryStringUuri.getEscapedURI());        
+        
+        String partiallyEscapedQueryString = 
+            "http://www.example.com/pa%20th?q=foo%";
+        UURI partiallyEscapedQueryStringUuri = UURIFactory.getInstance(
+                partiallyEscapedQueryString);
+        assertEquals("partiallyEscapedQueryString getURI", 
+                "http://www.example.com/pa th?q=foo%",
+                partiallyEscapedQueryStringUuri.getURI());
+        assertEquals("partiallyEscapedQueryString getEscapedURI", 
+                "http://www.example.com/pa%20th?q=foo%25",
+                partiallyEscapedQueryStringUuri.getEscapedURI());  
+    }
 }
