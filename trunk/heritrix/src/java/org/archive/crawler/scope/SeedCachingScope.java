@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.framework.CrawlScope;
 
 /**
  * A CrawlScope that caches its seed list for the
