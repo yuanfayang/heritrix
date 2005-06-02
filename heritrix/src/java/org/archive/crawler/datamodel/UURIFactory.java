@@ -523,8 +523,15 @@ public class UURIFactory extends URI {
         // above.  TODO: Look out for cases where we fail other than for the
         // above given reason which will be fixed when we address
         // '[ 913687 ] Make extractors interrogate for charset'.
+        //
+        // Added: ensure that at the very least, any URI that we pass along
+        // as 'already escaped' has no stray '%' chars that are not part of a 
+        // valid uri-escape sequence ('%xx' where x=hexdigit)
         if (e) {
-            validateEscaping(uriPath);
+            uriPath = ensureMinimalEscaping(uriPath);
+            validateEscaping(uriPath); // may be redundant
+            uriQuery = ensureMinimalEscaping(uriQuery);
+            validateEscaping(uriQuery); // may be redundant
         }
 
         // Preallocate.  The '1's and '2's in below are space for ':',
@@ -541,9 +548,25 @@ public class UURIFactory extends URI {
         appendNonNull(s, uriAuthority, "//", false);
         appendNonNull(s, uriPath, "", false);
         appendNonNull(s, uriQuery, "?", false);
-        return (e)? escapeWhitespace(s.toString()): s.toString();
+        return (e) ? escapeWhitespace(s.toString()) : s.toString(); 
     }
     
+    /**
+     * Ensure that there are no '%' characaters in the passed string
+     * that are not part of a valid URI escape sequence ('%xx' where
+     * each sx is a hex digit). Escape '%'s as necessary. 
+     * 
+     * @param u String to escape
+     * @return string with any stray '%' escaped
+     */
+    private String ensureMinimalEscaping(String u) {
+        if(u==null) {
+            return null;
+        }
+        // replace all '%' that are not followed by 2 hex digits with '%25'
+        return u.replaceAll("%(?=(.?[^\\p{XDigit}])|$)","%25");
+    }
+
     /**
      * Validate URL escaping is properly done.
      * The below is what the parent class does when UURI#getPath is called.
