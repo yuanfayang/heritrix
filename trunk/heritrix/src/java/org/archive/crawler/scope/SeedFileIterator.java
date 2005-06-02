@@ -25,6 +25,8 @@
 package org.archive.crawler.scope;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.UURIFactory;
@@ -39,25 +41,36 @@ import org.archive.util.iterator.TransformingIteratorWrapper;
  * @author gojomo
  */
 public class SeedFileIterator extends TransformingIteratorWrapper {
-    /*
-     * Regexp to identify lines with a seed URI (or seed hostname).
-     * (Like RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT.
-     * except content must begin with a word char ("\\w") so that
-     * "directive" lines with other characters may be ignored.
-     */
-    public static final String URI_OR_HOSTNAME_LINE = 
-        "^\\s*(\\w\\S+)\\s*(#.*)?$";
+    BufferedReader input;
+    BufferedWriter ignored;
     
     /**
-     * 
+     * Construct a SeedFileIterator over the input available
+     * from the supplied BufferedReader.
+     * @param br BufferedReader from which to get seeds
      */
-    public SeedFileIterator(BufferedReader reader) {
+    public SeedFileIterator(BufferedReader br) {
+        this(br,null);
+    }
+
+    /**
+     * Construct a SeedFileIterator over the input available
+     * from the supplied BufferedReader, reporting any nonblank
+     * noncomment entries which don't generate a valid seed to
+     * the supplied BufferedWriter.
+     * 
+     * @param br BufferedReader from which to get seeds
+     * @param ignoredWriter BufferedWriter to report any ignored input 
+     */
+    public SeedFileIterator(BufferedReader inputReader, BufferedWriter ignoredWriter) {
         super();
         inner = new RegexpLineIterator(
-                new LineReadingIterator(reader),
-                RegexpLineIterator.COMMENT_LINE,
-                RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT,
-                RegexpLineIterator.ENTRY);
+                    new LineReadingIterator(inputReader),
+                    RegexpLineIterator.COMMENT_LINE,
+                    RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT,
+                    RegexpLineIterator.ENTRY);
+        input = inputReader;
+        ignored = ignoredWriter;
     }
     
     /* (non-Javadoc)
@@ -65,15 +78,48 @@ public class SeedFileIterator extends TransformingIteratorWrapper {
      */
     protected Object transform(Object object) {
         String uri = (String)object;
-        if(uri.matches("[\\w\\.]+")) {
-            // all word chars and periods -- must be plain hostname
+        if(! uri.matches("[a-zA-Z][\\w+\\.]+:.*")) { // rfc2396 s3.1 scheme
+            // does not begin with scheme, so try http://
             uri = "http://"+uri;
         }
         try {
             // TODO: ignore lines beginning with non-word char
             return UURIFactory.getInstance(uri);
         } catch (URIException e) {
+            if(ignored!=null) {
+                try {
+                    ignored.write(object+"\n");
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+            }
             return null;
+        }
+    }
+    
+    
+    /**
+     * Clean-up when hasNext() has returned null: close open files. 
+     *
+     * @see org.archive.util.iterator.TransformingIteratorWrapper#noteExhausted()
+     */
+    protected void noteExhausted() {
+        super.noteExhausted();
+        close();
+    }
+    
+    public void close() {
+        try {
+            if(input!=null) {
+                input.close();
+            }
+            if(ignored!=null) {
+                ignored.close();
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 }
