@@ -72,7 +72,7 @@ public class SeedFileIteratorTest extends TestCase {
                seeds.contains("http://www.example.net/"));
        assertTrue("got wrong number of URLs", seeds.size()==3);
        assertTrue("ignored entry not reported", 
-               ignored.toString().contains("+http://www.example.us"));
+               ignored.toString().indexOf("+http://www.example.us")>=0);
    }
 }
 
