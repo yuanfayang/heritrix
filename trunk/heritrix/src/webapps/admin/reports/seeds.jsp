@@ -36,6 +36,13 @@
     }
     else
     {
+    String ignoredSeeds = cjob.getIgnoredSeeds(); 
+    if(ignoredSeeds!=null&&ignoredSeeds.length()>0) {
+%>
+	<b style="color:red">Items in seed specification were ignored. 
+	<a href="#ignored">See below</a> for details.</b><p>
+<%    
+    }
 %>
 
         <table>
@@ -81,6 +88,21 @@
         </table>
 
 <%
+    if(ignoredSeeds!=null&&ignoredSeeds.length()>0) {
+%>
+	<p>
+	<a name="ignored"></a>
+	Some items in seed specification were ignored. This may not indicate any 
+	problem, but the ignored items are displayed here for reference:<p>
+	
+	<div style="border:2px solid pink;margin-right:50px;margin-left:50px;padding:25px">
+<pre>
+<%=ignoredSeeds%>
+</pre>
+	</div>
+<%    
+    }
+
     }
 %>
 

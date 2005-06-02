@@ -24,11 +24,11 @@
 package org.archive.crawler.framework;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -75,7 +75,6 @@ public class CrawlScope extends Filter {
         Logger.getLogger(CrawlScope.class.getName());
     public static final String ATTR_NAME = "scope";
     public static final String ATTR_SEEDS = "seedsfile";
-//    private static final String IGNORED_SUFFIX = ".ignored";
 
     /** Constructs a new CrawlScope.
      *
@@ -226,18 +225,25 @@ public class CrawlScope extends Filter {
      * @return Iterator, perhaps over a disk file, of seeds
      */
     public Iterator seedsIterator() {
+        return seedsIterator(null);
+    }
+    
+    /**
+     * Gets an iterator over all configured seeds. Subclasses
+     * which cache seeds in memory can override with more
+     * efficient implementation. 
+     *
+     * @param ignoredItemWriter optional writer to get ignored seed items report
+     * @return Iterator, perhaps over a disk file, of seeds
+     */
+    public Iterator seedsIterator(Writer ignoredItemWriter) {
         BufferedReader br;
-//        BufferedWriter ignoreWriter; 
         try {
             br = new BufferedReader(new FileReader(getSeedfile()));
-//            ignoreWriter = 
-//                new BufferedWriter(
-//                   new FileWriter(
-//                        getSeedfile().getAbsolutePath() + IGNORED_SUFFIX));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return new SeedFileIterator(br);
+        return new SeedFileIterator(br,ignoredItemWriter);
     }
     
     /**

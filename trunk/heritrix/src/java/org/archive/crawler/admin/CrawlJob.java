@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -61,8 +60,10 @@ import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.StatisticsTracking;
+import org.archive.crawler.frontier.AbstractFrontier;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.FileUtils;
 import org.archive.util.JmxUtils;
 
 /**
@@ -1132,5 +1133,25 @@ public class CrawlJob implements DynamicMBean {
     
     public MBeanInfo getMBeanInfo() {
         return this.openMBeanInfo;
+    }
+    
+    /**
+     * Utility method to get the stored list of ignored seed items (if any),
+     * from the last time the seeds were imported to the frontier.
+     * 
+     * @return String of all ignored seed items, or null if none
+     */
+    public String getIgnoredSeeds() {
+        File ignoredFile = new File(getDirectory(),AbstractFrontier.IGNORED_SEEDS_FILENAME);
+        if(!ignoredFile.exists()) {
+            return null;
+        }
+        try {
+            return FileUtils.readFileAsString(ignoredFile);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return null;
+        }
     }
 }
