@@ -25,8 +25,8 @@
 package org.archive.crawler.scope;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.Writer;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.UURIFactory;
@@ -42,7 +42,7 @@ import org.archive.util.iterator.TransformingIteratorWrapper;
  */
 public class SeedFileIterator extends TransformingIteratorWrapper {
     BufferedReader input;
-    BufferedWriter ignored;
+    Writer ignored;
     
     /**
      * Construct a SeedFileIterator over the input available
@@ -62,7 +62,7 @@ public class SeedFileIterator extends TransformingIteratorWrapper {
      * @param br BufferedReader from which to get seeds
      * @param ignoredWriter BufferedWriter to report any ignored input 
      */
-    public SeedFileIterator(BufferedReader inputReader, BufferedWriter ignoredWriter) {
+    public SeedFileIterator(BufferedReader inputReader, Writer ignoredWriter) {
         super();
         inner = new RegexpLineIterator(
                     new LineReadingIterator(inputReader),

@@ -24,8 +24,12 @@
  */
 package org.archive.crawler.frontier;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -188,6 +192,9 @@ public abstract class AbstractFrontier extends ModuleType implements
      * Currently captures Frontier/URI transitions.
      */
     transient private FrontierJournal recover = null;
+
+    /** file collecting report of ignored seed-file entries (if any) */
+    public static final String IGNORED_SEEDS_FILENAME = "seeds.ignored";
 
     /**
      * @param name
@@ -463,13 +470,40 @@ public abstract class AbstractFrontier extends ModuleType implements
      * @see org.archive.crawler.framework.CrawlController#kickUpdate()
      */
     public void loadSeeds() {
+        Writer ignoredWriter = new StringWriter();
         // Get the seeds to refresh.
-        for (Iterator iter = this.controller.getScope().seedsIterator(); iter
-                .hasNext();) {
+        Iterator iter = this.controller.getScope().seedsIterator(ignoredWriter);
+        while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
             CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
             caUri.setSchedulingDirective(CandidateURI.MEDIUM);
             schedule(caUri);
+        }
+        // save ignored items (if any) where they can be consulted later
+        saveIgnoredItems(ignoredWriter.toString(), controller.getDisk());
+    }
+
+    /**
+     * Dump ignored seed items (if any) to disk; delete file otherwise.
+     * Static to allow non-derived sibling classes (frontiers not yet 
+     * subclassed here) to reuse.
+     * 
+     * @param ignoredWriter
+     */
+    public static void saveIgnoredItems(String ignoredItems, File dir) {
+        File ignoredFile = new File(dir, IGNORED_SEEDS_FILENAME);
+        if(ignoredItems==null | ignoredItems.length()>0) {
+            try {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(ignoredFile));
+                bw.write(ignoredItems);
+                bw.close();
+            } catch (IOException e) {
+                // TODO make an alert?
+                e.printStackTrace();
+            }
+        } else {
+            // delete any older file (if any)
+            ignoredFile.delete();
         }
     }
 

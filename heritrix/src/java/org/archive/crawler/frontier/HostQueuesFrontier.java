@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -449,13 +451,19 @@ HasUriReceiver,  CrawlStatusListener {
         // synchronization block.  The seeds list may get updated during our
         // iteration. This will throw a concurrentmodificationexception unless
         // we synchronize.
-        Iterator iter = this.controller.getScope().seedsIterator();
-        while(iter.hasNext()) {
+        Writer ignoredWriter = new StringWriter();
+        // Get the seeds to refresh.
+        Iterator iter = this.controller.getScope().seedsIterator(ignoredWriter);
+        while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
             CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
             caUri.setSchedulingDirective(CandidateURI.MEDIUM);
             innerSchedule(caUri);
         }
+        // save ignored items (if any) where they can be consulted later
+        AbstractFrontier.saveIgnoredItems(
+                ignoredWriter.toString(), 
+                controller.getDisk());
     }
 
     private static class ThreadLocalQueue

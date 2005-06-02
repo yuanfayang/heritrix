@@ -24,6 +24,8 @@ package org.archive.crawler.frontier;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -199,14 +201,19 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * This method is called by initialize() and kickUpdate()
      */
     private void loadSeeds() {
+        Writer ignoredWriter = new StringWriter();
         // Get the seeds to refresh.
-        for (Iterator iter = this.controller.getScope().seedsIterator();
-                iter.hasNext();) {
+        Iterator iter = this.controller.getScope().seedsIterator(ignoredWriter);
+        while (iter.hasNext()) {
             CandidateURI caUri =
                 CandidateURI.createSeedCandidateURI((UURI)iter.next());
             caUri.setSchedulingDirective(CandidateURI.MEDIUM);
             innerSchedule(caUri);
         }
+        // save ignored items (if any) where they can be consulted later
+        AbstractFrontier.saveIgnoredItems(
+                ignoredWriter.toString(), 
+                controller.getDisk());
     }
 
     /**
