@@ -394,6 +394,13 @@ list below, send a description of a couple of lines to the mailing list).
     Geometabot (Heritrix) is the feeder for the Lucene search engine which
     provides the coresearchservice for geometa.info.
     </li>
+    <li>Saurabh Pathak and Donna Bergmark have written a module for Heritrix
+    that asks of a Rainbow classifier if a page should be crawled or not.
+    See <a 
+    href="http://groups.yahoo.com/group/archive-crawler/message/1905">1905</a>
+    for their announcement of the project with links to src and
+    HOWTO documentation.
+    </li>
 </ul>
 </p>
 </answer>
