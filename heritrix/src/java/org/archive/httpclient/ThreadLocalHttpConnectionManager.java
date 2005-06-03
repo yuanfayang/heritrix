@@ -249,6 +249,9 @@ public final class ThreadLocalHttpConnectionManager implements
 
         public CloserThread() {
             super("HttpConnection closer");
+            // Make this a daemon thread so it can't be responsible for the JVM
+            // not shutting down.
+            setDaemon(true);
             start();
         }
 
