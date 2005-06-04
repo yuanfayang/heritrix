@@ -149,6 +149,10 @@ public class ArchiveUtils {
     public static String get17DigitDate(long date){
         return TIMESTAMP17.format(new Date(date));
     }
+    
+    public static String get17DigitDate(Date date){
+        return TIMESTAMP17.format(date);
+    }
 
     /**
      * Utility function for creating arc-style date stamps
@@ -162,6 +166,10 @@ public class ArchiveUtils {
         return TIMESTAMP14.format(new Date(date));
     }
 
+    public static String get14DigitDate(Date d) {
+        return TIMESTAMP14.format(d);
+    }
+
     /**
      * Utility function for creating arc-style date stamps
      * in the format yyyMMddHHmm.
@@ -172,6 +180,10 @@ public class ArchiveUtils {
      */
     public static String get12DigitDate(long date){
         return TIMESTAMP12.format(new Date(date));
+    }
+    
+    public static String get12DigitDate(Date d) {
+        return TIMESTAMP12.format(d);
     }
 
     /**
