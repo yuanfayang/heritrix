@@ -39,7 +39,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * A utility class for parsing http header values.
+ * A utility class for parsing http header values according to
+ * RFC-2616 Section 4 and 19.3.
  * 
  * @author Michael Becke
  * @author <a href="mailto:oleg@ural.ru">Oleg Kalnichevski</a>
@@ -61,7 +62,7 @@ public class HttpParser {
      * Stop reading when <tt>"\n"</tt> terminator encountered 
      * If the stream ends before the line terminator is found,
      * the last part of the string will still be returned. 
-     * If no input data available, <code>null</code> is returned
+     * If no input data available, <code>null</code> is returned.
      *
      * @param inputStream the stream to read from
      *
@@ -75,7 +76,7 @@ public class HttpParser {
         int ch;
         while ((ch = inputStream.read()) >= 0) {
             buf.write(ch);
-            if (ch == '\n') {
+            if (ch == '\n') { // be tolerant (RFC-2616 Section 19.3)
                 break;
             }
         }
@@ -89,7 +90,7 @@ public class HttpParser {
      * Read up to <tt>"\n"</tt> from an (unchunked) input stream.
      * If the stream ends before the line terminator is found,
      * the last part of the string will still be returned.
-     * If no input data available, <code>null</code> is returned
+     * If no input data available, <code>null</code> is returned.
      *
      * @param inputStream the stream to read from
      * @param charset charset of HTTP protocol elements
@@ -105,6 +106,7 @@ public class HttpParser {
         if (rawdata == null) {
             return null;
         }
+        // strip CR and LF from the end
         int len = rawdata.length;
         int offset = 0;
         if (len > 0) {
@@ -185,6 +187,7 @@ public class HttpParser {
                 // Otherwise we should have normal HTTP header line
                 // Parse the header name and value
                 int colon = line.indexOf(":");
+                
                 // START HERITRIX Change
                 // Don't throw an exception if can't parse.  We want to keep
                 // going even though header is bad. Rather, create
@@ -200,6 +203,7 @@ public class HttpParser {
                     value = new StringBuffer(line.substring(colon + 1).trim());
                 }
                 // END HERITRIX change.
+                
             }
 
         }

@@ -46,6 +46,7 @@ import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
 import org.apache.commons.httpclient.util.EncodingUtil;
+import org.apache.commons.httpclient.util.ExceptionUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -82,7 +83,7 @@ import org.archive.util.HttpRecorder;
  *
  * @author Rod Waldhoff
  * @author Sean C. Sullivan
- * @author Ortwin Gl??ck
+ * @author Ortwin Glueck
  * @author <a href="mailto:jsdever@apache.org">Jeff Dever</a>
  * @author <a href="mailto:mbowler@GargoyleSoftware.com">Mike Bowler</a>
  * @author <a href="mailto:oleg@ural.ru">Oleg Kalnichevski</a>
@@ -157,7 +158,6 @@ public class HttpConnection {
         this(hostConfiguration.getProxyHost(),
              hostConfiguration.getProxyPort(),
              hostConfiguration.getHost(),
-             hostConfiguration.getVirtualHost(),
              hostConfiguration.getPort(),
              hostConfiguration.getProtocol());
         this.localAddress = hostConfiguration.getLocalAddress();
@@ -171,7 +171,30 @@ public class HttpConnection {
      * @param proxyHost the host to proxy via
      * @param proxyPort the port to proxy via
      * @param host the host to connect to. Parameter value must be non-null.
-     * @param virtualHost the virtual host requests will be sent to
+     * @param virtualHost No longer applicable. 
+     * @param port the port to connect to
+     * @param protocol The protocol to use. Parameter value must be non-null.
+     * 
+     * @deprecated use #HttpConnection(String, int, String, int, Protocol)
+     */
+    public HttpConnection(
+        String proxyHost,
+        int proxyPort,
+        String host,
+        String virtualHost,
+        int port,
+        Protocol protocol) {
+        this(proxyHost, proxyPort, host, port, protocol);
+    }
+
+    /**
+     * Creates a new HTTP connection for the given host with the virtual 
+     * alias and port via the given proxy host and port using the given 
+     * protocol.
+     * 
+     * @param proxyHost the host to proxy via
+     * @param proxyPort the port to proxy via
+     * @param host the host to connect to. Parameter value must be non-null.
      * @param port the port to connect to
      * @param protocol The protocol to use. Parameter value must be non-null.
      */
@@ -179,7 +202,6 @@ public class HttpConnection {
         String proxyHost,
         int proxyPort,
         String host,
-        String virtualHost,
         int port,
         Protocol protocol) {
 
@@ -193,7 +215,6 @@ public class HttpConnection {
         proxyHostName = proxyHost;
         proxyPortNumber = proxyPort;
         hostName = host;
-        virtualName = virtualHost;
         portNumber = protocol.resolvePort(port);
         protocolInUse = protocol;
     }
@@ -238,9 +259,12 @@ public class HttpConnection {
      * Returns the target virtual host.
      *
      * @return the virtual host.
+     * 
+     * @deprecated no longer applicable
      */
+
     public String getVirtualHost() {
-        return virtualName;
+        return this.hostName;
     }
 
     /**
@@ -252,10 +276,12 @@ public class HttpConnection {
      *        to be used
      * 
      * @throws IllegalStateException if the connection is already open
+     * 
+     * @deprecated no longer applicable
      */
+
     public void setVirtualHost(String host) throws IllegalStateException {
         assertNotOpen();
-        virtualName = host;
     }
 
     /**
@@ -401,9 +427,11 @@ public class HttpConnection {
      * <code>false</code> otherwise.
      * 
      * @see #isStale()
+     * 
+     * @since 3.0
      */
-    public boolean closeIfStale() {
-        if (used && isOpen && isStale()) {
+    public boolean closeIfStale() throws IOException {
+        if (isOpen && isStale()) {
             LOG.debug("Connection is stale, closing...");
             close();
             return true;
@@ -462,10 +490,12 @@ public class HttpConnection {
      * {@link BufferedInputStream}, so although data might be read, what is visible
      * to clients of the connection will not change with this call.</p.
      *
+     * @throws IOException if the stale connection test is interrupted.
+     * 
      * @return <tt>true</tt> if the connection is already closed, or a read would
      * fail.
      */
-    protected boolean isStale() {
+    protected boolean isStale() throws IOException {
         boolean isStale = true;
         if (isOpen) {
             // the connection is open, but now we have to see if we can read it
@@ -489,6 +519,9 @@ public class HttpConnection {
                     }
                 }
             } catch (InterruptedIOException e) {
+                if (!ExceptionUtil.isSocketTimeoutException(e)) {
+                    throw e;
+                }
                 // aha - the connection is NOT stale - continue on!
             } catch (IOException e) {
                 // oops - the connection is stale, the read or soTimeout failed.
@@ -657,6 +690,11 @@ public class HttpConnection {
         final String host = (proxyHostName == null) ? hostName : proxyHostName;
         final int port = (proxyHostName == null) ? portNumber : proxyPortNumber;
         assertNotOpen();
+        
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Open connection to " + host + ":" + port);
+        }
+        
         try {
             if (this.socket == null) {
                 usingSecureSocket = isSecure() && !isProxied();
@@ -679,6 +717,7 @@ public class HttpConnection {
             highly interactive environments, such as some client/server 
             situations. In such cases, nagling may be turned off through 
             use of the TCP_NODELAY sockets option." */
+
             socket.setTcpNoDelay(this.params.getTcpNoDelay());
             socket.setSoTimeout(this.params.getSoTimeout());
             
@@ -696,13 +735,14 @@ public class HttpConnection {
                 socket.setReceiveBufferSize(rcvBufSize);
             }        
             int outbuffersize = socket.getSendBufferSize();
-            if (outbuffersize > 2048) {
+            if ((outbuffersize > 2048) || (outbuffersize <= 0)) {
                 outbuffersize = 2048;
             }
             int inbuffersize = socket.getReceiveBufferSize();
-            if (inbuffersize > 2048) {
+            if ((inbuffersize > 2048) || (inbuffersize <= 0)) {
                 inbuffersize = 2048;
             }
+            
             // START HERITRIX Change
             HttpRecorder httpRecorder = HttpRecorder.getHttpRecorder();
             if (httpRecorder == null) {
@@ -721,7 +761,6 @@ public class HttpConnection {
             // END HERITRIX change.
 
             isOpen = true;
-            used = false;
         } catch (IOException e) {
             // Connection wasn't opened properly
             // so close everything out
@@ -752,6 +791,10 @@ public class HttpConnection {
         if (usingSecureSocket) {
             throw new IllegalStateException("Already using a secure socket");
         }
+        
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Secure tunnel to " + this.hostName + ":" + this.portNumber);
+        }
 
         SecureProtocolSocketFactory socketFactory =
             (SecureProtocolSocketFactory) protocolInUse.getSocketFactory();
@@ -777,7 +820,6 @@ public class HttpConnection {
         outputStream = new BufferedOutputStream(socket.getOutputStream(), outbuffersize);
         usingSecureSocket = true;
         tunnelEstablished = true;
-        LOG.debug("Secure tunnel created");
     }
 
     /**
@@ -880,6 +922,9 @@ public class HttpConnection {
                     LOG.debug("Input data not available");
                 }
             } catch (InterruptedIOException e) {
+                if (!ExceptionUtil.isSocketTimeoutException(e)) {
+                    throw e;
+                }
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Input data not available after " + timeout + " ms");
                 }
@@ -1134,7 +1179,9 @@ public class HttpConnection {
     }
 
     /**
-     * Release the connection.
+     * Releases the connection. If the connection is locked or does not have a connection
+     * manager associated with it, this method has no effect. Note that it is completely safe 
+     * to call this method multiple times.
      */
     public void releaseConnection() {
         LOG.trace("enter HttpConnection.releaseConnection()");
@@ -1149,20 +1196,27 @@ public class HttpConnection {
     }
 
     /**
-     * @return
+     * Tests if the connection is locked. Locked connections cannot be released. 
+     * An attempt to release a locked connection will have no effect.
+     * 
+     * @return <tt>true</tt> if the connection is locked, <tt>false</tt> otherwise.
      * 
      * @since 3.0
      */
-    boolean isLocked() {
+    protected boolean isLocked() {
         return locked;
     }
 
     /**
-     * @param locked
+     * Locks or unlocks the connection. Locked connections cannot be released. 
+     * An attempt to release a locked connection will have no effect.
+     * 
+     * @param locked <tt>true</tt> to lock the connection, <tt>false</tt> to unlock
+     *  the connection.
      * 
      * @since 3.0
      */
-    void setLocked(boolean locked) {
+    protected void setLocked(boolean locked) {
         this.locked = locked;
     }
     // ------------------------------------------------------ Protected Methods
@@ -1209,7 +1263,6 @@ public class HttpConnection {
             }
         }
         isOpen = false;
-        used = false;
         tunnelEstablished = false;
         usingSecureSocket = false;
     }
@@ -1280,14 +1333,8 @@ public class HttpConnection {
     
     // ----------------------------------------------------- Instance Variables
     
-    /** A flag indicating if this connection has been used since being opened */
-    private boolean used = false;
-    
     /** My host. */
     private String hostName = null;
-    
-    /** My virtual host. */
-    private String virtualName = null;
     
     /** My port. */
     private int portNumber = -1;
