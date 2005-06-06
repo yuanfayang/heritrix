@@ -98,6 +98,15 @@ import org.archive.io.RecorderTimeoutException;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
 
+import com.sleepycat.bind.serial.SerialBinding;
+import com.sleepycat.bind.serial.StoredClassCatalog;
+import com.sleepycat.bind.tuple.StringBinding;
+import com.sleepycat.collections.StoredSortedMap;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseConfig;
+import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.Environment;
+
 /**
  * HTTP fetcher that uses <a
  * href="http://jakarta.apache.org/commons/httpclient/">Apache Jakarta Commons
@@ -196,6 +205,19 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     public static final String HTTPS_SCHEME = "https";
     
     public static final String ATTR_IGNORE_COOKIES = "ignore-cookies";
+    private static Boolean DEFAULT_IGNORE_COOKIES = new Boolean(false);
+
+    public static final String ATTR_BDB_COOKIES = "use-bdb-for-cookies";
+    private static Boolean DEFAULT_BDB_COOKIES = new Boolean(true);
+    
+    /**
+     * Database backing cookie map, if using BDB
+     */
+    protected Database cookieDb; 
+    /**
+     * Name of cookie BDB Database
+     */
+    public static final String COOKIEDB_NAME = "http_cookies";
 
     /**
      * Constructor.
@@ -233,9 +255,13 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             "Fetch is truncated at this length. A value of 0 means no limit.",
             DEFAULT_MAX_LENGTH_BYTES));
         e = addElementToDefinition(new SimpleType(ATTR_IGNORE_COOKIES,
-            "Disable cookie-handling.", new Boolean(false)));
+            "Disable cookie-handling.", DEFAULT_IGNORE_COOKIES));
         e.setOverrideable(true);
         e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_BDB_COOKIES,
+                "Store cookies in BDB-backed map.", DEFAULT_BDB_COOKIES));
+        e.setExpertSetting(true);
+
         e = addElementToDefinition(new SimpleType(ATTR_LOAD_COOKIES,
             "File to preload cookies from", ""));
         e.setExpertSetting(true);
@@ -921,7 +947,22 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         HeritrixProtocolSocketFactory.cleanup();
         // At the end save cookies to the file specified in the order file.
         saveCookies();
+        cleanupHttp();
         super.finalTasks();
+    }
+
+    /**
+     * Perform any final cleanup related to the HttpClient instance.
+     */
+    protected void cleanupHttp() {
+        if(cookieDb!=null) {
+            try {
+                cookieDb.close();
+            } catch (DatabaseException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 
     protected void configureHttp() throws RuntimeException {
@@ -948,6 +989,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // Set client to be version 1.0.
         hcp.setVersion(HttpVersion.HTTP_1_0);
         
+        configureHttpCookies();
+        
         // Use our own protocol factory, one that gets IP to use from
         // heritrix cache (They're cached in CrawlHost instances).
         Protocol.registerProtocol("http", new Protocol("http",
@@ -971,6 +1014,33 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 " attributes: " + e.getMessage());
         }
 	}
+
+    /**
+     * Set the HttpClient HttpState instance to use a BDB-backed
+     * StoredSortedMap for cookie storage, if that option is chosen.
+     */
+    private void configureHttpCookies() {
+        // If Bdb-backed cookies chosen, replace map in HttpState
+        if(((Boolean)getUncheckedAttribute(null, ATTR_BDB_COOKIES)).
+                booleanValue()) {
+            try {
+                Environment env = getController().getBdbEnvironment();
+                StoredClassCatalog classCatalog = getController().getClassCatalog();
+                DatabaseConfig dbConfig = new DatabaseConfig();
+                dbConfig.setTransactional(false);
+                dbConfig.setAllowCreate(true);
+                cookieDb = env.openDatabase(null, COOKIEDB_NAME, dbConfig);
+                StoredSortedMap cookiesMap = new StoredSortedMap(cookieDb,
+                        new StringBinding(), new SerialBinding(classCatalog,
+                                Cookie.class), true);
+                this.http.getState().setCookiesMap(cookiesMap);
+            } catch (DatabaseException e) {
+                // TODO Auto-generated catch block
+                logger.severe(e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
 
     /**
      * @param curi Current CrawlURI.  Used to get context.
