@@ -9,7 +9,6 @@
     </xs:annotation>
 
 
-
     <xs:element name="crawl-order">
         <xs:complexType>
             <xs:sequence>
@@ -37,6 +36,8 @@
             <xs:sequence>
                 <xs:element name="name" type="xs:string"/>
                 <xs:element name="description" type="xs:string"/>
+                <xs:element name="operator" type="xs:string"/>
+                <xs:element name="audience" type="xs:string"/>
                 <xs:element name="date" type="xs:string"/>
             </xs:sequence>
         </xs:complexType>
