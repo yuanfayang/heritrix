@@ -26,7 +26,6 @@ package org.archive.io;
 
 import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -65,7 +64,6 @@ import java.security.NoSuchAlgorithmException;
  *
  */
 public class RecordingOutputStream extends OutputStream {
-
     /**
      * Size of recording.
      *
@@ -86,6 +84,12 @@ public class RecordingOutputStream extends OutputStream {
     private byte[] buffer;
 
     private long position;
+    
+    /**
+     * Reusable buffer for FastBufferedOutputStream
+     */
+    protected byte[] bufStreamBuf = 
+        new byte [ FastBufferedOutputStream.DEFAULT_BUFFER_SIZE ];
     
     /**
      * True if we're to digest content.
@@ -154,17 +158,11 @@ public class RecordingOutputStream extends OutputStream {
         if (this.diskStream != null) {
             closeDiskStream();
         }
-        lateOpen();
-    }
-
-
-    private void lateOpen() throws FileNotFoundException {
-        // TODO: Fix so we only make file when its actually needed.
         if (this.diskStream == null) {
+            // TODO: Fix so we only make file when its actually needed.
             FileOutputStream fis = new FileOutputStream(this.backingFilename);
-            // FastBufferedOutputStream default buffer is 16k.  Probably too
-            // big for our usage here.
-            this.diskStream = new FastBufferedOutputStream(fis, 4 * 1024);
+            
+            this.diskStream = new RecyclingFastBufferedOutputStream(fis, bufStreamBuf);
         }
     }
 
@@ -201,7 +199,6 @@ public class RecordingOutputStream extends OutputStream {
             this.digest.update((byte)b);
         }
         if (this.position >= this.buffer.length) {
-            // lateOpen()
             // TODO: Its possible to call write w/o having first opened a
             // stream.  Protect ourselves against this.
             assert this.diskStream != null: "Diskstream is null";
@@ -240,7 +237,6 @@ public class RecordingOutputStream extends OutputStream {
      */
     private void tailRecord(byte[] b, int off, int len) throws IOException {
         if(this.position >= this.buffer.length){
-            // lateOpen()
             // TODO: Its possible to call write w/o having first opened a
             // stream.  Lets protect ourselves against this.
             if (this.diskStream == null) {
