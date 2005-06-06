@@ -61,6 +61,10 @@ public class RecordingInputStream
      */
     private InputStream in = null;
 
+    /**
+     * Reusable buffer to avoid reallocation on each readFullyUntil
+     */
+    protected byte[] drainBuffer = new byte[16*1024];
 
     /**
      * Create a new RecordingInputStream.
@@ -146,8 +150,7 @@ public class RecordingInputStream
     }
 
     public long readFully() throws IOException {
-        byte[] buf = new byte[4096];
-        while(read(buf) != -1) {
+        while(read(drainBuffer) != -1) {
             // Empty out stream.
             continue;
         }
@@ -183,14 +186,14 @@ public class RecordingInputStream
             timeoutTime = Long.MAX_VALUE;
         }
 
-        final int BUFFER_SIZE = 4096;
-        int buffersize = (maxLength > 0)?
-            Math.min(BUFFER_SIZE, (int)maxLength): BUFFER_SIZE;
-        byte[] buf = new byte[buffersize];
         long bytesRead = -1;
+        int maxToRead = -1; 
         while (true) {
             try {
-                bytesRead = read(buf);
+                maxToRead = (maxLength <= 0) 
+                    ? drainBuffer.length 
+                    : (int) Math.min(drainBuffer.length, maxLength - totalBytes); 
+                bytesRead = read(drainBuffer,0,maxToRead);
                 if (bytesRead == -1) {
                     break;
                 }
