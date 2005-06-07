@@ -27,8 +27,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.CrawlScope;
-import org.archive.crawler.framework.Processor;
+import org.archive.crawler.framework.Scoper;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.util.TextUtils;
@@ -43,24 +42,27 @@ import org.archive.util.TextUtils;
  * @author gojomo
  *
  */
-public class Preselector extends Processor implements FetchStatusCodes {
+public class Preselector extends Scoper
+implements FetchStatusCodes {
 
     /** whether to reapply crawl scope at this step */
     public static final String ATTR_RECHECK_SCOPE = "recheck-scope";
-    /** indicator allowing all URIs (of a given host, typically) to be blocked at this step*/
+    /** indicator allowing all URIs (of a given host, typically) to
+     * be blocked at this step*/
     public static final String ATTR_BLOCK_ALL = "block-all";
     /** indicator allowing all matching URIs to be blocked at this step */
     public static final String ATTR_BLOCK_BY_REGEXP = "block-by-regexp";
 
     /**
-     * @param name
+     * Constructor.
+     * @param name Name of this processor.
      */
     public Preselector(String name) {
         super(name, "Preselector. Does one last bit of checking to make " +
-                "sure that the current URI should be fetched.");
+            "sure that the current URI should be fetched.");
         Type e;
         e = addElementToDefinition(new SimpleType(ATTR_RECHECK_SCOPE,
-                "Recheck if uri is in scope. This is meaningfull if the scope" +
+                "Recheck if uri is in scope. This is meaningful if the scope" +
                 " is altered during a crawl. URIs are checked against the" +
                 " scope when they are added to queues. Setting this value to" +
                 " true forces the URI to be checked against the scope when it" +
@@ -80,15 +82,13 @@ public class Preselector extends Processor implements FetchStatusCodes {
         e.setExpertSetting(true);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Processor#innerProcess(org.archive.crawler.datamodel.CrawlURI)
-     */
     protected void innerProcess(CrawlURI curi) {
         // Check if uris should be blocked
         try {
             if (((Boolean) getAttribute(ATTR_BLOCK_ALL, curi)).booleanValue()) {
                 curi.setFetchStatus(S_BLOCKED_BY_USER);
-                curi.skipToProcessorChain(getController().getPostprocessorChain());
+                curi.skipToProcessorChain(getController().
+                    getPostprocessorChain());
             }
         } catch (AttributeNotFoundException e) {
             // Act as attribute was false, that is: do nothing.
@@ -100,7 +100,8 @@ public class Preselector extends Processor implements FetchStatusCodes {
             if (regexp != null && !regexp.equals("")) {
                 if (TextUtils.matches(regexp, curi.toString())) {
                     curi.setFetchStatus(S_BLOCKED_BY_USER);
-                    curi.skipToProcessorChain(getController().getPostprocessorChain());
+                    curi.skipToProcessorChain(getController().
+                        getPostprocessorChain());
                 }
             }
         } catch (AttributeNotFoundException e) {
@@ -109,17 +110,17 @@ public class Preselector extends Processor implements FetchStatusCodes {
 
         // Possibly recheck scope
         try {
-            if (((Boolean) getAttribute(ATTR_RECHECK_SCOPE, curi)).booleanValue()) {
-                CrawlScope scope = getController().getScope();
-                if(!scope.accepts(curi)) {
-                    // scope rejected
+            if (((Boolean) getAttribute(ATTR_RECHECK_SCOPE, curi)).
+                    booleanValue()) {
+                if (!isInScope(curi)) {
+                    // Scope rejected
                     curi.setFetchStatus(S_OUT_OF_SCOPE);
-                    curi.skipToProcessorChain(getController().getPostprocessorChain());
+                    curi.skipToProcessorChain(getController().
+                        getPostprocessorChain());
                 }
             }
         } catch (AttributeNotFoundException e) {
             // Act as attribute was false, that is: do nothing.
         }
     }
-
 }

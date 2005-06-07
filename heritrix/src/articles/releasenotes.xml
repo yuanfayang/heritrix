@@ -27,6 +27,21 @@
         </para>
         </sect3>
     </sect2>
+    <sect2 id="1_6_0_changes">
+        <title>Changes</title>
+        <sect3 id="postselector">
+        <title>Postselector</title>
+        <para>The Postselector has been refactored out of existence. 
+        Its responsibilities have been parcelled out to two new Processors:
+        LinksScoper and FrontierScheduler.  LinksScoper is responsible for
+        scope checking of extracted links.  FrontierScheduler does the
+        scheduling of URIs with the Frontier.
+        </para>
+        <para>This change was done to allow introduction of processors
+        between scope checking and Frontier scheduling steps.
+        </para>
+        </sect3>
+        </sect2>
     </sect1>
 
   <sect1 id="1_4_0">
