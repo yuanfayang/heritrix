@@ -76,8 +76,6 @@ implements Serializable, Lineable {
     
     /**
      * Marks URI as not schedulable.
-     * 
-     * @see org.archive.crawler.postprocessor.Postselector
      */
     public static final int DONT_SCHEDULE = -1;
     

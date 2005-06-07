@@ -1291,7 +1291,8 @@
           </listitem>
         </itemizedlist>
 
-        <para>Similarly the <literal>Post Processing</literal> chain has two
+        <para>Similarly the <literal>Post Processing</literal> chain has the
+        following
         special purpose processors:</para>
 
         <itemizedlist>
@@ -1302,14 +1303,21 @@
             by the fetch. This is currently robots and IP address info. Should
             always be included.</para>
           </listitem>
+            <listitem>
+              <para><emphasis role="bold">LinksScoper</emphasis></para>
 
-          <listitem>
-            <para><emphasis role="bold">Postselector</emphasis></para>
+              <para>Checks all links extracted from the current download
+              against the crawl scope.  Those that are out of scope are
+              discarded.  Logging of discarded URLs can be enabled.
+              </para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">FrontierScheduler</emphasis></para>
+                <para>'Schedules' any URLs stored as CandidateURIs found
+                in the current CrawlURI with the frontier for crawling.
+                Also schedules prerequisites if any.</para>
+            </listitem>
 
-            <para>Feeds discovered URIs back to the Frontier. Without this
-            processor no discovered URI will ever be scheduled for
-            crawling.</para>
-          </listitem>
         </itemizedlist>
       </sect3>
 

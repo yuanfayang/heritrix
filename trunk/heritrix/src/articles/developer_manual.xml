@@ -364,10 +364,16 @@ ${package_declaration}</programlisting></para>
       replaced by any Frontier that implements this interface. It should be
       noted though that writing a Frontier is not a trivial task.</para>
 
-      <para>The Frontier relies on the behavior of two specific external
-      processors, the PreconditionEnforcer and Postselector (discussed below),
-      to help place related URIs in any necessary ordering or select only the
-      interesting URIs (those in "scope") for scheduling. </para>
+      <para>The Frontier relies on the behavior of at least the
+      following external processors: PreconditionEnforcer, LinksScoper
+      and the FrontierScheduler (See below for more each of these
+      Processors).  The PreconditionEnforcer makes sure dns and robots
+      are checked ahead of any fetching. LinksScoper tests if
+      we are interested in a particular URL -- whether the URL is
+      'within the crawl scope' and if so, what our level of interest in the
+      URL is, the priority with which it should be fetched. The
+      FrontierScheduler adds ('schedules') URLs to the Frontier for crawling.
+      </para>
     </sect2>
 
     <sect2>
@@ -412,16 +418,16 @@ ${package_declaration}</programlisting></para>
         possible to completely block the crawling of URIs that have passed
         through the scope check.</para>
 
-        <para>In the <literal>Pre-fetch processing</literal> chain the following two
-        processors should be included (or replacement modules that perform
-        similar operations):<itemizedlist>
+        <para>In the <literal>Pre-fetch processing</literal> chain the
+        following processors should be included (or replacement modules that
+        perform similar operations):<itemizedlist>
             <listitem>
               <para><emphasis role="bold">Preselector</emphasis></para>
 
               <para>Last check if the URI should indeed be crawled. Can for
               example recheck scope. Useful if scope rules have been changed
               after the crawl starts. The scope is usually checked by the
-              Postselector, before new URIs are added to the Frontier to be
+              LinksScoper, before new URIs are added to the Frontier to be
               crawled. If the user changes the scope limits, it will not
               affect already queued URIs. By rechecking the scope at this
               point, you make sure that only URIs that are within current
@@ -469,7 +475,7 @@ ${package_declaration}</programlisting></para>
 
         <para>A URI should always pass through this chain even if a decision
         not to crawl the URI was done in a processor earlier in the chain. The
-        post-processing chain must contain the following two processors (or
+        post-processing chain must contain the following processors (or
         replacement modules that perform similar operations):<itemizedlist>
             <listitem>
               <para><emphasis role="bold">CrawlStateUpdater</emphasis></para>
@@ -480,11 +486,18 @@ ${package_declaration}</programlisting></para>
             </listitem>
 
             <listitem>
-              <para><emphasis role="bold">Postselector</emphasis></para>
+              <para><emphasis role="bold">LinksScoper</emphasis></para>
 
-              <para>Feeds discovered URIs which match the current scoping
-              rules back to the Frontier. Without this processor no discovered
-              URI will ever be scheduled for crawling.</para>
+              <para>Checks all links extracted from the current download
+              against the crawl scope.  Those that are out of scope are
+              discarded.  Logging of discarded URLs can be enabled.
+              </para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">FrontierScheduler</emphasis></para>
+                <para>'Schedules' any URLs stored as CandidateURIs found
+                in the current CrawlURI with the frontier for crawling.
+                Also schedules prerequisites if any.</para>
             </listitem>
           </itemizedlist></para>
       </sect3>
@@ -1427,11 +1440,13 @@ public class MyFrontier extends ModuleType implements Frontier,
       </calloutlist></para>
 
     <para>When a URI has been sent through the processor chain it ends up in
-    the PostSelector. All URIs should end up here even if the preconditions
+    the LinksScoper. All URIs should end up here even if the preconditions
     where not met and the fetching, extraction and writing to the archive has
-    been postponed. The PostSelector iterates through all new URIs
+    been postponed. The LinksScoper iterates through all new URIs
     (prerequisites and/or extracted URIs) added to the CrawlURI and, if they
-    are within the scope, adds them to Frontier by calling the <ulink
+    are within the scope, converts them from Link objects to CandidateURI
+    objects.  Later in the postprocessor chain, the FrontierScheduler adds
+    them to Frontier by calling the <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html#schedule(org.archive.crawler.datamodel.CandidateURI)">schedule(CandidateURI)</ulink>
     method. There is also a batch version of the schedule method for
     efficiency, see the <ulink
@@ -1472,7 +1487,8 @@ public class MyFrontier extends ModuleType implements Frontier,
         </callout>
       </calloutlist></para>
 
-    <para>After all the processors are finished (including the PostSelector's
+    <para>After all the processors are finished (including the
+    FrontierScheduler's
     scheduling of new URIs), the ToeThread calls the Frontiers <ulink
     url="http://crawler.archive.org/apidocs/org/archive/crawler/framework/Frontier.html#finished(org.archive.crawler.datamodel.CrawlURI)">finished(CrawlURI)</ulink>
     method submitting the CrawlURI that was sent through the
@@ -1828,9 +1844,11 @@ public class MyFrontier extends ModuleType implements Frontier,
               <para><emphasis role="bold">LINK COLLECTIONS</emphasis></para>
 
               <para>There are several Java Collection containing URIs
-              extracted from different sources. Each link is a string
+              extracted from different sources. Each link is a Link
               containing the extracted URI. The URI can be relative. The
-              Postselector will read this list and feed discovered.</para>
+              LinksScoper will read this list and convert Links inscope
+              to CandidateURIs for adding to the Frontier by
+              FrontierScheduler.</para>
 
               <note>
                 <para>CrawlURI has the convenience method <ulink

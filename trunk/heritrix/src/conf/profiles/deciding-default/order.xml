@@ -192,14 +192,19 @@
         <map name="filters">
         </map>
       </newObject>
-      <newObject name="Postselector" class="org.archive.crawler.postprocessor.Postselector">
+      <newObject name="LinksScoper" 
+            class="org.archive.crawler.postprocessor.LinksScoper">
         <boolean name="enabled">true</boolean>
         <map name="filters">
         </map>
         <boolean name="seed-redirects-new-seed">true</boolean>
         <boolean name="override-logger">false</boolean>
-        <map name="scope-rejected-uri-log-filters">
+        <map name="scope-rejected-url-filters">
         </map>
+      </newObject>
+      <newObject name="Scheduler" 
+            class="org.archive.crawler.postprocessor.FrontierScheduler">
+        <boolean name="enabled">true</boolean>
       </newObject>
     </map>
     <map name="loggers">

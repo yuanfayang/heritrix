@@ -460,6 +460,13 @@ implements CoreAttributeConstants, FetchStatusCodes {
     public Link getPrerequisiteUri() {
         return (Link) getObject(A_PREREQUISITE_URI);
     }
+    
+    /**
+     * @return True if this CrawlURI has a prerequisite.
+     */
+    public boolean hasPrerequisitUri() {
+        return containsKey(A_PREREQUISITE_URI);
+    }
 
     /**
      * Returns true if this CrawlURI is a prerequisite.
@@ -1068,7 +1075,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     /** all discovered outbound Links (navlinks, embeds, etc.) */
-    transient HashSet outLinks = new HashSet();
+    transient Collection outLinks = new HashSet();
     
     /**
      * @return Collection of all discovered outbound Links
@@ -1084,6 +1091,29 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public void addOutLink(Link link) {
         outLinks.add(link);
+    }
+    
+    public void clearOutlinks() {
+        this.outLinks.clear();
+    }
+    
+    /**
+     * Replace current collection of links w/ passed list.
+     * Used by Scopers adjusting the list of links (removing those
+     * not in scope and promoting Links to CandidateURIs).
+     * @param links Collection of links (Usually a collection
+     * of CandidateURIs replacing a collection of Links).
+     */
+    public void replaceOutlinks(Collection links) {
+        clearOutlinks();
+        this.outLinks.addAll(links);
+    }
+    
+    /**
+     * @return Count of outlinks.
+     */
+    public int outlinksSize() {
+        return this.outLinks.size();
     }
 
     /**
@@ -1189,6 +1219,41 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public static boolean removeAlistPersistentMember(Object key) {
         return alistPersistentMember.remove(key);
+    }
+    
+    /**
+     * Utility method for creation of CandidateURIs found extracting
+     * links from this CrawlURI.
+     * @param link Link to wrap CandidateURI in.
+     * @return New candidateURI wrapper around <code>link</code>.
+     * @throws URIException
+     */
+    public CandidateURI createCandidateURI(Link link)
+    throws URIException {
+        UURI uuri = (link.getDestination() instanceof UURI)?
+            (UURI)link.getDestination():
+            UURIFactory.getInstance(getBaseURI(),
+                link.getDestination().toString());
+        return new CandidateURI(uuri, getPathFromSeed() + link.getHopType(),
+            getUURI(), link.getContext());
+    }
+    
+    /**
+     * Utility method for creation of CandidateURIs found extracting
+     * links from this CrawlURI.
+     * @param link Link to wrap CandidateURI in.
+     * @param schedulingDirective How new CandidateURI should be scheduled.
+     * @param isSeed True if this CandidateURI is a seed.
+     * @return New candidateURI wrapper around <code>link</code>.
+     * @throws URIException
+     */
+    public CandidateURI createCandidateURI(Link link,
+        int schedulingDirective, boolean isSeed)
+    throws URIException {
+        final CandidateURI caURI = createCandidateURI(link);
+        caURI.setSchedulingDirective(schedulingDirective);
+        caURI.setIsSeed(isSeed);
+        return caURI;
     }
 
     /**
