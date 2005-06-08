@@ -37,6 +37,7 @@
                 <xs:element name="name" type="xs:string"/>
                 <xs:element name="description" type="xs:string"/>
                 <xs:element name="operator" type="xs:string"/>
+                <xs:element name="organization" type="xs:string"/>
                 <xs:element name="audience" type="xs:string"/>
                 <xs:element name="date" type="xs:string"/>
             </xs:sequence>
@@ -139,6 +140,21 @@
         </xs:complexType>
     </xs:element>
 
+   <!--
+    Objects of this class could be used instead of {@link java.lang.String} to
+    hold text strings with newlines in it. SimpleTypes with values wrapped in
+    objects of this class will show up in the UI as multiline text areas.
+   -->
+    <xs:element name="text">
+        <xs:complexType>
+            <xs:simpleContent>
+                <xs:extension base="xs:string">
+                    <xs:attribute name="name" use="required" type="xs:string"/>
+                </xs:extension>
+            </xs:simpleContent>
+        </xs:complexType>
+    </xs:element>
+
     <xs:element name="stringList">
         <xs:complexType>
             <xs:sequence>
@@ -206,6 +222,7 @@
             <xs:element ref="integerList"/>
             <xs:element ref="longList"/>
             <xs:element ref="stringList"/>
+            <xs:element ref="text"/>
             <xs:element ref="map"/>
         </xs:choice>
     </xs:complexType>
