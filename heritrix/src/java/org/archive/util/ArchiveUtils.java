@@ -114,6 +114,19 @@ public class ArchiveUtils {
 
     /**
      * Utility function for creating log timestamps, in
+     * W3C/ISO8601 format, assuming UTC. Use current time. 
+     * 
+     * Format is yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+     * @param date Date to format.
+     * 
+     * @return the date stamp
+     */
+    public static String getLog17Date(){
+        return TIMESTAMP17ISO8601Z.format(new Date());
+    }
+    
+    /**
+     * Utility function for creating log timestamps, in
      * W3C/ISO8601 format, assuming UTC. 
      * 
      * Format is yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
@@ -123,6 +136,18 @@ public class ArchiveUtils {
      */
     public static String getLog17Date(long date){
         return TIMESTAMP17ISO8601Z.format(new Date(date));
+    }
+    
+    /**
+     * Utility function for creating log timestamps, in
+     * W3C/ISO8601 format, assuming UTC. Use current time. 
+     * 
+     * Format is yyyy-MM-dd'T'HH:mm:ss'Z'
+     * 
+     * @return the date stamp
+     */
+    public static String getLog14Date(){
+        return TIMESTAMP14ISO8601Z.format(new Date());
     }
     
     /**
