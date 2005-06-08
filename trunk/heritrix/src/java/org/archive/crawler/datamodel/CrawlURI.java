@@ -1236,41 +1236,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
     public static boolean removeAlistPersistentMember(Object key) {
         return alistPersistentMember.remove(key);
     }
-    
-    /**
-     * Utility method for creation of CandidateURIs found extracting
-     * links from this CrawlURI.
-     * @param link Link to wrap CandidateURI in.
-     * @return New candidateURI wrapper around <code>link</code>.
-     * @throws URIException
-     */
-    public CandidateURI createCandidateURI(Link link)
-    throws URIException {
-        UURI uuri = (link.getDestination() instanceof UURI)?
-            (UURI)link.getDestination():
-            UURIFactory.getInstance(getBaseURI(),
-                link.getDestination().toString());
-        return new CandidateURI(uuri, getPathFromSeed() + link.getHopType(),
-            getUURI(), link.getContext());
-    }
-    
-    /**
-     * Utility method for creation of CandidateURIs found extracting
-     * links from this CrawlURI.
-     * @param link Link to wrap CandidateURI in.
-     * @param schedulingDirective How new CandidateURI should be scheduled.
-     * @param isSeed True if this CandidateURI is a seed.
-     * @return New candidateURI wrapper around <code>link</code>.
-     * @throws URIException
-     */
-    public CandidateURI createCandidateURI(Link link,
-        int schedulingDirective, boolean isSeed)
-    throws URIException {
-        final CandidateURI caURI = createCandidateURI(link);
-        caURI.setSchedulingDirective(schedulingDirective);
-        caURI.setIsSeed(isSeed);
-        return caURI;
-    }
 
     /**
      * Custom serialization writing an empty 'outLinks' as null. Estimated

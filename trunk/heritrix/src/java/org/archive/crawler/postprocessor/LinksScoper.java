@@ -31,8 +31,6 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -43,7 +41,6 @@ import org.archive.crawler.framework.Scoper;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
-import org.archive.crawler.util.LogUtils;
 
 /**
  * Determine which extracted links are within scope.
@@ -139,16 +136,16 @@ implements FetchStatusCodes {
         final boolean redirectsNewSeeds = ((Boolean)getUncheckedAttribute(curi,
             ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue();
         Collection inScopeLinks = new HashSet();
-        for (final Iterator iter = curi.getOutLinks().iterator();
-                iter.hasNext();) {
-            final Link wref = (Link)iter.next();
+        for (final Iterator i = curi.getOutLinks().iterator(); i.hasNext();) {
+            final Link wref = (Link)i.next();
             try {
                 final int directive = getSchedulingFor(wref, scheduleEmbeds);
                 if (directive == CandidateURI.DONT_SCHEDULE) {
                     continue;
                 }
-                final CandidateURI caURI = curi.createCandidateURI(wref, directive,
-                    considerAsSeed(curi, wref, redirectsNewSeeds));
+                final CandidateURI caURI =
+                    curi.createCandidateURI(curi.getBaseURI(), wref, directive,
+                        considerAsSeed(curi, wref, redirectsNewSeeds));
                 if (isInScope(caURI)) {
                     inScopeLinks.add(caURI);
                 }
@@ -167,6 +164,7 @@ implements FetchStatusCodes {
         if (!LOGGER.isLoggable(Level.INFO)) {
             return;
         }
+        // TODO: Fix filters so work on CandidateURI.
         CrawlURI curi = (caUri instanceof CrawlURI)?
             (CrawlURI)caUri:
             new CrawlURI(caUri.getUURI());

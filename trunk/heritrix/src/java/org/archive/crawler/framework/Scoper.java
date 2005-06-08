@@ -65,7 +65,8 @@ public abstract class Scoper extends Processor {
             "class in the job log directory. Set the logging level and " +
             "other " +
             "characteristics of the override logger such as rotation size, " +
-            "suffix pattern, etc. in heritrix.properties.",
+            "suffix pattern, etc. in heritrix.properties. This attribute " +
+            "is only checked once, on startup of a job.",
             new Boolean(false)));
         t.setExpertSetting(true);
     }
@@ -78,7 +79,8 @@ public abstract class Scoper extends Processor {
         // Set up logger for this instance.  May have special directives
         // since this class can log scope-rejected URLs.
         LogUtils.createFileLogger(getController().getLogsDir(),
-            this.getClass().getName(), LOGGER);
+            this.getClass().getName(),
+            Logger.getLogger(this.getClass().getName()));
     }
     
     /**
@@ -109,18 +111,21 @@ public abstract class Scoper extends Processor {
      * otherwise.
      */
     protected boolean isInScope(CandidateURI caUri) {
-        if(getController().getScope().accepts(caUri)) {
+        boolean result = false;
+        if (getController().getScope().accepts(caUri)) {
+            result = true;
             if (LOGGER.isLoggable(Level.FINER)) {
                 LOGGER.finer("Accepted: " + caUri);
             }
-            return true;
+        } else {
+            outOfScope(caUri);
         }
-        outOfScope(caUri);
-        return false;
+        return result;
     }
     
     /**
      * Called when a CandidateUri is ruled out of scope.
+     * Override if you don't want logs as coming from this class.
      * @param caUri CandidateURI that is out of scope.
      */
     protected void outOfScope(CandidateURI caUri) {

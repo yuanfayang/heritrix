@@ -92,7 +92,8 @@ implements FetchStatusCodes {
         try {
             // Create prerequisite.
             CandidateURI caUri =
-                curi.createCandidateURI(curi.getPrerequisiteUri());
+                curi.createCandidateURI(curi.getBaseURI(),
+                    curi.getPrerequisiteUri());
             int prereqPriority = curi.getSchedulingDirective() - 1;
             if (prereqPriority < 0) {
                 prereqPriority = 0;
