@@ -25,17 +25,30 @@ package org.archive.crawler.framework;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
+import org.archive.crawler.util.LogUtils;
 
 /**
  * Base class for Scopers.
- * Scopers test CrawlURIs against configured scope.
+ * Scopers test CandidateURIs against a scope.
+ * Scopers allow logging of rejected CandidateURIs.
  * @author stack
  * @version $Date$, $Revision$
  */
 public abstract class Scoper extends Processor {
-    private static Logger logger =
+    private static Logger LOGGER =
         Logger.getLogger(Scoper.class.getName());
+    
+    /**
+     * Protected so avaiilable to subclasses.
+     */
+    protected static final String ATTR_OVERRIDE_LOGGER_ENABLED =
+        "override-logger";
     
     /**
      * Constructor.
@@ -44,6 +57,49 @@ public abstract class Scoper extends Processor {
      */
     public Scoper(String name, String description) {
         super(name, description);
+        Type t = addElementToDefinition(
+            new SimpleType(ATTR_OVERRIDE_LOGGER_ENABLED,
+            "If enabled, override default logger for this class (Default " +
+            "logger writes the console).  Override " +
+            "logger will instead send all logging to a file named for this " +
+            "class in the job log directory. Set the logging level and " +
+            "other " +
+            "characteristics of the override logger such as rotation size, " +
+            "suffix pattern, etc. in heritrix.properties.",
+            new Boolean(false)));
+        t.setExpertSetting(true);
+    }
+    
+    protected void initialTasks() {
+        super.initialTasks();
+        if (!isOverrideLogger(null))    {
+            return;
+        }
+        // Set up logger for this instance.  May have special directives
+        // since this class can log scope-rejected URLs.
+        LogUtils.createFileLogger(getController().getLogsDir(),
+            this.getClass().getName(), LOGGER);
+    }
+    
+    /**
+     * @param context Context to use looking up attribute.
+     * @return True if we are to override default logger (default logs
+     * to console) with a logger that writes all loggings to a file
+     * named for this class.
+     */
+    protected boolean isOverrideLogger(Object context) {
+        boolean result = true;
+        try {
+            Boolean b = (Boolean)getAttribute(context,
+                ATTR_OVERRIDE_LOGGER_ENABLED);
+            if (b != null) {
+                result = b.booleanValue();
+            }
+        } catch (AttributeNotFoundException e) {
+            LOGGER.warning("Failed get of 'enabled' attribute.");
+        }
+
+        return result;
     }
     
     /**
@@ -54,8 +110,8 @@ public abstract class Scoper extends Processor {
      */
     protected boolean isInScope(CandidateURI caUri) {
         if(getController().getScope().accepts(caUri)) {
-            if (logger.isLoggable(Level.FINER)) {
-                logger.finer("Accepted: " + caUri);
+            if (LOGGER.isLoggable(Level.FINER)) {
+                LOGGER.finer("Accepted: " + caUri);
             }
             return true;
         }
@@ -68,6 +124,9 @@ public abstract class Scoper extends Processor {
      * @param caUri CandidateURI that is out of scope.
      */
     protected void outOfScope(CandidateURI caUri) {
-        // Default is do nothing.
+        if (!LOGGER.isLoggable(Level.INFO)) {
+            return;
+        }
+        LOGGER.info(caUri.getUURI().toString());
     }
 }
