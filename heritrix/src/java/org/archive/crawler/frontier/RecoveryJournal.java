@@ -45,6 +45,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.Frontier;
+import org.archive.util.ArchiveUtils;
 
 /**
  * Helper class for managing a simple Frontier change-events journal which is
@@ -64,12 +65,16 @@ implements FrontierJournal {
     public final static String F_RESCHEDULE = "Fr ";
     public final static String F_SUCCESS = "Fs ";
     public final static String F_FAILURE = "Ff ";
-
+    public final static String LOG_TIMESTAMP = "T ";
+    public final int TIMESTAMP_INTERVAL = 10000; // timestamp every this many lines
+    
     /**
      * Stream on which we record frontier events.
      */
     private Writer out = null;
 
+    private long lines = 0;
+    
     public static final String GZIP_SUFFIX = ".gz";
     
     /**
@@ -107,11 +112,7 @@ implements FrontierJournal {
             append(curi.getPathFromSeed()).
             append(" ").
             append(curi.flattenVia());
-        try {
-            accumulatingBuffer.write(this.out);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        writeLine(accumulatingBuffer);
     }
 
     public void finishedSuccess(CrawlURI curi) {
@@ -123,11 +124,11 @@ implements FrontierJournal {
     }
     
     protected void finishedSuccess(String uuri) {
-        write("\n" + F_SUCCESS + uuri);
+        writeLine("\n" + F_SUCCESS + uuri);
     }
 
     public void emitted(CrawlURI curi) {
-        write("\n" + F_EMIT + curi.toString());
+        writeLine("\n" + F_EMIT + curi.toString());
 
     }
 
@@ -140,21 +141,44 @@ implements FrontierJournal {
     }
     
     public void finishedFailure(String u) {
-        write("\n" + F_FAILURE + u);
+        writeLine("\n" + F_FAILURE + u);
     }
 
     public void rescheduled(CrawlURI curi) {
-        write("\n" + F_RESCHEDULE + curi.toString());
+        writeLine("\n" + F_RESCHEDULE + curi.toString());
     }
 
-    private void write(String string) {
+    private void writeLine(String string) {
         try {
             this.out.write(string);
+            noteLine();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void writeLine(MutableString mstring) {
+        try {
+            mstring.write(out);
+            noteLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * 
+     * @throws IOException
+     */
+    private void noteLine() throws IOException {
+        lines++;
+        if(lines % TIMESTAMP_INTERVAL == 0) {
+            out.write("\n");
+            out.write(LOG_TIMESTAMP);
+            out.write(ArchiveUtils.getLog14Date());
+        }
+    }
+    
     /**
      * Utility method for scanning a recovery journal and applying it to
      * a Frontier.
@@ -214,12 +238,12 @@ implements FrontierJournal {
                         u = UURIFactory.getInstance(args[1]);
                         String pathFromSeed = (args.length > 2)?
                             args[2]: "";
-                        String via = (args.length > 3)?
-                            args[3]: source.getPath();
+                        UURI via = (args.length > 3)?
+                                UURIFactory.getInstance(args[3]) : null;
                         String viaContext = (args.length > 4)?
                                 args[4]: "";
                         CandidateURI caUri = new CandidateURI(u, pathFromSeed,
-                            UURIFactory.getInstance(via), viaContext);
+                            via, viaContext);
                         frontier.schedule(caUri);
                     } catch (URIException e) {
                         e.printStackTrace();
