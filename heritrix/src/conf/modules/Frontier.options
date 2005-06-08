@@ -5,4 +5,3 @@ org.archive.crawler.frontier.BdbFrontier
 org.archive.crawler.frontier.HostQueuesFrontier
 org.archive.crawler.frontier.DomainSensitiveFrontier
 org.archive.crawler.frontier.AdaptiveRevisitFrontier
-org.archive.crawler.frontier.YetAnotherDomainSensitiveFrontier
