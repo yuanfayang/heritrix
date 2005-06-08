@@ -33,12 +33,17 @@
         <title>Postselector</title>
         <para>The Postselector has been refactored out of existence. 
         Its responsibilities have been parcelled out to two new Processors:
-        LinksScoper and FrontierScheduler.  LinksScoper is responsible for
-        scope checking of extracted links.  FrontierScheduler does the
+        LinksScoper and FrontierScheduler. LinksScoper is responsible for
+        scope checking of extracted links. FrontierScheduler does the
         scheduling of URIs with the Frontier.
         </para>
         <para>This change was done to allow introduction of processors
         between scope checking and Frontier scheduling steps.
+        </para>
+        <para>Because of this change, order files from 1.4.0 Heritrix or
+        before will need to be updated -- Postselector references replaced
+        by LinkScoper and FrontierScheduler references  -- before they
+        can be used with Heritrix 1.6.0.
         </para>
         </sect3>
         </sect2>
