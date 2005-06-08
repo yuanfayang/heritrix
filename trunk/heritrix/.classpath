@@ -24,7 +24,7 @@
 	<classpathentry kind="lib" path="lib/jmxtools-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/concurrent-1.3.2.jar"/>
 	<classpathentry kind="lib" path="lib/dnsjava-1.6.2.jar"/>
-	<classpathentry kind="lib" path="lib/je-1.7.1-instrumented-12562.jar"/>
+	<classpathentry kind="lib" path="lib/je-1.7.1-12562v2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-pool-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/dsi-unimi-it-0.9.1.jar"/>
 	<classpathentry kind="lib" path="lib/j5compat-0.1.0.jar"/>
