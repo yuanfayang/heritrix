@@ -95,6 +95,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
     // set as true
     transient private boolean linkExtractorFinished = false;
 
+    // protection against outlink overflow
+    public static int MAX_OUTLINKS = 6000;
+    transient private int discardedOutlinks = 0; 
+    
 ////////////////////////////////////////////////////////////////////
     private long contentSize = UNCALCULATED;
     private long contentLength = UNCALCULATED;
@@ -600,9 +604,12 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
 
     /**
-     * Add an annotation.
+     * Add an annotation: an abbrieviated indication of something special
+     * about this URI that need not be present in every crawl.log line,
+     * but should be noted for future reference. 
      *
-     * @param annotation the annotation to add.
+     * @param annotation the annotation to add; should not contain 
+     * whitespace or a comma
      */
     public void addAnnotation(String annotation) {
         String annotations;
@@ -753,6 +760,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public void linkExtractorFinished() {
         linkExtractorFinished = true;
+        if(discardedOutlinks>0) {
+            addAnnotation("dol:"+discardedOutlinks);
+        }
     }
 
     /**
@@ -1085,12 +1095,18 @@ implements CoreAttributeConstants, FetchStatusCodes {
     }
     
     /**
-     * Add a discovered Link. 
+     * Add a discovered Link, unless it would exceed the max number
+     * to accept. (If so, increment discarded link counter.) 
      * 
      * @param link the Link to add
      */
     public void addOutLink(Link link) {
-        outLinks.add(link);
+        if (outLinks.size() < MAX_OUTLINKS) {
+            outLinks.add(link);
+        } else {
+            // note & discard
+            discardedOutlinks++;
+        }
     }
     
     public void clearOutlinks() {
