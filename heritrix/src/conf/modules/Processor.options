@@ -21,6 +21,7 @@ org.archive.crawler.writer.ARCWriterProcessor|Archiver
 org.archive.crawler.writer.MirrorWriterProcessor|MirrorWriter
 org.archive.crawler.postprocessor.CrawlStateUpdater|Updater
 org.archive.crawler.postprocessor.LinksScoper|LinksScoper
+org.archive.crawler.postprocessor.SupplementaryLinksScoper|SupplementaryLinksScoper
 org.archive.crawler.postprocessor.FrontierScheduler|FrontierScheduler
 org.archive.crawler.postprocessor.LowDiskPauseProcessor|LowDiskPause
 org.archive.crawler.postprocessor.WaitEvaluator|WaitEvaluator

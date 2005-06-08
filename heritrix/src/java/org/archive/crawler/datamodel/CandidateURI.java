@@ -425,6 +425,43 @@ implements Serializable, Lineable {
     }
     
     /**
+     * Utility method for creation of CandidateURIs found extracting
+     * links from this CrawlURI.
+     * @param baseUURI BaseUURI for <code>link</code>.
+     * @param link Link to wrap CandidateURI in.
+     * @return New candidateURI wrapper around <code>link</code>.
+     * @throws URIException
+     */
+    public CandidateURI createCandidateURI(UURI baseUURI, Link link)
+    throws URIException {
+        UURI u = (link.getDestination() instanceof UURI)?
+            (UURI)link.getDestination():
+            UURIFactory.getInstance(baseUURI,
+                link.getDestination().toString());
+        return new CandidateURI(u, getPathFromSeed() + link.getHopType(),
+            getUURI(), link.getContext());
+    }
+    
+    /**
+     * Utility method for creation of CandidateURIs found extracting
+     * links from this CrawlURI.
+     * @param baseUURI BaseUURI for <code>link</code>.
+     * @param link Link to wrap CandidateURI in.
+     * @param scheduling How new CandidateURI should be scheduled.
+     * @param seed True if this CandidateURI is a seed.
+     * @return New candidateURI wrapper around <code>link</code>.
+     * @throws URIException
+     */
+    public CandidateURI createCandidateURI(UURI baseUURI, Link link,
+        int scheduling, boolean seed)
+    throws URIException {
+        final CandidateURI caURI = createCandidateURI(baseUURI, link);
+        caURI.setSchedulingDirective(scheduling);
+        caURI.setIsSeed(seed);
+        return caURI;
+    }
+    
+    /**
      * Assumption is that only one thread at a time will ever be accessing
      * a particular CandidateURI.
      * 
