@@ -46,10 +46,17 @@ public class ConfiguredDecideRule extends DecideRule {
     }
 
     public Object decisionFor(Object object) {
-        Object o = getUncheckedAttribute(object, ATTR_DECISION);
+        Object decision = getUncheckedAttribute(object, ATTR_DECISION);
         // We're not always getting back from the settings system the
-        // interned versions of ACCEPT and REJECT.  Test for this.
-        return (o == ACCEPT || o == REJECT)? o:
-            o.toString().equals(ACCEPT)? ACCEPT: REJECT;
+        // interned versions of ACCEPT and REJECT.  Guard against this.
+        Object result = PASS;
+        for (int i = 0; i < ALLOWED_TYPES.length; i++) {
+            if (ALLOWED_TYPES[i] == decision ||
+                    ALLOWED_TYPES[i].equals(decision)) {
+                result = ALLOWED_TYPES[i];
+                break;
+            }
+        }
+        return result;
     }
 }
