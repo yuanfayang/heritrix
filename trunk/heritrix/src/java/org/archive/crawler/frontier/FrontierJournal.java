@@ -78,4 +78,11 @@ public interface FrontierJournal {
      *  Flush and close any held objects.
      */
     public abstract void close();
+
+    /**
+     * Add a line noting a serious crawl error. 
+     * 
+     * @param string
+     */
+    public abstract void seriousError(String string);
 }

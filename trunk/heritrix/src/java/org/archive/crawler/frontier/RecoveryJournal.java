@@ -65,6 +65,7 @@ implements FrontierJournal {
     public final static String F_RESCHEDULE = "Fr ";
     public final static String F_SUCCESS = "Fs ";
     public final static String F_FAILURE = "Ff ";
+    public final static String LOG_ERROR = "E ";
     public final static String LOG_TIMESTAMP = "T ";
     public final int TIMESTAMP_INTERVAL = 10000; // timestamp every this many lines
     
@@ -287,5 +288,12 @@ implements FrontierJournal {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.frontier.FrontierJournal#seriousError(java.lang.String)
+     */
+    public void seriousError(String err) {
+        writeLine("\n"+LOG_ERROR+ArchiveUtils.getLog14Date()+" "+err);
     }
 }
