@@ -23,6 +23,9 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -206,16 +209,24 @@ Reporter {
             // engineer a soft-landing for low-memory conditions
             controller.freeReserveMemory();
             controller.requestCrawlPause();
+            controller.getFrontier().getFrontierJournal().seriousError(
+                    getName() + err.getMessage());
         }
         
         // OutOfMemory etc.
         String extraInfo = DevUtils.extraInfo();
         System.err.println("<<<");
+        System.err.println(ArchiveUtils.getLog17Date());
         System.err.println(err);
         System.err.println(extraInfo);
         err.printStackTrace(System.err);
+        
+        if (controller!=null) {
+            controller.getToePool().compactReportTo(new PrintWriter(System.err));
+        }
         System.err.println(">>>");
-
+        DevUtils.sigquitSelf();
+        
         String context = "unknown";
 		if(currentCuri!=null) {
             // update fetch-status, saving original as annotation
@@ -424,6 +435,50 @@ Reporter {
         return rep.toString();
     }
 
+    /**
+     * @return Compiles and returns a report on its status.
+     */
+    public String oneLineReport()
+    {
+        StringBuffer rep = new StringBuffer();
+
+        rep.append("#" + this.serialNumber);
+
+        // Make a local copy of the currentCuri reference in case it gets
+        // nulled while we're using it.  We're doing this because
+        // alternative is synchronizing and we don't want to do this --
+        // it causes hang ups as controller waits on a lock for this thread,
+        // something it gets easily enough on old threading model but something
+        // it can wait interminably for on NPTL threading model.
+        // See [ 994946 ] Pause/Terminate ignored on 2.6 kernel 1.5 JVM.
+        CrawlURI c = currentCuri;
+        if(c != null) {
+            rep.append(c.toString());
+            rep.append(" (" + c.getFetchAttempts() + ") ");
+            rep.append("in " + currentProcessorName);
+        } else {
+            rep.append("[no CrawlURI]");
+        }
+        
+        long now = System.currentTimeMillis();
+        long time = 0;
+
+        if(lastFinishTime > lastStartTime) {
+            // That means we finished something after we last started something
+            // or in other words we are not working on anything.
+            rep.append("WAITING for ");
+            time = now - lastFinishTime;
+        } else if(lastStartTime > 0) {
+            // We are working on something
+            rep.append("ACTIVE for ");
+            time = now-lastStartTime;
+        }
+        rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
+        rep.append("at "+step+" for "+(System.currentTimeMillis()-atStepSince)+"ms\n");
+
+        return rep.toString();
+    }
+    
     /** Get the CrawlController acossiated with this thread.
      *
      * @return Returns the CrawlController.
@@ -490,5 +545,18 @@ Reporter {
      */
     public boolean shouldRetire() {
         return shouldRetire;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(Writer writer) {
+        try {
+            // TODO invert: make report() based on this
+            writer.write(report());
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }
