@@ -104,7 +104,7 @@ implements CoreAttributeConstants {
     static final String EACH_ATTRIBUTE_EXTRACTOR =
       "(?is)\\s((href)|(action)|(on\\w*)"
      +"|((?:src)|(?:lowsrc)|(?:background)|(?:cite)|(?:longdesc)"
-     +"|(?:usemap)|(?:profile)|(?:datasrc)|(?:for))"
+     +"|(?:usemap)|(?:profile)|(?:datasrc))"
      +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)"
      +"|(value)|([-\\w]+))"
      +"\\s*=\\s*"
@@ -116,7 +116,7 @@ implements CoreAttributeConstants {
     // 2: HREF - single URI relative to doc base, or occasionally javascript:
     // 3: ACTION - single URI relative to doc base, or occasionally javascript:
     // 4: ON[WHATEVER] - script handler
-    // 5: SRC,LOWSRC,BACKGROUND,CITE,LONGDESC,USEMAP,PROFILE,DATASRC, or FOR
+    // 5: SRC,LOWSRC,BACKGROUND,CITE,LONGDESC,USEMAP,PROFILE, or DATASRC
     //    single URI relative to doc base
     // 6: CODEBASE - a single URI relative to doc base, affecting other
     //    attributes
