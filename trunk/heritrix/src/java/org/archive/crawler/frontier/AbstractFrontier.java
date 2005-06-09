@@ -922,15 +922,16 @@ public abstract class AbstractFrontier extends ModuleType implements
     }
 
     /**
-     * @param curi
-     *            CrawlURI we're to get a key for.
+     * @param cauri CrawlURI we're to get a key for.
      * @return a String token representing a queue
      */
-    protected String getClassKey(CrawlURI curi) {
-        String queueKey = (String)getUncheckedAttribute(curi, ATTR_FORCE_QUEUE);
+    public String getClassKey(CandidateURI cauri) {
+        String queueKey = (String)getUncheckedAttribute(cauri,
+            ATTR_FORCE_QUEUE);
         if ("".equals(queueKey)) {
             // Typical case, barring overrides
-            queueKey = queueAssignmentPolicy.getClassKey(this.controller, curi);
+            queueKey =
+                queueAssignmentPolicy.getClassKey(this.controller, cauri);
         }
         return queueKey;
     }

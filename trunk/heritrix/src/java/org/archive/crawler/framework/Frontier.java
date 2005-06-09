@@ -166,14 +166,13 @@ public interface Frontier {
      * <p>This method accepts one URI and schedules it immediately. This has
      * nothing to do with the priority of the URI being scheduled. Only that
      * it will be placed in it's respective queue at once. For priority
-     * scheduling see {@link CandidateURI#setSchedulingDirective(String)
-     * CandidateURI}
+     * scheduling see {@link CandidateURI#setSchedulingDirective(int)}
      *
      * <p>This method should be synchronized in all implementing classes.
      *
      * @param caURI The URI to schedule.
      *
-     * @see CandidateURI#setSchedulingDirective(String)
+     * @see CandidateURI#setSchedulingDirective(int)
      */
     public void schedule(CandidateURI caURI);
 
@@ -183,12 +182,9 @@ public interface Frontier {
      * <p>ToeThreads will invoke this method once they have completed work on
      * their assigned URI.
      *
-     * <p>This method is synchronized and also schedules any URIs that have been
-     * batched up by {@link #batchSchedule(CandidateURI) batchSchedule()}
+     * <p>This method is synchronized.
      *
      * @param cURI The URI that has finished processing.
-     *
-     * @see #batchFlush()
      */
     public void finished(CrawlURI cURI);
 
@@ -442,4 +438,11 @@ public interface Frontier {
      * this Frontier is using.  May be null if no journaling.
      */
     public FrontierJournal getFrontierJournal();
+    
+    /**
+     * @param cauri CandidateURI for which we're to calculate and
+     * set class key.
+     * @return Classkey for <code>cauri</code>.
+     */
+    public String getClassKey(CandidateURI cauri);
 }

@@ -676,15 +676,16 @@ HasUriReceiver,  CrawlStatusListener {
     }
 
     /**
-     * @param curi a CrawlURI
+     * @param cauri CandidateURI to calculate class key for.
      * @return a String token representing a queue
      */
-    protected String getClassKey(CrawlURI curi) {
-        String queueKey = (String) getUncheckedAttribute(curi,ATTR_FORCE_QUEUE);
-        if("".equals(queueKey)) {
-            // typical case, barring overrides
+    public String getClassKey(CandidateURI cauri) {
+        String queueKey = (String) getUncheckedAttribute(cauri,
+            ATTR_FORCE_QUEUE);
+        if ("".equals(queueKey)) {
+            // Typical case, barring overrides
             queueKey =
-                queueAssignmentPolicy.getClassKey(this.controller, curi);
+                queueAssignmentPolicy.getClassKey(this.controller, cauri);
         }
         return queueKey;
     }

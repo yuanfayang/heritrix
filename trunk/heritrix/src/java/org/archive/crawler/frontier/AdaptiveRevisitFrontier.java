@@ -215,6 +215,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 ignoredWriter.toString(), 
                 controller.getDisk());
     }
+    
+    public String getClassKey(CandidateURI cauri) {
+        return this.queueAssignmentPolicy.getClassKey(controller, cauri);
+    }
 
     /**
      * 
@@ -231,7 +235,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             // New CrawlURIs get 'current time' as the time of next processing.
         }
         
-        curi.setClassKey(queueAssignmentPolicy.getClassKey(controller,curi));
+        curi.setClassKey(getClassKey(curi));
 
         if(curi.isSeed() && curi.getVia() != null
                 && curi.flattenVia().length() > 0) {
