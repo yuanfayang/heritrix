@@ -1,4 +1,4 @@
-/* LinksScoper
+/* LogUtils
  * 
  * $Id$
  *

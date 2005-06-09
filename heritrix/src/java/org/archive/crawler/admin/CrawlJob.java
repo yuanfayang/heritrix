@@ -969,8 +969,7 @@ public class CrawlJob implements DynamicMBean {
     }
 
     public void setAttribute(Attribute attribute)
-    throws AttributeNotFoundException, InvalidAttributeValueException,
-            MBeanException, ReflectionException {
+    throws AttributeNotFoundException {
         throw new AttributeNotFoundException("No attribute can be set in " +
             "this MBean");
     }

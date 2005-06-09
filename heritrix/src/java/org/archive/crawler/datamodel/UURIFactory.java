@@ -264,16 +264,22 @@ public class UURIFactory extends URI {
     
     
     /**
+     * Coarse test of whether passed String has a (allowed) URI scheme.
      * @param possibleUrl URL string to examine.
      * @return True if passed string looks like it could be an URL.
      */
-    public static boolean isUrl(String possibleUrl) {
+    public static boolean hasScheme(String possibleUrl) {
+        // TODO: Make the test for scheme more stringent.
         final int index = possibleUrl.indexOf(':');
         if (index <= 0) {
             return false;
         }
         String tmpStr = possibleUrl.substring(0, index).toLowerCase();
-        return UURIFactory.factory.schemes.contains(tmpStr);
+        // No factory.schemes when unit testing so allow for it being
+        //  null.
+        return (UURIFactory.factory.schemes != null)?
+            UURIFactory.factory.schemes.contains(tmpStr):
+            true;
     }
 
     /**

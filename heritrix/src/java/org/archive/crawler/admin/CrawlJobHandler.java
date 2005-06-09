@@ -25,8 +25,6 @@ package org.archive.crawler.admin;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,7 +52,6 @@ import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
@@ -70,6 +67,7 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
+import org.archive.crawler.util.IoUtils;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
 
@@ -1344,42 +1342,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         return 0;
     }
     
-    /**
-     * Get input stream.
-     * This method looks at passed string and tries to judge it a
-     * filesystem path or an URL.  It then gets an InputStream on to
-     * the file or URL.
-     * 
-     * <p>ASSUMPTION: Scheme on any url will probably only ever be 'file' 
-     * or 'http'.
-     * @param fileOrUrl Pass path to a file on disk or pass in a URL.
-     * @return An input stream.
-     */
-    protected InputStream getInputStream(String fileOrUrl) {
-        InputStream is = null;
-        if (UURIFactory.isUrl(fileOrUrl)) {
-            try {
-                URL url = new URL(fileOrUrl);
-                is = url.openStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            // Assume its not an URI or we failed the parse.
-            // Try it as a file.
-            File source = new File(fileOrUrl);
-            if (!source.isAbsolute()) {
-                source = new File(this.controller.getDisk(), fileOrUrl);
-            }
-            try {
-                is = new FileInputStream(fileOrUrl);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        return is;
-    }
-    
     public String importUris(String file, String style, String force) {
         return importUris(file, style, "true".equals(force));
     }
@@ -1393,7 +1355,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public String importUris(final String fileOrUrl, final String style,
             final boolean forceRevisit) {
-        InputStream is = getInputStream(fileOrUrl);
+        InputStream is =
+            IoUtils.getInputStream(this.controller.getDisk(), fileOrUrl);
         String message = null;
         // Do we have an inputstream?
         if (is == null) {
