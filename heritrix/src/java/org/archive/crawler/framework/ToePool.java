@@ -23,12 +23,16 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.TreeSet;
 
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Histotable;
+import org.archive.util.Reporter;
 
 /**
  * A collection of ToeThreads. The class manages the ToeThreads currently
@@ -40,7 +44,7 @@ import org.archive.util.Histotable;
  *
  * @see org.archive.crawler.framework.ToeThread
  */
-public class ToePool extends ThreadGroup {
+public class ToePool extends ThreadGroup implements Reporter {
     /** run worker thread slightly lower than usual */
     public static int DEFAULT_TOE_PRIORITY = Thread.NORM_PRIORITY - 1;
     
@@ -133,28 +137,9 @@ public class ToePool extends ThreadGroup {
      */
     public String report()
     {
-        StringBuffer rep = new StringBuffer(32);
-        rep.append("Toe threads report - " +
-                ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-        rep.append(" Job being crawled: " +
-                this.controller.getOrder().getCrawlOrderName() + "\n");
-        rep.append(" Number of toe threads in pool: " +
-            getToeCount() + " (" + getActiveToeCount() + " active)\n");
-
-        Thread[] toes = this.getToes();
-        synchronized (toes) {
-            for (int i = 0; i < toes.length ; i++) {
-                if(!(toes[i] instanceof ToeThread)) {
-                    continue;
-                }
-                ToeThread tt = (ToeThread)toes[i];
-                if(tt!=null) {
-                    rep.append("   ToeThread #" + tt.getSerialNumber() + "\n");
-                    rep.append(tt.report());
-                }
-            }
-        }
-        return rep.toString();
+        StringWriter sw = new StringWriter();
+        reportTo(sw);
+        return sw.toString();
     }
 
     /**
@@ -233,4 +218,62 @@ public class ToePool extends ThreadGroup {
     public CrawlController getController() {
         return controller;
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(Writer writer) {
+        try {
+            writer.write("Toe threads report - " +
+                    ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+            writer.write(" Job being crawled: " +
+                    this.controller.getOrder().getCrawlOrderName() + "\n");
+            writer.write(" Number of toe threads in pool: " +
+                getToeCount() + " (" + getActiveToeCount() + " active)\n");
+
+            Thread[] toes = this.getToes();
+            synchronized (toes) {
+                for (int i = 0; i < toes.length ; i++) {
+                    if(!(toes[i] instanceof ToeThread)) {
+                        continue;
+                    }
+                    ToeThread tt = (ToeThread)toes[i];
+                    if(tt!=null) {
+                        writer.write("   ToeThread #" + tt.getSerialNumber() + "\n");
+                        tt.reportTo(writer);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void compactReportTo(Writer writer) {
+        try {
+            writer.write(
+                getToeCount() + " threads (" + getActiveToeCount() + " active)\n");
+
+            Thread[] toes = this.getToes();
+            synchronized (toes) {
+                for (int i = 0; i < toes.length ; i++) {
+                    if(!(toes[i] instanceof ToeThread)) {
+                        continue;
+                    }
+                    ToeThread tt = (ToeThread)toes[i];
+                    if(tt!=null) {
+                        writer.write(tt.oneLineReport());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
 }

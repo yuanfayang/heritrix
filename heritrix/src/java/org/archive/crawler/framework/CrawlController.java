@@ -141,7 +141,7 @@ public class CrawlController implements Serializable {
     // emergency reserve of memory to allow some progress/reporting after OOM
     private LinkedList reserveMemory;
     private static final int RESERVE_BLOCKS = 1;
-    private static final int RESERVE_BLOCK_SIZE = 5*2^20; // 3MB
+    private static final int RESERVE_BLOCK_SIZE = 6*2^20; // 6MB
 
     // crawl state: as requested or actual
     
@@ -1131,6 +1131,13 @@ public class CrawlController implements Serializable {
         return toePool.getToeCount();
     }
 
+    /**
+     * @return The ToePool
+     */
+    public ToePool getToePool() {
+        return toePool;
+    }
+    
 	/**
 	 * @return toepool one-line report
 	 */

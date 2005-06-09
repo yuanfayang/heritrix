@@ -22,13 +22,21 @@
  */
 package org.archive.util;
 
+import java.io.Writer;
+
 /**
  * @author stack
  * @version $Date$, $Revision$
  */
 public interface Reporter {
     /**
-     * @return A small report on status in a string.
+     * @return A report on status in a string.
      */
     public String report();
+    /**
+     * Report to the passed-in Writer
+     * 
+     * @param writer to receive report
+     */
+    public void reportTo(Writer writer);
 }
