@@ -22,7 +22,12 @@
  */
 package org.archive.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.logging.Logger;
+
+import org.archive.crawler.framework.ToeThread;
 
 
 /**
@@ -51,7 +56,55 @@ public class DevUtils {
      * always be available in which case we return empty string.
      */
     public static String extraInfo() {
+        StringBuffer sb = new StringBuffer();
         final Thread current = Thread.currentThread();
-        return (current instanceof Reporter)? ((Reporter)current).report(): "";
+        if (current instanceof ToeThread) {
+            ToeThread tt = (ToeThread) current;
+            sb.append(tt.report());
+            sb.append(tt.getController().getStatistics()
+                    .progressStatisticsLegend());
+            sb.append("\n");
+            sb.append(tt.getController().getStatistics()
+                    .progressStatisticsLine());
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @param re
+     */
+    public static void betterPrintStack(RuntimeException re) {
+        // TODO: print software version
+        // TODO: print thread name
+        // TODO: if ToeThread, print currentCuri and timing info
+        re.printStackTrace(System.err);
+    }
+    
+    /**
+     * Send this JVM process a SIGQUIT; giving a thread dump and possibly
+     * a heap histogram (if using -XX:+PrintClassHistogram).
+     * 
+     * Used to automatically dump info, for example when a serious error
+     * is encountered. Would use 'jmap'/'jstack', but have seen JVM
+     * lockups -- perhaps due to lost thread wake signals -- when using
+     * those against Sun 1.5.0+03 64bit JVM. 
+     */
+    public static void sigquitSelf() {
+        try {
+            Process p = Runtime.getRuntime().exec(
+                    new String[] {"perl", "-e", "print getppid(). \"\n\";"});
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String ppid = br.readLine();
+            Runtime.getRuntime().exec(
+                    new String[] {"sh", "-c", "kill -3 "+ppid}).waitFor();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }
