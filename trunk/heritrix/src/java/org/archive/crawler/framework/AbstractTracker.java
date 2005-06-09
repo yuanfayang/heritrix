@@ -122,10 +122,7 @@ implements StatisticsTracking, CrawlStatusListener {
         shouldrun = true; //If we are starting, this should always be true.
 
         // log the legend
-        controller.progressStats.log(Level.INFO, "           timestamp" +
-            "  discovered   " +
-            "   queued   downloaded       doc/s(avg)  KB/s(avg) " +
-            "  dl-failures   busy-thread   mem-use-KB  heap-size-KB");
+        controller.progressStats.log(Level.INFO, progressStatisticsLegend());
         lastLogPointTime = System.currentTimeMillis(); // The first interval begins now.
 
         // keep logging until someone calls stop()
@@ -147,6 +144,16 @@ implements StatisticsTracking, CrawlStatusListener {
                 logActivity();
             }
         }
+    }
+
+    /**
+     * @return legend for progress-statistics lines/log
+     */
+    public String progressStatisticsLegend() {
+        return "           timestamp" +
+            "  discovered   " +
+            "   queued   downloaded       doc/s(avg)  KB/s(avg) " +
+            "  dl-failures   busy-thread   mem-use-KB  heap-size-KB";
     }
 
     /**

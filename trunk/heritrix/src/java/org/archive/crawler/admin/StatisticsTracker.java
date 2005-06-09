@@ -268,23 +268,43 @@ implements CrawlURIDispositionListener {
 
         Date now = new Date();
         controller.progressStats.log(
-            Level.INFO, new PaddingStringBuffer()
-                .append(ArchiveUtils.TIMESTAMP14ISO8601Z.format(now))
-                .raAppend(32, discoveredUriCount)
-                .raAppend(44, queuedUriCount)
-                .raAppend(57, downloadedUriCount)
-                .raAppend(74, ArchiveUtils.
-                    doubleToString(currentDocsPerSecond,2) +
-                    "(" + ArchiveUtils.doubleToString(docsPerSecond,2) + ")")
-                .raAppend(85, currentKBPerSec + "(" + totalKBPerSec + ")")
-                .raAppend(99, downloadFailures)
-                .raAppend(113, busyThreads)
-                .raAppend(126, (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)
-                .raAppend(140, Runtime.getRuntime().totalMemory()/1024)
-                .toString());
+            Level.INFO, progressStatisticsLine(now));
         lastLogPointTime = System.currentTimeMillis();
     }
 
+    /**
+     * Return one line of current progress-statistics
+     * 
+     * @param now
+     * @return String of stats
+     */
+    public String progressStatisticsLine(Date now) {
+        return new PaddingStringBuffer()
+            .append(ArchiveUtils.TIMESTAMP14ISO8601Z.format(now))
+            .raAppend(32, discoveredUriCount)
+            .raAppend(44, queuedUriCount)
+            .raAppend(57, downloadedUriCount)
+            .raAppend(74, ArchiveUtils.
+                doubleToString(currentDocsPerSecond,2) +
+                "(" + ArchiveUtils.doubleToString(docsPerSecond,2) + ")")
+            .raAppend(85, currentKBPerSec + "(" + totalKBPerSec + ")")
+            .raAppend(99, downloadFailures)
+            .raAppend(113, busyThreads)
+            .raAppend(126, (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)
+            .raAppend(140, Runtime.getRuntime().totalMemory()/1024)
+            .toString();
+    }
+
+    /**
+     * Return one line of current progress-statistics
+     * 
+     * @param now
+     * @return String of stats
+     */
+    public String progressStatisticsLine() {
+        return progressStatisticsLine(new Date());
+    }
+    
     public double processedDocsPerSec(){
         return docsPerSecond;
     }
