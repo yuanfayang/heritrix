@@ -955,7 +955,7 @@ public class Heritrix implements DynamicMBean {
     }
     
     public String addCrawlJob(String pathOrUrl, String description) {
-        if (UURIFactory.isUrl(pathOrUrl)) {
+        if (UURIFactory.hasScheme(pathOrUrl)) {
             throw new UnsupportedOperationException("Order as URL " +
                 "not yet supported.");
         }
