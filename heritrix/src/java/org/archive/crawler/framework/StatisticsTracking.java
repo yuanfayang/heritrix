@@ -218,4 +218,14 @@ public interface StatisticsTracking extends Runnable {
      * @see #SEED_DISPOSITION_RETRY
      */
     public String getSeedDisposition(String UriString);
+
+    /**
+     * @return legend of progress-statistics
+     */
+    public String progressStatisticsLegend();
+
+    /**
+     * @return line of progress-statistics
+     */
+    public String progressStatisticsLine();
 }
