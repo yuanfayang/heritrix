@@ -135,6 +135,16 @@ implements Serializable, Lineable {
      * toString.
      */
     private String cachedCandidateURIString = null;
+    
+
+    /**
+     * Frontier/Scheduler lifecycle info.
+     * This is an identifier set by the Frontier for its
+     * purposes. Usually its the name of the Frontier queue
+     * this URI gets queued to.  Values can be host + port
+     * or IP, etc.
+     */
+    private String classKey;
 
     /**
      * Constructor.
@@ -459,6 +469,25 @@ implements Serializable, Lineable {
         caURI.setSchedulingDirective(scheduling);
         caURI.setIsSeed(seed);
         return caURI;
+    }
+    
+
+    /**
+     * Get the token (usually the hostname + port) which indicates
+     * what "class" this CrawlURI should be grouped with,
+     * for the purposes of ensuring only one item of the
+     * class is processed at once, all items of the class
+     * are held for a politeness period, etc.
+     *
+     * @return Token (usually the hostname) which indicates
+     * what "class" this CrawlURI should be grouped with.
+     */
+    public String getClassKey() {
+        return classKey;
+    }
+
+    public void setClassKey(String key) {
+        classKey = key;
     }
     
     /**

@@ -25,7 +25,7 @@
 package org.archive.crawler.frontier;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.CrawlController;
@@ -44,31 +44,28 @@ public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
     private static String DEFAULT_CLASS_KEY = "default...";
     
     private static final String DNS = "dns";
-    
-    /* (non-Javadoc)
-     * @see org.archive.crawler.frontier.QueueAssignmentPolicy#getClassKey(org.archive.crawler.datamodel.CrawlURI)
-     */
-    public String getClassKey(CrawlController controller, CrawlURI curi) {
-        String scheme = curi.getUURI().getScheme();
+
+    public String getClassKey(CrawlController controller, CandidateURI cauri) {
+        String scheme = cauri.getUURI().getScheme();
         String candidate = null;
         try {
             if (scheme.equals(DNS)){
-                if (curi.getVia() != null) {
+                if (cauri.getVia() != null) {
                     // Special handling for DNS: treat as being
                     // of the same class as the triggering URI.
                     // When a URI includes a port, this ensures 
                     // the DNS lookup goes atop the host:port
                     // queue that triggered it, rather than 
                     // some other host queue
-                	UURI viaUuri = UURIFactory.getInstance(curi.flattenVia());
+                	UURI viaUuri = UURIFactory.getInstance(cauri.flattenVia());
                     candidate = viaUuri.getAuthorityMinusUserinfo();
                     // adopt scheme of triggering URI
                     scheme = viaUuri.getScheme();
                 } else {
-                    candidate= curi.getUURI().getReferencedHost();
+                    candidate= cauri.getUURI().getReferencedHost();
                 }
             } else {
-                candidate =  curi.getUURI().getAuthorityMinusUserinfo();
+                candidate =  cauri.getUURI().getAuthorityMinusUserinfo();
             }
             
             if(candidate == null || candidate.length() == 0) {

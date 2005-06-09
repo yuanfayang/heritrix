@@ -73,9 +73,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
     // pathFromSeed
     // via
 
-    // Scheduler lifecycle info
-    private String classKey; // cached classKey value
-
     // Processing progress
     transient private Processor nextProcessor;
     transient private ProcessorChain nextProcessorChain;
@@ -403,24 +400,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
      */
     public void setNextProcessorChain(ProcessorChain nextProcessorChain) {
         this.nextProcessorChain = nextProcessorChain;
-    }
-
-    /**
-     * Get the token (usually the hostname + port) which indicates
-     * what "class" this CrawlURI should be grouped with,
-     * for the purposes of ensuring only one item of the
-     * class is processed at once, all items of the class
-     * are held for a politeness period, etc.
-     *
-     * @return Token (usually the hostname) which indicates
-     * what "class" this CrawlURI should be grouped with.
-     */
-    public String getClassKey() {
-        return classKey;
-    }
-
-    public void setClassKey(String key) {
-        classKey = key;
     }
 
     /**
