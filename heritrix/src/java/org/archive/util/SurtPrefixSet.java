@@ -24,9 +24,16 @@
 */ 
 package org.archive.util;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.SortedSet;
@@ -127,7 +134,7 @@ public class SurtPrefixSet extends TreeSet {
         while (iter.hasNext()) {
             s = (String) iter.next();
             // s is a URI (or even fragmentary hostname), not a SURT
-            deduceFromPlain(s);
+            addFromPlain(s);
         }
     }
 
@@ -160,7 +167,7 @@ public class SurtPrefixSet extends TreeSet {
                 } else {
                     // hostname/normal form URI from which 
                     // to deduce SURT prefix
-                    deduceFromPlain(u);
+                    addFromPlain(u);
                 }
                 
                 continue; 
@@ -168,7 +175,7 @@ public class SurtPrefixSet extends TreeSet {
                 if(deduceFromSeeds) {
                     // also deducing 'implied' SURT prefixes 
                     // from normal URIs/hostname seeds
-                    deduceFromPlain(s);
+                    addFromPlain(s);
                 }
             }
         }
@@ -180,18 +187,41 @@ public class SurtPrefixSet extends TreeSet {
      * 
      * @param u String of URI or hostname
      */
-    private void deduceFromPlain(String u) {
-        if(u.indexOf(':') == -1 || u.indexOf('.') < u.indexOf(':')) {
-            // No scheme present; prepend "http://"
-            u = "http://" + u;
-        } else if (u.startsWith("https://")) {
-            u = "http" + u.substring("https".length());
-        }
+    private void addFromPlain(String u) {
+        u = prefixFromPlain(u);
+        add(u);
+    }
+
+    /**
+     * Given a plain URI or hostname/hostname+path, deduce an implied SURT 
+     * prefix from it. Results may be unpredictable on strings that cannot
+     * be interpreted as URIs. 
+     * 
+     * @param u URI or almost-URI to consider
+     * @return implied SURT prefix form
+     */
+    public static String prefixFromPlain(String u) {
+        u = ArchiveUtils.addImpliedHttpIfNecessary(u);
+        u = coerceToHttpsForPrefixPurposesIfNecessary(u);
         // convert to full SURT
         u = SURT.fromURI(u);
         // truncate to implied prefix
         u = SurtPrefixSet.asPrefix(u);
-        add(u);
+        return u;
+    }
+
+    /**
+     * For SURT prefix comparisons, we treat https URIs as if they
+     * were http. 
+     * 
+     * @param u string to coerce if it has https scheme
+     * @return string converted to http scheme, or original if not necessary
+     */
+    private static String coerceToHttpsForPrefixPurposesIfNecessary(String u) {
+        if (u.startsWith("https://")) {
+            u = "http" + u.substring("https".length());
+        }
+        return u;
     }
 
     /**
@@ -289,5 +319,34 @@ public class SurtPrefixSet extends TreeSet {
             }
             this.add(prefix);
         } 
+    }
+    
+    /**
+     * Allow class to be used as a command-line tool for converting 
+     * URL lists (or naked host or host/path fragments implied
+     * to be HTTP URLs) to implied SURT prefix form. 
+     * 
+     * Read from stdin or first file argument. Writes to stdout. 
+     *
+     * @param args cmd-line arguments: may include input file
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
+        InputStream in = args.length > 0 ? new BufferedInputStream(
+                new FileInputStream(args[0])) : System.in;
+        PrintStream out = args.length > 1 ? new PrintStream(
+                new BufferedOutputStream(new FileOutputStream(args[1])))
+                : System.out;
+        BufferedReader br =
+            new BufferedReader(new InputStreamReader(in));
+        String line;
+        while((line = br.readLine())!=null) {
+            if(line.indexOf("#")>0) line=line.substring(0,line.indexOf("#"));
+            line = line.trim();
+            if(line.length()==0) continue;
+            out.println(prefixFromPlain(line));
+        }
+        br.close();
+        out.close();
     }
 }

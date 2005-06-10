@@ -24,6 +24,15 @@
 */ 
 package org.archive.util;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.regex.Matcher;
 
 /**
@@ -117,5 +126,38 @@ public class SURT {
     
     private static String emptyIfNull(String string) {
         return string == null ? "" : string;
+    }
+    
+    /**
+     * Allow class to be used as a command-line tool for converting 
+     * URL lists (or naked host or host/path fragments implied
+     * to be HTTP URLs) to SURT form. Lines that cannot be converted
+     * are returned unchanged. 
+     * 
+     *
+     * Read from stdin or first file argument. Writes to stdout or 
+     * second argument filename
+     * 
+     * @param args cmd-line arguments
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
+        InputStream in = args.length > 0 ? new BufferedInputStream(
+                new FileInputStream(args[0])) : System.in;
+        PrintStream out = args.length > 1 ? new PrintStream(
+                new BufferedOutputStream(new FileOutputStream(args[1])))
+                : System.out;
+        BufferedReader br =
+            new BufferedReader(new InputStreamReader(in));
+        String line;
+        while((line = br.readLine())!=null) {
+            if(line.indexOf("#")>0) line=line.substring(0,line.indexOf("#"));
+            line = line.trim();
+            if(line.length()==0) continue;
+            line = ArchiveUtils.addImpliedHttpIfNecessary(line);
+            out.println(SURT.fromURI(line));
+        }
+        br.close();
+        out.close();
     }
 }
