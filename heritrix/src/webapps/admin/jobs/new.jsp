@@ -79,12 +79,7 @@
         if(error == null && newJob != null) {
             // Ensure order file with new name/desc is written
             // [ 1066573 ] sometimes job based-on other job uses older job name
-            settingsHandler = newJob.getSettingsHandler();
-            orderfile = settingsHandler.getSettingsObject(null);
-            orderfile.setName(metaName);
-            orderfile.setDescription(jobDescription);
-            // JobConfigureUtils.writeNewOrderFile(crawlOrder, null, request, true);
-            settingsHandler.writeSettingsObject(orderfile);
+            handler.ensureNewJobWritten(newJob, metaName, jobDescription);
             if(request.getParameter("action").equals("configure")){
                 response.sendRedirect(request.getContextPath() +
                     "/jobs/configure.jsp?job="+newJob.getUID());

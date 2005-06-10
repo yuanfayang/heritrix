@@ -515,15 +515,15 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Return a job with the given UID.
-     * Doesn't matter if it's pending, currently running,has finished running is
-     * new or a profile.
+     * Doesn't matter if it's pending, currently running, has finished running
+     * is new or a profile.
      *
      * @param jobUID The unique ID of the job.
      * @return The job with the UID or null if no such job is found
      */
     public CrawlJob getJob(String jobUID) {
         if (jobUID == null){
-            return null; //UID can't be null
+            return null; // UID can't be null
         }
         // First check currently running job
         if (currentJob != null && currentJob.getUID().equals(jobUID)) {
@@ -541,7 +541,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 }
             }
 
-            // The check completed jobs.
+            // Next check completed jobs.
             Iterator itComp = completedCrawlJobs.iterator();
             while (itComp.hasNext()) {
                 CrawlJob cj = (CrawlJob) itComp.next();
@@ -558,7 +558,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 }
             }
         }
-        return null; //Nothing found, return null
+        return null; // Nothing found, return null
     }
 
     /**
@@ -1461,5 +1461,21 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if(this.controller != null) {
             this.controller.requestCrawlStop();
         }
+    }
+    
+    /**
+     * Ensure order file with new name/desc is written.
+     * See '[ 1066573 ] sometimes job based-on other job uses older job name'.
+     * @param newJob Newly created job.
+     * @param metaname Metaname for new job.
+     * @param description Description for new job.
+     */
+    public static void ensureNewJobWritten(CrawlJob newJob, String metaname,
+            String description) {
+        XMLSettingsHandler settingsHandler = newJob.getSettingsHandler();
+        CrawlerSettings orderfile = settingsHandler.getSettingsObject(null);
+        orderfile.setName(metaname);
+        orderfile.setDescription(description);
+        settingsHandler.writeSettingsObject(orderfile);
     }
 }
