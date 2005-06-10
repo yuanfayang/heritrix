@@ -179,16 +179,18 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
         // interpret seeds as surts, if appropriate
         boolean deduceFromSeeds = ((Boolean)getUncheckedAttribute(null,
                 ATTR_SEEDS_AS_SURT_PREFIXES)).booleanValue();
-        try {
-            fr = new FileReader(getSeedfile());
+        if(deduceFromSeeds) {
             try {
-                newSurtPrefixes.importFromMixed(fr, deduceFromSeeds);
-            } finally {
-                fr.close();
+                fr = new FileReader(getSeedfile());
+                try {
+                    newSurtPrefixes.importFromMixed(fr, deduceFromSeeds);
+                } finally {
+                    fr.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
         }
 
         surtPrefixes = newSurtPrefixes;
