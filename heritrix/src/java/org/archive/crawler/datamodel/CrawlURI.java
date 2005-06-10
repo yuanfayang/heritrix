@@ -251,6 +251,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
             // Heritrix internal codes (all negative numbers
             case S_BLOCKED_BY_USER:
                 return "Heritrix(" + S_BLOCKED_BY_USER + ")-Blocked by user";
+            case S_BLOCKED_BY_CUSTOM_PROCESSOR:
+                return "Heritrix(" + S_BLOCKED_BY_CUSTOM_PROCESSOR +
+                ")-Blocked by custom prefetch processor";
             case S_DELETED_BY_USER:
                 return "Heritrix(" + S_DELETED_BY_USER + ")-Deleted by user";
             case S_CONNECT_FAILED:
