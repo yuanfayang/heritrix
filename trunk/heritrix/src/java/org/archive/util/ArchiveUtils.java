@@ -483,5 +483,20 @@ public class ArchiveUtils {
         for(i = 0, shift = 56; i < 8; i++, shift -= 8)
         array[offset+i] = (byte)(0xFF & (l >> shift));
     }
+
+    /**
+     * Given a string that may be a plain host or host/path (without
+     * URI scheme), add an implied http:// if necessary. 
+     * 
+     * @param u string to evaluate
+     * @return string with http:// added if no scheme already present
+     */
+    public static String addImpliedHttpIfNecessary(String u) {
+        if(u.indexOf(':') == -1 || u.indexOf('.') < u.indexOf(':')) {
+            // No scheme present; prepend "http://"
+            u = "http://" + u;
+        }
+        return u;
+    }
 }
 
