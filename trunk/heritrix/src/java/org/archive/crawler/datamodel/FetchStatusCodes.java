@@ -84,6 +84,13 @@ public interface FetchStatusCodes {
     public static final int S_OUT_OF_SCOPE = -5000;
     /** blocked from fetch by user setting. */
     public static final int S_BLOCKED_BY_USER = -5001;
+    /**
+     * Blocked by custom prefetcher processor.
+     * A check against scope or against filters in a custom prefetch
+     * processor rules CrawlURI should not be crawled.
+     * TODO: Add to documentation and help page.
+     */
+    public static final int S_BLOCKED_BY_CUSTOM_PROCESSOR = -5002;
 
     /** deleted from frontier by user */
     public static final int S_DELETED_BY_USER = -6000;

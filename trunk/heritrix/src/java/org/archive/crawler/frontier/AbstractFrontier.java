@@ -144,7 +144,8 @@ public abstract class AbstractFrontier extends ModuleType implements
         new String[] {
             HostnameQueueAssignmentPolicy.class.getName(),
             IPQueueAssignmentPolicy.class.getName(),
-            BucketQueueAssignmentPolicy.class.getName()};
+            BucketQueueAssignmentPolicy.class.getName(),
+            SurtAuthorityQueueAssignmentPolicy.class.getName()};
 
     private final static String DEFAULT_QUEUE_ASSIGNMENT_POLICY =
         AVAILABLE_QUEUE_ASSIGNMENT_POLICIES[0];
@@ -823,6 +824,7 @@ public abstract class AbstractFrontier extends ModuleType implements
     protected boolean isDisregarded(CrawlURI curi) {
         switch (curi.getFetchStatus()) {
         case S_ROBOTS_PRECLUDED: // they don't want us to have it
+        case S_BLOCKED_BY_CUSTOM_PROCESSOR:
         case S_OUT_OF_SCOPE: // filtered out by scope
         case S_BLOCKED_BY_USER: // filtered out by user
         case S_TOO_MANY_EMBED_HOPS: // too far from last true link
