@@ -155,8 +155,8 @@ public abstract class AbstractFrontier extends ModuleType implements
 
     protected final static String DEFAULT_FORCE_QUEUE = "";
 
-    // word chars, dash, period
-    protected final static String ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.]*";
+    // word chars, dash, period, comma, colon
+    protected final static String ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.,:]*";
         
     /** whether pause, rather than finish, when crawl appears done */
     public final static String ATTR_PAUSE_AT_FINISH = "pause-at-finish";
@@ -272,7 +272,7 @@ public abstract class AbstractFrontier extends ModuleType implements
         t.setExpertSetting(true);
         t.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FORCE_QUEUE,
                 Level.WARNING, "This field must contain only alphanumeric "
-                + "characters plus period, dash, or underscore."));
+                + "characters plus period, dash, comma, colon, or underscore."));
         t = addElementToDefinition(new SimpleType(
                 ATTR_PAUSE_AT_FINISH,
                 "Whether to pause when the crawl appears finished, rather "
