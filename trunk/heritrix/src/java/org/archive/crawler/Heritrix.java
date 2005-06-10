@@ -231,11 +231,13 @@ public class Heritrix implements DynamicMBean {
     private final static String ADD_CRAWL_JOB_OPER = "addJob";
     private final static String ALERT_OPER = "alert";
     private final static String NEW_ALERT_OPER = "newAlert";
+    private final static String ADD_CRAWL_JOB_BASEDON_OPER = "addJobBasedon";
     private final static List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {START_OPER, STOP_OPER,
             INTERRUPT_OPER, START_CRAWLING_OPER, STOP_CRAWLING_OPER,
-            ADD_CRAWL_JOB_OPER, ALERT_OPER, NEW_ALERT_OPER});
+            ADD_CRAWL_JOB_OPER, ADD_CRAWL_JOB_BASEDON_OPER,
+            ALERT_OPER, NEW_ALERT_OPER});
     }
     
     /**
@@ -947,15 +949,10 @@ public class Heritrix implements DynamicMBean {
             CrawlJob.PRIORITY_HIGH,
             crawlOrderFile.getAbsoluteFile().getParentFile());
     }
-
-    public String addCrawlJob(String pathOrUrl) {
-        // This single argument method is for JMX.
-        return addCrawlJob(pathOrUrl, "Job JMX added " +
-            (new Date()).toString() + ".");
-    }
     
-    public String addCrawlJob(String pathOrUrl, String description) {
-        if (UURIFactory.hasScheme(pathOrUrl)) {
+    public String addCrawlJob(String orderPathOrUrl,
+            String description) {
+        if (UURIFactory.hasScheme(orderPathOrUrl)) {
             throw new UnsupportedOperationException("Order as URL " +
                 "not yet supported.");
         }
@@ -964,15 +961,36 @@ public class Heritrix implements DynamicMBean {
         }
         CrawlJob job = null;
         try {
-            job = createCrawlJob(jobHandler, new File(pathOrUrl),
+            job = createCrawlJob(jobHandler, new File(orderPathOrUrl),
                 description);
             Heritrix.jobHandler.addJob(job);
-            return "Added " + pathOrUrl;
+            return "Added " + orderPathOrUrl;
         } catch (InvalidAttributeValueException e) {
             e.printStackTrace();
-            return "InvalidAttributeValueException on " + pathOrUrl +
-                ": " + e.getMessage();
-        }
+            return "InvalidAttributeValueException on " +
+                orderPathOrUrl + ": " + e.getMessage();
+        } 
+    }
+    
+    public String addCrawlJobBasedOn(String jobUidOrProfile,
+            String metaname, String description, String seeds) {
+        try {
+            CrawlJob cj = Heritrix.jobHandler.getJob(jobUidOrProfile);
+            if (cj == null) {
+                throw new InvalidAttributeValueException(jobUidOrProfile +
+                    " is not a job UID or profile name (Job UIDs are " +
+                    " usually the 14 digit date portion of job name).");
+            }
+            CrawlJob job = Heritrix.jobHandler.newJob(cj, false, metaname,
+                description, seeds, CrawlJob.PRIORITY_AVERAGE);
+            CrawlJobHandler.ensureNewJobWritten(job, metaname,
+                description);
+            Heritrix.jobHandler.addJob(job);
+            return "Added " + jobUidOrProfile;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Exception on " + jobUidOrProfile + ": " + e.getMessage();
+        } 
     }
     
     public void startCrawling() {
@@ -1501,23 +1519,39 @@ public class Heritrix implements DynamicMBean {
                 MBeanOperationInfo.ACTION);
         
         args = new OpenMBeanParameterInfoSupport[1];
-        args[0] = new OpenMBeanParameterInfoSupport("pathOrUrl",
-            "A filesystem path or a URL", SimpleType.STRING);
+        args[0] = new OpenMBeanParameterInfoSupport("orderPathOrUrl",
+            "File path or URL pointing at an order file",
+            SimpleType.STRING);
         operations[5] = new OpenMBeanOperationInfoSupport(
             Heritrix.ADD_CRAWL_JOB_OPER, "Add a new crawl job", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
         
+        args = new OpenMBeanParameterInfoSupport[4];
+        args[0] = new OpenMBeanParameterInfoSupport("jobUidOrProfileName",
+            "Job UID or profile name to base job on", SimpleType.STRING);
+        args[1] = new OpenMBeanParameterInfoSupport("name",
+            "Basename for new job", SimpleType.STRING);
+        args[2] = new OpenMBeanParameterInfoSupport("description",
+            "Description to save with new job", SimpleType.STRING);
+        args[3] = new OpenMBeanParameterInfoSupport("seeds",
+            "Initial seed(s)", SimpleType.STRING);
+        
+        operations[6] = new OpenMBeanOperationInfoSupport(
+            Heritrix.ADD_CRAWL_JOB_BASEDON_OPER,
+            "Add a new crawl job based on passed Job UID or profile",
+            args, SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
+        
         args = new OpenMBeanParameterInfoSupport[1];
         args[0] = new OpenMBeanParameterInfoSupport("index",
             "Zero-based index into array of NEW alerts", SimpleType.INTEGER);
-        operations[6] = new OpenMBeanOperationInfoSupport(
+        operations[7] = new OpenMBeanOperationInfoSupport(
             Heritrix.NEW_ALERT_OPER, "Return NEW alert at passed index", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
         
         args = new OpenMBeanParameterInfoSupport[1];
         args[0] = new OpenMBeanParameterInfoSupport("index",
             "Zero-based index into array of alerts", SimpleType.INTEGER);
-        operations[7] = new OpenMBeanOperationInfoSupport(
+        operations[8] = new OpenMBeanOperationInfoSupport(
             Heritrix.ALERT_OPER, "Return alert at passed index", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
 
@@ -1620,8 +1654,14 @@ public class Heritrix implements DynamicMBean {
         }
         if (operationName.equals(ADD_CRAWL_JOB_OPER)) {
             JmxUtils.checkParamsCount(ADD_CRAWL_JOB_OPER, params, 1);
-            return addCrawlJob((String)params[0]);
+            return addCrawlJob((String)params[0], "Job JMX added " +
+                    (new Date()).toString() + ".");
         }
+        if (operationName.equals(ADD_CRAWL_JOB_BASEDON_OPER)) {
+            JmxUtils.checkParamsCount(ADD_CRAWL_JOB_OPER, params, 4);
+            return addCrawlJobBasedOn((String)params[0], (String)params[1],
+                (String)params[2], (String)params[3]);
+        }       
         if (operationName.equals(ALERT_OPER)) {
             JmxUtils.checkParamsCount(ALERT_OPER, params, 1);
             Vector v = getAlerts();

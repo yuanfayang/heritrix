@@ -23,7 +23,6 @@
  */
 package org.archive.crawler.scope;
 
-import org.archive.crawler.framework.CrawlScope;
 
 /**
  * A CrawlScope instance defines which URIs are "in"
