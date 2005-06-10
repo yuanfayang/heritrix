@@ -613,7 +613,7 @@ implements ARCConstants {
         String url = (String)headerFields.get(URL_HEADER_FIELD_KEY);
         if (url != null && url.indexOf('\t') >= 0) {
             headerFields.put(URL_HEADER_FIELD_KEY,
-                TextUtils.replaceAll("\t", url, "&09"));
+                TextUtils.replaceAll("\t", url, "%09"));
         }
 
         headerFields.put(VERSION_HEADER_FIELD_KEY, v);
