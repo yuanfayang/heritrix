@@ -87,12 +87,6 @@ implements RepositionableStream {
      * Buffer size used skipping over gzip members.
      */
     private static final int LINUX_PAGE_SIZE = 4 * 1024;
-
-    /**
-     * Buffer used skipping over gzip members.
-     */
-    private static final byte [] SKIP_BUFFER = new byte [LINUX_PAGE_SIZE];
-    
     
     public GzippedInputStream(InputStream is) throws IOException {
         // Have buffer match linux page size.
@@ -148,11 +142,8 @@ implements RepositionableStream {
         if (position() == 0) {
             return bytesSkipped;
         }
-        if (!this.inf.finished()) {
-            long read = 0;
-            while ((read = read(SKIP_BUFFER)) != -1) {
-                bytesSkipped += read;
-            }
+        while(!this.inf.finished()) {
+            bytesSkipped += skip(Long.MAX_VALUE);
         }
         return bytesSkipped;
     }
@@ -175,7 +166,7 @@ implements RepositionableStream {
                 try {
                     gotoEOR();
                 } catch (IOException e) {
-                    throw new RuntimeException(e.getMessage());
+                    throw new RuntimeException(e);
                 }
                 return moveToNextGzipMember();
             }
