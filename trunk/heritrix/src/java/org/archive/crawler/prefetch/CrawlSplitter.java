@@ -22,49 +22,61 @@
  */
 package org.archive.crawler.prefetch;
 
+import java.util.logging.Logger;
+
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 
 /**
- * Crawl splitter.
+ * A dumb crawl splitter.
+ * Sits at top of processing chain and looks at CrawlURis as they come off
+ * the Frontier.  Does a lexical comparison of CrawlURI#classKey against the
+ * supplied range.
  * @author stack
  * @version $Date$, $Revision$
  */
 public class CrawlSplitter extends Processor implements FetchStatusCodes {
-    private static final String ATTR_SPLIT_STR = "split-string";
-    private static final String ATTR_BEFORE_SPLIT = "crawl-before-split";
+    private static final Logger LOGGER =
+        Logger.getLogger(CrawlSplitter.class.getName());
+    private static final String ATTR_RANGE_LOWER = "crawl-range-lower";
+    private static final String ATTR_RANGE_UPPER = "crawl-range-upper";
     /**
      * Constructor.
      * @param name Name of this processor.
      */
     public CrawlSplitter(String name) {
         super(name, "CrawlSplitter. Compares CrawlURI#classKey " +
-            "lexically against a configured string. If CrawlURI is " +
-            "of wrong side of the split, its marked " +
+            "lexically against configured range. " +
+            "Uses String.compareTo. If CrawlURI " +
+            "falls outside of the configured range, its marked " +
             CrawlURI.fetchStatusCodesToString(S_BLOCKED_BY_CUSTOM_PROCESSOR) +
-            " and processing jumps to postprocessor. Put this processor " +
+            " and processing jumps to postprocessor (The CrawlURI " +
+            "will show with a " + S_BLOCKED_BY_CUSTOM_PROCESSOR +
+            " in the crawl.log. Put this processor " +
             "first ahead of all processors including PreconditionEnforcer.");
-        addElementToDefinition(new SimpleType(ATTR_SPLIT_STR,
-            "String to compare CrawlURI#classKey against. If empty, the" +
-            "crawl is not split.  If exactly equal, CrawlURI goes into " +
-            "the 'before' category.",
+        addElementToDefinition(new SimpleType(ATTR_RANGE_LOWER,
+            "String to use as lower-bound on range (Inclusive). Use the " +
+            "empty string to signify absolute bottom of the range.",
             ""));
-        addElementToDefinition(new SimpleType(ATTR_BEFORE_SPLIT,
-            "If true, we crawl the portion 'before' the split, else " +
-            "'after' the split.", Boolean.TRUE));
+        addElementToDefinition(new SimpleType(ATTR_RANGE_UPPER,
+            "String to use as upper-bound on range (Non-inclusive). " +
+            "Use '~' to signify maximum upper-bound.", "~"));
     }
     
     protected void innerProcess(CrawlURI curi) {
         // Check if blocked by regular expression.  Run regex against the
         // CrawlURI class key.
         try {
-            String str = (String)getAttribute(ATTR_SPLIT_STR, curi);
-            boolean crawlBeforeSplit = ((Boolean)getAttribute(ATTR_BEFORE_SPLIT)).
-                booleanValue();
-            boolean before = curi.getClassKey().compareTo(str) <= 0;
-            if ((before && !crawlBeforeSplit) || (!before && crawlBeforeSplit)) {
+            String lower = (String)getAttribute(ATTR_RANGE_LOWER);
+            String upper = (String)getAttribute(ATTR_RANGE_UPPER);
+            if (lower.compareTo(upper) > 0) {
+                LOGGER.severe("Lower, " + lower + ", is greater than Upper, " +
+                    upper);
+            }
+            if (curi.getClassKey().compareTo(lower) < 0 ||
+                    curi.getClassKey().compareTo(upper) > 0) {
                 curi.setFetchStatus(S_BLOCKED_BY_CUSTOM_PROCESSOR);
                 curi.skipToProcessorChain(getController().
                     getPostprocessorChain());
