@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -147,11 +148,8 @@ implements CrawlURIDispositionListener {
     protected Map hostsBytes = null;
     protected Map hostsLastFinished = null;
 
-    /** Keep track of processed seeds disposition*/
-    protected Map processedSeedsDisposition = new Hashtable();
-
-    /** Keep track of processed seeds status codes*/
-    protected Map processedSeedsStatusCodes = new Hashtable();
+    /** Record of seeds' latest actions */
+    protected Map processedSeedsRecords;
 
     /** Cache seed list.
      */
@@ -180,6 +178,9 @@ implements CrawlURIDispositionListener {
             this.hostsLastFinished =
                 BigMapFactory.getBigMap(c.getSettingsHandler(),
                     "hostsLastFinished", String.class, Long.class);
+            
+            this.processedSeedsRecords = makeSeedsMap();
+            
         } catch (Exception e) {
             throw new FatalConfigurationException("Failed setup of" +
                 " StatisticsTracker: " + e);
@@ -187,6 +188,11 @@ implements CrawlURIDispositionListener {
         controller.addCrawlURIDispositionListener(this);
     }
     
+    private Map makeSeedsMap() {
+        return new HashMap();
+        // TODO: BDBify
+    }
+
     protected void cleanup() {
         if (this.hostsBytes != null) {
             this.hostsBytes.clear();
@@ -298,7 +304,6 @@ implements CrawlURIDispositionListener {
     /**
      * Return one line of current progress-statistics
      * 
-     * @param now
      * @return String of stats
      */
     public String progressStatisticsLine() {
@@ -598,29 +603,6 @@ implements CrawlURIDispositionListener {
             controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
     }
 
-    public String getSeedDisposition(String UriString){
-        String ret = SEED_DISPOSITION_NOT_PROCESSED;
-        if(processedSeedsDisposition.containsKey(UriString)){
-            ret = (String)processedSeedsDisposition.get(UriString);
-        }
-        return ret;
-    }
-
-    /**
-     * Returns the status code of any seed. If the supplied URL is not a seed
-     * or a seed that has not been crawled it will return zero.
-     * @param UriString The URI of the seed
-     * @return the disposition of the seed
-     *
-     */
-    public int getSeedStatusCode(String UriString){
-        int ret = 0;
-        if(processedSeedsStatusCodes.containsKey(UriString)){
-            ret = ((Integer)processedSeedsStatusCodes.get(UriString)).intValue();
-        }
-        return ret;
-    }
-
     /**
      * If the curi is a seed, we update the processedSeeds table.
      *
@@ -629,9 +611,8 @@ implements CrawlURIDispositionListener {
      */
     private void handleSeed(CrawlURI curi, String disposition) {
         if(curi.isSeed()){
-            processedSeedsDisposition.put(curi.toString(), disposition);
-            processedSeedsStatusCodes.put(curi.toString(),
-                    new Integer(curi.getFetchStatus()));
+            SeedRecord sr = new SeedRecord(curi,disposition);
+            processedSeedsRecords.put(sr.getUri(),sr);
         }
     }
 
@@ -722,44 +703,40 @@ implements CrawlURIDispositionListener {
         return seedsCopy;
     }
 
-    public Iterator getSeedsSortedByStatusCode() {
-        return getSeedsSortedByStatusCode(getSeeds());
+    public Iterator getSeedRecordsSortedByStatusCode() {
+        return getSeedRecordsSortedByStatusCode(getSeeds());
     }
     
-    protected Iterator getSeedsSortedByStatusCode(Iterator i) {
+    protected Iterator getSeedRecordsSortedByStatusCode(Iterator i) {
         TreeSet sortedSet = new TreeSet(new Comparator() {
             public int compare(Object e1, Object e2) {
-                int firstCode = getSeedStatusCode((String) e1);
-                int secondCode = getSeedStatusCode((String) e2);
+                SeedRecord sr1 = (SeedRecord)e1;
+                SeedRecord sr2 = (SeedRecord)e2;
                 int ret = 0;
-
-                if (firstCode == secondCode) {
+                int code1 = sr1.getStatusCode();
+                int code2 = sr2.getStatusCode();
+                if (code1 == code2) {
                     // If the values are equal, sort by URIs.
-                    String firstURI = (String) e1;
-                    String secondURI = (String) e2;
-                    ret = firstURI.compareTo(secondURI);
-                } else if ( (firstCode > 0 && secondCode > 0)
-                          ||(firstCode < 0 && secondCode < 0) ){
-                    // Both are either positve or negative,
-                    // sort from largest to smallest
-                    if (firstCode < secondCode) {
-                        ret = 1;
-                    } else {
-                        ret = -1;
-                    }
-                } else {
-                    // Negative or zero come before positive status codes.
-                    if(firstCode > 0 || (firstCode < 0 && secondCode == 0 )) {
-                        ret = 1;
-                    } else {
-                        ret = -1;
-                    }
+                    return sr1.getUri().compareTo(sr2.getUri());
                 }
-                return ret;
+                // mirror and shift the nubmer line so as to
+                // place zero at the beginning, then all negatives 
+                // in order of ascending absolute value, then all 
+                // positives descending
+                code1 = -code1 - Integer.MAX_VALUE;
+                code2 = -code2 - Integer.MAX_VALUE;
+                
+                return new Integer(code1).compareTo(new Integer(code2));
             }
         });
         while (i.hasNext()) {
-            sortedSet.add(i.next());
+            String seed = (String)i.next();
+            SeedRecord sr = (SeedRecord) processedSeedsRecords.get(seed);
+            if(sr==null) {
+                sr = new SeedRecord(seed,SEED_DISPOSITION_NOT_PROCESSED);
+                processedSeedsRecords.put(seed,sr);
+            }
+            sortedSet.add(sr);
         }
         return sortedSet.iterator();
     }
@@ -822,25 +799,27 @@ implements CrawlURIDispositionListener {
         PaddingStringBuffer rep = new PaddingStringBuffer();
 
         // Build header.
-        rep.append("[seeds]");
-        rep.raAppend(maxURILength + 11, "[res-code]");
-        rep.append(" [status]");
+        rep.append("[code] [status] [seed] [redirect]");
         rep.newline();
 
         int seedsCrawled = 0;
         int seedsNotCrawled = 0;
-        for (Iterator i = getSeedsSortedByStatusCode(getSeeds(c).iterator());
+        for (Iterator i = getSeedRecordsSortedByStatusCode(getSeeds(c).iterator());
                 i.hasNext();) {
-            String UriString = (String)i.next();
-            int code = getSeedStatusCode(UriString);
-            rep.append(UriString);
-            rep.raAppend(maxURILength + 11, code);
-            if (code > 0) {
-                rep.append(" CRAWLED");
+            SeedRecord sr = (SeedRecord)i.next();
+            rep.raAppend(5,sr.getStatusCode());
+            if((sr.getStatusCode() > 0)) {
                 seedsCrawled++;
+                rep.raAppend(16,"CRAWLED");
             } else {
-                rep.append(" NOTCRAWLED");
                 seedsNotCrawled++;
+                rep.raAppend(16,"NOTCRAWLED");
+            }
+            rep.append(" ");
+            rep.append(sr.getUri());
+            if(sr.getRedirectUri()!=null) {
+                rep.append(" ");
+                rep.append(sr.getRedirectUri());
             }
             rep.newline();
         }
@@ -864,8 +843,12 @@ implements CrawlURIDispositionListener {
             // Key is 'host'.
             Object key = i.next();
             rep.append((String)key);
-            rep.raAppend(maxHostLength + 13,
-                    ((LongWrapper)hd.get(key)).longValue);
+            if (hd.get(key)!=null) {
+                rep.raAppend(maxHostLength + 13,
+                        ((LongWrapper)hd.get(key)).longValue);
+            } else {
+                rep.raAppend(maxHostLength + 13, "-");
+            }
             rep.raAppend(maxHostLength + 26, getBytesPerHost((String)key));
             rep.newline();
         }
