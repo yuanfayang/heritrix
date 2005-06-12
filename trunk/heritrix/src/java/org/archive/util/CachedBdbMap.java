@@ -235,10 +235,14 @@ public class CachedBdbMap extends AbstractMap implements Map {
         envConfig.setAllowCreate(true);
         envConfig.setTransactional(false);
         
-        //We're doing the caching ourselves so setting these at the lowest
-        //possible level.
-        envConfig.setCacheSize(1024);
-        envConfig.setCachePercent(1);
+        // We're doing the caching ourselves so setting these at the lowest
+        // possible level.
+        // 
+        //  Commented out because this constructor causes unit tests to fail
+        //  using bdb je 2.0.  This constructor is only used by unit test
+        //
+        // envConfig.setCacheSize(1024);
+        // envConfig.setCachePercent(1);
         
         DbEnvironmentEntry env = new DbEnvironmentEntry();
         try {
