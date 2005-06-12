@@ -1,6 +1,10 @@
 <%@include file="/include/handler.jsp"%>
 
-<%@ page import="org.archive.crawler.admin.CrawlJob,org.archive.crawler.admin.StatisticsTracker,org.archive.util.LongWrapper,java.util.*" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob" %>
+<%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
+<%@ page import="org.archive.util.LongWrapper" %>
+<%@ page import="java.util.*" %>
+<%@ page import="org.archive.crawler.admin.SeedRecord" %>
 <%@ page import="org.archive.crawler.datamodel.CrawlURI"%>
 
 <%
@@ -45,24 +49,21 @@
     }
 %>
 
-        <table>
+        <table cellspacing=0>
             <tr>
-                <th>
-                    Seeds for job '<%=cjob.getJobName()%>'
-                </th>
-                <th>
+                <th style="border-bottom:solid 1px #666666;">
                     Status code
+                    <br> and Disposition
                 </th>
-                <th>
-                    Disposition
+                <th style="border-bottom:solid 1px #666666;" align="left">
+                    Seeds for job '<%=cjob.getJobName()%>'
                 </th>
             </tr>
             <%
-                Iterator seeds = stats.getSeedsSortedByStatusCode();
+                Iterator seeds = stats.getSeedRecordsSortedByStatusCode();
                 while(seeds.hasNext()){
-                    String UriString = (String)seeds.next();
-                    String disposition = stats.getSeedDisposition(UriString);
-                    int code = stats.getSeedStatusCode(UriString);
+                    SeedRecord sr = (SeedRecord)seeds.next();
+                    int code = sr.getStatusCode();
                     String statusCode = code==0 ? "" : CrawlURI.fetchStatusCodesToString(code);
                     String statusColor = "black";
                     if(code<0 || code >=400){
@@ -71,16 +72,30 @@
                         statusColor = "green";
                     }
             %>
-                    <tr>
-                        <td>
-                            <%=UriString%>
+                    <tr >
+                        <td style="border-bottom:solid 1px #666666;" align="left">
+             <%
+                 if(code!=0) {
+              %>
+                            &nbsp;<font color="<%=statusColor%>"><%=statusCode%></font>&nbsp;<br>
+             <%
+                 }
+             %>
+                            <a href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=sr.getUri()%>&grep=true" style="text-decoration: none;">
+                            <%=sr.getDisposition()%></a>
                         </td>
-                        <td align="left">
-                            &nbsp;<font color="<%=statusColor%>"><%=statusCode%></font>&nbsp;
+                        <td style="border-bottom:solid 1px #666666;" nowrap>
+                            <%=sr.getUri()%>
+             <%
+                if(sr.getRedirectUri()!=null) {
+             %>
+                        <br>&rarr; <a href="<%=sr.getRedirectUri()%>"><%=sr.getRedirectUri()%></a>
+             <%
+                }
+             %>
                         </td>
-                        <td>
-                            <a href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=UriString%>&grep=true" style="text-decoration: none;"><%=disposition%></a>
-                        </td>
+
+
                     </tr>
             <%
                 }

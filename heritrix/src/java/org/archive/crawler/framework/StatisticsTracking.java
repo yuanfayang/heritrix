@@ -180,44 +180,20 @@ public interface StatisticsTracking extends Runnable {
     public long totalCount();
     
     /**
-     * Get a seed iterator for the job being monitored. If job is no longer
-     * running, stored values will be returned. If job is running, current
-     * seed iterator will be fetched and stored values will be updated.
+     * Get a SeedRecord iterator for the job being monitored. If job is no 
+     * longer running, stored values will be returned. If job is running, 
+     * current seed iterator will be fetched and stored values will be updated.
      * <p>
      * Sort order is:<br>
      * No status code (not processed)<br>
      * Status codes smaller then 0 (largest to smallest)<br>
      * Status codes larger then 0 (largest to smallest)<br>
      * <p>
-     * <b>Note:</b> This iterator will iterate over a list of <i>strings</i> not
-     * UURIs like the Scope seed iterator. The strings are equal to the URIs'
-     * getURIString() values.
+     * <b>Note:</b> This iterator will iterate over a list of 
+     * <i>SeedRecords</i>.
      * @return the seed iterator
      */
-    public Iterator getSeedsSortedByStatusCode();
-    
-
-    /**
-     * Returns the status code of any seed. If the supplied URL is not a seed
-     * or a seed that has not been crawled it will return zero.
-     * @param UriString The URI of the seed
-     * @return the disposition of the seed
-     */
-    public int getSeedStatusCode(String UriString);
-    
-    /**
-     * Returns the disposition of any seed. If the supplied URL is not a seed
-     * it will always return 'not processed'
-     * @param UriString The URI of the seed
-     * @return the disposition of the seed
-     *
-     * @see #SEED_DISPOSITION_NOT_PROCESSED
-     * @see #SEED_DISPOSITION_SUCCESS
-     * @see #SEED_DISPOSITION_FAILURE
-     * @see #SEED_DISPOSITION_DISREGARD
-     * @see #SEED_DISPOSITION_RETRY
-     */
-    public String getSeedDisposition(String UriString);
+    public Iterator getSeedRecordsSortedByStatusCode();
 
     /**
      * @return legend of progress-statistics

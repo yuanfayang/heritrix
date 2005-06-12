@@ -1113,14 +1113,14 @@ public class CrawlJob implements DynamicMBean {
             }
             MutableString ms = new MutableString("Seed report - " +
                     ArchiveUtils.get14DigitDate());
-            for(Iterator i = this.stats.getSeedsSortedByStatusCode();
+            for(Iterator i = this.stats.getSeedRecordsSortedByStatusCode();
                     i.hasNext();) {
                 ms.append("\n");
-                String UriString = (String)i.next();
-                ms.append(UriString).append(" ");
-                int code = this.stats.getSeedStatusCode(UriString);
+                SeedRecord sr = (SeedRecord)i.next();
+                ms.append(sr.getUri()).append(" ");
+                int code = sr.getStatusCode();
                 ms.append(CrawlURI.fetchStatusCodesToString(code)).append(" ");
-                ms.append(stats.getSeedDisposition(UriString));
+                ms.append(sr.getDisposition());
             }
             return ms.toString();
         }
