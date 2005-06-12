@@ -28,6 +28,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.util.TmpDirTestCase;
+import org.archive.util.FileUtils;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.DatabaseConfig;
@@ -50,8 +51,10 @@ implements AdaptiveRevisitAttributeConstants {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setTransactional(true); 
         envConfig.setAllowCreate(true);    
-        File envDir = new File(getTmpDir() + File.separator + "AR" +
-            File.separator);
+        File envDir = new File(getTmpDir(), "AR");
+        if (envDir.exists()) {
+            FileUtils.deleteDir(envDir);
+        }
         envDir.mkdirs();
         Environment env = new Environment(envDir, envConfig);
         // Open the class catalog database. Create it if it does not
