@@ -23,6 +23,7 @@
 package org.archive.crawler.fetcher;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
@@ -63,6 +64,11 @@ public class HeritrixHttpMethodRetryHandler implements HttpMethodRetryHandler {
     
     public boolean retryMethod(HttpMethod method, IOException exception,
 			int executionCount) {
+        if(exception instanceof SocketTimeoutException) {
+            // already waited for the configured amount of time with no reply; 
+            // do not retry further until next go round
+            return false; 
+        }
 		if (executionCount >= this.maxRetryCount) {
 			// Do not retry if over max retry count
 			return false;
