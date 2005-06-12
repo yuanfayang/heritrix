@@ -182,24 +182,12 @@ implements Serializable, Lineable {
     public void setIsSeed(boolean b) {
         this.isSeed = b;
         if (this.isSeed) {
-            setSeed();
+            if(pathFromSeed==null) {
+                this.pathFromSeed = "";
+            }
+//          seeds created on redirect must have a via to be recognized; don't clear
+//            setVia(null);
         }
-    }
-
-    /**
-     * A quick way to mark this URI as being a seed.
-     *
-     * <p>Equal to calling:
-     * <code>
-     *   setIsSeed(true);
-     *   setPathFromSeed("");
-     *   setVia("")
-     * </code>
-     */
-    protected void setSeed(){
-        isSeed = true;
-        setPathFromSeed("");
-        setVia(null);
     }
 
     /**

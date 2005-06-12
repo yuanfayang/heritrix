@@ -29,8 +29,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -39,8 +41,10 @@ import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.scope.SeedFileIterator;
+import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -75,6 +79,8 @@ public class CrawlScope extends Filter {
         Logger.getLogger(CrawlScope.class.getName());
     public static final String ATTR_NAME = "scope";
     public static final String ATTR_SEEDS = "seedsfile";
+    
+    protected Set seedListeners = new HashSet();
 
     /** Constructs a new CrawlScope.
      *
@@ -269,21 +275,30 @@ public class CrawlScope extends Filter {
      * @param uuri UURI to add
      * @return true if successful, false if add failed for any reason
      */
-    public boolean addSeed(UURI uuri) {
+    public boolean addSeed(CrawlURI curi) {
         File f = getSeedfile();
         if (f != null) {
             try {
                 FileWriter fw = new FileWriter(f, true);
                 // Write to new (last) line the URL.
                 fw.write("\n");
-                fw.write(uuri.toString());
+                fw.write("# Heritrix added seed redirected from: "+curi.getVia()+"\n");
+                fw.write(curi.toString());
                 fw.flush();
                 fw.close();
+                Iterator iter = seedListeners.iterator();
+                while(iter.hasNext()) {
+                    ((SeedListener)iter.next()).addedSeed(curi);
+                }
                 return true;
             } catch (IOException e) {
                 DevUtils.warnHandle(e, "problem writing new seed");
             }
         }
         return false; 
+    }
+    
+    public void addSeedListener(SeedListener sl) {
+        seedListeners.add(sl);
     }
 }

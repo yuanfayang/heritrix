@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 
 /**
@@ -50,13 +51,13 @@ public class SeedCachingScope extends ClassicScope {
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.CrawlScope#addSeed(org.archive.crawler.datamodel.UURI)
      */
-    public boolean addSeed(UURI uuri) {
-        if (super.addSeed(uuri) == false) {
+    public boolean addSeed(CrawlURI curi) {
+        if (super.addSeed(curi) == false) {
             // failed
             return false;
         }
         List newSeeds = new ArrayList(seeds);
-        newSeeds.add(uuri);
+        newSeeds.add(curi.getUURI());
         seeds = newSeeds;
         return true;
     }

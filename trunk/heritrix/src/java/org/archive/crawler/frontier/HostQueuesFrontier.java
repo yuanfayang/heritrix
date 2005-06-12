@@ -541,7 +541,7 @@ HasUriReceiver,  CrawlStatusListener {
             // This is a feature.  This is handling for case where a seed
             // gets immediately redirected to another page.  What we're doing
             // is treating the immediate redirect target as a seed.
-            this.controller.getScope().addSeed(curi.getUURI());
+            this.controller.getScope().addSeed(curi);
             // And it needs rapid scheduling.
             curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }

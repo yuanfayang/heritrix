@@ -30,7 +30,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.framework.CrawlScope;
+import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.util.SurtPrefixSet;
@@ -47,7 +50,8 @@ import org.archive.util.SurtPrefixSet;
  *
  * @author gojomo
  */
-public class SurtPrefixedDecideRule extends PredicatedDecideRule {
+public class SurtPrefixedDecideRule extends PredicatedDecideRule 
+        implements SeedListener {
     private static final Logger logger =
         Logger.getLogger(SurtPrefixedDecideRule.class.getName());
     
@@ -210,10 +214,22 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule {
 
     /**
      * Dig through everything to get the crawl-global seeds file. 
+     * Add self as listener while at it. 
+     * 
      * @return Seed list file
      */
     protected File getSeedfile() {
-        return getSettingsHandler().getOrder().getController().getScope()
-                .getSeedfile();
+        CrawlScope scope = getSettingsHandler().getOrder().getController().getScope();
+        scope.addSeedListener(this);
+        return scope.getSeedfile();
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.scope.SeedListener#addedSeed(org.archive.crawler.datamodel.UURI)
+     */
+    public synchronized void addedSeed(CrawlURI curi) {
+        SurtPrefixSet newSurtPrefixes = (SurtPrefixSet) surtPrefixes.clone();
+        newSurtPrefixes.add(SurtPrefixSet.prefixFromPlain(curi.toString()));
+        surtPrefixes = newSurtPrefixes;
     }
 }
