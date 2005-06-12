@@ -27,6 +27,7 @@ package org.archive.crawler.datamodel;
 import it.unimi.dsi.mg4j.util.MutableString;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -209,8 +210,15 @@ public class UURIFactory extends URI {
      */
     private static final String SCHEMES_KEY = ".schemes";
     
-    private List schemes = null;
-        
+    /**
+     * System property key for list of purposefully-ignored schemes.
+     */
+    private static final String IGNORED_SCHEMES_KEY = ".ignored-schemes";
+
+    private String[] schemes = null;
+    private String[] ignoredSchemes = null;
+
+    public static final int IGNORED_SCHEME = 9999999;
     
     /**
      * Protected constructor.
@@ -219,15 +227,13 @@ public class UURIFactory extends URI {
         super();
         String s = System.getProperty(this.getClass().getName() + SCHEMES_KEY);
         if (s != null && s.length() > 0) {
-            String[] candidates = s.split(",| ");
-            for (int i = 0; i < candidates.length; i++) {
-                if (candidates[i] != null && candidates[i].length() > 0) {
-                    if (this.schemes == null) {
-                        this.schemes = new ArrayList(candidates.length);
-                    }
-                    this.schemes.add(candidates[i]);
-                }
-            }
+            schemes = s.split("[, ]+");
+            Arrays.sort(schemes);
+        }
+        String ignored = System.getProperty(this.getClass().getName() + IGNORED_SCHEMES_KEY);
+        if (s != null && s.length() > 0) {
+            ignoredSchemes  = ignored.split("[, ]+");
+            Arrays.sort(ignoredSchemes);
         }
     }
     
@@ -278,7 +284,7 @@ public class UURIFactory extends URI {
         // No factory.schemes when unit testing so allow for it being
         //  null.
         return (UURIFactory.factory.schemes != null)?
-            UURIFactory.factory.schemes.contains(tmpStr):
+            (Arrays.binarySearch(UURIFactory.factory.schemes,tmpStr)>=0):
             true;
     }
 
@@ -433,8 +439,14 @@ public class UURIFactory extends URI {
         // If a scheme, is it a supported scheme?
         if (uriScheme != null && uriScheme.length() > 0 &&
                 this.schemes != null) {
-            if (!this.schemes.contains(uriScheme)) {
-                throw new URIException("Unsupported scheme: " + uriScheme);
+            if (!(Arrays.binarySearch(schemes,uriScheme)>=0)) {
+                // unsupported; see if silently ignored
+                if((Arrays.binarySearch(ignoredSchemes,uriScheme)>=0)) {
+                    throw new URIException(
+                            IGNORED_SCHEME, "Ignored scheme: " + uriScheme);
+                } else {
+                    throw new URIException("Unsupported scheme: " + uriScheme);
+                }
             }
         }
         

@@ -57,6 +57,7 @@ import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -1514,6 +1515,10 @@ public class CrawlController implements Serializable {
      * @param l String which could not be interpreted as URI without exception
      */
     public void logUriError(URIException e, UURI u, CharSequence l) {
+        if(e.getReasonCode()==UURIFactory.IGNORED_SCHEME) {
+            // don't log those that are intentionally ignored
+            return; 
+        }
         Object[] array = {u, l};
         uriErrors.log(Level.INFO, e.getMessage(),array);
     }
