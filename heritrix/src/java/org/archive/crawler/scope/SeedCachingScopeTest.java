@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.util.TmpDirTestCase;
@@ -146,11 +147,11 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        // First make sure that I can get the seed set from seed file.
        SeedCachingScope sl = checkContent(SeedCachingScopeTest.seeds);
        // Now do add and see if get set matches seed file content.
-       final UURI uuri = UURIFactory.getInstance("http://one.two.three");
-       sl.addSeed(uuri);
+       final CrawlURI curi = new CrawlURI(UURIFactory.getInstance("http://one.two.three"));
+       sl.addSeed(curi);
        Set set = new TreeSet(SeedCachingScopeTest.CMP);
        set.addAll(SeedCachingScopeTest.seeds);
-       set.add(uuri);
+       set.add(curi);
        checkContent(sl, set);
    }
 
