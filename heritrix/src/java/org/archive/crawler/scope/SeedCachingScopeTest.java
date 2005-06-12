@@ -151,7 +151,7 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        sl.addSeed(curi);
        Set set = new TreeSet(SeedCachingScopeTest.CMP);
        set.addAll(SeedCachingScopeTest.seeds);
-       set.add(curi);
+       set.add(curi.getUURI());
        checkContent(sl, set);
    }
 
