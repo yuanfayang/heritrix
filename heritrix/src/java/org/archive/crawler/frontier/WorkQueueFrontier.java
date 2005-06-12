@@ -76,6 +76,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */ 
     private static final int MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY = 3000;
 
+    /**
+     * When a snooze target for a queue is longer than this amount, and 
+     * there are already ready queues, deactivate rather than snooze 
+     * the current queue -- so other more responsive sites get a chance
+     * in active rotation. (As a result, queue's next try may be much
+     * further in the future than the snooze target delay.)
+     */
+    private static long SNOOZE_TO_INACTIVE_DELAY = 5*60*100; // 5 minutes
+    // TODO: make configurable
+    
     private static final Logger logger =
         Logger.getLogger(WorkQueueFrontier.class.getName());
     
@@ -394,7 +404,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     }
     
     /**
-     * Put the given queue on the inactiveQueues queue
+     * Put the given queue on the retiredQueues queue
      * @param wq
      */
     private void retireQueue(WorkQueue wq) {
@@ -521,8 +531,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                             // curi will be sent to true queue after lock
                             //  on readyQ is released, to prevent deadlock
                         } else {
-                            // readyQ is empty and ready: release held, allowing
-                            // subsequent enqueues to ready
+                            // readyQ is empty and ready: it's exhausted
+                            // release held status, allowing and subsequent 
+                            // enqueues to again put queue in ready
                             readyQ.clearHeld();
                             break;
                         }
@@ -610,12 +621,21 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                     // if still over-budget after an activation & replenishing,
                     // retire
                     retireQueue(candidateQ);
-                } else {
-                    readyQueue(candidateQ);
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.fine("ACTIVATED queue: " +
-                            candidateQ.getClassKey());
-                    }
+                    return;
+                } 
+                long now = System.currentTimeMillis();
+                long delay_ms = candidateQ.getWakeTime() - now;
+                if(delay_ms>0) {
+                    // queue still due for snoozing
+                    snoozeQueue(candidateQ,now,delay_ms);
+                    return;
+                }
+                candidateQ.setWakeTime(0); // clear obsolete wake time, if any
+                readyQueue(candidateQ);
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("ACTIVATED queue: " +
+                        candidateQ.getClassKey());
+                   
                 }
             }
         }
@@ -788,10 +808,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     private void snoozeQueue(WorkQueue wq, long now, long delay_ms) {
         long nextTime = now + delay_ms;
         wq.setWakeTime(nextTime);
-        snoozedClassQueues.add(wq);
-        // Update nextWakeupTime if we're supposed to wake up even sooner.
-        if (nextTime < this.nextWakeupTime) {
-            this.nextWakeupTime = nextTime;
+        if(delay_ms>SNOOZE_TO_INACTIVE_DELAY && ! readyClassQueues.isEmpty()) {
+            deactivateQueue(wq);
+        } else {
+            snoozedClassQueues.add(wq);
+            // Update nextWakeupTime if we're supposed to wake up even sooner.
+            if (nextTime < this.nextWakeupTime) {
+                this.nextWakeupTime = nextTime;
+            }
         }
     }
 
