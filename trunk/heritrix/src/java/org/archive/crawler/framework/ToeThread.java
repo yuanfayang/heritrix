@@ -84,6 +84,7 @@ Reporter {
     private HashMap localProcessors = new HashMap();
     private String currentProcessorName = "";
 
+    private String coreName;
     private CrawlURI currentCuri;
     private long lastStartTime;
     private long lastFinishTime;
@@ -108,6 +109,7 @@ Reporter {
     public ToeThread(ToePool g, int sn) {
         // TODO: add crawl name?
         super(g,"ToeThread #" + sn);
+        coreName="ToeThread #" + sn + ": ";
         controller = g.getController();
         serialNumber = sn;
         setPriority(DEFAULT_PRIORITY);
@@ -142,7 +144,7 @@ Reporter {
                 
                 synchronized(this) {
                     continueCheck();
-                    currentCuri = curi;
+                    setCurrentCuri(curi);
                 }
                 
                 processCrawlUri();
@@ -152,7 +154,7 @@ Reporter {
 
                 synchronized(this) {
                     controller.getFrontier().finished(currentCuri);
-                    currentCuri = null;
+                    setCurrentCuri(null);
                 }
                 
                 setStep(STEP_FINISHING_PROCESS);
@@ -174,7 +176,7 @@ Reporter {
         } finally {
             controller.releaseContinuePermission();
         }
-        currentCuri = null;
+        setCurrentCuri(null);
         // Do cleanup so that objects can be GC.
         this.httpRecorder.closeRecorders();
         this.httpRecorder = null;
@@ -184,6 +186,19 @@ Reporter {
         setStep(STEP_FINISHED);
         controller.toeEnded();
         controller = null;
+    }
+
+    /**
+     * Set currentCuri, updating thread name as appropriate
+     * @param curi
+     */
+    private void setCurrentCuri(CrawlURI curi) {
+        if(curi==null) {
+            setName(coreName);
+        } else {
+            setName(coreName+curi);
+        }
+        currentCuri = curi;
     }
 
     /**
@@ -222,7 +237,9 @@ Reporter {
         err.printStackTrace(System.err);
         
         if (controller!=null) {
-            controller.getToePool().compactReportTo(new PrintWriter(System.err));
+            PrintWriter pw = new PrintWriter(System.err);
+            controller.getToePool().compactReportTo(pw);
+            pw.flush();
         }
         System.err.println(">>>");
         DevUtils.sigquitSelf();
@@ -271,6 +288,7 @@ Reporter {
         currentCuri.setThreadNumber(this.serialNumber);
         currentCuri.setNextProcessorChain(controller.getFirstProcessorChain());
         lastStartTime = System.currentTimeMillis();
+//        System.out.println(currentCuri);
         try {
             while (currentCuri.nextProcessorChain() != null) {
                 setStep(STEP_ABOUT_TO_BEGIN_CHAIN);
@@ -283,7 +301,10 @@ Reporter {
                     Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
                     currentProcessorName = currentProcessor.getName();
                     continueCheck();
+//                    long memBefore = (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024;
                     currentProcessor.process(currentCuri);
+//                    long memAfter = (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024;
+//                    System.out.println((memAfter-memBefore)+"K in "+currentProcessorName);
                 }
             }
             setStep(STEP_DONE_WITH_PROCESSORS);
@@ -453,11 +474,13 @@ Reporter {
         // See [ 994946 ] Pause/Terminate ignored on 2.6 kernel 1.5 JVM.
         CrawlURI c = currentCuri;
         if(c != null) {
+            rep.append(" ");
+            rep.append(currentProcessorName);
+            rep.append(" ");
             rep.append(c.toString());
             rep.append(" (" + c.getFetchAttempts() + ") ");
-            rep.append("in " + currentProcessorName);
         } else {
-            rep.append("[no CrawlURI]");
+            rep.append(" [no CrawlURI] ");
         }
         
         long now = System.currentTimeMillis();
@@ -474,7 +497,7 @@ Reporter {
             time = now-lastStartTime;
         }
         rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
-        rep.append("at "+step+" for "+(System.currentTimeMillis()-atStepSince)+"ms\n");
+        rep.append("at "+step+" for "+(now-atStepSince)+"ms\n");
 
         return rep.toString();
     }
