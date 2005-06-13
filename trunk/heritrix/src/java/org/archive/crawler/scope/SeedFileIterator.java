@@ -59,7 +59,7 @@ public class SeedFileIterator extends TransformingIteratorWrapper {
      * noncomment entries which don't generate a valid seed to
      * the supplied BufferedWriter.
      * 
-     * @param br BufferedReader from which to get seeds
+     * @param inputReader BufferedReader from which to get seeds
      * @param ignoredWriter BufferedWriter to report any ignored input 
      */
     public SeedFileIterator(BufferedReader inputReader, Writer ignoredWriter) {
@@ -73,13 +73,10 @@ public class SeedFileIterator extends TransformingIteratorWrapper {
         ignored = ignoredWriter;
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.util.iterator.TransformingIteratorWrapper#transform(java.lang.Object)
-     */
     protected Object transform(Object object) {
         String uri = (String)object;
-        if(! uri.matches("[a-zA-Z][\\w+\\.]+:.*")) { // rfc2396 s3.1 scheme
-            // does not begin with scheme, so try http://
+        if(! uri.matches("[a-zA-Z][\\w+\\.\\-]+:.*")) { // Rfc2396 s3.1 scheme.
+            // Does not begin with scheme, so try http://
             uri = "http://"+uri;
         }
         try {
