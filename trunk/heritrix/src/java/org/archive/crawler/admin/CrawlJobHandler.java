@@ -881,13 +881,16 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @throws InvalidAttributeValueException 
      * @throws AttributeNotFoundException 
      */
-    private void updateRecoveryPaths(CrawlJob baseOn, XMLSettingsHandler newHandler) throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
+    private void updateRecoveryPaths(CrawlJob baseOn,
+            XMLSettingsHandler newHandler)
+    throws AttributeNotFoundException, InvalidAttributeValueException,
+    MBeanException, ReflectionException {
         // First, bring original crawl's recovery-log path into 
         // new job's 'recover-path'
         File oldLogsDisk = null;
         try {
-            oldLogsDisk = baseOn.getSettingsHandler().getOrder().getSettingsDir(
-                    CrawlOrder.ATTR_LOGS_PATH);
+            oldLogsDisk = baseOn.getSettingsHandler().getOrder().
+                getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
         } catch (AttributeNotFoundException e) {
             logger.severe("Failed to get logs directory " + e);
         }
