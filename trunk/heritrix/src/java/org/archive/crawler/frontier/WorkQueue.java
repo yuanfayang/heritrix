@@ -134,7 +134,7 @@ public abstract class WorkQueue implements Comparable, Serializable {
      * change it. 
      * 
      * TODO: evaluate if this is really necessary
-     * @param queues Work queues manager
+     * @param frontier Work queues manager
      * 
      * @return topmost queue item, or null
      */

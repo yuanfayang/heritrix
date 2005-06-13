@@ -203,16 +203,15 @@ public class BdbMultipleWorkQueues {
         cursor.close();
         if(status == OperationStatus.SUCCESS) {
             return key;
-        } else {
-            return null;
         }
+        return null;
     }
     
     /**
      * Get the next nearest item after the given key. Relies on 
      * external discipline to avoid asking for something from an
-     * origin where there are no associated items -- otherwise
-     * could get first item of next 'queue' by mistake. 
+     * origin/<code>headKey</code> where there are no associated items --
+     * otherwise could get first item of next 'queue' by mistake. 
      * 
      * TODO: hold within a queue's range
      * 
@@ -222,11 +221,27 @@ public class BdbMultipleWorkQueues {
      */
     public CrawlURI get(DatabaseEntry headKey) throws DatabaseException {
         DatabaseEntry result = new DatabaseEntry();
-        Cursor cursor = pendingUrisDB.openCursor(null,null);
-        cursor.getSearchKeyRange(headKey, result, null);
+        Cursor cursor = pendingUrisDB.openCursor(null, null);
+        // From Linda Lee of sleepycat:
+        // "You want to check the status returned from Cursor.getSearchKeyRange
+        // to make sure that you have OperationStatus.SUCCESS. In that case,
+        // you have found a valid data record, and result.getData()
+        // (called by internally by the binding code, in this case) will be
+        // non-null. The other possible status return is
+        // OperationStatus.NOTFOUND, in which case no data record matched
+        // the criteria. "
+        OperationStatus status =
+            cursor.getSearchKeyRange(headKey, result, null);
         cursor.close();
-        CrawlURI retVal = (CrawlURI) crawlUriBinding.entryToObject(result);
-        retVal.setHolderKey(headKey);
+        CrawlURI retVal = null;
+        if (status == OperationStatus.SUCCESS) {
+            retVal = (CrawlURI)crawlUriBinding.entryToObject(result);
+            retVal.setHolderKey(headKey);
+        } else {
+            throw new DatabaseException("See '1219854 NPE je-2.0 " +
+                "entryToObject...'. OperationStatus " +
+                " was not SUCCESS: " + status);
+        }
         return retVal;
     }
     
