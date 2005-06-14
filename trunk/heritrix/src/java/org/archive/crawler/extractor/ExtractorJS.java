@@ -30,6 +30,7 @@ import java.util.regex.Matcher;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
@@ -55,7 +56,10 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
     // (areas between paired ' or " characters, possibly backslash-quoted
     // on the ends, but not in the middle)
     static final String JAVASCRIPT_STRING_EXTRACTOR =
-        "(\\\\*(?:\"|\'))(\\S{0,2083}?)(?:\\1)";
+        "(\\\\*(?:\"|\'))(\\S{0,"+UURI.MAX_URL_LENGTH+"}?)(?:\\1)";
+    // GROUPS:
+    // (G1) ' or " with optional leading backslashes
+    // (G2) whitespace-free string delimited on boths ends by G1
 
     // determines whether a string is likely URI
     // (no whitespace or '<' '>',  has an internal dot or some slash,
