@@ -83,7 +83,7 @@ implements CoreAttributeConstants {
 // version w/ less unnecessary backtracking
       private static final int MAX_ELEMENT_LENGTH =
           Integer.parseInt(System.getProperty(ExtractorHTML.class.getName() +
-              ".maxElementLength", "1024"));
+              ".maxElementNameLength", "1024"));
       
       static final String RELEVANT_TAG_EXTRACTOR =
           "(?is)<(?:((script[^>]*+)>.*?</script)" + // 1, 2
@@ -106,8 +106,14 @@ implements CoreAttributeConstants {
 //    static Pattern ROBOTS_ATTRIBUTE_EXTRACTOR = Pattern.compile(
 //     "(?is)(\\w+)\\s+.*?(?:(robots))\\s*=(?:(?:\\s*\"(.+)\")|(?:\\s*'(.+)')|(\\S+))");
 
-      static final int MAX_ATTR_NAME_LENGTH = 1024; // 1K; 
-      static final int MAX_ATTR_VAL_LENGTH = 16 * 1024; // 16K; 
+      private static final int MAX_ATTR_NAME_LENGTH =
+          Integer.parseInt(System.getProperty(ExtractorHTML.class.getName() +
+              ".maxAttributeNameLength", "1024")); // 1K; 
+      
+      static final int MAX_ATTR_VAL_LENGTH = 
+          Integer.parseInt(System.getProperty(ExtractorHTML.class.getName() +
+              ".maxAttributeValueLength", "16384")); // 16K; 
+      
     // TODO: perhaps cut to near MAX_URI_LENGTH
     
     // this pattern extracts attributes from any open-tag innards
