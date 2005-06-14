@@ -92,8 +92,14 @@ implements CoreAttributeConstants, FetchStatusCodes {
     // set as true
     transient private boolean linkExtractorFinished = false;
 
-    // protection against outlink overflow
-    public static int MAX_OUTLINKS = 6000;
+    /**
+     * Protection against outlink overflow.
+     * Change value by setting alternate maximum in heritrix.properties.
+     */
+    public static final int MAX_OUTLINKS = Integer.
+        parseInt(System.getProperty(CrawlURI.class.getName() + ".maxOutLinks",
+            "6000"));
+    
     transient private int discardedOutlinks = 0; 
     
 ////////////////////////////////////////////////////////////////////
