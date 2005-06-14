@@ -225,9 +225,7 @@ public class ClassicScope extends CrawlScope {
      * reconfiguration (such as reading from external files) may be necessary.
      */
     public void kickUpdate() {
-        // TODO: evaluate whether refreshSeeds brings in too
-        // much (eg if crawling from a million seeds)
-        refreshSeeds();
+        super.kickUpdate();
         excludeFilter.kickUpdate();
     }
 }

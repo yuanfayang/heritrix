@@ -80,6 +80,15 @@ public class CrawlScope extends Filter {
     public static final String ATTR_NAME = "scope";
     public static final String ATTR_SEEDS = "seedsfile";
     
+    /**
+     * Whether every configu change should trigger a 
+     * rereading of the original seeds spec/file.
+     */
+    public static final String 
+        ATTR_REREAD_SEEDS_ON_CONFIG = "reread-seeds-on-config";
+    public static final Boolean
+        DEFAULT_REREAD_SEEDS_ON_CONFIG = Boolean.TRUE;
+    
     protected Set seedListeners = new HashSet();
 
     /** Constructs a new CrawlScope.
@@ -93,6 +102,15 @@ public class CrawlScope extends Filter {
         Type t;
         t = addElementToDefinition(new SimpleType(ATTR_SEEDS,
                 "File from which to extract seeds.", "seeds.txt"));
+        t.setOverrideable(false);
+        t.setExpertSetting(true);
+        t = addElementToDefinition(new SimpleType(ATTR_REREAD_SEEDS_ON_CONFIG,
+                "Whether to reread the seeds specification, whether it has " +
+                "changed or not, every time any configuration change occurs. " +
+                "If true, seeds are reread even when (for example) new " +
+                "domain overrides are set. Rereading the seeds can take a " +
+                "long time with large seed lists.", 
+                DEFAULT_REREAD_SEEDS_ON_CONFIG));
         t.setOverrideable(false);
         t.setExpertSetting(true);
 
@@ -218,9 +236,14 @@ public class CrawlScope extends Filter {
      * files) may be necessary.
      */
     public void kickUpdate() {
-        // TODO:  evaluate whether refreshSeeds brings in too 
-        // much (eg if crawling from a million seeds)    
-        refreshSeeds();
+        // TODO: further improve this so that case with hundreds of
+        // thousands or millions of seeds works better without requiring
+        // this specific settings check 
+        if (((Boolean) getUncheckedAttribute(null, ATTR_REREAD_SEEDS_ON_CONFIG))
+                .booleanValue()) {
+            refreshSeeds();
+            getSettingsHandler().getOrder().getController().getFrontier().loadSeeds();
+        }
     }
 
     /**
