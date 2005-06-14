@@ -62,6 +62,20 @@ public class DecideRule extends ModuleType {
     }
 
     /**
+     * If this rule is "one-way" -- can only return a single
+     * possible decision other than PASS -- return that 
+     * decision. Otherwise return null. Most rules will be
+     * one-way. 
+     * 
+     * @return the one decision other than PASS this rule might
+     * return, if there is only one
+     */
+    public Object singlePossibleNonPassDecision(Object object) {
+        // by default, don't assume one-way
+        return null;
+    }
+    
+    /**
      * Respond to a settings update, refreshing any internal settings-derived
      * state.
      * 

@@ -46,6 +46,10 @@ public class ConfiguredDecideRule extends DecideRule {
     }
 
     public Object decisionFor(Object object) {
+        return singlePossibleNonPassDecision(object);
+    }
+    
+    public Object singlePossibleNonPassDecision(Object object) {
         Object decision = getUncheckedAttribute(object, ATTR_DECISION);
         // We're not always getting back from the settings system the
         // interned versions of ACCEPT and REJECT.  Guard against this.
