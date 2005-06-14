@@ -81,7 +81,10 @@ implements CoreAttributeConstants {
      * <li> 8: !-- comment --
      */
 // version w/ less unnecessary backtracking
-      static final int MAX_ELEMENT_LENGTH = 1024;
+      private static final int MAX_ELEMENT_LENGTH =
+          Integer.parseInt(System.getProperty(ExtractorHTML.class.getName() +
+              ".maxElementLength", "1024"));
+      
       static final String RELEVANT_TAG_EXTRACTOR =
           "(?is)<(?:((script[^>]*+)>.*?</script)" + // 1, 2
           "|((style[^>]*+)>[^<]*+</style)" + // 3, 4
