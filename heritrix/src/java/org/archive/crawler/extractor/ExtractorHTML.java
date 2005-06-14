@@ -80,15 +80,20 @@ implements CoreAttributeConstants {
      * <li> 7: META
      * <li> 8: !-- comment --
      */
-// version w/ problems with unclosed script tags 
-//   static final String RELEVANT_TAG_EXTRACTOR =
-//   "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>";
-
 // version w/ less unnecessary backtracking
+      static final int MAX_ELEMENT_LENGTH = 1024;
       static final String RELEVANT_TAG_EXTRACTOR =
-          "(?is)<(?:((script[^>]*+)>.*?</script)|((style[^>]*+)>[^<]*+</style)|(((meta)|(?:\\w+))\\s+[^>]*+)|(!--.*?--))>";
+          "(?is)<(?:((script[^>]*+)>.*?</script)" + // 1, 2
+          "|((style[^>]*+)>[^<]*+</style)" + // 3, 4
+          "|(((meta)|(?:\\w{1,"+MAX_ELEMENT_LENGTH+"}))\\s+[^>]*+)" + // 5, 6, 7
+          "|(!--.*?--))>"; // 8 
+
+//    version w/ problems with unclosed script tags 
+//    static final String RELEVANT_TAG_EXTRACTOR =
+//    "(?is)<(?:((script.*?)>.*?</script)|((style.*?)>.*?</style)|(((meta)|(?:\\w+))\\s+.*?)|(!--.*?--))>";
 
 
+      
 //    // this pattern extracts 'href' or 'src' attributes from
 //    // any open-tag innards matched by the above
 //    static Pattern RELEVANT_ATTRIBUTE_EXTRACTOR = Pattern.compile(
@@ -98,19 +103,23 @@ implements CoreAttributeConstants {
 //    static Pattern ROBOTS_ATTRIBUTE_EXTRACTOR = Pattern.compile(
 //     "(?is)(\\w+)\\s+.*?(?:(robots))\\s*=(?:(?:\\s*\"(.+)\")|(?:\\s*'(.+)')|(\\S+))");
 
+      static final int MAX_ATTR_NAME_LENGTH = 1024; // 1K; 
+      static final int MAX_ATTR_VAL_LENGTH = 16 * 1024; // 16K; 
+    // TODO: perhaps cut to near MAX_URI_LENGTH
+    
     // this pattern extracts attributes from any open-tag innards
     // matched by the above. attributes known to be URIs of various
     // sorts are matched specially
     static final String EACH_ATTRIBUTE_EXTRACTOR =
-      "(?is)\\s((href)|(action)|(on\\w*)"
-     +"|((?:src)|(?:lowsrc)|(?:background)|(?:cite)|(?:longdesc)"
-     +"|(?:usemap)|(?:profile)|(?:datasrc))"
-     +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)"
-     +"|(value)|([-\\w]+))"
+      "(?is)\\s((href)|(action)|(on\\w*)" // 1, 2, 3, 4 
+     +"|((?:src)|(?:lowsrc)|(?:background)|(?:cite)|(?:longdesc)" // ...
+     +"|(?:usemap)|(?:profile)|(?:datasrc))" // 5
+     +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)" // 6, 7, 8, 9
+     +"|(value)|([-\\w]{1,"+MAX_ATTR_NAME_LENGTH+"}))" // 10, 11
      +"\\s*=\\s*"
-     +"(?:(?:\"(.*?)(?:\"|$))"
-     +"|(?:'(.*?)(?:'|$))"
-     +"|(\\S+))";
+     +"(?:(?:\"(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:\"|$))" // 12
+     +"|(?:'(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:'|$))" // 13
+     +"|(\\S{1,"+MAX_ATTR_VAL_LENGTH+"}))"; // 14
     // groups:
     // 1: attribute name
     // 2: HREF - single URI relative to doc base, or occasionally javascript:
@@ -625,7 +634,7 @@ implements CoreAttributeConstants {
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
             String refreshUri = content.substring(content.indexOf("=") + 1);
             try {
-                curi.createAndAddLinkRelativeToBase(refreshUri, cs.toString(),
+                curi.createAndAddLinkRelativeToBase(refreshUri, "meta",
                     Link.REFER_HOP);
             } catch (URIException e) {
                 if (getController() != null) {
