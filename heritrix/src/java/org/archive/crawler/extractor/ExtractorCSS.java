@@ -33,6 +33,7 @@ import java.util.regex.Matcher;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
@@ -73,7 +74,11 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
 //    static final String CSS_URI_EXTRACTOR =
 //        "url[(]\\s*([\"\']?)([^\\\"\\'].*?)\\1\\s*[)]";
     static final String CSS_URI_EXTRACTOR =    
-    "(?:@import (?:url[(]|)|url[(])\\s*([\\\"\']?)([^\\\"\'].*?)\\1\\s*[);]";
+    "(?:@import (?:url[(]|)|url[(])\\s*([\\\"\']?)" + // G1
+    "([^\\\"\'].{0,"+UURI.MAX_URL_LENGTH+"}?)\\1\\s*[);]"; // G2
+    // GROUPS:
+    // (G1) optional ' or "
+    // (G2) URI
     
     private long numberOfCURIsHandled = 0;
     private long numberOfLinksExtracted = 0;
