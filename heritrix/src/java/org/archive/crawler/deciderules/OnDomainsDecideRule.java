@@ -48,8 +48,8 @@ public class OnDomainsDecideRule extends SurtPrefixedDecideRule {
                  "configured set of domains (derived from the seed" +
                  "list, with \"www\" removed when present).");
         // disable direct setting of SURTs-related options
-       getElementFromDefinition(ATTR_SEEDS_AS_SURT_PREFIXES).setTransient(true);
-       getElementFromDefinition(ATTR_SURTS_SOURCE_FILE).setTransient(true);
+       //getElementFromDefinition(ATTR_SEEDS_AS_SURT_PREFIXES).setTransient(true);
+       //getElementFromDefinition(ATTR_SURTS_SOURCE_FILE).setTransient(true);
        // leaving surts-dump as option helpful for debugging/learning, for now
        //getElementFromDefinition(ATTR_SURTS_DUMP_FILE).setTransient(true);
     }
