@@ -40,4 +40,8 @@ public class RejectDecideRule extends DecideRule {
     public Object decisionFor(Object object) {
         return REJECT;
     }
+    
+    public Object singlePossibleNonPassDecision(Object object) {
+        return REJECT;
+    }
 }

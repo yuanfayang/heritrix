@@ -64,6 +64,10 @@ public class DecideRuleSequence extends DecideRule {
         for(Iterator iter = getRules(object).iterator(object);
                 iter.hasNext();) {
             DecideRule r = (DecideRule)iter.next();
+            if(runningAnswer==r.singlePossibleNonPassDecision(object)) {
+                // there's no chance this rule will change the decision;
+                continue;
+            }
             Object answer = r.decisionFor(object);
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("Rule " + r.getName() + " of " + this.getName() +
@@ -88,5 +92,17 @@ public class DecideRuleSequence extends DecideRule {
             logger.severe(e.getLocalizedMessage());
         }
         return rules;
+    }
+    
+    /* kick-update all constituent rules
+     * (non-Javadoc)
+     * @see org.archive.crawler.deciderules.DecideRule#kickUpdate()
+     */
+    public void kickUpdate() {
+        for(Iterator iter = getRules(null).iterator(null);
+                iter.hasNext();) {
+            DecideRule r = (DecideRule)iter.next();
+            r.kickUpdate();
+        }
     }
 }
