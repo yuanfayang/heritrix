@@ -806,7 +806,8 @@ public abstract class AbstractFrontier extends ModuleType implements
      * @see org.archive.crawler.framework.URIFrontier#kickUpdate()
      */
     public void kickUpdate() {
-        loadSeeds();
+        // by default, do nothing
+        // (scope will loadSeeds, if appropriate)
     }
 
     /**

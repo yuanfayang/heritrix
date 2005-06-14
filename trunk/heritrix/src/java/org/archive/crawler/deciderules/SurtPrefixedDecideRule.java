@@ -63,6 +63,15 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
     private static final Boolean DEFAULT_SEEDS_AS_SURT_PREFIXES =
         new Boolean(true);
 
+    /**
+     * Whether every configu change should trigger a 
+     * rebuilding of the prefix set.
+     */
+    public static final String 
+        ATTR_REBUILD_ON_RECONFIG = "rebuild-on-reconfig";
+    public static final Boolean
+        DEFAULT_REBUILD_ON_RECONFIG = Boolean.TRUE;
+    
     protected SurtPrefixSet surtPrefixes = null;
 
     /**
@@ -83,6 +92,16 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         Type t = addElementToDefinition(new SimpleType(ATTR_SURTS_DUMP_FILE,
                 "Dump file to save SURT prefixes actually used: " +
                 "Useful debugging SURTs.", ""));
+        t.setExpertSetting(true);
+        t = addElementToDefinition(new SimpleType(ATTR_REBUILD_ON_RECONFIG,
+                "Whether to rebuild the internal structures from source " +
+                "files (including seeds if appropriate) every time any " +
+                "configuration change occurs. If true, " +
+                "rule is rebuilt from sources even when (for example) " +
+                "unrelated new domain overrides are set. Rereading large" +
+                "source files can take a long time.", 
+                DEFAULT_REBUILD_ON_RECONFIG));
+        t.setOverrideable(false);
         t.setExpertSetting(true);
     }
 
@@ -170,7 +189,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
             try {
                 fr = new FileReader(source);
                 try {
-                    newSurtPrefixes.importFrom(fr);
+                    newSurtPrefixes.importFromMixed(fr, true);
                 } finally {
                     fr.close();
                 }
@@ -207,9 +226,13 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
      */
     public synchronized void kickUpdate() {
         super.kickUpdate();
+        if (((Boolean) getUncheckedAttribute(null, ATTR_REBUILD_ON_RECONFIG))
+                .booleanValue()) {
+            readPrefixes();
+        }
         // TODO: make conditional on file having actually changed,
         // perhaps by remembering mod-time
-        readPrefixes();
+
     }
 
     /**

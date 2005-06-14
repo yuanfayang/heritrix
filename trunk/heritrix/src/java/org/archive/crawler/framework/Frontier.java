@@ -445,4 +445,10 @@ public interface Frontier {
      * @return Classkey for <code>cauri</code>.
      */
     public String getClassKey(CandidateURI cauri);
+
+    /**
+     * Request that the Frontier load (or reload) crawl seeds, 
+     * typically by contacting the Scope. 
+     */
+    public void loadSeeds();
 }

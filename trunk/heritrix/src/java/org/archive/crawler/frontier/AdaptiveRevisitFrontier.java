@@ -200,7 +200,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * <p>
      * This method is called by initialize() and kickUpdate()
      */
-    private void loadSeeds() {
+    public void loadSeeds() {
         Writer ignoredWriter = new StringWriter();
         // Get the seeds to refresh.
         Iterator iter = this.controller.getScope().seedsIterator(ignoredWriter);

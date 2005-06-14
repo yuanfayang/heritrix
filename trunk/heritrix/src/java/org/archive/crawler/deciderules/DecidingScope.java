@@ -67,4 +67,15 @@ public class DecidingScope extends CrawlScope {
         // doesn't enforce/maintain identity
         return getDecideRule(o).decisionFor(o).equals(DecideRule.ACCEPT);
     }
+    
+    /**
+     * Note that configuration updates may be necessary. Pass to
+     * constituent rules.
+     */
+    public void kickUpdate() {
+        super.kickUpdate();
+        // TODO: figure out if there's any way to reconcile this with
+        // overrides/refinement rules
+        getDecideRule(null).kickUpdate();
+    }
 }
