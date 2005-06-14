@@ -24,6 +24,7 @@ package org.archive.crawler.admin;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -189,7 +190,7 @@ implements CrawlURIDispositionListener {
     }
     
     private Map makeSeedsMap() {
-        return new HashMap();
+        return Collections.synchronizedMap(new HashMap());
         // TODO: BDBify
     }
 
