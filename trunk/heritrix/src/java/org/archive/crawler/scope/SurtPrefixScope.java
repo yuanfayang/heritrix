@@ -130,7 +130,7 @@ public class SurtPrefixScope extends RefinedScope {
             try {
                 fr = new FileReader(source);
                 try {
-                    surtPrefixes.importFrom(fr);
+                    surtPrefixes.importFromMixed(fr,true);
                 } finally {
                     fr.close();
                 }
