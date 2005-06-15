@@ -193,8 +193,6 @@ public class CrawlJob implements DynamicMBean {
         THREAD_COUNT_ATTR, DOWNLOAD_COUNT_ATTR, DISCOVERED_COUNT_ATTR};
     private final static List ATTRIBUTE_LIST = Arrays.asList(ATTRIBUTE_ARRAY);
     
-    private final static String ATTRIBUTES = "Attributes";
-    
     private final static String IMPORT_URI_OPER = "importUri";
     private final static String IMPORT_URIS_OPER = "importUris";
     private final static String PAUSE_OPER = "pause";
@@ -203,11 +201,16 @@ public class CrawlJob implements DynamicMBean {
     private final static String FRONTIER_REPORT_OPER = "frontierReport";
     private final static String THREADS_REPORT_OPER = "threadsReport";
     private final static String SEEDS_REPORT_OPER = "seedsReport";
+    private final static String PROGRESS_STATISTICS_OPER =
+        "progressStatistics";
+    private final static String PROGRESS_STATISTICS_LEGEND_OPER =
+        "progressStatisticsLegend";
     private final static List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {IMPORT_URI_OPER,
             IMPORT_URIS_OPER, PAUSE_OPER, RESUME_OPER, TERMINATE_OPER,
-            FRONTIER_REPORT_OPER, THREADS_REPORT_OPER, SEEDS_REPORT_OPER});
+            FRONTIER_REPORT_OPER, THREADS_REPORT_OPER, SEEDS_REPORT_OPER,
+            PROGRESS_STATISTICS_OPER, PROGRESS_STATISTICS_LEGEND_OPER});
     }
     
     protected CrawlJob() {
@@ -865,10 +868,9 @@ public class CrawlJob implements DynamicMBean {
         
         args = new OpenMBeanParameterInfoSupport[3];
         args[0] = new OpenMBeanParameterInfoSupport("pathOrUrl",
-            "Path or URL to file of URLs to add to the frontier",
-            SimpleType.STRING);
+            "Path or URL to file of URLs", SimpleType.STRING);
         args[1] = new OpenMBeanParameterInfoSupport("style",
-            "File format (default|crawlLog|recoveryJournal)",
+            "Format format: default|crawlLog|recoveryJournal",
             SimpleType.STRING);
         args[2] = new OpenMBeanParameterInfoSupport("forceFetch",
             "True if URLs are to be force fetched", SimpleType.BOOLEAN);
@@ -898,6 +900,16 @@ public class CrawlJob implements DynamicMBean {
         
         operations[7] = new OpenMBeanOperationInfoSupport(SEEDS_REPORT_OPER,
              "Seeds report", null, SimpleType.STRING, MBeanOperationInfo.INFO);  
+ 
+        operations[8] =
+            new OpenMBeanOperationInfoSupport(PROGRESS_STATISTICS_OPER,
+                "Progress statistics at time of invocation", null,
+                SimpleType.STRING, MBeanOperationInfo.INFO); 
+        
+        operations[9] = new OpenMBeanOperationInfoSupport(
+            PROGRESS_STATISTICS_LEGEND_OPER,
+                "Progress statistics legend", null,
+                SimpleType.STRING, MBeanOperationInfo.INFO);  
         
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
@@ -1125,6 +1137,29 @@ public class CrawlJob implements DynamicMBean {
                 ms.append(sr.getDisposition());
             }
             return ms.toString();
+        }
+        
+        if (operationName.equals(PROGRESS_STATISTICS_OPER)) {
+            JmxUtils.checkParamsCount(PROGRESS_STATISTICS_OPER, params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            return getStatisticsTracking().progressStatisticsLine();
+        }
+        
+        if (operationName.equals(PROGRESS_STATISTICS_LEGEND_OPER)) {
+            JmxUtils.checkParamsCount(PROGRESS_STATISTICS_LEGEND_OPER,
+                    params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            return getStatisticsTracking().progressStatisticsLegend();
         }
         
         throw new ReflectionException(
