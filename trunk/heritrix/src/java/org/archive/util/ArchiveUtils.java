@@ -117,7 +117,6 @@ public class ArchiveUtils {
      * W3C/ISO8601 format, assuming UTC. Use current time. 
      * 
      * Format is yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
-     * @param date Date to format.
      * 
      * @return the date stamp
      */
@@ -482,6 +481,28 @@ public class ArchiveUtils {
                   
         for(i = 0, shift = 56; i < 8; i++, shift -= 8)
         array[offset+i] = (byte)(0xFF & (l >> shift));
+    }
+    
+    public static long byteArrayIntoLong(byte [] bytearray) {
+        return byteArrayIntoLong(bytearray, 0);
+    }
+    
+    /**
+     * Byte array into long.
+     * @param bytearray Array to convert to a long.
+     * @param offset Offset into array at which we start decoding the long.
+     * @return Long made of the bytes of <code>array</code> beginning at
+     * offset <code>offset</code>.
+     * @see #longIntoByteArray(long, byte[], int)
+     */
+    public static long byteArrayIntoLong(byte [] bytearray,
+            int offset) {
+        long result = 0;
+        for (int i = offset; i < 8 /*Bytes in long*/; i++) {
+            result = (result << 8 /*Bits in byte*/) |
+                (0xff & (byte)(bytearray[i] & 0xff));
+        }
+        return result;
     }
 
     /**
