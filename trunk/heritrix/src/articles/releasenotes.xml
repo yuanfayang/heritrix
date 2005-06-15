@@ -43,7 +43,9 @@
         <para>Because of this change, order files from 1.4.0 Heritrix or
         before will need to be updated -- Postselector references replaced
         by LinkScoper and FrontierScheduler references  -- before they
-        can be used with Heritrix 1.6.0.
+        can be used with Heritrix 1.6.0 (Referencing a non-existent
+        Postselector in an order file usually shows as -50 fetch status
+        in crawl.log).
         </para>
         </sect3>
         </sect2>
