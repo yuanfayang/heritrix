@@ -283,5 +283,19 @@ public class ArchiveUtilsTest extends TestCase {
                     (date1 < date2 && date2 < (date1 + delta)) ||
                     (date2 < date1 && date1 < (date2 + delta)));
     }
+    
+    public void testArrayToLong() {
+        testOneArrayToLong(-1);
+        testOneArrayToLong(1);
+        testOneArrayToLong(1000);
+        testOneArrayToLong(Integer.MAX_VALUE);
+    }
+    
+    private void testOneArrayToLong(final long testValue) {
+        byte [] a = new byte[8];
+        ArchiveUtils.longIntoByteArray(testValue, a, 0);
+        final long l = ArchiveUtils.byteArrayIntoLong(a, 0);
+        assertEquals(testValue, l);
+    }
 }
 
