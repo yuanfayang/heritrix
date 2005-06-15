@@ -1520,15 +1520,15 @@ public class Heritrix implements DynamicMBean {
         
         args = new OpenMBeanParameterInfoSupport[1];
         args[0] = new OpenMBeanParameterInfoSupport("orderPathOrUrl",
-            "File path or URL pointing at an order file",
+            "File path or URL of order file",
             SimpleType.STRING);
         operations[5] = new OpenMBeanOperationInfoSupport(
             Heritrix.ADD_CRAWL_JOB_OPER, "Add a new crawl job", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
         
         args = new OpenMBeanParameterInfoSupport[4];
-        args[0] = new OpenMBeanParameterInfoSupport("jobUidOrProfileName",
-            "Job UID or profile name to base job on", SimpleType.STRING);
+        args[0] = new OpenMBeanParameterInfoSupport("uidOrName",
+            "Job UID or profile name", SimpleType.STRING);
         args[1] = new OpenMBeanParameterInfoSupport("name",
             "Basename for new job", SimpleType.STRING);
         args[2] = new OpenMBeanParameterInfoSupport("description",
