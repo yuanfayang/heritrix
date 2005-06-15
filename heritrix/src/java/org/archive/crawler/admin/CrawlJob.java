@@ -192,7 +192,9 @@ public class CrawlJob implements DynamicMBean {
         CURRENT_DOC_RATE_ATTR, KB_RATE_ATTR, CURRENT_KB_RATE_ATTR,
         THREAD_COUNT_ATTR, DOWNLOAD_COUNT_ATTR, DISCOVERED_COUNT_ATTR};
     private final static List ATTRIBUTE_LIST = Arrays.asList(ATTRIBUTE_ARRAY);
-
+    
+    private final static String ATTRIBUTES = "Attributes";
+    
     private final static String IMPORT_URI_OPER = "importUri";
     private final static String IMPORT_URIS_OPER = "importUris";
     private final static String PAUSE_OPER = "pause";
@@ -887,15 +889,15 @@ public class CrawlJob implements DynamicMBean {
             MBeanOperationInfo.ACTION);
         
         operations[5] = new OpenMBeanOperationInfoSupport(FRONTIER_REPORT_OPER,
-             "Full frontier report", null, SimpleType.VOID,
+             "Full frontier report", null, SimpleType.STRING,
              MBeanOperationInfo.INFO);
         
         operations[6] = new OpenMBeanOperationInfoSupport(THREADS_REPORT_OPER,
-             "Full thread report", null, SimpleType.VOID,
+             "Full thread report", null, SimpleType.STRING,
              MBeanOperationInfo.INFO);
         
         operations[7] = new OpenMBeanOperationInfoSupport(SEEDS_REPORT_OPER,
-             "Seeds report", null, SimpleType.VOID, MBeanOperationInfo.INFO);  
+             "Seeds report", null, SimpleType.STRING, MBeanOperationInfo.INFO);  
         
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
