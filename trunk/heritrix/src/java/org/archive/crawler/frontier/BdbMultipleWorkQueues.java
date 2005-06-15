@@ -102,7 +102,6 @@ public class BdbMultipleWorkQueues {
         Pattern pattern = Pattern.compile(match);
         DatabaseEntry key = headKey;
         DatabaseEntry value = new DatabaseEntry();
-
         Cursor cursor = null;
         try {
             cursor = pendingUrisDB.openCursor(null, null);
@@ -240,7 +239,9 @@ public class BdbMultipleWorkQueues {
         } else {
             throw new DatabaseException("See '1219854 NPE je-2.0 " +
                 "entryToObject...'. OperationStatus " +
-                " was not SUCCESS: " + status);
+                " was not SUCCESS: " + status + ", headKey " +
+                Long.toHexString(ArchiveUtils.
+                    byteArrayIntoLong(headKey.getData())));
         }
         return retVal;
     }

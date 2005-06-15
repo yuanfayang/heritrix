@@ -24,6 +24,8 @@ package org.archive.crawler.frontier;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.ArchiveUtils;
@@ -40,6 +42,9 @@ import com.sleepycat.je.DatabaseException;
  */
 public class BdbWorkQueue extends WorkQueue
 implements Comparable, Serializable {
+    private static Logger LOGGER =
+        Logger.getLogger(BdbWorkQueue.class.getName());
+    
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
         .classnameBasedUID(BdbWorkQueue.class, 1);
@@ -56,6 +61,9 @@ implements Comparable, Serializable {
         origin = new byte[16];
         long fp = FPGenerator.std64.fp(classKey) & 0xFFFFFFFFFFFFFFF0l;
         ArchiveUtils.longIntoByteArray(fp, origin, 0);
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine(Long.toHexString(fp));
+        }
     }
 
     protected long deleteMatchingFromQueue(final WorkQueueFrontier frontier,
