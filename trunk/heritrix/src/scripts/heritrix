@@ -110,10 +110,12 @@ fi
 # interpolated (First need to find the current password if one supplied on
 # command-line, else use whats in heritrix.properties as default).
 # Need to make it so its only readable by user else jconsole won't use it.
-JMX_PASSWORD=`echo "$@" |sed -n -e 's/.*--admin=[^:]*:\([^ ]*\).*/\1/p'`
+JMX_PASSWORD=`echo "$@" |sed -n -e 's/.*--admin=[^:]*:\([^ ]*\).*/\1/p' \
+    -e 's/.*-a *[^:]*:\([^ ]*\).*/\1/p'`
 if [ -z "$JMX_PASSWORD" ]
 then
-    JMX_PASSWORD=`sed -n -e 's/heritrix.cmdline.admin[ ]*=[^:]*:\(.*\)/\1/p' ${HERITRIX_HOME}/conf/heritrix.properties`
+    JMX_PASSWORD=`sed -n -e 's/heritrix.cmdline.admin[ ]*=[^:]*:\(.*\)/\1/p' \
+        ${HERITRIX_HOME}/conf/heritrix.properties`
 fi
 JMX_PWORD_FILE="${HERITRIX_HOME}/jmxremote.password"
 if [ -f "${JMX_PWORD_FILE}" ]
