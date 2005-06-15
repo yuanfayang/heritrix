@@ -920,7 +920,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         rep.append(  "                       Snoozed: " + snoozedCount + "\n");
         rep.append(  "           Inactive queues: " + inactiveCount + "\n");
         rep.append(  "            Retired queues: " + retiredCount + "\n");
-        rep.append(  "          Exhuasted queues: " + exhaustedCount + "\n");
+        rep.append(  "          Exhausted queues: " + exhaustedCount + "\n");
         
         rep.append("\n -----===== IN-PROCESS QUEUES =====-----\n");
         ArrayList inProcessQueuesCopy;
