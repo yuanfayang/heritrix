@@ -62,7 +62,7 @@ then
   JAVA=`which java`
   if [ -z "$JAVA" ] 
   then
-    echo "Cannot find JAVA. Please set your PATH."
+    echo "Cannot find JAVA. Please set JAVA_HOME or your PATH."
     exit 1
   fi
   JAVA_BINDIR=`dirname $JAVA`
