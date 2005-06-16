@@ -37,7 +37,7 @@ import com.sleepycat.je.DatabaseException;
 
 
 /**
- * One independent queue of items with the same 'classKey' (eg host). 
+ * One independent queue of items with the same 'classKey' (eg host).
  * @author gojomo
  */
 public class BdbWorkQueue extends WorkQueue
@@ -49,6 +49,10 @@ implements Comparable, Serializable {
     private static final long serialVersionUID = ArchiveUtils
         .classnameBasedUID(BdbWorkQueue.class, 1);
 
+    /**
+     * All items in this queue have this same 'origin'
+     * prefix to their keys.
+     */
     private byte[] origin;
 
     /**
@@ -62,7 +66,7 @@ implements Comparable, Serializable {
         long fp = FPGenerator.std64.fp(classKey) & 0xFFFFFFFFFFFFFFF0l;
         ArchiveUtils.longIntoByteArray(fp, origin, 0);
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine(Long.toHexString(fp));
+            LOGGER.fine(getKeyPrefixHex(this.origin) + " " + classKey);
         }
     }
 
@@ -85,7 +89,6 @@ implements Comparable, Serializable {
                 .getWorkQueues();
              queues.delete(peekItem);
         } catch (DatabaseException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             throw (IOException) new IOException(e.getMessage()).initCause(e);
         }
@@ -108,8 +111,22 @@ implements Comparable, Serializable {
             final BdbMultipleWorkQueues queues = ((BdbFrontier) frontier)
                 .getWorkQueues();
             queues.put(curi);
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine("Inserted into " + getKeyPrefixHex(this.origin) +
+                    " (count " + Long.toString(getCount())+ "): " +
+                        curi.toString());
+            }
         } catch (DatabaseException e) {
             throw (IOException)new IOException(e.getMessage()).initCause(e);
         }
+    }
+    
+    /**
+     * @param byteArray Byte array to get hex string of.
+     * @return Hex string of passed in byte array (Used logging
+     * key-prefixes).
+     */
+    protected static String getKeyPrefixHex(final byte [] byteArray) {
+        return Long.toHexString(ArchiveUtils.byteArrayIntoLong(byteArray));
     }
 }

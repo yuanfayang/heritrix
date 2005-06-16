@@ -24,6 +24,8 @@ package org.archive.crawler.frontier;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CrawlURI;
@@ -51,13 +53,18 @@ import com.sleepycat.je.OperationStatus;
  * 
  * <p>For how the bdb keys are made, see {@link #calculateInsertKey(CrawlURI)}.
  * 
- * TODO: refactor, improve naming.
+ * <p>TODO: refactor, improve naming.
+ * 
  * @author gojomo
  */
 public class BdbMultipleWorkQueues {
-    /** database holding all pending URIs, grouped in virtual queues */
+    private static final Logger LOGGER =
+        Logger.getLogger(BdbMultipleWorkQueues.class.getName());
+    
+    /** Database holding all pending URIs, grouped in virtual queues */
     protected Database pendingUrisDB = null;
-    /**  Supporting bdb serialization of CrawlURIs*/
+    
+    /**  Supporting bdb serialization of CrawlURIs */
     protected RecyclingSerialBinding crawlUriBinding;
 
     /**
@@ -208,19 +215,22 @@ public class BdbMultipleWorkQueues {
     
     /**
      * Get the next nearest item after the given key. Relies on 
-     * external discipline to avoid asking for something from an
-     * origin/<code>headKey</code> where there are no associated items --
+     * external discipline -- we'll look at the queues count of how many
+     * items it has -- to avoid asking for something from a
+     * range where there are no associated items --
      * otherwise could get first item of next 'queue' by mistake. 
      * 
-     * TODO: hold within a queue's range
+     * <p>TODO: hold within a queue's range
      * 
-     * @param headKey
+     * @param headKey Key prefix that demarks the beginning of the range
+     * in <code>pendingUrisDB</code> we're interested in.
      * @return CrawlURI.
      * @throws DatabaseException
      */
-    public CrawlURI get(DatabaseEntry headKey) throws DatabaseException {
+    public CrawlURI get(DatabaseEntry headKey)
+    throws DatabaseException {
         DatabaseEntry result = new DatabaseEntry();
-        Cursor cursor = pendingUrisDB.openCursor(null, null);
+        
         // From Linda Lee of sleepycat:
         // "You want to check the status returned from Cursor.getSearchKeyRange
         // to make sure that you have OperationStatus.SUCCESS. In that case,
@@ -229,24 +239,43 @@ public class BdbMultipleWorkQueues {
         // non-null. The other possible status return is
         // OperationStatus.NOTFOUND, in which case no data record matched
         // the criteria. "
-        OperationStatus status =
-            cursor.getSearchKeyRange(headKey, result, null);
-        cursor.close();
+        OperationStatus status = getNextNearestItem(headKey, result);
         CrawlURI retVal = null;
-        if (status == OperationStatus.SUCCESS) {
-            retVal = (CrawlURI)crawlUriBinding.entryToObject(result);
-            retVal.setHolderKey(headKey);
-        } else {
-            throw new DatabaseException("See '1219854 NPE je-2.0 " +
-                "entryToObject...'. OperationStatus " +
-                " was not SUCCESS: " + status + ", headKey " +
-                Long.toHexString(ArchiveUtils.
-                    byteArrayIntoLong(headKey.getData())));
+        if (status != OperationStatus.SUCCESS) {
+            // Experience has the lookup succeeding on immediate retry.
+            // Cycle 3 times trying before giving up.
+            for (int i = 0; i < 3; i++) {
+                status = getNextNearestItem(headKey, result);
+                LOGGER.info("Retry getNextNearestItem " + Integer.toString(i) +
+                    ", return status " + status + " using key: " +
+                    BdbWorkQueue.getKeyPrefixHex(headKey.getData()));
+                if (status == OperationStatus.SUCCESS) {
+                    break;
+                }
+            }
+            if (status != OperationStatus.SUCCESS) {
+                throw new DatabaseException("See '1219854 NPE je-2.0 "
+                        + "entryToObject...'. OperationStatus "
+                        + " was not SUCCESS: "
+                        + status
+                        + ", headKey "
+                        + BdbWorkQueue.getKeyPrefixHex(headKey.getData()));
+            }
         }
+        retVal = (CrawlURI)crawlUriBinding.entryToObject(result);
+        retVal.setHolderKey(headKey);
         return retVal;
     }
     
-    
+    protected OperationStatus getNextNearestItem(DatabaseEntry headKey,
+            DatabaseEntry result)
+    throws DatabaseException {
+        Cursor cursor = this.pendingUrisDB.openCursor(null, null);
+        OperationStatus status =
+            cursor.getSearchKeyRange(headKey, result, null);
+        cursor.close();
+        return status;
+    }
     
     /**
      * Put the given CrawlURI in at the appropriate place. 
@@ -255,40 +284,46 @@ public class BdbMultipleWorkQueues {
      * @throws DatabaseException
      */
     public void put(CrawlURI curi) throws DatabaseException {
-        DatabaseEntry insertKey = (DatabaseEntry) curi.getHolderKey();
+        DatabaseEntry insertKey = (DatabaseEntry)curi.getHolderKey();
         if (insertKey == null) {
             insertKey = calculateInsertKey(curi);
             curi.setHolderKey(insertKey);
         }
         DatabaseEntry value = new DatabaseEntry();
         crawlUriBinding.objectToEntry(curi, value);
-//      tallyAverageEntrySize(curi, value);
+        // Output tally on avg. size if level is FINE or greater.
+        if (LOGGER.isLoggable(Level.FINE)) {
+            tallyAverageEntrySize(curi, value);
+        }
         pendingUrisDB.put(null, insertKey, value);
     }
     
-//    long entryCount = 0;
-//    long entrySizeSum = 0;
-//    int largestEntry = 0;
-//    
-//    /**
-//     * @param value
-//     */
-//    private synchronized void tallyAverageEntrySize(CrawlURI curi, DatabaseEntry value) {
-//        entryCount++;
-//        int length = value.getData().length;
-//        entrySizeSum += length;
-//        int avg = (int) (entrySizeSum/entryCount);
-//        if(entryCount % 1000 == 0) {
-//           System.out.println("Average entry size at "+entryCount+": "+avg);
-//        }
-//        if (length>largestEntry) {
-//            largestEntry = length; 
-//            System.out.println("Largest entry: "+length+" "+curi);
-//            if(length>(2*avg)) {
-//                System.out.println("excessive?");
-//            }
-//        }
-//    }
+    private long entryCount = 0;
+    private long entrySizeSum = 0;
+    private int largestEntry = 0;
+    
+    /**
+     * Log average size of database entry.
+     * @param curi CrawlURI this entry is for.
+     * @param value Database entry value.
+     */
+    private synchronized void tallyAverageEntrySize(CrawlURI curi,
+            DatabaseEntry value) {
+        entryCount++;
+        int length = value.getData().length;
+        entrySizeSum += length;
+        int avg = (int) (entrySizeSum/entryCount);
+        if(entryCount % 1000 == 0) {
+            LOGGER.fine("Average entry size at "+entryCount+": "+avg);
+        }
+        if (length>largestEntry) {
+            largestEntry = length; 
+            LOGGER.fine("Largest entry: "+length+" "+curi);
+            if(length>(2*avg)) {
+                LOGGER.fine("excessive?");
+            }
+        }
+    }
 
     /**
      * Calculate the insertKey that places a CrawlURI in the
@@ -304,7 +339,8 @@ public class BdbMultipleWorkQueues {
      */
     private DatabaseEntry calculateInsertKey(CrawlURI curi) {
         byte[] keyData = new byte[16];
-        long fpPlus = FPGenerator.std64.fp(curi.getClassKey()) & 0xFFFFFFFFFFFFFFF0L;
+        long fpPlus = FPGenerator.std64.fp(curi.getClassKey()) &
+            0xFFFFFFFFFFFFFFF0L;
         fpPlus = fpPlus | curi.getSchedulingDirective(); 
         ArchiveUtils.longIntoByteArray(fpPlus, keyData, 0);
         long ordinalPlus = curi.getOrdinal() & 0x00FFFFFFFFFFFFFFL;

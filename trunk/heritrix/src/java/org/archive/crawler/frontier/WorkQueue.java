@@ -113,8 +113,8 @@ public abstract class WorkQueue implements Comparable, Serializable {
      * Add the given CrawlURI, noting its addition in running count. (It
      * should not already be present.)
      * 
-     * @param queues Work queues manager.
-     * @param curi
+     * @param frontier Work queues manager.
+     * @param curi CrawlURI to insert.
      */
     public synchronized void enqueue(final WorkQueueFrontier frontier,
         CrawlURI curi) {
@@ -321,8 +321,8 @@ public abstract class WorkQueue implements Comparable, Serializable {
      * Update the given CrawlURI, which should already be present. (This
      * is not checked.) Equivalent to an enqueue without affecting the count.
      * 
-     * @param queues Work queues manager.
-     * @param curi
+     * @param frontier Work queues manager.
+     * @param curi CrawlURI to update.
      */
     public void update(final WorkQueueFrontier frontier, CrawlURI curi) {
         try {
@@ -343,9 +343,9 @@ public abstract class WorkQueue implements Comparable, Serializable {
 
     /**
      * Insert the given curi, whether it is already present or not. 
-     * 
-     * @param queues
-     * @param curi
+     * @param frontier WorkQueueFrontier.
+     * @param curi CrawlURI to insert.
+     * @throws IOException
      */
     private void insert(final WorkQueueFrontier frontier, CrawlURI curi)
         throws IOException {
@@ -357,8 +357,8 @@ public abstract class WorkQueue implements Comparable, Serializable {
      * Insert the given curi, whether it is already present or not.
      * Hook for subclasses. 
      * 
-     * @param queues
-     * @param curi
+     * @param frontier WorkQueueFrontier.
+     * @param curi CrawlURI to insert.
      * @throws IOException  if there was a problem while inserting the item
      */
     protected abstract void insertItem(final WorkQueueFrontier frontier,
