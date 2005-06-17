@@ -372,5 +372,13 @@
             </td>
         </tr>
     </table>
-    
+
+<%
+    if (handler.getCurrentJob() != null &&
+           handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED)) {
+        out.print("<a href=\"" + request.getContextPath() +
+            "/console/action.jsp?action=rotateLogs\">Rotate crawler logs</a>");
+    }
+%>
+
 <%@include file="/include/foot.jsp"%>

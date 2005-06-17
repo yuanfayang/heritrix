@@ -46,21 +46,21 @@ import org.archive.util.ArchiveUtils;
  */
 public class CheckpointContext implements Serializable {
     /** String to prefix any new checkpoint names */
-    protected String checkpointPrefix = "";
+    private final String checkpointPrefix;
     /** Next  overall series checkpoint number */
-    protected int nextCheckpoint = 1;
+    private int nextCheckpoint = 1;
 
     /** All checkpoint names in chain prior to now. May not all still
      * exist on disk */
-    protected List predecessorCheckpoints = new LinkedList();
+    private List predecessorCheckpoints = new LinkedList();
 
-    /** directory to place checkpoints */
-    protected File checkpointDirectory = null;
+    /** Directory to place checkpoints */
+    private File checkpointDirectory = null;
 
-    /** if a checkpoint has begun, its directory */
-    transient protected File checkpointInProgress = null;
+    /** If a checkpoint has begun, its directory */
+    private transient File checkpointInProgress = null;
 
-    /** if the checkpoint in progress has encountered fatal errors */
+    /** If the checkpoint in progress has encountered fatal errors */
     private boolean checkpointErrors = false;
 
     /**
@@ -72,16 +72,29 @@ public class CheckpointContext implements Serializable {
 
     /**
      * Create a new CheckpointContext with the given store directory
-     *
-     * @param checkpointDirectory
+     * @param checkpointDirectory Where to store checkpoint.
      */
     public CheckpointContext(File checkpointDirectory) {
         super();
         this.checkpointDirectory = checkpointDirectory;
+        this.checkpointPrefix = "";
+    }
+    
+    /**
+     * Create a new CheckpointContext with the given store directory
+     *
+     * @param checkpointDirectory Where to store checkpoint.
+     * @param prefix Prefix for checkpoint label.
+     */
+    public CheckpointContext(File checkpointDirectory, String prefix) {
+        super();
+        this.checkpointDirectory = checkpointDirectory;
+        this.checkpointPrefix = prefix;
     }
 
     public void begin() {
-        checkpointInProgress = new File(checkpointDirectory, nextCheckpointDirectoryName());
+        checkpointInProgress =
+            new File(checkpointDirectory, nextCheckpointDirectoryName());
         checkpointErrors = false;
     }
 
@@ -89,7 +102,7 @@ public class CheckpointContext implements Serializable {
      * @return next checkpoint, as a zero-padding string
      */
     private String nextCheckpointDirectoryName() {
-        return (new DecimalFormat("00000")).format(nextCheckpoint);
+        return this.checkpointPrefix + (new DecimalFormat("00000")).format(nextCheckpoint);
     }
 
     public void end() {
@@ -101,7 +114,7 @@ public class CheckpointContext implements Serializable {
     }
 
     private void writeValidity() {
-        File valid = new File(checkpointInProgress,"valid");
+        File valid = new File(checkpointInProgress, "valid");
         try {
             FileOutputStream fos = new FileOutputStream(valid);
             fos.write(ArchiveUtils.get14DigitDate().getBytes());
@@ -121,9 +134,9 @@ public class CheckpointContext implements Serializable {
     /**
      * Note that a checkpoint failed
      *
-     * @param e
+     * @param e Exception checkpoint failed on.
      */
-    public void checkpointFailed(IOException e) {
+    public void checkpointFailed(Exception e) {
         e.printStackTrace();
         checkpointErrors = true;
     }
@@ -137,12 +150,19 @@ public class CheckpointContext implements Serializable {
     }
 
     /**
-     * Advance thne context to reflect a resume-from-checkpoint.
+     * Advance the context to reflect a resume-from-checkpoint.
      */
     public void noteResumed() {
         // extend name
         // checkpointPrefix = nextHistoryName();
         // update counters
         nextCheckpoint += 1;
+    }
+    
+    /**
+     * @return Returns the predecessorCheckpoints.
+     */
+    public List getPredecessorCheckpoints() {
+        return this.predecessorCheckpoints;
     }
 }

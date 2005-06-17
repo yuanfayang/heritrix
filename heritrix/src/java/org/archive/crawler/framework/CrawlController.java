@@ -106,7 +106,7 @@ public class CrawlController implements Serializable {
      *
      * They appear on console.
      */
-    private final static Logger logger =
+    private final static Logger LOGGER =
         Logger.getLogger(CrawlController.class.getName());
 
     // manifest support
@@ -256,25 +256,26 @@ public class CrawlController implements Serializable {
     // And then switch to the array once there is more then one.
     transient protected ArrayList registeredCrawlURIDispositionListeners;
 
-    /** distinguished filename for this component in checkpoints */
+    /** Distinguished filename for this component in checkpoints.
+     */
     public static final String DISTINGUISHED_FILENAME = "controller.ser";
     
     /** Shared bdb Environment for Frontier subcomponents */
     // TODO: investigate using multiple environments to split disk accesses
     // across separate physical disks
-    private Environment bdbEnvironment = null;
+    private transient Environment bdbEnvironment = null;
     
     /**
      * Shared class catalog database.  Used by the
      * {@link #classCatalog}.
      */
-    private Database classCatalogDB = null;
+    private transient Database classCatalogDB = null;
     
     /**
      * Class catalog instance.
      * Used by bdb serialization.
      */
-    private StoredClassCatalog classCatalog = null;
+    private transient StoredClassCatalog classCatalog = null;
 
 
     /**
@@ -316,11 +317,11 @@ public class CrawlController implements Serializable {
                 setupDisk();
             }
 
-            if(cpContext == null) {
-                // create if not already loaded
+            if (cpContext == null) {
+                // Create if not already loaded
                 cpContext = new CheckpointContext(checkpointsDisk);
             } else {
-                // note new begin point
+                // Note new begin point
                 cpContext.noteResumed();
             }
 
@@ -378,10 +379,10 @@ public class CrawlController implements Serializable {
         */
         try {
             this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
-            if (logger.isLoggable(Level.INFO)) {
+            if (LOGGER.isLoggable(Level.INFO)) {
                 // Write out the bdb configuration.
                 envConfig = bdbEnvironment.getConfig();
-                logger.info("BdbConfiguration: Cache percentage " +
+                LOGGER.info("BdbConfiguration: Cache percentage " +
                     envConfig.getCachePercent() +
                     ", cache size " + envConfig.getCacheSize());
             }
@@ -551,8 +552,7 @@ public class CrawlController implements Serializable {
     }
 
     private void setupCrawlModules() throws FatalConfigurationException,
-             AttributeNotFoundException, InvalidAttributeValueException,
-             MBeanException, ReflectionException {
+             AttributeNotFoundException, MBeanException, ReflectionException {
         if (scope == null) {
             scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
         	scope.initialize(this);
@@ -619,7 +619,7 @@ public class CrawlController implements Serializable {
         try {
             f = getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
         } catch (AttributeNotFoundException e) {
-            logger.severe("Failed get of logs directory: " + e.getMessage());
+            LOGGER.severe("Failed get of logs directory: " + e.getMessage());
         }
         return f;
     }
@@ -702,8 +702,9 @@ public class CrawlController implements Serializable {
             logsPath + LOGNAME_URI_ERRORS + CURRENT_LOG_SUFFIX,
             new UriErrorFormatter(), true);
 
-        setupLogFile(progressStats, logsPath + LOGNAME_PROGRESS_STATISTICS
-                + CURRENT_LOG_SUFFIX, new StatisticsLogFormatter(), true);
+        setupLogFile(progressStats,
+            logsPath + LOGNAME_PROGRESS_STATISTICS + CURRENT_LOG_SUFFIX,
+            new StatisticsLogFormatter(), true);
 
     }
 
@@ -717,6 +718,16 @@ public class CrawlController implements Serializable {
         logger.setUseParentHandlers(false);
         this.fileHandlers.put(logger, fh);
     }
+    
+    /**
+     * Rotate off all logs
+     * Rotated get logs get 14 digit date suffix.
+     * @throws IOException
+     */
+    public void rotateLogFiles() throws IOException {
+        rotateLogFiles(CURRENT_LOG_SUFFIX + "." +
+            ArchiveUtils.get14DigitDate());
+    }
 
     /**
      * Cause all active log files to be closed and moved to filenames
@@ -727,17 +738,28 @@ public class CrawlController implements Serializable {
      * @throws IOException
      */
     public void rotateLogFiles(int generation) throws IOException {
-        String generationSuffix = "."
-                + (new DecimalFormat("00000")).format(generation);
-        Iterator iter = fileHandlers.keySet().iterator();
-        while (iter.hasNext()) {
-            Logger l = (Logger) iter.next();
-            GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
-                    .get(l);
-            GenerationFileHandler newGfh = gfh.rotate(generationSuffix,
-                    CURRENT_LOG_SUFFIX);
-            addToManifest((String) newGfh.getFilenameSeries().get(1),
+        // TODO: Get formatted generation from checkpoint context. Its
+        // already done the formatting and you may want to have a
+        // checkpoint prefix.
+        rotateLogFiles("." + (new DecimalFormat("00000")).format(generation));
+    }
+    
+    public void rotateLogFiles(String generationSuffix)
+    throws IOException {
+        if (this.state != PAUSED) {
+            throw new IllegalStateException("Pause crawl before requesting " +
+                "log rotation.");
+        }
+        for (Iterator i = fileHandlers.keySet().iterator(); i.hasNext();) {
+            Logger l = (Logger)i.next();
+            GenerationFileHandler gfh =
+                (GenerationFileHandler)fileHandlers.get(l);
+            GenerationFileHandler newGfh =
+                gfh.rotate(generationSuffix, CURRENT_LOG_SUFFIX);
+            if (gfh.shouldManifest()) {
+                addToManifest((String) newGfh.getFilenameSeries().get(1),
                     MANIFEST_LOG_FILE, newGfh.shouldManifest());
+            }
             l.removeHandler(gfh);
             l.addHandler(newGfh);
             fileHandlers.put(l, newGfh);
@@ -748,11 +770,10 @@ public class CrawlController implements Serializable {
      * Close all log files and remove handlers from loggers.
      */
     public void closeLogFiles() {
-        Iterator iter = fileHandlers.keySet().iterator();
-        while (iter.hasNext()) {
-            Logger l = (Logger) iter.next();
-            GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
-                    .get(l);
+       for (Iterator i = fileHandlers.keySet().iterator(); i.hasNext();) {
+            Logger l = (Logger)i.next();
+            GenerationFileHandler gfh =
+                (GenerationFileHandler)fileHandlers.get(l);
             gfh.close();
             l.removeHandler(gfh);
         }
@@ -816,10 +837,11 @@ public class CrawlController implements Serializable {
                 } else {
                     throw new RuntimeException("Unknown state: "+newState);
                 }
-
-                logger.fine("Sent " + newState + " to " + l);
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.fine("Sent " + newState + " to " + l);
+                }
             }
-            logger.info("Sent " + newState);
+            LOGGER.info("Sent " + newState);
         }
     }
 
@@ -832,7 +854,7 @@ public class CrawlController implements Serializable {
         }
 
         // Assume Frontier state already loaded.
-        logger.info("Starting crawl.");
+        LOGGER.info("Starting crawl.");
 
         sendCrawlStateChangeEvent(STARTED, CrawlJob.STATUS_PENDING);
         String jobState;
@@ -861,7 +883,7 @@ public class CrawlController implements Serializable {
     }
 
     private void completeStop() {
-        logger.info("Entered complete stop.");
+        LOGGER.info("Entered complete stop.");
         // Run processors' final tasks
         runProcessorFinalTasks();
         // Ok, now we are ready to exit.
@@ -912,11 +934,11 @@ public class CrawlController implements Serializable {
             this.bdbEnvironment = null;
         }
 
-        logger.info("Finished crawl.");
+        LOGGER.info("Finished crawl.");
     }
 
     private void completePause() {
-        logger.info("Crawl paused.");
+        LOGGER.info("Crawl paused.");
         sendCrawlStateChangeEvent(PAUSED, CrawlJob.STATUS_PAUSED);
     }
 
@@ -945,12 +967,15 @@ public class CrawlController implements Serializable {
     }
 
     /**
-     * Operator requested a checkpoint
+     * Request a checkpoint.
+     * @throws IllegalStateException Thrown if crawl is not in paused state
+     * (Crawl must be first paused before checkpointing).
      */
-    public synchronized void requestCrawlCheckpoint() {
+    public synchronized void requestCrawlCheckpoint()
+    throws IllegalStateException {
         if (state != PAUSED) {
-            // can only checkpoint a paused crawl
-            return;
+            throw new IllegalStateException("Pause crawl before requesting " +
+                "checkpoint.");
         }
         state = CHECKPOINTING;
         new Thread(new CheckpointTask()).start();
@@ -982,11 +1007,11 @@ public class CrawlController implements Serializable {
      * Start the process of stopping the crawl. 
      */
     public void beginCrawlStop() {
-        logger.info("Starting beginCrawlStop()...");
+        LOGGER.info("Starting beginCrawlStop()...");
         sendCrawlStateChangeEvent(STOPPING, this.sExit);
         frontier.terminate();
         frontier.unpause();
-        logger.info("Finished beginCrawlStop()."); 
+        LOGGER.info("Finished beginCrawlStop()."); 
     }
     
     /**
@@ -998,7 +1023,7 @@ public class CrawlController implements Serializable {
             return;
         }
         sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
-        logger.info("Pausing crawl...");
+        LOGGER.info("Pausing crawl...");
         frontier.pause();
         sendCrawlStateChangeEvent(PAUSING, this.sExit);
     }
@@ -1021,7 +1046,7 @@ public class CrawlController implements Serializable {
         }
         multiThreadMode();
         frontier.unpause();
-        logger.info("Crawl resumed.");
+        LOGGER.info("Crawl resumed.");
         sendCrawlStateChangeEvent(RUNNING, CrawlJob.STATUS_RUNNING);
     }
 
@@ -1290,14 +1315,10 @@ public class CrawlController implements Serializable {
      * @author gojomo
      */
     public class CheckpointTask implements Runnable {
-        /**
-         * @see java.lang.Runnable#run()
-         */
         public void run() {
             CrawlController.this.writeCheckpoint();
         }
     }
-
 
     /**
      * Write a checkpoint to disk.
@@ -1306,9 +1327,7 @@ public class CrawlController implements Serializable {
         cpContext.begin();
         try {
             this.checkpointTo(cpContext);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        } catch (Exception e) {
             cpContext.checkpointFailed(e);
         }
         cpContext.end();
@@ -1317,19 +1336,40 @@ public class CrawlController implements Serializable {
 
     /**
      * @param context Context to use checkpointing.
-     * @throws IOException
+     * @throws Exception
      */
     public void checkpointTo(CheckpointContext context)
-    throws IOException {
-        Checkpoint checkpoint =
-            new Checkpoint(context.getCheckpointInProgressDirectory());
+    throws Exception {
+        Checkpoint checkpoint = new Checkpoint(context
+                .getCheckpointInProgressDirectory());
+        // TODO: Serialize settings, write to disk all structures
+        // that are still in memory (list of queues, cookies? What else?).
+        //
+        // TODO: Turn recover log off by default?
+        //
+        
+        // Do a full bdb sync of all in cache to disk. Then checkpoint.
+        // From 'Chapter 8. Backing up and Restoring Berkeley DB Java
+        // Edition Applications'
+        LOGGER.info("Started bdb sync: " + checkpoint);
+        this.bdbEnvironment.sync();
+        // Below log cleaning looped suggested in je-2.0 javadoc.
+        int totalCleaned = 0;
+        for (int cleaned = 0; (cleaned = this.bdbEnvironment.cleanLog()) != 0;
+                totalCleaned += cleaned) {
+            LOGGER.fine("Cleaned " + cleaned + " log files.");
+        }
+        LOGGER.info("Cleaned out " + totalCleaned + " log files.");
+        // Pass null. Uses default values.
+        this.bdbEnvironment.checkpoint(null);
+        LOGGER.info("Rotating log files.");
         rotateLogFiles(context.getNextCheckpoint());
-        checkpoint.writeObjectPlusToFile(this,DISTINGUISHED_FILENAME);
+        checkpoint.writeObjectPlusToFile(this, DISTINGUISHED_FILENAME);
     }
 
     /**
      * @param resumeFrom
-     * @return A CrawlController instance. 
+     * @return A CrawlController instance.
      * @throws InitializationException
      */
     public static CrawlController readFrom(Checkpoint resumeFrom)

@@ -643,10 +643,22 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * Cause the current job to write a checkpoint to disk. Currently
      * requires job to already be paused.
+     * @throws IllegalStateException Thrown if crawl is not paused.
      */
-    public void checkpointJob() {
+    public void checkpointJob() throws IllegalStateException {
         if (controller != null) {
             controller.requestCrawlCheckpoint();
+        }
+    }
+    
+    /**
+     * Rotate logs.
+     * @throws IllegalStateException Thrown if crawl is not paused.
+     * @throws IOException
+     */
+    public void rotateLogs() throws IOException, IllegalStateException {
+        if (controller != null) {
+            this.controller.rotateLogFiles();
         }
     }
 
