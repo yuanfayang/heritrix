@@ -883,8 +883,7 @@ public abstract class AbstractFrontier extends ModuleType implements
      * for a particular URI -- its not so easy; Each CandidateURI would need a
      * reference to the settings system. That's awkward to pass in.
      * 
-     * @param uuri
-     *            Candidate URI to canonicalize.
+     * @param uuri Candidate URI to canonicalize.
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
@@ -892,36 +891,33 @@ public abstract class AbstractFrontier extends ModuleType implements
     }
 
     /**
-     * Canonicalize passed CandidateURI but also look at the CandidateURI
-     * context possibly skipping canonicalization if it means we may miss
-     * content. If canonicalization produces an URL that was 'alreadyseen', but
-     * the entry in the 'alreadyseen' database did nothing but redirect to the
-     * current URL, we won't get the current URL; we'll think we've already seen
-     * it. An example would be archive.org redirecting to www.archive.org. This
-     * method looks for this condition and DOES NOT canonicalize in this case.
-     * Otherwise it returns canonicalized form.
+     * Canonicalize passed CandidateURI. This method differs from
+     * {@link #canonicalize(UURI)} in that it takes a look at
+     * the CandidateURI context possibly overriding any canonicalization effect if
+     * it could make us miss content. If canonicalization produces an URL that
+     * was 'alreadyseen', but the entry in the 'alreadyseen' database did
+     * nothing but redirect to the current URL, we won't get the current URL;
+     * we'll think we've already see it. Examples would be archive.org
+     * redirecting to www.archive.org or the inverse, www.netarkivet.net
+     * redirecting to netarkivet.net (assuming stripWWW rule enabled).
+     * <p>Note, this method under circumstance sets the forceFetch flag.
      * 
-     * @param cauri
-     *            CandidateURI to examine.
-     * @return True if we are not to canonicalize before passing to alreadyseen.
+     * @param cauri CandidateURI to examine.
+     * @return Canonicalized <code>cacuri</code>.
      */
-    protected String conditionalCanonicalize(CandidateURI cauri) {
-        String c = canonicalize(cauri.getUURI());
-        if (!cauri.isLocation()) {
-            // If not result of a redirect, return canonicalized version.
-            return c;
+    protected String canonicalize(CandidateURI cauri) {
+        String canon = canonicalize(cauri.getUURI());
+        if (cauri.isLocation()) {
+            // This URI is result of a redirect. Does the
+            // canonicalization of this URI and that of its via
+            // resolve to same thing? If so, add force fetch so
+            // no chance of our not crawling content because
+            // alreadyseen check thinks its seen url before.
+            if (canonicalize(cauri.getVia()).equals(canon)) {
+                cauri.setForceFetch(true);
+            }
         }
-        // This URI is result of a redirect. Does the
-        // canonicalization of this URI and that of its via
-        // resolve to same thing? If so, return uncanonicalized
-        // version of this uri.
-        boolean same = canonicalize(cauri.getVia()).equals(c);
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Result for " + cauri.toString() + ", "
-                    + cauri.getVia().toString() + ", "
-                    + cauri.getPathFromSeed() + " : " + same);
-        }
-        return same? cauri.toString(): c;
+        return canon;
     }
 
     /**

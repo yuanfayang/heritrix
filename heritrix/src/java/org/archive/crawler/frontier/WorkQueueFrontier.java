@@ -306,17 +306,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * @see org.archive.crawler.framework.Frontier#schedule(org.archive.crawler.datamodel.CandidateURI)
      */
     public void schedule(CandidateURI caUri) {
+        // Canonicalization may set forceFetch flag.  See
+        // #canonicalization(CandidateURI) javadoc for circumstance.
+        String canon = canonicalize(caUri);
         if (caUri.forceFetch()) {
-            alreadyIncluded.addForce(canonicalize(caUri.getUURI()), caUri);
+            alreadyIncluded.addForce(canon, caUri);
         } else {
-            // If we've been redirected, then canonicalization can cause us
-            // to miss urls (e.g. If archive.org redirects to www.archive.org,
-            // then if included, the www canonicalization rule will think
-            // www.archive.org already seen).  The conditionalCanonicalize
-            // takes a CandidateURI -- as opposed to canonicalize taking a
-            // UURI as above --
-            // tests for this case (See its javadoc for more on this).
-            alreadyIncluded.add(conditionalCanonicalize(caUri), caUri);
+            alreadyIncluded.add(canon, caUri);
         }
     }
 
