@@ -41,8 +41,8 @@ import java.util.logging.FileHandler;
  * @author gojomo
  */
 public class GenerationFileHandler extends FileHandler {
-    protected LinkedList filenameSeries = new LinkedList();
-    protected boolean shouldManifest = false;
+    private LinkedList filenameSeries = new LinkedList();
+    private boolean shouldManifest = false;
 
     /**
      * @return Returns the filenameSeries.
@@ -52,6 +52,7 @@ public class GenerationFileHandler extends FileHandler {
     }
 
     /**
+     * Constructor.
      * @param pattern
      * @param append
      * @param shouldManifest
@@ -74,7 +75,7 @@ public class GenerationFileHandler extends FileHandler {
     public GenerationFileHandler(LinkedList filenameSeries,
             boolean shouldManifest)
     throws IOException {
-        super((String)filenameSeries.getFirst(), false); // never append in this case
+        super((String)filenameSeries.getFirst(), false); // Never append in this case
         this.filenameSeries = filenameSeries;
         this.shouldManifest = shouldManifest;
     }
@@ -93,20 +94,21 @@ public class GenerationFileHandler extends FileHandler {
             String activeSuffix)
     throws IOException {
         close();
-        String filename = (String) filenameSeries.getFirst();
-        if(filename.endsWith(activeSuffix)==false) {
-            throw new FileNotFoundException("active file does not have" +
+        String filename = (String)filenameSeries.getFirst();
+        if (!filename.endsWith(activeSuffix)) {
+            throw new FileNotFoundException("Active file does not have" +
                 " expected suffix");
         }
         String storeFilename = filename.substring(0,
-            filename.length() - activeSuffix.length()) + storeSuffix;
+             filename.length() - activeSuffix.length()) +
+             storeSuffix;
         File activeFile = new File(filename);
         File storeFile = new File(storeFilename);
-        if(activeFile.renameTo(storeFile)==false) {
-            throw new IOException("unable to move " + filename+" to " +
+        if (!activeFile.renameTo(storeFile)) {
+            throw new IOException("Unable to move " + filename + " to " +
                 storeFilename);
         }
-        filenameSeries.add(1,storeFilename);
+        filenameSeries.add(1, storeFilename);
         GenerationFileHandler newGfh = 
             new GenerationFileHandler(filenameSeries, shouldManifest);
         newGfh.setFormatter(this.getFormatter());
@@ -117,6 +119,6 @@ public class GenerationFileHandler extends FileHandler {
      * @return True if should manifest.
      */
     public boolean shouldManifest() {
-        return false;
+        return this.shouldManifest;
     }
 }

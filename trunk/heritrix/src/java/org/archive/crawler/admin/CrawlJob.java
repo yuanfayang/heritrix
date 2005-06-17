@@ -79,8 +79,10 @@ import org.archive.util.JmxUtils;
  *
  * @author Kristinn Sigurdsson
  *
- * @see org.archive.crawler.admin.CrawlJobHandler#newJob(CrawlJob, boolean, String, String, String, int)
- * @see org.archive.crawler.admin.CrawlJobHandler#newProfile(CrawlJob, String, String, String)
+ * @see org.archive.crawler.admin.CrawlJobHandler#newJob(CrawlJob,
+ * boolean, String, String, String, int)
+ * @see org.archive.crawler.admin.CrawlJobHandler#newProfile(CrawlJob,
+ *  String, String, String)
  */
 
 public class CrawlJob implements DynamicMBean {
@@ -114,21 +116,28 @@ public class CrawlJob implements DynamicMBean {
     /** Job was terminted by user input while crawling */
     public static final String STATUS_ABORTED = "Ended by operator";
     /** Something went very wrong */
-    public static final String STATUS_FINISHED_ABNORMAL = "Abnormal exit from crawling";
+    public static final String STATUS_FINISHED_ABNORMAL =
+        "Abnormal exit from crawling";
     /** Job finished normally having completed its crawl. */
     public static final String STATUS_FINISHED = "Finished";
     /** Job finished normally when the specified timelimit was hit. */
-    public static final String STATUS_FINISHED_TIME_LIMIT = "Finished - Timelimit hit";
-    /** Job finished normally when the specifed amount of data (MB) had been downloaded */
-    public static final String STATUS_FINISHED_DATA_LIMIT = "Finished - Maximum amount of data limit hit";
+    public static final String STATUS_FINISHED_TIME_LIMIT =
+        "Finished - Timelimit hit";
+    /** Job finished normally when the specifed amount of 
+     * data (MB) had been downloaded */
+    public static final String STATUS_FINISHED_DATA_LIMIT =
+        "Finished - Maximum amount of data limit hit";
     /** Job finished normally when the specified number of documents had been fetched. */
-    public static final String STATUS_FINISHED_DOCUMENT_LIMIT = "Finished - Maximum number of documents limit hit";
+    public static final String STATUS_FINISHED_DOCUMENT_LIMIT =
+        "Finished - Maximum number of documents limit hit";
     /** Job is going to be temporarly stopped after active threads are finished. */
-    public static final String STATUS_WAITING_FOR_PAUSE = "Pausing - Waiting for threads to finish";
+    public static final String STATUS_WAITING_FOR_PAUSE = "Pausing - " +
+        "Waiting for threads to finish";
     /** Job was temporarly stopped. State is kept so it can be resumed */
     public static final String STATUS_PAUSED = "Paused";
     /** Job could not be launced due to an InitializationException */
-    public static final String STATUS_MISCONFIGURED = "Could not launch job - Fatal InitializationException";
+    public static final String STATUS_MISCONFIGURED = "Could not launch job " +
+        "- Fatal InitializationException";
     /** Job is actually a profile */
     public static final String STATUS_PROFILE = "Profile";
     
@@ -145,7 +154,8 @@ public class CrawlJob implements DynamicMBean {
     private int priority;
     private int numberOfJournalEntries = 0;
 
-    // TODO: Statistics tracker will be saved at end of crawl. We will also want to save it at checkpoints.
+    // TODO: Statistics tracker will be saved at end of crawl. We will also
+    // want to save it at checkpoints.
     private StatisticsTracking stats;
     private String statisticsFileSave = "";
 
@@ -201,6 +211,8 @@ public class CrawlJob implements DynamicMBean {
     private final static String FRONTIER_REPORT_OPER = "frontierReport";
     private final static String THREADS_REPORT_OPER = "threadsReport";
     private final static String SEEDS_REPORT_OPER = "seedsReport";
+    private final static String ROTATELOGS_OPER = "rotateLogs";
+    private final static String CHECKPOINT_OPER = "checkpoint";
     private final static String PROGRESS_STATISTICS_OPER =
         "progressStatistics";
     private final static String PROGRESS_STATISTICS_LEGEND_OPER =
@@ -210,7 +222,8 @@ public class CrawlJob implements DynamicMBean {
         OPERATION_LIST = Arrays.asList(new String [] {IMPORT_URI_OPER,
             IMPORT_URIS_OPER, PAUSE_OPER, RESUME_OPER, TERMINATE_OPER,
             FRONTIER_REPORT_OPER, THREADS_REPORT_OPER, SEEDS_REPORT_OPER,
-            PROGRESS_STATISTICS_OPER, PROGRESS_STATISTICS_LEGEND_OPER});
+            PROGRESS_STATISTICS_OPER, PROGRESS_STATISTICS_LEGEND_OPER,
+            ROTATELOGS_OPER, CHECKPOINT_OPER});
     }
     
     protected CrawlJob() {
@@ -911,6 +924,13 @@ public class CrawlJob implements DynamicMBean {
                 "Progress statistics legend", null,
                 SimpleType.STRING, MBeanOperationInfo.INFO);  
         
+        operations[10] = new OpenMBeanOperationInfoSupport(ROTATELOGS_OPER,
+            "Rotate logs", null, SimpleType.VOID, MBeanOperationInfo.ACTION);
+        
+        operations[11] = new OpenMBeanOperationInfoSupport(CHECKPOINT_OPER,
+                "Start a checkpoint (Unimplemented)", null, SimpleType.VOID,
+                MBeanOperationInfo.ACTION);
+        
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
             "Current Crawl Job as OpenMBean", attributes, constructors,
@@ -918,7 +938,7 @@ public class CrawlJob implements DynamicMBean {
     }
     
     public Object getAttribute(String attribute_name)
-    throws AttributeNotFoundException, MBeanException, ReflectionException {
+    throws AttributeNotFoundException {
         if (attribute_name == null) {
             throw new RuntimeOperationsException(
                  new IllegalArgumentException("Attribute name cannot be null"),
@@ -1016,12 +1036,14 @@ public class CrawlJob implements DynamicMBean {
 
     public Object invoke(String operationName, Object[] params,
         String[] signature)
-    throws MBeanException, ReflectionException {
+    throws ReflectionException {
         if (operationName == null) {
             throw new RuntimeOperationsException(
                 new IllegalArgumentException("Operation name cannot be null"),
                 "Cannot call invoke with null operation name");
         }
+        // TODO: Exploit passed signature.
+        
         // The pattern in the below is to match an operation and when found
         // do a return out of if clause.  Doing it this way, I can fall
         // on to the MethodNotFoundException for case where we've an
@@ -1137,6 +1159,46 @@ public class CrawlJob implements DynamicMBean {
                 ms.append(sr.getDisposition());
             }
             return ms.toString();
+        }
+        
+        if (operationName.equals(ROTATELOGS_OPER)) {
+            JmxUtils.checkParamsCount(ROTATELOGS_OPER, params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+            try {
+                Heritrix.getJobHandler().rotateLogs();
+            } catch (RuntimeException e) {
+                throw new RuntimeOperationsException(e);
+            } catch (IOException e) {
+                throw new RuntimeOperationsException(
+                    new RuntimeException(e.fillInStackTrace()));
+            }
+            return null;
+        }       
+        
+        if (operationName.equals(CHECKPOINT_OPER)) {
+            JmxUtils.checkParamsCount(CHECKPOINT_OPER, params, 0);
+            if (!isCurrentJob()) {
+                throw new RuntimeOperationsException(
+                    new IllegalArgumentException("Empty job handler or not " +
+                    "crawling (Shouldn't ever be the case)"),
+                    "Not current crawling job?");
+            }
+
+            throw new RuntimeOperationsException(
+                    new RuntimeException("Unimplemented"));
+            /*
+            try {
+                Heritrix.getJobHandler().checkpointJob();
+            } catch (IllegalStateException e) {
+                throw new RuntimeOperationsException(e);
+            }
+            return null;
+            */
         }
         
         if (operationName.equals(PROGRESS_STATISTICS_OPER)) {

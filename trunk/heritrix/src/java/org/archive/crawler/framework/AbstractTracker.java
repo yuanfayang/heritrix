@@ -84,11 +84,12 @@ implements StatisticsTracking, CrawlStatusListener {
     }
 
     /**
-     * Sets up the Logger (including logInterval) and registers with the CrawlController
-     * for CrawlStatus and CrawlURIDisposition events.
+     * Sets up the Logger (including logInterval) and registers with the
+     * CrawlController for CrawlStatus and CrawlURIDisposition events.
      *
      * @param c A crawl controller instance.
-     * @throws FatalConfigurationException
+     * @throws FatalConfigurationException Not thrown here. For overrides that
+     * go to settings system for configuration.
      *
      * @see CrawlStatusListener
      * @see org.archive.crawler.event.CrawlURIDispositionListener

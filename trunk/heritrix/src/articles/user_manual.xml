@@ -3102,6 +3102,15 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       for on disk location of logs (<xref
       linkend="crawl-manifest.txt" />).</para>
 
+      <para>Logs can be manually rotated.  Pause the crawl and at the base
+      of the screen a <emphasis role="bold">Rotate Logs</emphasis>
+      link will appear.  Clicking on
+      <emphasis role="bold">Rotate Logs</emphasis>
+      will move aside all current crawl logs appending a 14-digit
+      GMT timestamp to the moved-aside logs. New log files will be opened
+      for the crawler to use in subsequent crawling.
+      </para>
+
       <para>The WUI offers users four ways of viewing these logs by:</para>
 
       <orderedlist>
