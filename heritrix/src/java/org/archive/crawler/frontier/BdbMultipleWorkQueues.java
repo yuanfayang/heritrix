@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.frontier;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -242,25 +243,13 @@ public class BdbMultipleWorkQueues {
         OperationStatus status = getNextNearestItem(headKey, result);
         CrawlURI retVal = null;
         if (status != OperationStatus.SUCCESS) {
-            // Experience has the lookup succeeding on immediate retry.
-            // Cycle 3 times trying before giving up.
-            for (int i = 0; i < 3; i++) {
-                status = getNextNearestItem(headKey, result);
-                LOGGER.info("Retry getNextNearestItem " + Integer.toString(i) +
-                    ", return status " + status + " using key: " +
-                    BdbWorkQueue.getKeyPrefixHex(headKey.getData()));
-                if (status == OperationStatus.SUCCESS) {
-                    break;
-                }
-            }
-            if (status != OperationStatus.SUCCESS) {
-                throw new DatabaseException("See '1219854 NPE je-2.0 "
-                        + "entryToObject...'. OperationStatus "
-                        + " was not SUCCESS: "
-                        + status
-                        + ", headKey "
-                        + BdbWorkQueue.getKeyPrefixHex(headKey.getData()));
-            }
+            LOGGER.severe("See '1219854 NPE je-2.0 "
+                    + "entryToObject...'. OperationStatus "
+                    + " was not SUCCESS: "
+                    + status
+                    + ", headKey "
+                    + BdbWorkQueue.getKeyPrefixHex(headKey.getData()));
+            return null;
         }
         retVal = (CrawlURI)crawlUriBinding.entryToObject(result);
         retVal.setHolderKey(headKey);
@@ -327,24 +316,29 @@ public class BdbMultipleWorkQueues {
 
     /**
      * Calculate the insertKey that places a CrawlURI in the
-     * desired spot. First 60 bits are always host (classKey)
-     * based -- ensuring grouping by host. Next 4 bits are
+     * desired spot. First 64 bits are always classKey (usu. host)
+     * based -- ensuring grouping by host. Next 8 bits are
      * priority -- allowing 'immediate' and 'soon' items to 
-     * sort above regular. Next 8 bits are 'cost'. Last 64 bits 
+     * sort above regular. Next 8 bits are 'cost'. Last 48 bits 
      * are ordinal serial number, ensuring earlier-discovered 
      * URIs sort before later. 
+     * 
+     * NOTE: Dangers here are:
+     * (1) classKey fingerprint collisions (likely to happen if 2^32
+     *     keys in use; remotely possible with much smaller numbers)
+     * (2) priorities or costs over 2^8
+     * (3) ordinals over 2^48
      * 
      * @param curi
      * @return a DatabaseEntry key for the CrawlURI
      */
     private DatabaseEntry calculateInsertKey(CrawlURI curi) {
         byte[] keyData = new byte[16];
-        long fpPlus = FPGenerator.std64.fp(curi.getClassKey()) &
-            0xFFFFFFFFFFFFFFF0L;
-        fpPlus = fpPlus | curi.getSchedulingDirective(); 
+        long fpPlus = FPGenerator.std64.fp(curi.getClassKey());
         ArchiveUtils.longIntoByteArray(fpPlus, keyData, 0);
-        long ordinalPlus = curi.getOrdinal() & 0x00FFFFFFFFFFFFFFL;
-        ordinalPlus = (((long)curi.getHolderCost()) << 56) | ordinalPlus;
+        long ordinalPlus = curi.getOrdinal() & 0x0000FFFFFFFFFFFFL;
+        ordinalPlus = (curi.getSchedulingDirective() << 56) | ordinalPlus;
+        ordinalPlus = (((long)curi.getHolderCost()) << 48) | ordinalPlus;
         ArchiveUtils.longIntoByteArray(ordinalPlus, keyData, 8);
         return new DatabaseEntry(keyData);
     }
@@ -357,7 +351,16 @@ public class BdbMultipleWorkQueues {
      * @throws DatabaseException
      */
     public void delete(CrawlURI item) throws DatabaseException {
-        pendingUrisDB.delete(null, (DatabaseEntry) item.getHolderKey());
+        OperationStatus status;
+        status = pendingUrisDB.delete(null, (DatabaseEntry) item.getHolderKey());
+        if (status != OperationStatus.SUCCESS) {
+            LOGGER.severe("expected item not present: "
+                    + item
+                    + "("
+                    + (new BigInteger(((DatabaseEntry) item.getHolderKey())
+                            .getData())).toString(16) + ")");
+        }
+
     }
     
     /**

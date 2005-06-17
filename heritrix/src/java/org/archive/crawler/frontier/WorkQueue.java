@@ -337,7 +337,7 @@ public abstract class WorkQueue implements Comparable, Serializable {
     /**
      * @return Returns the count.
      */
-    public long getCount() {
+    public synchronized long getCount() {
         return this.count;
     }
 
