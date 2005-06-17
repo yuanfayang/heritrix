@@ -24,6 +24,7 @@ package org.archive.crawler.frontier;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,6 +35,7 @@ import st.ata.util.FPGenerator;
 
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.OperationStatus;
 
 
 /**
@@ -62,8 +64,8 @@ implements Comparable, Serializable {
      */
     public BdbWorkQueue(String classKey) {
         super(classKey);
-        origin = new byte[16];
-        long fp = FPGenerator.std64.fp(classKey) & 0xFFFFFFFFFFFFFFF0l;
+        origin = new byte[8];
+        long fp = FPGenerator.std64.fp(classKey);
         ArchiveUtils.longIntoByteArray(fp, origin, 0);
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.fine(getKeyPrefixHex(this.origin) + " " + classKey);
@@ -99,7 +101,35 @@ implements Comparable, Serializable {
         try {
             final BdbMultipleWorkQueues queues = ((BdbFrontier) frontier)
                 .getWorkQueues();
-            return queues.get(new DatabaseEntry(origin));
+            DatabaseEntry key = new DatabaseEntry(origin);
+            CrawlURI curi = null;
+            int tries = 1;
+            while(true) {
+                curi = queues.get(key);
+                if (curi!=null) {
+                    // success
+                    break;
+                }
+                if (tries>3) {
+                    LOGGER.severe("no item where expected in queue "+classKey);
+                    break;
+                }
+                tries++;
+                LOGGER.severe("Trying get #" + Integer.toString(tries)
+                        + " in queue " + classKey + " with " + getCount()
+                        + " items using key "
+                        + getKeyPrefixHex(key.getData()));
+            }
+            
+            // ensure CrawlURI, if any,  came from acceptable range: 
+            if(!ArchiveUtils.startsWith(key.getData(),origin)) {
+                LOGGER.severe(
+                    "inconsistency: "+classKey+"("+
+                    getKeyPrefixHex(origin)+") gave "+
+                    curi +"("+getKeyPrefixHex(key.getData()));
+            }
+            
+            return curi;
         } catch (DatabaseException e) {
             throw (IOException)new IOException(e.getMessage()).initCause(e);
         }

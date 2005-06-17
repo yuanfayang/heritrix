@@ -519,5 +519,25 @@ public class ArchiveUtils {
         }
         return u;
     }
+
+    /**
+     * Verify that the array begins with the prefix. 
+     * 
+     * @param array
+     * @param prefix
+     * @return true if array is identical to prefix for the first prefix.length
+     * positions 
+     */
+    public static boolean startsWith(byte[] array, byte[] prefix) {
+        if(prefix.length>array.length) {
+            return false;
+        }
+        for(int i = 0; i < prefix.length; i++) {
+            if(array[i]!=prefix[i]) {
+                return false; 
+            }
+        }
+        return true; 
+    }
 }
 
