@@ -250,7 +250,7 @@ Reporter {
             currentCuri.addAnnotation("err="+err.getClass().getName());
             currentCuri.addAnnotation("os"+currentCuri.getFetchStatus());
 			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
-            context = currentCuri.toString() + " in " + currentProcessorName;
+            context = currentCuri.getLine() + " in " + currentProcessorName;
 		}
         String title = "Serious error occured processing '" + context + "'";
         String message = "The following serious error occured when trying " +
