@@ -24,7 +24,6 @@ package org.archive.crawler.frontier;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,7 +34,6 @@ import st.ata.util.FPGenerator;
 
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.OperationStatus;
 
 
 /**
@@ -98,41 +96,41 @@ implements Comparable, Serializable {
 
     protected CrawlURI peekItem(final WorkQueueFrontier frontier)
     throws IOException {
-        try {
-            final BdbMultipleWorkQueues queues = ((BdbFrontier) frontier)
-                .getWorkQueues();
-            DatabaseEntry key = new DatabaseEntry(origin);
-            CrawlURI curi = null;
-            int tries = 1;
-            while(true) {
+        final BdbMultipleWorkQueues queues = ((BdbFrontier) frontier)
+            .getWorkQueues();
+        DatabaseEntry key = new DatabaseEntry(origin);
+        CrawlURI curi = null;
+        int tries = 1;
+        while(true) {
+            try {
                 curi = queues.get(key);
-                if (curi!=null) {
-                    // success
-                    break;
-                }
-                if (tries>3) {
-                    LOGGER.severe("no item where expected in queue "+classKey);
-                    break;
-                }
-                tries++;
-                LOGGER.severe("Trying get #" + Integer.toString(tries)
-                        + " in queue " + classKey + " with " + getCount()
-                        + " items using key "
-                        + getKeyPrefixHex(key.getData()));
+            } catch (DatabaseException e) {
+                LOGGER.log(Level.SEVERE,"peekItem failure; retrying",e);
             }
-            
-            // ensure CrawlURI, if any,  came from acceptable range: 
-            if(!ArchiveUtils.startsWith(key.getData(),origin)) {
-                LOGGER.severe(
-                    "inconsistency: "+classKey+"("+
-                    getKeyPrefixHex(origin)+") gave "+
-                    curi +"("+getKeyPrefixHex(key.getData()));
+            if (curi!=null) {
+                // success
+                break;
             }
-            
-            return curi;
-        } catch (DatabaseException e) {
-            throw (IOException)new IOException(e.getMessage()).initCause(e);
+            if (tries>3) {
+                LOGGER.severe("no item where expected in queue "+classKey);
+                break;
+            }
+            tries++;
+            LOGGER.severe("Trying get #" + Integer.toString(tries)
+                    + " in queue " + classKey + " with " + getCount()
+                    + " items using key "
+                    + getKeyPrefixHex(key.getData()));
         }
+        
+        // ensure CrawlURI, if any,  came from acceptable range: 
+        if(!ArchiveUtils.startsWith(key.getData(),origin)) {
+            LOGGER.severe(
+                "inconsistency: "+classKey+"("+
+                getKeyPrefixHex(origin)+") gave "+
+                curi +"("+getKeyPrefixHex(key.getData()));
+        }
+        
+        return curi;
     }
 
     protected void insertItem(final WorkQueueFrontier frontier,
