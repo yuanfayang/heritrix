@@ -257,12 +257,17 @@ public class BdbMultipleWorkQueues {
     }
     
     protected OperationStatus getNextNearestItem(DatabaseEntry headKey,
-            DatabaseEntry result)
-    throws DatabaseException {
-        Cursor cursor = this.pendingUrisDB.openCursor(null, null);
-        OperationStatus status =
-            cursor.getSearchKeyRange(headKey, result, null);
-        cursor.close();
+            DatabaseEntry result) throws DatabaseException {
+        Cursor cursor = null;
+        OperationStatus status;
+        try {
+            cursor = this.pendingUrisDB.openCursor(null, null);
+            status = cursor.getSearchKeyRange(headKey, result, null);
+        } finally { 
+            if(cursor!=null) {
+                cursor.close();
+            }
+        }
         return status;
     }
     
