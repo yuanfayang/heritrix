@@ -152,6 +152,7 @@
           <fileset dir="${maven.src.dir}/scripts">
             <include name="*heritrix"/>
             <include name="arcreader"/>
+            <include name="shutdown.sh"/>
             <include name="*extractor"/>
             <include name="runclassmain"/>
             <include name="hoppath*"/>
