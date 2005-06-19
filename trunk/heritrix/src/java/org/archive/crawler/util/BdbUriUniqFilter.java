@@ -26,6 +26,8 @@ package org.archive.crawler.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
@@ -49,14 +51,11 @@ import com.sleepycat.je.OperationStatus;
  * This implementation performs adequately without blowing out 
  * the heap. See
  * <a href="http://crawler.archive.org/cgi-bin/wiki.pl?AlreadySeen">AlreadySeen</a>.
- * Its hardwired to grow to use 25% of JVM heap as cache (This can be changed).
  * 
- * <p>TODO: Make keys that have URIs from same server close to each other.  Mercator
+ * <p>Makes keys that have URIs from same server close to each other.  Mercator
  * and 2.3.5 'Elminating Already-Visited URLs' in 'Mining the Web' by Soumen
  * Chakrabarti talk of a two-level key with the first 24 bits a hash of the host plus
- * port and with the last 40 as a hash of the path.  What should I do for dns entries?
- * https?  Though the likelihood of a clash is low, wouldn't be good having one scheme
- * for http/https and another scheme for dns.
+ * port and with the last 40 as a hash of the path.
  * 
  * @author stack
  * @version $Date$, $Revision$
@@ -75,6 +74,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
 	private HasUriReceiver receiver = null;
     private static final String DB_NAME = "alreadySeenUrl";
     protected long count = 0;
+    private long aggregatedLookupTime = 0;
     
     private static final String COLON_SLASH_SLASH = "://";
     
@@ -165,7 +165,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
 			}
             this.alreadySeen = null;
         }
-    	if (env != null && createdEnvironment) {
+        if (env != null && createdEnvironment) {
             try {
 				// This sync flushes whats in RAM.  Its expensive operation.
 				// Without, data can be lost.  Not for transactional operation.
@@ -217,19 +217,19 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     }
 
     public void setDestination(HasUriReceiver receiver) {
-    	this.receiver = receiver;
+    	    this.receiver = receiver;
     }
 
     public void add(String canonical, CandidateURI item) {
-    	add(canonical, item, true, false);
+    	    add(canonical, item, true, false);
     }
 
     public void addNow(String canonical, CandidateURI item) {
-    	add(canonical, item);
+    	    add(canonical, item);
     }
 
     public void addForce(String canonical, CandidateURI item) {
-    	add(canonical, item, true, true);
+    	    add(canonical, item, true, true);
     }
 
     public void note(String canonical) {
@@ -247,29 +247,42 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      * of <code>item</code> even if already seen.
      */
     protected void add(String canonical, CandidateURI item, boolean passItOn,
-            boolean force) {
-        DatabaseEntry key = new DatabaseEntry();
+            boolean force) {        DatabaseEntry key = new DatabaseEntry();
         LongBinding.longToEntry(createKey(canonical), key);
+        long started = 0;
         
         OperationStatus status = null;
         try {
+            if (logger.isLoggable(Level.INFO)) {
+                started = (new Date()).getTime();
+            }
             status = this.alreadySeen.putNoOverwrite(null, key, this.value);
-
+            if (logger.isLoggable(Level.INFO)) {
+                this.aggregatedLookupTime += (new Date()).getTime() - started;
+            }
         } catch (DatabaseException e) {
             logger.severe(e.getMessage());
         }
-        if(status == OperationStatus.SUCCESS) {
+        if (status == OperationStatus.SUCCESS) {
             count++;
+            if (logger.isLoggable(Level.INFO)) {
+                final int logAt = 10000;
+                if (count > 0 && ((count % logAt) == 0)) {
+                    logger.info("Average lookup " +
+                        (this.aggregatedLookupTime / logAt) + "ms.");
+                    this.aggregatedLookupTime = 0;
+                }
+            }
         }
         if ((status != OperationStatus.KEYEXIST && passItOn) || force) {
-        	this.receiver.receive(item);
+            this.receiver.receive(item);
         }
     }
 
     public void forget(String canonical, CandidateURI item) {
         DatabaseEntry key = new DatabaseEntry();
         LongBinding.longToEntry(createKey(canonical), key);
-    	OperationStatus status = null;
+    	    OperationStatus status = null;
         try {
 			status = this.alreadySeen.delete(null, key);
 		} catch (DatabaseException e) {
@@ -281,7 +294,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     }
 
     public long flush() {
-    	// We always write but this might be place to do the sync
+    	    // We always write but this might be place to do the sync
         // when checkpointing?  TODO.
         return 0;
     }

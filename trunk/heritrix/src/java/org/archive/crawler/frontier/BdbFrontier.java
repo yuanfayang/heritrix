@@ -87,7 +87,7 @@ public class BdbFrontier extends WorkQueueFrontier {
     }
 
     /**
-     * Create a memory-based UriUniqFilter that will serve as record 
+     * Create a UriUniqFilter that will serve as record 
      * of already seen URIs.
      *
      * @return A UURISet that will serve as a record of already seen URIs
