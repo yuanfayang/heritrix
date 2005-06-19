@@ -1,5 +1,0 @@
-# Availible Statistics Tracking modules.
-# Each tracker class should be listed with full package info
-# followed by a '|' and a descriptive name (containing only [a-z,A-z])
-# Lines beginning with # and empty lines are ignored
-org.archive.crawler.admin.StatisticsTracker|crawl-statistics
