@@ -23,6 +23,7 @@
 package org.archive.crawler.frontier;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -539,6 +540,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                         sendToQueue(curi);
                     }
                 }
+            } else {
+                // readyQ key wasn't in all queues: unexpected
+                if(key!=null) {
+                    logger.severe("key "+key+
+                        " in readClassQueues but not allQueues");
+                }
             }
 
             if(shouldTerminate) {
@@ -723,10 +730,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             // Consider errors which can be retried, leaving uri atop queue
             long delay_sec = retryDelayFor(curi);
             curi.processingCleanup(); // lose state that shouldn't burden retry
-            wq.unpeek();
-            // TODO: consider if this should happen automatically inside unpeek()
-            wq.update(this, curi); // rewrite any changes
             synchronized(wq) {
+                wq.unpeek();
+                // TODO: consider if this should happen automatically inside unpeek()
+                wq.update(this, curi); // rewrite any changes
                 if (delay_sec > 0) {
                     long delay_ms = delay_sec * 1000;
                     snoozeQueue(wq, now, delay_ms);
@@ -840,7 +847,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     public long deleteURIs(String match) {
         long count = 0;
-        Iterator iter = allQueues.values().iterator();
+        // TODO: DANGER/ values() may not work right from CachedBdbMap
+        Iterator iter = allQueues.values().iterator(); 
         while(iter.hasNext()) {
             WorkQueue wq = (WorkQueue)iter.next();
             wq.unpeek();
@@ -850,11 +858,20 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         return count;
     }
 
+    //
+    // Reporter implementation
+    //
+    
+    public String[] getReports() {
+        return new String[] {};
+    }
+    
     /**
      * @return One-line summary report, useful for display when full report
      * may be unwieldy. 
+     * @throws IOException
      */
-    public String oneLineReport() {
+    public void singleLineReportTo(PrintWriter w) throws IOException {
         int allCount = allQueues.size();
         int inProcessCount = inProcessQueues.uniqueSet().size();
         int readyCount = readyClassQueues.getCount();
@@ -864,16 +881,23 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         int retiredCount = retiredQueues.getCount();
         int exhaustedCount = 
             allCount - activeCount - inactiveCount - retiredCount;
-        StringBuffer rep = new StringBuffer();
-        rep.append(allCount + " queues: " + 
-                activeCount + " active (" + 
-                inProcessCount + " in-process; " +
-                readyCount + " ready; " + 
-                snoozedCount + " snoozed); " +
-                inactiveCount +" inactive; " +
-                retiredCount + " retired; " +
-                exhaustedCount + " exhausted");
-        return rep.toString();
+        w.print(allCount);
+        w.print(" queues: ");
+        w.print(activeCount);
+        w.print(" active (");
+        w.print(inProcessCount);
+        w.print(" in-process; ");
+        w.print(readyCount);
+        w.print(" ready; ");
+        w.print(snoozedCount);
+        w.print(" snoozed); ");
+        w.print(inactiveCount);
+        w.print(" inactive; ");
+        w.print(retiredCount);
+        w.print(" retired; ");
+        w.print(exhaustedCount);
+        w.print(" exhausted");
+        w.flush();
     }
 
     /**
@@ -881,8 +905,18 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * at the time of the call.
      *
      * @return A report on the current status of the frontier.
+     * @throws IOException
      */
-    public synchronized String report() {
+    public synchronized void reportTo(String name, PrintWriter w) throws IOException {
+        // ignore name; only one kind of report for now
+        standardReportTo(w);
+    }
+    
+    /**
+     * @param w
+     * @throws IOException
+     */
+    private void standardReportTo(PrintWriter w) throws IOException {
         int allCount = allQueues.size();
         int inProcessCount = inProcessQueues.uniqueSet().size();
         int readyCount = readyClassQueues.getCount();
@@ -892,69 +926,99 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         int retiredCount = retiredQueues.getCount();
         int exhaustedCount = 
             allCount - activeCount - inactiveCount - retiredCount;
-        StringBuffer rep =
-            new StringBuffer(10 * 1024 /*SWAG at final report size.*/);
 
-        rep.append("Frontier report - "
-                + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-        rep.append(" Job being crawled: "
-                + controller.getOrder().getCrawlOrderName() + "\n");
-        rep.append("\n -----===== STATS =====-----\n");
-        rep.append(" Discovered:    " + discoveredUriCount() + "\n");
-        rep.append(" Queued:        " + queuedUriCount() + "\n");
-        rep.append(" Finished:      " + finishedUriCount() + "\n");
-        rep.append("  Successfully: " + succeededFetchCount() + "\n");
-        rep.append("  Failed:       " + failedFetchCount() + "\n");
-        rep.append("  Disregarded:  " + disregardedUriCount() + "\n");
-        rep.append("\n -----===== QUEUES =====-----\n");
-        rep.append(" Already included size:     " + alreadyIncluded.count()
-                + "\n");
-        rep.append("\n All class queues map size: " + allCount + "\n");
-        rep.append(  "             Active queues: " + activeCount  + "\n");
-        rep.append(  "                    In-process: " + inProcessCount  + "\n");
-        rep.append(  "                         Ready: " + readyCount + "\n");
-        rep.append(  "                       Snoozed: " + snoozedCount + "\n");
-        rep.append(  "           Inactive queues: " + inactiveCount + "\n");
-        rep.append(  "            Retired queues: " + retiredCount + "\n");
-        rep.append(  "          Exhausted queues: " + exhaustedCount + "\n");
+        w.print("Frontier report - ");
+        w.print(ArchiveUtils.TIMESTAMP12.format(new Date()));
+        w.print("\n");
+        w.print(" Job being crawled: ");
+        w.print(controller.getOrder().getCrawlOrderName());
+        w.print("\n");
+        w.print("\n -----===== STATS =====-----\n");
+        w.print(" Discovered:    ");
+        w.print(Long.toString(discoveredUriCount()));
+        w.print("\n");
+        w.print(" Queued:        ");
+        w.print(Long.toString(queuedUriCount()));
+        w.print("\n");
+        w.print(" Finished:      ");
+        w.print(Long.toString(finishedUriCount()));
+        w.print("\n");
+        w.print("  Successfully: ");
+        w.print(Long.toString(succeededFetchCount()));
+        w.print("\n");
+        w.print("  Failed:       ");
+        w.print(Long.toString(failedFetchCount()));
+        w.print("\n");
+        w.print("  Disregarded:  ");
+        w.print(Long.toString(disregardedUriCount()));
+        w.print("\n");
+        w.print("\n -----===== QUEUES =====-----\n");
+        w.print(" Already included size:     ");
+        w.print(Long.toString(alreadyIncluded.count()));
+        w.print("\n");
+        w.print("\n All class queues map size: ");
+        w.print(Long.toString(allCount));
+        w.print("\n");
+        w.print( "             Active queues: ");
+        w.print(activeCount);
+        w.print("\n");
+        w.print("                    In-process: ");
+        w.print(inProcessCount);
+        w.print("\n");
+        w.print("                         Ready: ");
+        w.print(readyCount);
+        w.print("\n");
+        w.print("                       Snoozed: ");
+        w.print(snoozedCount);
+        w.print("\n");
+        w.print("           Inactive queues: ");
+        w.print(inactiveCount);
+        w.print("\n");
+        w.print("            Retired queues: ");
+        w.print(retiredCount);
+        w.print("\n");
+        w.print("          Exhausted queues: ");
+        w.print(exhaustedCount);
+        w.print("\n");
         
-        rep.append("\n -----===== IN-PROCESS QUEUES =====-----\n");
+        w.print("\n -----===== IN-PROCESS QUEUES =====-----\n");
         ArrayList inProcessQueuesCopy;
         synchronized(this.inProcessQueues) {
             // grab a copy that will be stable against mods for report duration 
             inProcessQueuesCopy = new ArrayList(this.inProcessQueues);
         }
-        appendQueueReports(rep, inProcessQueuesCopy.iterator(),
+        appendQueueReports(w, inProcessQueuesCopy.iterator(),
             this.inProcessQueues.size(), REPORT_MAX_QUEUES);
         
-        rep.append("\n -----===== READY QUEUES =====-----\n");
-        appendQueueReports(rep, this.readyClassQueues.iterator(),
+        w.print("\n -----===== READY QUEUES =====-----\n");
+        appendQueueReports(w, this.readyClassQueues.iterator(),
             this.readyClassQueues.getCount(), REPORT_MAX_QUEUES);
 
-        rep.append("\n -----===== SNOOZED QUEUES =====-----\n");
-        appendQueueReports(rep, this.snoozedClassQueues.iterator(),
+        w.print("\n -----===== SNOOZED QUEUES =====-----\n");
+        appendQueueReports(w, this.snoozedClassQueues.iterator(),
             this.snoozedClassQueues.size(), REPORT_MAX_QUEUES);
         
-        rep.append("\n -----===== INACTIVE QUEUES =====-----\n");
-        appendQueueReports(rep, this.inactiveQueues.iterator(),
+        w.print("\n -----===== INACTIVE QUEUES =====-----\n");
+        appendQueueReports(w, this.inactiveQueues.iterator(),
             this.inactiveQueues.getCount(), REPORT_MAX_QUEUES);
         
-        rep.append("\n -----===== RETIRED QUEUES =====-----\n");
-        appendQueueReports(rep, this.retiredQueues.iterator(),
+        w.print("\n -----===== RETIRED QUEUES =====-----\n");
+        appendQueueReports(w, this.retiredQueues.iterator(),
             this.retiredQueues.getCount(), REPORT_MAX_QUEUES);
 
-        return rep.toString();
+        w.flush();
     }
-    
+
     /**
      * Append queue report to general Frontier report.
-     * @param report StringBuffer to append to.
+     * @param w StringBuffer to append to.
      * @param iterator An iterator over 
      * @param total
      * @param max
+     * @throws IOException
      */
-    protected void appendQueueReports(StringBuffer report, Iterator iterator,
-            int total, int max) {
+    protected void appendQueueReports(PrintWriter w, Iterator iterator,
+            int total, int max) throws IOException {
         Object obj;
         WorkQueue q;
         for(int count = 0; iterator.hasNext() && (count < max); count++) {
@@ -966,12 +1030,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                 (WorkQueue)obj:
                 (WorkQueue)this.allQueues.get(obj);
             if(q == null) {
-                report.append("WARNING: No report for queue "+obj);
+                w.print("WARNING: No report for queue "+obj);
             }
-            report.append(q.report());
+            q.reportTo(w);
         }
         if(total > max) {
-            report.append("...and " + (total - max) + " more.\n");
+            w.print("...and " + (total - max) + " more.\n");
         }
     }
 

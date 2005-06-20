@@ -34,6 +34,7 @@ import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
+import org.archive.util.Reporter;
 
 
 /**
@@ -108,7 +109,7 @@ import org.archive.crawler.frontier.FrontierJournal;
  * @see org.archive.crawler.framework.FrontierHostStatistics
  * @see org.archive.crawler.settings.ModuleType
  */
-public interface Frontier {
+public interface Frontier extends Reporter {
 
     /**
      * All URI Frontiers should have the same 'name' attribute. This constant
@@ -274,24 +275,6 @@ public interface Frontier {
      * @return The total amounts of bytes in all processed URIs.
      */
     public long totalBytesWritten();
-
-	/**
-	 * Compile a one-line summary report about this frontier. 
-	 * 
-	 * @return A one-line report of this frontier's status.
-	 */
-	public String oneLineReport();
-	
-    /**
-     * This methods compiles a human readable report on the status of the
-     * frontier at the time of the call.
-     *
-     * <p>This report should give an accurate picture of the current state of
-     * the frontier.
-     *
-     * @return A report on the current status of the frontier.
-     */
-    public String report();
 
     /**
      * Recover earlier state by reading a recovery log.

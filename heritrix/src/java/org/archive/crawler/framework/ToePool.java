@@ -24,8 +24,7 @@
 package org.archive.crawler.framework;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -92,54 +91,10 @@ public class ToePool extends ThreadGroup implements Reporter {
         return count; 
     }
     
-    /**
-     * @return One-line summary report, useful for display before drilling
-     * into full report.
-     */
-    public String oneLineReport() {
-    	StringBuffer rep = new StringBuffer();
-    	Histotable ht = new Histotable();
-        Thread[] toes = getToes();
-        for (int i = 0; i < toes.length; i++) {
-
-            if(!(toes[i] instanceof ToeThread)) {
-                continue;
-            }
-            ToeThread tt = (ToeThread)toes[i];
-            if(tt!=null) {
-                ht.tally(tt.getStep());
-            }
-        }
-        TreeSet sorted = ht.getSorted();
-        rep.append(getToeCount()+" threads: ");        
-        rep.append(Histotable.entryString(sorted.first()));
-        if(sorted.size()>1) {
-        	Iterator iter = sorted.iterator();
-        	iter.next();
-            rep.append("; "+Histotable.entryString(iter.next()));
-        }
-        if(sorted.size()>2) {
-        	rep.append("; etc...");
-        }
-    	return rep.toString();
-    }
-    
     private Thread[] getToes() {
         Thread[] toes = new Thread[activeCount()+10];
         this.enumerate(toes);
         return toes;
-    }
-
-    /**
-     * Get ToeThreads internal status report. Presented in human readable form.
-     *
-     * @return ToeThreads internal status report.
-     */
-    public String report()
-    {
-        StringWriter sw = new StringWriter();
-        reportTo(sw);
-        return sw.toString();
     }
 
     /**
@@ -218,17 +173,47 @@ public class ToePool extends ThreadGroup implements Reporter {
     public CrawlController getController() {
         return controller;
     }
+    
+    //
+    // Reporter implementation
+    //
+    
+    public static String STANDARD_REPORT = "standard";
+    public static String COMPACT_REPORT = "compact";
+    protected static String[] REPORTS = {STANDARD_REPORT,COMPACT_REPORT};
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#getReports()
+     */
+    public String[] getReports() {
+        return REPORTS;
+    }
 
     /* (non-Javadoc)
      * @see org.archive.util.Reporter#reportTo(java.io.Writer)
      */
-    public void reportTo(Writer writer) {
+    public void reportTo(String name, PrintWriter writer) throws IOException {
+        if(COMPACT_REPORT.equals(name)) {
+            compactReportTo(writer);
+            return;
+        }
+        if(name!=null && !STANDARD_REPORT.equals(name)) {
+            writer.print(name);
+            writer.print(" not recognized: giving standard report/n");
+        }
+        standardReportTo(writer);
+    }      
+            
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    protected void standardReportTo(PrintWriter writer) {
         try {
-            writer.write("Toe threads report - " +
+            writer.print("Toe threads report - " +
                     ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-            writer.write(" Job being crawled: " +
+            writer.print(" Job being crawled: " +
                     this.controller.getOrder().getCrawlOrderName() + "\n");
-            writer.write(" Number of toe threads in pool: " +
+            writer.print(" Number of toe threads in pool: " +
                 getToeCount() + " (" + getActiveToeCount() + " active)\n");
 
             Thread[] toes = this.getToes();
@@ -239,7 +224,7 @@ public class ToePool extends ThreadGroup implements Reporter {
                     }
                     ToeThread tt = (ToeThread)toes[i];
                     if(tt!=null) {
-                        writer.write("   ToeThread #" + tt.getSerialNumber() + "\n");
+                        writer.print("   ToeThread #" + tt.getSerialNumber() + "\n");
                         tt.reportTo(writer);
                     }
                 }
@@ -253,12 +238,13 @@ public class ToePool extends ThreadGroup implements Reporter {
     /* (non-Javadoc)
      * @see org.archive.util.Reporter#reportTo(java.io.Writer)
      */
-    public void compactReportTo(Writer writer) {
+    protected void compactReportTo(PrintWriter writer) {
         try {
-            writer.write(
+            writer.print(
                 getToeCount() + " threads (" + getActiveToeCount() + " active)\n");
 
             Thread[] toes = this.getToes();
+            // TODO: sort by activity: those with curi the longest at front
             synchronized (toes) {
                 for (int i = 0; i < toes.length ; i++) {
                     if(!(toes[i] instanceof ToeThread)) {
@@ -266,7 +252,7 @@ public class ToePool extends ThreadGroup implements Reporter {
                     }
                     ToeThread tt = (ToeThread)toes[i];
                     if(tt!=null) {
-                        writer.write(tt.oneLineReport());
+                        tt.singleLineReportTo(writer);
                     }
                 }
             }
@@ -276,4 +262,50 @@ public class ToePool extends ThreadGroup implements Reporter {
         }
     }
 
+    /**
+     * @return One-line summary report, useful for display before drilling
+     * into full report.
+     * @throws IOException
+     */
+    public void singleLineReportTo(PrintWriter w) throws IOException {
+        Histotable ht = new Histotable();
+        Thread[] toes = getToes();
+        for (int i = 0; i < toes.length; i++) {
+
+            if(!(toes[i] instanceof ToeThread)) {
+                continue;
+            }
+            ToeThread tt = (ToeThread)toes[i];
+            if(tt!=null) {
+                ht.tally(tt.getStep());
+            }
+        }
+        TreeSet sorted = ht.getSorted();
+        w.print(getToeCount());
+        w.print(" threads: ");        
+        w.print(Histotable.entryString(sorted.first()));
+        if(sorted.size()>1) {
+            Iterator iter = sorted.iterator();
+            iter.next();
+            w.print("; ");
+            w.print(Histotable.entryString(iter.next()));
+        }
+        if(sorted.size()>2) {
+            w.print("; etc...");
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReport()
+     */
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
+    }
 }

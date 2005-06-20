@@ -28,6 +28,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Iterator;
@@ -57,6 +58,7 @@ import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.url.Canonicalizer;
+import org.archive.util.ArchiveUtils;
 
 /**
  * Shared facilities for Frontier implementations.
@@ -997,5 +999,23 @@ public abstract class AbstractFrontier extends ModuleType implements
     public void crawlResuming(String statusMessage) {
         // TODO Auto-generated method stub
 
+    }
+    
+    //
+    // Reporter implementation
+    // 
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReport()
+     */
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
     }
 }

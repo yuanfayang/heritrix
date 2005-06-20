@@ -151,7 +151,7 @@ public class BdbFrontier extends WorkQueueFrontier {
         Iterator iter = curis.iterator();
         while(iter.hasNext()) {
             CrawlURI curi = (CrawlURI) iter.next();
-            results.add("["+curi.getClassKey()+"] "+curi.getLine());
+            results.add("["+curi.getClassKey()+"] "+curi.singleLineReport());
         }
         return results;
     }

@@ -25,6 +25,8 @@ package org.archive.util;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.logging.Logger;
 
 import org.archive.crawler.framework.ToeThread;
@@ -56,19 +58,26 @@ public class DevUtils {
      * always be available in which case we return empty string.
      */
     public static String extraInfo() {
-        StringBuffer sb = new StringBuffer();
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw); 
         final Thread current = Thread.currentThread();
         if (current instanceof ToeThread) {
             ToeThread tt = (ToeThread) current;
-            sb.append(tt.report());
-            sb.append(tt.getController().getStatistics()
+            try {
+                tt.reportTo(pw);
+            } catch (IOException e) {
+                // not really possible w/StringWriter
+                e.printStackTrace();
+            } 
+            pw.print(tt.getController().getStatistics()
                     .progressStatisticsLegend());
-            sb.append("\n");
-            sb.append(tt.getController().getStatistics()
+            pw.print("\n");
+            pw.print(tt.getController().getStatistics()
                     .progressStatisticsLine());
-            sb.append("\n");
+            pw.print("\n");
         }
-        return sb.toString();
+        pw.flush();
+        return sw.toString();
     }
 
     /**

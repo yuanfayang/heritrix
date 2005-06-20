@@ -342,8 +342,7 @@
             </tr>
             <%
                 alt = true;
-                TreeMap hd = stats.getReverseSortedCopy(stats.
-                    getHostsDistribution());
+                SortedMap hd = stats.getReverseSortedHostsDistribution();
                 for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
                     Object key = i.next();
             %>
@@ -352,7 +351,8 @@
                             <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^[^ ].*<%=(String)key%>&grep=true"><%=(String)key%></a>&nbsp;
                         </td>
                         <td nowrap>
-                            <%=((LongWrapper)hd.get(key)).longValue%>&nbsp;
+                            <% LongWrapper lw = ((LongWrapper)hd.get(key)); %>
+                            <%=(lw == null) ? "null" : lw.longValue%>&nbsp;
                         </td>
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)key))%>&nbsp;

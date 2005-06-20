@@ -22,6 +22,8 @@
  */
 package org.archive.util;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Writer;
 
 /**
@@ -30,13 +32,44 @@ import java.io.Writer;
  */
 public interface Reporter {
     /**
-     * @return A report on status in a string.
+     * Get an array of report names offered by this Reporter. 
+     * A name in brackets indicates a free-form String, 
+     * in accordance with the informal description inside
+     * the brackets, may yield a useful report.
+     * 
+     * @return String array of report names, empty if there is only
+     * one report type
      */
-    public String report();
+    public String[] getReports();
+    
     /**
-     * Report to the passed-in Writer
+     * Make a report of the given name to the passed-in Writer,
+     * If null, give the default report. 
      * 
      * @param writer to receive report
      */
-    public void reportTo(Writer writer);
+    public void reportTo(String name, PrintWriter writer) throws IOException;
+    
+    /**
+     * Make a default report to the passed-in Writer. Should
+     * be equivalent to reportTo(null, writer)
+     * 
+     * @param writer to receive report
+     */
+    public void reportTo(PrintWriter writer) throws IOException;
+    
+    /**
+     * Make a single-line summary report to the passed-in writer
+     * 
+     * @param writer to receive report
+     */
+    public void singleLineReportTo(PrintWriter writer) throws IOException;
+    
+    /**
+     * Return a short single-line summary report as a String.
+     * 
+     * @return String single-line summary report
+     */
+    public String singleLineReport();
+    
 }

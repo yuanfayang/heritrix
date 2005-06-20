@@ -26,6 +26,9 @@
  */
 package org.archive.util;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -538,6 +541,45 @@ public class ArchiveUtils {
             }
         }
         return true; 
+    }
+
+    /**
+     * Utility method to get a String singleLineReport from Reporter
+     * @param Reporter to get singleLineReport from
+     * @returns String of report
+     */
+    public static String singleLineReport(Reporter rep) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        try {
+            rep.singleLineReportTo(pw);
+        } catch (IOException e) {
+            // not really possible
+            e.printStackTrace();
+        }
+        pw.flush();
+        return sw.toString();
+    }
+
+    /**
+     * Compose the requested report into a String. DANGEROUS IF REPORT
+     * CAN BE LARGE.
+     * 
+     * @param rep Reported
+     * @param name String name of report to compose
+     * @return String of report
+     */
+    public static String writeReportToString(Reporter rep, String name) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        try {
+            rep.reportTo(name,pw);
+        } catch (IOException e) {
+            // not really possible
+            e.printStackTrace();
+        }
+        pw.flush();
+        return sw.toString();
     }
 }
 
