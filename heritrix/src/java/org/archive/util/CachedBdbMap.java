@@ -32,6 +32,7 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.util.AbstractMap;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -188,7 +189,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
      * @throws DatabaseException is thrown if the underlying BDB JE database
      *             throws an exception.
      */
-    public CachedBdbMap(Environment environment, StoredClassCatalog classCatalog,
+    public CachedBdbMap(Environment environment,
+            StoredClassCatalog classCatalog,
             String dbName, Class keyClass, Class valueClass)
     throws DatabaseException {
         super();
@@ -237,12 +239,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
         
         // We're doing the caching ourselves so setting these at the lowest
         // possible level.
-        // 
-        //  Commented out because this constructor causes unit tests to fail
-        //  using bdb je 2.0.  This constructor is only used by unit test
-        //
-        // envConfig.setCacheSize(1024);
-        // envConfig.setCachePercent(1);
+        envConfig.setCachePercent(1);
         
         DbEnvironmentEntry env = new DbEnvironmentEntry();
         try {
@@ -302,7 +299,6 @@ public class CachedBdbMap extends AbstractMap implements Map {
         super.finalize();
     }
 
-    
     /**
      * As this keySet is a union of the cache and diskMap KeySets,
      * it does not support the remove operations typical of keySet views
@@ -422,6 +418,36 @@ public class CachedBdbMap extends AbstractMap implements Map {
     public int size() {
         return diskMapSize + memMap.size();
     }
+    
+    /**
+     * Sync in-memory map entries to backing disk store.
+     * When done, the memory map will be cleared and all entries stored
+     * on disk.
+     * Assumes external synchronization, that no putting/getting happening
+     * when this method is called.
+     */
+    public void sync() {
+        long startTime = 0;
+        if (logger.isLoggable(Level.INFO)) {
+            startTime = (new Date()).getTime();
+        }
+        for (Iterator i = this.memMap.keySet().iterator(); i.hasNext();) {
+            Object key = i.next();
+            SoftEntry entry = (SoftEntry)memMap.get(key);
+            if (entry != null) {
+                Object value = entry.get(); // get & hold, so not cleared pre-return
+                if (value != null) {
+                    this.diskMap.put(key, value);
+                }
+            }
+        }
+        // Now, clear the memmap so entries are in mem or on disk only, not in
+        // both places at once.
+        this.memMap.clear();
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("Took " + ((new Date()).getTime() - startTime) + "ms.");
+        }
+    }
 
     private void expungeStaleEntries() {
         int c = 0;
@@ -513,13 +539,5 @@ public class CachedBdbMap extends AbstractMap implements Map {
             this.phantom = null;
             super.clear();
         }
-    }
-    
-    /**
-     * Used by unit test.
-     * @return This classes logger.
-     */
-    Logger getLogger() {
-        return logger;
     }
 }

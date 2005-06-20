@@ -46,18 +46,18 @@ public class CachedBdbMapTest extends TmpDirTestCase {
     }
     
     public void testBackingDbGetsUpdated() {
-        /*
         // Enable all logging. Up the level on the handlers and then
         // on the big map itself.
         Handler [] handlers = Logger.getLogger("").getHandlers();
         for (int index = 0; index < handlers.length; index++) {
             handlers[index].setLevel(Level.FINEST);
         }
-        this.cache.getLogger().setLevel(Level.FINEST);
+        Logger.getLogger(CachedBdbMap.class.getName()).
+            setLevel(Level.FINEST);
         // Set up values.
         final String value = "value";
         final String key = "key";
-        final int upperbound = 3000;
+        final int upperbound = 3;
         // First put in empty hashmap.
         for (int i = 0; i < upperbound; i++) {
             this.cache.put(key + Integer.toString(i), new HashMap());
@@ -67,14 +67,15 @@ public class CachedBdbMapTest extends TmpDirTestCase {
             HashMap m = (HashMap)this.cache.get(key + Integer.toString(i));
             m.put(key, value);
         }
+        this.cache.sync();
         for (int i = 0; i < upperbound; i++) {
             HashMap m = (HashMap)this.cache.get(key + Integer.toString(i));
             String v = (String)m.get(key);
             if (v == null || !v.equals(value)) {
-                this.cache.getLogger().warning("Wrong value " + i);
+                Logger.getLogger(CachedBdbMap.class.getName()).
+                    warning("Wrong value " + i);
             }
         }
-        */
     }
     
     public static void main(String [] args) {

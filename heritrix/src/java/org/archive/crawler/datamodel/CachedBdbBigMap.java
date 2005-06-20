@@ -49,6 +49,9 @@ implements BigMap {
     }
     
     public void clear() {
+        // Sync. memory and disk.
+        // TODO: Test how long this takes before adding to all crawls.
+        // sync();
         super.clear();
         // Close out my bdb db.
         if (this.db != null) {
