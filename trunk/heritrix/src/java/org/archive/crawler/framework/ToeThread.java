@@ -25,7 +25,6 @@ package org.archive.crawler.framework;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,7 +41,6 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.HttpRecorder;
 import org.archive.util.HttpRecorderMarker;
-import org.archive.util.PaddingStringBuffer;
 import org.archive.util.Reporter;
 
 import com.sleepycat.util.RuntimeExceptionWrapper;
@@ -250,7 +248,7 @@ Reporter {
             currentCuri.addAnnotation("err="+err.getClass().getName());
             currentCuri.addAnnotation("os"+currentCuri.getFetchStatus());
 			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
-            context = currentCuri.getLine() + " in " + currentProcessorName;
+            context = currentCuri.singleLineReport() + " in " + currentProcessorName;
 		}
         String title = "Serious error occured processing '" + context + "'";
         String message = "The following serious error occured when trying " +
@@ -385,122 +383,6 @@ Reporter {
     public HttpRecorder getHttpRecorder() {
         return this.httpRecorder;
     }
-
-    /**
-     * @return Compiles and returns a report on its status.
-     */
-    public String report()
-    {
-        PaddingStringBuffer rep = new PaddingStringBuffer();
-
-        rep.padTo(5);
-        rep.append("#" + this.serialNumber);
-        rep.padTo(11);
-
-        // Make a local copy of the currentCuri reference in case it gets
-        // nulled while we're using it.  We're doing this because
-        // alternative is synchronizing and we don't want to do this --
-        // it causes hang ups as controller waits on a lock for this thread,
-        // something it gets easily enough on old threading model but something
-        // it can wait interminably for on NPTL threading model.
-        // See [ 994946 ] Pause/Terminate ignored on 2.6 kernel 1.5 JVM.
-        CrawlURI c = currentCuri;
-        if(c != null) {
-            rep.append(c.toString());
-            rep.append(" (" + c.getFetchAttempts() + " attempts)");
-            rep.newline();
-            rep.padTo(8);
-            rep.append(c.getPathFromSeed());
-            if(c.getVia() != null) {
-                rep.append(" ");
-                rep.append(c.getVia().toString());
-            }
-            rep.newline();
-            rep.padTo(8);
-            rep.append("Current processor: " + currentProcessorName);
-        } else {
-            rep.append("[no CrawlURI]");
-        }
-
-        rep.newline();
-        rep.padTo(8);
-
-        long now = System.currentTimeMillis();
-        long time = 0;
-
-        if(lastFinishTime > lastStartTime) {
-            // That means we finished something after we last started something
-            // or in other words we are not working on anything.
-            rep.append("WAITING for ");
-            time = now - lastFinishTime;
-        } else if(lastStartTime > 0) {
-            // We are working on something
-            rep.append("ACTIVE for ");
-            time = now-lastStartTime;
-        }
-        rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
-        rep.newline();
-        
-        rep.padTo(8);
-        rep.append("Where: "+step+" for "+(System.currentTimeMillis()-atStepSince)+"ms");
-        rep.newline();
-
-        StackTraceElement[] ste = de.kohlschuetter.j5compat.Instances.STACKTRACES.getStackTrace(this);
-        for(int i=0;i<ste.length;i++) {
-            rep.padTo(12);
-            rep.append(ste[i].toString());
-            rep.newline();
-        }
-        rep.newline();
-        
-        return rep.toString();
-    }
-
-    /**
-     * @return Compiles and returns a report on its status.
-     */
-    public String oneLineReport()
-    {
-        StringBuffer rep = new StringBuffer();
-
-        rep.append("#" + this.serialNumber);
-
-        // Make a local copy of the currentCuri reference in case it gets
-        // nulled while we're using it.  We're doing this because
-        // alternative is synchronizing and we don't want to do this --
-        // it causes hang ups as controller waits on a lock for this thread,
-        // something it gets easily enough on old threading model but something
-        // it can wait interminably for on NPTL threading model.
-        // See [ 994946 ] Pause/Terminate ignored on 2.6 kernel 1.5 JVM.
-        CrawlURI c = currentCuri;
-        if(c != null) {
-            rep.append(" ");
-            rep.append(currentProcessorName);
-            rep.append(" ");
-            rep.append(c.toString());
-            rep.append(" (" + c.getFetchAttempts() + ") ");
-        } else {
-            rep.append(" [no CrawlURI] ");
-        }
-        
-        long now = System.currentTimeMillis();
-        long time = 0;
-
-        if(lastFinishTime > lastStartTime) {
-            // That means we finished something after we last started something
-            // or in other words we are not working on anything.
-            rep.append("WAITING for ");
-            time = now - lastFinishTime;
-        } else if(lastStartTime > 0) {
-            // We are working on something
-            rep.append("ACTIVE for ");
-            time = now-lastStartTime;
-        }
-        rep.append(ArchiveUtils.formatMillisecondsToConventional(time));
-        rep.append("at "+step+" for "+(now-atStepSince)+"ms\n");
-
-        return rep.toString();
-    }
     
     /** Get the CrawlController acossiated with this thread.
      *
@@ -570,16 +452,150 @@ Reporter {
         return shouldRetire;
     }
 
+    //
+    // Reporter implementation
+    // 
+    
+    /**
+     * @return Compiles and returns a report on its status.
+     * @throws IOException
+     */
+    public void reportTo(String name, PrintWriter pw) throws IOException
+    {
+        // name is ignored for now: only one kind of report
+        
+        pw.print("[");
+        pw.println(getName());
+
+        // Make a local copy of the currentCuri reference in case it gets
+        // nulled while we're using it.  We're doing this because
+        // alternative is synchronizing and we don't want to do this --
+        // it causes hang ups as controller waits on a lock for this thread,
+        // something it gets easily enough on old threading model but something
+        // it can wait interminably for on NPTL threading model.
+        // See [ 994946 ] Pause/Terminate ignored on 2.6 kernel 1.5 JVM.
+        CrawlURI c = currentCuri;
+        if(c != null) {
+            pw.print(" ");
+            c.singleLineReportTo(pw);
+            pw.print("    ");
+            pw.print(c.getFetchAttempts());
+            pw.print(" attempts");
+            pw.println();
+            pw.print("    ");
+            pw.print("in processor: ");
+            pw.print(currentProcessorName);
+        } else {
+            pw.print(" -no CrawlURI- ");
+        }
+        pw.println();
+
+        long now = System.currentTimeMillis();
+        long time = 0;
+
+        pw.print("    ");
+        if(lastFinishTime > lastStartTime) {
+            // That means we finished something after we last started something
+            // or in other words we are not working on anything.
+            pw.print("WAITING for ");
+            time = now - lastFinishTime;
+        } else if(lastStartTime > 0) {
+            // We are working on something
+            pw.print("ACTIVE for ");
+            time = now-lastStartTime;
+        }
+        pw.print(ArchiveUtils.formatMillisecondsToConventional(time));
+        pw.println();
+
+        pw.print("    ");
+        pw.print("step: ");
+        pw.print(step);
+        pw.print(" for ");
+        pw.print(ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-atStepSince));
+        pw.println();
+
+        StackTraceElement[] ste = de.kohlschuetter.j5compat.Instances.STACKTRACES.getStackTrace(this);
+        for(int i=0;i<ste.length;i++) {
+            pw.print("    ");
+            pw.print(ste[i].toString());
+            pw.println();
+        }
+        pw.print("]");
+        pw.println();
+        
+        pw.flush();
+    }
+
+    /**
+     * @return Compiles and returns a report on its status.
+     */
+    public void singleLineReportTo(PrintWriter w) throws IOException
+    {
+        w.print("#");
+        w.print(this.serialNumber);
+
+        // Make a local copy of the currentCuri reference in case it gets
+        // nulled while we're using it.  We're doing this because
+        // alternative is synchronizing and we don't want to do this --
+        // it causes hang ups as controller waits on a lock for this thread,
+        // something it gets easily enough on old threading model but something
+        // it can wait interminably for on NPTL threading model.
+        // See [ 994946 ] Pause/Terminate ignored on 2.6 kernel 1.5 JVM.
+        CrawlURI c = currentCuri;
+        if(c != null) {
+            w.print(" ");
+            w.print(currentProcessorName);
+            w.print(" ");
+            w.print(c.toString());
+            w.print(" (");
+            w.print(c.getFetchAttempts());
+            w.print(") ");
+        } else {
+            w.print(" [no CrawlURI] ");
+        }
+        
+        long now = System.currentTimeMillis();
+        long time = 0;
+
+        if(lastFinishTime > lastStartTime) {
+            // That means we finished something after we last started something
+            // or in other words we are not working on anything.
+            w.print("WAITING for ");
+            time = now - lastFinishTime;
+        } else if(lastStartTime > 0) {
+            // We are working on something
+            w.print("ACTIVE for ");
+            time = now-lastStartTime;
+        }
+        w.print(ArchiveUtils.formatMillisecondsToConventional(time));
+        w.print(" at ");
+        w.print(step);
+        w.print(" for ");
+        w.print(ArchiveUtils.formatMillisecondsToConventional(now-atStepSince));
+        w.print("ms\n");
+
+        w.flush();
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#getReports()
+     */
+    public String[] getReports() {
+        // for now none but the default
+        return new String[] {};
+    }
+
     /* (non-Javadoc)
      * @see org.archive.util.Reporter#reportTo(java.io.Writer)
      */
-    public void reportTo(Writer writer) {
-        try {
-            // TODO invert: make report() based on this
-            writer.write(report());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReport()
+     */
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
     }
 }

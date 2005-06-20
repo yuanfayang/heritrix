@@ -26,12 +26,14 @@ package org.archive.crawler.datamodel;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Iterator;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.extractor.Link;
-import org.archive.util.Lineable;
+import org.archive.util.ArchiveUtils;
+import org.archive.util.Reporter;
 
 import st.ata.util.AList;
 import st.ata.util.HashtableAList;
@@ -51,7 +53,7 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CandidateURI
-implements Serializable, Lineable {
+implements Serializable, Reporter {
     private static final long serialVersionUID = -7152937921526560388L;
 
     /** Highest scheduling priority.
@@ -262,13 +264,6 @@ implements Serializable, Lineable {
      */
     public String flattenVia() {
         return (via == null)? "": via.toString();
-    }
-
-    public String getLine() {
-        String className = this.getClass().getName();
-        className = className.substring(className.lastIndexOf(".")+1);
-        return className + " " + getUURI().toString() + " " + pathFromSeed +
-            " " + flattenVia();
     }
     
     /**
@@ -617,5 +612,47 @@ implements Serializable, Lineable {
             return null;
         }
     }
+    
+    //
+    // Reporter implementation
+    //
 
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+    
+    public void singleLineReportTo(PrintWriter w) throws IOException {
+        String className = this.getClass().getName();
+        className = className.substring(className.lastIndexOf(".")+1);
+        w.print(className);
+        w.print(" ");
+        w.print(getUURI().toString());
+        w.print(" ");
+        w.print(pathFromSeed);
+        w.print(" ");
+        w.print(flattenVia());
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#getReports()
+     */
+    public String[] getReports() {
+        // none but default: empty options
+        return new String[] {};
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.lang.String, java.io.Writer)
+     */
+    public void reportTo(String name, PrintWriter writer) throws IOException {
+        singleLineReportTo(writer);
+        writer.print("\n");
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
+    }
 }

@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -73,6 +74,7 @@ import org.archive.io.GenerationFileHandler;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.ObjectPlusFilesOutputStream;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.Reporter;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Type;
 import org.xbill.DNS.dns;
@@ -96,7 +98,7 @@ import com.sleepycat.je.EnvironmentConfig;
  *
  * @author Gordon Mohr
  */
-public class CrawlController implements Serializable {
+public class CrawlController implements Serializable, Reporter {
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlController.class,1);
@@ -927,6 +929,9 @@ public class CrawlController implements Serializable {
         }
         if (this.bdbEnvironment != null) {
             try {
+            	// can't hurt, might make bdb droppings post-crawl
+            	// more useful 
+                this.bdbEnvironment.sync();
                 this.bdbEnvironment.close();
             } catch (DatabaseException e) {
                 e.printStackTrace();
@@ -1169,44 +1174,8 @@ public class CrawlController implements Serializable {
 	 */
 	public String oneLineReportThreads() {
 		// TODO Auto-generated method stub
-		return toePool.oneLineReport();
+		return toePool.singleLineReport();
 	}
-    /**
-     * @return Compiles and returns a human readable report on the
-     * ToeThreads in it's ToePool.
-     */
-    public String reportThreads() {
-        return toePool.report();
-    }
-
-    /**
-     * Compiles and returns a human readable report on the active processors.
-     * @return human readable report on the active processors.
-     *
-     * @see org.archive.crawler.framework.Processor#report()
-     */
-    public String reportProcessors() {
-        StringBuffer rep = new StringBuffer();
-        rep.append(
-            "Processors report - "
-                + ArchiveUtils.TIMESTAMP12.format(new Date())
-                + "\n");
-        rep.append("  Job being crawled:    " + getOrder().getCrawlOrderName()
-                + "\n");
-
-        rep.append("  Number of Processors: " + processorChains.processorCount()
-                + "\n");
-        rep.append("  NOTE: Some processors may not return a report!\n\n");
-
-        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
-            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
-                    ip.hasNext(); ) {
-                rep.append(((Processor) ip.next()).report());
-            }
-        }
-
-        return rep.toString();
-    }
 
     /**
      * While many settings will update automatically when the SettingsHandler is
@@ -1521,14 +1490,6 @@ public class CrawlController implements Serializable {
             completeStop();
         }
     }
-    
-	/**
-	 * @return Returns the current state of the manifest (Used at reporting
-     * time).
-	 */
-	public String getManifest() {
-		return manifest.toString();
-	}
 
     /**
      * Add order file contents to manifest.
@@ -1561,5 +1522,91 @@ public class CrawlController implements Serializable {
         }
         Object[] array = {u, l};
         uriErrors.log(Level.INFO, e.getMessage(),array);
+    }
+    
+    // 
+    // Reporter
+    //
+    public final static String PROCESSORS_REPORT = "processors";
+    public final static String MANIFEST_REPORT = "manifest";
+    protected final static String[] REPORTS = {PROCESSORS_REPORT, MANIFEST_REPORT};
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#getReports()
+     */
+    public String[] getReports() {
+        return REPORTS;
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReport()
+     */
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.lang.String, java.io.Writer)
+     */
+    public void reportTo(String name, PrintWriter writer) throws IOException {
+        if(PROCESSORS_REPORT.equals(name)) {
+            reportProcessorsTo(writer);
+            return;
+        } else if (MANIFEST_REPORT.equals(name)) {
+            reportManifestTo(writer);
+            return;
+        } else if (name!=null) {
+            writer.println("requested report unknown: "+name);
+        }
+        singleLineReportTo(writer);
+    }
+
+    /**
+     * @param writer
+     * @throws IOException
+     */
+    protected void reportManifestTo(PrintWriter writer) throws IOException {
+        writer.print(manifest.toString());
+    }
+
+    /**
+     * Compiles and returns a human readable report on the active processors.
+     * @return human readable report on the active processors.
+     * @throws IOException
+     *
+     * @see org.archive.crawler.framework.Processor#report()
+     */
+    protected void reportProcessorsTo(PrintWriter writer) throws IOException {
+        writer.print(
+            "Processors report - "
+                + ArchiveUtils.TIMESTAMP12.format(new Date())
+                + "\n");
+        writer.print("  Job being crawled:    " + getOrder().getCrawlOrderName()
+                + "\n");
+
+        writer.print("  Number of Processors: " + processorChains.processorCount()
+                + "\n");
+        writer.print("  NOTE: Some processors may not return a report!\n\n");
+
+        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
+            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
+                    ip.hasNext(); ) {
+                writer.print(((Processor) ip.next()).report());
+            }
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReportTo(java.io.Writer)
+     */
+    public void singleLineReportTo(PrintWriter writer) throws IOException {
+        writer.write("[Crawl Controller]\n");
     }
 }

@@ -23,11 +23,15 @@
 package org.archive.crawler.frontier;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.archive.util.ArchiveUtils;
+import org.archive.util.Reporter;
 
 import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -62,7 +66,7 @@ import com.sleepycat.je.OperationStatus;
  *
  * @author Kristinn Sigurdsson
  */
-public class AdaptiveRevisitQueueList {
+public class AdaptiveRevisitQueueList implements Reporter {
 
     // TODO: Handle HQs becoming empty.
     
@@ -263,42 +267,7 @@ public class AdaptiveRevisitQueueList {
         }
         return count;
     }
-    
-    public String report(){
-        StringBuffer ret = new StringBuffer(256);
-        Iterator it = sortedHostQueues.iterator();
-        while(it.hasNext()){
-            AdaptiveRevisitHostQueueWrapper wrapper =
-                (AdaptiveRevisitHostQueueWrapper)it.next();
-          
-            ret.append(wrapper.hq.report());
-            ret.append("\n\n");
-        }
-        return ret.toString();
-    }
-    
-    public String oneLineReport(){
-        Iterator it = sortedHostQueues.iterator();
-        int total = 0;
-        int ready = 0;
-        int snoozed = 0;
-        int empty = 0;
-        int busy = 0;
-        while(it.hasNext()){
-            AdaptiveRevisitHostQueueWrapper wrapper =
-                (AdaptiveRevisitHostQueueWrapper)it.next();
-            total++;
-            switch(wrapper.hq.getState()){
-                case AdaptiveRevisitHostQueue.HQSTATE_BUSY : busy++; break;
-                case AdaptiveRevisitHostQueue.HQSTATE_EMPTY : empty++; break;
-                case AdaptiveRevisitHostQueue.HQSTATE_READY : ready++; break;
-                case AdaptiveRevisitHostQueue.HQSTATE_SNOOZED : snoozed++; break;
-            }
-        }
-        return total + " queues: " + ready + " ready, " + snoozed + 
-            " snoozed, " + busy + " busy, and " + empty + " empty";
-    }
-    
+        
     /**
      * This class wraps an AdaptiveRevisitHostQueue with a fixed value for next
      * ready time.
@@ -369,4 +338,62 @@ public class AdaptiveRevisitQueueList {
                     "\n" + e.getMessage());
         }
     }
+    
+    //
+    // Reporter implementation
+    //
+    
+    public String[] getReports() {
+        // none but default for now
+        return new String[] {};
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReport()
+     */
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
+    }
+    
+    public void reportTo(String name, PrintWriter writer) throws IOException {
+        // ignore name for now, only one default report
+        Iterator it = sortedHostQueues.iterator();
+        while(it.hasNext()){
+            AdaptiveRevisitHostQueueWrapper wrapper =
+                (AdaptiveRevisitHostQueueWrapper)it.next();
+          
+            writer.print(wrapper.hq.report());
+            writer.print("\n\n");
+        }
+    }
+    
+    public void singleLineReportTo(PrintWriter writer) throws IOException {
+        Iterator it = sortedHostQueues.iterator();
+        int total = 0;
+        int ready = 0;
+        int snoozed = 0;
+        int empty = 0;
+        int busy = 0;
+        while(it.hasNext()){
+            AdaptiveRevisitHostQueueWrapper wrapper =
+                (AdaptiveRevisitHostQueueWrapper)it.next();
+            total++;
+            switch(wrapper.hq.getState()){
+                case AdaptiveRevisitHostQueue.HQSTATE_BUSY : busy++; break;
+                case AdaptiveRevisitHostQueue.HQSTATE_EMPTY : empty++; break;
+                case AdaptiveRevisitHostQueue.HQSTATE_READY : ready++; break;
+                case AdaptiveRevisitHostQueue.HQSTATE_SNOOZED : snoozed++; break;
+            }
+        }
+        writer.print(total + " queues: " + ready + " ready, " + snoozed + 
+            " snoozed, " + busy + " busy, and " + empty + " empty");
+    }
+
 }

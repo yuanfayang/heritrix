@@ -23,6 +23,7 @@
 package org.archive.crawler.frontier;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -850,20 +851,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         return totalProcessedBytes;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#oneLineReport()
-     */
-    public synchronized String oneLineReport() {
-        return hostQueues.oneLineReport();
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.framework.Frontier#report()
-     */
-    public synchronized String report() {
-        return hostQueues.report();
-    }
-
     /**
      * Method is not supported by this Frontier implementation..
      * @param pathToLog
@@ -959,4 +946,42 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         throw new IOException("Unsupported");
     }
 
+    //
+    // Reporter implementation
+    //
+    
+    public String[] getReports() {
+        // none but default for now
+        return new String[] {};
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReport()
+     */
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#oneLineReport()
+     */
+    public synchronized void singleLineReportTo(PrintWriter w) throws IOException {
+        hostQueues.singleLineReportTo(w);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#report()
+     */
+    public synchronized void reportTo(String name, PrintWriter writer) throws IOException {
+        // ignore name; only one report for now
+        hostQueues.reportTo(writer);
+    }
+    
 }

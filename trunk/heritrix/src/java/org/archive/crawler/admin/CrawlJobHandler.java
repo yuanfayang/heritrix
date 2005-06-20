@@ -1108,7 +1108,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if (controller == null || controller.getFrontier() == null) {
             return "Crawler not running";
         }
-        return controller.getFrontier().oneLineReport();
+        return controller.getFrontier().singleLineReport();
     }
     
     /**
@@ -1121,7 +1121,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if (controller == null || controller.getFrontier() == null) {
             return "Crawler not running";
         }
-        return controller.getFrontier().report();
+        return ArchiveUtils.writeReportToString(controller.getFrontier(),"compact");
     }
 
     /**
@@ -1143,7 +1143,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if (controller == null) {
             return "Crawler not running";
         }
-        return controller.reportThreads();
+        return ArchiveUtils.writeReportToString(controller.getToePool(),null);
     }
 
     /**
@@ -1167,7 +1167,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if (controller == null) {
             return "Crawler not running";
         }
-        return controller.reportProcessors();
+        return ArchiveUtils.writeReportToString(controller,CrawlController.PROCESSORS_REPORT);
     }
 
     /**

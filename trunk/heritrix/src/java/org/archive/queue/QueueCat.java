@@ -32,7 +32,7 @@ import java.io.ObjectInputStream;
 import java.io.SequenceInputStream;
 
 import org.archive.util.ArchiveUtils;
-import org.archive.util.Lineable;
+import org.archive.util.Reporter;
 
 /**
  * Command-line tool that displays serialized object streams in a
@@ -77,8 +77,8 @@ public class QueueCat {
             } catch (EOFException e) {
                 return;
             }
-            if(o instanceof Lineable) {
-                System.out.println(((Lineable)o).getLine());
+            if(o instanceof Reporter) {
+                System.out.println(((Reporter)o).singleLineReport());
             } else {
                 // TODO: flatten multiple-line strings!
                 System.out.println(o.toString());

@@ -20,9 +20,7 @@
             if (handler.getCurrentJob() == null) {
                 message = "Current job is null.";
             } else {
-                stats.report(handler.getCurrentJob().getSettingsHandler().
-                    getOrder().getController(), 
-                    "Report made before crawl ended");
+                stats.report();
                 message = "Forced generation of end-of-crawl reports.";
             }
        }

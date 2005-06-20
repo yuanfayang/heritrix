@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -936,7 +937,7 @@ HasUriReceiver,  CrawlStatusListener {
             if (!snoozeQueues.remove(awoken)) {
                 logger.severe("First() item couldn't be remove()d! - " + awoken +
                     " - " + snoozeQueues.contains(awoken));
-                logger.severe(report());
+                logger.severe(singleLineReport());
             }
             awoken.wake();
             updateQ(awoken);
@@ -1534,7 +1535,7 @@ HasUriReceiver,  CrawlStatusListener {
                     String text;
 
                     // A verbose description
-                    text = "["+queueName+" " + itemsScanned + "] "+caURI.getLine();
+                    text = "["+queueName+" " + itemsScanned + "] "+caURI.singleLineReport();
 
                     list.add(text);
                     foundMatches++;
@@ -1571,121 +1572,6 @@ HasUriReceiver,  CrawlStatusListener {
 //        numberOfDeletes += pendingQueue.deleteMatchedItems(mat);
         queuedUriCount -= numberOfDeletes;
         return numberOfDeletes;
-    }
-
-    
-    /**
-     * @return One-line summary report, useful for display when full report
-     * may be unwieldy. 
-     */
-    public String oneLineReport() {
-    StringBuffer rep = new StringBuffer();
-    rep.append(allClassQueuesMap.size()+" queues: ");
-    rep.append(readyClassQueues.size()+" ready, ");
-    rep.append(snoozeQueues.size()+" snoozed, ");
-    rep.append(inactiveClassQueues.size()+" inactive");        
-    return rep.toString();
-    }
-    
-    /**
-     * This method compiles a human readable report on the status of the frontier
-     * at the time of the call.
-     *
-     * @return A report on the current status of the frontier.
-     */
-    public synchronized String report()
-    {
-        long now = System.currentTimeMillis();
-        StringBuffer rep = new StringBuffer();
-
-        rep.append("Frontier report - "
-                   + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-        rep.append(" Job being crawled: "
-                   + controller.getOrder().getCrawlOrderName() + "\n");
-        rep.append("\n -----===== STATS =====-----\n");
-        rep.append(" Discovered:    " + discoveredUriCount() + "\n");
-        rep.append(" Queued:        " + queuedUriCount() + "\n");
-        rep.append(" Finished:      " + finishedUriCount() + "\n");
-        rep.append("  Successfully: " + succeededFetchCount() + "\n");
-        rep.append("  Failed:       " + failedFetchCount() + "\n");
-        rep.append("  Disregarded:  " + disregardedUriCount() + "\n");
-        rep.append("\n -----===== QUEUES =====-----\n");
-        rep.append(" Already included size:     " + alreadyIncluded.count()+"\n");
-
-        // show up to REPORT_MAX_QUEUES of ready queues
-        int countOfQueues = readyClassQueues.size();
-        rep.append("\n Ready class queues size:   " + countOfQueues + "\n");
-        for(int i=0 ; i < countOfQueues && i < REPORT_MAX_QUEUES  ; i++)
-        {
-            KeyedQueue kq = (KeyedQueue)readyClassQueues.get(i);
-            appendKeyedQueue(rep,kq,now);
-        }
-        if(countOfQueues>REPORT_MAX_QUEUES) {
-            rep.append("...and "+(countOfQueues-REPORT_MAX_QUEUES)+" more.\n\n");
-        }
-
-        // show up to REPORT_MAX_QUEUES of snoozed queues
-        countOfQueues = snoozeQueues.size();
-        rep.append("\n Snooze queues size:        " + countOfQueues + "\n");
-        int displayCount = 0;
-        Iterator iter = snoozeQueues.iterator();
-        while(iter.hasNext() && displayCount < REPORT_MAX_QUEUES) {
-            Object q = iter.next();
-            if(q instanceof KeyedQueue)
-            {
-                KeyedQueue kq = (KeyedQueue)q;
-                appendKeyedQueue(rep,kq,now);
-                displayCount++;
-            }
-        }
-        if(countOfQueues>REPORT_MAX_QUEUES) {
-            rep.append("...and "+(countOfQueues-REPORT_MAX_QUEUES)+" more.\n\n");
-        }       
-        
-        // show up to REPORT_MAX_QUEUES of all queues, avoid dups of READY/SNOOZED
-        countOfQueues = allClassQueuesMap.size();
-        rep.append("\n All class queues map size: " + countOfQueues + "\n");
-        displayCount = 0;
-        iter = allClassQueuesMap.values().iterator();
-        while(iter.hasNext() && displayCount < REPORT_MAX_QUEUES) {
-            KeyedQueue kq = (KeyedQueue)iter.next();
-            if(kq.getState()!=URIWorkQueue.READY && kq.getState()!=URIWorkQueue.SNOOZED)
-            {
-                appendKeyedQueue(rep,kq,now);
-                displayCount++;
-            }
-        }
-        if (displayCount < countOfQueues) {
-            rep.append("...and "+(countOfQueues-displayCount)+" more.\n\n");
-        }       
-
-        rep.append("\n Inactive queues size:        " + inactiveClassQueues.size() + "\n");
-
-
-        return rep.toString();
-    }
-
-
-    private void appendKeyedQueue(StringBuffer rep, URIWorkQueue kq, long now) {
-        rep.append("    KeyedQueue  " + kq.getClassKey() + "\n");
-        rep.append("     Length:        " + kq.length() + "\n");
-//        rep.append("     Is ready:  " + kq.shouldWake() + "\n");
-        if(kq instanceof KeyedQueue){
-        rep.append("     Status:        " +
-            ((KeyedQueue)kq).getState().toString() + "\n");
-        }
-        if(kq.getState()==URIWorkQueue.SNOOZED) {
-            rep.append("     Wakes in:      " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
-        }
-        if(kq.getInProcessItems().size()>0) {
-            Iterator iter = kq.getInProcessItems().iterator();
-            while (iter.hasNext()) {
-                rep.append("     InProcess:     " + iter.next() + "\n");
-            }
-        }
-        rep.append("     Last enqueued: " + kq.getLastQueued()+"\n");
-        rep.append("     Last dequeued: " + kq.getLastDequeued()+"\n");
-
     }
 
     // custom serialization
@@ -1834,4 +1720,138 @@ HasUriReceiver,  CrawlStatusListener {
     public void crawlResuming(String statusMessage) {
         // TODO Auto-generated method stub
     }
+    
+    //
+    // Reporter implementation
+    //
+    
+    public String[] getReports() {
+        // none but default for now
+        return new String[] {};
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReport()
+     */
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
+    }
+    /**
+     * @return One-line summary report, useful for display when full report
+     * may be unwieldy. 
+     * @throws IOException
+     */
+    public void singleLineReportTo(PrintWriter writer) throws IOException {
+        writer.print(allClassQueuesMap.size()+" queues: ");
+        writer.print(readyClassQueues.size()+" ready, ");
+        writer.print(snoozeQueues.size()+" snoozed, ");
+        writer.print(inactiveClassQueues.size()+" inactive");        
+    }
+    
+    /**
+     * This method compiles a human readable report on the status of the frontier
+     * at the time of the call.
+     *
+     * @return A report on the current status of the frontier.
+     * @throws IOException
+     */
+    public synchronized void reportTo(String name, PrintWriter writer) throws IOException
+    {
+        // ignore name, only one report type for now
+        
+        long now = System.currentTimeMillis();
+
+        writer.print("Frontier report - "
+                   + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+        writer.print(" Job being crawled: "
+                   + controller.getOrder().getCrawlOrderName() + "\n");
+        writer.print("\n -----===== STATS =====-----\n");
+        writer.print(" Discovered:    " + discoveredUriCount() + "\n");
+        writer.print(" Queued:        " + queuedUriCount() + "\n");
+        writer.print(" Finished:      " + finishedUriCount() + "\n");
+        writer.print("  Successfully: " + succeededFetchCount() + "\n");
+        writer.print("  Failed:       " + failedFetchCount() + "\n");
+        writer.print("  Disregarded:  " + disregardedUriCount() + "\n");
+        writer.print("\n -----===== QUEUES =====-----\n");
+        writer.print(" Already included size:     " + alreadyIncluded.count()+"\n");
+
+        // show up to REPORT_MAX_QUEUES of ready queues
+        int countOfQueues = readyClassQueues.size();
+        writer.print("\n Ready class queues size:   " + countOfQueues + "\n");
+        for(int i=0 ; i < countOfQueues && i < REPORT_MAX_QUEUES  ; i++)
+        {
+            KeyedQueue kq = (KeyedQueue)readyClassQueues.get(i);
+            appendKeyedQueue(writer,kq,now);
+        }
+        if(countOfQueues>REPORT_MAX_QUEUES) {
+            writer.print("...and "+(countOfQueues-REPORT_MAX_QUEUES)+" more.\n\n");
+        }
+
+        // show up to REPORT_MAX_QUEUES of snoozed queues
+        countOfQueues = snoozeQueues.size();
+        writer.print("\n Snooze queues size:        " + countOfQueues + "\n");
+        int displayCount = 0;
+        Iterator iter = snoozeQueues.iterator();
+        while(iter.hasNext() && displayCount < REPORT_MAX_QUEUES) {
+            Object q = iter.next();
+            if(q instanceof KeyedQueue)
+            {
+                KeyedQueue kq = (KeyedQueue)q;
+                appendKeyedQueue(writer,kq,now);
+                displayCount++;
+            }
+        }
+        if(countOfQueues>REPORT_MAX_QUEUES) {
+            writer.print("...and "+(countOfQueues-REPORT_MAX_QUEUES)+" more.\n\n");
+        }       
+        
+        // show up to REPORT_MAX_QUEUES of all queues, avoid dups of READY/SNOOZED
+        countOfQueues = allClassQueuesMap.size();
+        writer.print("\n All class queues map size: " + countOfQueues + "\n");
+        displayCount = 0;
+        iter = allClassQueuesMap.values().iterator();
+        while(iter.hasNext() && displayCount < REPORT_MAX_QUEUES) {
+            KeyedQueue kq = (KeyedQueue)iter.next();
+            if(kq.getState()!=URIWorkQueue.READY && kq.getState()!=URIWorkQueue.SNOOZED)
+            {
+                appendKeyedQueue(writer,kq,now);
+                displayCount++;
+            }
+        }
+        if (displayCount < countOfQueues) {
+            writer.print("...and "+(countOfQueues-displayCount)+" more.\n\n");
+        }       
+
+        writer.print("\n Inactive queues size:        " + inactiveClassQueues.size() + "\n");
+    }
+
+
+    private void appendKeyedQueue(PrintWriter writer, URIWorkQueue kq, long now) throws IOException {
+        writer.print("    KeyedQueue  " + kq.getClassKey() + "\n");
+        writer.print("     Length:        " + kq.length() + "\n");
+//        writer.print("     Is ready:  " + kq.shouldWake() + "\n");
+        if(kq instanceof KeyedQueue){
+        writer.print("     Status:        " +
+            ((KeyedQueue)kq).getState().toString() + "\n");
+        }
+        if(kq.getState()==URIWorkQueue.SNOOZED) {
+            writer.print("     Wakes in:      " + ArchiveUtils.formatMillisecondsToConventional(kq.getWakeTime()-now)+"\n");
+        }
+        if(kq.getInProcessItems().size()>0) {
+            Iterator iter = kq.getInProcessItems().iterator();
+            while (iter.hasNext()) {
+                writer.print("     InProcess:     " + iter.next() + "\n");
+            }
+        }
+        writer.print("     Last enqueued: " + kq.getLastQueued()+"\n");
+        writer.print("     Last dequeued: " + kq.getLastDequeued()+"\n");
+    }
+
 }

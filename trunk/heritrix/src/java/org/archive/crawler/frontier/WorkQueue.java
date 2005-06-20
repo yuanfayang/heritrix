@@ -1,10 +1,15 @@
 package org.archive.crawler.frontier;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.Writer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.Reporter;
 
 /**
  * A single queue of related URIs to visit, grouped by a classKey
@@ -13,7 +18,10 @@ import org.archive.util.ArchiveUtils;
  * @author gojomo
  * @author Christian Kohlschuetter 
  */
-public abstract class WorkQueue implements Comparable, Serializable {
+public abstract class WorkQueue implements Comparable, Serializable, Reporter {
+    private static final Logger logger =
+        Logger.getLogger(WorkQueue.class.getName());
+    
     /** The classKey */
     protected final String classKey;
 
@@ -76,40 +84,6 @@ public abstract class WorkQueue implements Comparable, Serializable {
     }
 
     /**
-     * @return a string describing this queue
-     */
-    public String report() {
-        return "Queue "
-            + classKey
-            + "\n"
-            + "  "
-            + count
-            + " items"
-            + "\n"
-            + "    last enqueued: "
-            + lastQueued
-            + "\n"
-            + "      last peeked: "
-            + lastPeeked
-            + "\n"
-            + ((wakeTime == 0) ? "" : "         wakes in: "
-                + (wakeTime - System.currentTimeMillis()) + "ms\n")
-            + "   total expended: "
-            + totalExpenditure
-            + " (total budget: "
-            + totalBudget
-            + ")\n"
-            + "   active balance: "
-            + sessionBalance
-            + "\n"
-            + "   last(avg) cost: "
-            + lastCost
-            + "("
-            + ArchiveUtils.doubleToString(
-                ((double) totalExpenditure / costCount), 1) + ")\n";
-    }
-
-    /**
      * Add the given CrawlURI, noting its addition in running count. (It
      * should not already be present.)
      * 
@@ -144,8 +118,9 @@ public abstract class WorkQueue implements Comparable, Serializable {
                 peekItem = peekItem(frontier);
             } catch (IOException e) {
                 //FIXME better exception handling
+                logger.log(Level.SEVERE,"peek failure",e);
                 e.printStackTrace();
-                throw new RuntimeException(e);
+                // throw new RuntimeException(e);
             }
             if(peekItem != null) {
                 lastPeeked = peekItem.toString();
@@ -429,5 +404,100 @@ public abstract class WorkQueue implements Comparable, Serializable {
                 throw new RuntimeException(e);
             }
         }
+    }
+    
+    // 
+    // Reporter
+    //
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#getReports()
+     */
+    public String[] getReports() {
+        return new String[] {};
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
+     */
+    public void reportTo(PrintWriter writer) throws IOException {
+        reportTo(null,writer);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReportTo(java.io.Writer)
+     */
+    public void singleLineReportTo(PrintWriter writer) throws IOException {
+        // queue name
+        writer.print(classKey);
+        writer.print(" ");
+        // count of items
+        writer.print(Long.toString(count));
+        writer.print(" ");
+        writer.print(sessionBalance);
+        writer.print(" ");
+        writer.print(lastCost);
+        writer.print("(");
+        writer.print(ArchiveUtils.doubleToString(
+                    ((double) totalExpenditure / costCount), 1));
+        writer.print(")");
+        writer.print(" ");
+        // wake time if snoozed, or '-'
+        if (wakeTime != 0) {
+            writer.print(ArchiveUtils.formatMillisecondsToConventional(wakeTime - System.currentTimeMillis()));
+        } else {
+            writer.print("-");
+        }
+        writer.print(" ");
+        writer.print(Long.toString(totalExpenditure));
+        writer.print("/");
+        writer.print(Long.toString(totalBudget));
+        writer.print(" ");
+        writer.print(lastPeeked);
+        writer.print(" ");
+        writer.print(lastQueued);
+        writer.print("\n");
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineReport()
+     */
+    public String singleLineReport() {
+        return ArchiveUtils.singleLineReport(this);
+    }
+    
+    /**
+     * @param writer
+     * @throws IOException
+     */
+    public void reportTo(String name, PrintWriter writer) throws IOException {
+        // name is ignored: only one kind of report for now
+        writer.print("Queue ");
+        writer.print(classKey);
+        writer.print("\n");
+        writer.print("  ");
+        writer.print(Long.toString(count));
+        writer.print(" items");
+        if (wakeTime != 0) {
+            writer.print("\n   wakes in: "+ArchiveUtils.formatMillisecondsToConventional(wakeTime - System.currentTimeMillis()));
+        }
+        writer.print("\n    last enqueued: ");
+        writer.print(lastQueued);
+        writer.print("\n      last peeked: ");
+        writer.print(lastPeeked);
+        writer.print("\n");
+        writer.print("   total expended: ");
+        writer.print(Long.toString(totalExpenditure));
+        writer.print(" (total budget: ");
+        writer.print(Long.toString(totalBudget));
+        writer.print(")\n");
+        writer.print("   active balance: ");
+        writer.print(sessionBalance);
+        writer.print("\n   last(avg) cost: ");
+        writer.print(lastCost);
+        writer.print("(");
+        writer.print(ArchiveUtils.doubleToString(
+                    ((double) totalExpenditure / costCount), 1));
+        writer.print(")\n\n");
     }
 }

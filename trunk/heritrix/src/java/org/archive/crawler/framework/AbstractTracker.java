@@ -103,13 +103,6 @@ implements StatisticsTracking, CrawlStatusListener {
     }
     
     /**
-     * Run the reports.
-     * @param c A CrawlController instance.
-     * @param exitMessage Message to log into the crawl report exit status.
-     */
-    public abstract void report(CrawlController c, String exitMessage);
-    
-    /**
      * Start thread.  Will call logActivity() at intervals specified by
      * logInterval
      *
