@@ -352,7 +352,8 @@
                         </td>
                         <td nowrap>
                             <% LongWrapper lw = ((LongWrapper)hd.get(key)); %>
-                            <%=(lw == null) ? "null" : lw.longValue%>&nbsp;
+                            <%=(lw == null) ?
+                                "null": Long.toString(lw.longValue)%>&nbsp;
                         </td>
                         <td align="right" nowrap>
                             <%=ArchiveUtils.formatBytesForDisplay(stats.getBytesPerHost((String)key))%>&nbsp;
