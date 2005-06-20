@@ -24,6 +24,7 @@ package org.archive.crawler.admin;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -32,6 +33,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -144,7 +146,11 @@ implements CrawlURIDispositionListener {
     /** Keep track of fetch status codes */
     protected Hashtable statusCodeDistribution = new Hashtable();
     
-    /** Keep track of hosts */
+    /** Keep track of hosts. 
+     * 
+     * Each of these Maps are individually unsynchronized, and cannot 
+     * be trivially synchronized with the Collections wrapper. Thus
+     * their synchronized access is enforced by this class. */
     protected Map hostsDistribution = null;
     protected Map hostsBytes = null;
     protected Map hostsLastFinished = null;
@@ -156,6 +162,12 @@ implements CrawlURIDispositionListener {
      */
     protected List allSeeds = new Vector();
 
+    // seeds tallies: ONLY UPDATED WHEN SEED REPORT WRITTEN
+    private int seedsCrawled;
+    private int seedsNotCrawled;
+    // sExitMessage: only set at crawl-end
+    private String sExitMessage = "Before crawl end";
+
 
     public StatisticsTracker(String name) {
         super( name, "A statistics tracker thats integrated into " +
@@ -166,18 +178,14 @@ implements CrawlURIDispositionListener {
     throws FatalConfigurationException {
         super.initialize(c);
         try {
-            this.hostsDistribution =
-                BigMapFactory.getBigMap(c.getSettingsHandler(),
+            this.hostsDistribution = 
+                BigMapFactory.getBigMap(c.getSettingsHandler(), 
                     "hostsDistribution", String.class, LongWrapper.class);
-            this.hostsBytes = BigMapFactory.getBigMap(c.getSettingsHandler(),
-                    "hostsBytes", String.class, LongWrapper.class);
-            // This map is different from the above in that it doesn't
-            // increment a value per host.  Because of this, updates
-            // don't go via the incrementMapCount method which takes
-            // care to synchronize #puts.  This means any put into the
-            // below HashMap needs to be in a synchronize block.
-            this.hostsLastFinished =
+            this.hostsBytes = 
                 BigMapFactory.getBigMap(c.getSettingsHandler(),
+                    "hostsBytes", String.class, LongWrapper.class);
+            this.hostsLastFinished = 
+                BigMapFactory.getBigMap(c.getSettingsHandler(), 
                     "hostsLastFinished", String.class, Long.class);
             
             this.processedSeedsRecords = makeSeedsMap();
@@ -342,6 +350,10 @@ implements CrawlURIDispositionListener {
     /**
      * Increment a counter for a key in a given HashMap. Used for various
      * aggregate data.
+     * 
+     * As this is used to change Maps which depend on StatisticsTracker
+     * for their synchronization, this method should only be invoked
+     * from a a block synchronized on 'this'. 
      *
      * @param map The HashMap
      * @param key The key for the counter to be incremented, if it does not
@@ -355,6 +367,10 @@ implements CrawlURIDispositionListener {
     /**
      * Increment a counter for a key in a given HashMap by an arbitrary amount.
      * Used for various aggregate data. The increment amount can be negative.
+     *
+     * As this is used to change Maps which depend on StatisticsTracker
+     * for their synchronization, this method should only be invoked
+     * from a a block synchronized on 'this'. 
      *
      * @param map
      *            The HashMap
@@ -370,14 +386,11 @@ implements CrawlURIDispositionListener {
         if (key == null) {
             key = "unknown";
         }
-        // TODO: Check this synchronized block is not a bottleneck.
-        synchronized (map) {
-            LongWrapper lw = (LongWrapper)map.get(key);
-            if(lw == null) {
-                map.put(key, new LongWrapper((long)1));
-            } else {
-                lw.longValue += increment;
-            }
+        LongWrapper lw = (LongWrapper)map.get(key);
+        if(lw == null) {
+            map.put(key, new LongWrapper((long)1));
+        } else {
+            lw.longValue += increment;
         }
     }
 
@@ -389,6 +402,9 @@ implements CrawlURIDispositionListener {
      * sorted in an arbitrary, but consistent manner by their keys. Only items
      * with identical value and key are considered equal.
      *
+     * If the passed-in map requires access to be synchronized, the caller
+     * should ensure this synchronization. 
+     * 
      * @param mapOfLongWrapperValues
      *            Assumes values are wrapped with LongWrapper.
      * @return a sorted set containing the same elements as the map.
@@ -410,16 +426,14 @@ implements CrawlURIDispositionListener {
                 return ((String)e1).compareTo((String)e2);
             }
         });
-        synchronized (mapOfLongWrapperValues) {
-            try {
-                sortedMap.putAll(mapOfLongWrapperValues);
-            } catch (UnsupportedOperationException e) {
-                Iterator i = mapOfLongWrapperValues.keySet().iterator();
-                for (;i.hasNext();) {
-                    // Ok. Try doing it the slow way then.
-                    Object key = i.next();
-                    sortedMap.put(key, mapOfLongWrapperValues.get(key));
-                }
+        try {
+            sortedMap.putAll(mapOfLongWrapperValues);
+        } catch (UnsupportedOperationException e) {
+            Iterator i = mapOfLongWrapperValues.keySet().iterator();
+            for (;i.hasNext();) {
+                // Ok. Try doing it the slow way then.
+                Object key = i.next();
+                sortedMap.put(key, mapOfLongWrapperValues.get(key));
             }
         }
         return sortedMap;
@@ -438,20 +452,6 @@ implements CrawlURIDispositionListener {
     public Hashtable getStatusCodeDistribution() {
         return statusCodeDistribution;
     }
-
-    /**
-     * Return a Hashtable representing the distribution of hosts for
-     * successfully fetched curis, as represented by a hashmap where
-     * key -&gt; val represents (string)code -&gt; (integer)count.
-     *
-     * <b>Note:</b> All the values are wrapped with a
-     * {@link LongWrapper LongWrapper}
-     *
-     * @return Hosts distribution as a Hashtable
-     */
-    public Map getHostsDistribution() {
-        return hostsDistribution;
-    }
     
     /**
      * Returns the time (in millisec) when a URI belonging to a given host was
@@ -462,7 +462,7 @@ implements CrawlURIDispositionListener {
      * host was last finished processing. If no URI has been completed for host
      * -1 will be returned. 
      */
-    public long getHostLastFinished(String host){
+    public synchronized long getHostLastFinished(String host){
     	Long l = (Long)hostsLastFinished.get(host);
         return (l != null)? l.longValue(): -1;
     }
@@ -472,7 +472,7 @@ implements CrawlURIDispositionListener {
      * @param host name of the host
      * @return the accumulated number of bytes downloaded from a given host
      */
-    public long getBytesPerHost(String host){
+    public synchronized long getBytesPerHost(String host){
         return ((LongWrapper)hostsBytes.get(host)).longValue;
     }
 
@@ -648,13 +648,10 @@ implements CrawlURIDispositionListener {
                 curi.getContentSize());
     }
     
-    protected void saveHostStats(String hostname, long size) {
+    protected synchronized void saveHostStats(String hostname, long size) {
         incrementMapCount(hostsDistribution, hostname);
         incrementMapCount(hostsBytes, hostname, size);
-        synchronized(this.hostsLastFinished) {
-            hostsLastFinished.put(hostname,
-                new Long(System.currentTimeMillis()));
-        }
+        hostsLastFinished.put(hostname, new Long(System.currentTimeMillis()));
     }
     
 
@@ -691,14 +688,14 @@ implements CrawlURIDispositionListener {
      */
     public Iterator getSeeds() {
         if (this.shouldrun) {
-            this.allSeeds = getSeeds(this.controller);
+            this.allSeeds = getSeedList();
         }
         return this.allSeeds.iterator();
     }
     
-    protected List getSeeds(CrawlController c) {
+    protected List getSeedList() {
         List seedsCopy = new Vector();
-        for(Iterator i = c.getScope().seedsIterator(); i.hasNext();) {
+        for(Iterator i = controller.getScope().seedsIterator(); i.hasNext();) {
             seedsCopy.add(((UURI)i.next()).toString());
         }
         return seedsCopy;
@@ -744,9 +741,9 @@ implements CrawlURIDispositionListener {
 
     public void crawlEnded(String sExitMessage) {
         logger.info("Entered crawlEnded");
-        CrawlController c = this.controller;
         super.crawlEnded(sExitMessage);
-        report(c, sExitMessage);
+        this.sExitMessage = sExitMessage;
+        report();
         cleanup();
         logger.info("Leaving crawlEnded");
     }
@@ -761,190 +758,125 @@ implements CrawlURIDispositionListener {
     }
     
     /**
-     * @param i Iterator.
-     * @return Length of longest URL.
-     */
-    protected int getLongestString(Iterator i) {
-        int max = 0;
-        for (; i != null && i.hasNext();) {
-            String tmp = (String)i.next();
-            if (tmp != null && tmp.length() > max) {
-                max = tmp.length();
-            }
-        }
-        return max;
-    }
-    
-    /**
-     * @param i Iterator over map keys.
-     * @return Get longest map entry key.
-     */
-    protected int getLongestMapEntryKey(Iterator i) {
-        int max = 0;
-        for (; i.hasNext();) {
-            String key = i.next().toString();
-            if (key != null && key.length() > max) {
-                max = key.length();
-            }
-        }
-        return max;
-    }
-    
-    /**
      * @param c CrawlController instance.
      * @return A summary of seeds crawled and not crawled.
+     * @throws IOException
      */
-    protected SeedsSummary writeSeedsReport(CrawlController c) {
-        int maxURILength = getLongestString(getSeeds(c).iterator());
-        // Ok, we now know how much space to allocate the seed name colum
-        PaddingStringBuffer rep = new PaddingStringBuffer();
-
+    protected void writeSeedsReportTo(PrintWriter writer) throws IOException {
         // Build header.
-        rep.append("[code] [status] [seed] [redirect]");
-        rep.newline();
+        writer.print("[code] [status] [seed] [redirect]\n");
 
-        int seedsCrawled = 0;
-        int seedsNotCrawled = 0;
-        for (Iterator i = getSeedRecordsSortedByStatusCode(getSeeds(c).iterator());
+        seedsCrawled = 0;
+        seedsNotCrawled = 0;
+        for (Iterator i = getSeedRecordsSortedByStatusCode(getSeeds());
                 i.hasNext();) {
             SeedRecord sr = (SeedRecord)i.next();
-            rep.raAppend(5,sr.getStatusCode());
+            writer.print(sr.getStatusCode());
+            writer.print(" ");
             if((sr.getStatusCode() > 0)) {
                 seedsCrawled++;
-                rep.raAppend(16,"CRAWLED");
+                writer.print("CRAWLED");
             } else {
                 seedsNotCrawled++;
-                rep.raAppend(16,"NOTCRAWLED");
+                writer.print("NOTCRAWLED");
             }
-            rep.append(" ");
-            rep.append(sr.getUri());
+            writer.print(" ");
+            writer.print(sr.getUri());
             if(sr.getRedirectUri()!=null) {
-                rep.append(" ");
-                rep.append(sr.getRedirectUri());
+                writer.print(" ");
+                writer.print(sr.getRedirectUri());
             }
-            rep.newline();
+            writer.print("\n");
         }
-        
-        writeReport(c, "seeds-report.txt", rep.toString());
-        return new SeedsSummary(seedsCrawled, seedsNotCrawled);
     }
     
-    protected void writeHostsReport(CrawlController c) {
-        int maxHostLength = getLongestMapEntryKey(getHostsDistribution().
-            keySet().iterator());
-        // Ok, we now know how much space to allocate the seed name colum
-        PaddingStringBuffer rep = new PaddingStringBuffer();
-        // Build header.
-        rep.append("[host]");
-        rep.raAppend(maxHostLength + 13, "[#urls]");
-        rep.raAppend(maxHostLength + 26, "[#bytes]");
-        rep.newline();
-        TreeMap hd = getReverseSortedCopy(getHostsDistribution());
+    protected void writeHostsReportTo(PrintWriter writer) {
+        SortedMap hd = getReverseSortedHostsDistribution();
+        // header
+        writer.print("[#urls] [#bytes] [host]\n");
         for (Iterator i = hd.keySet().iterator(); i.hasNext();) {
             // Key is 'host'.
             Object key = i.next();
-            rep.append((String)key);
             if (hd.get(key)!=null) {
-                rep.raAppend(maxHostLength + 13,
-                        ((LongWrapper)hd.get(key)).longValue);
+                writer.print(((LongWrapper)hd.get(key)).longValue);
             } else {
-                rep.raAppend(maxHostLength + 13, "-");
+                writer.print("-");
             }
-            rep.raAppend(maxHostLength + 26, getBytesPerHost((String)key));
-            rep.newline();
+            writer.print(" ");
+            writer.print(getBytesPerHost((String)key));
+            writer.print(" ");
+            writer.print((String)key);
+            writer.print("\n");
         }
-
-        writeReport(c, "hosts-report.txt", rep.toString());
     }
     
-    protected void writeMimetypesReport(CrawlController c) {
-        int maxMimeLength = getLongestMapEntryKey(getFileDistribution().
-            keySet().iterator());
+    /**
+     * Return a copy of the hosts distribution in reverse-sorted
+     * (largest first) order. 
+     * @return SortedMap of hosts distribution
+     */
+    public SortedMap getReverseSortedHostsDistribution() {
+        return getReverseSortedCopy(hostsDistribution);
+    }
 
-        // Ok, we now know how much space to allocate the seed name colum
-        PaddingStringBuffer rep = new PaddingStringBuffer();
-
-        // Build header.
-        rep.append("[mime-types]");
-        rep.raAppend(maxMimeLength + 13, "[#urls]");
-        rep.raAppend(maxMimeLength + 26, "[#bytes]");
-        rep.newline();
+    protected void writeMimetypesReportTo(PrintWriter writer) throws IOException {
+        // header
+        writer.print("[#urls] [#bytes] [mime-types]\n");
         TreeMap fd = getReverseSortedCopy(getFileDistribution());
         for (Iterator i = fd.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
-            // Key is 'host'.
-            rep.append((String)key);
-            rep.raAppend(maxMimeLength + 13,
-                    ((LongWrapper)fd.get(key)).longValue);
-            rep.raAppend(maxMimeLength + 26, getBytesPerFileType((String)key));
-            rep.newline();
+            // Key is mime type.
+            writer.print(Long.toString(((LongWrapper)fd.get(key)).longValue));
+            writer.print(Long.toString(getBytesPerFileType((String)key)));
+            writer.print(" ");
+            writer.print((String)key);
+            writer.print("\n");
         }
-        writeReport(c, "mimetype-report.txt", rep.toString());
     }
     
-    protected void writeResponseCodeReport(CrawlController c) {
+    protected void writeResponseCodeReportTo(PrintWriter writer) throws IOException {
         int maxCodeLength = 10;
-        PaddingStringBuffer rep = new PaddingStringBuffer();
         // Build header.
-        rep.append("[rescode]");
-        rep.raAppend(maxCodeLength+13, "[#urls]");
-        rep.newline();
+        writer.print("[rescode] [#urls]\n");
         TreeMap scd = getReverseSortedCopy(getStatusCodeDistribution());
         for (Iterator i = scd.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
-            rep.append((String)key);
-            rep.raAppend(maxCodeLength + 13,
-                ((LongWrapper)scd.get(key)).longValue);
-            rep.newline();
+            writer.print((String)key);
+            writer.print(" ");
+            writer.print(Long.toString(((LongWrapper)scd.get(key)).longValue));
+            writer.print("\n");
         }
-        
-        writeReport(c, "responsecode-report.txt", rep.toString());
     }
     
-    protected void writeCrawlReport(CrawlController c, String exitMessage,
-            SeedsSummary seedsSummary) {
-        PaddingStringBuffer rep = new PaddingStringBuffer();
-        rep.append("Crawl Name: " + c.getOrder().getCrawlOrderName());
-        rep.newline();
-        rep.append("Crawl Status: " + exitMessage);
-        rep.newline();
-        rep.append("Duration Time: " +
+    protected void writeCrawlReportTo(PrintWriter writer) throws IOException {
+        writer.print("Crawl Name: " + controller.getOrder().getCrawlOrderName());
+        writer.print("\nCrawl Status: " + sExitMessage);
+        writer.print("\nDuration Time: " +
                 ArchiveUtils.formatMillisecondsToConventional(crawlDuration()));
-        rep.newline();
-        rep.append("Total Seeds Crawled: " + seedsSummary.getCrawled());
-        rep.newline();
-        rep.append("Total Seeds not Crawled: " + seedsSummary.getNotCrawled());
-        rep.newline();
+        writer.print("\nTotal Seeds Crawled: " + seedsCrawled);
+        writer.print("\nTotal Seeds not Crawled: " + seedsNotCrawled);
         // hostsDistribution contains all hosts crawled plus an entry for dns.
-        rep.append("Total Hosts Crawled: " + (hostsDistribution.size()-1));
-        rep.newline();
-        rep.append("Total Documents Crawled: " + finishedUriCount);
-        rep.newline();
-        rep.append("Processed docs/sec: " +
+        writer.print("\nTotal Hosts Crawled: " + (hostsDistribution.size()-1));
+        writer.print("\nTotal Documents Crawled: " + finishedUriCount);
+        writer.print("\nProcessed docs/sec: " +
                 ArchiveUtils.doubleToString(docsPerSecond,2));
-        rep.newline();
-        rep.append("Bandwidth in Kbytes/sec: " + totalKBPerSec);
-        rep.newline();
-        rep.append("Total Raw Data Size in Bytes: " + totalProcessedBytes +
+        writer.print("\nBandwidth in Kbytes/sec: " + totalKBPerSec);
+        writer.print("\nTotal Raw Data Size in Bytes: " + totalProcessedBytes +
                 " (" + ArchiveUtils.formatBytesForDisplay(totalProcessedBytes) +
-                ") ");
-        rep.newline();
-
-        writeReport(c, "crawl-report.txt", rep.toString());
+                ") \n");
     }
     
-    protected void wroteProcessorsReport(CrawlController c) {
-        writeReport(c, "processors-report.txt", c.reportProcessors());
+    protected void writeProcessorsReportTo(PrintWriter writer) throws IOException {
+        controller.reportTo(CrawlController.PROCESSORS_REPORT,writer);
     }
     
-    protected void writeReport(CrawlController c, String name,
-            String content) {
-        File f = new File(c.getDisk().getPath(), name);
+    protected void writeReportFile(String reportName, String filename) {
+        File f = new File(controller.getDisk().getPath(), filename);
         try {
-            FileWriter fw = new FileWriter(f);
-            fw.write(content);
-            fw.close();
-            c.addToManifest(f.getAbsolutePath(),
+            PrintWriter bw = new PrintWriter(new FileWriter(f));
+            writeReportTo(reportName,bw);
+            bw.close();
+            controller.addToManifest(f.getAbsolutePath(),
                 CrawlController.MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
             Heritrix.addAlert(new Alert("Unable to write " + f.getName(),
@@ -952,41 +884,59 @@ implements CrawlURIDispositionListener {
                 " at the end of crawl.", e, Level.SEVERE));
             e.printStackTrace();
         }
-        logger.info(f.getAbsolutePath());
+        logger.info("wrote report: "+f.getAbsolutePath());
     }
     
+    /**
+     * @param w
+     * @throws IOException
+     */
+    protected void writeManifestReportTo(PrintWriter writer) throws IOException {
+        controller.reportTo(CrawlController.MANIFEST_REPORT,writer);
+    }
+    
+    /**
+     * @param reportName
+     * @param bw
+     * @throws IOException
+     */
+    private void writeReportTo(String reportName, PrintWriter w) throws IOException {
+        if("hosts".equals(reportName)) {
+            writeHostsReportTo(w);
+        } else if ("mime types".equals(reportName)) {
+            writeMimetypesReportTo(w);
+        } else if ("response codes".equals(reportName)) {
+            writeResponseCodeReportTo(w);
+        } else if ("seeds".equals(reportName)) {
+            writeSeedsReportTo(w);
+        } else if ("crawl".equals(reportName)) {
+            writeCrawlReportTo(w);
+        } else if ("processors".equals(reportName)) {
+            writeProcessorsReportTo(w);
+        } else if ("manifest".equals(reportName)) {
+            writeManifestReportTo(w);
+        } /// TODO else default/error
+    }
+
+
+
     /**
      * Run the reports.
      * @param c A CrawlController instance.
      * @param exitMessage
      */
-    public void report(CrawlController c, String exitMessage) {
+    public void report() {
         // Add all files mentioned in the crawl order to the
         // manifest set.
-        c.addOrderToManifest();
-        writeHostsReport(c);
-        writeMimetypesReport(c);
-        writeResponseCodeReport(c);
-        SeedsSummary seedsSummary = writeSeedsReport(c);
-        writeCrawlReport(c, exitMessage, seedsSummary);
-        wroteProcessorsReport(c);
-        writeReport(c, "crawl-manifest.txt", c.getManifest());
+        controller.addOrderToManifest();
+        writeReportFile("hosts","hosts-report.txt");
+        writeReportFile("mime types","mimetype-report.txt");
+        writeReportFile("response codes","responsecode-report.txt");
+        writeReportFile("seeds","seeds-report.txt");
+        writeReportFile("crawl","crawl-report.txt");
+        writeReportFile("processors","processors-report.txt");
+        writeReportFile("manifest","crawl-manifest.txt");
         // TODO: Save object to disk?
-    }
-    
-    protected class SeedsSummary {
-        final int crawled;
-        final int notCrawled;
-        protected SeedsSummary(int crawled, int notCrawled) {
-            this.crawled = crawled;
-            this.notCrawled = notCrawled;
-        }
-        public int getCrawled() {
-            return this.crawled;
-        }
-        public int getNotCrawled() {
-            return this.notCrawled;
-        }
     }
 }
 
