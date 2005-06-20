@@ -57,13 +57,18 @@ import com.sleepycat.je.EnvironmentConfig;
  * to disk until they are not refrenced by any other object and therefore can be
  * Garbage Collected.
  * <p>
- * Requires external synchronization. 
+ * Requires external synchronization for accesses and modifications to be
+ * stable. Simply wrapping using Collections.synchronizedMap() may not work
+ * as expected, as it makes assumptions about, and essentially caches, 
+ * keySet/entrySet/values. (TODO: fix or guard against this.)
  * <p>
  * An entry will exist in the memMap, or on disk, but not in both places. So,
  * a resume from disk state (for example for checkpointing/crash-recovery) is
  * not well-supported. This behavior could be revisited to enable such use. 
  * 
  * @author John Erik Halse
+ * @author stack
+ * @author gojomo
  *  
  */
 public class CachedBdbMap extends AbstractMap implements Map {
