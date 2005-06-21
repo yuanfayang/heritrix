@@ -76,7 +76,19 @@ public class SURT {
     // 5: :port
     // 6: path
     static String URI_SPLITTER = 
-            "^(\\w+://)(?:(\\S+?)(@))?(\\S+?)(:\\d+)?(/\\S*)?$";
+            "^(\\w+://)(?:([-\\w\\.!~\\*'\\(\\)%;:&=+$,]+?)(@))?(\\S+?)(:\\d+)?(/\\S*)?$";
+    
+    // RFC2396 
+    //       reserved    = ";" | "/" | "?" | ":" | "@" | "&" | "=" | "+" |
+    //                     "$" | ","
+    //       unreserved  = alphanum | mark
+    //       mark        = "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")"
+    //       userinfo    = *( unreserved | escaped |
+    //                     ";" | ":" | "&" | "=" | "+" | "$" | "," )
+    //       escaped     = "%" hex hex
+
+
+    
     
     /**
      * Utility method for creating the SURT form of the URI in the
