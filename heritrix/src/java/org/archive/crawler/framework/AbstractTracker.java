@@ -303,6 +303,21 @@ implements StatisticsTracking, CrawlStatusListener {
         logActivity(); //Log end state
         logNote("CRAWL ENDED - " + sExitMessage);
         shouldrun = false;
+        dumpReports();
+        finalCleanup();
+    }
+
+    /**
+     * Dump reports, if any, on request or at crawl end. 
+     */
+    protected void dumpReports() {
+        // by default do nothing; subclasses may override
+    }
+
+    /**
+     * Cleanup resources used, at crawl end. 
+     */
+    protected void finalCleanup() {
         controller = null; // Facilitate GC.
     }
 

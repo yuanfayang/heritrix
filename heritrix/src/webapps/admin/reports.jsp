@@ -20,7 +20,7 @@
             if (handler.getCurrentJob() == null) {
                 message = "Current job is null.";
             } else {
-                stats.report();
+                stats.dumpReports();
                 message = "Forced generation of end-of-crawl reports.";
             }
        }
