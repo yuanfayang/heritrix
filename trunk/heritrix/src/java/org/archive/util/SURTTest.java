@@ -91,7 +91,12 @@ public class SURTTest extends TestCase {
         assertEquals("", 
                 "http://(org,archive,www,)/movies/movies.php#top",
                 SURT.fromURI("http://www.archive.org/movies/movies.php#top"));
-
+    }
+    
+    public void testAtSymbolInPath() throws URIException {
+        assertEquals("@ in path",
+                "http://(com,example,www,)/foo@bar",
+                SURT.fromURI("http://www.example.com/foo@bar"));  
     }
 }
 
