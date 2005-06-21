@@ -883,12 +883,12 @@ public class CrawlJob implements DynamicMBean {
         args[0] = new OpenMBeanParameterInfoSupport("pathOrUrl",
             "Path or URL to file of URLs", SimpleType.STRING);
         args[1] = new OpenMBeanParameterInfoSupport("style",
-            "Format format: default|crawlLog|recoveryJournal",
+            "Format format:default|crawlLog|recoveryJournal",
             SimpleType.STRING);
         args[2] = new OpenMBeanParameterInfoSupport("forceFetch",
             "True if URLs are to be force fetched", SimpleType.BOOLEAN);
         operations[1] = new OpenMBeanOperationInfoSupport(IMPORT_URIS_OPER,
-            "Add file of passed URLs to the frontier", args, SimpleType.VOID,
+            "Add file of passed URLs to the frontier", args, SimpleType.STRING,
                 MBeanOperationInfo.ACTION);
         
         operations[2] = new OpenMBeanOperationInfoSupport(PAUSE_OPER,
@@ -1075,10 +1075,9 @@ public class CrawlJob implements DynamicMBean {
                     "crawling (Shouldn't ever be the case)"),
                     "Not current crawling job?");
             }
-            Heritrix.getJobHandler().importUris((String)params[0],
+            return Heritrix.getJobHandler().importUris((String)params[0],
                 ((String)params[1]).toString(),
                 ((Boolean)params[2]).booleanValue());
-            return null;
         }
         
         if (operationName.equals(PAUSE_OPER)) {
