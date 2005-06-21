@@ -716,6 +716,7 @@
         <include>**/*Test.java</include>
       </includes>
     </unitTest>
+    <defaultGoal>dist</defaultGoal>
     <resources>
     <resource>
         <directory>${basedir}/src/resources</directory>
