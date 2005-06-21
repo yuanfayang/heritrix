@@ -1391,11 +1391,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
         String extractor;
         String output;
         if(CRAWL_LOG_STYLE.equals(style)) {
-            // skip first 3 fields
+            // Skip first 3 fields
             extractor = "\\S+\\s+\\S+\\s+\\S+\\s+(\\S+\\s+\\S+\\s+\\S+\\s+).*";
             output = "$1";
         } else if (RECOVERY_JOURNAL_STYLE.equals(style)) {
-            // skip the begin-of-line directive
+            // Skip the begin-of-line directive
             extractor = "\\S+\\s+((\\S+)(?:\\s+\\S+\\s+\\S+)?)\\s*";
             output = "$1";
         } else {
@@ -1442,17 +1442,20 @@ public class CrawlJobHandler implements CrawlStatusListener {
     
     /**
      * Schedule a uri.
-     * @param uri Uri to schedule.
+     * @param str String that can be: 1. a UURI, 2. a snippet of the
+     * crawl.log line, or 3. a snippet from recover log.  See
+     * {@link #importUris(InputStream, String, boolean)} for how it subparses
+     * the lines from crawl.log and recover.log.
      * @param forceFetch Should it be forcefetched.
      * @param isSeed True if seed.
      * @param isFlush If true, flush the frontier IF it implements
      * flushing.
      * @throws URIException
      */
-    public void importUri(final String uri, final boolean forceFetch,
+    public void importUri(final String str, final boolean forceFetch,
             final boolean isSeed, final boolean isFlush)
     throws URIException {
-        CandidateURI caUri = CandidateURI.fromString(uri);
+        CandidateURI caUri = CandidateURI.fromString(str);
         caUri.setForceFetch(forceFetch);
         if (isSeed) {
             caUri.setIsSeed(isSeed);
