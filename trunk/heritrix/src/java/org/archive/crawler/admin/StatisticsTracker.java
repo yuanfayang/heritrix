@@ -202,7 +202,8 @@ implements CrawlURIDispositionListener {
         // TODO: BDBify
     }
 
-    protected void cleanup() {
+    protected void finalCleanup() {
+        super.finalCleanup();
         if (this.hostsBytes != null) {
             this.hostsBytes.clear();
             this.hostsBytes = null;
@@ -741,10 +742,8 @@ implements CrawlURIDispositionListener {
 
     public void crawlEnded(String sExitMessage) {
         logger.info("Entered crawlEnded");
+        this.sExitMessage = sExitMessage; // held for reference by reports
         super.crawlEnded(sExitMessage);
-        this.sExitMessage = sExitMessage;
-        report();
-        cleanup();
         logger.info("Leaving crawlEnded");
     }
     
@@ -925,7 +924,7 @@ implements CrawlURIDispositionListener {
      * @param c A CrawlController instance.
      * @param exitMessage
      */
-    public void report() {
+    public void dumpReports() {
         // Add all files mentioned in the crawl order to the
         // manifest set.
         controller.addOrderToManifest();
