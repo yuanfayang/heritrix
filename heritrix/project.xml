@@ -316,9 +316,7 @@
                 Source (and build) can be found here:
                 http://crawler.archive.org/j5compat-0.1.tar.gz.
                 </description>
-                <license>
-	            <name>GNU LESSER GENERAL PUBLIC LICENSE</name>
-        	    <url>http://www.gnu.org/licenses/lgpl.txt</url>
+                <license>http://www.gnu.org/licenses/lgpl.txt
                 </license>
             </properties>
         </dependency>
