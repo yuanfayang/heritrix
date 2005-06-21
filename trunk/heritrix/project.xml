@@ -659,17 +659,48 @@
         </dependency>
         <dependency>
             <id>dsi-unimi-it</id>
-            <version>0.9.1</version>
+            <version>1.0.0</version>
             <url>http://mg4j.dsi.unimi.it/</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <ear.bundle>true</ear.bundle>
                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>This JAR supplies alternatives to String, 
-                StringBuffer, and unsynchronized I/0. This JAR was made from subsets of mg4j-0.9.1 and from fastutil-4.4.0 -- two jars that came out of the ubicrawler project, http://ubi0.iit.cnr.it/projects/ubi/ -- using autojar. Here is how I made this jar: % java -jar autojar-1.2.2/autojar-1.2.2.jar -v -o dsi.unimi.it-mg4j-0.9.1_fastutil-4.4.0.jar -c mg4j-0.9.1/mg4j-0.9.1.jar:fastutil-4.4.0/fastutil-4.4.0.jar it.unimi.dsi.mg4j.util.MutableString.class it.unimi.dsi.mg4j.io.FastBufferedInputStream.class it.unimi.dsi.mg4j.io.FastBufferedOutputStream.class it.unimi.dsi.mg4j.io.FastBufferedReader.class it.unimi.dsi.mg4j.io.FastByteArrayInputStream.class it.unimi.dsi.mg4j.io.FastByteArrayOutputStream.class it.unimi.dsi.mg4j.io.FastMultiByteArrayInputStream.class</description>
-                <license>Both MG4J and fastutils are LGPL</license>
+                <description>Alternatives to String, 
+                StringBuffer, unsynchronized I/0, and a ConsistentHashFunction.
+                Made from subsets of mg4j-0.9.1 and fastutil-4.4.0,
+                -- two jars that came of the ubicrawler project,
+                http://ubi0.iit.cnr.it/projects/ubi/ -- using autojar:
+                java -jar ~/workspace/autojar-1.2.2/autojar-1.2.2.jar -v -o
+                dss.unimi.it-1.0.0.jar -c fastutil-4.4.0/fastutil-4.4.0.jar:mg4j-0.9.1/mg4j-0.9.1.jar:ubix-1.0.3/ubix-1.0.3.jar: it.unimi.dsi.mg4j.util.MutableString.class it.unimi.dsi.mg4j.io.FastBufferedInputStream.class it.unimi.dsi.mg4j.io.FastBufferedOutputStream.class it.unimi.dsi.mg4j.io.FastBufferedReader.class it.unimi.dsi.mg4j.io.FastByteArrayInputStream.class it.unimi.dsi.mg4j.io.FastByteArrayOutputStream.class it.unimi.dsi.mg4j.io.FastMultiByteArrayInputStream.class it.unimi.dsi.ubix.ConsistentHashFunction.class</description>
+                <license>MG4J, ConsistentHashFunction, and fastutils are
+                LGPL</license>
             </properties>
         </dependency>
+        <dependency>
+            <id>colt-subset</id>
+            <version>1.2.0</version>
+            <url>http://dsd.lbl.gov/~hoschek/colt/</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <ear.bundle>true</ear.bundle>
+                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
+                <description>MerseeneTwister/RandomEngine required by the ubi
+                ConsistentHashFunction. Copyright (c) 1999
+                CERN - European Organization for Nuclear Research. Made with
+                autojar: java -jar 
+                ~/workspace/autojar-1.2.2/autojar-1.2.2.jar 
+                -v -o colt-subset-1.2.0.jar -c colt/lib/colt.jar
+                cern.jet.random.engine.MersenneTwister.class 
+                cern.jet.random.engine.RandomEngine.class 
+                cern.colt.PersistentObject.class 
+                cern.colt.function.DoubleFunction.class 
+                cern.colt.function.IntFunction.class
+                </description>
+                <license>http://dsd.lbl.gov/~hoschek/colt/license.html</license>
+            </properties>
+        </dependency>
+
+
 
   </dependencies>
 
