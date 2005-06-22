@@ -107,10 +107,21 @@ implements Comparable, Serializable {
             } catch (DatabaseException e) {
                 LOGGER.log(Level.SEVERE,"peekItem failure; retrying",e);
             }
+            
+            // ensure CrawlURI, if any,  came from acceptable range: 
+            if(!ArchiveUtils.startsWith(key.getData(),origin)) {
+                LOGGER.severe(
+                    "inconsistency: "+classKey+"("+
+                    getKeyPrefixHex(origin)+") with " + getCount() + " items gave "
+                    + curi +"("+getKeyPrefixHex(key.getData()));
+                curi = null; // clear curi to allow retry
+            }
+            
             if (curi!=null) {
                 // success
                 break;
             }
+            
             if (tries>3) {
                 LOGGER.severe("no item where expected in queue "+classKey);
                 break;
@@ -121,15 +132,7 @@ implements Comparable, Serializable {
                     + " items using key "
                     + getKeyPrefixHex(key.getData()));
         }
-        
-        // ensure CrawlURI, if any,  came from acceptable range: 
-        if(!ArchiveUtils.startsWith(key.getData(),origin)) {
-            LOGGER.severe(
-                "inconsistency: "+classKey+"("+
-                getKeyPrefixHex(origin)+") gave "+
-                curi +"("+getKeyPrefixHex(key.getData()));
-        }
-        
+ 
         return curi;
     }
 
