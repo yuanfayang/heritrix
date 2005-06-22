@@ -71,7 +71,11 @@ public class ArchiveUtils {
      */
     private static final char DEFAULT_PAD_CHAR = ' ';
 
-    
+    /** milliseconds in an hour */ 
+    private static final int HOUR_IN_MS = 60 * 60 * 1000;
+    /** milliseconds in a day */
+    private static final int DAY_IN_MS = 24 * HOUR_IN_MS;
+
     // Initialize fomatters with pattern and time zone
     static {
         TimeZone TZ = TimeZone.getTimeZone("GMT");
@@ -438,20 +442,29 @@ public class ArchiveUtils {
      */
     public static String formatMillisecondsToConventional(long time) {
         StringBuffer sb = new StringBuffer();
-        if (time > 3600000) {
+        if(time<0) {
+            sb.append("-");
+        }
+        long absTime = Math.abs(time);
+        if(absTime > DAY_IN_MS) {
+            // days
+            sb.append(absTime / DAY_IN_MS + "d");
+            absTime = absTime % DAY_IN_MS;
+        }
+        if (absTime > HOUR_IN_MS) {
             //got hours.
-            sb.append(time / 3600000 + "h");
-            time = time % 3600000;
+            sb.append(absTime / HOUR_IN_MS + "h");
+            absTime = absTime % HOUR_IN_MS;
         }
-        if (time > 60000) {
-            sb.append(time / 60000 + "m");
-            time = time % 60000;
+        if (absTime > 60000) {
+            sb.append(absTime / 60000 + "m");
+            absTime = absTime % 60000;
         }
-        if (time > 1000) {
-            sb.append(time / 1000 + "s");
-            time = time % 1000;
+        if (absTime > 1000) {
+            sb.append(absTime / 1000 + "s");
+            absTime = absTime % 1000;
         }
-        sb.append(time + "ms");
+        sb.append(absTime + "ms");
         return sb.toString();
     }
 
