@@ -35,7 +35,10 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.BdbUriUniqFilter;
+import org.archive.crawler.util.BloomUriUniqFilter;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.je.DatabaseException;
@@ -57,10 +60,26 @@ public class BdbFrontier extends WorkQueueFrontier {
     /** all URIs scheduled to be crawled */
     protected BdbMultipleWorkQueues pendingUris;
 
+    /** all URI-already-included options available to be chosen */
+    String[] AVAILABLE_INCLUDED_OPTIONS = new String[] {
+            BdbUriUniqFilter.class.getName(),
+            BloomUriUniqFilter.class.getName() };
+    
+    /** URI-already-included to use (by class name) */
+    public final static String ATTR_INCLUDED = "uri-included-structure";
+    
+    protected final static String DEFAULT_INCLUDED = BdbUriUniqFilter.class
+    .getName();
+    
     public BdbFrontier(String name) {
         this(name, "BdbFrontier. "
             + "A Frontier using BerkeleyDB Java Edition databases for "
             + "persistence to disk.");
+        Type t = addElementToDefinition(new SimpleType(ATTR_INCLUDED,
+                "Structure to use for tracking already-seen URIs. Non-default " +
+                "options may require additional configuration via system " +
+                "properties.", DEFAULT_INCLUDED, AVAILABLE_INCLUDED_OPTIONS));
+        t.setExpertSetting(true); 
     }
 
     /**
@@ -94,8 +113,12 @@ public class BdbFrontier extends WorkQueueFrontier {
      * @throws IOException
      */
     protected UriUniqFilter createAlreadyIncluded() throws IOException {
-        UriUniqFilter uuf =
-            new BdbUriUniqFilter(this.controller.getBdbEnvironment());
+        UriUniqFilter uuf;
+        if(((String) getUncheckedAttribute(null, ATTR_INCLUDED)).equals(BloomUriUniqFilter.class.getName())) {
+            uuf = new BloomUriUniqFilter();
+        } else {
+            uuf = new BdbUriUniqFilter(this.controller.getBdbEnvironment());
+        }
         uuf.setDestination(this);
         return uuf;
     }
