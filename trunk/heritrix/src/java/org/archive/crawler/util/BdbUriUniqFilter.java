@@ -254,11 +254,12 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         OperationStatus status = null;
         try {
             if (logger.isLoggable(Level.INFO)) {
-                started = (new Date()).getTime();
+                started = System.currentTimeMillis();
             }
             status = this.alreadySeen.putNoOverwrite(null, key, this.value);
             if (logger.isLoggable(Level.INFO)) {
-                this.aggregatedLookupTime += (new Date()).getTime() - started;
+                this.aggregatedLookupTime +=
+                    (System.currentTimeMillis() - started);
             }
         } catch (DatabaseException e) {
             logger.severe(e.getMessage());
