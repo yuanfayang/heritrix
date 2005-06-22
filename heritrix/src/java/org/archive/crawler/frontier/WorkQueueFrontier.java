@@ -67,7 +67,7 @@ import org.archive.util.ArchiveUtils;
 public abstract class WorkQueueFrontier extends AbstractFrontier
 implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     /** truncate reporting of queues at some large but not unbounded number */
-    private static final int REPORT_MAX_QUEUES = 5000;
+    private static final int REPORT_MAX_QUEUES = 2000;
     
     /**
      * If we know that only a small amount of queues is held in memory,
@@ -94,11 +94,18 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     public final static String ATTR_HOLD_QUEUES = "hold-queues";
     protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(true); 
 
-    /** whether to hold queues INACTIVE until needed for throughput */
+    /** amount to replenish budget on each activation (duty cycle) */
     public final static String ATTR_BALANCE_REPLENISH_AMOUNT =
         "balance-replenish-amount";
     protected final static Integer DEFAULT_BALANCE_REPLENISH_AMOUNT =
         new Integer(3000);
+    
+    /** whether to hold queues INACTIVE until needed for throughput */
+    public final static String ATTR_ERROR_PENALTY_AMOUNT =
+        "error-penalty-amount";
+    protected final static Integer DEFAULT_ERROR_PENALTY_AMOUNT =
+        new Integer(100);
+
 
     /** total expenditure to allow a queue before 'retiring' it  */
     public final static String ATTR_QUEUE_TOTAL_BUDGET = "queue-total-budget";
@@ -187,6 +194,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             "active. Larger amounts mean more URIs will be tried from the " +
             "queue before it is deactivated in favor of waiting queues. " +
             "Default is 3000", DEFAULT_BALANCE_REPLENISH_AMOUNT));
+        t.setExpertSetting(true);
+        t.setOverrideable(true);
+        t = addElementToDefinition(new SimpleType(ATTR_ERROR_PENALTY_AMOUNT,
+                "Amount to additionally penalize a queue when one of" +
+                "its URIs fails completely. Accelerates deactivation or " +
+                "full retirement of problem queues and unresponsive sites. " +
+                "Default is 100", DEFAULT_ERROR_PENALTY_AMOUNT));
         t.setExpertSetting(true);
         t.setOverrideable(true);
         t = addElementToDefinition(new SimpleType(ATTR_QUEUE_TOTAL_BUDGET,
@@ -666,6 +680,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     private void reenqueueQueue(WorkQueue wq) {
         if(wq.isOverBudget()) {
+            // if still over budget, deactivate
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("DEACTIVATED queue: " +
                     wq.getClassKey());
@@ -762,6 +777,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             // Check for codes that mean that while we the crawler did
             // manage to schedule it, it must be disregarded for some reason.
             incrementDisregardedUriCount();
+            // refund amount charged against queue
+            // TODO: consider if charging should just be deferred to finished?
+            wq.refund(getCost(curi));
             //Let interested listeners know of disregard disposition.
             controller.fireCrawledURIDisregardEvent(curi);
             // if exception, also send to crawlErrors
@@ -781,8 +799,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                 this.controller.runtimeErrors.log(Level.WARNING, curi.getUURI()
                         .toString(), array);
             }
-
             incrementFailedFetchCount();
+            // let queue note error
+            wq.noteError(((Integer) getUncheckedAttribute(curi,
+                    ATTR_ERROR_PENALTY_AMOUNT)).intValue()); 
             doJournalFinishedFailure(curi);
         }
 
@@ -862,6 +882,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     // Reporter implementation
     //
     
+    public static String STANDARD_REPORT = "standard";
+    public static String ALL_NONEMPTY = "nonempty";
+    protected static String[] REPORTS = {STANDARD_REPORT,ALL_NONEMPTY};
+    
     public String[] getReports() {
         return new String[] {};
     }
@@ -907,11 +931,72 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * @return A report on the current status of the frontier.
      * @throws IOException
      */
-    public synchronized void reportTo(String name, PrintWriter w) throws IOException {
-        // ignore name; only one kind of report for now
-        standardReportTo(w);
-    }
+    public synchronized void reportTo(String name, PrintWriter writer) throws IOException {
+        if(ALL_NONEMPTY.equals(name)) {
+            allNonemptyReportTo(writer);
+            return;
+        }
+        if(name!=null && !STANDARD_REPORT.equals(name)) {
+            writer.print(name);
+            writer.print(" unavailable; standard report:\n");
+        }
+        standardReportTo(writer);
+    }   
     
+    /** Compact report of all nonempty queues (one queue per line)
+     * 
+     * @param writer
+     * @throws IOException
+     */
+    private void allNonemptyReportTo(PrintWriter writer) throws IOException {
+        ArrayList inProcessQueuesCopy;
+        synchronized(this.inProcessQueues) {
+            // grab a copy that will be stable against mods for report duration 
+            inProcessQueuesCopy = new ArrayList(this.inProcessQueues);
+        }
+        writer.print("\n -----===== IN-PROCESS QUEUES =====-----\n");
+        queueSingleLinesTo(writer, inProcessQueuesCopy.iterator());
+
+        writer.print("\n -----===== READY QUEUES =====-----\n");
+        queueSingleLinesTo(writer, this.readyClassQueues.iterator());
+
+        writer.print("\n -----===== SNOOZED QUEUES =====-----\n");
+        queueSingleLinesTo(writer, this.snoozedClassQueues.iterator());
+        
+        writer.print("\n -----===== INACTIVE QUEUES =====-----\n");
+        queueSingleLinesTo(writer, this.inactiveQueues.iterator());
+        
+        writer.print("\n -----===== RETIRED QUEUES =====-----\n");
+        queueSingleLinesTo(writer, this.retiredQueues.iterator());
+        
+    }
+
+    /**
+     * Writer the single-line reports of all queues in the
+     * iterator to the writer 
+     * 
+     * @param writer to receive report
+     * @param iterator over queues of interest
+     * @throws IOException
+     */
+    private void queueSingleLinesTo(PrintWriter writer, Iterator iterator) throws IOException {
+        Object obj;
+        WorkQueue q;
+        while( iterator.hasNext()) {
+            obj = iterator.next();
+            if (obj ==  null) {
+                continue;
+            }
+            q = (obj instanceof WorkQueue)?
+                (WorkQueue)obj:
+                (WorkQueue)this.allQueues.get(obj);
+            if(q == null) {
+                writer.print(" ERROR: "+obj);
+            }
+            q.singleLineReportTo(writer);
+        }       
+    }
+
     /**
      * @param w
      * @throws IOException
