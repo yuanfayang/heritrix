@@ -190,6 +190,7 @@ public class FileUtils
         	    line = br.readLine();
         	    while (line != null) {
         	    	    sb.append(line);
+                        sb.append("\n");
         	    	    line = br.readLine();
         	    }
         } finally {
