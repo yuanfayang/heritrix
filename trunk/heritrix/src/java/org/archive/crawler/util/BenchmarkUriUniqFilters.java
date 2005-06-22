@@ -79,19 +79,19 @@ public class BenchmarkUriUniqFilters implements UriUniqFilter.HasUriReceiver {
     
     private UriUniqFilter createUriUniqFilter(String testClass) throws IOException {
         UriUniqFilter uniq = null;
-        if(BdbUriUniqFilter.class.getSimpleName().equals(testClass)) {;
+        if(BdbUriUniqFilter.class.getName().endsWith(testClass)) {;
             // BDB setup
             File tmpDir = File.createTempFile("uuf","benchmark");
             tmpDir.delete();
             tmpDir.mkdir();
             uniq = new BdbUriUniqFilter(tmpDir, 50);
-        } else if(BloomUriUniqFilter.class.getSimpleName().equals(testClass)) {
+        } else if(BloomUriUniqFilter.class.getName().endsWith(testClass)) {
             // bloom setup
             uniq = new BloomUriUniqFilter();
-        } else if(MemUriUniqFilter.class.getSimpleName().equals(testClass)) {
+        } else if(MemUriUniqFilter.class.getName().endsWith(testClass)) {
             // mem hashset
             uniq = new MemUriUniqFilter();
-        } else if (FPUriUniqFilter.class.getSimpleName().equals(testClass)) {
+        } else if (FPUriUniqFilter.class.getName().endsWith(testClass)) {
             // mem fp set (open-addressing) setup
             uniq = new FPUriUniqFilter(new MemLongFPSet(21,0.75f));
         }
