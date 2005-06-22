@@ -158,10 +158,6 @@ implements CrawlURIDispositionListener {
     /** Record of seeds' latest actions */
     protected Map processedSeedsRecords;
 
-    /** Cache seed list.
-     */
-    protected List allSeeds = new Vector();
-
     // seeds tallies: ONLY UPDATED WHEN SEED REPORT WRITTEN
     private int seedsCrawled;
     private int seedsNotCrawled;
@@ -678,28 +674,19 @@ implements CrawlURIDispositionListener {
     }
 
     /**
-     * Get a seed iterator for the job being monitored. If job is no longer
-     * running, stored values will be returned. If job is running, current
-     * seed iterator will be fetched and stored values will be updated.
-     * <p>
+     * Get a seed iterator for the job being monitored. 
+     * 
      * <b>Note:</b> This iterator will iterate over a list of <i>strings</i> not
      * UURIs like the Scope seed iterator. The strings are equal to the URIs'
      * getURIString() values.
      * @return the seed iterator
      */
     public Iterator getSeeds() {
-        if (this.shouldrun) {
-            this.allSeeds = getSeedList();
-        }
-        return this.allSeeds.iterator();
-    }
-    
-    protected List getSeedList() {
         List seedsCopy = new Vector();
         for(Iterator i = controller.getScope().seedsIterator(); i.hasNext();) {
             seedsCopy.add(((UURI)i.next()).toString());
         }
-        return seedsCopy;
+        return seedsCopy.iterator();
     }
 
     public Iterator getSeedRecordsSortedByStatusCode() {
@@ -914,15 +901,28 @@ implements CrawlURIDispositionListener {
             writeProcessorsReportTo(w);
         } else if ("manifest".equals(reportName)) {
             writeManifestReportTo(w);
+        } else if ("frontier".equals(reportName)) {
+            writeFrontierReportTo(w);
         } /// TODO else default/error
     }
 
 
 
     /**
+     * Write the Frontier's 'nonempty' report (if available)
+     * @param writer to report to
+     * @throws IOException
+     */
+    protected void writeFrontierReportTo(PrintWriter writer) throws IOException {
+        if(controller.getFrontier().isEmpty()) {
+            writer.println("frontier empty");
+        } else {
+            controller.getFrontier().reportTo("nonempty",writer);
+        }
+    }
+
+    /**
      * Run the reports.
-     * @param c A CrawlController instance.
-     * @param exitMessage
      */
     public void dumpReports() {
         // Add all files mentioned in the crawl order to the
@@ -935,6 +935,7 @@ implements CrawlURIDispositionListener {
         writeReportFile("crawl","crawl-report.txt");
         writeReportFile("processors","processors-report.txt");
         writeReportFile("manifest","crawl-manifest.txt");
+        writeReportFile("frontier","frontier-report.txt");
         // TODO: Save object to disk?
     }
 }
