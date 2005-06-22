@@ -61,6 +61,12 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
     /** Last URI peeked */
     private String lastPeeked;
 
+    /** time of last dequeue (disposition of some URI) **/ 
+    private long lastDequeueTime;
+    
+    /** count of errors encountered */
+    private long errorCount = 0;
+    
     public WorkQueue(final String pClassKey) {
         this.classKey = pClassKey;
     }
@@ -144,6 +150,7 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
         }
         unpeek();
         count--;
+        lastDequeueTime = System.currentTimeMillis();
     }
 
     /**
@@ -221,6 +228,29 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
         return this.sessionBalance;
     }
 
+    /**
+     * A URI should not have been charged against queue (eg
+     * it was disregarded); return the amount expended 
+     * @param amount to return
+     * @return updated budget value
+     */
+    public int refund(int amount) {
+        this.sessionBalance = this.sessionBalance + amount;
+        this.totalExpenditure = this.totalExpenditure - amount;
+        this.costCount--;
+        return this.sessionBalance;
+    }
+    
+    /**
+     * Note an error and assess an extra penalty. 
+     * @param penalty additional amount to deduct
+     */
+    public void noteError(int penalty) {
+        this.sessionBalance = this.sessionBalance - penalty;
+        this.totalExpenditure = this.totalExpenditure + penalty;
+        errorCount++;
+    }
+    
     /**
      * @param l
      */
@@ -442,6 +472,13 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
                     ((double) totalExpenditure / costCount), 1));
         writer.print(")");
         writer.print(" ");
+        // last dequeue time, if any, or '-'
+        if (lastDequeueTime != 0) {
+            writer.print(ArchiveUtils.getLog17Date(lastDequeueTime));
+        } else {
+            writer.print("-");
+        }
+        writer.print(" ");
         // wake time if snoozed, or '-'
         if (wakeTime != 0) {
             writer.print(ArchiveUtils.formatMillisecondsToConventional(wakeTime - System.currentTimeMillis()));
@@ -452,6 +489,8 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
         writer.print(Long.toString(totalExpenditure));
         writer.print("/");
         writer.print(Long.toString(totalBudget));
+        writer.print(" ");
+        writer.print(Long.toString(errorCount));
         writer.print(" ");
         writer.print(lastPeeked);
         writer.print(" ");
