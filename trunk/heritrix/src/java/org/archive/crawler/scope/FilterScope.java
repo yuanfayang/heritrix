@@ -61,7 +61,7 @@ import org.archive.crawler.framework.Filter;
  * no URIs will pass the filter and thus be excluded.
  *
  * @author gojomo
- *
+ * @deprecated Use {@link org.archive.crawler.deciderules.DecidingScope} 
  */
 public class FilterScope extends ClassicScope {
     private static Logger logger =
