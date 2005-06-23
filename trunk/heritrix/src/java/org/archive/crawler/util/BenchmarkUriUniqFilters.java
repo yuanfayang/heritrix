@@ -24,8 +24,10 @@
  */
 package org.archive.crawler.util;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -42,7 +44,10 @@ import org.archive.util.fingerprint.MemLongFPSet;
 public class BenchmarkUriUniqFilters implements UriUniqFilter.HasUriReceiver {
     private Logger LOGGER =
         Logger.getLogger(BenchmarkUriUniqFilters.class.getName());
-        
+    
+    private BufferedWriter out; // optional to dump uniq items
+    String current; // current line/URI being checked
+    
     /**
      * Test the UriUniqFilter implementation (MemUriUniqFilter,
      * BloomUriUniqFilter, or BdbUriUniqFilter) named in first
@@ -63,14 +68,20 @@ public class BenchmarkUriUniqFilters implements UriUniqFilter.HasUriReceiver {
         UriUniqFilter uniq = createUriUniqFilter(testClass);
         long created = System.currentTimeMillis();
         BufferedReader br = new BufferedReader(new FileReader(inputFilename));
-        String next;
+        if(args.length>2) {
+            String outputFilename = args[2];
+            out = new BufferedWriter(new FileWriter(outputFilename));
+        }
         int added = 0;
-        while((next=br.readLine())!=null) {
+        while((current=br.readLine())!=null) {
             added++;
-            uniq.add(next,null);
+            uniq.add(current,null);
         }
         uniq.close();
         long finished = System.currentTimeMillis();
+        if(out!=null) {
+            out.close();
+        }
         System.out.println(added+" adds");
         System.out.println(uniq.count()+" retained");
         System.out.println((created-start)+"ms to setup UUF");
@@ -103,6 +114,17 @@ public class BenchmarkUriUniqFilters implements UriUniqFilter.HasUriReceiver {
      * @see org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver#receive(org.archive.crawler.datamodel.CandidateURI)
      */
     public void receive(CandidateURI item) {
-        // do nothing    
+        if(out!=null) {
+            try {
+                // we assume all tested filters are immediate passthrough so
+                // we can use 'current'; a buffering filter would change this
+                // assumption
+                out.write(current);
+                out.write("\n");
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 }
