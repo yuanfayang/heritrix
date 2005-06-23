@@ -54,8 +54,11 @@ import com.sleepycat.je.OperationStatus;
  * 
  * <p>Makes keys that have URIs from same server close to each other.  Mercator
  * and 2.3.5 'Elminating Already-Visited URLs' in 'Mining the Web' by Soumen
- * Chakrabarti talk of a two-level key with the first 24 bits a hash of the host plus
- * port and with the last 40 as a hash of the path.
+ * Chakrabarti talk of a two-level key with the first 24 bits a hash of the
+ * host plus port and with the last 40 as a hash of the path.  Testing
+ * showed adoption of such a scheme halving lookup times (This implementation
+ * actually concatenates scheme + host in first 24 bits and path + query in
+ * trailing 40 bits).
  * 
  * @author stack
  * @version $Date$, $Revision$
