@@ -31,6 +31,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.framework.FrontierMarker;
@@ -79,7 +81,7 @@ public class BdbFrontier extends WorkQueueFrontier {
                 "Structure to use for tracking already-seen URIs. Non-default " +
                 "options may require additional configuration via system " +
                 "properties.", DEFAULT_INCLUDED, AVAILABLE_INCLUDED_OPTIONS));
-        t.setExpertSetting(true); 
+        t.setExpertSetting(true);
     }
 
     /**
@@ -114,7 +116,13 @@ public class BdbFrontier extends WorkQueueFrontier {
      */
     protected UriUniqFilter createAlreadyIncluded() throws IOException {
         UriUniqFilter uuf;
-        if(((String) getUncheckedAttribute(null, ATTR_INCLUDED)).equals(BloomUriUniqFilter.class.getName())) {
+        String c = null;
+        try {
+            c = (String)getAttribute(null, ATTR_INCLUDED);
+        } catch (AttributeNotFoundException e) {
+            // Do default action if attribute not in order.
+        }
+        if (c != null && c.equals(BloomUriUniqFilter.class.getName())) {
             uuf = new BloomUriUniqFilter();
         } else {
             uuf = new BdbUriUniqFilter(this.controller.getBdbEnvironment());
