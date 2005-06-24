@@ -401,12 +401,12 @@ implements Serializable, Reporter {
     public static CandidateURI fromString(String uriHopsViaString)
             throws URIException {
         String args[] = uriHopsViaString.split("\\s+");
-        String pathFromSeeds = (args.length > 1 && !args[1].equals("-")) ? args[1]
-                : "";
-        UURI via = (args.length > 2 && !args[2].equals("-")) ? UURIFactory
-                .getInstance(args[2]) : null;
-        CharSequence viaContext = (args.length > 3 && !args[3].equals("-")) ? args[2]
-                : null;
+        String pathFromSeeds = (args.length > 1 && !args[1].equals("-")) ?
+                args[1]: "";
+        UURI via = (args.length > 2 && !args[2].equals("-")) ?
+                UURIFactory.getInstance(args[2]) : null;
+        CharSequence viaContext = (args.length > 3 && !args[3].equals("-")) ?
+                args[2]: null;
         return new CandidateURI(UURIFactory.getInstance(args[0]),
                 pathFromSeeds, via, viaContext);
     }
@@ -541,7 +541,7 @@ implements Serializable, Reporter {
     /**
      * @return True if this CandidateURI was result of a redirect:
      * i.e. Its parent URI redirected to here, this URI was what was in 
-     * the 'Location:' HTTP Header.
+     * the 'Location:' or 'Content-Location:' HTTP Header.
      */
     public boolean isLocation() {
         return this.pathFromSeed != null && this.pathFromSeed.length() > 0 &&
@@ -561,7 +561,7 @@ implements Serializable, Reporter {
     private void writeObject(ObjectOutputStream stream)
         throws IOException {
         stream.defaultWriteObject();
-        stream.writeUTF(uuri.getURI());
+        stream.writeUTF(uuri.toString());
         stream.writeObject((via == null) ? null : via.getURI());
         stream.writeObject((alist==null) ? null : alist);
     }
