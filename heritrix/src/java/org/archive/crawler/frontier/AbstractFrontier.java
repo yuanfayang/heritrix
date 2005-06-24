@@ -910,12 +910,18 @@ public abstract class AbstractFrontier extends ModuleType implements
     protected String canonicalize(CandidateURI cauri) {
         String canon = canonicalize(cauri.getUURI());
         if (cauri.isLocation()) {
-            // This URI is result of a redirect. Does the
-            // canonicalization of this URI and that of its via
-            // resolve to same thing? If so, add force fetch so
-            // no chance of our not crawling content because
-            // alreadyseen check thinks its seen url before.
-            if (canonicalize(cauri.getVia()).equals(canon)) {
+            // If the via is not the same as where we're being redirected (i.e.
+            // we're not being redirected back to the same page, AND the
+            // canonicalization of the via is equal to the the current cauri, 
+            // THEN forcefetch (Forcefetch so no chance of our not crawling
+            // content because alreadyseen check things its seen the url before.
+            // An example of an URL that redirects to itself is:
+            // http://bridalelegance.com/images/buttons3/tuxedos-off.gif.
+            // An example of an URL whose canonicalization equals its via's
+            // canonicalization, and we want to fetch content at the
+            // redirection (i.e. need to set forcefetch), is netarkivet.dk.
+            if (!cauri.toString().equals(cauri.getVia().toString()) &&
+                    canonicalize(cauri.getVia()).equals(canon)) {
                 cauri.setForceFetch(true);
             }
         }
