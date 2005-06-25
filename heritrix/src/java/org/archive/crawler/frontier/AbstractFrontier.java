@@ -963,8 +963,10 @@ public abstract class AbstractFrontier extends ModuleType implements
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
-        // TODO Auto-generated method stub
-
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info("Closing with " + Long.toString(queuedUriCount()) +
+                " urls still in queue.");
+        }
     }
 
     /*

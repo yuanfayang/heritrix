@@ -29,9 +29,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.JeUtils;
 
 import st.ata.util.FPGenerator;
 
@@ -63,10 +65,10 @@ public class BdbMultipleWorkQueues {
         Logger.getLogger(BdbMultipleWorkQueues.class.getName());
     
     /** Database holding all pending URIs, grouped in virtual queues */
-    protected Database pendingUrisDB = null;
+    private Database pendingUrisDB = null;
     
     /**  Supporting bdb serialization of CrawlURIs */
-    protected RecyclingSerialBinding crawlUriBinding;
+    private RecyclingSerialBinding crawlUriBinding;
 
     /**
      * Create the multi queue in the given environment. 
@@ -81,17 +83,25 @@ public class BdbMultipleWorkQueues {
         // Open the database. Create it if it does not already exist. 
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
-        try {
-            // new preferred truncateDatabase() method cannot be used
-            // on an open (and thus certain to exist) database like 
-            // the deprecated method it replaces -- so use before
-            // opening the database and be ready if it doesn't exist
-            env.truncateDatabase(null, "pending", false);
-        } catch (DatabaseNotFoundException e) {
-            // ignored
+        if (!Heritrix.isBdbRecover()) {
+            try {
+                env.truncateDatabase(null, "pending", false);
+            } catch (DatabaseNotFoundException e) {
+                // Ignored
+            }
         }
-        pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
-        crawlUriBinding = new RecyclingSerialBinding(classCatalog, CrawlURI.class);
+        this.pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
+        crawlUriBinding =
+            new RecyclingSerialBinding(classCatalog, CrawlURI.class);
+    }
+    
+    /**
+     * @return Get count of all crawluris in database. Usually undependable but
+     * accurate just after construction to get count of items in a reused db.
+     * @throws DatabaseException 
+     */
+    public long getCount() throws DatabaseException {
+        return JeUtils.getCount(this.pendingUrisDB);
     }
 
     /**

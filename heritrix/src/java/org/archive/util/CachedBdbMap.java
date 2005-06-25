@@ -32,7 +32,6 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.util.AbstractMap;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -40,6 +39,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.archive.crawler.Heritrix;
+import org.archive.crawler.datamodel.CachedBdbBigMap;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -432,15 +434,17 @@ public class CachedBdbMap extends AbstractMap implements Map {
      * when this method is called.
      */
     public void sync() {
+        // Sync. memory and disk.
         long startTime = 0;
         if (logger.isLoggable(Level.INFO)) {
-            startTime = (new Date()).getTime();
+            startTime = System.currentTimeMillis();
         }
         for (Iterator i = this.memMap.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
-            SoftEntry entry = (SoftEntry)memMap.get(key);
+            SoftEntry entry = (SoftEntry) memMap.get(key);
             if (entry != null) {
-                Object value = entry.get(); // get & hold, so not cleared pre-return
+                // Get & hold so not cleared pre-return.
+                Object value = entry.get();
                 if (value != null) {
                     this.diskMap.put(key, value);
                 }
@@ -450,7 +454,14 @@ public class CachedBdbMap extends AbstractMap implements Map {
         // both places at once.
         this.memMap.clear();
         if (logger.isLoggable(Level.INFO)) {
-            logger.info("Took " + ((new Date()).getTime() - startTime) + "ms.");
+            String dbName = "Lookup-Failed";
+            try {
+                dbName = this.db.getDatabaseName();
+            } catch (DatabaseException e) {
+                // Do without a db name.
+            }
+            logger.info(dbName + " sync took " +
+                (System.currentTimeMillis() - startTime) + "ms.");
         }
     }
 

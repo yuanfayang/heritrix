@@ -22,10 +22,16 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.util.CachedBdbMap;
 
+import com.sleepycat.collections.StoredIterator;
 import com.sleepycat.je.DatabaseException;
 
 /**
@@ -35,10 +41,24 @@ import com.sleepycat.je.DatabaseException;
  */
 public class CachedBdbBigMap extends CachedBdbMap
 implements BigMap {
+    private static final Logger LOGGER =
+        Logger.getLogger(CachedBdbBigMap.class.getName());
+    
+    /**
+     * Constructor.
+     */
     public CachedBdbBigMap() {
         super();
     }
     
+    /**
+     * Setup the big map.
+     * @param settings Context.
+     * @param dbName Name of db to use.
+     * @param keyClass Type for key.
+     * @param valueClass Type for value.
+     * @throws DatabaseException 
+     */
     public void initialize(SettingsHandler settings, String dbName,
             Class keyClass, Class valueClass)
     throws DatabaseException {
@@ -46,13 +66,26 @@ implements BigMap {
         this.db = openDatabase(c.getBdbEnvironment(), dbName);
         this.diskMap = createDiskMap(this.db, c.getClassCatalog(),
             keyClass, valueClass);
+        if (LOGGER.isLoggable(Level.FINE)) {
+            Iterator i = this.diskMap.keySet().iterator();
+            try {
+                for (; i.hasNext();) {
+                    LOGGER.severe(dbName + " " + (String) i.next());
+                }
+            } finally {
+                StoredIterator.close(i);
+            }
+        }
     }
-    
+
     public void clear() {
-        // Sync. memory and disk.
-        // TODO: Test how long this takes before adding to all crawls.
-        // sync();
-        super.clear();
+        if (Heritrix.isBdbRecover()) {
+            // Don't clear. sync memory to disk instead.
+            sync();
+        } else {
+            super.clear();
+        }
+        
         // Close out my bdb db.
         if (this.db != null) {
             try {
