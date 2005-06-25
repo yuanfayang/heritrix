@@ -55,6 +55,8 @@ import org.archive.crawler.settings.Type;
 import org.archive.queue.LinkedQueue;
 import org.archive.util.ArchiveUtils;
 
+import com.sleepycat.collections.StoredIterator;
+
 /**
  * A common Frontier base using several queues to hold pending URIs. 
  * 
@@ -238,10 +240,18 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                 this.allQueues = Collections.synchronizedMap(BigMapFactory
                         .getBigMap(this.getSettingsHandler(), "allqueues",
                                 String.class, WorkQueue.class));
+                if (logger.isLoggable(Level.FINE)) {
+                    Iterator i = this.allQueues.keySet().iterator();
+                    try {
+                        for (; i.hasNext();) {
+                            logger.severe((String) i.next());
+                        }
+                    } finally {
+                        StoredIterator.close(i);
+                    }
+                }
             }
-
             alreadyIncluded = createAlreadyIncluded();
-
             initQueue();
         } catch (IOException e) {
             e.printStackTrace();
@@ -276,29 +286,32 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * @see org.archive.crawler.frontier.AbstractFrontier#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
-        // Ok, if the CrawlController is exiting we delete our
-        // reference to it to facilitate gc.  In fact, do it for
-        // all references because frontier instances stick around
-        // betweeen crawls so the UI can build new jobs based off
-        // the old and so old jobs can be looked at.
-        this.allQueues.clear();
-        this.allQueues = null;
-        this.inProcessQueues = null;
+        // Cleanup.  CrawlJobs persist after crawl has finished so undo any
+        // references.
         if (this.alreadyIncluded != null) {
             this.alreadyIncluded.close();
             this.alreadyIncluded = null;
         }
+
+        this.queueAssignmentPolicy = null;
+        
         try {
             closeQueue();
         } catch (IOException e) {
             // FIXME exception handling
             e.printStackTrace();
         }
-
-        this.snoozedClassQueues = null;
-        this.queueAssignmentPolicy = null;
+        
+        this.allQueues.clear();
+        this.allQueues = null;
+        this.inProcessQueues = null;
         this.readyClassQueues = null;
+        this.snoozedClassQueues = null;
+        this.inactiveQueues = null;
+        this.retiredQueues = null;
+        
         this.costAssignmentPolicy = null;
+        
         // Clearing controller is a problem. We get
         // NPEs in #preNext.
         // this.controller = null;
@@ -555,10 +568,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
                     }
                 }
             } else {
-                // readyQ key wasn't in all queues: unexpected
-                if(key!=null) {
-                    logger.severe("key "+key+
-                        " in readClassQueues but not allQueues");
+                // ReadyQ key wasn't in all queues: unexpected
+                if (key != null) {
+                    logger.severe("Key "+ key +
+                        " in readyClassQueues but not allQueues");
                 }
             }
 
@@ -571,7 +584,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             this.alreadyIncluded.flush(); 
             
             // if still nothing ready, activate an inactive queue, if available
-            if(readyClassQueues.isEmpty()) {
+            if (readyClassQueues.isEmpty()) {
                 activateInactiveQueue();
             }
         }

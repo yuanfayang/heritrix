@@ -1432,6 +1432,17 @@ public class Heritrix implements DynamicMBean {
         t.setDaemon(true);
         t.start();
     }
+    
+    /**
+     * Temporary method in place while developing BdbRecover.
+     * Looks to the heritrix.properties to see if isBdbRecover has been set.
+     * TODO: Remove when working reliably.
+     * @return True if we're to turn on BdbRecover.
+     */
+    public static boolean isBdbRecover() {
+        return (Boolean.valueOf(Heritrix.getProperty(Heritrix.class.getName() +
+            ".isBdbRecover", "false"))).booleanValue();
+    }
 
     public String interrupt(String threadName) {
         String result = "Thread " + threadName + " not found";

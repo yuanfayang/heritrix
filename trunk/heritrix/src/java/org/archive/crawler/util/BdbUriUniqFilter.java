@@ -30,16 +30,20 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.util.JeUtils;
 
 import st.ata.util.FPGenerator;
 
 import com.sleepycat.bind.tuple.LongBinding;
+import com.sleepycat.je.BtreeStats;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.DatabaseStats;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.OperationStatus;
@@ -152,8 +156,16 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     throws DatabaseException {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
-        this.alreadySeen = env.openDatabase(null, 
-            DB_NAME, dbConfig);
+        this.alreadySeen = env.openDatabase(null, DB_NAME, dbConfig);
+        if (Heritrix.isBdbRecover()) {
+            this.count = JeUtils.getCount(this.alreadySeen);
+            if (logger.isLoggable(Level.INFO)) {
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info("Count of alreadyseen on open "
+                            + Long.toString(count));
+                }
+            }
+        }
         this.value = new DatabaseEntry("".getBytes());
     }
     
@@ -162,6 +174,10 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         if (this.alreadySeen != null) {
         	try {
                 env = this.alreadySeen.getEnvironment();
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info("Count of alreadyseen on close " +
+                        Long.toString(count));
+                }
 				this.alreadySeen.close();
 			} catch (DatabaseException e) {
 				logger.severe(e.getMessage());
