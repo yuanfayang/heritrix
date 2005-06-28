@@ -65,9 +65,9 @@ public class RecoveryLogMapper {
     private Map crawledUrlToSeedMap = new HashMap();
     
     /**
-     * Tracks set of discovered URLs for each seed
+     * Maps seed URLs to Set of discovered URLs
      */
-    private Map seedUrlToDiscoveredUrlList = new HashMap();
+    private Map seedUrlToDiscoveredUrlsMap = new HashMap();
     
     /**
      * Tracks which URLs were successfully crawled
@@ -106,8 +106,8 @@ public class RecoveryLogMapper {
                             firstUrl + ")");
                     }
                     // Add seed the first time we find it
-                    if (seedUrlToDiscoveredUrlList.get(firstUrl) == null) {
-                        seedUrlToDiscoveredUrlList.put(firstUrl,
+                    if (seedUrlToDiscoveredUrlsMap.get(firstUrl) == null) {
+                        seedUrlToDiscoveredUrlsMap.put(firstUrl,
                             new HashSet());
                     }
                 } else { 
@@ -137,7 +137,7 @@ public class RecoveryLogMapper {
                         crawledUrlToSeedMap.put(firstUrl, seedForFirstUrl);
                     }
                     Set theSeedUrlList =
-                        (Set)seedUrlToDiscoveredUrlList.get(seedForFirstUrl);
+                        (Set)seedUrlToDiscoveredUrlsMap.get(seedForFirstUrl);
                     if (theSeedUrlList == null) {
                         throw new SeedUrlNotFoundException("recover log " +
                             recoverLogFileName + " at line " +
@@ -155,15 +155,23 @@ public class RecoveryLogMapper {
         }
     }
 
+    /**
+     * Returns seed for urlString (null if seed not found).
+     * @param urlString
+     * @return
+     */
     public String getSeedForUrl(String urlString) {
-        return (String) crawledUrlToSeedMap.get(urlString);
+        if (seedUrlToDiscoveredUrlsMap.get(urlString) != null)
+            return urlString;
+        else
+            return (String) crawledUrlToSeedMap.get(urlString);
     }
     
     /**
-     * @return Returns the seedUrlToDiscoveredUrlList.
+     * @return Returns the seedUrlToDiscoveredUrlsMap.
      */
-    public Map getSeedUrlToDiscoveredUrlList() {
-        return this.seedUrlToDiscoveredUrlList;
+    public Map getSeedUrlToDiscoveredUrlsMap() {
+        return this.seedUrlToDiscoveredUrlsMap;
     }
 
     /**
@@ -188,7 +196,7 @@ public class RecoveryLogMapper {
         public SuccessfullyCrawledURLsIterator(String seedUrlString)
         throws SeedUrlNotFoundException {
             Set discoveredUrlList =
-                (Set)getSeedUrlToDiscoveredUrlList().get(seedUrlString);
+                (Set)getSeedUrlToDiscoveredUrlsMap().get(seedUrlString);
             if (discoveredUrlList == null) {
                 throw new SeedUrlNotFoundException("Seed URL " +
                     seedUrlString + "  not found in seed list");
@@ -243,7 +251,7 @@ public class RecoveryLogMapper {
     }
 
     public Collection getSeedCollection() {
-        return seedUrlToDiscoveredUrlList.keySet();
+        return seedUrlToDiscoveredUrlsMap.keySet();
     }
 
     public static void main(String args[]) {
