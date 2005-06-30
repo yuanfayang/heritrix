@@ -48,11 +48,22 @@ extends QueueAssignmentPolicy {
         String candidate = null;
         try {
             if (scheme.equals(DNS)) {
-                // To do the dns surt form, convert to http (Gordon
-                // suggestion).
-                UURI dnsuuri = UURIFactory.getInstance("http://" +
-                    cauri.getUURI().getPath());
-                candidate = getSurtAuthority(dnsuuri.getSurtForm());
+            	UURI effectiveuuri;
+                if (cauri.getVia() != null) {
+                    // Special handling for DNS: treat as being
+                    // of the same class as the triggering URI.
+                    // When a URI includes a port, this ensures 
+                    // the DNS lookup goes atop the host:port
+                    // queue that triggered it, rather than 
+                    // some other host queue
+                	effectiveuuri = UURIFactory.getInstance(cauri.flattenVia());
+                } else {
+                	// To get the dns surt form, create a fake http version
+                	// (Gordon suggestion).
+                    effectiveuuri = UURIFactory.getInstance("http://" +
+                        cauri.getUURI().getPath());
+                }
+                candidate = getSurtAuthority(effectiveuuri.getSurtForm());
             } else {
                 candidate = getSurtAuthority(cauri.getUURI().getSurtForm());
             }
