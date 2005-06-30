@@ -146,8 +146,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
     /** 
      * Monotonically increasing number within a crawl;
      * useful for tending towards breadth-first ordering.
-     * Will sometimes be truncated to 56 bits, so behavior
-     * over 72 quadrillion instantiated CrawlURIs may be 
+     * Will sometimes be truncated to 48 bits, so behavior
+     * over 281 trillion instantiated CrawlURIs may be 
      * buggy
      */
     protected long ordinal;
