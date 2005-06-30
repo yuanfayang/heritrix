@@ -362,6 +362,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         doJournalAdded(curi);
     }
 
+	/* (non-Javadoc)
+	 * @see org.archive.crawler.frontier.AbstractFrontier#asCrawlUri(org.archive.crawler.datamodel.CandidateURI)
+	 */
+	protected CrawlURI asCrawlUri(CandidateURI caUri) {
+		CrawlURI curi = super.asCrawlUri(caUri);
+		// force cost to be calculated, pre-insert
+		getCost(curi);
+		return curi;
+	}
+	
     /**
      * Send a CrawlURI to the appropriate subqueue.
      * 
@@ -626,7 +636,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      */
     private int getCost(CrawlURI curi) {
         int cost = curi.getHolderCost();
-        if (cost == -1) {
+        if (cost == CrawlURI.UNCALCULATED) {
             cost = costAssignmentPolicy.costOf(curi);
             curi.setHolderCost(cost);
         }
