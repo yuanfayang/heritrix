@@ -100,7 +100,7 @@ implements FetchStatusCodes {
                 LOGGER.severe("Unable to promote prerequisite " + caUri +
                     " above " + curi);
             }
-            caUri.setSchedulingDirective(curi.getSchedulingDirective() - 1);
+            caUri.setSchedulingDirective(prereqPriority);
             caUri.setForceFetch(true);
             schedule(caUri);
        } catch (URIException ex) {
