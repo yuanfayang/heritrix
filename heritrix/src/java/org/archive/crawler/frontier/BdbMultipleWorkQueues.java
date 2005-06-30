@@ -352,8 +352,10 @@ public class BdbMultipleWorkQueues {
         long fpPlus = FPGenerator.std64.fp(curi.getClassKey());
         ArchiveUtils.longIntoByteArray(fpPlus, keyData, 0);
         long ordinalPlus = curi.getOrdinal() & 0x0000FFFFFFFFFFFFL;
-        ordinalPlus = (curi.getSchedulingDirective() << 56) | ordinalPlus;
-        ordinalPlus = (((long)curi.getHolderCost()) << 48) | ordinalPlus;
+        ordinalPlus = 
+        	((long)curi.getSchedulingDirective() << 56) | ordinalPlus;
+        ordinalPlus = 
+        	((((long)curi.getHolderCost()) & 0xFFL) << 48) | ordinalPlus;
         ArchiveUtils.longIntoByteArray(ordinalPlus, keyData, 8);
         return new DatabaseEntry(keyData);
     }
