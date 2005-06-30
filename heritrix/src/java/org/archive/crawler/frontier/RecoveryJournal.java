@@ -149,7 +149,7 @@ implements FrontierJournal {
         writeLine("\n" + F_RESCHEDULE + curi.toString());
     }
 
-    private void writeLine(String string) {
+    private synchronized void writeLine(String string) {
         try {
             this.out.write(string);
             noteLine();
@@ -158,7 +158,7 @@ implements FrontierJournal {
         }
     }
 
-    private void writeLine(MutableString mstring) {
+    private synchronized void writeLine(MutableString mstring) {
         try {
             mstring.write(out);
             noteLine();
