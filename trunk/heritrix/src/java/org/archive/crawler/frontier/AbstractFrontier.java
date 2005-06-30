@@ -343,7 +343,7 @@ public abstract class AbstractFrontier extends ModuleType implements
 
     protected void doJournalRescheduled(CrawlURI c) {
         if (this.recover != null) {
-            this.recover.added(c);
+            this.recover.rescheduled(c);
         }
     }
 
