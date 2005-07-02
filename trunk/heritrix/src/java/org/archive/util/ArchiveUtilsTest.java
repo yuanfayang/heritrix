@@ -26,6 +26,7 @@
 package org.archive.util;
 
 import java.text.ParseException;
+import java.util.logging.Logger;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -38,6 +39,8 @@ import junit.framework.TestSuite;
  * @version $Id$
  */
 public class ArchiveUtilsTest extends TestCase {
+    private static final Logger LOGGER =
+        Logger.getLogger(ArchiveUtilsTest.class.getName());
     /**
      * Create a new ArchiveUtilsTest object
      *
@@ -296,6 +299,27 @@ public class ArchiveUtilsTest extends TestCase {
         ArchiveUtils.longIntoByteArray(testValue, a, 0);
         final long l = ArchiveUtils.byteArrayIntoLong(a, 0);
         assertEquals(testValue, l);
+    }
+    
+    public void testSecondsSinceEpochCalculation() throws ParseException {
+        assertEquals(ArchiveUtils.secondsSinceEpoch("20010909014640"),
+            "1000000000");
+        assertEquals(ArchiveUtils.secondsSinceEpoch("20010909014639"),
+            "0999999999");
+        assertEquals(ArchiveUtils.secondsSinceEpoch("19700101"),
+            "0000000000");
+        assertEquals(ArchiveUtils.secondsSinceEpoch("2005"), "1104537600");
+        assertEquals(ArchiveUtils.secondsSinceEpoch("200501"), "1104537600");
+        assertEquals(ArchiveUtils.secondsSinceEpoch("20050101"), "1104537600");
+        assertEquals(ArchiveUtils.secondsSinceEpoch("2005010100"),
+            "1104537600");
+        boolean eThrown = false;
+        try {
+            ArchiveUtils.secondsSinceEpoch("20050");
+        } catch (IllegalArgumentException e) {
+            eThrown = true;
+        }
+        assertTrue(eThrown);
     }
 }
 
