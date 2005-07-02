@@ -89,6 +89,9 @@ public class ArchiveUtils {
         TIMESTAMP14ISO8601Z = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
     }
     
+    private static int MAX_INT_CHAR_WIDTH =
+        Integer.toString(Integer.MAX_VALUE).length();
+    
     /**
      * Utility function for creating arc-style date stamps
      * in the format yyyMMddHHmmssSSS.
@@ -292,6 +295,39 @@ public class ArchiveUtils {
         calendar.set(Calendar.SECOND, second);
         calendar.set(Calendar.MILLISECOND, milliseconds);
         return calendar;
+    }
+    
+    /**
+     * @param timestamp A 14-digit timestamp or the suffix for a 14-digit
+     * timestamp: E.g. '20010909014640' or '20010101' or '1970'.
+     * @return Seconds since the epoch as a string zero-pre-padded so always
+     * Integer.MAX_VALUE wide (Makes it so sorting of resultant string works
+     * properly).
+     * @throws ParseException 
+     */
+    public static String secondsSinceEpoch(String timestamp)
+    throws ParseException {
+        if (timestamp.length() < 14) {
+            if (timestamp.length() < 10 && (timestamp.length() % 2) == 1) {
+                throw new IllegalArgumentException("Must have year, " +
+                    "month, date, hour or second granularity: " + timestamp);
+            }
+            if (timestamp.length() == 4) {
+                // Add first month and first date.
+                timestamp = timestamp + "01010000";
+            }
+            if (timestamp.length() == 6) {
+                // Add a date of the first.
+                timestamp = timestamp + "010000";
+            }
+            if (timestamp.length() < 14) {
+                timestamp = timestamp +
+                    ArchiveUtils.padTo("", 14 - timestamp.length(), '0');
+            }
+        }
+        Date d = ArchiveUtils.parse14DigitDate(timestamp);
+        return ArchiveUtils.padTo(Integer.toString((int)(d.getTime()/1000)),
+            MAX_INT_CHAR_WIDTH, '0');
     }
 
     /** 
