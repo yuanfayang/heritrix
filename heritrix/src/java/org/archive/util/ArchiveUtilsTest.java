@@ -321,5 +321,10 @@ public class ArchiveUtilsTest extends TestCase {
         }
         assertTrue(eThrown);
     }
+    
+    public static void testZeroPadInteger() {
+        assertEquals(ArchiveUtils.zeroPadInteger(1), "0000000001");
+        assertEquals(ArchiveUtils.zeroPadInteger(1000000000), "1000000000");
+    }
 }
 

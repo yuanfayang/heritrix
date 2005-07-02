@@ -89,7 +89,7 @@ public class ArchiveUtils {
         TIMESTAMP14ISO8601Z = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
     }
     
-    private static int MAX_INT_CHAR_WIDTH =
+    public static int MAX_INT_CHAR_WIDTH =
         Integer.toString(Integer.MAX_VALUE).length();
     
     /**
@@ -326,8 +326,19 @@ public class ArchiveUtils {
             }
         }
         Date d = ArchiveUtils.parse14DigitDate(timestamp);
-        return ArchiveUtils.padTo(Integer.toString((int)(d.getTime()/1000)),
-            MAX_INT_CHAR_WIDTH, '0');
+        return zeroPadInteger((int)(d.getTime()/1000));
+    }
+    
+    /**
+     * @param i Integer to add prefix of zeros too.  If passed
+     * 2005, will return the String <code>0000002005</code>. String
+     * width is the width of Integer.MAX_VALUE as a string (10
+     * digits).
+     * @return Padded String version of <code>i</code>.
+     */
+    public static String zeroPadInteger(int i) {
+        return ArchiveUtils.padTo(Integer.toString(i),
+                MAX_INT_CHAR_WIDTH, '0');
     }
 
     /** 
