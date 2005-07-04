@@ -28,6 +28,10 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.logging.Logger;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.filter.OrFilter;
@@ -44,14 +48,18 @@ import org.archive.crawler.settings.Type;
  * frontier), but with the addition that you can set the number of documents to
  * download on a per site basis. 
  *
- * <p>Useful for case of frequent revisits of a site of frequent changes.
+ * Useful for case of frequent revisits of a site of frequent changes.
  * 
- * <p>To do this you choose the number of docs you want to download and specify
- * this in the max-docs field under frontier. You set one global value and then
- * no site will download more than that number of docs. If you want, you can
- * create an override and then sites affected by this override will download
- * that many docs instead, whether it is higher or lower.
- * 
+ * <p>Choose the number of docs you want to download and specify
+ * the count in <code>max-docs</code>.  If <code>count-per-host</code> is
+ * true, the default, then the crawler will download <code>max-docs</code> 
+ * per host.  If you create an override,  the overridden <code>max-docs</code>
+ * count will be downloaded instead, whether it is higher or lower.
+ * <p>If <code>count-per-host</code> is false, then <code>max-docs</code>
+ * acts like the the crawl order <code>max-docs</code> and the crawler will
+ * download this total amount of docs only.  Overrides will  
+ * download <code>max-docs</code> total in the overridden domain. 
+ *
  * @author Oskar Grenholm <oskar dot grenholm at kb dot se>
  */
 public class DomainSensitiveFrontier extends BdbFrontier
@@ -60,25 +68,53 @@ implements CrawlURIDispositionListener {
         Logger.getLogger(DomainSensitiveFrontier.class.getName());
     
     public static final String ATTR_MAX_DOCS = "max-docs";
+    public static final String ATTR_MODE = "count-per-host";
     
     // TODO: Make this a BigMap.
     private Hashtable hostCounters = new Hashtable();
+    private boolean countPerHost = false;
 
     public DomainSensitiveFrontier(String name) {
         super(ATTR_NAME, "DomainSensitiveFrontier. " +
             "Overrides BdbFrontier to add specification of number of " +
-            "documents to download per host (Expects 'exclude-filter' " +
+            "documents to download (Expects 'exclude-filter' " +
             "to be part of CrawlScope).");
         Type e = addElementToDefinition(new SimpleType(ATTR_MAX_DOCS,
             "Maximum number of documents to download for host or domain" +
             " (Zero means no limit).", new Long(0)));
         e.setOverrideable(true);
+        e = addElementToDefinition(new SimpleType(ATTR_MODE,
+            "If TRUE, the crawler will download " + ATTR_MAX_DOCS +
+            " per host. Add an override to change max count on a per-domain " +
+            "basis. If FALSE, " + ATTR_MAX_DOCS + " acts like the crawl " +
+            "order maximum download count and the crawler will download " +
+            "this total amount of docs only.  Override to change the max " +
+            "count for the overridden domain. For example, if you set " +
+            ATTR_MAX_DOCS + " to 30 and " + ATTR_MODE + " to TRUE, " +
+            "the crawler will download 30 docs from each host in " +
+            "scope. If you  override for kb.se setting " + ATTR_MAX_DOCS +
+            " to 20, it will instead download only 20 docs from each host " +
+            "of kb.se. If " + ATTR_MODE + " is set to FALSE, " +
+            "30 docs total will be downloaded.  An override with " +
+            ATTR_MAX_DOCS + " set to 20 for kb.se will download 20 docs " +
+            "from kb.se in TOTAL, not 20 from each host in kb.se.",
+            new Boolean(true)));
+            e.setOverrideable(false);
     }
 
     public void initialize(CrawlController c)
     throws FatalConfigurationException, IOException {
         super.initialize(c);
         this.controller.addCrawlURIDispositionListener(this);
+        try {
+            countPerHost = ((Boolean)getAttribute(ATTR_MODE)).booleanValue();
+        } catch (AttributeNotFoundException e) {
+            e.printStackTrace();
+        } catch (MBeanException e) {
+            e.printStackTrace();
+        } catch (ReflectionException e) {
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -101,39 +137,45 @@ implements CrawlURIDispositionListener {
         }
         try {
             String host = curi.getUURI().getHost();
-            CrawlerSettings cs =
-                this.controller.getSettingsHandler().getSettings(host);
-            thisMaxDocs = ((Long) getAttribute(cs, ATTR_MAX_DOCS)).longValue();
-            thisCounter = this.hostCounters.get(host) != null?
-                ((Long)this.hostCounters.get(host)).longValue(): 0;
-            // Have we hit the max document download limit for this host?
-            if ((thisMaxDocs > 0 && thisCounter >= thisMaxDocs)) {
-                logger.fine("Discarding Queue: " + host + " ");
-                if (!discarded) {
-                    long count = 0;
-                    WorkQueue wq = getQueueFor(curi);
-                    wq.unpeek();
-                    count += wq.deleteMatching(this, ".*");
-                    decrementQueuedCount(count);
-                    discarded = true;
-                    // I tried adding annotation but we're past log time for
-                    // Curi so it doesn't work.
-                    // curi.addAnnotation("maxDocsForHost");
+            CrawlerSettings cs = controller.getSettingsHandler().getSettings(host);
+            do {
+                String scope = countPerHost ? host: cs.getScope();
+                //This happens for root scope, so give it a key to count for in the Hash
+                if(scope == null)
+                    scope = "root";
+                thisMaxDocs =
+                    ((Long) getAttribute(cs, ATTR_MAX_DOCS)).longValue();
+                thisCounter = this.hostCounters.get(scope) != null ? ((Long) this.hostCounters
+                        .get(scope)).longValue() : 0;
+                // Have we hit the max document download limit for this host or domain?
+                if ((thisMaxDocs > 0 && thisCounter >= thisMaxDocs)) {
+                    logger.fine("Discarding Queue: " + host + " ");
+                    curi.addAnnotation("dsfLimit");
+                   if (!discarded) {
+                        long count = 0;
+                        WorkQueue wq = getQueueFor(curi);
+                        wq.unpeek();
+                        count += wq.deleteMatching(this, ".*");
+                        decrementQueuedCount(count);
+                        discarded = true;
+                        // I tried adding annotation but we're past log time for
+                        // Curi so it doesn't work.
+                        // curi.addAnnotation("maxDocsForHost");
+                    }
+                    // Adding an exclude filter for this host or domain
+                    OrFilter or = (OrFilter) this.controller.getScope()
+                            .getAttribute(ClassicScope.ATTR_EXCLUDE_FILTER);
+                    // If we have hit max for root, block everything. Else just the scope.
+                    String filter = scope.equalsIgnoreCase("root") ? ".*"
+                            : "^((https?://)?[a-zA-Z0-9\\.]*)" + scope + "($|/.*)";
+                    logger.fine("Adding filter: [" + filter + "].");
+                    URIRegExpFilter urf = new URIRegExpFilter(curi.toString(), filter);
+                    or.addFilter(this.controller.getSettingsHandler().getSettings(null), urf);
+                    thisMaxDocs = 0;
+                    thisCounter = 0;
+                    retVal = true;
                 }
-                // Adding an exclude filter for this host
-                OrFilter or = (OrFilter)this.controller.getScope().
-                    getAttribute(ClassicScope.ATTR_EXCLUDE_FILTER);
-                String filter = "^((https?://)?[a-zA-Z0-9\\.]*)" + host
-                    + "($|/.*)";
-                logger.fine("Adding filter: [" + filter + "].");
-                URIRegExpFilter urf = new URIRegExpFilter(curi.toString(),
-                    filter);
-                or.addFilter(this.controller.getSettingsHandler().
-                    getSettings(null),urf);
-                thisMaxDocs = 0;
-                thisCounter = 0;
-                retVal = true;
-            }
+            } while ((cs = cs.getParent()) != null && !countPerHost);
         } catch (Exception e) {
             logger.severe("ERROR: checkDownloadLimits(), "
                     + "while processing {" + curi.toString() + "}"
@@ -148,16 +190,22 @@ implements CrawlURIDispositionListener {
         if (!curi.getUURI().toString().startsWith("dns:")) {
             try {
                 String host = curi.getUURI().getHost();
-                long counter = this.hostCounters.get(host) != null ?
-                    ((Long)this.hostCounters.get(host)).longValue(): 0;
-                this.hostCounters.put(host, new Long(++counter));
+                CrawlerSettings cs = controller.getSettingsHandler().getSettings(host);
+                do {
+                    String scope = countPerHost? host: cs.getScope();
+                    if (scope == null)
+                        scope = "root";
+                    long counter = this.hostCounters.get(scope) != null ?
+                        ((Long)this.hostCounters.get(scope)).longValue(): 0;
+                    this.hostCounters.put(scope, new Long(++counter));
+                } while ((cs = cs.getParent()) != null && !countPerHost);
             } catch (Exception e) {
                 logger.severe("ERROR: incrementHostCounters() " +
                     e.getMessage());
             }
         }
     }
-
+    
     public void crawledURISuccessful(CrawlURI curi) {
         incrementHostCounters(curi);
         checkDownloadLimits(curi);
