@@ -2388,6 +2388,11 @@ public class SimpleExtractor extends Processor
       ARC Reader available at
       <ulink url="http://bibnum.bnf.fr/downloads/bat/BAT-0.03.tar.gz">BAT</ulink>.
       </para>
+      See <ulink url="http://cvs.sourceforge.net/viewcvs.py/archive-access/archive-access/projects/hedaern/">Hedaern</ulink> for python readers/writers and
+      for a skeleton webapp that allows querying by timestamp+date as well
+          as full-text search of ARC content..
+      <para>
+      </para>
     </sect2>
 
     <sect2 id="arcwriter">
