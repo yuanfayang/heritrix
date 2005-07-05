@@ -262,7 +262,6 @@
        
     </goal>
 
-
     <goal name="jspc">
         <!--Compile down to servlets all in the ${webapp.name} webapp
             (Set this ant property before calling this goal).  Compile the 
@@ -285,7 +284,7 @@
         <!--Make a couple of dirs.-->
         <mkdir dir="${jspc.src}" />
         <mkdir dir="${jspc.classes}" />
-        <!--Classpath to use in the below.-->
+        <!--Classpath to use in the believe.-->
         <path id="jspc.classpath">
             <path  refid="maven.dependency.classpath" />
             <pathelement path="${maven.build.dest}" />
@@ -294,46 +293,24 @@
             included ant task but ant also comes w/ a jspc.  We use the ant
             one below.  The jasper one gave me grief trying to figure out
             exclude of 'include' dir.
-
-            Below call to jspc needs to fork.  Otherwise, fails build
-            on maven 1.1.
          -->
-        <ant:java classname="org.apache.jasper.JspC" 
-                fork="true"
-                failonerror="true" 
-                classpathref="jspc.classpath">
-            <arg value="-uriroot"/>
-            <arg value="${webapp.src.dir}/${webapp.name}"/>
-            <arg value="-d"/>
-            <arg value="${jspc.src}"/>
-            <arg value="-s"/>
-            <arg value="-l"/>
-            <arg value="-webinc"/>
-            <arg value="${web.fragment}"/>
-            <arg value="-p"/>
-            <arg value="org.archive.crawler.jspc.${webapp.name}"/>
-        </ant:java>
-
-        <!--Need to exclude include dir. from compile. In previous
-        versions of the call to jspc above I used to use an exclude so the
-        include java files never got generated for include/*.jsp pages.
-        But since move to forking jspc, there is no mechanism for doing
-        exclude passing args to jsp on the command line.  So, let the
-        java classes for include/*jsp get generated and then remove them
-        so not around when we call javac.
-        -->
-        <ant:delete dir="${jspc.src}/include" />
-
-        <ant:javac
-            srcdir="${jspc.src}"
-            destdir="${jspc.classes}"
-            debug="${maven.compile.debug}"
-            deprecation="${maven.compile.deprecation}"
-            optimize="${maven.compile.optimize}"
-            classpathref="jspc.classpath" >
+        <jspc destdir="${jspc.src}" srcdir="${webapp.src.dir}/${webapp.name}"
+            verbose="100" package="org.archive.crawler.jspc.${webapp.name}"
+            webinc="${web.fragment}" classpathref="jspc.classpath"
+            uriroot="${webapp.src.dir}/${webapp.name}" >
+                <!--This include/exclude mechanism is really contrary.
+                    The below seems to work properly though keeping the
+                    include out of the fragments and out of the path of
+                    our compiler; nothing under include is compilable
+                    but its needed.
+                 -->
                 <exclude name="**/include/*.jsp"/>
-        </ant:javac>
-
+        </jspc>
+        <javac sourcepath="" srcdir="${jspc.src}" destdir="${jspc.classes}" 
+            classpathref="jspc.classpath"
+            source="${maven.compile.source}"
+            target="${maven.compile.target}"
+            />
         <loadfile srcFile="${web.fragment}" property="fragment"
             failonerror="true" />
         <replace file="${webinf}/web.xml"
@@ -345,8 +322,6 @@
         <mkdir dir="${webapp.lib}" />
         <copy todir="${webapp.lib}" file="${jsp.jar}" /> 
     </goal>
-
-
 
     <goal name="site:update-sourceforge">
         <!--This goal will update sourceforge crawler.archive.org site. Assumes
