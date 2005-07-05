@@ -25,6 +25,8 @@
 package org.archive.crawler.util;
 
 import org.archive.util.BloomFilter;
+import org.archive.util.BloomFilter32bp2;
+import org.archive.util.BloomFilter64bit;
 
 import java.util.logging.Logger;
 
@@ -55,11 +57,11 @@ public class BloomUriUniqFilter implements UriUniqFilter {
     protected static final String HASH_COUNT_KEY = ".hash-count";
 
     // these defaults create a bloom filter that is
-    // 1.44*200mil*24/8 ~= 864MB in size, and at full
+    // 1.44*125mil*22/8 ~= 495MB in size, and at full
     // capacity will give a false contained indication
-    // 1/(224) ~= 1 in every 16 million probes
-    private static final int DEFAULT_EXPECTED_SIZE = 200000000; // 200 million
-    private static final int DEFAULT_HASH_COUNT = 24; // 1 in 16 million false pos
+    // 1/(2^22) ~= 1 in every 4 million probes
+    private static final int DEFAULT_EXPECTED_SIZE = 125000000; // 125 million
+    private static final int DEFAULT_HASH_COUNT = 22; // 1 in 4 million false pos
 
     /**
      * Default constructor
@@ -96,7 +98,7 @@ public class BloomUriUniqFilter implements UriUniqFilter {
      */
     protected void initialize(final int n, final int d) {
         this.expected_n = n;
-        bloom = new BloomFilter(n,d);
+        bloom = new BloomFilter32bp2(n,d);
     }
 
     public long count() {
