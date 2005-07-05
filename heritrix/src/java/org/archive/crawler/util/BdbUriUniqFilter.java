@@ -157,7 +157,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
         this.alreadySeen = env.openDatabase(null, DB_NAME, dbConfig);
-        if (Heritrix.isBdbRecover()) {
+        if (Heritrix.isCheckpointRecover()) {
             this.count = JeUtils.getCount(this.alreadySeen);
             if (logger.isLoggable(Level.INFO)) {
                 if (logger.isLoggable(Level.INFO)) {
@@ -188,10 +188,8 @@ public class BdbUriUniqFilter implements UriUniqFilter {
             try {
 				// This sync flushes whats in RAM.  Its expensive operation.
 				// Without, data can be lost.  Not for transactional operation.
-				// TODO: This close needs to be inside a finally so that if 
-				// we pop out, already seen gets flushed.
 				env.sync();
-                env.close();
+				env.close();
 			} catch (DatabaseException e) {
 				logger.severe(e.getMessage());
 			}

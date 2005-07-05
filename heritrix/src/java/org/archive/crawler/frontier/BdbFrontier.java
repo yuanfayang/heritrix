@@ -223,7 +223,7 @@ public class BdbFrontier extends WorkQueueFrontier {
     protected void initQueue() throws IOException {
         try {
             pendingUris = createMultipleWorkQueues();
-            if (Heritrix.isBdbRecover()) {
+            if (Heritrix.isCheckpointRecover()) {
                 resurrectQueueState();
             }
         } catch(DatabaseException e) {
@@ -368,7 +368,7 @@ public class BdbFrontier extends WorkQueueFrontier {
             this.pendingUris.close();
             this.pendingUris = null;
         }
-        if (Heritrix.isBdbRecover()) {
+        if (Heritrix.isCheckpointRecover()) {
             persistQueueState();
         }
     }

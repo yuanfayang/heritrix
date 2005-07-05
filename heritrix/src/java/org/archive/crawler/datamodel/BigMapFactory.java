@@ -22,10 +22,17 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
+import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.checkpoint.Checkpointable;
 import org.archive.crawler.settings.SettingsHandler;
 
 /**
@@ -36,7 +43,16 @@ import org.archive.crawler.settings.SettingsHandler;
  * @version $Date$, $Revision$
  */
 public class BigMapFactory {
-    private static final String KEY = BigMapFactory.class.getName() + ".class";
+    private static final String KEY_BASE = BigMapFactory.class.getName();
+    private static final String KEY =  KEY_BASE + ".class";
+    private static final Logger LOGGER = Logger.getLogger(KEY_BASE);
+    
+    /**
+     * Keep a list of all instances made -- shouldn't be many -- so that
+     * we can checkpoint.
+     */
+    transient private static List instances =
+        Collections.synchronizedList(new ArrayList());
    
     private BigMapFactory() {
         super();
@@ -68,6 +84,23 @@ public class BigMapFactory {
         } else {
             result = new HashMap();
         }
+        BigMapFactory.instances.add(result);
         return result;
+    }
+
+    public static void checkpoint(Checkpoint cp)
+    throws Exception {
+        for (Iterator i = BigMapFactory.instances.iterator(); i.hasNext();) {
+            Object obj = i.next();
+            if (obj instanceof BigMap) {
+                ((BigMap)obj).sync();
+            } else {
+                LOGGER.info("Checkpointing unsupported for type " + obj);
+            }
+        }
+    }
+
+    public static void recover(Checkpoint cp) {
+        // Assume nothing to be done on a recover.
     }
 }

@@ -36,31 +36,40 @@ import org.archive.util.FileUtils;
 
 /**
  * Record of a specific checkpoint on disk.
- *
  * @author gojomo
  */
 public class Checkpoint {
-    /** flag label for invalid Checkpoints */
-    public static final String INVALID = "INVALID";
-    /** name of file written with timestamp into valid checkpoints */
-    public static final String VALIDITY_STAMP_FILENAME = "valid";
-    int seriesNumber;
-    String name;
-    String timestamp;
-    File directory;
+    /**
+     * Flag label for invalid Checkpoints
+     */
+    private static final String INVALID = "INVALID";
+    
+    /** 
+     * Name of file written with timestamp into valid checkpoints.
+     */
+    static final String VALIDITY_STAMP_FILENAME = "valid";
+    
+    private String timestamp;
+    private File directory;
+    private static final String AUX_SUFFIX = ".auxillary";
+    
+    /**
+     * Publically inaccessible default constructor.
+     */
+    protected Checkpoint() {
+        super();
+    }
 
     /**
      * Create a Checkpoint instance based on the given prexisting
      * checkpoint directory
      *
-     * @param directory
+     * @param directory Directory that holds checkpoint.
      */
     public Checkpoint(File directory) {
         this.directory = directory;
-        name = directory.getName();
-        seriesNumber = Integer.parseInt(name);
-        File validityStamp = new File(directory,VALIDITY_STAMP_FILENAME);
-        if(validityStamp.exists()==false) {
+        File validityStamp = new File(directory, VALIDITY_STAMP_FILENAME);
+        if (validityStamp.exists() == false) {
             timestamp = INVALID;
         } else {
             try {
@@ -70,47 +79,30 @@ public class Checkpoint {
                 timestamp = INVALID;
             }
         }
-
     }
 
-//    private void calculateSeriesFromHistoryName() {
-//        String[] numbers = historyName.split("\\+");
-//        int total = 0;
-//        for (int i = 0; i<numbers.length; i++) {
-//            if(numbers[i].length()>0) {
-//                total += Integer.parseInt(numbers[i]);
-//            }
-//        }
-//        seriesNumber = total;
-//        seriesName = (new DecimalFormat("00000")).format(seriesNumber);
-//    }
-
     /**
-     * Return whether this checkpoint appears complete/resumable
-     * (has 'valid' stamp file)
-     * @return true if valid
+     * 
+     * @return Return true if this checkpoint appears complete/resumable
+     * (has 'valid' stamp file).
      */
     public boolean isValid() {
         return timestamp != INVALID;
     }
 
     /**
-     * Get the name of this Checkpoint (eg "+2+1")
-     *
-     * @return Returns the name.
+     * @return Returns name of this Checkpoint
      */
     public String getName() {
-        return name;
+        return this.directory.getName();
     }
 
     /**
-     * Return the combination of given name and timestamp most commonly
+     * @return Return the combination of given name and timestamp most commonly
      * used in administrative interface.
-     *
-     * @return checkpoint's name with timestamp notation
      */
     public String getDisplayName() {
-        return getName() + " ["+getTimestamp()+"]";
+        return getName() + " [" + getTimestamp() + "]";
     }
 
     /**
@@ -123,22 +115,25 @@ public class Checkpoint {
     /**
      * Utility function to serialize an object to a file, using
      * the enhanced ObjectPlusFilesOutputStream, which offers facilities
-     * to store related files alongside the serialized object.
+     * to store related files alongside the serialized object in a directory
+     * named with a <code>.auxillary</code> suffix.
      *
-     * @param o
-     * @param filename
-     * @throws FileNotFoundException
+     * @param o Object to serialize.
+     * @param filename Name to serialize to.
      * @throws IOException
      */
-    public void writeObjectPlusToFile(Object o, String filename) throws FileNotFoundException, IOException {
+    public void writeObjectPlusToFile(Object o, String filename)
+    throws FileNotFoundException, IOException {
         this.directory.mkdirs();
-        File storeDir = new File(this.directory, filename+".aux");
         ObjectPlusFilesOutputStream out =
             new ObjectPlusFilesOutputStream(
-                    new FileOutputStream(
-                            new File(this.directory,filename)), storeDir);
-        out.writeObject(o);
-        out.close();
+                new FileOutputStream(new File(this.directory, filename)), 
+                    new File(this.directory, filename + AUX_SUFFIX));
+        try {
+            out.writeObject(o);
+        } finally {
+            out.close();
+        }
     }
 
     /**
@@ -151,12 +146,13 @@ public class Checkpoint {
      * @throws ClassNotFoundException
      * @return Object read from file.
      */
-    public Object readObjectFromFile(String filename) throws IOException, ClassNotFoundException {
+    public Object readObjectFromFile(String filename)
+    throws IOException, ClassNotFoundException {
         ObjectPlusFilesInputStream in =
             new ObjectPlusFilesInputStream(
                     new FileInputStream(
                             new File(this.directory,filename)),
-                    new File(this.directory, filename+".aux"));
+                    new File(this.directory, filename + AUX_SUFFIX));
         Object o = null;
         try {
             o = in.readObject();
@@ -166,4 +162,10 @@ public class Checkpoint {
         return o;
     }
 
+    /**
+     * @return Returns the checkpoint directory.
+     */
+    public File getDirectory() {
+        return this.directory;
+    }
 }

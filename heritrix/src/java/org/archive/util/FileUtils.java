@@ -30,9 +30,13 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Pattern;
 
 
@@ -42,11 +46,20 @@ import java.util.regex.Pattern;
  */
 public class FileUtils
 {
-    /** Constructor made private because all methods of this class are static.
-     *
+    /**
+     * Constructor made private because all methods of this class are static.
      */
     private FileUtils() {
         super();
+    }
+    
+    public static void copyFiles(final File srcDir, final List srcFiles,
+            final File dest)
+    throws IOException {
+        for (Iterator i = srcFiles.iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            copyFiles(new File(srcDir, name), new File(dest, name));
+        }
     }
 
     /** Recursively copy all files from one directory to another.
@@ -57,6 +70,22 @@ public class FileUtils
      */
     public static void copyFiles(File src, File dest)
     throws IOException {
+        copyFiles(src, null, dest, false);
+    }
+        
+    /**
+     * Recursively copy all files from one directory to another.
+     * 
+     * @param src File or directory to copy from.
+     * @param filter Filename filter to apply to src. May be null if no
+     * filtering wanted.
+     * @param dest File or directory to copy to.
+     * @param inSortedOrder Copy in order of natural sort.
+     * @throws IOException
+     */
+    public static void copyFiles(final File src, final FilenameFilter filter,
+            final File dest, final boolean inSortedOrder)
+    throws IOException {
         // TODO: handle failures at any step
         if (!src.exists()) {
             return;
@@ -65,13 +94,15 @@ public class FileUtils
         if (src.isDirectory()) {
             // Create destination directory
             dest.mkdirs();
-
-            // Go trough the contents of the directory
-            String list[] = src.list();
-            for (int i = 0; i < list.length; i++) {
-                copyFiles(new File(src, list[i]) , new File(dest, list[i]));
+            // Go through the contents of the directory
+            String list[] = (filter == null)? src.list(): src.list(filter);
+            if (inSortedOrder) {
+                Arrays.sort(list);
             }
-
+            for (int i = 0; i < list.length; i++) {
+                copyFiles(new File(src, list[i]), filter,
+                    new File(dest, list[i]), inSortedOrder);
+            }
         } else {
             copyFile(src, dest);
         }
@@ -79,7 +110,7 @@ public class FileUtils
 
     /**
      * Copy the src file to the destination.
-     *
+     * 
      * @param src
      * @param dest
      * @return True if the extent was greater than actual bytes copied.

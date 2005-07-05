@@ -26,10 +26,10 @@
         } else if(sAction.equalsIgnoreCase("resume")) {
             // Tell handler to resume crawl job
             handler.resumeJob();
-//        } else if(sAction.equalsIgnoreCase("checkpoint")) {
-//            if(handler.getCurrentJob() != null) {
-//                handler.checkpointJob();
-//            }
+        } else if(sAction.equalsIgnoreCase("checkpoint")) {
+            if(handler.getCurrentJob() != null) {
+                handler.checkpointJob();
+            }
         } else if(sAction.equalsIgnoreCase("rotateLogs")) {
             if(handler.getCurrentJob() != null) {
                 handler.rotateLogs();

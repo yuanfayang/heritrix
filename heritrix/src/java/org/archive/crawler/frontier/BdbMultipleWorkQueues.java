@@ -83,7 +83,7 @@ public class BdbMultipleWorkQueues {
         // Open the database. Create it if it does not already exist. 
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
-        if (!Heritrix.isBdbRecover()) {
+        if (!Heritrix.isCheckpointRecover()) {
             try {
                 env.truncateDatabase(null, "pending", false);
             } catch (DatabaseNotFoundException e) {

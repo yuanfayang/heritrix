@@ -38,29 +38,36 @@ import org.archive.util.ArchiveUtils;
  * Captures the checkpoint history and upcoming checkpoint name
  * of a crawl.
  *
- * A checkpoint name is a series number, starting from 1,
- * typically zero-padded to 5 places.
- *
  * @author gojomo
- *
  */
-public class CheckpointContext implements Serializable {
+public class CheckpointContext
+implements Serializable {
     /** String to prefix any new checkpoint names */
+    
     private final String checkpointPrefix;
-    /** Next  overall series checkpoint number */
+    
+    /**
+     * Next  overall series checkpoint number.
+     */
     private int nextCheckpoint = 1;
 
     /** All checkpoint names in chain prior to now. May not all still
-     * exist on disk */
+     * exist on disk.
+     */
     private List predecessorCheckpoints = new LinkedList();
 
-    /** Directory to place checkpoints */
-    private File checkpointDirectory = null;
+    /**
+     * Base directory to place checkpoints in.
+     */
+    private File baseCheckpointDirectory = null;
 
-    /** If a checkpoint has begun, its directory */
-    private transient File checkpointInProgress = null;
+    /**
+     * If a checkpoint has begun, its directory under
+     * <code>checkpointDirectory</code>.
+     */
+    private transient File checkpointInProgressDir = null;
 
-    /** If the checkpoint in progress has encountered fatal errors */
+    /** If the checkpoint in progress has encountered fatal errors. */
     private boolean checkpointErrors = false;
 
     /**
@@ -72,49 +79,50 @@ public class CheckpointContext implements Serializable {
 
     /**
      * Create a new CheckpointContext with the given store directory
-     * @param checkpointDirectory Where to store checkpoint.
+     * @param baseCheckpointDirectory Where to store checkpoint.
      */
-    public CheckpointContext(File checkpointDirectory) {
-        super();
-        this.checkpointDirectory = checkpointDirectory;
-        this.checkpointPrefix = "";
+    public CheckpointContext(File baseCheckpointDirectory) {
+        this(baseCheckpointDirectory, "");
     }
     
     /**
      * Create a new CheckpointContext with the given store directory
      *
-     * @param checkpointDirectory Where to store checkpoint.
+     * @param baseCheckpointDirectory Where to store checkpoint.
      * @param prefix Prefix for checkpoint label.
      */
-    public CheckpointContext(File checkpointDirectory, String prefix) {
+    public CheckpointContext(File baseCheckpointDirectory, String prefix) {
         super();
-        this.checkpointDirectory = checkpointDirectory;
+        this.baseCheckpointDirectory = baseCheckpointDirectory;
         this.checkpointPrefix = prefix;
     }
 
     public void begin() {
-        checkpointInProgress =
-            new File(checkpointDirectory, nextCheckpointDirectoryName());
+        this.checkpointInProgressDir = new File(baseCheckpointDirectory,
+            getNextCheckpointName());
+        // Clear the checkpoint errors.
         checkpointErrors = false;
     }
 
     /**
-     * @return next checkpoint, as a zero-padding string
+     * @return next checkpoint name (zero-padding string).
      */
-    private String nextCheckpointDirectoryName() {
-        return this.checkpointPrefix + (new DecimalFormat("00000")).format(nextCheckpoint);
+    public String getNextCheckpointName() {
+        return this.checkpointPrefix +
+            (new DecimalFormat("00000")).format(nextCheckpoint);
     }
 
     public void end() {
         if(checkpointErrors == false) {
             writeValidity();
         }
-        checkpointInProgress = null;
-        nextCheckpoint++;
+        this.checkpointInProgressDir = null;
+        this.nextCheckpoint++;
     }
 
     private void writeValidity() {
-        File valid = new File(checkpointInProgress, "valid");
+        File valid = new File(this.checkpointInProgressDir,
+            Checkpoint.VALIDITY_STAMP_FILENAME);
         try {
             FileOutputStream fos = new FileOutputStream(valid);
             fos.write(ArchiveUtils.get14DigitDate().getBytes());
@@ -128,7 +136,14 @@ public class CheckpointContext implements Serializable {
      * @return Checkpoint directory.
      */
     public File getCheckpointInProgressDirectory() {
-        return checkpointInProgress;
+        return this.checkpointInProgressDir;
+    }
+    
+    /**
+     * @return True if a checkpoint is in progress.
+     */
+    public boolean isCheckpointInProgress() {
+        return this.checkpointInProgressDir != null;
     }
 
     /**
@@ -139,6 +154,13 @@ public class CheckpointContext implements Serializable {
     public void checkpointFailed(Exception e) {
         e.printStackTrace();
         checkpointErrors = true;
+    }
+    
+    /**
+     * @return True if current/last checkpoint failed.
+     */
+    public boolean isCheckpointFailed() {
+        return this.checkpointErrors;
     }
 
     /**

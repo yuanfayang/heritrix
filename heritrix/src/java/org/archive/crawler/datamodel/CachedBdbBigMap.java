@@ -79,13 +79,7 @@ implements BigMap {
     }
 
     public void clear() {
-        if (Heritrix.isBdbRecover()) {
-            // Don't clear. sync memory to disk instead.
-            sync();
-        } else {
-            super.clear();
-        }
-        
+        super.clear();
         // Close out my bdb db.
         if (this.db != null) {
             try {
