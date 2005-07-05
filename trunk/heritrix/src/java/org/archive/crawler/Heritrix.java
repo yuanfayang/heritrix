@@ -1434,14 +1434,15 @@ public class Heritrix implements DynamicMBean {
     }
     
     /**
-     * Temporary method in place while developing BdbRecover.
-     * Looks to the heritrix.properties to see if isBdbRecover has been set.
+     * Temporary method in place while developing Checkpoint Recover.
+     * Looks to the heritrix.properties to see if isCheckpointRecover has been
+     * set.
      * TODO: Remove when working reliably.
-     * @return True if we're to turn on BdbRecover.
+     * @return True if we're to Checkpoint Recover.
      */
-    public static boolean isBdbRecover() {
+    public static boolean isCheckpointRecover() {
         return (Boolean.valueOf(Heritrix.getProperty(Heritrix.class.getName() +
-            ".isBdbRecover", "false"))).booleanValue();
+            ".isCheckpointRecover", "false"))).booleanValue();
     }
 
     public String interrupt(String threadName) {

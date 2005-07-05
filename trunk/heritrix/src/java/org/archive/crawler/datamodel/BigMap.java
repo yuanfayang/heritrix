@@ -44,4 +44,9 @@ public interface BigMap extends Map {
      */
     public void initialize(SettingsHandler settings, String dbName,
         Class keyClass, Class valueClass) throws Exception;
+    
+    /**
+     * Persist state.
+     */
+    public void sync();
 }
