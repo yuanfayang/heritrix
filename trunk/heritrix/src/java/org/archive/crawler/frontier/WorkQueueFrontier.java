@@ -213,7 +213,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
         t.setExpertSetting(true);
         t.setOverrideable(true);
 
-        addElementToDefinition(new SimpleType(ATTR_COST_POLICY,
+        t = addElementToDefinition(new SimpleType(ATTR_COST_POLICY,
                 "Policy for calculating the cost of each URI attempted. " +
                 "The default UnitCostAssignmentPolicy considers the cost of " +
                 "each URI to be '1'.", DEFAULT_COST_POLICY, AVAILABLE_COST_POLICIES));
@@ -473,12 +473,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
             // be re-retired; if not, they'll get a chance to become
             // active under the new rules.
             Object key = this.retiredQueues.poll(0);
-            if (key != null) {
-                WorkQueue q = (WorkQueue) retiredQueues.poll(0);
-                while(q != null) {
+            while (key != null) {
+                WorkQueue q = (WorkQueue)this.allQueues.get(key);
+                if(q != null) {
                     unretireQueue(q);
-                    q = (WorkQueue) retiredQueues.poll(0);
                 }
+                key = this.retiredQueues.poll(0);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
