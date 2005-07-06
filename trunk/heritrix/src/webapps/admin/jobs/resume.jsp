@@ -16,7 +16,10 @@
 <p>
     <b style="color:red">
 <%
-    handler.resumeJobFromCheckpoint(job,cp);
+    // This method has been removed.  Comment out for now till
+    // the method gets implemented to suit current checkpointing
+    // or an alternate is put in its place.
+    // handler.resumeJobFromCheckpoint(job,cp);
     out.println("Job "+job.getDisplayName()
                 +" scheduled for resumption at checkpoint "
                 +cp.getDisplayName());
