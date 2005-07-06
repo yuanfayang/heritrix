@@ -1066,9 +1066,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 // Create new controller
                 controller = new CrawlController();
             } else {
-                // restore old controller
-                controller = CrawlController.readFrom(resumeFrom);
-                // reuse restored settings handler
+                // Restore old controller
+                // TODO: REVISIT
+                // controller = CrawlController.readFrom(resumeFrom);
+                controller = new CrawlController();
+                // Reuse restored settings handler
                 currentJob.setSettingsHandler((XMLSettingsHandler)controller.
                     getSettingsHandler());
             }

@@ -73,7 +73,7 @@ public abstract class Scoper extends Processor {
     
     protected void initialTasks() {
         super.initialTasks();
-        if (!isOverrideLogger(null))    {
+        if (!isOverrideLogger(null)) {
             return;
         }
         // Set up logger for this instance.  May have special directives

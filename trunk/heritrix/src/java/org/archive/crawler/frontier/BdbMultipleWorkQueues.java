@@ -75,15 +75,16 @@ public class BdbMultipleWorkQueues {
      * 
      * @param env bdb environment to use
      * @param classCatalog Class catalog to use.
+     * @param recycle True if we are to reuse db content if any.
      * @throws DatabaseException
      */
     public BdbMultipleWorkQueues(Environment env,
-        StoredClassCatalog classCatalog)
+        StoredClassCatalog classCatalog, final boolean recycle)
     throws DatabaseException {
         // Open the database. Create it if it does not already exist. 
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
-        if (!Heritrix.isCheckpointRecover()) {
+        if (!recycle) {
             try {
                 env.truncateDatabase(null, "pending", false);
             } catch (DatabaseNotFoundException e) {

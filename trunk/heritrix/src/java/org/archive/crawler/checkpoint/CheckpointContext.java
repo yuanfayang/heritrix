@@ -42,16 +42,17 @@ import org.archive.util.ArchiveUtils;
  */
 public class CheckpointContext
 implements Serializable {
-    /** String to prefix any new checkpoint names */
-    
-    private final String checkpointPrefix;
+    /** String to prefix any new checkpoint names.
+     */
+    private String checkpointPrefix = "";
     
     /**
      * Next  overall series checkpoint number.
      */
     private int nextCheckpoint = 1;
 
-    /** All checkpoint names in chain prior to now. May not all still
+    /**
+     * All checkpoint names in chain prior to now. May not all still
      * exist on disk.
      */
     private List predecessorCheckpoints = new LinkedList();
@@ -59,7 +60,7 @@ implements Serializable {
     /**
      * Base directory to place checkpoints in.
      */
-    private File baseCheckpointDirectory = null;
+    private transient File baseCheckpointDirectory = null;
 
     /**
      * If a checkpoint has begun, its directory under
@@ -67,8 +68,10 @@ implements Serializable {
      */
     private transient File checkpointInProgressDir = null;
 
-    /** If the checkpoint in progress has encountered fatal errors. */
-    private boolean checkpointErrors = false;
+    /**
+     * If the checkpoint in progress has encountered fatal errors.
+     */
+    private transient boolean checkpointErrors = false;
 
     /**
      * @return Returns the nextCheckpoint.
@@ -172,13 +175,18 @@ implements Serializable {
     }
 
     /**
+     * Call this after instance has been revivifyied post-serialization to
+     * reset where checkpoints get stored in future and to advance the
+     * checkpoint counter.
      * Advance the context to reflect a resume-from-checkpoint.
+     * Call when recovering a checkpoint.
      */
-    public void noteResumed() {
-        // extend name
-        // checkpointPrefix = nextHistoryName();
-        // update counters
-        nextCheckpoint += 1;
+    public void checkpointRecoverFixup(File dir) {
+        this.nextCheckpoint += 1;
+        this.baseCheckpointDirectory = dir;
+        this.checkpointErrors = false;
+        // Add a 'rcvr-' prefix to any recovered checkpoints.
+        this.checkpointPrefix = "rcvr-" + this.checkpointPrefix;
     }
     
     /**

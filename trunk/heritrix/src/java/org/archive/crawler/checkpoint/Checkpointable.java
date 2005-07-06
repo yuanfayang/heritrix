@@ -35,8 +35,6 @@ import org.archive.crawler.framework.CrawlController;
  * @author stack
  */
 public interface Checkpointable {
-    public void recover(Checkpoint cp);
-    
     /**
      * Called by {@link CrawlController} when checkpointing.
      * @param cp Current checkpoint instance.

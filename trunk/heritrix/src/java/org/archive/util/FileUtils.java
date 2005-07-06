@@ -37,6 +37,7 @@ import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 
@@ -44,8 +45,9 @@ import java.util.regex.Pattern;
  *
  * @author John Erik Halse
  */
-public class FileUtils
-{
+public class FileUtils {
+    private static final Logger LOGGER =
+        Logger.getLogger(FileUtils.class.getName());
     /**
      * Constructor made private because all methods of this class are static.
      */
@@ -152,7 +154,7 @@ public class FileUtils
                 extent = fcin.size();
             }
 
-            // do the file copy
+            // Do the file copy
             long trans = fcin.transferTo(0, extent, fcout);
             if (trans < extent) {
                 result = false;
@@ -160,12 +162,20 @@ public class FileUtils
             result = true; 
         } catch (IOException e) {
             // Add more info to the exception. Preserve old stacktrace.
-            IOException newE =
-                new IOException("Copying " + src.getAbsolutePath() +
-                " to " + dest.getAbsolutePath() + " with extent " +
-                extent + " got IOE: " + e.getMessage());
-            newE.setStackTrace(e.getStackTrace());
-            throw newE;
+            // We get 'Invalid argument' on some file copies. See
+            // http://intellij.net/forums/thread.jsp?forum=13&thread=63027&message=853123
+            // for related issue.
+            String message = "Copying " + src.getAbsolutePath() + " to " +
+                dest.getAbsolutePath() + " with extent " + extent +
+                " got IOE: " + e.getMessage();
+            if (e.getMessage().equals("Invalid argument")) {
+                LOGGER.severe("Failed copy, trying workaround: " + message);
+                workaroundCopyFile(src, dest);
+            } else {
+                IOException newE = new IOException(message);
+                newE.setStackTrace(e.getStackTrace());
+                throw newE;
+            }
         } finally {
             // finish up
             if (fcin != null) {
@@ -182,6 +192,37 @@ public class FileUtils
             }
         }
         return result;
+    }
+    
+    protected static void workaroundCopyFile(final File src,
+            final File dest)
+    throws IOException {
+        FileInputStream from = null;
+        FileOutputStream to = null;
+        try {
+            from = new FileInputStream(src);
+            to = new FileOutputStream(dest);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = from.read(buffer)) != -1) {
+                to.write(buffer, 0, bytesRead);
+            }
+        } finally {
+            if (from != null) {
+                try {
+                    from.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (to != null) {
+                try {
+                    to.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
 	/** Deletes all files and subdirectories under dir.

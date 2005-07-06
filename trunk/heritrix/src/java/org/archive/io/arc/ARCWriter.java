@@ -397,6 +397,21 @@ public class ARCWriter implements ARCConstants {
     public static synchronized void resetSerialNo() {
         ARCWriter.serialNo = 0;
     }
+    
+    /**
+     * @return Serial number.
+     */
+    public static int getSerialNo() {
+        return ARCWriter.serialNo;
+    }
+    
+    /**
+     * Call when recovering from checkpointing.
+     * @param no Number to set serial number too.
+     */
+    public static void setSerialNo(int no) {
+        ARCWriter.serialNo = no;
+    }
 
 	/**
      * Write out the ARCMetaData.

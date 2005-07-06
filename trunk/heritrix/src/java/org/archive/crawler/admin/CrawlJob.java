@@ -1187,17 +1187,12 @@ public class CrawlJob implements DynamicMBean {
                     "crawling (Shouldn't ever be the case)"),
                     "Not current crawling job?");
             }
-
-            throw new RuntimeOperationsException(
-                    new RuntimeException("Unimplemented"));
-            /*
             try {
                 Heritrix.getJobHandler().checkpointJob();
             } catch (IllegalStateException e) {
                 throw new RuntimeOperationsException(e);
             }
             return null;
-            */
         }
         
         if (operationName.equals(PROGRESS_STATISTICS_OPER)) {
