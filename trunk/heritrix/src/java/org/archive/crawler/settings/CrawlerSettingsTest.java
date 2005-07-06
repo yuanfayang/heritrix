@@ -24,6 +24,20 @@
  */
 package org.archive.crawler.settings;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 
 /** Test the CrawlerSettings object
  *
@@ -56,5 +70,37 @@ public class CrawlerSettingsTest extends SettingsFrameworkTestCase {
         getGlobalSettings().addComplexType(mod);
         assertSame(mod, getGlobalSettings().getModule("name"));
     }
-
+    
+    public void testSerializingSimpleModuleType()
+    throws IOException, ClassNotFoundException {
+        ModuleType mt =
+            new ModuleType("testSerializingSimpleModuleType");
+        ModuleType mtDeserialized = (ModuleType)serializeDeserialize(mt);
+        assertEquals(mt.getName(), mtDeserialized.getName());
+    }
+    
+    public void testSerializingStringAttributeModuleType()
+    throws IOException, ClassNotFoundException, AttributeNotFoundException,
+    MBeanException, ReflectionException {
+        ModuleType mt =
+            new ModuleType("testSerializingStringAttributeModuleType");
+        final String value = "value";
+        mt.addElementToDefinition(new SimpleType("name", "description",
+            value));
+        ModuleType mtDeserialized = (ModuleType)serializeDeserialize(mt);
+        assertEquals(mt.getName(), mtDeserialized.getName());
+        assertEquals(value, (String)mtDeserialized.getAttribute("name"));
+    }
+    
+    protected Object serializeDeserialize(Object obj)
+    throws IOException, ClassNotFoundException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(obj);
+        oos.close();
+        byte [] objectBytes = baos.toByteArray();
+        ObjectInputStream ois =
+            new ObjectInputStream(new ByteArrayInputStream(objectBytes));
+        return ois.readObject();
+    }
 }

@@ -24,6 +24,7 @@
  */
 package org.archive.crawler.settings;
 
+import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -51,7 +52,7 @@ import java.util.logging.Level;
  *
  * @author John Erik Halse
  */
-public abstract class Constraint implements Comparable {
+public abstract class Constraint implements Comparable, Serializable {
     private final Level severity;
     private final String msg;
 
