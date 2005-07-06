@@ -38,12 +38,17 @@ import javax.management.AttributeNotFoundException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.crawler.util.BloomUriUniqFilter;
+import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.checkpoint.Checkpointable;
 import org.archive.util.ArchiveUtils;
+import org.archive.crawler.datamodel.BigMap;
 
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
@@ -59,7 +64,8 @@ import com.sleepycat.je.OperationStatus;
  *
  * @author Gordon Mohr
  */
-public class BdbFrontier extends WorkQueueFrontier {
+public class BdbFrontier
+extends WorkQueueFrontier implements Checkpointable {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
         .classnameBasedUID(BdbFrontier.class, 1);
@@ -118,6 +124,12 @@ public class BdbFrontier extends WorkQueueFrontier {
         super(name, description);
     }
 
+    public void initialize(CrawlController c)
+    throws FatalConfigurationException, IOException {
+        super.initialize(c);
+        c.registerCheckpointable(this);
+    }
+    
     /**
      * Create the single object (within which is one BDB database)
      * inside which all the other queues live. 
@@ -128,7 +140,8 @@ public class BdbFrontier extends WorkQueueFrontier {
     private BdbMultipleWorkQueues createMultipleWorkQueues()
     throws DatabaseException {
         return new BdbMultipleWorkQueues(this.controller.getBdbEnvironment(),
-            this.controller.getClassCatalog());
+            this.controller.getClassCatalog(),
+            this.controller.isCheckpointRecover());
     }
 
     /**
@@ -149,7 +162,8 @@ public class BdbFrontier extends WorkQueueFrontier {
         if (c != null && c.equals(BloomUriUniqFilter.class.getName())) {
             uuf = new BloomUriUniqFilter();
         } else {
-            uuf = new BdbUriUniqFilter(this.controller.getBdbEnvironment());
+            uuf = new BdbUriUniqFilter(this.controller.getBdbEnvironment(),
+                this.controller.isCheckpointRecover());
         }
         uuf.setDestination(this);
         return uuf;
@@ -223,21 +237,37 @@ public class BdbFrontier extends WorkQueueFrontier {
     protected void initQueue() throws IOException {
         try {
             pendingUris = createMultipleWorkQueues();
-            if (Heritrix.isCheckpointRecover()) {
-                resurrectQueueState();
-            }
         } catch(DatabaseException e) {
             throw (IOException)new IOException(e.getMessage()).initCause(e);
         }
+        // If checkpoint recover.
+        if (this.controller.isCheckpointRecover()) {
+            try {
+                resurrectQueueState();
+            } catch (DatabaseException e) {
+                IOException ioe = new IOException("Converted bdb exception: " +
+                    e.getMessage());
+                ioe.setStackTrace(e.getStackTrace());
+            }
+        }
     }
     
-    protected void resurrectQueueState() throws DatabaseException {
+    protected String getCheckpointDbName(String dbBasename,
+            String checkpointName) {
+        return dbBasename;
+    }
+    
+    protected void resurrectQueueState()
+    throws DatabaseException {
+        // TODO: Resurrect allqueues. Is it done above when we reopen bigmap?
+        
         incrementQueuedUriCount(this.pendingUris.getCount());
         logger.info("Queued URIs on startup: " + queuedUriCount());
         // Are there other dbs around with which to populate the
         // readyQueues, inactiveQueues and retiredQueues?
+        List queueDbBaseNames = Arrays.asList(SAVED_QUEUES_DBNAMES);
         List dbNames = this.controller.getBdbEnvironment().getDatabaseNames();
-        if (!dbNames.containsAll(Arrays.asList(SAVED_QUEUES_DBNAMES))) {
+        if (!dbNames.containsAll(queueDbBaseNames)) {
             logger.severe("All expected dbs not present -- skipping "
                     + "resurrection of " + SAVED_QUEUES_DBNAMES);
         } else {
@@ -368,31 +398,23 @@ public class BdbFrontier extends WorkQueueFrontier {
             this.pendingUris.close();
             this.pendingUris = null;
         }
-        if (Heritrix.isCheckpointRecover()) {
-            persistQueueState();
-        }
     }
     
-    protected void persistQueueState() {
-        // Queue cleanup and persisting of any state.
-        // Clear will persist allQueues if a bdb bigmap.
-        this.allQueues.clear();
+    protected void persistQueueState() throws Exception {
+        // TODO: AllQueues will be peristed as part of bigmap factory
+        // checkpointing if allQueues is a bigmap instance.
 
         // Write out readyQueues. Append inProcessQueues and snoozedQueues.
         // Let restart refigure whats snoozed and in process.
-        try {
-            saveStringKeysToBdb(READY_QUEUES_DBNAME,
-                new Iterator[] {this.readyClassQueues.iterator(),
-                    this.inProcessQueues.iterator() });
-            saveStringKeysToBdb(SNOOZED_QUEUES_DBNAME,
-                this.snoozedClassQueues.iterator());
-            saveStringKeysToBdb(INACTIVE_QUEUES_DBNAME,
-                this.inactiveQueues.iterator());
-            saveStringKeysToBdb(RETIRED_QUEUES_DBNAME,
-                this.retiredQueues.iterator());
-        } catch (DatabaseException e) {
-            e.printStackTrace();
-        }
+        saveStringKeysToBdb(READY_QUEUES_DBNAME, new Iterator[] {
+                this.readyClassQueues.iterator(),
+                this.inProcessQueues.iterator() });
+        saveStringKeysToBdb(SNOOZED_QUEUES_DBNAME, this.snoozedClassQueues
+                .iterator());
+        saveStringKeysToBdb(INACTIVE_QUEUES_DBNAME, this.inactiveQueues
+                .iterator());
+        saveStringKeysToBdb(RETIRED_QUEUES_DBNAME, this.retiredQueues
+                .iterator());
     }
         
     protected BdbMultipleWorkQueues getWorkQueues() {
@@ -401,5 +423,9 @@ public class BdbFrontier extends WorkQueueFrontier {
 
     protected boolean workQueueDataOnDisk() {
         return true;
+    }
+
+    public void checkpoint(Checkpoint cp) throws Exception {
+        persistQueueState();
     }
 }

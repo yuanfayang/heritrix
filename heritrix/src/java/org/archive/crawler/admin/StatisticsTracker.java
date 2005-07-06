@@ -183,7 +183,6 @@ implements CrawlURIDispositionListener {
             this.hostsLastFinished = 
                 BigMapFactory.getBigMap(c.getSettingsHandler(), 
                     "hostsLastFinished", String.class, Long.class);
-            
             this.processedSeedsRecords = makeSeedsMap();
             
         } catch (Exception e) {

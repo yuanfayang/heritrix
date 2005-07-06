@@ -371,7 +371,7 @@ public class CachedBdbMap extends AbstractMap implements Map {
         }
         try {
             long cacheHitPercent = (cacheHit * 100) / (cacheHit + diskHit);
-            logger.fine("DB name: " + db.getDatabaseName()
+            logger.fine("DB name: " + this.db.getDatabaseName()
                 + ", Cache Hit: " + cacheHitPercent
                 + "%, Not in map: " + (countOfGets - (cacheHit + diskHit))
                 + ", Total number of gets: " + countOfGets);
@@ -454,13 +454,15 @@ public class CachedBdbMap extends AbstractMap implements Map {
         // both places at once.
         this.memMap.clear();
         if (logger.isLoggable(Level.INFO)) {
-            String dbName = "Lookup-Failed";
+            String name = "DbName-Lookup-Failed";
             try {
-                dbName = this.db.getDatabaseName();
+                if (this.db != null) {
+                    name = this.db.getDatabaseName();
+                }
             } catch (DatabaseException e) {
-                // Do without a db name.
+                // Ignore.
             }
-            logger.info(dbName + " sync took " +
+            logger.info(name + " sync took " +
                 (System.currentTimeMillis() - startTime) + "ms.");
         }
     }

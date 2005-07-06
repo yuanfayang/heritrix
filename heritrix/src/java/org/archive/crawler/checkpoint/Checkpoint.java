@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 
 import org.archive.io.ObjectPlusFilesInputStream;
@@ -51,7 +52,10 @@ public class Checkpoint {
     
     private String timestamp;
     private File directory;
+
     private static final String AUX_SUFFIX = ".auxillary";
+    
+    private int arcWriterSerialNo = 0;
     
     /**
      * Publically inaccessible default constructor.
@@ -167,5 +171,36 @@ public class Checkpoint {
      */
     public File getDirectory() {
         return this.directory;
+    }
+
+    public File getBdbSubDirectory() {
+        return new File(getDirectory(), "bdbje-logs");
+    }
+    
+    public FilenameFilter getJeLogsFilter() {
+        return new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name != null && name.toLowerCase().endsWith(".jdb");
+            }
+        };
+    }
+
+    /**
+     * @return Returns ARCWriter serial number stored into this checkpoint.
+     */
+    public int getArcWriterSerialNo() {
+        return this.arcWriterSerialNo;
+    }
+
+    /**
+     * Save in here the ARCWriter serial number for restoration on checkpoint
+     * recover.
+     * Save serialno here because ARCWriter is behind ARCPool which is held by
+     * ARCWriterProcessor -- serializing ARCWriter, a non-processor, would
+     * be awkward.
+     * @param arcWriterSerialNo
+     */
+    public void setArcWriterSerialNo(int arcWriterSerialNo) {
+        this.arcWriterSerialNo = arcWriterSerialNo;
     }
 }

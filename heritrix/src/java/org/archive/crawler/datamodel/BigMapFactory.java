@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.Checkpoint;
-import org.archive.crawler.checkpoint.Checkpointable;
 import org.archive.crawler.settings.SettingsHandler;
 
 /**
@@ -98,9 +97,5 @@ public class BigMapFactory {
                 LOGGER.info("Checkpointing unsupported for type " + obj);
             }
         }
-    }
-
-    public static void recover(Checkpoint cp) {
-        // Assume nothing to be done on a recover.
     }
 }

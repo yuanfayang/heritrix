@@ -43,6 +43,7 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.DatabaseNotFoundException;
 import com.sleepycat.je.DatabaseStats;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
@@ -95,13 +96,14 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     /**
      * Constructor.
      * @param environment A bdb environment ready-configured.
+     * @param recycle True if we are to reuse db content if any.
      * @throws IOException
      */
-    public BdbUriUniqFilter(Environment environment)
+    public BdbUriUniqFilter(Environment environment, boolean recycle)
     throws IOException {
         super();
         try {
-            initialize(environment);
+            initialize(environment, recycle);
         } catch (DatabaseException e) {
             throw new IOException(e.getMessage());
         }
@@ -112,11 +114,12 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      * @param bdbEnv The directory that holds the bdb environment. Will
      * make a database under here if doesn't already exit.  Otherwise
      * reopens any existing dbs.
+     * @param recycle True if we are to reuse db content if any.
      * @throws IOException
      */
-    public BdbUriUniqFilter(File bdbEnv)
+    public BdbUriUniqFilter(File bdbEnv, boolean recycle)
     throws IOException {
-        this(bdbEnv, -1);
+        this(bdbEnv, -1, recycle);
     }
     
     /**
@@ -128,7 +131,23 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      * its cache.  Pass -1 to get default cache size.
      * @throws IOException
      */
-    public BdbUriUniqFilter(File bdbEnv, int cacheSizePercentage)
+    public BdbUriUniqFilter(File bdbEnv, final int cacheSizePercentage)
+    throws IOException {
+        this(bdbEnv, cacheSizePercentage, false);
+    }
+    
+    /**
+     * Constructor.
+     * @param bdbEnv The directory that holds the bdb environment. Will
+     * make a database under here if doesn't already exit.  Otherwise
+     * reopens any existing dbs.
+     * @param cacheSizePercentage Percentage of JVM bdb allocates as
+     * its cache.  Pass -1 to get default cache size.
+     * @param recycle True if we are to reuse db content if any.
+     * @throws IOException
+     */
+    public BdbUriUniqFilter(File bdbEnv, final int cacheSizePercentage,
+            final boolean recycle)
     throws IOException {
         super();
         if (!bdbEnv.exists()) {
@@ -141,7 +160,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         }
         try {
             createdEnvironment = true;
-            initialize(new Environment(bdbEnv, envConfig));
+            initialize(new Environment(bdbEnv, envConfig), recycle);
         } catch (DatabaseException e) {
             throw new IOException(e.getMessage());
         }
@@ -150,14 +169,22 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     /**
      * Method shared by constructors.
      * @param env Environment to use.
+     * @param recycle Reuse db content if any.
      * @throws DatabaseException
      */
-    protected void initialize(Environment env)
+    protected void initialize(Environment env, boolean recycle)
     throws DatabaseException {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
+        if (!recycle) {
+            try {
+                env.truncateDatabase(null, DB_NAME, false);
+            } catch (DatabaseNotFoundException e) {
+                // Ignored
+            } 
+        }
         this.alreadySeen = env.openDatabase(null, DB_NAME, dbConfig);
-        if (Heritrix.isCheckpointRecover()) {
+        if (recycle) {
             this.count = JeUtils.getCount(this.alreadySeen);
             if (logger.isLoggable(Level.INFO)) {
                 if (logger.isLoggable(Level.INFO)) {

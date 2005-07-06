@@ -158,7 +158,7 @@ ARCWriterSettings, FetchStatusCodes {
     /**
      * Calculate metadata once only.
      */
-    private List cachedMetadata = null;
+    transient private List cachedMetadata = null;
 
     /**
      * Reference to an ARCWriter.
