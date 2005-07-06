@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.settings;
 
+import java.io.Serializable;
 import java.util.logging.Level;
 
 import org.archive.util.TextUtils;
@@ -33,8 +34,9 @@ import org.archive.util.TextUtils;
  *
  * @author John Erik Halse
  */
-public class RegularExpressionConstraint extends Constraint {
-
+public class RegularExpressionConstraint
+extends Constraint implements Serializable {
+    private static final long serialVersionUID = -5916211981136071809L;
     private final String pattern;
 
     /**

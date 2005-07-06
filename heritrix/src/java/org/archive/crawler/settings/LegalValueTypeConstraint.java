@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.settings;
 
+import java.io.Serializable;
 import java.util.logging.Level;
 
 /**
@@ -30,7 +31,9 @@ import java.util.logging.Level;
  *
  * @author John Erik Halse
  */
-public class LegalValueTypeConstraint extends Constraint {
+public class LegalValueTypeConstraint
+extends Constraint implements Serializable {
+    private static final long serialVersionUID = 6106774072922858976L;
 
     /**
      * Constructs a new LegalValueListConstraint.
@@ -70,15 +73,8 @@ public class LegalValueTypeConstraint extends Constraint {
         this(Level.SEVERE);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.archive.crawler.settings.Constraint#innerCheck(org.archive.crawler.settings.Type,
-     *      java.lang.Object)
-     */
     public FailedCheck innerCheck(CrawlerSettings settings, ComplexType owner,
-            Type definition,
-            Object value) {
+            Type definition, Object value) {
         FailedCheck res = null;
 
         // Check that the value is of right type
@@ -90,5 +86,4 @@ public class LegalValueTypeConstraint extends Constraint {
         }
         return res;
     }
-
 }
