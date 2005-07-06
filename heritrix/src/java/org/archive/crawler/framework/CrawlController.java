@@ -24,14 +24,11 @@
 package org.archive.crawler.framework;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -265,6 +262,7 @@ public class CrawlController implements Serializable, Reporter {
      */
     transient private List registeredCrawlStatusListeners =
         Collections.synchronizedList(new ArrayList());
+    
     // Since there is a high probability that there will only ever by one
     // CrawlURIDispositionListner we will use this while there is only one:
     transient CrawlURIDispositionListener registeredCrawlURIDispositionListener;
@@ -297,7 +295,6 @@ public class CrawlController implements Serializable, Reporter {
     
     private transient ObjectInstance jeRegisteredMBeanInstance = null;
 
-    private static final String SERIALIZED_CLASS_SUFFIX = ".serialized";
     
     /**
      * Gets set to checkpoint instance if we're in recover checkpoint mode.
@@ -391,9 +388,10 @@ public class CrawlController implements Serializable, Reporter {
      * Copies bdb log files into state dir, sets the ARCWriter serial number,
      * etc.
      * @throws IOException
+     * @throws ClassNotFoundException 
      */
     protected void setupCheckpointRecover()
-    throws IOException {
+    throws IOException, ClassNotFoundException {
         long started = -1;
         if (LOGGER.isLoggable(Level.INFO)) {
             started = System.currentTimeMillis();
@@ -406,6 +404,16 @@ public class CrawlController implements Serializable, Reporter {
             this.checkpointRecover.getJeLogsFilter(), getStateDisk(), true);
         // Set the serial number into ARCWriter.
         ARCWriter.setSerialNo(this.checkpointRecover.getArcWriterSerialNo());
+        // Revive the statistics tracker object. TODO: Make it so we just
+        // scan the checkpoint directory for all serialized classes and
+        // revivify whatever we find asking each what it is and assigning
+        // it to its place in CrawlController accordingly.  For now,
+        // just doing core classes.
+        // 
+        // TODO: StatisticsTracker doesn't yet serialize.  Fix.
+        // this.statistics = (StatisticsTracker)this.checkpointRecover.
+        //     readObjectFromFile(this.checkpointRecover.
+        //        getClassCheckpointFilename(StatisticsTracker.class));
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.info("Finished checkpoint recover named "
                     + this.checkpointRecover.getDisplayName() + " in "
@@ -421,15 +429,12 @@ public class CrawlController implements Serializable, Reporter {
      */
     protected CheckpointContext restoreCheckpointContext()
     throws IOException, ClassNotFoundException {
-        String filename = getClassCheckpointFilename(CheckpointContext.class);
+        String filename = Checkpoint.
+            getClassCheckpointFilename(CheckpointContext.class);
         CheckpointContext cpc = (CheckpointContext)this.checkpointRecover
             .readObjectFromFile(filename);
-        cpc.checkpointRecoverFixup(this.checkpointsDisk);
+        cpc.postRecoverFixup(this.checkpointsDisk);
         return cpc;
-    }
-
-    protected String getClassCheckpointFilename(Class c) {
-        return c.getName() + SERIALIZED_CLASS_SUFFIX;
     }
     
     private void setupBdb()
@@ -755,7 +760,7 @@ public class CrawlController implements Serializable, Reporter {
     throws InvalidAttributeValueException, FatalConfigurationException {
         MapType loggers = order.getLoggers();
         if (loggers.isEmpty(null)) {
-            // set up a default tracker
+            // Set up a default tracker
             if (statistics == null) {
                 statistics = new StatisticsTracker("crawl-statistics");
             }
@@ -1128,13 +1133,13 @@ public class CrawlController implements Serializable, Reporter {
         // TODO: checkpoint.writeObjectPlusToFile(this, DISTINGUISHED_FILENAME);
         
         // Serialize the checkpoint context.
-        checkpoint.writeObjectPlusToFile(this.cpContext,
-            getClassCheckpointFilename(this.cpContext.getClass()));
+        checkpoint.writeObjectToFile(this.cpContext,
+            Checkpoint.getClassCheckpointFilename(this.cpContext.getClass()));
         
         // Serialize the checkpoint instance itself.
         checkpoint.setArcWriterSerialNo(ARCWriter.getSerialNo());
-        checkpoint.writeObjectPlusToFile(checkpoint,
-            getClassCheckpointFilename(checkpoint.getClass()));
+        checkpoint.writeObjectToFile(checkpoint,
+            Checkpoint.getClassCheckpointFilename(checkpoint.getClass()));
 
         LOGGER.info("Finished: " +
             (context.isCheckpointFailed()? "Failed": "Succeeded") + ", Took " +
@@ -1223,12 +1228,12 @@ public class CrawlController implements Serializable, Reporter {
         // Assume if path is to a directory, its a checkpoint recover.
         Checkpoint result = null;
         if (rp.exists() && rp.isDirectory()) {
-            Checkpoint cp = new Checkpoint(rp);
+            String name = Checkpoint.getClassCheckpointFilename(Checkpoint.class);
+            Checkpoint cp = (Checkpoint)Checkpoint.
+                readObjectFromFile(new File(rp, name));
             if (cp.isValid()) {
-                // Pick up the Checkpoint that was serialized to disk. It'll
-                // has info written at checkpointing time.
-                String name = getClassCheckpointFilename(cp.getClass());
-                result = (Checkpoint)cp.readObjectFromFile(name);
+                // if valid, set as result.
+                result = cp;
             }
         }
         return result;

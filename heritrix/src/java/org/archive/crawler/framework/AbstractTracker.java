@@ -18,6 +18,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.logging.Level;
 
@@ -51,14 +52,15 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.admin.StatisticsTracker
  */
 public abstract class AbstractTracker extends ModuleType
-implements StatisticsTracking, CrawlStatusListener {
+implements StatisticsTracking, CrawlStatusListener, Serializable {
+    
     /** default period between logging stat values */
     public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL = new Integer(20);
     /** attrbiute name for interval setting */
     public static final String ATTR_STATS_INTERVAL = "interval-seconds";
 
     /** A reference to the CrawlContoller of the crawl that we are to track statistics for.*/
-    protected CrawlController controller;
+    protected transient CrawlController controller;
 
     // Keep track of time.
     protected long crawlerStartTime;

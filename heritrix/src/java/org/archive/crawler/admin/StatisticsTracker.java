@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -51,6 +52,8 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
 import org.archive.util.PaddingStringBuffer;
+import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.checkpoint.Checkpointable;
 
 /**
  * This is an implementation of the AbstractTracker. It is designed to function
@@ -103,18 +106,17 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.AbstractTracker
  */
 public class StatisticsTracker extends AbstractTracker
-implements CrawlURIDispositionListener {
+implements CrawlURIDispositionListener, Checkpointable, Serializable {
+    private static final long serialVersionUID = 8004878315916392305L;
+
     /**
      * Messages from the StatisticsTracker.
      */
     private final static Logger logger =
         Logger.getLogger(StatisticsTracker.class.getName());
     
-    // TODO: Class needs to be serializable.
     // TODO: Need to be able to specify file where the object will be
     // written once the CrawlEnded event occurs
-    // TODO: Need to be able to save object on Checkpointing as well
-    // as CrawlEnded.
 
     protected long lastPagesFetchedCount = 0;
     protected long lastProcessedBytesCount = 0;
@@ -150,10 +152,14 @@ implements CrawlURIDispositionListener {
      * 
      * Each of these Maps are individually unsynchronized, and cannot 
      * be trivially synchronized with the Collections wrapper. Thus
-     * their synchronized access is enforced by this class. */
-    protected Map hostsDistribution = null;
-    protected Map hostsBytes = null;
-    protected Map hostsLastFinished = null;
+     * their synchronized access is enforced by this class.
+     * 
+     * <p>They're transient because usually bigmaps that get reconstituted
+     * on recover from checkpoint.
+     */
+    protected transient Map hostsDistribution = null;
+    protected transient Map hostsBytes = null;
+    protected transient Map hostsLastFinished = null;
 
     /** Record of seeds' latest actions */
     protected Map processedSeedsRecords;
@@ -190,6 +196,9 @@ implements CrawlURIDispositionListener {
                 " StatisticsTracker: " + e);
         }
         controller.addCrawlURIDispositionListener(this);
+        // TODO: Not yet implemented.  Need to fix serialization of
+        // this class first.
+        // this.controller.registerCheckpointable(this);
     }
     
     private Map makeSeedsMap() {
@@ -733,13 +742,8 @@ implements CrawlURIDispositionListener {
         logger.info("Leaving crawlEnded");
     }
     
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
-     */
     public void crawlStarted(String message) {
-        // TODO Auto-generated method stub
-        
+        ;
     }
     
     /**
@@ -905,8 +909,6 @@ implements CrawlURIDispositionListener {
         } /// TODO else default/error
     }
 
-
-
     /**
      * Write the Frontier's 'nonempty' report (if available)
      * @param writer to report to
@@ -937,6 +939,11 @@ implements CrawlURIDispositionListener {
         writeReportFile("frontier","frontier-report.txt");
         // TODO: Save object to disk?
     }
+
+    public void checkpoint(Checkpoint cp) throws Exception {
+        // TODO: Not called because we don't register ourselves
+        // yet.  See #initialize above.
+        cp.writeObjectToFile(this,
+            cp.getClassCheckpointFilename(this.getClass()));
+    }
 }
-
-

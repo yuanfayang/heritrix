@@ -30,16 +30,19 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
-import org.archive.io.ObjectPlusFilesInputStream;
-import org.archive.io.ObjectPlusFilesOutputStream;
 import org.archive.util.FileUtils;
 
 /**
  * Record of a specific checkpoint on disk.
  * @author gojomo
  */
-public class Checkpoint {
+public class Checkpoint implements Serializable {
+    private static final long serialVersionUID = 8196988571190409200L;
+
     /**
      * Flag label for invalid Checkpoints
      */
@@ -50,10 +53,10 @@ public class Checkpoint {
      */
     static final String VALIDITY_STAMP_FILENAME = "valid";
     
-    private String timestamp;
+    private static final String SERIALIZED_CLASS_SUFFIX = ".serialized";
+    
+    private transient String timestamp;
     private File directory;
-
-    private static final String AUX_SUFFIX = ".auxillary";
     
     private int arcWriterSerialNo = 0;
     
@@ -72,15 +75,27 @@ public class Checkpoint {
      */
     public Checkpoint(File directory) {
         this.directory = directory;
-        File validityStamp = new File(directory, VALIDITY_STAMP_FILENAME);
+        readValid();
+    }
+    
+    private void readObject(ObjectInputStream s)
+    throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        readValid();
+    }
+    
+    protected void readValid() {
+        File validityStamp = new File(this.directory,
+            VALIDITY_STAMP_FILENAME);
         if (validityStamp.exists() == false) {
-            timestamp = INVALID;
+            this.timestamp = INVALID;
         } else {
             try {
-                timestamp = FileUtils.readFileAsString(validityStamp).trim();
+                this.timestamp = FileUtils.readFileAsString(validityStamp).
+                    trim();
             } catch (IOException e) {
                 e.printStackTrace();
-                timestamp = INVALID;
+                this.timestamp = INVALID;
             }
         }
     }
@@ -126,13 +141,11 @@ public class Checkpoint {
      * @param filename Name to serialize to.
      * @throws IOException
      */
-    public void writeObjectPlusToFile(Object o, String filename)
+    public void writeObjectToFile(Object o, String filename)
     throws FileNotFoundException, IOException {
         this.directory.mkdirs();
-        ObjectPlusFilesOutputStream out =
-            new ObjectPlusFilesOutputStream(
-                new FileOutputStream(new File(this.directory, filename)), 
-                    new File(this.directory, filename + AUX_SUFFIX));
+        ObjectOutputStream out = new ObjectOutputStream(
+            new FileOutputStream(new File(this.directory, filename)));
         try {
             out.writeObject(o);
         } finally {
@@ -152,11 +165,14 @@ public class Checkpoint {
      */
     public Object readObjectFromFile(String filename)
     throws IOException, ClassNotFoundException {
-        ObjectPlusFilesInputStream in =
-            new ObjectPlusFilesInputStream(
-                    new FileInputStream(
-                            new File(this.directory,filename)),
-                    new File(this.directory, filename + AUX_SUFFIX));
+        return readObjectFromFile(new File(this.directory, filename));
+        
+    }
+    
+    public static Object readObjectFromFile(File absolutePath)
+    throws FileNotFoundException, IOException, ClassNotFoundException {
+        ObjectInputStream in =
+            new ObjectInputStream(new FileInputStream(absolutePath));
         Object o = null;
         try {
             o = in.readObject();
@@ -183,6 +199,10 @@ public class Checkpoint {
                 return name != null && name.toLowerCase().endsWith(".jdb");
             }
         };
+    }
+    
+    public static String getClassCheckpointFilename(Class c) {
+        return c.getName() + SERIALIZED_CLASS_SUFFIX;
     }
 
     /**

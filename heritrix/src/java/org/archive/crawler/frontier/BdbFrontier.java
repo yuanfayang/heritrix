@@ -259,10 +259,18 @@ extends WorkQueueFrontier implements Checkpointable {
     
     protected void resurrectQueueState()
     throws DatabaseException {
-        // TODO: Resurrect allqueues. Is it done above when we reopen bigmap?
-        
         incrementQueuedUriCount(this.pendingUris.getCount());
-        logger.info("Queued URIs on startup: " + queuedUriCount());
+        
+        // TODO: Resurrect allqueues. Is it done above when we reopen bigmap?
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer("Pending URIs count: " + queuedUriCount());
+            for (Iterator i = this.allQueues.keySet().iterator();
+                    i.hasNext();) {
+                logger.finer("allqueues " +
+                    ((WorkQueue)this.allQueues.get(i.next())).getClassKey());
+            }
+        }
+        
         // Are there other dbs around with which to populate the
         // readyQueues, inactiveQueues and retiredQueues?
         List queueDbBaseNames = Arrays.asList(SAVED_QUEUES_DBNAMES);
@@ -401,9 +409,15 @@ extends WorkQueueFrontier implements Checkpointable {
     }
     
     protected void persistQueueState() throws Exception {
-        // TODO: AllQueues will be peristed as part of bigmap factory
-        // checkpointing if allQueues is a bigmap instance.
-
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer("Pending URIs count: " + this.pendingUris.getCount());
+            for (Iterator i = this.allQueues.keySet().iterator();
+                    i.hasNext();) {
+                logger.finer("allqueues " +
+                    ((WorkQueue)this.allQueues.get(i.next())).getClassKey());
+            }
+        }
+        
         // Write out readyQueues. Append inProcessQueues and snoozedQueues.
         // Let restart refigure whats snoozed and in process.
         saveStringKeysToBdb(READY_QUEUES_DBNAME, new Iterator[] {

@@ -953,26 +953,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Resume the given job from the given checkpoint. Currently
-     * happens in-place of the existing job, and thus may clobber
-     * any job output that was subsequent to the given checkpoint,
-     * and corrupt subsequent checkpoints.
-     *
-     * @param job
-     * @param cp
-     */
-    public void resumeJobFromCheckpoint(CrawlJob job, Checkpoint cp) {
-        //  remove Job from completed
-        completedCrawlJobs.remove(job);
-
-        //  touchup internal values  to indicate resume
-        job.configureForResume(cp);
-
-        //  add to pending & start if necessary
-        addJob(job);
-    }
-
-    /**
      * Discard the handler's 'new job'. This will remove any files/directories
      * written to disk.
      */
@@ -1059,25 +1039,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
         assert pendingCrawlJobs.contains(currentJob) :
             "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
-        Checkpoint resumeFrom = currentJob.getResumeFromCheckpoint();
 
         try {
-            if (resumeFrom == null) {
-                // Create new controller
-                controller = new CrawlController();
-            } else {
-                // Restore old controller
-                // TODO: REVISIT
-                // controller = CrawlController.readFrom(resumeFrom);
-                controller = new CrawlController();
-                // Reuse restored settings handler
-                currentJob.setSettingsHandler((XMLSettingsHandler)controller.
-                    getSettingsHandler());
-            }
+            controller = new CrawlController();
             // Register as listener to get job finished notice.
             controller.addCrawlStatusListener(this);
             SettingsHandler settingsHandler = currentJob.getSettingsHandler();
-
             controller.initialize(settingsHandler);
         } catch (InitializationException e) {
             // Can't load current job since it is misconfigured.
