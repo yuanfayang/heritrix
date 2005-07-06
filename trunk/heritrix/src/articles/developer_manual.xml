@@ -2385,8 +2385,8 @@ public class SimpleExtractor extends Processor
       <ulink url="http://archive-access.sourceforge.net/">archive-access</ulink>).</para>
 
       <para>The French National Library (BnF) has also released a GPL perl/c
-      ARC Reader available at
-      <ulink url="http://bibnum.bnf.fr/downloads/bat/BAT-0.03.tar.gz">BAT</ulink>.
+      ARC Reader. See 
+      <ulink url="http://crawler.archive.org/cgi-bin/wiki.pl?BnfArcTools">BAT</ulink> for documentation and where to download..
       </para>
       See <ulink url="http://cvs.sourceforge.net/viewcvs.py/archive-access/archive-access/projects/hedaern/">Hedaern</ulink> for python readers/writers and
       for a skeleton webapp that allows querying by timestamp+date as well
