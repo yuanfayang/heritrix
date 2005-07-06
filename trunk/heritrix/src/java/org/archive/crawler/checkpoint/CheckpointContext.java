@@ -42,6 +42,8 @@ import org.archive.util.ArchiveUtils;
  */
 public class CheckpointContext
 implements Serializable {
+    private static final long serialVersionUID = -2339801205500280142L;
+
     /** String to prefix any new checkpoint names.
      */
     private String checkpointPrefix = "";
@@ -181,12 +183,10 @@ implements Serializable {
      * Advance the context to reflect a resume-from-checkpoint.
      * Call when recovering a checkpoint.
      */
-    public void checkpointRecoverFixup(File dir) {
+    public void postRecoverFixup(File newdir) {
         this.nextCheckpoint += 1;
-        this.baseCheckpointDirectory = dir;
+        this.baseCheckpointDirectory = newdir;
         this.checkpointErrors = false;
-        // Add a 'rcvr-' prefix to any recovered checkpoints.
-        this.checkpointPrefix = "rcvr-" + this.checkpointPrefix;
     }
     
     /**

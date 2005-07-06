@@ -758,19 +758,6 @@ public class CrawlJob implements DynamicMBean {
     }
 
     /**
-     * Update the job's state to reflect that it should
-     * be resumed from the given checkpoint.
-     *
-     * @param cp
-     */
-    public void configureForResume(Checkpoint cp) {
-        // TODO clear old data? reset any values?
-
-        // mark as resume, remember checkpoint
-        resumeFrom  = cp;
-    }
-
-    /**
      * Returns the absolute path of the specified log.
      * Note: If crawl has not begun, this file may not exist.
      * @param log
