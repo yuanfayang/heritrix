@@ -35,10 +35,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -76,7 +78,6 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.GenerationFileHandler;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.ObjectPlusFilesOutputStream;
-import org.archive.io.arc.ARCWriter;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.JEApplicationMBean;
@@ -179,15 +180,27 @@ public class CrawlController implements Serializable, Reporter {
     // disk paths
     private File disk;        // overall disk path
     private File logsDisk;    // for log files
-    private File checkpointsDisk;    // for checkpoint files
+    
     private File stateDisk;   // for temp files representing state of crawler (eg queues)
     private File scratchDisk; // for discardable temp files (eg fetch buffers)
 
     /**
+     * Directory that holds checkpoint.
+     */
+    private File checkpointsDisk;
+    
+    /**
      * Checkpoint context.
-     * Knows if checkpoint in progress, what name of checkpoint is, etc.
+     * Knows if checkpoint in progress, what name of checkpoint is, has utility
+     * methods to aid checkpointing.
      */
     private CheckpointContext cpContext;
+    
+    /**
+     * Gets set to checkpoint we're in recovering if in checkpoint recover
+     * mode.  Gets setup by {@link #getCheckpointRecover()}.
+     */
+    private transient Checkpoint checkpointRecover = null;
 
     // crawl limits
     private long maxBytes;
@@ -287,14 +300,6 @@ public class CrawlController implements Serializable, Reporter {
     private transient StoredClassCatalog classCatalog = null;
     
     private transient ObjectInstance jeRegisteredMBeanInstance = null;
-
-    
-    /**
-     * Gets set to checkpoint instance if we're in recover checkpoint mode.
-     * Go via {@link #getCheckpointRecover()}.  It will take care of
-     * construction if we're in recover checkpoint mode.
-     */
-    private Checkpoint checkpointRecover = null;
     
     /**
      * Default constructor
@@ -336,7 +341,22 @@ public class CrawlController implements Serializable, Reporter {
             onFailMessage = "Unable to create log file(s)";
             setupLogs();
             
-            // Do checkpointing restore if called for.
+            // Figure if we're to do a checkpoint restore.
+            // If so, setup the checkpointRecover instance,
+            // deserialize the old checkpointcontext and use that
+            // from here on forward -- its keeping track of the
+            // checkpoint serial number to use next -- and then
+            // put into place the old bdb log files. Later in
+            // setupStatTracking, CrawlController will manage the restoration
+            // of the old StatisticsTracker.  Moving the bdb log files
+            // into place and reviving the StatisticsTracker are the
+            // two main tasks done by CrawlController recovering a
+            // checkpoint.  Other objects interested in recovery need to
+            // ask CrawlController#isCheckpointRecover to figure if in
+            // recovery and then take appropriate recovery action
+            // (These objects can call CrawlController#getCheckpointRecover
+            // to get the directory that might hold files/objects dropped
+            // checkpointing).
             onFailMessage = "Unable to test/run checkpoint recover";
             this.checkpointRecover = getCheckpointRecover();
             if (this.checkpointRecover == null) {
@@ -378,8 +398,7 @@ public class CrawlController implements Serializable, Reporter {
     
     /**
      * Does setup of checkpoint recover.
-     * Copies bdb log files into state dir, sets the ARCWriter serial number,
-     * etc.
+     * Copies bdb log files into state dir.
      * @throws IOException
      */
     protected void setupCheckpointRecover()
@@ -393,7 +412,9 @@ public class CrawlController implements Serializable, Reporter {
         this.progressStats.info("CHECKPOINT RECOVER " +
             this.checkpointRecover.getDisplayName());
         // Copy the bdb log files to the state dir so we don't damage
-        // old checkpoint.
+        // old checkpoint.  If thousands of log files, can take
+        // tens of minutes (1000 logs takes ~5 minutes to java copy,
+        // dependent upon hardware).
         File bdbSubDir = CheckpointContext.
             getBdbSubDirectory(this.checkpointRecover.getDirectory());
         FileUtils.copyFiles(bdbSubDir, CheckpointContext.getJeLogsFilter(),
@@ -406,8 +427,9 @@ public class CrawlController implements Serializable, Reporter {
     }
         
     /**
-     * @return Deserialized CheckpointContext read out of the pointed to recover
-     * checkpoint directory.
+     * @return Return CheckpointContext made from serialized CheckpointContext
+     * written into checkpoint directory (Doing this, we'll keep our
+     * checkpoint sequence numbering straight).
      * @throws IOException
      * @throws ClassNotFoundException
      */
@@ -416,7 +438,7 @@ public class CrawlController implements Serializable, Reporter {
         CheckpointContext cpc = (CheckpointContext)CheckpointContext.
             readObjectFromFile(CheckpointContext.class,
                 this.checkpointRecover.getDirectory());
-        cpc.postRecoverFixup(this.checkpointsDisk);
+        cpc.recoveryAmendments(this.checkpointsDisk);
         return cpc;
     }
     
@@ -636,8 +658,9 @@ public class CrawlController implements Serializable, Reporter {
             // Try to initialize frontier from the config file
             try {
                 frontier.initialize(this);
-                frontier.pause(); // pause until begun
-                // Run recovery if recoverPath points to a file.
+                frontier.pause(); // Pause until begun
+                // Run recovery if recoverPath points to a file (If it points
+                // to a directory, its a checkpoint recovery).
                 // TODO: make recover path relative to job root dir.
                 if (!isCheckpointRecover()) {
                     runFrontierRecover((String)order.
@@ -667,8 +690,7 @@ public class CrawlController implements Serializable, Reporter {
             return;
         }
         if (!f.isFile()) {
-            // Its a directory if we're supposed to be doing a checkpoint
-            // recover.
+            // Its a directory if supposed to be doing a checkpoint recover.
             return;
         }
         boolean retainFailures = ((Boolean)order.
@@ -761,23 +783,18 @@ public class CrawlController implements Serializable, Reporter {
         }
     }
     
-    protected void restoreStatisticsTracker(MapType loggers, String replace)
+    protected void restoreStatisticsTracker(MapType loggers,
+            String replaceName)
     throws FatalConfigurationException {
         try {
             StatisticsTracker rst = (StatisticsTracker)CheckpointContext.
                 readObjectFromFile(StatisticsTracker.class,
                     this.checkpointRecover.getDirectory());
             if (rst != null) {
-                loggers.removeElement(loggers.globalSettings(), replace);
+                loggers.removeElement(loggers.globalSettings(), replaceName);
                 loggers.addElement(loggers.globalSettings(), rst);
             }
-        } catch (InvalidAttributeValueException e) {
-            throw convertToFatalConfigurationException(e);
-        } catch (AttributeNotFoundException e) {
-            throw convertToFatalConfigurationException(e);
-        } catch (IOException e) {
-            throw convertToFatalConfigurationException(e);
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             throw convertToFatalConfigurationException(e);
         }
     }
@@ -840,14 +857,16 @@ public class CrawlController implements Serializable, Reporter {
      * Rotate off all logs
      * Rotated get logs get 14 digit date suffix.
      * @throws IOException
-     * @deprecated Let log rotation happen as part of checkpointing instead.
+     * @deprecated Shutdown this api that lets random rotation of
+     * logs. Let log rotation happen as part of checkpointing instead.
+     * @see #rotateLogFiles(String)
      */
     public void rotateLogFiles() throws IOException {
         rotateLogFiles(CURRENT_LOG_SUFFIX + "." +
             ArchiveUtils.get14DigitDate());
     }
     
-    public void rotateLogFiles(String generationSuffix)
+    protected void rotateLogFiles(String generationSuffix)
     throws IOException {
         if (this.state != PAUSED && this.state != CHECKPOINTING) {
             throw new IllegalStateException("Pause crawl before requesting " +
@@ -921,8 +940,8 @@ public class CrawlController implements Serializable, Reporter {
      * Send crawl change event to all listeners.
      * @param newState State change we're to tell listeners' about.
      * @param message Message on state change.
-     * @see #sendCheckpointEvent(File) for special case telling
-     * listeners to checkpoint.
+     * @see #sendCheckpointEvent(File) for special case event sending
+     * telling listeners to checkpoint.
      */
     protected void sendCrawlStateChangeEvent(Object newState, String message) {
         synchronized (this.registeredCrawlStatusListeners) {
@@ -955,6 +974,15 @@ public class CrawlController implements Serializable, Reporter {
         }
     }
     
+    /**
+     * Send the checkpoint event.
+     * Has its own method apart from
+     * {@link #sendCrawlStateChangeEvent(Object, String)} because checkpointing
+     * throws an Exception (Didn't want to have to wrap all of the
+     * sendCrawlStateChangeEvent in try/catches).
+     * @param checkpointDir Where to write checkpoint state to.
+     * @throws Exception
+     */
     protected void sendCheckpointEvent(File checkpointDir) throws Exception {
         synchronized (this.registeredCrawlStatusListeners) {
             for (Iterator i = this.registeredCrawlStatusListeners.iterator();
@@ -1087,6 +1115,7 @@ public class CrawlController implements Serializable, Reporter {
 
     /**
      * Request a checkpoint.
+     * Sets a checkpointing thread running.
      * @throws IllegalStateException Thrown if crawl is not in paused state
      * (Crawl must be first paused before checkpointing).
      */
@@ -1126,20 +1155,45 @@ public class CrawlController implements Serializable, Reporter {
 
     /**
      * Run checkpointing.
-     * <p>TODO: Serialize settings.  Or, I suppose these are already serialized.
-     * Copy settings to the checkpoint dir.
-     * <p>TODO: Turn recover log off by default when working?
+     * CrawlController takes care of managing the checkpointing/serializing
+     * of bdb, the StatisticsTracker, and the CheckpointContext.  Other
+     * modules that want to revive themselves on checkpoint recovery need to
+     * save state inside in their 
+     * {@link CrawlStatusListener#crawlCheckpoint(File)} invocation
+     * and then in their #initialize if a module, or in their #initialTask if a
+     * processor, check with the CrawlController if its checkpoint recovery,
+     * and if it is, read in their old state from the pointed to checkpoint
+     * directory.
+     * <p>TODO: Do we need to serialize settings or just 
+     * copy settings, seeds, and settings dir to the checkpoint dir?
+     * <p>TODO: Add option to turn off recover recover log when
+     * checkpointing reliable.
+     * <p>TODO: Copy logs to checkpoint directory.
      * @param context Context to use checkpointing.
      * @throws Exception
      */
     public void checkpointTo(CheckpointContext context)
     throws Exception {
         long started = System.currentTimeMillis();
+        context.getCheckpointInProgressDirectory().mkdirs();
+        
+        // Tell registered listeners to checkpoint.
         sendCheckpointEvent(context.getCheckpointInProgressDirectory());
         
-        // Sync the BigMap contents to disk.
+        // Sync the BigMap contents to bdb, if their bdb bigmaps.
         LOGGER.info("BigMaps.");
         BigMapFactory.checkpoint();
+        
+        // Manage serialization of statistics tracker.
+        LOGGER.info("StatisticsTracker.");
+        CheckpointContext.writeObjectToFile(this.statistics,
+            context.getCheckpointInProgressDirectory());
+        // Note, on deserialization, the super CrawlType#parent
+        // needs to be restored. Parent is '/crawl-order/loggers'.
+        // The settings handler for this module also needs to be
+        // restored.  Both of these fields are private in the
+        // super class.  Adding the restored ST to crawl order should take
+        // care of this.
         
         // Checkpoint bdb environment.
         LOGGER.info("Bdb environment.");
@@ -1149,7 +1203,6 @@ public class CrawlController implements Serializable, Reporter {
         LOGGER.info("Rotating log files.");
         rotateLogFiles(CURRENT_LOG_SUFFIX + "."
             + this.cpContext.getNextCheckpointName());
-        // TODO: Copy logs to checkpoint dir.
         
         // Serialize the checkpoint context.
         CheckpointContext.writeObjectToFile(this.cpContext,
@@ -1159,7 +1212,7 @@ public class CrawlController implements Serializable, Reporter {
             (context.isCheckpointFailed()? "Failed": "Succeeded") + ", Took " +
             (System.currentTimeMillis() - started) + "ms.");
         
-        // Set crawler back into paused mode.
+        // Set crawler state back into paused mode.
         completePause();
     }
     
@@ -1175,7 +1228,10 @@ public class CrawlController implements Serializable, Reporter {
         // From 'Chapter 8. Backing up and Restoring Berkeley DB Java
         // Edition Applications'  This will clean up logs.
         this.bdbEnvironment.sync();
-        // Below log cleaning looped suggested in je-2.0 javadoc.
+        LOGGER.fine("Finished bdb sync");
+        // Below log cleaning loop suggested in je-2.0 javadoc.
+        // TODO: Cleanlogs takes time.  Might not be worth it if the
+        // cleaner thread has been keeping up.
         int totalCleaned = 0;
         for (int cleaned = 0; (cleaned = this.bdbEnvironment.cleanLog()) != 0;
                 totalCleaned += cleaned) {
@@ -1184,42 +1240,35 @@ public class CrawlController implements Serializable, Reporter {
         LOGGER.info("Cleaned out " + totalCleaned + " log files total.");
         // Pass null. Uses default values.
         this.bdbEnvironment.checkpoint(null);
+        LOGGER.fine("Finished bdb checkpoint.");
         // Copy off the bdb log files. Copy them in order.
         FilenameFilter filter = CheckpointContext.getJeLogsFilter();
-        FileUtils.copyFiles(getStateDisk(), filter,
-            CheckpointContext.getBdbSubDirectory(checkpointDir), true);
+        File bdbDir = CheckpointContext.getBdbSubDirectory(checkpointDir);
+        FileUtils.copyFiles(getStateDisk(), filter, bdbDir, true);
         // Go again in case new bdb logs were added since above
         // bulk copy.  Keep cycling till two dirs match.
-        List outstanding = null;
+        Set src = null;
         do {
-            List src = Arrays.asList(getStateDisk().list(filter));
+            src = new HashSet(Arrays.asList(getStateDisk().list(filter)));
             List tgt = Arrays.asList(CheckpointContext.
                 getBdbSubDirectory(checkpointDir).list(filter));
-            outstanding =  new ArrayList();
-            for (Iterator i = src.iterator(); i.hasNext();) {
-                Object obj = i.next();
-                if (!tgt.contains(obj)) {
-                    outstanding.add(obj);
-                }
+            src.removeAll(tgt);
+            if (src.size() > 0) {
+                LOGGER.fine("Copying " + src.size() + " new bdb log files.");
+                FileUtils.copyFiles(bdbDir, src, getStateDisk());
             }
-            if (outstanding.size() > 0) {
-                LOGGER.fine("Copying " + outstanding.size() +
-                    " new bdb log files.");
-                FileUtils.copyFiles(
-                    CheckpointContext.getBdbSubDirectory(checkpointDir),
-                    outstanding, getStateDisk());
-            }
-        } while (outstanding.size() > 0);
+        } while (src != null && src.size() > 0);
     }
     
     /**
      * Get recover checkpoint.
      * Returns null if we're NOT in recover mode.
      * Looks at ATTR_RECOVER_PATH and if its a directory, assumes checkpoint
-     * recover. If checkpoint mode, returns deserialized Checkpoint instance if
-     * checkpoint was VALID.
-     * @return Deserialized Checkpoint instance if we're in recover checkpoint
+     * recover. If checkpoint mode, returns Checkpoint instance if
+     * checkpoint was VALID (else null).
+     * @return Checkpoint instance if we're in recover checkpoint
      * mode and the pointed-to checkpoint was valid.
+     * @see #isCheckpointRecover()
      */
     public synchronized Checkpoint getCheckpointRecover() {
         if (this.checkpointRecover != null) {
@@ -1244,7 +1293,9 @@ public class CrawlController implements Serializable, Reporter {
     }
     
     /**
-     * @return True if this CrawlJob was made of a checkpoint recover.
+     * @return True if we're in checkpoint recover mode. Call
+     * {@link #getCheckpointRecover()} to get at Checkpoint instance
+     * that has info on checkpoint directory being recovered from.
      */
     public boolean isCheckpointRecover() {
         return this.checkpointRecover != null;

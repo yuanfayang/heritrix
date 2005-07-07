@@ -937,12 +937,6 @@ implements CrawlURIDispositionListener, Serializable {
     }
 
     public void crawlCheckpoint(File cpDir) throws Exception {
-        CheckpointContext.writeObjectToFile(this, cpDir);
-        // Note, on deserialization, the super CrawlType#parent
-        // needs to be restored. Parent is '/crawl-order/loggers'.
-        // The settings handler for this module also needs to be
-        // restored.  Both of these fields are private in the
-        // super class.  Adding the restored ST to crawl order should take
-        // care of this.
+        // CrawlController is managing the checkpointing of this object.
     }
 }

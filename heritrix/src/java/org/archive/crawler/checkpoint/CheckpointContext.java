@@ -186,15 +186,18 @@ implements Serializable {
 
     /**
      * Call this after instance has been revivifyied post-serialization to
-     * reset where checkpoints get stored in future and to advance the
-     * checkpoint counter.
-     * Advance the context to reflect a resume-from-checkpoint.
+     * amend counters and directories that effect where checkpoints get stored
+     * from here on out.
      * Call when recovering a checkpoint.
      * @param newdir New base dir to use future checkpointing.
      */
-    public void postRecoverFixup(File newdir) {
+    public void recoveryAmendments(File newdir) {
         this.nextCheckpoint += 1;
         this.baseCheckpointDirectory = newdir;
+        // Prepend the checkpoint name with a little 'r' so we tell apart
+        // checkpoints made from a recovery.  Allow for there being
+        // multiple 'r' prefixes.
+        this.checkpointPrefix += ('r' + this.checkpointPrefix);
     }
     
     /**
