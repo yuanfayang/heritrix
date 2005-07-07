@@ -26,11 +26,9 @@ package org.archive.crawler.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.util.JeUtils;
@@ -38,7 +36,6 @@ import org.archive.util.JeUtils;
 import st.ata.util.FPGenerator;
 
 import com.sleepycat.bind.tuple.LongBinding;
-import com.sleepycat.je.BtreeStats;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
@@ -72,8 +69,6 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     private static Logger logger =
         Logger.getLogger(BdbUriUniqFilter.class.getName());
     // protected transient FPGenerator fpgen64 = FPGenerator.std64;
-    protected transient FPGenerator fpgen40 = FPGenerator.std40;
-    protected transient FPGenerator fpgen24 = FPGenerator.std24;
     protected boolean createdEnvironment = false;
     protected long lastCacheMiss = 0;
     protected long lastCacheMissDiff = 0;
@@ -237,19 +232,18 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     
     /**
      * Create fingerprint.
-     * Default access so can unit test createKey.
+     * Pubic access so test code can access createKey.
      * @param url Url to fingerprint.
      * @return Fingerprint of passed <code>url</code>.
      */
-    long createKey(String url) {
+    public static long createKey(String url) {
         int index = url.indexOf(COLON_SLASH_SLASH);
         if (index > 0) {
             index = url.indexOf('/', index + COLON_SLASH_SLASH.length());
         }
-        String hostPlusScheme = (index == -1)? url: url.substring(0, index);
-        String path = (index == -1)? "": url.substring(index);
-        long tmp = this.fpgen24.fp(hostPlusScheme);
-        return tmp | (this.fpgen40.fp(path) >>> 24);
+        CharSequence hostPlusScheme = (index == -1)? url: url.subSequence(0, index);
+        long tmp = FPGenerator.std24.fp(hostPlusScheme);
+        return tmp | (FPGenerator.std40.fp(url) >>> 24);
     }
     
     public long count() {
