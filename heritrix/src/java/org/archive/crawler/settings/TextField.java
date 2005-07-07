@@ -24,6 +24,8 @@
  */
 package org.archive.crawler.settings;
 
+import java.io.Serializable;
+
 import org.archive.util.TextUtils;
 
 /** Class to hold values for text fields.
@@ -35,7 +37,8 @@ import org.archive.util.TextUtils;
  * @author John Erik Halse
  *
  */
-public class TextField implements CharSequence {
+public class TextField implements CharSequence, Serializable {
+    private static final long serialVersionUID = -2853908867414076703L;
     private String value;
 
     /** Constructs a new TextField object.

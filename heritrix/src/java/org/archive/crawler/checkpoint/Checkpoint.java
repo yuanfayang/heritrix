@@ -25,19 +25,16 @@
 package org.archive.crawler.checkpoint;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import org.archive.util.FileUtils;
 
 /**
  * Record of a specific checkpoint on disk.
+ * Used recovering from a checkpoint or displaying list of checkpoints done
+ * so far.
  * @author gojomo
  */
 public class Checkpoint implements Serializable {
@@ -53,12 +50,9 @@ public class Checkpoint implements Serializable {
      */
     static final String VALIDITY_STAMP_FILENAME = "valid";
     
-    private static final String SERIALIZED_CLASS_SUFFIX = ".serialized";
     
     private transient String timestamp;
     private File directory;
-    
-    private int arcWriterSerialNo = 0;
     
     /**
      * Publically inaccessible default constructor.
@@ -71,10 +65,10 @@ public class Checkpoint implements Serializable {
      * Create a Checkpoint instance based on the given prexisting
      * checkpoint directory
      *
-     * @param directory Directory that holds checkpoint.
+     * @param checkpointDir Directory that holds checkpoint.
      */
-    public Checkpoint(File directory) {
-        this.directory = directory;
+    public Checkpoint(File checkpointDir) {
+        this.directory = checkpointDir;
         readValid();
     }
     
@@ -101,7 +95,6 @@ public class Checkpoint implements Serializable {
     }
 
     /**
-     * 
      * @return Return true if this checkpoint appears complete/resumable
      * (has 'valid' stamp file).
      */
@@ -132,95 +125,9 @@ public class Checkpoint implements Serializable {
     }
 
     /**
-     * Utility function to serialize an object to a file, using
-     * the enhanced ObjectPlusFilesOutputStream, which offers facilities
-     * to store related files alongside the serialized object in a directory
-     * named with a <code>.auxillary</code> suffix.
-     *
-     * @param o Object to serialize.
-     * @param filename Name to serialize to.
-     * @throws IOException
-     */
-    public void writeObjectToFile(Object o, String filename)
-    throws FileNotFoundException, IOException {
-        this.directory.mkdirs();
-        ObjectOutputStream out = new ObjectOutputStream(
-            new FileOutputStream(new File(this.directory, filename)));
-        try {
-            out.writeObject(o);
-        } finally {
-            out.close();
-        }
-    }
-
-    /**
-     * Utility function to deserialize an object, plus any
-     * related files stored alongside it, from a file and
-     * accompanying directory structure.
-     *
-     * @param filename
-     * @throws IOException
-     * @throws ClassNotFoundException
-     * @return Object read from file.
-     */
-    public Object readObjectFromFile(String filename)
-    throws IOException, ClassNotFoundException {
-        return readObjectFromFile(new File(this.directory, filename));
-        
-    }
-    
-    public static Object readObjectFromFile(File absolutePath)
-    throws FileNotFoundException, IOException, ClassNotFoundException {
-        ObjectInputStream in =
-            new ObjectInputStream(new FileInputStream(absolutePath));
-        Object o = null;
-        try {
-            o = in.readObject();
-        } finally {
-            in.close();
-        }
-        return o;
-    }
-
-    /**
      * @return Returns the checkpoint directory.
      */
     public File getDirectory() {
         return this.directory;
-    }
-
-    public File getBdbSubDirectory() {
-        return new File(getDirectory(), "bdbje-logs");
-    }
-    
-    public FilenameFilter getJeLogsFilter() {
-        return new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name != null && name.toLowerCase().endsWith(".jdb");
-            }
-        };
-    }
-    
-    public static String getClassCheckpointFilename(Class c) {
-        return c.getName() + SERIALIZED_CLASS_SUFFIX;
-    }
-
-    /**
-     * @return Returns ARCWriter serial number stored into this checkpoint.
-     */
-    public int getArcWriterSerialNo() {
-        return this.arcWriterSerialNo;
-    }
-
-    /**
-     * Save in here the ARCWriter serial number for restoration on checkpoint
-     * recover.
-     * Save serialno here because ARCWriter is behind ARCPool which is held by
-     * ARCWriterProcessor -- serializing ARCWriter, a non-processor, would
-     * be awkward.
-     * @param arcWriterSerialNo
-     */
-    public void setArcWriterSerialNo(int arcWriterSerialNo) {
-        this.arcWriterSerialNo = arcWriterSerialNo;
     }
 }

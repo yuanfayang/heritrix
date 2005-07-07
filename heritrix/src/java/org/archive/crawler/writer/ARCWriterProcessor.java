@@ -27,9 +27,12 @@ package org.archive.crawler.writer;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -170,6 +173,12 @@ ARCWriterSettings, FetchStatusCodes {
      */
     private long totalBytesWritten = 0;
     
+    /**
+     * Name of file to keep state in when checkpointing.
+     */
+    private static final String STATE_FILENAME =
+        ARCWriterProcessor.class.getName() + ".state";
+    
 
     /**
      * @param name Name of this writer.
@@ -234,6 +243,36 @@ ARCWriterSettings, FetchStatusCodes {
         getSettingsHandler().getOrder().getController().
             addCrawlStatusListener(this);
         setupPool();
+        if (getSettingsHandler().getOrder().getController().
+                isCheckpointRecover()) {
+            // If in recover mode, read in the ARCWriter serial number saved
+            // off when we checkpointed.
+            File stateFile = new File(getSettingsHandler().getOrder().
+                getController().getCheckpointRecover().getDirectory(),
+                    STATE_FILENAME);
+            if (!stateFile.exists()) {
+                logger.info(stateFile.getAbsolutePath() +
+                    " doesn't exist so cannot restore ARC serial number.");
+            } else {
+                DataInputStream dis = null;
+                try {
+                    dis = new DataInputStream(new FileInputStream(stateFile));
+                    ARCWriter.setSerialNo(dis.readShort());
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (dis != null) {
+                            dis.close();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
     void setupPool() {
@@ -609,7 +648,18 @@ ARCWriterSettings, FetchStatusCodes {
      */
     public void crawlStarted(String message) {
         // TODO Auto-generated method stub
-        
+    }
+    
+    public void crawlCheckpoint(File checkpointDir)
+    throws IOException {
+        // Write out the current state of the ARCWriter serial number.
+        File f = new File(checkpointDir, STATE_FILENAME);
+        DataOutputStream dos = new DataOutputStream(new FileOutputStream(f));
+        try {
+            dos.writeShort(ARCWriter.getSerialNo());
+        } finally {
+            dos.close();
+        }
     }
     
 	public void crawlPausing(String statusMessage) {

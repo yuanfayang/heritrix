@@ -69,6 +69,7 @@ import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.archive.crawler.Heritrix;
+import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlOrder;
@@ -1372,6 +1373,13 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
      */
     public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlCheckpoint(File checkpointDir) {
         // TODO Auto-generated method stub
     }
 

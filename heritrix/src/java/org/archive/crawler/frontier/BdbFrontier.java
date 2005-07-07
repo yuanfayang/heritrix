@@ -25,6 +25,7 @@
   */
 package org.archive.crawler.frontier;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,20 +36,15 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.Heritrix;
+import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.crawler.util.BloomUriUniqFilter;
-import org.archive.crawler.checkpoint.Checkpoint;
-import org.archive.crawler.checkpoint.Checkpointable;
 import org.archive.util.ArchiveUtils;
-import org.archive.crawler.datamodel.BigMap;
 
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
@@ -64,8 +60,7 @@ import com.sleepycat.je.OperationStatus;
  *
  * @author Gordon Mohr
  */
-public class BdbFrontier
-extends WorkQueueFrontier implements Checkpointable {
+public class BdbFrontier extends WorkQueueFrontier {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
         .classnameBasedUID(BdbFrontier.class, 1);
@@ -122,12 +117,6 @@ extends WorkQueueFrontier implements Checkpointable {
      */
     public BdbFrontier(String name, String description) {
         super(name, description);
-    }
-
-    public void initialize(CrawlController c)
-    throws FatalConfigurationException, IOException {
-        super.initialize(c);
-        c.registerCheckpointable(this);
     }
     
     /**
@@ -250,11 +239,6 @@ extends WorkQueueFrontier implements Checkpointable {
                 ioe.setStackTrace(e.getStackTrace());
             }
         }
-    }
-    
-    protected String getCheckpointDbName(String dbBasename,
-            String checkpointName) {
-        return dbBasename;
     }
     
     protected void resurrectQueueState()
@@ -439,7 +423,7 @@ extends WorkQueueFrontier implements Checkpointable {
         return true;
     }
 
-    public void checkpoint(Checkpoint cp) throws Exception {
+    public void crawlCheckpoint(File checkpointDir) throws Exception {
         persistQueueState();
     }
 }

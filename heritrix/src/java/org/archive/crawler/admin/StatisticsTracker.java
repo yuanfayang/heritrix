@@ -42,6 +42,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
+import org.archive.crawler.checkpoint.CheckpointContext;
 import org.archive.crawler.datamodel.BigMapFactory;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UURI;
@@ -52,8 +53,6 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
 import org.archive.util.PaddingStringBuffer;
-import org.archive.crawler.checkpoint.Checkpoint;
-import org.archive.crawler.checkpoint.Checkpointable;
 
 /**
  * This is an implementation of the AbstractTracker. It is designed to function
@@ -106,7 +105,7 @@ import org.archive.crawler.checkpoint.Checkpointable;
  * @see org.archive.crawler.framework.AbstractTracker
  */
 public class StatisticsTracker extends AbstractTracker
-implements CrawlURIDispositionListener, Checkpointable, Serializable {
+implements CrawlURIDispositionListener, Serializable {
     private static final long serialVersionUID = 8004878315916392305L;
 
     /**
@@ -196,9 +195,6 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
                 " StatisticsTracker: " + e);
         }
         controller.addCrawlURIDispositionListener(this);
-        // TODO: Not yet implemented.  Need to fix serialization of
-        // this class first.
-        // this.controller.registerCheckpointable(this);
     }
     
     private Map makeSeedsMap() {
@@ -393,7 +389,7 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
         }
         LongWrapper lw = (LongWrapper)map.get(key);
         if(lw == null) {
-            map.put(key, new LongWrapper((long)1));
+            map.put(key, new LongWrapper(1));
         } else {
             lw.longValue += increment;
         }
@@ -617,8 +613,8 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
      */
     private void handleSeed(CrawlURI curi, String disposition) {
         if(curi.isSeed()){
-            SeedRecord sr = new SeedRecord(curi,disposition);
-            processedSeedsRecords.put(sr.getUri(),sr);
+            SeedRecord sr = new SeedRecord(curi, disposition);
+            processedSeedsRecords.put(sr.getUri(), sr);
         }
     }
 
@@ -706,7 +702,6 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
             public int compare(Object e1, Object e2) {
                 SeedRecord sr1 = (SeedRecord)e1;
                 SeedRecord sr2 = (SeedRecord)e2;
-                int ret = 0;
                 int code1 = sr1.getStatusCode();
                 int code2 = sr2.getStatusCode();
                 if (code1 == code2) {
@@ -735,23 +730,24 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
         return sortedSet.iterator();
     }
 
-    public void crawlEnded(String sExitMessage) {
+    public void crawlEnded(String message) {
         logger.info("Entered crawlEnded");
-        this.sExitMessage = sExitMessage; // held for reference by reports
-        super.crawlEnded(sExitMessage);
+        this.sExitMessage = message; // held for reference by reports
+        super.crawlEnded(message);
         logger.info("Leaving crawlEnded");
     }
     
     public void crawlStarted(String message) {
-        ;
+        // Reset these values in case statistics are from a recovered crawl.
+        this.crawlerPauseStarted = 0;
+        this.crawlerTotalPausedTime = 0;
+        noteStart();
     }
     
     /**
-     * @param c CrawlController instance.
-     * @return A summary of seeds crawled and not crawled.
-     * @throws IOException
+     * @param writer Where to write.
      */
-    protected void writeSeedsReportTo(PrintWriter writer) throws IOException {
+    protected void writeSeedsReportTo(PrintWriter writer) {
         // Build header.
         writer.print("[code] [status] [seed] [redirect]\n");
 
@@ -808,7 +804,7 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
         return getReverseSortedCopy(hostsDistribution);
     }
 
-    protected void writeMimetypesReportTo(PrintWriter writer) throws IOException {
+    protected void writeMimetypesReportTo(PrintWriter writer) {
         // header
         writer.print("[#urls] [#bytes] [mime-types]\n");
         TreeMap fd = getReverseSortedCopy(getFileDistribution());
@@ -823,8 +819,7 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
         }
     }
     
-    protected void writeResponseCodeReportTo(PrintWriter writer) throws IOException {
-        int maxCodeLength = 10;
+    protected void writeResponseCodeReportTo(PrintWriter writer) {
         // Build header.
         writer.print("[rescode] [#urls]\n");
         TreeMap scd = getReverseSortedCopy(getStatusCodeDistribution());
@@ -837,7 +832,7 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
         }
     }
     
-    protected void writeCrawlReportTo(PrintWriter writer) throws IOException {
+    protected void writeCrawlReportTo(PrintWriter writer) {
         writer.print("Crawl Name: " + controller.getOrder().getCrawlOrderName());
         writer.print("\nCrawl Status: " + sExitMessage);
         writer.print("\nDuration Time: " +
@@ -877,19 +872,20 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
     }
     
     /**
-     * @param w
+     * @param writer Where to write.
      * @throws IOException
      */
     protected void writeManifestReportTo(PrintWriter writer) throws IOException {
-        controller.reportTo(CrawlController.MANIFEST_REPORT,writer);
+        controller.reportTo(CrawlController.MANIFEST_REPORT, writer);
     }
     
     /**
-     * @param reportName
-     * @param bw
+     * @param reportName Name of report.
+     * @param w Where to write.
      * @throws IOException
      */
-    private void writeReportTo(String reportName, PrintWriter w) throws IOException {
+    private void writeReportTo(String reportName, PrintWriter w)
+    throws IOException {
         if("hosts".equals(reportName)) {
             writeHostsReportTo(w);
         } else if ("mime types".equals(reportName)) {
@@ -940,10 +936,13 @@ implements CrawlURIDispositionListener, Checkpointable, Serializable {
         // TODO: Save object to disk?
     }
 
-    public void checkpoint(Checkpoint cp) throws Exception {
-        // TODO: Not called because we don't register ourselves
-        // yet.  See #initialize above.
-        cp.writeObjectToFile(this,
-            cp.getClassCheckpointFilename(this.getClass()));
+    public void crawlCheckpoint(File cpDir) throws Exception {
+        CheckpointContext.writeObjectToFile(this, cpDir);
+        // Note, on deserialization, the super CrawlType#parent
+        // needs to be restored. Parent is '/crawl-order/loggers'.
+        // The settings handler for this module also needs to be
+        // restored.  Both of these fields are private in the
+        // super class.  Adding the restored ST to crawl order should take
+        // care of this.
     }
 }

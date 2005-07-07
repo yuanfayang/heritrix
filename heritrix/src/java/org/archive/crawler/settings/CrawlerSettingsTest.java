@@ -92,6 +92,14 @@ public class CrawlerSettingsTest extends SettingsFrameworkTestCase {
         assertEquals(value, (String)mtDeserialized.getAttribute("name"));
     }
     
+    public void testSerializingTextField()
+    throws IOException, ClassNotFoundException, AttributeNotFoundException,
+    MBeanException, ReflectionException {
+        TextField tf = new TextField("testSerializingTextField");
+        TextField tfDeserialized = (TextField)serializeDeserialize(tf);
+        assertEquals(tf.toString(), tfDeserialized.toString());
+    }
+    
     protected Object serializeDeserialize(Object obj)
     throws IOException, ClassNotFoundException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

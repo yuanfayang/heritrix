@@ -25,13 +25,12 @@
  */
 package org.archive.crawler.admin;
 
+import java.io.Serializable;
 import java.util.Iterator;
 
-import org.apache.commons.httpclient.HttpMethod;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.extractor.Link;
 
 /**
  * Record of all interesting info about the most-recent
@@ -39,11 +38,12 @@ import org.archive.crawler.extractor.Link;
  * 
  * @author gojomo
  */
-public class SeedRecord implements CoreAttributeConstants  {
-    String uri;
-    int statusCode;
-    String disposition;
-    String redirectUri;
+public class SeedRecord implements CoreAttributeConstants, Serializable {
+    private static final long serialVersionUID = -8455358640509744478L;
+    private final String uri;
+    private int statusCode;
+    private final String disposition;
+    private String redirectUri;
     
     /**
      * Create a record from the given CrawlURI and disposition string

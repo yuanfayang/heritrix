@@ -87,7 +87,7 @@ public class BigMapFactory {
         return result;
     }
 
-    public static void checkpoint(Checkpoint cp)
+    public static void checkpoint()
     throws Exception {
         for (Iterator i = BigMapFactory.instances.iterator(); i.hasNext();) {
             Object obj = i.next();

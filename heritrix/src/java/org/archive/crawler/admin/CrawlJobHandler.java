@@ -292,6 +292,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         // Check job status and place it accordingly.
         if( cjob.getStatus().equals(CrawlJob.STATUS_RUNNING)
                 || cjob.getStatus().equals(CrawlJob.STATUS_PAUSED)
+                || cjob.getStatus().equals(CrawlJob.STATUS_CHECKPOINTING)
                 || cjob.getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE) ){
             // Was a running job.
             // TODO: Consider checking for checkpoints and offering resume?
@@ -1197,6 +1198,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
     
     public void crawlStarted(String message) {
         // TODO Auto-generated method stub
+    }
+    
+    public void crawlCheckpoint(File checkpointDir) throws Exception {
+        currentJob.setStatus(CrawlJob.STATUS_CHECKPOINTING);
     }
 
     /**
