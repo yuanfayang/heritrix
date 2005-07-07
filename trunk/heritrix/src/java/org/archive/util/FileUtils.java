@@ -37,6 +37,7 @@ import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -55,10 +56,10 @@ public class FileUtils {
         super();
     }
     
-    public static void copyFiles(final File srcDir, final List srcFiles,
+    public static void copyFiles(final File srcDir, Set srcFile,
             final File dest)
     throws IOException {
-        for (Iterator i = srcFiles.iterator(); i.hasNext();) {
+        for (Iterator i = srcFile.iterator(); i.hasNext();) {
             String name = (String)i.next();
             copyFiles(new File(srcDir, name), new File(dest, name));
         }
