@@ -26,6 +26,7 @@ package org.archive.crawler.util;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
@@ -92,13 +93,27 @@ implements UriUniqFilter.HasUriReceiver {
     
     public void testCreateKey() {
         String url = "dns:archive.org";
-        long fingerprint = ((BdbUriUniqFilter)this.filter).createKey(url);
+        long fingerprint = BdbUriUniqFilter.createKey(url);
         assertTrue("Fingerprint wrong " + url,
-            fingerprint == 8812918003193194397L);
+            fingerprint == 8812917769287344085L);
         url = "http://archive.org/index.html";
-        fingerprint = ((BdbUriUniqFilter)this.filter).createKey(url);
+        fingerprint = BdbUriUniqFilter.createKey(url);
         assertTrue("Fingerprint wrong " + url,
-            fingerprint == 6613238036839061197L);
+            fingerprint == 6613237167064754714L);
+    }
+    
+    /**
+     * Verify that two URIs which gave colliding hashes, when previously
+     * the last 40bits of the composite did not sufficiently vary with certain
+     * inputs, no longer collide. 
+     */
+    public void testCreateKeyCollisions() {
+        HashSet fingerprints = new HashSet();
+        fingerprints.add(new Long(BdbUriUniqFilter
+                .createKey("dns:mail.daps.dla.mil")));
+        fingerprints.add(new Long(BdbUriUniqFilter
+                .createKey("dns:militaryreview.army.mil")));
+        assertEquals("colliding fingerprints",2,fingerprints.size());
     }
     
     /**
