@@ -82,7 +82,7 @@ implements FrontierJournal {
     // once this many URIs are queued during recovery, allow 
     // crawl to begin, while enqueuing of other URIs from log
     // continues in background
-    private static final long ENOUGH_TO_START_CRAWLING = 50000;
+    private static final long ENOUGH_TO_START_CRAWLING = 100000;
     /**
      * Stream on which we record frontier events.
      */
@@ -303,6 +303,8 @@ implements FrontierJournal {
     private static void importQueuesFromLog(File source, Frontier frontier, int lines, Latch enough) {
         BufferedReader reader;
         String read;
+        long queuedAtStart = frontier.queuedUriCount();
+        long queuedDuringRecovery = 0;
         int qLines = 0;
         
         try {
@@ -326,7 +328,9 @@ implements FrontierJournal {
                             CandidateURI caUri = new CandidateURI(u, 
                                     pathFromSeed, via, viaContext);
                             frontier.schedule(caUri);
-                            if(frontier.queuedUriCount()==ENOUGH_TO_START_CRAWLING) {
+                            
+                            queuedDuringRecovery = frontier.queuedUriCount() - queuedAtStart;
+                            if(((queuedDuringRecovery+1)%ENOUGH_TO_START_CRAWLING)==0) {
                                 enough.release();
                             }
                         } catch (URIException e) {
@@ -352,6 +356,7 @@ implements FrontierJournal {
             e.printStackTrace();
         }
         LOGGER.info("finished recovering frontier from "+source);
+        enough.release();
     }
 
     /**
