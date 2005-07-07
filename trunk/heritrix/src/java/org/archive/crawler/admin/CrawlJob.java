@@ -135,6 +135,12 @@ public class CrawlJob implements DynamicMBean {
         "Waiting for threads to finish";
     /** Job was temporarly stopped. State is kept so it can be resumed */
     public static final String STATUS_PAUSED = "Paused";
+    /**
+     * Job is being checkpointed.  When finished checkpointing, job is set
+     * back to STATUS_PAUSED (Job must be first paused before checkpointing
+     * will run).
+     */
+    public static final String STATUS_CHECKPOINTING = "Checkpointing";
     /** Job could not be launced due to an InitializationException */
     public static final String STATUS_MISCONFIGURED = "Could not launch job " +
         "- Fatal InitializationException";
@@ -331,6 +337,7 @@ public class CrawlJob implements DynamicMBean {
                 && status.equals(STATUS_FINISHED_TIME_LIMIT)==false
                 && status.equals(STATUS_MISCONFIGURED)==false
                 && status.equals(STATUS_PAUSED)==false
+                && status.equals(STATUS_CHECKPOINTING)==false
                 && status.equals(STATUS_PENDING)==false
                 && status.equals(STATUS_RUNNING)==false
                 && status.equals(STATUS_WAITING_FOR_PAUSE)==false
@@ -557,7 +564,7 @@ public class CrawlJob implements DynamicMBean {
      * @param status Current status of CrawlJob
      *         (see constants defined here beginning with STATUS)
      */
-    public void setStatus(String status){
+    public void setStatus(String status) {
         this.status = status;
         writeJobFile(); //Save changes
         // TODO: If job finished, save StatisticsTracker!

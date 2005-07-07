@@ -72,8 +72,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.settings.ComplexType");
 
-    private SettingsHandler settingsHandler;
-    private ComplexType parent;
+    private transient SettingsHandler settingsHandler;
+    private transient ComplexType parent;
     private String description;
     private String absoluteName;
     private final List definition = new ArrayList();

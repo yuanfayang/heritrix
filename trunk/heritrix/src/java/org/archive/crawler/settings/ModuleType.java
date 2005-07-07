@@ -55,9 +55,6 @@ public class ModuleType extends ComplexType {
         super(name, name);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.ComplexType#addElement(org.archive.crawler.settings.CrawlerSettings, org.archive.crawler.settings.Type)
-     */
     public Type addElement(CrawlerSettings settings, Type type)
             throws InvalidAttributeValueException {
         if (isInitialized()) {

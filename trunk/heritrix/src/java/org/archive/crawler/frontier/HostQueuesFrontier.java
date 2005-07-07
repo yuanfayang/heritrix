@@ -45,6 +45,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.httpclient.HttpStatus;
+import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
@@ -1698,6 +1699,13 @@ HasUriReceiver,  CrawlStatusListener {
     public void crawlStarted(String message) {
         // TODO Auto-generated method stub
         
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlCheckpoint(File checkpointDir) {
+        // TODO Auto-generated method stub
     }
 
     /* (non-Javadoc)

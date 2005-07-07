@@ -53,13 +53,15 @@ import org.archive.util.PaddingStringBuffer;
  */
 public abstract class AbstractTracker extends ModuleType
 implements StatisticsTracking, CrawlStatusListener, Serializable {
-    
     /** default period between logging stat values */
-    public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL = new Integer(20);
+    public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL =
+        new Integer(20);
     /** attrbiute name for interval setting */
     public static final String ATTR_STATS_INTERVAL = "interval-seconds";
 
-    /** A reference to the CrawlContoller of the crawl that we are to track statistics for.*/
+    /** A reference to the CrawlContoller of the crawl that we are to track
+     * statistics for.
+     */
     protected transient CrawlController controller;
 
     // Keep track of time.
@@ -220,14 +222,13 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * @return time of the crawl's last pause/suspend or 0 if the crawl is not
      *         currently paused.
      */
-    public long getCrawlPauseStartedTime()
-    {
+    public long getCrawlPauseStartedTime() {
         return crawlerPauseStarted;
     }
 
     public long getCrawlerTotalElapsedTime() {
-        return getCrawlPauseStartedTime() != 0?
-            //Are currently paused, calculate time up to last pause
+        return (getCrawlPauseStartedTime() != 0)?
+            // Are currently paused, calculate time up to last pause
             (getCrawlPauseStartedTime() - getCrawlTotalPauseTime() -
                 getCrawlStartTime()):
             // Not paused, calculate total time.
@@ -289,13 +290,9 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
         lastLogPointTime = System.currentTimeMillis();
     }
 
-    /**
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
-     */
     public void crawlEnding(String sExitMessage) {
         logNote("CRAWL ENDING - " + sExitMessage);
     }
-
 
     /**
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)

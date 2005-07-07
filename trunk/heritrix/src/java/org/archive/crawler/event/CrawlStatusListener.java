@@ -18,6 +18,11 @@
  */
 package org.archive.crawler.event;
 
+import java.io.File;
+
+import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.framework.CrawlController;
+
 
 /**
  * Listen for CrawlStatus events.
@@ -79,4 +84,13 @@ public interface CrawlStatusListener {
      *                         Passed for convenience
      */
     public void crawlResuming(String statusMessage);
+    
+    /**
+     * Called by {@link CrawlController} when checkpointing.
+     * @param checkpointDir Checkpoint dir.  Write checkpoint state here.
+     * @throws Exception A fatal exception.  Any exceptions
+     * that are let out of this checkpoint are assumed fatal
+     * and terminate further checkpoint processing.
+     */
+    public void crawlCheckpoint(File checkpointDir) throws Exception;
 }
