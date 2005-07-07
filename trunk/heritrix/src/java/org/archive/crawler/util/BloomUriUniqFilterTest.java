@@ -89,14 +89,14 @@ implements UriUniqFilter.HasUriReceiver {
             UURI u = UURIFactory.getInstance("http://www" +
                     count + ".archive.org/" + count + "/index.html");
             assertFalse("already contained "+u.toString(),filter.bloom.contains(u.toString()));
-            logger.info("adding "+u.toString());
+            logger.fine("adding "+u.toString());
             filter.add(u.toString(), new CandidateURI(u));
             assertTrue("not in bloom",filter.bloom.contains(u.toString()));
             if (count > 0 && ((count % 100) == 0)) {
                 list.add(u);
             }
         }
-        logger.info("Added " + count + " in " +
+        logger.fine("Added " + count + " in " +
                 (System.currentTimeMillis() - start));
 
         start = System.currentTimeMillis();
@@ -104,7 +104,7 @@ implements UriUniqFilter.HasUriReceiver {
             UURI uuri = (UURI)i.next();
             filter.add(uuri.toString(), new CandidateURI(uuri));
         }
-        logger.info("Readded subset " + list.size() + " in " +
+        logger.fine("Readded subset " + list.size() + " in " +
                 (System.currentTimeMillis() - start));
 
         assertTrue("Count is off: " + filter.count(),
