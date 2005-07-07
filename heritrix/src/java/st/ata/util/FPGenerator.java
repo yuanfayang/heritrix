@@ -154,7 +154,7 @@ public final class FPGenerator {
 //        return extend(empty, t);
 //    }
     /** Compute fingerprint of (all bits of) the characters of "s". */
-    public long fp(String s) {
+    public long fp(CharSequence s) {
         return extend(empty, s);
     }
 
@@ -233,7 +233,7 @@ public final class FPGenerator {
     /** Extends fingerprint <code>f</code> by adding (all bits of)
         the characters of "s".
         Result is reduced. */
-    public long extend(long f, String s) {
+    public long extend(long f, CharSequence s) {
         int n = s.length();
         for (int i = 0; i < n; i++) {
             int v = (int) s.charAt(i);
