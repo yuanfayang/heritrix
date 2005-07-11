@@ -463,8 +463,11 @@ implements CrawlURIDispositionListener, Serializable {
      * host was last finished processing. If no URI has been completed for host
      * -1 will be returned. 
      */
-    public synchronized long getHostLastFinished(String host){
-    	Long l = (Long)hostsLastFinished.get(host);
+    public long getHostLastFinished(String host){
+        Long l = null;
+        synchronized(hostsLastFinished){
+            l = (Long)hostsLastFinished.get(host);
+        }
         return (l != null)? l.longValue(): -1;
     }
 
@@ -473,8 +476,10 @@ implements CrawlURIDispositionListener, Serializable {
      * @param host name of the host
      * @return the accumulated number of bytes downloaded from a given host
      */
-    public synchronized long getBytesPerHost(String host){
-        return ((LongWrapper)hostsBytes.get(host)).longValue;
+    public long getBytesPerHost(String host){
+        synchronized(hostsBytes){
+            return ((LongWrapper)hostsBytes.get(host)).longValue;
+        }
     }
 
     /**
@@ -649,10 +654,16 @@ implements CrawlURIDispositionListener, Serializable {
                 curi.getContentSize());
     }
     
-    protected synchronized void saveHostStats(String hostname, long size) {
-        incrementMapCount(hostsDistribution, hostname);
-        incrementMapCount(hostsBytes, hostname, size);
-        hostsLastFinished.put(hostname, new Long(System.currentTimeMillis()));
+    protected void saveHostStats(String hostname, long size) {
+        synchronized(hostsDistribution){
+            incrementMapCount(hostsDistribution, hostname);
+        }
+        synchronized(hostsBytes){
+            incrementMapCount(hostsBytes, hostname, size);
+        }
+        synchronized(hostsLastFinished){
+            hostsLastFinished.put(hostname, new Long(System.currentTimeMillis()));
+        }
     }
     
 
