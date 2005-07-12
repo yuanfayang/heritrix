@@ -1,4 +1,4 @@
-/* BdbUriUniqFilter
+/* RecoveryLogMapper.java
 *
 * $Id$
 *
