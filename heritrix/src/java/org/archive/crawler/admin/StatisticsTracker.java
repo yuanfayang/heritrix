@@ -812,7 +812,9 @@ implements CrawlURIDispositionListener, Serializable {
      * @return SortedMap of hosts distribution
      */
     public SortedMap getReverseSortedHostsDistribution() {
-        return getReverseSortedCopy(hostsDistribution);
+        synchronized(hostsDistribution){
+            return getReverseSortedCopy(hostsDistribution);
+        }
     }
 
     protected void writeMimetypesReportTo(PrintWriter writer) {
