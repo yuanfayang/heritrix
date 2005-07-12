@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.util.TextUtils;
 
 /**
  * CostAssignmentPolicy that further penalizes URIs with
@@ -41,17 +42,17 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author gojomo
  */
 public class AntiCalendarCostAssignmentPolicy extends WagCostAssignmentPolicy {
-    public static Pattern CALENDARISH = Pattern.compile(
+    public static String CALENDARISH =
             "(?i)(calendar)|(year)|(month)|(day)|(date)|(viewcal)" +
             "|(\\D19\\d\\d\\D)|(\\D20\\d\\d\\D)|(event)|(yr=)" +
-            "|(calendrier)|(jour)");
+            "|(calendrier)|(jour)";
     
     /* (non-Javadoc)
      * @see org.archive.crawler.frontier.CostAssignmentPolicy#costOf(org.archive.crawler.datamodel.CrawlURI)
      */
     public int costOf(CrawlURI curi) {
         int cost = super.costOf(curi);
-        Matcher m = CALENDARISH.matcher(curi.toString());
+        Matcher m = TextUtils.getMatcher(CALENDARISH, curi.toString());
         if (m.find()) {
             cost++;
             // TODO: consider if multiple occurences should cost more
