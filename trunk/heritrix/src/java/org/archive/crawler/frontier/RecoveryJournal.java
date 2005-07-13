@@ -27,6 +27,7 @@ package org.archive.crawler.frontier;
 import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
 import it.unimi.dsi.mg4j.util.MutableString;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -49,7 +51,6 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.util.ArchiveUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.Latch;
-import EDU.oswego.cs.dl.util.concurrent.Semaphore;
 
 /**
  * Helper class for managing a simple Frontier change-events journal which is
@@ -120,8 +121,7 @@ implements FrontierJournal {
 
     public synchronized void added(CrawlURI curi) {
         accumulatingBuffer.length(0);
-        this.accumulatingBuffer.append('\n').
-            append(F_ADD).
+        this.accumulatingBuffer.append(F_ADD).
             append(curi.toString()).
             append(" "). 
             append(curi.getPathFromSeed()).
@@ -139,11 +139,11 @@ implements FrontierJournal {
     }
     
     protected void finishedSuccess(String uuri) {
-        writeLine("\n" + F_SUCCESS + uuri);
+        writeLine(F_SUCCESS, uuri);
     }
 
     public void emitted(CrawlURI curi) {
-        writeLine("\n" + F_EMIT + curi.toString());
+        writeLine(F_EMIT, curi.toString());
 
     }
 
@@ -156,15 +156,16 @@ implements FrontierJournal {
     }
     
     public void finishedFailure(String u) {
-        writeLine("\n" + F_FAILURE + u);
+        writeLine(F_FAILURE, u);
     }
 
     public void rescheduled(CrawlURI curi) {
-        writeLine("\n" + F_RESCHEDULE + curi.toString());
+        writeLine(F_RESCHEDULE, curi.toString());
     }
 
     private synchronized void writeLine(String string) {
         try {
+            this.out.write("\n");
             this.out.write(string);
             noteLine();
         } catch (IOException e) {
@@ -172,9 +173,32 @@ implements FrontierJournal {
         }
     }
 
+    private synchronized void writeLine(String s1, String s2) {
+        try {
+            this.out.write("\n");
+            this.out.write(s1);
+            this.out.write(s2);
+            noteLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
     private synchronized void writeLine(MutableString mstring) {
         try {
+            this.out.write("\n");
             mstring.write(out);
+            noteLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private synchronized void writeLine(MutableString m1, MutableString m2) {
+        try {
+            this.out.write("\n");
+            m1.write(out);
+            m2.write(out);
             noteLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -248,20 +272,23 @@ implements FrontierJournal {
      * @return number of lines in recovery log (for reference)
      * @throws IOException
      */
-    private static int importCompletionInfoFromLog(File source, Frontier frontier, boolean retainFailures) throws IOException {
+    private static int importCompletionInfoFromLog(File source, 
+            Frontier frontier, boolean retainFailures) throws IOException {
         // Scan log for all 'Fs' lines: add as 'alreadyIncluded'
-        BufferedReader reader = getBufferedReader(source);
-        String read;
+        BufferedInputStream is = getBufferedInput(source);
+        // create MutableString of good starting size (will grow if necessary)
+        MutableString read = new MutableString(UURI.MAX_URL_LENGTH); 
         int lines = 0; 
         try {
-            while ((read = reader.readLine()) != null) {
+            while (readLine(is,read)) {
                 lines++;
                 boolean wasSuccess = read.startsWith(F_SUCCESS);
                 if (wasSuccess
 						|| (retainFailures && read.startsWith(F_FAILURE))) {
-                    String args[] = read.split("\\s+");
+                    // retrieve first (only) URL on line 
+                    String s = read.subSequence(3,read.length()).toString();
                     try {
-                        UURI u = UURIFactory.getInstance(args[1]);
+                        UURI u = UURIFactory.getInstance(s);
                         frontier.considerIncluded(u);
                         if(wasSuccess) {
                             frontier.getFrontierJournal().finishedSuccess(u);
@@ -275,19 +302,50 @@ implements FrontierJournal {
                     }
                 }
                 if((lines%PROGRESS_INTERVAL)==0) {
-                    // every 5 million lines, print progress
+                    // every 1 million lines, print progress
                     LOGGER.info(
                             "at line " + lines 
                             + " alreadyIncluded count = " +
                             frontier.discoveredUriCount());
                 }
             }
-        } catch (EOFException e1) {
-            // no problem; end of recovery journal
+        } catch (EOFException e) {
+            // expected in some uncleanly-closed recovery logs; ignore
         } finally {
-            reader.close();
+            is.close();
         }
         return lines;
+    }
+
+    /**
+     * Read a line from the given bufferedinputstream into the MutableString.
+     * Return true if a line was read; false if EOF. 
+     * 
+     * @param is
+     * @param read
+     * @return
+     * @throws IOException
+     */
+    private static boolean readLine(BufferedInputStream is, MutableString read) throws IOException {
+        read.length(0);
+        int c = is.read();
+        while((c!=-1)&&c!='\n'&&c!='\r') {
+            read.append((char)c);
+            c = is.read();
+        }
+        if(c==-1 && read.length()==0) {
+            // EOF and none read; return false
+            return false;
+        }
+        if(c=='\n') {
+            // consume LF following CR, if present
+            is.mark(1);
+            if(is.read()!='\r') {
+                is.reset();
+            }
+        }
+        // a line (possibly blank) was read
+        return true;
     }
 
     /**
@@ -301,8 +359,9 @@ implements FrontierJournal {
      * @throws IOException
      */
     private static void importQueuesFromLog(File source, Frontier frontier, int lines, Latch enough) {
-        BufferedReader reader;
-        String read;
+        BufferedInputStream is;
+        // create MutableString of good starting size (will grow if necessary)
+        MutableString read = new MutableString(UURI.MAX_URL_LENGTH);
         long queuedAtStart = frontier.queuedUriCount();
         long queuedDuringRecovery = 0;
         int qLines = 0;
@@ -310,21 +369,21 @@ implements FrontierJournal {
         try {
             // Scan log for all 'F+' lines: if not alreadyIncluded, schedule for
             // visitation
-            reader = getBufferedReader(source);
+            is = getBufferedInput(source);
             try {
-                while ((read = reader.readLine()) != null) {
+                while (readLine(is,read)) {
                     qLines++;
                     if (read.startsWith(F_ADD)) {
                         UURI u;
-                        String args[] = read.split("\\s+");
+                        CharSequence args[] = splitOnSpaceRuns(read);
                         try {
-                            u = UURIFactory.getInstance(args[1]);
+                            u = UURIFactory.getInstance(args[1].toString());
                             String pathFromSeed = (args.length > 2)?
-                                args[2]: "";
+                                args[2].toString() : "";
                             UURI via = (args.length > 3)?
-                                    UURIFactory.getInstance(args[3]) : null;
+                                    UURIFactory.getInstance(args[3].toString()) : null;
                             String viaContext = (args.length > 4)?
-                                    args[4]: "";
+                                    args[4].toString(): "";
                             CandidateURI caUri = new CandidateURI(u, 
                                     pathFromSeed, via, viaContext);
                             frontier.schedule(caUri);
@@ -338,7 +397,7 @@ implements FrontierJournal {
                         }
                     }
                     if((qLines%PROGRESS_INTERVAL)==0) {
-                        // every 5 million lines, print progress
+                        // every 1 million lines, print progress
                         LOGGER.info(
                                 "through line " 
                                 + qLines + "/" + lines 
@@ -349,14 +408,43 @@ implements FrontierJournal {
             } catch (EOFException e) {
                 // no problem: untidy end of recovery journal
             } finally {
-            	    reader.close(); 
+            	    is.close(); 
             }
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        LOGGER.info("finished recovering frontier from "+source);
+        LOGGER.info("finished recovering frontier from "+source+" "
+                +qLines+" lines processed");
         enough.release();
+    }
+
+    /**
+     * Return an array of the subsequences of the passed-in sequence,
+     * split on space runs. 
+     * 
+     * @param read
+     * @return
+     */
+    private static CharSequence[] splitOnSpaceRuns(CharSequence read) {
+        int lastStart = 0;
+        ArrayList segs = new ArrayList(5);
+        int i;
+        for(i=0;i<read.length();i++) {
+            if (read.charAt(i)==' ') {
+                segs.add(read.subSequence(lastStart,i));
+                i++;
+                while(i < read.length() && read.charAt(i)==' ') {
+                    // skip any space runs
+                    i++;
+                }
+                lastStart = i;
+            }
+        }
+        if(lastStart<read.length()) {
+            segs.add(read.subSequence(lastStart,i));
+        }
+        return (CharSequence[]) segs.toArray(new CharSequence[segs.size()]);        
     }
 
     /**
@@ -375,7 +463,23 @@ implements FrontierJournal {
     }
 
     /**
-     *  Flush and close the underlying IO objects.
+     * Get a BufferedInputStream on the recovery file given.
+     *
+     * @param source file to open
+     * @return Recover log buffered input stream.
+     * @throws IOException
+     */
+    public static BufferedInputStream getBufferedInput(File source)
+    throws IOException {
+        boolean isGzipped = source.getName().toLowerCase().
+            endsWith(GZIP_SUFFIX);
+        FileInputStream fis = new FileInputStream(source);
+        return isGzipped ? new BufferedInputStream(new GZIPInputStream(fis))
+                : new BufferedInputStream(fis);
+    }
+    
+    /**
+     * Flush and close the underlying IO objects.
      */
     public void close() {
         if (this.out == null) {
