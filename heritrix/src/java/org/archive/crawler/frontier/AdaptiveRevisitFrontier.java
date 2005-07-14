@@ -22,6 +22,7 @@
 */
 package org.archive.crawler.frontier;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -43,6 +44,7 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UURI;
+import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.FrontierMarker;
@@ -66,15 +68,12 @@ import org.archive.util.ArchiveUtils;
  * The Frontier borrows many things from HostQueuesFrontier, but implements 
  * an entirely different strategy in issuing URIs and consequently in keeping a
  * record of discovered URIs.
- * <p>
- * NOTE: When serializing a CrawlURI, any data in the AList other then Strings,
- * longs and ints, will be discarded because they may not be serializable.
  *
  * @author Kristinn Sigurdsson
  */
 public class AdaptiveRevisitFrontier extends ModuleType 
 implements Frontier, FetchStatusCodes, CoreAttributeConstants,
-        AdaptiveRevisitAttributeConstants {
+        AdaptiveRevisitAttributeConstants, CrawlStatusListener {
     private static final Logger logger =
         Logger.getLogger(AdaptiveRevisitFrontier.class.getName());
 
@@ -141,7 +140,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         this(name, "AdaptiveRevisitFrontier. EXPERIMENTAL Frontier that " +
                 "will repeatedly visit all " +
                 "encountered URIs. Wait time between visits is configurable" +
-                " and varies based on observed changes of documents. " +
+                " and is determined by seperate Processor(s). See " +
+                "WaitEvaluators " +
                 "See documentation for ARFrontier limitations.");        
     }
 
@@ -340,7 +340,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             if(waitTime > 0){
                 wait(waitTime);
             }
-            hq = hostQueues.getTopHQ(); //A busy hq may have become 'unbusy'
+            // The top HQ may have changed, so get it again
+            hq = hostQueues.getTopHQ(); 
         }             
 
         if(shouldTerminate){
@@ -423,7 +424,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             } else if (needsRetrying(curi)) {
                 // Consider errors which can be retried
                 reschedule(curi,true);
-                controller.fireCrawledURINeedRetryEvent(curi); // Let everyone interested know that it will be retried.
+                controller.fireCrawledURINeedRetryEvent(curi);
             } else if(isDisregarded(curi)) {
                 // Check for codes that mean that while the crawler did
                 // manage to get it it must be disregarded for any reason.
@@ -434,7 +435,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             }
 
             // New items might be available, let waiting threads know
-            notify();
+            // More then one queue might have become available due to 
+            // scheduling of items outside the parent URIs host, so we
+            // wake all waiting threads.
+            notifyAll();
         } catch (RuntimeException e) {
             curi.setFetchStatus(S_RUNTIME_EXCEPTION);
             // store exception temporarily for logging
@@ -473,13 +477,15 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @param curi The CrawlURI
      */
     protected void successDisposition(CrawlURI curi) {
-        totalProcessedBytes += curi.getContentSize();
         curi.aboutToLog();
+
+        long waitInterval = 0;
         
         if(curi.containsKey(A_WAIT_INTERVAL)){
+            waitInterval = curi.getLong(A_WAIT_INTERVAL);
             curi.addAnnotation("wt:" + 
                     ArchiveUtils.formatMillisecondsToConventional(
-                    (curi.getLong(A_WAIT_INTERVAL))));
+                            waitInterval));
         } else {
             logger.severe("Missing wait interval for " + curi.toString() +
                     " WaitEvaluator may be missing.");
@@ -511,8 +517,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         
         curi.setSchedulingDirective(CandidateURI.NORMAL);
 
-        long waitInterval = curi.getLong(A_WAIT_INTERVAL);
-
         // Set time of next processing
         curi.putLong(A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis()+waitInterval);
@@ -521,18 +525,19 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         /* Update HQ */
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         
-        long snoozeTime = calculateSnoozeTime(curi);
+        // Wake up time is based on the time when a fetch was completed + the
+        // calculated snooze time for politeness. If the fetch completion time
+        // is missing, we'll use current time.
+        long wakeupTime = (curi.containsKey(A_FETCH_COMPLETED_TIME)?
+                curi.getLong(A_FETCH_COMPLETED_TIME):
+                    (new Date()).getTime()) + calculateSnoozeTime(curi);
         
         // Ready the URI for reserialization.
         curi.processingCleanup(); 
         curi.resetDeferrals();   
         curi.resetFetchAttempts();
         try {
-            hq.update(curi, true,
-                (curi.containsKey(A_FETCH_COMPLETED_TIME)?
-                        curi.getLong(A_FETCH_COMPLETED_TIME):
-                        (new Date()).getTime()) + snoozeTime
-                    );
+            hq.update(curi, true, wakeupTime);
         } catch (IOException e) {
             logger.severe("An IOException occured when updating " + 
                     curi.toString() + "\n" + e.getMessage());
@@ -544,7 +549,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * Put near top of relevant hostQueue (but behind anything recently
      * scheduled 'high')..
      *
-     * @param curi CrawlURI to reschedule.
+     * @param curi CrawlURI to reschedule. Its time of next processing is not
+     *             modified.
      * @param errorWait signals if there should be a wait before retrying.
      * @throws AttributeNotFoundException
      */
@@ -555,10 +561,14 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             if(curi.containsKey(A_RETRY_DELAY)) {
                 delay = curi.getLong(A_RETRY_DELAY);
             } else {
-                // use overall default
+                // use ARFrontier default
                 delay = ((Long)getAttribute(ATTR_RETRY_DELAY,curi)).longValue();
             }
         }
+        
+        long retryTime = (curi.containsKey(A_FETCH_COMPLETED_TIME)?
+                curi.getLong(A_FETCH_COMPLETED_TIME):
+                    (new Date()).getTime()) + delay;
         
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         // Ready the URI for reserialization.
@@ -567,7 +577,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             curi.resetDeferrals(); //Defferals only refer to immediate retries.
         }
         try {
-            hq.update(curi, errorWait, delay);
+            hq.update(curi, errorWait, retryTime);
         } catch (IOException e) {
             // TODO Handle IOException
             e.printStackTrace();
@@ -632,16 +642,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             curi.getUURI().toString(),
             array);
 
-        // if exception, also send to crawlErrors
-        if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
-            controller.runtimeErrors.log(
-                Level.WARNING,
-                curi.getUURI().toString(),
-                array);
-        }
         disregardedUriCount++;
         
-        curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); //Todo: consider timout before retrying disregarded elements.
+        // Todo: consider timout before retrying disregarded elements.
+        //       Possibly add a setting to the WaitEvaluators?
+        curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); 
         curi.setSchedulingDirective(CandidateURI.NORMAL);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
@@ -670,7 +675,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     protected boolean shouldBeForgotten(CrawlURI curi) {
         switch(curi.getFetchStatus()) {
             case S_OUT_OF_SCOPE:
-            case S_BLOCKED_BY_USER:
             case S_TOO_MANY_EMBED_HOPS:
             case S_TOO_MANY_LINK_HOPS:
                 return true;
@@ -729,19 +733,23 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     protected boolean needsRetrying(CrawlURI curi)
             throws AttributeNotFoundException {
-        //
-        if (curi.getFetchAttempts() >= ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
+        // Check to see if maximum number of retries has been exceeded.
+        if (curi.getFetchAttempts() >= 
+            ((Integer)getAttribute(ATTR_MAX_RETRIES,curi)).intValue() ) {
             return false;
-        }
-        switch (curi.getFetchStatus()) {
-            case S_CONNECT_FAILED:
-            case S_CONNECT_LOST:
-            case S_DOMAIN_UNRESOLVABLE:
-                // these are all worth a retry
-                // TODO: consider if any others (S_TIMEOUT in some cases?) deserve retry
-                return true;
-            default:
-                return false;
+        } else {
+            // Check if FetchStatus indicates that a delayed retry is needed.
+            switch (curi.getFetchStatus()) {
+                case S_CONNECT_FAILED:
+                case S_CONNECT_LOST:
+                case S_DOMAIN_UNRESOLVABLE:
+                    // these are all worth a retry
+                    // TODO: consider if any others (S_TIMEOUT in some cases?) 
+                    //       deserve retry
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
     
@@ -877,7 +885,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     public synchronized ArrayList getURIsList(FrontierMarker marker,
             int numberOfMatches, boolean verbose)
-    throws InvalidFrontierMarkerException {
+        throws InvalidFrontierMarkerException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -918,7 +926,6 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     }
     synchronized public void terminate() { 
         shouldTerminate = true;
-        hostQueues.close();
     }  
 
     /* (non-Javadoc)
@@ -989,6 +996,56 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     public synchronized void reportTo(String name, PrintWriter writer) throws IOException {
         // ignore name; only one report for now
         hostQueues.reportTo(writer);
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
+     */
+    public void crawlStarted(String message) {
+        // Not interested
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
+     */
+    public void crawlEnding(String sExitMessage) {
+        // Not interested
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
+     */
+    public void crawlEnded(String sExitMessage) {
+        // Cleanup!
+        hostQueues.close();
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
+     */
+    public void crawlPausing(String statusMessage) {
+        // Not interested
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
+     */
+    public void crawlPaused(String statusMessage) {
+        // Not interested
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
+     */
+    public void crawlResuming(String statusMessage) {
+        // Not interested
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.event.CrawlStatusListener#crawlCheckpoint(java.io.File)
+     */
+    public void crawlCheckpoint(File checkpointDir) throws Exception {
+        // Not interested
     }
     
 }
