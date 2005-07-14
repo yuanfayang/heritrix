@@ -520,6 +520,15 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         
         /* Update HQ */
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
+        
+        long snoozeTime = 0;
+        try{
+            snoozeTime = calculateSnoozeTime(curi);
+        } catch (AttributeNotFoundException e) {
+            logger.severe("Unable to locate fetch completion time for " + 
+                    curi.toString());
+        }
+        
         // Ready the URI for reserialization.
         curi.processingCleanup(); 
         curi.resetDeferrals();   
@@ -528,15 +537,12 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             hq.update(curi, true,
                 (curi.containsKey(A_FETCH_COMPLETED_TIME)?
                         curi.getLong(A_FETCH_COMPLETED_TIME):
-                        (new Date()).getTime()) +
-                    calculateSnoozeTime(curi));
+                        (new Date()).getTime()) + snoozeTime
+                    );
         } catch (IOException e) {
             logger.severe("An IOException occured when updating " + 
                     curi.toString() + "\n" + e.getMessage());
             e.printStackTrace();
-        } catch (AttributeNotFoundException e) {
-            logger.severe("Unable to locate fetch completion time for " + 
-                    curi.toString());
         }
     }
 
