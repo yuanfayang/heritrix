@@ -521,13 +521,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         /* Update HQ */
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         
-        long snoozeTime = 0;
-        try{
-            snoozeTime = calculateSnoozeTime(curi);
-        } catch (AttributeNotFoundException e) {
-            logger.severe("Unable to locate fetch completion time for " + 
-                    curi.toString());
-        }
+        long snoozeTime = calculateSnoozeTime(curi);
         
         // Ready the URI for reserialization.
         curi.processingCleanup(); 
@@ -772,38 +766,45 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      *
      * @param curi The CrawlURI
      * @return How long to snooze.
-     * @throws AttributeNotFoundException
      */
-    protected long calculateSnoozeTime(CrawlURI curi)
-    throws AttributeNotFoundException {
+    protected long calculateSnoozeTime(CrawlURI curi) {
         long durationToWait = 0;
         if (curi.containsKey(A_FETCH_BEGAN_TIME)
             && curi.containsKey(A_FETCH_COMPLETED_TIME)) {
-
-            long completeTime = curi.getLong(A_FETCH_COMPLETED_TIME);
-            long durationTaken = 
-                (completeTime - curi.getLong(A_FETCH_BEGAN_TIME));
             
-            durationToWait = (long)(
-                    ((Float) getAttribute(ATTR_DELAY_FACTOR, curi))
-                        .floatValue() * durationTaken);
-
-            long minDelay = 
-                ((Integer) getAttribute(ATTR_MIN_DELAY, curi)).longValue();
+            try{
             
-            if (minDelay > durationToWait) {
-                // wait at least the minimum
-                durationToWait = minDelay;
-            }
-
-            long maxDelay = ((Integer) getAttribute(ATTR_MAX_DELAY, curi)).longValue();
-            if (durationToWait > maxDelay) {
-                // wait no more than the maximum
-                durationToWait = maxDelay;
+                long completeTime = curi.getLong(A_FETCH_COMPLETED_TIME);
+                long durationTaken = 
+                    (completeTime - curi.getLong(A_FETCH_BEGAN_TIME));
+                
+                durationToWait = (long)(
+                        ((Float) getAttribute(ATTR_DELAY_FACTOR, curi))
+                            .floatValue() * durationTaken);
+    
+                long minDelay = 
+                    ((Integer) getAttribute(ATTR_MIN_DELAY, curi)).longValue();
+                
+                if (minDelay > durationToWait) {
+                    // wait at least the minimum
+                    durationToWait = minDelay;
+                }
+    
+                long maxDelay = ((Integer) getAttribute(ATTR_MAX_DELAY, curi)).longValue();
+                if (durationToWait > maxDelay) {
+                    // wait no more than the maximum
+                    durationToWait = maxDelay;
+                }
+            } catch (AttributeNotFoundException e) {
+                logger.severe("Unable to find attribute. " + 
+                        curi.toString());
+                //Wait for max interval.
+                durationToWait = DEFAULT_MAX_DELAY.longValue();
             }
 
         }
-        long ret = durationToWait > 0 ? durationToWait : 0;
+        long ret = durationToWait > DEFAULT_MIN_DELAY.longValue() ? 
+                durationToWait : DEFAULT_MIN_DELAY.longValue();
         logger.finest("Snooze time for " + curi.toString() + " = " + ret );
         return ret;
     }
