@@ -52,6 +52,7 @@ import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.settings.ModuleType;
+import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.queue.MemQueue;
@@ -113,7 +114,21 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     public final static String ATTR_PREFERENCE_EMBED_HOPS =
         "preference-embed-hops";
     private final static Integer DEFAULT_PREFERENCE_EMBED_HOPS = new Integer(0); 
+    
+    /** Queue assignment to force on CrawlURIs. Intended to be used 
+     *  via overrides*/
+    public final static String ATTR_FORCE_QUEUE = "force-queue-assignment";
+    protected final static String DEFAULT_FORCE_QUEUE = "";
+    /** Acceptable characters in forced queue names.
+     *  Word chars, dash, period, comma, colon */
+    protected final static String ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.,:]*";
 
+    /** Should the queue assignment ignore www in hostnames, effectively 
+     *  stripping them away. 
+     */
+    public final static String ATTR_QUEUE_IGNORE_WWW = "queue-ignore-www";
+    protected final static Boolean DEFAULT_QUEUE_IGNORE_WWW = new Boolean(false);
+    
     private CrawlController controller;
     
     private AdaptiveRevisitQueueList hostQueues;
@@ -179,6 +194,29 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                     " host.",
                     DEFAULT_HOST_VALENCE));
             t.setExpertSetting(true);
+            t = addElementToDefinition(new SimpleType(ATTR_QUEUE_IGNORE_WWW,
+                    "If true then documents from x.com, www.x.com and any " +
+                    "www[0-9]+.x.com will be assigned to the same queue.",
+                    DEFAULT_QUEUE_IGNORE_WWW));
+            t.setExpertSetting(true);
+            t = addElementToDefinition(new SimpleType(
+                    ATTR_FORCE_QUEUE,
+                    "The queue name into which to force URIs. Should "
+                    + "be left blank at global level.  Specify a "
+                    + "per-domain/per-host override to force URIs into "
+                    + "a particular named queue, regardless of the assignment "
+                    + "policy in effect (domain or ip-based politeness). "
+                    + "This could be used on domains known to all be from "
+                    + "the same small set of IPs (eg blogspot, dailykos, etc.) "
+                    + "to simulate IP-based politeness, or it could be used if "
+                    + "you wanted to enforce politeness over a whole domain, even "
+                    + "though the subdomains are split across many IPs.",
+                    DEFAULT_FORCE_QUEUE));
+            t.setOverrideable(true);
+            t.setExpertSetting(true);
+            t.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FORCE_QUEUE,
+                    Level.WARNING, "This field must contain only alphanumeric "
+                    + "characters plus period, dash, comma, colon, or underscore."));
 
         // Register persistent CrawlURI items 
         CrawlURI.addAlistPersistentMember(A_CONTENT_STATE_KEY);
@@ -188,6 +226,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     public synchronized void initialize(CrawlController c)
             throws FatalConfigurationException, IOException {
         controller = c;
+        controller.addCrawlStatusListener(this);
+
         queueAssignmentPolicy = new HostnameQueueAssignmentPolicy();
         
         hostQueues = new AdaptiveRevisitQueueList(c.getBdbEnvironment(),
@@ -218,7 +258,21 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     }
     
     public String getClassKey(CandidateURI cauri) {
-        return this.queueAssignmentPolicy.getClassKey(controller, cauri);
+        String queueKey = (String)getUncheckedAttribute(cauri,
+                ATTR_FORCE_QUEUE);
+            if ("".equals(queueKey)) {
+                // Typical case, barring overrides
+                queueKey =
+                    queueAssignmentPolicy.getClassKey(controller, cauri);
+                // The queueAssignmentPolicy is always based on Hostnames
+                // We may need to remove any www[0-9]{0,}\. prefixes from the
+                // hostnames
+                if(((Boolean)getUncheckedAttribute(
+                        cauri,ATTR_QUEUE_IGNORE_WWW)).booleanValue()){
+                    queueKey = queueKey.replaceAll("^www[0-9]{0,}\\.","");
+                }
+            }
+            return queueKey;
     }
 
     /**
@@ -236,7 +290,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             // New CrawlURIs get 'current time' as the time of next processing.
         }
         
-        curi.setClassKey(getClassKey(curi));
+        if(curi.getClassKey() == null){
+            curi.setClassKey(getClassKey(curi));
+        }
 
         if(curi.isSeed() && curi.getVia() != null
                 && curi.flattenVia().length() > 0) {
