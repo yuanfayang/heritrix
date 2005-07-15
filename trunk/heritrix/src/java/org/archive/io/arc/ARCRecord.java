@@ -392,8 +392,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
                 (this.httpHeaderStream.available() > 0)) {
             // If http header, return bytes from it before we go to underlying
             // stream.
-            read = Math.min(length - offset,
-                this.httpHeaderStream.available());
+            read = Math.min(length - offset, this.httpHeaderStream.available());
             if (read == 0) {
                 read = -1;
             } else {
@@ -405,7 +404,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
             }
         } else {
             read = Math.min(length - offset, available());
-            if (read == 0) {
+            if (read == -1 || read == 0) {
                 read = -1;
             } else {
                 read = this.in.read(b, offset, read);
