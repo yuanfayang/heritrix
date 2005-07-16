@@ -1,4 +1,4 @@
-/* BloomFilter32bit
+/* BloomFilter
 *
 * $Id$
 *
@@ -38,6 +38,9 @@ import java.security.SecureRandom;
  * <ul>
  * <li>Adapted to use 32bit ops as much as possible... may be slightly
  * faster on 32bit hardware/OS</li>
+ * <li>Changed to use bitfield that is a power-of-two in size, allowing
+ * hash() to use bitshifting rather than modulus... may be slightly
+ * faster</li>
  * <li>NUMBER_OF_WEIGHTS is 2083, to better avoid collisions between 
  * similar strings</li>
  * <li>Removed dependence on cern.colt MersenneTwister (replaced with
@@ -68,15 +71,21 @@ import java.security.SecureRandom;
  *
  * @author Sebastiano Vigna
  */
-public class BloomFilter32bit implements Serializable, BloomFilter {
+public class BloomFilter32bp2Split implements Serializable, BloomFilter {
     /** The number of weights used to create hash functions. */
     final public static int NUMBER_OF_WEIGHTS = 2083; // CHANGED FROM 16
     /** The number of bits in this filter. */
     final public long m; 
+    /** the power-of-two that m is */
+    final public long power; // 1<<power == m
     /** The number of hash functions used by this filter. */
     final public int d;
     /** The underlying bit vectorS. */
-    final private int[] bits;
+    final private int[][] bits;
+    /** Bitshift to get first index */
+    final private int aShift;
+    /** Mask to get second index */
+    final private int bMask;
     /** The random integers used to generate the hash functions. */
     final private int[][] weight;
 
@@ -97,15 +106,26 @@ public class BloomFilter32bit implements Serializable, BloomFilter {
      * @param d the number of hash functions; if the filter add not more than <code>n</code> elements,
      * false positives will happen with probability 2<sup>-<var>d</var></sup>.
      */
-    public BloomFilter32bit( final int n, final int d ) {
+    public BloomFilter32bp2Split( final int n, final int d ) {
         this.d = d;
-        int len =
-        	(int)Math.ceil( ( (long)n * (long)d / NATURAL_LOG_OF_2 ) / 32 );
-        this.m = len*32L;
-        if ( m >= 1L<<32 ) {
+        long minBits = (long) ((long)n * (long)d / NATURAL_LOG_OF_2);
+        long pow = 0;
+        while((1L<<pow) < minBits) {
+        	pow++;
+        }
+        this.power = pow;
+        this.m = 1L<<pow;
+        int len = (int) (m / 32);
+        if ( m > 1L<<32 ) {
         	throw new IllegalArgumentException( "This filter would require " + m + " bits" );
         }
-        bits = new int[ len ];
+
+        aShift = (int) (pow - ADDRESS_BITS_PER_UNIT - 8);
+        bMask = (1<<aShift) - 1;
+        bits = new int[256][ 1<<aShift ];
+
+        System.out.println("power "+power+" bits "+m+" len "+len);
+        System.out.println("aShift "+aShift+" bMask "+bMask);
 
         if ( DEBUG ) System.err.println( "Number of bits: " + m );
 
@@ -137,11 +157,11 @@ public class BloomFilter32bit implements Serializable, BloomFilter {
      * @param k a hash function index (smaller than {@link #d}).
      * @return the position in the filter corresponding to <code>s</code> for the hash function <code>k</code>.
      */
-	private long hash( final CharSequence s, final int l, final int k ) {
+	private int hash( final CharSequence s, final int l, final int k ) {
 		final int[] w = weight[ k ];
 		int h = 0, i = l;
 		while( i-- != 0 ) h ^= s.charAt( i ) * w[ i % NUMBER_OF_WEIGHTS ];
-		return ((long)h-Integer.MIN_VALUE) % m; 
+		return h >>> (32-power); 
 	}
 
     /** Checks whether the given character sequence is in this filter.
@@ -172,18 +192,17 @@ public class BloomFilter32bit implements Serializable, BloomFilter {
     public boolean add( final CharSequence s ) {
         boolean result = false;
         int i = d, l = s.length();
-        long h;
+        int h;
         while( i-- != 0 ) {
             h = hash( s, l, i );
-            if ( ! getBit( h ) ) result = true;
-            setBit( h );
+            if ( ! setGetBit( h ) ) result = true;
         }
         if ( result ) size++;
         return result;
     }
     
-    protected final static long ADDRESS_BITS_PER_UNIT = 5; // 32=2^5
-    protected final static long BIT_INDEX_MASK = 31; // = BITS_PER_UNIT - 1;
+    protected final static int ADDRESS_BITS_PER_UNIT = 5; // 32=2^5
+    protected final static int BIT_INDEX_MASK = 31; // = BITS_PER_UNIT - 1;
 
     /**
      * Returns from the local bitvector the value of the bit with 
@@ -196,8 +215,9 @@ public class BloomFilter32bit implements Serializable, BloomFilter {
      * @param     bitIndex   the bit index.
      * @return    the value of the bit with the specified index.
      */
-    protected boolean getBit(long bitIndex) {
-        return ((bits[(int)(bitIndex >> ADDRESS_BITS_PER_UNIT)] & (1 << (bitIndex & BIT_INDEX_MASK))) != 0);
+    protected boolean getBit(int bitIndex) {
+        int intIndex = (int)(bitIndex >>> ADDRESS_BITS_PER_UNIT);
+        return ((bits[intIndex>>>aShift][intIndex&bMask] & (1 << (bitIndex & BIT_INDEX_MASK))) != 0);
     }
 
     /**
@@ -207,14 +227,33 @@ public class BloomFilter32bit implements Serializable, BloomFilter {
      * 
      * @param     bitIndex   the index of the bit to be set.
      */
-    protected void setBit(long bitIndex) {
-            bits[(int)(bitIndex >> ADDRESS_BITS_PER_UNIT)] |= 1 << (bitIndex & BIT_INDEX_MASK);
+    protected void setBit(int bitIndex) {
+        int intIndex = (int)(bitIndex >>> ADDRESS_BITS_PER_UNIT);
+        bits[intIndex>>>aShift][intIndex&bMask] |= 1 << (bitIndex & BIT_INDEX_MASK);
     }
-
+    
+    /**
+     * Sets the bit with index <tt>bitIndex</tt> in local bitvector -- 
+     * returning the old value. 
+     *
+     * (adapted from cern.colt.bitvector.QuickBitVector)
+     * 
+     * @param     bitIndex   the index of the bit to be set.
+     */
+    protected boolean setGetBit(int bitIndex) {
+        int intIndex = (int)(bitIndex >>> ADDRESS_BITS_PER_UNIT);
+        int a = intIndex>>>aShift;
+        int b = intIndex&bMask;
+        int mask = 1 << (bitIndex & BIT_INDEX_MASK);
+        boolean ret = ((bits[a][b] & (mask)) != 0);
+        bits[a][b] |= mask;
+        return ret;
+    }
+    
 	/* (non-Javadoc)
 	 * @see org.archive.util.BloomFilter#getSizeBytes()
 	 */
 	public long getSizeBytes() {
-		return bits.length*4;
+		return bits.length*bits[0].length*4;
 	}
 }
