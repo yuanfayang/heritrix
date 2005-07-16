@@ -86,7 +86,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
      * in active rotation. (As a result, queue's next try may be much
      * further in the future than the snooze target delay.)
      */
-    private static long SNOOZE_TO_INACTIVE_DELAY = 5*60*100; // 5 minutes
+    public static long SNOOZE_TO_INACTIVE_DELAY_MS = 5*60*1000; // 5 minutes
     // TODO: make configurable
     
     private static final Logger logger =
@@ -854,7 +854,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     private void snoozeQueue(WorkQueue wq, long now, long delay_ms) {
         long nextTime = now + delay_ms;
         wq.setWakeTime(nextTime);
-        if(delay_ms>SNOOZE_TO_INACTIVE_DELAY && ! readyClassQueues.isEmpty()) {
+        if(delay_ms>SNOOZE_TO_INACTIVE_DELAY_MS && ! readyClassQueues.isEmpty()) {
             deactivateQueue(wq);
         } else {
             snoozedClassQueues.add(wq);
