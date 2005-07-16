@@ -24,17 +24,26 @@
  */
 package org.archive.io.arc;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
+import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.io.GzipHeader;
 import org.archive.io.GzippedInputStream;
+
+import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
 
 
 /**
@@ -45,7 +54,9 @@ import org.archive.io.GzippedInputStream;
  * @author stack
  */
 public class ARCReaderFactory implements ARCConstants {
-
+    private static final File TMPDIR =
+        new File(System.getProperty("java.io.tmpdir", "/tmp"));
+    
     /**
      * This factory instance.
      */
@@ -68,13 +79,130 @@ public class ARCReaderFactory implements ARCConstants {
     }
     
     /**
+     * Get ARCReader on passed path or url.
+     * Does primitive heuristic figuring if path or URL.
+     * @param arcFileOrUrl File path or URL pointing at an ARC.
+     * @return An ARCReader.
+     * @throws IOException 
+     * @throws MalformedURLException 
+     * @throws IOException 
+     */
+    public static ARCReader get(String arcFileOrUrl)
+    throws MalformedURLException, IOException {
+        return UURIFactory.hasScheme(arcFileOrUrl)?
+            get(new URL(arcFileOrUrl)): get(new File(arcFileOrUrl));
+    }
+    
+    /**
+     * Pass an URL to an ARC.
+     * Currently, this method pulls the ARC local into whereever the System
+     * Property 'java.io.tmpdir' points.  It then hands back an ARCReader that
+     * points at this local copy.  A close on this ARCReader instance will
+     * remove the local copy.
+     * @param arcUrl An URL that points at an ARC.
+     * @return An ARCReader.
+     * @throws IOException 
+     */
+    public static ARCReader get(final URL arcUrl) throws IOException {
+        final File tmpFile = File.createTempFile("ARCReader", ".arc", TMPDIR);
+        OutputStream os =
+            new FastBufferedOutputStream(new FileOutputStream(tmpFile));
+        InputStream is = null;
+        final int size = 16 * 1024;
+        final byte [] buffer = new byte[size];
+        ARCReader reader = null;
+        try {
+            is = new BufferedInputStream(arcUrl.openConnection().
+                getInputStream());
+            for (int read = -1; (read = is.read(buffer, 0, size)) != -1;) {
+                os.write(buffer, 0, read);
+            }
+            os.close();
+            os = null;
+            // Try and get arcreader while inside the try/catch so we cleanup
+            // the tmpFile if exceptions.
+            reader = get(tmpFile, true);
+        } catch (IOException e) {
+            tmpFile.delete();
+            throw e;
+        } finally {
+            if (os != null) {
+                os.close();
+            }
+            if (is != null) {
+                is.close();
+            }
+        }
+        
+        // Assign to a final variable so can assign it to inner class
+        // data member.
+        final ARCReader arcreader = reader;
+        
+        // Return a delegate that does cleanup of downloaded file on close.
+        return new ARCReader() {
+            private File fileToCleanup = tmpFile;
+            private final ARCReader delegate = arcreader;
+            
+            public void close() throws IOException {
+                this.delegate.close();
+                if (this.fileToCleanup != null && this.fileToCleanup.exists()) {
+                    this.fileToCleanup.delete();
+                    this.fileToCleanup = null;
+                }
+            }
+            
+            public ARCRecord get(long offset) throws IOException {
+                return this.delegate.get(offset);
+            }
+            
+            public boolean isDigest() {
+                return this.delegate.isDigest();
+            }
+            
+            public boolean isParseHttpHeaders() {
+                return this.delegate.isParseHttpHeaders();
+            }
+            
+            public boolean isStrict() {
+                return this.delegate.isStrict();
+            }
+            
+            public Iterator iterator() {
+                return this.delegate.iterator();
+            }
+            
+            public void setDigest(boolean d) {
+                this.delegate.setDigest(d);
+            }
+            
+            public void setParseHttpHeaders(boolean parse) {
+                this.delegate.setParseHttpHeaders(parse);
+            }
+            
+            public void setStrict(boolean s) {
+                this.delegate.setStrict(s);
+            }
+            
+            public List validate() throws IOException {
+                return this.delegate.validate();
+            }
+        };
+    }
+    
+    /**
      * @param arcFile An arcfile to read.
      * @return An ARCReader.
-     * @throws IOException
+     * @throws IOException 
      */
-    public static ARCReader get(File arcFile)
+    public static ARCReader get(final File arcFile) throws IOException {
+        return get(arcFile, false);
+    }
+    
+    protected static ARCReader get(final File arcFile,
+            final boolean skipSuffixTest)
     throws IOException {
-        boolean compressed = isCompressed(arcFile);
+        boolean compressed = ARCReaderFactory.factory.
+            testCompressedARCFile(arcFile, skipSuffixTest);
         if (!compressed) {
             if (!ARCReaderFactory.factory.testUncompressedARCFile(arcFile)) {
                 throw new IOException(arcFile.getAbsolutePath() +
@@ -87,7 +215,7 @@ public class ARCReaderFactory implements ARCConstants {
             (ARCReader)ARCReaderFactory.factory.
                 new UncompressedARCReader(arcFile);
     }
-
+    
     /**
      * Check file is compressed and in ARC GZIP format.
      *
@@ -102,45 +230,64 @@ public class ARCReaderFactory implements ARCConstants {
      */
     public boolean testCompressedARCFile(File arcFile)
     throws IOException {
+        return testCompressedARCFile(arcFile, false);
+    }
+
+    /**
+     * Check file is compressed and in ARC GZIP format.
+     *
+     * @param arcFile File to test if its Internet Archive ARC file
+     * GZIP compressed.
+     * @param skipSuffixCheck Set to true if we're not to test on the
+     * '.arc.gz' suffix.
+     *
+     * @return True if this is an Internet Archive GZIP'd ARC file (It begins
+     * w/ the Internet Archive GZIP header).
+     *
+     * @exception IOException If file does not exist or is not unreadable.
+     */
+    public boolean testCompressedARCFile(File arcFile, boolean skipSuffixCheck)
+    throws IOException {
         boolean compressedARCFile = false;
         isReadable(arcFile);
-        if(arcFile.getName().toLowerCase()
-            .endsWith(COMPRESSED_ARC_FILE_EXTENSION)) {
-            
+        if(!skipSuffixCheck && !arcFile.getName().toLowerCase()
+                .endsWith(COMPRESSED_ARC_FILE_EXTENSION)) {
+            return compressedARCFile;
+        }
+        
             FileInputStream fis = new FileInputStream(arcFile);
-            try {
-                GzipHeader gh = new GzipHeader(new FileInputStream(arcFile));
-                byte [] fextra = gh.getFextra();
-                // Now make sure following bytes are IA GZIP comment.
-                // First check length.  ARC_GZIP_EXTRA_FIELD includes length
-                // so subtract two and start compare to ARC_GZIP_EXTRA_FIELD
-                // at +2.
-                if (ARC_GZIP_EXTRA_FIELD.length - 2 == fextra.length) {
-                    compressedARCFile = true;
-                    for (int i = 0; i < fextra.length; i++) {
-                        if (fextra[i] != ARC_GZIP_EXTRA_FIELD[i + 2]) {
-                            compressedARCFile = false;
-                            break;
-                        }
+        try {
+            GzipHeader gh = new GzipHeader(new FileInputStream(arcFile));
+            byte[] fextra = gh.getFextra();
+            // Now make sure following bytes are IA GZIP comment.
+            // First check length. ARC_GZIP_EXTRA_FIELD includes length
+            // so subtract two and start compare to ARC_GZIP_EXTRA_FIELD
+            // at +2.
+            if (ARC_GZIP_EXTRA_FIELD.length - 2 == fextra.length) {
+                compressedARCFile = true;
+                for (int i = 0; i < fextra.length; i++) {
+                    if (fextra[i] != ARC_GZIP_EXTRA_FIELD[i + 2]) {
+                        compressedARCFile = false;
+                        break;
                     }
                 }
-            } finally {
-                fis.close();
             }
+        } finally {
+            fis.close();
         }
-
         return compressedARCFile;
     }
 
     /**
      * Check file is uncompressed ARC file.
-     *
-     * @param arcFile File to test if its Internet Archive ARC file
-     * uncompressed.
-     *
+     * 
+     * @param arcFile
+     *            File to test if its Internet Archive ARC file uncompressed.
+     * 
      * @return True if this is an Internet Archive ARC file.
-     *
-     * @exception IOException If file does not exist or is not unreadable.
+     * 
+     * @exception IOException
+     *                If file does not exist or is not unreadable.
      */
     public boolean testUncompressedARCFile(File arcFile) throws IOException {
         boolean uncompressedARCFile = false;

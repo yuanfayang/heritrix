@@ -74,11 +74,11 @@ extends TmpDirTestCase implements ARCConstants {
         super.tearDown();
     }
     
-    protected String getContent() {
+    protected static String getContent() {
         return getContent(null);
     }
     
-    protected String getContent(String indexStr) {
+    protected static String getContent(String indexStr) {
         String page = (indexStr != null)? "Page #" + indexStr: "Some Page";
         return "HTTP/1.1 200 OK\r\n" +
         "Content-Type: text/html\r\n\r\n" +
@@ -197,15 +197,15 @@ extends TmpDirTestCase implements ARCConstants {
             compress, DEFAULT_MAX_ARC_FILE_SIZE);
     }
     
-    protected ByteArrayOutputStream getBaos(String str)
+    protected static ByteArrayOutputStream getBaos(String str)
     throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(str.getBytes());
         return baos;
     }
     
-    protected void writeRecord(ARCWriter writer, String url, String type,
-        int len, ByteArrayOutputStream baos)
+    protected static void writeRecord(ARCWriter writer, String url,
+        String type, int len, ByteArrayOutputStream baos)
     throws IOException {
         writer.write(url, type, "192.168.1.1", (new Date()).getTime(), len,
             baos);
@@ -405,6 +405,24 @@ extends TmpDirTestCase implements ARCConstants {
         assertTrue("No gap when should be",
             message != null &&
             message.indexOf("Gap between expected and actual") >= 0);
+    }
+    
+    /**
+     * Write an arc file for other tests to use.
+     * @param arcdir Directory to write to.
+     * @param compress True if file should be compressed.
+     * @throws IOException 
+     */
+    public static File createARCFile(File arcdir, boolean compress)
+    throws IOException {
+        File [] files = {arcdir};
+        ARCWriter writer = new ARCWriter(Arrays.asList(files),
+            "test", compress, DEFAULT_MAX_ARC_FILE_SIZE);
+        String content = getContent();
+        writeRecord(writer, SOME_URL, "text/html", content.length(),
+            getBaos(content));
+        writer.close();
+        return writer.getArcFile();
     }
     
 //    public void testSpeed() throws IOException {

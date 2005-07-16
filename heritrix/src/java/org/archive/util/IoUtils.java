@@ -127,7 +127,8 @@ public class IoUtils {
      * @return String of the whole inputStream's contents
      * @throws IOException
      */
-    public static String readFullyAsString(InputStream inputStream) throws IOException {
+    public static String readFullyAsString(InputStream inputStream)
+    throws IOException {
         StringBuffer sb = new StringBuffer();
         int c;
         while((c = inputStream.read()) > -1) {

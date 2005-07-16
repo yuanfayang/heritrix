@@ -712,7 +712,7 @@ implements ARCConstants {
      * This method iterates over the file throwing exception if it fails
      * to successfully parse.
      *
-     * <p>Assumes the stream is at the start of the file.
+     * <p>We start validation from whereever we are in the stream.
      *
      * @param noRecords Number of records expected.  Pass -1 if number is
      * unknown.
@@ -722,9 +722,10 @@ implements ARCConstants {
      *
      * @throws IOException
      */
-    public List validate(int noRecords) throws IOException {
+    protected List validate(int noRecords) throws IOException {
         List metaDatas = new ArrayList();
         int count = 0;
+        setStrict(true);
         for (Iterator i = iterator(); i.hasNext();) {
             count++;
             ARCRecord r = (ARCRecord)i.next();
@@ -753,7 +754,7 @@ implements ARCConstants {
      * @return True if file can be successfully parsed.
      * Assumes the stream is at the start of the file.
      */
-    public boolean isValid() {
+    protected boolean isValid() {
         boolean valid = false;
         try {
             validate();
@@ -770,7 +771,7 @@ implements ARCConstants {
      * @return The current ARC record or null if none.
      * After construction has the arcfile header record.
      */
-    public ARCRecord getCurrentRecord() {
+    protected ARCRecord getCurrentRecord() {
         return this.currentRecord;
     }
     
@@ -1022,7 +1023,7 @@ implements ARCConstants {
     /**
      * @return True if we're digesting as we read.
      */
-    public boolean getDigest() {
+    public boolean isDigest() {
         return this.digest;
     }
 
