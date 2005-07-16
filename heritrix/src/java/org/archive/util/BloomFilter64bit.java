@@ -106,8 +106,10 @@ public class BloomFilter64bit implements Serializable, BloomFilter {
 
         if ( DEBUG ) System.err.println( "Number of bits: " + m );
 
-        final SecureRandom random = new SecureRandom();
-        random.setSeed(1996); // for predictability in repeated runs
+        // seeded for reproduceable behavior in repeated runs; BUT: 
+        // SecureRandom's default implementation (as of 1.5) 
+        // seems to mix in its own seeding.
+        final SecureRandom random = new SecureRandom(new byte[] {19,96});
         weight = new long[ d ][];
         for( int i = 0; i < d; i++ ) {
             weight[ i ] = new long[ NUMBER_OF_WEIGHTS ];

@@ -26,6 +26,7 @@ package org.archive.crawler.util;
 
 import org.archive.util.BloomFilter;
 import org.archive.util.BloomFilter32bp2;
+import org.archive.util.BloomFilter32bp2Split;
 import org.archive.util.BloomFilter64bit;
 
 import java.util.logging.Logger;
@@ -98,7 +99,7 @@ public class BloomUriUniqFilter implements UriUniqFilter {
      */
     protected void initialize(final int n, final int d) {
         this.expected_n = n;
-        bloom = new BloomFilter32bp2(n,d);
+        bloom = new BloomFilter32bp2Split(n,d);
     }
 
     public long count() {
