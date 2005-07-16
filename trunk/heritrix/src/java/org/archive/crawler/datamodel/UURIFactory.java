@@ -26,6 +26,7 @@ package org.archive.crawler.datamodel;
 
 import it.unimi.dsi.mg4j.util.MutableString;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -275,6 +276,10 @@ public class UURIFactory extends URI {
      * @return True if passed string looks like it could be an URL.
      */
     public static boolean hasScheme(String possibleUrl) {
+        if (possibleUrl.charAt(0) == File.separatorChar) {
+            return false;
+        }
+        
         // TODO: Make the test for scheme more stringent.
         final int index = possibleUrl.indexOf(':');
         if (index <= 0) {
