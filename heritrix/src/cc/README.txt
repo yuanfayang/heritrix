@@ -141,10 +141,8 @@ on this page: http://c2.com/w4/cc/wiki.cgi?GettingStartedWithCruiseControl.
 Set up the 'override.properties' file making it point into $CCBUILDDIR and then
 'chmod u+x build.sh' and then './build.sh war' under the cruisecontrol
 reporting/jsp dir.  Make sure the build completes.  I deployed the generated
-war under a jetty instance.  I downloaded jetty, copied it into place, played
-w/ settings under the jetty etc/ dir (jetty.xml) and then did
-'java -Djetty.port=8080 -jar start.jar' under the jetty dir (Note, our crawl??
-machines only allow web access on port 8080).
+war under a tomcat instance. The web.xml used in the cruisecontrol.war
+is checked in here for comparisons sake.
 
 + Run cruisecontrol.  See the start.sh in this directory for sample.
 It sets up all environment variables and configuration including a custom
