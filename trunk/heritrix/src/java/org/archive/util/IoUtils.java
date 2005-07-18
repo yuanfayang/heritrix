@@ -22,9 +22,12 @@
  */
 package org.archive.util;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
 
@@ -135,5 +138,42 @@ public class IoUtils {
             sb.append((char)c);
         }
         return sb.toString();
+    }
+    
+    /**
+     * Read the entire stream to EOF into the passed file.
+     * @param inputStream
+     * @param toFile File to read into .
+     * @throws IOException 
+     * @throws IOException
+     */
+    public static void readFullyAsFile(InputStream inputStream,
+            File toFile) throws IOException {
+        readFullyAsFile(inputStream, toFile, new byte[4096]);
+    }
+    /**
+     * Read the entire stream to EOF into the passed file.
+     * @param inputStream
+     * @param toFile File to read into .
+     * @param buffer Buffer to use reading.
+     * @return Count of bytes read.
+     * @throws IOException
+     */
+    public static long readFullyAsFile(InputStream inputStream,
+            File toFile, byte [] buffer)
+    throws IOException {
+        long totalcount = -1;
+        OutputStream os =
+            new BufferedOutputStream(new FileOutputStream(toFile));
+        try {
+            for (int count = inputStream.read(buffer, 0, buffer.length);
+                    (count = inputStream.read(buffer, 0, buffer.length)) != -1;
+                    totalcount += count) {
+                os.write(buffer, 0, count);  
+            }
+        } finally {
+            os.close();
+        }
+        return totalcount;
     }
 }

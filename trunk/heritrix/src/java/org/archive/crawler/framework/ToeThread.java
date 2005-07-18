@@ -41,6 +41,7 @@ import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.HttpRecorder;
 import org.archive.util.HttpRecorderMarker;
+import org.archive.util.ProgressStatisticsReporter;
 import org.archive.util.Reporter;
 
 import com.sleepycat.util.RuntimeExceptionWrapper;
@@ -53,7 +54,7 @@ import com.sleepycat.util.RuntimeExceptionWrapper;
  */
 public class ToeThread extends Thread
 implements CoreAttributeConstants, FetchStatusCodes, HttpRecorderMarker,
-Reporter {
+Reporter, ProgressStatisticsReporter {
     private static final String STEP_NASCENT = "NASCENT";
     private static final String STEP_PAUSING = "PAUSING";
     private static final String STEP_ABOUT_TO_GET_URI = "ABOUT_TO_GET_URI";
@@ -207,9 +208,6 @@ Reporter {
         atStepSince = System.currentTimeMillis();
     }
 
-    /**
-	 * @param err
-	 */
 	private void seriousError(Error err) {
 	    // try to prevent timeslicing until we have a chance to deal with OOM
         // TODO: recognize that new JVM priority indifference may make this
@@ -457,11 +455,12 @@ Reporter {
     // 
     
     /**
-     * @return Compiles and returns a report on its status.
+     * Compiles and returns a report on its status.
+     * @param name Report name.
+     * @param pw Where to print.
      * @throws IOException
      */
-    public void reportTo(String name, PrintWriter pw) throws IOException
-    {
+    public void reportTo(String name, PrintWriter pw) throws IOException {
         // name is ignored for now: only one kind of report
         
         pw.print("[");
@@ -585,11 +584,8 @@ Reporter {
         return new String[] {};
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
-     */
     public void reportTo(PrintWriter writer) throws IOException {
-        reportTo(null,writer);
+        reportTo(null, writer);
     }
 
     /* (non-Javadoc)
@@ -597,5 +593,17 @@ Reporter {
      */
     public String singleLineReport() {
         return ArchiveUtils.singleLineReport(this);
+    }
+
+    public void progressStatisticsLine(PrintWriter writer) {
+        writer.print(getController().getStatistics()
+            .progressStatisticsLine());
+        writer.print("\n");
+    }
+
+    public void progressStatisticsLegend(PrintWriter writer) {
+        writer.print(getController().getStatistics()
+            .progressStatisticsLegend());
+        writer.print("\n");
     }
 }
