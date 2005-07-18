@@ -27,10 +27,10 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.Filter;
+import org.archive.net.UURI;
 
 /**
  * A core CrawlScope suitable for the most common

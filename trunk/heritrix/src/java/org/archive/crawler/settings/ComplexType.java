@@ -47,8 +47,8 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.Constraint.FailedCheck;
+import org.archive.net.UURI;
 
 /** Superclass of all configurable modules.
  *

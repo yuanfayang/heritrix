@@ -27,7 +27,7 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.UURI;
+import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
 
 /**

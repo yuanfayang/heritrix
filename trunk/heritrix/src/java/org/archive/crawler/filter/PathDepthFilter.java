@@ -30,9 +30,9 @@ import javax.management.AttributeNotFoundException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.net.UURI;
 
 /**
  * Accepts all urls passed in with a path depth

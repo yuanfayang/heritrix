@@ -33,7 +33,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.net.UURIFactory;
 
 /**
  * Logging utils.

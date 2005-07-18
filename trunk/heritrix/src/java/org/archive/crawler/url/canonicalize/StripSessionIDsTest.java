@@ -23,7 +23,7 @@
 package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.net.UURIFactory;
 
 import junit.framework.TestCase;
 

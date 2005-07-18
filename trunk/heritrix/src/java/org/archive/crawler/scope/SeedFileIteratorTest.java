@@ -33,7 +33,7 @@ import java.util.LinkedList;
 
 import junit.framework.TestCase;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.net.UURI;
 
 /**
  * Test {@link SeedFileIterator}.

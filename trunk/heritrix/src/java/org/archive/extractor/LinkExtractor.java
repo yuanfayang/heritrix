@@ -28,8 +28,8 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.extractor.Link;
+import org.archive.net.UURI;
 
 /**
  * LinkExtractor is a general interface for classes which, when given an

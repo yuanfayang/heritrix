@@ -29,9 +29,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.extractor.Link;
+import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 import org.archive.util.TextUtils;
 
 /**

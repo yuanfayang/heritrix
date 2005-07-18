@@ -26,7 +26,6 @@ import java.io.File;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.XMLSettingsHandler;
@@ -35,6 +34,7 @@ import org.archive.crawler.url.canonicalize.LowercaseRule;
 import org.archive.crawler.url.canonicalize.StripSessionIDs;
 import org.archive.crawler.url.canonicalize.StripUserinfoRule;
 import org.archive.crawler.url.canonicalize.StripWWWRule;
+import org.archive.net.UURIFactory;
 import org.archive.util.TmpDirTestCase;
 
 /**

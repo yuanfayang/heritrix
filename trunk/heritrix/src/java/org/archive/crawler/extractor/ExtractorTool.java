@@ -45,7 +45,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.MapType;
@@ -54,6 +53,7 @@ import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecord;
+import org.archive.net.UURIFactory;
 import org.archive.util.HttpRecorder;
 import org.archive.util.OneLineSimpleLogger;
 

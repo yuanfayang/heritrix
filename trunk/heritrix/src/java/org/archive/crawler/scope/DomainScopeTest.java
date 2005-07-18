@@ -32,7 +32,7 @@ import java.util.Iterator;
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.net.UURIFactory;
 
 /**
  * Test the domain scope focus filter.

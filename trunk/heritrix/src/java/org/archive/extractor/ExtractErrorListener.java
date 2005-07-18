@@ -26,7 +26,7 @@ package org.archive.extractor;
 
 import java.io.IOException;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.net.UURI;
 
 /**
  * ExtractErrorListener receives exceptions that may need to be logged

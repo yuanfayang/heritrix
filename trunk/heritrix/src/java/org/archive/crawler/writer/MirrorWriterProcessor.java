@@ -42,7 +42,6 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.ListType;
 import org.archive.crawler.settings.RegularExpressionConstraint;
@@ -51,6 +50,7 @@ import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
 import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayInputStream;
+import org.archive.net.UURI;
 import org.archive.util.IoUtils;
 
 /**

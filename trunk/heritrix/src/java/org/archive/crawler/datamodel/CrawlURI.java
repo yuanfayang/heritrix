@@ -41,6 +41,8 @@ import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
+import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 import org.archive.util.HttpRecorder;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;

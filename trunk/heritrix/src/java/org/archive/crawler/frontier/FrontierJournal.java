@@ -23,7 +23,7 @@
 package org.archive.crawler.frontier;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
+import org.archive.net.UURI;
 
 /**
  * Record of key Frontier happenings.

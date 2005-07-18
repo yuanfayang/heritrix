@@ -25,8 +25,8 @@ package org.archive.crawler.frontier;
 import java.io.File;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 import org.archive.util.TmpDirTestCase;
 import org.archive.util.FileUtils;
 

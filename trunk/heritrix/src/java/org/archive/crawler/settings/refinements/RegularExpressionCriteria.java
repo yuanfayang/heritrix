@@ -24,7 +24,7 @@
  */
 package org.archive.crawler.settings.refinements;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.net.UURI;
 import org.archive.util.TextUtils;
 
 

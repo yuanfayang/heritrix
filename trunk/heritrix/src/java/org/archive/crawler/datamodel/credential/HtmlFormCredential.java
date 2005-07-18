@@ -38,11 +38,11 @@ import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 
 
 

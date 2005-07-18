@@ -39,6 +39,7 @@ import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.ReplayInputStream;
+import org.archive.net.UURIFactory;
 
 /**
  * Represents a single remote "server".

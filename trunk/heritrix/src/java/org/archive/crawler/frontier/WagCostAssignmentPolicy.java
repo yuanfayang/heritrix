@@ -25,7 +25,7 @@
 package org.archive.crawler.frontier;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
+import org.archive.net.UURI;
 
 /**
  * A CostAssignmentPolicy based on some wild guesses of kinds of URIs
