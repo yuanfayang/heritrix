@@ -26,10 +26,7 @@ package org.archive.net;
 
 import it.unimi.dsi.mg4j.util.MutableString;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -276,7 +273,7 @@ public class UURIFactory extends URI {
      * @param possibleUrl URL string to examine.
      * @return True if passed string looks like it could be an URL.
      */
-    public static boolean isSupportedUriScheme(String possibleUrl) {
+    public static boolean hasSupportedScheme(String possibleUrl) {
         boolean hasScheme = UURI.hasScheme(possibleUrl);
         if (!hasScheme || UURIFactory.factory.schemes == null) {
             return hasScheme;

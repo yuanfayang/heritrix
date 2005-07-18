@@ -89,7 +89,7 @@ public class ARCReaderFactory implements ARCConstants {
      */
     public static ARCReader get(String arcFileOrUrl)
     throws MalformedURLException, IOException {
-        return UURIFactory.hasScheme(arcFileOrUrl)?
+        return UURIFactory.hasSupportedScheme(arcFileOrUrl)?
             get(new URL(arcFileOrUrl)): get(new File(arcFileOrUrl));
     }
     

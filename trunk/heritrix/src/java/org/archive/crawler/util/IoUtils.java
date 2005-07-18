@@ -62,7 +62,7 @@ public class IoUtils {
      */
     public static InputStream getInputStream(File basedir, String pathOrUrl) {
         InputStream is = null;
-        if (UURIFactory.hasScheme(pathOrUrl)) {
+        if (UURIFactory.hasSupportedScheme(pathOrUrl)) {
             try {
                 URL url = new URL(pathOrUrl);
                 is = url.openStream();
