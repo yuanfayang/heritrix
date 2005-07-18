@@ -43,8 +43,8 @@ import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.refinements.Refinement;
+import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
 
 /** An instance of this class holds a hierarchy of settings.

@@ -36,7 +36,6 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.scope.ClassicScope;
 import org.archive.crawler.settings.refinements.Criteria;
@@ -44,6 +43,7 @@ import org.archive.crawler.settings.refinements.PortnumberCriteria;
 import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.crawler.settings.refinements.RegularExpressionCriteria;
 import org.archive.crawler.settings.refinements.TimespanCriteria;
+import org.archive.net.UURIFactory;
 
 /**
  * Tests the handling of settings files.

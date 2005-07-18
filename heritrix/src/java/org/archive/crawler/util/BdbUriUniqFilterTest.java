@@ -35,9 +35,9 @@ import junit.framework.TestSuite;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.UURI;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
 

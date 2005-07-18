@@ -25,10 +25,10 @@ package org.archive.crawler.scope;
 
 import java.util.Iterator;
 
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.Filter;
+import org.archive.net.UURI;
 
 /**
  * A core CrawlScope suitable for the most common

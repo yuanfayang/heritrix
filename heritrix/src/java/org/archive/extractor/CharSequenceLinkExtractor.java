@@ -30,8 +30,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.extractor.Link;
+import org.archive.net.UURI;
 
 /**
  * Abstract superclass providing utility methods for LinkExtractors which

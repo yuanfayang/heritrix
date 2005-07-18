@@ -39,9 +39,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.io.GzipHeader;
 import org.archive.io.GzippedInputStream;
+import org.archive.net.UURIFactory;
 
 import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
 

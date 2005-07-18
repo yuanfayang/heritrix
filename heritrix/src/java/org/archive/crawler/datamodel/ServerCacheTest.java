@@ -25,6 +25,8 @@ package org.archive.crawler.datamodel;
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 
 /**
  * Test the BigMapServerCache

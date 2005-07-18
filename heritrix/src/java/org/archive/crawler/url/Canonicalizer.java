@@ -29,8 +29,8 @@ import java.util.logging.Level;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.MapType;
+import org.archive.net.UURI;
 
 /**
  * URL canonicalizer.

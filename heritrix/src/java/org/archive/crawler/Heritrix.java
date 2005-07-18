@@ -79,13 +79,13 @@ import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobErrorHandler;
 import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.datamodel.CredentialStore;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.net.UURIFactory;
 import org.archive.util.JmxUtils;
 
 

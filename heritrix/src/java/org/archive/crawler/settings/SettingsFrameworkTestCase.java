@@ -31,8 +31,8 @@ import javax.management.Attribute;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.settings.Constraint.FailedCheck;
+import org.archive.net.UURIFactory;
 import org.archive.util.TmpDirTestCase;
 
 /** Set up a couple of settings to test different functions of the settings

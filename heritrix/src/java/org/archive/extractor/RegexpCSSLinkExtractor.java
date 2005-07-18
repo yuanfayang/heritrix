@@ -30,8 +30,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.UURIFactory;
 import org.archive.crawler.extractor.Link;
+import org.archive.net.UURIFactory;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 

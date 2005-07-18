@@ -29,7 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.archive.crawler.datamodel.UURI;
+import org.archive.net.UURI;
 
 /**
  * A refinement criteria that checks if a URI is requested within a specific

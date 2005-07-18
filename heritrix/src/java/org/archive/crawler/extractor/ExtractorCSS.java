@@ -33,10 +33,10 @@ import java.util.regex.Matcher;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
+import org.archive.net.UURI;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 

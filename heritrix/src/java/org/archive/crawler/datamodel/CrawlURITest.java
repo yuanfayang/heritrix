@@ -30,6 +30,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.net.UURIFactory;
 import org.archive.queue.DiskStack;
 import org.archive.queue.Stack;
 import org.archive.util.TmpDirTestCase;

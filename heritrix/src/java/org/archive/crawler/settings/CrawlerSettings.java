@@ -33,8 +33,8 @@ import java.util.ListIterator;
 import java.util.Map;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.refinements.Refinement;
+import org.archive.net.UURI;
 
 /**
  * Class representing a settings file.

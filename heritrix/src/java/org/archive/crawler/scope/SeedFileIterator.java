@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.UURIFactory;
+import org.archive.net.UURIFactory;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
 import org.archive.util.iterator.TransformingIteratorWrapper;

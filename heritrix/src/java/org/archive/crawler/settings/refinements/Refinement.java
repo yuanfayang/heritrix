@@ -29,8 +29,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.net.UURI;
 
 
 /**

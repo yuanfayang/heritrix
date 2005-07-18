@@ -31,11 +31,11 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.UURI;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.net.UURI;
 import org.archive.util.SurtPrefixSet;
 
 
