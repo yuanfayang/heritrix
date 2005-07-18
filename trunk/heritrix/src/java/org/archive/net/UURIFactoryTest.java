@@ -23,7 +23,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package org.archive.crawler.datamodel;
+package org.archive.net;
 
 import java.util.Iterator;
 import java.util.TreeMap;
@@ -706,5 +706,12 @@ public class UURIFactoryTest extends TestCase {
         assertEquals("partiallyEscapedQueryString getEscapedURI", 
                 "http://www.example.com/pa%20th?q=foo%25",
                 partiallyEscapedQueryStringUuri.getEscapedURI());  
+    }
+    
+    public void testHasScheme() {
+        assertTrue(UURI.hasScheme("http://www.archive.org"));
+        assertTrue(UURI.hasScheme("http:"));
+        assertFalse(UURI.hasScheme("ht/tp://www.archive.org"));
+        assertFalse(UURI.hasScheme("/tmp"));
     }
 }

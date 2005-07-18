@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.datamodel;
+package org.archive.net;
 
 import it.unimi.dsi.mg4j.util.MutableString;
 
@@ -269,28 +269,20 @@ public class UURIFactory extends URI {
         return UURIFactory.factory.create(base, relative);
     }
     
-    
     /**
-     * Coarse test of whether passed String has a (allowed) URI scheme.
+     * Test of whether passed String has an (allowed) URI scheme.
+     * First tests if likely scheme suffix.  If so, we then test if its one of
+     * the supported schemes.
      * @param possibleUrl URL string to examine.
      * @return True if passed string looks like it could be an URL.
      */
     public static boolean hasScheme(String possibleUrl) {
-        if (possibleUrl.charAt(0) == File.separatorChar) {
-            return false;
+        boolean hasScheme = UURI.hasScheme(possibleUrl);
+        if (!hasScheme || UURIFactory.factory.schemes == null) {
+            return hasScheme;
         }
-        
-        // TODO: Make the test for scheme more stringent.
-        final int index = possibleUrl.indexOf(':');
-        if (index <= 0) {
-            return false;
-        }
-        String tmpStr = possibleUrl.substring(0, index).toLowerCase();
-        // No factory.schemes when unit testing so allow for it being
-        //  null.
-        return (UURIFactory.factory.schemes != null)?
-            (Arrays.binarySearch(UURIFactory.factory.schemes,tmpStr)>=0):
-            true;
+        String tmpStr = possibleUrl.substring(0, possibleUrl.indexOf(':'));
+        return Arrays.binarySearch(UURIFactory.factory.schemes, tmpStr) >= 0;
     }
 
     /**
