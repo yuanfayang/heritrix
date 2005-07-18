@@ -71,5 +71,4 @@ public interface Reporter {
      * @return String single-line summary report
      */
     public String singleLineReport();
-    
 }

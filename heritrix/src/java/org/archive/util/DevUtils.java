@@ -29,8 +29,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
 
-import org.archive.crawler.framework.ToeThread;
-
 
 /**
  * Write a message and stack trace to the 'org.archive.util.DevUtils' logger.
@@ -61,20 +59,24 @@ public class DevUtils {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw); 
         final Thread current = Thread.currentThread();
-        if (current instanceof ToeThread) {
-            ToeThread tt = (ToeThread) current;
+        if (current instanceof Reporter) {
+            Reporter tt = (Reporter)current;
             try {
                 tt.reportTo(pw);
             } catch (IOException e) {
-                // not really possible w/StringWriter
+                // Not really possible w/ a StringWriter
                 e.printStackTrace();
             } 
-            pw.print(tt.getController().getStatistics()
-                    .progressStatisticsLegend());
-            pw.print("\n");
-            pw.print(tt.getController().getStatistics()
-                    .progressStatisticsLine());
-            pw.print("\n");
+        }
+        if (current instanceof ProgressStatisticsReporter) {
+            ProgressStatisticsReporter tt = (ProgressStatisticsReporter)current;
+            try {
+                tt.progressStatisticsLegend(pw);
+                tt.progressStatisticsLegend(pw);
+            } catch (IOException e) {
+                // Not really possible w/ a StringWriter
+                e.printStackTrace();
+            }
         }
         pw.flush();
         return sw.toString();

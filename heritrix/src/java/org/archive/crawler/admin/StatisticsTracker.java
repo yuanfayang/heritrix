@@ -927,7 +927,7 @@ implements CrawlURIDispositionListener, Serializable {
         if(controller.getFrontier().isEmpty()) {
             writer.println("frontier empty");
         } else {
-            controller.getFrontier().reportTo("nonempty",writer);
+            controller.getFrontier().reportTo("nonempty", writer);
         }
     }
 
