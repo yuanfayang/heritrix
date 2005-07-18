@@ -708,7 +708,7 @@ public class UURIFactoryTest extends TestCase {
                 partiallyEscapedQueryStringUuri.getEscapedURI());  
     }
     
-    public void testIsSupportedUriScheme() {
+    public void testHasSupportedScheme() {
         assertTrue(UURI.hasScheme("http://www.archive.org"));
         assertTrue(UURI.hasScheme("http:"));
         assertFalse(UURI.hasScheme("ht/tp://www.archive.org"));
