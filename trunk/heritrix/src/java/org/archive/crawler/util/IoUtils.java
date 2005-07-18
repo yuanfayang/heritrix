@@ -97,9 +97,10 @@ public class IoUtils {
      * @param pathOrUrl Pass path to a file on disk or pass in a URL.
      * @return A File.
      */
-    public static File getLocalFile(File basedir, File tmpdir, String pathOrUrl) {
+    public static File getLocalFile(File basedir, File tmpdir,
+            String pathOrUrl) {
         File result = null;
-        if (UURIFactory.hasScheme(pathOrUrl)) {
+        if (UURIFactory.hasSupportedScheme(pathOrUrl)) {
             try {
                 URL url = new URL(pathOrUrl);
                 if (url.getProtocol().equals("file")) {
