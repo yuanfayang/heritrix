@@ -22,12 +22,15 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.datamodel;
+package org.archive.net;
 
+import java.io.File;
 import java.io.Serializable;
+import java.util.Arrays;
 
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.util.SURT;
 import org.archive.util.TextUtils;
 
@@ -582,5 +585,29 @@ implements CharSequence, Serializable {
 
         // set this URI.
         setURI();
+    }
+    
+    
+    
+    /**
+     * Test if passed String has likely URI scheme prefix.
+     * @param possibleUrl URL string to examine.
+     * @return True if passed string looks like it could be an URL.
+     */
+    public static boolean hasScheme(String possibleUrl) {
+        boolean result = false;
+        for (int i = 0; i < possibleUrl.length(); i++) {
+            char c = possibleUrl.charAt(i);
+            if (c == ':') {
+                if (i != 0) {
+                    result = true;
+                }
+                break;
+            }
+            if (!scheme.get(c)) {
+                break;
+            }
+        }
+        return result;
     }
 }
