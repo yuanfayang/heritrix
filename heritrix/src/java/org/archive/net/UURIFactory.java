@@ -270,13 +270,13 @@ public class UURIFactory extends URI {
     }
     
     /**
-     * Test of whether passed String has an (allowed) URI scheme.
+     * Test of whether passed String has an allowed URI scheme.
      * First tests if likely scheme suffix.  If so, we then test if its one of
      * the supported schemes.
      * @param possibleUrl URL string to examine.
      * @return True if passed string looks like it could be an URL.
      */
-    public static boolean hasScheme(String possibleUrl) {
+    public static boolean isSupportedUriScheme(String possibleUrl) {
         boolean hasScheme = UURI.hasScheme(possibleUrl);
         if (!hasScheme || UURIFactory.factory.schemes == null) {
             return hasScheme;
