@@ -133,23 +133,25 @@ public class SurtPrefixSetTest extends TestCase {
     
     public void testImportFromUris() throws IOException {
         String seed = "http://www.archive.org/index.html";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).equals("http://(org,archive,www,)/"));
+        assertEquals("Convert failed " + seed,
+                "http://(org,archive,www,)/",
+                makeSurtPrefix(seed));
         seed = "http://timmknibbs4senate.blogspot.com/";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).
-                equals("http://(com,blogspot,timmknibbs4senate,)/"));
+        assertEquals("Convert failed " + seed,
+                "http://(com,blogspot,timmknibbs4senate,)/",
+                makeSurtPrefix(seed));
         seed = "https://one.two.three";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).equals("http://(three,two,one,"));
+        assertEquals("Convert failed " + seed,
+                "http://(three,two,one,",
+                makeSurtPrefix(seed));
         seed = "https://xone.two.three/a/b/c/";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).
-                equals("http://(three,two,xone,)/a/b/c/"));
+        assertEquals("Convert failed " + seed,
+                "http://(three,two,xone,)/a/b/c/",
+                makeSurtPrefix(seed));
         seed = "https://yone.two.three/a/b/c";
-        assertTrue("Convert failed " + seed,
-            makeSurtPrefix(seed).
-                equals("http://(three,two,yone,)/a/b/"));
+        assertEquals("Convert failed " + seed,
+                "http://(three,two,yone,)/a/b/",
+                makeSurtPrefix(seed));
     }
     
     private String makeSurtPrefix(String seed) {
