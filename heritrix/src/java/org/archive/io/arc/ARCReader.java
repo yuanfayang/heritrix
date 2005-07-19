@@ -127,6 +127,11 @@ implements ARCConstants {
      */
     private String version = null;
     
+    /**
+     * Is this arc compressed?
+     */
+    protected boolean compressed = false;
+    
 
     /**
      * Array of field names.
@@ -194,6 +199,10 @@ implements ARCConstants {
      */
     protected void initialize(File f) {
         this.arcFile = f;
+    }
+    
+    public boolean isCompressed() {
+        return this.compressed;
     }
     
     /**
@@ -801,7 +810,7 @@ implements ARCConstants {
         formatter.printHelp("java org.archive.io.arc.ARCReader" +
             " [--digest=true|false] \\\n" +
             " [--format=cdx|cdxfile|dump|gzipdump|nohead]" +
-            " [--offset=#] \\\n[--strict] ARCFILE",
+            " [--offset=#] \\\n[--strict] ARC_FILE|ARC_URL",
                 options);
         System.exit(exitCode);
     }
@@ -816,19 +825,18 @@ implements ARCConstants {
     /**
      * Write out the arcfile.
      * 
-     * @param f Arc file to read.
+     * @param urlOrPath Arc file to read.
      * @param digest Digest yes or no.
      * @param strict True if we are to run in strict mode.
      * @param format Format to use outputting.
      * @throws IOException
      * @throws java.text.ParseException
      */
-    protected static void output(File f, boolean digest, String format,
-            boolean strict)
+    protected static void output(String urlOrPath, boolean digest,
+            String format, boolean strict)
     throws IOException, java.text.ParseException {
         // long start = System.currentTimeMillis();
-        boolean compressed = ARCReaderFactory.isCompressed(f);
-        ARCReader arc = ARCReaderFactory.get(f);
+        ARCReader arc = ARCReaderFactory.get(urlOrPath);
         arc.setStrict(strict);
         // Clear cache of calculated arc file name.
         cachedShortArcFileName = null;
@@ -839,14 +847,14 @@ implements ARCConstants {
         // Hash is hard-coded straight SHA-1 hash of content.
         if (format.equals(CDX_OUTPUT)) {
             arc.setDigest(digest);
-            cdxOutput(arc, compressed, false);
+            cdxOutput(arc, false);
         } else if (format.equals(DUMP_OUTPUT)) {
             dumpOutput(arc, false);
         } else if (format.equals(GZIP_DUMP_OUTPUT)) {
             dumpOutput(arc, true);
         } else if (format.equals(CDX_FILE_OUTPUT)) {
             arc.setDigest(digest);
-            cdxOutput(arc, compressed, true);
+            cdxOutput(arc, true);
         } else {
             throw new IOException("Unsupported format: " + format);
         }
@@ -886,8 +894,7 @@ implements ARCConstants {
         // System.out.println(System.currentTimeMillis() - start);
     }
     
-    protected static void cdxOutput(ARCReader arc, boolean compressed,
-            boolean toFile)
+    protected static void cdxOutput(ARCReader arc, boolean toFile)
     throws IOException {
         BufferedWriter cdxWriter = null;
         if (toFile) {
@@ -898,7 +905,7 @@ implements ARCConstants {
             cdxWriter = new BufferedWriter(new FileWriter(cdxFilename));
         }
         
-        String header = "CDX b e a m s c " + ((compressed) ? "V" : "v")
+        String header = "CDX b e a m s c " + ((arc.isCompressed()) ? "V" : "v")
             + " n g";
         if (toFile) {
             cdxWriter.write(header);
@@ -1044,13 +1051,13 @@ implements ARCConstants {
     /**
      * Generate a CDX index file for an ARC file.
      *
-     * @param arcFilename The ARC file to generate a CDX index for
+     * @param urlOrPath The ARC file to generate a CDX index for
      * @throws IOException
      * @throws java.text.ParseException
      */
-    public static void createCDXIndexFile(String arcFilename)
+    public static void createCDXIndexFile(String urlOrPath)
     throws IOException, java.text.ParseException {
-        output(new File(arcFilename), true, CDX_FILE_OUTPUT, false);
+        output(urlOrPath, true, CDX_FILE_OUTPUT, false);
     }
 
     /**
@@ -1158,24 +1165,23 @@ implements ARCConstants {
                 System.out.println("Error: Pass one arcfile only.");
                 usage(formatter, options, 1);
             }
-            ARCReader arc = ARCReaderFactory.
-                get(new File((String)cmdlineArgs.get(0)));
+            ARCReader arc = ARCReaderFactory.get((String)cmdlineArgs.get(0));
             arc.setStrict(strict);
             ARCRecord rec = arc.get(offset);
             outputARCRecord(rec, format);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
-                File f = new File((String)i.next());
+                String urlOrPath = (String)i.next();
                 try {
-                    output(f, digest, format, strict);
+                    output(urlOrPath, digest, format, strict);
                 } catch (RuntimeException e) {
                     // Write out name of file we failed on to help with
                     // debugging.  Then print stack trace and try to keep
                     // going.  We do this for case where we're being fed
                     // a bunch of ARCs; just note the bad one and move
                     // on to the next.
-                    System.err.println("Exception processing " + f + ": " +
-                        e.getMessage());
+                    System.err.println("Exception processing " + urlOrPath +
+                        ": " + e.getMessage());
                     e.printStackTrace(System.err);
                     System.exit(1);
                 }

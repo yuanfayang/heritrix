@@ -49,7 +49,6 @@ import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
-import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -65,9 +64,9 @@ import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.crawler.util.IoUtils;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
-import org.archive.crawler.util.IoUtils;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
 
