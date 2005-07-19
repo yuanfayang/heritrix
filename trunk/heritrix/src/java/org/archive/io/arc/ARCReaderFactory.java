@@ -24,16 +24,15 @@
  */
 package org.archive.io.arc;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -41,9 +40,9 @@ import java.util.logging.Level;
 
 import org.archive.io.GzipHeader;
 import org.archive.io.GzippedInputStream;
-import org.archive.net.UURIFactory;
-
-import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+import org.archive.net.UURI;
+import org.archive.net.rsync.RsyncURLConnection;
+import org.archive.util.IoUtils;
 
 
 /**
@@ -89,7 +88,7 @@ public class ARCReaderFactory implements ARCConstants {
      */
     public static ARCReader get(String arcFileOrUrl)
     throws MalformedURLException, IOException {
-        return UURIFactory.hasSupportedScheme(arcFileOrUrl)?
+        return UURI.hasScheme(arcFileOrUrl)?
             get(new URL(arcFileOrUrl)): get(new File(arcFileOrUrl));
     }
     
@@ -104,34 +103,44 @@ public class ARCReaderFactory implements ARCConstants {
      * @throws IOException 
      */
     public static ARCReader get(final URL arcUrl) throws IOException {
-        final File tmpFile = File.createTempFile("ARCReader", ".arc", TMPDIR);
-        OutputStream os =
-            new FastBufferedOutputStream(new FileOutputStream(tmpFile));
-        InputStream is = null;
-        final int size = 16 * 1024;
-        final byte [] buffer = new byte[size];
+        // If url represents a local file -- i.e. has scheme of 'file' -- then
+        // return the file it points to.
+        File f = new File(arcUrl.getPath());
+        if (f.canRead()) {
+            return get(f);
+        }
+        
+        URLConnection connection = arcUrl.openConnection();
+        File localFile = null;
+        if (connection instanceof HttpURLConnection) {
+            // If http url connection, bring down the resouce local.
+            localFile = File.createTempFile(ARCReader.class.getName(), ".arc",
+                    TMPDIR);
+            connection.connect();
+            try {
+                IoUtils.readFullyToFile(connection.getInputStream(), localFile,
+                        new byte[16 * 1024]);
+                // Try and get arcreader while inside the try/catch so we
+                // cleanup the localFile if exceptions.
+            } catch (IOException ioe) {
+                localFile.delete();
+                throw ioe;
+            }
+        } else if (connection instanceof RsyncURLConnection) {
+            // Then, connect and this will create a local file.
+            connection.connect();
+            localFile = ((RsyncURLConnection)connection).getFile();
+        } else {
+            throw new UnsupportedOperationException("No support for " +
+                connection);
+        }
+        
         ARCReader reader = null;
         try {
-            is = new BufferedInputStream(arcUrl.openConnection().
-                getInputStream());
-            for (int read = -1; (read = is.read(buffer, 0, size)) != -1;) {
-                os.write(buffer, 0, read);
-            }
-            os.close();
-            os = null;
-            // Try and get arcreader while inside the try/catch so we cleanup
-            // the tmpFile if exceptions.
-            reader = get(tmpFile, true);
+            reader = get(localFile, true);
         } catch (IOException e) {
-            tmpFile.delete();
+            localFile.delete();
             throw e;
-        } finally {
-            if (os != null) {
-                os.close();
-            }
-            if (is != null) {
-                is.close();
-            }
         }
         
         // Assign to a final variable so can assign it to inner class
@@ -140,14 +149,14 @@ public class ARCReaderFactory implements ARCConstants {
         
         // Return a delegate that does cleanup of downloaded file on close.
         return new ARCReader() {
-            private File fileToCleanup = tmpFile;
             private final ARCReader delegate = arcreader;
             
             public void close() throws IOException {
                 this.delegate.close();
-                if (this.fileToCleanup != null && this.fileToCleanup.exists()) {
-                    this.fileToCleanup.delete();
-                    this.fileToCleanup = null;
+                if (this.delegate.arcFile != null &&
+                        this.delegate.arcFile.exists()) {
+                    this.delegate.arcFile.delete();
+                    this.delegate.arcFile = null;
                 }
             }
             
@@ -368,6 +377,7 @@ public class ARCReaderFactory implements ARCConstants {
             // Arc file has been tested for existence by time it has come
             // to here.
             this.in = new GzippedInputStream(getInputStream(f));
+            this.compressed = true;
             initialize(f);
         }
         

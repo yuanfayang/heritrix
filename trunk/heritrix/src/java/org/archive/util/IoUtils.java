@@ -22,7 +22,9 @@
  */
 package org.archive.util;
 
-import java.io.BufferedOutputStream;
+import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -142,37 +144,44 @@ public class IoUtils {
     
     /**
      * Read the entire stream to EOF into the passed file.
-     * @param inputStream
+     * @param is
      * @param toFile File to read into .
      * @throws IOException 
      * @throws IOException
      */
-    public static void readFullyAsFile(InputStream inputStream,
+    public static void readFullyToFile(InputStream is,
             File toFile) throws IOException {
-        readFullyAsFile(inputStream, toFile, new byte[4096]);
+        readFullyToFile(is, toFile, new byte[4096]);
     }
+    
     /**
      * Read the entire stream to EOF into the passed file.
-     * @param inputStream
+     * Closes <code>is</code> when done or if an exception.
+     * @param is Stream to read.
      * @param toFile File to read into .
      * @param buffer Buffer to use reading.
      * @return Count of bytes read.
      * @throws IOException
      */
-    public static long readFullyAsFile(InputStream inputStream,
-            File toFile, byte [] buffer)
+    public static long readFullyToFile(final InputStream is, final File toFile,
+            final byte [] buffer)
     throws IOException {
         long totalcount = -1;
         OutputStream os =
-            new BufferedOutputStream(new FileOutputStream(toFile));
+            new FastBufferedOutputStream(new FileOutputStream(toFile));
+        InputStream localIs = (is instanceof BufferedInputStream)?
+            is: new BufferedInputStream(is);
         try {
-            for (int count = inputStream.read(buffer, 0, buffer.length);
-                    (count = inputStream.read(buffer, 0, buffer.length)) != -1;
+            for (int count = -1;
+                (count = localIs.read(buffer, 0, buffer.length)) != -1;
                     totalcount += count) {
                 os.write(buffer, 0, count);  
             }
         } finally {
             os.close();
+            if (localIs != null) {
+                localIs.close();
+            }
         }
         return totalcount;
     }

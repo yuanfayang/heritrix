@@ -33,36 +33,41 @@ import java.util.Iterator;
 import org.archive.util.TmpDirTestCase;
 
 public class ARCReaderFactoryTest extends TmpDirTestCase {
+// Commented out net-dependent test.
+//    public void testGetHttpURL() throws MalformedURLException, IOException {
+//        ARCReader reader = null;
+//        File tmpFile = null;
+//        try {
+//            reader = ARCReaderFactory.
+//                get(new URL("http://www.archive.org/~stack/IA-000026.arc.gz"));
+//            tmpFile = null;
+//            for (Iterator i = reader.iterator(); i.hasNext();) {
+//                ARCRecord r = (ARCRecord)i.next();
+//                if (tmpFile == null) {
+//                    tmpFile = r.getMetaData().getArcFile();
+//                }
+//            }
+//            assertTrue(tmpFile.exists());
+//        } finally {
+//            if (reader != null) {
+//                reader.close();
+//            }
+//        }
+//        // Temporary file should be cleaned up when done.
+//        assertFalse(tmpFile.exists());
+//    }
     
     /**
      * Test URL.
      * @throws MalformedURLException
      * @throws IOException
      */
-    public void testGetURL() throws MalformedURLException, IOException {
+    public void testGetFileURL() throws MalformedURLException, IOException {
         File arc = ARCWriterTest.createARCFile(getTmpDir(), true);
-        ARCReader reader = null;
-        File tmpFile = null;
-        try {
-            reader = ARCReaderFactory.
-                get(new URL("file:////" + arc.getAbsolutePath()));
-            tmpFile = null;
-            for (Iterator i = reader.iterator(); i.hasNext();) {
-                ARCRecord r = (ARCRecord)i.next();
-                if (tmpFile == null) {
-                    tmpFile = r.getMetaData().getArcFile();
-                }
-            }
-            assertTrue(tmpFile.exists());
-        } finally {
-            if (reader != null) {
-                reader.close();
-            }
-        }
-        assertFalse(tmpFile.exists());
+        doGetFileUrl(arc);
     }
     
-    protected void doGetUrl(File arc)
+    protected void doGetFileUrl(File arc)
     throws MalformedURLException, IOException {
         ARCReader reader = null;
         File tmpFile = null;
@@ -82,17 +87,19 @@ public class ARCReaderFactoryTest extends TmpDirTestCase {
                 reader.close();
             }
         }
-        assertFalse(tmpFile.exists());
+        assertTrue(tmpFile.exists());
     }
     
     /**
      * Test path or url.
+     * @throws MalformedURLException 
+     * @throws IOException 
      */
     public void testGetPathOrURL() throws MalformedURLException, IOException {
         File arc = ARCWriterTest.createARCFile(getTmpDir(), true);
         ARCReader reader = ARCReaderFactory.get(arc.getAbsoluteFile());
         assertNotNull(reader);
         reader.close();
-        doGetUrl(arc);
+        doGetFileUrl(arc);
     }   
 }

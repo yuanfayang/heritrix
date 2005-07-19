@@ -922,7 +922,7 @@ public class CrawlJob implements DynamicMBean {
             "Rotate logs", null, SimpleType.VOID, MBeanOperationInfo.ACTION);
         
         operations[11] = new OpenMBeanOperationInfoSupport(CHECKPOINT_OPER,
-                "Start a checkpoint (Unimplemented)", null, SimpleType.VOID,
+                "Start a checkpoint", null, SimpleType.VOID,
                 MBeanOperationInfo.ACTION);
         
         // Build the info object.

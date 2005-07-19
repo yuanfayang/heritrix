@@ -1562,7 +1562,7 @@ public class Heritrix implements DynamicMBean {
     }
     
     public Object getAttribute(String attribute_name)
-    throws AttributeNotFoundException, MBeanException, ReflectionException {
+    throws AttributeNotFoundException {
         if (attribute_name == null) {
             throw new RuntimeOperationsException(
                  new IllegalArgumentException("Attribute name cannot be null"),
@@ -1584,8 +1584,7 @@ public class Heritrix implements DynamicMBean {
     }
 
     public void setAttribute(Attribute attribute)
-    throws AttributeNotFoundException, InvalidAttributeValueException,
-            MBeanException, ReflectionException {
+    throws AttributeNotFoundException {
         throw new AttributeNotFoundException("No attribute can be set in " +
             "this MBean");
     }
@@ -1618,7 +1617,7 @@ public class Heritrix implements DynamicMBean {
 
     public Object invoke(String operationName, Object[] params,
         String[] signature)
-    throws MBeanException, ReflectionException {
+    throws ReflectionException {
         if (operationName == null) {
             throw new RuntimeOperationsException(
                 new IllegalArgumentException("Operation name cannot be null"),
