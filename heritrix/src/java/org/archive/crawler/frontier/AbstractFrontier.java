@@ -474,16 +474,23 @@ public abstract class AbstractFrontier extends ModuleType implements
      */
     public void loadSeeds() {
         Writer ignoredWriter = new StringWriter();
+        logger.info("beginning");
         // Get the seeds to refresh.
         Iterator iter = this.controller.getScope().seedsIterator(ignoredWriter);
+        int count = 0; 
         while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
             CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
             caUri.setSchedulingDirective(CandidateURI.MEDIUM);
             schedule(caUri);
+            count++;
+            if(count%1000==0) {
+                logger.info(count+" seeds");
+            }
         }
         // save ignored items (if any) where they can be consulted later
         saveIgnoredItems(ignoredWriter.toString(), controller.getDisk());
+        logger.info("finished");
     }
 
     /**
