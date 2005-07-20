@@ -26,14 +26,17 @@ package org.archive.crawler;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -52,7 +55,6 @@ import javax.management.DynamicMBean;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.InvalidAttributeValueException;
-import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanOperationInfo;
@@ -82,11 +84,17 @@ import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
-import org.archive.net.UURIFactory;
+import org.archive.net.UURI;
+import org.archive.util.FileUtils;
+import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
+import org.archive.util.TextUtils;
+
+import sun.net.www.protocol.file.FileURLConnection;
 
 
 /**
@@ -111,6 +119,9 @@ public class Heritrix implements DynamicMBean {
      */
     private static final Logger logger =
         Logger.getLogger(Heritrix.class.getName());
+    
+    private static final File TMPDIR =
+        new File(System.getProperty("java.io.tmpdir", "/tmp"));
 
     /**
      * Name of the heritrix properties file.
@@ -240,6 +251,8 @@ public class Heritrix implements DynamicMBean {
             ALERT_OPER, NEW_ALERT_OPER});
     }
     
+    private static final String JAR_SUFFIX = ".jar";
+
     /**
      * Constructor.
      * @throws IOException
@@ -870,7 +883,7 @@ public class Heritrix implements DynamicMBean {
         Heritrix.jobHandler = new CrawlJobHandler();
         String status = null;
         if (crawlOrderFile != null) {
-            addCrawlJob(crawlOrderFile, "Auto launched.");
+            addCrawlJob(crawlOrderFile, "Auto launched.", "", "");
             if(runMode) {
                 jobHandler.startCrawler();
                 status = "Job being crawled: " + crawlOrderFile;
@@ -940,40 +953,169 @@ public class Heritrix implements DynamicMBean {
     }
 
     protected static CrawlJob createCrawlJob(CrawlJobHandler handler,
-            File crawlOrderFile, String descriptor)
+            File crawlOrderFile, String name)
     throws InvalidAttributeValueException {
         XMLSettingsHandler settings = new XMLSettingsHandler(crawlOrderFile);
         settings.initialize();
-        return new CrawlJob(handler.getNextJobUID(), descriptor, settings,
+        return new CrawlJob(handler.getNextJobUID(), name, settings,
             new CrawlJobErrorHandler(Level.SEVERE),
             CrawlJob.PRIORITY_HIGH,
             crawlOrderFile.getAbsoluteFile().getParentFile());
     }
     
-    public String addCrawlJob(String orderPathOrUrl,
-            String description) {
-        if (UURIFactory.hasSupportedScheme(orderPathOrUrl)) {
-            throw new UnsupportedOperationException("Order as URL " +
-                "not yet supported.");
+    /**
+     * This method is called when we have an order file to hand that we want
+     * to base a job on.  It leaves the order file in place and just starts up
+     * a job that uses all the order points to for locations for logs, etc.
+     * @param orderPathOrUrl Path to an order file or to a seeds file.
+     * @param name Name to use for this job.
+     * @param description 
+     * @param seeds 
+     * @return A status string.
+     * @throws IOException 
+     * @throws FatalConfigurationException 
+     */
+    public String addCrawlJob(String orderPathOrUrl, String name,
+            String description, String seeds)
+    throws IOException, FatalConfigurationException {
+        if (!UURI.hasScheme(orderPathOrUrl)) {
+            // Assume its a file path.
+            return addCrawlJob(new File(orderPathOrUrl), name, description,
+                    seeds);
         }
+
+        // Otherwise, must be an URL.
+        URL url = new URL(orderPathOrUrl);
+
+        // Handle http and file only for now (Tried to handle JarUrlConnection
+        // but too awkward undoing jar stream.  Rather just look for URLs that
+        // end in '.jar').
+        String result = null;
+        URLConnection connection = url.openConnection();
+        if (connection instanceof HttpURLConnection) {
+            result = addCrawlJob(url, (HttpURLConnection)connection, name,
+                description, seeds);
+        } else if (connection instanceof FileURLConnection) {
+            result = addCrawlJob(new File(url.getPath()), name, description,
+                seeds);
+        } else {
+            throw new UnsupportedOperationException("No support for "
+                + connection);
+        }
+
+        return result;
+    }
+    
+    protected String addCrawlJob(final URL url,
+            final HttpURLConnection connection,
+            final String name, final String description, final String seeds)
+    throws IOException, FatalConfigurationException {
+        // Look see if its a jar file.  If it is undo it.
+        boolean isJar = url.getPath() != null &&
+            url.getPath().toLowerCase().endsWith(JAR_SUFFIX);
+        // If http url connection, bring down the resource local.
+        File localFile = File.createTempFile(Heritrix.class.getName(),
+           isJar? JAR_SUFFIX: null, TMPDIR);
+        connection.connect();
+        String result = null;
+        try {
+            IoUtils.readFullyToFile(connection.getInputStream(), localFile);
+            addCrawlJob(localFile, name, description, seeds);
+        } catch (IOException ioe) {
+            // Cleanup if an Exception.
+            localFile.delete();
+            localFile = null;
+        } finally {
+             connection.disconnect();
+             // If its a jar file, then we made a job based on the jar contents.
+             // Its no longer needed.  Remove it.  If not a jar file, then leave
+             // the file around because the job depends on it.
+             if (isJar && localFile != null && localFile.exists()) {
+                 localFile.delete();
+             }
+        }
+        return result;
+    }
+    
+    protected String addCrawlJob(final File order, final String name,
+            final String description, final String seeds)
+    throws FatalConfigurationException, IOException {
         if (Heritrix.jobHandler == null) {
             throw new NullPointerException("Heritrix jobhandler is null.");
         }
-        CrawlJob job = null;
         try {
-            job = createCrawlJob(jobHandler, new File(orderPathOrUrl),
-                description);
-            Heritrix.jobHandler.addJob(job);
-            return "Added " + orderPathOrUrl;
+            if (order.getName().toLowerCase().endsWith(JAR_SUFFIX)) {
+                return addCrawlJobBasedonJar(order, name, description, seeds);
+            }
+            Heritrix.jobHandler.addJob(createCrawlJob(jobHandler, order, name));
         } catch (InvalidAttributeValueException e) {
-            e.printStackTrace();
-            return "InvalidAttributeValueException on " +
-                orderPathOrUrl + ": " + e.getMessage();
-        } 
+            FatalConfigurationException fce = new FatalConfigurationException(
+                "Converted InvalidAttributeValueException on " +
+                order.getAbsolutePath() + ": " + e.getMessage());
+            fce.setStackTrace(e.getStackTrace());
+        }
+        return "Added " + order.getAbsolutePath();
+    }
+    
+    /**
+     * Undo jar file and use as basis for a new job.
+     * @param jarFile Pointer to file that holds jar.
+     * @param name Name to use for new job.
+     * @param description 
+     * @param seeds 
+     * @return Message.
+     * @throws IOException
+     * @throws FatalConfigurationException
+     */
+    protected String addCrawlJobBasedonJar(final File jarFile,
+            final String name, final String description, final String seeds)
+    throws IOException, FatalConfigurationException {
+        if (jarFile == null || !jarFile.exists()) {
+            throw new FileNotFoundException(jarFile.getAbsolutePath());
+        }
+        // Create a directory with a tmp name.  Do it by first creating file,
+        // removing it, then creating the directory. There is a hole during
+        // which the OS may put a file of same exact name in our way but
+        // unlikely.
+        File dir = File.createTempFile(Heritrix.class.getName(), ".expandedjar",
+            TMPDIR);
+        dir.delete();
+        dir.mkdir();
+        try {
+            org.archive.crawler.util.IoUtils.unzip(jarFile, dir);
+            // Expect to find an order file at least.
+            File orderFile = new File(dir, "order.xml");
+            if (!orderFile.exists()) {
+                throw new IOException("Missing order: " +
+                    orderFile.getAbsolutePath());
+            }
+            CrawlJob job =
+                createCrawlJobBasedOn(orderFile, name, description, seeds);
+            // Copy into place any seeds and settings directories before we
+            // add job to Heritrix to crawl.
+            File seedsFile = new File(dir, "seeds.txt");
+            if (seedsFile.exists()) {
+                FileUtils.copyFiles(seedsFile, new File(job.getDirectory(),
+                    seedsFile.getName()));
+            }
+            File settingsDir = new File(dir, "settings");
+            if (settingsDir.exists()) {
+                FileUtils.copyFiles(settingsDir, job.getDirectory());
+            }
+            addCrawlJob(job);
+            return "Added " + job.getUID();
+         } finally {
+             // After job has been added, no more need of expanded content.
+             // (Let the caller be responsible for cleanup of jar. Sometimes
+             // its should be deleted -- when its a local copy of a jar pulled
+             // across the net -- wherease other times, if its a jar passed
+             // in w/ a 'file' scheme, it shouldn't be deleted.
+             org.archive.util.FileUtils.deleteDir(dir);
+         }
     }
     
     public String addCrawlJobBasedOn(String jobUidOrProfile,
-            String metaname, String description, String seeds) {
+            String name, String description, String seeds) {
         try {
             CrawlJob cj = Heritrix.jobHandler.getJob(jobUidOrProfile);
             if (cj == null) {
@@ -981,16 +1123,33 @@ public class Heritrix implements DynamicMBean {
                     " is not a job UID or profile name (Job UIDs are " +
                     " usually the 14 digit date portion of job name).");
             }
-            CrawlJob job = Heritrix.jobHandler.newJob(cj, false, metaname,
-                description, seeds, CrawlJob.PRIORITY_AVERAGE);
-            CrawlJobHandler.ensureNewJobWritten(job, metaname,
-                description);
-            Heritrix.jobHandler.addJob(job);
-            return "Added " + jobUidOrProfile;
+            CrawlJob job = addCrawlJobBasedOn(
+                cj.getSettingsHandler().getOrderFile(), name, description,
+                    seeds);
+            return "Added " + job.getUID();
         } catch (Exception e) {
             e.printStackTrace();
             return "Exception on " + jobUidOrProfile + ": " + e.getMessage();
         } 
+    }
+    
+    protected CrawlJob addCrawlJobBasedOn(final File orderFile,
+        final String name, final String description, final String seeds)
+    throws FatalConfigurationException, IOException {
+        return addCrawlJob(createCrawlJobBasedOn(orderFile, name, description,
+                seeds));
+    }
+    
+    protected CrawlJob createCrawlJobBasedOn(final File orderFile,
+            final String name, final String description, final String seeds)
+    throws FatalConfigurationException, IOException {
+        CrawlJob job = Heritrix.jobHandler.newJob(orderFile, name, description,
+                seeds);
+        return CrawlJobHandler.ensureNewJobWritten(job, name, description);
+    }
+    
+    protected CrawlJob addCrawlJob(final CrawlJob job) {
+        return Heritrix.jobHandler.addJob(job);
     }
     
     public void startCrawling() {
@@ -1518,12 +1677,18 @@ public class Heritrix implements DynamicMBean {
                 " crawling mode", null, SimpleType.VOID,
                 MBeanOperationInfo.ACTION);
         
-        args = new OpenMBeanParameterInfoSupport[1];
+        args = new OpenMBeanParameterInfoSupport[4];
         args[0] = new OpenMBeanParameterInfoSupport("orderPathOrUrl",
-            "File path or URL of order file",
+            "File path or URL of order file or jar or order + seeds",
             SimpleType.STRING);
+        args[1] = new OpenMBeanParameterInfoSupport("name",
+            "Basename for new job", SimpleType.STRING);
+        args[2] = new OpenMBeanParameterInfoSupport("description",
+            "Description to save with new job", SimpleType.STRING);
+        args[3] = new OpenMBeanParameterInfoSupport("seeds",
+            "Initial seed(s)", SimpleType.STRING);
         operations[5] = new OpenMBeanOperationInfoSupport(
-            Heritrix.ADD_CRAWL_JOB_OPER, "Add a new crawl job", args,
+            Heritrix.ADD_CRAWL_JOB_OPER, "Add new crawl job", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
         
         args = new OpenMBeanParameterInfoSupport[4];
@@ -1535,7 +1700,6 @@ public class Heritrix implements DynamicMBean {
             "Description to save with new job", SimpleType.STRING);
         args[3] = new OpenMBeanParameterInfoSupport("seeds",
             "Initial seed(s)", SimpleType.STRING);
-        
         operations[6] = new OpenMBeanOperationInfoSupport(
             Heritrix.ADD_CRAWL_JOB_BASEDON_OPER,
             "Add a new crawl job based on passed Job UID or profile",
@@ -1652,14 +1816,22 @@ public class Heritrix implements DynamicMBean {
             return null;
         }
         if (operationName.equals(ADD_CRAWL_JOB_OPER)) {
-            JmxUtils.checkParamsCount(ADD_CRAWL_JOB_OPER, params, 1);
-            return addCrawlJob((String)params[0], "Job JMX added " +
-                    (new Date()).toString() + ".");
+            JmxUtils.checkParamsCount(ADD_CRAWL_JOB_OPER, params, 4);
+            try {
+                return addCrawlJob((String)params[0], (String)params[1],
+                    checkForEmptyPlaceHolder((String)params[2]),
+                    checkForEmptyPlaceHolder((String)params[3]));
+            } catch (IOException e) {
+                throw convertException(e);
+            } catch (FatalConfigurationException e) {
+                throw convertException(e);
+            }
         }
         if (operationName.equals(ADD_CRAWL_JOB_BASEDON_OPER)) {
-            JmxUtils.checkParamsCount(ADD_CRAWL_JOB_OPER, params, 4);
+            JmxUtils.checkParamsCount(ADD_CRAWL_JOB_BASEDON_OPER, params, 4);
             return addCrawlJobBasedOn((String)params[0], (String)params[1],
-                (String)params[2], (String)params[3]);
+                    checkForEmptyPlaceHolder((String)params[2]),
+                    checkForEmptyPlaceHolder((String)params[3]));
         }       
         if (operationName.equals(ALERT_OPER)) {
             JmxUtils.checkParamsCount(ALERT_OPER, params, 1);
@@ -1689,6 +1861,20 @@ public class Heritrix implements DynamicMBean {
                 "Cannot find the operation " + operationName);
     }
     
+    /**
+     * If passed str has placeholder for the empty string, return the empty
+     * string else return orginal.
+     * Dumb jmx clients can't pass empty string so they'll pass a representation
+     * of empty string such as ' ' or '-'.  Convert such strings to empty
+     * string.
+     * @param str String to check.
+     * @return Original <code>str</code> or empty string if <code>str</code>
+     * contains a placeholder for the empty-string (e.g. '-', or ' ').
+     */
+    protected String checkForEmptyPlaceHolder(String str) {
+        return TextUtils.matches("-| +", str)? "": str;
+    }
+
     protected String getAlertStringRepresentation(Alert a) {
         if (a.isNew()) {
             a.setAlertSeen();
@@ -1699,5 +1885,11 @@ public class Heritrix implements DynamicMBean {
     public MBeanInfo getMBeanInfo() {
         return this.openMBeanInfo;
     }
+    
+    protected RuntimeOperationsException convertException(Exception e) {
+        RuntimeException re = new RuntimeException("Converted " +
+            e.getClass().getName() + ": " + e.getMessage());
+        re.setStackTrace(e.getStackTrace());
+        return new RuntimeOperationsException(re);
+    }
 }
-

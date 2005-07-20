@@ -105,9 +105,11 @@ public class ARCReaderFactory implements ARCConstants {
     public static ARCReader get(final URL arcUrl) throws IOException {
         // If url represents a local file -- i.e. has scheme of 'file' -- then
         // return the file it points to.
-        File f = new File(arcUrl.getPath());
-        if (f.canRead()) {
-            return get(f);
+        if (arcUrl.getPath() != null) {
+            File f = new File(arcUrl.getPath());
+            if (f.exists()) {
+                return get(f);
+            }
         }
         
         URLConnection connection = arcUrl.openConnection();
@@ -115,13 +117,11 @@ public class ARCReaderFactory implements ARCConstants {
         if (connection instanceof HttpURLConnection) {
             // If http url connection, bring down the resouce local.
             localFile = File.createTempFile(ARCReader.class.getName(), ".arc",
-                    TMPDIR);
+                TMPDIR);
             connection.connect();
             try {
                 IoUtils.readFullyToFile(connection.getInputStream(), localFile,
                         new byte[16 * 1024]);
-                // Try and get arcreader while inside the try/catch so we
-                // cleanup the localFile if exceptions.
             } catch (IOException ioe) {
                 localFile.delete();
                 throw ioe;

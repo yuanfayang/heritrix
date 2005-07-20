@@ -43,19 +43,4 @@ public class IoUtilsTest extends TmpDirTestCase {
         // Comment out test that requires net.
         // assertNotNull(IoUtils.getInputStream("http://www.archive.org/"));
     }
-
-    public void testGetLocalFile() throws IOException {
-        File f = new File(getTmpDir(), this.getName() + ".txt");
-        f.createNewFile();
-        File result =
-            IoUtils.getLocalFile(f.getParentFile(), getTmpDir(), f.getName());
-        assertEquals(f + " " + result + " not equal.", f, result);
-        result = IoUtils.getLocalFile(f.getParentFile(), getTmpDir(),
-            "file://" + f.getAbsolutePath());
-        assertEquals(f + " " + result + " not equal.", f, result);
-        // Comment out test that requires net.
-        // result = IoUtils.getLocalFile(null, getTmpDir(),
-        //   "http://www.archive.org/index.html");
-    }
-
 }
