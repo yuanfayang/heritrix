@@ -137,21 +137,31 @@ implements FetchStatusCodes {
             ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue();
         Collection inScopeLinks = new HashSet();
         for (final Iterator i = curi.getOutLinks().iterator(); i.hasNext();) {
-            final Link wref = (Link)i.next();
-            try {
-                final int directive = getSchedulingFor(wref, scheduleEmbeds);
-                if (directive == CandidateURI.DONT_SCHEDULE) {
-                    continue;
+            Object o = i.next();
+            if(o instanceof Link){
+                final Link wref = (Link)o;
+                try {
+                    final int directive = getSchedulingFor(wref, scheduleEmbeds);
+                    if (directive == CandidateURI.DONT_SCHEDULE) {
+                        continue;
+                    }
+                    final CandidateURI caURI =
+                        curi.createCandidateURI(curi.getBaseURI(), wref, directive,
+                            considerAsSeed(curi, wref, redirectsNewSeeds));
+                    if (isInScope(caURI)) {
+                        inScopeLinks.add(caURI);
+                    }
+                } catch (URIException e) {
+                    getController().logUriError(e, curi.getUURI(), 
+                        wref.getDestination().toString());
                 }
-                final CandidateURI caURI =
-                    curi.createCandidateURI(curi.getBaseURI(), wref, directive,
-                        considerAsSeed(curi, wref, redirectsNewSeeds));
-                if (isInScope(caURI)) {
+            } else if(o instanceof CandidateURI){
+                CandidateURI caURI = (CandidateURI)o;
+                if(isInScope(caURI)){
                     inScopeLinks.add(caURI);
                 }
-            } catch (URIException e) {
-                getController().logUriError(e, curi.getUURI(), 
-                    wref.getDestination().toString());
+            } else {
+                LOGGER.severe("Unexpected type: " + o);
             }
         }
         // Replace current links collection w/ inscopeLinks.  May be
