@@ -106,14 +106,14 @@ public class IoUtils {
             boolean overwrite) {
         final class Expander extends Expand {
                 public Expander() {
-                project = new Project();
-                project.init();
-                taskType = "unzip";
-                taskName = "unzip";
-                target = new Target();
             }   
         }
         Expander expander = new Expander();
+        expander.setProject(new Project());
+        expander.getProject().init();
+        expander.setTaskType("unzip");
+        expander.setTaskName("unzip");
+        expander.setOwningTarget(new Target());
         expander.setSrc(zipFile);
         expander.setDest(destinationDir);
         expander.setOverwrite(overwrite);
