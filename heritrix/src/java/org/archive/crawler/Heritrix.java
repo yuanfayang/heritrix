@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
@@ -67,13 +68,21 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.RuntimeOperationsException;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeDataSupport;
+import javax.management.openmbean.CompositeType;
+import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 import javax.management.openmbean.OpenMBeanConstructorInfoSupport;
 import javax.management.openmbean.OpenMBeanInfoSupport;
 import javax.management.openmbean.OpenMBeanOperationInfoSupport;
 import javax.management.openmbean.OpenMBeanParameterInfo;
 import javax.management.openmbean.OpenMBeanParameterInfoSupport;
+import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
+import javax.management.openmbean.TabularData;
+import javax.management.openmbean.TabularDataSupport;
+import javax.management.openmbean.TabularType;
 
 import org.apache.commons.cli.Option;
 import org.archive.crawler.admin.Alert;
@@ -89,6 +98,7 @@ import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.net.UURI;
+import org.archive.util.ExceptionUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
@@ -243,13 +253,21 @@ public class Heritrix implements DynamicMBean {
     private final static String ALERT_OPER = "alert";
     private final static String NEW_ALERT_OPER = "newAlert";
     private final static String ADD_CRAWL_JOB_BASEDON_OPER = "addJobBasedon";
+    private final static String PENDING_JOBS_OPER = "pendingJobs";
+    private final static String COMPLETED_JOBS_OPER = "completedJobs";
+    private final static String CRAWLEND_REPORT_OPER = "crawlendReport";
     private final static List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {START_OPER, STOP_OPER,
             INTERRUPT_OPER, START_CRAWLING_OPER, STOP_CRAWLING_OPER,
             ADD_CRAWL_JOB_OPER, ADD_CRAWL_JOB_BASEDON_OPER,
-            ALERT_OPER, NEW_ALERT_OPER});
+            ALERT_OPER, NEW_ALERT_OPER, PENDING_JOBS_OPER,
+            COMPLETED_JOBS_OPER, CRAWLEND_REPORT_OPER});
     }
+    private CompositeType jobCompositeType = null;
+    private TabularType jobsTabularType = null;
+    private static final String [] JOB_KEYS =
+        new String [] {"uid", "name", "status"};
     
     private static final String JAR_SUFFIX = ".jar";
 
@@ -260,7 +278,11 @@ public class Heritrix implements DynamicMBean {
     public Heritrix()
     throws IOException {
         super();
-        this.openMBeanInfo = buildMBeanInfo();
+        try {
+            this.openMBeanInfo = buildMBeanInfo();
+        } catch (OpenDataException e) {
+            throw ExceptionUtils.convertToIOException(e);
+        }
         Heritrix.loadProperties();
         Heritrix.patchLogging();
         // Register a shutdownHook so we get called on JVM KILL SIGNAL
@@ -1628,8 +1650,9 @@ public class Heritrix implements DynamicMBean {
     /**
      * Build up the MBean info for Heritrix main.
      * @return Return created mbean info instance.
+     * @throws OpenDataException 
      */
-    protected OpenMBeanInfoSupport buildMBeanInfo() {
+    protected OpenMBeanInfoSupport buildMBeanInfo() throws OpenDataException {
         OpenMBeanAttributeInfoSupport[] attributes =
             new OpenMBeanAttributeInfoSupport[Heritrix.ATTRIBUTE_LIST.size()];
         OpenMBeanConstructorInfoSupport[] constructors =
@@ -1661,7 +1684,7 @@ public class Heritrix implements DynamicMBean {
         
         OpenMBeanParameterInfo[] args = new OpenMBeanParameterInfoSupport[1];
         args[0] = new OpenMBeanParameterInfoSupport("threadName",
-            "Name of thread to send interrupt to", SimpleType.STRING);
+            "Name of thread to send interrupt", SimpleType.STRING);
         operations[2] = new OpenMBeanOperationInfoSupport(
             Heritrix.INTERRUPT_OPER, "Send thread an interrupt " +
                 "(Used debugging)", args, SimpleType.STRING,
@@ -1678,8 +1701,8 @@ public class Heritrix implements DynamicMBean {
                 MBeanOperationInfo.ACTION);
         
         args = new OpenMBeanParameterInfoSupport[4];
-        args[0] = new OpenMBeanParameterInfoSupport("orderPathOrUrl",
-            "File path or URL of order file or jar or order + seeds",
+        args[0] = new OpenMBeanParameterInfoSupport("pathOrURL",
+            "Path/URL to order or jar of order+seed",
             SimpleType.STRING);
         args[1] = new OpenMBeanParameterInfoSupport("name",
             "Basename for new job", SimpleType.STRING);
@@ -1717,6 +1740,33 @@ public class Heritrix implements DynamicMBean {
             "Zero-based index into array of alerts", SimpleType.INTEGER);
         operations[8] = new OpenMBeanOperationInfoSupport(
             Heritrix.ALERT_OPER, "Return alert at passed index", args,
+                SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
+        
+        this.jobCompositeType = new CompositeType("job",
+                "Job attributes", JOB_KEYS,
+                new String [] {"Job unique ID", "Job name", "Job status"},
+                new OpenType [] {SimpleType.STRING, SimpleType.STRING,
+                    SimpleType.STRING});
+        this.jobsTabularType = new TabularType("jobs", "List of jobs",
+            this.jobCompositeType, new String [] {"uid"});
+                
+        operations[9] = new OpenMBeanOperationInfoSupport(
+            Heritrix.PENDING_JOBS_OPER,
+                "List of pending jobs (or null if none)", null,
+                this.jobsTabularType, MBeanOperationInfo.INFO);
+        operations[10] = new OpenMBeanOperationInfoSupport(
+                Heritrix.COMPLETED_JOBS_OPER,
+                    "List of completed jobs (or null if none)", null,
+                    this.jobsTabularType, MBeanOperationInfo.INFO);
+        
+        args = new OpenMBeanParameterInfoSupport[2];
+        args[0] = new OpenMBeanParameterInfoSupport("uid",
+            "Job unique ID", SimpleType.STRING);
+        args[1] = new OpenMBeanParameterInfoSupport("name",
+                "Report name (e.g. crawl-report, etc.)",
+                SimpleType.STRING);
+        operations[11] = new OpenMBeanOperationInfoSupport(
+            Heritrix.CRAWLEND_REPORT_OPER, "Return crawl-end report", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
 
         // Build the info object.
@@ -1822,9 +1872,11 @@ public class Heritrix implements DynamicMBean {
                     checkForEmptyPlaceHolder((String)params[2]),
                     checkForEmptyPlaceHolder((String)params[3]));
             } catch (IOException e) {
-                throw convertException(e);
+                throw new RuntimeOperationsException(
+                        ExceptionUtils.convertToRuntime(e));
             } catch (FatalConfigurationException e) {
-                throw convertException(e);
+                throw new RuntimeOperationsException(
+                        ExceptionUtils.convertToRuntime(e));
             }
         }
         if (operationName.equals(ADD_CRAWL_JOB_BASEDON_OPER)) {
@@ -1856,9 +1908,78 @@ public class Heritrix implements DynamicMBean {
                     get(((Integer)params[0]).intValue())));
         }
         
+        if (operationName.equals(PENDING_JOBS_OPER)) {
+                JmxUtils.checkParamsCount(PENDING_JOBS_OPER, params, 0);
+            try {
+                return makeJobsTabularData(getJobHandler().getPendingJobs());
+            } catch (OpenDataException e) {
+                throw new RuntimeOperationsException(
+                        ExceptionUtils.convertToRuntime(e));
+            }
+        }
+        
+        if (operationName.equals(COMPLETED_JOBS_OPER)) {
+                JmxUtils.checkParamsCount(COMPLETED_JOBS_OPER, params, 0);
+            try {
+                return makeJobsTabularData(getJobHandler().getCompletedJobs());
+            } catch (OpenDataException e) {
+                throw new RuntimeOperationsException(
+                        ExceptionUtils.convertToRuntime(e));
+            }
+        }
+        
+        if (operationName.equals(CRAWLEND_REPORT_OPER)) {
+            JmxUtils.checkParamsCount(CRAWLEND_REPORT_OPER, params, 2);
+            try {
+                return getCrawlendReport((String)params[0], (String) params[1]);
+            } catch (IOException e) {
+                throw new RuntimeOperationsException(ExceptionUtils
+                        .convertToRuntime(e));
+            }
+        }
+        
         throw new ReflectionException(
             new NoSuchMethodException(operationName),
                 "Cannot find the operation " + operationName);
+    }
+    
+    /**
+     * Return named crawl end report for job with passed uid.
+     * Crawler makes reports when its finished its crawl.  Use this method
+     * to get a String version of one of these files.
+     * @param jobUid The unique ID for the job whose reports you want to see
+     * (Must be a completed job).
+     * @param reportName Name of report minus '.txt' (e.g. crawl-report).
+     * @return String version of the on-disk report.
+     * @throws IOException 
+     */
+    protected String getCrawlendReport(String jobUid, String reportName)
+    throws IOException {
+        CrawlJob job = getJobHandler().getJob(jobUid);
+        if (job == null) {
+            throw new IOException("No such job: " + jobUid);
+        }
+        File report = new File(job.getDirectory(), reportName + ".txt");
+        if (!report.exists()) {
+            throw new FileNotFoundException(report.getAbsolutePath());
+        }
+        return FileUtils.readFileAsString(report);
+    }
+    
+    protected TabularData makeJobsTabularData(List jobs)
+    throws OpenDataException {
+        if (jobs == null || jobs.size() == 0) {
+            return null;
+        }
+        TabularData td = new TabularDataSupport(this.jobsTabularType);
+        for (Iterator i = jobs.iterator(); i.hasNext();) {
+            CrawlJob job = (CrawlJob)i.next();
+            CompositeData cd = new CompositeDataSupport(this.jobCompositeType,
+                JOB_KEYS,
+                new String [] {job.getUID(), job.getJobName(), job.getStatus()});
+            td.put(cd);
+        }
+        return td;
     }
     
     /**
@@ -1884,12 +2005,5 @@ public class Heritrix implements DynamicMBean {
 
     public MBeanInfo getMBeanInfo() {
         return this.openMBeanInfo;
-    }
-    
-    protected RuntimeOperationsException convertException(Exception e) {
-        RuntimeException re = new RuntimeException("Converted " +
-            e.getClass().getName() + ": " + e.getMessage());
-        re.setStackTrace(e.getStackTrace());
-        return new RuntimeOperationsException(re);
     }
 }
