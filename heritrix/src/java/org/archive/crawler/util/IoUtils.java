@@ -30,10 +30,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.archive.net.UURIFactory;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Target;
+import org.apache.tools.ant.taskdefs.Expand;
+import org.archive.net.UURI;
 
 /**
  * Logging utils.
@@ -62,7 +64,7 @@ public class IoUtils {
      */
     public static InputStream getInputStream(File basedir, String pathOrUrl) {
         InputStream is = null;
-        if (UURIFactory.hasSupportedScheme(pathOrUrl)) {
+        if (UURI.hasScheme(pathOrUrl)) {
             try {
                 URL url = new URL(pathOrUrl);
                 is = url.openStream();
@@ -86,42 +88,35 @@ public class IoUtils {
     }
     
     /**
-     * Takes a path or url string and returns a File object for a local
-     * resource.  If passed <code>pathOrUrl</code> is judged remote
-     * URL, we return a pointer to a local copy of the URL resource.
-     * @param basedir If passed <code>fileOrUrl</code> is a file path and
-     * it is not absolute, prefix with this basedir (May be null then
-     * no prefixing will be done).
-     * @param tmpdir If remote url -- not a file url -- then the directory
-     * in which to store the local copy of the remote resource.
-     * @param pathOrUrl Pass path to a file on disk or pass in a URL.
-     * @return A File.
+     * Use ant to unjar.
+     * @param zipFile File to unzip.
+     * @param destinationDir Where to unzip to.
      */
-    public static File getLocalFile(File basedir, File tmpdir,
-            String pathOrUrl) {
-        File result = null;
-        if (UURIFactory.hasSupportedScheme(pathOrUrl)) {
-            try {
-                URL url = new URL(pathOrUrl);
-                if (url.getProtocol().equals("file")) {
-                    // Assume local reference.
-                    result = new File(url.getPath());
-                } else {
-                    // Assume remote.  Bring a copy local.
-                    throw new RuntimeException("Unimplemented");
-                }
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        } else {
-            // Assume its not an URI or we failed the parse.
-            // Try it as a file.
-            result = new File(pathOrUrl);
-            if (!result.isAbsolute() && basedir != null) {
-                result = new File(basedir, pathOrUrl);
-            }
+    public static void unzip(File zipFile, File destinationDir) {
+        unzip(zipFile, destinationDir, true);
+    }
+     
+    /**
+     * Use ant to unjar.
+     * @param zipFile File to unzip.
+     * @param destinationDir Where to unzip to.
+     * @param overwrite Whether to overwrite existing content.
+     */
+    public static void unzip(File zipFile, File destinationDir,
+            boolean overwrite) {
+        final class Expander extends Expand {
+                public Expander() {
+                project = new Project();
+                project.init();
+                taskType = "unzip";
+                taskName = "unzip";
+                target = new Target();
+            }   
         }
-        return result;
+        Expander expander = new Expander();
+        expander.setSrc(zipFile);
+        expander.setDest(destinationDir);
+        expander.setOverwrite(overwrite);
+        expander.execute();
     }
 }
