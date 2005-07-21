@@ -43,6 +43,8 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
@@ -54,6 +56,8 @@ import org.archive.crawler.settings.ModuleType;
 import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.crawler.url.Canonicalizer;
+import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.net.UURI;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
@@ -74,7 +78,7 @@ import org.archive.util.ArchiveUtils;
  */
 public class AdaptiveRevisitFrontier extends ModuleType 
 implements Frontier, FetchStatusCodes, CoreAttributeConstants,
-        AdaptiveRevisitAttributeConstants, CrawlStatusListener {
+        AdaptiveRevisitAttributeConstants, CrawlStatusListener, HasUriReceiver {
     private static final Logger logger =
         Logger.getLogger(AdaptiveRevisitFrontier.class.getName());
 
@@ -129,9 +133,17 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     public final static String ATTR_QUEUE_IGNORE_WWW = "queue-ignore-www";
     protected final static Boolean DEFAULT_QUEUE_IGNORE_WWW = new Boolean(false);
     
+    /** Should the Frontier use a seperate 'already included' datastructure
+     *  or rely on the queues'. 
+     */
+    public final static String ATTR_USE_URI_UNIQ_FILTER = "use-uri-uniq-filter";
+    protected final static Boolean DEFAULT_USE_URI_UNIQ_FILTER = new Boolean(false);
+    
     private CrawlController controller;
     
     private AdaptiveRevisitQueueList hostQueues;
+    
+    private UriUniqFilter alreadyIncluded;
 
     private ThreadLocalQueue threadWaiting = new ThreadLocalQueue();
 
@@ -217,6 +229,13 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             t.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FORCE_QUEUE,
                     Level.WARNING, "This field must contain only alphanumeric "
                     + "characters plus period, dash, comma, colon, or underscore."));
+            t = addElementToDefinition(new SimpleType(ATTR_USE_URI_UNIQ_FILTER,
+                    "If true then the Frontier will use a seperate " +
+                    "datastructure to detect and eliminate duplicates.\n" +
+                    "This is required for Canonicalization rules to work.",
+                    DEFAULT_USE_URI_UNIQ_FILTER));
+            t.setExpertSetting(true);
+            t.setOverrideable(false);
 
         // Register persistent CrawlURI items 
         CrawlURI.addAlistPersistentMember(A_CONTENT_STATE_KEY);
@@ -233,9 +252,32 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         hostQueues = new AdaptiveRevisitQueueList(c.getBdbEnvironment(),
             c.getClassCatalog());
         
+        if(((Boolean)getUncheckedAttribute(
+                null,ATTR_USE_URI_UNIQ_FILTER)).booleanValue()){
+            alreadyIncluded = createAlreadyIncluded();
+        } else {
+            alreadyIncluded = null;
+        }
+        
         loadSeeds();
     }
 
+    /**
+     * Create a UriUniqFilter that will serve as record 
+     * of already seen URIs.
+     *
+     * @return A UURISet that will serve as a record of already seen URIs
+     * @throws IOException
+     */
+    protected UriUniqFilter createAlreadyIncluded() throws IOException {
+        UriUniqFilter uuf = new BdbUriUniqFilter(
+                this.controller.getBdbEnvironment(),
+                this.controller.isCheckpointRecover());
+
+        uuf.setDestination(this);
+        return uuf;
+    }
+    
     /**
      * Loads the seeds
      * <p>
@@ -249,8 +291,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             CandidateURI caUri =
                 CandidateURI.createSeedCandidateURI((UURI)iter.next());
             caUri.setSchedulingDirective(CandidateURI.MEDIUM);
-            innerSchedule(caUri);
+            schedule(caUri);
         }
+        batchFlush();
         // save ignored items (if any) where they can be consulted later
         AbstractFrontier.saveIgnoredItems(
                 ignoredWriter.toString(), 
@@ -273,6 +316,56 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 }
             }
             return queueKey;
+    }
+
+    /**
+     * Canonicalize passed uuri. Its would be sweeter if this canonicalize
+     * function was encapsulated by that which it canonicalizes but because
+     * settings change with context -- i.e. there may be overrides in operation
+     * for a particular URI -- its not so easy; Each CandidateURI would need a
+     * reference to the settings system. That's awkward to pass in.
+     * 
+     * @param uuri Candidate URI to canonicalize.
+     * @return Canonicalized version of passed <code>uuri</code>.
+     */
+    protected String canonicalize(UURI uuri) {
+        return Canonicalizer.canonicalize(uuri, this.controller.getOrder());
+    }
+
+    /**
+     * Canonicalize passed CandidateURI. This method differs from
+     * {@link #canonicalize(UURI)} in that it takes a look at
+     * the CandidateURI context possibly overriding any canonicalization effect if
+     * it could make us miss content. If canonicalization produces an URL that
+     * was 'alreadyseen', but the entry in the 'alreadyseen' database did
+     * nothing but redirect to the current URL, we won't get the current URL;
+     * we'll think we've already see it. Examples would be archive.org
+     * redirecting to www.archive.org or the inverse, www.netarkivet.net
+     * redirecting to netarkivet.net (assuming stripWWW rule enabled).
+     * <p>Note, this method under circumstance sets the forceFetch flag.
+     * 
+     * @param cauri CandidateURI to examine.
+     * @return Canonicalized <code>cacuri</code>.
+     */
+    protected String canonicalize(CandidateURI cauri) {
+        String canon = canonicalize(cauri.getUURI());
+        if (cauri.isLocation()) {
+            // If the via is not the same as where we're being redirected (i.e.
+            // we're not being redirected back to the same page, AND the
+            // canonicalization of the via is equal to the the current cauri, 
+            // THEN forcefetch (Forcefetch so no chance of our not crawling
+            // content because alreadyseen check things its seen the url before.
+            // An example of an URL that redirects to itself is:
+            // http://bridalelegance.com/images/buttons3/tuxedos-off.gif.
+            // An example of an URL whose canonicalization equals its via's
+            // canonicalization, and we want to fetch content at the
+            // redirection (i.e. need to set forcefetch), is netarkivet.dk.
+            if (!cauri.toString().equals(cauri.getVia().toString()) &&
+                    canonicalize(cauri.getVia()).equals(canon)) {
+                cauri.setForceFetch(true);
+            }
+        }
+        return canon;
     }
 
     /**
@@ -359,7 +452,18 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     private void innerBatchFlush() {
         Queue q = threadWaiting.getQueue();
         while(!q.isEmpty()) {
-            innerSchedule((CandidateURI)q.dequeue());
+            CandidateURI caUri = (CandidateURI)q.dequeue();
+            if(alreadyIncluded != null){
+                String cannon = canonicalize(caUri);
+                System.out.println("Cannon of " + caUri + " is " + cannon);
+                if (caUri.forceFetch()) {
+                    alreadyIncluded.addForce(cannon, caUri);
+                } else {
+                    alreadyIncluded.add(cannon, caUri);
+                }
+            } else {
+                innerSchedule(caUri);
+            }
         }
     }
     
@@ -679,7 +783,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.resetFetchAttempts();
         try {
             // No wait on failure. No contact was made with the server.
-            hq.update(curi,false, 0, shouldBeForgotten(curi)); 
+            boolean shouldForget = shouldBeForgotten(curi);
+            if(shouldForget && alreadyIncluded != null){
+                alreadyIncluded.forget(canonicalize(curi.getUURI()),curi);
+            }
+            hq.update(curi,false, 0, shouldForget); 
         } catch (IOException e) {
             // TODO Handle IOException
             e.printStackTrace();
@@ -877,7 +985,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @see org.archive.crawler.framework.Frontier#discoveredUriCount()
      */
     public synchronized long discoveredUriCount() {
-        return hostQueues.getSize();
+        return (this.alreadyIncluded != null) ? 
+                this.alreadyIncluded.count() : hostQueues.getSize();
     }
 
     /* (non-Javadoc)
@@ -1073,6 +1182,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     public void crawlEnded(String sExitMessage) {
         // Cleanup!
+        if (this.alreadyIncluded != null) {
+            this.alreadyIncluded.close();
+            this.alreadyIncluded = null;
+        }
         hostQueues.close();
     }
 
@@ -1102,6 +1215,14 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     public void crawlCheckpoint(File checkpointDir) throws Exception {
         // Not interested
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver#receive(org.archive.crawler.datamodel.CandidateURI)
+     */
+    public void receive(CandidateURI item) {
+        System.out.println("Received " + item);
+        innerSchedule(item);        
     }
     
 }
