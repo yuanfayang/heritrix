@@ -1036,7 +1036,7 @@ public class Heritrix implements DynamicMBean {
         String result = null;
         try {
             IoUtils.readFullyToFile(connection.getInputStream(), localFile);
-            addCrawlJob(localFile, name, description, seeds);
+            result = addCrawlJob(localFile, name, description, seeds);
         } catch (IOException ioe) {
             // Cleanup if an Exception.
             localFile.delete();
@@ -1056,6 +1056,7 @@ public class Heritrix implements DynamicMBean {
     protected String addCrawlJob(final File order, final String name,
             final String description, final String seeds)
     throws FatalConfigurationException, IOException {
+        CrawlJob addedJob = null;
         if (Heritrix.jobHandler == null) {
             throw new NullPointerException("Heritrix jobhandler is null.");
         }
@@ -1063,14 +1064,15 @@ public class Heritrix implements DynamicMBean {
             if (order.getName().toLowerCase().endsWith(JAR_SUFFIX)) {
                 return addCrawlJobBasedonJar(order, name, description, seeds);
             }
-            Heritrix.jobHandler.addJob(createCrawlJob(jobHandler, order, name));
+            addedJob = Heritrix.jobHandler.
+                addJob(createCrawlJob(jobHandler, order, name));
         } catch (InvalidAttributeValueException e) {
             FatalConfigurationException fce = new FatalConfigurationException(
                 "Converted InvalidAttributeValueException on " +
                 order.getAbsolutePath() + ": " + e.getMessage());
             fce.setStackTrace(e.getStackTrace());
         }
-        return "Added " + order.getAbsolutePath();
+        return addedJob != null? addedJob.getUID(): null;
     }
     
     /**
@@ -1119,7 +1121,7 @@ public class Heritrix implements DynamicMBean {
                 FileUtils.copyFiles(settingsDir, job.getDirectory());
             }
             addCrawlJob(job);
-            return "Added " + job.getUID();
+            return job.getUID();
          } finally {
              // After job has been added, no more need of expanded content.
              // (Let the caller be responsible for cleanup of jar. Sometimes
@@ -1142,7 +1144,7 @@ public class Heritrix implements DynamicMBean {
             CrawlJob job = addCrawlJobBasedOn(
                 cj.getSettingsHandler().getOrderFile(), name, description,
                     seeds);
-            return "Added " + job.getUID();
+            return job.getUID();
         } catch (Exception e) {
             e.printStackTrace();
             return "Exception on " + jobUidOrProfile + ": " + e.getMessage();
