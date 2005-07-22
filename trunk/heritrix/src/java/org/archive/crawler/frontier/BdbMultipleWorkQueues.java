@@ -345,10 +345,12 @@ public class BdbMultipleWorkQueues {
      * (2) priorities or costs over 2^8
      * (3) ordinals over 2^48
      * 
+     * Package access & static for testing purposes. 
+     * 
      * @param curi
      * @return a DatabaseEntry key for the CrawlURI
      */
-    private DatabaseEntry calculateInsertKey(CrawlURI curi) {
+    static DatabaseEntry calculateInsertKey(CrawlURI curi) {
         byte[] keyData = new byte[16];
         long fpPlus = FPGenerator.std64.fp(curi.getClassKey());
         ArchiveUtils.longIntoByteArray(fpPlus, keyData, 0);
