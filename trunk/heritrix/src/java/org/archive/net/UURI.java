@@ -24,9 +24,7 @@
  */
 package org.archive.net;
 
-import java.io.File;
 import java.io.Serializable;
-import java.util.Arrays;
 
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;

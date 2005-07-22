@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
@@ -98,7 +97,6 @@ import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.net.UURI;
-import org.archive.util.ExceptionUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
@@ -278,11 +276,7 @@ public class Heritrix implements DynamicMBean {
     public Heritrix()
     throws IOException {
         super();
-        try {
-            this.openMBeanInfo = buildMBeanInfo();
-        } catch (OpenDataException e) {
-            throw ExceptionUtils.convertToIOException(e);
-        }
+        this.openMBeanInfo = buildMBeanInfo();
         Heritrix.loadProperties();
         Heritrix.patchLogging();
         // Register a shutdownHook so we get called on JVM KILL SIGNAL
@@ -1650,9 +1644,8 @@ public class Heritrix implements DynamicMBean {
     /**
      * Build up the MBean info for Heritrix main.
      * @return Return created mbean info instance.
-     * @throws OpenDataException 
      */
-    protected OpenMBeanInfoSupport buildMBeanInfo() throws OpenDataException {
+    protected OpenMBeanInfoSupport buildMBeanInfo() {
         OpenMBeanAttributeInfoSupport[] attributes =
             new OpenMBeanAttributeInfoSupport[Heritrix.ATTRIBUTE_LIST.size()];
         OpenMBeanConstructorInfoSupport[] constructors =
@@ -1742,14 +1735,18 @@ public class Heritrix implements DynamicMBean {
             Heritrix.ALERT_OPER, "Return alert at passed index", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
         
-        this.jobCompositeType = new CompositeType("job",
-                "Job attributes", JOB_KEYS,
-                new String [] {"Job unique ID", "Job name", "Job status"},
-                new OpenType [] {SimpleType.STRING, SimpleType.STRING,
-                    SimpleType.STRING});
-        this.jobsTabularType = new TabularType("jobs", "List of jobs",
-            this.jobCompositeType, new String [] {"uid"});
-                
+        try {
+            this.jobCompositeType = new CompositeType("job",
+                    "Job attributes", JOB_KEYS,
+                    new String [] {"Job unique ID", "Job name", "Job status"},
+                    new OpenType [] {SimpleType.STRING, SimpleType.STRING,
+                        SimpleType.STRING});
+            this.jobsTabularType = new TabularType("jobs", "List of jobs",
+                    this.jobCompositeType, new String [] {"uid"});
+        } catch (OpenDataException e) {
+            // This should never happen.
+            throw new RuntimeException(e);
+        }
         operations[9] = new OpenMBeanOperationInfoSupport(
             Heritrix.PENDING_JOBS_OPER,
                 "List of pending jobs (or null if none)", null,
@@ -1872,11 +1869,9 @@ public class Heritrix implements DynamicMBean {
                     checkForEmptyPlaceHolder((String)params[2]),
                     checkForEmptyPlaceHolder((String)params[3]));
             } catch (IOException e) {
-                throw new RuntimeOperationsException(
-                        ExceptionUtils.convertToRuntime(e));
+                throw new RuntimeOperationsException(new RuntimeException(e));
             } catch (FatalConfigurationException e) {
-                throw new RuntimeOperationsException(
-                        ExceptionUtils.convertToRuntime(e));
+                throw new RuntimeOperationsException(new RuntimeException(e));
             }
         }
         if (operationName.equals(ADD_CRAWL_JOB_BASEDON_OPER)) {
@@ -1913,8 +1908,7 @@ public class Heritrix implements DynamicMBean {
             try {
                 return makeJobsTabularData(getJobHandler().getPendingJobs());
             } catch (OpenDataException e) {
-                throw new RuntimeOperationsException(
-                        ExceptionUtils.convertToRuntime(e));
+                throw new RuntimeOperationsException(new RuntimeException(e));
             }
         }
         
@@ -1923,8 +1917,7 @@ public class Heritrix implements DynamicMBean {
             try {
                 return makeJobsTabularData(getJobHandler().getCompletedJobs());
             } catch (OpenDataException e) {
-                throw new RuntimeOperationsException(
-                        ExceptionUtils.convertToRuntime(e));
+                throw new RuntimeOperationsException(new RuntimeException(e));
             }
         }
         
@@ -1933,8 +1926,7 @@ public class Heritrix implements DynamicMBean {
             try {
                 return getCrawlendReport((String)params[0], (String) params[1]);
             } catch (IOException e) {
-                throw new RuntimeOperationsException(ExceptionUtils
-                        .convertToRuntime(e));
+                throw new RuntimeOperationsException(new RuntimeException(e));
             }
         }
         
