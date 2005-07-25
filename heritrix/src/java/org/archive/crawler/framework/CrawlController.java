@@ -1757,12 +1757,12 @@ public class CrawlController implements Serializable, Reporter {
      * @param l String which could not be interpreted as URI without exception
      */
     public void logUriError(URIException e, UURI u, CharSequence l) {
-        if(e.getReasonCode()==UURIFactory.IGNORED_SCHEME) {
+        if (e.getReasonCode() == UURIFactory.IGNORED_SCHEME) {
             // don't log those that are intentionally ignored
             return; 
         }
         Object[] array = {u, l};
-        uriErrors.log(Level.INFO, e.getMessage(),array);
+        uriErrors.log(Level.INFO, e.getMessage(), array);
     }
     
     // 
