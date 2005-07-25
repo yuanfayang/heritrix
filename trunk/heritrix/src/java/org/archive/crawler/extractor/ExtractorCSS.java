@@ -119,7 +119,8 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
                 curi.toString());
             return;
         }
-        this.numberOfLinksExtracted += processStyleCode(curi, cs, getController());
+        this.numberOfLinksExtracted +=
+            processStyleCode(curi, cs, getController());
         // Set flag to indicate that link extraction is completed.
         curi.linkExtractorFinished();
         // Done w/ the ReplayCharSequence.  Close it.
@@ -133,7 +134,8 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
         }
     }
 
-    public static long processStyleCode(CrawlURI curi, CharSequence cs, CrawlController controller) {
+    public static long processStyleCode(CrawlURI curi, CharSequence cs,
+            CrawlController controller) {
         long foundLinks = 0;
         Matcher uris = null;
         String cssUri;
@@ -144,12 +146,21 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
                 // TODO: Escape more HTML Entities.
                 cssUri = TextUtils.replaceAll(ESCAPED_AMP, cssUri, "&");
                 // Remove backslashes when used as escape character in CSS URL
-                cssUri = TextUtils.replaceAll(CSS_BACKSLASH_ESCAPE, cssUri, "$1");
+                cssUri = TextUtils.replaceAll(CSS_BACKSLASH_ESCAPE, cssUri,
+                        "$1");
                 foundLinks++;
                 try {
-                    curi.createAndAddLink(cssUri,Link.EMBED_MISC,Link.EMBED_HOP);
+                    curi.createAndAddLink(cssUri,Link.EMBED_MISC,
+                            Link.EMBED_HOP);
                 } catch (URIException e) {
-                    controller.logUriError(e,curi.getUURI(),cssUri);
+                    // There may not be a controller (e.g. If we're being run
+                    // by the extractor tool).
+                    if (controller != null) {
+                        controller.logUriError(e, curi.getUURI(), cssUri);
+                    } else {
+                        logger.info(e.getMessage() + ": " + curi.getUURI() +
+                                ": " + cssUri);
+                    }
                 }
             }
         } catch (StackOverflowError e) {

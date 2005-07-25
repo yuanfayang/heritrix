@@ -674,7 +674,8 @@ implements CoreAttributeConstants {
 
         // then, parse for URIs
         this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
-            curi, sequence.subSequence(endOfOpenTag,sequence.length()), getController());
+            curi, sequence.subSequence(endOfOpenTag,sequence.length()),
+                getController());
     }
 
     /* (non-Javadoc)
