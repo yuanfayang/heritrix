@@ -23,7 +23,12 @@
 package org.archive.util;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +40,7 @@ import java.util.regex.Pattern;
  */
 public class InetAddressUtil {
     private static Logger logger =
-        Logger.getLogger(DNSJavaUtil.class.getName());
+        Logger.getLogger(InetAddressUtil.class.getName());
     
     /**
      * ipv4 address.
@@ -74,5 +79,42 @@ public class InetAddressUtil {
             logger.warning(e.getMessage());
         }
         return result;
+    }
+    
+    /**
+     * @return All known local names for this host or null if none found.
+     */
+    public static List getAllLocalHostNames() {
+        List localNames = new ArrayList();
+        Enumeration e = null;
+        try {
+            e = NetworkInterface.getNetworkInterfaces();
+        } catch(SocketException exception) {
+            throw new RuntimeException(exception);
+        }
+        for (; e.hasMoreElements();) {
+            for (Enumeration ee =
+                ((NetworkInterface)e.nextElement()).getInetAddresses();
+                    ee.hasMoreElements();) {
+                InetAddress ia = (InetAddress)ee.nextElement();
+                if (ia != null) {
+                    if (ia.getHostName() != null) {
+                        localNames.add(ia.getHostName());
+                    }
+                    if (ia.getHostAddress() !=  null) {
+                        localNames.add(ia.getHostAddress());
+                    }
+                }
+            }
+        }
+        final String localhost = "localhost";
+        if (!localNames.contains(localhost)) {
+            localNames.add(localhost);
+        }
+        final String localhostLocaldomain = "localhost.localdomain";
+        if (!localNames.contains(localhostLocaldomain)) {
+            localNames.add(localhostLocaldomain);
+        }
+        return localNames;
     }
 }
