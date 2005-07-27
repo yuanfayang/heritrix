@@ -871,7 +871,7 @@ implements CrawlURIDispositionListener, Serializable {
         File f = new File(controller.getDisk().getPath(), filename);
         try {
             PrintWriter bw = new PrintWriter(new FileWriter(f));
-            writeReportTo(reportName,bw);
+            writeReportTo(reportName, bw);
             bw.close();
             controller.addToManifest(f.getAbsolutePath(),
                 CrawlController.MANIFEST_REPORT_FILE, true);
