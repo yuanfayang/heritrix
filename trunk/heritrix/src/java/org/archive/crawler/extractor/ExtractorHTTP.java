@@ -23,6 +23,8 @@
  */
 package org.archive.crawler.extractor;
 
+import java.util.logging.Logger;
+
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.URIException;
@@ -36,6 +38,8 @@ import org.archive.crawler.framework.Processor;
  */
 public class ExtractorHTTP extends Processor
 implements CoreAttributeConstants {
+    private static final Logger LOGGER =
+        Logger.getLogger(ExtractorHTTP.class.getName());
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
@@ -66,7 +70,14 @@ implements CoreAttributeConstants {
                 Link.REFER_HOP);
             numberOfLinksExtracted++;
         } catch (URIException e) {
-            getController().logUriError(e,curi.getUURI(),loc.getValue());
+            // There may not be a controller (e.g. If we're being run
+            // by the extractor tool).
+            if (getController() != null) {
+                getController().logUriError(e, curi.getUURI(), loc.getValue());
+            } else {
+                LOGGER.info(curi + ", " + loc.getValue() + ": " +
+                    e.getMessage());
+            }
         }
 
     }
