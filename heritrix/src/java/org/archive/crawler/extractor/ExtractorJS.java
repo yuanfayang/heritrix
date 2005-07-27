@@ -45,7 +45,7 @@ import org.archive.util.TextUtils;
  *
  */
 public class ExtractorJS extends Processor implements CoreAttributeConstants {
-    private static Logger logger =
+    private static Logger LOGGER =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
 
     static final String AMP = "&";
@@ -110,7 +110,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
             	"Failed get of replay char sequence.");
         }
         if (cs == null) {
-            logger.warning("Failed getting ReplayCharSequence: " +
+            LOGGER.warning("Failed getting ReplayCharSequence: " +
                 curi.toString());
             return;
         }
@@ -128,7 +128,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
             try {
                 cs.close();
             } catch (IOException ioe) {
-                logger.warning(TextUtils.exceptionToString(
+                LOGGER.warning(TextUtils.exceptionToString(
                     "Failed close of ReplayCharSequence.", ioe));
             }
         }
@@ -157,10 +157,12 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
                             Link.JS_MISC, Link.SPECULATIVE_HOP);
                     }
                 } catch (URIException e) {
+                    // There may not be a controller (e.g. If we're being run
+                    // by the extractor tool).
                     if (controller != null) {
                         controller.logUriError(e, curi.getUURI(), string);
                     } else {
-                        logger.warning(string + " from " + curi + " threw " +
+                        LOGGER.info(curi + ", " + string + ": " +
                             e.getMessage());
                     }
                 }

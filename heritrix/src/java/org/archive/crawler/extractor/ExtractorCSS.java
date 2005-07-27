@@ -158,8 +158,8 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
                     if (controller != null) {
                         controller.logUriError(e, curi.getUURI(), cssUri);
                     } else {
-                        logger.info(e.getMessage() + ": " + curi.getUURI() +
-                                ": " + cssUri);
+                        logger.info(curi + ", " + cssUri + ": " +
+                            e.getMessage());
                     }
                 }
             }

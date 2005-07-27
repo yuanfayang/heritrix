@@ -40,8 +40,9 @@ import org.archive.crawler.framework.ToeThread;
  * @author Parker Thompson
  *
  */
-public class ExtractorPDF extends Processor implements CoreAttributeConstants
-{
+public class ExtractorPDF extends Processor implements CoreAttributeConstants {
+    private static final Logger LOGGER =
+        Logger.getLogger(ExtractorPDF.class.getName());
     private static int DEFAULT_MAX_SIZE_TO_PARSE = 5*1024*1024; // 5MB
 
     // TODO: make configurable
@@ -106,7 +107,14 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants
                 try {
                     curi.createAndAddLink(uri,Link.NAVLINK_MISC,Link.NAVLINK_HOP);
                 } catch (URIException e1) {
-                    getController().logUriError(e1,curi.getUURI(),uri);
+                    // There may not be a controller (e.g. If we're being run
+                    // by the extractor tool).
+                    if (getController() != null) {
+                        getController().logUriError(e1, curi.getUURI(), uri);
+                    } else {
+                        LOGGER.info(curi + ", " + uri + ": " +
+                            e1.getMessage());
+                    }
                 }
             }
             numberOfLinksExtracted += uris.size();
