@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1140,18 +1142,14 @@ public class CrawlJob implements DynamicMBean {
                     "crawling (Shouldn't ever be the case)"),
                     "Not current crawling job?");
             }
-            MutableString ms = new MutableString("Seed report - " +
-                    ArchiveUtils.get14DigitDate());
-            for(Iterator i = this.stats.getSeedRecordsSortedByStatusCode();
-                    i.hasNext();) {
-                ms.append("\n");
-                SeedRecord sr = (SeedRecord)i.next();
-                ms.append(sr.getUri()).append(" ");
-                int code = sr.getStatusCode();
-                ms.append(CrawlURI.fetchStatusCodesToString(code)).append(" ");
-                ms.append(sr.getDisposition());
+            StringWriter sw = new StringWriter();
+            if (this.stats instanceof StatisticsTracker) {
+                ((StatisticsTracker)this.stats).
+                    writeSeedsReportTo(new PrintWriter(sw));
+            } else {
+                sw.write("Unsupported");
             }
-            return ms.toString();
+            return sw.toString();
         }
         
         if (operationName.equals(ROTATELOGS_OPER)) {
