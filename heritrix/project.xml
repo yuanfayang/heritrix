@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
     On maven:
      http://maven.apache.org/
@@ -27,7 +26,6 @@
     you can't do much formatting using xdoc tags.
  -->
 <project>
-
   <!--The version of maven's project object model -->
   <pomVersion>3</pomVersion>
 
@@ -106,7 +104,7 @@
 
     <versions />
 
-    <!-- any mailing lists for the project -->
+    <!-- Mailing lists for the project -->
     <mailingLists>
         <mailingList>  
             <name>Crawler Discussion List</name>
@@ -133,7 +131,7 @@
         </mailingList>  
     </mailingLists>
   
-  <!--TODO: who the developers are for the project -->
+  <!--Developers for the project -->
   <developers>
     <developer>
         <name>Gordon Mohr</name>
@@ -290,7 +288,7 @@
     </licenses>
 
 
-    <!--For now, refer to local jars.  Later when (if) we deceide to go
+    <!--For now, refer to local jars.  Later when (if) we decide to go
         all-out maven, we'll pull common jars from remote repository.
 
         TODO: Fix the display of dependencies so it displays the 
@@ -299,7 +297,6 @@
         page using info below.
 
         TODO: Change the licenses into links to actual licenses.
-
     -->
     <dependencies>
         <dependency>
