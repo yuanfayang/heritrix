@@ -57,10 +57,6 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
  * custom processing extracted data and state across CrawlURI
  * processing.  See the {@link #putString(String, String)},
  * {@link #getString(String)}, etc. 
- * 
- * <p>Should only be instantiated via URIStore.getCrawlURI(...),
- * which will assure only one CrawlURI can exist per
- * UURI within a distinct "crawler".
  *
  * @author Gordon Mohr
  */
