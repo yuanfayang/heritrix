@@ -83,7 +83,11 @@ public class RecordingOutputStream extends OutputStream {
      */
     private byte[] buffer;
 
+    /** current virtual position in the recording */
     private long position;
+    
+    /** flag to disable recording */
+    private boolean recording;
     
     /**
      * Reusable buffer for FastBufferedOutputStream
@@ -127,6 +131,7 @@ public class RecordingOutputStream extends OutputStream {
     public RecordingOutputStream(int bufferSize, String backingFilename) {
         this.buffer = new byte[bufferSize];
         this.backingFilename = backingFilename;
+        recording = true;
     }
 
     /**
@@ -153,6 +158,8 @@ public class RecordingOutputStream extends OutputStream {
         this.out = wrappedStream;
         this.position = 0;
         this.size = 0;
+        // ensure recording turned on
+        this.recording = true;
         // Always begins false; must use startDigest() to begin
         this.shouldDigest = false;
         if (this.diskStream != null) {
@@ -167,21 +174,27 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     public void write(int b) throws IOException {
-        record(b);
+        if(recording) {
+            record(b);
+        }
         if (this.out != null) {
             this.out.write(b);
         }
     }
 
     public void write(byte[] b) throws IOException {
-        record(b, 0, b.length);
+        if(recording) {
+            record(b, 0, b.length);
+        }
         if (this.out != null) {
             this.out.write(b);
         }
     }
 
     public void write(byte[] b, int off, int len) throws IOException {
-        record(b, off, len);
+        if(recording) {
+            record(b, off, len);
+        }
         if (this.out != null) {
             this.out.write(b, off, len);
         }
@@ -274,8 +287,8 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     public void closeRecorder() throws IOException {
-        closeDiskStream();
-
+        recording = false;
+        closeDiskStream(); // if any
         // This setting of size is important.  Its passed to ReplayInputStream
         // on creation.  It uses it to know EOS.
         if (this.size == 0) {
