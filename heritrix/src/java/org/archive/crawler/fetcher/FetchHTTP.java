@@ -92,6 +92,7 @@ import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
+import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.httpclient.ThreadLocalHttpConnectionManager;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.RecorderLengthExceededException;
@@ -416,12 +417,21 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             return;
         }
         
+        // set softMax on bytes to get (if implied by content-length) 
+        long softMax = -1;
+        Header cl = method.getResponseHeader("content-length");
+        if(cl!=null) {
+            softMax = Long.parseLong(cl.getValue());
+        }
+        // set hardMax on bytes (if set by operator)
+        long hardMax = getMaxLength(curi);
+
         try {
             if (!((HttpMethodBase)method).isAborted()) {
                 // Force read-to-end, so that any socket hangs occur here,
                 // not in later modules.
-                rec.getRecordedInput().readFullyOrUntil(getMaxLength(curi),
-                        1000 * getTimeout(curi));
+                rec.getRecordedInput().readFullyOrUntil(softMax,
+                        hardMax, 1000 * getTimeout(curi));
             }
         } catch (RecorderTimeoutException ex) {
             doAbort(curi, method, "timeTrunc");
@@ -437,6 +447,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             cleanup(curi, e, "readFully", S_CONNECT_LOST);
             return;
         } finally {
+            // ensure recording has stopped
+            rec.closeRecorders();
             if (!((HttpMethodBase)method).isAborted()) {
                 method.releaseConnection();
             }
@@ -970,8 +982,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // Get timeout.  Use it for socket and for connection timeout.
         int timeout = (getSoTimeout(null) > 0)? getSoTimeout(null): 0;
         
-        // HttpConnectionManager cm = new ThreadLocalHttpConnectionManager();
         HttpConnectionManager cm = new ThreadLocalHttpConnectionManager();
+        // HttpConnectionManager cm = new SingleHttpConnectionManager();
         
         // TODO: The following settings should be made in the corresponding
         // HttpConnectionManager, not here.

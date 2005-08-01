@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.security.MessageDigest;
 import java.util.logging.Level;
@@ -159,25 +160,44 @@ public class RecordingInputStream
 
     /**
      * Read all of a stream (Or read until we timeout or have read to the max).
-     * @param maxLength Maximum length to read. If zero or < 0, then no limit.
-     * @param timeout Timeout in milliseconds for total read.  If zero or
-     * negative, timeout is <code>Long.MAX_VALUE</code>.
+     * @param softMaxLength Maximum length to read; if zero or < 0, then no 
+     * limit. If met, return normally. 
+     * @param hardMaxLength Maximum length to read; if zero or < 0, then no 
+     * limit. If exceeded, throw RecorderLengthExceededException
+     * @param timeout Timeout in milliseconds for total read; if zero or
+     * negative, timeout is <code>Long.MAX_VALUE</code>. If exceeded, throw
+     * RecorderTimeoutException
      * @throws IOException failed read.
      * @throws RecorderLengthExceededException
      * @throws RecorderTimeoutException
      * @throws InterruptedException
      */
-    public void readFullyOrUntil(long maxLength, long timeout)
+    public void readFullyOrUntil(long softMaxLength, long hardMaxLength, long timeout)
         throws IOException, RecorderLengthExceededException,
             RecorderTimeoutException, InterruptedException
     {
         // Check we're open before proceeding.
         if (!isOpen()) {
+            // TODO: should this be a noisier exception-raising error? 
             return;
         }
 
+        long maxLength;
+        if ( softMaxLength>0 && hardMaxLength>0) {
+            // both maxes set; use lower of softMax or hardMax+1
+            maxLength = Math.min(softMaxLength,hardMaxLength+1);
+        } else if(softMaxLength>0 && hardMaxLength<=0) {
+            // softMax only; set max to softMax
+            maxLength = softMaxLength;
+        } else if(softMaxLength<=0 && hardMaxLength>0) {
+            // hardMax only; set max to read as 1 past max
+            maxLength = hardMaxLength+1;
+        } else { // => (softMaxLength<=0 && hardMaxLength<=0) 
+            // no maxes
+            maxLength = -1;
+        }
+
         long timeoutTime;
-        long totalBytes = 0;
         long startTime = System.currentTimeMillis();
 
         if(timeout > 0) {
@@ -186,6 +206,7 @@ public class RecordingInputStream
             timeoutTime = Long.MAX_VALUE;
         }
 
+        long totalBytes = 0;
         long bytesRead = -1;
         int maxToRead = -1; 
         while (true) {
@@ -216,6 +237,8 @@ public class RecordingInputStream
                             e.getMessage());
                     }
                 }
+            } catch (SocketException se) {
+                throw se;
             } catch (NullPointerException e) {
                 // [ 896757 ] NPEs in Andy's Th-Fri Crawl.
                 // A crawl was showing NPE's in this part of the code but can
@@ -225,13 +248,15 @@ public class RecordingInputStream
                 throw new NullPointerException("Stream " + this.in + ", " +
                     e.getMessage() + " " + Thread.currentThread().getName());
             }
-
-            if (maxLength > 0 && totalBytes >= maxLength) {
-                throw new RecorderLengthExceededException();
-            }
             if (System.currentTimeMillis() >= timeoutTime) {
                 throw new RecorderTimeoutException("Timedout after " +
                     (timeoutTime - startTime) + "ms.");
+            }
+            if (hardMaxLength > 0 && totalBytes >= hardMaxLength) {
+                throw new RecorderLengthExceededException();
+            }
+            if (maxLength > 0 && totalBytes >= maxLength) {
+                break; // return
             }
         }
     }
