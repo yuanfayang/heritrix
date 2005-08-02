@@ -14,12 +14,13 @@
       </answer>
     </faq>
 
-    <faq id="developer">
+    <faq id="introduction">
       <question>
-    I'm a developer, can I help?
+      Where can I go to get a good introduction/overview of Heritrix?
       </question>
       <answer>
-        <p>Yes -- especially if you have experience with Java, open-source projects, and web protocols! Drop us a message or join our <a href="mailing-lists.html">mailing lists</a> for more details.
+        <p><a href="An Introduction to Heritrix.pdf">An Introduction to
+            Heritrix</a>.
         </p>
       </answer>
     </faq>
@@ -35,18 +36,21 @@
       </answer>
     </faq>
 
-    <faq id="introduction">
+    <faq id="developer">
       <question>
-      Where can I go to get a good introduction/overview of Heritrix?
+    I'm a developer, can I help?
       </question>
       <answer>
-        <p><a href="An Introduction to Heritrix.pdf">An Introduction to
-            Heritrix</a>.
+        <p>Yes -- especially if you have experience with Java,
+        open-source projects, and web protocols! Drop us a message or join
+        our <a href="mailing-lists.html">mailing lists</a> for more details.
+        See also the <a href="articles/deveoper_manual.html">Heritrix
+        Developer Manual</a>.
         </p>
       </answer>
     </faq>
-
   </part>
+
   <part id="problems">
     <title>Common Problems</title>
     <faq id="arc_closed">
@@ -69,10 +73,27 @@
     <faq id="testsfail">
       <question>Why do unit tests fail when I build?</question>
       <answer>You're probably on a platform other than linux (or using 
-      a 2.6.x kernel and a JVM that is other than the release 1.5 jdk).
+      a 2.6.x kernel and a JVM that is other than the release version of 
+      the SUN 1.5 jdk).
       See sections 4.1.3/4.1.4 in 
       <a href="articles/releasenotes.html#984390">Release Notes</a>
       page.</answer>
+    </faq>
+
+    <faq id="windows">
+        <question>How do I run Heritrix on windows.</question>
+        <answer>Before you begin, Heritrix is not supported
+        on windows -- See <a href="requirements.html">requirements</a> -- 
+        mostly because we don't have the resources
+        to support any more than the linux platform we use internally
+        at the Internet Archive.  That said, here is a pointer to
+        a <a 
+        href="http://groups.yahoo.com/group/archive-crawler/message/2072">bat
+        script</a> and some discussion of issues running on windows xp
+        that should get you going (provided by Subramanya C R).
+        See also the items below that pertain to windows:
+        <a href="#windowsstart">dns</a> and <a  href="#windowsmkdir">mkdir</a>.
+        </answer>
     </faq>
 
     <faq id="windowsstart">
@@ -93,8 +114,8 @@
     <faq id="midfetch">
       <question>I only want to download <code>text/html</code> and nothing else.  Can I do it?</question>
       <answer>Tom Emerson describes one technique here, 
-      <a href="http://www.dreamersrealm.net/~tree/blog/?s=text%2Fhtml&amp;submit=GO">Focusing on HTML</a>.</answer>
-      <answer>You can also add a filter that excludes all filters that end
+      <a href="http://www.dreamersrealm.net/~tree/blog/?s=text%2Fhtml&amp;submit=GO">Focusing on HTML</a>.  
+      You can also add a filter that excludes all filters that end
       in other than 'html|htm', etc., or, if you want to instead
       look at document mimetypes, you can Add a 
       <code>ContentTypeRegExpFilter</code>  filter
@@ -168,31 +189,6 @@
       </p>
       </answer>
       </faq>
-      <faq id="traps">
-        <question>What are crawler traps?</question>
-        <answer>
-        <p>Traps are infinite page sources put up to occupy ('trap') a crawler.
-        Traps may be as innocent as a calendar that returns pages years into
-        the future or not-so-innocent 
-        <a href="http://spiders.must.die.net/">http://spiders.must.die.net/</a>.
-        Traps are created by CGIs/server-side code that dynamically conjures
-        'nonsense' pages or else exploits combination of soft and relative links
-        to generate URI paths of infinite variety and depth.
-        Once identified, use filters to guard against falling in.
-        </p>
-
-        <p>Another trap that works by feeding documents of infinite sizes
-        to the crawler is
-        http://yahoo.domain.com.au/tools/spiderbait.aspx* as in
-        http://yahoo.domain.com.au/tools/spiderbait.aspx?state=vic or
-        http://yahoo.domain.com.au/tools/spiderbait.aspx?state=nsw.
-        To filter out infinite document size traps, add a maximum doc.
-        size filter to your crawl order.
-        </p>
-        <p>See <a href="#crawl_junk">What to do when I'm crawling "junk"?</a>
-        </p>
-        </answer>
-      </faq>
       <faq id="oome_broadcrawl">
         <question>Why
         do I get an OutOfMemoryException ten minutes after starting 
@@ -201,8 +197,9 @@
         <p>See the note in
         <a hef="https://sourceforge.net/tracker/?func=detail&amp;atid=539102&amp;aid=896772&amp;group_id=73833">[ 896772 ] "Site-first"/'frontline' prioritization</a> and this Release Note, <a href="http://crawler.archive.org/articles/releasenotes.html#1_0_0_limitations">5.1.1 Crawl Size Upper Bounds</a>.
         See this note by Kris from the list, <a href="http://groups.yahoo.com/group/archive-crawler/message/1027">1027</a> for how
-        to mitigate memory-use when using HostQueuesFrontier (The advice is
-        less applicable if using a post-1.2.0, BdbFrontier Heritrix).
+        to mitigate memory-use when using HostQueuesFrontier. The advice is
+        less applicable if using a post-1.2.0, BdbFrontier Heritrix.  See
+        sections 'Crawl Size Upper Bounds Update' in the Release Notes.
         </p>
         </answer>
       </faq>
@@ -280,6 +277,31 @@
 
         </answer>
       </faq>
+      <faq id="traps">
+        <question>What are crawler traps?</question>
+        <answer>
+        <p>Traps are infinite page sources put up to occupy ('trap') a crawler.
+        Traps may be as innocent as a calendar that returns pages years into
+        the future or not-so-innocent 
+        <a href="http://spiders.must.die.net/">http://spiders.must.die.net/</a>.
+        Traps are created by CGIs/server-side code that dynamically conjures
+        'nonsense' pages or else exploits combination of soft and relative links
+        to generate URI paths of infinite variety and depth.
+        Once identified, use filters to guard against falling in.
+        </p>
+
+        <p>Another trap that works by feeding documents of infinite sizes
+        to the crawler is
+        http://yahoo.domain.com.au/tools/spiderbait.aspx* as in
+        http://yahoo.domain.com.au/tools/spiderbait.aspx?state=vic or
+        http://yahoo.domain.com.au/tools/spiderbait.aspx?state=nsw.
+        To filter out infinite document size traps, add a maximum doc.
+        size filter to your crawl order.
+        </p>
+        <p>See <a href="#crawl_junk">What to do when I'm crawling "junk"?</a>
+        </p>
+        </answer>
+      </faq>
 
       <faq id="crawl_junk">
         <question>What do I do to avoid crawling "junk"?</question>
@@ -323,8 +345,8 @@
         <p>Sure.  Make sure all that is in the Heritrix lib directory is on
         your CLASSPATH (ensuring the heritrix.jar is found first).
         Thereafter, using HEAD (post-1.2.0), doing the following should
-        get you a long ways: <programlisting>Heritrix h = new Heritrix();
-h.launch();</programlisting>.  You'll then need to have your program
+        get you a long ways: <source>Heritrix h = new Heritrix();
+h.launch();</source>.  You'll then need to have your program
         hangaround while the crawl runs.  See
         <a href="http://groups.yahoo.com/group/archive-crawler/message/1276">message1276</a>  for an example.
         </p>
@@ -422,10 +444,9 @@ list below, send a description of a couple of lines to the mailing list).
       ARC files?
       </question>
       <answer>
-        <p>You need a free website login, but once made, a collection of
-        useful overview links of formats/tools appears on the left column
-        <a href="http://www.archive.org/web/researcher/researcher.php">here</a>
-        at the Internet Archive.
+        <p>See the ARC section in the
+        <a href="articles/developer_manual.html#arcs">Developer
+        Manual</a>.
         </p>
       </answer>
     </faq>
@@ -450,6 +471,9 @@ list below, send a description of a couple of lines to the mailing list).
     and Java core API updates -- but some of these are still issues, and in
     any case it gives a good flavor for the kinds of
     problems and profiling one might need to do.
+    </li>
+    <li><a href="http://vigna.dsi.unimi.it/ftp/papers/UbiCrawler.pdf">Ubicrawler</a>, a scalable distributed
+    web crawler.
     </li>
 
     <li><a href="http://citeseer.nj.nec.com/leung01towards.html">Towards
