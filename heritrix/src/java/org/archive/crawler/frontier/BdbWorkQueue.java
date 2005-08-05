@@ -24,13 +24,12 @@ package org.archive.crawler.frontier;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.ArchiveUtils;
-
-import st.ata.util.FPGenerator;
 
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
@@ -62,11 +61,9 @@ implements Comparable, Serializable {
      */
     public BdbWorkQueue(String classKey) {
         super(classKey);
-        origin = new byte[8];
-        long fp = FPGenerator.std64.fp(classKey);
-        ArchiveUtils.longIntoByteArray(fp, origin, 0);
+        origin = BdbMultipleWorkQueues.calculateOriginKey(classKey);
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine(getKeyPrefixHex(this.origin) + " " + classKey);
+            LOGGER.fine(getPrefixClassKey(this.origin) + " " + classKey);
         }
     }
 
@@ -112,8 +109,8 @@ implements Comparable, Serializable {
             if(!ArchiveUtils.startsWith(key.getData(),origin)) {
                 LOGGER.severe(
                     "inconsistency: "+classKey+"("+
-                    getKeyPrefixHex(origin)+") with " + getCount() + " items gave "
-                    + curi +"("+getKeyPrefixHex(key.getData()));
+                    getPrefixClassKey(origin)+") with " + getCount() + " items gave "
+                    + curi +"("+getPrefixClassKey(key.getData()));
                 curi = null; // clear curi to allow retry
             }
             
@@ -130,7 +127,7 @@ implements Comparable, Serializable {
             LOGGER.severe("Trying get #" + Integer.toString(tries)
                     + " in queue " + classKey + " with " + getCount()
                     + " items using key "
-                    + getKeyPrefixHex(key.getData()));
+                    + getPrefixClassKey(key.getData()));
         }
  
         return curi;
@@ -143,7 +140,7 @@ implements Comparable, Serializable {
                 .getWorkQueues();
             queues.put(curi);
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine("Inserted into " + getKeyPrefixHex(this.origin) +
+                LOGGER.fine("Inserted into " + getPrefixClassKey(this.origin) +
                     " (count " + Long.toString(getCount())+ "): " +
                         curi.toString());
             }
@@ -157,7 +154,17 @@ implements Comparable, Serializable {
      * @return Hex string of passed in byte array (Used logging
      * key-prefixes).
      */
-    protected static String getKeyPrefixHex(final byte [] byteArray) {
-        return Long.toHexString(ArchiveUtils.byteArrayIntoLong(byteArray));
+    protected static String getPrefixClassKey(final byte [] byteArray) {
+        int zeroIndex = 0;
+        while(byteArray[zeroIndex]!=0) {
+            zeroIndex++;
+        }
+        try {
+            return new String(byteArray,0,zeroIndex,"UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // should be impossible; UTF-8 always available
+            e.printStackTrace();
+            return e.getMessage();
+        }
     }
 }

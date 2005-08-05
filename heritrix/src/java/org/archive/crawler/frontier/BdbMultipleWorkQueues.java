@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.frontier;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,13 +30,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.JeUtils;
-
-import st.ata.util.FPGenerator;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.Cursor;
@@ -259,7 +257,7 @@ public class BdbMultipleWorkQueues {
                     + " was not SUCCESS: "
                     + status
                     + ", headKey "
-                    + BdbWorkQueue.getKeyPrefixHex(headKey.getData()));
+                    + BdbWorkQueue.getPrefixClassKey(headKey.getData()));
             return null;
         }
         retVal = (CrawlURI)crawlUriBinding.entryToObject(result);
@@ -331,19 +329,43 @@ public class BdbMultipleWorkQueues {
     }
 
     /**
+     * Calculate the 'origin' key for a virtual queue of items
+     * with the given classKey. This origin key will be a 
+     * prefix of the keys for all items in the queue. 
+     * 
+     * @param classKey String key to derive origin byte key from 
+     * @return a byte array key 
+     */
+    static byte[] calculateOriginKey(String classKey) {
+        byte[] classKeyBytes = null;
+        int len = 0;
+        try {
+            classKeyBytes = classKey.getBytes("UTF-8");
+            len = classKeyBytes.length;
+        } catch (UnsupportedEncodingException e) {
+            // should be impossible; all JVMs must support UTF-8
+            e.printStackTrace();
+        }
+        byte[] keyData = new byte[len+1];
+        System.arraycopy(classKeyBytes,0,keyData,0,len);
+        keyData[len]=0;
+        return keyData;
+    }
+    
+    /**
      * Calculate the insertKey that places a CrawlURI in the
-     * desired spot. First 64 bits are always classKey (usu. host)
-     * based -- ensuring grouping by host. Next 8 bits are
+     * desired spot. First bytes are always classKey (usu. host)
+     * based -- ensuring grouping by host -- terminated by a zero
+     * byte. Then 8 bytes of data ensuring desired ordering 
+     * within that 'queue' are used. The first byte of these 8 is
      * priority -- allowing 'immediate' and 'soon' items to 
-     * sort above regular. Next 8 bits are 'cost'. Last 48 bits 
+     * sort above regular. Next 1 byte is 'cost'. Last 6 bytes 
      * are ordinal serial number, ensuring earlier-discovered 
      * URIs sort before later. 
      * 
      * NOTE: Dangers here are:
-     * (1) classKey fingerprint collisions (likely to happen if 2^32
-     *     keys in use; remotely possible with much smaller numbers)
-     * (2) priorities or costs over 2^8
-     * (3) ordinals over 2^48
+     * (1) priorities or costs over 2^7 (signed byte comparison)
+     * (2) ordinals over 2^48
      * 
      * Package access & static for testing purposes. 
      * 
@@ -351,15 +373,24 @@ public class BdbMultipleWorkQueues {
      * @return a DatabaseEntry key for the CrawlURI
      */
     static DatabaseEntry calculateInsertKey(CrawlURI curi) {
-        byte[] keyData = new byte[16];
-        long fpPlus = FPGenerator.std64.fp(curi.getClassKey());
-        ArchiveUtils.longIntoByteArray(fpPlus, keyData, 0);
+        byte[] classKeyBytes = null;
+        int len = 0;
+        try {
+            classKeyBytes = curi.getClassKey().getBytes("UTF-8");
+            len = classKeyBytes.length;
+        } catch (UnsupportedEncodingException e) {
+            // should be impossible; all JVMs must support UTF-8
+            e.printStackTrace();
+        }
+        byte[] keyData = new byte[len+9];
+        System.arraycopy(classKeyBytes,0,keyData,0,len);
+        keyData[len]=0;
         long ordinalPlus = curi.getOrdinal() & 0x0000FFFFFFFFFFFFL;
         ordinalPlus = 
         	((long)curi.getSchedulingDirective() << 56) | ordinalPlus;
         ordinalPlus = 
         	((((long)curi.getHolderCost()) & 0xFFL) << 48) | ordinalPlus;
-        ArchiveUtils.longIntoByteArray(ordinalPlus, keyData, 8);
+        ArchiveUtils.longIntoByteArray(ordinalPlus, keyData, len+1);
         return new DatabaseEntry(keyData);
     }
     
