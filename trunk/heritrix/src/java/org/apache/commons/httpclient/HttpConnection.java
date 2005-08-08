@@ -502,7 +502,7 @@ public class HttpConnection {
             // assume the connection is not stale.
             isStale = false;
             try {
-                if (inputStream.available() == 0) {
+                if (inputStream.available() <= 0) {
                     try {
                         socket.setSoTimeout(1);
                         inputStream.mark(1);

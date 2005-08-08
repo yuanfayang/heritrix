@@ -163,7 +163,7 @@ public class HttpParser {
         StringBuffer value = null;
         for (; ;) {
             String line = HttpParser.readLine(is, charset);
-            if ((line == null) || (line.length() < 1)) {
+            if ((line == null) || (line.trim().length() < 1)) {
                 break;
             }
 

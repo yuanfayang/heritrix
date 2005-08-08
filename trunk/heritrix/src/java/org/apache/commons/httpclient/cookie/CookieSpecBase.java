@@ -507,7 +507,6 @@ public class CookieSpecBase implements CookieSpec {
      * @return true if the specified host matches the given domain.
      */
     public boolean domainMatch(final String host, String domain) {
-// FIX PER http://issues.apache.org/bugzilla/show_bug.cgi?id=35225
         if (host.equals(domain)) {
             return true;
         }
@@ -515,16 +514,12 @@ public class CookieSpecBase implements CookieSpec {
             domain = "." + domain;
         }
         return host.endsWith(domain) || host.equals(domain.substring(1));
-// END FIX PER http://issues.apache.org/bugzilla/show_bug.cgi?id=35225
     }
 
     /**
      * Performs path-match as implemented in common browsers.
-     * 
-     * @param path
-     *            The target path.
-     * @param topmostPath
-     *            The cookie path attribute.
+     * @param path The target path.
+     * @param topmostPath The cookie path attribute.
      * @return true if the paths match
      */
     public boolean pathMatch(final String path, final String topmostPath) {
@@ -625,14 +620,12 @@ public class CookieSpecBase implements CookieSpec {
     
     /**
      * Adds the given cookie into the given list in descending path order. That
-     * is, more specific path to least specific paths. This may not be the
+     * is, more specific path to least specific paths.  This may not be the
      * fastest algorythm, but it'll work OK for the small number of cookies
      * we're generally dealing with.
-     * 
-     * @param list -
-     *            the list to add the cookie to
-     * @param addCookie -
-     *            the Cookie to add to list
+     *
+     * @param list - the list to add the cookie to
+     * @param addCookie - the Cookie to add to list
      */
     private static void addInPathOrder(List list, Cookie addCookie) {
         int i = 0;
