@@ -1490,12 +1490,16 @@ public abstract class HttpMethodBase implements HttpMethod {
         }
         
         CookieSpec parser = getCookieSpec(state);
+        String host = this.params.getVirtualHost();
+        if (host == null) {
+            host = conn.getHost();
+        }
         for (int i = 0; i < headers.length; i++) {
             Header header = headers[i];
             Cookie[] cookies = null;
             try {
                 cookies = parser.parse(
-                  conn.getHost(),
+                  host,
                   conn.getPort(),
                   getPath(),
                   conn.isSecure(),
@@ -1512,7 +1516,7 @@ public abstract class HttpMethodBase implements HttpMethod {
                     Cookie cookie = cookies[j];
                     try {
                         parser.validate(
-                          conn.getHost(),
+                          host,
                           conn.getPort(),
                           getPath(),
                           conn.isSecure(),
