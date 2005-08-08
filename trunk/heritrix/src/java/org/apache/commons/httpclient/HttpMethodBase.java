@@ -216,7 +216,10 @@ public abstract class HttpMethodBase implements HttpMethod {
             if (uri == null || uri.equals("")) {
                 uri = "/";
             }
+// BEGIN IA CHANGES
             setURI(new URI(uri, true));
+//          setURI(new org.archive.net.LaxURI(uri, true));
+// END IA CHANGES
         } catch (URIException e) {
             throw new IllegalArgumentException("Invalid uri '" 
                 + uri + "': " + e.getMessage() 
