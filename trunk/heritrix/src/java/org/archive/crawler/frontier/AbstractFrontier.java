@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.management.AttributeNotFoundException;
 
@@ -142,16 +143,6 @@ public abstract class AbstractFrontier extends ModuleType implements
     public final static String ATTR_QUEUE_ASSIGNMENT_POLICY =
         "queue-assignment-policy";
 
-    private final static String [] AVAILABLE_QUEUE_ASSIGNMENT_POLICIES =
-        new String[] {
-            HostnameQueueAssignmentPolicy.class.getName(),
-            IPQueueAssignmentPolicy.class.getName(),
-            BucketQueueAssignmentPolicy.class.getName(),
-            SurtAuthorityQueueAssignmentPolicy.class.getName()};
-
-    private final static String DEFAULT_QUEUE_ASSIGNMENT_POLICY =
-        AVAILABLE_QUEUE_ASSIGNMENT_POLICIES[0];
-
     /** queue assignment to force onto CrawlURIs; intended to be overridden */
     public final static String ATTR_FORCE_QUEUE = "force-queue-assignment";
 
@@ -249,11 +240,24 @@ public abstract class AbstractFrontier extends ModuleType implements
                 + "limitation.", DEFAULT_MAX_HOST_BANDWIDTH_USAGE));
         t.setExpertSetting(true);
 
+        // Read the list of permissible choices from heritrix.properties.
+        // Its a list of space- or comma-separated values.
+        String queueStr = System.getProperty(AbstractFrontier.class.getName() +
+                "." + ATTR_QUEUE_ASSIGNMENT_POLICY,
+                HostnameQueueAssignmentPolicy.class.getName() + " " +
+                IPQueueAssignmentPolicy.class.getName() + " " +
+                BucketQueueAssignmentPolicy.class.getName() + " " +
+                SurtAuthorityQueueAssignmentPolicy.class.getName());
+        Pattern p = Pattern.compile("\\s*,\\s*|\\s+");
+        String [] queues = p.split(queueStr);
+        if (queues.length <= 0) {
+            throw new RuntimeException("Failed parse of " +
+                    " assignment queue policy string: " + queueStr);
+        }
         t = addElementToDefinition(new SimpleType(ATTR_QUEUE_ASSIGNMENT_POLICY,
                 "Defines how to assign URIs to queues. Can assign by host, " +
                 "by ip, and into one of a fixed set of buckets (1k).",
-                DEFAULT_QUEUE_ASSIGNMENT_POLICY,
-                AVAILABLE_QUEUE_ASSIGNMENT_POLICIES));
+                queues[0], queues));
         t.setExpertSetting(true);
         t.setOverrideable(false);
 
