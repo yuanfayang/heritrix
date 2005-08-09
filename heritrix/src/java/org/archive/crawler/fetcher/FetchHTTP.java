@@ -91,6 +91,7 @@ import org.archive.httpclient.ConfigurableX509TrustManager;
 import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
+import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.httpclient.ThreadLocalHttpConnectionManager;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.RecorderLengthExceededException;
@@ -980,8 +981,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // Get timeout.  Use it for socket and for connection timeout.
         int timeout = (getSoTimeout(null) > 0)? getSoTimeout(null): 0;
         
-        HttpConnectionManager cm = new ThreadLocalHttpConnectionManager();
-        // HttpConnectionManager cm = new SingleHttpConnectionManager();
+        // HttpConnectionManager cm = new ThreadLocalHttpConnectionManager();
+        HttpConnectionManager cm = new SingleHttpConnectionManager();
         
         // TODO: The following settings should be made in the corresponding
         // HttpConnectionManager, not here.
