@@ -77,6 +77,7 @@ public class SURT {
     // 6: path
     static String URI_SPLITTER = 
             "^(\\w+://)(?:([-\\w\\.!~\\*'\\(\\)%;:&=+$,]+?)(@))?(\\S+?)(:\\d+)?(/\\S*)?$";
+    //        1           2                                 3   4      5       6
     
     // RFC2396 
     //       reserved    = ";" | "/" | "?" | ":" | "@" | "&" | "=" | "+" |
@@ -95,8 +96,12 @@ public class SURT {
      * given String.
      * 
      * If it appears a bit convoluted in its approach, note that it was
-     * optimized to minimiz object-creation after allocation-sites profiling 
+     * optimized to minimize object-creation after allocation-sites profiling 
      * indicated this method was a top source of garbage in long-running crawls.
+     * 
+     * Assumes that the String URI has already been cleaned/fixed (eg
+     * by UURI fixup) in ways that put it in its crawlable form for 
+     * evaluation.
      * 
      * @param s String URI to be converted to SURT form
      * @return SURT form 
