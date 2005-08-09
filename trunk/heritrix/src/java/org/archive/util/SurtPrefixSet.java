@@ -39,6 +39,8 @@ import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.net.UURIFactory;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
 
@@ -197,12 +199,29 @@ public class SurtPrefixSet extends TreeSet {
      * prefix from it. Results may be unpredictable on strings that cannot
      * be interpreted as URIs. 
      * 
+     * UURI 'fixup' is applied to the URI that is built. 
+     *
      * @param u URI or almost-URI to consider
      * @return implied SURT prefix form
      */
     public static String prefixFromPlain(String u) {
         u = ArchiveUtils.addImpliedHttpIfNecessary(u);
         u = coerceToHttpsForPrefixPurposesIfNecessary(u);
+        boolean trailingSlash = u.endsWith("/");
+        // ensure all typical UURI cleanup (incl. IDN-punycoding) is done
+        try {
+            u = UURIFactory.getInstance(u).toString();
+        } catch (URIException e) {
+            e.printStackTrace();
+            // allow to continue with original string uri
+        }
+        // except: don't let UURI-fixup add a trailing slash
+        // if it wasn't already there (presence or absence of
+        // such slash has special meaning specifying implied
+        // SURT prefixes)
+        if(!trailingSlash && u.endsWith("/")) {
+            u = u.substring(0,u.length()-1);
+        }
         // convert to full SURT
         u = SURT.fromURI(u);
         // truncate to implied prefix

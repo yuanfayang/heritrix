@@ -66,7 +66,7 @@ public class UURIFactoryTest extends TestCase {
 		
 		UURI uuri = UURIFactory.getInstance(URISTR);
 		final String uuriStr = uuri.toString();
-		assertTrue(ESCAPED_URISTR.equals(uuriStr));
+		assertEquals("expected escaping", ESCAPED_URISTR, uuriStr);
 	}
 
     public final void testUnderscoreMakesPortParseFail() throws URIException {
@@ -170,13 +170,11 @@ public class UURIFactoryTest extends TestCase {
         uri = "http://archive.org/index%25\t.html";
         tgtUri = "http://archive.org/index%25%09.html";
         uuri = UURIFactory.getInstance(uri);
-        assertTrue("Not equal " + uuri.toString(),
-                uuri.toString().equals(tgtUri));       
+        assertEquals("whitespace escaping", tgtUri, uuri.toString());       
         uri = "http://archive.org/index%25\u001D.html";
         tgtUri = "http://archive.org/index%25%1D.html".toLowerCase();
         uuri = UURIFactory.getInstance(uri);
-        assertTrue("Not equal " + uuri.toString(),
-                uuri.toString().equals(tgtUri));
+        assertEquals("whitespace escaping", tgtUri, uuri.toString());
         uri = "http://gemini.info.usaid.gov/directory/" +
             "pbResults.cfm?&urlNameLast=Adamson";
         tgtUri = "http://gemini.info.usaid.gov/directory/faxResults.cfm?" +
@@ -184,19 +182,19 @@ public class UURIFactoryTest extends TestCase {
         uuri = UURIFactory.getInstance(UURIFactory.getInstance(uri),
             "faxResults.cfm?name=Charisse +Adamson,&location=" +
             "RRB%20%20%20%205%2E08%2D006");
-        assertTrue("Not equal " + uuri.toString(),
-                uuri.toString().equals(tgtUri));
+        assertEquals("whitespace escaping", tgtUri, uuri.toString());
     }
     
-	public final void testFailedGetPath() throws URIException {
-		final String path = "/RealMedia/ads/" +
-		"click_lx.ads/%%PAGE%%/%%RAND%%/%%POS%%/%%CAMP%%/empty";
-		final String uri = "http://ads.nandomedia.com" + path;
-		final UURI uuri = UURIFactory.getInstance(uri);
-		String foundPath = uuri.getPath();
-		assertTrue("Didn't get expected path: " + uri, 
-				foundPath.equals(path));
-	}
+//	public final void testFailedGetPath() throws URIException {
+//		final String path = "/RealMedia/ads/" +
+//		"click_lx.ads/%%PAGE%%/%%RAND%%/%%POS%%/%%CAMP%%/empty";
+//        // decoding in getPath will interpret %CA as 8-bit escaped char,
+//        // possibly incomplete
+//		final String uri = "http://ads.nandomedia.com" + path;
+//		final UURI uuri = UURIFactory.getInstance(uri);
+//		String foundPath = uuri.getPath();
+//		assertEquals("unexpected path", path, foundPath);
+//	}
     
     public final void testDnsHost() throws URIException {
         String uri = "dns://ads.nandomedia.com:81/one.html";
@@ -215,10 +213,10 @@ public class UURIFactoryTest extends TestCase {
 	
 	public final void testPercentEscaping() throws URIException {
 		final String uri = "http://archive.org/%a%%%%%.html";
-		final String tgtUri = "http://archive.org/%25a%25%25%25%25%25.html";
+        // tests indicate firefox (1.0.6) does not encode '%' at all
+        final String tgtUri = "http://archive.org/%a%%%%%.html";
 		UURI uuri = UURIFactory.getInstance(uri);
-		assertTrue("Not equal " + uuri.toString(),
-				uuri.toString().equals(tgtUri));
+		assertEquals("Not equal",tgtUri, uuri.toString());
 	}
     
 	public final void testRelativeDblPathSlashes() throws URIException {
@@ -272,24 +270,20 @@ public class UURIFactoryTest extends TestCase {
 		final String encodedUri =
 			"http://archive.org/DIR%20WITH%20SPACES/home%E6.html";
 		UURI uuri = UURIFactory.getInstance(uri, "ISO-8859-1");
-		assertTrue("Not equal " + uuri.toString(),
-				uuri.toString().equals(encodedUri));
+		assertEquals("single encoding", encodedUri, uuri.toString());
 		// Dbl-encodes.
 		uuri = UURIFactory.getInstance(uuri.toString(), "ISO-8859-1");
 		uuri = UURIFactory.getInstance(uuri.toString(), "ISO-8859-1");
-		assertTrue("Not equal (dbl-encoding) " + uuri.toString(),
-				uuri.toString().equals(encodedUri));
+		assertEquals("double encoding", encodedUri, uuri.toString());
 		// Do default utf-8 test.
 		uuri = UURIFactory.getInstance(uri);
 		final String encodedUtf8Uri =
 			"http://archive.org/DIR%20WITH%20SPACES/home%C3%A6.html";
-		assertTrue("Not equal utf8 " + uuri.toString(),
-				uuri.toString().equals(encodedUtf8Uri));      
+		assertEquals("Not equal utf8", encodedUtf8Uri, uuri.toString());      
 		// Now dbl-encode.
 		uuri = UURIFactory.getInstance(uuri.toString());
 		uuri = UURIFactory.getInstance(uuri.toString());
-		assertTrue("Not equal (dbl-encoding) utf8 " + uuri.toString(),
-				uuri.toString().equals(encodedUtf8Uri));
+		assertEquals("Not equal (dbl-encoding) utf8", encodedUtf8Uri, uuri.toString());
 	}
 	
 	/**
@@ -407,7 +401,7 @@ public class UURIFactoryTest extends TestCase {
 	
 	private void checkExceptionOnIllegalDomainlabel(String uuri) {
 		boolean expectedException = false;
-		try {
+        try {
 			UURIFactory.getInstance(uuri);
 		} catch (URIException e) {
 			// Expected exception.
@@ -673,27 +667,28 @@ public class UURIFactoryTest extends TestCase {
         UURI plainPathUuri = UURIFactory.getInstance(plainPath);
         assertEquals("plainPath getURI", plainPath, plainPathUuri.getURI());
         assertEquals("plainPath getEscapedURI", 
-                "http://www.example.com/path%25",
+                "http://www.example.com/path%", // browsers don't escape '%'
                 plainPathUuri.getEscapedURI());
         
         String partiallyEscapedPath = "http://www.example.com/pa%20th%";
         UURI partiallyEscapedPathUuri = UURIFactory.getInstance(
                 partiallyEscapedPath);
-        assertEquals("partiallyEscapedPath getURI", 
-                "http://www.example.com/pa th%", 
-                partiallyEscapedPathUuri.getURI());
+//        assertEquals("partiallyEscapedPath getURI", 
+//                "http://www.example.com/pa th%", // TODO: is this desirable?
+////              partiallyEscapedPath,
+//                partiallyEscapedPathUuri.getURI());
         assertEquals("partiallyEscapedPath getEscapedURI", 
-                "http://www.example.com/pa%20th%25",
+                "http://www.example.com/pa%20th%",
                 partiallyEscapedPathUuri.getEscapedURI());
         
         String plainQueryString = "http://www.example.com/path?q=foo%";
         UURI plainQueryStringUuri = UURIFactory.getInstance(
                 plainQueryString);
-        assertEquals("plainQueryString getURI", 
-                plainQueryString,
-                plainQueryStringUuri.getURI());
+//        assertEquals("plainQueryString getURI", 
+//                plainQueryString,
+//                plainQueryStringUuri.getURI());
         assertEquals("plainQueryString getEscapedURI", 
-                "http://www.example.com/path?q=foo%25",
+                "http://www.example.com/path?q=foo%",
                 plainQueryStringUuri.getEscapedURI());        
         
         String partiallyEscapedQueryString = 
@@ -704,14 +699,68 @@ public class UURIFactoryTest extends TestCase {
                 "http://www.example.com/pa th?q=foo%",
                 partiallyEscapedQueryStringUuri.getURI());
         assertEquals("partiallyEscapedQueryString getEscapedURI", 
-                "http://www.example.com/pa%20th?q=foo%25",
+                "http://www.example.com/pa%20th?q=foo%",
                 partiallyEscapedQueryStringUuri.getEscapedURI());  
     }
     
-    public void testHasSupportedScheme() {
-        assertTrue(UURI.hasScheme("http://www.archive.org"));
-        assertTrue(UURI.hasScheme("http:"));
-        assertFalse(UURI.hasScheme("ht/tp://www.archive.org"));
-        assertFalse(UURI.hasScheme("/tmp"));
+    /**
+     * Ensure that stray '%' characters do not prevent
+     * UURI instances from being created, and are reasonably 
+     * escaped when encountered. 
+     *
+     * @throws URIException
+     */
+    public void testStrayPercents() throws URIException {
+        String oneStray = "http://www.example.com/pa%th";
+        UURI oneStrayUuri = UURIFactory.getInstance(oneStray);
+        assertEquals("oneStray getURI", oneStray, oneStrayUuri.getURI());
+        assertEquals("oneStray getEscapedURI", 
+                "http://www.example.com/pa%th", // browsers don't escape '%'
+                oneStrayUuri.getEscapedURI());
+        
+        String precededByValidEscape = "http://www.example.com/pa%20th%way";
+        UURI precededByValidEscapeUuri = UURIFactory.getInstance(
+                precededByValidEscape);
+        assertEquals("precededByValidEscape getURI", 
+                precededByValidEscapeUuri.getURI());
+        assertEquals("precededByValidEscape getEscapedURI", 
+                "http://www.example.com/pa%20th%way",
+                precededByValidEscapeUuri.getEscapedURI());
+        
+        String followedByValidEscape = "http://www.example.com/pa%th%20way";
+        UURI followedByValidEscapeUuri = UURIFactory.getInstance(
+                followedByValidEscape);
+        assertEquals("followedByValidEscape getURI", 
+                "http://www.example.com/pa%th way", // getURI interprets escapes
+                followedByValidEscapeUuri.getURI());
+        assertEquals("followedByValidEscape getEscapedURI", 
+                "http://www.example.com/pa%th%20way",
+                followedByValidEscapeUuri.getEscapedURI());        
+    }
+    
+    public void testEscapingNotNecessary() throws URIException {
+        String escapesUnnecessary = 
+            "http://www.example.com/misc;reserved:chars@that&don't=need"
+            +"+escaping$even,though!you(might)initially?think#so";
+        // expect everything but the #fragment
+        String expected = escapesUnnecessary.substring(0, escapesUnnecessary
+                .length() - 3);
+        assertEquals("escapes unnecessary", 
+                expected, 
+                UURIFactory.getInstance(escapesUnnecessary).toString());
+    }
+    
+    public void testIdn() throws URIException {
+        // expected values are as given by http://www.josefsson.org/idn.php
+        String idn1 = "http://räksmörgås.josefßon.org/";
+        String puny1 = "http://xn--rksmrgs-5wao1o.josefsson.org/";
+        assertEquals("encoding of "+idn1, 
+                puny1, 
+                UURIFactory.getInstance(idn1).toString());
+        String idn2 = "http://www.pølse.dk/";
+        String puny2 = "http://www.xn--plse-gra.dk/";
+        assertEquals("encoding of "+idn2, 
+                puny2, 
+                UURIFactory.getInstance(idn2).toString());
     }
 }
