@@ -24,9 +24,13 @@
  */
 package org.archive.net;
 
+import gnu.inet.encoding.IDNA;
+import gnu.inet.encoding.IDNAException;
 import it.unimi.dsi.mg4j.util.MutableString;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -68,7 +72,7 @@ public class UURIFactory extends URI {
     private static final UURIFactory factory = new UURIFactory();
     
     /**
-     * RFC 2396 regex.
+     * RFC 2396-inspired regex.
      *
      * From the RFC Appendix B:
      * <pre>
@@ -119,12 +123,25 @@ public class UURIFactory extends URI {
      * fragment  = $9
      * </pre>
      *
+     * -- 
      * <p>Below differs from the rfc regex in that it has java escaping of
      * regex characters and we allow a URI made of a fragment only (Added extra
      * group so indexing is off by one after scheme).
      */
     final static Pattern RFC2396REGEX = Pattern.compile(
         "^(([^:/?#]+):)?((//([^/?#]*))?([^?#]*)(\\?([^#]*))?)?(#(.*))?");
+    //    12            34  5          6       7   8          9 A
+    //              2 1             54        6          87 3      A9
+    // 1: scheme
+    // 2: scheme:
+    // 3: //authority/path
+    // 4: //authority
+    // 5: authority
+    // 6: path
+    // 7: ?query
+    // 8: query 
+    // 9: #fragment
+    // A: fragment
 
     public static final String SLASHDOTDOTSLASH = "^(/\\.\\./)+";
     public static final String SLASH = "/";
@@ -171,6 +188,7 @@ public class UURIFactory extends URI {
         "%((?:[^\\p{XDigit}])|(?:.[^\\p{XDigit}])|(?:\\z))";
     public static final String COMMERCIAL_AT = "@";
     public static final char PERCENT_SIGN = '%';
+    public static final char COLON = ':';
     
     /**
      * First percent sign in string followed by two hex chars.
@@ -184,12 +202,16 @@ public class UURIFactory extends URI {
     final static Pattern PORTREGEX = Pattern.compile("(.*:)([0-9]+)$");
     
     /**
-     * Legal characters in the domain label part of a uri authority.
+     * Characters we'll accept in the domain label part of a URI
+     * authority: ASCII letters-digits-hyphen (LDH) plus underscore,
+     * with single intervening '.' characters.
      * 
-     * We're looser than the spec. allowing underscores.
+     * (We accept '_' because DNS servers have tolerated for many
+     * years counter to spec; we also accept dash patterns and ACE
+     * prefixes that will be rejected by IDN-punycoding attempt.)
      */
-    final static String LEGAL_DOMAINLABEL_REGEX =
-        "^(?:[a-zA-Z0-9_-]++(?:\\.)?)++(:[0-9]+)?$";
+    final static String ACCEPTABLE_ASCII_DOMAIN =
+        "^(?:[a-zA-Z0-9_-]++(?:\\.)?)++$";
     
     /**
      * Pattern that looks for case of three or more slashes after the 
@@ -298,12 +320,10 @@ public class UURIFactory extends URI {
      * @throws URIException
      */
     private UURI create(String uri, String charset) throws URIException {
-        boolean e = isEscaped(uri);
-        UURI uuri  = new UURI(fixup(uri, null, e), e, charset);
+        UURI uuri  = new UURI(fixup(uri, null, charset), true, charset);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("URI " + uri +
                 " PRODUCT " + uuri.toString() +
-                " ESCAPED " + e +
                 " CHARSET " + charset);
         }
         return validityCheck(uuri);
@@ -316,13 +336,11 @@ public class UURIFactory extends URI {
      * @throws URIException
      */
     private UURI create(UURI base, String relative) throws URIException {
-        boolean e = isEscaped(relative);
-        UURI uuri = new UURI(base, new UURI(fixup(relative, base, e),
-            e, base.getProtocolCharset()));
+        UURI uuri = new UURI(base, new UURI(fixup(relative, base, base.getProtocolCharset()),
+            true, base.getProtocolCharset()));
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(" URI " + relative +
                 " PRODUCT " + uuri.toString() +
-                " ESCAPED " + e +
                 " CHARSET " + base.getProtocolCharset() +
                 " BASE " + base);
         }
@@ -349,22 +367,13 @@ public class UURIFactory extends URI {
     }
     
     /**
-     * If first <code>%</code> found is URI encoded, then its
-     * escaped.
-     * @param uri URI to check.
-     * @return True if the passed URI exhibits 'escapedness'.
-     */
-    public static boolean isEscaped(String uri) {
-        return (uri == null || uri.length() <= 0)? false:
-            TextUtils.getMatcher(URI_HEX_ENCODING, uri).matches();
-    }
-    
-    /**
      * Do heritrix fix-up on passed uri string.
      *
      * Does heritrix escaping; usually escaping done to make our behavior align
      * with IEs.  This method codifies our experience pulling URIs from the
-     * wilds.  Its does escaping NOT done in superclass.
+     * wilds.  Its does all the escaping we want; its output can always be
+     * assumed to be 'escaped' (though perhaps to a laxer standard than the 
+     * vanilla HttpClient URI class or official specs might suggest). 
      *
      * @param uri URI as string.
      * @param base May be null.
@@ -372,7 +381,7 @@ public class UURIFactory extends URI {
      * @return A fixed up URI string.
      * @throws URIException
      */
-    private String fixup(String uri, final URI base, final boolean e)
+    private String fixup(String uri, final URI base, final String charset)
     throws URIException {
         if (uri == null) {
             throw new NullPointerException();
@@ -416,6 +425,9 @@ public class UURIFactory extends URI {
         if (matcher.matches()) {
             uri = matcher.group(1) + matcher.group(2);
         }
+
+        // now, minimally escape any whitespace
+        uri = escapeWhitespace(uri);
         
         // For further processing, get uri elements.  See the RFC2396REGEX
         // comment above for explaination of group indices used in the below.
@@ -462,28 +474,9 @@ public class UURIFactory extends URI {
             }
         }
         
-        // Lowercase the host part of the uriAuthority; don't destroy any
-        // userinfo capitalizations.  Make sure no illegal characters in
-        // domainlabel substring of the uri authority.
-        if (uriAuthority != null) {
-            // Get rid of any trailing escaped spaces:
-            // http://www.archive.org%20.  Rare but happens.
-            for(Matcher m = TextUtils.
-                        getMatcher(TRAILING_ESCAPED_SPACE, uriAuthority);
-                    m !=  null && m.matches();
-                    m = TextUtils.
-                        getMatcher(TRAILING_ESCAPED_SPACE, uriAuthority)) {
-                uriAuthority = m.group(1);
-            }
-            int index = uriAuthority.indexOf(COMMERCIAL_AT);
-            if (index < 0) {
-                uriAuthority = checkDomainlabel(uriAuthority.toLowerCase());
-            } else {
-                uriAuthority = uriAuthority.substring(0, index) +
-                    COMMERCIAL_AT + checkDomainlabel(uriAuthority.
-                        substring(index + 1).toLowerCase());
-            }
-        }
+        // fixup authority portion: lowercase/IDN-punycode any domain; 
+        // remove stray trailing spaces
+        uriAuthority = fixupAuthority(uriAuthority);
 
         // Do some checks if absolute path.
         if (uriSchemeSpecificPart != null &&
@@ -516,13 +509,10 @@ public class UURIFactory extends URI {
             uriAuthority = stripPrefix(uriAuthority, DOT);
         }
         
-        // If already URI escaped, make sure escaping was done properly.
-        // Do it here now in the fixup so if improperly escaped, we throw
-        // an exception not letting a URI out.  Otherwise, we make a URI
-        // and its fine till a processor does a getPath on it; the getPath
-        // forces the parent to decode the escaping failing if the escaping
-        // is improper.  The resultant exception happens at an inconvenient
-        // time midprocessing (PathDepthFilter checks).
+        // Ensure minimal escaping. Use of 'lax' URI and URLCodec 
+        // means minimal escaping isn't necessarily complete/consistent.
+        // There is a chance such lax encoding will throw exceptions
+        // later at inconvenient times. 
         //
         // One reason for these bad escapings -- though not the only --
         // is that the page is using an encoding other than the ASCII or the
@@ -531,71 +521,141 @@ public class UURIFactory extends URI {
         // was passed into this factory, the encoding seems to be parsed
         // correctly (See the testEscapedEncoding unit test).
         //
-        // This fixup may cause us to miss content.  There is the case noted
-        // above.  TODO: Look out for cases where we fail other than for the
-        // above given reason which will be fixed when we address
+        // This fixup may cause us to miss content.  There is the charset case
+        // noted above.  TODO: Look out for cases where we fail other than for
+        // the above given reason which will be fixed when we address
         // '[ 913687 ] Make extractors interrogate for charset'.
-        //
-        // Added: ensure that at the very least, any URI that we pass along
-        // as 'already escaped' has no stray '%' chars that are not part of a 
-        // valid uri-escape sequence ('%xx' where x=hexdigit)
-        if (e) {
-            uriPath = ensureMinimalEscaping(uriPath);
-            validateEscaping(uriPath); // may be redundant
-            uriQuery = ensureMinimalEscaping(uriQuery);
-            validateEscaping(uriQuery); // may be redundant
-        }
+
+        uriPath = ensureMinimalEscaping(uriPath, charset);
+        uriQuery = ensureMinimalEscaping(uriQuery, charset);
 
         // Preallocate.  The '1's and '2's in below are space for ':',
         // '//', etc. URI characters.
         MutableString s = new MutableString(
-            ((uriScheme != null)? uriScheme.length(): 0) +
-            1 +
-            ((uriAuthority != null)? uriAuthority.length(): 0) +
-            2 +
-            ((uriPath != null)? uriPath.length(): 0) +
-            1 +
-            ((uriQuery != null)? uriQuery.length(): 0));
+            ((uriScheme != null)? uriScheme.length(): 0)
+            + 1 // ';' 
+            + ((uriAuthority != null)? uriAuthority.length(): 0)
+            + 2 // '//'
+            + ((uriPath != null)? uriPath.length(): 0)
+            + 1 // '?'
+            + ((uriQuery != null)? uriQuery.length(): 0));
         appendNonNull(s, uriScheme, ":", true);
         appendNonNull(s, uriAuthority, "//", false);
         appendNonNull(s, uriPath, "", false);
         appendNonNull(s, uriQuery, "?", false);
-        return (e) ? escapeWhitespace(s.toString()) : s.toString(); 
+        return s.toString();
     }
     
     /**
-     * Ensure that there are no '%' characaters in the passed string
-     * that are not part of a valid URI escape sequence ('%xx' where
-     * each sx is a hex digit). Escape '%'s as necessary. 
+     * Fixup 'authority' portion of URI, by removing any stray 
+     * encoded spaces, lowercasing any domain names, and applying
+     * IDN-punycoding to Unicode domains. 
+     * 
+     * @param uriAuthority the authority string to fix
+     * @return fixed version
+     * @throws URIException
+     */
+    private String fixupAuthority(String uriAuthority) throws URIException {
+        // Lowercase the host part of the uriAuthority; don't destroy any
+        // userinfo capitalizations.  Make sure no illegal characters in
+        // domainlabel substring of the uri authority.
+        if (uriAuthority != null) {
+            // Get rid of any trailing escaped spaces:
+            // http://www.archive.org%20.  Rare but happens.
+            // TODO: reevaluate: do IE or firefox do such mid-URI space-removal?
+            // if not, we shouldn't either. 
+            while(uriAuthority.endsWith(ESCAPED_SPACE)) {
+                uriAuthority = uriAuthority.substring(0,uriAuthority.length()-3);
+            }
+
+            // lowercase & IDN-punycode only the domain portion
+            int atIndex = uriAuthority.indexOf(COMMERCIAL_AT);
+            int portColonIndex = uriAuthority.indexOf(COLON,(atIndex<0)?0:atIndex);
+            if(atIndex<0 && portColonIndex<0) {
+                // most common case: neither userinfo nor port
+                return fixupDomainlabel(uriAuthority);
+            } else if (atIndex<0 && portColonIndex>-1) {
+                // next most common: port but no userinfo
+                String domain = fixupDomainlabel(uriAuthority.substring(0,portColonIndex));
+                String port = uriAuthority.substring(portColonIndex);
+                return domain + port;
+            } else if (atIndex>-1 && portColonIndex<0) {
+                // uncommon: userinfo, no port
+                String userinfo = uriAuthority.substring(0,atIndex+1);
+                String domain = fixupDomainlabel(uriAuthority.substring(atIndex+1));
+                return userinfo + domain;
+            } else {
+                // uncommon: userinfo, port
+                String userinfo = uriAuthority.substring(0,atIndex+1);
+                String domain = fixupDomainlabel(uriAuthority.substring(atIndex+1));
+                String port = uriAuthority.substring(portColonIndex);
+                return userinfo + domain + port;
+            }
+        }
+        return uriAuthority;
+    }
+    
+    /**
+     * Fixup the domain label part of the authority.
+     * 
+     * We're more lax than the spec. in that we allow underscores.
+     * 
+     * @param label Domain label to fix.
+     * @return Return fixed domain label.
+     * @throws URIException
+     */
+    private String fixupDomainlabel(String label)
+    throws URIException {
+        
+        // apply IDN-punycoding, as necessary
+        try {
+            // TODO: optimize: only apply when necessary, or
+            // keep cache of recent encodings
+            label = IDNA.toASCII(label);
+        } catch (IDNAException e) {
+            Matcher m = TextUtils.getMatcher(ACCEPTABLE_ASCII_DOMAIN,label);
+            if(m.matches()) {
+                // domain name has ACE prefix, leading/trailing dash, or 
+                // underscore -- but is still a name we wish to tolerate;
+                // simply continue
+            } else {
+                // problematic domain: neither ASCII acceptable characters
+                // nor IDN-punycodable, so throw exception 
+                // TODO: change to HeritrixURIException so distinguishable
+                // from URIExceptions in library code
+                throw new URIException(e+" "+label);
+            }
+        }
+        label = label.toLowerCase();
+        return label;
+    }
+    
+    /**
+     * Ensure that there all characters needing escaping
+     * in the passed-in String are escaped. Stray '%' characters
+     * are *not* escaped, as per browser behavior. 
      * 
      * @param u String to escape
-     * @return string with any stray '%' escaped
+     * @return string with any necessary escaping applied
      */
-    private String ensureMinimalEscaping(String u) {
-        if(u==null) {
+    private String ensureMinimalEscaping(String u, String charset) {
+        if (u == null) {
             return null;
         }
-        // replace all '%' that are not followed by 2 hex digits with '%25'
-        return u.replaceAll("%(?=(.?[^\\p{XDigit}])|$)","%25");
-    }
-
-    /**
-     * Validate URL escaping is properly done.
-     * The below is what the parent class does when UURI#getPath is called.
-     * @param component Snippet of URI to validate.
-     * @throws URIException if escaping incorrectly done.
-     */
-    protected void validateEscaping(String component)
-    throws URIException {
-        if (component == null) {
-            return;
+        for (int i = 0; i < u.length(); i++) {
+            char c = u.charAt(i);
+            if (!LaxURLCodec.EXPANDED_URI_SAFE.get(c)) {
+                try {
+                    u = LaxURLCodec.DEFAULT.encode(
+                            LaxURLCodec.EXPANDED_URI_SAFE, u, charset);
+                } catch (UnsupportedEncodingException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                break;
+            }
         }
-        try { 
-            URLCodec.decodeUrl(EncodingUtil.getAsciiBytes(component));
-        } catch (DecoderException e) {
-            throw new URIException(e.getMessage() + "; Component: " +
-                component);
-        }
+        return u;
     }
 
     /**
@@ -607,7 +667,7 @@ public class UURIFactory extends URI {
      * of whether the uri has already been escaped.  We do this for
      * case where uri has been judged already-escaped only, its been
      * incompletly done and whitespace remains.  Spaces, etc., in the URI are
-     * a real pain.  They're presence will break log file and ARC parsing.
+     * a real pain.  Their presence will break log file and ARC parsing.
      * @param uri URI string to check.
      * @return uri with spaces escaped if any found.
      */
@@ -641,23 +701,6 @@ public class UURIFactory extends URI {
             }
         }
         return (buffer !=  null)? buffer.toString(): uri;
-    }
-    
-    /**
-     * Check the domain label part of the authority.
-     * 
-     * We're more lax than the spec. in that we allow underscores.
-     * 
-     * @param label Domain label to check.
-     * @return Return passed domain label.
-     * @throws URIException
-     */
-    private String checkDomainlabel(String label)
-    throws URIException {
-        if (!TextUtils.matches(LEGAL_DOMAINLABEL_REGEX, label)) {
-            throw new URIException("Illegal domain label: " + label);
-        }
-        return label;
     }
 
     /**

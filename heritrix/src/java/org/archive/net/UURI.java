@@ -25,9 +25,13 @@
 package org.archive.net;
 
 import java.io.Serializable;
+import java.util.BitSet;
 
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.util.EncodingUtil;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.util.SURT;
 import org.archive.util.TextUtils;
@@ -55,7 +59,7 @@ import org.archive.util.TextUtils;
  *
  * @see org.apache.commons.httpclient.URI
  */
-public class UURI extends URI
+public class UURI extends LaxURI
 implements CharSequence, Serializable {
     /**
      * Consider URIs too long for IE as illegal.
@@ -142,13 +146,24 @@ implements CharSequence, Serializable {
     }
 
     /**
+     * @param uri String representation of a URI.
+     * @param escaped If escaped.
+     * @throws NullPointerException
+     * @throws URIException
+     */
+    public UURI(String uri, boolean escaped) throws URIException, NullPointerException {
+        super(uri,escaped);
+        normalize();
+    }
+
+    /**
      * @param uri URI as string that is resolved relative to this UURI.
      * @return UURI that uses this UURI as base.
      * @throws URIException
      */
     public UURI resolve(String uri)
     throws URIException {
-        return resolve(uri, UURIFactory.isEscaped(uri),
+        return resolve(uri, false, // assume not escaped
             this.getProtocolCharset());
     }
 
@@ -380,212 +395,6 @@ implements CharSequence, Serializable {
         }
         return u;
     }
-    
-    /**
-     * Overridden from superclass to apply fixes to the two 
-     * marked lines, preventing the misinterpretation of URI
-     * strings which begin with a ':' as absolute URIs. 
-     *
-     * See also HTTPClient bug #35148
-     *  http://issues.apache.org/bugzilla/show_bug.cgi?id=35148
-     * 
-     * @see org.apache.commons.httpclient.URI#parseUriReference(java.lang.String, boolean)
-     */
-    protected void parseUriReference(String original, boolean escaped)
-        throws URIException {
-
-        // validate and contruct the URI character sequence
-        if (original == null) {
-            throw new URIException("URI-Reference required");
-        }
-
-        /* @
-         *  ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
-         */
-        String tmp = original.trim();
-        
-        /*
-         * The length of the string sequence of characters.
-         * It may not be equal to the length of the byte array.
-         */
-        int length = tmp.length();
-
-        /*
-         * Remove the delimiters like angle brackets around an URI.
-         */
-        if (length > 0) {
-            char[] firstDelimiter = { tmp.charAt(0) };
-            if (validate(firstDelimiter, delims)) {
-                if (length >= 2) {
-                    char[] lastDelimiter = { tmp.charAt(length - 1) };
-                    if (validate(lastDelimiter, delims)) {
-                        tmp = tmp.substring(1, length - 1);
-                        length = length - 2;
-                    }
-                }
-            }
-        }
-
-        /*
-         * The starting index
-         */
-        int from = 0;
-
-        /*
-         * The test flag whether the URI is started from the path component.
-         */
-        boolean isStartedFromPath = false;
-        int atColon = tmp.indexOf(':');
-        int atSlash = tmp.indexOf('/');
-// THIS NEXT LINE IS A CHANGE FROM SUPERCLASS
-        if (atColon <= 0 || (atSlash >= 0 && atSlash < atColon)) {
-            isStartedFromPath = true;
-        }
-
-        /*
-         * <p><blockquote><pre>
-         *     @@@@@@@@
-         *  ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
-         * </pre></blockquote><p>
-         */
-        int at = indexFirstOf(tmp, isStartedFromPath ? "/?#" : ":/?#", from);
-        if (at == -1) { 
-            at = 0;
-        }
-
-        /*
-         * Parse the scheme.
-         * <p><blockquote><pre>
-         *  scheme    =  $2 = http
-         *              @
-         *  ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
-         * </pre></blockquote><p>
-         */
-// THIS NEXT LINE IS A CHANGE FROM SUPERCLASS
-        if (at > 0 && at < length && tmp.charAt(at) == ':') {
-            char[] target = tmp.substring(0, at).toLowerCase().toCharArray();
-            if (validate(target, scheme)) {
-                _scheme = target;
-            } else {
-                throw new URIException("incorrect scheme");
-            }
-            from = ++at;
-        }
-
-        /*
-         * Parse the authority component.
-         * <p><blockquote><pre>
-         *  authority =  $4 = jakarta.apache.org
-         *                  @@
-         *  ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
-         * </pre></blockquote><p>
-         */
-        // Reset flags
-        _is_net_path = _is_abs_path = _is_rel_path = _is_hier_part = false;
-        if (0 <= at && at < length && tmp.charAt(at) == '/') {
-            // Set flag
-            _is_hier_part = true;
-            if (at + 2 < length && tmp.charAt(at + 1) == '/') {
-                // the temporary index to start the search from
-                int next = indexFirstOf(tmp, "/?#", at + 2);
-                if (next == -1) {
-                    next = (tmp.substring(at + 2).length() == 0) ? at + 2 
-                        : tmp.length();
-                }
-                parseAuthority(tmp.substring(at + 2, next), escaped);
-                from = at = next;
-                // Set flag
-                _is_net_path = true;
-            }
-            if (from == at) {
-                // Set flag
-                _is_abs_path = true;
-            }
-        }
-
-        /*
-         * Parse the path component.
-         * <p><blockquote><pre>
-         *  path      =  $5 = /ietf/uri/
-         *                                @@@@@@
-         *  ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
-         * </pre></blockquote><p>
-         */
-        if (from < length) {
-            // rel_path = rel_segment [ abs_path ]
-            int next = indexFirstOf(tmp, "?#", from);
-            if (next == -1) {
-                next = tmp.length();
-            }
-            if (!_is_abs_path) {
-                if (!escaped 
-                    && prevalidate(tmp.substring(from, next), disallowed_rel_path) 
-                    || escaped 
-                    && validate(tmp.substring(from, next).toCharArray(), rel_path)) {
-                    // Set flag
-                    _is_rel_path = true;
-                } else if (!escaped 
-                    && prevalidate(tmp.substring(from, next), disallowed_opaque_part) 
-                    || escaped 
-                    && validate(tmp.substring(from, next).toCharArray(), opaque_part)) {
-                    // Set flag
-                    _is_opaque_part = true;
-                } else {
-                    // the path component may be empty
-                    _path = null;
-                }
-            }
-            if (escaped) {
-                setRawPath(tmp.substring(from, next).toCharArray());
-            } else {
-                setPath(tmp.substring(from, next));
-            }
-            at = next;
-        }
-
-        // set the charset to do escape encoding
-        String charset = getProtocolCharset();
-
-        /*
-         * Parse the query component.
-         * <p><blockquote><pre>
-         *  query     =  $7 = <undefined>
-         *                                        @@@@@@@@@
-         *  ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
-         * </pre></blockquote><p>
-         */
-        if (0 <= at && at + 1 < length && tmp.charAt(at) == '?') {
-            int next = tmp.indexOf('#', at + 1);
-            if (next == -1) {
-                next = tmp.length();
-            }
-            _query = (escaped) ? tmp.substring(at + 1, next).toCharArray() 
-                : encode(tmp.substring(at + 1, next), allowed_query, charset);
-            at = next;
-        }
-
-        /*
-         * Parse the fragment component.
-         * <p><blockquote><pre>
-         *  fragment  =  $9 = Related
-         *                                                   @@@@@@@@
-         *  ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
-         * </pre></blockquote><p>
-         */
-        if (0 <= at && at + 1 <= length && tmp.charAt(at) == '#') {
-            if (at + 1 == length) { // empty fragment
-                _fragment = "".toCharArray();
-            } else {
-                _fragment = (escaped) ? tmp.substring(at + 1).toCharArray() 
-                    : encode(tmp.substring(at + 1), allowed_fragment, charset);
-            }
-        }
-
-        // set this URI.
-        setURI();
-    }
-    
-    
     
     /**
      * Test if passed String has likely URI scheme prefix.
