@@ -1,6 +1,12 @@
 <%@include file="/include/handler.jsp"%>
 
-<%@page import="org.archive.crawler.datamodel.CrawlOrder,org.archive.crawler.settings.SettingsHandler,org.archive.crawler.settings.XMLSettingsHandler,org.archive.crawler.admin.CrawlJob,org.archive.crawler.util.LogReader,java.io.File" %>
+<%@page import="org.archive.crawler.datamodel.CrawlOrder" %>
+<%@page import="org.archive.crawler.settings.SettingsHandler" %>
+<%@page import="org.archive.crawler.settings.XMLSettingsHandler" %>
+<%@page import="org.archive.crawler.admin.CrawlJob" %>
+<%@page import="org.archive.crawler.util.LogReader" %>
+<%@page import="java.io.File" %>
+<%@page import="org.archive.util.TextUtils" %>
 
 <%
     /* Various settings with default values (where applicable) */
@@ -360,7 +366,7 @@
         </tr>
         <tr>
             <td colspan="4" class="main" width="400" height="100" valign="top">
-                    <pre><%=logText%></pre>
+                    <pre><% TextUtils.writeEscapedForHTML(logText,out); %></pre>
             </td>
         </tr>
         <tr>
