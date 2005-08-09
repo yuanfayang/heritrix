@@ -121,7 +121,7 @@ public class LaxURLCodec extends URLCodec {
         // experiments indicate: Firefox (1.0.6) never escapes '%'
         EXPANDED_URI_SAFE.set('%');
         // experiments indicate: Firefox (1.0.6) does not escape '|' or '''
-        // EXPANDED_URI_SAFE.set('|'); // but, HttpCLient URI refuses to accept unescaped '|'
+        EXPANDED_URI_SAFE.set('|'); 
         EXPANDED_URI_SAFE.set('\'');
     }
     
