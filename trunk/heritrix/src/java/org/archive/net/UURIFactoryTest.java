@@ -752,12 +752,12 @@ public class UURIFactoryTest extends TestCase {
     
     public void testIdn() throws URIException {
         // expected values are as given by http://www.josefsson.org/idn.php
-        String idn1 = "http://r√§ksm√∂rg√•s.josef√üon.org/";
+        String idn1 = "http://r‰ksmˆrgÂs.josefﬂon.org/"; //
         String puny1 = "http://xn--rksmrgs-5wao1o.josefsson.org/";
         assertEquals("encoding of "+idn1, 
                 puny1, 
                 UURIFactory.getInstance(idn1).toString());
-        String idn2 = "http://www.p√∏lse.dk/";
+        String idn2 = "http://www.p¯lse.dk/"; // 
         String puny2 = "http://www.xn--plse-gra.dk/";
         assertEquals("encoding of "+idn2, 
                 puny2, 
