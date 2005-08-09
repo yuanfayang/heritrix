@@ -47,6 +47,12 @@ public class LaxURI extends URI {
         // TODO: add additional allowances as need is demonstrated
     }
 
+    protected static final BitSet lax_abs_path = new BitSet(256);
+    static {
+        lax_abs_path.or(abs_path);
+        lax_abs_path.set('|'); // tests indicate Firefox (1.0.6) doesn't escape
+    }
+    
     // passthrough initializers
     public LaxURI(String uri, boolean escaped, String charset) throws URIException {
         super(uri,escaped,charset);
@@ -123,6 +129,9 @@ public class LaxURI extends URI {
         if(generous == rel_segment) {
             // swap in more lax allowable set
             return lax_rel_segment;
+        }
+        if (generous == abs_path) {
+            return lax_abs_path;
         }
         // otherwise, leave as is
         return generous;

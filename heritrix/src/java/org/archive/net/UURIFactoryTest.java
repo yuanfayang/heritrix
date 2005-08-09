@@ -45,7 +45,6 @@ public class UURIFactoryTest extends TestCase {
 		final String ESCAPED_URISTR = "http://archive.org/" +
 		    UURIFactory.ESCAPED_SPACE +
 			UURIFactory.ESCAPED_SPACE +
-			UURIFactory.ESCAPED_PIPE +
 			UURIFactory.ESCAPED_CIRCUMFLEX +
 			UURIFactory.ESCAPED_QUOT +
 			UURIFactory.SQUOT +
@@ -57,7 +56,7 @@ public class UURIFactoryTest extends TestCase {
 			UURIFactory.SLASH + "a.gif"; // NBSP and SPACE should be trimmed;
 		
 		final String URISTR = "http://archive.org/.././" + "\u00A0" +
-		    UURIFactory.SPACE + UURIFactory.PIPE + UURIFactory.CIRCUMFLEX +
+		    UURIFactory.SPACE + UURIFactory.CIRCUMFLEX +
 			UURIFactory.QUOT + UURIFactory.SQUOT +
 			UURIFactory.APOSTROPH + UURIFactory.LSQRBRACKET +
 			UURIFactory.RSQRBRACKET + UURIFactory.LCURBRACKET +
@@ -722,6 +721,7 @@ public class UURIFactoryTest extends TestCase {
         UURI precededByValidEscapeUuri = UURIFactory.getInstance(
                 precededByValidEscape);
         assertEquals("precededByValidEscape getURI", 
+                "http://www.example.com/pa th%way", // getURI interprets escapes
                 precededByValidEscapeUuri.getURI());
         assertEquals("precededByValidEscape getEscapedURI", 
                 "http://www.example.com/pa%20th%way",
