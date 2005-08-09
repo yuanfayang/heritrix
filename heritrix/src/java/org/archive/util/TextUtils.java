@@ -18,12 +18,17 @@
  */
 package org.archive.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.servlet.jsp.JspWriter;
 
 public class TextUtils {
     private static final String FIRSTWORD = "^([^\\s]*).*$";
@@ -181,6 +186,37 @@ public class TextUtils {
         return escaped; 
     }
 
+    /**
+     * Escapes a string so that it can be placed inside XML/HTML attribute.
+     * Replaces ampersand, less-than, greater-than, single-quote, and 
+     * double-quote with escaped versions. 
+     * 
+     * @param s The string to escape
+     * @return The same string escaped.
+     */
+    public static String escapeForHTML(String s) {
+        // TODO: do this in a single pass instead of creating 5 junk strings
+        String escaped = s.replaceAll("&","&amp;");
+        escaped = escaped.replaceAll("<","&lt;");
+        return escaped; 
+    }
+    
+    /**
+     * Utility method for writing a (potentially large) String to a JspWriter,
+     * escaping it for HTML display, withouth constructing another large String
+     * of the whole content. 
+     * @param s String to write
+     * @param out destination JspWriter
+     * @throws IOException
+     */
+    public static void writeEscapedForHTML(String s, JspWriter out) throws IOException {
+        BufferedReader reader = new BufferedReader(new StringReader(s));
+        String line;
+        while((line=reader.readLine())!=null){
+            out.println(escapeForHTML(line));
+        }
+    }
+    
     /**
      * @param message Message to put at top of the string returned. May be
      * null.
