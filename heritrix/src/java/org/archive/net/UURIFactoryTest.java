@@ -35,6 +35,8 @@ import org.apache.commons.httpclient.URIException;
 /**
  * Test UURIFactory for proper UURI creation across variety of
  * important/tricky cases.
+ * 
+ * Be careful writing this file.  Make sure you write it with UTF-8 encoding.
  *
  * @author igor stack gojomo
  */
@@ -751,16 +753,14 @@ public class UURIFactoryTest extends TestCase {
     }
     
     public void testIdn() throws URIException {
-        // expected values are as given by http://www.josefsson.org/idn.php
-        String idn1 = "http://r‰ksmˆrgÂs.josefﬂon.org/"; //
+        // See http://www.josefsson.org/idn.php.
+        String idn1 = new String("http://r√§ksm√∂rg√•s.josef√üon.org/");
         String puny1 = "http://xn--rksmrgs-5wao1o.josefsson.org/";
-        assertEquals("encoding of "+idn1, 
-                puny1, 
-                UURIFactory.getInstance(idn1).toString());
-        String idn2 = "http://www.p¯lse.dk/"; // 
+        assertEquals("encoding of " + idn1, puny1, UURIFactory
+                .getInstance(idn1).toString());
+        String idn2 = "http://www.p√∏lse.dk/";
         String puny2 = "http://www.xn--plse-gra.dk/";
-        assertEquals("encoding of "+idn2, 
-                puny2, 
-                UURIFactory.getInstance(idn2).toString());
+        assertEquals("encoding of " + idn2, puny2, UURIFactory
+                .getInstance(idn2).toString());
     }
 }
