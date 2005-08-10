@@ -766,6 +766,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
         if (needsRetrying(curi)) {
             // Consider errors which can be retried, leaving uri atop queue
+            if(curi.getFetchStatus()==S_DEFERRED) {
+                // wasn't tried; cost shouldn't have been charged against queue
+                wq.refund(getCost(curi));
+                // TODO: potentially factor out a deservesRefund() test; move
+                // charging against budget to finished so that refunds are 
+                // unnecessary 
+            }
             long delay_sec = retryDelayFor(curi);
             curi.processingCleanup(); // lose state that shouldn't burden retry
             synchronized(wq) {
