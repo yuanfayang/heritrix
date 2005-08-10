@@ -30,17 +30,13 @@ import it.unimi.dsi.mg4j.util.MutableString;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
-import org.apache.commons.httpclient.util.EncodingUtil;
 import org.archive.util.TextUtils;
 
 

@@ -29,5 +29,6 @@
 	<classpathentry kind="lib" path="lib/dsi-unimi-it-1.0.0.kb.jar"/>
 	<classpathentry kind="lib" path="lib/colt-subset-1.2.0.kb.jar"/>
 	<classpathentry kind="lib" path="lib/j5compat-0.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/libidn-0.5.9.jar"/>
 	<classpathentry kind="output" path="target"/>
 </classpath>
