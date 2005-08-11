@@ -153,9 +153,13 @@ public abstract class AbstractFrontier extends ModuleType implements
         
     /** whether pause, rather than finish, when crawl appears done */
     public final static String ATTR_PAUSE_AT_FINISH = "pause-at-finish";
-
     // TODO: change default to true once well-tested
     protected final static Boolean DEFAULT_PAUSE_AT_FINISH =
+        new Boolean(false);
+    
+    /** whether to pause at crawl start */
+    public final static String ATTR_PAUSE_AT_START = "pause-at-start";
+    protected final static Boolean DEFAULT_PAUSE_AT_START =
         new Boolean(false);
 
     // top-level stats
@@ -280,6 +284,12 @@ public abstract class AbstractFrontier extends ModuleType implements
                 Level.WARNING, "This field must contain only alphanumeric "
                 + "characters plus period, dash, comma, colon, or underscore."));
         t = addElementToDefinition(new SimpleType(
+                ATTR_PAUSE_AT_START,
+                "Whether to pause when the crawl begins, before any URIs " +
+                "are tried. This gives the operator a chance to verify or " +
+                "adjust the crawl before actual work begins. " +
+                "Default is false.", DEFAULT_PAUSE_AT_START));
+        t = addElementToDefinition(new SimpleType(
                 ATTR_PAUSE_AT_FINISH,
                 "Whether to pause when the crawl appears finished, rather "
                 + "than immediately end the crawl. This gives the operator an "
@@ -289,6 +299,17 @@ public abstract class AbstractFrontier extends ModuleType implements
         t.setOverrideable(false);
     }
 
+    public void start() {
+        if (((Boolean)getUncheckedAttribute(null, ATTR_PAUSE_AT_START))
+                .booleanValue()) {
+            // trigger crawl-wide pause
+            controller.requestCrawlPause();
+        } else {
+            // simply begin
+            unpause(); 
+        }
+    }
+    
     synchronized public void pause() {
         shouldPause = true;
     }

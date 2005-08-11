@@ -159,11 +159,6 @@ public class CrawlController implements Serializable, Reporter {
      * Crawl exit status.
      */
     private String sExit;
-    
-    /**
-     * Whether controller should start in PAUSED state.
-     */
-    private boolean beginPaused = false;
 
     private static final Object NASCENT = "NASCENT".intern();
     private static final Object RUNNING = "RUNNING".intern();
@@ -1005,13 +1000,8 @@ public class CrawlController implements Serializable, Reporter {
 
         sendCrawlStateChangeEvent(STARTED, CrawlJob.STATUS_PENDING);
         String jobState;
-        if(beginPaused) {
-            state = PAUSED;
-            jobState = CrawlJob.STATUS_PAUSED;
-        } else {
-            state = RUNNING;
-            jobState = CrawlJob.STATUS_RUNNING;
-        }
+        state = RUNNING;
+        jobState = CrawlJob.STATUS_RUNNING;
         sendCrawlStateChangeEvent(this.state, jobState);
 
         // A proper exit will change this value.
@@ -1021,7 +1011,7 @@ public class CrawlController implements Serializable, Reporter {
         statLogger.setName("StatLogger");
         statLogger.start();
         
-        frontier.unpause();
+        frontier.start();
     }
 
     private void completeStop() {
@@ -1346,6 +1336,11 @@ public class CrawlController implements Serializable, Reporter {
         sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
         frontier.pause();
         sendCrawlStateChangeEvent(PAUSING, this.sExit);
+        if (toePool.getActiveToeCount()==0) {
+            // if all threads already held, complete pause now
+            // (no chance to trigger off later held thread)
+            completePause();
+        }
     }
 
     /**

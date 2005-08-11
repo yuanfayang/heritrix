@@ -1081,6 +1081,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         loadSeeds();
     }
     
+    public void start() {
+        unpause(); 
+    }
+    
     synchronized public void pause() { 
         shouldPause = true;
         notifyAll();
