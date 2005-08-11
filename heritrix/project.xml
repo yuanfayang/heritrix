@@ -37,20 +37,16 @@
   
   <!-- A short but descriptive name for the project -->
   <name>Heritrix</name>
-  
-  <!-- The version of the project under development, e.g.
-       1.1, 1.2, 2.0-SNAPSHOT
 
-       See "Version and Release Numbering" on
-       http://crawler.archive.org/developer.html for how version is done in 
-       this project.
+  <!-- The version of the project under development, e.g. 1.1, 1.2, 2.0-SNAPSHOT
 
-       NOTE: If this version is changed, you MUST update the version property
-       in build.xml.
+    See "Version and Release Numbering" in
+    http://crawler.archive.org/articles/developer_manual.html#release_numbering
+    for how version is done in this project.
 
-       Supply a version.build.suffix in a build.properties file and it will
-       be picked up and appended to the currentVersion.  Handy for continuous
-       builds if the version.build.suffix holds time of build.
+    Supply a version.build.suffix in a build.properties file and it will
+    be picked up and appended to the currentVersion.  Handy for continuous
+    builds if the version.build.suffix holds time of build.
     -->
   <currentVersion>1.5.0${version.build.suffix}</currentVersion>
   
