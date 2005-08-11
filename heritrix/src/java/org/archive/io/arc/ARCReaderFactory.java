@@ -69,15 +69,6 @@ public class ARCReaderFactory implements ARCConstants {
     }
     
     /**
-     * @param arcFile File to test.
-     * @return True if <code>arcFile</code> is compressed ARC.
-     * @throws IOException
-     */
-    public static boolean isCompressed(File arcFile) throws IOException {
-        return ARCReaderFactory.factory.testCompressedARCFile(arcFile);
-    }
-    
-    /**
      * Get ARCReader on passed path or url.
      * Does primitive heuristic figuring if path or URL.
      * @param arcFileOrUrl File path or URL pointing at an ARC.
@@ -210,10 +201,10 @@ public class ARCReaderFactory implements ARCConstants {
     protected static ARCReader get(final File arcFile,
             final boolean skipSuffixTest)
     throws IOException {
-        boolean compressed = ARCReaderFactory.factory.
-            testCompressedARCFile(arcFile, skipSuffixTest);
+        boolean compressed =
+            ARCUtils.testCompressedARCFile(arcFile, skipSuffixTest);
         if (!compressed) {
-            if (!ARCReaderFactory.factory.testUncompressedARCFile(arcFile)) {
+            if (!ARCUtils.testUncompressedARCFile(arcFile)) {
                 throw new IOException(arcFile.getAbsolutePath() +
                     " is not an Internet Archive ARC file.");
             }
@@ -223,124 +214,6 @@ public class ARCReaderFactory implements ARCConstants {
                 new CompressedARCReader(arcFile):
             (ARCReader)ARCReaderFactory.factory.
                 new UncompressedARCReader(arcFile);
-    }
-    
-    /**
-     * Check file is compressed and in ARC GZIP format.
-     *
-     * @param arcFile File to test if its Internet Archive ARC file
-     * GZIP compressed.
-     *
-     * @return True if this is an Internet Archive GZIP'd ARC file (It begins
-     * w/ the Internet Archive GZIP header and has the
-     * COMPRESSED_ARC_FILE_EXTENSION suffix).
-     *
-     * @exception IOException If file does not exist or is not unreadable.
-     */
-    public boolean testCompressedARCFile(File arcFile)
-    throws IOException {
-        return testCompressedARCFile(arcFile, false);
-    }
-
-    /**
-     * Check file is compressed and in ARC GZIP format.
-     *
-     * @param arcFile File to test if its Internet Archive ARC file
-     * GZIP compressed.
-     * @param skipSuffixCheck Set to true if we're not to test on the
-     * '.arc.gz' suffix.
-     *
-     * @return True if this is an Internet Archive GZIP'd ARC file (It begins
-     * w/ the Internet Archive GZIP header).
-     *
-     * @exception IOException If file does not exist or is not unreadable.
-     */
-    public boolean testCompressedARCFile(File arcFile, boolean skipSuffixCheck)
-    throws IOException {
-        boolean compressedARCFile = false;
-        isReadable(arcFile);
-        if(!skipSuffixCheck && !arcFile.getName().toLowerCase()
-                .endsWith(COMPRESSED_ARC_FILE_EXTENSION)) {
-            return compressedARCFile;
-        }
-        
-            FileInputStream fis = new FileInputStream(arcFile);
-        try {
-            GzipHeader gh = new GzipHeader(new FileInputStream(arcFile));
-            byte[] fextra = gh.getFextra();
-            // Now make sure following bytes are IA GZIP comment.
-            // First check length. ARC_GZIP_EXTRA_FIELD includes length
-            // so subtract two and start compare to ARC_GZIP_EXTRA_FIELD
-            // at +2.
-            if (ARC_GZIP_EXTRA_FIELD.length - 2 == fextra.length) {
-                compressedARCFile = true;
-                for (int i = 0; i < fextra.length; i++) {
-                    if (fextra[i] != ARC_GZIP_EXTRA_FIELD[i + 2]) {
-                        compressedARCFile = false;
-                        break;
-                    }
-                }
-            }
-        } finally {
-            fis.close();
-        }
-        return compressedARCFile;
-    }
-
-    /**
-     * Check file is uncompressed ARC file.
-     * 
-     * @param arcFile
-     *            File to test if its Internet Archive ARC file uncompressed.
-     * 
-     * @return True if this is an Internet Archive ARC file.
-     * 
-     * @exception IOException
-     *                If file does not exist or is not unreadable.
-     */
-    public boolean testUncompressedARCFile(File arcFile) throws IOException {
-        boolean uncompressedARCFile = false;
-        isReadable(arcFile);
-        if(arcFile.getName().toLowerCase().endsWith(ARC_FILE_EXTENSION)) {
-            FileInputStream fis = new FileInputStream(arcFile);
-            try {
-                byte [] b = new byte[ARC_MAGIC_NUMBER.length()];
-                int read = fis.read(b, 0, ARC_MAGIC_NUMBER.length());
-                fis.close();
-                if (read == ARC_MAGIC_NUMBER.length()) {
-                    StringBuffer beginStr
-                        = new StringBuffer(ARC_MAGIC_NUMBER.length());
-                    for (int i = 0; i < ARC_MAGIC_NUMBER.length(); i++) {
-                        beginStr.append((char)b[i]);
-                    }
-                    
-                    if (beginStr.toString().
-                            equalsIgnoreCase(ARC_MAGIC_NUMBER)) {
-                        uncompressedARCFile = true;
-                    }
-                }
-            } finally {
-                fis.close();
-            }
-        }
-
-        return uncompressedARCFile;
-    }
-
-    /**
-     * @param arcFile File to test.
-      * @exception IOException If file does not exist or is not unreadable.
-     */
-    private void isReadable(File arcFile) throws IOException {
-        if (!arcFile.exists()) {
-            throw new FileNotFoundException(arcFile.getAbsolutePath() +
-                " does not exist.");
-        }
-
-        if (!arcFile.canRead()) {
-            throw new FileNotFoundException(arcFile.getAbsolutePath() +
-                " is not readable.");
-        }
     }
 
     /**

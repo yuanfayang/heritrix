@@ -64,29 +64,19 @@ import org.archive.util.TextUtils;
  * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc
  * File Format</a>.
  *
- * <p>This class knows how to parse an ARC file and has accessors for all of
- * the ARC file content. It can parse ARC Version 1 and 2.
+ * <p>This class knows how to parse an ARC file.  Pass it a file path
+ * or an URL to an ARC. It can parse ARC Version 1 and 2.
  *
- * <p>ARC file header looks like this:
- *
- * <pre>filedesc://testIsBoundary-JunitIAH200401070157520.arc 0.0.0.0 \\
- *      20040107015752 text/plain 77
- * 1 0 InternetArchive
- * URL IP-address Archive-date Content-type Archive-length</pre>
- *
- * <p>Iterator returns ARCRecords (though {@link Iterator#next()} returns
- * java.lang.Object).  Cast the return.
+ * <p>Iterator returns <code>ARCRecord</code>
+ * though {@link Iterator#next()} is returning
+ * java.lang.Object.  Cast the return.
  *
  * <p>Profiling java.io vs. memory-mapped ByteBufferInputStream shows the
  * latter slightly slower -- but not by much.  TODO: Test more.  Just
  * change {@link #getInputStream(File)}.
  *
- * <p>TODO: Testing of this reader class against ARC files harvested out in
- * the wilds.  This class has only been tested to date going against small
- * files made by unit tests.  The class needs to be tested that it might
- * develop robustness.
- *
  * @author stack
+ * @version $Date$ $Revision$
  */
 public abstract class ARCReader
 implements ARCConstants {

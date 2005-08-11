@@ -58,7 +58,9 @@ public class ARCReaderFactoryTest extends TmpDirTestCase {
 //    }
     
     /**
-     * Test URL.
+     * Test File URL.
+     * If a file url, we just use the pointed to file.  There is no
+     * copying down to a file in tmp that gets cleaned up after close.
      * @throws MalformedURLException
      * @throws IOException
      */
