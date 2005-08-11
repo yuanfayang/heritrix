@@ -618,14 +618,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Cause the current job to pause. If no current job is crawling this method
-     * will have to effect. If the job is already paused it may cause the status
-     * of the job to be incorrectly 'Waiting to pause'.
+     * will have no effect. 
      */
     public void pauseJob() {
         if (controller != null && controller.isPaused()==false) {
             controller.requestCrawlPause();
-            //We'll do this pre-emptively so that the UI can be updated.
-            currentJob.setStatus(CrawlJob.STATUS_WAITING_FOR_PAUSE);
         }
     }
 

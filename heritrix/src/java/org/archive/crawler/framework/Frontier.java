@@ -434,4 +434,10 @@ public interface Frontier extends Reporter {
      * typically by contacting the Scope. 
      */
     public void loadSeeds();
+
+    /**
+     * Request that Frontier allow crawling to begin. Usually
+     * just unpauses Frontier, if paused. 
+     */
+    public void start();
 }
