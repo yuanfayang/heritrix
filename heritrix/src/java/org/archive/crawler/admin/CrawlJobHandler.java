@@ -44,12 +44,10 @@ import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
-import javax.management.ObjectInstance;
 import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.CrawlController;
@@ -58,24 +56,19 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
-import org.archive.crawler.frontier.HostQueuesFrontier;
 import org.archive.crawler.frontier.RecoveryJournal;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
-import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
-import org.archive.crawler.util.IoUtils;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
-import org.archive.util.iterator.LineReadingIterator;
-import org.archive.util.iterator.RegexpLineIterator;
 
 
 /**
  * This class manages CrawlJobs. Submitted crawl jobs are queued up and run
- * in order when the crawler is running.<br>
- * Basically this provides a layer between any potential user interface and
- * the CrawlController and the details of a crawl.
+ * in order when the crawler is running.
+ * <p>Basically this provides a layer between any potential user interface and
+ * the CrawlJobs.  It keeps the lists of completed jobs, pending jobs, etc.
  * <p>
  * The jobs managed by the handler can be divided into the following:
  * <ul>
@@ -136,14 +129,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Job currently being crawled.
      */
     private CrawlJob currentJob = null;
-
-    /**
-     * ObjectInstance registered w/ JMX agent.
-     * Null if no current job and if no JMX agent to register against.
-     * Keep around the reference as long as there is a current job.
-     * Updated everytime there is a current job.
-     */
-    private ObjectInstance currentJobRegisteredMBeanInstance = null;
     
     /**
      * A new job that is being created/configured. Not yet ready for crawling.
@@ -161,7 +146,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     private TreeSet pendingCrawlJobs;
 
     /**
-     * A list of completed CrawlJobs
+     * A list of completed CrawlJobs.
      */
     //private Vector completedCrawlJobs = new Vector();
     private TreeSet completedCrawlJobs;
@@ -171,7 +156,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     private TreeSet profileJobs;
     
-    // The UIDs of profiles should be NOT be timestamps. A descriptive name is ideal.
+    // The UIDs of profiles should be NOT be timestamps. A descriptive name is
+    // ideal.
     private String defaultProfile = null;
 
     /**
@@ -179,35 +165,26 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * crawling as soon as the current job (if any) is completed.
      */
     private boolean running = false;
-
-    /**
-     * If true then a job is currently crawling.
-     */
-    private boolean crawling = false;
-
-    private CrawlController controller = null;
-
-    // Default access so available to CrawlJob.
-    static final String RECOVERY_JOURNAL_STYLE = "recoveryJournal";
-    static final String CRAWL_LOG_STYLE = "crawlLog";
+    
+    private File jobsDir = null;
 
     /**
      * Constructor.
-     * @throws IOException
+     * @param jobsDir Jobs dir.
      */
-    public CrawlJobHandler()
-    throws IOException{
-        this(true, true);
+    public CrawlJobHandler(final File jobsDir) {
+        this(jobsDir, true, true);
     }
 
     /**
      * Constructor allowing for optional loading of profiles and jobs.
+     * @param jobsDir Jobs directory.
      * @param loadJobs If true then any applicable jobs will be loaded.
      * @param loadProfiles If true then any applicable profiles will be loaded.
-     * @throws IOException
      */
-    public CrawlJobHandler(boolean loadJobs, boolean loadProfiles)
-    throws IOException{
+    public CrawlJobHandler(final File jobsDir,
+            final boolean loadJobs, final boolean loadProfiles) {
+        this.jobsDir = jobsDir;
         // Make a comparator for CrawlJobs.
         Comparator comp = new Comparator(){
             public int compare(Object o1, Object o2) {
@@ -241,12 +218,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * <p>
      * Availible jobs are any directory containing a file called
      * <code>state.job</code>. The file must contain valid job information.
-     * @throws IOException
      */
-    private void loadJobs() throws IOException {
-        File jobDir = Heritrix.getJobsdir();
-        jobDir.mkdirs();
-        File[] jobs = jobDir.listFiles();
+    private void loadJobs() {
+        this.jobsDir.mkdirs();
+        File[] jobs = this.jobsDir.listFiles();
         for (int i = 0; i < jobs.length; i++) {
             if (jobs[i].isDirectory()) {
                 // Need to find job file ('state.job').
@@ -269,25 +244,22 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * into the completed list.
      * @param job the job file of the job to load.
      */
-    protected void loadJob(File job) {
+    protected void loadJob(final File job) {
         CrawlJob cjob = null;
         try {
             // Load the CrawlJob
             cjob = new CrawlJob(job, new CrawlJobErrorHandler());
         } catch (InvalidJobFileException e) {
-            Heritrix.addAlert( new Alert(
-                    "InvalidJobFileException for " + job.getName(),
-                    "Invalid job file for " + job.getAbsolutePath(),
-                    e, Level.INFO) );
+            logger.log(Level.INFO,
+                    "Invalid job file for " + job.getAbsolutePath(), e);
             return;
         } catch (IOException e) {
-            Heritrix.addAlert( new Alert(
-                    "IOException for " + job.getName(),
-                    "An IO exception occured while reading from job file " +
-                        job.getAbsolutePath(),
-                    e, Level.INFO) );
+            logger.log(Level.INFO, "IOException for " + job.getName() +
+                    ", " + job.getAbsolutePath(), e);
             return;
         }
+        
+        // TODO: Move test into CrawlJob.
         // Check job status and place it accordingly.
         if( cjob.getStatus().equals(CrawlJob.STATUS_RUNNING)
                 || cjob.getStatus().equals(CrawlJob.STATUS_PAUSED)
@@ -297,11 +269,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
             // TODO: Consider checking for checkpoints and offering resume?
             cjob.setStatus(CrawlJob.STATUS_FINISHED_ABNORMAL);
             completedCrawlJobs.add(cjob);
-        } else if( cjob.getStatus().equals(CrawlJob.STATUS_PENDING) ){
+        } else if( cjob.getStatus().equals(CrawlJob.STATUS_PENDING) ) {
             // Was a pending job.
             pendingCrawlJobs.add(cjob);
         } else if( cjob.getStatus().equals(CrawlJob.STATUS_CREATED)
-                || cjob.getStatus().equals(CrawlJob.STATUS_DELETED) ){
+                || cjob.getStatus().equals(CrawlJob.STATUS_DELETED) ) {
             // Ignore for now. TODO: Add to 'recycle bin'
         } else {
             // Must have been completed.
@@ -426,8 +398,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Submit a job to the handler. Job will be scheduled for crawling. At present
-     * it will not take the job's* priority into consideration.
+     * Submit a job to the handler. Job will be scheduled for crawling. At
+     * present it will not take the job's priority into consideration.
      *
      * @param job A new job for the handler
      * @return CrawlJob that was added or null.
@@ -443,7 +415,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             job.setNew(false);
         }
         pendingCrawlJobs.add(job);
-        if(crawling == false && isRunning()) {
+        if(isCrawling() == false && isRunning()) {
             // Start crawling
             startNextJob();
         }
@@ -456,7 +428,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * profiles exist it will return null
      * @return the default profile.
      */
-    public synchronized CrawlJob getDefaultProfile(){
+    public synchronized CrawlJob getDefaultProfile() {
         if(defaultProfile != null){
             for(Iterator it = profileJobs.iterator(); it.hasNext();) {
                 CrawlJob item = (CrawlJob)it.next();
@@ -478,7 +450,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *                profile.isProfile() should return true and
      *                this.getProfiles() should contain it.
      */
-    public void setDefaultProfile(CrawlJob profile){
+    public void setDefaultProfile(CrawlJob profile) {
         defaultProfile = profile.getJobName();
         // TODO: Make changes to default profile durable across restarts.
     }
@@ -496,8 +468,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Get the job that is currently being crawled.
-     *
      * @return The job currently being crawled.
      */
     public CrawlJob getCurrentJob() {
@@ -505,8 +475,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * A List of all finished jobs
-     *
      * @return A List of all finished jobs.
      */
     public List getCompletedJobs() {
@@ -578,7 +546,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             // Need to terminate the current job.
             // requestCrawlStop will cause crawlEnding to be invoked.
             // It will handle the clean up.
-            controller.requestCrawlStop();
+            this.currentJob.stopCrawling();
             synchronized (this) {
                 try {
                     // Take a few moments so that the controller can change
@@ -589,7 +557,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
                     return;
                 }
             }
-
             return; // We're not going to find another job with the same UID
         }
         
@@ -617,12 +584,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     /**
-     * Cause the current job to pause. If no current job is crawling this method
-     * will have no effect. 
+     * Cause the current job to pause. If no current job is crawling this
+     * method will have no effect. 
      */
     public void pauseJob() {
-        if (controller != null && controller.isPaused()==false) {
-            controller.requestCrawlPause();
+        if (this.currentJob != null) {
+            this.currentJob.pause();
         }
     }
 
@@ -634,8 +601,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * resume crawling.
      */
     public void resumeJob() {
-        if (controller != null) {
-            controller.requestCrawlResume();
+        if (this.currentJob != null) {
+            this.currentJob.resume();
         }
     }
 
@@ -645,8 +612,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @throws IllegalStateException Thrown if crawl is not paused.
      */
     public void checkpointJob() throws IllegalStateException {
-        if (controller != null) {
-            controller.requestCrawlCheckpoint();
+        if (this.currentJob != null) {
+            this.currentJob.checkpoint();
         }
     }
     
@@ -656,8 +623,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @throws IOException
      */
     public void rotateLogs() throws IOException, IllegalStateException {
-        if (controller != null) {
-            this.controller.rotateLogFiles();
+        if (this.currentJob != null) {
+            this.currentJob.rotateLogs();
         }
     }
 
@@ -743,20 +710,20 @@ public class CrawlJobHandler implements CrawlStatusListener {
     protected CrawlJob createNewJob(final File orderFile,
             final File recoverLogsDir, final String name,
             final String description, final String seeds, final int priority)
-    throws IOException, FatalConfigurationException {
+    throws FatalConfigurationException {
         if (newJob != null) {
             //There already is a new job. Discard it.
             discardNewJob();
         }
         String UID = getNextJobUID();
-        File jobDir = new File(Heritrix.getJobsdir(), name + "-" + UID);
+        File jobDir = new File(this.jobsDir, name + "-" + UID);
         CrawlJobErrorHandler errorHandler = new CrawlJobErrorHandler();
         // If in recovery mode, set the recoverLogsDir.
         XMLSettingsHandler handler =
             createSettingsHandler(orderFile, recoverLogsDir, name, description,
                 seeds, jobDir, errorHandler, "order.xml", "seeds.txt");
         this.newJob = new CrawlJob(UID, name, handler, errorHandler, priority,
-            jobDir);
+                jobDir);
         return this.newJob;
     }
 
@@ -947,10 +914,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
         File newLogsDisk = null;
         while(true) {
             try {
-                newLogsDisk = newHandler.getOrder().getSettingsDir(
-                        CrawlOrder.ATTR_LOGS_PATH);
+                newLogsDisk = newHandler.getOrder().
+                    getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
             } catch (AttributeNotFoundException e) {
-                logger.severe("Failed to get logs directory " + e);
+                logger.log(Level.SEVERE, "Failed to get logs directory", e);
             }
             if (newLogsDisk.list().length>0) {
                 // 'new' directory is nonempty; rename with trailing '-R'
@@ -969,7 +936,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 newStateDisk = newHandler.getOrder().getSettingsDir(
                         CrawlOrder.ATTR_STATE_PATH);
             } catch (AttributeNotFoundException e) {
-                logger.severe("Failed to get state directory " + e);
+                logger.log(Level.SEVERE, "Failed to get state directory", e);
             }
             if (newStateDisk.list().length>0) {
                 // 'new' directory is nonempty; rename with trailing '-R'
@@ -1014,7 +981,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *         False if no job is being crawled.
      */
     public boolean isCrawling() {
-        return crawling;
+        return this.currentJob != null;
     }
 
     /**
@@ -1022,7 +989,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public void startCrawler() {
         running = true;
-        if (pendingCrawlJobs.size() > 0 && crawling == false) {
+        if (pendingCrawlJobs.size() > 0 && isCrawling() == false) {
             // Ok, can just start the next job
             startNextJob();
         }
@@ -1066,182 +1033,30 @@ public class CrawlJobHandler implements CrawlStatusListener {
             // No job ready or already crawling.
             return;
         }
-        
-        this.currentJob = (CrawlJob) pendingCrawlJobs.first();
+        this.currentJob = (CrawlJob)pendingCrawlJobs.first();
         assert pendingCrawlJobs.contains(currentJob) :
             "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
-
         try {
-            controller = new CrawlController();
-            // Register as listener to get job finished notice.
-            controller.addCrawlStatusListener(this);
-            SettingsHandler settingsHandler = currentJob.getSettingsHandler();
-            controller.initialize(settingsHandler);
+            this.currentJob.startCrawling();
+            // This is ugly but needed so I can clear the currentJob
+            // reference in the crawlEnding and update the list of completed
+            // jobs.  Also, crawlEnded can startup next job.
+            this.currentJob.getController().addCrawlStatusListener(this);
         } catch (InitializationException e) {
-            // Can't load current job since it is misconfigured.
-            currentJob.setStatus(CrawlJob.STATUS_MISCONFIGURED);
-            currentJob.setErrorMessage(
-                "A fatal InitializationException occured when loading job:\n"
-                    + e.getMessage());
-            completedCrawlJobs.add(currentJob);
-            // Log to stdout so its seen in logs as well as in UI.
-            e.printStackTrace();
-            currentJob = null;
-            controller = null;
-            startNextJobInternal(); //Load the next job if there is one.
-            return;
+            this.completedCrawlJobs.add(this.currentJob);
+            this.currentJob = null;
+            startNextJobInternal(); // Load the next job if there is one.
         }
-        this.crawling = true;
-        this.currentJob.setStatus(CrawlJob.STATUS_RUNNING);
-        this.currentJob.setRunning(true);
-        this.currentJob.setStatisticsTracking(controller.getStatistics());
-        // Register the current job w/ the JMX agent, if there is one.
-        this.currentJobRegisteredMBeanInstance =
-            Heritrix.registerMBean(this.currentJob, "CurrentJob");
-        controller.requestCrawlStart();
-    }
-
-    /**
-     * @return One-line Frontier report.
-     */
-    public String getFrontierOneLine() {
-        if (controller == null || controller.getFrontier() == null) {
-            return "Crawler not running";
-        }
-        return controller.getFrontier().singleLineReport();
-    }
-    
-    /**
-     * Returns the Frontier report for the running crawl. If no crawl is running
-     * a message to that effect will be returned instead.
-     *
-     * @return A report of the frontier's status.
-     */
-    public String getFrontierReport() {
-        if (controller == null || controller.getFrontier() == null) {
-            return "Crawler not running";
-        }
-        return ArchiveUtils.writeReportToString(controller.getFrontier(),"compact");
-    }
-
-    /**
-     * @return One-line threads report.
-     */
-    public String getThreadOneLine() {
-        if (controller == null) {
-            return "Crawler not running";
-        }
-        return controller.oneLineReportThreads();
-    }
-    
-    /**
-     * Get the CrawlControllers ToeThreads report for the running crawl. If no
-     * crawl is running a message to that effect will be returned instead.
-     * @return The CrawlControllers ToeThreads report
-     */
-    public String getThreadsReport() {
-        if (controller == null) {
-            return "Crawler not running";
-        }
-        return ArchiveUtils.writeReportToString(controller.getToePool(),null);
-    }
-
-    /**
-     * Kills a thread. For details see
-     * {@link org.archive.crawler.framework.ToePool#killThread(int, boolean)
-     * ToePool.killThread(int, boolean)}.
-     * @param threadNumber Thread to kill.
-     * @param replace Should thread be replaced.
-     * @see org.archive.crawler.framework.ToePool#killThread(int, boolean)
-     */
-    public void killThread(int threadNumber, boolean replace){
-        controller.killThread(threadNumber, replace);
-    }
-
-    /**
-     * Get the Processors report for the running crawl. If no crawl is running a
-     * message to that effect will be returned instead.
-     * @return The Processors report for the running crawl.
-     */
-    public String getProcessorsReport() {
-        if (controller == null) {
-            return "Crawler not running";
-        }
-        return ArchiveUtils.writeReportToString(controller,CrawlController.PROCESSORS_REPORT);
-    }
-
-    /**
-     * @param statusMessage Message to display.
-     *
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
-     */
-    public void crawlPausing(String statusMessage) {
-        currentJob.setStatus(statusMessage);
-    }
-
-    /**
-     * @param statusMessage Message to display.
-     *
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
-     */
-    public void crawlPaused(String statusMessage) {
-        currentJob.setStatus(statusMessage);
-    }
-
-    /**
-     * @param statusMessage Message to display.
-     *
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
-     */
-    public void crawlResuming(String statusMessage) {
-        currentJob.setStatus(statusMessage);
-    }
-
-    /**
-     * @param sExitMessage Exit message to display.
-     *
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
-     */
-    public void crawlEnding(String sExitMessage) {
-        this.crawling = false;
-        currentJob.setStatus(sExitMessage);
-        currentJob.setReadOnly(); //Further changes have no meaning
-        currentJob.setRunning(false);
-        // Unregister current job from JMX agent, if there one.
-        Heritrix.unregisterMBean(this.currentJobRegisteredMBeanInstance);
-        this.currentJobRegisteredMBeanInstance = null;
-        completedCrawlJobs.add(currentJob);
-        currentJob = null;
-        // Remove the reference so that the old controller can be gc.
-        this.controller = null;
-        synchronized (this) {
-            // If the GUI terminated the job then it is waiting for this event.
-            notifyAll();
-        }
-    }
-
-    public void crawlEnded(String sExitMessage) {
-        if (this.running) {
-            startNextJob();
-        }
-    }
-    
-    public void crawlStarted(String message) {
-        // TODO Auto-generated method stub
-    }
-    
-    public void crawlCheckpoint(File checkpointDir) throws Exception {
-        currentJob.setStatus(CrawlJob.STATUS_CHECKPOINTING);
     }
 
     /**
      * Forward a 'kick' update to current controller if any.
      * @see CrawlController#kickUpdate()
      */
-    public void kickUpdate(){
-        if(controller != null){
-            controller.kickUpdate();
+    public void kickUpdate() {
+        if(this.currentJob != null) {
+            this.currentJob.kickUpdate();
         }
     }
 
@@ -1308,13 +1123,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public FrontierMarker getInitialMarker(String regexpr,
             boolean inCacheOnly) {
-        FrontierMarker tmp = null;
-        if (controller != null && controller.isPaused()) {
-            // Ok, get the marker.
-            tmp = controller.getFrontier().getInitialMarker(regexpr,
-                    inCacheOnly);
-        }
-        return tmp;
+        return (this.currentJob != null)?
+                this.currentJob.getInitialMarker(regexpr, inCacheOnly): null;
     }
 
     /**
@@ -1338,14 +1148,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public ArrayList getPendingURIsList(FrontierMarker marker,
             int numberOfMatches, boolean verbose)
-            throws InvalidFrontierMarkerException {
-        ArrayList tmp = null;
-        if (controller != null && controller.isPaused()) {
-            // Ok, get the list.
-            tmp = controller.getFrontier().getURIsList(marker,
-                    numberOfMatches, verbose);
-        }
-        return tmp;
+    throws InvalidFrontierMarkerException {
+        return (this.currentJob != null)?
+           this.currentJob.getPendingURIsList(marker, numberOfMatches, verbose):
+           null;
     }
 
     /**
@@ -1355,11 +1161,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param regexpr Regular expression to delete URIs by.
      * @return the number of URIs deleted
      */
-    public long deleteURIsFromPending(String regexpr){
-        if(controller != null && controller.isPaused()){
-            return controller.getFrontier().deleteURIs(regexpr);
-        }
-        return 0;
+    public long deleteURIsFromPending(String regexpr) {
+        return (this.currentJob != null)?
+                this.currentJob.deleteURIsFromPending(regexpr): 0;
     }
     
     public String importUris(String file, String style, String force) {
@@ -1375,61 +1179,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
      */
     public String importUris(final String fileOrUrl, final String style,
             final boolean forceRevisit) {
-        InputStream is =
-            IoUtils.getInputStream(this.controller.getDisk(), fileOrUrl);
-        String message = null;
-        // Do we have an inputstream?
-        if (is == null) {
-            message = "Failed to get inputstream from " + fileOrUrl;
-            logger.severe(message);
-        } else {
-            int addedCount = importUris(is, style, forceRevisit);
-            message = Integer.toString(addedCount) + " URIs added from " +
-                fileOrUrl;
-        }
-        return message;
+        return (this.currentJob != null)?
+            this.currentJob.importUris(fileOrUrl, style, forceRevisit): null;
     }
     
     protected int importUris(InputStream is, String style,
             boolean forceRevisit) {
-        // Figure the regex to use parsing each line of input stream.
-        String extractor;
-        String output;
-        if(CRAWL_LOG_STYLE.equals(style)) {
-            // Skip first 3 fields
-            extractor = "\\S+\\s+\\S+\\s+\\S+\\s+(\\S+\\s+\\S+\\s+\\S+\\s+).*";
-            output = "$1";
-        } else if (RECOVERY_JOURNAL_STYLE.equals(style)) {
-            // Skip the begin-of-line directive
-            extractor = "\\S+\\s+((\\S+)(?:\\s+\\S+\\s+\\S+)?)\\s*";
-            output = "$1";
-        } else {
-            extractor =
-                RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT;
-            output = RegexpLineIterator.ENTRY;
-        }
-        
-        // Read the input stream.
-        BufferedReader br = null;
-        int addedCount = 0;
-        try {
-            br = new BufferedReader(new InputStreamReader(is));
-            Iterator iter = new RegexpLineIterator(new LineReadingIterator(br),
-                RegexpLineIterator.COMMENT_LINE, extractor, output);
-            while(iter.hasNext()) {
-                try {
-                    importUri((String)iter.next(), forceRevisit, false, false);
-                    addedCount++;
-                } catch (URIException e) {
-                    e.printStackTrace();
-                }
-            }
-            br.close();
-            doFlush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return addedCount;
+        return (this.currentJob != null)?
+                this.currentJob.importUris(is, style, forceRevisit): 0;
     }
     
     /**
@@ -1460,14 +1217,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public void importUri(final String str, final boolean forceFetch,
             final boolean isSeed, final boolean isFlush)
     throws URIException {
-        CandidateURI caUri = CandidateURI.fromString(str);
-        caUri.setForceFetch(forceFetch);
-        if (isSeed) {
-            caUri.setIsSeed(isSeed);
-        }
-        controller.getFrontier().schedule(caUri);
-        if (isFlush) {
-            doFlush();
+        if (this.currentJob != null) {
+            this.currentJob.importUri(str, forceFetch, isSeed, isFlush);
         }
     }
     
@@ -1475,14 +1226,20 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * If its a HostQueuesFrontier, needs to be flushed for the queued.
      */
     protected void doFlush() {
-        if (controller.getFrontier() instanceof HostQueuesFrontier) {
-            ((HostQueuesFrontier)controller.getFrontier()).batchFlush();
+        if (this.currentJob != null) {
+            this.currentJob.flush();
+        }
+    }
+    
+    public void stop() {
+        if (isCrawling()) {
+            deleteJob(getCurrentJob().getUID());
         }
     }
     
     public void requestCrawlStop() {
-        if(this.controller != null) {
-            this.controller.requestCrawlStop();
+        if (this.currentJob != null) {
+            this.currentJob.stopCrawling();
         }
     }
     
@@ -1502,5 +1259,43 @@ public class CrawlJobHandler implements CrawlStatusListener {
         orderfile.setDescription(description);
         settingsHandler.writeSettingsObject(orderfile);
         return newJob;
+    }
+
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void crawlEnding(String sExitMessage) {
+        completedCrawlJobs.add(currentJob);
+        currentJob = null;
+        synchronized (this) {
+            // If the GUI terminated the job then it is waiting for this event.
+            notifyAll();
+        }
+    }
+
+    public void crawlEnded(String sExitMessage) {
+        if (this.running) {
+            startNextJob();
+        }
+    }
+
+    public void crawlPausing(String statusMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void crawlPaused(String statusMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void crawlResuming(String statusMessage) {
+        // TODO Auto-generated method stub
+    }
+
+    public void crawlCheckpoint(File checkpointDir) throws Exception {
+        // TODO Auto-generated method stub
     }
 }

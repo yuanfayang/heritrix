@@ -78,12 +78,12 @@
                                             <b>
                                                 Alerts: 
                                             </b>
-                                            <% if(Heritrix.getAlerts().size()==0) { %>
+                                            <% if(heritrix.getAlertsCount() == 0) { %>
                                                 <a style="color: #000000; text-decoration: none" href="<%=request.getContextPath()%>/console/alerts.jsp">no alerts</a>
-                                            <% } else if(Heritrix.getNewAlertsCount()>0){ %>
-                                                <b><a href="<%=request.getContextPath()%>/console/alerts.jsp"><%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlertsCount()%> new)</a></b>
+                                            <% } else if(heritrix.getNewAlertsCount()>0){ %>
+                                                <b><a href="<%=request.getContextPath()%>/console/alerts.jsp"><%=heritrix.getAlerts().size()%> (<%=heritrix.getNewAlertsCount()%> new)</a></b>
                                             <% } else { %>
-                                                <a style="color: #000000" href="<%=request.getContextPath()%>/console/alerts.jsp"><%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlertsCount()%> new)</a>
+                                                <a style="color: #000000" href="<%=request.getContextPath()%>/console/alerts.jsp"><%=heritrix.getAlertsCount()%> (<%=heritrix.getNewAlertsCount()%> new)</a>
                                             <% } %>
                                         </td>
                                     </tr>
@@ -120,9 +120,9 @@
                                         </td>
                                         <td nowrap>
                                             <% if(handler.isCrawling()){ %>
-                                                    Downloaded <%=stats.successfullyFetchedCount()%> documents in 
+                                                    Downloaded <%=(stats != null)? stats.successfullyFetchedCount(): 0%> documents in 
                                             <%
-                                                    long time = (stats.getCrawlerTotalElapsedTime())/1000;
+                                                    long time = (stats != null)?(stats.getCrawlerTotalElapsedTime()/1000): 0;
                         
                                                     if(time>3600)
                                                     {

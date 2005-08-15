@@ -38,8 +38,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
@@ -58,6 +60,7 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanOperationInfo;
+import javax.management.MBeanRegistration;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
@@ -82,24 +85,30 @@ import javax.management.openmbean.SimpleType;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 import javax.management.openmbean.TabularType;
+import javax.naming.CompoundName;
+import javax.naming.Context;
 
 import org.apache.commons.cli.Option;
-import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobErrorHandler;
 import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.framework.AlertManager;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.selftest.SelfTestCrawlJobHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.io.SinkHandler;
+import org.archive.io.SinkHandlerLogRecord;
 import org.archive.net.UURI;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
+import org.archive.util.JndiUtils;
+import org.archive.util.PropertyUtils;
 import org.archive.util.TextUtils;
 
 import sun.net.www.protocol.file.FileURLConnection;
@@ -108,7 +117,7 @@ import sun.net.www.protocol.file.FileURLConnection;
 /**
  * Main class for Heritrix crawler.
  *
- * Heritrix is launched by a shell script that backgrounds heritrix and
+ * Heritrix is usually launched by a shell script that backgrounds heritrix and
  * that redirects all stdout and stderr emitted by heritrix to a log file.  So
  * that startup messages emitted subsequent to the redirection of stdout and
  * stderr show on the console, this class prints usage or startup output
@@ -116,12 +125,15 @@ import sun.net.www.protocol.file.FileURLConnection;
  * script is waiting on.  As soon as the shell script sees output in this file,
  * it prints its content and breaks out of its wait.
  * See ${HERITRIX_HOME}/bin/heritrix.
+ * 
+ * <p>Heritrix can also be embedded or launched by webapp initialization or
+ * by jmx bootstrapping.
  *
  * @author gojomo
  * @author Kristinn Sigurdsson
- *
+ * @author Stack
  */
-public class Heritrix implements DynamicMBean {
+public class Heritrix implements DynamicMBean, MBeanRegistration {
     /**
      * Heritrix logging instance.
      */
@@ -141,13 +153,11 @@ public class Heritrix implements DynamicMBean {
      * command line.
      */
     private static final String PROPERTIES_KEY = PROPERTIES;
-
+    
     /**
-     * Heritrix properties.
-     *
-     * Read from properties file on startup and cached thereafter.
+     * Prefix used on properties we'll add to the System.properties list.
      */
-    private static Properties properties = null;
+    private static final String HERITRIX_PROPERTIES_PREFIX = "heritrix.";
 
     /**
      * Instance of web server if one was started.
@@ -157,7 +167,7 @@ public class Heritrix implements DynamicMBean {
     /**
      * CrawlJob handler. Manages multiple crawl jobs at runtime.
      */
-    private static CrawlJobHandler jobHandler = null;
+    private CrawlJobHandler jobHandler = null;
 
     /**
      * Heritrix start log file.
@@ -196,16 +206,6 @@ public class Heritrix implements DynamicMBean {
     private static PrintWriter out = null;
 
     /**
-     * When running selftest, we set in here the URL for the selftest.
-     */
-    private static String selftestURL = null;
-
-    /**
-     * Alerts that have occured
-     */
-    private static Vector alerts = new Vector();
-
-    /**
      * The crawler package.
      */
 	private static final String CRAWLER_PACKAGE = Heritrix.class.getName().
@@ -217,25 +217,53 @@ public class Heritrix implements DynamicMBean {
     private static final String ROOT_CONTEXT = "/";
 
     /**
-     * Set to true if application is running from a command line.
+     * Set to true if application is started from command line.
      */
     private static boolean commandLine = false;
     
-    /**
-     * Set if we're running with a web UI.
-     */
-    private static boolean noWui = false;
+    private static final String JAR_SUFFIX = ".jar";
+    
+    private final AlertManager alertManager;
+    
+    // JNDI
+    private Context jndiContext = null;
     
     // OpenMBean support.
     /**
-     * The MBean we've registered ourselves with (May be null
-     * throughout life of Heritrix).
+     * The MBean server we're registered with (May be null).
      */
-    private static MBeanServer mbeanServer = null;
-    private static ObjectInstance registeredHeritrixObjectInstance =
-        null;
-    private final OpenMBeanInfoSupport openMBeanInfo;
+    private MBeanServer mbeanServer = null;
     
+    /**
+     * MBean name we were registered as.
+     */
+    private ObjectName mbeanName = null;
+    
+    /**
+     * Instance of Heritrix MBean registered by cmdline Heritrix.
+     * In the case where Heritrix was launched from the command-line, we'll
+     * take care to register ourselves with any MBeanServer found (Usually the
+     * JVM MBeanServer if we're in 1.5 JVM).  So we clean up properly after
+     * ourselves, we need to keep around static reference
+     * so we deregister ourselves on the way out.
+     */
+    private static ObjectInstance cmdlineRegisteredInstance = null;
+    
+    /**
+     * Server cmdline Heritrix registered its MBean with.
+     * Keep around a static reference to the server we registered with so we
+     * can deregister ourselves as we go down.
+     */
+    private static MBeanServer cmdlineRegisteredServer = null;
+    
+    /**
+     * Keep reference to all instances of Heritrix.
+     * Used by the UI to figure which of the local Heritrices it should
+     * be going against.
+     */
+    private static Map instances = new Hashtable();
+    
+    private final OpenMBeanInfoSupport openMBeanInfo;
     private final static String STATUS_ATTR = "Status";
     private final static List ATTRIBUTE_LIST;
     static {
@@ -248,8 +276,8 @@ public class Heritrix implements DynamicMBean {
     private final static String START_CRAWLING_OPER = "startCrawling";
     private final static String STOP_CRAWLING_OPER = "stopCrawling";
     private final static String ADD_CRAWL_JOB_OPER = "addJob";
+    private final static String DELETE_CRAWL_JOB_OPER = "deleteJob";
     private final static String ALERT_OPER = "alert";
-    private final static String NEW_ALERT_OPER = "newAlert";
     private final static String ADD_CRAWL_JOB_BASEDON_OPER = "addJobBasedon";
     private final static String PENDING_JOBS_OPER = "pendingJobs";
     private final static String COMPLETED_JOBS_OPER = "completedJobs";
@@ -259,7 +287,7 @@ public class Heritrix implements DynamicMBean {
         OPERATION_LIST = Arrays.asList(new String [] {START_OPER, STOP_OPER,
             INTERRUPT_OPER, START_CRAWLING_OPER, STOP_CRAWLING_OPER,
             ADD_CRAWL_JOB_OPER, ADD_CRAWL_JOB_BASEDON_OPER,
-            ALERT_OPER, NEW_ALERT_OPER, PENDING_JOBS_OPER,
+            DELETE_CRAWL_JOB_OPER, ALERT_OPER, PENDING_JOBS_OPER,
             COMPLETED_JOBS_OPER, CRAWLEND_REPORT_OPER});
     }
     private CompositeType jobCompositeType = null;
@@ -267,8 +295,7 @@ public class Heritrix implements DynamicMBean {
     private static final String [] JOB_KEYS =
         new String [] {"uid", "name", "status"};
     
-    private static final String JAR_SUFFIX = ".jar";
-
+    
     /**
      * Constructor.
      * @throws IOException
@@ -276,22 +303,58 @@ public class Heritrix implements DynamicMBean {
     public Heritrix()
     throws IOException {
         super();
-        this.openMBeanInfo = buildMBeanInfo();
         Heritrix.loadProperties();
         Heritrix.patchLogging();
-        // Register a shutdownHook so we get called on JVM KILL SIGNAL
-        Runtime.getRuntime().addShutdownHook(new Thread("HeritrixShutdown") {
-            public void run() {
-                Heritrix.prepareHeritrixShutDown();
+        this.jobHandler = new CrawlJobHandler(getJobsdir());
+        this.openMBeanInfo = buildMBeanInfo();
+        final SinkHandler sinkHandler = SinkHandler.getInstance();
+        if (sinkHandler == null) {
+            throw new NullPointerException("SinkHandler is not " +
+                "present.  Has it been configured in heritrix.properties?");
+        }
+        // Adapt the alerting system to use SinkHandler.
+        this.alertManager = new AlertManager() {
+            public void add(SinkHandlerLogRecord record) {
+                sinkHandler.publish(record);
             }
-        });
-    } 
+
+            public Vector getAll() {
+                return sinkHandler.getAll();
+            }
+
+            public Vector getNewAll() {
+                return sinkHandler.getAllUnread();
+            }
+
+            public SinkHandlerLogRecord get(String alertID) {
+                return sinkHandler.get(Long.parseLong(alertID));
+            }
+            
+            public int getCount() {
+                return sinkHandler.getCount();
+            }
+
+            public int getNewCount() {
+                return sinkHandler.getUnreadCount();
+            }
+
+            public void remove(String alertID) {
+                sinkHandler.remove(Long.parseLong(alertID));
+            }
+
+            public void read(String alertID) {
+                sinkHandler.read(Long.parseLong(alertID));
+            }
+        };
+    }
     
     /**
      * Launch program.
-     *
+     * Optionally will launch a web server to host UI.  Will also register
+     * Heritrix MBean with first found JMX Agent (Usually the 1.5.0 JVM
+     * Agent).
+     * 
      * @param args Command line arguments.
-     *
      * @throws Exception
      */
     public static void main(String[] args)
@@ -305,8 +368,9 @@ public class Heritrix implements DynamicMBean {
         File startLog = new File(getHeritrixHome(), STARTLOG);
         Heritrix.out = new PrintWriter(isDevelopment()? 
             System.out: new PrintStream(new FileOutputStream(startLog)));
-        
         try {
+            // Load up the properties.  This invocation adds heritrix properties
+            // to system properties so all available via System.getProperty.
             loadProperties();
             patchLogging();
             configureTrustStore();
@@ -330,7 +394,8 @@ public class Heritrix implements DynamicMBean {
                 if (Heritrix.out != null) {
                     Heritrix.out.close();
                 }
-                System.out.println("Heritrix version: " + getVersion());
+                System.out.println("Heritrix version: " +
+                        Heritrix.getVersion());
             } else {
                 if (Heritrix.out != null) {
                     Heritrix.out.flush();
@@ -339,23 +404,27 @@ public class Heritrix implements DynamicMBean {
         }
     }
 
-    protected static String doCmdLineArgs(String [] args)
+    protected static String doCmdLineArgs(final String [] args)
     throws Exception {
         // Get defaults for commandline arguments from the properties file.
-        String tmpStr = getPropertyOrNull("heritrix.cmdline.port");
+        String tmpStr =
+            PropertyUtils.getPropertyOrNull("heritrix.cmdline.port");
         int port = (tmpStr == null)?
             SimpleHttpServer.DEFAULT_PORT: Integer.parseInt(tmpStr);
-        tmpStr = getPropertyOrNull("heritrix.cmdline.admin");
+        tmpStr = PropertyUtils.getPropertyOrNull("heritrix.cmdline.admin");
         String adminLoginPassword = (tmpStr == null)?
             "admin:letmein": tmpStr;
-        String crawlOrderFile = getPropertyOrNull("heritrix.cmdline.order");
-        tmpStr = getPropertyOrNull("heritrix.cmdline.run");
-        boolean runMode = getBooleanProperty("heritrix.cmdline.run");
-        Heritrix.noWui = getBooleanProperty("heritrix.cmdline.nowui");    
+        String crawlOrderFile =
+            PropertyUtils.getPropertyOrNull("heritrix.cmdline.order");
+        tmpStr = PropertyUtils.getPropertyOrNull("heritrix.cmdline.run");
+        boolean runMode =
+            PropertyUtils.getBooleanProperty("heritrix.cmdline.run");
+        boolean noWui =
+            PropertyUtils.getBooleanProperty("heritrix.cmdline.nowui");    
         boolean selfTest = false;
         String selfTestName = null;
         CommandLineParser clp = new CommandLineParser(args, Heritrix.out,
-            getVersion());
+            Heritrix.getVersion());
         List arguments = clp.getCommandLineArguments();
         Option [] options = clp.getCommandLineOptions();
 
@@ -397,7 +466,7 @@ public class Heritrix implements DynamicMBean {
                         clp.usage("You must specify an ORDER_FILE with" +
                             " '--nowui' option.", 1);
                     }
-                    Heritrix.noWui = true;
+                    noWui = true;
                     break;
 
                 case 'p':
@@ -443,10 +512,8 @@ public class Heritrix implements DynamicMBean {
                 // No arguments accepted by selftest.
                 clp.usage(1);
             }
-            Heritrix h = new Heritrix();
-            registerHeritrixMBean(h);
-            status = h.selftest(selfTestName, port);
-        } else if (Heritrix.noWui) {
+            status = selftest(selfTestName, port);
+        } else if (noWui) {
             if (options.length > 1) {
                 // If more than just '--nowui' passed, then there is
                 // confusion on what is being asked of us.  Print usage
@@ -505,8 +572,8 @@ public class Heritrix implements DynamicMBean {
      * @return The directory into which we put jobs.
      * @throws IOException
      */
-    public static File getJobsdir() throws IOException {
-        String jobsdirStr = getProperty("heritrix.jobsdir", "jobs");
+    public File getJobsdir() throws IOException {
+        String jobsdirStr = System.getProperty("heritrix.jobsdir", "jobs");
         return jobsdirStr.startsWith(File.separator)?
             new File(jobsdirStr):
             new File(getHeritrixHome(), jobsdirStr);
@@ -555,24 +622,6 @@ public class Heritrix implements DynamicMBean {
     }
     
     /**
-     * @param key Property key.
-     * @return Named property or null if the property is null or empty.
-     */
-    protected static String getPropertyOrNull(String key) {
-        String value = (String)Heritrix.properties.get(key);
-        return (value == null || value.length() <= 0)? null: value;
-    }
-    
-    /**
-     * @param key Property key.
-     * @return Boolean value or false if null or unreadable.
-     */
-    protected static boolean getBooleanProperty(String key) {
-        return (getPropertyOrNull(key) == null)?
-            false: Boolean.valueOf(getPropertyOrNull(key)).booleanValue();
-    }
-    
-    /**
      * Test string is valid login/password string.
      *
      * A valid login/password string has the login and password compounded
@@ -599,27 +648,26 @@ public class Heritrix implements DynamicMBean {
     }
 
     /**
-     * Loads the heritrix.properties file.
+     * Load the heritrix.properties file.
      * 
-     * Also loads any property that starts with
-     * <code>CRAWLER_PACKAGE</code> into system properties
-     * (except logging '.level' directives).
-     * 
+     * Adds any property that starts with
+     * <code>HERITRIX_PROPERTIES_PREFIX</code>
+     * or <code>CRAWLER_PACKAGE</code>
+     * into system properties (except logging '.level' directives).
+     * @return Loaded properties.
      * @throws IOException
      */
-    protected static void loadProperties()
+    protected static Properties loadProperties()
     throws IOException {
-        if (Heritrix.properties != null) {
-            return;   
-        }
-        Heritrix.properties = new Properties();
-        Heritrix.properties.load(getPropertiesInputStream());
+        Properties properties = new Properties();
+        properties.load(getPropertiesInputStream());
         
         // Any property that begins with CRAWLER_PACKAGE, make it
         // into a system property.
         for (Enumeration e = properties.keys(); e.hasMoreElements();) {
             String key = ((String)e.nextElement()).trim();
-        	if (key.startsWith(CRAWLER_PACKAGE)) {
+        	if (key.startsWith(CRAWLER_PACKAGE) ||
+                    key.startsWith(HERITRIX_PROPERTIES_PREFIX)) {
                 // Don't add the heritrix.properties entries that are
                 // changing the logging level of particular classes.
                 if (key.indexOf(".level") < 0) {
@@ -628,6 +676,7 @@ public class Heritrix implements DynamicMBean {
                 }
             }
         }
+        return properties;
     }
 
     protected static InputStream getPropertiesInputStream()
@@ -702,12 +751,12 @@ public class Heritrix implements DynamicMBean {
     protected static void configureTrustStore() {
         // Below must be defined in jsse somewhere but can' find it.
         final String TRUSTSTORE_KEY = "javax.net.ssl.trustStore";
-        String value = getProperty(TRUSTSTORE_KEY);
+        String value = System.getProperty(TRUSTSTORE_KEY);
         File confdir = null;
         try {
 			confdir = getConfdir(false);
 		} catch (IOException e) {
-			logger.warning("Failed to get confdir.");
+			logger.log(Level.WARNING, "Failed to get confdir.", e);
 		}
         if ((value == null || value.length() <= 0) && confdir != null) {
             // Use the heritrix store if it exists on disk.
@@ -723,48 +772,6 @@ public class Heritrix implements DynamicMBean {
     }
 
     /**
-     * Get a property value from the properties file or from system properties.
-     *
-     * System property overrides content of heritrix.properties file.
-     *
-     * @param key Key for property to find.
-     *
-     * @return Property if found or default if no such property.
-     */
-    public static String getProperty(String key) {
-        return getProperty(key, null);
-    }
-
-    /**
-     * Get a property value from the properties file or from system properties.
-     *
-     * System property overrides content of heritrix.properties file.
-     *
-     * @param key Key for property to find.
-     * @param fallback Default value to use if property not found.
-     *
-     * @return Property if found or default if no such property.
-     */
-    public static String getProperty(String key, String fallback)
-    {
-        String value = System.getProperty(key);
-        if (value == null && properties !=  null) {
-            value = properties.getProperty(key);
-        }
-        return (value != null)? value: fallback;
-    }
-    
-    
-    public static int getIntProperty(String key, int fallback) {
-        String tmp = getProperty(key);
-        int result = fallback;
-        if (tmp != null && tmp.length() > 0) {
-            result = Integer.parseInt(tmp);
-        }
-        return result;
-    }
-
-    /**
      * Run the selftest
      *
      * @param oneSelfTestName Name of a test if we are to run one only rather
@@ -774,7 +781,8 @@ public class Heritrix implements DynamicMBean {
      * @exception Exception
      * @return Status of how selftest startup went.
      */
-    protected String selftest(String oneSelfTestName, int port)
+    protected static String selftest(final String oneSelfTestName,
+            final int port)
         throws Exception {
         // Put up the webserver w/ the root and selftest webapps only.
         final String SELFTEST = "selftest";
@@ -787,7 +795,6 @@ public class Heritrix implements DynamicMBean {
         // in the selftest order.xml file.
         Heritrix.httpServer.setAuthentication(SELFTEST, ROOT_CONTEXT, SELFTEST,
             SELFTEST, SELFTEST);
-        // Start server.
         Heritrix.httpServer.startServer();
         // Get the order file from the CLASSPATH unless we're running in dev
         // environment.
@@ -795,31 +802,36 @@ public class Heritrix implements DynamicMBean {
             new File(getConfdir(), SELFTEST):
             new File(File.separator + SELFTEST);
         File crawlOrderFile = new File(selftestDir, "order.xml");
-        Heritrix.jobHandler = new SelfTestCrawlJobHandler(oneSelfTestName);
         // Create a job based off the selftest order file.  Then use this as
         // a template to pass jobHandler.newJob().  Doing this gets our
         // selftest output to show under the jobs directory.
         // Pass as a seed a pointer to the webserver we just put up.
         final String ROOTURI = "127.0.0.1:" + Integer.toString(port);
-        Heritrix.selftestURL = "http://" + ROOTURI + '/';
+        String selfTestUrl = "http://" + ROOTURI + '/';
         if (oneSelfTestName != null && oneSelfTestName.length() > 0) {
-            selftestURL += (oneSelfTestName + '/');
+            selfTestUrl += (oneSelfTestName + '/');
         }
-        CrawlJob job = createCrawlJob(jobHandler, crawlOrderFile, "Template");
-        job = Heritrix.jobHandler.newJob(job, false, SELFTEST,
-            "Integration self test", Heritrix.selftestURL,
-            CrawlJob.PRIORITY_CRITICAL);
-        Heritrix.jobHandler.addJob(job);
+        Heritrix h = new Heritrix();
+        h.setJobHandler(new SelfTestCrawlJobHandler(h.getJobsdir(),
+                oneSelfTestName, selfTestUrl));
+        registerHeritrixMBean(h);
+
+        CrawlJob job = createCrawlJob(h.getJobHandler(), crawlOrderFile,
+                "Template");
+        job = h.getJobHandler().newJob(job, false, SELFTEST,
+            "Integration self test", selfTestUrl, CrawlJob.PRIORITY_CRITICAL);
+        h.getJobHandler().addJob(job);
         // Before we start, need to change some items in the settings file.
         CredentialStore cs = (CredentialStore)job.getSettingsHandler().
             getOrder().getAttribute(CredentialStore.ATTR_NAME);
         for (Iterator i = cs.iterator(null); i.hasNext();) {
             ((Credential)i.next()).setCredentialDomain(null, ROOTURI);
         }
-        Heritrix.jobHandler.startCrawler();
+        h.getJobHandler().startCrawler();
         StringBuffer buffer = new StringBuffer();
-        buffer.append("Heritrix " + getVersion() + " selftest started.");
-        buffer.append("\nSelftest first crawls " + getSelftestURL() +
+        buffer.append("Heritrix " + Heritrix.getVersion() +
+                " selftest started.");
+        buffer.append("\nSelftest first crawls " + selfTestUrl +
             " and then runs an analysis.");
         buffer.append("\nResult of analysis printed to " +
             getHeritrixOut() + " when done.");
@@ -896,12 +908,11 @@ public class Heritrix implements DynamicMBean {
      */
     public String launch(String crawlOrderFile, boolean runMode)
     throws Exception {
-        Heritrix.jobHandler = new CrawlJobHandler();
         String status = null;
         if (crawlOrderFile != null) {
             addCrawlJob(crawlOrderFile, "Auto launched.", "", "");
             if(runMode) {
-                jobHandler.startCrawler();
+                this.jobHandler.startCrawler();
                 status = "Job being crawled: " + crawlOrderFile;
             } else {
                 status = "Crawl job ready and pending: " + crawlOrderFile;
@@ -910,8 +921,8 @@ public class Heritrix implements DynamicMBean {
             // The use case is that jobs are to be run on a schedule and that
             // if the crawler is in run mode, then the scheduled job will be
             // run at appropriate time.  Otherwise, not.
-            jobHandler.startCrawler();
-            status = "Crawler set to run mode but no order file to crawl";
+            this.jobHandler.startCrawler();
+            status = "Crawler set to run mode.";
         }
         return status;
     }
@@ -924,14 +935,15 @@ public class Heritrix implements DynamicMBean {
      * @throws Exception
      * @return Status on webserver startup.
      */
-    protected static String startEmbeddedWebserver(int port,
-        String adminLoginPassword)
+    protected static String startEmbeddedWebserver(final int port,
+        final String adminLoginPassword)
     throws Exception {
         String adminUN =
             adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
         String adminPW =
             adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
-        httpServer = new SimpleHttpServer("admin", ROOT_CONTEXT, port, false);
+        Heritrix.httpServer =
+            new SimpleHttpServer("admin", ROOT_CONTEXT, port, false);
         
         final String DOTWAR = ".war";
         final String ADMIN = "admin";
@@ -947,7 +959,8 @@ public class Heritrix implements DynamicMBean {
                         !warNameNC.equals(ADMIN + DOTWAR) &&
                         !warNameNC.equals(SELFTEST + DOTWAR)) {
                     int dot = warName.indexOf('.');
-                    httpServer.addWebapp(warName.substring(0, dot), null, true);
+                    Heritrix.httpServer.addWebapp(warName.substring(0, dot),
+                            null, true);
                 }
             }
         }
@@ -957,11 +970,11 @@ public class Heritrix implements DynamicMBean {
         final String ROLE = ADMIN;
         Heritrix.httpServer.setAuthentication(ROLE, ROOT_CONTEXT, adminUN,
             adminPW, ROLE);
-        httpServer.startServer();
+        Heritrix.httpServer.startServer();
         InetAddress addr = InetAddress.getLocalHost();
         String uiLocation = "http://" + addr.getHostName() + ":" + port;
         StringBuffer buffer = new StringBuffer();
-        buffer.append("Heritrix " + getVersion() + " is running.");
+        buffer.append("Heritrix " + Heritrix.getVersion() + " is running.");
         buffer.append("\nWeb console is at: " + uiLocation);
         buffer.append("\nWeb console login and password: " +
             adminUN + "/" + adminPW);
@@ -1057,15 +1070,15 @@ public class Heritrix implements DynamicMBean {
             final String description, final String seeds)
     throws FatalConfigurationException, IOException {
         CrawlJob addedJob = null;
-        if (Heritrix.jobHandler == null) {
+        if (this.jobHandler == null) {
             throw new NullPointerException("Heritrix jobhandler is null.");
         }
         try {
             if (order.getName().toLowerCase().endsWith(JAR_SUFFIX)) {
                 return addCrawlJobBasedonJar(order, name, description, seeds);
             }
-            addedJob = Heritrix.jobHandler.
-                addJob(createCrawlJob(jobHandler, order, name));
+            addedJob = this.jobHandler.
+                addJob(createCrawlJob(this.jobHandler, order, name));
         } catch (InvalidAttributeValueException e) {
             FatalConfigurationException fce = new FatalConfigurationException(
                 "Converted InvalidAttributeValueException on " +
@@ -1135,7 +1148,7 @@ public class Heritrix implements DynamicMBean {
     public String addCrawlJobBasedOn(String jobUidOrProfile,
             String name, String description, String seeds) {
         try {
-            CrawlJob cj = Heritrix.jobHandler.getJob(jobUidOrProfile);
+            CrawlJob cj = getJobHandler().getJob(jobUidOrProfile);
             if (cj == null) {
                 throw new InvalidAttributeValueException(jobUidOrProfile +
                     " is not a job UID or profile name (Job UIDs are " +
@@ -1161,48 +1174,36 @@ public class Heritrix implements DynamicMBean {
     protected CrawlJob createCrawlJobBasedOn(final File orderFile,
             final String name, final String description, final String seeds)
     throws FatalConfigurationException, IOException {
-        CrawlJob job = Heritrix.jobHandler.newJob(orderFile, name, description,
+        CrawlJob job = getJobHandler().newJob(orderFile, name, description,
                 seeds);
         return CrawlJobHandler.ensureNewJobWritten(job, name, description);
     }
     
     protected CrawlJob addCrawlJob(final CrawlJob job) {
-        return Heritrix.jobHandler.addJob(job);
+        return getJobHandler().addJob(job);
     }
     
     public void startCrawling() {
-        if (Heritrix.jobHandler == null) {
+        if (getJobHandler() == null) {
             throw new NullPointerException("Heritrix jobhandler is null.");
         }
-        Heritrix.jobHandler.startCrawler();
+        getJobHandler().startCrawler();
     }
 
     public void stopCrawling() {
-        if (Heritrix.jobHandler == null) {
+        if (getJobHandler() == null) {
             throw new NullPointerException("Heritrix jobhandler is null.");
         }
-        Heritrix.jobHandler.stopCrawler();
+        getJobHandler().stopCrawler();
     }
-
+    
     /**
      * Get the heritrix version.
      *
      * @return The heritrix version.  May be null.
      */
     public static String getVersion() {
-        return (properties != null)?
-            properties.getProperty("heritrix.version"): null;
-    }
-
-    /**
-     * Return heritrix properties.
-     *
-     * @return The returned Properties contains the content of
-     * heritrix.properties.  May be null if we failed initial read of
-     * 'heritrix.properties'.
-     */
-    public static Properties getProperties() {
-        return properties;
+        return System.getProperty("heritrix.version");
     }
 
     /**
@@ -1210,8 +1211,16 @@ public class Heritrix implements DynamicMBean {
      *
      * @return The CrawlJobHandler being used.
      */
-    public static CrawlJobHandler getJobHandler() {
-        return jobHandler;
+    public CrawlJobHandler getJobHandler() {
+        return this.jobHandler;
+    }
+    
+    /**
+     * @param handler Overwrite crawl job handler (Private because only
+     * for use by selftest).
+     */
+    private void setJobHandler(final CrawlJobHandler handler) {
+        this.jobHandler = handler;
     }
 
     /**
@@ -1241,19 +1250,8 @@ public class Heritrix implements DynamicMBean {
     /**
      * @return Returns the httpServer. May be null if one was not started.
      */
-    public static SimpleHttpServer getHttpServer()
-    {
-        return httpServer;
-    }
-
-    /**
-     * Returns the selftest URL.
-     *
-     * @return Returns the selftestWebappURL.  This method returns null if
-     * we are not in selftest.  URL has a trailing '/'.
-     */
-    public static String getSelftestURL() {
-        return selftestURL;
+    public static SimpleHttpServer getHttpServer() {
+        return Heritrix.httpServer;
     }
 
     /**
@@ -1274,7 +1272,7 @@ public class Heritrix implements DynamicMBean {
      * and before calling performHeritrixShutDown() to allow as many threads as
      * possible to finish what they are doing.
      */
-    public static void prepareHeritrixShutDown(){
+    public static void prepareHeritrixShutDown() {
         if(Heritrix.httpServer != null) {
             // Shut down the web access.
             try {
@@ -1288,26 +1286,17 @@ public class Heritrix implements DynamicMBean {
             }
         }
         
-        if (Heritrix.jobHandler != null) {
-            // Shut down the jobHandler.
-            if(jobHandler.isCrawling()){
-                jobHandler.deleteJob(jobHandler.getCurrentJob().getUID());
-            }
-            jobHandler.requestCrawlStop();
-            Heritrix.jobHandler = null;
-        }
-        
         // Unregister MBean.
-        if (Heritrix.registeredHeritrixObjectInstance != null) {
-            unregisterMBean(Heritrix.registeredHeritrixObjectInstance);
-            Heritrix.registeredHeritrixObjectInstance = null;
+        if (Heritrix.cmdlineRegisteredInstance != null) {
+            unregisterMBean(Heritrix.cmdlineRegisteredServer,
+                    Heritrix.cmdlineRegisteredInstance.getObjectName());
+            Heritrix.cmdlineRegisteredInstance = null;
         }
     }
 
     /**
      * Exit program. Recommended that prepareHeritrixShutDown() be invoked
      * prior to this method.
-     *
      */
     public static void performHeritrixShutDown() {
         performHeritrixShutDown(0);
@@ -1326,120 +1315,34 @@ public class Heritrix implements DynamicMBean {
 
     /**
      * Shutdown heritrix.
-     *
-     * Stops crawling, shutsdown webserver and system exits.
-     */
-    public static void shutdown() {
-    	shutdown(0);
-    }
-
-    /**
-     * Shutdown heritrix.
-     *
+     * Assumes stop has already been called.
 	 * @param exitCode Exit code to pass system exit.
 	 */
-	public static void shutdown(int exitCode) {
-        prepareHeritrixShutDown();
-        performHeritrixShutDown(exitCode);
+	public static void shutdown(final int exitCode) {
+        Thread t = new Thread() {
+            public void run() {
+                Heritrix.prepareHeritrixShutDown();
+                Heritrix.performHeritrixShutDown(exitCode);
+            }
+        };
+        t.setDaemon(true);
+        t.start();
 	}
-
-	/**
-     * Add a new alert
-     * @param alert the new alert
-     */
-    public static void addAlert(Alert alert){
-        if(Heritrix.noWui){
-            alert.print(logger);
-        }
-        alerts.add(alert);
-    }
-
-    /**
-     * Get all current alerts
-     * @return all current alerts
-     */
-    public static Vector getAlerts(){
-        return alerts;
-    }
-
-    /**
-     * Returns an alert with the given ID. If no alert is found for given ID
-     * null is returned
-     * @param alertID the ID of the alert
-     * @return an alert with the given ID
-     */
-    public static Alert getAlert(String alertID){
-        if(alertID == null){
-            // null will never match any alert
-            return null;
-        }
-        for( int i = 0 ; i < alerts.size() ; i++ ){
-            Alert tmp = (Alert)alerts.get(i);
-            if(alertID.equals(tmp.getID())){
-                return tmp;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Get the number of new alerts.
-     * @return the number of new alerts
-     */
-    public static int getNewAlertsCount() {
-        int n = 0;
-        for(int i = 0 ; i < alerts.size() ; i++ ) {
-            Alert tmp = (Alert)alerts.get(i);
-            if(tmp.isNew()){
-                n++;
-            }
-        }
-        return n;
+    
+    public static void shutdown() {
+        shutdown(0);
     }
     
-    public static Vector getNewAlerts() {
-        Vector newAlerts = null;
-        for(int i = 0 ; i < alerts.size(); i++ ) {
-            Alert tmp = (Alert)alerts.get(i);
-            if(tmp.isNew()) {
-                if (newAlerts == null) {
-                    newAlerts = new Vector();
-                }
-                newAlerts.add(tmp);
-            }
-        }
-        return newAlerts;
-    }
-
-    /**
-     * Remove an alert.
-     * @param alertID the ID of the alert
-     */
-    public static void removeAlert(String alertID){
-        for( int i = 0 ; i < alerts.size() ; i++ ){
-            Alert tmp = (Alert)alerts.get(i);
-            if(alertID.equals(tmp.getID())){
-                alerts.remove(i--);
-            }
-        }
-    }
-
-    /**
-     * Mark a specific alert as seen (That is, not now).
-     * @param alertID the ID of the alert
-     */
-    public static void seenAlert(String alertID){
-        for( int i = 0 ; i < alerts.size() ; i++ ){
-            Alert tmp = (Alert)alerts.get(i);
-            if(alertID.equals(tmp.getID())){
-                tmp.setAlertSeen();
-            }
-        }
+    public static void registerHeritrixMBean(final Heritrix h)
+    throws InstanceAlreadyExistsException, MBeanRegistrationException,
+            NotCompliantMBeanException, MalformedObjectNameException {
+        registerHeritrixMBean(h, null);
     }
     
     /**
-     * Register Heritrix MBean if an agent to register ourselves with.
-     * This method will only have effect if we're running in a 1.5.0
+     * If launched from cmdline, register Heritrix MBean if an agent to register
+     * ourselves with.
+     * Usually this method will only have effect if we're running in a 1.5.0
      * JDK and command line options such as
      * '-Dcom.sun.management.jmxremote.port=8082
      * -Dcom.sun.management.jmxremote.authenticate=false
@@ -1447,10 +1350,10 @@ public class Heritrix implements DynamicMBean {
      * See <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring
      * and Management Using JMX</a>
      * for more on the command line options and how to connect to the
-     * Heritrix bean using the JDK 1.5.0 jconsole tool.  Will only register
-     * with the JMX agent started by the JVM (i.e.
-     * com.sun.jmx.mbeanserver.JmxMBeanServer).
+     * Heritrix bean using the JDK 1.5.0 jconsole tool.  We register currently
+     * with first server we find (TODO: Make configurable).
      * @param h Instance of heritrix to register.
+     * @param name Name to use for this Heritrix instance.
      * @throws NotCompliantMBeanException
      * @throws MBeanRegistrationException
      * @throws InstanceAlreadyExistsException
@@ -1462,90 +1365,140 @@ public class Heritrix implements DynamicMBean {
      * @throws MalformedObjectNameException
      * @throws NullPointerException
      */
-    static void registerHeritrixMBean(Heritrix h)
+    public static void registerHeritrixMBean(final Heritrix h,
+            final String name)
     throws InstanceAlreadyExistsException, MBeanRegistrationException,
-            NotCompliantMBeanException, MalformedObjectNameException,
-            NullPointerException {
+            NotCompliantMBeanException, MalformedObjectNameException {
+        ObjectName objName = new ObjectName(
+                (name == null || name.length() <= 0)?
+                        getJmxName(): getJmxName(name));
+        Heritrix.cmdlineRegisteredServer = getMBeanServer(objName);
+        Heritrix.cmdlineRegisteredInstance =
+            Heritrix.cmdlineRegisteredServer.registerMBean(h, objName);
+    }
+    
+    /**
+     * Get MBeanServer.
+     * Currently uses first MBeanServer found.  TODO: Make which server
+     * settable.  Also, if none, put up our own MBeanServer.
+     * @param objName Check if this object is already registered.
+     * @return An MBeanServer to register with or null.
+     */
+    public static MBeanServer getMBeanServer(final ObjectName objName) {
+        MBeanServer result = null;
         List servers = MBeanServerFactory.findMBeanServer(null);
         if (servers == null) {
-            return;
+            return result;
         }
         for (Iterator i = servers.iterator(); i.hasNext();) {
             MBeanServer server = (MBeanServer)i.next();
-            if (server != null) {
-                ObjectName on = new ObjectName(getJmxName());
-                boolean registeredAlready = true;
-                try {
-                    Heritrix.registeredHeritrixObjectInstance =
-                        server.getObjectInstance(on);
-                } catch (InstanceNotFoundException e) {
-                    registeredAlready = false;
-                }
-                if (!registeredAlready) {
-                    Heritrix.registeredHeritrixObjectInstance =
-                        server.registerMBean(h, on);
-                }
-                System.out.println(on.getCanonicalName() +
-                    (registeredAlready? " (already)": "") +
-                    " registered to " + server.toString());
-                Heritrix.mbeanServer = server;
+            if (server == null) {
+                continue;
+            }
+            boolean registeredAlready = true;
+            try {
+                server.getObjectInstance(objName);
+            } catch (InstanceNotFoundException e) {
+                registeredAlready = false;
+            }
+            if (registeredAlready) {
+                logger.severe("Already registered to " +
+                        JmxUtils.getServerDetail(server));
+            }
+            if (!registeredAlready) {
+                result = server;
                 break;
             }
         }
+        return result;
     }
     
-    public static ObjectInstance registerMBean(Object objToRegister,
-            String type) {
-        if (Heritrix.mbeanServer == null) {
-            return null;
-        }
-        
-        ObjectInstance result = null;
+    public static MBeanServer registerMBean(final Object objToRegister,
+            final String name, final String type) {
+        String jmxname = getJmxName(name, type);
+        MBeanServer server = null;
+        ObjectName objName = null;
         try {
-            String name = getJmxName(type);
-            result = Heritrix.mbeanServer.registerMBean(objToRegister,
-                new ObjectName(name));
-            logger.info("Registered bean " + name);
+            objName = new ObjectName(jmxname);
+            server = getMBeanServer(objName);
+            server = registerMBean(server, objToRegister, objName);
+        } catch (MalformedObjectNameException e) {
+            e.printStackTrace();
+        }
+        return server;
+    }
+    
+    public static MBeanServer registerMBean(final MBeanServer server,
+            final Object objToRegister, final String name, final String type) {
+        try {
+            registerMBean(server, objToRegister,
+                    new ObjectName(getJmxName(name, type)));
+        } catch (MalformedObjectNameException e) {
+            e.printStackTrace();
+        }
+        return server;
+    }
+        
+    public static MBeanServer registerMBean(final MBeanServer server,
+                final Object objToRegister, final ObjectName objName) {
+        try {
+            server.registerMBean(objToRegister, objName);
         } catch (InstanceAlreadyExistsException e) {
             e.printStackTrace();
         } catch (MBeanRegistrationException e) {
             e.printStackTrace();
         } catch (NotCompliantMBeanException e) {
             e.printStackTrace();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        return server;
+    }
+    
+    public static void unregisterMBean(final MBeanServer server,
+            final String name, final String type) {
+        if (server == null) {
+            return;
+        }
+        try {
+            unregisterMBean(server, new ObjectName(getJmxName(name, type)));
         } catch (MalformedObjectNameException e) {
+            e.printStackTrace();
+        }
+    }
+            
+    public static void unregisterMBean(final MBeanServer server,
+            final ObjectName name) {
+        try {
+            server.unregisterMBean(name);
+            logger.info("Unregistered bean " + name.getCanonicalName());
+        } catch (InstanceNotFoundException e) {
+            e.printStackTrace();
+        } catch (MBeanRegistrationException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
-        return result;
     }
     
-    public static void unregisterMBean(ObjectInstance obj) {
-        if (Heritrix.mbeanServer != null && obj !=  null) {
-            try {
-                Heritrix.mbeanServer.unregisterMBean(obj.getObjectName());
-                logger.info("Unregistered bean " + obj.getObjectName());
-            } catch (InstanceNotFoundException e) {
-                e.printStackTrace();
-            } catch (MBeanRegistrationException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    
-    /**
-     * @return Jmx ObjectName used by this Heritrix instance.
-     */
     public static String getJmxName() {
-        return getJmxName("Service");
+        return getJmxName("Heritrix", JmxUtils.SERVICE);
     }
     
-    public static String getJmxName(String type) {
-        return CRAWLER_PACKAGE + ":name=Heritrix,type=" + type;
+    public static String getJmxName(final String name) {
+        return getJmxName(name, JmxUtils.SERVICE);
+    }
+    
+    public static String getJmxName(final String name, final String type) {
+        return CRAWLER_PACKAGE + ":" + JmxUtils.TYPE + "=" + type +
+            ",name=" + name;
     }
     
     /**
      * @return Returns true if Heritrix was launched from the command line.
+     * (When launched from command line, we do stuff like put up a web server
+     * to manage our web interface and we register ourselves with the first
+     * available jmx agent).
      */
     public static boolean isCommandLine() {
         return Heritrix.commandLine;
@@ -1555,22 +1508,55 @@ public class Heritrix implements DynamicMBean {
      * @return True if heritrix has been started.
      */
     public boolean isStarted() {
-        return Heritrix.jobHandler != null;
+        return this.jobHandler != null;
     }
     
     public String getStatus() {
         StringBuffer buffer = new StringBuffer();
-        if (Heritrix.getJobHandler() != null) {
+        if (this.getJobHandler() != null) {
             buffer.append("isRunning=");
-            buffer.append(Heritrix.getJobHandler().isRunning());
+            buffer.append(this.getJobHandler().isRunning());
             buffer.append(" isCrawling=");
-            buffer.append(Heritrix.getJobHandler().isCrawling());
+            buffer.append(this.getJobHandler().isCrawling());
             buffer.append(" alertCount=");
-            buffer.append((getAlerts() == null)? 0: getAlerts().size());
+            buffer.append(getAlertsCount());
             buffer.append(" newAlertCount=");
-            buffer.append(Heritrix.getNewAlertsCount());
+            buffer.append(getNewAlertsCount());
+            if (this.getJobHandler().isCrawling()) {
+                buffer.append(" currentJob=");
+                buffer.append(this.getJobHandler().getCurrentJob().getUID());
+            }
         }
         return buffer.toString();
+    }
+    
+    // Alert methods.
+    public int getAlertsCount() {
+        return this.alertManager.getCount();
+    }
+    
+    public int getNewAlertsCount() {
+        return this.alertManager.getNewCount();
+    }
+    
+    public Vector getAlerts() {
+        return this.alertManager.getAll();
+    }
+    
+    public Vector getNewAlerts() {
+        return this.alertManager.getNewAll();
+    }
+    
+    public SinkHandlerLogRecord getAlert(final String id) {
+        return this.alertManager.get(id);
+    }
+    
+    public void readAlert(final String id) {
+        this.alertManager.read(id);
+    }
+    
+    public void removeAlert(final String id) {
+        this.alertManager.remove(id);
     }
     
     /**
@@ -1584,8 +1570,6 @@ public class Heritrix implements DynamicMBean {
         // Don't start if already started.
         if (!Heritrix.isCommandLine() && !isStarted()) {
             try {
-                // Register ourselves w/ any agent that might be running.
-                registerHeritrixMBean(this);
                 launch();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1601,13 +1585,9 @@ public class Heritrix implements DynamicMBean {
      * so returns immediately.
      */
     public void stop() {
-        Thread t = new Thread() {
-            public void run() {
-                shutdown();
-            }
-        };
-        t.setDaemon(true);
-        t.start();
+        if (this.jobHandler != null) {
+            this.jobHandler.stop();
+        }
     }
 
     public String interrupt(String threadName) {
@@ -1724,11 +1704,11 @@ public class Heritrix implements DynamicMBean {
             args, SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
         
         args = new OpenMBeanParameterInfoSupport[1];
-        args[0] = new OpenMBeanParameterInfoSupport("index",
-            "Zero-based index into array of NEW alerts", SimpleType.INTEGER);
-        operations[7] = new OpenMBeanOperationInfoSupport(
-            Heritrix.NEW_ALERT_OPER, "Return NEW alert at passed index", args,
-                SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
+        args[0] = new OpenMBeanParameterInfoSupport("UID",
+            "Job UID", SimpleType.STRING);
+        operations[7] = new OpenMBeanOperationInfoSupport(DELETE_CRAWL_JOB_OPER,
+            "Delete/stop this crawl job", args, SimpleType.VOID,
+            MBeanOperationInfo.ACTION);
         
         args = new OpenMBeanParameterInfoSupport[1];
         args[0] = new OpenMBeanParameterInfoSupport("index",
@@ -1828,8 +1808,8 @@ public class Heritrix implements DynamicMBean {
         return new AttributeList(); // always empty
     }
 
-    public Object invoke(String operationName, Object[] params,
-        String[] signature)
+    public Object invoke(final String operationName, final Object[] params,
+        final String[] signature)
     throws ReflectionException {
         if (operationName == null) {
             throw new RuntimeOperationsException(
@@ -1876,6 +1856,12 @@ public class Heritrix implements DynamicMBean {
                 throw new RuntimeOperationsException(new RuntimeException(e));
             }
         }
+        if (operationName.equals(DELETE_CRAWL_JOB_OPER)) {
+            JmxUtils.checkParamsCount(DELETE_CRAWL_JOB_OPER, params, 1);
+            this.jobHandler.deleteJob((String)params[0]);
+            return null;
+        }
+        
         if (operationName.equals(ADD_CRAWL_JOB_BASEDON_OPER)) {
             JmxUtils.checkParamsCount(ADD_CRAWL_JOB_BASEDON_OPER, params, 4);
             return addCrawlJobBasedOn((String)params[0], (String)params[1],
@@ -1884,25 +1870,9 @@ public class Heritrix implements DynamicMBean {
         }       
         if (operationName.equals(ALERT_OPER)) {
             JmxUtils.checkParamsCount(ALERT_OPER, params, 1);
-            Vector v = getAlerts();
-            if (v == null) {
-                throw new RuntimeOperationsException(
-                    new NullPointerException("There are no alerts"),
-                        "Empty alerts vector");
-            }
-            return getAlertStringRepresentation(((Alert)v.
-                get(((Integer)params[0]).intValue())));
-        }
-        if (operationName.equals(NEW_ALERT_OPER)) {
-            JmxUtils.checkParamsCount(NEW_ALERT_OPER, params, 1);
-            Vector v = getNewAlerts();
-            if (v == null) {
-                throw new RuntimeOperationsException(
-                    new NullPointerException("There are no new alerts"),
-                        "Empty new alerts vector");
-            }
-            return getAlertStringRepresentation(((Alert)v.
-                    get(((Integer)params[0]).intValue())));
+            SinkHandlerLogRecord slr =
+                this.alertManager.get((String)params[0]);
+            return (slr != null)? slr.toString(): null;
         }
         
         if (operationName.equals(PENDING_JOBS_OPER)) {
@@ -1990,14 +1960,100 @@ public class Heritrix implements DynamicMBean {
         return TextUtils.matches("-| +", str)? "": str;
     }
 
-    protected String getAlertStringRepresentation(Alert a) {
-        if (a.isNew()) {
-            a.setAlertSeen();
-        }
-        return a.getID() + "\n" + a.getBody();
-    }
-
     public MBeanInfo getMBeanInfo() {
         return this.openMBeanInfo;
+    }
+
+    public ObjectName preRegister(MBeanServer server, ObjectName name)
+    throws Exception {
+        this.mbeanServer = server;
+        Hashtable ht = name.getKeyPropertyList();
+        if (!ht.containsKey(JmxUtils.NAME)) {
+            throw new IllegalArgumentException("Name property required" +
+                    name.getCanonicalName());
+        }
+        if (!ht.containsKey(JmxUtils.TYPE)) {
+            ht.put(JmxUtils.TYPE, JmxUtils.SERVICE);
+            name = new ObjectName(name.getDomain(), ht);
+        }
+        if (!ht.containsKey(JmxUtils.HOST)) {
+            ht.put(JmxUtils.HOST, InetAddress.getLocalHost().getHostName());
+            name = new ObjectName(name.getDomain(), ht);
+        }
+        this.mbeanName = name;
+        // Populate the hashtable of all running local Heritrix instances
+        // (Needed by UI because its tightly bound to a Heritrix instance. Later
+        // make it so UI that goes via JMX is satisfactory).
+        Heritrix.instances.
+            put(this.mbeanName.getCanonicalKeyPropertyListString(), this);
+        return name;
+    }
+
+    public void postRegister(Boolean registrationDone) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(
+                JmxUtils.getLogRegistrationMsg(this.mbeanName.getCanonicalName(),
+                this.mbeanServer, registrationDone.booleanValue()));
+        }
+        try {
+            this.jndiContext =
+                JndiUtils.getSubContext(this.mbeanName.getDomain());
+            CompoundName key =
+                JndiUtils.bindObjectName(this.jndiContext, this.mbeanName);
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("Bound '"  + key + "' to '"
+                    + JndiUtils.
+                       getCompoundName(this.jndiContext.getNameInNamespace())
+                           .toString() + "' jndi context");
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed jndi registration", e);
+        }
+    }
+
+    public void preDeregister() throws Exception {
+        CompoundName key =
+            JndiUtils.unbindObjectName(this.jndiContext, this.mbeanName);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Unbound '"  + key + "' from '"
+                + JndiUtils.
+                   getCompoundName(this.jndiContext.getNameInNamespace())
+                       .toString() + "' jndi context");
+        }
+    }
+
+    public void postDeregister() {
+        // Remove reference from list of Heritrix instances.
+        Heritrix.instances.
+            remove(this.mbeanName.getCanonicalKeyPropertyListString());
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(JmxUtils.getLogUnregistrationMsg(
+                    this.mbeanName.getCanonicalName(), this.mbeanServer));
+        }
+    }
+    
+    /**
+     * @return Return all registered instances of Heritrix (Rare are there 
+     * more than one).
+     */
+    public static Map getInstances() {
+        return Heritrix.instances;
+    }
+    
+    /**
+     * @return True if only one instance of Heritrix.
+     */
+    public static boolean isSingleInstance() {
+        return Heritrix.instances != null && Heritrix.instances.size() == 1;
+    }
+    
+    /**
+     * @return Returns single instance or null if no instance or multiple.
+     */
+    public static Heritrix getSingleInstance() {
+        return !isSingleInstance()?
+            null:
+            (Heritrix)Heritrix.instances.
+                get(Heritrix.instances.keySet().iterator().next());
     }
 }

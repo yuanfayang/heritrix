@@ -35,8 +35,6 @@ import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
-import org.archive.crawler.Heritrix;
-import org.archive.crawler.admin.Alert;
 import org.archive.crawler.settings.Constraint.FailedCheck;
 import org.archive.crawler.settings.refinements.PortnumberCriteria;
 import org.archive.crawler.settings.refinements.Refinement;
@@ -220,15 +218,14 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
                 }
             }
         } else {
-            Heritrix.addAlert(new Alert("Problems reading settings",
-                    "Unknown element '" + qName + "' in '"
-                            + locator.getSystemId() + "', line: "
-                            + locator.getLineNumber() + ", column: "
-                            + locator.getColumnNumber(), Level.CONFIG));
-            logger.warning("Unknown element '" + qName + "' in '"
-                    + locator.getSystemId() + "', line: "
-                    + locator.getLineNumber() + ", column: "
-                    + locator.getColumnNumber());
+            String tmp = "Unknown element '" + qName + "' in '" +
+                locator.getSystemId() + "', line: " + locator.getLineNumber() +
+                ", column: " + locator.getColumnNumber();
+            if (this.settingsHandler.getOrder() != null &&
+                    this.settingsHandler.getOrder().getController() !=  null) {
+                logger.log(Level.WARNING, tmp);
+            }
+            logger.warning(tmp);
         }
     }
 

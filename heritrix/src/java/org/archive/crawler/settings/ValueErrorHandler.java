@@ -34,6 +34,5 @@ package org.archive.crawler.settings;
  * @author John Erik Halse
  */
 public interface ValueErrorHandler {
-
     public void handleValueError(Constraint.FailedCheck error);
 }

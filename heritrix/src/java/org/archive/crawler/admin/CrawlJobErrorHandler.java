@@ -1,4 +1,4 @@
-/* CrawlJobSettingsErrorHandler.java
+/* CrawlJobErrorHandler
  *
  * $Id$
  *
@@ -46,7 +46,6 @@ import org.archive.crawler.settings.Constraint.FailedCheck;
  * @see org.archive.crawler.settings.ValueErrorHandler
  */
 public class CrawlJobErrorHandler implements ValueErrorHandler {
-
     /** All encountered errors */
     HashMap errors = null;
     Level level = Level.INFO;
@@ -61,9 +60,6 @@ public class CrawlJobErrorHandler implements ValueErrorHandler {
         this.level = level;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.settings.ValueErrorHandler#handleValueError(org.archive.crawler.settings.Constraint.FailedCheck)
-     */
     public void handleValueError(FailedCheck error) {
         String key = error.getOwner().getAbsoluteName() +
             "/" + error.getDefinition().getName();
@@ -88,15 +84,17 @@ public class CrawlJobErrorHandler implements ValueErrorHandler {
 
     /**
      * Get error for a specific attribute
-     *
-     * @param absoluteName The absolute name of the attribute.
-     * @param level Limit errors to those at this or higher level.
-     * @return error for a specific attribute at or above specified error
-     *           level. null if no matching error is found.
+     * 
+     * @param absoluteName
+     *            The absolute name of the attribute.
+     * @param level
+     *            Limit errors to those at this or higher level.
+     * @return error for a specific attribute at or above specified error level.
+     *         null if no matching error is found.
      */
-    public FailedCheck getError(String absoluteName, Level level){
-        FailedCheck fc = (FailedCheck)errors.get(absoluteName);
-        if( fc!=null && fc.getLevel().intValue()>=level.intValue() ){
+    public FailedCheck getError(String absoluteName, Level level) {
+        FailedCheck fc = (FailedCheck) errors.get(absoluteName);
+        if (fc != null && fc.getLevel().intValue() >= level.intValue()) {
             return fc;
         }
         return null;

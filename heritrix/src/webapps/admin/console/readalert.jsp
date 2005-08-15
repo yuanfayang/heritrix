@@ -1,36 +1,26 @@
 <%@include file="/include/handler.jsp"%>
-
-<%@ page import="org.archive.crawler.admin.Alert" %>
-
+<%@ page import="org.archive.io.SinkHandlerLogRecord" %>
 <%@ page import="java.util.logging.Level" %>
-
 <%
-    Alert alert = Heritrix.getAlert(request.getParameter("alert"));
-    alert.setAlertSeen();
+    SinkHandlerLogRecord alert =
+        heritrix.getAlert(request.getParameter("alert"));
+    alert.setRead();
     String title = "Read alert";
     int tab = 0;
 %>
 
 <%@include file="/include/head.jsp"%>
 <p>
-<% if(alert == null){ %>
+<% if(alert == null) { %>
     <b> No matching alert found </b>
 <% } else { %>
     <table>
         <tr>
             <td>
-                <b>Title:</b>&nbsp;
-            </td>
-            <td>
-                <%=alert.getTitle()%>
-            </td>
-        </tr>
-        <tr>
-            <td>
                 <b>Time:</b>&nbsp;
             </td>
             <td>
-                <%=sdf.format(alert.getTimeOfAlert())%> GMT
+                <%=sdf.format(alert.getCreationTime())%> GMT
             </td>
         </tr>
         <tr>
@@ -46,7 +36,15 @@
                 <b>Message:</b>&nbsp;
             </td>
             <td>
-                <pre><%=alert.getBody()%></pre>
+                <pre><%=alert.getMessage()%></pre>
+            </td>
+        </tr>
+        <tr>
+            <td valign="top">
+                <b>Exception:</b>&nbsp;
+            </td>
+            <td>
+                <pre><%=alert.getThrownToString()%></pre>
             </td>
         </tr>
     </table>
@@ -54,5 +52,5 @@
     <p>
         <a href="<%=request.getContextPath()%>/console/alerts.jsp">Back to alerts</a>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="<%=request.getContextPath()%>/console/alerts.jsp?alerts=<%=alert.getID()%>&action=delete">Delete this alert</a>
+        <a href="<%=request.getContextPath()%>/console/alerts.jsp?alerts=<%=alert.getSequenceNumber()%>&action=delete">Delete this alert</a>
 <%@include file="/include/foot.jsp"%>

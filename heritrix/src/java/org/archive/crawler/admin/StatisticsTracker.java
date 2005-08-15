@@ -41,8 +41,6 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.Heritrix;
-import org.archive.crawler.checkpoint.CheckpointContext;
 import org.archive.crawler.datamodel.BigMapFactory;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlURIDispositionListener;
@@ -497,11 +495,14 @@ implements CrawlURIDispositionListener, Serializable {
      * @return The total number of ToeThreads
      */
     public int threadCount() {
-        return controller.getToeCount();
+        return this.controller != null? controller.getToeCount(): 0;
     }
 
+    /**
+     * @return Current thread count (or zero if can't figure it out).
+     */ 
     public int activeThreadCount() {
-        return controller.getActiveToeCount();
+        return this.controller != null? controller.getActiveToeCount(): 0;
         // note: reuse of old busy value seemed misleading: anyone asking
         // for thread count when paused or stopped still wants accurate reading
     }
@@ -863,7 +864,7 @@ implements CrawlURIDispositionListener, Serializable {
                 ") \n");
     }
     
-    protected void writeProcessorsReportTo(PrintWriter writer) throws IOException {
+    protected void writeProcessorsReportTo(PrintWriter writer) {
         controller.reportTo(CrawlController.PROCESSORS_REPORT,writer);
     }
     
@@ -876,19 +877,16 @@ implements CrawlURIDispositionListener, Serializable {
             controller.addToManifest(f.getAbsolutePath(),
                 CrawlController.MANIFEST_REPORT_FILE, true);
         } catch (IOException e) {
-            Heritrix.addAlert(new Alert("Unable to write " + f.getName(),
-                "Unable to write " + f.getAbsolutePath() +
-                " at the end of crawl.", e, Level.SEVERE));
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Unable to write " + f.getAbsolutePath() +
+                " at the end of crawl.", e);
         }
-        logger.info("wrote report: "+f.getAbsolutePath());
+        logger.info("wrote report: " + f.getAbsolutePath());
     }
     
     /**
      * @param writer Where to write.
-     * @throws IOException
      */
-    protected void writeManifestReportTo(PrintWriter writer) throws IOException {
+    protected void writeManifestReportTo(PrintWriter writer) {
         controller.reportTo(CrawlController.MANIFEST_REPORT, writer);
     }
     

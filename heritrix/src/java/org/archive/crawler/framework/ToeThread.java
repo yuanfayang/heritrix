@@ -29,8 +29,6 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.Heritrix;
-import org.archive.crawler.admin.Alert;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -248,10 +246,9 @@ Reporter, ProgressStatisticsReporter {
 			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
             context = currentCuri.singleLineReport() + " in " + currentProcessorName;
 		}
-        String title = "Serious error occured processing '" + context + "'";
-        String message = "The following serious error occured when trying " +
-            "to process '" + context + "'\n\n" + extraInfo;
-		Heritrix.addAlert(new Alert(title,message.toString(),err, Level.SEVERE));
+        String message = "Serious error occured trying " +
+            "to process '" + context + "'\n" + extraInfo;
+        logger.log(Level.SEVERE, message.toString(), err);
         setPriority(DEFAULT_PRIORITY);
 	}
 
@@ -339,15 +336,12 @@ Reporter, ProgressStatisticsReporter {
         // store exception temporarily for logging
         currentCuri.addAnnotation("err="+e.getClass().getName());
         currentCuri.putObject(A_RUNTIME_EXCEPTION, e);
-        String title = "Problem occured processing '"
-                + currentCuri.toString() + "'";
         String message = "Problem " + e + 
                 " occured when trying to process '"
                 + currentCuri.toString()
                 + "' at step " + previousStep 
                 + " in " + currentProcessorName +"\n";
-        Heritrix.addAlert(new Alert(title, message.toString(), e,
-                Level.SEVERE));
+        logger.log(Level.SEVERE, message.toString(), e);
     }
 
     private Processor getProcessor(Processor processor) {
@@ -526,9 +520,9 @@ Reporter, ProgressStatisticsReporter {
     }
 
     /**
-     * @return Compiles and returns a report on its status.
+     * @param w PrintWriter to write to.
      */
-    public void singleLineReportTo(PrintWriter w) throws IOException
+    public void singleLineReportTo(PrintWriter w)
     {
         w.print("#");
         w.print(this.serialNumber);

@@ -22,7 +22,7 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -44,9 +44,7 @@ import org.archive.crawler.admin.CrawlJobHandler;
  * @version $Id$
  */
 
-public class SelfTestCrawlJobHandler
-    extends CrawlJobHandler
-{
+public class SelfTestCrawlJobHandler extends CrawlJobHandler {
     /**
      * Name of the selftest webapp.
      */
@@ -61,25 +59,25 @@ public class SelfTestCrawlJobHandler
      * If set, run this test only.  Otherwise run them all.
      */
     private String selfTestName = null;
+    
+    private String selfTestUrl = null;
 
 
-    public SelfTestCrawlJobHandler()
-    throws IOException {
-        this(null);
+    private SelfTestCrawlJobHandler() {
+        this(null, null, null);
     }
 
-    public SelfTestCrawlJobHandler(String selfTestName)
-    throws IOException {
-        super(false, false); //No need to load jobs or profiles
+    public SelfTestCrawlJobHandler(final File jobsDir,
+            final String selfTestName, final String url) {
+        // No need to load jobs or profiles
+        super(jobsDir, false, false);
         this.selfTestName = selfTestName;
+        this.selfTestUrl = url;
     }
 
-    public void crawlEnded(String sExitMessage)
-    {
+    public void crawlEnded(String sExitMessage)  {
         TestResult result = null;
-
-        try
-        {
+        try {
             super.crawlEnded(sExitMessage);
 
             // At crawlEnded time, there is no current job.  Get the selftest
@@ -108,26 +106,20 @@ public class SelfTestCrawlJobHandler
                     // Need to make a list.  Make an array first.
                     List classList = new ArrayList();
                     classList.add(Class.forName(selftestClass));
-                    test = AllSelfTestCases.suite(Heritrix.getSelftestURL(),
+                    test = AllSelfTestCases.suite(this.selfTestUrl,
                         job, job.getDirectory(), Heritrix.getHttpServer().
                         getWebappPath(SELFTEST_WEBAPP), classList);
                 } else {
                     // Run all tests.
-                    test = AllSelfTestCases.suite(Heritrix.getSelftestURL(),
+                    test = AllSelfTestCases.suite(this.selfTestUrl,
                         job, job.getDirectory(), Heritrix.getHttpServer().
                         getWebappPath(SELFTEST_WEBAPP));
                 }
                 result = junit.textui.TestRunner.run(test);
             }
-        }
-
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             logger.info("Failed running selftest analysis: " + e.getMessage());
-        }
-
-        finally
-        {
+        } finally  {
             // TODO: This technique where I'm calling shutdown directly means
             // we bypass the running of other crawlended handlers.  Means
             // that such as the statistics tracker have no chance to run so
@@ -135,6 +127,7 @@ public class SelfTestCrawlJobHandler
             // code.
             logger.info((new Date()).toString() + " Selftest " +
                 (result != null && result.wasSuccessful()? "PASSED": "FAILED"));
+            stop();
             Heritrix.shutdown(((result !=  null) && result.wasSuccessful())?
                 0: 1);
         }

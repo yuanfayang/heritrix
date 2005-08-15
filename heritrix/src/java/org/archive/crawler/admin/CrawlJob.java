@@ -20,18 +20,19 @@
  */
 package org.archive.crawler.admin;
 
-import it.unimi.dsi.mg4j.util.MutableString;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -42,15 +43,21 @@ import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
+import javax.management.MBeanRegistration;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.RuntimeOperationsException;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 import javax.management.openmbean.OpenMBeanConstructorInfoSupport;
 import javax.management.openmbean.OpenMBeanInfoSupport;
+import javax.management.openmbean.OpenMBeanOperationInfo;
 import javax.management.openmbean.OpenMBeanOperationInfoSupport;
 import javax.management.openmbean.OpenMBeanParameterInfo;
 import javax.management.openmbean.OpenMBeanParameterInfoSupport;
@@ -59,14 +66,27 @@ import javax.management.openmbean.SimpleType;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.StatisticsTracking;
+import org.archive.crawler.framework.exceptions.InitializationException;
+import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.AbstractFrontier;
+import org.archive.crawler.frontier.HostQueuesFrontier;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.crawler.util.IoUtils;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
+import org.archive.util.JEMBeanHelper;
 import org.archive.util.JmxUtils;
+import org.archive.util.iterator.LineReadingIterator;
+import org.archive.util.iterator.RegexpLineIterator;
+
+import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.Environment;
 
 /**
  * A CrawlJob encapsulates a 'crawl order' with any and all information and
@@ -87,7 +107,8 @@ import org.archive.util.JmxUtils;
  *  String, String, String)
  */
 
-public class CrawlJob implements DynamicMBean {
+public class CrawlJob
+implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
     private static final Logger logger =
         Logger.getLogger(CrawlJob.class.getName());
     /*
@@ -181,7 +202,25 @@ public class CrawlJob implements DynamicMBean {
     // Checkpoint to resume
     private Checkpoint resumeFrom = null;
     
+    private CrawlController controller = null;
+    
+    private static final String RECOVERY_JOURNAL_STYLE = "recoveryJournal";
+    private static final String CRAWL_LOG_STYLE = "crawlLog";
+    
     // OpenMBean support.
+
+    /**
+     * Server we registered with.
+     * Maybe null.
+     */
+    private MBeanServer mbeanServer = null;
+    private ObjectName mbeanName = null;
+    private static final String CRAWLJOB_JMXMBEAN_TYPE = "CrawlJob";
+    private JEMBeanHelper bdbjeMBeanHelper = null;
+    private List bdbjeAttributeNameList = null;
+    private List bdbjeOperationsNameList = null;
+    
+    
     /**
      * The MBean we've registered ourselves with (May be null
      * throughout life of Heritrix).
@@ -215,12 +254,11 @@ public class CrawlJob implements DynamicMBean {
     private final static String IMPORT_URIS_OPER = "importUris";
     private final static String PAUSE_OPER = "pause";
     private final static String RESUME_OPER = "resume";
-    private final static String TERMINATE_OPER = "terminate";
     private final static String FRONTIER_REPORT_OPER = "frontierReport";
     private final static String THREADS_REPORT_OPER = "threadsReport";
     private final static String SEEDS_REPORT_OPER = "seedsReport";
     private final static String ROTATELOGS_OPER = "rotateLogs";
-    private final static String CHECKPOINT_OPER = "checkpoint";
+    private final static String CHECKPOINT_OPER = "startCheckpoint";
     private final static String PROGRESS_STATISTICS_OPER =
         "progressStatistics";
     private final static String PROGRESS_STATISTICS_LEGEND_OPER =
@@ -228,12 +266,18 @@ public class CrawlJob implements DynamicMBean {
     private final static List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {IMPORT_URI_OPER,
-            IMPORT_URIS_OPER, PAUSE_OPER, RESUME_OPER, TERMINATE_OPER,
+            IMPORT_URIS_OPER, PAUSE_OPER, RESUME_OPER,
             FRONTIER_REPORT_OPER, THREADS_REPORT_OPER, SEEDS_REPORT_OPER,
             PROGRESS_STATISTICS_OPER, PROGRESS_STATISTICS_LEGEND_OPER,
             ROTATELOGS_OPER, CHECKPOINT_OPER});
     }
     
+    // Same as JEMBeanHelper.OP_DB_STAT
+    private final static String OP_DB_STAT = "getDatabaseStats";
+    
+    /**
+     * A shutdown Constructor.
+     */
     protected CrawlJob() {
         super();
     }
@@ -251,15 +295,12 @@ public class CrawlJob implements DynamicMBean {
      * @param priority job priority.
      * @param dir The directory that is considered this jobs working directory.
      */
-    public CrawlJob(String UID, String name, XMLSettingsHandler settingsHandler,
-            CrawlJobErrorHandler errorHandler, int priority, File dir) {
-        this.UID = UID;
-        this.name = name;
-        this.settingsHandler = settingsHandler;
-        this.priority = priority;
-        jobDir = dir;
-        this.errorHandler = errorHandler;
-        this.openMBeanInfo = buildMBeanInfo();
+    public CrawlJob(final String UID,
+            final String name, final XMLSettingsHandler settingsHandler,
+            final CrawlJobErrorHandler errorHandler, final int priority,
+            final File dir) {
+        this(UID, name, settingsHandler, errorHandler,
+                priority, dir, null, false, true);
     }
 
     /**
@@ -275,15 +316,28 @@ public class CrawlJob implements DynamicMBean {
      * @param errorHandler The crawl jobs settings error handler.
      *           <tt>null</tt> means none is set
      */
-    protected CrawlJob(String UIDandName, XMLSettingsHandler settingsHandler,
-            CrawlJobErrorHandler errorHandler) {
-        this.UID = UIDandName;
-        this.name = UIDandName;
+    protected CrawlJob(final String UIDandName,
+            final XMLSettingsHandler settingsHandler,
+            final CrawlJobErrorHandler errorHandler) {
+        this(UIDandName, UIDandName, settingsHandler, errorHandler,
+            PRIORITY_AVERAGE, null, STATUS_PROFILE, true, false);
+    }
+    
+    public CrawlJob(final String UID,
+            final String name, final XMLSettingsHandler settingsHandler,
+            final CrawlJobErrorHandler errorHandler, final int priority,
+            final File dir, final String status, final boolean isProfile,
+            final boolean isNew) {
+        super();
+        this.UID = UID;
+        this.name = name;
         this.settingsHandler = settingsHandler;
-        isProfile = true;
-        isNew = false;
-        status = STATUS_PROFILE;
         this.errorHandler = errorHandler;
+        this.status = status;
+        this.isProfile = isProfile;
+        this.isNew = isNew;
+        this.jobDir = dir;
+        this.priority = priority;
     }
 
     /**
@@ -303,7 +357,6 @@ public class CrawlJob implements DynamicMBean {
      * Line 8. setting file (with path) <br>
      * Line 9. statistics tracker file (with path) <br>
      * Line 10-?. error message (String, empty for null), can be many lines <br>
-     *
      * @param jobFile
      *            a file containing information about the job to load.
      * @param errorHandler The crawl jobs settings error handler.
@@ -313,22 +366,22 @@ public class CrawlJob implements DynamicMBean {
      * @throws IOException
      *            if io operations fail
      */
-    protected CrawlJob(File jobFile, CrawlJobErrorHandler errorHandler)
+    protected CrawlJob(final File jobFile,
+            final CrawlJobErrorHandler errorHandler)
             throws InvalidJobFileException, IOException {
-        this.errorHandler = errorHandler;
+        this(null, null, null, errorHandler,
+                PRIORITY_AVERAGE, null, null, false, true);
+        this.jobDir = jobFile.getParentFile();
         
-        jobDir = jobFile.getParentFile();
-        
-        // Open file
-        // Read data and set up class variables accordingly...
+        // Open file. Read data and set up class variables accordingly...
         BufferedReader jobReader =
-            new BufferedReader(new FileReader(jobFile),4096);
+            new BufferedReader(new FileReader(jobFile), 4096);
         // UID
-        UID = jobReader.readLine();
+        this.UID = jobReader.readLine();
         // name
-        name = jobReader.readLine();
+        this.name = jobReader.readLine();
         // status
-        status = jobReader.readLine();
+        this.status = jobReader.readLine();
         if(status.equals(STATUS_ABORTED)==false
                 && status.equals(STATUS_CREATED)==false
                 && status.equals(STATUS_DELETED)==false
@@ -362,9 +415,9 @@ public class CrawlJob implements DynamicMBean {
         // isRunning
         tmp = jobReader.readLine();
         if(tmp.equals("true")){
-            isRunning = true;
+            this.isRunning = true;
         } else if(tmp.equals("false")){
-            isRunning = false;
+            this.isRunning = false;
         } else {
             throw new InvalidJobFileException("isRunning (line 5) in job " +
                     "file '" + jobFile.getAbsolutePath() + "' is not valid: " +
@@ -373,7 +426,7 @@ public class CrawlJob implements DynamicMBean {
         // priority
         tmp = jobReader.readLine();
         try{
-            priority = Integer.parseInt(tmp);
+            this.priority = Integer.parseInt(tmp);
         } catch(NumberFormatException e){
             throw new InvalidJobFileException("priority (line 5) in job " +
                     "file '" + jobFile.getAbsolutePath() + "' is not valid: " +
@@ -382,7 +435,7 @@ public class CrawlJob implements DynamicMBean {
         // numberOfJournalEntries
         tmp = jobReader.readLine();
         try{
-            numberOfJournalEntries = Integer.parseInt(tmp);
+            this.numberOfJournalEntries = Integer.parseInt(tmp);
         } catch(NumberFormatException e){
             throw new InvalidJobFileException("numberOfJournalEntries " +
                     "(line 5) in job file '" + jobFile.getAbsolutePath() +
@@ -392,12 +445,12 @@ public class CrawlJob implements DynamicMBean {
         tmp = jobReader.readLine();
         try {
             File f = new File(tmp);
-            settingsHandler = new XMLSettingsHandler((f.isAbsolute())?
+            this.settingsHandler = new XMLSettingsHandler((f.isAbsolute())?
                 f: new File(jobDir, f.getName()));
             if(this.errorHandler != null){
-                settingsHandler.registerValueErrorHandler(errorHandler);
+                this.settingsHandler.registerValueErrorHandler(errorHandler);
             }
-            settingsHandler.initialize();
+            this.settingsHandler.initialize();
         } catch (InvalidAttributeValueException e1) {
             throw new InvalidJobFileException("Problem reading from settings " +
                     "file (" + tmp + ") specified in job file '" +
@@ -421,8 +474,6 @@ public class CrawlJob implements DynamicMBean {
 
         // TODO: This should be inside a finally block.
         jobReader.close();
-
-        this.openMBeanInfo = buildMBeanInfo();
     }
 
     /**
@@ -436,8 +487,6 @@ public class CrawlJob implements DynamicMBean {
         }
         
         final String jobDirAbsolute = jobDir.getAbsolutePath();
-
-        FileWriter jobWriter = null;
         if (!jobDir.exists() || !jobDir.canWrite()) {
             logger.warning("Can't update status on " +
                 jobDirAbsolute + " because file does not" +
@@ -447,39 +496,43 @@ public class CrawlJob implements DynamicMBean {
         File f = new File(jobDirAbsolute, "state.job");
 
         String settingsFile = getSettingsDirectory();
-        // Make settingsFile's path relative if order.xml is somewhere in the job's directory tree
+        // Make settingsFile's path relative if order.xml is somewhere in the
+        // job's directory tree
         if(settingsFile.startsWith(jobDirAbsolute.concat(File.separator))) {
             settingsFile = settingsFile.substring(jobDirAbsolute.length()+1);
         }
-        
         try {
-            jobWriter = new FileWriter(f, false);
+            FileWriter jobWriter = new FileWriter(f, false);
             try {
-                jobWriter.write(UID+"\n");
-                jobWriter.write(name+"\n");
-                jobWriter.write(status+"\n");
-                jobWriter.write(isReadOnly+"\n");
-                jobWriter.write(isRunning+"\n");
-                jobWriter.write(priority+"\n");
-                jobWriter.write(numberOfJournalEntries+"\n");
-                jobWriter.write(settingsFile+"\n");
-                jobWriter.write(statisticsFileSave+"\n");// TODO: Is this right?
+                jobWriter.write(UID + "\n");
+                jobWriter.write(name + "\n");
+                jobWriter.write(status + "\n");
+                jobWriter.write(isReadOnly + "\n");
+                jobWriter.write(isRunning + "\n");
+                jobWriter.write(priority + "\n");
+                jobWriter.write(numberOfJournalEntries + "\n");
+                jobWriter.write(settingsFile + "\n");
+                jobWriter.write(statisticsFileSave + "\n");// TODO: Is this
+                                                            // right?
                 // Can be multiple lines so we keep it last
-                jobWriter.write(errorMessage==null?"":errorMessage+"\n");
+                if (errorMessage != null) {
+                    jobWriter.write(errorMessage + "\n");
+                }
             } finally {
-                jobWriter.close();
+                if (jobWriter != null) {
+                    jobWriter.close();
+                }
             }
         } catch (IOException e) {
-            Heritrix.addAlert(new Alert("IOException saving job " + name,
-                    "An IOException occured when saving job " +
-                    name + " (" + UID + ")",e, Level.WARNING));
+            logger.log(Level.WARNING, "An IOException occured saving job " +
+                    name + " (" + UID + ")", e);
         }
     }
-
+  
     /**
-     * Returns this jobs unique ID (UID) that was issued by the CrawlJobHandler()
-     * when this job was first created.
-     *
+     * Returns this jobs unique ID (UID) that was issued by the
+     * CrawlJobHandler() when this job was first created.
+     * 
      * @return Job This jobs UID.
      * @see CrawlJobHandler#getNextJobUID()
      */
@@ -547,7 +600,7 @@ public class CrawlJob implements DynamicMBean {
      * Typically this is done once a crawl is completed and further changes
      * to the crawl order are therefor meaningless.
      */
-    public void setReadOnly(){
+    public void setReadOnly() {
         isReadOnly = true;
         writeJobFile(); //Save changes
     }
@@ -650,13 +703,115 @@ public class CrawlJob implements DynamicMBean {
      * Set if job is being crawled.
      * @param b Is job being crawled.
      */
-    public void setRunning(boolean b) {
+    protected void setRunning(boolean b) {
         isRunning = b;
-        writeJobFile(); //Save changes
+        writeJobFile(); // Save changes
         //TODO: Job ending -> Save statistics tracker.
         //TODO: This is likely to happen as the CrawlEnding event occurs, need to ensure that the StatisticsTracker is saved to disk on CrawlEnded. Maybe move responsibility for this into the StatisticsTracker?
     }
+    
+    public void startCrawling()
+    throws InitializationException {
+        try {
+            this.controller = new CrawlController();
+            // Register as listener to get job finished notice.
+            this.controller.addCrawlStatusListener(this);
+            this.controller.initialize(getSettingsHandler());
+            // Create our mbean description and register our crawljob.
+            this.openMBeanInfo = buildMBeanInfo();
+            Heritrix.registerMBean(this, getUID(), CRAWLJOB_JMXMBEAN_TYPE);
+        } catch (InitializationException e) {
+            // Can't load current job since it is misconfigured.
+            setStatus(CrawlJob.STATUS_MISCONFIGURED);
+            setErrorMessage("A fatal InitializationException occured when "
+                    + "loading job:\n" + e.getMessage());
+            // Log to stdout so its seen in logs as well as in UI.
+            e.printStackTrace();
+            this.controller = null;
+            throw e;
+        }
+        setStatus(CrawlJob.STATUS_RUNNING);
+        setRunning(true);
+        setStatisticsTracking(this.controller.getStatistics());
+        this.controller.requestCrawlStart();
+    }
+    
+    public void stopCrawling() {
+        if(this.controller != null) {
+            this.controller.requestCrawlStop();
+        }
+    }
 
+    /**
+     * @return One-line Frontier report.
+     */
+    public String getFrontierOneLine() {
+        if (this.controller == null || this.controller.getFrontier() == null) {
+            return "Crawler not running";
+        }
+        return this.controller.getFrontier().singleLineReport();
+    }
+    
+    /**
+     * @return A report of the frontier's status.
+     */
+    public String getFrontierReport() {
+        if (this.controller == null || this.controller.getFrontier() == null) {
+            return "Crawler not running";
+        }
+        return ArchiveUtils.writeReportToString(this.controller.getFrontier(),
+                "compact");
+    }
+
+    /**
+     * @return One-line threads report.
+     */
+    public String getThreadOneLine() {
+        if (this.controller == null) {
+            return "Crawler not running";
+        }
+        return this.controller.oneLineReportThreads();
+    }
+    
+    /**
+     * Get the CrawlControllers ToeThreads report for the running crawl.
+     * @return The CrawlControllers ToeThreads report
+     */
+    public String getThreadsReport() {
+        if (this.controller == null) {
+            return "Crawler not running";
+        }
+        return ArchiveUtils.writeReportToString(this.controller.getToePool(),
+                null);
+    }
+
+    /**
+     * Kills a thread. For details see
+     * {@link org.archive.crawler.framework.ToePool#killThread(int, boolean)
+     * ToePool.killThread(int, boolean)}.
+     * @param threadNumber Thread to kill.
+     * @param replace Should thread be replaced.
+     * @see org.archive.crawler.framework.ToePool#killThread(int, boolean)
+     */
+    public void killThread(int threadNumber, boolean replace) {
+        if (this.controller ==  null) {
+            return;
+        }
+        this.controller.killThread(threadNumber, replace);
+    }
+
+    /**
+     * Get the Processors report for the running crawl.
+     * @return The Processors report for the running crawl.
+     */
+    public String getProcessorsReport() {
+        if (this.controller == null) {
+            return "Crawler not running";
+        }
+        return ArchiveUtils.writeReportToString(this.controller,
+                CrawlController.PROCESSORS_REPORT);
+    }
+    
     /**
      * Returns the directory where the configuration files for this job are
      * located.
@@ -723,7 +878,8 @@ public class CrawlJob implements DynamicMBean {
      * directory into Checkpoint instances
      */
     public void scanCheckpoints() {
-        File checkpointsDirectory = settingsHandler.getOrder().getCheckpointsDirectory();
+        File checkpointsDirectory =
+            settingsHandler.getOrder().getCheckpointsDirectory();
         File[] perCheckpointDirs = checkpointsDirectory.listFiles();
         checkpoints = new ArrayList();
         for(int i = 0; i < perCheckpointDirs.length; i++) {
@@ -793,77 +949,266 @@ public class CrawlJob implements DynamicMBean {
 
     // OpenMBean implementation.
     
-    /**
-     * @return True if there is a current job and
-     * its this crawl job instance.
-     */
-    protected boolean isCurrentJob() {
-        if (Heritrix.getJobHandler() == null) {
-            return false;
+    protected void pause() {
+        if (this.controller != null && this.controller.isPaused() == false) {
+            this.controller.requestCrawlPause();
         }
-        CrawlJob job = Heritrix.getJobHandler().getCurrentJob();
-        return job != null && job == this;
+    }
+    
+    protected void resume() {
+        if (this.controller != null) {
+            this.controller.requestCrawlResume();
+        }
+    }
+
+    /**
+     * @throws IllegalStateException Thrown if crawl is not paused.
+     */
+    protected void checkpoint() throws IllegalStateException {
+        if (this.controller != null) {
+            this.controller.requestCrawlCheckpoint();
+        }
+    }
+    
+    /**
+     * @throws IllegalStateException Thrown if crawl is not paused.
+     * @throws IOException
+     */
+    protected void rotateLogs() throws IOException, IllegalStateException {
+        if (this.controller != null) {
+            this.controller.rotateLogFiles();
+        }
+    }
+    
+    /**
+     * If its a HostQueuesFrontier, needs to be flushed for the queued.
+     */
+    protected void flush() {
+        if (this.controller != null &&
+                this.controller.getFrontier() instanceof HostQueuesFrontier) {
+            ((HostQueuesFrontier)controller.getFrontier()).batchFlush();
+        }
+    }
+
+    /**
+     * Delete any URI from the frontier of the current (paused) job that match
+     * the specified regular expression. If the current job is not paused (or
+     * there is no current job) nothing will be done.
+     * @param regexpr Regular expression to delete URIs by.
+     * @return the number of URIs deleted
+     */
+    public long deleteURIsFromPending(String regexpr){
+        return (this.controller != null && this.controller.isPaused())?
+            this.controller.getFrontier().deleteURIs(regexpr): 0;
+    }
+    
+    public String importUris(String file, String style, String force) {
+        return importUris(file, style, "true".equals(force));
+    }
+
+    /**
+     * @param fileOrUrl Name of file w/ seeds.
+     * @param style What style of seeds -- crawl log, recovery journal, or
+     * seeds file.
+     * @param forceRevisit Should we revisit even if seen before?
+     * @return A display string that has a count of all added.
+     */
+    public String importUris(final String fileOrUrl, final String style,
+            final boolean forceRevisit) {
+        InputStream is =
+            IoUtils.getInputStream(this.controller.getDisk(), fileOrUrl);
+        String message = null;
+        // Do we have an inputstream?
+        if (is == null) {
+            message = "Failed to get inputstream from " + fileOrUrl;
+            logger.severe(message);
+        } else {
+            int addedCount = importUris(is, style, forceRevisit);
+            message = Integer.toString(addedCount) + " URIs added from " +
+                fileOrUrl;
+        }
+        return message;
+    }
+    
+    protected int importUris(InputStream is, String style,
+            boolean forceRevisit) {
+        // Figure the regex to use parsing each line of input stream.
+        String extractor;
+        String output;
+        if(CRAWL_LOG_STYLE.equals(style)) {
+            // Skip first 3 fields
+            extractor = "\\S+\\s+\\S+\\s+\\S+\\s+(\\S+\\s+\\S+\\s+\\S+\\s+).*";
+            output = "$1";
+        } else if (RECOVERY_JOURNAL_STYLE.equals(style)) {
+            // Skip the begin-of-line directive
+            extractor = "\\S+\\s+((\\S+)(?:\\s+\\S+\\s+\\S+)?)\\s*";
+            output = "$1";
+        } else {
+            extractor =
+                RegexpLineIterator.NONWHITESPACE_ENTRY_TRAILING_COMMENT;
+            output = RegexpLineIterator.ENTRY;
+        }
+        
+        // Read the input stream.
+        BufferedReader br = null;
+        int addedCount = 0;
+        try {
+            br = new BufferedReader(new InputStreamReader(is));
+            Iterator iter = new RegexpLineIterator(new LineReadingIterator(br),
+                RegexpLineIterator.COMMENT_LINE, extractor, output);
+            while(iter.hasNext()) {
+                try {
+                    importUri((String)iter.next(), forceRevisit, false, false);
+                    addedCount++;
+                } catch (URIException e) {
+                    e.printStackTrace();
+                }
+            }
+            br.close();
+            flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return addedCount;
+    }
+    
+    /**
+     * Schedule a uri.
+     * @param uri Uri to schedule.
+     * @param forceFetch Should it be forcefetched.
+     * @param isSeed True if seed.
+     * @throws URIException
+     */
+    public void importUri(final String uri, final boolean forceFetch,
+            final boolean isSeed)
+    throws URIException {
+        importUri(uri, forceFetch, isSeed, true);
+    }
+    
+    /**
+     * Schedule a uri.
+     * @param str String that can be: 1. a UURI, 2. a snippet of the
+     * crawl.log line, or 3. a snippet from recover log.  See
+     * {@link #importUris(InputStream, String, boolean)} for how it subparses
+     * the lines from crawl.log and recover.log.
+     * @param forceFetch Should it be forcefetched.
+     * @param isSeed True if seed.
+     * @param isFlush If true, flush the frontier IF it implements
+     * flushing.
+     * @throws URIException
+     */
+    public void importUri(final String str, final boolean forceFetch,
+            final boolean isSeed, final boolean isFlush)
+    throws URIException {
+        CandidateURI caUri = CandidateURI.fromString(str);
+        caUri.setForceFetch(forceFetch);
+        if (isSeed) {
+            caUri.setIsSeed(isSeed);
+        }
+        this.controller.getFrontier().schedule(caUri);
+        if (isFlush) {
+            flush();
+        }
+    }
+    
+    
+    /**
+     * @return Our mbean info (Needed for CrawlJob to qualify as a
+     * DynamicMBean).
+     */
+    public MBeanInfo getMBeanInfo() {
+        return this.openMBeanInfo;
     }
     
     /**
      * Build up the MBean info for Heritrix main.
      * @return Return created mbean info instance.
+     * @throws InitializationException 
      */
-    protected OpenMBeanInfoSupport buildMBeanInfo() {
-        OpenMBeanAttributeInfoSupport[] attributes =
-            new OpenMBeanAttributeInfoSupport[ATTRIBUTE_LIST.size()];
-        OpenMBeanConstructorInfoSupport[] constructors =
-            new OpenMBeanConstructorInfoSupport[0];
-        OpenMBeanOperationInfoSupport[] operations =
-            new OpenMBeanOperationInfoSupport[OPERATION_LIST.size()];
-        MBeanNotificationInfo[] notifications =
-            new MBeanNotificationInfo[0];
+    protected OpenMBeanInfoSupport buildMBeanInfo()
+    throws InitializationException {
+        // Start adding my attributes.
+        List attributes = new ArrayList();
 
         // Attributes.
-        attributes[0] = new OpenMBeanAttributeInfoSupport(NAME_ATTR,
-            "Crawl job name", SimpleType.STRING, true, false, false);
-        attributes[1] = new OpenMBeanAttributeInfoSupport(STATUS_ATTR,
+        attributes.add(new OpenMBeanAttributeInfoSupport(NAME_ATTR,
+            "Crawl job name", SimpleType.STRING, true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(STATUS_ATTR,
             "Short basic status message", SimpleType.STRING, true, false,
-            false);
-        attributes[2] =
-            new OpenMBeanAttributeInfoSupport(FRONTIER_SHORT_REPORT_ATTR,
+            false));
+        attributes.add(
+                new OpenMBeanAttributeInfoSupport(FRONTIER_SHORT_REPORT_ATTR,
                 "Short frontier report", SimpleType.STRING, true,
-                false, false);
-        attributes[3] =
-            new OpenMBeanAttributeInfoSupport(THREADS_SHORT_REPORT_ATTR,
+                false, false));
+        attributes.add(
+                new OpenMBeanAttributeInfoSupport(THREADS_SHORT_REPORT_ATTR,
                 "Short threads report", SimpleType.STRING, true,
-                false, false);
-        attributes[4] = new OpenMBeanAttributeInfoSupport(UID_ATTR,
-            "Crawl job UID", SimpleType.STRING, true, false, false);  
-        attributes[5] = new OpenMBeanAttributeInfoSupport(TOTAL_DATA_ATTR,
-            "Total data received", SimpleType.STRING, true, false, false);
-        attributes[6] = new OpenMBeanAttributeInfoSupport(CRAWL_TIME_ATTR,
-            "Crawl time", SimpleType.STRING, true, false, false);
-        attributes[7] =
-            new OpenMBeanAttributeInfoSupport(CURRENT_DOC_RATE_ATTR,
+                false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(UID_ATTR,
+            "Crawl job UID", SimpleType.STRING, true, false, false));  
+        attributes.add(new OpenMBeanAttributeInfoSupport(TOTAL_DATA_ATTR,
+            "Total data received", SimpleType.STRING, true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(CRAWL_TIME_ATTR,
+            "Crawl time", SimpleType.STRING, true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(CURRENT_DOC_RATE_ATTR,
             "Current crawling rate (Docs/sec)", SimpleType.STRING,
-            true, false, false);
-        attributes[8] =
-            new OpenMBeanAttributeInfoSupport(CURRENT_KB_RATE_ATTR,
+            true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(CURRENT_KB_RATE_ATTR,
             "Current crawling rate (Kb/sec)", SimpleType.STRING,
-            true, false, false);
-        attributes[9] = new OpenMBeanAttributeInfoSupport(THREAD_COUNT_ATTR,
-            "Active thread count", SimpleType.STRING, true, false, false);
-        attributes[10] = new OpenMBeanAttributeInfoSupport(DOC_RATE_ATTR,
+            true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(THREAD_COUNT_ATTR,
+            "Active thread count", SimpleType.STRING, true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(DOC_RATE_ATTR,
             "Crawling rate (Docs/sec)", SimpleType.STRING,
-            true, false, false);
-        attributes[11] = new OpenMBeanAttributeInfoSupport(KB_RATE_ATTR,
+            true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(KB_RATE_ATTR,
             "Current crawling rate (Kb/sec)", SimpleType.STRING,
-            true, false, false);
-        attributes[12] = new OpenMBeanAttributeInfoSupport(DOWNLOAD_COUNT_ATTR,
+            true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(DOWNLOAD_COUNT_ATTR,
                 "Count of downloaded documents", SimpleType.STRING,
-                true, false, false);
-        attributes[13] = new OpenMBeanAttributeInfoSupport(
+                true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(
                 DISCOVERED_COUNT_ATTR,
                 "Count of discovered documents", SimpleType.STRING,
-                true, false, false);
+                true, false, false));
+        
+        // Add the bdbje attributes.  Convert to open mbean attributes.
+        // First do bdbeje setup.  Add all attributes for now.
+        Environment env = this.controller.getBdbEnvironment();
+        try {
+            this.bdbjeMBeanHelper =
+                new JEMBeanHelper(env.getConfig(), env.getHome(), true);
+        } catch (DatabaseException e) {
+            e.printStackTrace();
+            InitializationException ie =
+                new InitializationException(e.getMessage());
+            ie.setStackTrace(e.getStackTrace());
+            throw ie;
+        }
+        List bdbjeAttributes = this.bdbjeMBeanHelper.getAttributeList(env);
+        // Only add a subset of all attributes.  Keep around the list of names
+        // as a convenience for when it comes time to test if attribute is
+        // supported.
+        this.bdbjeAttributeNameList = Arrays.asList(new String [] {
+                JEMBeanHelper.ATT_ENV_HOME,
+                JEMBeanHelper.ATT_OPEN,
+                JEMBeanHelper.ATT_IS_READ_ONLY,
+                JEMBeanHelper.ATT_IS_TRANSACTIONAL,
+                JEMBeanHelper.ATT_CACHE_SIZE,
+                JEMBeanHelper.ATT_CACHE_PERCENT,
+                JEMBeanHelper.ATT_LOCK_TIMEOUT,
+                JEMBeanHelper.ATT_IS_SERIALIZABLE,
+                JEMBeanHelper.ATT_SET_READ_ONLY,
+        });
+        for (Iterator i = bdbjeAttributes.iterator(); i.hasNext();) {
+            MBeanAttributeInfo info = (MBeanAttributeInfo)i.next();
+            if (this.bdbjeAttributeNameList.contains(info.getName())) {
+                attributes.add(JmxUtils.convertToOpenMBeanAttribute(info));
+            }
+        }
 
         // Operations.
+        List operations = new ArrayList();
         OpenMBeanParameterInfo[] args = new OpenMBeanParameterInfoSupport[3];
         args[0] = new OpenMBeanParameterInfoSupport("url",
             "URL to add to the frontier", SimpleType.STRING);
@@ -871,9 +1216,9 @@ public class CrawlJob implements DynamicMBean {
             "True if URL is to be force fetched", SimpleType.BOOLEAN);
         args[2] = new OpenMBeanParameterInfoSupport("seed",
             "True if URL is a seed", SimpleType.BOOLEAN);
-        operations[0] = new OpenMBeanOperationInfoSupport(IMPORT_URI_OPER,
+        operations.add(new OpenMBeanOperationInfoSupport(IMPORT_URI_OPER,
             "Add passed URL to the frontier", args, SimpleType.VOID,
-                MBeanOperationInfo.ACTION);
+                MBeanOperationInfo.ACTION));
         
         args = new OpenMBeanParameterInfoSupport[3];
         args[0] = new OpenMBeanParameterInfoSupport("pathOrUrl",
@@ -883,54 +1228,93 @@ public class CrawlJob implements DynamicMBean {
             SimpleType.STRING);
         args[2] = new OpenMBeanParameterInfoSupport("forceFetch",
             "True if URLs are to be force fetched", SimpleType.BOOLEAN);
-        operations[1] = new OpenMBeanOperationInfoSupport(IMPORT_URIS_OPER,
+        operations.add(new OpenMBeanOperationInfoSupport(IMPORT_URIS_OPER,
             "Add file of passed URLs to the frontier", args, SimpleType.STRING,
-                MBeanOperationInfo.ACTION);
+                MBeanOperationInfo.ACTION));
         
-        operations[2] = new OpenMBeanOperationInfoSupport(PAUSE_OPER,
+        operations.add(new OpenMBeanOperationInfoSupport(PAUSE_OPER,
             "Pause crawling (noop if already paused)", null, SimpleType.VOID,
-            MBeanOperationInfo.ACTION);
+            MBeanOperationInfo.ACTION));
         
-        operations[3] = new OpenMBeanOperationInfoSupport(RESUME_OPER,
+        operations.add(new OpenMBeanOperationInfoSupport(RESUME_OPER,
             "Resume crawling (noop if already resumed)", null,
-            SimpleType.VOID, MBeanOperationInfo.ACTION);
+            SimpleType.VOID, MBeanOperationInfo.ACTION));
         
-        operations[4] = new OpenMBeanOperationInfoSupport(TERMINATE_OPER,
-            "Terminate this crawl job", null, SimpleType.VOID,
-            MBeanOperationInfo.ACTION);
-        
-        operations[5] = new OpenMBeanOperationInfoSupport(FRONTIER_REPORT_OPER,
+        operations.add(new OpenMBeanOperationInfoSupport(FRONTIER_REPORT_OPER,
              "Full frontier report", null, SimpleType.STRING,
-             MBeanOperationInfo.INFO);
+             MBeanOperationInfo.INFO));
         
-        operations[6] = new OpenMBeanOperationInfoSupport(THREADS_REPORT_OPER,
+        operations.add(new OpenMBeanOperationInfoSupport(THREADS_REPORT_OPER,
              "Full thread report", null, SimpleType.STRING,
-             MBeanOperationInfo.INFO);
+             MBeanOperationInfo.INFO));
         
-        operations[7] = new OpenMBeanOperationInfoSupport(SEEDS_REPORT_OPER,
-             "Seeds report", null, SimpleType.STRING, MBeanOperationInfo.INFO);  
+        operations.add(new OpenMBeanOperationInfoSupport(SEEDS_REPORT_OPER,
+             "Seeds report", null, SimpleType.STRING, MBeanOperationInfo.INFO));  
  
-        operations[8] =
-            new OpenMBeanOperationInfoSupport(PROGRESS_STATISTICS_OPER,
+        operations.add(
+                new OpenMBeanOperationInfoSupport(PROGRESS_STATISTICS_OPER,
                 "Progress statistics at time of invocation", null,
-                SimpleType.STRING, MBeanOperationInfo.INFO); 
+                SimpleType.STRING, MBeanOperationInfo.INFO)); 
         
-        operations[9] = new OpenMBeanOperationInfoSupport(
+        operations.add(new OpenMBeanOperationInfoSupport(
             PROGRESS_STATISTICS_LEGEND_OPER,
                 "Progress statistics legend", null,
-                SimpleType.STRING, MBeanOperationInfo.INFO);  
+                SimpleType.STRING, MBeanOperationInfo.INFO));  
         
-        operations[10] = new OpenMBeanOperationInfoSupport(ROTATELOGS_OPER,
-            "Rotate logs", null, SimpleType.VOID, MBeanOperationInfo.ACTION);
+        operations.add(new OpenMBeanOperationInfoSupport(ROTATELOGS_OPER,
+            "Rotate logs", null, SimpleType.VOID, MBeanOperationInfo.ACTION));
         
-        operations[11] = new OpenMBeanOperationInfoSupport(CHECKPOINT_OPER,
+        operations.add(new OpenMBeanOperationInfoSupport(CHECKPOINT_OPER,
                 "Start a checkpoint", null, SimpleType.VOID,
-                MBeanOperationInfo.ACTION);
+                MBeanOperationInfo.ACTION));
+        
+        
+        List bdbjeOperations = this.bdbjeMBeanHelper.getOperationList(env);
+        // Add subset of operations.  Keep around the list so have it to hand
+        // when figuring what operations are supported. Usual actual Strings
+        // because not accessible from JEMBeanHelper.
+        this.bdbjeOperationsNameList = Arrays.asList(new String [] {"cleanLog",
+                "evictMemory", "checkpoint", "sync",
+                "getEnvironmentStatsToString", "getLockStatsToString",
+                "getDatabaseNames", OP_DB_STAT
+        });
+        for (Iterator i = bdbjeOperations.iterator(); i.hasNext();) {
+            MBeanOperationInfo info = (MBeanOperationInfo)i.next();
+            if (this.bdbjeOperationsNameList.contains(info.getName())) {
+                OpenMBeanOperationInfo omboi =
+                    JmxUtils.convertToOpenMBeanOperation(info);
+                if (info.getName().equals(OP_DB_STAT)) {
+                    // Db stats needs special handling.  The published
+                    // signature is wrong.  Fix it.
+                    MBeanParameterInfo [] params = omboi.getSignature();
+                    args = new OpenMBeanParameterInfoSupport[params.length + 1];
+                    for (int ii = 0; ii < params.length; ii++) {
+                        args[ii] = (OpenMBeanParameterInfo)params[ii];
+                    }
+                    args[params.length] =
+                        new OpenMBeanParameterInfoSupport("name",
+                        "Database name", SimpleType.STRING);
+                    omboi = new OpenMBeanOperationInfoSupport(omboi.getName(),
+                        omboi.getDescription(), args, omboi.getReturnOpenType(),
+                            omboi.getImpact());
+                }
+                operations.add(omboi);
+            }
+        }
         
         // Build the info object.
+        OpenMBeanAttributeInfoSupport[] attributesArray =
+            new OpenMBeanAttributeInfoSupport[attributes.size()];
+        attributes.toArray(attributesArray);
+        OpenMBeanOperationInfoSupport[] operationsArray =
+            new OpenMBeanOperationInfoSupport[operations.size()];
+        operations.toArray(operationsArray);
         return new OpenMBeanInfoSupport(this.getClass().getName(),
-            "Current Crawl Job as OpenMBean", attributes, constructors,
-            operations, notifications);
+            "Current Crawl Job as OpenMBean",
+            attributesArray,
+            new OpenMBeanConstructorInfoSupport [] {},
+            operationsArray,
+            new MBeanNotificationInfo [] {});
     }
     
     public Object getAttribute(String attribute_name)
@@ -940,10 +1324,22 @@ public class CrawlJob implements DynamicMBean {
                  new IllegalArgumentException("Attribute name cannot be null"),
                  "Cannot call getAttribute with null attribute name");
         }
+        
+        // Is it a bdbje attribute?
+        if (this.bdbjeAttributeNameList.contains(attribute_name)) {
+            try {
+                return this.bdbjeMBeanHelper.getAttribute(
+                        this.controller.getBdbEnvironment(), attribute_name);
+            } catch (MBeanException e) {
+                throw new RuntimeOperationsException(new RuntimeException(e));
+            }
+        }
+        
         if (!ATTRIBUTE_LIST.contains(attribute_name)) {
             throw new AttributeNotFoundException("Attribute " +
-                 attribute_name + " is unimplemented.");
+                    attribute_name + " is unimplemented.");
         }
+
         // The pattern in the below is to match an attribute and when found
         // do a return out of if clause.  Doing it this way, I can fall
         // on to the AttributeNotFoundException for case where we've an
@@ -983,10 +1379,10 @@ public class CrawlJob implements DynamicMBean {
             return Integer.toString(this.stats.activeThreadCount());
         }       
         if (attribute_name.equals(FRONTIER_SHORT_REPORT_ATTR)) {
-            return Heritrix.getJobHandler().getFrontierOneLine();
+            return getFrontierOneLine();
         }
         if (attribute_name.equals(THREADS_SHORT_REPORT_ATTR)) {
-            return Heritrix.getJobHandler().getThreadOneLine();
+            return getThreadOneLine();
         }
         if (attribute_name.equals(DISCOVERED_COUNT_ATTR)) {
             return Long.toString(this.stats.totalCount());
@@ -994,14 +1390,25 @@ public class CrawlJob implements DynamicMBean {
         if (attribute_name.equals(DOWNLOAD_COUNT_ATTR)) {
             return Long.toString(this.stats.successfullyFetchedCount());
         }
+        
         throw new AttributeNotFoundException("Attribute " +
             attribute_name + " not found.");
     }
 
     public void setAttribute(Attribute attribute)
-    throws AttributeNotFoundException {
-        throw new AttributeNotFoundException("No attribute can be set in " +
-            "this MBean");
+            throws AttributeNotFoundException {
+        if (!this.bdbjeAttributeNameList.contains(attribute.getName())) {
+            throw new AttributeNotFoundException("Attribute "
+                    + attribute.getName() + " can not be set.");
+        }
+        try {
+            this.bdbjeMBeanHelper.
+                setAttribute(this.controller.getBdbEnvironment(), attribute);
+        } catch (AttributeNotFoundException e) {
+            throw new RuntimeOperationsException(new RuntimeException(e));
+        } catch (InvalidAttributeValueException e) {
+            throw new RuntimeOperationsException(new RuntimeException(e));
+        }
     }
 
     public AttributeList getAttributes(String [] attributeNames) {
@@ -1011,6 +1418,7 @@ public class CrawlJob implements DynamicMBean {
                 "null"), "Cannot call getAttributes with null attribute " +
                 "names");
         }
+        
         AttributeList resultList = new AttributeList();
         if (attributeNames.length == 0) {
             return resultList;
@@ -1027,7 +1435,29 @@ public class CrawlJob implements DynamicMBean {
     }
 
     public AttributeList setAttributes(AttributeList attributes) {
-        return new AttributeList(); // always empty
+        if (attributes == null) {
+            throw new RuntimeOperationsException(
+                new IllegalArgumentException("attributeNames[] cannot be " +
+                "null"), "Cannot call getAttributes with null attribute " +
+                "names");
+        }
+        
+        AttributeList resultList = new AttributeList();
+        if (attributes.size() == 0) {
+            return resultList;
+        }
+        for (int i = 0; i < attributes.size(); i++) {
+            try {
+                Attribute attr = (Attribute)attributes.get(i);
+                setAttribute(attr);
+                String an = attr.getName();
+                Object newValue = getAttribute(an);
+                resultList.add(new Attribute(an, newValue));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return resultList;
     }
 
     public Object invoke(String operationName, Object[] params,
@@ -1038,6 +1468,22 @@ public class CrawlJob implements DynamicMBean {
                 new IllegalArgumentException("Operation name cannot be null"),
                 "Cannot call invoke with null operation name");
         }
+        
+        if (this.bdbjeOperationsNameList.contains(operationName)) {
+            try {
+                Object o = this.bdbjeMBeanHelper.invoke(
+                        this.controller.getBdbEnvironment(),
+                        operationName, params, signature);
+                // If OP_DB_ST, return String version of result.
+                if (operationName.equals(OP_DB_STAT)) {
+                    return o.toString();
+                }
+                return o;
+            } catch (MBeanException e) {
+                throw new RuntimeOperationsException(new RuntimeException(e));
+            }
+        }
+        
         // TODO: Exploit passed signature.
         
         // The pattern in the below is to match an operation and when found
@@ -1046,102 +1492,54 @@ public class CrawlJob implements DynamicMBean {
         // attribute but no handler.
         if (operationName.equals(IMPORT_URI_OPER)) {
             JmxUtils.checkParamsCount(IMPORT_URI_OPER, params, 3);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
+            mustBeCrawling();
             try {
-                Heritrix.getJobHandler().importUri((String)params[0],
+                importUri((String)params[0],
                     ((Boolean)params[1]).booleanValue(),
                     ((Boolean)params[2]).booleanValue());
             } catch (URIException e) {
-                throw new RuntimeOperationsException(
-                    new RuntimeException(e.getMessage()), e.getMessage());
+                throw new RuntimeOperationsException(new RuntimeException(e));
             }
             return null;
         }
         
         if (operationName.equals(IMPORT_URIS_OPER)) {
             JmxUtils.checkParamsCount(IMPORT_URIS_OPER, params, 3);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
-            return Heritrix.getJobHandler().importUris((String)params[0],
+            mustBeCrawling();
+            return importUris((String)params[0],
                 ((String)params[1]).toString(),
                 ((Boolean)params[2]).booleanValue());
         }
         
         if (operationName.equals(PAUSE_OPER)) {
             JmxUtils.checkParamsCount(PAUSE_OPER, params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
-            Heritrix.getJobHandler().pauseJob();
+            mustBeCrawling();
+            pause();
             return null;
         }
         
         if (operationName.equals(RESUME_OPER)) {
             JmxUtils.checkParamsCount(RESUME_OPER, params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
-            Heritrix.getJobHandler().resumeJob();
-            return null;
-        }
-        
-        if (operationName.equals(TERMINATE_OPER)) {
-            JmxUtils.checkParamsCount(TERMINATE_OPER, params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
-            Heritrix.getJobHandler().deleteJob(getUID());
+            mustBeCrawling();
+            resume();
             return null;
         }
         
         if (operationName.equals(FRONTIER_REPORT_OPER)) {
             JmxUtils.checkParamsCount(FRONTIER_REPORT_OPER, params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
-            return Heritrix.getJobHandler().getFrontierReport();
+            mustBeCrawling();
+            return getFrontierReport();
         }
         
         if (operationName.equals(THREADS_REPORT_OPER)) {
             JmxUtils.checkParamsCount(THREADS_REPORT_OPER, params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
-            return Heritrix.getJobHandler().getThreadsReport();
+            mustBeCrawling();
+            return getThreadsReport();
         }
         
         if (operationName.equals(SEEDS_REPORT_OPER)) {
             JmxUtils.checkParamsCount(SEEDS_REPORT_OPER, params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
+            mustBeCrawling();
             StringWriter sw = new StringWriter();
             if (this.stats instanceof StatisticsTracker) {
                 ((StatisticsTracker)this.stats).
@@ -1154,33 +1552,22 @@ public class CrawlJob implements DynamicMBean {
         
         if (operationName.equals(ROTATELOGS_OPER)) {
             JmxUtils.checkParamsCount(ROTATELOGS_OPER, params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
+            mustBeCrawling();
             try {
-                Heritrix.getJobHandler().rotateLogs();
+                rotateLogs();
             } catch (RuntimeException e) {
                 throw new RuntimeOperationsException(e);
             } catch (IOException e) {
-                throw new RuntimeOperationsException(
-                    new RuntimeException(e.fillInStackTrace()));
+                throw new RuntimeOperationsException(new RuntimeException(e));
             }
             return null;
         }       
         
         if (operationName.equals(CHECKPOINT_OPER)) {
             JmxUtils.checkParamsCount(CHECKPOINT_OPER, params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
+            mustBeCrawling();
             try {
-                Heritrix.getJobHandler().checkpointJob();
+                checkpoint();
             } catch (IllegalStateException e) {
                 throw new RuntimeOperationsException(e);
             }
@@ -1189,24 +1576,13 @@ public class CrawlJob implements DynamicMBean {
         
         if (operationName.equals(PROGRESS_STATISTICS_OPER)) {
             JmxUtils.checkParamsCount(PROGRESS_STATISTICS_OPER, params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
+            mustBeCrawling();
             return getStatisticsTracking().progressStatisticsLine();
         }
         
         if (operationName.equals(PROGRESS_STATISTICS_LEGEND_OPER)) {
             JmxUtils.checkParamsCount(PROGRESS_STATISTICS_LEGEND_OPER,
                     params, 0);
-            if (!isCurrentJob()) {
-                throw new RuntimeOperationsException(
-                    new IllegalArgumentException("Empty job handler or not " +
-                    "crawling (Shouldn't ever be the case)"),
-                    "Not current crawling job?");
-            }
             return getStatisticsTracking().progressStatisticsLegend();
         }
         
@@ -1215,8 +1591,17 @@ public class CrawlJob implements DynamicMBean {
                 "Cannot find the operation " + operationName);
     }
     
-    public MBeanInfo getMBeanInfo() {
-        return this.openMBeanInfo;
+    public void mustBeCrawling() {
+        if (!isCrawling()) {
+            throw new RuntimeOperationsException(
+                new IllegalArgumentException("Not " +
+                "crawling (Shouldn't ever be the case)"),
+                "Not current crawling job?");
+        }
+    }
+    
+    public boolean isCrawling() {
+        return this.controller != null;
     }
     
     /**
@@ -1226,7 +1611,8 @@ public class CrawlJob implements DynamicMBean {
      * @return String of all ignored seed items, or null if none
      */
     public String getIgnoredSeeds() {
-        File ignoredFile = new File(getDirectory(),AbstractFrontier.IGNORED_SEEDS_FILENAME);
+        File ignoredFile = new File(getDirectory(),
+                AbstractFrontier.IGNORED_SEEDS_FILENAME);
         if(!ignoredFile.exists()) {
             return null;
         }
@@ -1236,6 +1622,143 @@ public class CrawlJob implements DynamicMBean {
             // TODO Auto-generated catch block
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    /**
+     * Forward a 'kick' update to current controller if any.
+     * @see CrawlController#kickUpdate()
+     */
+    public void kickUpdate(){
+        if (this.controller != null){
+            this.controller.kickUpdate();
+        }
+    }
+    
+    /**
+     * Returns a URIFrontierMarker for the current, paused, job. If there is no
+     * current job or it is not paused null will be returned.
+     *
+     * @param regexpr A regular expression that each URI must match in order to
+     * be considered 'within' the marker.
+     * @param inCacheOnly Limit marker scope to 'cached' URIs.
+     * @return a URIFrontierMarker for the current job.
+     * @see #getPendingURIsList(FrontierMarker, int, boolean)
+     * @see org.archive.crawler.framework.Frontier#getInitialMarker(String,
+     *      boolean)
+     * @see org.archive.crawler.framework.FrontierMarker
+     */
+    public FrontierMarker getInitialMarker(String regexpr,
+            boolean inCacheOnly) {
+        return (this.controller != null && this.controller.isPaused())?
+           this.controller.getFrontier().getInitialMarker(regexpr, inCacheOnly):
+               null;
+    }
+    
+    /**
+     * Returns the frontiers URI list based on the provided marker. This method
+     * will return null if there is not current job or if the current job is
+     * not paused. Only when there is a paused current job will this method
+     * return a URI list.
+     *
+     * @param marker URIFrontier marker
+     * @param numberOfMatches Maximum number of matches to return
+     * @param verbose Should detailed info be provided on each URI?
+     * @return the frontiers URI list based on the provided marker
+     * @throws InvalidFrontierMarkerException
+     *             When marker is inconsistent with the current state of the
+     *             frontier.
+     * @see #getInitialMarker(String, boolean)
+     * @see org.archive.crawler.framework.FrontierMarker
+     */
+    public ArrayList getPendingURIsList(FrontierMarker marker,
+            int numberOfMatches, boolean verbose)
+    throws InvalidFrontierMarkerException {
+        return  (this.controller != null && this.controller.isPaused())?
+            this.controller.getFrontier().getURIsList(marker, numberOfMatches,
+                    verbose):
+            null;
+    }
+
+    public void crawlStarted(String message) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void crawlEnding(String sExitMessage) {
+        setRunning(false);
+        setStatus(sExitMessage);
+        setReadOnly();
+        // Remove the reference so that the old controller can be gc'd.
+        this.controller = null;
+        // Unregister current job from JMX agent, if there one.
+        if (this.mbeanServer != null) {
+            try {
+                this.mbeanServer.unregisterMBean(this.mbeanName);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed unregistration of " +
+                        this.mbeanName, e);
+            }
+        }
+    }
+
+    public void crawlEnded(String sExitMessage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void crawlPausing(String statusMessage) {
+        setStatus(statusMessage);
+    }
+
+    public void crawlPaused(String statusMessage) {
+        setStatus(statusMessage);
+    }
+
+    public void crawlResuming(String statusMessage) {
+        setStatus(statusMessage);
+    }
+
+    public void crawlCheckpoint(File checkpointDir) throws Exception {
+        setStatus(CrawlJob.STATUS_CHECKPOINTING);
+    }
+
+    public CrawlController getController() {
+        return this.controller;
+    }
+    
+    public ObjectName preRegister(final MBeanServer server, ObjectName name)
+    throws Exception {
+        this.mbeanServer = server;
+        Hashtable ht = name.getKeyPropertyList();
+        if (!ht.containsKey("name")) {
+            throw new IllegalArgumentException("Name property required" +
+                    name.getCanonicalName());
+        }
+        if (!ht.containsKey(JmxUtils.TYPE)) {
+            ht.put(JmxUtils.TYPE, CRAWLJOB_JMXMBEAN_TYPE);
+            name = new ObjectName(name.getDomain(), ht);
+        }
+        this.mbeanName = name;
+        return name;
+    }
+
+    public void postRegister(Boolean registrationDone) {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(
+                JmxUtils.getLogRegistrationMsg(this.mbeanName.getCanonicalName(),
+                this.mbeanServer, registrationDone.booleanValue()));
+        }
+    }
+
+    public void preDeregister() throws Exception {
+        // TODO: Remove from JNDI.
+    }
+
+    public void postDeregister() {
+        if (logger.isLoggable(Level.INFO)) {
+            logger.info(JmxUtils.getLogUnregistrationMsg(
+                    this.mbeanName.getCanonicalName(), this.mbeanServer));
         }
     }
 }

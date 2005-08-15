@@ -94,8 +94,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         try {
             dnsName = curi.getUURI().getReferencedHost();
         } catch (URIException e) {
-            logger.severe("Failed parse of dns record " + curi + " " +
-                e.getMessage());
+            logger.log(Level.SEVERE, "Failed parse of dns record " + curi, e);
             return;
         }
 

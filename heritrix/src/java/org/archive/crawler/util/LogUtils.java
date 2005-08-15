@@ -32,6 +32,7 @@ import java.util.logging.Formatter;
 import java.util.logging.Logger;
 
 import org.archive.crawler.Heritrix;
+import org.archive.util.PropertyUtils;
 
 /**
  * Logging utils.
@@ -54,20 +55,19 @@ public class LogUtils {
     public static void createFileLogger(File logsDir, String baseName,
             Logger logger) {
         int limit =
-            Heritrix.getIntProperty("java.util.logging.FileHandler.limit",
+            PropertyUtils.getIntProperty("java.util.logging.FileHandler.limit",
             1024 * 1024 * 1024 * 1024);
         int count =
-            Heritrix.getIntProperty("java.util.logging.FileHandler.count", 1);
+            PropertyUtils.getIntProperty("java.util.logging.FileHandler.count", 1);
         try {
             String tmp =
-                Heritrix.getProperty("java.util.logging.FileHandler.pattern");
+                System.getProperty("java.util.logging.FileHandler.pattern");
                 File logFile = new File(logsDir, baseName +
                     ((tmp != null && tmp.length() > 0)? tmp: ".log"));
             FileHandler fh = new FileHandler(logFile.getAbsolutePath(), limit,
                 count, true);
             // Manage the formatter to use.
-            tmp = Heritrix
-                .getProperty("java.util.logging.FileHandler.formatter");
+            tmp = System.getProperty("java.util.logging.FileHandler.formatter");
             if (tmp != null && tmp.length() > 0) {
                 Constructor co = Class.forName(tmp).
                     getConstructor(new Class[] {});

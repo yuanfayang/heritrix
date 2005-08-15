@@ -22,13 +22,103 @@
  */
 package org.archive.util;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import javax.management.RuntimeOperationsException;
+import javax.management.openmbean.OpenMBeanAttributeInfo;
+import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
+import javax.management.openmbean.OpenMBeanOperationInfo;
+import javax.management.openmbean.OpenMBeanOperationInfoSupport;
+import javax.management.openmbean.OpenMBeanParameterInfo;
+import javax.management.openmbean.OpenMBeanParameterInfoSupport;
+import javax.management.openmbean.OpenType;
+import javax.management.openmbean.SimpleType;
 
 /**
+ * Static utility used by JMX.
  * @author stack
  * @version $Date$, $Revision$
  */
 public class JmxUtils {
+    private static final Logger LOGGER =
+        Logger.getLogger(JmxUtils.class.getName());
+    public static final String TYPE = "type";
+    public static final String SERVICE = "Service";
+    public static final String NAME = "name";
+    public static final String HOST = "host";
+    public static final String KEY = "key";
+    
+    protected JmxUtils() {
+        super();
+    }
+    
+    /**
+     * Return a string suitable for logging on registration.
+     * @param logger Logger to use logging severe messages in case we fail
+     * getting server details.
+     * @param mbeanName Mbean that got registered.
+     * @param mbeanServer Server we were registered to.
+     * @param registrationDone Whether we registered successfully or not.
+     * @return String suitable for logging.
+     */
+    public static String getLogRegistrationMsg(final String mbeanName,
+            final MBeanServer mbeanServer, final boolean registrationDone) {
+        return mbeanName + (registrationDone? " " : " NOT ") +
+            "registered to " + JmxUtils.getServerDetail(mbeanServer);
+    }
+    
+    public static String getLogUnregistrationMsg(final String mbeanName,
+            final MBeanServer mbeanServer) {
+        return mbeanName + " unregistered from " +
+            JmxUtils.getServerDetail(mbeanServer);
+    }
+    
+    public static String getServerDetail(final MBeanServer server) {
+        ObjectName delegateName = null;
+        try {
+            delegateName = new ObjectName(
+                    "JMImplementation:type=MBeanServerDelegate");
+        } catch (MalformedObjectNameException e) {
+            LOGGER.log(Level.SEVERE, "Failed to create ObjectName for " +
+                    "JMImplementation:type=MBeanServerDelegate", e);
+            return null;
+        }
+        StringBuffer buffer = new StringBuffer("MBeanServerId=");
+        try {
+            buffer.append((String) server.getAttribute(delegateName,
+                    "MBeanServerId"));
+            buffer.append(", SpecificationVersion=");
+            buffer.append((String) server.getAttribute(delegateName,
+                    "SpecificationVersion"));
+            buffer.append(", ImplementationVersion=");
+            buffer.append((String) server.getAttribute(delegateName,
+                    "ImplementationVersion"));
+            buffer.append(", SpecificationVendor=");
+            buffer.append((String) server.getAttribute(delegateName,
+                    "SpecificationVendor"));
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed gettting server detail for " +
+                    "JMImplementation:type=MBeanServerDelegate", e);
+        }
+        return buffer.toString();
+    }
+    
+    /**
+     * @param operationName
+     *            Name of operation we're checking params on (Used in exception
+     *            if one thrown).
+     * @param params
+     *            Amount of params passed.
+     * @param count
+     *            Count of params expected.
+     */
     public static void checkParamsCount(String operationName, Object[] params,
             int count) {
         if ((params.length != count)) {
@@ -42,11 +132,119 @@ public class JmxUtils {
         } 
     }
     
-    protected JmxUtils() {
-        super();
+    /**
+     * @param in MBeanOperation to convert.
+     * @return An OpenMBeanOperation version of the passed MBeanOperation.
+     */
+    public static OpenMBeanOperationInfo convertToOpenMBeanOperation(
+            MBeanOperationInfo in) {
+        return convertToOpenMBeanOperation(in, null);
+    }
+    
+    /**
+     * @param in MBeanOperation to convert.
+     * @param prefix A prefix to add to the name of new operation.
+     * @return An OpenMBeanOperation version of the passed MBeanOperation.
+     */   
+    public static OpenMBeanOperationInfo convertToOpenMBeanOperation(
+            final MBeanOperationInfo in, final String prefix) {
+        MBeanParameterInfo [] params = in.getSignature();
+        OpenMBeanParameterInfo [] signature =
+            new OpenMBeanParameterInfo[params.length];
+        for (int i = 0; i < params.length; i++) {
+            signature[i] = convertToOpenMBeanOperationInfo(params[i]);
+        }
+        return new OpenMBeanOperationInfoSupport(
+                ((prefix != null)? prefix + in.getName(): in.getName()),
+                in.getDescription(), signature,
+                getOpenType(in.getReturnType(), SimpleType.STRING),
+                convertImpact(in.getImpact()));
+    }
+    
+    public static int convertImpact(final int impact) {
+        if (impact != MBeanOperationInfo.ACTION &&
+                impact != MBeanOperationInfo.ACTION_INFO &&
+                impact != MBeanOperationInfo.INFO) {
+            // Don't allow back MBeanOperationInfo.UNKNOWN impact.
+            return MBeanOperationInfo.ACTION_INFO;
+        }
+        return impact;
+    }
+    
+    /**
+     * @param in MBeanParameterInfo to convert to an OpenMBeanParameterInfo.
+     * @return OpenMBeanParameterInfo version of <code>in</code>
+     */
+    public static OpenMBeanParameterInfo
+            convertToOpenMBeanOperationInfo(MBeanParameterInfo in) {
+        return new OpenMBeanParameterInfoSupport(in.getName(),
+                in.getDescription(), getOpenType(in.getType())); 
     }
 
-    public static void main(String [] args) {
-        // Unused.
+    /**
+     * @param classString Java class name.
+     * @return Its OpenType equivalent.
+     */
+    public static OpenType getOpenType(final String classString) {
+        return getOpenType(classString, null);
+    }
+    
+    /**
+     * @param classString Java class name.
+     * @param defaultType If no equivalent found, use passed defaultType.
+     * @return Its OpenType equivalent.
+     */
+    public static OpenType getOpenType(final String classString,
+            final OpenType defaultType) {
+        if (classString.equals(String.class.getName())) {
+            return SimpleType.STRING;
+        } else if (classString.equals(Boolean.class.getName())) {
+            return SimpleType.BOOLEAN;
+        } else if (classString.equals(Long.class.getName())) {
+            return SimpleType.LONG;
+        } else if (classString.equals(Integer.class.getName())) {
+            return SimpleType.INTEGER;
+        } else if (defaultType != null) {
+            return defaultType;
+        }
+        throw new RuntimeException("Unsupported type: " + classString);
+    }
+   
+    /**
+     * @param in AttributeInfo to convert.
+     * @return OpenMBeanAttributeInfo version of <code>in</code>.
+     */
+    public static OpenMBeanAttributeInfo
+    convertToOpenMBeanAttribute(MBeanAttributeInfo in) {
+        return convertToOpenMBeanAttribute(in, null);
+    }
+
+    /**
+     * @param in AttributeInfo to convert.
+     * @param prefix Prefix to add to names of new attributes. If null, nothing
+     * is added.
+     * @return OpenMBeanAttributeInfo version of <code>in</code>.
+     */
+    public static OpenMBeanAttributeInfo
+            convertToOpenMBeanAttribute(final MBeanAttributeInfo in,
+                    final String prefix) {
+        return createOpenMBeanAttributeInfo(getOpenType(in.getType()), in,
+                prefix);
+    }
+    
+    /**
+     * @param type Type of new OpenMBeanAttributeInfo.
+     * @param in The MBeanAttributeInfo we're converting.
+     * @param prefix Prefix to add to name of new Attribute (If null, nothing
+     * is added).
+     * @return New OpenMBeanAttributeInfo based on <code>in</code>.
+     */
+    public static OpenMBeanAttributeInfo createOpenMBeanAttributeInfo(
+            final OpenType type, final MBeanAttributeInfo in,
+            final String prefix) {
+        return new OpenMBeanAttributeInfoSupport(
+                ((prefix != null)? prefix + in.getName(): in.getName()),
+                in.getDescription(), type, in.isReadable(),
+                in.isWritable(), in.isIs());
     }
 }

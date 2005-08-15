@@ -229,20 +229,12 @@ public class CrawlOrder extends ModuleType {
                 "+http://loc.gov)'. " +
                 "Note, you must preserve the '+' before the 'http'.",
           "Mozilla/5.0 (compatible; heritrix/@VERSION@ +PROJECT_URL_HERE)"));
-        e.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_USER_AGENT,
-                Level.WARNING,
-                "This field must contain a valid URL leading to the website " +
-                "of the person or organization responsible for this crawl."));
 
         e = httpHeaders.addElementToDefinition(new SimpleType(ATTR_FROM,
                 "Contact information. This field must contain a valid " +
                 "e-mail address for the person or organization responsible" +
                 "for this crawl: e.g. 'webmaster@loc.gov'",
                 "CONTACT_EMAIL_ADDRESS_HERE"));
-        e.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FROM,
-                Level.WARNING, "This field must contain a valid e-mail " +
-                        "address for the person or organization responsible " +
-                        "for this crawl."));
 
         addElementToDefinition(new RobotsHonoringPolicy());
 
@@ -424,7 +416,8 @@ public class CrawlOrder extends ModuleType {
         String from = this.getFrom(null);
         if (!(userAgent.matches(ACCEPTABLE_USER_AGENT)
             && from.matches(ACCEPTABLE_FROM))) {
-            throw new FatalConfigurationException("unacceptable user-agent or from");
+            throw new FatalConfigurationException("unacceptable user-agent " +
+                    " or from (Reedit your order file).");
         }
     }
 
@@ -433,7 +426,8 @@ public class CrawlOrder extends ModuleType {
      */
     public File getCheckpointsDirectory() {
         try {
-            return getDirectoryRelativeToDiskPath((String) getAttribute(null, CrawlOrder.ATTR_CHECKPOINTS_PATH));
+            return getDirectoryRelativeToDiskPath((String) getAttribute(null,
+                    CrawlOrder.ATTR_CHECKPOINTS_PATH));
         } catch (AttributeNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

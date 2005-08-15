@@ -74,7 +74,7 @@ public class BigMapFactory {
         Map result = null;
         // Try and get an instance of BigMap, if there is one configured into
         // Heritrix. If not, we'll just go with default HashMap.
-        String className = Heritrix.getProperty(BigMapFactory.KEY);
+        String className = System.getProperty(BigMapFactory.KEY);
         if (className != null) {
             Class classDefinition = Class.forName(className);
             result = (Map)classDefinition.newInstance();
