@@ -48,12 +48,9 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
-import javax.management.ObjectInstance;
 import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.Heritrix;
-import org.archive.crawler.admin.Alert;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.checkpoint.Checkpoint;
@@ -80,7 +77,6 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
-import org.archive.util.JEApplicationMBean;
 import org.archive.util.Reporter;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Type;
@@ -294,8 +290,6 @@ public class CrawlController implements Serializable, Reporter {
      */
     private transient StoredClassCatalog classCatalog = null;
     
-    private transient ObjectInstance jeRegisteredMBeanInstance = null;
-    
     /**
      * Default constructor
      */
@@ -370,13 +364,11 @@ public class CrawlController implements Serializable, Reporter {
             onFailMessage = "Unable to setup crawl modules";
             setupCrawlModules();
         } catch (Exception e) {
-            String extendedMessage = onFailMessage + ": " + e.toString();
-            Heritrix.addAlert(
-                new Alert(
-                    e.getClass().getName() + " on crawl: "
-                    + settingsHandler.getSettingsObject(null).getName(),
-                    extendedMessage,e,Level.CONFIG));
-            throw new InitializationException(extendedMessage, e);
+            String tmp = "On crawl: "
+                + settingsHandler.getSettingsObject(null).getName() + " " +
+                onFailMessage;
+            LOGGER.log(Level.SEVERE, tmp, e);
+            throw new InitializationException(tmp, e);
         }
 
         // force creation of DNS Cache now -- avoids CacheCleaner in toe-threads group
@@ -472,11 +464,6 @@ public class CrawlController implements Serializable, Reporter {
             this.classCatalogDB = this.bdbEnvironment.
                 openDatabase(null, "classes", dbConfig);
             this.classCatalog = new StoredClassCatalog(classCatalogDB);
-            // Register the current bdbje env w/ the JMX agent, if there is
-            // one.
-            this.jeRegisteredMBeanInstance = Heritrix.
-                registerMBean(new JEApplicationMBean(this.bdbEnvironment),
-                    "BdbJe");
         } catch (DatabaseException e) {
             e.printStackTrace();
             throw new FatalConfigurationException(e.getMessage());
@@ -1062,9 +1049,6 @@ public class CrawlController implements Serializable, Reporter {
             	// can't hurt, might make bdb droppings post-crawl
             	// more useful 
                 this.bdbEnvironment.sync();
-                if (this.jeRegisteredMBeanInstance != null) {
-                    Heritrix.unregisterMBean(this.jeRegisteredMBeanInstance);
-                }
                 this.bdbEnvironment.close();
             } catch (DatabaseException e) {
                 e.printStackTrace();
@@ -1369,7 +1353,7 @@ public class CrawlController implements Serializable, Reporter {
      * @return Active toe thread count.
      */
     public int getActiveToeCount() {
-        if (toePool==null) {
+        if (toePool == null) {
             return 0;
         }
         return toePool.getActiveToeCount();

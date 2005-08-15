@@ -6,5 +6,7 @@
 %>
 
 <%@include file="/include/head.jsp"%>
-        <pre><%=handler.getFrontierReport().replaceAll("<","&lt;")%></pre>
+        <pre><%=handler.getCurrentJob() != null?
+            handler.getCurrentJob().getFrontierReport().replaceAll("<","&lt;"):
+            "No current job"%></pre>
 <%@include file="/include/foot.jsp"%>

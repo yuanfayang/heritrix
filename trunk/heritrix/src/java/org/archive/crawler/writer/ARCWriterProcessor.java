@@ -59,7 +59,6 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.archive.crawler.Heritrix;
-import org.archive.crawler.admin.Alert;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -397,8 +396,8 @@ ARCWriterSettings, FetchStatusCodes {
         } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e, "WriteARCRecord: " +
                 curi.toString());
-            Heritrix.addAlert(new Alert("Failed write of ARC Record: " +
-                curi.toString(), e.getMessage(), e, Level.SEVERE));
+            logger.log(Level.SEVERE, "Failed write of ARC Record: " +
+                curi.toString(), e);
         }
     }
 

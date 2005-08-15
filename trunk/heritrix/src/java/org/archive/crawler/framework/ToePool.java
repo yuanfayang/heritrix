@@ -182,17 +182,11 @@ public class ToePool extends ThreadGroup implements Reporter {
     public static String COMPACT_REPORT = "compact";
     protected static String[] REPORTS = {STANDARD_REPORT,COMPACT_REPORT};
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#getReports()
-     */
     public String[] getReports() {
         return REPORTS;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
-     */
-    public void reportTo(String name, PrintWriter writer) throws IOException {
+    public void reportTo(String name, PrintWriter writer) {
         if(COMPACT_REPORT.equals(name)) {
             compactReportTo(writer);
             return;
@@ -239,35 +233,25 @@ public class ToePool extends ThreadGroup implements Reporter {
      * @see org.archive.util.Reporter#reportTo(java.io.Writer)
      */
     protected void compactReportTo(PrintWriter writer) {
-        try {
-            writer.print(
-                getToeCount() + " threads (" + getActiveToeCount() + " active)\n");
+        writer.print(getToeCount() + " threads (" + getActiveToeCount()
+                + " active)\n");
 
-            Thread[] toes = this.getToes();
-            // TODO: sort by activity: those with curi the longest at front
-            synchronized (toes) {
-                for (int i = 0; i < toes.length ; i++) {
-                    if(!(toes[i] instanceof ToeThread)) {
-                        continue;
-                    }
-                    ToeThread tt = (ToeThread)toes[i];
-                    if(tt!=null) {
-                        tt.singleLineReportTo(writer);
-                    }
+        Thread[] toes = this.getToes();
+        // TODO: sort by activity: those with curi the longest at front
+        synchronized (toes) {
+            for (int i = 0; i < toes.length; i++) {
+                if (!(toes[i] instanceof ToeThread)) {
+                    continue;
+                }
+                ToeThread tt = (ToeThread) toes[i];
+                if (tt != null) {
+                    tt.singleLineReportTo(writer);
                 }
             }
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
     }
 
-    /**
-     * @return One-line summary report, useful for display before drilling
-     * into full report.
-     * @throws IOException
-     */
-    public void singleLineReportTo(PrintWriter w) throws IOException {
+    public void singleLineReportTo(PrintWriter w) {
         Histotable ht = new Histotable();
         Thread[] toes = getToes();
         for (int i = 0; i < toes.length; i++) {
@@ -295,17 +279,11 @@ public class ToePool extends ThreadGroup implements Reporter {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#singleLineReport()
-     */
     public String singleLineReport() {
         return ArchiveUtils.singleLineReport(this);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
-     */
-    public void reportTo(PrintWriter writer) throws IOException {
+    public void reportTo(PrintWriter writer) {
         reportTo(null,writer);
     }
 }

@@ -326,7 +326,7 @@ public abstract class AbstractFrontier extends ModuleType implements
         try {
             logsDisk = c.getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
         } catch (AttributeNotFoundException e) {
-            logger.severe("Failed to get logs directory " + e);
+            logger.log(Level.SEVERE, "Failed to get logs directory", e);
         }
         if (logsDisk != null) {
             String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;

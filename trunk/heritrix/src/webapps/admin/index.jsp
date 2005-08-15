@@ -127,7 +127,7 @@
                             <td>
                                 <a style="color: #000000" 
                                     href="<%=request.getContextPath()%>/console/alerts.jsp">
-                                    <%=Heritrix.getAlerts().size()%> (<%=Heritrix.getNewAlertsCount()%> new)
+                                    <%=heritrix.getAlertsCount()%> (<%=heritrix.getNewAlertsCount()%> new)
                                 </a>
                             </td>
                     </table>
@@ -330,7 +330,7 @@
             &nbsp;
     </td></tr>
     <tr><td>
-        <% if (Heritrix.isCommandLine()) {  
+        <% if (heritrix.isCommandLine()) {  
             // Print the shutdown only if we were started from command line.
             // It makes no sense when in webcontainer mode.
          %>

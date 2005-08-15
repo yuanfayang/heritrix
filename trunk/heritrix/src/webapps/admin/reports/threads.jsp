@@ -8,11 +8,16 @@
     String message = null;
     if(action != null && action.equals("killkillkill")){
         // Kill thread.
-        try{
-            handler.killThread(Integer.parseInt(request.getParameter("threadNumber")),
-                    (request.getParameter("replace")!=null && 
-                        request.getParameter("replace").equals("replace")));
-            message = "Kill message sent to thread #" + request.getParameter("threadNumber");
+        try {
+            if (handler.getCurrentJob() != null) {
+                String threadNumber =request.getParameter("threadNumber");
+                handler.getCurrentJob().
+                    killThread(Integer.parseInt(threadNumber),
+                        (request.getParameter("replace")!=null && 
+                            request.getParameter("replace").equals("replace")));
+                message = "Kill message sent to thread #" +
+                    request.getParameter("threadNumber");
+            }
         } catch(NumberFormatException e){
             message = "Kill operation failed";
         }
@@ -32,7 +37,8 @@
             }
         }
     </script>
-    <pre><%=handler.getThreadsReport()%></pre>
+    <pre><%=handler.getCurrentJob() != null?
+    handler.getCurrentJob().getThreadsReport(): ""%></pre>
     <hr>
     <form name="frmThread" method="post" action="threads.jsp">
         <input type="hidden" name="action">

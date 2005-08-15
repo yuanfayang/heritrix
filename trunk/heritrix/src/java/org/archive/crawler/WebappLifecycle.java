@@ -43,7 +43,7 @@ public class WebappLifecycle implements ServletContextListener {
 				e.printStackTrace();
 			}
             if (this.heritrix != null) {
-            	    this.heritrix.start();
+                this.heritrix.start();
             }
         }
     }

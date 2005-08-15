@@ -7,6 +7,8 @@
 
 <%@include file="/include/head.jsp"%>
 
-    <pre><%=handler.getProcessorsReport().replaceAll(" ","&nbsp;")%></pre>
+    <pre><%=handler.getCurrentJob() != null?
+    handler.getCurrentJob().getProcessorsReport().replaceAll(" ","&nbsp;"):
+    ""%></pre>
 
 <%@include file="/include/foot.jsp"%>

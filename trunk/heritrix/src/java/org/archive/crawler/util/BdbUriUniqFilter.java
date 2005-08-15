@@ -100,7 +100,8 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         try {
             initialize(environment, recycle);
         } catch (DatabaseException e) {
-            throw new IOException(e.getMessage());
+            throw new IOException("Recycle was: " + Boolean.toString(recycle) +
+                    ": " + e.getMessage());
         }
     }
     

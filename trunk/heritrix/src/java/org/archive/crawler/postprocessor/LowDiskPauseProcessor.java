@@ -33,8 +33,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.archive.crawler.Heritrix;
-import org.archive.crawler.admin.Alert;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
@@ -129,6 +127,7 @@ public class LowDiskPauseProcessor extends Processor {
      * Probe via 'df' to see if monitored mounts have fallen
      * below the pause available threshold. If so, request a 
      * crawl pause. 
+     * @param curi Current context.
      */
     private void checkAvailableSpace(CrawlURI curi) {
         try {
@@ -150,11 +149,10 @@ public class LowDiskPauseProcessor extends Processor {
                             null, ATTR_PAUSE_THRESHOLD)).intValue();
                     if (availKilobytes < thresholdKilobytes ) {
                         getController().requestCrawlPause();
-                        Heritrix.addAlert(new Alert("Low Disk Pause",
+                        logger.log(Level.SEVERE, "Low Disk Pause",
                                 availKilobytes + "K available on " + mount
                                         + " (below threshold "
-                                        + thresholdKilobytes + "K)",
-                                Level.SEVERE));
+                                        + thresholdKilobytes + "K)");
                         break;
                     }
                 }
