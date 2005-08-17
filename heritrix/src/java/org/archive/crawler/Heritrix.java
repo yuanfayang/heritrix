@@ -66,7 +66,6 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.RuntimeOperationsException;
@@ -238,16 +237,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * MBean name we were registered as.
      */
     private ObjectName mbeanName = null;
-    
-    /**
-     * Instance of Heritrix MBean registered by cmdline Heritrix.
-     * In the case where Heritrix was launched from the command-line, we'll
-     * take care to register ourselves with any MBeanServer found (Usually the
-     * JVM MBeanServer if we're in 1.5 JVM).  So we clean up properly after
-     * ourselves, we need to keep around static reference
-     * so we deregister ourselves on the way out.
-     */
-    private static ObjectInstance cmdlineRegisteredInstance = null;
     
     /**
      * Server cmdline Heritrix registered its MBean with.
@@ -1373,8 +1362,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 (name == null || name.length() <= 0)?
                         getJmxName(): getJmxName(name));
         Heritrix.cmdlineRegisteredServer = getMBeanServer(objName);
-        Heritrix.cmdlineRegisteredInstance =
-            Heritrix.cmdlineRegisteredServer.registerMBean(h, objName);
+        Heritrix.cmdlineRegisteredServer.registerMBean(h, objName);
     }
     
     /**
