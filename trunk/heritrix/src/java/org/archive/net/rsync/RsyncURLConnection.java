@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.util.ProcessUtils;
@@ -41,12 +42,14 @@ import org.archive.util.ProcessUtils;
  * @version $Date$, $Revision$
  */
 public class RsyncURLConnection extends URLConnection {
-    private static final String CLASSNAME = Handler.class.getName();
+    private static final String CLASSNAME = RsyncURLConnection.class.getName();
     private final Logger LOGGER = Logger.getLogger(CLASSNAME);
     private static final File TMPDIR =
         new File(System.getProperty("java.io.tmpdir", "/tmp"));
     private static final String RSYNC =
         System.getProperty(CLASSNAME + ".path", "rsync");
+    private static final String RSYNC_TIMEOUT =
+        System.getProperty(CLASSNAME + ".timeout", "10");
     private File downloadFile = null;
 
     protected RsyncURLConnection(URL u) {
@@ -65,8 +68,19 @@ public class RsyncURLConnection extends URLConnection {
         
         this.downloadFile = File.createTempFile(CLASSNAME, null, TMPDIR);
         try {
-            ProcessUtils.exec(new String[] {RSYNC, this.url.toExternalForm(),
-                this.downloadFile.getAbsolutePath()});
+            String [] cmd = new String[] {RSYNC, "--timeout=" + RSYNC_TIMEOUT,
+                this.url.toExternalForm(), this.downloadFile.getAbsolutePath()};
+            if (LOGGER.isLoggable(Level.FINE)) {
+                StringBuffer buffer = new StringBuffer();
+                for (int i = 0; i < cmd.length; i++) {
+                    if (i > 0) {
+                        buffer.append(" ");
+                    }
+                    buffer.append(cmd[i]);
+                }
+                LOGGER.fine("Rsyc command: " + buffer.toString());
+            }
+            ProcessUtils.exec(cmd);
             // Assume download went smoothly.
             this.connected = true;
         } catch (IOException ioe) {
