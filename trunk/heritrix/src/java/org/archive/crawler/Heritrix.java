@@ -282,13 +282,14 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private final static String PENDING_JOBS_OPER = "pendingJobs";
     private final static String COMPLETED_JOBS_OPER = "completedJobs";
     private final static String CRAWLEND_REPORT_OPER = "crawlendReport";
+    private final static String SHUTDOWN_OPER = "shutdown";
     private final static List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {START_OPER, STOP_OPER,
             INTERRUPT_OPER, START_CRAWLING_OPER, STOP_CRAWLING_OPER,
             ADD_CRAWL_JOB_OPER, ADD_CRAWL_JOB_BASEDON_OPER,
             DELETE_CRAWL_JOB_OPER, ALERT_OPER, PENDING_JOBS_OPER,
-            COMPLETED_JOBS_OPER, CRAWLEND_REPORT_OPER});
+            COMPLETED_JOBS_OPER, CRAWLEND_REPORT_OPER, SHUTDOWN_OPER});
     }
     private CompositeType jobCompositeType = null;
     private TabularType jobsTabularType = null;
@@ -1286,11 +1287,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             }
         }
         
-        // Unregister MBean.
-        if (Heritrix.cmdlineRegisteredInstance != null) {
-            unregisterMBean(Heritrix.cmdlineRegisteredServer,
-                    Heritrix.cmdlineRegisteredInstance.getObjectName());
-            Heritrix.cmdlineRegisteredInstance = null;
+        // Shutdown all running Heritrix instances.
+        for (final Iterator i = Heritrix.instances.keySet().iterator();
+                i.hasNext();) {
+            ((Heritrix)Heritrix.instances.get(i.next())).stop();
         }
     }
 
@@ -1581,8 +1581,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * Stop Heritrix.
      * 
      * Used by JMX and webapp initialization for stopping Heritrix.
-     * Starts up a shutdown thread rather than synchronously waiting
-     * so returns immediately.
      */
     public void stop() {
         if (this.jobHandler != null) {
@@ -1747,6 +1745,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         operations[11] = new OpenMBeanOperationInfoSupport(
             Heritrix.CRAWLEND_REPORT_OPER, "Return crawl-end report", args,
                 SimpleType.STRING, MBeanOperationInfo.ACTION_INFO);
+        
+        operations[12] = new OpenMBeanOperationInfoSupport(
+            Heritrix.SHUTDOWN_OPER, "Shutdown container", null,
+                SimpleType.VOID, MBeanOperationInfo.ACTION);
 
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
@@ -1828,6 +1830,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         if (operationName.equals(STOP_OPER)) {
             JmxUtils.checkParamsCount(STOP_OPER, params, 0);
             stop();
+            return null;
+        }
+        if (operationName.equals(SHUTDOWN_OPER)) {
+            JmxUtils.checkParamsCount(SHUTDOWN_OPER, params, 0);
+            Heritrix.shutdown();
             return null;
         }
         if (operationName.equals(INTERRUPT_OPER)) {
