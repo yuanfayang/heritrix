@@ -2375,7 +2375,7 @@ public class SimpleExtractor extends Processor
       method javadoc</ulink> comments).</para>
 
       <para><ulink
-      url="http://www.netarchive.dk/website/sources/index-en.htm">Netarchive.dk</ulink>
+      url="http://www.netarchive.dk/website/sources/index-en.php">Netarchive.dk</ulink>
       have also developed arc reading and writing tools.</para>
 
       <para>Tom Emerson of Basis Technology has put up a project on
