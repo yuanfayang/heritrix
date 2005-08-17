@@ -100,4 +100,4 @@ esac
 
 ${JAVA_HOME}/bin/java -jar ${HERITRIX_HOME}/bin/cmdline-jmxclient*.jar \
     ${USERPWORD} localhost:${JMX_PORT} \
-    org.archive.crawler:name=Heritrix,type=Service stop
+    org.archive.crawler:name=Heritrix,type=Service shutdown
