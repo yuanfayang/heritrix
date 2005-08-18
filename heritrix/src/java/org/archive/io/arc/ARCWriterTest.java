@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.archive.io.ReplayInputStream;
 import org.archive.util.ArchiveUtils;
@@ -285,11 +284,11 @@ extends TmpDirTestCase implements ARCConstants {
         try {
             lengthTooShort("testLengthTooShortCompressedStrict-" + PREFIX,
                 true, true);
-        } catch (NoSuchElementException e) {
+        } catch (RuntimeException e) {
             eMessage = e.getMessage();
         }
         assertTrue("Didn't get expected exception: " + eMessage,
-            eMessage.startsWith("Record ENDING at"));
+            eMessage.startsWith("java.io.IOException: Record ENDING at"));
     }
      
     protected void lengthTooShort(String name, boolean compress, boolean strict)
