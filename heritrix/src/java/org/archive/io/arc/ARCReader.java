@@ -205,8 +205,7 @@ implements ARCConstants {
             try {
                 ((RepositionableStream)this.in).position(0);
             } catch (IOException e) {
-                throw new RuntimeException(e.getClass().getName() + ": " +
-                    e.getMessage());
+                throw new RuntimeException(e);
             }
        } else {
            throw new IOException("Stream is not resettable.");
@@ -377,7 +376,7 @@ implements ARCConstants {
             try {
                 cleanupCurrentRecord();
             } catch (IOException e) {
-                throw new NoSuchElementException(e.getMessage());
+                throw new RuntimeException(e);
             }
             return innerHasNext();
         }
@@ -386,7 +385,7 @@ implements ARCConstants {
             try {
                 return getInputStream().available() > 0;
             } catch (IOException e) {
-                throw new RuntimeException("Failed: " + e.getMessage());
+                throw new RuntimeException(e);
             }
         }
 
@@ -407,8 +406,7 @@ implements ARCConstants {
                 }
                 return null;
             } catch (IOException e) {
-                throw new NoSuchElementException(e.getClass() + ": " +
-                    e.getMessage());
+                throw new RuntimeException(e);
             }
         }
 
@@ -425,16 +423,14 @@ implements ARCConstants {
         try {
             cleanupCurrentRecord();
         } catch (IOException e) {
-            throw new RuntimeException(e.getClass().getName() + ": " +
-                    e.getMessage());
+            throw new RuntimeException(e);
         }
         
         // Now reset stream to the start of the arc file.
         try {
             rewind();
         } catch (IOException e) {
-            throw new RuntimeException(e.getClass().getName() + ": " +
-                    e.getMessage());
+            throw new RuntimeException(e);
         }
         return new ARCRecordIterator();
     }

@@ -25,8 +25,6 @@
 package org.archive.io.arc;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -38,7 +36,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
-import org.archive.io.GzipHeader;
 import org.archive.io.GzippedInputStream;
 import org.archive.net.UURI;
 import org.archive.net.rsync.RsyncURLConnection;
