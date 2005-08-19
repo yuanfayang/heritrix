@@ -33,13 +33,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -364,11 +365,16 @@ implements ARCConstants {
     
     /**
      * Inner ARCRecord Iterator class.
+     * Throws RuntimeExceptions in {@link #hasNext()} and {@link #next()} if
+     * trouble pulling record from underlying stream.
      * @author stack
      */
     protected class ARCRecordIterator implements Iterator {
         /**
          * @return True if we have more ARC records to read.
+         * @exception RuntimeException Can throw an IOException wrapped in a
+         * RuntimeException if a problem reading underlying stream (Corrupted
+         * gzip, etc.).
          */
         public boolean hasNext() {
             // Call close on any extant record.  This will scoot us past
@@ -392,8 +398,10 @@ implements ARCConstants {
         /**
          * Return the next record.
          *
-         * @return Next ARCRecord else null if no more records left.
-         * You need to cast result to ARCRecord.
+         * @return Next ARCRecord. Cast result to ARCRecord.
+         * @exception RuntimeException Can throw an IOException wrapped in a
+         * RuntimeException if a problem reading underlying stream (Corrupted
+         * gzip, etc.).
          */
         public Object next() {
             try {
@@ -1176,7 +1184,7 @@ implements ARCConstants {
     }
     
     /**
-     * A subclass of IOException that is not fatal.
+     * A decorator on IOException that indicates IOEs that are not fatal.
      * If iterating over records, should be able to move to the next record and 
      * continue processing.
      * @author stack
@@ -1184,11 +1192,59 @@ implements ARCConstants {
      */
     public class RecoverableIOException
     extends IOException {
-        protected RecoverableIOException() {
-            super();
+        private final IOException decoratedIOException;
+        
+        protected RecoverableIOException(final String message) {
+            this.decoratedIOException = new IOException(message);
         }
-        protected RecoverableIOException(String message) {
-            super(message);
+        
+        protected RecoverableIOException(final IOException ioe) {
+            super();
+            this.decoratedIOException = ioe;
+        }
+
+        public synchronized Throwable fillInStackTrace() {
+            return this.decoratedIOException.fillInStackTrace();
+        }
+
+        public Throwable getCause() {
+            return this.decoratedIOException.getCause();
+        }
+
+        public String getLocalizedMessage() {
+            return this.decoratedIOException.getLocalizedMessage();
+        }
+
+        public String getMessage() {
+            return this.decoratedIOException.getMessage();
+        }
+
+        public StackTraceElement[] getStackTrace() {
+            return this.decoratedIOException.getStackTrace();
+        }
+
+        public synchronized Throwable initCause(Throwable cause) {
+            return this.decoratedIOException.initCause(cause);
+        }
+
+        public void printStackTrace() {
+            this.decoratedIOException.printStackTrace();
+        }
+
+        public void printStackTrace(PrintStream s) {
+            this.decoratedIOException.printStackTrace(s);
+        }
+
+        public void printStackTrace(PrintWriter s) {
+            this.decoratedIOException.printStackTrace(s);
+        }
+
+        public void setStackTrace(StackTraceElement[] stackTrace) {
+            this.decoratedIOException.setStackTrace(stackTrace);
+        }
+
+        public String toString() {
+            return this.decoratedIOException.toString();
         }
     }
 }
