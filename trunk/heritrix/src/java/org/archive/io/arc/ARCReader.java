@@ -84,6 +84,13 @@ implements ARCConstants {
     Logger logger = Logger.getLogger(ARCReader.class.getName());
     
     /**
+     * Maximum amount of recoverable exceptions in a row.
+     * If more than this amount in a row, we'll let out the exception rather
+     * than go back in for a retry.
+     */
+    private static final int MAX_ALLOWED_RECOVERABLES = 10;
+    
+    /**
      * Assumed maximum size of a record meta header line.
      *
      * This 100k which seems massive but its the same as the LINE_LENGTH from
@@ -388,36 +395,98 @@ implements ARCConstants {
         }
         
         protected boolean innerHasNext() {
+            long offset = -1;
             try {
+                offset = ((RepositionableStream)getInputStream()).position();
                 return getInputStream().available() > 0;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Offset " + offset, e);
             }
         }
 
         /**
-         * Return the next record.
-         *
-         * @return Next ARCRecord. Cast result to ARCRecord.
-         * @exception RuntimeException Can throw an IOException wrapped in a
-         * RuntimeException if a problem reading underlying stream (Corrupted
-         * gzip, etc.).
+         * Tries to move to next record if we get
+         * {@link RecoverableIOException}. If not <code>strict</code>
+         * tries to move to next record if we get an
+         * {@link IOException}.
+         * @return Next object.
+         * @exception RuntimeException Throws a runtime exception,
+         * usually a wrapping of an IOException, if trouble getting
+         * a record (Throws exception rather than return null).
          */
         public Object next() {
+            long offset = -1;
             try {
-                return get(((RepositionableStream)getInputStream())
-                    .position());
-            } catch (RecoverableIOException e) {
-                getLogger().warning("Recoverable error: " + e.getMessage());
-                if (hasNext()) {
-                    return next();
-                }
-                return null;
+                offset = ((RepositionableStream)getInputStream()).position();
+                return exceptionNext();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                if (!isStrict()) {
+                    // Retry once.
+                    try {
+                        if (hasNext()) {
+                            logger.warning("Retrying (Current offset " +
+                                    offset + "): " +  e.getMessage());
+                            return exceptionNext();
+                        }
+                        // There is no next and we don't have a record
+                        // to return.  Throw the recoverable.
+                        return new RuntimeException("Retried but " +
+                            "no next record (Offset " + offset + ")",
+                            e);
+                    } catch (IOException e1) {
+                        throw new RuntimeException("After retry (Offset " +
+                                offset + ")", e1);
+                    }
+                }
+                throw new RuntimeException("(Offset " + offset + ")", e);
             }
         }
-
+        
+        /**
+         * A next that throws exceptions and has handling of
+         * recoverable exceptions moving us to next record. Can call
+         * hasNext which itself may throw exceptions.
+         * @return Next record.
+         * @throws IOException
+         * @throws RuntimeException Thrown when we've reached maximum
+         * retries.
+         */
+        protected Object exceptionNext()
+        throws IOException, RuntimeException {
+            Object result = null;
+            IOException ioe = null;
+            for (int i = MAX_ALLOWED_RECOVERABLES; i > 0 &&
+                    result == null; i--) {
+                ioe = null;
+                try {
+                    result = innerNext();
+                } catch (RecoverableIOException e) {
+                    ioe = e;
+                    getLogger().warning(e.getMessage());
+                    if (hasNext()) {
+                        continue;
+                    }
+                    // No records left.  Throw exception rather than
+                    // return null.  The caller is expecting to get
+                    // back a record since they've just called
+                    // hasNext.
+                    break;
+                }
+            }
+            if (ioe != null) {
+                // Then we did MAX_ALLOWED_RECOVERABLES retries.  Throw
+                // the recoverable ioe wrapped in a RuntimeException so
+                // it goes out pass checks for IOE.
+                throw new RuntimeException("Retried " +
+                    MAX_ALLOWED_RECOVERABLES + " times in a row", ioe);
+            }
+            return result;
+        }
+        
+        protected Object innerNext() throws IOException {
+            return get(((RepositionableStream)getInputStream()).position());
+        }
+        
         public void remove() {
             throw new UnsupportedOperationException();
         }
