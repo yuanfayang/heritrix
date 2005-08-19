@@ -53,13 +53,6 @@ public class ARCReaderFactory implements ARCConstants {
         new File(System.getProperty("java.io.tmpdir", "/tmp"));
     
     /**
-     * Maximum amount of recoverable exceptions in a row.
-     * If more than this amount in a row, we'll let out the exception rather
-     * than go back in for a retry.
-     */
-    private static final int MAX_ALLOWED_RECOVERABLES = 10;
-    
-    /**
      * This factory instance.
      */
     private static final ARCReaderFactory factory = new ARCReaderFactory();
@@ -271,94 +264,25 @@ public class ARCReaderFactory implements ARCConstants {
         }
         
         public Iterator iterator() {
-            // Override ARCRecordIterator so can base returned iterator
-            // on GzippedInputStream iterator.
+            /**
+             * Override ARCRecordIterator so can base returned iterator on
+             * GzippedInputStream iterator.
+             */
             return new ARCRecordIterator() {
-                private GzippedInputStream gis =
-                    (GzippedInputStream)getInputStream();
+                private GzippedInputStream gis = (GzippedInputStream) getInputStream();
+
                 private Iterator gzipIterator = this.gis.iterator();
-                
+
                 protected boolean innerHasNext() {
                     return this.gzipIterator.hasNext();
                 }
 
-                /**
-                 * Tries to move to next record if we get
-                 * {@link RecoverableIOException}. If not <code>strict</code>
-                 * tries to move to next record if we get an
-                 * {@link IOException}.
-                 * @exception RuntimeException Throws a runtime exception,
-                 * usually a wrapping of an IOException, if trouble getting
-                 * a record (Throws exception rather than return null).
-                 */
-                public Object next() {
-                    try {
-                        return exceptionNext();
-                    } catch (IOException e) {
-                        if (!isStrict()) {
-                            // Retry once.
-                            try {
-                                if (hasNext()) {
-                                    logger.warning("Retrying after " +
-                                        e.getMessage());
-                                    return exceptionNext();
-                                }
-                                // There is no next and we don't have a record
-                                // to return.  Throw the recoverable.
-                                return new RuntimeException("Retried but " +
-                                    "no next record", e);
-                            } catch (IOException e1) {
-                                throw new RuntimeException("Retry", e1);
-                            }
-                        }
-                        throw new RuntimeException(e);
-                    }
-                }
-                
-                /**
-                 * A next that throws exceptions and has handling of
-                 * recoverable exceptions moving us to next record. Can call
-                 * hasNext which itself may throw exceptions.
-                 * @return Next record.
-                 * @throws IOException
-                 * @throws RuntimeException Thrown when we've reached maximum
-                 * retries.
-                 */
-                protected Object exceptionNext()
-                throws IOException, RuntimeException {
-                    Object result = null;
-                    IOException ioe = null;
-                    for (int i = MAX_ALLOWED_RECOVERABLES; i > 0 &&
-                            result == null; i--) {
-                        ioe = null;
-                        try {
-                            // Get the positoin before gzipIterator.next moves
-                            // it on past the gzip header.
-                            long p = this.gis.position();
-                            InputStream is =
-                                (InputStream)this.gzipIterator.next();
-                            result = createARCRecord(is, p);
-                        } catch (RecoverableIOException e) {
-                            ioe = e;
-                            getLogger().warning(e.getMessage());
-                            if (hasNext()) {
-                                continue;
-                            }
-                            // No records left.  Throw exception rather than
-                            // return null.  The caller is expecting to get
-                            // back a record since they've just called
-                            // hasNext.
-                            break;
-                        }
-                    }
-                    if (ioe != null) {
-                        // Then we did MAX_ALLOWED_RECOVERABLES retries.  Throw
-                        // the recoverable ioe wrapped in a RuntimeException so
-                        // it goes out pass checks for IOE.
-                        throw new RuntimeException("Retried " +
-                            MAX_ALLOWED_RECOVERABLES + " times in a row", ioe);
-                    }
-                    return result;
+                protected Object innerNext() throws IOException {
+                    // Get the positoin before gzipIterator.next moves
+                    // it on past the gzip header.
+                    long p = this.gis.position();
+                    InputStream is = (InputStream) this.gzipIterator.next();
+                    return createARCRecord(is, p);
                 }
             };
         }
