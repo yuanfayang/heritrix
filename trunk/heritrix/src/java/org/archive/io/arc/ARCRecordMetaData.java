@@ -149,7 +149,8 @@ public class ARCRecordMetaData
     }
 
     /**
-     * @return mimetype.
+     * @return mimetype The mimetype that is in the ARC metaline -- NOT the http
+     * content-type content.
      */
     public String getMimetype() {
         return (String)this.headerFields.get(MIMETYPE_HEADER_FIELD_KEY);
