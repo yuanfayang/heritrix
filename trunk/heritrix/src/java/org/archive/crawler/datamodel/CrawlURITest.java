@@ -31,8 +31,6 @@ import java.io.ObjectOutputStream;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURIFactory;
-import org.archive.queue.DiskStack;
-import org.archive.queue.Stack;
 import org.archive.util.TmpDirTestCase;
 
 /**
@@ -88,54 +86,6 @@ public class CrawlURITest extends TmpDirTestCase {
         } finally {
             serialize.delete();
         }
-    }
-    
-    /** 
-     * Make a new DiskStack, using <code>/tmp</code> and <code>foo</code>
-     * as the <code>scratchDir</code> and <code>prefix</code> respectively.
-     * @return the Queue
-     */
-    protected Stack makeStack() {
-        try {
-            File storeFile = new File(getTmpDir(),
-                this.getClass().getName() + ".stack");
-            storeFile.delete();
-            return new DiskStack(storeFile);
-        } catch (IOException e) {
-            fail("IOException: " + e.getMessage());
-            // never gets here
-            return null;
-        }
-    }
-
-    public void testStack() throws URIException {
-        Stack stack = makeStack();
-        try {
-            pushPop(stack, this.seed);
-            pushPop(stack, this.seed);
-            pushPop(stack, this.seed);
-            pushPop(stack, this.seed);
-            stack.push(this.seed);
-            stack.push(this.seed);
-            stack.push(this.seed);
-            stack.push(this.seed);
-            stack.push(this.seed);
-            stack.push(this.seed);
-            stack.push(this.seed);
-            pushPop(stack, this.seed);
-            pushPop(stack, this.seed);
-            pushPop(stack, this.seed);
-        } finally {
-            stack.release();
-        }
-    }
-    
-    private void pushPop(Stack stack, CrawlURI curi) throws URIException {
-        stack.push(curi);
-        CrawlURI poppedCuri = (CrawlURI)stack.pop();
-        String host = poppedCuri.getUURI().getHost();
-        assertTrue("Host is empty",
-            host != null && host.length() > 0);
     }
     
     public void testCandidateURIWithLoadedAList()

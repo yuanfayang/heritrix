@@ -623,7 +623,7 @@ implements Serializable, Reporter {
         return ArchiveUtils.singleLineReport(this);
     }
     
-    public void singleLineReportTo(PrintWriter w) throws IOException {
+    public void singleLineReportTo(PrintWriter w) {
         String className = this.getClass().getName();
         className = className.substring(className.lastIndexOf(".")+1);
         w.print(className);
@@ -646,7 +646,7 @@ implements Serializable, Reporter {
     /* (non-Javadoc)
      * @see org.archive.util.Reporter#reportTo(java.lang.String, java.io.Writer)
      */
-    public void reportTo(String name, PrintWriter writer) throws IOException {
+    public void reportTo(String name, PrintWriter writer) {
         singleLineReportTo(writer);
         writer.print("\n");
     }

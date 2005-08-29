@@ -75,7 +75,6 @@ import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.AbstractFrontier;
-import org.archive.crawler.frontier.HostQueuesFrontier;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.util.IoUtils;
 import org.archive.util.ArchiveUtils;
@@ -984,10 +983,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
      * If its a HostQueuesFrontier, needs to be flushed for the queued.
      */
     protected void flush() {
-        if (this.controller != null &&
-                this.controller.getFrontier() instanceof HostQueuesFrontier) {
-            ((HostQueuesFrontier)controller.getFrontier()).batchFlush();
-        }
+        // Nothing to do.
     }
 
     /**

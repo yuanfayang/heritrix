@@ -26,7 +26,6 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.Heritrix;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.util.CachedBdbMap;

@@ -67,6 +67,7 @@ public class RobotsExclusionPolicy implements Serializable {
     private List userAgentsToTest = null;
 
     /**
+     * @param settings 
      * @param reader
      * @param honoringPolicy
      * @return Robot exclusion policy.
@@ -140,6 +141,7 @@ public class RobotsExclusionPolicy implements Serializable {
 
 
     /**
+     * @param settings 
      * @param u
      * @param d
      * @param errs
@@ -257,6 +259,7 @@ public class RobotsExclusionPolicy implements Serializable {
      * is written in the serialization stream.
      *
      * @param stream the serialization stream.
+     * @throws IOException 
      */
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.writeInt(type);
@@ -269,6 +272,8 @@ public class RobotsExclusionPolicy implements Serializable {
      * is read from the serialization stream.
      *
      * @param stream the serialization stream.
+     * @throws IOException 
+     * @throws ClassNotFoundException 
      */
     private void readObject(ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
@@ -280,6 +285,8 @@ public class RobotsExclusionPolicy implements Serializable {
 
     /** If object is DENYALL or ALLOWALL, the object is replaced by constants
      * so that check for object equality works.
+     * @return Object.
+     * @throws ObjectStreamException 
      */
     private Object readResolve() throws ObjectStreamException {
         if (type == NORMAL_TYPE) {

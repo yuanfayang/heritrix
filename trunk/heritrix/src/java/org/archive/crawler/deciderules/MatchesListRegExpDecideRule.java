@@ -79,7 +79,7 @@ public class MatchesListRegExpDecideRule extends PredicatedDecideRule {
      * Evaluate whether given object's string version
      * matches configured regexps
      * 
-     * @param object
+     * @param o
      * @return true if regexps are matched
      */
     protected boolean evaluate(Object o) {

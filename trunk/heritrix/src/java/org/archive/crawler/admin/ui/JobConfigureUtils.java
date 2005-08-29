@@ -287,6 +287,7 @@ public class JobConfigureUtils {
      * @param redirectBasePath Full path for where to go next if an error.
      * E.g. "/admin/jobs/per/overview.jsp".
      * @param currDomain Current domain.  Pass null for global domain.
+     * @param reference 
      * @return The crawljob configured.
      * @throws IOException
      * @throws AttributeNotFoundException

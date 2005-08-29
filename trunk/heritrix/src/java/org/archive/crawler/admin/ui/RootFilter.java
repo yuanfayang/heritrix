@@ -34,14 +34,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
+ * Filter that redirects accesses to 'index.jsp'.
  * @author stack
  * @version $Date$, $Revision$
  */
 public class RootFilter implements Filter {
     private FilterConfig filterConfig = null;
     
-    public void init(FilterConfig config)
-    throws ServletException {
+    public void init(FilterConfig config) {
         this.filterConfig = config;
     }
     

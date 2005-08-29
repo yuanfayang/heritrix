@@ -1163,7 +1163,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     
     protected CrawlJob createCrawlJobBasedOn(final File orderFile,
             final String name, final String description, final String seeds)
-    throws FatalConfigurationException, IOException {
+    throws FatalConfigurationException {
         CrawlJob job = getJobHandler().newJob(orderFile, name, description,
                 seeds);
         return CrawlJobHandler.ensureNewJobWritten(job, name, description);

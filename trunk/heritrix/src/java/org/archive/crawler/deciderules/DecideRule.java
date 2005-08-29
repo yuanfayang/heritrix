@@ -66,6 +66,7 @@ public class DecideRule extends ModuleType {
      * possible decision other than PASS -- return that 
      * decision. Otherwise return null. Most rules will be
      * one-way. 
+     * @param object 
      * 
      * @return the one decision other than PASS this rule might
      * return, if there is only one
