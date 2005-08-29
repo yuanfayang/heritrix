@@ -423,9 +423,8 @@ public class Cookie extends NameValuePair implements Serializable, Comparator {
             return LangUtils.equals(this.getName(), that.getName())
                   && LangUtils.equals(this.cookieDomain, that.cookieDomain)
                   && LangUtils.equals(this.cookiePath, that.cookiePath);
-        } else {
-            return false;
         }
+        return false;
     }
 
 
@@ -471,16 +470,14 @@ public class Cookie extends NameValuePair implements Serializable, Comparator {
             // null is assumed to be "/"
             if (c2.getPath().equals(CookieSpec.PATH_DELIM)) {
                 return 0;
-            } else {
-                return -1;
             }
+            return -1;
         } else if (c2.getPath() == null) {
             // null is assumed to be "/"
             if (c1.getPath().equals(CookieSpec.PATH_DELIM)) {
                 return 0;
-            } else {
-                return 1;
             }
+            return 1;
         } else {
             return STRING_COLLATOR.compare(c1.getPath(), c2.getPath());
         }

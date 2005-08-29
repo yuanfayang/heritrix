@@ -666,11 +666,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return The new crawl job.
      * @throws FatalConfigurationException If a problem occurs creating the
      *             settings.
-     * @throws IOException
      */
     public CrawlJob newJob(CrawlJob baseOn, boolean isRecover, String name,
             String description, String seeds, int priority)
-    throws FatalConfigurationException, IOException {
+    throws FatalConfigurationException {
         File recoverLogsDir = null;
         try {
             recoverLogsDir = isRecover? 
@@ -698,11 +697,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return The new crawl job.
      * @throws FatalConfigurationException If a problem occurs creating the
      *             settings.
-     * @throws IOException
      */
     public CrawlJob newJob(final File orderFile, final String name,
             final String description, final String seeds)
-    throws FatalConfigurationException, IOException {
+    throws FatalConfigurationException {
         return createNewJob(orderFile, null, name, description, seeds,
             CrawlJob.PRIORITY_AVERAGE);
     }

@@ -45,7 +45,7 @@ public interface FrontierJournal {
     public abstract void finishedSuccess(CrawlURI curi);
 
     /**
-     * @param curi UURI that finished successfully.
+     * @param uuri UURI that finished successfully.
      */
     public abstract void finishedSuccess(UURI uuri);
 
