@@ -217,8 +217,8 @@ public abstract class HttpMethodBase implements HttpMethod {
                 uri = "/";
             }
 // BEGIN IA CHANGES
-            setURI(new URI(uri, true));
-//          setURI(new org.archive.net.LaxURI(uri, true));
+//          setURI(new URI(uri, true));
+            setURI(new org.archive.net.LaxURI(uri, true));
 // END IA CHANGES
         } catch (URIException e) {
             throw new IllegalArgumentException("Invalid uri '" 
