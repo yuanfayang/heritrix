@@ -29,7 +29,6 @@
 ##
 ## JMX_PORT         Port you'd like the JVM JMX administration server to run
 ##                  on. Default is 8849.
-##
 
 # Resolve links - $0 may be a softlink
 PRG="$0"
