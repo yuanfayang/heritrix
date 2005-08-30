@@ -707,11 +707,7 @@
                 http://www.gnu.org/licenses/lgpl.txt</license>
             </properties>
         </dependency>
-
-
-
   </dependencies>
-
   
   <!-- build information for the project -->
   <build>
