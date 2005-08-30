@@ -295,7 +295,7 @@ public class CrawlController implements Serializable, Reporter {
      */
     public CrawlController() {
         super();
-        // defer most setup to initialize methods
+        // Defer most setup to initialize methods
     }
 
     /**
@@ -1001,7 +1001,10 @@ public class CrawlController implements Serializable, Reporter {
         frontier.start();
     }
 
-    private void completeStop() {
+    /**
+     * Called when the last toethread exits.
+     */
+    protected void completeStop() {
         LOGGER.info("Entered complete stop.");
         // Run processors' final tasks
         runProcessorFinalTasks();
@@ -1291,8 +1294,7 @@ public class CrawlController implements Serializable, Reporter {
             return;
         }
         if (message == null) {
-            throw new IllegalArgumentException("Message cannot be" +
-                " null.");
+            throw new IllegalArgumentException("Message cannot be null.");
         }
         this.sExit = message;
         beginCrawlStop();
@@ -1302,11 +1304,11 @@ public class CrawlController implements Serializable, Reporter {
      * Start the process of stopping the crawl. 
      */
     public void beginCrawlStop() {
-        LOGGER.info("Starting beginCrawlStop()...");
+        LOGGER.info("Started.");
         sendCrawlStateChangeEvent(STOPPING, this.sExit);
         frontier.terminate();
         frontier.unpause();
-        LOGGER.info("Finished beginCrawlStop()."); 
+        LOGGER.info("Finished."); 
     }
     
     /**

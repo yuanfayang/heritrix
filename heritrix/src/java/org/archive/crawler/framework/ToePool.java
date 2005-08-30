@@ -23,7 +23,6 @@
  */
 package org.archive.crawler.framework;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Iterator;
@@ -202,30 +201,27 @@ public class ToePool extends ThreadGroup implements Reporter {
      * @see org.archive.util.Reporter#reportTo(java.io.Writer)
      */
     protected void standardReportTo(PrintWriter writer) {
-        try {
-            writer.print("Toe threads report - " +
-                    ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
-            writer.print(" Job being crawled: " +
-                    this.controller.getOrder().getCrawlOrderName() + "\n");
-            writer.print(" Number of toe threads in pool: " +
-                getToeCount() + " (" + getActiveToeCount() + " active)\n");
+        writer.print("Toe threads report - "
+                + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+        writer.print(" Job being crawled: "
+                + this.controller.getOrder().getCrawlOrderName() + "\n");
+        writer.print(" Number of toe threads in pool: " + getToeCount() + " ("
+                + getActiveToeCount() + " active)\n");
 
-            Thread[] toes = this.getToes();
-            synchronized (toes) {
-                for (int i = 0; i < toes.length ; i++) {
-                    if(!(toes[i] instanceof ToeThread)) {
-                        continue;
-                    }
-                    ToeThread tt = (ToeThread)toes[i];
-                    if(tt!=null) {
-                        writer.print("   ToeThread #" + tt.getSerialNumber() + "\n");
-                        tt.reportTo(writer);
-                    }
+        Thread[] toes = this.getToes();
+        synchronized (toes) {
+            for (int i = 0; i < toes.length; i++) {
+                if (!(toes[i] instanceof ToeThread)) {
+                    continue;
+                }
+                ToeThread tt = (ToeThread) toes[i];
+                if (tt != null) {
+                    writer
+                            .print("   ToeThread #" + tt.getSerialNumber()
+                                    + "\n");
+                    tt.reportTo(writer);
                 }
             }
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
     }
     

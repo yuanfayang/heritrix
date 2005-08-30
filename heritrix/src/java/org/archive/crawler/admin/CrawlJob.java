@@ -262,14 +262,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
         "progressStatistics";
     private final static String PROGRESS_STATISTICS_LEGEND_OPER =
         "progressStatisticsLegend";
-    private final static List OPERATION_LIST;
-    static {
-        OPERATION_LIST = Arrays.asList(new String [] {IMPORT_URI_OPER,
-            IMPORT_URIS_OPER, PAUSE_OPER, RESUME_OPER,
-            FRONTIER_REPORT_OPER, THREADS_REPORT_OPER, SEEDS_REPORT_OPER,
-            PROGRESS_STATISTICS_OPER, PROGRESS_STATISTICS_LEGEND_OPER,
-            ROTATELOGS_OPER, CHECKPOINT_OPER});
-    }
     
     // Same as JEMBeanHelper.OP_DB_STAT
     private final static String OP_DB_STAT = "getDatabaseStats";
@@ -709,10 +701,34 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
         //TODO: This is likely to happen as the CrawlEnding event occurs, need to ensure that the StatisticsTracker is saved to disk on CrawlEnded. Maybe move responsibility for this into the StatisticsTracker?
     }
     
+    protected void unregisterMBean() {
+        // Unregister current job from JMX agent, if there one.
+        if (this.mbeanServer == null) {
+            return;
+        }
+        try {
+            this.mbeanServer.unregisterMBean(this.mbeanName);
+            this.mbeanName = null;
+            this.mbeanServer = null;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed with " + this.mbeanName, e);
+        }
+    }
+    
     public void startCrawling()
     throws InitializationException {
         try {
-            this.controller = new CrawlController();
+            // Subclass CrawlController so can add a final task, the
+            // unregistering of this MBean.
+            this.controller = new CrawlController() {
+                protected void completeStop() {
+                    try {
+                        super.completeStop();
+                    } finally {
+                        unregisterMBean();
+                    }
+                }
+            };
             // Register as listener to get job finished notice.
             this.controller.addCrawlStatusListener(this);
             this.controller.initialize(getSettingsHandler());
@@ -1687,20 +1703,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
         setReadOnly();
         // Remove the reference so that the old controller can be gc'd.
         this.controller = null;
-        // Unregister current job from JMX agent, if there one.
-        if (this.mbeanServer != null) {
-            try {
-                this.mbeanServer.unregisterMBean(this.mbeanName);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Failed unregistration of " +
-                        this.mbeanName, e);
-            }
-        }
     }
 
     public void crawlEnded(String sExitMessage) {
         // TODO Auto-generated method stub
-        
     }
 
     public void crawlPausing(String statusMessage) {
