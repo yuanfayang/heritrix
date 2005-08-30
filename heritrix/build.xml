@@ -3,5 +3,5 @@
 
     (This is a placeholder build.xml. Without it, the maven build of src
     will try to autogenerate an ant build file spewing an ugly exception
-    into the build).
+    into the build output).
  -->
