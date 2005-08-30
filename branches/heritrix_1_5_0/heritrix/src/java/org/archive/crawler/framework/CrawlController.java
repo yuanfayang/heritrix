@@ -1014,7 +1014,7 @@ public class CrawlController implements Serializable, Reporter {
         frontier.start();
     }
 
-    private void completeStop() {
+    protected void completeStop() {
         LOGGER.info("Entered complete stop.");
         // Run processors' final tasks
         runProcessorFinalTasks();
