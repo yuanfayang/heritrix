@@ -1061,6 +1061,15 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
     }
     
+    protected void unregisterMBean() {
+        // Unregister current job from JMX agent, if there one.
+        if (this.currentJobRegisteredMBeanInstance == null) {
+            return;
+        }
+        Heritrix.unregisterMBean(this.currentJobRegisteredMBeanInstance);
+        this.currentJobRegisteredMBeanInstance = null;
+    }
+    
     protected void startNextJobInternal() {
         if (pendingCrawlJobs.size() == 0 || isCrawling()) {
             // No job ready or already crawling.
@@ -1071,9 +1080,18 @@ public class CrawlJobHandler implements CrawlStatusListener {
         assert pendingCrawlJobs.contains(currentJob) :
             "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
-
         try {
-            controller = new CrawlController();
+            // Subclass CrawlController so can add a final task, the
+            // unregistering of this MBean.
+            this.controller = new CrawlController() {
+                protected void completeStop() {
+                    try {
+                        super.completeStop();
+                    } finally {
+                        unregisterMBean();
+                    }
+                }
+            };
             // Register as listener to get job finished notice.
             controller.addCrawlStatusListener(this);
             SettingsHandler settingsHandler = currentJob.getSettingsHandler();
@@ -1208,9 +1226,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         currentJob.setStatus(sExitMessage);
         currentJob.setReadOnly(); //Further changes have no meaning
         currentJob.setRunning(false);
-        // Unregister current job from JMX agent, if there one.
-        Heritrix.unregisterMBean(this.currentJobRegisteredMBeanInstance);
-        this.currentJobRegisteredMBeanInstance = null;
         completedCrawlJobs.add(currentJob);
         currentJob = null;
         // Remove the reference so that the old controller can be gc.
