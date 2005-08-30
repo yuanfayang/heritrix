@@ -23,7 +23,6 @@
  */
 package org.archive.crawler.framework;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -56,16 +55,23 @@ Reporter, ProgressStatisticsReporter {
     private static final String STEP_NASCENT = "NASCENT";
     private static final String STEP_PAUSING = "PAUSING";
     private static final String STEP_ABOUT_TO_GET_URI = "ABOUT_TO_GET_URI";
-    private static final String STEP_EXIT_PROCESSING_LOOP = "EXIT_PROCESSING_LOOP";
+    private static final String STEP_EXIT_PROCESSING_LOOP =
+        "EXIT_PROCESSING_LOOP";
     private static final String STEP_FINISHED = "FINISHED";
-    private static final String STEP_ABOUT_TO_BEGIN_CHAIN = "ABOUT_TO_BEGIN_CHAIN";
-    private static final String STEP_ABOUT_TO_BEGIN_PROCESSOR = "ABOUT_TO_BEGIN_PROCESSOR";
-    private static final String STEP_DONE_WITH_PROCESSORS = "DONE_WITH_PROCESSORS";
-    private static final String STEP_HANDLING_RUNTIME_EXCEPTION = "HANDLING_RUNTIME_EXCEPTION";
-    private static final String STEP_ABOUT_TO_RETURN_URI = "ABOUT_TO_RETURN_URI";
+    private static final String STEP_ABOUT_TO_BEGIN_CHAIN =
+        "ABOUT_TO_BEGIN_CHAIN";
+    private static final String STEP_ABOUT_TO_BEGIN_PROCESSOR =
+        "ABOUT_TO_BEGIN_PROCESSOR";
+    private static final String STEP_DONE_WITH_PROCESSORS =
+        "DONE_WITH_PROCESSORS";
+    private static final String STEP_HANDLING_RUNTIME_EXCEPTION =
+        "HANDLING_RUNTIME_EXCEPTION";
+    private static final String STEP_ABOUT_TO_RETURN_URI =
+        "ABOUT_TO_RETURN_URI";
     private static final String STEP_FINISHING_PROCESS = "FINISHING_PROCESS";
 
-    private static Logger logger = Logger.getLogger("org.archive.crawler.framework.ToeThread");
+    private static Logger logger =
+        Logger.getLogger("org.archive.crawler.framework.ToeThread");
 
     private CrawlController controller;
     private int serialNumber;
@@ -452,9 +458,8 @@ Reporter, ProgressStatisticsReporter {
      * Compiles and returns a report on its status.
      * @param name Report name.
      * @param pw Where to print.
-     * @throws IOException
      */
-    public void reportTo(String name, PrintWriter pw) throws IOException {
+    public void reportTo(String name, PrintWriter pw) {
         // name is ignored for now: only one kind of report
         
         pw.print("[");
@@ -578,7 +583,7 @@ Reporter, ProgressStatisticsReporter {
         return new String[] {};
     }
 
-    public void reportTo(PrintWriter writer) throws IOException {
+    public void reportTo(PrintWriter writer) {
         reportTo(null, writer);
     }
 
