@@ -22,6 +22,8 @@
  */
 package org.archive.util;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +34,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.RuntimeOperationsException;
+import javax.management.openmbean.InvalidOpenTypeException;
 import javax.management.openmbean.OpenMBeanAttributeInfo;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 import javax.management.openmbean.OpenMBeanOperationInfo;
@@ -54,6 +57,8 @@ public class JmxUtils {
     public static final String NAME = "name";
     public static final String HOST = "host";
     public static final String KEY = "key";
+    private static final List OPENTYPES =
+        Arrays.asList(OpenType.ALLOWED_CLASSNAMES);
     
     protected JmxUtils() {
         super();
@@ -61,8 +66,6 @@ public class JmxUtils {
     
     /**
      * Return a string suitable for logging on registration.
-     * @param logger Logger to use logging severe messages in case we fail
-     * getting server details.
      * @param mbeanName Mbean that got registered.
      * @param mbeanServer Server we were registered to.
      * @param registrationDone Whether we registered successfully or not.
@@ -138,16 +141,19 @@ public class JmxUtils {
      */
     public static OpenMBeanOperationInfo convertToOpenMBeanOperation(
             MBeanOperationInfo in) {
-        return convertToOpenMBeanOperation(in, null);
+        return convertToOpenMBeanOperation(in, null, null);
     }
     
     /**
      * @param in MBeanOperation to convert.
      * @param prefix A prefix to add to the name of new operation.
+     * @param returnType Return type to use in new operation.  Use this
+     * parameter to override the passed <code>in</code> return type.
      * @return An OpenMBeanOperation version of the passed MBeanOperation.
      */   
     public static OpenMBeanOperationInfo convertToOpenMBeanOperation(
-            final MBeanOperationInfo in, final String prefix) {
+            final MBeanOperationInfo in, final String prefix,
+            final OpenType returnType) {
         MBeanParameterInfo [] params = in.getSignature();
         OpenMBeanParameterInfo [] signature =
             new OpenMBeanParameterInfo[params.length];
@@ -157,7 +163,8 @@ public class JmxUtils {
         return new OpenMBeanOperationInfoSupport(
                 ((prefix != null)? prefix + in.getName(): in.getName()),
                 in.getDescription(), signature,
-                getOpenType(in.getReturnType(), SimpleType.STRING),
+                (returnType != null)?
+                        returnType: getOpenType(in.getReturnType()),
                 convertImpact(in.getImpact()));
     }
     
@@ -180,6 +187,14 @@ public class JmxUtils {
         return new OpenMBeanParameterInfoSupport(in.getName(),
                 in.getDescription(), getOpenType(in.getType())); 
     }
+    
+    public static boolean isOpenType(final Class c) {
+        return isOpenType(c.getName());
+    }
+    
+    public static boolean isOpenType(final String classname) {
+        return OPENTYPES.contains(classname);
+    }
 
     /**
      * @param classString Java class name.
@@ -194,8 +209,14 @@ public class JmxUtils {
      * @param defaultType If no equivalent found, use passed defaultType.
      * @return Its OpenType equivalent.
      */
-    public static OpenType getOpenType(final String classString,
+    public static OpenType getOpenType(String classString,
             final OpenType defaultType) {
+        if (classString.equals("void")) {
+            return SimpleType.VOID;
+        }
+        if (!isOpenType(classString)) {
+            throw new InvalidOpenTypeException(classString);
+        }
         if (classString.equals(String.class.getName())) {
             return SimpleType.STRING;
         } else if (classString.equals(Boolean.class.getName())) {
@@ -204,6 +225,8 @@ public class JmxUtils {
             return SimpleType.LONG;
         } else if (classString.equals(Integer.class.getName())) {
             return SimpleType.INTEGER;
+        } else if (classString.equals(Float.class.getName())) {
+            return SimpleType.FLOAT;
         } else if (defaultType != null) {
             return defaultType;
         }
