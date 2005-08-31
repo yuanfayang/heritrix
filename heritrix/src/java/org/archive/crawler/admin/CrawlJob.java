@@ -75,6 +75,9 @@ import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.framework.exceptions.InitializationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.AbstractFrontier;
+import org.archive.crawler.settings.ComplexType;
+import org.archive.crawler.settings.ModuleAttributeInfo;
+import org.archive.crawler.settings.TextField;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.util.IoUtils;
 import org.archive.util.ArchiveUtils;
@@ -265,6 +268,14 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
     
     // Same as JEMBeanHelper.OP_DB_STAT
     private final static String OP_DB_STAT = "getDatabaseStats";
+    
+    /**
+     * Don't add the following crawl-order items.
+     */
+    private final static List ORDER_EXCLUDE;
+    static {
+        ORDER_EXCLUDE = Arrays.asList(new String [] {"bdb-cache-percent"});
+    }
     
     /**
      * A shutdown Constructor.
@@ -1184,6 +1195,9 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
                 "Count of discovered documents", SimpleType.STRING,
                 true, false, false));
         
+        // Add in the crawl order attributes.
+        addCrawlOrderAttributes(this.getController().getOrder(), attributes);
+        
         // Add the bdbje attributes.  Convert to open mbean attributes.
         // First do bdbeje setup.  Add all attributes for now.
         Environment env = this.controller.getBdbEnvironment();
@@ -1197,7 +1211,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
             ie.setStackTrace(e.getStackTrace());
             throw ie;
         }
-        List bdbjeAttributes = this.bdbjeMBeanHelper.getAttributeList(env);
         // Only add a subset of all attributes.  Keep around the list of names
         // as a convenience for when it comes time to test if attribute is
         // supported.
@@ -1212,12 +1225,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
                 JEMBeanHelper.ATT_IS_SERIALIZABLE,
                 JEMBeanHelper.ATT_SET_READ_ONLY,
         });
-        for (Iterator i = bdbjeAttributes.iterator(); i.hasNext();) {
-            MBeanAttributeInfo info = (MBeanAttributeInfo)i.next();
-            if (this.bdbjeAttributeNameList.contains(info.getName())) {
-                attributes.add(JmxUtils.convertToOpenMBeanAttribute(info));
-            }
-        }
+        // Add bdbje attributes.
+        addBdbjeAttributes(attributes,
+                this.bdbjeMBeanHelper.getAttributeList(env),
+                this.bdbjeAttributeNameList);
 
         // Operations.
         List operations = new ArrayList();
@@ -1279,40 +1290,18 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
         operations.add(new OpenMBeanOperationInfoSupport(CHECKPOINT_OPER,
                 "Start a checkpoint", null, SimpleType.VOID,
                 MBeanOperationInfo.ACTION));
-        
-        
-        List bdbjeOperations = this.bdbjeMBeanHelper.getOperationList(env);
-        // Add subset of operations.  Keep around the list so have it to hand
-        // when figuring what operations are supported. Usual actual Strings
-        // because not accessible from JEMBeanHelper.
-        this.bdbjeOperationsNameList = Arrays.asList(new String [] {"cleanLog",
+                
+        // Add bdbje operations. Add subset only. Keep around the list so have
+        // it to hand when figuring what operations are supported. Usual actual
+        // Strings because not accessible from JEMBeanHelper.
+        this.bdbjeOperationsNameList = Arrays.asList(new String[] { "cleanLog",
                 "evictMemory", "checkpoint", "sync",
                 "getEnvironmentStatsToString", "getLockStatsToString",
                 "getDatabaseNames", OP_DB_STAT
         });
-        for (Iterator i = bdbjeOperations.iterator(); i.hasNext();) {
-            MBeanOperationInfo info = (MBeanOperationInfo)i.next();
-            if (this.bdbjeOperationsNameList.contains(info.getName())) {
-                OpenMBeanOperationInfo omboi =
-                    JmxUtils.convertToOpenMBeanOperation(info);
-                if (info.getName().equals(OP_DB_STAT)) {
-                    // Db stats needs special handling.  The published
-                    // signature is wrong.  Fix it.
-                    MBeanParameterInfo [] params = omboi.getSignature();
-                    args = new OpenMBeanParameterInfoSupport[params.length + 1];
-                    for (int ii = 0; ii < params.length; ii++) {
-                        args[ii] = (OpenMBeanParameterInfo)params[ii];
-                    }
-                    args[params.length] =
-                        new OpenMBeanParameterInfoSupport("name",
-                        "Database name", SimpleType.STRING);
-                    omboi = new OpenMBeanOperationInfoSupport(omboi.getName(),
-                        omboi.getDescription(), args, omboi.getReturnOpenType(),
-                            omboi.getImpact());
-                }
-                operations.add(omboi);
-            }
-        }
+        addBdbjeOperations(operations,
+                this.bdbjeMBeanHelper.getOperationList(env),
+                this.bdbjeOperationsNameList);
         
         // Build the info object.
         OpenMBeanAttributeInfoSupport[] attributesArray =
@@ -1327,6 +1316,86 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
             new OpenMBeanConstructorInfoSupport [] {},
             operationsArray,
             new MBeanNotificationInfo [] {});
+    }
+    
+    protected void addBdbjeAttributes(final List attributes,
+            final List bdbjeAttributes, final List bdbjeNamesToAdd) {
+        for (Iterator i = bdbjeAttributes.iterator(); i.hasNext();) {
+            MBeanAttributeInfo info = (MBeanAttributeInfo)i.next();
+            if (bdbjeNamesToAdd.contains(info.getName())) {
+                attributes.add(JmxUtils.convertToOpenMBeanAttribute(info));
+            }
+        }   
+    }
+    
+    protected void addBdbjeOperations(final List operations,
+            final List bdbjeOperations, final List bdbjeNamesToAdd) {
+        for (Iterator i = bdbjeOperations.iterator(); i.hasNext();) {
+            MBeanOperationInfo info = (MBeanOperationInfo) i.next();
+            if (bdbjeNamesToAdd.contains(info.getName())) {
+                OpenMBeanOperationInfo omboi = null;
+                if (info.getName().equals(OP_DB_STAT)) {
+                    // Db stats needs special handling. The published
+                    // signature is wrong and its return type is awkward.
+                    // Handle it.
+                    omboi = JmxUtils.convertToOpenMBeanOperation(info, null,
+                        SimpleType.STRING);
+                    MBeanParameterInfo[] params = omboi.getSignature();
+                    OpenMBeanParameterInfo[] args =
+                        new OpenMBeanParameterInfoSupport[params.length + 1];
+                    for (int ii = 0; ii < params.length; ii++) {
+                        args[ii] = (OpenMBeanParameterInfo) params[ii];
+                    }
+                    args[params.length] = new OpenMBeanParameterInfoSupport(
+                            "name", "Database name", SimpleType.STRING);
+                    omboi = new OpenMBeanOperationInfoSupport(omboi.getName(),
+                        omboi.getDescription(), args, omboi.getReturnOpenType(),
+                        omboi.getImpact());
+                } else {
+                    omboi = JmxUtils.convertToOpenMBeanOperation(info);
+                }
+                operations.add(omboi);
+            }
+        }
+    }
+    
+    protected void addCrawlOrderAttributes(final ComplexType type,
+            final List attributes) {
+        for (final Iterator i = type.getAttributeInfoIterator(null);
+                i.hasNext();) {
+            ModuleAttributeInfo info = (ModuleAttributeInfo)i.next();
+            if (ORDER_EXCLUDE.contains(info.getName())) {
+                // Skip.
+                continue;
+            }
+            String absoluteName = type.getAbsoluteName() + "/" + info.getName();
+            if (JmxUtils.isOpenType(info.getType())) {
+                attributes.add(new OpenMBeanAttributeInfoSupport(
+                    absoluteName, info.getDescription(),
+                    JmxUtils.getOpenType(info.getType()), true, true, false));
+            } else if(info.isComplexType()) {
+                try {
+                    ComplexType c =
+                        (ComplexType)type.getAttribute(info.getName());
+                    addCrawlOrderAttributes(c, attributes);
+                } catch (AttributeNotFoundException e) {
+                    logger.log(Level.SEVERE, "Failed get of attribute", e);
+                } catch (MBeanException e) {
+                    logger.log(Level.SEVERE, "Failed get of attribute", e);
+                } catch (ReflectionException e) {
+                    logger.log(Level.SEVERE, "Failed get of attribute", e);
+                }
+            } else if (info.getType().equals(TextField.class.getName())) {
+                // Special handling for TextField.  Use the STRING OpenType.
+                attributes.add(new OpenMBeanAttributeInfoSupport(
+                        absoluteName, info.getDescription(),
+                        SimpleType.STRING, true, true, false));
+            } else {
+                // Looks like only type we don't currently handle is StringList.
+                // Figure how to do it.
+                logger.info(info.getType());
+            }
+        }
     }
     
     public Object getAttribute(String attribute_name)
@@ -1345,6 +1414,12 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
             } catch (MBeanException e) {
                 throw new RuntimeOperationsException(new RuntimeException(e));
             }
+        }
+        
+        // Is it a crawl-order attribute?
+        if (attribute_name.
+                startsWith(this.controller.getOrder().getAbsoluteName())) {
+            return getCrawlOrderAttribute(attribute_name);
         }
         
         if (!ATTRIBUTE_LIST.contains(attribute_name)) {
@@ -1406,9 +1481,50 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
         throw new AttributeNotFoundException("Attribute " +
             attribute_name + " not found.");
     }
+    
+    protected Object getCrawlOrderAttribute(final String attribute_name) {
+        CrawlOrder order = this.getController().getOrder();
+        return getCrawlOrderAttribute(
+            attribute_name.substring(order.getAbsoluteName().length()), order);
+    }
+
+    protected Object getCrawlOrderAttribute(final String attribute_name,
+            final ComplexType ct) {
+        String subName = attribute_name.startsWith("/")?
+            attribute_name.substring(1): attribute_name;
+        int index = subName.indexOf("/");
+        try {
+            if (index <= 0) {
+                MBeanAttributeInfo info = ct.getAttributeInfo(subName);
+                // Special handling for TextField.
+                return info.getType().equals(TextField.class.toString())?
+                    ct.getAttribute(subName).toString():
+                    ct.getAttribute(subName);
+            }
+            return getCrawlOrderAttribute(subName.substring(index + 1),
+                (ComplexType)ct.getAttribute(subName.substring(0, index)));
+        } catch (NullPointerException e) {
+            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
+        } catch (AttributeNotFoundException e) {
+            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
+        } catch (MBeanException e) {
+            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
+        } catch (ReflectionException e) {
+            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
+        }
+        return null;
+    }
 
     public void setAttribute(Attribute attribute)
             throws AttributeNotFoundException {
+        CrawlOrder order = this.getController().getOrder();
+        if (attribute.getName().
+                startsWith(order.getAbsoluteName())) {
+            setCrawlOrderAttribute(attribute.getName().
+                    substring(order.getAbsoluteName().length()),
+                order, attribute);
+            return;
+        }
         if (!this.bdbjeAttributeNameList.contains(attribute.getName())) {
             throw new AttributeNotFoundException("Attribute "
                     + attribute.getName() + " can not be set.");
@@ -1420,6 +1536,32 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
             throw new RuntimeOperationsException(new RuntimeException(e));
         } catch (InvalidAttributeValueException e) {
             throw new RuntimeOperationsException(new RuntimeException(e));
+        }
+    }
+    
+    protected void setCrawlOrderAttribute(final String attribute_name,
+            final ComplexType ct, final Attribute attribute) {
+        String subName = attribute_name.startsWith("/")?
+            attribute_name.substring(1): attribute_name;
+        int index = subName.indexOf("/");
+        try {
+            if (index <= 0) {
+                ct.setAttribute(new Attribute(subName, attribute.getValue()));
+                return;
+            }
+            setCrawlOrderAttribute(subName.substring(index + 1),
+                (ComplexType)ct.getAttribute(subName.substring(0, index)),
+                attribute);
+        } catch (NullPointerException e) {
+            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
+        } catch (AttributeNotFoundException e) {
+            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
+        } catch (MBeanException e) {
+            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
+        } catch (ReflectionException e) {
+            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
+        } catch (InvalidAttributeValueException e) {
+            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
         }
     }
 
