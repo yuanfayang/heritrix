@@ -27,7 +27,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,80 +74,26 @@ public class RobotsExclusionPolicy implements Serializable {
      */
     public static RobotsExclusionPolicy policyFor(CrawlerSettings settings,
             BufferedReader reader, RobotsHonoringPolicy honoringPolicy)
-            throws IOException {
-
-        String read;
-        ArrayList current = null;
+    throws IOException {
         LinkedList userAgents = new LinkedList();
         HashMap disallows = new HashMap();
-         boolean hasErrors = false;
-         String catchall = null;
-        while (reader != null) {
-            do {read = reader.readLine();}
-            while (
-              (read != null)
-              && ( (read=read.trim()).startsWith("#")
-                   || read.length() == 0) ); // skip comments & blanks
-
-            if (read == null) {
-                reader.close();
-                reader = null;
-            } else {
-                int commentIndex = read.indexOf("#");
-                if( commentIndex >-1 ) {
-                    // strip trailing comment
-                    read = read.substring(0, commentIndex);
-                }
-                read = read.trim();
-                if (read.matches("(?i)^User-agent:.*")) {
-                    String ua = read.substring(11).trim().toLowerCase();
-                    if(current==null||current.size()!=0) {
-                        // only create new rules-list if necessary
-                        // otherwise share with previous user-agent
-                        current = new ArrayList();
-                    }
-                    if(ua.equals("*")) {
-                        ua = "";
-                        catchall = ua;
-                    } else {
-                        userAgents.addLast(ua);
-                    }
-                    disallows.put(ua,current);
-                    continue;
-                }
-                if (read.matches("(?i)Disallow:.*")) {
-                    if(current==null) {
-                        // buggy robots.txt
-                        hasErrors = true;
-                        continue;
-                    }
-                    String path = read.substring(9).trim();
-                    current.add(path);
-                    continue;
-                }
-                //unknown line; do nothing for now
-            }
-        }
-
-        if (catchall!=null) {
-            userAgents.addLast(catchall);
-        }
-
-        if(disallows.isEmpty()) return ALLOWALL;
-        return new RobotsExclusionPolicy(
-            settings, userAgents, disallows, hasErrors, honoringPolicy);
+        Robotstxt.parse(reader, userAgents, disallows);
+        return (disallows.isEmpty())?
+            ALLOWALL:
+            new RobotsExclusionPolicy(settings, userAgents, disallows,
+                honoringPolicy);
     }
+
 
 
     /**
      * @param settings 
      * @param u
      * @param d
-     * @param errs
      * @param honoringPolicy
      */
     public RobotsExclusionPolicy(CrawlerSettings settings, LinkedList u,
-            HashMap d, boolean errs, RobotsHonoringPolicy honoringPolicy) {
+            HashMap d, RobotsHonoringPolicy honoringPolicy) {
         userAgents = u;
         disallows = d;
         this.honoringPolicy = honoringPolicy;
@@ -179,7 +124,7 @@ public class RobotsExclusionPolicy implements Serializable {
     }
 
     public RobotsExclusionPolicy(int type) {
-        this(null, null, null, false, null);
+        this(null, null, null, null);
         this.type = type;
     }
 
@@ -286,9 +231,8 @@ public class RobotsExclusionPolicy implements Serializable {
     /** If object is DENYALL or ALLOWALL, the object is replaced by constants
      * so that check for object equality works.
      * @return Object.
-     * @throws ObjectStreamException 
      */
-    private Object readResolve() throws ObjectStreamException {
+    private Object readResolve() {
         if (type == NORMAL_TYPE) {
             return this;
         } else if (type == ALLOWALL_TYPE) {
