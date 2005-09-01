@@ -212,8 +212,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
     // OpenMBean support.
 
     /**
-     * Server we registered with.
-     * Maybe null.
+     * Server we registered with. Maybe null.
      */
     private MBeanServer mbeanServer = null;
     private ObjectName mbeanName = null;
@@ -274,7 +273,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
      */
     private final static List ORDER_EXCLUDE;
     static {
-        ORDER_EXCLUDE = Arrays.asList(new String [] {"bdb-cache-percent"});
+        ORDER_EXCLUDE = Arrays.asList(new String [] {"bdb-cache-percent",
+            "extract-processors", "DNS", "uri-included-structure"});
     }
     
     /**
@@ -578,7 +578,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
      * @see #PRIORITY_HIGH
      * @see #PRIORITY_CRITICAL
      */
-    public void setJobPriority(int priority){
+    public void setJobPriority(int priority) {
         this.priority = priority;
     }
 
@@ -593,7 +593,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
      * @see #PRIORITY_HIGH
      * @see #PRIORITY_CRITICAL
      */
-    public int getJobPriority(){
+    public int getJobPriority() {
         return priority;
     }
 
@@ -633,7 +633,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
      * @return The current status of this CrawlJob
      *         (see constants defined here beginning with STATUS)
      */
-    public String getStatus(){
+    public String getStatus() {
         return status;
     }
 
@@ -642,21 +642,21 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
      *
      * @param tracker
      */
-    public void setStatisticsTracking(StatisticsTracking tracker){
+    public void setStatisticsTracking(StatisticsTracking tracker) {
         this.stats = tracker;
     }
 
     /**
      * @return the stat tracking helper object
      */
-    public StatisticsTracking getStatisticsTracking(){
+    public StatisticsTracking getStatisticsTracking() {
         return stats;
     }
 
     /**
      * @param settingsHandler
      */
-    public void setSettingsHandler(XMLSettingsHandler settingsHandler){
+    public void setSettingsHandler(XMLSettingsHandler settingsHandler) {
         this.settingsHandler = settingsHandler;
         // TODO: Is this method needed? Probably not.
     }
@@ -665,7 +665,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
      * Returns the settigns handler for this job. It will have been initialized.
      * @return the settigns handler for this job.
      */
-    public XMLSettingsHandler getSettingsHandler(){
+    public XMLSettingsHandler getSettingsHandler() {
         return settingsHandler;
     }
     /**
@@ -709,7 +709,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
         isRunning = b;
         writeJobFile(); // Save changes
         //TODO: Job ending -> Save statistics tracker.
-        //TODO: This is likely to happen as the CrawlEnding event occurs, need to ensure that the StatisticsTracker is saved to disk on CrawlEnded. Maybe move responsibility for this into the StatisticsTracker?
+        //TODO: This is likely to happen as the CrawlEnding event occurs,
+        // need to ensure that the StatisticsTracker is saved to disk on
+        // CrawlEnded. Maybe move responsibility for this into the
+        // StatisticsTracker?
     }
     
     protected void unregisterMBean() {
@@ -1199,7 +1202,9 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
         addCrawlOrderAttributes(this.getController().getOrder(), attributes);
         
         // Add the bdbje attributes.  Convert to open mbean attributes.
-        // First do bdbeje setup.  Add all attributes for now.
+        // First do bdbeje setup.  Then add a subset of the bdbje attributes.
+        // Keep around the list of names as a convenience for when it comes
+        // time to test if attribute is supported.
         Environment env = this.controller.getBdbEnvironment();
         try {
             this.bdbjeMBeanHelper =
@@ -1211,9 +1216,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
             ie.setStackTrace(e.getStackTrace());
             throw ie;
         }
-        // Only add a subset of all attributes.  Keep around the list of names
-        // as a convenience for when it comes time to test if attribute is
-        // supported.
         this.bdbjeAttributeNameList = Arrays.asList(new String [] {
                 JEMBeanHelper.ATT_ENV_HOME,
                 JEMBeanHelper.ATT_OPEN,
@@ -1225,7 +1227,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
                 JEMBeanHelper.ATT_IS_SERIALIZABLE,
                 JEMBeanHelper.ATT_SET_READ_ONLY,
         });
-        // Add bdbje attributes.
         addBdbjeAttributes(attributes,
                 this.bdbjeMBeanHelper.getAttributeList(env),
                 this.bdbjeAttributeNameList);
@@ -1392,8 +1393,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
                         SimpleType.STRING, true, true, false));
             } else {
                 // Looks like only type we don't currently handle is StringList.
-                // Figure how to do it.
-                logger.info(info.getType());
+                // Figure how to do it.  Add as AttributeList?
+                logger.fine(info.getType());
             }
         }
     }
@@ -1484,87 +1485,39 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
     
     protected Object getCrawlOrderAttribute(final String attribute_name) {
         CrawlOrder order = this.getController().getOrder();
-        return getCrawlOrderAttribute(
-            attribute_name.substring(order.getAbsoluteName().length()), order);
+        Object result = null;
+        try {
+            result = getCrawlOrderAttribute(attribute_name.substring(order
+                    .getAbsoluteName().length()), order);
+        } catch (NullPointerException e) {
+            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
+        } catch (AttributeNotFoundException e) {
+            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
+        } catch (MBeanException e) {
+            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
+        } catch (ReflectionException e) {
+            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
+        }
+        return result;
     }
 
     protected Object getCrawlOrderAttribute(final String attribute_name,
-            final ComplexType ct) {
-        String subName = attribute_name.startsWith("/")?
-            attribute_name.substring(1): attribute_name;
+            final ComplexType ct)
+    throws AttributeNotFoundException, MBeanException, ReflectionException {
+        String subName = attribute_name.startsWith("/") ? attribute_name
+                .substring(1) : attribute_name;
         int index = subName.indexOf("/");
-        try {
-            if (index <= 0) {
-                MBeanAttributeInfo info = ct.getAttributeInfo(subName);
-                // Special handling for TextField.
-                return info.getType().equals(TextField.class.toString())?
-                    ct.getAttribute(subName).toString():
-                    ct.getAttribute(subName);
-            }
-            return getCrawlOrderAttribute(subName.substring(index + 1),
-                (ComplexType)ct.getAttribute(subName.substring(0, index)));
-        } catch (NullPointerException e) {
-            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
-        } catch (AttributeNotFoundException e) {
-            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
-        } catch (MBeanException e) {
-            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
-        } catch (ReflectionException e) {
-            logger.log(Level.SEVERE, "Failed get of " + attribute_name, e);
+        if (index <= 0) {
+            MBeanAttributeInfo info = ct.getAttributeInfo(subName);
+            // Special handling for TextField.
+            return info.getType().equals(TextField.class.getName()) ? ct
+                    .getAttribute(subName).toString() : ct
+                    .getAttribute(subName);
         }
-        return null;
-    }
-
-    public void setAttribute(Attribute attribute)
-            throws AttributeNotFoundException {
-        CrawlOrder order = this.getController().getOrder();
-        if (attribute.getName().
-                startsWith(order.getAbsoluteName())) {
-            setCrawlOrderAttribute(attribute.getName().
-                    substring(order.getAbsoluteName().length()),
-                order, attribute);
-            return;
-        }
-        if (!this.bdbjeAttributeNameList.contains(attribute.getName())) {
-            throw new AttributeNotFoundException("Attribute "
-                    + attribute.getName() + " can not be set.");
-        }
-        try {
-            this.bdbjeMBeanHelper.
-                setAttribute(this.controller.getBdbEnvironment(), attribute);
-        } catch (AttributeNotFoundException e) {
-            throw new RuntimeOperationsException(new RuntimeException(e));
-        } catch (InvalidAttributeValueException e) {
-            throw new RuntimeOperationsException(new RuntimeException(e));
-        }
+        return getCrawlOrderAttribute(subName.substring(index + 1),
+                (ComplexType) ct.getAttribute(subName.substring(0, index)));
     }
     
-    protected void setCrawlOrderAttribute(final String attribute_name,
-            final ComplexType ct, final Attribute attribute) {
-        String subName = attribute_name.startsWith("/")?
-            attribute_name.substring(1): attribute_name;
-        int index = subName.indexOf("/");
-        try {
-            if (index <= 0) {
-                ct.setAttribute(new Attribute(subName, attribute.getValue()));
-                return;
-            }
-            setCrawlOrderAttribute(subName.substring(index + 1),
-                (ComplexType)ct.getAttribute(subName.substring(0, index)),
-                attribute);
-        } catch (NullPointerException e) {
-            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
-        } catch (AttributeNotFoundException e) {
-            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
-        } catch (MBeanException e) {
-            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
-        } catch (ReflectionException e) {
-            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
-        } catch (InvalidAttributeValueException e) {
-            logger.log(Level.SEVERE, "Failed set of " + attribute_name, e);
-        }
-    }
-
     public AttributeList getAttributes(String [] attributeNames) {
         if (attributeNames == null) {
             throw new RuntimeOperationsException(
@@ -1586,6 +1539,62 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
             }
         }
         return(resultList);
+    }
+
+    public void setAttribute(Attribute attribute)
+            throws AttributeNotFoundException {
+        // Is it a crawl order attribute?
+        CrawlOrder order = this.getController().getOrder();
+        String attName = attribute.getName();
+        if (attName.startsWith(order.getAbsoluteName())) {
+            try {
+                setCrawlOrderAttribute(attribute.getName().substring(
+                        order.getAbsoluteName().length()), order, attribute);
+            } catch (NullPointerException e) {
+                logger.log(Level.SEVERE, "Failed set of " + attName, e);
+            } catch (AttributeNotFoundException e) {
+                logger.log(Level.SEVERE, "Failed set of " + attName, e);
+            } catch (MBeanException e) {
+                logger.log(Level.SEVERE, "Failed set of " + attName, e);
+            } catch (ReflectionException e) {
+                logger.log(Level.SEVERE, "Failed set of " + attName, e);
+            } catch (InvalidAttributeValueException e) {
+                logger.log(Level.SEVERE, "Failed set of " + attName, e);
+            }
+            return;
+        }
+        
+        // Is it a bdbje attribute?
+        if (this.bdbjeAttributeNameList.contains(attName)) {
+            try {
+                this.bdbjeMBeanHelper.setAttribute(this.controller
+                        .getBdbEnvironment(), attribute);
+            } catch (AttributeNotFoundException e) {
+                throw new RuntimeOperationsException(new RuntimeException(e));
+            } catch (InvalidAttributeValueException e) {
+                throw new RuntimeOperationsException(new RuntimeException(e));
+            }
+            return;
+        }
+        
+        // Else, we don't know how to handle this attribute.
+        throw new AttributeNotFoundException("Attribute " + attName +
+            " can not be set.");
+    }
+    
+    protected void setCrawlOrderAttribute(final String attribute_name,
+            final ComplexType ct, final Attribute attribute)
+    throws AttributeNotFoundException, InvalidAttributeValueException,
+            MBeanException, ReflectionException {
+        String subName = attribute_name.startsWith("/") ? attribute_name
+                .substring(1) : attribute_name;
+        int index = subName.indexOf("/");
+        if (index <= 0) {
+            ct.setAttribute(new Attribute(subName, attribute.getValue()));
+            return;
+        }
+        setCrawlOrderAttribute(subName.substring(index + 1), (ComplexType) ct
+                .getAttribute(subName.substring(0, index)), attribute);
     }
 
     public AttributeList setAttributes(AttributeList attributes) {
