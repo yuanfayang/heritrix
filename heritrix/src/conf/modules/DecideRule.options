@@ -22,3 +22,4 @@ org.archive.crawler.deciderules.NotMatchesFilePatternDecideRule
 org.archive.crawler.deciderules.ExternalImplDecideRule
 org.archive.crawler.deciderules.ClassKeyMatchesRegExpDecideRule
 org.archive.crawler.deciderules.HopsPathMatchesRegExpDecideRule
+org.archive.crawler.deciderules.ScopePlusOneDecideRule
