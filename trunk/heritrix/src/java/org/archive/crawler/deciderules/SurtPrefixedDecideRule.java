@@ -242,14 +242,12 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
      * @return Seed list file
      */
     protected File getSeedfile() {
-        CrawlScope scope = getSettingsHandler().getOrder().getController().getScope();
+        CrawlScope scope =
+            getSettingsHandler().getOrder().getController().getScope();
         scope.addSeedListener(this);
         return scope.getSeedfile();
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.scope.SeedListener#addedSeed(org.archive.crawler.datamodel.UURI)
-     */
     public synchronized void addedSeed(CrawlURI curi) {
         SurtPrefixSet newSurtPrefixes = (SurtPrefixSet) surtPrefixes.clone();
         newSurtPrefixes.add(SurtPrefixSet.prefixFromPlain(curi.toString()));

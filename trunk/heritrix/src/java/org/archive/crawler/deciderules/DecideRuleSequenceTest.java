@@ -38,6 +38,7 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.util.SurtPrefixSet;
 import org.archive.util.TmpDirTestCase;
 
 /**
@@ -120,7 +121,7 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
         assertTrue("Expect REJECT but got " + decision,
             decision == DecideRule.REJECT);
     }
-    
+        
     public void testRegex()
     throws InvalidAttributeValueException, AttributeNotFoundException,
     MBeanException, ReflectionException {
@@ -324,6 +325,80 @@ public class DecideRuleSequenceTest extends TmpDirTestCase {
         assertTrue("Expect " + overLimitDecision + " but got " + decision,
             decision == overLimitDecision);       
     }
+          
+    public void testScopePlusOne() 
+                throws URIException, InvalidAttributeValueException, 
+                AttributeNotFoundException, MBeanException,
+                ReflectionException {
+        // first test host scope      
+        ScopePlusOneDecideRule t = new ScopePlusOneDecideRule("host");
+        SurtPrefixSet mSet = new SurtPrefixSet();
+        mSet.add(SurtPrefixSet.prefixFromPlain("http://audio.archive.org"));
+        mSet.convertAllPrefixesToHosts();
+        t.surtPrefixes = mSet;
+        DecideRule s = addDecideRule(t);
+        s.setAttribute(new Attribute(ScopePlusOneDecideRule.ATTR_SCOPE,
+            ScopePlusOneDecideRule.HOST));
+
+
+        UURI uuri =
+            UURIFactory.getInstance("http://audio.archive.org/examples");
+        CandidateURI candidate = new CandidateURI(uuri);
+        Object decision = this.rule.decisionFor(candidate);
+        assertTrue("URI Expect " + DecideRule.ACCEPT + " for " + candidate +
+            " but got " + decision, decision == DecideRule.ACCEPT);    
+        UURI uuriOne = UURIFactory.getInstance("http://movies.archive.org");
+        CandidateURI plusOne = new CandidateURI(uuriOne);
+        plusOne.setVia(uuri);
+        decision = this.rule.decisionFor(plusOne);
+        assertTrue("PlusOne Expect " + DecideRule.ACCEPT + " for " + plusOne +
+            " with via " + plusOne.flattenVia() + " but got " + decision,
+            decision == DecideRule.ACCEPT);
+        UURI uuriTwo = UURIFactory.getInstance("http://sloan.archive.org");
+        CandidateURI plusTwo = new CandidateURI(uuriTwo);
+        plusTwo.setVia(uuriOne);
+        decision = this.rule.decisionFor(plusTwo);
+        assertTrue("PlusTwo Expect " + DecideRule.PASS + " for " + plusTwo +
+            " with via " + plusTwo.flattenVia() + " but got " + decision,
+            decision == DecideRule.PASS);        
+        
+
+        //now test domain scope
+        ScopePlusOneDecideRule u = new ScopePlusOneDecideRule("domain");
+        SurtPrefixSet mSet1 = new SurtPrefixSet();
+        mSet1.add(SurtPrefixSet.prefixFromPlain("archive.org"));
+        mSet1.convertAllPrefixesToDomains();
+        u.surtPrefixes = mSet1;
+        DecideRule v = addDecideRule(u);
+        v.setAttribute(new Attribute(ScopePlusOneDecideRule.ATTR_SCOPE,
+            ScopePlusOneDecideRule.DOMAIN));
+        
+        decision = this.rule.decisionFor(candidate);
+        assertTrue("Domain: URI Expect " + DecideRule.ACCEPT + " for " +
+            candidate + " but got " + decision, decision == DecideRule.ACCEPT);    
+        decision = this.rule.decisionFor(plusOne);
+        assertTrue("Domain: PlusOne Expect " + DecideRule.ACCEPT + " for " +
+            plusOne + " with via "  + plusOne.flattenVia() + " but got " +
+            decision, decision == DecideRule.ACCEPT);
+        decision = this.rule.decisionFor(plusTwo);
+        assertTrue("Domain: PlusTwo Expect " + DecideRule.ACCEPT + " for " +
+            plusTwo + " with via " + plusTwo.flattenVia() + " but got " +
+            decision, decision == DecideRule.ACCEPT);        
+        UURI uuriThree = UURIFactory.getInstance("http://sloan.org");
+        CandidateURI plusThree = new CandidateURI(uuriThree);
+        plusThree.setVia(uuriTwo);
+        decision = this.rule.decisionFor(plusThree);
+        assertTrue("Domain: PlusThree Expect " + DecideRule.ACCEPT + " for " +
+            plusThree + " with via " + plusThree.flattenVia() + " but got " +
+            decision, decision == DecideRule.ACCEPT);        
+        UURI uuriFour = UURIFactory.getInstance("http://example.com");
+        CandidateURI plusFour = new CandidateURI(uuriFour);
+        plusFour.setVia(uuriThree);
+        decision = this.rule.decisionFor(plusFour);                
+        assertTrue("Domain: PlusFour Expect " + DecideRule.PASS + " for " +
+            plusFour + " with via " + plusFour.flattenVia() + " but got " +
+            decision, decision == DecideRule.PASS);        
+    }     
     
     protected DecideRule addDecideRule(DecideRule dr)
     throws InvalidAttributeValueException {
