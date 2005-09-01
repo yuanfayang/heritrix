@@ -100,7 +100,7 @@ public class SinkHandlerLogRecord extends LogRecord {
         StringWriter sw = new StringWriter();
         Throwable t = getThrown();
         if (t == null) {
-            sw.append("No associated exception.");
+            sw.write("No associated exception.");
         } else {
             String tStr = t.toString();
             sw.write(tStr);

@@ -70,15 +70,8 @@ public class TextField implements CharSequence, Serializable {
         return value.subSequence(start, end);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     public boolean equals(Object obj) {
-        if (obj instanceof TextField && value.equals(obj)) {
-            return true;
-        } else {
-            return false;
-        }
+        return obj instanceof TextField && value.equals(obj);
     }
 
     /* (non-Javadoc)

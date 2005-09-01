@@ -1156,7 +1156,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     
     protected CrawlJob addCrawlJobBasedOn(final File orderFile,
         final String name, final String description, final String seeds)
-    throws FatalConfigurationException, IOException {
+    throws FatalConfigurationException {
         return addCrawlJob(createCrawlJobBasedOn(orderFile, name, description,
                 seeds));
     }
@@ -1362,7 +1362,15 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 (name == null || name.length() <= 0)?
                         getJmxName(): getJmxName(name));
         Heritrix.cmdlineRegisteredServer = getMBeanServer(objName);
-        Heritrix.cmdlineRegisteredServer.registerMBean(h, objName);
+        if (Heritrix.cmdlineRegisteredServer != null) {
+            Heritrix.cmdlineRegisteredServer.registerMBean(h, objName);
+        } else {
+            // JMX ain't available. Put this instance into the list of Heritrix
+            // instances so findable by the UI (Normally this is done in the
+            // jmx postRegister routine below).  When no JMX, can only have
+            // one instance of Heritrix so no need to do the deregisteration.
+            h.registerHeritrix(h.getClass().getName(), h);
+        }
     }
     
     /**
@@ -1976,11 +1984,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             name = new ObjectName(name.getDomain(), ht);
         }
         this.mbeanName = name;
-        // Populate the hashtable of all running local Heritrix instances
-        // (Needed by UI because its tightly bound to a Heritrix instance. Later
-        // make it so UI that goes via JMX is satisfactory).
-        Heritrix.instances.
-            put(this.mbeanName.getCanonicalKeyPropertyListString(), this);
+        registerHeritrix(name.getCanonicalKeyPropertyListString(), this);
         return name;
     }
 
@@ -2018,13 +2022,33 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
 
     public void postDeregister() {
-        // Remove reference from list of Heritrix instances.
+        unregisterHeritrix(this.mbeanName.getCanonicalKeyPropertyListString());
+        
         Heritrix.instances.
             remove(this.mbeanName.getCanonicalKeyPropertyListString());
         if (logger.isLoggable(Level.INFO)) {
             logger.info(JmxUtils.getLogUnregistrationMsg(
                     this.mbeanName.getCanonicalName(), this.mbeanServer));
         }
+    }
+    
+    /**
+     * Populate the hashtable of all running local Heritrix instances. 
+     * Needed by UI because its tightly bound to a Heritrix instance (TODO:
+     * Make UI go via JMX instead).
+     * @param key Key to use for this instance.
+     * @param h Instance to register.
+     */
+    protected void registerHeritrix(final String key, final Heritrix h) {
+        Heritrix.instances.put(key, h);
+    }
+    
+    /**
+     * Remove reference from list of Heritrix instances.
+     * @param key Key to use for this instance.
+     */
+    protected void unregisterHeritrix(final String key) {
+        Heritrix.instances.remove(key);
     }
     
     /**
