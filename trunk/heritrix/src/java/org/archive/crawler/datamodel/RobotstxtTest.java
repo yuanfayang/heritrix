@@ -59,6 +59,7 @@ public class RobotstxtTest extends TestCase {
         userAgents = new LinkedList();
         assertFalse(Robotstxt.parse(reader, userAgents, disallows));
         assertTrue(disallows.size() == 1);
-        assertTrue(userAgents.size() == 0);
+        assertTrue(userAgents.size() == 1);
+        assertEquals(userAgents.get(0), "");
     }
 }
