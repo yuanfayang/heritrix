@@ -1417,7 +1417,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         try {
             objName = new ObjectName(jmxname);
             server = getMBeanServer(objName);
-            server = registerMBean(server, objToRegister, objName);
+            if (server != null) {
+                server = registerMBean(server, objToRegister, objName);
+            }
         } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         }
