@@ -1371,8 +1371,13 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
             }
             String absoluteName = type.getAbsoluteName() + "/" + info.getName();
             if (JmxUtils.isOpenType(info.getType())) {
+                String description = info.getDescription();
+                if (description == null || description.length() <= 0) {
+                    // Description can't be empty.
+                    description = info.getName();
+                }
                 attributes.add(new OpenMBeanAttributeInfoSupport(
-                    absoluteName, info.getDescription(),
+                    absoluteName, description,
                     JmxUtils.getOpenType(info.getType()), true, true, false));
             } else if(info.isComplexType()) {
                 try {
