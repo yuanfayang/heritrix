@@ -30,7 +30,6 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.settings.MapType;
 
 /**
@@ -45,7 +44,7 @@ import org.archive.crawler.settings.MapType;
  */
 public class DecideRuleSequence extends DecideRule {
     private static final Logger logger =
-        Logger.getLogger(OrFilter.class.getName());
+        Logger.getLogger(DecideRuleSequence.class.getName());
 
     public static final String ATTR_RULES = "rules";
     
