@@ -41,7 +41,8 @@ import org.archive.util.ArchiveUtils;
 
 /**
  * Captures the checkpoint history and upcoming checkpoint name of a crawl.
- * Also has utility to help make checkpoint.
+ * Also has utility to help make checkpoint.  Maintains a directory named for
+ * the checkpoint into which checkpointing modules can safely write.
  *
  * @author gojomo
  */
@@ -49,9 +50,10 @@ public class CheckpointContext
 implements Serializable {
     private static final long serialVersionUID = -2339801205500280142L;
 
-    /** String to prefix any new checkpoint names.
+    /**
+     * String to prefix any new checkpoint names.
      */
-    private String checkpointPrefix = "";
+    private  String checkpointPrefix = "";
     
     /**
      * Next  overall series checkpoint number.
@@ -146,7 +148,8 @@ implements Serializable {
     }
 
     /**
-     * @return Checkpoint directory.
+     * @return Checkpoint directory. Name of the directory is the name of this
+     * current checkpoint.
      */
     public File getCheckpointInProgressDirectory() {
         return this.checkpointInProgressDir;
@@ -166,7 +169,7 @@ implements Serializable {
      */
     public void checkpointFailed(Exception e) {
         e.printStackTrace();
-        checkpointErrors = true;
+        this.checkpointErrors = true;
     }
     
     /**
@@ -185,10 +188,10 @@ implements Serializable {
     }
 
     /**
+     * Call when recovering a checkpoint.
      * Call this after instance has been revivifyied post-serialization to
      * amend counters and directories that effect where checkpoints get stored
      * from here on out.
-     * Call when recovering a checkpoint.
      * @param newdir New base dir to use future checkpointing.
      */
     public void recoveryAmendments(File newdir) {

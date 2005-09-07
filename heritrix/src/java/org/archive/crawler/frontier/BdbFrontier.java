@@ -188,11 +188,11 @@ public class BdbFrontier extends WorkQueueFrontier {
      * Return list of urls.
      * @param marker
      * @param numberOfMatches
-     * @param verbose
+     * @param verbose 
      * @return List of URIs (strings).
      */
     public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
-            boolean verbose) {
+            final boolean verbose) {
         List curis;
         try {
             curis = pendingUris.getFrom(marker, numberOfMatches);
@@ -423,6 +423,7 @@ public class BdbFrontier extends WorkQueueFrontier {
     }
 
     public void crawlCheckpoint(File checkpointDir) throws Exception {
+        super.crawlCheckpoint(checkpointDir);
         persistQueueState();
     }
 }

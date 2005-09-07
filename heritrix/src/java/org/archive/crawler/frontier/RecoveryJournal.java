@@ -32,6 +32,7 @@ import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -94,6 +95,12 @@ implements FrontierJournal {
     public static final String GZIP_SUFFIX = ".gz";
     
     /**
+     * File we're writing recovery to.
+     * Keep a reference in case we want to rotate it off.
+     */
+    private File gzipFile = null;
+    
+    /**
      * Allocate a buffer for accumulating lines to write and reuse it.
      */
     private MutableString accumulatingBuffer =
@@ -114,9 +121,14 @@ implements FrontierJournal {
      */
     public RecoveryJournal(String path, String filename)
     throws IOException {
-        this.out = new OutputStreamWriter(new GZIPOutputStream(
-            new FastBufferedOutputStream(new FileOutputStream(new File(path,
-                filename + GZIP_SUFFIX)))));
+        this.gzipFile = new File(path, filename + GZIP_SUFFIX);
+        this.out = initialize(gzipFile);
+    }
+    
+    private Writer initialize (final File f)
+    throws FileNotFoundException, IOException {
+        return new OutputStreamWriter(new GZIPOutputStream(
+            new FastBufferedOutputStream(new FileOutputStream(f))));
     }
 
     public synchronized void added(CrawlURI curi) {
@@ -229,8 +241,8 @@ implements FrontierJournal {
      * 
      * @see org.archive.crawler.framework.Frontier#importRecoverLog(String, boolean)
      */
-    public static void importRecoverLog(final File source, final Frontier frontier,
-            final boolean retainFailures)
+    public static void importRecoverLog(final File source,
+        final Frontier frontier, final boolean retainFailures)
     throws IOException {
         if (source == null) {
             throw new IllegalArgumentException("Passed source file is null.");
@@ -239,9 +251,11 @@ implements FrontierJournal {
         
         // first, fill alreadyIncluded with successes (and possibly failures),
         // and count the total lines
-        final int lines = importCompletionInfoFromLog(source, frontier, retainFailures);
+        final int lines =
+            importCompletionInfoFromLog(source, frontier, retainFailures);
         
-        LOGGER.info("finished completion state; recovering queues from "+source);
+        LOGGER.info("finished completion state; recovering queues from " +
+            source);
 
         // now, re-add anything that was in old frontier and not already
         // registered as finished. Do this in a separate thread that signals
@@ -291,11 +305,17 @@ implements FrontierJournal {
                         UURI u = UURIFactory.getInstance(s);
                         frontier.considerIncluded(u);
                         if(wasSuccess) {
-                            frontier.getFrontierJournal().finishedSuccess(u);
+                            if (frontier.getFrontierJournal() != null) {
+                                frontier.getFrontierJournal().
+                                    finishedSuccess(u);
+                            }
                         } else {
                             // carryforward failure, in case future recovery
-                            // wants to no retain them as finished  
-                            frontier.getFrontierJournal().finishedFailure(u);
+                            // wants to no retain them as finished 
+                            if (frontier.getFrontierJournal() != null) {
+                                frontier.getFrontierJournal().
+                                    finishedFailure(u);
+                            }
                         }
                     } catch (URIException e) {
                         e.printStackTrace();
@@ -323,10 +343,11 @@ implements FrontierJournal {
      * 
      * @param is
      * @param read
-     * @return
+     * @return True if we read a line.
      * @throws IOException
      */
-    private static boolean readLine(BufferedInputStream is, MutableString read) throws IOException {
+    private static boolean readLine(BufferedInputStream is, MutableString read)
+    throws IOException {
         read.length(0);
         int c = is.read();
         while((c!=-1)&&c!='\n'&&c!='\r') {
@@ -356,9 +377,9 @@ implements FrontierJournal {
      * @param frontier frontier to update
      * @param lines total lines noted in recovery log earlier
      * @param enough latch signalling 'enough' URIs queued to begin crawling
-     * @throws IOException
      */
-    private static void importQueuesFromLog(File source, Frontier frontier, int lines, Latch enough) {
+    private static void importQueuesFromLog(File source, Frontier frontier,
+            int lines, Latch enough) {
         BufferedInputStream is;
         // create MutableString of good starting size (will grow if necessary)
         MutableString read = new MutableString(UURI.MAX_URL_LENGTH);
@@ -381,15 +402,18 @@ implements FrontierJournal {
                             String pathFromSeed = (args.length > 2)?
                                 args[2].toString() : "";
                             UURI via = (args.length > 3)?
-                                    UURIFactory.getInstance(args[3].toString()) : null;
+                                UURIFactory.getInstance(args[3].toString()):
+                                null;
                             String viaContext = (args.length > 4)?
                                     args[4].toString(): "";
                             CandidateURI caUri = new CandidateURI(u, 
                                     pathFromSeed, via, viaContext);
                             frontier.schedule(caUri);
                             
-                            queuedDuringRecovery = frontier.queuedUriCount() - queuedAtStart;
-                            if(((queuedDuringRecovery+1)%ENOUGH_TO_START_CRAWLING)==0) {
+                            queuedDuringRecovery =
+                                frontier.queuedUriCount() - queuedAtStart;
+                            if(((queuedDuringRecovery + 1) %
+                                    ENOUGH_TO_START_CRAWLING) == 0) {
                                 enough.release();
                             }
                         } catch (URIException e) {
@@ -424,7 +448,7 @@ implements FrontierJournal {
      * split on space runs. 
      * 
      * @param read
-     * @return
+     * @return CharSequence.
      */
     private static CharSequence[] splitOnSpaceRuns(CharSequence read) {
         int lastStart = 0;
@@ -494,10 +518,20 @@ implements FrontierJournal {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.frontier.FrontierJournal#seriousError(java.lang.String)
-     */
     public void seriousError(String err) {
         writeLine("\n"+LOG_ERROR+ArchiveUtils.getLog14Date()+" "+err);
+    }
+
+    public synchronized void checkpoint(final File checkpointDir)
+    throws IOException {
+        if (this.out == null || !this.gzipFile.exists()) {
+            return;
+        }
+        close();
+        // Rename gzipFile with the checkpoint name as suffix.
+        this.gzipFile.renameTo(new File(this.gzipFile.getParentFile(),
+                this.gzipFile.getName() + "." + checkpointDir.getName()));
+        // Open new gzip file.
+        this.out = initialize(this.gzipFile);
     }
 }

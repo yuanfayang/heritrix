@@ -182,8 +182,8 @@ public class CrawlController implements Serializable, Reporter {
     
     /**
      * Checkpoint context.
-     * Knows if checkpoint in progress, what name of checkpoint is, has utility
-     * methods to aid checkpointing.
+     * Knows if checkpoint in progress and what name of checkpoint is. Has
+     * utility methods to aid checkpointing process.
      */
     private CheckpointContext cpContext;
     
@@ -1135,17 +1135,11 @@ public class CrawlController implements Serializable, Reporter {
      * CrawlController takes care of managing the checkpointing/serializing
      * of bdb, the StatisticsTracker, and the CheckpointContext.  Other
      * modules that want to revive themselves on checkpoint recovery need to
-     * save state inside in their 
-     * {@link CrawlStatusListener#crawlCheckpoint(File)} invocation
-     * and then in their #initialize if a module, or in their #initialTask if a
-     * processor, check with the CrawlController if its checkpoint recovery,
-     * and if it is, read in their old state from the pointed to checkpoint
-     * directory.
-     * <p>TODO: Do we need to serialize settings or just 
-     * copy settings, seeds, and settings dir to the checkpoint dir?
-     * <p>TODO: Add option to turn off recover recover log when
-     * checkpointing reliable.
-     * <p>TODO: Copy logs to checkpoint directory.
+     * save state during their {@link CrawlStatusListener#crawlCheckpoint(File)}
+     * invocation and then in their #initialize if a module,
+     * or in their #initialTask if a processor, check with the CrawlController
+     * if its checkpoint recovery. If it is, read in their old state from the
+     * pointed to  checkpoint directory.
      * @param context Context to use checkpointing.
      * @throws Exception
      */
@@ -1176,10 +1170,14 @@ public class CrawlController implements Serializable, Reporter {
         LOGGER.info("Bdb environment.");
         checkpointBdb(context.getCheckpointInProgressDirectory());
         
-        // Rotate off logs.
+        // Rotate off crawler logs.
         LOGGER.info("Rotating log files.");
         rotateLogFiles(CURRENT_LOG_SUFFIX + "."
             + this.cpContext.getNextCheckpointName());
+        
+        // Make copy of order, seeds, and settings.
+        LOGGER.info("Copying settings.");
+        copySettings(context.getCheckpointInProgressDirectory());        
         
         // Serialize the checkpoint context.
         CheckpointContext.writeObjectToFile(this.cpContext,
@@ -1194,30 +1192,63 @@ public class CrawlController implements Serializable, Reporter {
     }
     
     /**
+     * Copy off the settings.
+     * @param checkpointDir Directory to write checkpoint to.
+     * @throws IOException 
+     */
+    protected void copySettings(final File checkpointDir) throws IOException {
+        final List files = this.settingsHandler.getListOfAllFiles();
+        boolean copiedSettingsDir = false;
+        final File settingsDir = new File(this.disk, "settings");
+        for (final Iterator i = files.iterator(); i.hasNext();) {
+            File f = new File((String)i.next());
+            if (f.getAbsolutePath().startsWith(settingsDir.getAbsolutePath())) {
+                if (copiedSettingsDir) {
+                    // Skip.  We've already copied this member of the
+                    // settings directory.
+                    continue;
+                }
+                // Copy 'settings' dir all in one lump, not a file at a time.
+                copiedSettingsDir = true;
+                FileUtils.copyFiles(settingsDir,
+                    new File(checkpointDir, settingsDir.getName()));
+                continue;
+            }
+            FileUtils.copyFiles(f, f.isDirectory()? checkpointDir:
+                new File(checkpointDir, f.getName()));
+        }
+    }
+    
+    /**
      * Checkpoint bdb.
      * @param checkpointDir Directory to write checkpoint to.
      * @throws DatabaseException 
      * @throws IOException 
+     * @throws RuntimeException Thrown if failed setup of new bdb environment.
      */
     protected void checkpointBdb(File checkpointDir)
-    throws DatabaseException, IOException {
-        // Do a full bdb sync of all in cache to disk. Then checkpoint.
-        // From 'Chapter 8. Backing up and Restoring Berkeley DB Java
-        // Edition Applications'  This will clean up logs.
+    throws DatabaseException, IOException, RuntimeException {
+        // Do a full bdb sync of all in cache to disk. This takes a long time.
         this.bdbEnvironment.sync();
         LOGGER.fine("Finished bdb sync");
+        
+        // Removed log cleaning.  Takes way too much time (20minutes for a
+        // crawl of 1million items).  Assume cleaner is keeping up.
+        //
         // Below log cleaning loop suggested in je-2.0 javadoc.
         // TODO: Cleanlogs takes time.  Might not be worth it if the
         // cleaner thread has been keeping up.
-        int totalCleaned = 0;
-        for (int cleaned = 0; (cleaned = this.bdbEnvironment.cleanLog()) != 0;
-                totalCleaned += cleaned) {
-            LOGGER.fine("Cleaned " + cleaned + " log files.");
-        }
-        LOGGER.info("Cleaned out " + totalCleaned + " log files total.");
-        // Pass null. Uses default values.
-        this.bdbEnvironment.checkpoint(null);
-        LOGGER.fine("Finished bdb checkpoint.");
+        // int totalCleaned = 0;
+        // for (int cleaned = 0; (cleaned = this.bdbEnvironment.cleanLog()) != 0;
+        //        totalCleaned += cleaned) {
+        //    LOGGER.fine("Cleaned " + cleaned + " log files.");
+        // }
+        // LOGGER.info("Cleaned out " + totalCleaned + " log files total.");
+        
+//        // Pass null. Uses default values.
+//        this.bdbEnvironment.checkpoint(null);
+//        LOGGER.fine("Finished bdb checkpoint.");
+        
         // Copy off the bdb log files. Copy them in order.
         FilenameFilter filter = CheckpointContext.getJeLogsFilter();
         File bdbDir = CheckpointContext.getBdbSubDirectory(checkpointDir);

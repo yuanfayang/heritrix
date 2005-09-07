@@ -1002,6 +1002,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
     /**
      * @throws IllegalStateException Thrown if crawl is not paused.
      * @throws IOException
+     * @deprecated Use {@link #checkpoint()} instead.
      */
     protected void rotateLogs() throws IOException, IllegalStateException {
         if (this.controller != null) {
