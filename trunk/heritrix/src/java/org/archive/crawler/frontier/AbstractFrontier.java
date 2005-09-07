@@ -66,8 +66,9 @@ import org.archive.util.ArchiveUtils;
  * 
  * @author gojomo
  */
-public abstract class AbstractFrontier extends ModuleType implements
-        CrawlStatusListener, Frontier, FetchStatusCodes, CoreAttributeConstants {
+public abstract class AbstractFrontier extends ModuleType
+implements CrawlStatusListener, Frontier, FetchStatusCodes,
+        CoreAttributeConstants {
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
 
@@ -154,13 +155,19 @@ public abstract class AbstractFrontier extends ModuleType implements
     /** whether pause, rather than finish, when crawl appears done */
     public final static String ATTR_PAUSE_AT_FINISH = "pause-at-finish";
     // TODO: change default to true once well-tested
-    protected final static Boolean DEFAULT_PAUSE_AT_FINISH =
-        new Boolean(false);
+    protected final static Boolean DEFAULT_PAUSE_AT_FINISH = Boolean.FALSE;
     
     /** whether to pause at crawl start */
     public final static String ATTR_PAUSE_AT_START = "pause-at-start";
-    protected final static Boolean DEFAULT_PAUSE_AT_START =
-        new Boolean(false);
+    protected final static Boolean DEFAULT_PAUSE_AT_START = Boolean.FALSE;
+    
+    /**
+     * Recover log on or off attribute.
+     */
+    protected final static String ATTR_RECOVERY_ENABLED =
+        "recovery-log-enabled";
+    protected final static Boolean DEFAULT_ATTR_RECOVERY_ENABLED =
+        Boolean.TRUE;
 
     // top-level stats
     private long queuedUriCount = 0; // total URIs queued to be visited
@@ -188,6 +195,7 @@ public abstract class AbstractFrontier extends ModuleType implements
      * Crawl replay logger.
      * 
      * Currently captures Frontier/URI transitions.
+     * Can be null if user chose not to run a recovery.log.
      */
     transient private FrontierJournal recover = null;
 
@@ -195,8 +203,8 @@ public abstract class AbstractFrontier extends ModuleType implements
     public static final String IGNORED_SEEDS_FILENAME = "seeds.ignored";
 
     /**
-     * @param name
-     * @param description
+     * @param name Name of this frontier.
+     * @param description Description for this frontier.
      */
     public AbstractFrontier(String name, String description) {
         super(name, description);
@@ -297,6 +305,14 @@ public abstract class AbstractFrontier extends ModuleType implements
                 + "adjust settings, while the crawl state is still available. "
                 + "Default is false.", DEFAULT_PAUSE_AT_FINISH));
         t.setOverrideable(false);
+        
+        t = addElementToDefinition(new SimpleType(ATTR_RECOVERY_ENABLED,
+                "Set to false to disable recovery log writing.  Do this if " +
+                "you you are using the checkpoint feature for recovering " +
+                "crashed crawls.", DEFAULT_ATTR_RECOVERY_ENABLED));
+        t.setExpertSetting(true);
+        // No sense in it being overrideable.
+        t.setOverrideable(false);
     }
 
     public void start() {
@@ -330,8 +346,11 @@ public abstract class AbstractFrontier extends ModuleType implements
         }
         if (logsDisk != null) {
             String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
-            this.recover = new RecoveryJournal(logsPath,
+            if (((Boolean)getUncheckedAttribute(null, ATTR_RECOVERY_ENABLED))
+                    .booleanValue()) {
+                this.recover = new RecoveryJournal(logsPath,
                     FrontierJournal.LOGNAME_RECOVER);
+            }
         }
         try {
             final Class qapClass = Class.forName((String)getUncheckedAttribute(
@@ -975,6 +994,9 @@ public abstract class AbstractFrontier extends ModuleType implements
         return queueKey;
     }
 
+    /**
+     * @return RecoveryJournal instance.  May be null.
+     */
     public FrontierJournal getFrontierJournal() {
         return this.recover;
     }
@@ -1039,6 +1061,11 @@ public abstract class AbstractFrontier extends ModuleType implements
     public void crawlResuming(String statusMessage) {
         // TODO Auto-generated method stub
 
+    }
+    
+    public void crawlCheckpoint(File checkpointDir)
+    throws Exception {
+        this.recover.checkpoint(checkpointDir);
     }
     
     //

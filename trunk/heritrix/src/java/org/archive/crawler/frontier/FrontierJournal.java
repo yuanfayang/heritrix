@@ -22,6 +22,9 @@
  */
 package org.archive.crawler.frontier;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.net.UURI;
 
@@ -78,6 +81,14 @@ public interface FrontierJournal {
      *  Flush and close any held objects.
      */
     public abstract void close();
+    
+    /**
+     * Checkpoint.
+     * @param checkpointDir Directory we're checkpointing into.
+     * @throws IOException
+     */
+    public abstract void checkpoint(final File checkpointDir)
+    throws IOException;
 
     /**
      * Add a line noting a serious crawl error. 

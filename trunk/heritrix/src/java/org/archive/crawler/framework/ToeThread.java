@@ -224,8 +224,10 @@ Reporter, ProgressStatisticsReporter {
             // engineer a soft-landing for low-memory conditions
             controller.freeReserveMemory();
             controller.requestCrawlPause();
-            controller.getFrontier().getFrontierJournal().seriousError(
+            if (controller.getFrontier().getFrontierJournal() != null) {
+                controller.getFrontier().getFrontierJournal().seriousError(
                     getName() + err.getMessage());
+            }
         }
         
         // OutOfMemory etc.

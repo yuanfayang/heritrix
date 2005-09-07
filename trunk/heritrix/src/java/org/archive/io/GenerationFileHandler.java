@@ -85,8 +85,8 @@ public class GenerationFileHandler extends FileHandler {
      * of the activeSuffix; continuing logging to a new file under the
      * original filename.
      *
-     * @param storeSuffix
-     * @param activeSuffix
+     * @param storeSuffix Suffix to put in place of <code>activeSuffix</code>
+     * @param activeSuffix Suffix to replace with <code>storeSuffix</code>.
      * @return GenerationFileHandler instance.
      * @throws IOException
      */
