@@ -227,6 +227,10 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
     }
 
     public long getCrawlerTotalElapsedTime() {
+        if (getCrawlStartTime()==0) {
+            // if no start time set yet, consider elapsed time zero
+            return 0;
+        }
         return (getCrawlPauseStartedTime() != 0)?
             // Are currently paused, calculate time up to last pause
             (getCrawlPauseStartedTime() - getCrawlTotalPauseTime() -
