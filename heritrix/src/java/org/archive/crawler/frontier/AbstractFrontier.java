@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Iterator;
@@ -68,11 +69,11 @@ import org.archive.util.ArchiveUtils;
  */
 public abstract class AbstractFrontier extends ModuleType
 implements CrawlStatusListener, Frontier, FetchStatusCodes,
-        CoreAttributeConstants {
+        CoreAttributeConstants, Serializable {
     private static final Logger logger = Logger
             .getLogger(AbstractFrontier.class.getName());
 
-    protected CrawlController controller;
+    protected transient CrawlController controller;
 
     /** ordinal numbers to assign to created CrawlURIs */
     protected long nextOrdinal = 1;
@@ -84,7 +85,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * should the frontier send an EndedException to any threads asking for
      * URIs?
      */
-    protected boolean shouldTerminate = false;
+    protected transient boolean shouldTerminate = false;
 
     /**
      * how many multiples of last fetch elapsed time to wait before recontacting
@@ -170,26 +171,28 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         Boolean.TRUE;
 
     // top-level stats
-    private long queuedUriCount = 0; // total URIs queued to be visited
+    protected long queuedUriCount = 0; // total URIs queued to be visited
 
-    private long succeededFetchCount = 0;
+    protected long succeededFetchCount = 0;
 
-    private long failedFetchCount = 0;
+    protected long failedFetchCount = 0;
 
-    private long disregardedUriCount = 0; //URIs that are disregarded (for
+    protected long disregardedUriCount = 0; //URIs that are disregarded (for
                                           // example because of robot.txt rules)
 
-    // Used when bandwidth constraint are used
-    long totalProcessedBytes = 0;
+    /**
+     * Used when bandwidth constraint are used.
+     */
+    protected long totalProcessedBytes = 0;
 
-    long nextURIEmitTime = 0;
+    private transient long nextURIEmitTime = 0;
 
-    long processedBytesAfterLastEmittedURI = 0;
-
-    int lastMaxBandwidthKB = 0;
+    protected long processedBytesAfterLastEmittedURI = 0;
+    
+    protected int lastMaxBandwidthKB = 0;
 
     /** Policy for assigning CrawlURIs to named queues */
-    protected QueueAssignmentPolicy queueAssignmentPolicy = null;
+    protected transient QueueAssignmentPolicy queueAssignmentPolicy = null;
 
     /**
      * Crawl replay logger.
@@ -197,7 +200,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * Currently captures Frontier/URI transitions.
      * Can be null if user chose not to run a recovery.log.
      */
-    transient private FrontierJournal recover = null;
+    private transient FrontierJournal recover = null;
 
     /** file collecting report of ignored seed-file entries (if any) */
     public static final String IGNORED_SEEDS_FILENAME = "seeds.ignored";
@@ -542,7 +545,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * Static to allow non-derived sibling classes (frontiers not yet 
      * subclassed here) to reuse.
      * 
-     * @param ignoredWriter
+     * @param ignoredItems
+     * @param dir 
      */
     public static void saveIgnoredItems(String ignoredItems, File dir) {
         File ignoredFile = new File(dir, IGNORED_SEEDS_FILENAME);
@@ -1001,21 +1005,10 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         return this.recover;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
-     */
     public void crawlEnding(String sExitMessage) {
         // TODO Auto-generated method stub
-
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
-     */
     public void crawlEnded(String sExitMessage) {
         if (logger.isLoggable(Level.INFO)) {
             logger.info("Closing with " + Long.toString(queuedUriCount()) +
@@ -1023,44 +1016,20 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
-     */
     public void crawlStarted(String message) {
         // TODO Auto-generated method stub
-
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
-     */
     public void crawlPausing(String statusMessage) {
         // TODO Auto-generated method stub
-
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
-     */
     public void crawlPaused(String statusMessage) {
         // TODO Auto-generated method stub
-
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
-     */
     public void crawlResuming(String statusMessage) {
         // TODO Auto-generated method stub
-
     }
     
     public void crawlCheckpoint(File checkpointDir)

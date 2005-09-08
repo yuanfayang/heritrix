@@ -1,4 +1,4 @@
-/* $Header$
+/* $Id$
  * Created on Sep 24, 2004
  *
  *  Copyright (C) 2004 Internet Archive.
@@ -24,6 +24,7 @@ package org.archive.crawler.frontier;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -67,7 +68,8 @@ import com.sleepycat.collections.StoredIterator;
  * @author Christian Kohlschuetter
  */
 public abstract class WorkQueueFrontier extends AbstractFrontier
-implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
+implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
+        Serializable {
     /** truncate reporting of queues at some large but not unbounded number */
     private static final int REPORT_MAX_QUEUES = 2000;
     
@@ -120,28 +122,28 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
 
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
-    protected UriUniqFilter alreadyIncluded;
+    protected transient UriUniqFilter alreadyIncluded;
 
     /** all known queues */
-    protected Map allQueues = null; // of classKey -> ClassKeyQueue
+    protected transient Map allQueues = null; // of classKey -> ClassKeyQueue
 
     /**
      * All per-class queues whose first item may be handed out.
      * Linked-list of keys for the queues.
      */
-    protected LinkedQueue readyClassQueues = new LinkedQueue();
+    protected transient LinkedQueue readyClassQueues = new LinkedQueue();
 
     /** 
      * All 'inactive' queues, not yet in active rotation.
      * Linked-list of keys for the queues.
      */
-    protected LinkedQueue inactiveQueues = new LinkedQueue();
+    protected transient LinkedQueue inactiveQueues = new LinkedQueue();
 
     /**
      * 'retired' queues, no longer considered for activation.
      * Linked-list of keys for queues.
      */
-    protected LinkedQueue retiredQueues = new LinkedQueue();
+    protected transient LinkedQueue retiredQueues = new LinkedQueue();
     
     /** all per-class queues from whom a URI is outstanding */
     protected Bag inProcessQueues = 
@@ -155,7 +157,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver {
     private static final long DEFAULT_WAIT = 1000; // 1 second
 
     /** a policy for assigning 'cost' values to CrawlURIs */
-    private CostAssignmentPolicy costAssignmentPolicy;
+    private transient CostAssignmentPolicy costAssignmentPolicy;
     
     /**
      * A snoozed queue will be available at this time.

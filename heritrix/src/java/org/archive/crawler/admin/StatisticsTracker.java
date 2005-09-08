@@ -29,7 +29,6 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -158,8 +157,10 @@ implements CrawlURIDispositionListener, Serializable {
     protected transient Map hostsBytes = null;
     protected transient Map hostsLastFinished = null;
 
-    /** Record of seeds' latest actions */
-    protected Map processedSeedsRecords;
+    /**
+     * Record of seeds' latest actions.
+     */
+    protected transient Map processedSeedsRecords;
 
     // seeds tallies: ONLY UPDATED WHEN SEED REPORT WRITTEN
     private int seedsCrawled;
@@ -186,18 +187,16 @@ implements CrawlURIDispositionListener, Serializable {
             this.hostsLastFinished = 
                 BigMapFactory.getBigMap(c.getSettingsHandler(), 
                     "hostsLastFinished", String.class, Long.class);
-            this.processedSeedsRecords = makeSeedsMap();
+            this.processedSeedsRecords = 
+                Collections.synchronizedMap(BigMapFactory.
+                    getBigMap(c.getSettingsHandler(), "processedSeedsRecords",
+                        String.class, SeedRecord.class));
             
         } catch (Exception e) {
             throw new FatalConfigurationException("Failed setup of" +
                 " StatisticsTracker: " + e);
         }
         controller.addCrawlURIDispositionListener(this);
-    }
-    
-    private Map makeSeedsMap() {
-        return Collections.synchronizedMap(new HashMap());
-        // TODO: BDBify
     }
 
     protected void finalCleanup() {
@@ -213,6 +212,10 @@ implements CrawlURIDispositionListener, Serializable {
         if (this.hostsLastFinished != null) {
             this.hostsLastFinished.clear();
             this.hostsLastFinished = null;
+        }
+        if (this.processedSeedsRecords != null) {
+            this.processedSeedsRecords.clear();
+            this.processedSeedsRecords = null;
         }
     }
 
@@ -624,9 +627,6 @@ implements CrawlURIDispositionListener, Serializable {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURISuccessful(org.archive.crawler.datamodel.CrawlURI)
-     */
     public void crawledURISuccessful(CrawlURI curi) {
         handleSeed(curi,SEED_DISPOSITION_SUCCESS);
         // Save status codes
@@ -663,7 +663,8 @@ implements CrawlURIDispositionListener, Serializable {
             incrementMapCount(hostsBytes, hostname, size);
         }
         synchronized(hostsLastFinished){
-            hostsLastFinished.put(hostname, new Long(System.currentTimeMillis()));
+            hostsLastFinished.put(hostname,
+                new Long(System.currentTimeMillis()));
         }
     }
     
