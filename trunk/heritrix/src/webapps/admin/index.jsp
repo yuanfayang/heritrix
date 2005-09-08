@@ -305,11 +305,15 @@
         }
 
         if(handler.isCrawling()) {
-            out.println(" | <a href='javascript:doTerminateCurrentJob()'>Terminate current job</a> | ");
+            out.println(" | <a href='javascript:doTerminateCurrentJob()'>Terminate</a> | ");
             if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) || handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE)) {
-                out.println("<a href='/console/action.jsp?action=resume'>Resume current job</a>");
+                out.println("<a href='/console/action.jsp?action=resume'>Resume</a>");
                 if(handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED))
                 {
+                    out.println(" | <a href=\"");
+                    out.println(request.getContextPath());
+                    out.println("/console/action.jsp?" +
+                        "action=checkpoint\">Checkpoint</a>");
                     out.println(" | <a href=\"");
                     out.println(request.getContextPath());
                     out.println("/console/frontier.jsp\">View or Edit Frontier URIs</a> ");
@@ -318,7 +322,7 @@
             } else {
                 out.println("<a href=\"");
                 out.println(request.getContextPath());
-                out.println("/console/action.jsp?action=pause\">Pause current job</a> ");
+                out.println("/console/action.jsp?action=pause\">Pause</a> ");
             }
         }
     %> | <a href="<%=request.getContextPath()%>/">Refresh</a>

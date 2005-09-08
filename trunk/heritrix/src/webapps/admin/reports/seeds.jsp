@@ -15,40 +15,34 @@
      */
     String job = request.getParameter("job");
     CrawlJob cjob = (job != null)? handler.getJob(job): handler.getCurrentJob();
-    
     String title = "Seeds report";
     int tab = 4;
-    
 %>
 
 <%@include file="/include/head.jsp"%>
 
 <%
-    if(cjob == null)
-    {
+    if(cjob == null) {
         // NO JOB SELECTED - ERROR
 %>
         <p>&nbsp;<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Invalid job selected</b>
 <%
-    }
-    else if(stats == null)
-    {
-        out.println("<b>No statistics associated with job.</b><p><b>Job status:</b> " + cjob.getStatus());            
-        if(cjob.getErrorMessage()!=null){
-            out.println("<p><pre><font color='red'>"+cjob.getErrorMessage()+"</font></pre>");
+    } else if(stats == null) {
+        out.println("<b>No statistics associated with job.</b><p>" +
+            "<b>Job status:</b> " + cjob.getStatus());            
+        if (cjob.getErrorMessage()!=null) {
+            out.println("<p><pre><font color='red'>" +
+                cjob.getErrorMessage() + "</font></pre>");
         }
-    }
-    else
-    {
-    String ignoredSeeds = cjob.getIgnoredSeeds(); 
-    if(ignoredSeeds!=null&&ignoredSeeds.length()>0) {
+    } else {
+        String ignoredSeeds = cjob.getIgnoredSeeds(); 
+        if (ignoredSeeds != null && ignoredSeeds.length() > 0) {
 %>
 	<b style="color:red">Items in seed specification were ignored. 
 	<a href="#ignored">See below</a> for details.</b><p>
 <%    
     }
 %>
-
         <table cellspacing=0>
             <tr>
                 <th style="border-bottom:solid 1px #666666;">
@@ -61,19 +55,21 @@
             </tr>
             <%
                 Iterator seeds = stats.getSeedRecordsSortedByStatusCode();
-                while(seeds.hasNext()){
+                while (seeds.hasNext()) {
                     SeedRecord sr = (SeedRecord)seeds.next();
                     int code = sr.getStatusCode();
-                    String statusCode = code==0 ? "" : CrawlURI.fetchStatusCodesToString(code);
+                    String statusCode = code==0?
+                        "" : CrawlURI.fetchStatusCodesToString(code);
                     String statusColor = "black";
-                    if(code<0 || code >=400){
+                    if (code<0 || code >= 400) {
                         statusColor = "red";
-                    }else if(code == 200){
+                    } else if(code == 200) {
                         statusColor = "green";
                     }
             %>
                     <tr >
-                        <td style="border-bottom:solid 1px #666666;" align="left">
+                        <td style="border-bottom:solid 1px #666666;"
+                            align="left">
              <%
                  if(code!=0) {
               %>

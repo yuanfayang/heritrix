@@ -19,7 +19,7 @@
  * CrawlController.java
  * Created on May 14, 2003
  *
- * $Header$
+ * $Id$
  */
 package org.archive.crawler.framework;
 
@@ -85,6 +85,7 @@ import org.xbill.DNS.dns;
 import EDU.oswego.cs.dl.util.concurrent.ReentrantLock;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
+import com.sleepycat.je.CheckpointConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
@@ -339,13 +340,16 @@ public class CrawlController implements Serializable, Reporter {
             // setupStatTracking, CrawlController will manage the restoration
             // of the old StatisticsTracker.  Moving the bdb log files
             // into place and reviving the StatisticsTracker are the
-            // two main tasks done by CrawlController recovering a
-            // checkpoint.  Other objects interested in recovery need to
-            // ask CrawlController#isCheckpointRecover to figure if in
+            // main tasks done by CrawlController recovering a checkpoint.
+            // Other objects interested in recovery need to ask
+            // CrawlController#isCheckpointRecover to figure if in
             // recovery and then take appropriate recovery action
             // (These objects can call CrawlController#getCheckpointRecover
             // to get the directory that might hold files/objects dropped
-            // checkpointing).
+            // checkpointing).  Such objects will need to use a technique other
+            // than object serialization restoring settings because they'll
+            // have already been constructed when comes time for object to ask
+            // if its to recover itself.
             onFailMessage = "Unable to test/run checkpoint recover";
             this.checkpointRecover = getCheckpointRecover();
             if (this.checkpointRecover == null) {
@@ -390,10 +394,9 @@ public class CrawlController implements Serializable, Reporter {
      */
     protected void setupCheckpointRecover()
     throws IOException {
-        long started = -1;
-        if (LOGGER.isLoggable(Level.INFO)) {
-            started = System.currentTimeMillis();
-            LOGGER.info("Starting checkpoint recover named "
+        long started = System.currentTimeMillis();;
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine("Starting checkpoint recover named "
                     + this.checkpointRecover.getDisplayName());
         }
         this.progressStats.info("CHECKPOINT RECOVER " +
@@ -450,10 +453,10 @@ public class CrawlController implements Serializable, Reporter {
         */
         try {
             this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
-            if (LOGGER.isLoggable(Level.INFO)) {
+            if (LOGGER.isLoggable(Level.FINE)) {
                 // Write out the bdb configuration.
                 envConfig = bdbEnvironment.getConfig();
-                LOGGER.info("BdbConfiguration: Cache percentage " +
+                LOGGER.fine("BdbConfiguration: Cache percentage " +
                     envConfig.getCachePercent() +
                     ", cache size " + envConfig.getCacheSize());
             }
@@ -633,11 +636,9 @@ public class CrawlController implements Serializable, Reporter {
                " initialize frontier (Failed setup of ServerCache) " + e);
         }
         
-        if (frontier == null) {
-            Object o = order.getAttribute(Frontier.ATTR_NAME);
-            frontier = (Frontier)o;
-
-            // Try to initialize frontier from the config file
+        if (this.frontier == null) {
+            this.frontier = 
+                (Frontier)order.getAttribute(Frontier.ATTR_NAME);
             try {
                 frontier.initialize(this);
                 frontier.pause(); // Pause until begun
@@ -952,7 +953,7 @@ public class CrawlController implements Serializable, Reporter {
                     LOGGER.fine("Sent " + newState + " to " + l);
                 }
             }
-            LOGGER.info("Sent " + newState);
+            LOGGER.fine("Sent " + newState);
         }
     }
     
@@ -975,7 +976,7 @@ public class CrawlController implements Serializable, Reporter {
                     LOGGER.fine("Sent " + CHECKPOINTING + " to " + l);
                 }
             }
-            LOGGER.info("Sent " + CHECKPOINTING);
+            LOGGER.fine("Sent " + CHECKPOINTING);
         }
     }
 
@@ -1005,7 +1006,7 @@ public class CrawlController implements Serializable, Reporter {
      * Called when the last toethread exits.
      */
     protected void completeStop() {
-        LOGGER.info("Entered complete stop.");
+        LOGGER.fine("Entered complete stop.");
         // Run processors' final tasks
         runProcessorFinalTasks();
         // Ok, now we are ready to exit.
@@ -1059,7 +1060,7 @@ public class CrawlController implements Serializable, Reporter {
             this.bdbEnvironment = null;
         }
 
-        LOGGER.info("Finished crawl.");
+        LOGGER.fine("Finished crawl.");
     }
 
     private void completePause() {
@@ -1152,13 +1153,9 @@ public class CrawlController implements Serializable, Reporter {
         sendCheckpointEvent(context.getCheckpointInProgressDirectory());
         
         // Sync the BigMap contents to bdb, if their bdb bigmaps.
-        LOGGER.info("BigMaps.");
+        LOGGER.fine("BigMaps.");
         BigMapFactory.checkpoint();
         
-        // Manage serialization of statistics tracker.
-        LOGGER.info("StatisticsTracker.");
-        CheckpointContext.writeObjectToFile(this.statistics,
-            context.getCheckpointInProgressDirectory());
         // Note, on deserialization, the super CrawlType#parent
         // needs to be restored. Parent is '/crawl-order/loggers'.
         // The settings handler for this module also needs to be
@@ -1167,17 +1164,22 @@ public class CrawlController implements Serializable, Reporter {
         // care of this.
         
         // Checkpoint bdb environment.
-        LOGGER.info("Bdb environment.");
+        LOGGER.fine("Bdb environment.");
         checkpointBdb(context.getCheckpointInProgressDirectory());
         
         // Rotate off crawler logs.
-        LOGGER.info("Rotating log files.");
+        LOGGER.fine("Rotating log files.");
         rotateLogFiles(CURRENT_LOG_SUFFIX + "."
             + this.cpContext.getNextCheckpointName());
         
         // Make copy of order, seeds, and settings.
-        LOGGER.info("Copying settings.");
-        copySettings(context.getCheckpointInProgressDirectory());        
+        LOGGER.fine("Copying settings.");
+        copySettings(context.getCheckpointInProgressDirectory());       
+        
+        // Manage serialization of statistics tracker.
+        LOGGER.fine("StatisticsTracker.");
+        CheckpointContext.writeObjectToFile(this.statistics,
+            context.getCheckpointInProgressDirectory());
         
         // Serialize the checkpoint context.
         CheckpointContext.writeObjectToFile(this.cpContext,
@@ -1221,6 +1223,24 @@ public class CrawlController implements Serializable, Reporter {
     
     /**
      * Checkpoint bdb.
+     * I used do a call to log cleaning as suggested in je-2.0 javadoc but takes
+     * way too much time (20minutes for a crawl of 1million items). Assume
+     * cleaner is keeping up. Below was log cleaning loop .
+     * <pre>int totalCleaned = 0;
+     * for (int cleaned = 0; (cleaned = this.bdbEnvironment.cleanLog()) != 0;
+     *  totalCleaned += cleaned) {
+     *      LOGGER.fine("Cleaned " + cleaned + " log files.");
+     * }
+     * </pre>
+     * <p>I also used to do a sync. But, from Mark Hayes, sync and checkpoint
+     * are effectively same thing only sync is not configurable.  He suggests
+     * doing one or the other:
+     * <p>MS: Reading code, Environment.sync() is a checkpoint.  Looks like
+     * I don't need to call a checkpoint after calling a sync?
+     * <p>MH: Right, they're almost the same thing -- just do one or the other,
+     * not both.  With the new API, you'll need to do a checkpoint not a
+     * sync, because the sync() method has no config parameter.  Don't worry
+     * -- it's fine to do a checkpoint even though you're not using.
      * @param checkpointDir Directory to write checkpoint to.
      * @throws DatabaseException 
      * @throws IOException 
@@ -1228,44 +1248,47 @@ public class CrawlController implements Serializable, Reporter {
      */
     protected void checkpointBdb(File checkpointDir)
     throws DatabaseException, IOException, RuntimeException {
-        // Do a full bdb sync of all in cache to disk. This takes a long time.
-        this.bdbEnvironment.sync();
-        LOGGER.fine("Finished bdb sync");
-        
-        // Removed log cleaning.  Takes way too much time (20minutes for a
-        // crawl of 1million items).  Assume cleaner is keeping up.
-        //
-        // Below log cleaning loop suggested in je-2.0 javadoc.
-        // TODO: Cleanlogs takes time.  Might not be worth it if the
-        // cleaner thread has been keeping up.
-        // int totalCleaned = 0;
-        // for (int cleaned = 0; (cleaned = this.bdbEnvironment.cleanLog()) != 0;
-        //        totalCleaned += cleaned) {
-        //    LOGGER.fine("Cleaned " + cleaned + " log files.");
-        // }
-        // LOGGER.info("Cleaned out " + totalCleaned + " log files total.");
-        
-//        // Pass null. Uses default values.
-//        this.bdbEnvironment.checkpoint(null);
-//        LOGGER.fine("Finished bdb checkpoint.");
-        
-        // Copy off the bdb log files. Copy them in order.
-        FilenameFilter filter = CheckpointContext.getJeLogsFilter();
-        File bdbDir = CheckpointContext.getBdbSubDirectory(checkpointDir);
-        FileUtils.copyFiles(getStateDisk(), filter, bdbDir, true);
-        // Go again in case new bdb logs were added since above
-        // bulk copy.  Keep cycling till two dirs match.
-        Set src = null;
-        do {
-            src = new HashSet(Arrays.asList(getStateDisk().list(filter)));
-            List tgt = Arrays.asList(CheckpointContext.
-                getBdbSubDirectory(checkpointDir).list(filter));
-            src.removeAll(tgt);
-            if (src.size() > 0) {
-                LOGGER.fine("Copying " + src.size() + " new bdb log files.");
-                FileUtils.copyFiles(bdbDir, src, getStateDisk());
-            }
-        } while (src != null && src.size() > 0);
+        EnvironmentConfig envConfig = this.bdbEnvironment.getConfig();
+        final List bkgrdThreads = Arrays.asList(new String []
+            {"je.env.runCheckpointer", "je.env.runCleaner",
+                "je.env.runINCompressor"});
+        try {
+            // Disable background threads
+            setBdbjeBkgrdThreads(envConfig, bkgrdThreads, "false");
+            // Do a force checkpoint.  Thats what a sync does.
+            CheckpointConfig chkptConfig = new CheckpointConfig();
+            chkptConfig.setForce(true);
+            this.bdbEnvironment.checkpoint(chkptConfig);
+            LOGGER.fine("Finished bdb checkpoint.");
+
+            // Copy off the bdb log files. Copy them in order.
+            FilenameFilter filter = CheckpointContext.getJeLogsFilter();
+            File bdbDir = CheckpointContext.getBdbSubDirectory(checkpointDir);
+            FileUtils.copyFiles(getStateDisk(), filter, bdbDir, true);
+            // Go again in case new bdb logs were added since above
+            // bulk copy. Keep cycling till two dirs match.
+            Set src = null;
+            do {
+                src = new HashSet(Arrays.asList(getStateDisk().list(filter)));
+                List tgt = Arrays.asList(CheckpointContext.
+                    getBdbSubDirectory(checkpointDir).list(filter));
+                src.removeAll(tgt);
+                if (src.size() > 0) {
+                    LOGGER.fine("Copying " + src.size() + " new bdb logs.");
+                    FileUtils.copyFiles(bdbDir, src, getStateDisk());
+                }
+            } while (src != null && src.size() > 0);
+        } finally {
+            // Restore background threads.
+            setBdbjeBkgrdThreads(envConfig, bkgrdThreads, "true");
+        }
+    }
+    
+    protected void setBdbjeBkgrdThreads(final EnvironmentConfig config,
+            final List threads, final String setting) {
+        for (final Iterator i = threads.iterator(); i.hasNext();) {
+            config.setConfigParam((String)i.next(), setting);
+        }
     }
     
     /**
@@ -1335,11 +1358,11 @@ public class CrawlController implements Serializable, Reporter {
      * Start the process of stopping the crawl. 
      */
     public void beginCrawlStop() {
-        LOGGER.info("Started.");
+        LOGGER.fine("Started.");
         sendCrawlStateChangeEvent(STOPPING, this.sExit);
         frontier.terminate();
         frontier.unpause();
-        LOGGER.info("Finished."); 
+        LOGGER.fine("Finished."); 
     }
     
     /**
@@ -1378,7 +1401,7 @@ public class CrawlController implements Serializable, Reporter {
         }
         multiThreadMode();
         frontier.unpause();
-        LOGGER.info("Crawl resumed.");
+        LOGGER.fine("Crawl resumed.");
         sendCrawlStateChangeEvent(RUNNING, CrawlJob.STATUS_RUNNING);
     }
 

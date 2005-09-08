@@ -1,6 +1,6 @@
 /* BdbFrontier
  * 
- * $Header$
+ * $Id$
 * 
  * Created on Sep 24, 2004
  *
@@ -26,7 +26,9 @@
 package org.archive.crawler.frontier;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -36,9 +38,12 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
+import org.archive.crawler.checkpoint.CheckpointContext;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
+import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.BdbUriUniqFilter;
@@ -59,7 +64,7 @@ import com.sleepycat.je.OperationStatus;
  *
  * @author Gordon Mohr
  */
-public class BdbFrontier extends WorkQueueFrontier {
+public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     // be robust against trivial implementation changes
     private static final long serialVersionUID = ArchiveUtils
         .classnameBasedUID(BdbFrontier.class, 1);
@@ -68,10 +73,10 @@ public class BdbFrontier extends WorkQueueFrontier {
         Logger.getLogger(BdbFrontier.class.getName());
 
     /** all URIs scheduled to be crawled */
-    protected BdbMultipleWorkQueues pendingUris;
+    protected transient BdbMultipleWorkQueues pendingUris;
 
     /** all URI-already-included options available to be chosen */
-    String[] AVAILABLE_INCLUDED_OPTIONS = new String[] {
+    private String[] AVAILABLE_INCLUDED_OPTIONS = new String[] {
             BdbUriUniqFilter.class.getName(),
             BloomUriUniqFilter.class.getName() };
     
@@ -421,9 +426,48 @@ public class BdbFrontier extends WorkQueueFrontier {
     protected boolean workQueueDataOnDisk() {
         return true;
     }
+    
+    public void initialize(CrawlController c)
+    throws FatalConfigurationException, IOException {
+        super.initialize(c);
+        if (c.isCheckpointRecover()) {
+            // If a checkpoint recover, copy old values from serialized
+            // instance into this Frontier (Do it this way because its
+            // awkward having CrawlController managing the revivification of
+            // the BdbFrontier -- CC needs to know too much about BdbFrontier
+            // internals.  Below copying over is error-prone because its easy
+            // to miss a value.  Perhaps there's a better way?  Introspection?
+            BdbFrontier f = null;
+            try {
+                f = (BdbFrontier)CheckpointContext.
+                    readObjectFromFile(this.getClass(),
+                        this.controller.getCheckpointRecover().getDirectory());
+            } catch (FileNotFoundException e) {
+                throw new FatalConfigurationException("Failed checkpoint " +
+                    "recover: " + e.getMessage());
+            } catch (IOException e) {
+                throw new FatalConfigurationException("Failed checkpoint " +
+                    "recover: " + e.getMessage());
+            } catch (ClassNotFoundException e) {
+                throw new FatalConfigurationException("Failed checkpoint " +
+                    "recover: " + e.getMessage());
+            }
+            this.nextOrdinal = f.nextOrdinal;
+            this.totalProcessedBytes = f.totalProcessedBytes;
+            this.disregardedUriCount = f.disregardedUriCount;
+            this.failedFetchCount = f.failedFetchCount;
+            this.processedBytesAfterLastEmittedURI =
+                f.processedBytesAfterLastEmittedURI;
+            this.queuedUriCount = f.queuedUriCount;
+            this.succeededFetchCount = f.succeededFetchCount;
+            this.lastMaxBandwidthKB = f.lastMaxBandwidthKB;
+        }
+    }
 
     public void crawlCheckpoint(File checkpointDir) throws Exception {
         super.crawlCheckpoint(checkpointDir);
         persistQueueState();
+        // Serialize ourselves.
+        CheckpointContext.writeObjectToFile(this, checkpointDir);
     }
 }
