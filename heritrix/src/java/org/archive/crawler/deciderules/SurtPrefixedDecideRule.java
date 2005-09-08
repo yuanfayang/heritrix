@@ -30,6 +30,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.scope.SeedListener;
@@ -64,13 +65,22 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         new Boolean(true);
 
     /**
-     * Whether every configu change should trigger a 
+     * Whether every config change should trigger a 
      * rebuilding of the prefix set.
      */
     public static final String 
         ATTR_REBUILD_ON_RECONFIG = "rebuild-on-reconfig";
     public static final Boolean
         DEFAULT_REBUILD_ON_RECONFIG = Boolean.TRUE;
+    
+    /**
+     * Whether the 'via' of CrawlURIs should also be checked
+     * to see if it is prefixed by the set of SURT prefixes
+     */
+    public static final String 
+        ATTR_ALSO_CHECK_VIA = "also-check-via";
+    public static final Boolean
+        DEFAULT_ALSO_CHECK_VIA = Boolean.FALSE;
     
     protected SurtPrefixSet surtPrefixes = null;
 
@@ -82,7 +92,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         super(name);
         setDescription("SurtPrefixedDecideRule. Makes the configured decision "
                 + "for any URI which, when expressed in SURT form, begins "
-                + "with the established prefixes (from either seeds "
+                + "with any of the established prefixes (from either seeds "
                 + "specification or an external file).");
         addElementToDefinition(new SimpleType(ATTR_SURTS_SOURCE_FILE,
                 "Source file from which to read SURT prefixes.", ""));
@@ -92,6 +102,15 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         Type t = addElementToDefinition(new SimpleType(ATTR_SURTS_DUMP_FILE,
                 "Dump file to save SURT prefixes actually used: " +
                 "Useful debugging SURTs.", ""));
+        t.setExpertSetting(true);
+        t = addElementToDefinition(new SimpleType(ATTR_ALSO_CHECK_VIA,
+                "Whether to also make the configured decision if a " +
+                "URI's 'via' URI (the URI from which it was discovered) " +
+                "in SURT form begins with any of the established prefixes. " +
+                "For example, can be used to ACCEPT URIs that are 'one hop " +
+                "off' URIs fitting the SURT prefixes. Default is false.",
+                DEFAULT_ALSO_CHECK_VIA));
+        t.setOverrideable(false);
         t.setExpertSetting(true);
         t = addElementToDefinition(new SimpleType(ATTR_REBUILD_ON_RECONFIG,
                 "Whether to rebuild the internal structures from source " +
@@ -106,25 +125,47 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
     }
 
     /**
-     * Evaluate whether given object's URI is in the SURT prefix set
+     * Evaluate whether given object's URI is covered by the SURT prefix set
      * 
      * @param object Item to evaluate.
-     * @return true if regexp is matched
+     * @return true if item, as SURT form URI, is prefixed by an item in the set
      */
     protected boolean evaluate(Object object) {
-        SurtPrefixSet set = getPrefixes();
+        String candidateSurt;
+        if ( (object instanceof CandidateURI) && 
+                ((Boolean) getUncheckedAttribute(null, ATTR_ALSO_CHECK_VIA))
+                    .booleanValue()) {
+            if(evaluate(((CandidateURI)object).getVia())) {
+                return true;
+            }
+        }
+        candidateSurt = getCandidateSurt(object);
+        if (candidateSurt == null) {
+            return false;
+        }
+        return getPrefixes().containsPrefixOf(candidateSurt);
+    }
+
+    /**
+     * Calculate the SURT form URI to evaluate from the given 
+     * Object (CandidateURI ior UURI)
+     * 
+     * @param object CandidateURI or UURI
+     * @return SURT form of URI for evaluation, or null if unavailable
+     */
+    private String getCandidateSurt(Object object) {
         UURI u = UURI.from(object);
         if (u == null) {
-            return false;
+            return null;
         }
         String candidateSurt = u.getSurtForm();
         // also want to treat https as http
         if (candidateSurt.startsWith("https:")) {
             candidateSurt = "http:" + candidateSurt.substring(6);
         }
-        return set.containsPrefixOf(candidateSurt);
+        return candidateSurt;
     }
-    
+
     /**
      * Synchronized get of prefix set to use
      * 
@@ -232,7 +273,6 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         }
         // TODO: make conditional on file having actually changed,
         // perhaps by remembering mod-time
-
     }
 
     /**
