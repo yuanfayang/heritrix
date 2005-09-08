@@ -49,6 +49,10 @@ import org.archive.util.SurtPrefixSet;
  * The set can be filled with SURT prefixes implied or
  * listed in the seeds file, or another external file. 
  *
+ * The "also-check-via" option to implement "one hop off" 
+ * scoping derives from a contribution by Shifra Raffel
+ * of the California Digital Library. 
+ * 
  * @author gojomo
  */
 public class SurtPrefixedDecideRule extends PredicatedDecideRule 
