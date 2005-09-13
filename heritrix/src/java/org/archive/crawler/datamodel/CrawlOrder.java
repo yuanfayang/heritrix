@@ -28,7 +28,7 @@
 package org.archive.crawler.datamodel;
 
 import java.io.File;
-import java.util.logging.Level;
+import java.io.Serializable;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -42,7 +42,6 @@ import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.RegularExpressionConstraint;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.url.canonicalize.BaseRule;
@@ -54,7 +53,7 @@ import org.archive.crawler.url.canonicalize.BaseRule;
  *
  * @see org.archive.crawler.settings.ModuleType
  */
-public class CrawlOrder extends ModuleType {
+public class CrawlOrder extends ModuleType implements Serializable {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.datamodel.CrawlOrder");
 
@@ -95,12 +94,12 @@ public class CrawlOrder extends ModuleType {
      */
     private final static Integer DEFAULT_BDB_CACHE_PERCENT = new Integer(0);
 
-    private String caseFlattenedUserAgent;
+    private transient String caseFlattenedUserAgent;
 
-    private MapType httpHeaders;
-    private MapType loggers;
+    private transient MapType httpHeaders;
+    private transient MapType loggers;
 
-    private CrawlController controller;
+    private transient CrawlController controller;
 
     /**
      * Regex for acceptable user-agent format.
