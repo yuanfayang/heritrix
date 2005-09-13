@@ -18,7 +18,10 @@
      */
     CrawlJob theJob = handler.getJob(request.getParameter("job"));
     boolean isProfile = "true".equals(request.getParameter("profile"));
-    boolean isRecover = "true".equals(request.getParameter("recover"));
+    // Recover can have a value of 'true' if we are to do a recover-log
+    // based recovery else it has the name of the checkpoint we're to recover
+    // from.
+    String recovery = request.getParameter("recover");
     
     if(theJob == null) {
         //Ok, use default profile then.
@@ -68,7 +71,7 @@
             } else {
                 newJob = handler.newJob(
                     theJob, 
-                    isRecover,
+                    recovery,
                     metaName, 
                     jobDescription,
                     request.getParameter("seeds"),
@@ -112,8 +115,8 @@
             <input type="hidden" name="action" value="new">
             <input type="hidden" name="profile" value="<%=isProfile%>">
             <input type="hidden" name="job" value="<%=theJob.getUID()%>">
-            <%     if(isRecover) { %>
-            <input type="hidden" name="recover" value="true">
+            <%     if(recovery != null && recovery.length() > 0) { %>
+            <input type="hidden" name="recover" value="<%=recovery%>">
             <%    }  %>
             <b>
                 Create new 
@@ -123,7 +126,7 @@
                 crawl job 
             <%    }    %>
                 based on
-            <%     if(isRecover) { %>
+            <%     if(recovery != null && recovery.length() > 0) { %>
                 recovery of 
             <%    }  %>
             <%     if(request.getParameter("job")==null){%>

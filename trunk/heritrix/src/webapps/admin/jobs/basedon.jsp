@@ -5,7 +5,7 @@
 <%@ page import="javax.servlet.http.HttpServletRequest" %>
 
 <%!
-    public String printJobList(List jobs, boolean isJobs, boolean showRecover,
+    public String printJobList(List jobs, boolean isJobs,
             HttpServletRequest request) {
         if(jobs==null) {
             return null;
@@ -21,12 +21,6 @@
                 ret.append(" ["+tmp.getUID()+"]");
             }
             ret.append("</a>");
-            if(showRecover) {
-                ret.append(" (<a href=\"");
-	            ret.append(request.getContextPath());
-	            ret.append("/jobs/new.jsp?job=" + tmp.getUID() + 
-	            "&recover=true\">recover</a>)");
-            }
         }
         return ret.toString();
     }
@@ -44,8 +38,7 @@
     <ul>
 <%
     if(isJobs){
-        out.println(printJobList(handler.getPendingJobs(), true, false,
-            request));
+        out.println(printJobList(handler.getPendingJobs(), true, request));
         if(handler.getCurrentJob()!=null){
             out.println("<li><a href=\"");
             out.println(request.getContextPath());
@@ -54,9 +47,9 @@
                 handler.getCurrentJob().getJobName() +
                 " [" + handler.getCurrentJob().getUID() + "]</a>");
         }
-        out.println(printJobList(handler.getCompletedJobs(),true, true, request));
+        out.println(printJobList(handler.getCompletedJobs(),true, request));
     } else {
-        out.println(printJobList(handler.getProfiles(),false, false, request));
+        out.println(printJobList(handler.getProfiles(),false, request));
     }
 %>    
     </ul>

@@ -49,6 +49,8 @@
     <ul>
 	<li><a href="<%=request.getContextPath()%>/jobs/basedon.jsp?type=jobs">
 	Based on existing job</a></li>
+	<li><a href="<%=request.getContextPath()%>/jobs/recovery.jsp">
+	Based on a recovery</a></li>
 	<li><a href="<%=request.getContextPath()%>/jobs/basedon.jsp">
 	Based on a profile</a></li>
 	<li><a href="<%=request.getContextPath()%>/jobs/new.jsp">

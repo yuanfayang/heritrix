@@ -139,7 +139,7 @@
 
           <para>Default a java heap of 256MB RAM, which is usually suitable
           for crawls that range over hundreds of hosts. Assign more -- see
-          <xref linkend="java_opts" /> for how -- of your available RAM to the
+          <xref linkend="java_opts" /> for how -- of your available ram to the
           heap if you are crawling thousands of hosts or experience Java
           out-of-memory problems.</para>
         </sect4>
@@ -3677,7 +3677,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
     <sect2 id="recover">
       <title>Recovery of Frontier State and recover.gz</title>
 
-      <para>During normal running, the Heritrix Frontier keeps a journal. The
+      <para>During normal running, the Heritrix Frontier by default keeps a
+      journal. The
       journal is kept in the jobs logs directory. Its named
       <literal>recover.gz</literal>. If a crawl crashes, the recover.gz
       journal can be used to recreate approximately the status of the crawler
@@ -3686,7 +3687,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
       <para>To run the recovery process, relaunch the crashed crawler. Create
       a new crawl order job based on the crawl that crashed. If you choose the
-      "Recover" link after the job in the completed job list, the new job will
+      "recover-log" link from the list of completed jobs in the 'Based on
+      recovery' page, the new job will
       automatically be set up to use the original job's recovery journal to
       bootstrap its Frontier state (of completed and queued URIs). Further, if
       the recovered job attempts to reuse any already-full 'logs' or 'state'
@@ -3721,6 +3723,50 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       use restoring the frontier at least to where the gzip file went bad
       (Gzip zips in 32k blocks; the worst loss would be the last 32k of
       gzipped data).</para>
+      <para>See also below, the related recovery facility,
+        <xref linkend="checkpoint" />, for an alternate recovery mechanism.
+      </para>
+    </sect2>
+
+    <sect2 id="checkpoint">
+      <title>Checkpointing</title>
+      <para>Checkpointing [<xref linked="checkpointing" />] the crawler will
+      write a representation of its 
+      state to disk and copy the mutable objects and logs -- e.g. the
+      bdbje logs and the serialized java objects -- to a directory
+      under the configured <literal>checkpoints-path</literal> directory
+      that is named for the checkpoint.
+      Checkpointing also rotates off the crawler logs including the
+      <literal>recover.gz</literal> log if enabled.  Log files are not copied.
+      They are left under the logs directory and are distingushed by a suffix.
+      The suffix is checkpoint name (e.g. crawl.log.00031 where 00031 is the
+      checkpoint name).
+      </para>
+      <para>
+      To run a checkpoint, pause the crawl. In the UI, after completion of
+      the pause, a <literal>checkpoint</literal> button will appear.  Click
+      the button.  Dependent on the size of the crawl, checkpointing can
+      take some time (Most of the time is taken up copying off the bdbje logs).
+      While checkpointing, the status will show as
+      <literal>checkpointing</literal> (Its possible to perform a checkpoint
+      via JMX).  When the checkpoint has completed, resume the crawl.
+      </para>
+      <para>Recovery from a checkpoint has much in common with the
+      recovery of a crawl using the recover.log (See <xref linked="recover" />.
+      Checkpointing is currently experimental.  The recover-log technique
+      is tried-and-true.  Once checkpointing is proven reliable, faster, and
+      more comprehensive, it will become the preferred method recovering
+      a crawler).  To recover, create a job.  Then before launching, set the
+      <literal>recover-path</literal> to point at the checkpoint directory
+      you want to recover.  Alternatively, browse to the
+      <literal>Jobs->Based on a recovery</literal> screen and select the
+      checkpoint you want to recover from.  After clicking, a new job
+      will be created that takes the old jobs (end-of-crawl) settings
+      and autofills the recover-path with the right directory-path (The
+      renaming of logs and state dirs so they do not clash with the old
+      as is described above in <xref linkend="recover" /> is also done).
+      </para>
+      
     </sect2>
 
     <sect2 id="mon_com">
@@ -3776,9 +3822,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <glossterm>Checkpointing</glossterm>
 
         <glossdef>
-          <para>Heritrix currently has no checkpointing facility. However, our
-          conception of what we need is heavily influenced by what Mercator
-          provided. In <ulink
+          <para>Heritrix checkpointing has been heavily influenced by what
+          Mercator provided. In <ulink
           url="http://citeseer.nj.nec.com/najork01highperformance.html">one of
           the papers on Mercator</ulink> it is described this way:
           <quote>Checkpointing is an important part of any long-running
@@ -3793,6 +3838,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           background thread performs a checkpoint is user-configurable; we
           typically checkpoint anywhere from 1 to 4 times per
           day.</quote></para>
+          <para>See <xref linkend="checkpoint" /> for discussion of the
+          Heritrix implementation.</para>
         </glossdef>
       </glossentry>
 

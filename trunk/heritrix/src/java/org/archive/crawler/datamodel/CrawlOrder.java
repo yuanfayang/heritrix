@@ -65,15 +65,18 @@ public class CrawlOrder extends ModuleType implements Serializable {
     public static final String ATTR_STATE_PATH = "state-path";
     public static final String ATTR_SCRATCH_PATH = "scratch-path";
     public static final String ATTR_RECOVER_PATH = "recover-path";
-    public static final String ATTR_RECOVER_RETAIN_FAILURES = "recover-retain-failures";
+    public static final String ATTR_RECOVER_RETAIN_FAILURES =
+        "recover-retain-failures";
     public static final String ATTR_MAX_BYTES_DOWNLOAD = "max-bytes-download";
-    public static final String ATTR_MAX_DOCUMENT_DOWNLOAD = "max-document-download";
+    public static final String ATTR_MAX_DOCUMENT_DOWNLOAD =
+        "max-document-download";
     public static final String ATTR_MAX_TIME_SEC = "max-time-sec";
     public static final String ATTR_MAX_TOE_THREADS = "max-toe-threads";
     public static final String ATTR_HTTP_HEADERS = "http-headers";
     public static final String ATTR_USER_AGENT = "user-agent";
     public static final String ATTR_FROM = "from";
-    public static final String ATTR_PRE_FETCH_PROCESSORS = "pre-fetch-processors";
+    public static final String ATTR_PRE_FETCH_PROCESSORS =
+        "pre-fetch-processors";
     public static final String ATTR_FETCH_PROCESSORS = "fetch-processors";
     public static final String ATTR_EXTRACT_PROCESSORS = "extract-processors";
     public static final String ATTR_WRITE_PROCESSORS = "write-processors";
@@ -145,7 +148,8 @@ public class CrawlOrder extends ModuleType implements Serializable {
         e.setExpertSetting(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_CHECKPOINTS_PATH,
-                "Directory where crawler checkpoint files will be kept. If this path " +
+                "Directory where crawler checkpoint files will be kept. " +
+                "If this path " +
                 "is a relative path, it will be relative to the 'disk-path'.",
                 "checkpoints"));
         e.setOverrideable(false);
@@ -159,7 +163,8 @@ public class CrawlOrder extends ModuleType implements Serializable {
         e.setExpertSetting(true);
 
         e = addElementToDefinition(new SimpleType(ATTR_SCRATCH_PATH,
-                "Directory where discardable temporary files will be kept. If this path " +
+                "Directory where discardable temporary files will be kept. " +
+                "If this path " +
                 "is a relative path, it will be relative to the 'disk-path'.",
                 "scratch"));
         e.setOverrideable(false);
@@ -280,15 +285,8 @@ public class CrawlOrder extends ModuleType implements Serializable {
                 "reports and/or provide information to the user interface."));
 
         e = addElementToDefinition(new SimpleType(ATTR_RECOVER_PATH,
-                "Optional. Points at recover log (or recover.gz log) " +
-                "to use recovering Frontier (OR, experimentally, it " +
-                "points to a " +
-                "checkpoint directory to recover). A recover log " +
-                "is automatically generated during a crawl. If a crawl " +
-                "crashes it can be used to recreate the status of the crawler" +
-                " at the time of the crash. This can take a long" +
-                " time in some cases, but is usually much quicker then " +
-                "repeating a crawl.", ""));
+                "Optional. Points at recover log (or recover.gz log) OR " +
+                "the checkpoint directory to use recovering a crawl.", ""));
         e.setOverrideable(false);
         e.setExpertSetting(true);
 
