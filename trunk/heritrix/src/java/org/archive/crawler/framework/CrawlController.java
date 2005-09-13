@@ -71,8 +71,6 @@ import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.GenerationFileHandler;
-import org.archive.io.ObjectPlusFilesInputStream;
-import org.archive.io.ObjectPlusFilesOutputStream;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
@@ -132,13 +130,18 @@ public class CrawlController implements Serializable, Reporter {
     private static final String LOGNAME_CRAWL = "crawl";
 
     // key subcomponents which define and implement a crawl in progress
-    private CrawlOrder order;
-    private CrawlScope scope;
-    private ProcessorChainList processorChains;
+    private transient CrawlOrder order;
+    private transient CrawlScope scope;
+    private transient ProcessorChainList processorChains;
+    
+    private transient Frontier frontier;
+
     private transient ToePool toePool;
-    private Frontier frontier;
+    
     private transient ServerCache serverCache;
-    private SettingsHandler settingsHandler;
+    
+    // This gets passed into the initialize method.
+    private transient SettingsHandler settingsHandler;
 
 
     // used to enable/disable single-threaded operation after OOM
@@ -146,7 +149,7 @@ public class CrawlController implements Serializable, Reporter {
     private static final ReentrantLock SINGLE_THREAD_LOCK = new ReentrantLock();
 
     // emergency reserve of memory to allow some progress/reporting after OOM
-    private LinkedList reserveMemory;
+    private transient LinkedList reserveMemory;
     private static final int RESERVE_BLOCKS = 1;
     private static final int RESERVE_BLOCK_SIZE = 6*2^20; // 6MB
 
@@ -155,7 +158,7 @@ public class CrawlController implements Serializable, Reporter {
     /**
      * Crawl exit status.
      */
-    private String sExit;
+    private transient String sExit;
 
     private static final Object NASCENT = "NASCENT".intern();
     private static final Object RUNNING = "RUNNING".intern();
@@ -170,16 +173,23 @@ public class CrawlController implements Serializable, Reporter {
     transient private Object state = NASCENT;
 
     // disk paths
-    private File disk;        // overall disk path
-    private File logsDisk;    // for log files
+    private transient File disk;        // overall disk path
+    private transient File logsDisk;    // for log files
     
-    private File stateDisk;   // for temp files representing state of crawler (eg queues)
-    private File scratchDisk; // for discardable temp files (eg fetch buffers)
+    /**
+     * For temp files representing state of crawler (eg queues)
+     */
+    private transient File stateDisk;
+    
+    /**
+     * For discardable temp files (eg fetch buffers).
+     */
+    private transient File scratchDisk;
 
     /**
      * Directory that holds checkpoint.
      */
-    private File checkpointsDisk;
+    private transient File checkpointsDisk;
     
     /**
      * Checkpoint context.
@@ -255,7 +265,6 @@ public class CrawlController implements Serializable, Reporter {
      */
     transient public Logger reports;
 
-    // create a statistic tracking object and have it write to the log every
     protected StatisticsTracking statistics = null;
 
     /**
@@ -265,7 +274,7 @@ public class CrawlController implements Serializable, Reporter {
      * concurrent modification exceptions.
      * See {@link java.util.Collections#synchronizedList(List)}.
      */
-    transient private List registeredCrawlStatusListeners =
+    private List registeredCrawlStatusListeners =
         Collections.synchronizedList(new ArrayList());
     
     // Since there is a high probability that there will only ever by one
@@ -331,13 +340,9 @@ public class CrawlController implements Serializable, Reporter {
             onFailMessage = "Unable to create log file(s)";
             setupLogs();
             
-            // Figure if we're to do a checkpoint restore.
-            // If so, setup the checkpointRecover instance,
-            // deserialize the old checkpointcontext and use that
-            // from here on forward -- its keeping track of the
-            // checkpoint serial number to use next -- and then
-            // put into place the old bdb log files. Later in
-            // setupStatTracking, CrawlController will manage the restoration
+            // Figure if we're to do a checkpoint restore. If so, get the
+            // checkpointRecover instance and then put into place the old bdb
+            // log files. CrawlController will manage the restoration
             // of the old StatisticsTracker.  Moving the bdb log files
             // into place and reviving the StatisticsTracker are the
             // main tasks done by CrawlController recovering a checkpoint.
@@ -355,7 +360,6 @@ public class CrawlController implements Serializable, Reporter {
             if (this.checkpointRecover == null) {
                 this.cpContext = new CheckpointContext(this.checkpointsDisk);
             } else {
-                this.cpContext = restoreCheckpointContext();
                 setupCheckpointRecover();
             }
             
@@ -399,6 +403,8 @@ public class CrawlController implements Serializable, Reporter {
             LOGGER.fine("Starting checkpoint recover named "
                     + this.checkpointRecover.getDisplayName());
         }
+        // Mark context we're in a recovery.
+        this.cpContext.recoveryAmendments(this.checkpointsDisk);
         this.progressStats.info("CHECKPOINT RECOVER " +
             this.checkpointRecover.getDisplayName());
         // Copy the bdb log files to the state dir so we don't damage
@@ -414,22 +420,6 @@ public class CrawlController implements Serializable, Reporter {
                     + this.checkpointRecover.getDisplayName() + " in "
                     + (System.currentTimeMillis() - started) + "ms.");
         }
-    }
-        
-    /**
-     * @return Return CheckpointContext made from serialized CheckpointContext
-     * written into checkpoint directory (Doing this, we'll keep our
-     * checkpoint sequence numbering straight).
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    protected CheckpointContext restoreCheckpointContext()
-    throws IOException, ClassNotFoundException {
-        CheckpointContext cpc = (CheckpointContext)CheckpointContext.
-            readObjectFromFile(CheckpointContext.class,
-                this.checkpointRecover.getDirectory());
-        cpc.recoveryAmendments(this.checkpointsDisk);
-        return cpc;
     }
     
     private void setupBdb()
@@ -637,8 +627,7 @@ public class CrawlController implements Serializable, Reporter {
         }
         
         if (this.frontier == null) {
-            this.frontier = 
-                (Frontier)order.getAttribute(Frontier.ATTR_NAME);
+            this.frontier = (Frontier)order.getAttribute(Frontier.ATTR_NAME);
             try {
                 frontier.initialize(this);
                 frontier.pause(); // Pause until begun
@@ -747,16 +736,16 @@ public class CrawlController implements Serializable, Reporter {
         MapType loggers = order.getLoggers();
         final String cstName = "crawl-statistics";
         if (loggers.isEmpty(null)) {
-            if (statistics == null) {
+            if (!isCheckpointRecover() && statistics == null) {
                 statistics = new StatisticsTracker(cstName);
             }
-            loggers.addElement(null, (StatisticsTracker)statistics);
+            loggers.addElement(null, (StatisticsTracker)this.statistics);
         }
-        // If checkpoint recover, restore old StatisticsTracker and add it in
-        // place of the fresh StatisticsTracker instance.
+        
         if (isCheckpointRecover()) {
             restoreStatisticsTracker(loggers, cstName);
         }
+
         for (Iterator it = loggers.iterator(null); it.hasNext();) {
             StatisticsTracking tracker = (StatisticsTracking)it.next();
             tracker.initialize(this);
@@ -767,19 +756,16 @@ public class CrawlController implements Serializable, Reporter {
     }
     
     protected void restoreStatisticsTracker(MapType loggers,
-            String replaceName)
+        String replaceName)
     throws FatalConfigurationException {
         try {
-            StatisticsTracker rst = (StatisticsTracker)CheckpointContext.
-                readObjectFromFile(StatisticsTracker.class,
-                    this.checkpointRecover.getDirectory());
-            if (rst != null) {
-                loggers.removeElement(loggers.globalSettings(), replaceName);
-                loggers.addElement(loggers.globalSettings(), rst);
-            }
-        } catch (Exception e) {
-            throw convertToFatalConfigurationException(e);
-        }
+            // Add the deserialized statstracker to the settings system.
+            loggers.removeElement(loggers.globalSettings(), replaceName);
+            loggers.addElement(loggers.globalSettings(),
+                (StatisticsTracker)this.statistics);
+         } catch (Exception e) {
+             throw convertToFatalConfigurationException(e);
+         }
     }
     
     protected FatalConfigurationException
@@ -916,7 +902,8 @@ public class CrawlController implements Serializable, Reporter {
      * @return Object this controller is using to track crawl statistics
      */
     public StatisticsTracking getStatistics() {
-        return statistics==null?new StatisticsTracker("crawl-statistics"):statistics;
+        return statistics==null ?
+            new StatisticsTracker("crawl-statistics"): this.statistics;
     }
     
     /**
@@ -1176,13 +1163,8 @@ public class CrawlController implements Serializable, Reporter {
         LOGGER.fine("Copying settings.");
         copySettings(context.getCheckpointInProgressDirectory());       
         
-        // Manage serialization of statistics tracker.
-        LOGGER.fine("StatisticsTracker.");
-        CheckpointContext.writeObjectToFile(this.statistics,
-            context.getCheckpointInProgressDirectory());
-        
-        // Serialize the checkpoint context.
-        CheckpointContext.writeObjectToFile(this.cpContext,
+        // Checkpoint crawlcontroller.
+        CheckpointContext.writeObjectToFile(this,
             context.getCheckpointInProgressDirectory());
 
         LOGGER.info("Finished: " +
@@ -1305,6 +1287,10 @@ public class CrawlController implements Serializable, Reporter {
         if (this.checkpointRecover != null) {
             return this.checkpointRecover;
         }
+        return getCheckpointRecover(this.order);
+    }
+    
+    public static Checkpoint getCheckpointRecover(final CrawlOrder order) {
         String path = (String)order.getUncheckedAttribute(null,
             CrawlOrder.ATTR_RECOVER_PATH);
         if (path == null || path.length() <= 0) {
@@ -1321,6 +1307,10 @@ public class CrawlController implements Serializable, Reporter {
             }
         }
         return result;
+    }
+    
+    public static boolean isCheckpointRecover(final CrawlOrder order) {
+        return getCheckpointRecover(order) != null;
     }
     
     /**
@@ -1629,55 +1619,24 @@ public class CrawlController implements Serializable, Reporter {
     public boolean atFinish() {
         return state == RUNNING && !shouldContinueCrawling();
     }
-
-    // custom serialization
-    private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.defaultWriteObject();
-        ObjectPlusFilesOutputStream opfos = (ObjectPlusFilesOutputStream)stream;
-        // TODO: snapshot logs
-        opfos.pushAuxiliaryDirectory("logs");
-        List allLogs = getAllLogFilenames();
-        opfos.writeInt(allLogs.size());
-        Iterator iter = allLogs.iterator();
-        while (iter.hasNext()) {
-            opfos.snapshotAppendOnlyFile(new File((String) iter.next()));
-        }
-        opfos.popAuxiliaryDirectory();
-        // TODO someday: snapshot on-disk settings/overrides/refinements
-    }
-
-    private List getAllLogFilenames() {
-        LinkedList names = new LinkedList();
-        Iterator iter = fileHandlers.keySet().iterator();
-        while (iter.hasNext()) {
-            Logger l = (Logger) iter.next();
-            GenerationFileHandler gfh = (GenerationFileHandler) fileHandlers
-                    .get(l);
-            Iterator logFiles = gfh.getFilenameSeries().iterator();
-            while (logFiles.hasNext()) {
-                names.add(logFiles.next());
-            }
-        }
-        return names;
-    }
-
+    
     private void readObject(ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        ObjectPlusFilesInputStream opfis = (ObjectPlusFilesInputStream)stream;
-        // restore logs
-        int totalLogs = opfis.readInt();
-        opfis.pushAuxiliaryDirectory("logs");
-        for(int i = 1; i <= totalLogs; i++) {
-            opfis.restoreFileTo(logsDisk);
-        }
-        opfis.popAuxiliaryDirectory();
-        // ensure disk CrawlerSettings data is loaded
-        // settingsHandler.initialize();
-
-        // setup status listeners
+        // Setup status listeners
         this.registeredCrawlStatusListeners =
             Collections.synchronizedList(new ArrayList());
+    }
+
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        // Save off the registeredCrawlStatusListeners and set to null for
+        // serialization.  It has awkward to serialize content.  See above
+        // where we deserialize and create a new instance to put in place of
+        // the null serialized instance.
+        List savedList = this.registeredCrawlStatusListeners;
+        this.registeredCrawlStatusListeners = null;
+        stream.defaultWriteObject();
+        this.registeredCrawlStatusListeners = savedList;
     }
 
     /**

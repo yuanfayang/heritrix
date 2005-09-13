@@ -432,10 +432,10 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         super.initialize(c);
         if (c.isCheckpointRecover()) {
             // If a checkpoint recover, copy old values from serialized
-            // instance into this Frontier (Do it this way because its
-            // awkward having CrawlController managing the revivification of
-            // the BdbFrontier -- CC needs to know too much about BdbFrontier
-            // internals.  Below copying over is error-prone because its easy
+            // instance into this Frontier instance. Do it this way because 
+            // though its possible to serialize BdbFrontier, its difficult
+            // plugging the deserialized object back into the settings system.
+            // The below copying over is error-prone because its easy
             // to miss a value.  Perhaps there's a better way?  Introspection?
             BdbFrontier f = null;
             try {

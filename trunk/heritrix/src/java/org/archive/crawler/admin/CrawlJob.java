@@ -22,12 +22,14 @@ package org.archive.crawler.admin;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,6 +68,7 @@ import javax.management.openmbean.SimpleType;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.checkpoint.Checkpoint;
+import org.archive.crawler.checkpoint.CheckpointContext;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -110,7 +113,7 @@ import com.sleepycat.je.Environment;
  */
 
 public class CrawlJob
-implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
+implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     private static final Logger logger =
         Logger.getLogger(CrawlJob.class.getName());
     /*
@@ -187,24 +190,24 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
 
     // TODO: Statistics tracker will be saved at end of crawl. We will also
     // want to save it at checkpoints.
-    private StatisticsTracking stats;
+    private transient StatisticsTracking stats;
     private String statisticsFileSave = "";
 
     private String errorMessage = null;
 
     private File jobDir = null;
 
-    private CrawlJobErrorHandler errorHandler = null;
+    private transient CrawlJobErrorHandler errorHandler = null;
 
-    protected XMLSettingsHandler settingsHandler;
+    protected transient XMLSettingsHandler settingsHandler;
 
     // all discovered on-disk checkpoints for this job
     private Collection checkpoints = null;
 
     // Checkpoint to resume
-    private Checkpoint resumeFrom = null;
+    private transient Checkpoint resumeFrom = null;
     
-    private CrawlController controller = null;
+    private transient CrawlController controller = null;
     
     private static final String RECOVERY_JOURNAL_STYLE = "recoveryJournal";
     private static final String CRAWL_LOG_STYLE = "crawlLog";
@@ -214,19 +217,19 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
     /**
      * Server we registered with. Maybe null.
      */
-    private MBeanServer mbeanServer = null;
-    private ObjectName mbeanName = null;
+    private transient MBeanServer mbeanServer = null;
+    private transient ObjectName mbeanName = null;
     private static final String CRAWLJOB_JMXMBEAN_TYPE = "CrawlJob";
-    private JEMBeanHelper bdbjeMBeanHelper = null;
-    private List bdbjeAttributeNameList = null;
-    private List bdbjeOperationsNameList = null;
+    private transient JEMBeanHelper bdbjeMBeanHelper = null;
+    private transient List bdbjeAttributeNameList = null;
+    private transient List bdbjeOperationsNameList = null;
     
     
     /**
      * The MBean we've registered ourselves with (May be null
      * throughout life of Heritrix).
      */
-    private OpenMBeanInfoSupport openMBeanInfo;
+    private transient OpenMBeanInfoSupport openMBeanInfo;
     
     private final static String NAME_ATTR = "Name";
     private final static String UID_ATTR = "UID";
@@ -729,20 +732,43 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
         }
     }
     
+    /**
+     * Subclass of crawlcontroller that unregisters beans when stopped.
+     */
+    public class MBeanCrawlController extends CrawlController
+    implements Serializable {
+        protected void completeStop() {
+            try {
+                super.completeStop();
+            } finally {
+                unregisterMBean();
+            }
+        }
+    }
+    
     public void startCrawling()
     throws InitializationException {
         try {
-            // Subclass CrawlController so can add a final task, the
-            // unregistering of this MBean.
-            this.controller = new CrawlController() {
-                protected void completeStop() {
-                    try {
-                        super.completeStop();
-                    } finally {
-                        unregisterMBean();
-                    }
+            // Check if we're to do a checkpoint recover.  If so, deserialize
+            // the checkpoint's CrawlController and use that in place of a new
+            // CrawlController instance.
+            Checkpoint cp = CrawlController.
+                getCheckpointRecover(getSettingsHandler().getOrder());
+            if (cp != null) {
+                try {
+                    this.controller = (MBeanCrawlController)CheckpointContext.
+                        readObjectFromFile(MBeanCrawlController.class,
+                            cp.getDirectory());
+                } catch (FileNotFoundException e) {
+                    throw new InitializationException(e);
+                } catch (IOException e) {
+                    throw new InitializationException(e);
+                } catch (ClassNotFoundException e) {
+                    throw new InitializationException(e);
                 }
-            };
+            } else {
+                this.controller = new MBeanCrawlController();
+            }
             // Register as listener to get job finished notice.
             this.controller.addCrawlStatusListener(this);
             this.controller.initialize(getSettingsHandler());
@@ -916,7 +942,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener {
             checkpoints.add(cp);
         }
     }
-
 
     /**
      * @return collection of Checkpoint instances available
