@@ -31,6 +31,9 @@ import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
 
 /**
+ * Formatter for 'uri-errors.log', of URIs so malformed they could
+ * not be instantiated.
+ * 
  * @author gojomo
  *
  */
@@ -43,7 +46,7 @@ public class UriErrorFormatter extends Formatter implements CoreAttributeConstan
         UURI uuri = (UURI) lr.getParameters()[0];
         String problem = (String) lr.getParameters()[1];
 
-        return ArchiveUtils.get17DigitDate()
+        return ArchiveUtils.getLog17Date()
         + " "
         + ( (uuri ==null) ? "n/a" : uuri.toString() )
         + " \""
