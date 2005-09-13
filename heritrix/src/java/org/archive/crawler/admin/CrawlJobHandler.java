@@ -59,6 +59,7 @@ import org.archive.crawler.frontier.FrontierJournal;
 import org.archive.crawler.frontier.RecoveryJournal;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
@@ -167,6 +168,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
     private boolean running = false;
     
     private File jobsDir = null;
+    
+    /**
+     * String to indicate recovery should be based on the recovery log, not
+     * based on checkpointing.
+     */
+    public static final String RECOVER_LOG = "recover";
 
     /**
      * Constructor.
@@ -652,8 +659,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @param baseOn
      *            A CrawlJob (with a valid settingshandler) to use as the
      *            template for the new job.
-     * @param isRecover 
-     *            Whether to preinitialize new job as recovery of baseOn job
+     * @param recovery Whether to preinitialize new job as recovery of
+     * <code>baseOn</code> job.  String holds RECOVER_LOG if we are to
+     * do the recovery based off the recover.gz log -- See RecoveryJournal in
+     * the frontier package -- or it holds the name of
+     * the checkpoint we're to use recoverying.
      * @param name
      *            The name of the new job.
      * @param description
@@ -667,21 +677,51 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @throws FatalConfigurationException If a problem occurs creating the
      *             settings.
      */
-    public CrawlJob newJob(CrawlJob baseOn, boolean isRecover, String name,
+    public CrawlJob newJob(CrawlJob baseOn, String recovery, String name,
             String description, String seeds, int priority)
     throws FatalConfigurationException {
-        File recoverLogsDir = null;
+        // See what the recover story is.
+        File recover = null;
         try {
-            recoverLogsDir = isRecover? 
-                baseOn.getSettingsHandler().getOrder().
-                    getSettingsDir(CrawlOrder.ATTR_LOGS_PATH): null;
+            if (recovery != null && recovery.length() > 0
+                    && recovery.equals(RECOVER_LOG)) {
+                // Then we're to do a recovery based off the RecoveryJournal
+                // recover.gz log.
+                File dir = baseOn.getSettingsHandler().getOrder()
+                    .getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
+                // Add name of recover file.  We're hardcoding it as
+                // 'recover.gz'.
+                recover = new File(dir, FrontierJournal.LOGNAME_RECOVER +
+                    RecoveryJournal.GZIP_SUFFIX);
+            } else if (recovery != null && recovery.length() > 0) {
+                // Must be name of a checkpoint to use.
+                recover = new File(baseOn.getSettingsHandler().
+                    getOrder().getSettingsDir(CrawlOrder.ATTR_CHECKPOINTS_PATH),
+                        recovery);
+            }
         } catch (AttributeNotFoundException e1) {
             throw new FatalConfigurationException(
                 "AttributeNotFoundException occured while setting up" +
-                    "new job/profile\n" + e1.getMessage());
+                    "new job/profile " + name + " \n" + e1.getMessage());
         }
-        return createNewJob(baseOn.getSettingsHandler().getOrderFile(),
-            recoverLogsDir, name, description, seeds, priority);
+
+        CrawlJob cj = createNewJob(baseOn.getSettingsHandler().getOrderFile(),
+            name, description, seeds, priority);
+    
+        updateRecoveryPaths(recover, cj.getSettingsHandler(), name);
+        
+        return cj;
+    }
+    
+    protected void checkDirectory(File dir)
+    throws FatalConfigurationException {
+        if (dir == null) {
+            return;
+        }
+        if (!dir.exists() && !dir.canRead()) {
+            throw new FatalConfigurationException(dir.getAbsolutePath() +
+                " does not exist or is unreadable");
+        }
     }
     
     /**
@@ -701,12 +741,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public CrawlJob newJob(final File orderFile, final String name,
             final String description, final String seeds)
     throws FatalConfigurationException {
-        return createNewJob(orderFile, null, name, description, seeds,
+        return createNewJob(orderFile, name, description, seeds,
             CrawlJob.PRIORITY_AVERAGE);
     }
     
-    protected CrawlJob createNewJob(final File orderFile,
-            final File recoverLogsDir, final String name,
+    protected CrawlJob createNewJob(final File orderFile, final String name,
             final String description, final String seeds, final int priority)
     throws FatalConfigurationException {
         if (newJob != null) {
@@ -716,9 +755,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
         String UID = getNextJobUID();
         File jobDir = new File(this.jobsDir, name + "-" + UID);
         CrawlJobErrorHandler errorHandler = new CrawlJobErrorHandler();
-        // If in recovery mode, set the recoverLogsDir.
         XMLSettingsHandler handler =
-            createSettingsHandler(orderFile, recoverLogsDir, name, description,
+            createSettingsHandler(orderFile, name, description,
                 seeds, jobDir, errorHandler, "order.xml", "seeds.txt");
         this.newJob = new CrawlJob(UID, name, handler, errorHandler, priority,
                 jobDir);
@@ -751,7 +789,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         CrawlJobErrorHandler cjseh = new CrawlJobErrorHandler(Level.SEVERE);
         CrawlJob newProfile = new CrawlJob(name,
             createSettingsHandler(baseOn.getSettingsHandler().getOrderFile(),
-                null, name, description, seeds, profileDir, cjseh, "order.xml",
+                name, description, seeds, profileDir, cjseh, "order.xml",
                 "seeds.txt"), cjseh);
         addProfile(newProfile);
         return newProfile;
@@ -763,8 +801,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * directory.
      *
      * @param orderFile Order file to base new order file on.  Cannot be null.
-     * @param oldLogsDir If non-null, assumed we're to recover from logs in this
-     * directory.
      * @param name Name for the new settings
      * @param description Description of the new settings.
      * @param seeds The contents of the new settings' seed file.
@@ -780,9 +816,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *             seed file.
      */
     protected XMLSettingsHandler createSettingsHandler(
-        final File orderFile, final File oldLogsDir,
-        final String name, final String description, final String seeds,
-        final File newSettingsDir, final CrawlJobErrorHandler errorHandler,
+        final File orderFile, final String name, final String description,
+        final String seeds, final File newSettingsDir,
+        final CrawlJobErrorHandler errorHandler,
         final String filename, final String seedfile)
     throws FatalConfigurationException {
         XMLSettingsHandler newHandler = null;
@@ -807,10 +843,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
             // Set the seed file
             ((ComplexType)newHandler.getOrder().getAttribute("scope"))
                 .setAttribute(new Attribute("seedsfile", seedfile));
-            // Set 'recover-from' to be old job's recovery log path
-            if (oldLogsDir != null) {
-                updateRecoveryPaths(oldLogsDir, newHandler);
-            }
         } catch (AttributeNotFoundException e1) {
             throw new FatalConfigurationException(
                     "AttributeNotFoundException occured while setting up" +
@@ -827,10 +859,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
             throw new FatalConfigurationException(
                     "ReflectionException occured while setting up" +
                     " new job/profile\n" + e1.getMessage());
-        } catch (IOException e) {
-            throw new FatalConfigurationException(
-                "IOException occured while setting up" +
-                " new job/profile\n" + e.getMessage());
         }
 
         File newFile = new File(newSettingsDir.getAbsolutePath(), filename);
@@ -881,35 +909,80 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         return newHandler;
     }
+    
+    /**
+     * @param recover
+     *            Source to use recovering. Can be full path to a recovery log
+     *            or full path to a checkpoint src dir.
+     * @param sh
+     *            Settings Handler to update.
+     * @param jobName
+     *            Name of this job.
+     * @throws FatalConfigurationException 
+     */
+    protected void updateRecoveryPaths(final File recover,
+            final SettingsHandler sh, final String jobName)
+    throws FatalConfigurationException {
+        if (recover == null) {
+            return;
+        }
+        checkDirectory(recover);
+        try {
+            // Set 'recover-path' to be old job's recovery log path
+            updateRecoveryPaths(recover, sh);
+        } catch (AttributeNotFoundException e1) {
+            throw new FatalConfigurationException(
+                    "AttributeNotFoundException occured while setting up"
+                            + "new job/profile " + jobName + " \n"
+                            + e1.getMessage());
+        } catch (InvalidAttributeValueException e1) {
+            throw new FatalConfigurationException(
+                    "InvalidAttributeValueException occured while setting"
+                            + "new job/profile " + jobName + " \n"
+                            + e1.getMessage());
+        } catch (MBeanException e1) {
+            throw new FatalConfigurationException(
+                    "MBeanException occured while setting up new"
+                            + "new job/profile " + jobName + " \n"
+                            + e1.getMessage());
+        } catch (ReflectionException e1) {
+            throw new FatalConfigurationException(
+                    "ReflectionException occured while setting up"
+                            + "new job/profile " + jobName + " \n"
+                            + e1.getMessage());
+        } catch (IOException e) {
+            throw new FatalConfigurationException(
+                    "IOException occured while setting up" + "new job/profile "
+                            + jobName + " \n" + e.getMessage());
+        }
+    }
 
     /**
-     * @param oldLogsDisk Where log files we are to recover from are.
+     * @param recover
+     *            Source to use recovering. Can be full path to a recovery log
+     *            or full path to a checkpoint src dir.
      * @param newHandler
-     * @throws ReflectionException 
-     * @throws MBeanException 
-     * @throws InvalidAttributeValueException 
-     * @throws AttributeNotFoundException 
-     * @throws IOException 
+     * @throws ReflectionException
+     * @throws MBeanException
+     * @throws InvalidAttributeValueException
+     * @throws AttributeNotFoundException
+     * @throws IOException
      */
-    private void updateRecoveryPaths(File oldLogsDisk,
-        XMLSettingsHandler newHandler)
+    private void updateRecoveryPaths(final File recover,
+        SettingsHandler newHandler)
     throws AttributeNotFoundException, InvalidAttributeValueException,
     MBeanException, ReflectionException, IOException {
-        if (oldLogsDisk == null || !oldLogsDisk.exists()) {
-            throw new IOException("Source directory does not exist: " +
-                oldLogsDisk);
+        if (recover == null || !recover.exists()) {
+            throw new IOException("Recovery src does not exist: " + recover);
         }
-        // First, bring original crawl's recovery-log path into
-        // new job's 'recover-path'
-        String recoveryPath = oldLogsDisk.getAbsolutePath() +
-            File.separatorChar + FrontierJournal.LOGNAME_RECOVER +
-            RecoveryJournal.GZIP_SUFFIX;
         newHandler.getOrder().setAttribute(
-            new Attribute(CrawlOrder.ATTR_RECOVER_PATH, recoveryPath));
+            new Attribute(CrawlOrder.ATTR_RECOVER_PATH,
+                recover.getAbsolutePath()));
             
         // Now, ensure that 'logs' and 'state' don't overlap with
         // previous job's files (ok for 'arcs' and 'scratch' to overlap)
         File newLogsDisk = null;
+        final String RECOVERY_SUFFIX = "-R";
         while(true) {
             try {
                 newLogsDisk = newHandler.getOrder().
@@ -917,12 +990,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
             } catch (AttributeNotFoundException e) {
                 logger.log(Level.SEVERE, "Failed to get logs directory", e);
             }
-            if (newLogsDisk.list().length>0) {
+            if (newLogsDisk.list().length > 0) {
                 // 'new' directory is nonempty; rename with trailing '-R'
                 String logsPath =  (String) newHandler.getOrder().
                     getAttribute(CrawlOrder.ATTR_LOGS_PATH);
                 newHandler.getOrder().setAttribute(
-                    new Attribute(CrawlOrder.ATTR_LOGS_PATH, logsPath+"-R"));
+                    new Attribute(CrawlOrder.ATTR_LOGS_PATH,
+                        logsPath + RECOVERY_SUFFIX));
             } else {
                 // directory is suitably empty; exit loop
                 break;
@@ -941,7 +1015,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 String statePath =  (String) newHandler.getOrder().
                     getAttribute(CrawlOrder.ATTR_STATE_PATH);
                 newHandler.getOrder().setAttribute(
-                    new Attribute(CrawlOrder.ATTR_STATE_PATH, statePath+"-R"));
+                    new Attribute(CrawlOrder.ATTR_STATE_PATH,
+                        statePath + RECOVERY_SUFFIX));
             } else {
                 // directory is suitably empty; exit loop
                 break;

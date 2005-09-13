@@ -956,7 +956,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      * @return checkpoint matching the given name
      */
     public Checkpoint getCheckpoint(String chkptName) {
-        if(checkpoints==null) {
+        if(checkpoints == null) {
             scanCheckpoints();
         }
         Iterator iter = checkpoints.iterator();
