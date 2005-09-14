@@ -160,9 +160,13 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
                 // Its using bdb and that has already been recovered by time
                 // come in  here.
                 try {
+                    logger.info("Started deserializing bloom filter as part " +
+                        "of checkpoint recover. Can take some time.");
                     uuf = (BloomUriUniqFilter)CheckpointContext.
                         readObjectFromFile(BloomUriUniqFilter.class,
                         this.controller.getCheckpointRecover().getDirectory());
+                    logger.info("Finished deserializing bloom filter as part " +
+                        "of checkpoint recover.");
                 } catch (ClassNotFoundException e) {
                     throw new IOException("Failed to deserialize "  +
                         BloomUriUniqFilter.class.getName() + ": " +
@@ -284,7 +288,6 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             logger.severe("All expected dbs not present -- skipping "
                     + "resurrection of " + SAVED_QUEUES_DBNAMES);
         } else {
-            logger.info("Restoring queues state from bdb");
             try {
                 Putter p = new Putter() {
                     public void put(Object obj)
@@ -489,8 +492,12 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         // Writing out the bloom takes a couple of minutes since its megabytes
         // in size.
         if (this.alreadyIncluded instanceof BloomUriUniqFilter) {
+            logger.info("Started serializing bloom filter as part " +
+                "of checkpoint. Can take some time.");
             CheckpointContext.writeObjectToFile(this.alreadyIncluded,
                 checkpointDir);
+            logger.info("Finished serializing bloom filter as part " +
+                "of checkpoint.");
         }
         // Serialize ourselves.
         CheckpointContext.writeObjectToFile(this, checkpointDir);
