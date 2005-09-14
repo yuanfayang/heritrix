@@ -168,10 +168,12 @@ implements CoreAttributeConstants {
     public static final String ATTR_TREAT_FRAMES_AS_EMBED_LINKS =
         "treat-frames-as-embed-links";
     
+    public static final String ATTR_IGNORE_FORM_ACTION_URLS =
+        "ignore-form-action-urls";
+
+    
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
-
-
 
     public ExtractorHTML(String name) {
         this(name, "HTML extractor. Extracts links from HTML documents");
@@ -185,6 +187,12 @@ implements CoreAttributeConstants {
             "resources (IMG etc.), otherwise they are treated as " +
             "navigational links", Boolean.TRUE));
         t.setExpertSetting(true);
+        Type t2 = addElementToDefinition(
+            new SimpleType(ATTR_IGNORE_FORM_ACTION_URLS,
+            "If enabled, links appearing as the ACTION attribute in " +
+            "FORMs are not extracted.",
+            Boolean.FALSE));
+        t2.setExpertSetting(true);
     }
 
     protected void processGeneralTag(CrawlURI curi, CharSequence element,
@@ -198,6 +206,9 @@ implements CoreAttributeConstants {
         
         final boolean framesAsEmbeds = ((Boolean)getUncheckedAttribute(curi,
             ATTR_TREAT_FRAMES_AS_EMBED_LINKS)).booleanValue();
+
+            final boolean ignoreFormActions = ((Boolean)getUncheckedAttribute(curi,
+                ATTR_IGNORE_FORM_ACTION_URLS)).booleanValue();
         
         final String elementStr = element.toString();
 
@@ -238,9 +249,11 @@ implements CoreAttributeConstants {
                 }
             } else if (attr.start(3) > -1) {
                 // ACTION
-                CharSequence context = Link.elementContext(element,
-                    attr.group(3));
-                processLink(curi, value, context);
+                if (!ignoreFormActions) {
+                    CharSequence context = Link.elementContext(element,
+                        attr.group(3));
+                    processLink(curi, value, context);
+                }
             } else if (attr.start(4) > -1) {
                 // ON____
                 processScriptCode(curi, value); // TODO: context?
@@ -325,7 +338,7 @@ implements CoreAttributeConstants {
             if (codebase != null) {
                 // TODO: Pass in the charset.
                 codebaseURI = UURIFactory.
-                	    getInstance(curi.getUURI(), codebase);
+                    getInstance(curi.getUURI(), codebase);
             }
             while(iter.hasNext()) {
                 res = iter.next().toString();
