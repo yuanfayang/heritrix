@@ -713,17 +713,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         return cj;
     }
     
-    protected void checkDirectory(File dir)
-    throws FatalConfigurationException {
-        if (dir == null) {
-            return;
-        }
-        if (!dir.exists() && !dir.canRead()) {
-            throw new FatalConfigurationException(dir.getAbsolutePath() +
-                " does not exist or is unreadable");
-        }
-    }
-    
     /**
      * Creates a new job. The new job will be returned and also registered as
      * the handler's 'new job'. The new job will be based on the settings
@@ -743,6 +732,17 @@ public class CrawlJobHandler implements CrawlStatusListener {
     throws FatalConfigurationException {
         return createNewJob(orderFile, name, description, seeds,
             CrawlJob.PRIORITY_AVERAGE);
+    }
+    
+    protected void checkDirectory(File dir)
+    throws FatalConfigurationException {
+        if (dir == null) {
+            return;
+        }
+        if (!dir.exists() && !dir.canRead()) {
+            throw new FatalConfigurationException(dir.getAbsolutePath() +
+                " does not exist or is unreadable");
+        }
     }
     
     protected CrawlJob createNewJob(final File orderFile, final String name,

@@ -808,7 +808,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
 
         CrawlJob job = createCrawlJob(h.getJobHandler(), crawlOrderFile,
                 "Template");
-        job = h.getJobHandler().newJob(job, false, SELFTEST,
+        job = h.getJobHandler().newJob(job, null, SELFTEST,
             "Integration self test", selfTestUrl, CrawlJob.PRIORITY_CRITICAL);
         h.getJobHandler().addJob(job);
         // Before we start, need to change some items in the settings file.
