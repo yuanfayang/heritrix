@@ -937,10 +937,11 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             settingsHandler.getOrder().getCheckpointsDirectory();
         File[] perCheckpointDirs = checkpointsDirectory.listFiles();
         checkpoints = new ArrayList();
-        for(int i = 0; perCheckpointDirs != null &&
-                i < perCheckpointDirs.length; i++) {
-            Checkpoint cp = new Checkpoint(perCheckpointDirs[i]);
-            checkpoints.add(cp);
+        if (perCheckpointDirs != null) {
+            for (int i = 0; i < perCheckpointDirs.length; i++) {
+                Checkpoint cp = new Checkpoint(perCheckpointDirs[i]);
+                checkpoints.add(cp);
+            }
         }
     }
 
