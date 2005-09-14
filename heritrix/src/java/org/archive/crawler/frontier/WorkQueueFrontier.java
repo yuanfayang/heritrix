@@ -253,7 +253,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     }
                 }
             }
-            alreadyIncluded = createAlreadyIncluded();
+            this.alreadyIncluded = createAlreadyIncluded();
             initQueue();
         } catch (IOException e) {
             e.printStackTrace();

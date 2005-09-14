@@ -24,15 +24,13 @@
 */
 package org.archive.crawler.util;
 
-import org.archive.util.BloomFilter;
-import org.archive.util.BloomFilter32bp2;
-import org.archive.util.BloomFilter32bp2Split;
-import org.archive.util.BloomFilter64bit;
-
+import java.io.Serializable;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.util.BloomFilter;
+import org.archive.util.BloomFilter32bp2Split;
 
 
 /**
@@ -45,7 +43,7 @@ import org.archive.crawler.datamodel.UriUniqFilter;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class BloomUriUniqFilter implements UriUniqFilter {
+public class BloomUriUniqFilter implements UriUniqFilter, Serializable {
     private static Logger LOGGER =
         Logger.getLogger(BloomUriUniqFilter.class.getName());
 
