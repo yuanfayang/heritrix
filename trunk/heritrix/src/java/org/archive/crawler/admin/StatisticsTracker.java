@@ -49,6 +49,7 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
+import org.archive.util.MimetypeUtils;
 import org.archive.util.PaddingStringBuffer;
 
 /**
@@ -643,7 +644,7 @@ implements CrawlURIDispositionListener, Serializable {
             }
             mime = mime.toLowerCase();
         } else {
-            mime = "not set";
+            mime = MimetypeUtils.NO_TYPE_MIMETYPE;
         }
         incrementMapCount(mimeTypeDistribution, mime);
         incrementMapCount(mimeTypeBytes, mime, curi.getContentSize());
