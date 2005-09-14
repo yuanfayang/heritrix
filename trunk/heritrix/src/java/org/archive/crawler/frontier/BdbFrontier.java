@@ -153,7 +153,24 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             // Do default action if attribute not in order.
         }
         if (c != null && c.equals(BloomUriUniqFilter.class.getName())) {
-            uuf = new BloomUriUniqFilter();
+            if (this.controller.isCheckpointRecover()) {
+                // If a checkpoint recover, then resusitate the bloom filter
+                // based already-seen (The bdbje-based already-seen doesn't
+                // need any special treatment recovering from a checkpoint.
+                // Its using bdb and that has already been recovered by time
+                // come in  here.
+                try {
+                    uuf = (BloomUriUniqFilter)CheckpointContext.
+                        readObjectFromFile(BloomUriUniqFilter.class,
+                        this.controller.getCheckpointRecover().getDirectory());
+                } catch (ClassNotFoundException e) {
+                    throw new IOException("Failed to deserialize "  +
+                        BloomUriUniqFilter.class.getName() + ": " +
+                        e.getMessage());
+                }
+            } else {
+                uuf = new BloomUriUniqFilter();
+            }
         } else {
             uuf = new BdbUriUniqFilter(this.controller.getBdbEnvironment(),
                 this.controller.isCheckpointRecover());
@@ -467,6 +484,14 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     public void crawlCheckpoint(File checkpointDir) throws Exception {
         super.crawlCheckpoint(checkpointDir);
         persistQueueState();
+        // If we're using bloom filter, serialize it (this.alreadyIncluded
+        // is transient).  On initialization, we'll deserialize the bloom
+        // Writing out the bloom takes a couple of minutes since its megabytes
+        // in size.
+        if (this.alreadyIncluded instanceof BloomUriUniqFilter) {
+            CheckpointContext.writeObjectToFile(this.alreadyIncluded,
+                checkpointDir);
+        }
         // Serialize ourselves.
         CheckpointContext.writeObjectToFile(this, checkpointDir);
     }
