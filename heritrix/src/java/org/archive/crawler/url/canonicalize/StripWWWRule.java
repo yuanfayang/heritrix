@@ -27,7 +27,11 @@ import java.util.regex.Pattern;
 
 
 /**
- * Strip any 'www' found on http/https URLs.
+ * Strip any 'www' found on http/https URLs, IF they have some
+ * path/query component (content after third slash). (Top 'slash page' 
+ * URIs are left unstripped, so that we prefer crawling redundant
+ * top pages to missing an entire site only available from either
+ * the www-full or www-less hostname, but not both). 
  * @author stack
  * @version $Date$, $Revision$
  */
@@ -36,11 +40,11 @@ public class StripWWWRule extends BaseRule {
         "Use this rule to equate 'http://www.archive.org/index.html' and" +
         " 'http://archive.org/index.html'.  The resulting canonicalization" +
         " returns 'http://archive.org/index.html'.  Removes any www's" +
-        " found.  Operates on http and https schemes only.";
+        " found, except on URIs that have no path/query component " +
+        " ('slash' pages).  Operates on http and https schemes only.";
     
     private static final Pattern REGEX =
-        Pattern.compile("^(https?://)(?:www\\.)(.*)$",
-            Pattern.CASE_INSENSITIVE);
+        Pattern.compile("(?i)^(https?://)(?:www\\.)([^/]*/.+)$");
 
     public StripWWWRule(String name) {
         super(name, DESCRIPTION);
