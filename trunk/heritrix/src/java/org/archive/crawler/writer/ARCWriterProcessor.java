@@ -659,6 +659,13 @@ ARCWriterSettings, FetchStatusCodes {
         } finally {
             dos.close();
         }
+        // Close all ARCs on checkpoint.
+        try {
+            this.pool.close();
+        } finally {
+            // Reopen on checkpoint.
+            setupPool();
+        }
     }
     
 	public void crawlPausing(String statusMessage) {
