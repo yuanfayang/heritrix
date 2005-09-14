@@ -634,18 +634,7 @@ implements CrawlURIDispositionListener, Serializable {
         incrementMapCount(statusCodeDistribution,Integer.toString(curi.getFetchStatus()));
 
         // Save mime types
-        // strip things like charset (e.g. text/html; charset=iso-blah-blah)
-        String mime = curi.getContentType();
-        if(mime!=null)
-        {
-            int semicolonLoc = mime.indexOf(';');
-            if (semicolonLoc >= 0) {
-                mime = mime.substring(0, semicolonLoc);
-            }
-            mime = mime.toLowerCase();
-        } else {
-            mime = MimetypeUtils.NO_TYPE_MIMETYPE;
-        }
+        String mime = MimetypeUtils.truncate(curi.getContentType());
         incrementMapCount(mimeTypeDistribution, mime);
         incrementMapCount(mimeTypeBytes, mime, curi.getContentSize());
 
