@@ -3742,6 +3742,10 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       The suffix is checkpoint name (e.g. crawl.log.00031 where 00031 is the
       checkpoint name).
       </para>
+      <note>
+      <para>Currently, only the BdbFrontier is checkpointable.
+      </para>
+      </note>
       <para>
       To run a checkpoint, pause the crawl. In the UI, after completion of
       the pause, a <literal>checkpoint</literal> button will appear.  Click
