@@ -80,7 +80,7 @@ public class SupplementaryLinksScoper extends Scoper {
 
     protected void innerProcess(final CrawlURI curi) {
         // If prerequisites or no links, nothing to be done in here.
-        if (curi.hasPrerequisitUri() || curi.outlinksSize() <= 0) {
+        if (curi.hasPrerequisiteUri() || curi.outlinksSize() <= 0) {
             return;
         }
         
