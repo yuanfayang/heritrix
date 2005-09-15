@@ -88,7 +88,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * in active rotation. (As a result, queue's next try may be much
      * further in the future than the snooze target delay.)
      */
-    public static long SNOOZE_TO_INACTIVE_DELAY_MS = 5*60*1000; // 5 minutes
+    public final static String ATTR_SNOOZE_DEACTIVATE_MS = "snooze-deactivate-ms";
+    public static Long DEFAULT_SNOOZE_DEACTIVATE_MS = new Long(5*60*1000); // 5 minutes
     // TODO: make configurable
     
     private static final Logger logger =
@@ -220,6 +221,17 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                 "The default UnitCostAssignmentPolicy considers the cost of " +
                 "each URI to be '1'.", DEFAULT_COST_POLICY, AVAILABLE_COST_POLICIES));
         t.setExpertSetting(true);
+        
+        t = addElementToDefinition(new SimpleType(ATTR_SNOOZE_DEACTIVATE_MS,
+                "Threshold above which any 'snooze' delay will cause the " +
+                "affected queue to go inactive, allowing other queues a " +
+                "chance to rotate into active state. Typically set to be " +
+                "longer than the politeness pauses between successful " +
+                "fetches, but shorter than the connection-failed " +
+                "'retry-delay-seconds'. (Default is 5 minutes.)", 
+                DEFAULT_SNOOZE_DEACTIVATE_MS));
+        t.setExpertSetting(true);
+        t.setOverrideable(false);
     }
 
     /**
@@ -863,7 +875,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     private void snoozeQueue(WorkQueue wq, long now, long delay_ms) {
         long nextTime = now + delay_ms;
         wq.setWakeTime(nextTime);
-        if(delay_ms>SNOOZE_TO_INACTIVE_DELAY_MS && ! readyClassQueues.isEmpty()) {
+        long snoozeToInactiveDelayMs = ((Long)getUncheckedAttribute(null,
+                ATTR_SNOOZE_DEACTIVATE_MS)).longValue();
+        if(delay_ms>snoozeToInactiveDelayMs && ! readyClassQueues.isEmpty()) {
             deactivateQueue(wq);
         } else {
             snoozedClassQueues.add(wq);
