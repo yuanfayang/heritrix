@@ -425,9 +425,8 @@ www.archive.org.        1600    IN      A       207.241.224.241</programlisting>
         <title>IBM JVM</title>
 
         <para>The IBM JVM generally is more performant than SUN JVMs. It also
-        emits more detailed heap dumps. For these reasons we like the IBM JVM.
-        That said, new Heritrix 1.2.0 features may not work on the IBM
-        JVM.</para>
+        emits more detailed heap dumps.  That said, new Heritrix 1.2.0
+        features may not work on the IBM JVM.</para>
 
         <sect4 id="ibmhttps">
           <title>HTTPS</title>
