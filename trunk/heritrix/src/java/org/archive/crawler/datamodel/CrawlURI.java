@@ -454,7 +454,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     /**
      * @return True if this CrawlURI has a prerequisite.
      */
-    public boolean hasPrerequisitUri() {
+    public boolean hasPrerequisiteUri() {
         return containsKey(A_PREREQUISITE_URI);
     }
 

@@ -116,7 +116,7 @@ implements FetchStatusCodes {
         }
         
         // If prerequisites, nothing to be done in here.
-        if (curi.hasPrerequisitUri()) {
+        if (curi.hasPrerequisiteUri()) {
             return;
         }
         
