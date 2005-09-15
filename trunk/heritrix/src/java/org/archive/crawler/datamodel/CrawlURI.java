@@ -435,7 +435,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *
      * @param link Link to set as prereq.
      */
-    protected void setPrerequisiteUri(Link link) {
+    public void setPrerequisiteUri(Object link) {
         putObject(A_PREREQUISITE_URI, link);
     }
 
@@ -447,8 +447,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
      *
      * @return the prerequisite for this URI or null if no prerequisite.
      */
-    public Link getPrerequisiteUri() {
-        return (Link) getObject(A_PREREQUISITE_URI);
+    public Object getPrerequisiteUri() {
+        return getObject(A_PREREQUISITE_URI);
     }
     
     /**

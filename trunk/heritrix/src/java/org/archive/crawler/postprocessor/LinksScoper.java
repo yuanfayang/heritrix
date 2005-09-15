@@ -117,6 +117,7 @@ implements FetchStatusCodes {
         
         // If prerequisites, nothing to be done in here.
         if (curi.hasPrerequisiteUri()) {
+            handlePrerequisite(curi);
             return;
         }
         
@@ -169,6 +170,43 @@ implements FetchStatusCodes {
         curi.replaceOutlinks(inScopeLinks);
     }
     
+    /**
+     * The CrawlURI has a prerequisite; apply scoping and update
+     * Link to CandidateURI in manner analogous to outlink handling. 
+     * @param curi CrawlURI with prereq to consider
+     */
+    protected void handlePrerequisite(CrawlURI curi) {
+        try {
+            // Create prerequisite CandidateURI
+            CandidateURI caUri =
+                curi.createCandidateURI(curi.getBaseURI(),
+                    (Link) curi.getPrerequisiteUri());
+            int prereqPriority = curi.getSchedulingDirective() - 1;
+            if (prereqPriority < 0) {
+                prereqPriority = 0;
+                LOGGER.severe("Unable to promote prerequisite " + caUri +
+                    " above " + curi);
+            }
+            caUri.setSchedulingDirective(prereqPriority);
+            caUri.setForceFetch(true);
+            if(isInScope(caUri)) {
+                // replace link with CandidateURI
+                curi.setPrerequisiteUri(caUri);
+            } else {
+                // prerequisite is out-of-scope; mark CrawlURI as error,
+                // preventinting normal S_DEFERRED handling
+                curi.setFetchStatus(S_PREREQUISITE_UNSCHEDULABLE_FAILURE);
+            }
+       } catch (URIException ex) {
+            Object[] array = {curi, curi.getPrerequisiteUri()};
+            getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
+        } catch (NumberFormatException e) {
+            // UURI.createUURI will occasionally throw this error.
+            Object[] array = {curi, curi.getPrerequisiteUri()};
+            getController().uriErrors.log(Level.INFO,e.getMessage(), array);
+        }
+    }
+
     protected void outOfScope(CandidateURI caUri) {
         super.outOfScope(caUri);
         if (!LOGGER.isLoggable(Level.INFO)) {

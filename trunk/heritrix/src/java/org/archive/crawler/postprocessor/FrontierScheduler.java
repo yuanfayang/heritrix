@@ -29,11 +29,9 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Processor;
 
 /**
@@ -66,8 +64,8 @@ implements FetchStatusCodes {
             LOGGER.finest(getName() + " processing " + curi);
         }
         
-        // Handle any prerequisites.
-        if (curi.hasPrerequisiteUri()) {
+        // Handle any prerequisites when S_DEFERRED for prereqs
+        if (curi.hasPrerequisiteUri() && curi.getFetchStatus() == S_DEFERRED) {
             handlePrerequisites(curi);
             return;
         }
@@ -89,28 +87,7 @@ implements FetchStatusCodes {
     }
 
     protected void handlePrerequisites(CrawlURI curi) {
-        try {
-            // Create prerequisite.
-            CandidateURI caUri =
-                curi.createCandidateURI(curi.getBaseURI(),
-                    curi.getPrerequisiteUri());
-            int prereqPriority = curi.getSchedulingDirective() - 1;
-            if (prereqPriority < 0) {
-                prereqPriority = 0;
-                LOGGER.severe("Unable to promote prerequisite " + caUri +
-                    " above " + curi);
-            }
-            caUri.setSchedulingDirective(prereqPriority);
-            caUri.setForceFetch(true);
-            schedule(caUri);
-       } catch (URIException ex) {
-            Object[] array = {curi, curi.getPrerequisiteUri()};
-            getController().uriErrors.log(Level.INFO,ex.getMessage(), array);
-        } catch (NumberFormatException e) {
-            // UURI.createUURI will occasionally throw this error.
-            Object[] array = {curi, curi.getPrerequisiteUri()};
-            getController().uriErrors.log(Level.INFO,e.getMessage(), array);
-        }
+        schedule((CandidateURI)curi.getPrerequisiteUri());
     }
 
     /**
