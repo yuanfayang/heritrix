@@ -465,9 +465,8 @@ implements CoreAttributeConstants {
             curi.addLocalizedError(this.getName(), e,
                 "Failed get of replay char sequence " + curi.toString() +
                     " " + e.getMessage());
-            logger.warning("Failed get of replay char sequence " +
-                curi.toString() + " " + e.getMessage() + " " +
-                Thread.currentThread().getName());
+            logger.log(Level.SEVERE,"Failed get of replay char sequence in " +
+                Thread.currentThread().getName(), e);
         }
         
         if (cs == null) {
