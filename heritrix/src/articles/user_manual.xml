@@ -3723,6 +3723,20 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       use restoring the frontier at least to where the gzip file went bad
       (Gzip zips in 32k blocks; the worst loss would be the last 32k of
       gzipped data).</para>
+      
+      <para>Java's Gzip support (up through at least Java 1.5/5.0) can 
+      compress arbitrarily large input streams, but has problems when 
+      decompressing any stream to output larger than 2GB. When attempting
+      to recover a crawl that has a recovery log that, when uncompressed,
+      would be over 2GB, this will trigger a FatalConfigurationException
+      alert, with detail message "Recover.log problem: java.io.IOException: 
+      Corrupt GZIP trailer". Heritrix will accept either compressed or 
+      uncompressed recovery log files, so a workaround is to first uncompress 
+      the recovery log using another non-Java tool (such as the 'gunzip' 
+      available in Linux and Cygwin), then refer to this uncompressed 
+      recovery log when recovering. (Reportedly, Java 6.0 "Mustang" will fix
+      this Java bug with un-gzipping large files.)</para>
+      
       <para>See also below, the related recovery facility,
         <xref linkend="checkpoint" />, for an alternate recovery mechanism.
       </para>
