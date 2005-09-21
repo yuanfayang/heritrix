@@ -146,7 +146,7 @@
             <table>
                 <tr>
                     <td>
-                        Name of new job:
+                        Name of new <%= isProfile ? "profile" : "job" %>:
                     </td>
                     <td>
                         <input maxlength="38" name="meta/name" value="<%=error==null?orderfile.getName():metaName%>" style="width: 440px">
