@@ -24,12 +24,14 @@
 */ 
 package org.archive.crawler.frontier;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.util.DevUtils;
 
 /**
  * QueueAssignmentPolicy based on the hostname:port evident in the given
@@ -38,6 +40,8 @@ import org.archive.util.DevUtils;
  * @author gojomo
  */
 public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
+    private static final Logger logger = Logger
+        .getLogger(HostnameQueueAssignmentPolicy.class.getName());
     /**
      * When neat host-based class-key fails us
      */
@@ -72,8 +76,8 @@ public class HostnameQueueAssignmentPolicy extends QueueAssignmentPolicy {
                 candidate = DEFAULT_CLASS_KEY;
             }
         } catch (URIException e) {
-            DevUtils.warnHandle(e, "Failed to get class key: " +
-                e.getMessage() + " " + this);
+            logger.log(Level.INFO,
+                    "unable to extract class key; using default", e);
             candidate = DEFAULT_CLASS_KEY;
         }
         if (scheme != null && scheme.equals(UURIFactory.HTTPS)) {
