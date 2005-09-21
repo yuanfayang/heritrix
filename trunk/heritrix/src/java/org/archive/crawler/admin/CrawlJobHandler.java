@@ -891,7 +891,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
         orderfile.setName(name);
         orderfile.setDescription(description);
 
-        if (seeds != null && seeds.length() > 0) {
+        if (seeds != null) {
             BufferedWriter writer = null;
             try {
                 writer = new BufferedWriter(new FileWriter(newHandler
