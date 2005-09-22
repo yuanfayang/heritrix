@@ -193,8 +193,8 @@ public class CrawlScope extends Filter {
             // getHost can come back null.  See
             // "[ 910120 ] java.net.URI#getHost fails when leading digit"
             try {
-                if (a.getHost() != null && b.getHost() != null) {
-                    if (a.getHost().equals(b.getHost())) {
+                if (a.getReferencedHost() != null && b.getReferencedHost() != null) {
+                    if (a.getReferencedHost().equals(b.getReferencedHost())) {
                         isSameHost = true;
                     }
                 }
