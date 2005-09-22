@@ -994,6 +994,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 // 'new' directory is nonempty; rename with trailing '-R'
                 String logsPath =  (String) newHandler.getOrder().
                     getAttribute(CrawlOrder.ATTR_LOGS_PATH);
+                if(logsPath.endsWith("/")) {
+                    logsPath = logsPath.substring(0,logsPath.length()-1);
+                }
                 newHandler.getOrder().setAttribute(
                     new Attribute(CrawlOrder.ATTR_LOGS_PATH,
                         logsPath + RECOVERY_SUFFIX));
@@ -1014,6 +1017,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 // 'new' directory is nonempty; rename with trailing '-R'
                 String statePath =  (String) newHandler.getOrder().
                     getAttribute(CrawlOrder.ATTR_STATE_PATH);
+                if(statePath.endsWith("/")) {
+                    statePath = statePath.substring(0,statePath.length()-1);
+                }
                 newHandler.getOrder().setAttribute(
                     new Attribute(CrawlOrder.ATTR_STATE_PATH,
                         statePath + RECOVERY_SUFFIX));
