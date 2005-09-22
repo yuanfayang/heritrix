@@ -217,7 +217,9 @@ public class ClassicScope extends CrawlScope {
                 transCount++;
             }
         }
-        return (linkCount > maxLinkHops) || (transCount > maxTransHops);
+//      return (linkCount > maxLinkHops) || (transCount > maxTransHops);
+        // base only on links, don't treat trans count as hard max
+        return (linkCount > maxLinkHops);
     }
 
     /**

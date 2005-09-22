@@ -252,9 +252,9 @@ implements CharSequence, Serializable {
         if (this.cachedHostBasename != null) {
             return;
         }
-        if (this.getHost() != null) {
+        if (this.getReferencedHost() != null) {
             this.cachedHostBasename = TextUtils.
-                replaceFirst(MASSAGEHOST_PATTERN, this.getHost(),
+                replaceFirst(MASSAGEHOST_PATTERN, this.getReferencedHost(),
                 UURIFactory.EMPTY_STRING);
         }
     }
