@@ -32,7 +32,6 @@ import org.apache.commons.httpclient.URIException;
 import org.apache.poi.hdf.extractor.WordDocument;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Processor;
 
 /**
  *  This class allows the caller to extract href style links from word97-format word documents.
@@ -40,7 +39,7 @@ import org.archive.crawler.framework.Processor;
  * @author Parker Thompson
  *
  */
-public class ExtractorDOC extends Processor implements CoreAttributeConstants {
+public class ExtractorDOC extends Extractor implements CoreAttributeConstants {
 
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorDOC");
@@ -61,7 +60,7 @@ public class ExtractorDOC extends Processor implements CoreAttributeConstants {
      *  text for valid URIs.
      * @param curi CrawlURI to process.
      */
-    protected void innerProcess(CrawlURI curi){
+    protected void extract(CrawlURI curi){
         // Assumes docs will be coming in through http.
         // TODO make this more general (currently we're only fetching via http
         // so it doesn't matter)

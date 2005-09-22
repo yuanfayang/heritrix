@@ -30,7 +30,6 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ToeThread;
 
 
@@ -40,7 +39,7 @@ import org.archive.crawler.framework.ToeThread;
  * @author Parker Thompson
  *
  */
-public class ExtractorPDF extends Processor implements CoreAttributeConstants {
+public class ExtractorPDF extends Extractor implements CoreAttributeConstants {
     private static final Logger LOGGER =
         Logger.getLogger(ExtractorPDF.class.getName());
     private static int DEFAULT_MAX_SIZE_TO_PARSE = 5*1024*1024; // 5MB
@@ -61,7 +60,7 @@ public class ExtractorPDF extends Processor implements CoreAttributeConstants {
         super(name, "PDF extractor. Link extraction on PDF documents.");
     }
 
-    protected void innerProcess(CrawlURI curi){
+    protected void extract(CrawlURI curi){
         if (!isHttpTransactionContentToProcess(curi) ||
                 !isExpectedMimeType(curi.getContentType(),
                     "application/pdf")) {
