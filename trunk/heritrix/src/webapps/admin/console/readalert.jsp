@@ -4,7 +4,6 @@
 <%
     SinkHandlerLogRecord alert =
         heritrix.getAlert(request.getParameter("alert"));
-    alert.setRead();
     String title = "Read alert";
     int tab = 0;
 %>
@@ -13,7 +12,9 @@
 <p>
 <% if(alert == null) { %>
     <b> No matching alert found </b>
-<% } else { %>
+<% } else { 
+    alert.setRead();
+%>
     <table>
         <tr>
             <td>
@@ -52,5 +53,7 @@
     <p>
         <a href="<%=request.getContextPath()%>/console/alerts.jsp">Back to alerts</a>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="<%=request.getContextPath()%>/console/alerts.jsp?alerts=<%=alert.getSequenceNumber()%>&action=delete">Delete this alert</a>
+        <% if(alert != null) { %>
+             <a href="<%=request.getContextPath()%>/console/alerts.jsp?alerts=<%=alert.getSequenceNumber()%>&action=delete">Delete this alert</a>
+        <% } %>
 <%@include file="/include/foot.jsp"%>
