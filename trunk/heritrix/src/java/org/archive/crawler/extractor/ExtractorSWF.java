@@ -34,7 +34,6 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Processor;
 
 import com.anotherbigidea.flash.interfaces.SWFVectors;
 import com.anotherbigidea.flash.readers.SWFReader;
@@ -51,7 +50,7 @@ import com.anotherbigidea.io.InStream;
  * @author Igor Ranitovic
  */
 public class ExtractorSWF
-extends Processor
+extends Extractor
 implements CoreAttributeConstants {
     private static Logger logger =
         Logger.getLogger(ExtractorSWF.class.getName());
@@ -67,7 +66,7 @@ implements CoreAttributeConstants {
             "(flash/shockwave) files.");
     }
 
-    protected void innerProcess(CrawlURI curi) {
+    protected void extract(CrawlURI curi) {
         if (!isHttpTransactionContentToProcess(curi)) {
             return;
         }

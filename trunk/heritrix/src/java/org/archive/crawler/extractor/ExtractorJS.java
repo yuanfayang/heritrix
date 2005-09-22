@@ -31,7 +31,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
 import org.archive.net.UURI;
 import org.archive.util.DevUtils;
@@ -44,7 +43,7 @@ import org.archive.util.TextUtils;
  * @author gojomo
  *
  */
-public class ExtractorJS extends Processor implements CoreAttributeConstants {
+public class ExtractorJS extends Extractor implements CoreAttributeConstants {
     private static Logger LOGGER =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
 
@@ -81,7 +80,7 @@ public class ExtractorJS extends Processor implements CoreAttributeConstants {
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#process(org.archive.crawler.datamodel.CrawlURI)
      */
-    public void innerProcess(CrawlURI curi) {
+    public void extract(CrawlURI curi) {
         if (!isHttpTransactionContentToProcess(curi)) {
             return;
         }

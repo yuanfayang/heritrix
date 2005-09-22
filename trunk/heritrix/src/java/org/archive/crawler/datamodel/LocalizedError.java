@@ -30,7 +30,7 @@ package org.archive.crawler.datamodel;
 public class LocalizedError {
 
     private String message;
-    public Exception exception;
+    public Throwable exception;
     private String processorName;
 
     /**
@@ -38,7 +38,7 @@ public class LocalizedError {
      * @param ex
      * @param message
      */
-    public LocalizedError(String processorName, Exception ex, String message) {
+    public LocalizedError(String processorName, Throwable ex, String message) {
         this.processorName = processorName;
         this.exception = ex;
         this.message = message;

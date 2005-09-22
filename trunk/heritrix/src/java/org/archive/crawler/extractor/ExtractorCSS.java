@@ -34,7 +34,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.Processor;
 import org.archive.io.ReplayCharSequence;
 import org.archive.net.UURI;
 import org.archive.util.DevUtils;
@@ -56,7 +55,7 @@ import org.archive.util.TextUtils;
  *
  **/
 
-public class ExtractorCSS extends Processor implements CoreAttributeConstants {
+public class ExtractorCSS extends Extractor implements CoreAttributeConstants {
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorCSS");
 
@@ -94,7 +93,7 @@ public class ExtractorCSS extends Processor implements CoreAttributeConstants {
     /**
      * @param curi Crawl URI to process.
      */
-    public void innerProcess(CrawlURI curi) {
+    public void extract(CrawlURI curi) {
         if (!isHttpTransactionContentToProcess(curi)) {
             return;
         }

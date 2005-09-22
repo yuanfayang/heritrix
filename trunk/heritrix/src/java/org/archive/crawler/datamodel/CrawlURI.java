@@ -573,10 +573,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * 
      * @param processorName Name of processor the exception was thrown
      * in.
-     * @param ex Exception to log.
+     * @param ex Throwable to log.
      * @param message Extra message to log beyond exception message.
      */
-    public void addLocalizedError(String processorName, Exception ex,
+    public void addLocalizedError(String processorName, Throwable ex,
         	String message) {
         List localizedErrors;
         if(containsKey(A_LOCALIZED_ERRORS)) {

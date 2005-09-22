@@ -34,7 +34,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.RobotsHonoringPolicy;
-import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.io.ReplayCharSequence;
@@ -51,7 +50,7 @@ import org.archive.util.TextUtils;
  * @author gojomo
  *
  */
-public class ExtractorHTML extends Processor
+public class ExtractorHTML extends Extractor
 implements CoreAttributeConstants {
     //  TODO: add config param to change
     protected boolean ignoreUnexpectedHTML = true;
@@ -433,7 +432,7 @@ implements CoreAttributeConstants {
         this.numberOfLinksExtracted++;
     }
 
-    public void innerProcess(CrawlURI curi) {
+    public void extract(CrawlURI curi) {
         if (!isHttpTransactionContentToProcess(curi) ||
                 !isExpectedMimeType(curi.getContentType(), "text/html")) {
             return;

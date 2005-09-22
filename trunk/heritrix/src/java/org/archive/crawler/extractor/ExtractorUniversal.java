@@ -30,7 +30,6 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.net.UURI;
@@ -54,7 +53,7 @@ import org.archive.util.TextUtils;
  *
  * @author Kristinn Sigurdsson
  */
-public class ExtractorUniversal extends Processor
+public class ExtractorUniversal extends Extractor
 implements CoreAttributeConstants {
     private static final Logger logger =
         Logger.getLogger(ExtractorUniversal.class.getName());
@@ -369,7 +368,7 @@ implements CoreAttributeConstants {
         e.setExpertSetting(true);
     }
 
-    protected void innerProcess(CrawlURI curi) {
+    protected void extract(CrawlURI curi) {
         if (!isHttpTransactionContentToProcess(curi)) {
             return;
         }
