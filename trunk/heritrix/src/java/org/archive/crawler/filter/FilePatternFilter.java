@@ -128,7 +128,7 @@ public class FilePatternFilter extends URIRegExpFilter {
             }
 
         } catch (AttributeNotFoundException e) {
-            logger.severe(e.getMessage());
+            logger.log(Level.SEVERE,"necessary setting missing",e);
         }
         // Basically the filter is inactive if this occurs (The caller
         // returns 'false' when regexp is null).
