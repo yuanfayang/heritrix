@@ -421,8 +421,8 @@
     scope</emphasis>. It allows you to specify the limits of the crawl. By
     default it is limited to the domains that your seeds span. This may be
     suitable for your purposes. If not you can choose a broad scope (not
-    limited to the domains of it's seeds) or the more restrictive host scope
-    that limits the crawl to the hosts that it's seeds span. For more on
+    limited to the domains of its seeds) or the more restrictive host scope
+    that limits the crawl to the hosts that its seeds span. For more on
     scopes refer to <xref linkend="scopes" />.</para>
 
     <para>To change scopes, select the new one from the combobox and click the
@@ -558,7 +558,7 @@
 
       <para>Below these input fields there are several buttons. The last one
       <emphasis>Submit job</emphasis> will immediately submit the job and
-      (assuming that it's properly configured) it will be ready to run (see
+      (assuming it is properly configured) it will be ready to run (see
       <xref linkend="running" />). The other buttons will take the user to the
       relevant configuration pages (those are covered in detail in <xref
       linkend="config" />). Once all desired changes have been made to the
@@ -866,7 +866,7 @@
 
             <para>This scope goes yet further and limits the discovered URIs
             to a section of paths on hosts defined by the seeds. Of course any
-            host that has a seed pointing at it's root (i.e.
+            host that has a seed pointing at its root (i.e.
             <literal>www.sample.com/index.html</literal>) will be included in
             full where as a host whose only seed is
             <literal>www.sample2.com/path/index.html</literal> will be limited
@@ -1206,7 +1206,7 @@
               <listitem>
                 <para>Increase and decrease factors on unchanged and changed
                 documents respectively. Basically if a document has not
-                changed between visits, it's wait time will be multiplied by
+                changed between visits, its wait time will be multiplied by
                 the "unchanged-factor" and if it has changed, the wait time
                 will be divided by the "changed-factor". Both values accept
                 real numbers, not just integers.</para>
@@ -1223,7 +1223,7 @@
           URIs based on their mime types, this is possible. You have to create
           a Refinement (<xref linkend="refinements" />) and use the
           ContentType criteria. Simply use a regular expression that matches
-          the desired mime type as it's parameter and then override the
+          the desired mime type as its parameter and then override the
           applicable parameters in the refinement.</para>
 
           <para>By setting the 'state' directory to the same location that
@@ -1604,7 +1604,7 @@
         for each credential) and then configured on the settings page (<xref
         linkend="settings" />).</para>
 
-        <para>One of the settings for each credential is it's
+        <para>One of the settings for each credential is its
         <literal>credential-domain</literal> and thus it is possible to create
         all credentials on the global level. However since this can cause
         excessive unneeded checking of credentials it is recommended that
@@ -2243,7 +2243,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
               <para>Maximum size per ARC file. Once this size is reached no
               more documents will be added to an ARC file, another will be
               created to continue the crawl. This is of course not a hard
-              limit and the last item added to an ARC file will push it's size
+              limit and the last item added to an ARC file will push its size
               above this limit. If exceptionally large items are being
               downloaded the size of an ARC file may exceed this value by a
               considerable amount since items will never be split between ARC
@@ -2827,7 +2827,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           <title>Thread report</title>
 
           <para>Contains information about what each toe thread is doing and
-          how long it's been doing it. Also allows users to terminate threads
+          how long it has been doing it. Also allows users to terminate threads
           that have become stuck. Terminated threads will not actually be
           removed from memory, Java does not provide a way of doing that.
           Instead they will be isolated from the rest of the program running
@@ -2914,7 +2914,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         unread ones clearly marked in bold and offering the user the option of
         reading them, marking as read and deleting them.</para>
 
-        <para>Clicking an alert brings up a screen with it's details.</para>
+        <para>Clicking an alert brings up a screen with its details.</para>
 
         <para>Alerts are generated in response to an error or problem of some
         form. Alerts have severity levels that mirror the Java log
@@ -3379,7 +3379,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <emphasis>discovered</emphasis> seeds if that option is enabled (that
         is treat redirects from seeds as new seeds). For each seed the status
         code for the fetch attempt is presented in verbose form (that is with
-        minimum textual description of it's meaning). Following that is the
+        minimum textual description of its meaning). Following that is the
         seeds disposition, a quick look at if the seed was successfully
         crawled, not attempted, or failed to crawl.</para>
 
@@ -3487,7 +3487,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>This report is created by the
         <literal>StatisticsTracker</literal> (see <xref
         linkend="stattrack" />) and is written at the very end of the crawl
-        only. See <literal>crawl-manifest.txt</literal> for it's
+        only. See <literal>crawl-manifest.txt</literal> for its
         location.</para>
       </sect3>
 
@@ -3501,7 +3501,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>This report is created by the
         <literal>StatisticsTracker</literal> (see <xref
         linkend="stattrack" />) and is written at the very end of the crawl
-        only. See <literal>crawl-manifest.txt</literal> for it's
+        only. See <literal>crawl-manifest.txt</literal> for its
         location.</para>
       </sect3>
 
@@ -3524,7 +3524,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>This report is created by the
         <literal>StatisticsTracker</literal> (see <xref
         linkend="stattrack" />) and is written at the very end of the crawl
-        only. See <literal>crawl-manifest.txt</literal> for it's
+        only. See <literal>crawl-manifest.txt</literal> for its
         location.</para>
       </sect3>
 
@@ -3537,7 +3537,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>This report is created by the
         <literal>StatisticsTracker</literal> (see <xref
         linkend="stattrack" />) and is written at the very end of the crawl
-        only. See <literal>crawl-manifest.txt</literal> for it's
+        only. See <literal>crawl-manifest.txt</literal> for its
         location.</para>
       </sect3>
 
@@ -3865,7 +3865,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <glossterm>CrawlURI</glossterm>
 
         <glossdef>
-          <para>A URI and it's associated data such as parent URI, number of
+          <para>A URI and its associated data such as parent URI, number of
           links from seed etc.</para>
         </glossdef>
       </glossentry>
