@@ -772,6 +772,23 @@
             either by letting the SURT prefixes be implied from the supplied
             seed URIs, specifying an external file with a listing of SURT
             prefixes, or both.</para>
+            
+            <para>This scope also enables a special syntax within the seeds
+            list for adding SURT prefixes separate from seeds. Any line in 
+            the seeds list beginning with a '+' will be considered a SURT
+            prefix specification, rather than a seed. Any URL you put after
+            the '+' will only be used to deduce a SURT prefix -- it will not
+            be independently scheduled. You can also put your own literal
+            SURT prefix after the '+'.</para>
+            
+            <para>For example, each of the following SURT prefix directives in 
+            the seeds box are equivalent:</para>
+            
+            <para><programlisting>
++http://(org,example,      # literal SURT prefix
++http://example.org        # regular URL implying same SURT prefix
++example.org               # URL fragment with implied 'http' scheme
+            </programlisting></para>
 
             <para>When you use this scope, it adds 3 hard-to-find-in-the-UI
             attributes -- <literal>surts-source-file</literal>,
