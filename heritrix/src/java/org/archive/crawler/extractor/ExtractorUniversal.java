@@ -518,12 +518,13 @@ implements CoreAttributeConstants {
      *  <li> <code>[0-9]</code> values 48-57
      *  <li> <code>: ; = ? @</code> value 58-59,61,63-64
      *  <li> <code>[A-Z]</code> values 65-90
+     *  <li> <code>_</code> value 95
      *  <li> <code>[a-z]</code> values 97-122
      *  <li> <code>~</code> value 126
      * </ul>
      * <p>
      * To summerize, the following ranges are considered URLable:<br>
-     * 35-38,43-59,61,63-90,97-122,126
+     * 35-38,43-59,61,63-90,95,97-122,126
      *
      * @param ch The character (represented by an int) to test.
      * @return True if it is a URLable character, false otherwise.
@@ -533,6 +534,7 @@ implements CoreAttributeConstants {
             || (ch>=43 && ch<=59)
             || (ch==61)
             || (ch>=63 && ch<=90)
+            || (ch==95)
             || (ch>=97 && ch<=122)
             || (ch==126);
     }
