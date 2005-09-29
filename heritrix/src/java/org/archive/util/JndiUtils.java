@@ -65,27 +65,23 @@ public class JndiUtils {
     }
     
     /**
-     * @param on
-     * @return Returns name made of the 'host' and 'name' portion of the passed
-     * <code>on</code>.
-     * @throws MalformedObjectNameException
+     * Return name to use as jndi name.
+     * Used to do a subset of the ObjectName fields but not just
+     * let all through so its easy to just use the jndi name to 
+     * find mbean.
+     * @param on ObjectName instance to work with.
+     * @return Returns a compound name to use as jndi key.
      * @throws NullPointerException
      * @throws InvalidNameException
      */
     public static CompoundName getCompoundName(final ObjectName on)
-    throws MalformedObjectNameException, NullPointerException,
+    throws NullPointerException,
     InvalidNameException {
-        // Make a new name that only has host and jmx bean name in it.
-        Hashtable ht = on.getKeyPropertyList();
-        Hashtable newHt = new Hashtable();
-        newHt.put(JmxUtils.HOST, ht.get(JmxUtils.HOST));
-        newHt.put(JmxUtils.NAME, ht.get(JmxUtils.NAME));
-        ObjectName newOn = new ObjectName(on.getDomain(), newHt);
-        return getCompoundName(newOn.getCanonicalKeyPropertyListString());
+        return getCompoundName(on.getCanonicalKeyPropertyListString());
     }
     
     /**
-     * @param on
+     * @param on ObjectName instance to work with.
      * @return A simple reference based on passed <code>on</code>
      */
     public static Reference getReference(final ObjectName on) {
@@ -144,8 +140,8 @@ public class JndiUtils {
         String name = getCompoundName(context.getNameInNamespace()).toString();
         if (!name.equals(on.getDomain())) {
             throw new NamingException("The current context is " + name +
-                    " but domain is " + on.getDomain() + " (Was expecting " +
-                    "them to be the same).");
+                " but domain is " + on.getDomain() + " (Was expecting " +
+                "them to be the same).");
         }
         CompoundName key = getCompoundName(on);
         context.rebind(key, getReference(on));

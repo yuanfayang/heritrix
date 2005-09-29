@@ -224,6 +224,19 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     
     private final AlertManager alertManager;
     
+    /**
+     * True if we're to put up a GUI.
+     * Cmdline processing can override.
+     */
+    private static boolean gui =
+        !PropertyUtils.getBooleanProperty("heritrix.cmdline.nowui");
+    
+    /**
+     * Port to put the GUI up on.
+     * Cmdline processing can override.
+     */
+    private static int guiPort = SimpleHttpServer.DEFAULT_PORT;
+    
     // JNDI
     private Context jndiContext = null;
     
@@ -393,15 +406,17 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             }
         }
     }
-
+    
     protected static String doCmdLineArgs(final String [] args)
     throws Exception {
         // Get defaults for commandline arguments from the properties file.
         String tmpStr =
             PropertyUtils.getPropertyOrNull("heritrix.cmdline.port");
-        int port = (tmpStr == null)?
-            SimpleHttpServer.DEFAULT_PORT: Integer.parseInt(tmpStr);
-        tmpStr = PropertyUtils.getPropertyOrNull("heritrix.cmdline.admin");
+        if (tmpStr != null) {
+            Heritrix.guiPort = Integer.parseInt(tmpStr);
+        }
+        tmpStr =
+            PropertyUtils.getPropertyOrNull("heritrix.cmdline.admin");
         String adminLoginPassword = (tmpStr == null)?
             "admin:letmein": tmpStr;
         String crawlOrderFile =
@@ -409,8 +424,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         tmpStr = PropertyUtils.getPropertyOrNull("heritrix.cmdline.run");
         boolean runMode =
             PropertyUtils.getBooleanProperty("heritrix.cmdline.run");
-        boolean noWui =
-            PropertyUtils.getBooleanProperty("heritrix.cmdline.nowui");    
         boolean selfTest = false;
         String selfTestName = null;
         CommandLineParser clp = new CommandLineParser(args, Heritrix.out,
@@ -456,17 +469,18 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                         clp.usage("You must specify an ORDER_FILE with" +
                             " '--nowui' option.", 1);
                     }
-                    noWui = true;
+                    Heritrix.gui = false;
                     break;
 
                 case 'p':
                     try {
-                        port = Integer.parseInt(options[i].getValue());
+                        Heritrix.guiPort =
+                            Integer.parseInt(options[i].getValue());
                     } catch (NumberFormatException e) {
                         clp.usage("Failed parse of port number: " +
                             options[i].getValue(), 1);
                     }
-                    if (port <= 0) {
+                    if (Heritrix.guiPort <= 0) {
                         clp.usage("Nonsensical port number: " +
                             options[i].getValue(), 1);
                     }
@@ -502,8 +516,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 // No arguments accepted by selftest.
                 clp.usage(1);
             }
-            status = selftest(selfTestName, port);
-        } else if (noWui) {
+            status = selftest(selfTestName, Heritrix.guiPort);
+        } else if (!Heritrix.gui) {
             if (options.length > 1) {
                 // If more than just '--nowui' passed, then there is
                 // confusion on what is being asked of us.  Print usage
@@ -514,7 +528,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             registerHeritrixMBean(h);
             status = h.doOneCrawl(crawlOrderFile);
         } else {
-            status = startEmbeddedWebserver(port, adminLoginPassword);
+            status =
+                startEmbeddedWebserver(Heritrix.guiPort, adminLoginPassword);
             Heritrix h = new Heritrix();
             registerHeritrixMBean(h);
             String tmp = h.launch(crawlOrderFile, runMode);
@@ -1975,7 +1990,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         Hashtable ht = name.getKeyPropertyList();
         if (!ht.containsKey(JmxUtils.NAME)) {
             throw new IllegalArgumentException("Name property required" +
-                    name.getCanonicalName());
+                name.getCanonicalName());
         }
         if (!ht.containsKey(JmxUtils.TYPE)) {
             ht.put(JmxUtils.TYPE, JmxUtils.SERVICE);
@@ -1984,6 +1999,24 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         if (!ht.containsKey(JmxUtils.HOST)) {
             ht.put(JmxUtils.HOST, InetAddress.getLocalHost().getHostName());
             name = new ObjectName(name.getDomain(), ht);
+        }
+        if (!ht.containsKey(JmxUtils.JMX_PORT)) {
+            // Add jdk jmx-port. This will be present if we've attached
+            // ourselves to the jdk jmx agent.  Otherwise, we've been
+            // deployed in a j2ee container with its own jmx agent.  In
+            // this case we won't know how to get jmx port.
+            String p = System.getProperty("com.sun.management.jmxremote.port");
+            if (p != null && p.length() > 0) {
+                ht.put(JmxUtils.JMX_PORT, p);
+                name = new ObjectName(name.getDomain(), ht);
+            }
+        }
+        if (!ht.containsKey(JmxUtils.GUI_PORT)) {
+            // Add gui port if this instance was started with a gui.
+            if (Heritrix.gui) {
+                ht.put(JmxUtils.GUI_PORT, Integer.toString(Heritrix.guiPort));
+                name = new ObjectName(name.getDomain(), ht);
+            }
         }
         this.mbeanName = name;
         registerHeritrix(name.getCanonicalKeyPropertyListString(), this);
