@@ -56,6 +56,8 @@ public class JmxUtils {
     public static final String SERVICE = "Service";
     public static final String NAME = "name";
     public static final String HOST = "host";
+    public static final String JMX_PORT = "jmxport";
+    public static final String GUI_PORT = "guiport";
     public static final String KEY = "key";
     private static final List OPENTYPES =
         Arrays.asList(OpenType.ALLOWED_CLASSNAMES);
