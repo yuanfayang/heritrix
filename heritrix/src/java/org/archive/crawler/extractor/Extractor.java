@@ -24,8 +24,12 @@
 */ 
 package org.archive.crawler.extractor;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.frontier.AbstractFrontier;
 
 /**
  * Convenience shared superclass for Extractor Processors.
@@ -45,6 +49,8 @@ import org.archive.crawler.framework.Processor;
  * @author gojomo
  */
 public abstract class Extractor extends Processor {
+    private static final Logger logger = Logger
+        .getLogger(Extractor.class.getName());
 
     /**
      * Passthrough constructor.
@@ -64,6 +70,8 @@ public abstract class Extractor extends Processor {
             // both annotate (to highlight in crawl log) & add as local-error
             curi.addAnnotation("err="+soe.getClass().getName());
             curi.addLocalizedError(getName(),soe,"");
+            // also log as warning
+            logger.log(Level.WARNING,"overflow in "+getName(),soe);
         }
     }
 
