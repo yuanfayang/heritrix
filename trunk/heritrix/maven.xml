@@ -217,6 +217,9 @@
         <war destfile="${maven.build.dir}/selftest.war"
             webxml="${webapps.dir}/selftest/WEB-INF/web.xml"
             basedir="${webapps.dir}/selftest" />
+        <war destfile="${maven.build.dir}/hcc.war"
+            webxml="${webapps.dir}/hcc/WEB-INF/web.xml"
+            basedir="${webapps.dir}/hcc" />
 
         <!--Copy over the just made war files into the distribution copy.-->
         <copy todir="${maven.dist.bin.assembly.dir}/webapps">
