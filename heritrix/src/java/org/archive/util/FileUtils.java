@@ -35,11 +35,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+
+import org.archive.crawler.checkpoint.CheckpointContext;
 
 
 /** Utility methods for manipulating files and directories.
@@ -56,13 +60,28 @@ public class FileUtils {
         super();
     }
     
-    public static void copyFiles(final File srcDir, Set srcFile,
+    public static int copyFiles(final File srcDir, Set srcFile,
             final File dest)
     throws IOException {
+        int count = 0;
         for (Iterator i = srcFile.iterator(); i.hasNext();) {
             String name = (String)i.next();
-            copyFiles(new File(srcDir, name), new File(dest, name));
+            File src = new File(srcDir, name);
+            File tgt = new File(dest, name);
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine("Before " + src.getAbsolutePath() + " " +
+                    src.exists() + ", " + tgt.getAbsolutePath() + " " +
+                    tgt.exists());
+            }
+            copyFiles(src, tgt);
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine("After " + src.getAbsolutePath() + " " +
+                    src.exists() + ", " + tgt.getAbsolutePath() + " " +
+                    tgt.exists());
+            }
+            count++;
         }
+        return count;
     }
 
     /** Recursively copy all files from one directory to another.
@@ -91,12 +110,20 @@ public class FileUtils {
     throws IOException {
         // TODO: handle failures at any step
         if (!src.exists()) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine(src.getAbsolutePath() + " does not exist");
+            }
             return;
         }
 
         if (src.isDirectory()) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine(src.getAbsolutePath() + " is a directory.");
+            }
             // Create destination directory
-            dest.mkdirs();
+            if (!dest.exists()) {
+                dest.mkdirs();
+            }
             // Go through the contents of the directory
             String list[] = (filter == null)? src.list(): src.list(filter);
             if (inSortedOrder) {
@@ -138,6 +165,10 @@ public class FileUtils {
     public static boolean copyFile(File src, File dest, long extent)
             throws FileNotFoundException, IOException {
         boolean result = false;
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine("Copying file " + src + " to " + dest + " extent " +
+                extent + " exists " + dest.exists());
+        }
         if (dest.exists()) {
             dest.delete();
         }
@@ -312,5 +343,30 @@ public class FileUtils {
         }
 
         return new RegexpFileFilter(regexp);
+    }
+    
+    /**
+     * Use for case where files are being added to src.  Will break off copy
+     * when tgt is same as src.
+     * @param src Source directory to copy from.
+     * @param tgt Target to copy to.
+     * @param filter Filter to apply to files to copy.
+     * @throws IOException
+     */
+    public static void syncDirectories(final File src,
+            final FilenameFilter filter, final File tgt)
+    throws IOException {
+        Set srcFilenames = null;
+        do {
+            srcFilenames = new HashSet(Arrays.asList(src.list(filter)));
+            List tgtFilenames = Arrays.asList(tgt.list(filter));
+            srcFilenames.removeAll(tgtFilenames);
+            if (srcFilenames.size() > 0) {
+                int count = FileUtils.copyFiles(src, srcFilenames, tgt);
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.fine("Copied " + count);
+                }
+            }
+        } while (srcFilenames != null && srcFilenames.size() > 0);
     }
 }

@@ -23,7 +23,9 @@
 package org.archive.util;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
 
 
 /**
@@ -42,8 +44,17 @@ public class FileUtilsTest extends TmpDirTestCase {
         this.srcDirFile.mkdirs();
         this.tgtDirFile = new File(getTmpDir(), tgtDirName);
         this.tgtDirFile.mkdirs();
-        for (int i = 0; i < 3; i++) {
-            File.createTempFile(this.getName(), null, srcDirFile);
+        addFiles();
+    }
+ 
+    private void addFiles() throws IOException {
+        addFiles(3, this.getName());
+    }
+    
+    private void addFiles(final int howMany, final String baseName)
+    throws IOException {
+        for (int i = 0; i < howMany; i++) {
+            File.createTempFile(baseName, null, this.srcDirFile);
         }
     }
     
@@ -75,5 +86,13 @@ public class FileUtilsTest extends TmpDirTestCase {
             e = ioe;
         }
         assertNotNull("Didn't get expected IOE", e);
+    }
+    
+    public void testSyncDirectories() throws IOException {
+        FileUtils.syncDirectories(this.srcDirFile, null, this.tgtDirFile);
+        addFiles(1, "xxxxxx");
+        FileUtils.syncDirectories(this.srcDirFile, null, this.tgtDirFile);
+        assertEquals("Not equal", this.srcDirFile.list().length,
+            this.tgtDirFile.list().length);
     }
 }

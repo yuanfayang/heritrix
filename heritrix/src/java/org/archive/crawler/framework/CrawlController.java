@@ -35,12 +35,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -1139,6 +1137,11 @@ public class CrawlController implements Serializable, Reporter {
         // Tell registered listeners to checkpoint.
         sendCheckpointEvent(context.getCheckpointInProgressDirectory());
         
+        // Rotate off crawler logs.
+        LOGGER.fine("Rotating log files.");
+        rotateLogFiles(CURRENT_LOG_SUFFIX + "."
+            + this.cpContext.getNextCheckpointName());
+        
         // Sync the BigMap contents to bdb, if their bdb bigmaps.
         LOGGER.fine("BigMaps.");
         BigMapFactory.checkpoint();
@@ -1153,11 +1156,6 @@ public class CrawlController implements Serializable, Reporter {
         // Checkpoint bdb environment.
         LOGGER.fine("Bdb environment.");
         checkpointBdb(context.getCheckpointInProgressDirectory());
-        
-        // Rotate off crawler logs.
-        LOGGER.fine("Rotating log files.");
-        rotateLogFiles(CURRENT_LOG_SUFFIX + "."
-            + this.cpContext.getNextCheckpointName());
         
         // Make copy of order, seeds, and settings.
         LOGGER.fine("Copying settings.");
@@ -1237,7 +1235,7 @@ public class CrawlController implements Serializable, Reporter {
         try {
             // Disable background threads
             setBdbjeBkgrdThreads(envConfig, bkgrdThreads, "false");
-            // Do a force checkpoint.  Thats what a sync does.
+            // Do a force checkpoint.  Thats what a sync does (i.e. doSync).
             CheckpointConfig chkptConfig = new CheckpointConfig();
             chkptConfig.setForce(true);
             this.bdbEnvironment.checkpoint(chkptConfig);
@@ -1248,18 +1246,9 @@ public class CrawlController implements Serializable, Reporter {
             File bdbDir = CheckpointContext.getBdbSubDirectory(checkpointDir);
             FileUtils.copyFiles(getStateDisk(), filter, bdbDir, true);
             // Go again in case new bdb logs were added since above
-            // bulk copy. Keep cycling till two dirs match.
-            Set src = null;
-            do {
-                src = new HashSet(Arrays.asList(getStateDisk().list(filter)));
-                List tgt = Arrays.asList(CheckpointContext.
-                    getBdbSubDirectory(checkpointDir).list(filter));
-                src.removeAll(tgt);
-                if (src.size() > 0) {
-                    LOGGER.fine("Copying " + src.size() + " new bdb logs.");
-                    FileUtils.copyFiles(bdbDir, src, getStateDisk());
-                }
-            } while (src != null && src.size() > 0);
+            // bulk copy.  Keep going till we've copied all of src.
+            FileUtils.syncDirectories(getStateDisk(), filter, bdbDir);
+            LOGGER.fine("Finished copying bdb log files.");
         } finally {
             // Restore background threads.
             setBdbjeBkgrdThreads(envConfig, bkgrdThreads, "true");
