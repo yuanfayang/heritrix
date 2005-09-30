@@ -163,17 +163,19 @@
                 %> </ol> <%
             }
 	    %>
-            <p><a href="about.html">About HCC</a>.</p> 
-            <hr />
-            	<p>Provide a <b>login</b> for the cluster.  Assumption is that all cluster
-            	members share the same login and password.  Submitting
-            	writes the login and password into your session.
-          	<form method="POST" action="index.jsp" enctype="application/x-www-form-urlencoded">
-          	Cluster login: <input name="login" maxlength="32" type="text"/>
-          	Cluster password: <input name="password" maxlength="32" type="password"/>
-          	<input name="submit" maxlength="32" type="submit" value="Submit" />
-		</form>
-            	 </p>
-            <hr />
+        <p><a href="about.html">About HCC</a>.</p> 
+        <hr />
+        <p>Provide a <b>login</b> for the cluster. Assumption is that all
+        cluster members share the same login and password. Submitting
+        writes the login and password into your session.</p>
+        <form method="post" action="index.jsp"
+                enctype="application/x-www-form-urlencoded">
+            <p>Cluster login: <input name="login" maxlength="32" type="text"/>
+            Cluster password: <input name="password" maxlength="32"
+                type="password"/>
+            <input name="submit" maxlength="32" type="submit" value="Submit" />
+            </p>
+        </form>
+        <hr />
 	</body>
 </html>
