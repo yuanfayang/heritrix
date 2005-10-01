@@ -9,6 +9,8 @@
 <%@ page import="java.util.Hashtable" %>
 <%@ page import="java.util.Iterator" %>
 <%!
+    // This section has code that needs to be moved out to java classes.
+    //
     /**
      * @return The heritrix jndi subcontext (Be sure to close it when done).
      */
@@ -115,6 +117,13 @@
             context.close();
         }
     }
+
+    // Set defaults or set to result of form handling.
+    String clusterLogin = (String)session.getValue("clusterLogin");
+    if (clusterLogin == null) {
+        clusterLogin = "";
+    }
+    String clusterPassword = (String)session.getValue("clusterPassword");
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -168,12 +177,13 @@
         <p>Provide a <b>login</b> for the cluster. Assumption is that all
         cluster members share the same login and password. Submitting
         writes the login and password into your session.</p>
-        <form method="post" action="index.jsp"
+        <form method="post" action="form-handler.jsp"
                 enctype="application/x-www-form-urlencoded">
-            <p>Cluster login: <input name="login" maxlength="32" type="text"/>
+            <p>Cluster login: <input name="login" maxlength="32" type="text"
+                value="<%=clusterLogin%>" />
             Cluster password: <input name="password" maxlength="32"
-                type="password"/>
-            <input name="submit" maxlength="32" type="submit" value="Submit" />
+                type="password" value="<%=clusterPassword%>"/>
+            <input name="cluster-login-submit" type="submit" value="Login" />
             </p>
         </form>
         <hr />

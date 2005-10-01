@@ -32,17 +32,21 @@
           	Tomcat (TODO: Look at if its possible for external applications to use
           	Tomcat's JNDI.  I think I read this is not possible).</p>
           	
-          	<p>This webapp will work in Jetty.  Put a <code>jndi.properties</code>
+          	<p>This webapp will work in Jetty.  Unjar the webapp WAR file and 
+          	put a <code>jndi.properties</code>
           	configured to point at the external JNDI provider into the
           	<code>hcc/WEB-INF/classes</code> directory so its on the hcc webapp
-          	CLASSPATH.  Add any necessary client JARs to <code>hcc/WEB-INF/lib</code>.
-          	Restart.
+          	CLASSPATH (Doesn't have to be here but this seems easiest way of
+          	adding webapp scoped elements to CLASSPATH).  Add any necessary
+          	client JARs to the CLASSPATH: e.g. by putting them in
+          	<code>hcc/WEB-INF/lib</code>. Restart.
           	</p>
           	
           	<p>This webapp will also work in JBOSS.  If using a JBOSS JNP JNDI
           	Service Provider, then, just drop this webapp into JBOSS and it will
           	deploy reading the local JBOSS JNP instance; no need to mess with
-          	any jndi.properties.</p>
+          	any jndi.properties (If using JNP, see JNDIView MBean to get listings
+          	on the JNDI content).</p>
     
 	</body>
 </html>
