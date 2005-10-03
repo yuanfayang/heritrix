@@ -24,4 +24,5 @@ org.archive.crawler.deciderules.ClassKeyMatchesRegExpDecideRule
 org.archive.crawler.deciderules.HopsPathMatchesRegExpDecideRule
 org.archive.crawler.deciderules.ScopePlusOneDecideRule
 org.archive.crawler.deciderules.SeedAcceptDecideRule
+org.archive.crawler.deciderules.ExternalGeoLocationDecideRule
 
