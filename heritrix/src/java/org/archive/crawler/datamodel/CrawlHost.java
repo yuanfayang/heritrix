@@ -45,6 +45,7 @@ public class CrawlHost implements Serializable {
     /** Flag value indicating an IP has not yet been looked up */
     public static final long IP_NEVER_LOOKED_UP = -2;
     private String hostname;
+    private String countryCode;
     private InetAddress ip;
     private long ipFetched = IP_NEVER_LOOKED_UP;
 
@@ -71,7 +72,18 @@ public class CrawlHost implements Serializable {
      * @param hostname the host name for this host.
      */
     public CrawlHost(String hostname) {
+    		this(hostname, null);
+    }
+
+    /** 
+     * Create a new CrawlHost object.
+     *
+     * @param hostname the host name for this host.
+     * @param countryCode the country code for this host.
+     */
+    public CrawlHost(String hostname, String countryCode) {
         this.hostname = hostname;
+        this.countryCode = countryCode;
         InetAddress tmp = InetAddressUtil.getIPHostAddress(hostname);
         if (tmp != null) {
             setIP(tmp, IP_NEVER_EXPIRES);
@@ -164,4 +176,22 @@ public class CrawlHost implements Serializable {
     public void setEarliestNextURIEmitTime(long earliestNextURIEmitTime) {
         this.earliestNextURIEmitTime = earliestNextURIEmitTime;
     }
+
+    /**
+     * Get country code of this host
+     * 
+     * @return Retruns country code or null if not availabe 
+     */
+	public String getCountryCode() {
+		return countryCode;
+	}
+
+	/**
+	 * Set country code for this hos
+	 * 
+	 * @param countryCode The country code of this host
+	 */
+	public void setCountryCode(String countryCode) {
+		this.countryCode = countryCode;
+	}
 }
