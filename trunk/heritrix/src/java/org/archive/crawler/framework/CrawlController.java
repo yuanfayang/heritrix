@@ -1238,6 +1238,20 @@ public class CrawlController implements Serializable, Reporter {
             // Do a force checkpoint.  Thats what a sync does (i.e. doSync).
             CheckpointConfig chkptConfig = new CheckpointConfig();
             chkptConfig.setForce(true);
+            // Mark Hayes of sleepycat says:
+            // "The default for this property is false, which gives the current
+            // behavior (allow deltas).  If this property is true, deltas are
+            // prohibited -- full versions of internal nodes are always logged
+            // during the checkpoint. When a full version of an internal node
+            // is logged during a checkpoint, recovery does not need to process
+            // it at all.  It is only fetched if needed by the application,
+            // during normal DB operations after recovery. When a delta of an
+            // internal node is logged during a checkpoint, recovery must
+            // process it by fetching the full version of the node from earlier
+            // in the log, and then applying the delta to it.  This can be
+            // pretty slow, since it is potentially a large amount of
+            // random I/O."
+            chkptConfig.setMinimizeRecoveryTime(true);
             this.bdbEnvironment.checkpoint(chkptConfig);
             LOGGER.fine("Finished bdb checkpoint.");
 
