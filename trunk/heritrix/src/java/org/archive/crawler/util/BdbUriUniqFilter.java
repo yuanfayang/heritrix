@@ -26,12 +26,12 @@ package org.archive.crawler.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.util.JeUtils;
 
 import st.ata.util.FPGenerator;
 
@@ -41,7 +41,6 @@ import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.DatabaseNotFoundException;
-import com.sleepycat.je.DatabaseStats;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.OperationStatus;
@@ -65,16 +64,16 @@ import com.sleepycat.je.OperationStatus;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class BdbUriUniqFilter implements UriUniqFilter {
+public class BdbUriUniqFilter implements UriUniqFilter, Serializable {
     private static Logger logger =
         Logger.getLogger(BdbUriUniqFilter.class.getName());
     // protected transient FPGenerator fpgen64 = FPGenerator.std64;
     protected boolean createdEnvironment = false;
     protected long lastCacheMiss = 0;
     protected long lastCacheMissDiff = 0;
-    protected Database alreadySeen = null;
-    protected DatabaseEntry value = null;
-	private HasUriReceiver receiver = null;
+    protected transient Database alreadySeen = null;
+    protected transient DatabaseEntry value = null;
+	private transient HasUriReceiver receiver = null;
     private static final String DB_NAME = "alreadySeenUrl";
     protected long count = 0;
     private long aggregatedLookupTime = 0;
@@ -91,17 +90,15 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     /**
      * Constructor.
      * @param environment A bdb environment ready-configured.
-     * @param recycle True if we are to reuse db content if any.
      * @throws IOException
      */
-    public BdbUriUniqFilter(Environment environment, boolean recycle)
+    public BdbUriUniqFilter(Environment environment)
     throws IOException {
         super();
         try {
-            initialize(environment, recycle);
+            initialize(environment);
         } catch (DatabaseException e) {
-            throw new IOException("Recycle was: " + Boolean.toString(recycle) +
-                    ": " + e.getMessage());
+            throw new IOException(e.getMessage());
         }
     }
     
@@ -110,12 +107,11 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      * @param bdbEnv The directory that holds the bdb environment. Will
      * make a database under here if doesn't already exit.  Otherwise
      * reopens any existing dbs.
-     * @param recycle True if we are to reuse db content if any.
      * @throws IOException
      */
-    public BdbUriUniqFilter(File bdbEnv, boolean recycle)
+    public BdbUriUniqFilter(File bdbEnv)
     throws IOException {
-        this(bdbEnv, -1, recycle);
+        this(bdbEnv, -1);
     }
     
     /**
@@ -129,22 +125,6 @@ public class BdbUriUniqFilter implements UriUniqFilter {
      */
     public BdbUriUniqFilter(File bdbEnv, final int cacheSizePercentage)
     throws IOException {
-        this(bdbEnv, cacheSizePercentage, false);
-    }
-    
-    /**
-     * Constructor.
-     * @param bdbEnv The directory that holds the bdb environment. Will
-     * make a database under here if doesn't already exit.  Otherwise
-     * reopens any existing dbs.
-     * @param cacheSizePercentage Percentage of JVM bdb allocates as
-     * its cache.  Pass -1 to get default cache size.
-     * @param recycle True if we are to reuse db content if any.
-     * @throws IOException
-     */
-    public BdbUriUniqFilter(File bdbEnv, final int cacheSizePercentage,
-            final boolean recycle)
-    throws IOException {
         super();
         if (!bdbEnv.exists()) {
             bdbEnv.mkdirs();
@@ -156,7 +136,7 @@ public class BdbUriUniqFilter implements UriUniqFilter {
         }
         try {
             createdEnvironment = true;
-            initialize(new Environment(bdbEnv, envConfig), recycle);
+            initialize(new Environment(bdbEnv, envConfig));
         } catch (DatabaseException e) {
             throw new IOException(e.getMessage());
         }
@@ -165,30 +145,33 @@ public class BdbUriUniqFilter implements UriUniqFilter {
     /**
      * Method shared by constructors.
      * @param env Environment to use.
-     * @param recycle Reuse db content if any.
      * @throws DatabaseException
      */
-    protected void initialize(Environment env, boolean recycle)
-    throws DatabaseException {
+    protected void initialize(Environment env) throws DatabaseException {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
-        if (!recycle) {
-            try {
-                env.truncateDatabase(null, DB_NAME, false);
-            } catch (DatabaseNotFoundException e) {
-                // Ignored
-            } 
+        try {
+            env.truncateDatabase(null, DB_NAME, false);
+        } catch (DatabaseNotFoundException e) {
+            // Ignored
         }
+        open(env, dbConfig);
+    }
+    
+    /**
+     * Call after deserializing an instance of this class.  Will open the
+     * already seen in passed environment.
+     * @param env DB Environment to use.
+     * @throws DatabaseException
+     */
+    public void reopen(final Environment env)
+    throws DatabaseException {
+        open(env, null);
+    }
+    
+    protected void open(final Environment env, final DatabaseConfig dbConfig)
+    throws DatabaseException {
         this.alreadySeen = env.openDatabase(null, DB_NAME, dbConfig);
-        if (recycle) {
-            this.count = JeUtils.getCount(this.alreadySeen);
-            if (logger.isLoggable(Level.INFO)) {
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info("Count of alreadyseen on open "
-                            + Long.toString(count));
-                }
-            }
-        }
         this.value = new DatabaseEntry("".getBytes());
     }
     

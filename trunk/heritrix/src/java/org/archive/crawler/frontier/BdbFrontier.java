@@ -153,33 +153,45 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             // Do default action if attribute not in order.
         }
         if (c != null && c.equals(BloomUriUniqFilter.class.getName())) {
-            if (this.controller.isCheckpointRecover()) {
-                // If a checkpoint recover, then resusitate the bloom filter
-                // based already-seen (The bdbje-based already-seen doesn't
-                // need any special treatment recovering from a checkpoint.
-                // Its using bdb and that has already been recovered by time
-                // come in  here.
-                try {
-                    logger.info("Started deserializing bloom filter as part " +
-                        "of checkpoint recover. Can take some time.");
-                    uuf = (BloomUriUniqFilter)CheckpointContext.
-                        readObjectFromFile(BloomUriUniqFilter.class,
-                        this.controller.getCheckpointRecover().getDirectory());
-                    logger.info("Finished deserializing bloom filter as part " +
-                        "of checkpoint recover.");
-                } catch (ClassNotFoundException e) {
-                    throw new IOException("Failed to deserialize "  +
-                        BloomUriUniqFilter.class.getName() + ": " +
-                        e.getMessage());
-                }
-            } else {
-                uuf = new BloomUriUniqFilter();
-            }
+            uuf = this.controller.isCheckpointRecover()?
+                    deserializeAlreadySeen(BloomUriUniqFilter.class,
+                        this.controller.getCheckpointRecover().getDirectory()):
+                    new BloomUriUniqFilter();
         } else {
-            uuf = new BdbUriUniqFilter(this.controller.getBdbEnvironment(),
-                this.controller.isCheckpointRecover());
+            // Assume its BdbUriUniqFilter.
+            uuf = this.controller.isCheckpointRecover()?
+                deserializeAlreadySeen(BdbUriUniqFilter.class,
+                    this.controller.getCheckpointRecover().getDirectory()):
+                new BdbUriUniqFilter(this.controller.getBdbEnvironment());
+            if (this.controller.isCheckpointRecover()) {
+                // If recover, need to call reopen of the db.
+                try {
+                    ((BdbUriUniqFilter)uuf).
+                        reopen(this.controller.getBdbEnvironment());
+                } catch (DatabaseException e) {
+                    throw new IOException(e.getMessage());
+                }
+            }   
         }
         uuf.setDestination(this);
+        return uuf;
+    }
+    
+    protected UriUniqFilter deserializeAlreadySeen(final Class cls,
+            final File dir)
+    throws FileNotFoundException, IOException {
+        UriUniqFilter uuf = null;
+        try {
+            logger.info("Started deserializing " + cls.getName() +
+                " of checkpoint recover.");
+            uuf = (UriUniqFilter)CheckpointContext.
+                readObjectFromFile(cls, dir);
+            logger.info("Finished deserializing bdbje as part " +
+                "of checkpoint recover.");
+        } catch (ClassNotFoundException e) {
+            throw new IOException("Failed to deserialize "  +
+                cls.getName() + ": " + e.getMessage());
+        }
         return uuf;
     }
 
@@ -487,18 +499,12 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     public void crawlCheckpoint(File checkpointDir) throws Exception {
         super.crawlCheckpoint(checkpointDir);
         persistQueueState();
-        // If we're using bloom filter, serialize it (this.alreadyIncluded
-        // is transient).  On initialization, we'll deserialize the bloom
-        // Writing out the bloom takes a couple of minutes since its megabytes
-        // in size.
-        if (this.alreadyIncluded instanceof BloomUriUniqFilter) {
-            logger.info("Started serializing bloom filter as part " +
-                "of checkpoint. Can take some time.");
-            CheckpointContext.writeObjectToFile(this.alreadyIncluded,
-                checkpointDir);
-            logger.info("Finished serializing bloom filter as part " +
-                "of checkpoint.");
-        }
+        logger.info("Started serializing already seen as part "
+            + "of checkpoint. Can take some time.");
+        CheckpointContext
+            .writeObjectToFile(this.alreadyIncluded, checkpointDir);
+        logger.info("Finished serializing already seen as part "
+            + "of checkpoint.");
         // Serialize ourselves.
         CheckpointContext.writeObjectToFile(this, checkpointDir);
     }
