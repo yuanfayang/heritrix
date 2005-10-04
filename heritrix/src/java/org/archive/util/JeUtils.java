@@ -39,6 +39,7 @@ public class JeUtils {
      * Only reliable when db is quiescent. Should be inexpensive operation.
      * See tail of
      * http://www.sleepycat.com/blogs/bdb-je/archives/2004/12/17/12.46.07/
+     * <p>This seems to take a way long time -- if not forever on big dbs.
      * @param db Db to get count for.
      * @return Count of all db records
      * @throws DatabaseException

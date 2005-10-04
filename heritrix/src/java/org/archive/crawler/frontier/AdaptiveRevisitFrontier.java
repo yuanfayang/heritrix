@@ -271,9 +271,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     protected UriUniqFilter createAlreadyIncluded() throws IOException {
         UriUniqFilter uuf = new BdbUriUniqFilter(
-                this.controller.getBdbEnvironment(),
-                this.controller.isCheckpointRecover());
-
+                this.controller.getBdbEnvironment());
         uuf.setDestination(this);
         return uuf;
     }
