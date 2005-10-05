@@ -93,15 +93,6 @@ public class BdbMultipleWorkQueues {
         crawlUriBinding =
             new RecyclingSerialBinding(classCatalog, CrawlURI.class);
     }
-    
-    /**
-     * @return Get count of all crawluris in database. Usually undependable but
-     * accurate just after construction to get count of items in a reused db.
-     * @throws DatabaseException 
-     */
-    public long getCount() throws DatabaseException {
-        return JeUtils.getCount(this.pendingUrisDB);
-    }
 
     /**
      * Delete all CrawlURIs matching the given expression.

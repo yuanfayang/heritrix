@@ -39,12 +39,15 @@ public class JeUtils {
      * Only reliable when db is quiescent. Should be inexpensive operation.
      * See tail of
      * http://www.sleepycat.com/blogs/bdb-je/archives/2004/12/17/12.46.07/
-     * <p>This seems to take a way long time -- if not forever on big dbs.
-     * @param db Db to get count for.
      * @return Count of all db records
      * @throws DatabaseException
+     * @deprecated This seems to take a way long time -- if not forever
+     * recovering databases.  If all dbs in an bdbje environment are small,
+     * then it seems to work fine but if an environment holds large dbs, then
+     * we seem to never come out of the getStats call.
+     * @param db Db to get count for.
      */
-    public static long getCount(Database db) throws DatabaseException {
+    public static long getCount(final Database db) throws DatabaseException {
         BtreeStats bts = (BtreeStats)db.getStats(null);
         return bts.getLeafNodeCount();
     }
