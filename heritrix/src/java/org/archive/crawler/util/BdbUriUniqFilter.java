@@ -64,16 +64,15 @@ import com.sleepycat.je.OperationStatus;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class BdbUriUniqFilter implements UriUniqFilter, Serializable {
+public class BdbUriUniqFilter extends SetBasedUriUniqFilter implements Serializable {
     private static Logger logger =
         Logger.getLogger(BdbUriUniqFilter.class.getName());
-    // protected transient FPGenerator fpgen64 = FPGenerator.std64;
+
     protected boolean createdEnvironment = false;
     protected long lastCacheMiss = 0;
     protected long lastCacheMissDiff = 0;
-    protected transient Database alreadySeen = null;
-    protected transient DatabaseEntry value = null;
-	private transient HasUriReceiver receiver = null;
+    protected Database alreadySeen = null;
+    protected DatabaseEntry value = null;
     private static final String DB_NAME = "alreadySeenUrl";
     protected long count = 0;
     private long aggregatedLookupTime = 0;
@@ -217,10 +216,11 @@ public class BdbUriUniqFilter implements UriUniqFilter, Serializable {
     /**
      * Create fingerprint.
      * Pubic access so test code can access createKey.
-     * @param url Url to fingerprint.
+     * @param uri URI to fingerprint.
      * @return Fingerprint of passed <code>url</code>.
      */
-    public static long createKey(String url) {
+    public static long createKey(CharSequence uri) {
+        String url = uri.toString();
         int index = url.indexOf(COLON_SLASH_SLASH);
         if (index > 0) {
             index = url.indexOf('/', index + COLON_SLASH_SLASH.length());
@@ -229,48 +229,12 @@ public class BdbUriUniqFilter implements UriUniqFilter, Serializable {
         long tmp = FPGenerator.std24.fp(hostPlusScheme);
         return tmp | (FPGenerator.std40.fp(url) >>> 24);
     }
-    
-    public long count() {
-        return count;
-    }
 
-    public long pending() {
-        return 0;
-    }
 
-    public void setDestination(HasUriReceiver receiver) {
-    	    this.receiver = receiver;
-    }
 
-    public void add(String canonical, CandidateURI item) {
-    	    add(canonical, item, true, false);
-    }
-
-    public void addNow(String canonical, CandidateURI item) {
-    	    add(canonical, item);
-    }
-
-    public void addForce(String canonical, CandidateURI item) {
-    	    add(canonical, item, true, true);
-    }
-
-    public void note(String canonical) {
-        add(canonical, null, false, false);
-    }
-    
-    /**
-     * Add implementation.
-     * @param item Item to add to already seen and to pass through to the
-     * receiver.
-     * @param canonical Canonical representation of <code>item</code>.
-     * @param passItOn True if we're to pass on the item IF it has not
-     * been seen already.
-     * @param force Override of <code>passItOn</code> forcing passing on
-     * of <code>item</code> even if already seen.
-     */
-    protected void add(String canonical, CandidateURI item, boolean passItOn,
-            boolean force) {        DatabaseEntry key = new DatabaseEntry();
-        LongBinding.longToEntry(createKey(canonical), key);
+    protected boolean setAdd(CharSequence uri) {
+        DatabaseEntry key = new DatabaseEntry();
+        LongBinding.longToEntry(createKey(uri), key);
         long started = 0;
         
         OperationStatus status = null;
@@ -278,9 +242,9 @@ public class BdbUriUniqFilter implements UriUniqFilter, Serializable {
             if (logger.isLoggable(Level.INFO)) {
                 started = System.currentTimeMillis();
             }
-            status = this.alreadySeen.putNoOverwrite(null, key, this.value);
+            status = alreadySeen.putNoOverwrite(null, key, value);
             if (logger.isLoggable(Level.INFO)) {
-                this.aggregatedLookupTime +=
+                aggregatedLookupTime +=
                     (System.currentTimeMillis() - started);
             }
         } catch (DatabaseException e) {
@@ -292,27 +256,36 @@ public class BdbUriUniqFilter implements UriUniqFilter, Serializable {
                 final int logAt = 10000;
                 if (count > 0 && ((count % logAt) == 0)) {
                     logger.info("Average lookup " +
-                        (this.aggregatedLookupTime / logAt) + "ms.");
-                    this.aggregatedLookupTime = 0;
+                        (aggregatedLookupTime / logAt) + "ms.");
+                    aggregatedLookupTime = 0;
                 }
             }
         }
-        if ((status != OperationStatus.KEYEXIST && passItOn) || force) {
-            this.receiver.receive(item);
+        if(status == OperationStatus.KEYEXIST) {
+            return false; // not added
+        } else {
+            return true;
         }
     }
 
-    public void forget(String canonical, CandidateURI item) {
+    protected long setCount() {
+        return count;
+    }
+
+    protected boolean setRemove(CharSequence uri) {
         DatabaseEntry key = new DatabaseEntry();
-        LongBinding.longToEntry(createKey(canonical), key);
-    	    OperationStatus status = null;
+        LongBinding.longToEntry(createKey(uri), key);
+            OperationStatus status = null;
         try {
-			status = this.alreadySeen.delete(null, key);
-		} catch (DatabaseException e) {
-			logger.severe(e.getMessage());
-		}
+            status = alreadySeen.delete(null, key);
+        } catch (DatabaseException e) {
+            logger.severe(e.getMessage());
+        }
         if (status == OperationStatus.SUCCESS) {
             count--;
+            return true; // removed
+        } else {
+            return false; // not present
         }
     }
 
