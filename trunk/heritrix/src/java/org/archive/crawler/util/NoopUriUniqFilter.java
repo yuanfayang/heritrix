@@ -26,31 +26,30 @@ package org.archive.crawler.util;
 import java.util.HashSet;
 
 /**
- * A purely in-memory UriUniqFilter based on a HashSet, which remembers
- * every full URI string it sees. 
+ * A UriUniqFilter that doesn't actually provide any uniqueness
+ * filter on presented items: all are passed through. 
  * 
  * @author gojomo
  *
  */
-public class MemUriUniqFilter
+public class NoopUriUniqFilter
 extends SetBasedUriUniqFilter {
-    HashSet hashSet; 
     
     protected synchronized boolean setAdd(CharSequence uri) {
-        return hashSet.add(uri);
+        return true; // always consider as new
     }
     protected synchronized boolean setRemove(CharSequence uri) {
-        return hashSet.remove(uri);
+        return true; // always consider as succeeded
     }
     protected synchronized long setCount() {
-        return (long)hashSet.size();
+        return -1; // return nonsense value
     }
     
     /* (non-Javadoc)
      * @see org.archive.crawler.util.UriUniqFilterImpl#createUriSet()
      */
     protected void createUriSet() {
-        hashSet = new HashSet();
+        // do nothing
     }
 
 }

@@ -26,8 +26,6 @@ package org.archive.crawler.util;
 import java.io.Serializable;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.LongFPSet;
 
@@ -42,8 +40,8 @@ import st.ata.util.FPGenerator;
  *
  * @author gojomo
  */
-public class FPUriUniqFilter
-implements UriUniqFilter, Serializable {
+public class FPUriUniqFilter extends SetBasedUriUniqFilter 
+implements Serializable {
     // Be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(FPUriUniqFilter.class, 1);
@@ -53,7 +51,6 @@ implements UriUniqFilter, Serializable {
     
     private LongFPSet fpset;
     private transient FPGenerator fpgen = FPGenerator.std64;
-    private HasUriReceiver receiver;
     
     /**
      * Create FPUriUniqFilter wrapping given long set
@@ -63,61 +60,20 @@ implements UriUniqFilter, Serializable {
     public FPUriUniqFilter(LongFPSet fpset) {
         this.fpset = fpset;
     }
-
-    public void setDestination(HasUriReceiver r) {
-        this.receiver = r;
-    }
-
-    public void add(String canonical, CandidateURI obj) {
-        if(fpAdd(getFp(canonical))) {
-            this.receiver.receive(obj);
-        }
-    }
-
-    private synchronized boolean fpAdd(long fp) {
-        return fpset.add(fp);
-    }
     
-    private long getFp(String canonical) {
+    private long getFp(CharSequence canonical) {
         return fpgen.fp(canonical);
     }
 
-    public void addNow(String canonical, CandidateURI obj) {
-        add(canonical, obj);
+    protected boolean setAdd(CharSequence uri) {
+        return fpset.add(getFp(uri));
     }
 
-    public void addForce(String canonical, CandidateURI obj) {
-        fpAdd(getFp(canonical));
-        this.receiver.receive(obj);
-    }
-
-    public void note(String canonical) {
-        fpAdd(getFp(canonical));        
-    }
-    
-    public synchronized void forget(String canonical,
-            CandidateURI curi) {
-        fpset.remove(getFp(canonical));        
-    }
-
-    public long flush() {
-        // noop for now
-        return 0;
-    }
-    
-    /**
-     * @see org.archive.crawler.datamodel.UriUniqFilter#count()
-     */
-    public synchronized long count() {
+    protected long setCount() {
         return fpset.count();
     }
 
-    public long pending() {
-        // No items pile up in this implementation
-        return 0;
+    protected boolean setRemove(CharSequence uri) {
+        return fpset.remove(getFp(uri));
     }
-
-	public void close() {
-		// Nothing to do.
-	}
 }

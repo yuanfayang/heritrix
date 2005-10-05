@@ -37,7 +37,6 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.util.fingerprint.MemLongFPSet;
 
 
 /**
