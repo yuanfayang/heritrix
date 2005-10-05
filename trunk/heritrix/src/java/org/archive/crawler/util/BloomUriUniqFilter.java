@@ -28,8 +28,8 @@ import java.io.Serializable;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.util.BloomFilter;
+import org.archive.util.BloomFilter32bitSplit;
 import org.archive.util.BloomFilter32bp2Split;
 
 
@@ -43,14 +43,12 @@ import org.archive.util.BloomFilter32bp2Split;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class BloomUriUniqFilter implements UriUniqFilter, Serializable {
+public class BloomUriUniqFilter extends SetBasedUriUniqFilter implements Serializable {
     private static Logger LOGGER =
         Logger.getLogger(BloomUriUniqFilter.class.getName());
 
     BloomFilter bloom; // package access for testing convenience
     protected int expected_n; // remember bloom contruction param
-
-    protected HasUriReceiver receiver;
 
     protected static final String EXPECTED_SIZE_KEY = ".expected-size";
     protected static final String HASH_COUNT_KEY = ".hash-count";
@@ -97,60 +95,7 @@ public class BloomUriUniqFilter implements UriUniqFilter, Serializable {
      */
     protected void initialize(final int n, final int d) {
         this.expected_n = n;
-        bloom = new BloomFilter32bp2Split(n,d);
-    }
-
-    public long count() {
-        return bloom.size();
-    }
-
-    public long pending() {
-        return 0;
-    }
-
-    public void setDestination(HasUriReceiver receiver) {
-        this.receiver = receiver;
-    }
-
-    public void add(String canonical, CandidateURI item) {
-            add(canonical, item, true, false);
-    }
-
-    public void addNow(String canonical, CandidateURI item) {
-            add(canonical, item);
-    }
-
-    public void addForce(String canonical, CandidateURI item) {
-            add(canonical, item, true, true);
-    }
-
-    public void note(String canonical) {
-        add(canonical, null, false, false);
-    }
-
-    /**
-     * Add implementation.
-     * @param item Item to add to already seen and to pass through to the
-     * receiver.
-     * @param canonical Canonical representation of <code>item</code>.
-     * @param passItOn True if we're to pass on the item IF it has not
-     * been seen already.
-     * @param force Override of <code>passItOn</code> forcing passing on
-     * of <code>item</code> even if already seen.
-     */
-    protected synchronized void add(String canonical, CandidateURI item, boolean passItOn,
-            boolean force) {
-        boolean wasNew = bloom.add(canonical);
-        // check if bloom is operating past expected range (and thus
-        // giving more false indications a string was already contained
-        // than was intended); if so, offer a warning on every 10000th
-        // increment
-        if( (bloom.size() > expected_n) && (bloom.size() % 10000 == 0)) {
-            LOGGER.warning(bloom.size()+" beyond expected limit "+expected_n);
-        }
-        if ((wasNew && passItOn) || force) {
-            this.receiver.receive(item);
-        }
+        bloom = new BloomFilter32bitSplit(n,d);
     }
 
     public void forget(String canonical, CandidateURI item) {
@@ -158,14 +103,24 @@ public class BloomUriUniqFilter implements UriUniqFilter, Serializable {
         LOGGER.severe("forget(\""+canonical+"\",CandidateURI) not supported");
     }
 
-    public long flush() {
-        return 0;
+    
+    protected boolean setAdd(CharSequence uri) {
+        boolean added = bloom.add(uri);
+        // check if bloom is operating past expected range (and thus
+        // giving more false indications a string was already contained
+        // than was intended); if so, offer a warning on every 10000th
+        // increment
+        if( added && (count() > expected_n) && (count() % 10000 == 0)) {
+            LOGGER.warning(count()+" beyond expected limit "+expected_n);
+        }
+        return added;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#close()
-     */
-    public void close() {
-        // do nothing
+    protected long setCount() {
+        return bloom.size();
+    }
+
+    protected boolean setRemove(CharSequence uri) {
+        throw new UnsupportedOperationException();
     }
 }

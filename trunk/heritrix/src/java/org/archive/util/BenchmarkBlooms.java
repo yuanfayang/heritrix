@@ -59,12 +59,16 @@ public class BenchmarkBlooms {
 	    
 	    BloomFilter bloom64;
 	    BloomFilter bloom32;
+        BloomFilter bloom32split;
 	    BloomFilter bloom32p2;
         BloomFilter bloom32p2split;
 		for (int r=0;r<reps;r++) {
 			bloom32 = new BloomFilter32bit(n_expected,d_hashes);
 			testBloom(bloom32,adds,prefix);
 			bloom32=null;
+            bloom32split = new BloomFilter32bitSplit(n_expected,d_hashes);
+            testBloom(bloom32split,adds,prefix);
+            bloom32split=null;
 			bloom64 = new BloomFilter64bit(n_expected,d_hashes);
 			testBloom(bloom64,adds,prefix);
 			bloom64=null;
