@@ -182,11 +182,11 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     throws FileNotFoundException, IOException {
         UriUniqFilter uuf = null;
         try {
-            logger.info("Started deserializing " + cls.getName() +
+            logger.fine("Started deserializing " + cls.getName() +
                 " of checkpoint recover.");
             uuf = (UriUniqFilter)CheckpointContext.
                 readObjectFromFile(cls, dir);
-            logger.info("Finished deserializing bdbje as part " +
+            logger.fine("Finished deserializing bdbje as part " +
                 "of checkpoint recover.");
         } catch (ClassNotFoundException e) {
             throw new IOException("Failed to deserialize "  +
@@ -280,8 +280,6 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     
     protected void resurrectQueueState()
     throws DatabaseException {
-        incrementQueuedUriCount(this.pendingUris.getCount());
-        
         // TODO: Resurrect allqueues. Is it done above when we reopen bigmap?
         if (logger.isLoggable(Level.FINER)) {
             logger.finer("Pending URIs count: " + queuedUriCount());
@@ -430,7 +428,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     
     protected void persistQueueState() throws Exception {
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Pending URIs count: " + this.pendingUris.getCount());
+            logger.finer("Pending URIs count: " + this.queuedUriCount);
             for (Iterator i = this.allQueues.keySet().iterator();
                     i.hasNext();) {
                 logger.finer("allqueues " +
@@ -499,11 +497,11 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     public void crawlCheckpoint(File checkpointDir) throws Exception {
         super.crawlCheckpoint(checkpointDir);
         persistQueueState();
-        logger.info("Started serializing already seen as part "
+        logger.fine("Started serializing already seen as part "
             + "of checkpoint. Can take some time.");
         CheckpointContext
             .writeObjectToFile(this.alreadyIncluded, checkpointDir);
-        logger.info("Finished serializing already seen as part "
+        logger.fine("Finished serializing already seen as part "
             + "of checkpoint.");
         // Serialize ourselves.
         CheckpointContext.writeObjectToFile(this, checkpointDir);
