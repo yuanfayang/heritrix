@@ -49,6 +49,9 @@ public class RegexpLineIterator extends TransformingIteratorWrapper {
     public static final String COMMENT_LINE = "\\s*(#.*)?";
     public static final String NONWHITESPACE_ENTRY_TRAILING_COMMENT = 
         "^\\s*(\\S+)\\s*(#.*)?$";
+    public static final String TRIMMED_ENTRY_TRAILING_COMMENT = 
+        "^\\s*([^#]+?)\\s*(#.*)?$";
+
     public static final String ENTRY = "$1";
 
     protected Matcher ignoreLine = null;
