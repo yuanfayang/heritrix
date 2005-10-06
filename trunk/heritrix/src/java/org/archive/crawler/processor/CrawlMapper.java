@@ -43,11 +43,17 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.util.NoopUriUniqFilter;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.fingerprint.ArrayLongFPCache;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
+
+import st.ata.util.FPGenerator;
 
 /**
  * A simple crawl splitter/mapper, dividing up CandidateURIs/CrawlURIs
@@ -148,6 +154,8 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
     /** name of the enclosing crawler (URIs mapped here stay put) */
     protected String localName;
     
+    protected ArrayLongFPCache cache = new ArrayLongFPCache();
+    
     /**
      * Constructor.
      * @param name Name of this processor.
@@ -201,6 +209,7 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
             if(!localName.equals(target)) {
                 // CrawlURI is mapped to somewhere other than here
                 curi.setFetchStatus(S_BLOCKED_BY_CUSTOM_PROCESSOR);
+                curi.addAnnotation("to:"+target);
                 curi.skipToProcessorChain(getController().
                         getPostprocessorChain());
                 divertLog(curi,target);
@@ -286,13 +295,26 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
      * @param target String node name (log name) to receive URI
      */
     protected synchronized void divertLog(CandidateURI cauri, String target) {
-        System.currentTimeMillis();
-        System.currentTimeMillis();
+        if(recentlySeen(cauri)) {
+            return;
+        }
         PrintWriter diversionLog = getDiversionLog(target);
         cauri.singleLineReportTo(diversionLog);
         diversionLog.println();
     }
     
+    /**
+     * Consult the cache to determine if the given URI
+     * has been recently seen -- entering it if not. 
+     * 
+     * @param cauri CandidateURI to test
+     * @return true if URI was already in the cache; false otherwise 
+     */
+    private boolean recentlySeen(CandidateURI cauri) {
+        long fp = FPGenerator.std64.fp(cauri.getURIString());
+        return ! cache.add(fp);
+    }
+
     /**
      * Get the diversion log for a given target crawler node node. 
      * 
