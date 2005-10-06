@@ -30,6 +30,9 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
     /** Total number of stored items */
     private long count = 0;
 
+    /** Total number of items ever enqueued */
+    private long enqueueCount = 0;
+    
     /** Whether queue is already in lifecycle stage */
     private boolean isHeld = false;
 
@@ -106,6 +109,7 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
             throw new RuntimeException(e);
         }
         count++;
+        enqueueCount++;
     }
 
     /**
@@ -463,6 +467,9 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
         writer.print(" ");
         // count of items
         writer.print(Long.toString(count));
+        writer.print(" ");
+        // enqueue count
+        writer.print(Long.toString(enqueueCount));
         writer.print(" ");
         writer.print(sessionBalance);
         writer.print(" ");
