@@ -64,15 +64,16 @@ import com.sleepycat.je.OperationStatus;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class BdbUriUniqFilter extends SetBasedUriUniqFilter implements Serializable {
+public class BdbUriUniqFilter
+extends SetBasedUriUniqFilter implements Serializable {
     private static Logger logger =
         Logger.getLogger(BdbUriUniqFilter.class.getName());
 
     protected boolean createdEnvironment = false;
     protected long lastCacheMiss = 0;
     protected long lastCacheMissDiff = 0;
-    protected Database alreadySeen = null;
-    protected DatabaseEntry value = null;
+    protected transient Database alreadySeen = null;
+    protected transient DatabaseEntry value = null;
     private static final String DB_NAME = "alreadySeenUrl";
     protected long count = 0;
     private long aggregatedLookupTime = 0;

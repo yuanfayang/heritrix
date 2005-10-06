@@ -37,65 +37,38 @@ import org.archive.crawler.datamodel.UriUniqFilter;
  * @author gojomo
  */
 public abstract class SetBasedUriUniqFilter implements UriUniqFilter {
-    HasUriReceiver receiver;
-    PrintWriter profileLog;
+    protected HasUriReceiver receiver;
+    protected PrintWriter profileLog;
     
-    /**
-     * 
-     */
     public SetBasedUriUniqFilter() {
         super();
     }
     
-    /**
-     * @param key
-     */
     protected abstract boolean setAdd(CharSequence key);
 
-    /**
-     * @param key
-     */
     protected abstract boolean setRemove(CharSequence key);
-    
-    /**
-     * @return
-     */
+
     protected abstract long setCount();
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#count()
-     */
     public long count() {
         return setCount();
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#pending()
-     */
     public long pending() {
         // no items pile up in this implementation
         return 0;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#setDestination(org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver)
-     */
     public void setDestination(HasUriReceiver receiver) {
         this.receiver = receiver;
     }
 
-    /**
-     * @param key
-     */
     protected void profileLog(String key) {
-        if(profileLog!=null) {
+        if (profileLog != null) {
             profileLog.println(key);
         }
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#add(java.lang.String, org.archive.crawler.datamodel.CandidateURI)
-     */
     public void add(String key, CandidateURI value) {
         profileLog(key);
         if(setAdd(key)) {
@@ -103,57 +76,34 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#addNow(java.lang.String, org.archive.crawler.datamodel.CandidateURI)
-     */
     public void addNow(String key, CandidateURI value) {
         add(key, value);
     }
     
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#addForce(java.lang.String, org.archive.crawler.datamodel.CandidateURI)
-     */
     public void addForce(String key, CandidateURI value) {
         profileLog(key);
         setAdd(key);
         this.receiver.receive(value);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#note(java.lang.String)
-     */
     public void note(String key) {
         profileLog(key);
         setAdd(key);
     }
 
-
-    
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#forget(java.lang.String, org.archive.crawler.datamodel.CandidateURI)
-     */
     public void forget(String key, CandidateURI value) {
         setRemove(key);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#flush()
-     */
     public long flush() {
         // unnecessary; all actions with set-based uniqfilter are immediate
         return 0;
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#close()
-     */
     public void close() {
         // Nothing to do.
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.datamodel.UriUniqFilter#setProfileLog(java.io.File)
-     */
     public void setProfileLog(File logfile) {
         try {
             profileLog = new PrintWriter(logfile);
