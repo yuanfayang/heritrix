@@ -930,10 +930,11 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     
     public static String STANDARD_REPORT = "standard";
     public static String ALL_NONEMPTY = "nonempty";
-    protected static String[] REPORTS = {STANDARD_REPORT,ALL_NONEMPTY};
+    public static String ALL_QUEUES = "all";
+    protected static String[] REPORTS = {STANDARD_REPORT,ALL_NONEMPTY,ALL_QUEUES};
     
     public String[] getReports() {
-        return new String[] {};
+        return REPORTS;
     }
     
     /**
@@ -982,6 +983,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             allNonemptyReportTo(writer);
             return;
         }
+        if(ALL_QUEUES.equals(name)) {
+            allQueuesReportTo(writer);
+            return;
+        }
         if(name!=null && !STANDARD_REPORT.equals(name)) {
             writer.print(name);
             writer.print(" unavailable; standard report:\n");
@@ -1014,9 +1019,17 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         
         writer.print("\n -----===== RETIRED QUEUES =====-----\n");
         queueSingleLinesTo(writer, this.retiredQueues.iterator());
-        
     }
 
+    /** Compact report of all nonempty queues (one queue per line)
+     * 
+     * @param writer
+     * @throws IOException
+     */
+    private void allQueuesReportTo(PrintWriter writer) throws IOException {
+        queueSingleLinesTo(writer, allQueues.keySet().iterator());
+    }
+    
     /**
      * Writer the single-line reports of all queues in the
      * iterator to the writer 

@@ -810,12 +810,12 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     /**
      * @return A report of the frontier's status.
      */
-    public String getFrontierReport() {
+    public String getFrontierReport(String reportName) {
         if (this.controller == null || this.controller.getFrontier() == null) {
             return "Crawler not running";
         }
         return ArchiveUtils.writeReportToString(this.controller.getFrontier(),
-                "compact");
+                reportName);
     }
 
     /**
@@ -1724,7 +1724,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         if (operationName.equals(FRONTIER_REPORT_OPER)) {
             JmxUtils.checkParamsCount(FRONTIER_REPORT_OPER, params, 0);
             mustBeCrawling();
-            return getFrontierReport();
+            return getFrontierReport("standard");
         }
         
         if (operationName.equals(THREADS_REPORT_OPER)) {
