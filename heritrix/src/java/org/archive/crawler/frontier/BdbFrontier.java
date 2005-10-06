@@ -312,14 +312,14 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
                         inactiveQueues.put(obj);
                     }
                 };
-                resurrectOneQueueState(INACTIVE_QUEUES_DBNAME, p, true);
+                resurrectOneQueueState(INACTIVE_QUEUES_DBNAME, p, false);
                 
                 p = new Putter() {
                     public void put(Object obj) throws InterruptedException {
                         retiredQueues.put(obj);
                     }
                 };
-                resurrectOneQueueState(RETIRED_QUEUES_DBNAME, p, true);
+                resurrectOneQueueState(RETIRED_QUEUES_DBNAME, p, false);
                 
                 p = new Putter() {
                     public void put(Object obj) {
@@ -410,7 +410,8 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
                     status = db.put(null, new DatabaseEntry(key.getBytes()),
                         EMPTY_DB_ENTRY);
                     if (logger.isLoggable(Level.FINE)) {
-                        logger.fine(key + " " + status);
+                        logger.fine(key + ", " +
+                            key.getClass().getName() + ", " + status);
                     }
                 }
             }

@@ -398,8 +398,9 @@ public class CrawlController implements Serializable, Reporter {
     throws IOException {
         long started = System.currentTimeMillis();;
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine("Starting checkpoint recover named "
-                    + this.checkpointRecover.getDisplayName());
+            LOGGER.fine("Starting recovery setup -- copying into place " +
+                "bdbje log files -- for checkpoint named " +
+                this.checkpointRecover.getDisplayName());
         }
         // Mark context we're in a recovery.
         this.cpContext.recoveryAmendments(this.checkpointsDisk);
@@ -414,9 +415,9 @@ public class CrawlController implements Serializable, Reporter {
         FileUtils.copyFiles(bdbSubDir, CheckpointContext.getJeLogsFilter(),
             getStateDisk(), true);
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.info("Finished checkpoint recover named "
-                    + this.checkpointRecover.getDisplayName() + " in "
-                    + (System.currentTimeMillis() - started) + "ms.");
+            LOGGER.info("Finished recovery setup for checkpoint named " +
+                this.checkpointRecover.getDisplayName() + " in " +
+                (System.currentTimeMillis() - started) + "ms.");
         }
     }
     
