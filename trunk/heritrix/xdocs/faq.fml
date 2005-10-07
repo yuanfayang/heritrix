@@ -348,25 +348,31 @@
         your CLASSPATH (ensuring the heritrix.jar is found first).
         Thereafter, using HEAD (post-1.2.0), doing the following should
         get you a long ways: <source>Heritrix h = new Heritrix();
-h.launch();</source>.  You'll then need to have your program
+h.launch();</source>
+        You'll then need to have your program
         hangaround while the crawl runs.  See
-        <a href="http://groups.yahoo.com/group/archive-crawler/message/1276">message1276</a>  for an example.
+        <a href="http://groups.yahoo.com/group/archive-crawler/message/1276">message1276</a>  for an example. See also the answer to the next question.
         </p>
         </answer>
       </faq>
       <faq id="cmdlinecontrol">
         <question>Can I stop/pause and get status from a running Heritrix
-        using command-line tools?
+        using command-line tools? Can I remote control Heritrix?
         </question>
         <answer>
-        <p>An experimental cmdline control utility has been added to HEAD
-(Post 1.2.0 release).  The script can be found in the scripts directory.  Its
+        <p>A JMX interface has been added to the crawler.  The intent is that
+        all features of the UI are exposed in JMX so Heritrix can be
+        remotely controlled.</p>
+        <p>A cmdline control utility that makes use of the JMX API has been
+        added.  The script can
+        be found in the scripts directory.  Its
 packaged as a jar file named <code>cmdline-jmxclient.X.X.X.jar</code>.  
 It has no dependencies on other jars being found in its classpath so it 
 can be safely moved from this location.  Its only dependency is jdk1.5.0.
 To learn more, obtain client usage by typing the following:
 <code>${PATH_TO_JDK1.5.0}/bin/java -jar cmdline-jmxclient.X.X.X.jar</code>. 
-See also <a href="http://crawler.archive.org/cmdline-jmxclient/">cmdline-jmxclient</a>
+See also <a 
+href="http://crawler.archive.org/cmdline-jmxclient/">cmdline-jmxclient</a>
 to learn more.</p>  
         </answer>
       </faq>
@@ -377,6 +383,9 @@ to learn more.</p>
         </question>
         <answer>
         <p>See this, <a href="http://groups.yahoo.com/group/archive-crawler/message/1182">1182</a>, Tom Emerson note for a suggestion.</p>  
+        <p>Its also possible post-1.4.0 to run multiple Heritrix instances
+        in a single JVM.  Browse to <code>/local-instances.jsp</code>.
+        </p>
         </answer>
       </faq>
 
@@ -434,6 +443,22 @@ list below, send a description of a couple of lines to the mailing list).
 </p>
 </answer>
 </faq>
+      <faq id="nutchwax">
+        <question>I've downloaded all these ARC files, now what?
+        </question>
+        <answer>
+        <p>See the <ulink 
+        url="http://crawler.archive.org/articles/developer_manual.html#arcs">Developer's Manual</ulink> for more on ARCs and tools for reading and writing
+        them.  There are also tools for searching ARC collections
+        available over in the <ulink 
+        url="http://archive-access.sourceforge.net/">archive-access</ulink>
+        project.  Checkout the nutch-based <ulink 
+        url="http://archive-access.sourceforge.net/projects/nutch/">NutchWAX</ulink>
+        and its companion viewer application, <ulink 
+        url="http://archive-access.sourceforge.net/projects/nutch/">WERA</ulink>.
+        </p>
+        </answer>
+      </faq>
 
   </part>
 

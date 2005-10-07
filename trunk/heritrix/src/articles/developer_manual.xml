@@ -2404,6 +2404,12 @@ public class SimpleExtractor extends Processor
       url="http://www.csc.fi/sovellus/nedlib/index.phtml.en">nedlib</ulink>
       files as arcs.</para>
     </sect2>
+
+    <sect2 id="searching_arcs">
+        <title>Searching ARCS</title>
+        <para>Check out the <ulink url="http://archive-access.sourceforge.net/projects/nutch/">NutchWAX</ulink>+<ulink
+        url="http://archive-access.sourceforge.net/projects/wera/">WERA</ulink> bundle.</para>
+    </sect2>
   </sect1>
 
   <appendix>
