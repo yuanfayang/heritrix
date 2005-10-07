@@ -808,9 +808,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
     
     /**
+     * @param reportName Name of report to write.
      * @return A report of the frontier's status.
      */
-    public String getFrontierReport(String reportName) {
+    public String getFrontierReport(final String reportName) {
         if (this.controller == null || this.controller.getFrontier() == null) {
             return "Crawler not running";
         }
@@ -820,6 +821,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     
     /**
      * Write the requested frontier report to the given PrintWriter
+     * @param reportName Name of report to write.
+     * @param writer Where to write to.
      */
     public void writeFrontierReport(String reportName, PrintWriter writer) {
         if (this.controller == null || this.controller.getFrontier() == null) {
@@ -853,13 +856,15 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     
     /**
      * Write the requested threads report to the given PrintWriter
+     * @param reportName Name of report to write.
+     * @param writer Where to write to.
      */
     public void writeThreadsReport(String reportName, PrintWriter writer) {
         if (this.controller == null || this.controller.getFrontier() == null) {
             writer.println("Crawler not running.");
             return;
         }
-        this.controller.getToePool().reportTo(reportName,writer);
+        this.controller.getToePool().reportTo(reportName, writer);
     }
     
     /**
@@ -1314,8 +1319,11 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             "Resume crawling (noop if already resumed)", null,
             SimpleType.VOID, MBeanOperationInfo.ACTION));
         
+        args = new OpenMBeanParameterInfoSupport[1];
+        args[0] = new OpenMBeanParameterInfoSupport("name",
+            "Name of report ('all', 'standard', etc.).", SimpleType.STRING);
         operations.add(new OpenMBeanOperationInfoSupport(FRONTIER_REPORT_OPER,
-             "Full frontier report", null, SimpleType.STRING,
+             "Full frontier report", args, SimpleType.STRING,
              MBeanOperationInfo.INFO));
         
         operations.add(new OpenMBeanOperationInfoSupport(THREADS_REPORT_OPER,
@@ -1744,9 +1752,9 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         }
         
         if (operationName.equals(FRONTIER_REPORT_OPER)) {
-            JmxUtils.checkParamsCount(FRONTIER_REPORT_OPER, params, 0);
+            JmxUtils.checkParamsCount(FRONTIER_REPORT_OPER, params, 1);
             mustBeCrawling();
-            return getFrontierReport("standard");
+            return getFrontierReport((String)params[0]);
         }
         
         if (operationName.equals(THREADS_REPORT_OPER)) {
