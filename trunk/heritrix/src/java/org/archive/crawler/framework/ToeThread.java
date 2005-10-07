@@ -572,11 +572,18 @@ Reporter, ProgressStatisticsReporter {
         w.print(step);
         w.print(" for ");
         w.print(ArchiveUtils.formatMillisecondsToConventional(now-atStepSince));
-        w.print("ms\n");
+        w.print("\n");
 
         w.flush();
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineLegend()
+     */
+    public String singleLineLegend() {
+        return "#serialNumber processorName currentUri (fetchAttempts) threadState threadStep";
+    }
+    
     /* (non-Javadoc)
      * @see org.archive.util.Reporter#getReports()
      */
@@ -606,5 +613,9 @@ Reporter, ProgressStatisticsReporter {
         writer.print(getController().getStatistics()
             .progressStatisticsLegend());
         writer.print("\n");
+    }
+    
+    public String getCurrentProcessorName() {
+        return currentProcessorName;
     }
 }

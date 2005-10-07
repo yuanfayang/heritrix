@@ -1791,6 +1791,7 @@ public class CrawlController implements Serializable, Reporter {
         return ArchiveUtils.singleLineReport(this);
     }
 
+    
     /* (non-Javadoc)
      * @see org.archive.util.Reporter#reportTo(java.lang.String, java.io.Writer)
      */
@@ -1840,6 +1841,17 @@ public class CrawlController implements Serializable, Reporter {
     }
 
     public void singleLineReportTo(PrintWriter writer) {
+        // TODO: imrpvoe to be summary of crawl state
         writer.write("[Crawl Controller]\n");
     }
+
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineLegend()
+     */
+    public String singleLineLegend() {
+        // TODO improve
+        return "nothingYet";
+    }
+    
+    
 }
