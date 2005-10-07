@@ -981,9 +981,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     /**
      * This method compiles a human readable report on the status of the frontier
      * at the time of the call.
-     *
-     * @return A report on the current status of the frontier.
-     * @throws IOException
+     * @param name Name of report.
+     * @param writer Where to write to.
      */
     public synchronized void reportTo(String name, PrintWriter writer) {
         if(ALL_NONEMPTY.equals(name)) {
