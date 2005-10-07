@@ -3,6 +3,7 @@
 <%
     String title = "Threads report";
     int tab = 4;
+    String reportName = request.getParameter("name");
     
     String action = request.getParameter("action");
     String message = null;
@@ -37,8 +38,15 @@
             }
         }
     </script>
-    <pre><%=handler.getCurrentJob() != null?
-    handler.getCurrentJob().getThreadsReport(): ""%></pre>
+    <pre><%
+    if (handler.getCurrentJob() != null) {
+    	java.io.PrintWriter writer = new java.io.PrintWriter(out);
+    	handler.getCurrentJob().writeThreadsReport(reportName,writer);
+    	writer.flush();
+    } else {
+%> No current job <%
+    }
+    %></pre>
     <hr>
     <form name="frmThread" method="post" action="threads.jsp">
         <input type="hidden" name="action">

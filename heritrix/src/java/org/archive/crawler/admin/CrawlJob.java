@@ -817,6 +817,17 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         return ArchiveUtils.writeReportToString(this.controller.getFrontier(),
                 reportName);
     }
+    
+    /**
+     * Write the requested frontier report to the given PrintWriter
+     */
+    public void writeFrontierReport(String reportName, PrintWriter writer) {
+        if (this.controller == null || this.controller.getFrontier() == null) {
+            writer.println("Crawler not running.");
+            return;
+        }
+        this.controller.getFrontier().reportTo(reportName,writer);
+    }
 
     /**
      * @return One-line threads report.
@@ -839,7 +850,18 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         return ArchiveUtils.writeReportToString(this.controller.getToePool(),
                 null);
     }
-
+    
+    /**
+     * Write the requested threads report to the given PrintWriter
+     */
+    public void writeThreadsReport(String reportName, PrintWriter writer) {
+        if (this.controller == null || this.controller.getFrontier() == null) {
+            writer.println("Crawler not running.");
+            return;
+        }
+        this.controller.getToePool().reportTo(reportName,writer);
+    }
+    
     /**
      * Kills a thread. For details see
      * {@link org.archive.crawler.framework.ToePool#killThread(int, boolean)

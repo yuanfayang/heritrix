@@ -43,7 +43,8 @@
     <li>Seed report (unavailable)</li>
     <% } %>
 	<% if(handler.getCurrentJob() != null) { %>
-    <li><a href="<%=request.getContextPath()%>/reports/frontier.jsp">Frontier report</a> <%=handler.getCurrentJob() != null?
+    <li><a href="<%=request.getContextPath()%>/reports/frontier.jsp">Frontier report</a><br>
+     <%=handler.getCurrentJob() != null?
         handler.getCurrentJob().getFrontierOneLine(): ""%></li>
     <% } else { %>
     <li>Frontier report (unavailable)</li>
@@ -54,7 +55,8 @@
     <li>Processors report (unavailable)</li>
     <% } %>
     <% if(handler.isCrawling()) { %>
-    <li><a href="<%=request.getContextPath()%>/reports/threads.jsp">ToeThread report</a> <%=(handler.getCurrentJob() != null)?
+    <li><a href="<%=request.getContextPath()%>/reports/threads.jsp">ToeThread report</a><br>
+     <%=(handler.getCurrentJob() != null)?
         handler.getCurrentJob().getThreadOneLine():"" %></li>
     <% } else { %>
     <li>ToeThread report (unavailable)</li>
