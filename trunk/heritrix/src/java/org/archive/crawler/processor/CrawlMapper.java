@@ -154,7 +154,7 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
     /** name of the enclosing crawler (URIs mapped here stay put) */
     protected String localName;
     
-    protected ArrayLongFPCache cache = new ArrayLongFPCache();
+    protected ArrayLongFPCache cache;
     
     /**
      * Constructor.
@@ -350,6 +350,7 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
     protected void initialTasks() {
         super.initialTasks();
         localName = (String) getUncheckedAttribute(null, ATTR_LOCAL_NAME);
+        cache = new ArrayLongFPCache();
         try {
             loadMap();
         } catch (IOException e) {

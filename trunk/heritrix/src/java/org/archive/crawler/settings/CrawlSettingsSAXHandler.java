@@ -510,23 +510,23 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
                     } catch (IllegalStateException ise) {
                         // An attribute in the settings file is not in the
                         // ComplexType's definition, log and skip.
-                        logger.warning("Module '" + moduleName + "' in '"
+                        logger.log(Level.WARNING,"Module '" + moduleName + "' in '"
                                 + locator.getSystemId() + "', line: "
                                 + locator.getLineNumber() + ", column: "
                                 + locator.getColumnNumber()
                                 + " is not defined in '"
-                                + parentModule.getName() + "'.");
+                                + parentModule.getName() + "'.",ise);
                         throw new SAXException(new AttributeNotFoundException(
                                 ise.getMessage()));
                     }
                 }
                 stack.push(module);
             } catch (InvocationTargetException e) {
-                logger.warning("Couldn't instantiate " + moduleName
+                logger.log(Level.WARNING,"Couldn't instantiate " + moduleName
                         + ", from class: " + moduleClass + "' in '"
                         + locator.getSystemId() + "', line: "
                         + locator.getLineNumber() + ", column: "
-                        + locator.getColumnNumber());
+                        + locator.getColumnNumber(), e);
                 throw new SAXException(e);
             } catch (InvalidAttributeValueException e) {
                 throw new SAXException(e);
