@@ -3774,15 +3774,22 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       checkpoint name).
       </para>
       <note>
-      <para>Currently, only the BdbFrontier is checkpointable.
+      <para>Currently, only the BdbFrontier is checkpointable (using either
+      the bdbje-based already-seen or the bloom filter-based already-seen).
       </para>
       </note>
       <para>
       To run a checkpoint, pause the crawl. In the UI, after completion of
       the pause, a <literal>checkpoint</literal> button will appear.  Click
       the button.  Dependent on the size of the crawl, checkpointing can
-      take some time (Most of the time is taken up copying off the bdbje logs).
-      While checkpointing, the status will show as
+      take some time.  The bulk of the time is taken up copying off the bdbje
+      logs.  For example, checkpointing a crawl that had downloaded
+      18million items -- it had discovered > 130million (bloom filter) -- the
+      checkpointing took about 100minutes to complete of which 90 plus minutes
+      were spent copying the ~12k bdbje log files (One disk only involved). 
+      Set log level on
+      org.archive.util.FileUtils to FINE to watch the
+      java file-copy.  While checkpointing, the status will show as
       <literal>checkpointing</literal> (Its possible to perform a checkpoint
       via JMX).  When the checkpoint has completed, resume the crawl.
       </para>
@@ -3800,6 +3807,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       and autofills the recover-path with the right directory-path (The
       renaming of logs and state dirs so they do not clash with the old
       as is described above in <xref linkend="recover" /> is also done).
+      The first thing recover does is copy into place the saved-off bdbje
+      log files.  Again this can take time.
       </para>
       
     </sect2>
