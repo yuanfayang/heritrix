@@ -33,7 +33,6 @@ import java.util.regex.Pattern;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.JeUtils;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.Cursor;
