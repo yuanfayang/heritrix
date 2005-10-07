@@ -636,6 +636,13 @@ implements Serializable, Reporter {
     }
 
     /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineLegend()
+     */
+    public String singleLineLegend() {
+        return "className uri hopsPath viaUri";
+    }
+    
+    /* (non-Javadoc)
      * @see org.archive.util.Reporter#getReports()
      */
     public String[] getReports() {

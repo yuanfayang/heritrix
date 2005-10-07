@@ -632,12 +632,7 @@ public class ArchiveUtils {
     public static String writeReportToString(Reporter rep, String name) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
-        try {
-            rep.reportTo(name,pw);
-        } catch (IOException e) {
-            // not really possible
-            e.printStackTrace();
-        }
+        rep.reportTo(name,pw);
         pw.flush();
         return sw.toString();
     }

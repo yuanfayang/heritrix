@@ -48,7 +48,7 @@ public interface Reporter {
      * 
      * @param writer to receive report
      */
-    public void reportTo(String name, PrintWriter writer) throws IOException;
+    public void reportTo(String name, PrintWriter writer);
     
     /**
      * Make a default report to the passed-in Writer. Should
@@ -71,4 +71,11 @@ public interface Reporter {
      * @return String single-line summary report
      */
     public String singleLineReport();
+    
+    /**
+     * Return a  legend for the single-line summary report as a String.
+     * 
+     * @return String single-line summary legend
+     */
+    public String singleLineLegend();
 }

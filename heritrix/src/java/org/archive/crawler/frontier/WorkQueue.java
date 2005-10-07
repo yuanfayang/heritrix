@@ -3,7 +3,6 @@ package org.archive.crawler.frontier;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.io.Writer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -454,14 +453,14 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
     /* (non-Javadoc)
      * @see org.archive.util.Reporter#reportTo(java.io.Writer)
      */
-    public void reportTo(PrintWriter writer) throws IOException {
+    public void reportTo(PrintWriter writer) {
         reportTo(null,writer);
     }
 
     /* (non-Javadoc)
      * @see org.archive.util.Reporter#singleLineReportTo(java.io.Writer)
      */
-    public void singleLineReportTo(PrintWriter writer) throws IOException {
+    public void singleLineReportTo(PrintWriter writer) {
         // queue name
         writer.print(classKey);
         writer.print(" ");
@@ -506,6 +505,15 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
     }
 
     /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineLegend()
+     */
+    public String singleLineLegend() {
+        return "queue currentSize totalEnqueues sessionBalance lastCost " +
+                "(averageCost) lastDequeueTime wakeTime " +
+                "totalSpend/totalBudget errorCount lastPeekUri lastQueuedUri";
+    }
+    
+    /* (non-Javadoc)
      * @see org.archive.util.Reporter#singleLineReport()
      */
     public String singleLineReport() {
@@ -516,7 +524,7 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
      * @param writer
      * @throws IOException
      */
-    public void reportTo(String name, PrintWriter writer) throws IOException {
+    public void reportTo(String name, PrintWriter writer) {
         // name is ignored: only one kind of report for now
         writer.print("Queue ");
         writer.print(classKey);

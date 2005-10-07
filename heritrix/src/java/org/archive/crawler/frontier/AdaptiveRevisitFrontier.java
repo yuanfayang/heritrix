@@ -1158,9 +1158,16 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     }
 
     /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineLegend()
+     */
+    public String singleLineLegend() {
+        return hostQueues.singleLineLegend();
+    }
+    
+    /* (non-Javadoc)
      * @see org.archive.crawler.framework.Frontier#report()
      */
-    public synchronized void reportTo(String name, PrintWriter writer) throws IOException {
+    public synchronized void reportTo(String name, PrintWriter writer) {
         // ignore name; only one report for now
         hostQueues.reportTo(writer);
     }

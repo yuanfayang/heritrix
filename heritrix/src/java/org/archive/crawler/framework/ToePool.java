@@ -233,6 +233,7 @@ public class ToePool extends ThreadGroup implements Reporter {
                 + " active)\n");
 
         Thread[] toes = this.getToes();
+        boolean legendWritten = false; 
         // TODO: sort by activity: those with curi the longest at front
         synchronized (toes) {
             for (int i = 0; i < toes.length; i++) {
@@ -241,6 +242,10 @@ public class ToePool extends ThreadGroup implements Reporter {
                 }
                 ToeThread tt = (ToeThread) toes[i];
                 if (tt != null) {
+                    if(!legendWritten) {
+                        writer.println(tt.singleLineLegend());
+                        legendWritten = true;
+                    }
                     tt.singleLineReportTo(writer);
                 }
             }
@@ -275,6 +280,13 @@ public class ToePool extends ThreadGroup implements Reporter {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineLegend()
+     */
+    public String singleLineLegend() {
+        return "total: mostCommonStateTotal secondMostCommonStateTotal";
+    }
+    
     public String singleLineReport() {
         return ArchiveUtils.singleLineReport(this);
     }

@@ -358,11 +358,11 @@ public class AdaptiveRevisitQueueList implements Reporter {
     /* (non-Javadoc)
      * @see org.archive.util.Reporter#reportTo(java.io.Writer)
      */
-    public void reportTo(PrintWriter writer) throws IOException {
+    public void reportTo(PrintWriter writer) {
         reportTo(null,writer);
     }
     
-    public void reportTo(String name, PrintWriter writer) throws IOException {
+    public void reportTo(String name, PrintWriter writer) {
         // ignore name for now, only one default report
         Iterator it = sortedHostQueues.iterator();
         while(it.hasNext()){
@@ -374,7 +374,7 @@ public class AdaptiveRevisitQueueList implements Reporter {
         }
     }
     
-    public void singleLineReportTo(PrintWriter writer) throws IOException {
+    public void singleLineReportTo(PrintWriter writer) {
         Iterator it = sortedHostQueues.iterator();
         int total = 0;
         int ready = 0;
@@ -394,6 +394,13 @@ public class AdaptiveRevisitQueueList implements Reporter {
         }
         writer.print(total + " queues: " + ready + " ready, " + snoozed + 
             " snoozed, " + busy + " busy, and " + empty + " empty");
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineLegend()
+     */
+    public String singleLineLegend() {
+        return "total ready snoozed busy empty";
     }
 
 }

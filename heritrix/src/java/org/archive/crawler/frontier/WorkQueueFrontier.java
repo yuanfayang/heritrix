@@ -580,7 +580,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                             //  on readyQ is released, to prevent deadlock
                         } else {
                             // readyQ is empty and ready: it's exhausted
-                            // release held status, allowing and subsequent 
+                            // release held status, allowing any subsequent 
                             // enqueues to again put queue in ready
                             readyQ.clearHeld();
                             break;
@@ -970,6 +970,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         w.print(" exhausted");
         w.flush();
     }
+    
+    /* (non-Javadoc)
+     * @see org.archive.util.Reporter#singleLineLegend()
+     */
+    public String singleLineLegend() {
+        return "total active in-process ready snoozed inactive retired exhausted";
+    }
 
     /**
      * This method compiles a human readable report on the status of the frontier
@@ -978,7 +985,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @return A report on the current status of the frontier.
      * @throws IOException
      */
-    public synchronized void reportTo(String name, PrintWriter writer) throws IOException {
+    public synchronized void reportTo(String name, PrintWriter writer) {
         if(ALL_NONEMPTY.equals(name)) {
             allNonemptyReportTo(writer);
             return;
@@ -999,7 +1006,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param writer
      * @throws IOException
      */
-    private void allNonemptyReportTo(PrintWriter writer) throws IOException {
+    private void allNonemptyReportTo(PrintWriter writer) {
         ArrayList inProcessQueuesCopy;
         synchronized(this.inProcessQueues) {
             // grab a copy that will be stable against mods for report duration 
@@ -1026,7 +1033,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param writer
      * @throws IOException
      */
-    private void allQueuesReportTo(PrintWriter writer) throws IOException {
+    private void allQueuesReportTo(PrintWriter writer) {
         queueSingleLinesTo(writer, allQueues.keySet().iterator());
     }
     
@@ -1038,9 +1045,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param iterator over queues of interest
      * @throws IOException
      */
-    private void queueSingleLinesTo(PrintWriter writer, Iterator iterator) throws IOException {
+    private void queueSingleLinesTo(PrintWriter writer, Iterator iterator) {
         Object obj;
         WorkQueue q;
+        boolean legendWritten = false;
         while( iterator.hasNext()) {
             obj = iterator.next();
             if (obj ==  null) {
@@ -1052,6 +1060,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             if(q == null) {
                 writer.print(" ERROR: "+obj);
             }
+            if(!legendWritten) {
+                writer.println(q.singleLineLegend());
+                legendWritten = true;
+            }
             q.singleLineReportTo(writer);
         }       
     }
@@ -1060,7 +1072,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param w
      * @throws IOException
      */
-    private void standardReportTo(PrintWriter w) throws IOException {
+    private void standardReportTo(PrintWriter w) {
         int allCount = allQueues.size();
         int inProcessCount = inProcessQueues.uniqueSet().size();
         int readyCount = readyClassQueues.getCount();
@@ -1162,7 +1174,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @throws IOException
      */
     protected void appendQueueReports(PrintWriter w, Iterator iterator,
-            int total, int max) throws IOException {
+            int total, int max) {
         Object obj;
         WorkQueue q;
         for(int count = 0; iterator.hasNext() && (count < max); count++) {
