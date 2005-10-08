@@ -49,6 +49,7 @@ public class SingleHttpConnectionManager extends SimpleHttpConnectionManager {
         HostConfiguration hostConfiguration, long timeout) {
 
         HttpConnection conn = new HttpConnection(hostConfiguration);
+        conn.setHttpConnectionManager(this);
         conn.setStaleCheckingEnabled(isConnectionStaleCheckingEnabled());
         return conn;
     }
