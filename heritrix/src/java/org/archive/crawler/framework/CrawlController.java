@@ -24,6 +24,7 @@
 package org.archive.crawler.framework;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -35,10 +36,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,8 +89,11 @@ import com.sleepycat.je.CheckpointConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.DbInternal;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.je.dbi.EnvironmentImpl;
+import com.sleepycat.je.utilint.DbLsn;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -421,6 +428,11 @@ public class CrawlController implements Serializable, Reporter {
         }
     }
     
+    protected boolean getCheckpointCopyBdbjeLogs() {
+        return ((Boolean)this.order.getUncheckedAttribute(null,
+            CrawlOrder.ATTR_CHECKPOINT_COPY_BDBJE_LOGS)).booleanValue();
+    }
+    
     private void setupBdb()
     throws FatalConfigurationException, AttributeNotFoundException {
         EnvironmentConfig envConfig = new EnvironmentConfig();
@@ -433,13 +445,22 @@ public class CrawlController implements Serializable, Reporter {
             envConfig.setCachePercent(bdbCachePercent);
         }
         envConfig.setLockTimeout(5000000); // 5 seconds
-        // Uncomment this section to see the bdbje Evictor logging.
-        /*
-        envConfig.setConfigParam("java.util.logging.level", "SEVERE");
-        envConfig.setConfigParam("java.util.logging.level.evictor", "SEVERE");
-        envConfig.setConfigParam("java.util.logging.ConsoleHandler.on",
-            "true");
-        */
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            envConfig.setConfigParam("java.util.logging.level", "SEVERE");
+            envConfig.setConfigParam("java.util.logging.level.evictor",
+                "SEVERE");
+            envConfig.setConfigParam("java.util.logging.ConsoleHandler.on",
+                "true");
+        }
+
+        if (!getCheckpointCopyBdbjeLogs()) {
+            // If we are not copying files on checkpoint, then set bdbje to not
+            // remove its log files so that its possible to later assemble
+            // (manually) all needed to run a recovery using mix of current
+            // bdbje logs and those its marked for deletion.
+            envConfig.setConfigParam("je.cleaner.expunge", "false");
+        }
+                
         try {
             this.bdbEnvironment = new Environment(getStateDisk(), envConfig);
             if (LOGGER.isLoggable(Level.FINE)) {
@@ -1255,19 +1276,84 @@ public class CrawlController implements Serializable, Reporter {
             chkptConfig.setMinimizeRecoveryTime(true);
             this.bdbEnvironment.checkpoint(chkptConfig);
             LOGGER.fine("Finished bdb checkpoint.");
-
-            // Copy off the bdb log files. Copy them in order.
-            FilenameFilter filter = CheckpointContext.getJeLogsFilter();
-            File bdbDir = CheckpointContext.getBdbSubDirectory(checkpointDir);
-            FileUtils.copyFiles(getStateDisk(), filter, bdbDir, true);
-            // Go again in case new bdb logs were added since above
-            // bulk copy.  Keep going till we've copied all of src.
-            FileUtils.syncDirectories(getStateDisk(), filter, bdbDir);
-            LOGGER.fine("Finished copying bdb log files.");
+            
+            // From the sleepycat folks: A trick for flipping db logs.
+            EnvironmentImpl envImpl = 
+                DbInternal.envGetEnvironmentImpl(this.bdbEnvironment);
+            long firstFileInNextSet =
+                DbLsn.getFileNumber(envImpl.forceLogFileFlip());
+            // So the last file in the checkpoint is firstFileInNextSet - 1.
+            // Write manifest of all log files into the bdb directory.
+            final String lastBdbCheckpointLog =
+                getBdbLogFileName(firstFileInNextSet - 1);
+            processBdbLogs(checkpointDir, lastBdbCheckpointLog);
+            LOGGER.fine("Finished processing bdb log files.");
         } finally {
             // Restore background threads.
             setBdbjeBkgrdThreads(envConfig, bkgrdThreads, "true");
         }
+    }
+    
+    protected void processBdbLogs(final File checkpointDir,
+            final String lastBdbCheckpointLog) throws IOException {
+        FilenameFilter filter = CheckpointContext.getJeLogsFilter();
+        File bdbDir = CheckpointContext.getBdbSubDirectory(checkpointDir);
+        if (!bdbDir.exists()) {
+            bdbDir.mkdir();
+        }
+        PrintWriter pw = new PrintWriter(new FileOutputStream(new File(
+             checkpointDir, "bdbje-logs-manifest.txt")));
+        try {
+            // Don't copy any beyond the last bdb log file (bdbje can keep
+            // writing logs after checkpoint).
+            boolean pastLastLogFile = false;
+            Set srcFilenames = null;
+            final boolean copyFiles = getCheckpointCopyBdbjeLogs();
+            do {
+                srcFilenames =
+                    new HashSet(Arrays.asList(getStateDisk().list(filter)));
+                List tgtFilenames = Arrays.asList(bdbDir.list(filter));
+                if (tgtFilenames != null && tgtFilenames.size() > 0) {
+                    srcFilenames.removeAll(tgtFilenames);
+                }
+                if (srcFilenames.size() > 0) {
+                    // Sort files.
+                    srcFilenames = new TreeSet(srcFilenames);
+                    int count = 0;
+                    for (final Iterator i = srcFilenames.iterator();
+                            i.hasNext() && !pastLastLogFile;) {
+                        String name = (String) i.next();
+                        if (copyFiles) {
+                            FileUtils.copyFiles(new File(getStateDisk(), name),
+                                new File(bdbDir, name));
+                        }
+                        pw.println(name);
+                        if (name.equals(lastBdbCheckpointLog)) {
+                            // We're done.
+                            pastLastLogFile = true;
+                        }
+                        count++;
+                    }
+                    if (LOGGER.isLoggable(Level.FINE)) {
+                        LOGGER.fine("Copied " + count);
+                    }
+                }
+            } while (!pastLastLogFile && srcFilenames != null &&
+                srcFilenames.size() > 0);
+        } finally {
+            pw.close();
+        }
+    }
+ 
+    protected String getBdbLogFileName(final long index) {
+        String lastBdbLogFileHex = Long.toHexString(index);
+        StringBuffer buffer = new StringBuffer();
+        for (int i = 0; i < (8 - lastBdbLogFileHex.length()); i++) {
+            buffer.append('0');
+        }
+        buffer.append(lastBdbLogFileHex);
+        buffer.append(".jdb");
+        return buffer.toString();
     }
     
     protected void setBdbjeBkgrdThreads(final EnvironmentConfig config,
