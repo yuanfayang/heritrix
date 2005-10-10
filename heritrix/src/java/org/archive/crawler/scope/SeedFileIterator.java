@@ -27,6 +27,8 @@ package org.archive.crawler.scope;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURIFactory;
@@ -41,6 +43,9 @@ import org.archive.util.iterator.TransformingIteratorWrapper;
  * @author gojomo
  */
 public class SeedFileIterator extends TransformingIteratorWrapper {
+    private static Logger logger =
+        Logger.getLogger(SeedFileIterator.class.getName());
+    
     BufferedReader input;
     Writer ignored;
     
@@ -83,6 +88,8 @@ public class SeedFileIterator extends TransformingIteratorWrapper {
             // TODO: ignore lines beginning with non-word char
             return UURIFactory.getInstance(uri);
         } catch (URIException e) {
+            logger.log(Level.WARNING, "line in seed file ignored: "
+                    + e.getMessage(), e);
             if(ignored!=null) {
                 try {
                     ignored.write(object+"\n");
