@@ -50,7 +50,7 @@ public class SingleHttpConnectionManager extends SimpleHttpConnectionManager {
 
         HttpConnection conn = new HttpConnection(hostConfiguration);
         conn.setHttpConnectionManager(this);
-        conn.setStaleCheckingEnabled(isConnectionStaleCheckingEnabled());
+        conn.getParams().setDefaults(this.getParams());
         return conn;
     }
 
