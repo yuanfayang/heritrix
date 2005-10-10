@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
@@ -181,7 +182,7 @@ public class RobotsExclusionPolicy implements Serializable {
                     }
                 }
                 catch (URIException e) {
-                    logger.severe("Failed getPath from " + curi);
+                    logger.log(Level.SEVERE,"Failed getPathQuery from " + curi, e);
                 }
             }
             if(disallow == false) {

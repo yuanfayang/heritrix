@@ -79,6 +79,12 @@ public class LaxURI extends URI {
     }
 
     // overridden to use this class's static decode()
+    public String getPathQuery() throws URIException {
+        char[] rawPathQuery = getRawPathQuery();
+        return (rawPathQuery == null) ? null : decode(rawPathQuery,
+                getProtocolCharset());
+    }
+    // overridden to use this class's static decode()
     protected static String decode(char[] component, String charset)
             throws URIException {
         if (component == null) {
