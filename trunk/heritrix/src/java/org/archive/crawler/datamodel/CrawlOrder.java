@@ -93,6 +93,20 @@ public class CrawlOrder extends ModuleType implements Serializable {
         "bdb-cache-percent";
     
     /**
+     * When checkpointing, copy the bdb logs.
+     * Default is true.  If false, then we do not copy logs on checkpoint AND
+     * we tell bdbje never to delete log files; instead it renames
+     * files-to-delete with a '.del' extension.  Assumption is that when this
+     * setting is false, an external process is managing the removing of
+     * bdbje log files and that come time to recover from a checkpoint, the
+     * files that comprise a checkpoint are manually assembled.
+     */
+    public static final String ATTR_CHECKPOINT_COPY_BDBJE_LOGS =
+        "checkpoint-copy-bdbje-logs";
+    public static final Boolean DEFAULT_CHECKPOINT_COPY_BDBJE_LOGS =
+        Boolean.TRUE;
+    
+    /**
      * Default size of bdb cache.
      */
     private final static Integer DEFAULT_BDB_CACHE_PERCENT = new Integer(0);
@@ -287,6 +301,27 @@ public class CrawlOrder extends ModuleType implements Serializable {
         e = addElementToDefinition(new SimpleType(ATTR_RECOVER_PATH,
                 "Optional. Points at recover log (or recover.gz log) OR " +
                 "the checkpoint directory to use recovering a crawl.", ""));
+        e.setOverrideable(false);
+        e.setExpertSetting(true);
+        
+        e = addElementToDefinition(new SimpleType(
+            ATTR_CHECKPOINT_COPY_BDBJE_LOGS,
+            "When true, on a checkpoint, we copy off the bdbje log files to " +
+            "the checkpoint directory. To recover a checkpoint, just " +
+            "set the " + ATTR_RECOVER_PATH + " to point at the checkpoint " +
+            "directory to recover.  This is default setting. " +
+            "But if crawl is large, " +
+            "copying bdbje log files can take tens of minutes and even " +
+            "upwards of an hour (Copying bdbje log files will consume bulk " +
+            "of time checkpointing). If this setting is false, we do NOT copy " +
+            "bdbje logs on checkpoint AND we set bdbje to NEVER delete log " +
+            "files (instead we have it rename files-to-delete with a '.del'" +
+            "extension). Assumption is that when this setting is false, " +
+            "an external process is managing the removal of bdbje log files " +
+            "and that come time to recover from a checkpoint, the files that " +
+            "comprise a checkpoint are manually assembled. This is an expert " +
+            "setting.",
+            DEFAULT_CHECKPOINT_COPY_BDBJE_LOGS));
         e.setOverrideable(false);
         e.setExpertSetting(true);
 

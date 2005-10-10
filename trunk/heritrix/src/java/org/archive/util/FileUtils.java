@@ -94,6 +94,34 @@ public class FileUtils {
     throws IOException {
         copyFiles(src, null, dest, false);
     }
+    
+    /**
+     * @param src Directory of files to fetch.
+     * @param filter Filter to apply to filenames.
+     * @return Files in directory sorted.
+     */
+    public static String [] getSortedDirContent(final File src,
+            final FilenameFilter filter) {
+        if (!src.exists()) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine(src.getAbsolutePath() + " does not exist");
+            }
+            return null;
+        }
+       
+        if (!src.isDirectory()) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine(src.getAbsolutePath() + " is not directory.");
+            }
+            return null;
+        }
+        // Go through the contents of the directory
+        String [] list = (filter == null)? src.list(): src.list(filter);
+        if (list != null) {
+            Arrays.sort(list);
+        }
+        return list;
+    }
         
     /**
      * Recursively copy all files from one directory to another.
