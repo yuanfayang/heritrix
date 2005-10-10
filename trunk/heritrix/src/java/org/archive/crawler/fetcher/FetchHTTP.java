@@ -362,7 +362,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // Below we do two inner classes that add check of midfetch
         // filters just as we're about to receive the response body.
         String curiString = curi.getUURI().toString();
-        HttpMethod method = null;
+        HttpMethodBase method = null;
         if (curi.isPost()) {
             method = new HttpRecorderPostMethod(curiString, rec) {
                 protected void readResponseBody(HttpState state,
@@ -417,11 +417,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
         
         // set softMax on bytes to get (if implied by content-length) 
-        long softMax = -1;
-        Header cl = method.getResponseHeader("content-length");
-        if(cl!=null) {
-            softMax = Long.parseLong(cl.getValue());
-        }
+        long softMax = method.getResponseContentLength();
+        
         // set hardMax on bytes (if set by operator)
         long hardMax = getMaxLength(curi);
 
@@ -610,6 +607,11 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     private void configureMethod(CrawlURI curi, HttpMethod method) {
         // Don't auto-follow redirects
         method.setFollowRedirects(false);
+        
+//        // set soTimeout
+//        method.getParams().setSoTimeout(
+//                ((Integer) getUncheckedAttribute(curi, ATTR_SOTIMEOUT_MS))
+//                        .intValue());
         
         // Set cookie policy.
         method.getParams().setCookiePolicy(
