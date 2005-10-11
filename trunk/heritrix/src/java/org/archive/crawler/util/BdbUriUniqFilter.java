@@ -66,6 +66,8 @@ import com.sleepycat.je.OperationStatus;
  */
 public class BdbUriUniqFilter
 extends SetBasedUriUniqFilter implements Serializable {
+    private static final long serialVersionUID = -8099357538178524011L;
+
     private static Logger logger =
         Logger.getLogger(BdbUriUniqFilter.class.getName());
 
