@@ -85,11 +85,12 @@ extends QueueAssignmentPolicy {
     }
 
     protected String getSurtAuthority(String surt) {
-        int indexOfOpen = surt.indexOf("(");
+        int indexOfOpen = surt.indexOf("://(");
         int indexOfClose = surt.indexOf(")");
-        if (indexOfOpen == -1 || indexOfClose == -1) {
+        if (indexOfOpen == -1 || indexOfClose == -1
+                || ((indexOfOpen + 4) >= indexOfClose)) {
             return DEFAULT_CLASS_KEY;
         }
-        return surt.substring(indexOfOpen + 1, indexOfClose);
+        return surt.substring(indexOfOpen + 4, indexOfClose);
     }
 }
