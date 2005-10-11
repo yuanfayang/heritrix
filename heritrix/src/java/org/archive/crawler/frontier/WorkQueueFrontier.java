@@ -258,7 +258,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     Iterator i = this.allQueues.keySet().iterator();
                     try {
                         for (; i.hasNext();) {
-                            logger.severe((String) i.next());
+                            logger.fine((String) i.next());
                         }
                     } finally {
                         StoredIterator.close(i);
@@ -877,7 +877,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         wq.setWakeTime(nextTime);
         long snoozeToInactiveDelayMs = ((Long)getUncheckedAttribute(null,
                 ATTR_SNOOZE_DEACTIVATE_MS)).longValue();
-        if(delay_ms>snoozeToInactiveDelayMs && ! readyClassQueues.isEmpty()) {
+        if (delay_ms > snoozeToInactiveDelayMs && !readyClassQueues.isEmpty()) {
             deactivateQueue(wq);
         } else {
             snoozedClassQueues.add(wq);

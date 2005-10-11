@@ -370,7 +370,9 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("Restoring: " + key);
         }
-        putter.put((isWq)? this.allQueues.get(key): key);
+        Object obj = (isWq)? this.allQueues.get(key): key;
+        assert obj != null: obj + " is null: " + key;
+        putter.put(obj);
     }
     
     protected void saveStringKeysToBdb(final String dbName,
@@ -407,10 +409,12 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
                     Object obj = it.next();
                     String key = (obj instanceof WorkQueue)?
                         ((WorkQueue)obj).getClassKey(): (String)obj;
+                    assert this.allQueues.get(key) != null:
+                        key + " not in allqueues.";
                     status = db.put(null, new DatabaseEntry(key.getBytes()),
                         EMPTY_DB_ENTRY);
                     if (logger.isLoggable(Level.FINE)) {
-                        logger.fine(key + ", " +
+                        logger.fine(dbName + ", " + key + ", " +
                             key.getClass().getName() + ", " + status);
                     }
                 }
