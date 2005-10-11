@@ -80,7 +80,8 @@ public class SeedFileIterator extends TransformingIteratorWrapper {
     
     protected Object transform(Object object) {
         String uri = (String)object;
-        if(! uri.matches("[a-zA-Z][\\w+\\.\\-]+:.*")) { // Rfc2396 s3.1 scheme.
+        if(! uri.matches("[a-zA-Z][\\w+\\-]+:.*")) { // Rfc2396 s3.1 scheme, 
+                                                     // minus '.'
             // Does not begin with scheme, so try http://
             uri = "http://"+uri;
         }
