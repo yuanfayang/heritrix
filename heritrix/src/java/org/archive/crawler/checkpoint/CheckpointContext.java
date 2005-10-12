@@ -226,12 +226,23 @@ implements Serializable {
         };
     }
     
-    public static File getClassCheckpointFile(File checkpointDir, Class c) {
-        return new File(checkpointDir, getClassCheckpointFilename(c));
+    public static File getClassCheckpointFile(File checkpointDir,
+            final String suffix, Class c) {
+        return new File(checkpointDir, getClassCheckpointFilename(c, suffix));
     }
     
-    public static String getClassCheckpointFilename(Class c) {
-        return c.getName() + SERIALIZED_CLASS_SUFFIX;
+    public static File getClassCheckpointFile(File checkpointDir, Class c) {
+        return new File(checkpointDir, getClassCheckpointFilename(c, null));
+    }
+    
+    public static String getClassCheckpointFilename(final Class c) {
+        return getClassCheckpointFilename(c, null);
+    }
+    
+    public static String getClassCheckpointFilename(final Class c,
+            final String suffix) {
+        return c.getName() + ((suffix == null)? "": suffix) +
+            SERIALIZED_CLASS_SUFFIX;
     }
     
     /**
@@ -244,11 +255,18 @@ implements Serializable {
      * @param dir Directory to serialize into.
      * @throws IOException
      */
-    public static void writeObjectToFile(Object o, File dir)
+    public static void writeObjectToFile(final Object o, final File dir)
+    throws IOException {
+        writeObjectToFile(o, null, dir);
+    }
+        
+    public static void writeObjectToFile(final Object o, final String suffix,
+            final File dir)
     throws IOException {
         dir.mkdirs();
         ObjectOutputStream out = new ObjectOutputStream(
-            new FileOutputStream(getClassCheckpointFile(dir, o.getClass())));
+            new FileOutputStream(getClassCheckpointFile(dir, suffix,
+                o.getClass())));
         try {
             out.writeObject(o);
         } finally {
@@ -256,10 +274,16 @@ implements Serializable {
         }
     }
     
-    public static Object readObjectFromFile(Class c, File dir)
+    public static Object readObjectFromFile(final Class c, final File dir)
+    throws FileNotFoundException, IOException, ClassNotFoundException {
+        return readObjectFromFile(c, null, dir);
+    }
+    
+    public static Object readObjectFromFile(final Class c, final String suffix,
+            final File dir)
     throws FileNotFoundException, IOException, ClassNotFoundException {
         ObjectInputStream in = new ObjectInputStream(
-            new FileInputStream(getClassCheckpointFile(dir, c)));
+            new FileInputStream(getClassCheckpointFile(dir, suffix, c)));
         Object o = null;
         try {
             o = in.readObject();
