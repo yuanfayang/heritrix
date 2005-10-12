@@ -22,6 +22,8 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,7 +41,8 @@ import com.sleepycat.je.DatabaseException;
  * @version $Date$, $Revision$
  */
 public class CachedBdbBigMap extends CachedBdbMap
-implements BigMap {
+implements BigMap, Serializable {
+    private static final long serialVersionUID = -2230838823763943383L;
     private static final Logger LOGGER =
         Logger.getLogger(CachedBdbBigMap.class.getName());
     
@@ -89,5 +92,15 @@ implements BigMap {
             }
             this.db = null;
         }
+    }
+    
+    public void sync() {
+        super.sync();
+    }
+    
+    private void writeObject(java.io.ObjectOutputStream stream)
+    throws IOException {
+        sync();
+        stream.defaultWriteObject();
     }
 }

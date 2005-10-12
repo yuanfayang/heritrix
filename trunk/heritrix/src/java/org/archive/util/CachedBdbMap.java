@@ -25,6 +25,7 @@
 package org.archive.util;
 
 import java.io.File;
+import java.io.Serializable;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -39,9 +40,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.archive.crawler.Heritrix;
-import org.archive.crawler.datamodel.CachedBdbBigMap;
 
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
@@ -73,7 +71,8 @@ import com.sleepycat.je.EnvironmentConfig;
  * @author gojomo
  *  
  */
-public class CachedBdbMap extends AbstractMap implements Map {
+public class CachedBdbMap extends AbstractMap implements Map, Serializable {
+    private static final long serialVersionUID = -8655539411367047332L;
 
     private static final Logger logger =
         Logger.getLogger(CachedBdbMap.class.getName());
@@ -88,22 +87,22 @@ public class CachedBdbMap extends AbstractMap implements Map {
     private static final Map dbEnvironmentMap = new HashMap();
 
     /** The BDB JE environment used for this instance. */
-    private DbEnvironmentEntry dbEnvironment;
+    private transient DbEnvironmentEntry dbEnvironment;
 
     /** The BDB JE database used for this instance. */
-    protected Database db;
+    protected transient Database db;
 
     /** The Collection view of the BDB JE database used for this instance. */
-    protected StoredMap diskMap;
+    protected transient StoredMap diskMap;
 
     /** The softreferenced cache */
-    private Map memMap;
+    private transient Map memMap;
 
-    protected ReferenceQueue refQueue = new ReferenceQueue();
+    protected transient ReferenceQueue refQueue = new ReferenceQueue();
 
     /** The number of objects stored in the BDB JE database. 
      *  (Package access for unit testing.) */
-    int diskMapSize = 0;
+    private int diskMapSize = 0;
 
     /**
      * Count of times we got an object from in-memory cache.
@@ -438,6 +437,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
         long startTime = 0;
         if (logger.isLoggable(Level.INFO)) {
             startTime = System.currentTimeMillis();
+            logger.info("Start sizes " + this.diskMapSize + " " +
+                this.memMap.size());
         }
         for (Iterator i = this.memMap.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
@@ -447,9 +448,14 @@ public class CachedBdbMap extends AbstractMap implements Map {
                 Object value = entry.get();
                 if (value != null) {
                     this.diskMap.put(key, value);
+                    diskMapSize++;
                 }
             }
         }
+        // Call expunge in case we got some null values in above (They're off
+        // in the phantom queue still).
+        expungeStaleEntries();
+        
         // Now, clear the memmap so entries are in mem or on disk only, not in
         // both places at once.
         this.memMap.clear();
@@ -463,7 +469,8 @@ public class CachedBdbMap extends AbstractMap implements Map {
                 // Ignore.
             }
             logger.info(name + " sync took " +
-                (System.currentTimeMillis() - startTime) + "ms.");
+                (System.currentTimeMillis() - startTime) + "ms. Finish sizes " +
+                this.diskMapSize + " " + this.memMap.size());
         }
     }
 

@@ -114,6 +114,7 @@ import com.sleepycat.je.Environment;
 
 public class CrawlJob
 implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
+    private static final long serialVersionUID = -5006954139249693422L;
     private static final Logger logger =
         Logger.getLogger(CrawlJob.class.getName());
     /*
@@ -737,6 +738,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      */
     public class MBeanCrawlController extends CrawlController
     implements Serializable {
+        private static final long serialVersionUID = -4608537998168407222L;
+
         protected void completeStop() {
             try {
                 super.completeStop();
