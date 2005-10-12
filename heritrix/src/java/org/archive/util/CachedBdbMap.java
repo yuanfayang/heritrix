@@ -25,6 +25,7 @@
 package org.archive.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
@@ -98,7 +99,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     /** The softreferenced cache */
     private transient Map memMap;
 
-    protected transient ReferenceQueue refQueue = new ReferenceQueue();
+    protected transient ReferenceQueue refQueue;
 
     /** The number of objects stored in the BDB JE database. 
      *  (Package access for unit testing.) */
@@ -155,7 +156,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      */
     protected CachedBdbMap() {
         super();
-        initialize();
+        setup();
     }
 
     /**
@@ -177,7 +178,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     public CachedBdbMap(File dbDir, String dbName, Class keyClass,
             Class valueClass) throws DatabaseException {
         super();
-        initialize();
+        setup();
         dbEnvironment = getDbEnvironment(dbDir);
         this.db = openDatabase(dbEnvironment.environment, dbName);
         dbEnvironment.openDbCount++;
@@ -200,15 +201,15 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
             String dbName, Class keyClass, Class valueClass)
     throws DatabaseException {
         super();
-        initialize();
+        setup();
         this.db = openDatabase(environment, dbName);
         this.diskMap = createDiskMap(this.db, classCatalog, keyClass,
             valueClass);
     }
     
-    private void initialize() {
-        // Setup memory cache
+    private void setup() {
         this.memMap = new HashMap();
+        this.refQueue = new ReferenceQueue();
     }
     
     protected StoredMap createDiskMap(Database database,
@@ -425,6 +426,18 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         return diskMapSize + memMap.size();
     }
     
+    protected String getDatabaseName() {
+        String dbName = "DbName-Lookup-Failed";
+        try {
+            if (this.db != null) {
+                dbName = this.db.getDatabaseName();
+            }
+        } catch (DatabaseException e) {
+            // Ignore.
+        }
+        return dbName;
+    }
+    
     /**
      * Sync in-memory map entries to backing disk store.
      * When done, the memory map will be cleared and all entries stored
@@ -433,12 +446,14 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * when this method is called.
      */
     public void sync() {
+        String dbName = null;
         // Sync. memory and disk.
         long startTime = 0;
         if (logger.isLoggable(Level.INFO)) {
+            dbName = getDatabaseName();
             startTime = System.currentTimeMillis();
-            logger.info("Start sizes " + this.diskMapSize + " " +
-                this.memMap.size());
+            logger.info(dbName + " start sizes: disk " + this.diskMapSize +
+                ", mem " + this.memMap.size());
         }
         for (Iterator i = this.memMap.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
@@ -460,17 +475,10 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         // both places at once.
         this.memMap.clear();
         if (logger.isLoggable(Level.INFO)) {
-            String name = "DbName-Lookup-Failed";
-            try {
-                if (this.db != null) {
-                    name = this.db.getDatabaseName();
-                }
-            } catch (DatabaseException e) {
-                // Ignore.
-            }
-            logger.info(name + " sync took " +
-                (System.currentTimeMillis() - startTime) + "ms. Finish sizes " +
-                this.diskMapSize + " " + this.memMap.size());
+            logger.info(dbName + " sync took " +
+                (System.currentTimeMillis() - startTime) + "ms. " +
+                "Finish sizes: disk " +
+                this.diskMapSize + ", mem " + this.memMap.size());
         }
     }
 
@@ -563,6 +571,15 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
             this.phantom.clear();
             this.phantom = null;
             super.clear();
+        }
+    }
+    
+    private void readObject(java.io.ObjectInputStream stream)
+    throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        setup();
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(getDatabaseName() + " diskMapSize: " + diskMapSize);
         }
     }
 }

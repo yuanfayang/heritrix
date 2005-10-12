@@ -101,6 +101,21 @@ public class Checkpoint implements Serializable {
     public boolean isValid() {
         return timestamp != INVALID;
     }
+    
+    /**
+     * @return True if this checkpoint contains bdb logs (It won't if we're
+     * doing 'fast' checkpoints).
+     */
+    public boolean hasBdbjeLogs() {
+        boolean decision = false;
+        File bdbjeDir = CheckpointContext.getBdbSubDirectory(this.directory);
+        if (bdbjeDir.exists()) {
+            String [] files =
+                bdbjeDir.list(CheckpointContext.getJeLogsFilter());
+            decision = (files != null && files.length > 0);
+        }
+        return decision;
+    }
 
     /**
      * @return Returns name of this Checkpoint

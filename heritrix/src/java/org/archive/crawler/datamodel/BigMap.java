@@ -23,15 +23,17 @@
 package org.archive.crawler.datamodel;
 
 import java.util.Map;
+import java.io.Serializable;
 
 import org.archive.crawler.settings.SettingsHandler;
 
 /**
  * A map that knows how to manage ever-growing sets of key/value pairs.
+ * Implementations must implement {@link Serializable}.
  * @author stack
  * @version $Date$, $Revision$
  */
-public interface BigMap extends Map {
+public interface BigMap extends Map, Serializable {
     /**
      * Initialize this big map.
      * Pass in the crawl settings so map instance can use current
@@ -46,7 +48,7 @@ public interface BigMap extends Map {
         Class keyClass, Class valueClass) throws Exception;
     
     /**
-     * Persist state.
+     * Sync in-memory structures to disk in preperation for persisting.
      */
     public void sync();
 }

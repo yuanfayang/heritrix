@@ -241,7 +241,7 @@ implements Serializable {
     
     public static String getClassCheckpointFilename(final Class c,
             final String suffix) {
-        return c.getName() + ((suffix == null)? "": suffix) +
+        return c.getName() + ((suffix == null)? "": "." + suffix) +
             SERIALIZED_CLASS_SUFFIX;
     }
     
