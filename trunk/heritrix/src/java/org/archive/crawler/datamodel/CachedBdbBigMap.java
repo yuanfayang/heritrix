@@ -78,6 +78,14 @@ implements BigMap, Serializable {
                 StoredIterator.close(i);
             }
         }
+        if (this.diskMapSize==0) {
+            Iterator iter = this.diskMap.keySet().iterator();
+            while(iter.hasNext()) {
+                iter.next();
+                diskMapSize++;
+            }
+            StoredIterator.close(iter);
+        }
     }
 
     public void clear() {
