@@ -41,7 +41,6 @@ import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.settings.CrawlerSettings;
@@ -285,27 +284,29 @@ public class CrawlScope extends Filter {
             ((SeedFileIterator)iter).close();
         }
     }
-
+    
     /**
      * Add a new seed to scope. By default, simply appends
      * to seeds file, though subclasses may handle differently.
      *
-     * This method is *not* sufficient to get the new seed 
+     * <p>This method is *not* sufficient to get the new seed 
      * scheduled in the Frontier for crawling -- it only 
      * affects the Scope's seed record (and decisions which
      * flow from seeds). 
      *
-     * @param uuri UURI to add
+     * @param curi CandidateUri to add
      * @return true if successful, false if add failed for any reason
      */
-    public boolean addSeed(CrawlURI curi) {
+    public boolean addSeed(final CandidateURI curi) {
         File f = getSeedfile();
         if (f != null) {
             try {
                 FileWriter fw = new FileWriter(f, true);
                 // Write to new (last) line the URL.
                 fw.write("\n");
-                fw.write("# Heritrix added seed redirected from: "+curi.getVia()+"\n");
+                fw.write("# Heritrix added seed " +
+                    ((curi.getVia() != null) ? "redirect from " + curi.getVia():
+                        "(JMX)") + ".\n");
                 fw.write(curi.toString());
                 fw.flush();
                 fw.close();

@@ -23,7 +23,7 @@
 */
 package org.archive.crawler.scope;
 
-import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.CandidateURI;
 
 /**
  * Implemented by components which want notifications of 
@@ -32,7 +32,5 @@ import org.archive.crawler.datamodel.CrawlURI;
  * @author gojomo
  */
 public interface SeedListener {
-
-    void addedSeed(CrawlURI uuri);
-
+    void addedSeed(final CandidateURI uuri);
 }
