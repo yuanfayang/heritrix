@@ -102,7 +102,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
 
     /** The number of objects stored in the BDB JE database. 
      *  (Package access for unit testing.) */
-    private int diskMapSize = 0;
+    protected int diskMapSize = 0;
 
     /**
      * Count of times we got an object from in-memory cache.
