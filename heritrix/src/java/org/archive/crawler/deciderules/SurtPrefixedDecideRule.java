@@ -292,7 +292,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         return scope.getSeedfile();
     }
 
-    public synchronized void addedSeed(CrawlURI curi) {
+    public synchronized void addedSeed(final CandidateURI curi) {
         SurtPrefixSet newSurtPrefixes = (SurtPrefixSet) surtPrefixes.clone();
         newSurtPrefixes.add(SurtPrefixSet.prefixFromPlain(curi.toString()));
         surtPrefixes = newSurtPrefixes;

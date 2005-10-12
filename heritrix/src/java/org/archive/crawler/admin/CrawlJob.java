@@ -1089,16 +1089,22 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     public String importUris(String file, String style, String force) {
         return importUris(file, style, "true".equals(force));
     }
+    
+    public String importUris(final String fileOrUrl, final String style,
+            final boolean forceRevisit) {
+        return importUris(fileOrUrl, style, forceRevisit, false);
+    }
 
     /**
      * @param fileOrUrl Name of file w/ seeds.
      * @param style What style of seeds -- crawl log, recovery journal, or
      * seeds file.
      * @param forceRevisit Should we revisit even if seen before?
+     * @param areSeeds Is the file exclusively seeds?
      * @return A display string that has a count of all added.
      */
     public String importUris(final String fileOrUrl, final String style,
-            final boolean forceRevisit) {
+            final boolean forceRevisit, final boolean areSeeds) {
         InputStream is =
             IoUtils.getInputStream(this.controller.getDisk(), fileOrUrl);
         String message = null;
@@ -1107,7 +1113,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             message = "Failed to get inputstream from " + fileOrUrl;
             logger.severe(message);
         } else {
-            int addedCount = importUris(is, style, forceRevisit);
+            int addedCount = importUris(is, style, forceRevisit, areSeeds);
             message = Integer.toString(addedCount) + " URIs added from " +
                 fileOrUrl;
         }
@@ -1116,6 +1122,11 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     
     protected int importUris(InputStream is, String style,
             boolean forceRevisit) {
+        return importUris(is, style, forceRevisit, false);
+    }
+    
+    protected int importUris(InputStream is, String style,
+            boolean forceRevisit, final boolean areSeeds) {
         // Figure the regex to use parsing each line of input stream.
         String extractor;
         String output;
@@ -1142,7 +1153,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 RegexpLineIterator.COMMENT_LINE, extractor, output);
             while(iter.hasNext()) {
                 try {
-                    importUri((String)iter.next(), forceRevisit, false, false);
+                    importUri((String)iter.next(), forceRevisit, areSeeds,
+                        false);
                     addedCount++;
                 } catch (URIException e) {
                     e.printStackTrace();
@@ -1188,6 +1200,12 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         caUri.setForceFetch(forceFetch);
         if (isSeed) {
             caUri.setIsSeed(isSeed);
+            if (caUri.getVia() == null || caUri.getVia().length() <= 0) {
+                // Danger of double-add of seeds because of this code here.
+                // Only call addSeed if no via.  If a via, the schedule will
+                // take care of updating scope.
+                this.controller.getScope().addSeed(caUri);
+            }
         }
         this.controller.getFrontier().schedule(caUri);
         if (isFlush) {
@@ -1302,7 +1320,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             "Add passed URL to the frontier", args, SimpleType.VOID,
                 MBeanOperationInfo.ACTION));
         
-        args = new OpenMBeanParameterInfoSupport[3];
+        args = new OpenMBeanParameterInfoSupport[4];
         args[0] = new OpenMBeanParameterInfoSupport("pathOrUrl",
             "Path or URL to file of URLs", SimpleType.STRING);
         args[1] = new OpenMBeanParameterInfoSupport("style",
@@ -1310,6 +1328,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             SimpleType.STRING);
         args[2] = new OpenMBeanParameterInfoSupport("forceFetch",
             "True if URLs are to be force fetched", SimpleType.BOOLEAN);
+        args[3] = new OpenMBeanParameterInfoSupport("seed",
+            "True if all content are seeds.", SimpleType.BOOLEAN);
         operations.add(new OpenMBeanOperationInfoSupport(IMPORT_URIS_OPER,
             "Add file of passed URLs to the frontier", args, SimpleType.STRING,
                 MBeanOperationInfo.ACTION));
@@ -1733,11 +1753,12 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         }
         
         if (operationName.equals(IMPORT_URIS_OPER)) {
-            JmxUtils.checkParamsCount(IMPORT_URIS_OPER, params, 3);
+            JmxUtils.checkParamsCount(IMPORT_URIS_OPER, params, 4);
             mustBeCrawling();
             return importUris((String)params[0],
                 ((String)params[1]).toString(),
-                ((Boolean)params[2]).booleanValue());
+                ((Boolean)params[2]).booleanValue(),
+                ((Boolean)params[3]).booleanValue());
         }
         
         if (operationName.equals(PAUSE_OPER)) {
