@@ -1166,7 +1166,7 @@ public class CrawlController implements Serializable, Reporter {
         
         // Sync the BigMap contents to bdb, if their bdb bigmaps.
         LOGGER.fine("BigMaps.");
-        BigMapFactory.checkpoint();
+        BigMapFactory.checkpoint(context.getCheckpointInProgressDirectory());
         
         // Note, on deserialization, the super CrawlType#parent
         // needs to be restored. Parent is '/crawl-order/loggers'.

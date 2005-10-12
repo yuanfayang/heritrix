@@ -25,11 +25,11 @@
             CrawlJob tmp = (CrawlJob)jobs.get(i);
             tmp.scanCheckpoints();
             Collection cps = tmp.getCheckpoints();
-            // Are there valid cps?
+            // Are there valid cps -- that have bdbje logs in them?
             boolean foundValidCp = false;
             for (final Iterator it = cps.iterator(); it.hasNext(); ) {
                 Checkpoint cp = (Checkpoint)it.next();
-                if (cp.isValid()) {
+                if (cp.isValid() && cp.hasBdbjeLogs()) {
                     foundValidCp = true;
                     break;
                 }
@@ -69,7 +69,7 @@
             }
             for (final Iterator it = cps.iterator(); it.hasNext(); ) {
                 Checkpoint cp = (Checkpoint)it.next();
-                if (!cp.isValid()) {
+                if (!cp.isValid() || !cp.hasBdbjeLogs()) {
                     continue;
                 }
                 ret.append(" <a href=\"");

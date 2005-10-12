@@ -22,7 +22,6 @@
  */
 package org.archive.crawler.datamodel;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.logging.Level;
@@ -78,7 +77,12 @@ implements BigMap, Serializable {
                 StoredIterator.close(i);
             }
         }
-        if (this.diskMapSize==0) {
+        // The below code was added to deal with case where we were not
+        // managing diskMapSize across checkpoint/recover. This has since been
+        // fixed.  The code below should not be triggered subsequent to
+        // recover of bnf crawl (10/2005). Can be removed thereafter. See
+        // '[ 1324989 ] Queue counts wrong after checkpointing'.
+        if (this.diskMapSize == 0) {
             Iterator iter = this.diskMap.keySet().iterator();
             while(iter.hasNext()) {
                 iter.next();
@@ -90,7 +94,6 @@ implements BigMap, Serializable {
 
     public void clear() {
         super.clear();
-        
         // Close out my bdb db.
         if (this.db != null) {
             try {
@@ -102,13 +105,5 @@ implements BigMap, Serializable {
         }
     }
     
-    public void sync() {
-        super.sync();
-    }
     
-    private void writeObject(java.io.ObjectOutputStream stream)
-    throws IOException {
-        sync();
-        stream.defaultWriteObject();
-    }
 }
