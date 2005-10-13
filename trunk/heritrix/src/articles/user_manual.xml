@@ -3787,9 +3787,8 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       18million items -- it had discovered > 130million (bloom filter) -- the
       checkpointing took about 100minutes to complete of which 90 plus minutes
       were spent copying the ~12k bdbje log files (One disk only involved). 
-      Set log level on
-      org.archive.util.FileUtils to FINE to watch the
-      java file-copy.  While checkpointing, the status will show as
+      Set log level on <literal>org.archive.util.FileUtils</literal> to FINE to
+      watch the java file-copy.  While checkpointing, the status will show as
       <literal>checkpointing</literal> (Its possible to perform a checkpoint
       via JMX).  When the checkpoint has completed, resume the crawl.
       </para>
@@ -3808,9 +3807,53 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       renaming of logs and state dirs so they do not clash with the old
       as is described above in <xref linkend="recover" /> is also done).
       The first thing recover does is copy into place the saved-off bdbje
-      log files.  Again this can take time.
+      log files. Again this can take time -- an hour or more if a crawl of
+      millions.
       </para>
-      
+      <note>
+        <title>Expert mode checkpointing</title>
+        <para>Since copying off bdbje log files can take hours, we've
+        added an <emphasis>expert mode</emphasis> checkpoint that bypasses
+        bdbje log copying.  The upside is your checkpoint completes promptly
+        -- in minutes, even if the crawl is large -- but downside is recovery
+        takes more work: to recover from a checkpoint, the bdbje log files
+        need to be manually assembled in the checkpoint
+        <literal>bdb-logs</literal> subdirectory. You know which bdbje log
+        files make up the checkpoint because we write the current list of 
+        bdbje logs into the checkpoint directory in a file
+        named <literal>bdbj-logs-manifest.txt</literal>. To prevent bdbje
+        removing log files that might be needed assembling a checkpoint
+        made at sometime in the past, we configure it not to delete logs when
+        done; instead, bdbje gives logs it no longer uses a
+        <literal>.del</literal> suffix. Assembling a checkpoint will often
+        require renaming files with the <literal>.del</literal> suffix
+        so they have the <literal>.jdb</literal> suffix in accordance
+        with the <literal>bdbj-logs-manifest.txt</literal> list (Note: With
+        this expert mode enabled, 
+        the crawler state directory will grow without bound; a process
+        external to the crawler can be set to prune the state directory
+        of <literal>.del</literal> files referenced by checkpoints since
+        superceded).
+        </para>
+        <para>To enable the no-files copy checkpoint, set
+        the new expert mode setting
+        <literal>checkpoint-copy-bdbje-logs</literal> to 
+        <literal>false</literal>.
+        </para>
+        <para>To recover using a checkpoint that has all but the bdbje
+        log files, you will need to copy all logs listed in
+        <literal>bdbj-logs-manifest.txt</literal> to the
+        <literal>bdbje-logs</literal> directory.  In some cases this will
+        necessitate renaming logs with the <literal>.del</literal> to instead
+        have the <literal>.jdb</literal> ending. One thing to watch for is
+        copying too logs into the bdbje logs subdirectory.  The list of logs
+        must match exactly whats in the manifest file.  Otherwise, the
+        recovery will fail (For example, see 
+        <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1325961&amp;group_id=73833&amp;atid=539099">[1325961] resurrectOneQueueState has keys for items not in allqueues</ulink>).
+        </para>
+
+      </note>
+
     </sect2>
 
     <sect2 id="mon_com">
