@@ -17,9 +17,8 @@
         <em>heretix</em>/<em>heratix</em>) is an 
         archaic word for <em>heiress</em> (woman who inherits). Since our 
         crawler seeks to collect and <i>preserve</i> the digital
-        artifacts of our culture for 
-        the benefit of future researchers and generations, this name 
-        seemed apt.</p>
+        artifacts of our culture for the benefit of future researchers and
+        generations, this name seemed apt.</p>
     </section>
     <section name="Webmasters!">
         <p>Heritrix is designed to respect the
@@ -46,12 +45,13 @@
     <section name="News and Status">
 
     <subsection name="Release 1.4.0 04/28/2005">
-      <p>Much improved memory usage, new experimental
-      scoping/filter model, and a new revisiting frontier.
-      Over 90 bugs fixed. See
-        <a href="articles/releasenotes.html#1_4_0">Heritrix Release Notes</a> 
-        for detail and <a href="articles/releasenotes.html#1-4_0_limitations">Known Limitations</a>: e.g. You cannot use your old order files with the new
-            release.</p>
+      <p>Much improved memory usage, new experimental scoping/filter model,
+      and a new revisiting frontier.  Over 90 bugs fixed. See
+      <a href="articles/releasenotes.html#1_4_0">Heritrix Release Notes</a> 
+      for detail and
+      <a href="articles/releasenotes.html#1-4_0_limitations">Known
+      Limitations</a>: e.g. You cannot use your old order files with the new
+      release.</p>
     </subsection>
 
     <subsection name="Release 1.2.0 11/16/2004">
