@@ -3761,7 +3761,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
     <sect2 id="checkpoint">
       <title>Checkpointing</title>
-      <para>Checkpointing [<xref linked="checkpointing" />] the crawler will
+      <para>Checkpointing [<xref linkend="checkpointing" />] the crawler will
       write a representation of its 
       state to disk and copy the mutable objects and logs -- e.g. the
       bdbje logs and the serialized java objects -- to a directory
@@ -3810,7 +3810,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       log files. Again this can take time -- an hour or more if a crawl of
       millions.
       </para>
-      <note>
+      <sect3>
         <title>Expert mode checkpointing</title>
         <para>Since copying off bdbje log files can take hours, we've
         added an <emphasis>expert mode</emphasis> checkpoint that bypasses
@@ -3852,7 +3852,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1325961&amp;group_id=73833&amp;atid=539099">[1325961] resurrectOneQueueState has keys for items not in allqueues</ulink>).
         </para>
 
-      </note>
+      </sect3>
 
     </sect2>
 
