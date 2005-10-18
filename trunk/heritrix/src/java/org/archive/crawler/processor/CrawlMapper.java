@@ -22,15 +22,16 @@
  */
 package org.archive.crawler.processor;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
@@ -43,11 +44,8 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.util.NoopUriUniqFilter;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.ArrayLongFPCache;
 import org.archive.util.iterator.LineReadingIterator;
@@ -100,7 +98,7 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
     public class FilePrintWriter extends PrintWriter {
         File file; 
         public FilePrintWriter(File file) throws FileNotFoundException {
-            super(file);
+            super(new BufferedOutputStream(new FileOutputStream(file)));
             this.file = file; 
         }
         public File getFile() {

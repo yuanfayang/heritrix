@@ -24,8 +24,10 @@
 */ 
 package org.archive.crawler.util;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.PrintWriter;
 
 import org.archive.crawler.datamodel.CandidateURI;
@@ -106,7 +108,8 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter {
 
     public void setProfileLog(File logfile) {
         try {
-            profileLog = new PrintWriter(logfile);
+            profileLog = new PrintWriter(new BufferedOutputStream(
+                    new FileOutputStream(logfile)));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
