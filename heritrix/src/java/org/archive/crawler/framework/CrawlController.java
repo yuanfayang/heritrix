@@ -1716,6 +1716,10 @@ public class CrawlController implements Serializable, Reporter {
         // Setup status listeners
         this.registeredCrawlStatusListeners =
             Collections.synchronizedList(new ArrayList());
+        // ensure no holdover singleThreadMode
+        singleThreadMode = false; 
+        SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds());
+        // TODO: make singleThreadMode, SINGLE_THREAD_LOCK transient
     }
 
     private void writeObject(ObjectOutputStream stream) throws IOException {
