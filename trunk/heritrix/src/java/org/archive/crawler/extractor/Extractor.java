@@ -29,7 +29,6 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.frontier.AbstractFrontier;
 
 /**
  * Convenience shared superclass for Extractor Processors.
@@ -66,12 +65,18 @@ public abstract class Extractor extends Processor {
     public void innerProcess(CrawlURI curi) {
         try {
             extract(curi);
+        } catch (NullPointerException npe) {
+            // both annotate (to highlight in crawl log) & add as local-error
+            curi.addAnnotation("err="+npe.getClass().getName());
+            curi.addLocalizedError(getName(),npe,"");
+            // also log as warning
+            logger.log(Level.WARNING,getName()+": NullPointerException",npe);
         } catch (StackOverflowError soe) {
             // both annotate (to highlight in crawl log) & add as local-error
             curi.addAnnotation("err="+soe.getClass().getName());
             curi.addLocalizedError(getName(),soe,"");
             // also log as warning
-            logger.log(Level.WARNING,"overflow in "+getName(),soe);
+            logger.log(Level.WARNING,getName()+": StackOverflowError",soe);
         }
     }
 
