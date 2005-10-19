@@ -169,11 +169,9 @@ Reporter, ProgressStatisticsReporter {
             }
         } catch (EndedException e) {
             // crawl ended (or thread was retired), so allow thread to end
-        } catch (InterruptedException e1) {
-            // Thread was interrupted 
-            System.err.println(getName()+" interrupted while working on "+currentCuri);
-            // TODO: more?
-            e1.printStackTrace();
+        } catch (Exception e) {
+            // everything else (including interruption)
+            logger.log(Level.SEVERE,"Fatal exception in "+getName(),e);
         } catch (OutOfMemoryError err) {
             seriousError(err);
         } finally {
