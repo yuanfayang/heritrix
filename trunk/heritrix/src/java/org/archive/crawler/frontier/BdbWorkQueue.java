@@ -111,7 +111,10 @@ implements Comparable, Serializable {
                     "inconsistency: "+classKey+"("+
                     getPrefixClassKey(origin)+") with " + getCount() + " items gave "
                     + curi +"("+getPrefixClassKey(key.getData()));
-                curi = null; // clear curi to allow retry
+                // clear curi to allow retry
+                curi = null; 
+                // reset key to original origin for retry
+                key.setData(origin);
             }
             
             if (curi!=null) {
