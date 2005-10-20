@@ -825,6 +825,7 @@ implements CrawlURIDispositionListener, Serializable {
             Object key = i.next();
             // Key is mime type.
             writer.print(Long.toString(((LongWrapper)fd.get(key)).longValue));
+            writer.print(" ");
             writer.print(Long.toString(getBytesPerFileType((String)key)));
             writer.print(" ");
             writer.print((String)key);
