@@ -823,10 +823,12 @@ implements ARCConstants {
     }
 
     /**
+     * Test ARC is valid.
+     * Assumes the stream is at the start of the file.  Be aware that this
+     * method makes a pass over the whole ARC. 
      * @return True if file can be successfully parsed.
-     * Assumes the stream is at the start of the file.
      */
-    protected boolean isValid() {
+    public boolean isValid() {
         boolean valid = false;
         try {
             validate();
