@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>About Heritrix Cluster Controller</title>
+		<meta name="author" content="Stack" />
+		<meta name="description" content="Heritrix Cluster Controller About" />
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+		<meta http-equiv="Content-Script-Type" content="text/javascript" />
+		<meta http-equiv="Content-Style-Type" content="text/css" />
+	</head>
+	<body>
+	<p><img src="./images/logo.jpg" width="80" height="45"
+            alt="Heritrix Cluster Controller Logo" /> This page describes how to setup
+            and run this <b>Heritrix Cluster Controller</b> web application.  This
+            webapp must be configured to point to the same JNDI Service Provider
+            all members of a Heritrix cluster are pointing to.  This will usually require
+            adding a <code>jndi.properties</code> specification and any needed
+            client JARs to the CLASSPATH of the hcc webapp. Once up and running,
+            hcc will list all cluster members, report basic stats on the cluster as a whole
+            and allow execution of cluster-wide operations.</p>
+            
+            <p><a href="index.jsp">Home</a></p>
+            
+          	<h2>JNDI Service Provider</h2>
+          	
+          	<p>This web application expects a <code>jndi.properties</code>
+          	on the CLASSPATH that holds specification of the JNDI Service Provider to use.
+          	Usually the provider will be external.  Because Tomcat has its own local
+          	JNDI provider and it doesn't seem possible to make a Tomcat webapp use
+          	other than the container's JNDI Provider, this webapp will not work under
+          	Tomcat (TODO: Look at if its possible for external applications to use
+          	Tomcat's JNDI.  I think I read this is not possible).</p>
+          	
+          	<p>This webapp will work in Jetty.  Unjar the webapp WAR file and 
+          	put a <code>jndi.properties</code>
+          	configured to point at the external JNDI provider into the
+          	<code>hcc/WEB-INF/classes</code> directory so its on the hcc webapp
+          	CLASSPATH (Doesn't have to be here but this seems easiest way of
+          	adding webapp scoped elements to CLASSPATH).  Add any necessary
+          	client JARs to the CLASSPATH: e.g. by putting them in
+          	<code>hcc/WEB-INF/lib</code>. Restart.
+          	</p>
+          	
+          	<p>This webapp will also work in JBOSS.  If using a JBOSS JNP JNDI
+          	Service Provider, then, just drop this webapp into JBOSS and it will
+          	deploy reading the local JBOSS JNP instance; no need to mess with
+          	any jndi.properties (If using JNP, see JNDIView MBean to get listings
+          	on the JNDI content).</p>
+    
+	</body>
+</html>
