@@ -1,4 +1,6 @@
 <%@include file="/include/handler.jsp"%>
+<%@ page import="java.io.BufferedOutputStream" %>
+<%@ page import="java.io.FileOutputStream" %>
 
 <%
     String title = "Frontier report";
@@ -13,7 +15,8 @@
             if(handler.getCurrentJob() != null) {
                 java.io.PrintWriter writer;
                 if (dumpFile!=null) {
-                    writer = new java.io.PrintWriter(dumpFile);
+                    writer = new java.io.PrintWriter(new BufferedOutputStream(
+                        new FileOutputStream(dumpFile)));
                     %> Report dumping to file '<%=dumpFile%>'... <%
                 } else {
             	    writer = new java.io.PrintWriter(out);
