@@ -149,9 +149,9 @@ public class CrawlController implements Serializable, Reporter {
     private transient SettingsHandler settingsHandler;
 
 
-    // used to enable/disable single-threaded operation after OOM
-    volatile boolean singleThreadMode = false; 
-    private static final ReentrantLock SINGLE_THREAD_LOCK = new ReentrantLock();
+    // Used to enable/disable single-threaded operation after OOM
+    private volatile transient boolean singleThreadMode = false; 
+    private transient ReentrantLock singleThreadLock = null;
 
     // emergency reserve of memory to allow some progress/reporting after OOM
     private transient LinkedList reserveMemory;
@@ -323,6 +323,8 @@ public class CrawlController implements Serializable, Reporter {
     public void initialize(SettingsHandler sH)
     throws InitializationException {
         sendCrawlStateChangeEvent(PREPARING, CrawlJob.STATUS_PREPARING);
+
+        this.singleThreadLock = new ReentrantLock();
         
         this.settingsHandler = sH;
         this.order = settingsHandler.getOrder();
@@ -1716,9 +1718,8 @@ public class CrawlController implements Serializable, Reporter {
         // Setup status listeners
         this.registeredCrawlStatusListeners =
             Collections.synchronizedList(new ArrayList());
-        // ensure no holdover singleThreadMode
+        // Ensure no holdover singleThreadMode
         singleThreadMode = false; 
-        // TODO: make singleThreadMode transient; SINGLE_THREAD_LOCK nonstatic?
     }
 
     private void writeObject(ObjectOutputStream stream) throws IOException {
@@ -1741,7 +1742,7 @@ public class CrawlController implements Serializable, Reporter {
      */
     public void singleThreadMode() {
         try {
-            SINGLE_THREAD_LOCK.acquire();
+            this.singleThreadLock.acquire();
             singleThreadMode = true; 
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -1754,13 +1755,14 @@ public class CrawlController implements Serializable, Reporter {
      */
     public void multiThreadMode() {
         try {
-            SINGLE_THREAD_LOCK.acquire();
+            this.singleThreadLock.acquire();
             singleThreadMode = false; 
-            SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds());
+            this.singleThreadLock.release(this.singleThreadLock.holds());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
+    
     /**
      * Proceed only if allowed, giving CrawlController a chance
      * to enforce single-thread mode.
@@ -1768,11 +1770,11 @@ public class CrawlController implements Serializable, Reporter {
      * @throws InterruptedException
      */
     public void acquireContinuePermission() throws InterruptedException {
-        if(singleThreadMode) {
-            SINGLE_THREAD_LOCK.acquire();
+        if (singleThreadMode) {
+            this.singleThreadLock.acquire();
             if(!singleThreadMode) {
-                // if changed while waiting, ignore
-                SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds());
+                // If changed while waiting, ignore
+                this.singleThreadLock.release(this.singleThreadLock.holds());
             }
         } // else, permission is automatic
     }
@@ -1782,9 +1784,10 @@ public class CrawlController implements Serializable, Reporter {
      * another thread to proceed if in single-thread mode). 
      */
     public void releaseContinuePermission() {
-        if(singleThreadMode) {
-            if(SINGLE_THREAD_LOCK.holds()>0) {
-                SINGLE_THREAD_LOCK.release(SINGLE_THREAD_LOCK.holds()); // release all
+        if (singleThreadMode) {
+            if (this.singleThreadLock.holds() > 0) {
+                // Release all
+                this.singleThreadLock.release(this.singleThreadLock.holds());
             }
         } // else do nothing; 
     }

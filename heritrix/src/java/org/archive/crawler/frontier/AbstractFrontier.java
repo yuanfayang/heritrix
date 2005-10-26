@@ -61,6 +61,7 @@ import org.archive.crawler.settings.Type;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.TestUtils;
 
 /**
  * Shared facilities for Frontier implementations.
@@ -1040,18 +1041,11 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     //
     // Reporter implementation
     // 
-    
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#singleLineReport()
-     */
     public String singleLineReport() {
         return ArchiveUtils.singleLineReport(this);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#reportTo(java.io.Writer)
-     */
-    public void reportTo(PrintWriter writer) throws IOException {
-        reportTo(null,writer);
+    public void reportTo(PrintWriter writer) {
+        reportTo(null, writer);
     }
 }
