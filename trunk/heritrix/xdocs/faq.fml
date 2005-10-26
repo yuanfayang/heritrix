@@ -80,6 +80,22 @@
       page.</answer>
     </faq>
 
+    <faq id="linuxes">
+    <question>Which Linux distribution should I use to run Heritrix and which kernel version do I need?</question>
+    <answer><p>Heritrix does not depend on a specific Linux distribution to
+    function and should work on any distro as long as a suitable Java Virtual
+    Machine can be installed on it. We know that Heritrix has been successfully
+    deployed on Red Hat 7.2, recent fedora core versions (2 and 4), as well as
+    on suse 9.3. Heritrix is known to work well with kernel versions 2.4.x. 
+    With kernel versions 2.6.x there are issues when using JVMs other then the
+    release version of the SUN 1.5 jdk. See 
+    <a href="#testsfail">Why do unit tests fail when I build?</a> 
+    below. There are also issues when using the linux NPTL threading model, 
+    particularly with older glibcs (i.e. debian).  See
+    <a href="#glibc2_3_2">Glibc 2.3.2 and NPTL</a> in the release
+    notes.</p></answer>
+    </faq>
+
     <faq id="windows">
         <question>How do I run Heritrix on windows.</question>
         <answer>Before you begin, Heritrix is not supported
