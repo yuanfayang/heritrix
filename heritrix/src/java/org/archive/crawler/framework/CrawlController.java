@@ -325,7 +325,6 @@ public class CrawlController implements Serializable, Reporter {
         sendCrawlStateChangeEvent(PREPARING, CrawlJob.STATUS_PREPARING);
 
         this.singleThreadLock = new ReentrantLock();
-        
         this.settingsHandler = sH;
         this.order = settingsHandler.getOrder();
         this.order.setController(this);
