@@ -61,7 +61,6 @@ import org.archive.crawler.settings.Type;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.TestUtils;
 
 /**
  * Shared facilities for Frontier implementations.

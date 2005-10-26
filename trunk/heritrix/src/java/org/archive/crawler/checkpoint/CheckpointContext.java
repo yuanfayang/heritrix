@@ -200,7 +200,7 @@ implements Serializable {
         // Prepend the checkpoint name with a little 'r' so we tell apart
         // checkpoints made from a recovery.  Allow for there being
         // multiple 'r' prefixes.
-        this.checkpointPrefix += ('r' + this.checkpointPrefix);
+        this.checkpointPrefix = 'r' + this.checkpointPrefix;
     }
     
     /**
