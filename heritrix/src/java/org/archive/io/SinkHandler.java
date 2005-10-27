@@ -77,13 +77,21 @@ public class SinkHandler extends Handler {
      * @return SinkHandler instance if one registered or null.
      */
     public static SinkHandler getInstance() {
-        Handler[] handlers = Logger.getLogger("").getHandlers();
         SinkHandler h = null;
+        Handler[] handlers = Logger.getLogger("").getHandlers();
         for (int i = 0; i < handlers.length; i++) {
             if (handlers[i] instanceof SinkHandler) {
                 h = (SinkHandler) handlers[i];
                 break;
             }
+        }
+        if (h == null) {
+            // None setup automatically (Not found in heritrix.properties --
+            // can happen when deployed in a containter such as tomcat).
+            // Create one manually here.
+            h = new SinkHandler();
+            h.setLevel(Level.WARNING);
+            Logger.getLogger("").addHandler(h);
         }
         return h;
     }
