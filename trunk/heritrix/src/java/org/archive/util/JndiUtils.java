@@ -130,19 +130,22 @@ public class JndiUtils {
      * @param on The ObjectName we're to base our bind name on.
      * @return Returns key we used binding this ObjectName.
      * @throws NamingException
-     * @throws MalformedObjectNameException
      * @throws NullPointerException
      */
     public static CompoundName bindObjectName(Context context,
             final ObjectName on)
-    throws NamingException, MalformedObjectNameException, NullPointerException {
+    throws NamingException, NullPointerException {
+        // I can't call getNameInNamespace in tomcat. Complains about
+        // unsupported operation -- that I can't get absolute name.
+        // Therefore just skip this test below -- at least for now.
         // Check that passed context has the passed ObjectNames' name.
-        String name = getCompoundName(context.getNameInNamespace()).toString();
-        if (!name.equals(on.getDomain())) {
-            throw new NamingException("The current context is " + name +
-                " but domain is " + on.getDomain() + " (Was expecting " +
-                "them to be the same).");
-        }
+        //
+//        String name = getCompoundName(context.getNameInNamespace()).toString();
+//        if (!name.equals(on.getDomain())) {
+//            throw new NamingException("The current context is " + name +
+//                " but domain is " + on.getDomain() + " (Was expecting " +
+//                "them to be the same).");
+//        }
         CompoundName key = getCompoundName(on);
         context.rebind(key, getReference(on));
         return key;
@@ -150,7 +153,7 @@ public class JndiUtils {
     
     public static CompoundName unbindObjectName(final Context context,
             final ObjectName on)
-    throws MalformedObjectNameException, NullPointerException, NamingException {
+    throws NullPointerException, NamingException {
         CompoundName key = getCompoundName(on);
         context.unbind(key);
         return key;

@@ -126,7 +126,7 @@ import sun.net.www.protocol.file.FileURLConnection;
  * See ${HERITRIX_HOME}/bin/heritrix.
  * 
  * <p>Heritrix can also be embedded or launched by webapp initialization or
- * by jmx bootstrapping.
+ * by JMX bootstrapping.
  *
  * @author gojomo
  * @author Kristinn Sigurdsson
@@ -222,7 +222,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     
     private static final String JAR_SUFFIX = ".jar";
     
-    private final AlertManager alertManager;
+    private AlertManager alertManager;
     
     /**
      * True if we're to put up a GUI.
@@ -252,20 +252,22 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private ObjectName mbeanName = null;
     
     /**
-     * Server cmdline Heritrix registered its MBean with.
-     * Keep around a static reference to the server we registered with so we
-     * can deregister ourselves as we go down.
+     * Name we used registering this instance of Heritrix.
+     * Usually same as the mbeanName -- but could be just class name if no
+     * JMX agent present.
      */
-    private static MBeanServer cmdlineRegisteredServer = null;
+    private final String registrationName;
     
     /**
      * Keep reference to all instances of Heritrix.
      * Used by the UI to figure which of the local Heritrices it should
-     * be going against.
+     * be going against and to figure what to shutdown on the way out (If
+     * there was always a JMX Agent, we wouldn't need to keep this list.  We
+     * could always ask the JMX Agent for all instances).
      */
     private static Map instances = new Hashtable();
     
-    private final OpenMBeanInfoSupport openMBeanInfo;
+    private OpenMBeanInfoSupport openMBeanInfo;
     private final static String STATUS_ATTR = "Status";
     private final static List ATTRIBUTE_LIST;
     static {
@@ -298,22 +300,35 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private static final String [] JOB_KEYS =
         new String [] {"uid", "name", "status"};
     
-    
     /**
      * Constructor.
      * @throws IOException
      */
-    public Heritrix()
+    public Heritrix() throws IOException {
+        this(null);
+    }
+    
+    /**
+     * Constructor.
+     * @param name If null, we bring up the default Heritrix instance.
+     * @throws IOException
+     */
+    public Heritrix(final String name)
     throws IOException {
         super();
+        // Note, loadProperties and patchLogging have global effects -- not just
+        // effects on current Heritrix instance. May want to move these calls
+        // elsewhere and out of this contructor.
         Heritrix.loadProperties();
         Heritrix.patchLogging();
         this.jobHandler = new CrawlJobHandler(getJobsdir());
         this.openMBeanInfo = buildMBeanInfo();
+        // Set up the alerting system.  SinkHandler is also a global so will
+        // catch alerts for all running Heritrix instances.  Will need to
+        // address (Add name of instance that threw the alert to SinkRecord?).
         final SinkHandler sinkHandler = SinkHandler.getInstance();
         if (sinkHandler == null) {
-            throw new NullPointerException("SinkHandler is not " +
-                "present.  Has it been configured in heritrix.properties?");
+            throw new NullPointerException("SinkHandler not found.");
         }
         // Adapt the alerting system to use SinkHandler.
         this.alertManager = new AlertManager() {
@@ -349,6 +364,41 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 sinkHandler.read(Long.parseLong(alertID));
             }
         };
+        
+        try {
+            this.registrationName = Heritrix.registerHeritrix(this, name);
+        } catch (InstanceAlreadyExistsException e) {
+            throw new RuntimeException(e);
+        } catch (MBeanRegistrationException e) {
+            throw new RuntimeException(e);
+        } catch (NotCompliantMBeanException e) {
+            throw new RuntimeException(e);
+        } catch (MalformedObjectNameException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    /**
+     * Do inverse of construction.
+     * Used by anyone who does a 'new Heritrix' when they want to cleanup the
+     * instance.
+     */
+    public void destroy() {
+        stop();
+        try {
+            Heritrix.unregisterHeritrix(this.registrationName);
+        } catch (InstanceNotFoundException e) {
+            e.printStackTrace();
+        } catch (MBeanRegistrationException e) {
+            e.printStackTrace();
+        } catch (MalformedObjectNameException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        this.jobHandler = null;
+        this.openMBeanInfo = null;
+        this.alertManager = null;
     }
     
     /**
@@ -525,13 +575,12 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 clp.usage(1);
             }
             Heritrix h = new Heritrix();
-            Heritrix.cmdlineRegisteredServer = registerHeritrixMBean(h);
             status = h.doOneCrawl(crawlOrderFile);
         } else {
             status =
                 startEmbeddedWebserver(Heritrix.guiPort, adminLoginPassword);
             Heritrix h = new Heritrix();
-            Heritrix.cmdlineRegisteredServer = registerHeritrixMBean(h);
+            
             String tmp = h.launch(crawlOrderFile, runMode);
             if (tmp != null) {
                 status += ('\n' + tmp);
@@ -817,10 +866,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             selfTestUrl += (oneSelfTestName + '/');
         }
         Heritrix h = new Heritrix();
+        
         h.setJobHandler(new SelfTestCrawlJobHandler(h.getJobsdir(),
                 oneSelfTestName, selfTestUrl));
-        Heritrix.cmdlineRegisteredServer = registerHeritrixMBean(h);
-
         CrawlJob job = createCrawlJob(h.getJobHandler(), crawlOrderFile,
                 "Template");
         job = h.getJobHandler().newJob(job, null, SELFTEST,
@@ -846,9 +894,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
 
     /**
-     * Launch the crawler without a web UI.
+     * Launch the crawler without a web UI and run the passed crawl only.
      * 
-     * Run the passed crawl only.
+     * Specialized version of {@link #launch()}.
      *
      * @param crawlOrderFile The crawl order to crawl.
      * @throws InitializationException
@@ -861,9 +909,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
     
     /**
-     * Launch the crawler without a web UI.
+     * Launch the crawler without a web UI and run passed crawl only.
      * 
-     * Run the passed crawl only.
+     * Specialized version of {@link #launch()}.
      *
      * @param crawlOrderFile The crawl order to crawl.
      * @param listener Register this crawl status listener before starting
@@ -1278,6 +1326,14 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * possible to finish what they are doing.
      */
     public static void prepareHeritrixShutDown() {
+        // Stop and destroy all running Heritrix instances.
+        // Get array of the key set to avoid CCEs for case where call to
+        // destroy does a remove of an instance from Heritrix.instances.
+        final Object [] keys = Heritrix.instances.keySet().toArray();
+        for (int i = 0; i < keys.length; i++) {
+            ((Heritrix)Heritrix.instances.get(keys[i])).destroy();
+        }
+        
         if(Heritrix.httpServer != null) {
             // Shut down the web access.
             try {
@@ -1289,12 +1345,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             } finally {
                 Heritrix.httpServer = null;
             }
-        }
-        
-        // Shutdown all running Heritrix instances.
-        for (final Iterator i = Heritrix.instances.keySet().iterator();
-                i.hasNext();) {
-            ((Heritrix)Heritrix.instances.get(i.next())).stop();
         }
     }
 
@@ -1318,7 +1368,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
 
     /**
-     * Shutdown heritrix.
+     * Shutdown all running heritrix instances and the JVM.
      * Assumes stop has already been called.
 	 * @param exitCode Exit code to pass system exit.
 	 */
@@ -1337,17 +1387,19 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         shutdown(0);
     }
     
-    public static MBeanServer registerHeritrixMBean(final Heritrix h)
+    protected static String registerHeritrix(final Heritrix h)
     throws InstanceAlreadyExistsException, MBeanRegistrationException,
             NotCompliantMBeanException, MalformedObjectNameException {
-        return registerHeritrixMBean(h, null);
+        return registerHeritrix(h, null);
     }
     
     /**
+     * Register Heritrix with JNDI, JMX, and with the static hashtable of all
+     * Heritrix instances known to this JVM.
+     * 
      * If launched from cmdline, register Heritrix MBean if an agent to register
-     * ourselves with.
-     * Usually this method will only have effect if we're running in a 1.5.0
-     * JDK and command line options such as
+     * ourselves with. Usually this method will only have effect if we're
+     * running in a 1.5.0 JDK and command line options such as
      * '-Dcom.sun.management.jmxremote.port=8082
      * -Dcom.sun.management.jmxremote.authenticate=false
      * -Dcom.sun.management.jmxremote.ssl=false' are supplied.
@@ -1356,6 +1408,16 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * for more on the command line options and how to connect to the
      * Heritrix bean using the JDK 1.5.0 jconsole tool.  We register currently
      * with first server we find (TODO: Make configurable).
+     * 
+     * <p>If we register successfully with a JMX agent, then part of the
+     * registration will include our registering ourselves with JNDI.
+     * 
+     * <p>Finally, add the heritrix instance to the hashtable of all the
+     * Heritrix instances floating in the current VM.  This latter registeration
+     * happens whether or no there is a JMX agent to register with.  This is
+     * a list we keep out of convenience so its easy iterating over all
+     *  all instances calling stop when main application is going down.
+     * 
      * @param h Instance of heritrix to register.
      * @param name Name to use for this Heritrix instance.
      * @throws NotCompliantMBeanException
@@ -1368,36 +1430,52 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * @throws InstanceAlreadyExistsException
      * @throws MalformedObjectNameException
      * @throws NullPointerException
-     * @return MBeanServer we registered with.
+     * @return Name we registered with.
      */
-    public static MBeanServer registerHeritrixMBean(final Heritrix h,
+    protected static String registerHeritrix(final Heritrix h,
             final String name)
     throws InstanceAlreadyExistsException, MBeanRegistrationException,
             NotCompliantMBeanException, MalformedObjectNameException {
-        ObjectName objName = new ObjectName(
-                (name == null || name.length() <= 0)?
-                        getJmxName(): getJmxName(name));
-        MBeanServer server = getMBeanServer(objName);
+        String result = null;
+        ObjectName objName =
+            new ObjectName((name == null || name.length() <= 0)?
+                getJmxName(): getJmxName(name));
+        MBeanServer server = getMBeanServer();
         if (server != null) {
-            server.registerMBean(h, objName);
+            result = server.registerMBean(h, objName).getObjectName().
+                getCanonicalName();
         } else {
             // JMX ain't available. Put this instance into the list of Heritrix
             // instances so findable by the UI (Normally this is done in the
-            // jmx postRegister routine below).  When no JMX, can only have
+            // JMX postRegister routine below).  When no JMX, can only have
             // one instance of Heritrix so no need to do the deregisteration.
-            h.registerHeritrix(h.getClass().getName(), h);
+            result = h.getClass().getName();
+            Heritrix.instances.put(result, h);
         }
-        return server;
+        return result;
+    }
+    
+    protected static void unregisterHeritrix(final String key)
+    throws InstanceNotFoundException, MBeanRegistrationException,
+    MalformedObjectNameException, NullPointerException {
+        MBeanServer server = getMBeanServer();
+        if (server != null) {
+            server.unregisterMBean(new ObjectName(key));
+        } else {
+            // JMX ain't available. Remove from list of Heritrix instances.
+            // Usually this is done by the JMX postDeregister below.
+            Heritrix.instances.remove(key);
+        }
     }
     
     /**
      * Get MBeanServer.
-     * Currently uses first MBeanServer found.  TODO: Make which server
-     * settable.  Also, if none, put up our own MBeanServer.
-     * @param objName Check if this object is already registered.
+     * Currently uses first MBeanServer found.  This will definetly not be whats
+     * always wanted. TODO: Make which server settable. Also, if none, put up
+     * our own MBeanServer.
      * @return An MBeanServer to register with or null.
      */
-    public static MBeanServer getMBeanServer(final ObjectName objName) {
+    public static MBeanServer getMBeanServer() {
         MBeanServer result = null;
         List servers = MBeanServerFactory.findMBeanServer(null);
         if (servers == null) {
@@ -1408,20 +1486,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             if (server == null) {
                 continue;
             }
-            boolean registeredAlready = true;
-            try {
-                server.getObjectInstance(objName);
-            } catch (InstanceNotFoundException e) {
-                registeredAlready = false;
-            }
-            if (registeredAlready) {
-                logger.severe("Already registered to " +
-                        JmxUtils.getServerDetail(server));
-            }
-            if (!registeredAlready) {
-                result = server;
-                break;
-            }
+            result = server;
+            break;
         }
         return result;
     }
@@ -1433,7 +1499,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         ObjectName objName = null;
         try {
             objName = new ObjectName(jmxname);
-            server = getMBeanServer(objName);
+            server = getMBeanServer();
             if (server != null) {
                 server = registerMBean(server, objToRegister, objName);
             }
@@ -1578,14 +1644,17 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * Start Heritrix.
      * 
      * Used by JMX and webapp initialization for starting Heritrix.
-     * Idempotent.
+     * Not by the cmdline launched Heritrix. Idempotent.
+     * If start is called by JMX, then new instance of Heritrix is automatically
+     * registered w/ JMX Agent.  If started by webapp, need to register the new
+     * Heritrix instance.  See {@link #registerHeritrix(Heritrix)}.
      */
     public void start() {
         // Don't start if we've been launched from the command line.
         // Don't start if already started.
         if (!Heritrix.isCommandLine() && !isStarted()) {
             try {
-                launch();
+                logger.info(launch());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -2021,7 +2090,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             }
         }
         this.mbeanName = name;
-        registerHeritrix(name.getCanonicalKeyPropertyListString(), this);
+        Heritrix.instances.put(name.getCanonicalKeyPropertyListString(), this);
         return name;
     }
 
@@ -2059,33 +2128,12 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
 
     public void postDeregister() {
-        unregisterHeritrix(this.mbeanName.getCanonicalKeyPropertyListString());
-        
         Heritrix.instances.
             remove(this.mbeanName.getCanonicalKeyPropertyListString());
         if (logger.isLoggable(Level.INFO)) {
             logger.info(JmxUtils.getLogUnregistrationMsg(
                     this.mbeanName.getCanonicalName(), this.mbeanServer));
         }
-    }
-    
-    /**
-     * Populate the hashtable of all running local Heritrix instances. 
-     * Needed by UI because its tightly bound to a Heritrix instance (TODO:
-     * Make UI go via JMX instead).
-     * @param key Key to use for this instance.
-     * @param h Instance to register.
-     */
-    protected void registerHeritrix(final String key, final Heritrix h) {
-        Heritrix.instances.put(key, h);
-    }
-    
-    /**
-     * Remove reference from list of Heritrix instances.
-     * @param key Key to use for this instance.
-     */
-    protected void unregisterHeritrix(final String key) {
-        Heritrix.instances.remove(key);
     }
     
     /**
