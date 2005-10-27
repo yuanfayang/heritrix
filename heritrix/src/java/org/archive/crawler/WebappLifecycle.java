@@ -24,10 +24,6 @@ package org.archive.crawler;
 
 import java.io.IOException;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -39,7 +35,6 @@ import javax.servlet.ServletContextListener;
  */
 public class WebappLifecycle implements ServletContextListener {
     private Heritrix heritrix = null;
-    private static final String REG_KEY = "heritrix";
     public void contextInitialized(ServletContextEvent sce) {
         if (!Heritrix.isCommandLine()) {
             try {
@@ -48,7 +43,6 @@ public class WebappLifecycle implements ServletContextListener {
 				e.printStackTrace();
 			}
             if (this.heritrix != null) {
-                this.heritrix.registerHeritrix(REG_KEY, this.heritrix);
                 this.heritrix.start();
             }
         }
@@ -56,8 +50,8 @@ public class WebappLifecycle implements ServletContextListener {
 
     public void contextDestroyed(ServletContextEvent sce) {
         if (this.heritrix !=  null) {
-            this.heritrix.stop();
-            this.heritrix.unregisterHeritrix(REG_KEY);
+            this.heritrix.destroy();
+            this.heritrix = null;
         }
     }
 }
