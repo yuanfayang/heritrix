@@ -94,16 +94,15 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * @param c A crawl controller instance.
      * @throws FatalConfigurationException Not thrown here. For overrides that
      * go to settings system for configuration.
-     *
      * @see CrawlStatusListener
      * @see org.archive.crawler.event.CrawlURIDispositionListener
      */
     public void initialize(CrawlController c)
     throws FatalConfigurationException {
-        controller = c;
+        this.controller = c;
 
         // Add listeners
-        controller.addCrawlStatusListener(this);
+        this.controller.addCrawlStatusListener(this);
     }
     
     /**
@@ -112,8 +111,8 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      *
      */
     public void run() {
-        // don't start logging if we have no logger
-        if (controller == null) {
+        // Don't start logging if we have no logger
+        if (this.controller == null) {
             return;
         }
 
@@ -138,7 +137,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
             }
 
             // In case stop() was invoked while the thread was sleeping or we are paused.
-            if(shouldrun && getCrawlPauseStartedTime()==0){
+            if(shouldrun && getCrawlPauseStartedTime() == 0){
                 logActivity();
             }
         }
@@ -160,7 +159,10 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * before other threads start interacting with tracker. 
      */
     public void noteStart() {
-        crawlerStartTime = System.currentTimeMillis(); //Note the time the crawl starts.
+        if (this.crawlerStartTime == 0) {
+            // Note the time the crawl starts (only if not already set)
+            this.crawlerStartTime = System.currentTimeMillis();
+        }
     }
 
     /**
@@ -181,8 +183,8 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * <code>System.currentTimeMillis()</code> when the crawl started).
      * @return time fo the crawl's start
      */
-    public long getCrawlStartTime(){
-        return crawlerStartTime;
+    public long getCrawlStartTime() {
+        return this.crawlerStartTime;
     }
 
     /**
@@ -194,14 +196,9 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * @return The time of the crawl ending or the current time if the crawl has
      *         not ended.
      */
-    public long getCrawlEndTime()
-    {
-        if(crawlerEndTime==-1)
-        {
-            return System.currentTimeMillis();
-        }
-
-        return crawlerEndTime;
+    public long getCrawlEndTime() {
+        return (this.crawlerEndTime == -1)?
+            System.currentTimeMillis(): this.crawlerEndTime;
     }
 
     /**
@@ -210,9 +207,8 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * @return the number of msec. that the crawl was paused or otherwise
      *         suspended.
      */
-    public long getCrawlTotalPauseTime()
-    {
-        return crawlerTotalPausedTime;
+    public long getCrawlTotalPauseTime() {
+        return this.crawlerTotalPausedTime;
     }
 
     /**
@@ -223,14 +219,15 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      *         currently paused.
      */
     public long getCrawlPauseStartedTime() {
-        return crawlerPauseStarted;
+        return this.crawlerPauseStarted;
     }
 
     public long getCrawlerTotalElapsedTime() {
-        if (getCrawlStartTime()==0) {
+        if (getCrawlStartTime() == 0) {
             // if no start time set yet, consider elapsed time zero
             return 0;
         }
+        
         return (getCrawlPauseStartedTime() != 0)?
             // Are currently paused, calculate time up to last pause
             (getCrawlPauseStartedTime() - getCrawlTotalPauseTime() -
@@ -285,13 +282,21 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
      */
     public void crawlResuming(String statusMessage) {
-        if(crawlerPauseStarted>0){
-            // Ok, we managed to actually pause before resuming.
-            crawlerTotalPausedTime+=(System.currentTimeMillis()-crawlerPauseStarted);
-        }
-        crawlerPauseStarted = 0;
+        tallyCurrentPause();
         logNote("CRAWL RESUMED");
         lastLogPointTime = System.currentTimeMillis();
+    }
+
+    /**
+     * For a current pause (if any), add paused time to total and reset
+     */
+    protected void tallyCurrentPause() {
+        if (this.crawlerPauseStarted > 0) {
+            // Ok, we managed to actually pause before resuming.
+            this.crawlerTotalPausedTime
+                += (System.currentTimeMillis() - this.crawlerPauseStarted);
+        }
+        this.crawlerPauseStarted = 0;
     }
 
     public void crawlEnding(String sExitMessage) {
@@ -302,7 +307,8 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
-        crawlerEndTime = System.currentTimeMillis(); //Note the time when the crawl stops.
+        //Note the time when the crawl stops.
+        crawlerEndTime = System.currentTimeMillis();
         logActivity(); //Log end state
         logNote("CRAWL ENDED - " + sExitMessage);
         shouldrun = false;
@@ -310,6 +316,11 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
         finalCleanup();
     }
 
+    public void crawlStarted(String message) {
+        tallyCurrentPause();
+        noteStart();
+    }
+    
     /**
      * Dump reports, if any, on request or at crawl end. 
      */
