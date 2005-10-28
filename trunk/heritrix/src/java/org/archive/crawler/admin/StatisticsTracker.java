@@ -230,14 +230,12 @@ implements CrawlURIDispositionListener, Serializable {
         downloadDisregards = disregardedFetchAttempts();
         totalProcessedBytes = totalBytesWritten();
 
-        if(finishedUriCount() == 0){
+        if (finishedUriCount() == 0) {
             docsPerSecond = 0;
             totalKBPerSec = 0;
-        }
-        else if(getCrawlerTotalElapsedTime() < 1000){
-            return; //Not enough time has passed for a decent snapshot.
-        }
-        else{
+        } else if (getCrawlerTotalElapsedTime() < 1000) {
+            return; // Not enough time has passed for a decent snapshot.
+        } else {
             docsPerSecond = (double) downloadedUriCount /
                 (double)(getCrawlerTotalElapsedTime() / 1000);
             // Round to nearest long.
@@ -262,7 +260,7 @@ implements CrawlURIDispositionListener, Serializable {
 
             // if we haven't done anyting or there isn't a reasonable sample
             // size give up.
-            if(sampleTime >= 1000) {
+            if (sampleTime >= 1000) {
                 // Update docs/sec snapshot
                 long currentPageCount = successfullyFetchedCount();
                 long samplePageCount = currentPageCount - lastPagesFetchedCount;
@@ -738,13 +736,6 @@ implements CrawlURIDispositionListener, Serializable {
         this.sExitMessage = message; // held for reference by reports
         super.crawlEnded(message);
         logger.info("Leaving crawlEnded");
-    }
-    
-    public void crawlStarted(String message) {
-        // Reset these values in case statistics are from a recovered crawl.
-        this.crawlerPauseStarted = 0;
-        this.crawlerTotalPausedTime = 0;
-        noteStart();
     }
     
     /**
