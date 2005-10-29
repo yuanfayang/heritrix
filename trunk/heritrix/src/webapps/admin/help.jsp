@@ -23,6 +23,10 @@
         advanced users.
 </p>
 <p>
+    <b><a target="_blank" 
+        href="<%=request.getContextPath()%>/docs/articles/releasenotes.html">Release Notes</a></b><br>
+</p>
+<p>
 	<b><a href="http://crawler.archive.org/issue-tracking.html" target="_blank">Issue Tracking</a></b><br />
 	If you have found a bug or would like to see new features in Heritrix, check the following links:
 	<ul>
