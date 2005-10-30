@@ -24,6 +24,8 @@
  */
 package org.archive.queue;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -35,13 +37,12 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedNode;
  * 
  * @author gojomo
  */
-public class LinkedQueue extends EDU.oswego.cs.dl.util.concurrent.LinkedQueue {
-    /** count of items in queue*/
+public class LinkedQueue extends EDU.oswego.cs.dl.util.concurrent.LinkedQueue
+implements Serializable {
+    /** Count of items in queue.
+     */
     protected int count = 0;
 
-    /* (non-Javadoc)
-     * @see EDU.oswego.cs.dl.util.concurrent.LinkedQueue#extract()
-     */
     protected synchronized Object extract() {
         Object obj = super.extract();
         if (obj != null) {
@@ -50,9 +51,6 @@ public class LinkedQueue extends EDU.oswego.cs.dl.util.concurrent.LinkedQueue {
         return obj;
     }
 
-    /* (non-Javadoc)
-     * @see EDU.oswego.cs.dl.util.concurrent.LinkedQueue#insert(java.lang.Object)
-     */
     protected void insert(Object x) {
         super.insert(x);
         synchronized(this) { // (increments are not atomic)
@@ -72,6 +70,43 @@ public class LinkedQueue extends EDU.oswego.cs.dl.util.concurrent.LinkedQueue {
     public int getCount() {
         return count;
     }
+    
+    /**
+     * Custom serialization.
+     * Serialize this object then each of the items of the linkedqueue
+     * in turn.
+     * @param out Stream to serialize to.
+     * @throws IOException
+     */
+    private void writeObject(final java.io.ObjectOutputStream out)
+    throws IOException {
+        out.defaultWriteObject();
+        for (final Iterator i = iterator(); i.hasNext();) {
+            out.writeObject(i.next());
+        }
+    }
+    
+    /**
+     * Custom deserialization to match custom
+     * {@link #writeObject(java.io.ObjectOutputStream)}.
+     * @param in Stream to read from.
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void readObject(final java.io.ObjectInputStream in)
+    throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        int localCount = this.count;
+        // Reset.
+        this.count = 0;
+        for (int i = 0; i < localCount; i++) {
+            try {
+                put(in.readObject());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
     public Iterator iterator() {
         return new LinkedQueueIterator();
@@ -86,26 +121,17 @@ public class LinkedQueue extends EDU.oswego.cs.dl.util.concurrent.LinkedQueue {
      * @author gojomo
      */
     public class LinkedQueueIterator implements Iterator {
-        LinkedNode current;
+        private LinkedNode current;
 
-        /**
-         * 
-         */
         public LinkedQueueIterator() {
             super();
             current = head_;
         }
 
-        /* (non-Javadoc)
-         * @see java.util.Iterator#hasNext()
-         */
         public boolean hasNext() {
             return current.next != null;
         }
 
-        /* (non-Javadoc)
-         * @see java.util.Iterator#next()
-         */
         public Object next() {
             if (current.next == null) {
                 throw new NoSuchElementException();
@@ -115,9 +141,6 @@ public class LinkedQueue extends EDU.oswego.cs.dl.util.concurrent.LinkedQueue {
             return obj;
         }
 
-        /* (non-Javadoc)
-         * @see java.util.Iterator#remove()
-         */
         public void remove() {
             throw new UnsupportedOperationException();
         }
