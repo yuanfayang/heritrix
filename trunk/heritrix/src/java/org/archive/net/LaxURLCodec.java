@@ -103,6 +103,7 @@ public class LaxURLCodec extends URLCodec {
         }
         // special chars
         EXPANDED_URI_SAFE.set('-');
+        EXPANDED_URI_SAFE.set('~');
         EXPANDED_URI_SAFE.set('_');
         EXPANDED_URI_SAFE.set('.');
         EXPANDED_URI_SAFE.set('*');
