@@ -235,6 +235,12 @@ public class UURIFactoryTest extends TestCase {
         UURIFactory.getInstance(base, "http://www.changeup.com/...</a");
     }
     
+    public final void testTilde() throws URIException {
+        final String tildeUri = "http://license.joins.com/~igor";
+        UURI uuri = UURIFactory.getInstance(tildeUri);
+        assertEquals(uuri.toString(), tildeUri);
+    }
+    
 	public final void testTrimSpaceNBSP() throws URIException {
 		final String uri = "   http://archive.org/DIR WITH SPACES/" +
 		UURIFactory.NBSP + "home.html    " + UURIFactory.NBSP + "   ";
