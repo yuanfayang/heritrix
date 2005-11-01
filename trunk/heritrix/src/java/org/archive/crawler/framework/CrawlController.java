@@ -279,7 +279,7 @@ public class CrawlController implements Serializable, Reporter {
      * concurrent modification exceptions.
      * See {@link java.util.Collections#synchronizedList(List)}.
      */
-    private List registeredCrawlStatusListeners =
+    private transient List registeredCrawlStatusListeners =
         Collections.synchronizedList(new ArrayList());
     
     // Since there is a high probability that there will only ever by one
@@ -1719,17 +1719,6 @@ public class CrawlController implements Serializable, Reporter {
             Collections.synchronizedList(new ArrayList());
         // Ensure no holdover singleThreadMode
         singleThreadMode = false; 
-    }
-
-    private void writeObject(ObjectOutputStream stream) throws IOException {
-        // Save off the registeredCrawlStatusListeners and set to null for
-        // serialization.  It has awkward to serialize content.  See above
-        // where we deserialize and create a new instance to put in place of
-        // the null serialized instance.
-        List savedList = this.registeredCrawlStatusListeners;
-        this.registeredCrawlStatusListeners = null;
-        stream.defaultWriteObject();
-        this.registeredCrawlStatusListeners = savedList;
     }
 
     /**
