@@ -30,10 +30,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -50,13 +48,7 @@ import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.crawler.util.BloomUriUniqFilter;
 import org.archive.util.ArchiveUtils;
 
-import com.sleepycat.je.Cursor;
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
-import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.DatabaseNotFoundException;
-import com.sleepycat.je.OperationStatus;
 
 /**
  * A Frontier using several BerkeleyDB JE Databases to hold its record of
@@ -85,18 +77,6 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     
     private final static String DEFAULT_INCLUDED =
         BdbUriUniqFilter.class.getName();
-    
-    private static final String READY_QUEUES_DBNAME = "readyQueues";
-    private static final String INACTIVE_QUEUES_DBNAME = "inactiveQueues";
-    private static final String RETIRED_QUEUES_DBNAME = "retiredQueues";
-    private static final String SNOOZED_QUEUES_DBNAME = "snoozedQueues";
-    private static final String [] SAVED_QUEUES_DBNAMES = {
-        READY_QUEUES_DBNAME, INACTIVE_QUEUES_DBNAME, RETIRED_QUEUES_DBNAME,
-        SNOOZED_QUEUES_DBNAME
-    };
-    
-    private static final DatabaseEntry EMPTY_DB_ENTRY =
-        new DatabaseEntry(new byte [0]);
     
     /**
      * Constructor.
@@ -247,211 +227,19 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         return results;
     }
     
-    /**
-     * Private interface used in the below initQueue so I can treat TreeMap,
-     * LinkedQueue, and Set all the same when it comes to adding objects.
-     * @author stack
-     */
-    private interface Putter {
-        /**
-         * @param obj Object to add.
-         * @throws InterruptedException LinkedQueue can throw this on put.
-         */
-        public void put(Object obj) throws InterruptedException;
-    }
-    
     protected void initQueue() throws IOException {
         try {
-            pendingUris = createMultipleWorkQueues();
+            this.pendingUris = createMultipleWorkQueues();
         } catch(DatabaseException e) {
             throw (IOException)new IOException(e.getMessage()).initCause(e);
         }
-        // If checkpoint recover.
-        if (this.controller.isCheckpointRecover()) {
-            try {
-                resurrectQueueState();
-            } catch (DatabaseException e) {
-                IOException ioe = new IOException("Converted bdb exception: " +
-                    e.getMessage());
-                ioe.setStackTrace(e.getStackTrace());
-            }
-        }
     }
     
-    protected void resurrectQueueState()
-    throws DatabaseException {
-        // TODO: Resurrect allqueues. Is it done above when we reopen bigmap?
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Pending URIs count: " + queuedUriCount());
-            for (Iterator i = this.allQueues.keySet().iterator();
-                    i.hasNext();) {
-                logger.finer("allqueues " +
-                    ((WorkQueue)this.allQueues.get(i.next())).getClassKey());
-            }
-        }
-        
-        // Are there other dbs around with which to populate the
-        // readyQueues, inactiveQueues and retiredQueues?
-        List queueDbBaseNames = Arrays.asList(SAVED_QUEUES_DBNAMES);
-        List dbNames = this.controller.getBdbEnvironment().getDatabaseNames();
-        if (!dbNames.containsAll(queueDbBaseNames)) {
-            logger.severe("All expected dbs not present -- skipping "
-                    + "resurrection of " + SAVED_QUEUES_DBNAMES);
-        } else {
-            try {
-                Putter p = new Putter() {
-                    public void put(Object obj)
-                    throws InterruptedException {
-                        readyClassQueues.put(obj);
-                    }
-                };
-                resurrectOneQueueState(READY_QUEUES_DBNAME, p, false);
-                
-                p = new Putter() {
-                    public void put(Object obj) throws InterruptedException {
-                        inactiveQueues.put(obj);
-                    }
-                };
-                resurrectOneQueueState(INACTIVE_QUEUES_DBNAME, p, false);
-                
-                p = new Putter() {
-                    public void put(Object obj) throws InterruptedException {
-                        retiredQueues.put(obj);
-                    }
-                };
-                resurrectOneQueueState(RETIRED_QUEUES_DBNAME, p, false);
-                
-                p = new Putter() {
-                    public void put(Object obj) {
-                        snoozedClassQueues.add(obj);
-                    }
-                };
-                resurrectOneQueueState(SNOOZED_QUEUES_DBNAME, p, true);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    protected void resurrectOneQueueState(final String dbName,
-            final Putter putter, final boolean isWq)
-    throws DatabaseException, InterruptedException {
-        DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setAllowCreate(false);
-        dbConfig.setReadOnly(true);
-        Database db = this.controller.getBdbEnvironment().
-            openDatabase(null, dbName, dbConfig);
-        OperationStatus status;
-        Cursor c = null;
-        try {
-            DatabaseEntry key = new DatabaseEntry();
-            DatabaseEntry noValue = new DatabaseEntry();
-            c = db.openCursor(null, null);
-            status = c.getFirst(key, noValue, null);
-            long count = 0;
-            if (status == OperationStatus.SUCCESS) {
-                count++;
-                put(putter, new String(key.getData()), isWq);
-            }
-            while ((status = c.getNext(key, noValue, null)) ==
-                    OperationStatus.SUCCESS) {
-                count++;
-                put(putter, new String(key.getData()), isWq);
-            }
-        } finally {
-            c.close();
-            db.close();
-        }
-    }
-    
-    protected void put(final Putter putter, final String key,
-            final boolean isWq)
-    throws InterruptedException {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Restoring: " + key);
-        }
-        Object obj = (isWq)? this.allQueues.get(key): key;
-        assert obj != null: obj + " is null: " + key;
-        putter.put(obj);
-    }
-    
-    protected void saveStringKeysToBdb(final String dbName,
-        final Iterator iterator) 
-    throws DatabaseException {
-        saveStringKeysToBdb(dbName, new Iterator [] {iterator});
-    }
-    
-    /**
-     * Save to bdb the passed <code>arrayOfIterators</code>.
-     * @param dbName Name of db to save to.
-     * @param arrayOfIterators Array of iterators over strings or over
-     * WorkQueue instances.
-     * @throws DatabaseException
-     */
-    protected void saveStringKeysToBdb(String dbName,
-            Iterator [] arrayOfIterators)
-    throws DatabaseException {
-        DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setAllowCreate(true);
-        // Overwrite any extant db, if there is one.
-        try {
-            this.controller.getBdbEnvironment().
-                truncateDatabase(null, dbName, false);
-        } catch (DatabaseNotFoundException e) {
-            // Ignore.
-        }
-        Database db = this.controller.getBdbEnvironment().
-            openDatabase(null, dbName, dbConfig);
-        OperationStatus status = null;
-        try {
-            for (int i = 0; i < arrayOfIterators.length; i++) {
-                for (Iterator it = arrayOfIterators[i]; it.hasNext();) {
-                    Object obj = it.next();
-                    String key = (obj instanceof WorkQueue)?
-                        ((WorkQueue)obj).getClassKey(): (String)obj;
-                    assert this.allQueues.get(key) != null:
-                        key + " not in allqueues.";
-                    status = db.put(null, new DatabaseEntry(key.getBytes()),
-                        EMPTY_DB_ENTRY);
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.fine(dbName + ", " + key + ", " +
-                            key.getClass().getName() + ", " + status);
-                    }
-                }
-            }
-        } finally {
-            db.close();
-        }
-    }
-
     protected void closeQueue() {
         if (this.pendingUris != null) {
             this.pendingUris.close();
             this.pendingUris = null;
         }
-    }
-    
-    protected void persistQueueState() throws Exception {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Pending URIs count: " + this.queuedUriCount);
-            for (Iterator i = this.allQueues.keySet().iterator();
-                    i.hasNext();) {
-                logger.finer("allqueues " +
-                    ((WorkQueue)this.allQueues.get(i.next())).getClassKey());
-            }
-        }
-        
-        // Write out readyQueues. Append inProcessQueues and snoozedQueues.
-        // Let restart refigure whats snoozed and in process.
-        saveStringKeysToBdb(READY_QUEUES_DBNAME, new Iterator[] {
-                this.readyClassQueues.iterator(),
-                this.inProcessQueues.iterator() });
-        saveStringKeysToBdb(SNOOZED_QUEUES_DBNAME, this.snoozedClassQueues
-                .iterator());
-        saveStringKeysToBdb(INACTIVE_QUEUES_DBNAME, this.inactiveQueues
-                .iterator());
-        saveStringKeysToBdb(RETIRED_QUEUES_DBNAME, this.retiredQueues
-                .iterator());
     }
         
     protected BdbMultipleWorkQueues getWorkQueues() {
@@ -496,12 +284,16 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             this.queuedUriCount = f.queuedUriCount;
             this.succeededFetchCount = f.succeededFetchCount;
             this.lastMaxBandwidthKB = f.lastMaxBandwidthKB;
+            this.readyClassQueues = f.readyClassQueues;
+            this.inactiveQueues = f.inactiveQueues;
+            this.retiredQueues = f.retiredQueues;
+            this.snoozedClassQueues = f.snoozedClassQueues;
+            this.inProcessQueues = f.inProcessQueues;
         }
     }
 
     public void crawlCheckpoint(File checkpointDir) throws Exception {
         super.crawlCheckpoint(checkpointDir);
-        persistQueueState();
         logger.fine("Started serializing already seen as part "
             + "of checkpoint. Can take some time.");
         CheckpointContext

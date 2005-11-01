@@ -88,7 +88,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * in active rotation. (As a result, queue's next try may be much
      * further in the future than the snooze target delay.)
      */
-    public final static String ATTR_SNOOZE_DEACTIVATE_MS = "snooze-deactivate-ms";
+    public final static String ATTR_SNOOZE_DEACTIVATE_MS =
+        "snooze-deactivate-ms";
     public static Long DEFAULT_SNOOZE_DEACTIVATE_MS = new Long(5*60*1000); // 5 minutes
     // TODO: make configurable
     
@@ -125,32 +126,35 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      thus should not be rescheduled */
     protected transient UriUniqFilter alreadyIncluded;
 
-    /** all known queues */
+    /** All known queues.
+     */
     protected transient Map allQueues = null; // of classKey -> ClassKeyQueue
 
     /**
      * All per-class queues whose first item may be handed out.
      * Linked-list of keys for the queues.
      */
-    protected transient LinkedQueue readyClassQueues = new LinkedQueue();
+    protected LinkedQueue readyClassQueues = new LinkedQueue();
 
     /** 
      * All 'inactive' queues, not yet in active rotation.
      * Linked-list of keys for the queues.
      */
-    protected transient LinkedQueue inactiveQueues = new LinkedQueue();
+    protected LinkedQueue inactiveQueues = new LinkedQueue();
 
     /**
      * 'retired' queues, no longer considered for activation.
      * Linked-list of keys for queues.
      */
-    protected transient LinkedQueue retiredQueues = new LinkedQueue();
+    protected LinkedQueue retiredQueues = new LinkedQueue();
     
     /** all per-class queues from whom a URI is outstanding */
     protected Bag inProcessQueues = 
         BagUtils.synchronizedBag(new HashBag()); // of ClassKeyQueue
-
-    /** all per-class queues held in snoozed state, sorted by wake time */
+    
+    /**
+     * All per-class queues held in snoozed state, sorted by wake time.
+     */
     protected SortedSet snoozedClassQueues =
         Collections.synchronizedSortedSet(new TreeSet());
 
@@ -244,6 +248,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // Call the super method. It sets up frontier journalling.
         super.initialize(c);
         this.controller = c;
+        
         try {
             if (workQueueDataOnDisk()
                     && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
@@ -269,10 +274,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             initQueue();
         } catch (IOException e) {
             e.printStackTrace();
-            throw (FatalConfigurationException)new FatalConfigurationException(e.getMessage()).initCause(e);
+            throw (FatalConfigurationException)
+                new FatalConfigurationException(e.getMessage()).initCause(e);
         } catch (Exception e) {
             e.printStackTrace();
-            throw (FatalConfigurationException)new FatalConfigurationException(e.getMessage()).initCause(e);
+            throw (FatalConfigurationException)
+                new FatalConfigurationException(e.getMessage()).initCause(e);
         }
         
         initCostPolicy();
@@ -776,7 +783,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         logLocalizedErrors(curi);
         WorkQueue wq = (WorkQueue) curi.getHolder();
         assert (wq.peek(this) == curi) : "unexpected peek " + wq;
-        inProcessQueues.remove(wq,1);
+        inProcessQueues.remove(wq, 1);
 
         if (needsRetrying(curi)) {
             // Consider errors which can be retried, leaving uri atop queue
@@ -938,11 +945,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     }
     
     /**
-     * @return One-line summary report, useful for display when full report
-     * may be unwieldy. 
-     * @throws IOException
+     * @param w Where to write to.
      */
-    public void singleLineReportTo(PrintWriter w) throws IOException {
+    public void singleLineReportTo(PrintWriter w) {
         int allCount = allQueues.size();
         int inProcessCount = inProcessQueues.uniqueSet().size();
         int readyCount = readyClassQueues.getCount();
@@ -1003,7 +1008,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     /** Compact report of all nonempty queues (one queue per line)
      * 
      * @param writer
-     * @throws IOException
      */
     private void allNonemptyReportTo(PrintWriter writer) {
         ArrayList inProcessQueuesCopy;
@@ -1030,7 +1034,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     /** Compact report of all nonempty queues (one queue per line)
      * 
      * @param writer
-     * @throws IOException
      */
     private void allQueuesReportTo(PrintWriter writer) {
         queueSingleLinesTo(writer, allQueues.keySet().iterator());
@@ -1041,8 +1044,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * iterator to the writer 
      * 
      * @param writer to receive report
-     * @param iterator over queues of interest
-     * @throws IOException
+     * @param iterator over queues of interest.
      */
     private void queueSingleLinesTo(PrintWriter writer, Iterator iterator) {
         Object obj;
@@ -1068,8 +1070,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     }
 
     /**
-     * @param w
-     * @throws IOException
+     * @param w Writer to print to.
      */
     private void standardReportTo(PrintWriter w) {
         int allCount = allQueues.size();
@@ -1170,7 +1171,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param iterator An iterator over 
      * @param total
      * @param max
-     * @throws IOException
      */
     protected void appendQueueReports(PrintWriter w, Iterator iterator,
             int total, int max) {

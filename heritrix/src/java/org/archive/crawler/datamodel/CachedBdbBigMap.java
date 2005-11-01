@@ -104,6 +104,4 @@ implements BigMap, Serializable {
             this.db = null;
         }
     }
-    
-    
 }
