@@ -92,7 +92,6 @@ import org.archive.httpclient.HttpRecorderGetMethod;
 import org.archive.httpclient.HttpRecorderMethod;
 import org.archive.httpclient.HttpRecorderPostMethod;
 import org.archive.httpclient.SingleHttpConnectionManager;
-import org.archive.httpclient.ThreadLocalHttpConnectionManager;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;

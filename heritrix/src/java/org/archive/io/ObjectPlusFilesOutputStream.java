@@ -1,4 +1,4 @@
-/* CheckpointObjectOutputStream
+/* ObjectPlusFilesOutputStream
 *
 * $Id$
 *
