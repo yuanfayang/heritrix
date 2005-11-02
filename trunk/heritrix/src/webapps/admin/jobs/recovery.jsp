@@ -23,8 +23,7 @@
         StringBuffer ret = new StringBuffer();
         for (int i = jobs.size() - 1 ; i >= 0 ; i--) {
             CrawlJob tmp = (CrawlJob)jobs.get(i);
-            tmp.scanCheckpoints();
-            Collection cps = tmp.getCheckpoints();
+            Collection cps = tmp.scanCheckpoints();
             // Are there valid cps -- that have bdbje logs in them?
             boolean foundValidCp = false;
             for (final Iterator it = cps.iterator(); it.hasNext(); ) {
