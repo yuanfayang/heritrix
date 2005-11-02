@@ -80,6 +80,7 @@ import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.AbstractFrontier;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.ModuleAttributeInfo;
+import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.TextField;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.util.IoUtils;
@@ -201,12 +202,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     private transient CrawlJobErrorHandler errorHandler = null;
 
     protected transient XMLSettingsHandler settingsHandler;
-
-    // all discovered on-disk checkpoints for this job
-    private Collection checkpoints = null;
-
-    // Checkpoint to resume
-    private transient Checkpoint resumeFrom = null;
     
     private transient CrawlController controller = null;
     
@@ -739,12 +734,21 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     public class MBeanCrawlController extends CrawlController
     implements Serializable {
         private static final long serialVersionUID = -4608537998168407222L;
+        private CrawlJob cj = null;
+        
+        public CrawlJob getCrawlJob() {
+            return this.cj;
+        }
 
+        public void setCrawlJob(CrawlJob cj) {
+            this.cj = cj;
+        }     
+        
         protected void completeStop() {
             try {
                 super.completeStop();
             } finally {
-                unregisterMBean();
+                this.cj.unregisterMBean();
             }
         }
     }
@@ -775,6 +779,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             // Register as listener to get job finished notice.
             this.controller.addCrawlStatusListener(this);
             this.controller.initialize(getSettingsHandler());
+            // Set the crawl job this MBeanCrawlController needs to worry about.
+            ((MBeanCrawlController)this.controller).setCrawlJob(this);
             // Create our mbean description and register our crawljob.
             this.openMBeanInfo = buildMBeanInfo();
             Heritrix.registerMBean(this, getUID(), CRAWLJOB_JMXMBEAN_TYPE);
@@ -962,50 +968,18 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      * Read all the checkpoints found in the job's checkpoints
      * directory into Checkpoint instances
      */
-    public void scanCheckpoints() {
+    public Collection scanCheckpoints() {
         File checkpointsDirectory =
             settingsHandler.getOrder().getCheckpointsDirectory();
         File[] perCheckpointDirs = checkpointsDirectory.listFiles();
-        checkpoints = new ArrayList();
+        Collection checkpoints = new ArrayList();
         if (perCheckpointDirs != null) {
             for (int i = 0; i < perCheckpointDirs.length; i++) {
                 Checkpoint cp = new Checkpoint(perCheckpointDirs[i]);
                 checkpoints.add(cp);
             }
         }
-    }
-
-    /**
-     * @return collection of Checkpoint instances available
-     * on disk for this job
-     */
-    public Collection getCheckpoints() {
         return checkpoints;
-    }
-
-    /**
-     * @param chkptName Name of chkpoint.
-     * @return checkpoint matching the given name
-     */
-    public Checkpoint getCheckpoint(String chkptName) {
-        if(checkpoints == null) {
-            scanCheckpoints();
-        }
-        Iterator iter = checkpoints.iterator();
-        while(iter.hasNext()) {
-            Checkpoint candidate = (Checkpoint) iter.next();
-            if (candidate.getName().equals(chkptName)) {
-                return candidate;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @return the checkpoint to resume from, or null
-     */
-    public Checkpoint getResumeFromCheckpoint() {
-        return resumeFrom;
     }
 
     /**
@@ -1992,7 +1966,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     public void preDeregister() throws Exception {
-        // TODO: Remove from JNDI.
+        // Nothing to do.
     }
 
     public void postDeregister() {
