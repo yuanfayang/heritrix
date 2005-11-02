@@ -80,7 +80,6 @@ import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.AbstractFrontier;
 import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.ModuleAttributeInfo;
-import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.TextField;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.util.IoUtils;

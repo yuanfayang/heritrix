@@ -275,6 +275,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
                 throw new FatalConfigurationException("Failed checkpoint " +
                     "recover: " + e.getMessage());
             }
+
             this.nextOrdinal = f.nextOrdinal;
             this.totalProcessedBytes = f.totalProcessedBytes;
             this.disregardedUriCount = f.disregardedUriCount;

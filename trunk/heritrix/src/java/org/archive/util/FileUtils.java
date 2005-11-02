@@ -43,8 +43,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import org.archive.crawler.checkpoint.CheckpointContext;
-
 
 /** Utility methods for manipulating files and directories.
  *
