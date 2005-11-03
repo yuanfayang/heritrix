@@ -72,9 +72,11 @@ public class PreconditionEnforcer
     public final static String ATTR_ROBOTS_VALIDITY_DURATION
         = "robot-validity-duration-seconds";
 
-    /**
-     * @param name
-     */
+    /** whether to calculate robots exclusion without applying */
+    public final static Boolean DEFAULT_CALCULATE_ROBOTS_ONLY = Boolean.FALSE;
+    public final static String ATTR_CALCULATE_ROBOTS_ONLY 
+        = "calculate-robots-only";
+    
     public PreconditionEnforcer(String name) {
         super(name, "Precondition enforcer");
 
@@ -93,6 +95,14 @@ public class PreconditionEnforcer
                 "If the value is set to '0', then the robots.txt information" +
                 " will never expire.",
                 DEFAULT_ROBOTS_VALIDITY_DURATION));
+        e.setExpertSetting(true);
+        
+        e = addElementToDefinition(new SimpleType(ATTR_CALCULATE_ROBOTS_ONLY,
+                "Whether to only calculate the robots status of an URI, " +
+                "without actually applying any exclusions found. If true, " +
+                "exlcuded URIs will only be annotated in the crawl.log, but " +
+                "still fetched. Default is false. ",
+                DEFAULT_CALCULATE_ROBOTS_ONLY));
         e.setExpertSetting(true);
     }
 
@@ -177,12 +187,18 @@ public class PreconditionEnforcer
         if(cs.isValidRobots()){
             String ua = getController().getOrder().getUserAgent(curi);
             if(cs.getRobots().disallows(curi, ua)) {
-                // Don't fetch and turn off later stages of processing.
-                curi.skipToProcessorChain(getController().getPostprocessorChain());
-                curi.setFetchStatus(S_ROBOTS_PRECLUDED);
-                curi.putString("error","robots.txt exclusion");
-                logger.fine("robots.txt precluded " + curi);
-                return true;
+                if(((Boolean)getUncheckedAttribute(curi,ATTR_CALCULATE_ROBOTS_ONLY)).booleanValue() == true) {
+                    // annotate URI as excluded, but continue to process normally
+                    curi.addAnnotation("robotExcluded");
+                    return false; 
+                } else {
+                    // Don't fetch and turn off later stages of processing.
+                    curi.skipToProcessorChain(getController().getPostprocessorChain());
+                    curi.setFetchStatus(S_ROBOTS_PRECLUDED);
+                    curi.putString("error","robots.txt exclusion");
+                    logger.fine("robots.txt precluded " + curi);
+                    return true;
+                }
             }
             return false;
         }
