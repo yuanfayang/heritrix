@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,7 +57,6 @@ import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.checkpoint.Checkpoint;
 import org.archive.crawler.checkpoint.CheckpointContext;
-import org.archive.crawler.datamodel.BigMapFactory;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
@@ -75,6 +75,7 @@ import org.archive.io.GenerationFileHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
 import org.archive.util.Reporter;
 import org.xbill.DNS.DClass;
@@ -305,6 +306,12 @@ public class CrawlController implements Serializable, Reporter {
     private transient StoredClassCatalog classCatalog = null;
     
     /**
+     * Keep a list of all BigMap instance made -- shouldn't be many -- so that
+     * we can checkpoint.
+     */
+    private transient Map bigmaps = null;
+    
+    /**
      * Default constructor
      */
     public CrawlController() {
@@ -327,6 +334,7 @@ public class CrawlController implements Serializable, Reporter {
         this.settingsHandler = sH;
         this.order = settingsHandler.getOrder();
         this.order.setController(this);
+        this.bigmaps = new Hashtable();
         sExit = "";
         this.manifest = new StringBuffer();
         String onFailMessage = "";
@@ -640,7 +648,7 @@ public class CrawlController implements Serializable, Reporter {
         	scope.initialize(this);
         }
         try {
-            this.serverCache = new ServerCache(getSettingsHandler());
+            this.serverCache = new ServerCache(this);
         } catch (Exception e) {
             throw new FatalConfigurationException("Unable to" +
                " initialize frontier (Failed setup of ServerCache) " + e);
@@ -756,8 +764,8 @@ public class CrawlController implements Serializable, Reporter {
         MapType loggers = order.getLoggers();
         final String cstName = "crawl-statistics";
         if (loggers.isEmpty(null)) {
-            if (!isCheckpointRecover() && statistics == null) {
-                statistics = new StatisticsTracker(cstName);
+            if (!isCheckpointRecover() && this.statistics == null) {
+                this.statistics = new StatisticsTracker(cstName);
             }
             loggers.addElement(null, (StatisticsTracker)this.statistics);
         }
@@ -1066,6 +1074,7 @@ public class CrawlController implements Serializable, Reporter {
             }
             this.bdbEnvironment = null;
         }
+        this.bigmaps = null;
 
         LOGGER.fine("Finished crawl.");
     }
@@ -1166,7 +1175,7 @@ public class CrawlController implements Serializable, Reporter {
         
         // Sync the BigMap contents to bdb, if their bdb bigmaps.
         LOGGER.fine("BigMaps.");
-        BigMapFactory.checkpoint(context.getCheckpointInProgressDirectory());
+        checkpointBigMaps(context.getCheckpointInProgressDirectory());
         
         // Note, on deserialization, the super CrawlType#parent
         // needs to be restored. Parent is '/crawl-order/loggers'.
@@ -1863,17 +1872,10 @@ public class CrawlController implements Serializable, Reporter {
         reportTo(null,writer);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#singleLineReport()
-     */
     public String singleLineReport() {
         return ArchiveUtils.singleLineReport(this);
     }
 
-    
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#reportTo(java.lang.String, java.io.Writer)
-     */
     public void reportTo(String name, PrintWriter writer) {
         if(PROCESSORS_REPORT.equals(name)) {
             reportProcessorsTo(writer);
@@ -1888,7 +1890,7 @@ public class CrawlController implements Serializable, Reporter {
     }
 
     /**
-     * @param writer
+     * @param writer Where to write report to.
      */
     protected void reportManifestTo(PrintWriter writer) {
         writer.print(manifest.toString());
@@ -1924,13 +1926,52 @@ public class CrawlController implements Serializable, Reporter {
         writer.write("[Crawl Controller]\n");
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.util.Reporter#singleLineLegend()
-     */
     public String singleLineLegend() {
         // TODO improve
         return "nothingYet";
     }
     
+    /**
+     * Call this method to get instance of the crawler BigMap implementation.
+     * A "BigMap" is a Map that knows how to manage ever-growing sets of
+     * key/value pairs. If we're in a checkpoint recovery, this method will
+     * manage reinstantiation of checkpointed bigmaps.
+     * @param dbName Name to give any associated database.  Also used
+     * as part of name serializing out bigmap.  Needs to be unique to a crawl.
+     * @param keyClass Class of keys we'll be using.
+     * @param valueClass Class of values we'll be using.
+     * @return Map that knows how to carry large sets of key/value pairs or
+     * if none available, returns instance of HashMap.
+     * @throws Exception
+     */
+    public Map getBigMap(final String dbName, final Class keyClass,
+            final Class valueClass)
+    throws Exception {
+        CachedBdbMap result = new CachedBdbMap(dbName);
+        if (isCheckpointRecover()) {
+            File baseDir = getCheckpointRecover().getDirectory();
+            result = (CachedBdbMap)CheckpointContext.
+                readObjectFromFile(result.getClass(), dbName, baseDir);
+        }
+        result.initialize(getBdbEnvironment(), keyClass, valueClass,
+                getClassCatalog());
+        // Save reference to all big maps made so can manage their
+        // checkpointing.
+        this.bigmaps.put(dbName, result);
+        return result;
+    }
     
+    protected void checkpointBigMaps(final File cpDir)
+    throws Exception {
+        for (final Iterator i = this.bigmaps.keySet().iterator(); i.hasNext();) {
+            Object key = i.next();
+            Object obj = this.bigmaps.get(key);
+            // TODO: I tried adding sync to custom serialization of BigMap
+            // implementation but data member counts of the BigMap
+            // implementation were not being persisted properly.  Look at
+            // why.  For now, do sync in advance of serialization for now.
+            ((CachedBdbMap)obj).sync();
+            CheckpointContext.writeObjectToFile(obj, (String)key, cpDir);
+        }
+    }
 }

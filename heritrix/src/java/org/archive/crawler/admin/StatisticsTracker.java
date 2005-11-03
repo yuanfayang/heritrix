@@ -40,7 +40,6 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.BigMapFactory;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.AbstractTracker;
@@ -179,20 +178,15 @@ implements CrawlURIDispositionListener, Serializable {
     throws FatalConfigurationException {
         super.initialize(c);
         try {
-            this.hostsDistribution = 
-                BigMapFactory.getBigMap(c.getSettingsHandler(), 
-                    "hostsDistribution", String.class, LongWrapper.class);
-            this.hostsBytes = 
-                BigMapFactory.getBigMap(c.getSettingsHandler(),
-                    "hostsBytes", String.class, LongWrapper.class);
-            this.hostsLastFinished = 
-                BigMapFactory.getBigMap(c.getSettingsHandler(), 
-                    "hostsLastFinished", String.class, Long.class);
-            this.processedSeedsRecords = 
-                Collections.synchronizedMap(BigMapFactory.
-                    getBigMap(c.getSettingsHandler(), "processedSeedsRecords",
-                        String.class, SeedRecord.class));
-            
+            this.hostsDistribution = c.getBigMap("hostsDistribution",
+                String.class, LongWrapper.class);
+            this.hostsBytes = c.getBigMap("hostsBytes", String.class,
+                LongWrapper.class);
+            this.hostsLastFinished =  c.getBigMap("hostsLastFinished",
+                String.class, Long.class);
+            this.processedSeedsRecords =
+                Collections.synchronizedMap(c.getBigMap("processedSeedsRecords",
+                    String.class, SeedRecord.class));
         } catch (Exception e) {
             throw new FatalConfigurationException("Failed setup of" +
                 " StatisticsTracker: " + e);

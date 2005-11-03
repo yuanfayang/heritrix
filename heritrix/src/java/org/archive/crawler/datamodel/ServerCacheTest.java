@@ -25,6 +25,7 @@ package org.archive.crawler.datamodel;
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.settings.SettingsHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 
@@ -35,7 +36,7 @@ import org.archive.net.UURIFactory;
  */
 public class ServerCacheTest extends TestCase {
     public void testHolds() throws Exception {
-        ServerCache servers = new ServerCache(null);
+        ServerCache servers = new ServerCache((SettingsHandler)null);
         String serverKey = "www.example.com:9090";
         String hostKey = "www.example.com";
         servers.getServerFor(serverKey);
@@ -46,7 +47,7 @@ public class ServerCacheTest extends TestCase {
     
     public void testCrawlURIKeys()
     throws Exception {
-        ServerCache servers = new ServerCache(null);
+        ServerCache servers = new ServerCache((SettingsHandler)null);
         testHostServer(servers, "http://www.example.com");
         testHostServer(servers, "http://www.example.com:9090");
         testHostServer(servers, "dns://www.example.com:9090");

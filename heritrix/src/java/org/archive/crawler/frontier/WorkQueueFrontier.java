@@ -39,7 +39,6 @@ import java.util.logging.Logger;
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.BagUtils;
 import org.apache.commons.collections.bag.HashBag;
-import org.archive.crawler.datamodel.BigMapFactory;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -256,9 +255,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                         MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
                 this.allQueues = Collections.synchronizedMap(new HashMap());
             } else {
-                this.allQueues = Collections.synchronizedMap(BigMapFactory
-                        .getBigMap(this.getSettingsHandler(), "allqueues",
-                                String.class, WorkQueue.class));
+                this.allQueues =
+                    Collections.synchronizedMap(c.getBigMap("allqueues",
+                        String.class, WorkQueue.class));
                 if (logger.isLoggable(Level.FINE)) {
                     Iterator i = this.allQueues.keySet().iterator();
                     try {
