@@ -1117,11 +1117,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
             "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
         try {
-            this.currentJob.startCrawling();
+            this.currentJob.setupForCrawlStart();
             // This is ugly but needed so I can clear the currentJob
             // reference in the crawlEnding and update the list of completed
             // jobs.  Also, crawlEnded can startup next job.
             this.currentJob.getController().addCrawlStatusListener(this);
+            // now, actually start
+            this.currentJob.getController().requestCrawlStart();
         } catch (InitializationException e) {
             this.completedCrawlJobs.add(this.currentJob);
             this.currentJob = null;

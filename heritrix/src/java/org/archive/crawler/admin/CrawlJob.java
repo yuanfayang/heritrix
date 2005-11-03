@@ -752,7 +752,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         }
     }
     
-    public void startCrawling()
+    public void setupForCrawlStart()
     throws InitializationException {
         try {
             // Check if we're to do a checkpoint recover.  If so, deserialize
@@ -796,7 +796,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         setStatus(CrawlJob.STATUS_RUNNING);
         setRunning(true);
         setStatisticsTracking(this.controller.getStatistics());
-        this.controller.requestCrawlStart();
     }
     
     public void stopCrawling() {
