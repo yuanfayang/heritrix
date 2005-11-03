@@ -197,6 +197,9 @@ implements FrontierJournal {
     }
     
     private synchronized void writeLine(MutableString mstring) {
+        if (this.out == null) {
+            return;
+        }
         try {
             this.out.write("\n");
             mstring.write(out);
@@ -206,19 +209,7 @@ implements FrontierJournal {
         }
     }
     
-    private synchronized void writeLine(MutableString m1, MutableString m2) {
-        try {
-            this.out.write("\n");
-            m1.write(out);
-            m2.write(out);
-            noteLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
     /**
-     * 
      * @throws IOException
      */
     private void noteLine() throws IOException {

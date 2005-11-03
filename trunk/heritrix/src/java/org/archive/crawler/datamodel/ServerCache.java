@@ -23,10 +23,12 @@
 package org.archive.crawler.datamodel;
 
 import java.util.Map;
+import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SettingsHandler;
 
 /**
@@ -60,13 +62,25 @@ public class ServerCache {
         super();
     }
     
-    public ServerCache(SettingsHandler settings)
+    /**
+     * This constructor creates a ServerCache that is all memory-based using
+     * Hashtables.  Used for unit testing only
+     * (Use {@link #ServerCache(CrawlController)} when crawling).
+     * @param sh
+     * @throws Exception
+     */
+    public ServerCache(final SettingsHandler sh)
     throws Exception {
-        this.settingsHandler = settings;
-        this.servers = BigMapFactory.getBigMap(settings, "servers",
-            String.class, CrawlServer.class);
-        this.hosts = BigMapFactory.getBigMap(settings, "hosts",
-            String.class, CrawlHost.class);
+        this.settingsHandler = sh;
+        this.servers = new Hashtable();
+        this.hosts = new Hashtable();
+    }
+    
+    public ServerCache(final CrawlController c)
+    throws Exception {
+        this.settingsHandler = c.getSettingsHandler();
+        this.servers = c.getBigMap("servers", String.class, CrawlServer.class);
+        this.hosts = c.getBigMap("hosts", String.class, CrawlHost.class);
     }
     
     /**

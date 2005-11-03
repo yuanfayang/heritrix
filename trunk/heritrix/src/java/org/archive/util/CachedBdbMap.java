@@ -87,7 +87,8 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      */
     private static final Map dbEnvironmentMap = new HashMap();
 
-    /** The BDB JE environment used for this instance. */
+    /** The BDB JE environment used for this instance.
+     */
     private transient DbEnvironmentEntry dbEnvironment;
 
     /** The BDB JE database used for this instance. */
@@ -120,6 +121,11 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * object (Doesn't include accesses that came back null).
      */
     private long diskHit = 0;
+    
+    /**
+     * Name of bdbje db.
+     */
+    private String dbName = null;
 
     /**
      * Reference to the Reference#referent Field.
@@ -152,20 +158,39 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     }
     
     /**
-     * Constructor for subclasses to use.
+     * Shudown default constructor.
      */
-    protected CachedBdbMap() {
+    private CachedBdbMap() {
         super();
-        setup();
+    }
+    
+    /**
+     * Constructor.
+     * 
+     * You must call
+     * {@link #initialize(Environment, Class, Class, StoredClassCatalog)}
+     * to finish construction. Construction is two-stepped to support
+     * reconnecting a deserialized CachedBdbMap with its backing bdbje
+     * database.
+     * 
+     * @param dbName Name of the backing db this instance should use.
+     */
+    public CachedBdbMap(final String dbName) {
+        this();
+        this.dbName = dbName;
     }
 
     /**
      * A constructor for creating a new CachedBdbMap.
-     * <p>
+     * 
      * Even though the put and get methods conforms to the Collections interface
      * taking any object as key or value, you have to submit the class of the
      * allowed key and value objects here and will get an exception if you try
      * to put anything else in the map.
+     * 
+     * <p>This constructor internally calls
+     * {@link #initialize(Environment, Class, Class, StoredClassCatalog)}.
+     * Do not call initialize if you use this constructor.
      * 
      * @param dbDir The directory where the database will be created.
      * @param dbName The name of the database to back this map by.
@@ -175,39 +200,49 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * @throws DatabaseException is thrown if the underlying BDB JE database
      *             throws an exception.
      */
-    public CachedBdbMap(File dbDir, String dbName, Class keyClass,
-            Class valueClass) throws DatabaseException {
-        super();
-        setup();
-        dbEnvironment = getDbEnvironment(dbDir);
-        this.db = openDatabase(dbEnvironment.environment, dbName);
-        dbEnvironment.openDbCount++;
-        this.diskMap = createDiskMap(this.db, dbEnvironment.classCatalog,
-            keyClass, valueClass);
+    public CachedBdbMap(final File dbDir, final String dbName,
+            final Class keyClass, final Class valueClass)
+    throws DatabaseException {
+        this(dbName);
+        this.dbEnvironment = getDbEnvironment(dbDir);
+        this.dbEnvironment.openDbCount++;
+        initialize(dbEnvironment.environment, keyClass, valueClass,
+            dbEnvironment.classCatalog);
+        if (logger.isLoggable(Level.INFO)) {
+            // Write out the bdb configuration.
+            EnvironmentConfig cfg = this.dbEnvironment.environment.getConfig();
+            logger.info("BdbConfiguration: Cache percentage "  +
+                cfg.getCachePercent() + ", cache size " + cfg.getCacheSize() +
+                ", Map size: " + size());
+        }
     }
     
     /**
-     * Constructor that takes ready-made environment and class catalog.
-     * @param environment
+     * Call this method when you have an instance when you used the
+     * default constructor or when you have a deserialized instance that you
+     * want to reconnect with an extant bdbje environment.  Do not
+     * call this method if you used the
+     * {@link #CachedBdbMap(File, String, Class, Class)} constructor.
+     * @param env
+     * @param keyClass
+     * @param valueClass
      * @param classCatalog
-     * @param dbName The name of the database to back this map by.
-     * @param keyClass The class of the objects allowed as keys.
-     * @param valueClass The class of the objects allowed as values.
-     * @throws DatabaseException is thrown if the underlying BDB JE database
-     *             throws an exception.
+     * @throws DatabaseException
      */
-    public CachedBdbMap(Environment environment,
-            StoredClassCatalog classCatalog,
-            String dbName, Class keyClass, Class valueClass)
+    public void initialize(final Environment env, final Class keyClass,
+            final Class valueClass, final StoredClassCatalog classCatalog)
     throws DatabaseException {
-        super();
-        setup();
-        this.db = openDatabase(environment, dbName);
+        initializeInstance();
+        this.db = openDatabase(env, this.dbName);
         this.diskMap = createDiskMap(this.db, classCatalog, keyClass,
             valueClass);
     }
     
-    private void setup() {
+    /**
+     * Do any instance setup.
+     * This method is used by constructors and when deserializing an instance.
+     */
+    protected void initializeInstance() {
         this.memMap = new HashMap();
         this.refQueue = new ReferenceQueue();
     }
@@ -216,12 +251,6 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
             StoredClassCatalog classCatalog, Class keyClass, Class valueClass) {
         return new StoredMap(database, new SerialBinding(classCatalog,
             keyClass), new SerialBinding(classCatalog, valueClass), true);
-    }
-
-    public CachedBdbMap(File dbDir, String dbName, Map map, Class keyClass,
-            Class valueClass) throws DatabaseException {
-        this(dbDir, dbName, keyClass, valueClass);
-        putAll(map);
     }
 
     /**
@@ -247,7 +276,6 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         // We're doing the caching ourselves so setting these at the lowest
         // possible level.
         envConfig.setCachePercent(1);
-        
         DbEnvironmentEntry env = new DbEnvironmentEntry();
         try {
             env.environment = new Environment(dbDir, envConfig);
@@ -262,15 +290,6 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
                     CLASS_CATALOG, dbConfig);
             
             env.classCatalog = new StoredClassCatalog(catalogDb);
-            
-            if (logger.isLoggable(Level.INFO)) {
-                // Write out the bdb configuration.
-                envConfig = env.environment.getConfig();
-                logger.info("BdbConfiguration: Cache percentage "
-                        + envConfig.getCachePercent() + ", cache size "
-                        + envConfig.getCacheSize() + ", Map size: "
-                        + size());
-            }
         } catch (DatabaseException e) {
             e.printStackTrace();
             //throw new FatalConfigurationException(e.getMessage());
@@ -278,8 +297,8 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         return env;
     }
 
-    protected synchronized Database openDatabase(Environment environment,
-            String dbName) throws DatabaseException {
+    protected synchronized Database openDatabase(final Environment environment,
+            final String dbName) throws DatabaseException {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setTransactional(false);
         dbConfig.setAllowCreate(true);
@@ -287,8 +306,15 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     }
 
     public synchronized void close() throws DatabaseException {
-        if( db != null) {
-            db.close();
+        // Close out my bdb db.
+        if (this.db != null) {
+            try {
+                this.db.close();
+            } catch (DatabaseException e) {
+                e.printStackTrace();
+            } finally {
+                this.db = null;
+            }
         }
         if (dbEnvironment != null) {
             dbEnvironment.openDbCount--;
@@ -386,10 +412,21 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         return prevVal;
     }
 
+    /**
+     * Note that a call to this method CLOSEs the underlying bdbje.
+     * This instance is no longer of any use.  It must be re-initialized.
+     * We close the db here because if this BigMap is being treated as a plain
+     * Map, this is only opportunity for cleanup.
+     */
     public void clear() {
-        memMap.clear();
-        diskMap.clear();
-        diskMapSize = 0;
+        this.memMap.clear();
+        this.diskMap.clear();
+        this.diskMapSize = 0;
+        try {
+            close();
+        } catch (DatabaseException e) {
+            e.printStackTrace();
+        }
     }
 
     public Object remove(final Object key) {
@@ -427,15 +464,15 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     }
     
     protected String getDatabaseName() {
-        String dbName = "DbName-Lookup-Failed";
+        String name = "DbName-Lookup-Failed";
         try {
             if (this.db != null) {
-                dbName = this.db.getDatabaseName();
+                name = this.db.getDatabaseName();
             }
         } catch (DatabaseException e) {
             // Ignore.
         }
-        return dbName;
+        return name;
     }
     
     /**
@@ -577,7 +614,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     private void readObject(java.io.ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        setup();
+        initializeInstance();
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(getDatabaseName() + " diskMapSize: " + diskMapSize);
         }
