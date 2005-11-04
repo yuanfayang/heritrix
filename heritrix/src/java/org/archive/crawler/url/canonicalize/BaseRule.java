@@ -55,6 +55,7 @@ implements CanonicalizationRule {
      */
     public BaseRule(String name, String description) {
         super(name, description);
+        setExpertSetting(true);
         setOverrideable(true);
         Object [] possibleValues = {Boolean.TRUE, Boolean.FALSE};
         addElementToDefinition(new SimpleType(ATTR_ENABLED,

@@ -60,9 +60,11 @@
                              boolean expert,
                              CrawlJobErrorHandler errorHandler) 
                          throws Exception {
-        if(mbean.isTransient() || (mbean.isExpertSetting() && expert == false)){
+        if(mbean.isTransient()){
             return "";
         }
+        String expertClass = expert ? "expertShow" : "expertHide";
+        
         StringBuffer p = new StringBuffer();
         MBeanInfo info = mbean.getMBeanInfo(settings);
         MBeanAttributeInfo[] a = info.getAttributes();
@@ -76,7 +78,8 @@
         	TextUtils.escapeForMarkupAttribute(mbean.getDescription());
         String descriptionForJs = 
         	TextUtils.escapeForJavascript(mbean.getDescription());
-        p.append("<tr><td title=\"" + descriptionForAttribute +"\">");
+        p.append(mbean.isExpertSetting()?"<tr class='"+expertClass+"'>":"<tr>");
+        p.append("<td title=\"" + descriptionForAttribute +"\">");
         p.append("<b>" + indent + mbean.getName() + "</b></td>\n");
         p.append("<td><a class='help' href=\"javascript:doPop('");
         p.append(descriptionForJs);
@@ -105,7 +108,7 @@
                 Object localAttribute = null;
                 ModuleAttributeInfo att = (ModuleAttributeInfo)a[n]; //The attributes of the current attribute.
 
-                if(att.isTransient()==false && (att.isExpertSetting()==false || expert)){
+                if(att.isTransient()==false){
                     try {
                         currentAttribute = mbean.getAttribute(settings, att.getName());
                         localAttribute = mbean.getLocalAttribute(settings, att.getName());
@@ -136,7 +139,9 @@
         					TextUtils.escapeForMarkupAttribute(att.getDescription());
         				descriptionForJs = 
         					TextUtils.escapeForJavascript(att.getDescription());
-                        p.append("<tr><td title=\"" + descriptionForAttribute +"\" valign='top'>");
+        				p.append((att.isExpertSetting()||mbean.isExpertSetting())
+        				           ?"<tr class='"+expertClass+"'>":"<tr>");
+                        p.append("<td title=\"" + descriptionForAttribute +"\" valign='top'>");
                         p.append(indent + "&nbsp;&nbsp;" + att.getName() + ":&nbsp;</td>");
                         p.append("<td valign='top'><a class='help' href=\"javascript:doPop('");
                         p.append(descriptionForJs);
