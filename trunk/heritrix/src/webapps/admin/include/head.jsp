@@ -37,6 +37,8 @@
         <title>Heritrix: <%=title%></title>
         <link rel="stylesheet" 
             href="<%=request.getContextPath()%>/css/heritrix.css">
+        <script src="/js/util.js">
+        </script>
     </head>
 
     <body>

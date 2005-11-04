@@ -91,19 +91,6 @@
             map.removeElement(orderfile,key);
             response.sendRedirect("configure.jsp?job=" + theJob.getUID());
             return;
-        } else if(action.equals("updateexpert")) {
-            if(request.getParameter("expert") != null) {
-                if(request.getParameter("expert").equals("true")) {
-                    expert = true;
-                } else {
-                    expert = false;
-                }
-                // Save to cookie.
-                Cookie operatorCookie = new Cookie("expert", 
-                    Boolean.toString(expert));
-                operatorCookie.setMaxAge(60*60*24*365); //One year
-                response.addCookie(operatorCookie);
-            }
         }
     }    
 
@@ -149,13 +136,6 @@
             alert(text);
         }
         
-        function setExpert(val){
-            document.frmConfig.expert.value = val;
-            document.frmConfig.action.value="updateexpert";
-            setUpdate();
-            doSubmit();
-        }
-        
         function setUpdate(){
             document.frmConfig.update.value = "true";
         }
@@ -163,16 +143,36 @@
         function setEdited(name){
             setUpdate();
         }
+        
+        expert = <%=expert%>;
+        function setExpert(exp) {
+            var initVal = exp ? "expertHide" : "expertShow";
+            var newVal = exp ? "expertShow" : "expertHide";
+            var trElements = document.getElementsByTagName("tr");
+            for(i = 0; i < trElements.length; i++) {
+                if(trElements[i].className == initVal) {
+                    trElements[i].className = newVal;
+                }   
+            }
+            eraseCookie('expert','/jobs/'); // erase legacy cookie if any
+            createCookie('expert',exp,365);
+            document.getElementById('hideExpertLink').className=exp?'show':'hide';
+            document.getElementById('showExpertLink').className=exp?'hide':'show';
+        }
     </script>
 
     <p>
         <%@include file="/include/jobnav.jsp"%>
     <p>
-        <% if(expert){ %>
-            <a href="javascript:setExpert('false')">Hide expert settings</a>
-        <% } else { %>
-            <a href="javascript:setExpert('true')">View expert settings</a>
-        <% } %>
+
+            <a id='hideExpertLink' 
+                class='<%=expert?"show":"hide"%>' 
+                href="javascript:setExpert(false)">Hide expert settings</a>
+
+            <a id='showExpertLink' 
+               class='<%=expert?"hide":"show"%>'  
+               href="javascript:setExpert(true)">View expert settings</a>
+
     <p>
     
     <form name="frmConfig" method="post" action="configure.jsp">
