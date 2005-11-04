@@ -236,9 +236,34 @@ public class UURIFactoryTest extends TestCase {
     }
     
     public final void testTilde() throws URIException {
-        final String tildeUri = "http://license.joins.com/~igor";
-        UURI uuri = UURIFactory.getInstance(tildeUri);
-        assertEquals(uuri.toString(), tildeUri);
+        noChangeExpected("http://license.joins.com/~igor");
+    }
+    
+    public final void testCurlies() throws URIException {
+        // Firefox allows curlies in the query string portion of a URL only
+        // (converts curlies if they are in the path portion ahead of the
+        // query string).
+        UURI uuri =
+            noChangeExpected("http://license.joins.com/igor?one={curly}");
+        assertEquals(uuri.getQuery(), "one={curly}");
+        assertEquals(UURIFactory.
+                getInstance("http://license.joins.com/igor{curly}.html").
+                    toString(),
+            "http://license.joins.com/igor%7Bcurly%7D.html");
+        boolean exception = false;
+        try {
+            UURIFactory.getInstance("http://license.{curly}.com/igor.html");
+        } catch (URIException u) {
+            exception = true;
+        }
+        assertTrue("Did not get exception.", exception);
+    }
+    
+    protected UURI noChangeExpected(final String original)
+    throws URIException {
+        UURI uuri = UURIFactory.getInstance(original);
+        assertEquals(original, uuri.toString());
+        return uuri;
     }
     
 	public final void testTrimSpaceNBSP() throws URIException {

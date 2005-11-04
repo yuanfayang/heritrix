@@ -85,9 +85,10 @@ public class LaxURLCodec extends URLCodec {
         return buffer.toByteArray(); 
     }
 
-    /** a more expansive set of ASCII URI characters to consider
-     * as 'safe' to leave unencoded, based on actual browser
-     * behavior */
+    /**
+     * A more expansive set of ASCII URI characters to consider as 'safe' to
+     * leave unencoded, based on actual browser behavior.
+     */
     public static BitSet EXPANDED_URI_SAFE = new BitSet(256);
     static {
         // alpha characters
@@ -126,6 +127,14 @@ public class LaxURLCodec extends URLCodec {
         EXPANDED_URI_SAFE.set('\'');
     }
     
+    public static BitSet QUERY_SAFE = new BitSet(256);
+    static {
+        QUERY_SAFE.or(EXPANDED_URI_SAFE);
+        // Tests indicate Firefox (1.0.7-1) doesn't escape curlies in query str.
+        QUERY_SAFE.set('{');
+        QUERY_SAFE.set('}');
+    }
+    
     /**
      * Encodes a string into its URL safe form using the specified
      * string charset. Unsafe characters are escaped.
@@ -136,15 +145,15 @@ public class LaxURLCodec extends URLCodec {
      * 
      * @param safe BitSet of characters that don't need to be encoded
      * @param pString String to encode
-     * @param charset name of character set to use
-     * @return
+     * @param cs Name of character set to use
+     * @return Encoded version of <code>pString</code>.
      * @throws UnsupportedEncodingException
      */
-    public String encode(BitSet safe, String pString, String charset)
-            throws UnsupportedEncodingException {
+    public String encode(BitSet safe, String pString, String cs)
+    throws UnsupportedEncodingException {
         if (pString == null) {
             return null;
         }
-        return new String(encodeUrl(safe,pString.getBytes(charset)), "US-ASCII");
+        return new String(encodeUrl(safe,pString.getBytes(cs)), "US-ASCII");
     }
 }

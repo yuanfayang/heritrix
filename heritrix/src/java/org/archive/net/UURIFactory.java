@@ -30,6 +30,7 @@ import it.unimi.dsi.mg4j.util.MutableString;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -523,7 +524,8 @@ public class UURIFactory extends URI {
         // '[ 913687 ] Make extractors interrogate for charset'.
 
         uriPath = ensureMinimalEscaping(uriPath, charset);
-        uriQuery = ensureMinimalEscaping(uriQuery, charset);
+        uriQuery = ensureMinimalEscaping(uriQuery, charset,
+            LaxURLCodec.QUERY_SAFE);
 
         // Preallocate.  The '1's and '2's in below are space for ':',
         // '//', etc. URI characters.
@@ -632,20 +634,34 @@ public class UURIFactory extends URI {
      * are *not* escaped, as per browser behavior. 
      * 
      * @param u String to escape
+     * @param charset 
      * @return string with any necessary escaping applied
      */
-    private String ensureMinimalEscaping(String u, String charset) {
+    private String ensureMinimalEscaping(String u, final String charset) {
+        return ensureMinimalEscaping(u, charset, LaxURLCodec.EXPANDED_URI_SAFE);
+    }
+    
+    /**
+     * Ensure that there all characters needing escaping
+     * in the passed-in String are escaped. Stray '%' characters
+     * are *not* escaped, as per browser behavior. 
+     * 
+     * @param u String to escape
+     * @param charset 
+     * @param bitset 
+     * @return string with any necessary escaping applied
+     */
+    private String ensureMinimalEscaping(String u, final String charset,
+            final BitSet bitset) {
         if (u == null) {
             return null;
         }
         for (int i = 0; i < u.length(); i++) {
             char c = u.charAt(i);
-            if (!LaxURLCodec.EXPANDED_URI_SAFE.get(c)) {
+            if (!bitset.get(c)) {
                 try {
-                    u = LaxURLCodec.DEFAULT.encode(
-                            LaxURLCodec.EXPANDED_URI_SAFE, u, charset);
+                    u = LaxURLCodec.DEFAULT.encode(bitset, u, charset);
                 } catch (UnsupportedEncodingException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
                 break;

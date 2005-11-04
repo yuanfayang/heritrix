@@ -50,11 +50,12 @@ public class LaxURI extends URI {
     protected static final BitSet lax_abs_path = new BitSet(256);
     static {
         lax_abs_path.or(abs_path);
-        lax_abs_path.set('|'); // tests indicate Firefox (1.0.6) doesn't escape
+        lax_abs_path.set('|'); // tests indicate Firefox (1.0.6) doesn't escape.
     }
     
     // passthrough initializers
-    public LaxURI(String uri, boolean escaped, String charset) throws URIException {
+    public LaxURI(String uri, boolean escaped, String charset)
+    throws URIException {
         super(uri,escaped,charset);
     }
     public LaxURI(URI base, URI relative) throws URIException {
@@ -74,8 +75,8 @@ public class LaxURI extends URI {
     
     // overridden to use this class's static decode()
     public String getPath() throws URIException {
-        char[] path = getRawPath();
-        return (path == null) ? null : decode(path, getProtocolCharset());
+        char[] p = getRawPath();
+        return (p == null) ? null : decode(p, getProtocolCharset());
     }
 
     // overridden to use this class's static decode()
@@ -132,8 +133,8 @@ public class LaxURI extends URI {
      * @return (possibly more lax) BitSet to use
      */
     protected BitSet lax(BitSet generous) {
-        if(generous == rel_segment) {
-            // swap in more lax allowable set
+        if (generous == rel_segment) {
+            // Swap in more lax allowable set
             return lax_rel_segment;
         }
         if (generous == abs_path) {
