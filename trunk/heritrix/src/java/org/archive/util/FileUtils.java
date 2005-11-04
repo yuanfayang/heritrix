@@ -51,6 +51,9 @@ import java.util.regex.Pattern;
 public class FileUtils {
     private static final Logger LOGGER =
         Logger.getLogger(FileUtils.class.getName());
+    
+    private static final boolean DEFAULT_OVERWRITE = true;
+    
     /**
      * Constructor made private because all methods of this class are static.
      */
@@ -90,7 +93,7 @@ public class FileUtils {
      */
     public static void copyFiles(File src, File dest)
     throws IOException {
-        copyFiles(src, null, dest, false);
+        copyFiles(src, null, dest, false, true);
     }
     
     /**
@@ -129,10 +132,13 @@ public class FileUtils {
      * filtering wanted.
      * @param dest File or directory to copy to.
      * @param inSortedOrder Copy in order of natural sort.
+     * @param overwrite If target file already exits, and this parameter is
+     * true, overwrite target file (We do this by first deleting the target
+     * file before we begin the copy).
      * @throws IOException
      */
     public static void copyFiles(final File src, final FilenameFilter filter,
-            final File dest, final boolean inSortedOrder)
+        final File dest, final boolean inSortedOrder, final boolean overwrite)
     throws IOException {
         // TODO: handle failures at any step
         if (!src.exists()) {
@@ -157,10 +163,10 @@ public class FileUtils {
             }
             for (int i = 0; i < list.length; i++) {
                 copyFiles(new File(src, list[i]), filter,
-                    new File(dest, list[i]), inSortedOrder);
+                    new File(dest, list[i]), inSortedOrder, overwrite);
             }
         } else {
-            copyFile(src, dest);
+            copyFile(src, dest, overwrite);
         }
     }
 
@@ -173,9 +179,43 @@ public class FileUtils {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public static boolean copyFile(File src, File dest)
-            throws FileNotFoundException, IOException {
-        return copyFile(src, dest, -1);
+    public static boolean copyFile(final File src, final File dest)
+    throws FileNotFoundException, IOException {
+        return copyFile(src, dest, -1, DEFAULT_OVERWRITE);
+    }
+    
+    /**
+     * Copy the src file to the destination.
+     * 
+     * @param src
+     * @param dest
+     * @param overwrite If target file already exits, and this parameter is
+     * true, overwrite target file (We do this by first deleting the target
+     * file before we begin the copy).
+     * @return True if the extent was greater than actual bytes copied.
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public static boolean copyFile(final File src, final File dest,
+        final boolean overwrite)
+    throws FileNotFoundException, IOException {
+        return copyFile(src, dest, -1, overwrite);
+    }
+    
+    /**
+     * Copy up to extent bytes of the source file to the destination
+     *
+     * @param src
+     * @param dest
+     * @param extent Maximum number of bytes to copy
+     * @return True if the extent was greater than actual bytes copied.
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public static boolean copyFile(final File src, final File dest,
+        long extent)
+    throws FileNotFoundException, IOException {
+        return copyFile(src, dest, extent, DEFAULT_OVERWRITE);
     }
 
 	/**
@@ -184,19 +224,29 @@ public class FileUtils {
      * @param src
      * @param dest
      * @param extent Maximum number of bytes to copy
+	 * @param overwrite If target file already exits, and this parameter is
+     * true, overwrite target file (We do this by first deleting the target
+     * file before we begin the copy).
 	 * @return True if the extent was greater than actual bytes copied.
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public static boolean copyFile(File src, File dest, long extent)
-            throws FileNotFoundException, IOException {
+    public static boolean copyFile(final File src, final File dest,
+        long extent, final boolean overwrite)
+    throws FileNotFoundException, IOException {
         boolean result = false;
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.fine("Copying file " + src + " to " + dest + " extent " +
                 extent + " exists " + dest.exists());
         }
         if (dest.exists()) {
-            dest.delete();
+            if (overwrite) {
+                dest.delete();
+                LOGGER.finer(dest.getAbsolutePath() + " removed before copy.");
+            } else {
+                // Already in place and we're not to overwrite.  Return.
+                return result;
+            }
         }
         FileInputStream fis = null;
         FileOutputStream fos = null;

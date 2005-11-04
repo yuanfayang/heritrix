@@ -355,12 +355,13 @@ public class CrawlController implements Serializable, Reporter {
             
             // Figure if we're to do a checkpoint restore. If so, get the
             // checkpointRecover instance and then put into place the old bdb
-            // log files. CrawlController will manage the restoration
-            // of the old StatisticsTracker.  Moving the bdb log files
-            // into place and reviving the StatisticsTracker are the
-            // main tasks done by CrawlController recovering a checkpoint.
-            // Other objects interested in recovery need to ask
-            // CrawlController#isCheckpointRecover to figure if in
+            // log files. If any of the log files already exist in target state
+            // diretory, WE DO NOT OVERWRITE (Makes for faster recovery).
+            // CrawlController checkpoint recovery code manages restoration of
+            // the old StatisticsTracker, any BigMaps used by the Crawler and
+            // the moving of bdb log files into place only. Other objects
+            // interested in recovery need to ask if
+            // CrawlController#isCheckpointRecover is set to figure if in
             // recovery and then take appropriate recovery action
             // (These objects can call CrawlController#getCheckpointRecover
             // to get the directory that might hold files/objects dropped
@@ -424,11 +425,13 @@ public class CrawlController implements Serializable, Reporter {
         // Copy the bdb log files to the state dir so we don't damage
         // old checkpoint.  If thousands of log files, can take
         // tens of minutes (1000 logs takes ~5 minutes to java copy,
-        // dependent upon hardware).
+        // dependent upon hardware).  If log file already exists over in the
+        // target state directory, we do not overwrite -- we assume the log
+        // file in the target same as one we'd copy from the checkpoint dir.
         File bdbSubDir = CheckpointContext.
             getBdbSubDirectory(this.checkpointRecover.getDirectory());
         FileUtils.copyFiles(bdbSubDir, CheckpointContext.getJeLogsFilter(),
-            getStateDisk(), true);
+            getStateDisk(), true, false);
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.info("Finished recovery setup for checkpoint named " +
                 this.checkpointRecover.getDisplayName() + " in " +
