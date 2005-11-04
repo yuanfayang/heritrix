@@ -782,7 +782,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             ((MBeanCrawlController)this.controller).setCrawlJob(this);
             // Create our mbean description and register our crawljob.
             this.openMBeanInfo = buildMBeanInfo();
-            Heritrix.registerMBean(this, getUID(), CRAWLJOB_JMXMBEAN_TYPE);
+            Heritrix.registerMBean(this, getJmxJobName(),
+                CRAWLJOB_JMXMBEAN_TYPE);
         } catch (InitializationException e) {
             // Can't load current job since it is misconfigured.
             setStatus(CrawlJob.STATUS_MISCONFIGURED);
@@ -965,6 +966,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     /**
      * Read all the checkpoints found in the job's checkpoints
      * directory into Checkpoint instances
+     * @return Collection containing list of all checkpoints.
      */
     public Collection scanCheckpoints() {
         File checkpointsDirectory =
@@ -1972,5 +1974,13 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             logger.info(JmxUtils.getLogUnregistrationMsg(
                     this.mbeanName.getCanonicalName(), this.mbeanServer));
         }
+    }
+    
+    /**
+     * @return Unique name for job that is safe to use in jmx (Like display
+     * name but without spaces).
+     */
+    public String getJmxJobName() {
+        return getJobName() + "-" + getUID();
     }
 }
