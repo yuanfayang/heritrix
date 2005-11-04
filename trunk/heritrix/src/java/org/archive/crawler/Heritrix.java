@@ -287,13 +287,15 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private final static String COMPLETED_JOBS_OPER = "completedJobs";
     private final static String CRAWLEND_REPORT_OPER = "crawlendReport";
     private final static String SHUTDOWN_OPER = "shutdown";
+    private final static String LOG_OPER = "log";
     private final static List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {START_OPER, STOP_OPER,
             INTERRUPT_OPER, START_CRAWLING_OPER, STOP_CRAWLING_OPER,
             ADD_CRAWL_JOB_OPER, ADD_CRAWL_JOB_BASEDON_OPER,
             DELETE_CRAWL_JOB_OPER, ALERT_OPER, PENDING_JOBS_OPER,
-            COMPLETED_JOBS_OPER, CRAWLEND_REPORT_OPER, SHUTDOWN_OPER});
+            COMPLETED_JOBS_OPER, CRAWLEND_REPORT_OPER, SHUTDOWN_OPER,
+            LOG_OPER});
     }
     private CompositeType jobCompositeType = null;
     private TabularType jobsTabularType = null;
@@ -1605,7 +1607,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             buffer.append(getNewAlertsCount());
             if (this.getJobHandler().isCrawling()) {
                 buffer.append(" currentJob=");
-                buffer.append(this.getJobHandler().getCurrentJob().getUID());
+                buffer.append(this.getJobHandler().getCurrentJob().
+                    getJmxJobName());
             }
         }
         return buffer.toString();
@@ -1833,6 +1836,15 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         operations[12] = new OpenMBeanOperationInfoSupport(
             Heritrix.SHUTDOWN_OPER, "Shutdown container", null,
                 SimpleType.VOID, MBeanOperationInfo.ACTION);
+        
+        args = new OpenMBeanParameterInfoSupport[2];
+        args[0] = new OpenMBeanParameterInfoSupport("level",
+            "Log level: e.g. SEVERE, WARNING, etc.", SimpleType.STRING);
+        args[1] = new OpenMBeanParameterInfoSupport("message",
+            "Log message", SimpleType.STRING);
+        operations[13] = new OpenMBeanOperationInfoSupport(Heritrix.LOG_OPER,
+            "Add a log message", args, SimpleType.VOID,
+            MBeanOperationInfo.ACTION);
 
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
@@ -1919,6 +1931,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         if (operationName.equals(SHUTDOWN_OPER)) {
             JmxUtils.checkParamsCount(SHUTDOWN_OPER, params, 0);
             Heritrix.shutdown();
+            return null;
+        }
+        if (operationName.equals(LOG_OPER)) {
+            JmxUtils.checkParamsCount(LOG_OPER, params, 2);
+            logger.log(Level.parse((String)params[0]), (String)params[1]);
             return null;
         }
         if (operationName.equals(INTERRUPT_OPER)) {
