@@ -100,7 +100,7 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
         String nameAsStored = readUTF();
         long lengthAtStoreTime = readLong();
         File storedFile = new File(getAuxiliaryDirectory(),nameAsStored);
-        FileUtils.copyFile(storedFile,destination,lengthAtStoreTime);
+        FileUtils.copyFile(storedFile, destination, lengthAtStoreTime);
     }
 
     /**
@@ -116,7 +116,7 @@ public class ObjectPlusFilesInputStream extends ObjectInputStream {
         long lengthAtStoreTime = readLong();
         File storedFile = new File(getAuxiliaryDirectory(),nameAsStored);
         File destination = new File(directory,nameAsStored);
-        FileUtils.copyFile(storedFile,destination,lengthAtStoreTime);
+        FileUtils.copyFile(storedFile, destination, lengthAtStoreTime);
     }
 
     /**
