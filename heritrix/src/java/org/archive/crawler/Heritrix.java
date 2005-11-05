@@ -36,6 +36,7 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -86,6 +87,8 @@ import javax.management.openmbean.TabularDataSupport;
 import javax.management.openmbean.TabularType;
 import javax.naming.CompoundName;
 import javax.naming.Context;
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingException;
 
 import org.apache.commons.cli.Option;
 import org.archive.crawler.admin.CrawlJob;
@@ -111,6 +114,7 @@ import org.archive.util.PropertyUtils;
 import org.archive.util.TextUtils;
 
 import sun.net.www.protocol.file.FileURLConnection;
+import sun.security.krb5.internal.n;
 
 
 /**
@@ -237,9 +241,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     private static int guiPort = SimpleHttpServer.DEFAULT_PORT;
     
-    // JNDI
-    private Context jndiContext = null;
-    
     // OpenMBean support.
     /**
      * The MBean server we're registered with (May be null).
@@ -323,6 +324,17 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         // elsewhere and out of this contructor.
         Heritrix.loadProperties();
         Heritrix.patchLogging();
+        // Will run on SIGTERM but not on SIGKILL though unfortunately.
+        // Otherwise, ensures we cleanup after ourselves (Deregister from
+        // JMX and JNDI).
+        Runtime.getRuntime().addShutdownHook(Heritrix.getShutdownThread(false,
+            0, "Heritrix shutdown hook"));
+        // We'll rebind on every Heritrix instantiation but that should be fine.
+        try {
+            registerJndi(getJndiContainerName());
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed jndi container registration.", e);      
+        }
         this.jobHandler = new CrawlJobHandler(getJobsdir());
         this.openMBeanInfo = buildMBeanInfo();
         // Set up the alerting system.  SinkHandler is also a global so will
@@ -1336,6 +1348,14 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             ((Heritrix)Heritrix.instances.get(keys[i])).destroy();
         }
         
+        try {
+            deregisterJndi(getJndiContainerName());
+        } catch (NameNotFoundException e) {
+            // We were probably unbound already. Ignore.
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
         if(Heritrix.httpServer != null) {
             // Shut down the web access.
             try {
@@ -1375,15 +1395,22 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
 	 * @param exitCode Exit code to pass system exit.
 	 */
 	public static void shutdown(final int exitCode) {
-        Thread t = new Thread() {
+        getShutdownThread(true, exitCode, "Heritrix shutdown").start();
+	}
+    
+    protected static Thread getShutdownThread(final boolean sysexit,
+            final int exitCode, final String name) {
+        Thread t = new Thread(name) {
             public void run() {
                 Heritrix.prepareHeritrixShutDown();
-                Heritrix.performHeritrixShutDown(exitCode);
+                if (sysexit) {
+                    Heritrix.performHeritrixShutDown(exitCode);
+                }
             }
         };
         t.setDaemon(true);
-        t.start();
-	}
+        return t;
+    }
     
     public static void shutdown() {
         shutdown(0);
@@ -2084,6 +2111,24 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             ht.put(JmxUtils.TYPE, JmxUtils.SERVICE);
             name = new ObjectName(name.getDomain(), ht);
         }
+        this.mbeanName = addVitals(name);
+        Heritrix.instances.put(this.mbeanName.
+            getCanonicalKeyPropertyListString(), this);
+        return this.mbeanName;
+    }
+    
+    /**
+     * Add vital stats to passed in ObjectName.
+     * @param name ObjectName to add to.
+     * @return name with host, guiport, and jmxport added.
+     * @throws UnknownHostException
+     * @throws MalformedObjectNameException
+     * @throws NullPointerException
+     */
+    protected static ObjectName addVitals(ObjectName name)
+    throws UnknownHostException, MalformedObjectNameException,
+    NullPointerException {
+        Hashtable ht = name.getKeyPropertyList();
         if (!ht.containsKey(JmxUtils.HOST)) {
             ht.put(JmxUtils.HOST, InetAddress.getLocalHost().getHostName());
             name = new ObjectName(name.getDomain(), ht);
@@ -2106,8 +2151,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 name = new ObjectName(name.getDomain(), ht);
             }
         }
-        this.mbeanName = name;
-        Heritrix.instances.put(name.getCanonicalKeyPropertyListString(), this);
         return name;
     }
 
@@ -2118,30 +2161,14 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 this.mbeanServer, registrationDone.booleanValue()));
         }
         try {
-            this.jndiContext =
-                JndiUtils.getSubContext(this.mbeanName.getDomain());
-            CompoundName key =
-                JndiUtils.bindObjectName(this.jndiContext, this.mbeanName);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Bound '"  + key + "' to '"
-                    + JndiUtils.
-                       getCompoundName(this.jndiContext.getNameInNamespace())
-                           .toString() + "' jndi context");
-            }
+            registerJndi(this.mbeanName);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed jndi registration", e);
         }
     }
 
     public void preDeregister() throws Exception {
-        CompoundName key =
-            JndiUtils.unbindObjectName(this.jndiContext, this.mbeanName);
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("Unbound '"  + key + "' from '"
-                + JndiUtils.
-                   getCompoundName(this.jndiContext.getNameInNamespace())
-                       .toString() + "' jndi context");
-        }
+        deregisterJndi(this.mbeanName);
     }
 
     public void postDeregister() {
@@ -2151,6 +2178,51 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             logger.info(JmxUtils.getLogUnregistrationMsg(
                     this.mbeanName.getCanonicalName(), this.mbeanServer));
         }
+    }
+
+    protected static void registerJndi(final ObjectName name)
+    throws NullPointerException, NamingException {
+        CompoundName key = JndiUtils.bindObjectName(getJndiContext(), name);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Bound '"  + key + "' to '" + JndiUtils.
+               getCompoundName(getJndiContext().getNameInNamespace()).toString()
+               + "' jndi context");
+        }
+    }
+    
+    protected static void deregisterJndi(final ObjectName name)
+    throws NullPointerException, NamingException {
+        CompoundName key = JndiUtils.unbindObjectName(getJndiContext(), name);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Unbound '" + key + "' from '" +
+                JndiUtils.getCompoundName(getJndiContext().
+                        getNameInNamespace()).toString() + "' jndi context");
+        }
+    }
+    
+    /**
+     * @return Jndi context for the crawler.
+     * @throws NamingException 
+     */
+    protected static Context getJndiContext() throws NamingException {
+        return JndiUtils.getSubContext(CRAWLER_PACKAGE);
+    }
+    
+    /**
+     * @return Jndi container name -- the name to use for the 'container' that
+     * can host zero or more heritrix instances (Return a JMX ObjectName.  We
+     * use ObjectName because then we're sync'd with JMX naming and ObjectName
+     * has nice parsing).
+     * @throws NullPointerException 
+     * @throws MalformedObjectNameException 
+     * @throws UnknownHostException 
+     */
+    protected static ObjectName getJndiContainerName()
+    throws MalformedObjectNameException, NullPointerException,
+    UnknownHostException {
+        ObjectName objName = new ObjectName(CRAWLER_PACKAGE, "type",
+            "container");
+        return addVitals(objName);
     }
     
     /**
