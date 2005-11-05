@@ -27,10 +27,12 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.framework.Frontier.FrontierGroup;
 
 
 /**
@@ -52,9 +54,18 @@ public class CrawlStateUpdater extends Processor implements
     }
 
     protected void innerProcess(CrawlURI curi) {
-        String scheme = curi.getUURI().getScheme().toLowerCase();
+        // tally per-server, per-host, per-frontier-class running totals
         CrawlServer server =
             getController().getServerCache().getServerFor(curi);
+        server.getSubstats().tally(curi); 
+        CrawlHost host = 
+            getController().getServerCache().getHostFor(curi);
+        host.getSubstats().tally(curi);
+        FrontierGroup group = 
+            getController().getFrontier().getGroup(curi);
+        group.getSubstats().tally(curi);
+        
+        String scheme = curi.getUURI().getScheme().toLowerCase();
         if (scheme.equals("http") || scheme.equals("https") &&
                 server != null) {
             // Update connection problems counter

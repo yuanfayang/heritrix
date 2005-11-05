@@ -31,3 +31,4 @@ org.archive.crawler.postprocessor.ContentBasedWaitEvaluator|ContentBasedWaitEval
 org.archive.crawler.postprocessor.TextWaitEvaluator|TextWaitEvaluator
 org.archive.crawler.postprocessor.ImageWaitEvaluator|ImageWaitEvaluator
 org.archive.crawler.processor.CrawlMapper|CrawlMapper
+org.archive.crawler.prefetch.QuotaEnforcer|QuotaEnforcer

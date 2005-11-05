@@ -91,7 +91,11 @@ public interface FetchStatusCodes {
      * TODO: Add to documentation and help page.
      */
     public static final int S_BLOCKED_BY_CUSTOM_PROCESSOR = -5002;
-
+    /**
+     * Blocked due to exceeding an established quota.
+     * TODO: Add to documentation and help page.
+     */
+    public static final int S_BLOCKED_BY_QUOTA = -5003;
     /** deleted from frontier by user */
     public static final int S_DELETED_BY_USER = -6000;
 

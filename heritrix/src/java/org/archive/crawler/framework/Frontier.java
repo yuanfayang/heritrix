@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -110,7 +111,6 @@ import org.archive.util.Reporter;
  * @see org.archive.crawler.settings.ModuleType
  */
 public interface Frontier extends Reporter {
-
     /**
      * All URI Frontiers should have the same 'name' attribute. This constant
      * defines that name. This is a name used to reference the Frontier being
@@ -440,4 +440,21 @@ public interface Frontier extends Reporter {
      * just unpauses Frontier, if paused. 
      */
     public void start();
+
+    /**
+     * Get the 'frontier group' (usually queue) for the given 
+     * CrawlURI. 
+     * @param curi CrawlURI to find matching group
+     * @return FrontierGroup for the CrawlURI
+     */
+    public FrontierGroup getGroup(CrawlURI curi);
+    
+    /**
+     * Generic interface representing the internal groupings 
+     * of a Frontier's URIs -- usually queues. Currently only 
+     * offers the HasCrawlSubstats interface. 
+     */
+    public interface FrontierGroup extends CrawlSubstats.HasCrawlSubstats {
+
+    }
 }

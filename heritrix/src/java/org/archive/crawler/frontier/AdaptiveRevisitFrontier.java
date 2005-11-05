@@ -420,23 +420,36 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         
         try {
             logger.finest("scheduling " + curi.toString());
-            AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
-            if(hq == null){
-                // Need to create it.
-                int valence = DEFAULT_HOST_VALENCE.intValue();
-                try {
-                    valence = ((Integer)getAttribute(curi,ATTR_HOST_VALENCE)).intValue();
-                } catch (AttributeNotFoundException e2) {
-                    logger.severe("Unable to load valence.");
-                }
-                hq = hostQueues.createHQ(curi.getClassKey(),valence);
-            }
+            AdaptiveRevisitHostQueue hq = getHQ(curi);
             hq.add(curi,prefEmbed);
         } catch (IOException e) {
             // TODO Handle IOExceptions
             e.printStackTrace();
         }
         
+    }
+
+    /**
+     * Get the AdaptiveRevisitHostQueue for the given CrawlURI, creating
+     * it if necessary. 
+     * 
+     * @param curi CrawlURI for which to get a queue
+     * @return AdaptiveRevisitHostQueue for given CrawlURI
+     * @throws IOException
+     */
+    protected AdaptiveRevisitHostQueue getHQ(CrawlURI curi) throws IOException {
+        AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
+        if(hq == null){
+            // Need to create it.
+            int valence = DEFAULT_HOST_VALENCE.intValue();
+            try {
+                valence = ((Integer)getAttribute(curi,ATTR_HOST_VALENCE)).intValue();
+            } catch (AttributeNotFoundException e2) {
+                logger.severe("Unable to load valence.");
+            }
+            hq = hostQueues.createHQ(curi.getClassKey(),valence);
+        }
+        return hq;
     }
 
     protected void batchSchedule(CandidateURI caUri) {
@@ -1232,6 +1245,17 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     public void receive(CandidateURI item) {
         System.out.println("Received " + item);
         innerSchedule(item);        
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#getGroup(org.archive.crawler.datamodel.CrawlURI)
+     */
+    public FrontierGroup getGroup(CrawlURI curi) {
+        try {
+            return getHQ(curi);
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
     }
     
 }
