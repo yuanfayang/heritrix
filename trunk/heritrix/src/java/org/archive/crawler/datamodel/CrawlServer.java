@@ -49,7 +49,7 @@ import org.archive.net.UURIFactory;
  *
  * @author gojomo
  */
-public class CrawlServer implements Serializable {
+public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats {
     public static final long ROBOTS_NOT_FETCHED = -1;
 
     private final String server; // actually, host+port in the https case
@@ -59,7 +59,8 @@ public class CrawlServer implements Serializable {
     long robotsFetched = ROBOTS_NOT_FETCHED;
     boolean validRobots = false;
     Checksum robotstxtChecksum;
-
+    CrawlSubstats substats = new CrawlSubstats();
+    
     // how many consecutive connection errors have been encountered;
     // used to drive exponentially increasing retry timeout or decision
     // to 'freeze' entire class (queue) of URIs
@@ -325,4 +326,11 @@ public class CrawlServer implements Serializable {
 	    }
 	    return key;
 	}
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.CrawlSubstats.HasCrawlSubstats#getSubstats()
+     */
+    public CrawlSubstats getSubstats() {
+        return substats;
+    }
 }

@@ -6,7 +6,9 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.Frontier;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 
@@ -17,7 +19,8 @@ import org.archive.util.Reporter;
  * @author gojomo
  * @author Christian Kohlschuetter 
  */
-public abstract class WorkQueue implements Comparable, Serializable, Reporter {
+public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
+        Serializable, Reporter {
     private static final Logger logger =
         Logger.getLogger(WorkQueue.class.getName());
     
@@ -68,6 +71,9 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
     
     /** count of errors encountered */
     private long errorCount = 0;
+    
+    /** Substats for all CrawlURIs in this group */
+    protected CrawlSubstats substats = new CrawlSubstats();
     
     public WorkQueue(final String pClassKey) {
         this.classKey = pClassKey;
@@ -553,5 +559,9 @@ public abstract class WorkQueue implements Comparable, Serializable, Reporter {
         writer.print(ArchiveUtils.doubleToString(
                     ((double) totalExpenditure / costCount), 1));
         writer.print(")\n\n");
+    }
+    
+    public CrawlSubstats getSubstats() {
+        return substats;
     }
 }

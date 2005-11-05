@@ -38,7 +38,7 @@ import org.archive.util.InetAddressUtil;
  *
  * @author gojomo
  */
-public class CrawlHost implements Serializable {
+public class CrawlHost implements Serializable, CrawlSubstats.HasCrawlSubstats {
     private static final Logger logger = Logger.getLogger(CrawlHost.class.getName());
     /** Flag value indicating always-valid IP */
     public static final long IP_NEVER_EXPIRES = -1;
@@ -48,7 +48,7 @@ public class CrawlHost implements Serializable {
     private String countryCode;
     private InetAddress ip;
     private long ipFetched = IP_NEVER_LOOKED_UP;
-
+    protected CrawlSubstats substats = new CrawlSubstats(); 
     /**
      * TTL gotten from dns record.
      *
@@ -194,4 +194,11 @@ public class CrawlHost implements Serializable {
 	public void setCountryCode(String countryCode) {
 		this.countryCode = countryCode;
 	}
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.CrawlSubstats.HasCrawlSubstats#getSubstats()
+     */
+    public CrawlSubstats getSubstats() {
+        return substats;
+    }
 }

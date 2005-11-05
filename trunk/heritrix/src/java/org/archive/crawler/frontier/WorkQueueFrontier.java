@@ -1225,5 +1225,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @return a constant boolean value for this class/instance
      */
     protected abstract boolean workQueueDataOnDisk();
+    
+    
+    public FrontierGroup getGroup(CrawlURI curi) {
+        return getQueueFor(curi);
+    }
 }
 

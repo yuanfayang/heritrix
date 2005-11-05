@@ -27,7 +27,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.Frontier.FrontierGroup;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.bind.EntryBinding;
@@ -70,7 +72,7 @@ import com.sleepycat.je.SecondaryDatabase;
  * @author Kristinn Sigurdsson
  */
 public class AdaptiveRevisitHostQueue
-implements AdaptiveRevisitAttributeConstants {
+implements AdaptiveRevisitAttributeConstants, FrontierGroup {
     
     // TODO: Need to be able to remove URIs, both by name and reg.expr.
     
@@ -134,6 +136,8 @@ implements AdaptiveRevisitAttributeConstants {
     /** Logger */
     private static final Logger logger = 
         Logger.getLogger(AdaptiveRevisitHostQueue.class.getName());
+    
+    protected CrawlSubstats substats = new CrawlSubstats(); 
     
     // Berkeley DB - All class member variables related to BDB JE
     // Databases
@@ -1163,6 +1167,13 @@ implements AdaptiveRevisitAttributeConstants {
             indexKeyOutput.writeLong(timeOfNextProcessing);
             return true;
         }
+    }
+
+    /* (non-Javadoc)
+     * @see org.archive.crawler.datamodel.CrawlSubstats.HasCrawlSubstats#getSubstats()
+     */
+    public CrawlSubstats getSubstats() {
+        return substats;
     }
 
 }
