@@ -53,6 +53,8 @@ import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
+import javax.management.Notification;
+import javax.management.NotificationBroadcasterSupport;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.RuntimeOperationsException;
@@ -112,7 +114,7 @@ import com.sleepycat.je.Environment;
  *  String, String, String)
  */
 
-public class CrawlJob
+public class CrawlJob extends NotificationBroadcasterSupport
 implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     private static final long serialVersionUID = -5006954139249693422L;
     private static final Logger logger =
@@ -274,6 +276,12 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         ORDER_EXCLUDE = Arrays.asList(new String [] {"bdb-cache-percent",
             "extract-processors", "DNS", "uri-included-structure"});
     }
+    
+    /**
+     * Sequence number for jmx notifications.
+     */
+    private static int notificationsSequenceNumber = 1;
+    
     
     /**
      * A shutdown Constructor.
@@ -1359,6 +1367,20 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 this.bdbjeMBeanHelper.getOperationList(env),
                 this.bdbjeOperationsNameList);
         
+        // Register notifications
+        List notifications = new ArrayList();
+        notifications.add(
+            new MBeanNotificationInfo(new String [] {
+                    this.getClass().getName() + ".crawlStarted",
+                    this.getClass().getName() + ".crawlEnded",
+                    this.getClass().getName() + ".crawlPaused",
+                    this.getClass().getName() + ".crawlResuming"},
+                this.getClass().getName() + ".notifications",
+                "CrawlStatusListener events as notifications"));
+        MBeanNotificationInfo [] notificationsArray =
+            new MBeanNotificationInfo[notifications.size()];
+        notifications.toArray(notificationsArray);
+        
         // Build the info object.
         OpenMBeanAttributeInfoSupport[] attributesArray =
             new OpenMBeanAttributeInfoSupport[attributes.size()];
@@ -1371,7 +1393,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             attributesArray,
             new OpenMBeanConstructorInfoSupport [] {},
             operationsArray,
-            new MBeanNotificationInfo [] {});
+            notificationsArray);
     }
     
     protected void addBdbjeAttributes(final List attributes,
@@ -1905,8 +1927,11 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     public void crawlStarted(String message) {
-        // TODO Auto-generated method stub
-        
+        sendNotification(new Notification(
+                this.getClass().getName() + ".crawlStarted",
+                this, CrawlJob.notificationsSequenceNumber++,
+                message
+                )); 
     }
 
     public void crawlEnding(String sExitMessage) {
@@ -1918,7 +1943,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     public void crawlEnded(String sExitMessage) {
-        // TODO Auto-generated method stub
+        sendNotification(new Notification(
+            this.getClass().getName() + ".crawlEnded",
+            this, CrawlJob.notificationsSequenceNumber++,
+            sExitMessage));        
     }
 
     public void crawlPausing(String statusMessage) {
@@ -1927,10 +1955,18 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
 
     public void crawlPaused(String statusMessage) {
         setStatus(statusMessage);
+        sendNotification(new Notification(
+            this.getClass().getName() + ".crawlPaused",
+            this, CrawlJob.notificationsSequenceNumber++,
+            statusMessage));    
     }
 
     public void crawlResuming(String statusMessage) {
         setStatus(statusMessage);
+        sendNotification(new Notification(
+            this.getClass().getName() + ".crawlResuming",
+            this, CrawlJob.notificationsSequenceNumber++,
+            statusMessage));    
     }
 
     public void crawlCheckpoint(File checkpointDir) throws Exception {
