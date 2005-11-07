@@ -261,7 +261,15 @@ public class BdbMultipleWorkQueues {
         OperationStatus status;
         try {
             cursor = this.pendingUrisDB.openCursor(null, null);
-            status = cursor.getSearchKeyRange(headKey, result, null);
+            // get cap; headKey at this point should always point to 
+            // a queue-beginning cap entry (zero-length value)
+            status = cursor.getSearchKey(headKey, result, null);
+            if(status!=OperationStatus.SUCCESS || result.getData().length > 0) {
+                // cap missing
+                throw new DatabaseException("bdb queue cap missing");
+            }
+            // get next item (real first item of queue)
+            status = cursor.getNext(headKey,result,null);
         } finally { 
             if(cursor!=null) {
                 cursor.close();
@@ -484,6 +492,23 @@ public class BdbMultipleWorkQueues {
         public boolean hasNext() {
             // as long as any startKey is stated, consider as having next
             return startKey != null;
+        }
+    }
+
+    /**
+     * Add a dummy 'cap' entry at the given insertion key. Prevents
+     * 'seeks' to queue heads from holding lock on last item of 
+     * 'preceding' queue. See:
+     * http://sourceforge.net/tracker/index.php?func=detail&aid=1262665&group_id=73833&atid=539102
+     * 
+     * @param origin key at which to insert the cap
+     */
+    public void addCap(byte[] origin) {
+        try {
+            pendingUrisDB.put(null, new DatabaseEntry(origin),
+                    new DatabaseEntry(new byte[0]));
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e);
         }
     }
 }
