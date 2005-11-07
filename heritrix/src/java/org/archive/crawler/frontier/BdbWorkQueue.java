@@ -59,12 +59,15 @@ implements Comparable, Serializable {
      * 
      * @param classKey
      */
-    public BdbWorkQueue(String classKey) {
+    public BdbWorkQueue(String classKey, BdbFrontier frontier) {
         super(classKey);
         origin = BdbMultipleWorkQueues.calculateOriginKey(classKey);
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.fine(getPrefixClassKey(this.origin) + " " + classKey);
         }
+        // add the queue-front 'cap' entry; see...
+        // http://sourceforge.net/tracker/index.php?func=detail&aid=1262665&group_id=73833&atid=539102
+        frontier.getWorkQueues().addCap(origin);
     }
 
     protected long deleteMatchingFromQueue(final WorkQueueFrontier frontier,

@@ -188,7 +188,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         synchronized (allQueues) {
             wq = (WorkQueue)allQueues.get(classKey);
             if (wq == null) {
-                wq = new BdbWorkQueue(classKey);
+                wq = new BdbWorkQueue(classKey,this);
                 wq.setTotalBudget(((Long)getUncheckedAttribute(
                     curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue());
                 allQueues.put(classKey, wq);
