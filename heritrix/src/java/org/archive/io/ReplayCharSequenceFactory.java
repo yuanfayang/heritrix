@@ -206,10 +206,10 @@ public class ReplayCharSequenceFactory {
         }
 
         if (responseBodyStart > buffer.length) {
-            throw new IllegalArgumentException("Unexpected response body" +
-                " offset of " + responseBodyStart + ".  The way this" +
-                " class works, it assumes the HTTP headers are in buffer: " +
-                buffer.length);
+            logger.log(Level.WARNING,
+                "Unexpected response body offset " + responseBodyStart + ",\n" +
+                "beyond the first buffer of length "+buffer.length+".\n" +
+                "Thread: "+ Thread.currentThread().getName() + "\n");
         }
 
         if ((size - responseBodyStart) > Integer.MAX_VALUE) {
