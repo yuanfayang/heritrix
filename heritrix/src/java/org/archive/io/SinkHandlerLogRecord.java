@@ -28,6 +28,8 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+import org.archive.crawler.framework.ToeThread;
+
 /**
  * Version of LogRecord used by SinkHandler.
  * Adds being able to mark the LogRecord as already-read and timestamping time
@@ -49,6 +51,16 @@ public class SinkHandlerLogRecord extends LogRecord {
 
     public SinkHandlerLogRecord(final LogRecord record) {
         super(record.getLevel(), record.getMessage());
+        // if available, append current processor name to message
+        // [ 1108006 ] alerts should show current processor
+        // http://sourceforge.net/tracker/index.php?func=detail&aid=1108006&group_id=73833&atid=539102
+        if(Thread.currentThread() instanceof ToeThread) {
+            ToeThread tt = (ToeThread) Thread.currentThread();
+            if(tt.getCurrentProcessorName().length()>0) {
+                this.setMessage(this.getMessage() + "(in processor "
+                        + tt.getCurrentProcessorName() + ")");
+            }
+        }
         this.delegatee = record;
     }
     
