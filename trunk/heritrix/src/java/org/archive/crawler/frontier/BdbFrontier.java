@@ -196,6 +196,21 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         }
         return wq;
     }
+    
+    /**
+     * Return the work queue for the given classKey, or null
+     * if no such queue exists.
+     * 
+     * @param classKey key to look for
+     * @return the found WorkQueue
+     */
+    protected WorkQueue getQueueFor(String classKey) {
+        WorkQueue wq; 
+        synchronized (allQueues) {
+            wq = (WorkQueue)allQueues.get(classKey);
+        }
+        return wq;
+    }
 
     public FrontierMarker getInitialMarker(String regexpr,
             boolean inCacheOnly) {

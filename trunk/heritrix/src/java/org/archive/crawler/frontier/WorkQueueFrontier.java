@@ -527,6 +527,15 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     protected abstract WorkQueue getQueueFor(CrawlURI curi);
 
     /**
+     * Return the work queue for the given classKey, or null
+     * if no such queue exists.
+     * 
+     * @param classKey key to look for
+     * @return the found WorkQueue
+     */
+    protected abstract WorkQueue getQueueFor(String classKey);
+    
+    /**
      * Return the next CrawlURI to be processed (and presumably
      * visited/fetched) by a a worker thread.
      *
@@ -920,9 +929,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     public long deleteURIs(String match) {
         long count = 0;
         // TODO: DANGER/ values() may not work right from CachedBdbMap
-        Iterator iter = allQueues.values().iterator(); 
+        Iterator iter = allQueues.keySet().iterator(); 
         while(iter.hasNext()) {
-            WorkQueue wq = (WorkQueue)iter.next();
+            WorkQueue wq = (WorkQueue)getQueueFor(((String)iter.next()));
             wq.unpeek();
             count += wq.deleteMatching(this, match);
         }

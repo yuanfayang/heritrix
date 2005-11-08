@@ -116,15 +116,17 @@ public class BdbMultipleWorkQueues {
                     value, null);
 
             while (result == OperationStatus.SUCCESS) {
-                CrawlURI curi = (CrawlURI) crawlUriBinding
-                        .entryToObject(value);
-                if (!curi.getClassKey().equals(queue)) {
-                    // rolled into next queue; finished with this queue
-                    break;
-                }
-                if (pattern.matcher(curi.toString()).matches()) {
-                    cursor.delete();
-                    deletedCount++;
+                if(value.getData().length>0) {
+                    CrawlURI curi = (CrawlURI) crawlUriBinding
+                            .entryToObject(value);
+                    if (!curi.getClassKey().equals(queue)) {
+                        // rolled into next queue; finished with this queue
+                        break;
+                    }
+                    if (pattern.matcher(curi.toString()).matches()) {
+                        cursor.delete();
+                        deletedCount++;
+                    }
                 }
                 result = cursor.getNext(key, value, null);
             }
@@ -160,12 +162,14 @@ public class BdbMultipleWorkQueues {
                 result = cursor.getSearchKey(key, value, null);
                 
                 while(matches<maxMatches && result == OperationStatus.SUCCESS) {
-                    CrawlURI curi = (CrawlURI) crawlUriBinding.entryToObject(value);
-                    if(marker.accepts(curi)) {
-                        results.add(curi);
-                        matches++;
+                    if(value.getData().length>0) {
+                        CrawlURI curi = (CrawlURI) crawlUriBinding.entryToObject(value);
+                        if(marker.accepts(curi)) {
+                            results.add(curi);
+                            matches++;
+                        }
+                        tries++;
                     }
-                    tries++;
                     result = cursor.getNext(key,value,null);
                 }
             } finally {
