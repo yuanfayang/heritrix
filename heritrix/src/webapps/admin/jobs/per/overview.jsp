@@ -81,7 +81,6 @@
             // Delete settings.
             if(currDomain != null && currDomain.length()>0){
                 settingsHandler.deleteSettingsObject(settingsHandler.getOrCreateSettingsObject(currDomain));
-                // Then redirect to configure override.
                 message = "Override for domain '"+currDomain+"' deleted.";
                 currDomain = "";
             }
@@ -125,13 +124,22 @@
         }
         
         function doDeleteThis(){
+            if(!confirm("Are you sure you want to delete override for '"+
+                document.frmPer.currDomain.value +"'?")) {
+                return;
+            }
             document.frmPer.action.value="delete";
             doSubmit();
         }
         
         function doDelete(){
+            if(!confirm("Are you sure you want to delete override for '"+
+                document.frmPer.newDomain.value +"'?")) {
+                return;
+            }
             document.frmPer.currDomain.value = document.frmPer.newDomain.value;
-            doDeleteThis();
+            document.frmPer.action.value="delete";
+            doSubmit();
         }
         
         function doCreate(){
@@ -192,9 +200,7 @@
                 if(localSettings != null){
         %>
                     <p><a href="javascript:doEdit()">Edit override for '<%=currDomain%>'</a><br>
-                    <% if(theJob.isRunning()==false){ %>
                         <p><a href="javascript:doDeleteThis()">Delete override for '<%=currDomain%>'</a><br>
-                    <% } %>
         <%
                 } else {
         %>
@@ -207,8 +213,6 @@
             <b>Quick override:</b><br>
             Domain: <input name="newDomain" value="<%=currDomain%>">
             <input type="submit" value="Create/Edit" onClick="doCreateEdit()">
-            <% if(theJob.isRunning()==false){ %>
                 <input type="button" value="Delete" onClick="doDelete()">
-            <% } %>
     </form>
 <%@include file="/include/foot.jsp"%>
