@@ -234,7 +234,7 @@ public class CrawlController implements Serializable, Reporter {
      *
      * No exceptions.  Logs summary result of each url processing.
      */
-    transient public Logger uriProcessing;
+    public transient Logger uriProcessing;
 
     /**
      * This logger contains unexpected runtime errors.
@@ -242,7 +242,7 @@ public class CrawlController implements Serializable, Reporter {
      * Would contain errors trying to set up a job or failures inside
      * processors that they are not prepared to recover from.
      */
-    transient public Logger runtimeErrors;
+    public transient Logger runtimeErrors;
 
     /**
      * This logger is for job-scoped logging, specifically errors which
@@ -250,17 +250,17 @@ public class CrawlController implements Serializable, Reporter {
      *
      * Examples would be socket timeouts, exceptions thrown by extractors, etc.
      */
-    transient public Logger localErrors;
+    public transient Logger localErrors;
 
     /**
      * Special log for URI format problems, wherever they may occur.
      */
-    transient public Logger uriErrors;
+    public transient Logger uriErrors;
 
     /**
      * Statistics tracker writes here at regular intervals.
      */
-    transient public Logger progressStats;
+    public transient Logger progressStats;
 
     /**
      * Logger to hold job summary report.
@@ -268,7 +268,7 @@ public class CrawlController implements Serializable, Reporter {
      * Large state reports made at infrequent intervals (e.g. job ending) go
      * here.
      */
-    transient public Logger reports;
+    public transient Logger reports;
 
     protected StatisticsTracking statistics = null;
 
@@ -284,9 +284,11 @@ public class CrawlController implements Serializable, Reporter {
     
     // Since there is a high probability that there will only ever by one
     // CrawlURIDispositionListner we will use this while there is only one:
-    transient CrawlURIDispositionListener registeredCrawlURIDispositionListener;
+    private transient CrawlURIDispositionListener
+        registeredCrawlURIDispositionListener;
+
     // And then switch to the array once there is more then one.
-    transient protected ArrayList registeredCrawlURIDispositionListeners;
+     protected transient ArrayList registeredCrawlURIDispositionListeners;
     
     /** Shared bdb Environment for Frontier subcomponents */
     // TODO: investigate using multiple environments to split disk accesses
@@ -1033,6 +1035,7 @@ public class CrawlController implements Serializable, Reporter {
             // Remove all listeners now we're done with them.
             this.registeredCrawlStatusListeners.
                 removeAll(this.registeredCrawlStatusListeners);
+            this.registeredCrawlStatusListeners = null;
         }
         
         closeLogFiles();
@@ -1044,15 +1047,22 @@ public class CrawlController implements Serializable, Reporter {
         this.localErrors = null;
         this.runtimeErrors = null;
         this.progressStats = null;
+        this.reports = null;
+        this.manifest = null;
 
         // Do cleanup.
         this.statistics = null;
         this.frontier = null;
         this.disk = null;
         this.scratchDisk = null;
-        this.toePool = null;
         this.order = null;
         this.scope = null;
+        if (this.settingsHandler !=  null) {
+            this.settingsHandler.cleanup();
+        }
+        this.settingsHandler = null;
+        this.reserveMemory = null;
+        this.processorChains = null;
         if (this.serverCache != null) {
             this.serverCache.cleanup();
             this.serverCache = null;
@@ -1068,8 +1078,6 @@ public class CrawlController implements Serializable, Reporter {
         }
         if (this.bdbEnvironment != null) {
             try {
-            	// can't hurt, might make bdb droppings post-crawl
-            	// more useful 
                 this.bdbEnvironment.sync();
                 this.bdbEnvironment.close();
             } catch (DatabaseException e) {
@@ -1078,10 +1086,19 @@ public class CrawlController implements Serializable, Reporter {
             this.bdbEnvironment = null;
         }
         this.bigmaps = null;
-
+        if (this.toePool != null) {
+            this.toePool.cleanup();
+            // I played with launching a thread here to do cleanup of the
+            // ToePool ThreadGroup (making sure the cleanup thread was not
+            // in the ToePool ThreadGroup).  Did this because ToePools seemed
+            // to be sticking around holding references to CrawlController at
+            // least.  Need to spend more time looking to see that this is
+            // still the case even after adding the above toePool#cleanup call.
+        }
+        this.toePool = null;
         LOGGER.fine("Finished crawl.");
     }
-
+    
     private void completePause() {
         sendCrawlStateChangeEvent(PAUSED, CrawlJob.STATUS_PAUSED);
     }
@@ -1791,9 +1808,6 @@ public class CrawlController implements Serializable, Reporter {
         } // else do nothing; 
     }
     
-    /**
-     * 
-     */
     public void freeReserveMemory() {
         if(!reserveMemory.isEmpty()) {
             reserveMemory.removeLast();

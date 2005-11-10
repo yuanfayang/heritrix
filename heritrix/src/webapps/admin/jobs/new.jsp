@@ -23,8 +23,8 @@
     // from.
     String recovery = request.getParameter("recover");
     
-    if(theJob == null) {
-        //Ok, use default profile then.
+    if (theJob == null) {
+        // Ok, use default profile then.
         theJob = handler.getDefaultProfile();
         if(theJob == null){
             // ERROR - This should never happen. There must always be at least

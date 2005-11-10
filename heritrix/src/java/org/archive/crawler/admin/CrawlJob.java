@@ -191,8 +191,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     private int priority;
     private int numberOfJournalEntries = 0;
 
-    // TODO: Statistics tracker will be saved at end of crawl. We will also
-    // want to save it at checkpoints.
     private transient StatisticsTracking stats;
     private String statisticsFileSave = "";
 
@@ -660,19 +658,11 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     /**
-     * @param settingsHandler
-     */
-    public void setSettingsHandler(XMLSettingsHandler settingsHandler) {
-        this.settingsHandler = settingsHandler;
-        // TODO: Is this method needed? Probably not.
-    }
-
-    /**
-     * Returns the settigns handler for this job. It will have been initialized.
-     * @return the settigns handler for this job.
+     * Returns the settings handler for this job. It will have been initialized.
+     * @return the settings handler for this job.
      */
     public XMLSettingsHandler getSettingsHandler() {
-        return settingsHandler;
+        return this.settingsHandler;
     }
     /**
      * Is this a new job?
@@ -749,13 +739,19 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
 
         public void setCrawlJob(CrawlJob cj) {
             this.cj = cj;
-        }     
+        }
         
         protected void completeStop() {
             try {
                 super.completeStop();
             } finally {
-                this.cj.unregisterMBean();
+                if (this.cj != null) {
+                    this.cj.unregisterMBean();
+                    // Clear these now we're done with them.
+                    this.cj.mbeanServer = null;
+                    this.cj.mbeanName = null;
+                }
+                this.cj = null;
             }
         }
     }
@@ -1929,7 +1925,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     public void crawlStarted(String message) {
         sendNotification(new Notification(
                 this.getClass().getName() + ".crawlStarted",
-                this, CrawlJob.notificationsSequenceNumber++,
+                this.mbeanName, CrawlJob.notificationsSequenceNumber++,
                 message
                 )); 
     }
@@ -1940,13 +1936,29 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         setReadOnly();
         // Remove the reference so that the old controller can be gc'd.
         this.controller = null;
+        this.stats = null;
     }
 
     public void crawlEnded(String sExitMessage) {
         sendNotification(new Notification(
             this.getClass().getName() + ".crawlEnded",
-            this, CrawlJob.notificationsSequenceNumber++,
-            sExitMessage));        
+            this.mbeanName, CrawlJob.notificationsSequenceNumber++,
+            sExitMessage));   
+        this.openMBeanInfo = null;
+        this.bdbjeMBeanHelper = null;
+        this.bdbjeAttributeNameList = null;
+        this.bdbjeOperationsNameList = null;
+        // Don't clear the below two data members.  They're needed by the
+        // MBeanCrawlController#completeStop method. It will clear them.
+        // this.mbeanServer = null;
+        // this.mbeanName = null;
+        
+        // Let the settings handler be cleaned up by the crawl controller
+        // completeStop. Just let go of our reference in here.
+        // if (this.settingsHandler != null) {
+        //    this.settingsHandler.cleanup();
+        // }
+        this.settingsHandler = null;
     }
 
     public void crawlPausing(String statusMessage) {
@@ -1954,19 +1966,27 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     public void crawlPaused(String statusMessage) {
+        if (this.mbeanName == null) {
+            // Can be null around job startup.
+            return;
+        }
         setStatus(statusMessage);
         sendNotification(new Notification(
             this.getClass().getName() + ".crawlPaused",
-            this, CrawlJob.notificationsSequenceNumber++,
+            this.mbeanName, CrawlJob.notificationsSequenceNumber++,
             statusMessage));    
     }
 
     public void crawlResuming(String statusMessage) {
+        if (this.mbeanName == null) {
+            // Can be null around job startup.
+            return;
+        }
         setStatus(statusMessage);
         sendNotification(new Notification(
             this.getClass().getName() + ".crawlResuming",
-            this, CrawlJob.notificationsSequenceNumber++,
-            statusMessage));    
+            this.mbeanName, CrawlJob.notificationsSequenceNumber++,
+            statusMessage));
     }
 
     public void crawlCheckpoint(File checkpointDir) throws Exception {
