@@ -42,7 +42,6 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
@@ -58,11 +57,11 @@ import org.archive.util.ArchiveUtils;
  */
 public abstract class SettingsHandler {
     /** Cached CrawlerSettings objects */
-    private final SettingsCache settingsCache = new SettingsCache(
-            new CrawlerSettings(this, null));
+    private SettingsCache settingsCache =
+        new SettingsCache(new CrawlerSettings(this, null));
 
     /** Reference to the order module */
-    private final CrawlOrder order;
+    private CrawlOrder order;
 
     private Set valueErrorHandlers = Collections.synchronizedSet(new HashSet());
     private int errorReportingLevel = Level.ALL.intValue();
@@ -124,6 +123,14 @@ public abstract class SettingsHandler {
      */
     public void initialize() {
         readSettingsObject(settingsCache.getGlobalSettings());
+    }
+    
+    public void cleanup() {
+        this.settingsCache = null;
+        if (this.order != null) {
+            this.order.setController(null);
+        }
+        this.order =  null;
     }
 
     /** Strip off the leftmost part of a domain name.

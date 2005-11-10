@@ -332,10 +332,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         
         this.costAssignmentPolicy = null;
         
-        // Clearing controller is a problem. We get
-        // NPEs in #preNext.
-        // this.controller = null;
+        // Clearing controller is a problem. We get NPEs in #preNext.
         super.crawlEnded(sExitMessage);
+        this.controller = null;
     }
 
     /**

@@ -59,6 +59,10 @@ public class ToePool extends ThreadGroup implements Reporter {
         super("ToeThreads");
         this.controller = c;
     }
+    
+    public void cleanup() {
+        this.controller = null;
+    }
 
     /**
      * @return The number of ToeThreads that are not available (Approximation).
@@ -66,7 +70,7 @@ public class ToePool extends ThreadGroup implements Reporter {
     public int getActiveToeCount() {
         Thread[] toes = getToes();
         int count = 0;
-        for (int i = 0; i<toes.length; i++) {
+        for (int i = 0; i < toes.length; i++) {
             if((toes[i] instanceof ToeThread) &&
                     ((ToeThread)toes[i]).isActive()) {
                 count++;

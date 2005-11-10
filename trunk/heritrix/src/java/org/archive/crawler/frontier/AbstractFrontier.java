@@ -583,26 +583,29 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      */
     protected synchronized void preNext(long now) throws InterruptedException,
             EndedException {
-
-        // check completion conditions
-        if (controller.atFinish()) {
+        if (this.controller == null) {
+            return;
+        }
+        
+        // Check completion conditions
+        if (this.controller.atFinish()) {
             if (((Boolean)getUncheckedAttribute(null, ATTR_PAUSE_AT_FINISH))
                     .booleanValue()) {
-                controller.requestCrawlPause();
+                this.controller.requestCrawlPause();
             } else {
-                controller.beginCrawlStop();
+                this.controller.beginCrawlStop();
             }
         }
 
         // enforce operator pause
         if (shouldPause) {
             while (shouldPause) {
-                controller.toePaused();
+                this.controller.toePaused();
                 wait();
             }
             // exitted pause; possibly finish regardless of pause-at-finish
             if (controller.atFinish()) {
-                controller.beginCrawlStop();
+                this.controller.beginCrawlStop();
             }
         }
 

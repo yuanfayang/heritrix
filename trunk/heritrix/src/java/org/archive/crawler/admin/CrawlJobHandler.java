@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -50,7 +51,6 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
@@ -208,16 +208,33 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 }
             }
         };
-        pendingCrawlJobs = new TreeSet(comp);
-        completedCrawlJobs = new TreeSet(comp);
+        this.pendingCrawlJobs = new TreeSet(comp);
+        this.completedCrawlJobs = new TreeSet(comp);
         // Profiles always have the same priority so it will be sorted by name
-        profileJobs = new TreeSet(comp);
-        if(loadProfiles){
+        this.profileJobs = new TreeSet(comp);
+        if (loadProfiles){
             loadProfiles();
         }
-        if(loadJobs){
+        if (loadJobs){
             loadJobs();
         }
+    }
+    
+    /**
+     * Find the state.job file in the job directory.
+     * @param jobDir Directory to look in.
+     * @return Full path to 'state.job' file or null if none found.
+     */
+    protected File getStateJobFile(final File jobDir) {
+        // Need to find job file ('state.job').
+        File[] jobFiles = jobDir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".job") &&
+                    (new File(dir, name)).canRead();
+            }
+            
+        });
+        return (jobFiles.length == 1)? jobFiles[0]: null;
     }
 
     /**
@@ -231,14 +248,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
         File[] jobs = this.jobsDir.listFiles();
         for (int i = 0; i < jobs.length; i++) {
             if (jobs[i].isDirectory()) {
-                // Need to find job file ('state.job').
-                File[] jobFiles = jobs[i].listFiles();
-                for (int j = 0; j < jobFiles.length; j++) {
-                    File job = jobFiles[j];
-                    if (job.getName().matches(".*\\.job") && job.canRead()) {
-                        // Found a potential job file. Try loading it.
-                        loadJob(job);
-                    }
+                File jobFile = getStateJobFile(jobs[i]);
+                if (jobFile != null) {
+                    loadJob(jobFile);
                 }
             }
         }
@@ -249,7 +261,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * the list of completed jobs or pending queue depending on its status.
      * Running jobs will have their status set to 'finished abnormally' and put
      * into the completed list.
-     * @param job the job file of the job to load.
+     * @param job The job file of the job to load.
      */
     protected void loadJob(final File job) {
         CrawlJob cjob = null;
@@ -268,23 +280,22 @@ public class CrawlJobHandler implements CrawlStatusListener {
         
         // TODO: Move test into CrawlJob.
         // Check job status and place it accordingly.
-        if( cjob.getStatus().equals(CrawlJob.STATUS_RUNNING)
+        if (cjob.getStatus().equals(CrawlJob.STATUS_RUNNING)
                 || cjob.getStatus().equals(CrawlJob.STATUS_PAUSED)
                 || cjob.getStatus().equals(CrawlJob.STATUS_CHECKPOINTING)
                 || cjob.getStatus().equals(CrawlJob.STATUS_WAITING_FOR_PAUSE) ){
             // Was a running job.
-            // TODO: Consider checking for checkpoints and offering resume?
             cjob.setStatus(CrawlJob.STATUS_FINISHED_ABNORMAL);
-            completedCrawlJobs.add(cjob);
+            this.completedCrawlJobs.add(cjob);
         } else if( cjob.getStatus().equals(CrawlJob.STATUS_PENDING) ) {
             // Was a pending job.
-            pendingCrawlJobs.add(cjob);
+            this.pendingCrawlJobs.add(cjob);
         } else if( cjob.getStatus().equals(CrawlJob.STATUS_CREATED)
                 || cjob.getStatus().equals(CrawlJob.STATUS_DELETED) ) {
             // Ignore for now. TODO: Add to 'recycle bin'
         } else {
             // Must have been completed.
-            completedCrawlJobs.add(cjob);
+            this.completedCrawlJobs.add(cjob);
         }
     }
 
@@ -418,10 +429,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
         job.setStatus(CrawlJob.STATUS_PENDING);
         if(job.isNew()){
             // Are adding the new job to the pending queue.
-            newJob = null;
+            this.newJob = null;
             job.setNew(false);
         }
-        pendingCrawlJobs.add(job);
+        this.pendingCrawlJobs.add(job);
         if(isCrawling() == false && isRunning()) {
             // Start crawling
             startNextJob();
@@ -1125,15 +1136,14 @@ public class CrawlJobHandler implements CrawlStatusListener {
             // now, actually start
             this.currentJob.getController().requestCrawlStart();
         } catch (InitializationException e) {
-            this.completedCrawlJobs.add(this.currentJob);
+            loadJob(getStateJobFile(this.currentJob.getDirectory()));
             this.currentJob = null;
             startNextJobInternal(); // Load the next job if there is one.
         }
     }
 
     /**
-     * Forward a 'kick' update to current controller if any.
-     * @see CrawlController#kickUpdate()
+     * Forward a 'kick' update to current job if any.
      */
     public void kickUpdate() {
         if(this.currentJob != null) {
@@ -1348,7 +1358,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     }
 
     public void crawlEnding(String sExitMessage) {
-        completedCrawlJobs.add(currentJob);
+        loadJob(getStateJobFile(this.currentJob.getDirectory()));
         currentJob = null;
         synchronized (this) {
             // If the GUI terminated the job then it is waiting for this event.

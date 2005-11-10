@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.refinements.Refinement;
 import org.archive.net.UURI;
 
