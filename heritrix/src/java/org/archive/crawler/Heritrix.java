@@ -269,9 +269,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     
     private OpenMBeanInfoSupport openMBeanInfo;
     private final static String STATUS_ATTR = "Status";
+    private final static String VERSION_ATTR = "Version";
     private final static List ATTRIBUTE_LIST;
     static {
-        ATTRIBUTE_LIST = Arrays.asList(new String [] {STATUS_ATTR});
+        ATTRIBUTE_LIST = Arrays.asList(new String [] {STATUS_ATTR,
+            VERSION_ATTR});
     }
     
     private final static String START_OPER = "start";
@@ -1541,7 +1543,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             final Object objToRegister, final String name, final String type) {
         try {
             registerMBean(server, objToRegister,
-                    new ObjectName(getJmxName(name, type)));
+                new ObjectName(getJmxName(name, type)));
         } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         }
@@ -1753,6 +1755,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             new OpenMBeanAttributeInfoSupport(Heritrix.STATUS_ATTR,
                 "Short basic status message", SimpleType.STRING, true,
                 false, false);
+        // Attributes.
+        attributes[1] =
+            new OpenMBeanAttributeInfoSupport(Heritrix.VERSION_ATTR,
+                "Heritrix version", SimpleType.STRING, true, false, false);
 
         // Constructors.
         constructors[0] = new OpenMBeanConstructorInfoSupport(
@@ -1895,6 +1901,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         // attribute but no handler.
         if (attribute_name.equals(STATUS_ATTR)) {
             return getStatus();
+        }
+        if (attribute_name.equals(VERSION_ATTR)) {
+            return getVersion();
         }
         throw new AttributeNotFoundException("Attribute " +
             attribute_name + " not found.");
