@@ -244,18 +244,6 @@
         <war destfile="${maven.build.dir}/selftest.war"
             webxml="${webapps.dir}/selftest/WEB-INF/web.xml"
             basedir="${webapps.dir}/selftest" />
-        <!--Copy over the cmdline-jmxclient jar.-->
-        <property name="hcc.lib.dir"
-            value="${maven.build.dir}/webapps/hcc/WEB-INF/lib" />
-        <mkdir dir="${hcc.lib.dir}" />
-        <copy todir="${hcc.lib.dir}" filtering="false">
-          <fileset dir="${maven.src.dir}/scripts/">
-            <include name="cmdline-jmxclient*"/>
-          </fileset>
-        </copy>
-        <war destfile="${maven.build.dir}/hcc.war"
-            webxml="${webapps.dir}/hcc/WEB-INF/web.xml"
-            basedir="${webapps.dir}/hcc" />
 
         <!--Copy over the just made war files into the distribution copy.-->
         <copy todir="${maven.dist.bin.assembly.dir}/webapps">
