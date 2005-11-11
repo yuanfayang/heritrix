@@ -41,10 +41,13 @@ public class TextUtils {
 
     /**
      * Get a matcher object for a precompiled regex pattern.
+     * 
      * This method tries to reuse Matcher objects for efficiency.
-     * It returns one Matcher per pattern per thread. Calling
-     * this method recursively with different inputs will invalidate
-     * any previous input.
+     * It can hold for recycling one Matcher per pattern per thread. 
+     * 
+     * Matchers retrieved should be returned for reuse via the
+     * recycleMatcher() method, but no errors will occur if they
+     * are not.
      * 
      * This method is a hotspot frequently accessed.
      *
@@ -60,13 +63,18 @@ public class TextUtils {
         Matcher m = (Matcher)matchers.get(pattern);
         if(m == null) {
             m = Pattern.compile(pattern).matcher(input);
-            matchers.put(pattern, m);
         } else {
+            matchers.put(pattern,null);
             m.reset(input);
         }
         return m;
     }
 
+    public static void recycleMatcher(Matcher m) {
+        final Map matchers = (Map)TL_MATCHER_MAP.get();
+        matchers.put(m.pattern().pattern(),m);
+    }
+    
     /**
      * Utility method using a precompiled pattern instead of using the
      * replaceAll method of the String class. This method will also be reusing
@@ -82,6 +90,7 @@ public class TextUtils {
             String pattern, CharSequence input, String replacement) {
         Matcher m = getMatcher(pattern, input);
         String res = m.replaceAll(replacement);
+        recycleMatcher(m);
         return res;
     }
 
@@ -100,6 +109,7 @@ public class TextUtils {
             String pattern, CharSequence input, String replacement) {
         Matcher m = getMatcher(pattern, input);
         String res = m.replaceFirst(replacement);
+        recycleMatcher(m);
         return res;
     }
 
@@ -116,6 +126,7 @@ public class TextUtils {
     public static boolean matches(String pattern, CharSequence input) {
         Matcher m = getMatcher(pattern, input);
         boolean res = m.matches();
+        recycleMatcher(m);
         return res;
     }
 
@@ -129,7 +140,10 @@ public class TextUtils {
      * @return array of Strings split by pattern
      */
     public static String[] split(String pattern, CharSequence input) {
-        return getMatcher(pattern,input).pattern().split(input); 
+        Matcher m = getMatcher(pattern,input);
+        String[] retVal = m.pattern().split(input); 
+        recycleMatcher(m);
+        return retVal;
     }
     
     /**
@@ -139,7 +153,9 @@ public class TextUtils {
      */
     public static String getFirstWord(String s) {
         Matcher m = getMatcher(FIRSTWORD, s);
-        return (m != null && m.matches())? m.group(1): null;
+        String retVal = (m != null && m.matches())? m.group(1): null;
+        recycleMatcher(m);
+        return retVal;
     }
 
     /**

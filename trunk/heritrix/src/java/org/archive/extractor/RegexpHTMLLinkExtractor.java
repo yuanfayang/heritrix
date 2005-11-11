@@ -271,7 +271,7 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
                 // and/or symptomatic of page bugs
             }
         }
-        attr = null;
+        TextUtils.recycleMatcher(attr);
 
         // handle codebase/resources
         if (resources == null) {
@@ -385,8 +385,8 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
             }
             // TODO: handle other stuff
         }
-        attr = null;
-
+        TextUtils.recycleMatcher(attr);
+        
         // Look for the 'robots' meta-tag
         if("robots".equalsIgnoreCase(name) && content != null ) {
             if (getHonorRobots())  {
@@ -449,6 +449,7 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
      */
     public void reset() {
         super.reset();
+        TextUtils.recycleMatcher(tags);
         tags = null;
     }
 

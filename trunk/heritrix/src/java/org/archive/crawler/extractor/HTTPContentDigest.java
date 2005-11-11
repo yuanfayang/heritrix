@@ -188,6 +188,7 @@ public class HTTPContentDigest extends Processor {
             // Process the document
             Matcher m = TextUtils.getMatcher(regexpr, cs);
             s = m.replaceAll(" ");
+            TextUtils.recycleMatcher(m);
         }
         digest.update(s.getBytes());
 

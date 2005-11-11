@@ -48,7 +48,7 @@ public abstract class CharSequenceLinkExtractor implements LinkExtractor {
     protected ExtractErrorListener extractErrorListener;
 
     protected CharSequence sourceContent;
-    protected LinkedList next = new LinkedList();
+    protected LinkedList next;
 
     public void setup(UURI source, UURI base, InputStream content,
             Charset charset, ExtractErrorListener listener) {
@@ -67,6 +67,7 @@ public abstract class CharSequenceLinkExtractor implements LinkExtractor {
         this.base = base;
         this.extractErrorListener = listener;
         this.sourceContent = content;
+        this.next = new LinkedList();
     }
 
 

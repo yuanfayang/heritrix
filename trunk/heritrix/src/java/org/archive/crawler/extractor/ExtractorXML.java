@@ -141,6 +141,7 @@ public class ExtractorXML extends Extractor implements CoreAttributeConstants {
                 }
             }
         }
+        TextUtils.recycleMatcher(uris);
         return foundLinks;
     }
 

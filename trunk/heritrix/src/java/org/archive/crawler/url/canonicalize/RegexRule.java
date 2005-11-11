@@ -75,12 +75,16 @@ extends BaseRule {
             return url;
         }
         Matcher matcher = TextUtils.getMatcher(regex, url);
+        String retVal; 
         if (matcher == null || !matcher.matches()) {
-            return url;
+            retVal = url;
+        } else {
+            StringBuffer buffer = new StringBuffer(url.length() * 2);
+            format(matcher, format, buffer);
+            retVal = buffer.toString();
         }
-        StringBuffer buffer = new StringBuffer(url.length() * 2);
-        format(matcher, format, buffer);
-        return buffer.toString();
+        TextUtils.recycleMatcher(matcher);
+        return retVal;
     }
     
     /**

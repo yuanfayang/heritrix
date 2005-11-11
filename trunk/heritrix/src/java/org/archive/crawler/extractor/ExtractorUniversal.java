@@ -465,7 +465,9 @@ implements CoreAttributeConstants {
             //Check if the rest of the string looks like an IP address.
             //if so return true. Otherwise continue on.
             Matcher ip = TextUtils.getMatcher(IP_ADDRESS, lookat);
-            if(ip.matches()){
+            boolean testVal = ip.matches();
+            TextUtils.recycleMatcher(ip);
+            if(testVal){
                 return true;
             }
         }
@@ -503,6 +505,7 @@ implements CoreAttributeConstants {
         potentialTLD.toLowerCase();
         Matcher uri = TextUtils.getMatcher(TLDs, potentialTLD);
         boolean ret = uri.matches();
+        TextUtils.recycleMatcher(uri);
         return ret;
     }
 
