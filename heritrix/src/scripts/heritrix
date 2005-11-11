@@ -152,6 +152,7 @@ then
 fi
 stdouterrlog=${HERITRIX_OUT}
 echo "`date` Starting heritrix" >> $stdouterrlog
+echo "HERITRIX_HOME=${HERITRIX_HOME}"
 uname -a >> $stdouterrlog 2>&1
 ${JAVACMD} ${JAVA_OPTS} -version >> $stdouterrlog 2>&1
 echo "JAVA_OPTS=${JAVA_OPTS}" >> $stdouterrlog
