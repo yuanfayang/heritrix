@@ -71,10 +71,14 @@ public class TextUtilsTest extends TestCase {
         String pattern = "f.*";
         Matcher m1 = TextUtils.getMatcher(pattern,"foo");
         assertTrue("matcher against 'foo' problem", m1.matches());
+        TextUtils.recycleMatcher(m1);
         Matcher m2 = TextUtils.getMatcher(pattern,"");
         assertFalse("matcher against '' problem", m2.matches());
+        assertTrue("matcher not recycled",m1==m2);
+        // now verify proper behavior without recycling
         Matcher m3 = TextUtils.getMatcher(pattern,"fuggedaboutit");
         assertTrue("matcher against 'fuggedaboutit' problem",m3.matches());
+        assertFalse("matcher was recycled",m3==m2);
     }
     
     public void testGetFirstWord() {

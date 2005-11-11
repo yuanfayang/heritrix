@@ -169,7 +169,9 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
                foundLinks += considerStrings(curi, subsequence,
                    controller, handlingJSFile);
             }
+            TextUtils.recycleMatcher(uri);
         }
+        TextUtils.recycleMatcher(strings);
         return foundLinks;
     }
 

@@ -164,6 +164,8 @@ public class ExtractorCSS extends Extractor implements CoreAttributeConstants {
             }
         } catch (StackOverflowError e) {
             DevUtils.warnHandle(e, "ExtractorCSS StackOverflowError");
+        } finally {
+            TextUtils.recycleMatcher(uris);
         }
         return foundLinks;
     }

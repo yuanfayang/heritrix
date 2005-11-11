@@ -76,6 +76,8 @@ public class RegexpCSSLinkExtractor extends CharSequenceLinkExtractor {
     protected boolean findNextLink() {
         if (uris == null) {
             uris = TextUtils.getMatcher(CSS_URI_EXTRACTOR, sourceContent);
+            // NOTE: this matcher can't be recycled in this method because
+            // it is reused on rentry
         }
         String cssUri;
         try {
@@ -101,6 +103,12 @@ public class RegexpCSSLinkExtractor extends CharSequenceLinkExtractor {
         return false;
     }
 
+    public void reset() {
+        super.reset();
+        TextUtils.recycleMatcher(uris);
+        uris = null;
+    }
+    
     protected static CharSequenceLinkExtractor newDefaultInstance() {
         return new RegexpCSSLinkExtractor();
     }

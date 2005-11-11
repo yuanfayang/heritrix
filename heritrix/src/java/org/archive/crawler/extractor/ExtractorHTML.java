@@ -324,7 +324,7 @@ implements CoreAttributeConstants {
                 // and/or symptomatic of page bugs
             }
         }
-        attr = null;
+        TextUtils.recycleMatcher(attr);
 
         // handle codebase/resources
         if (resources == null) {
@@ -555,6 +555,7 @@ implements CoreAttributeConstants {
                     tags.end(4) - start);
             }
         }
+        TextUtils.recycleMatcher(tags);
     }
 
 
@@ -632,7 +633,7 @@ implements CoreAttributeConstants {
             }
             // TODO: handle other stuff
         }
-        attr = null;
+        TextUtils.recycleMatcher(attr);
 
         // Look for the 'robots' meta-tag
         if("robots".equalsIgnoreCase(name) && content != null ) {
