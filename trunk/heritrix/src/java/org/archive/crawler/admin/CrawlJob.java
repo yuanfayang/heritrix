@@ -1923,11 +1923,13 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     public void crawlStarted(String message) {
-        sendNotification(new Notification(
-                this.getClass().getName() + ".crawlStarted",
+        if (this.mbeanName != null) {
+            // Can be null around job startup.
+            sendNotification(new Notification(this.getClass().getName() +
+                    ".crawlStarted",
                 this.mbeanName, CrawlJob.notificationsSequenceNumber++,
-                message
-                )); 
+                message)); 
+        }
     }
 
     public void crawlEnding(String sExitMessage) {
@@ -1940,10 +1942,11 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     public void crawlEnded(String sExitMessage) {
-        sendNotification(new Notification(
-            this.getClass().getName() + ".crawlEnded",
-            this.mbeanName, CrawlJob.notificationsSequenceNumber++,
-            sExitMessage));   
+        if (this.mbeanName != null) {
+            sendNotification(new Notification(this.getClass().getName() +
+                    ".crawlEnded", this.mbeanName,
+                CrawlJob.notificationsSequenceNumber++, sExitMessage));
+        }
         this.openMBeanInfo = null;
         this.bdbjeMBeanHelper = null;
         this.bdbjeAttributeNameList = null;
@@ -1966,27 +1969,23 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     public void crawlPaused(String statusMessage) {
-        if (this.mbeanName == null) {
-            // Can be null around job startup.
-            return;
-        }
         setStatus(statusMessage);
-        sendNotification(new Notification(
-            this.getClass().getName() + ".crawlPaused",
-            this.mbeanName, CrawlJob.notificationsSequenceNumber++,
-            statusMessage));    
+        if (this.mbeanName != null) {
+            // Can be null around job startup.
+            sendNotification(new Notification(this.getClass().getName() +
+                    ".crawlPaused", this.mbeanName,
+                CrawlJob.notificationsSequenceNumber++, statusMessage));
+        }
     }
 
     public void crawlResuming(String statusMessage) {
-        if (this.mbeanName == null) {
-            // Can be null around job startup.
-            return;
-        }
         setStatus(statusMessage);
-        sendNotification(new Notification(
-            this.getClass().getName() + ".crawlResuming",
-            this.mbeanName, CrawlJob.notificationsSequenceNumber++,
-            statusMessage));
+        if (this.mbeanName != null) {
+            // Can be null around job startup.
+            sendNotification(new Notification(this.getClass().getName() +
+                    ".crawlResuming", this.mbeanName,
+                CrawlJob.notificationsSequenceNumber++, statusMessage));
+        }
     }
 
     public void crawlCheckpoint(File checkpointDir) throws Exception {
