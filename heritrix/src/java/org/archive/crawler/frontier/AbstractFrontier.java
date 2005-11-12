@@ -604,7 +604,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
                 wait();
             }
             // exitted pause; possibly finish regardless of pause-at-finish
-            if (controller.atFinish()) {
+            if (controller != null && controller.atFinish()) {
                 this.controller.beginCrawlStop();
             }
         }
