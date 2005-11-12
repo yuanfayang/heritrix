@@ -57,6 +57,7 @@ public class AntiCalendarCostAssignmentPolicy extends WagCostAssignmentPolicy {
             cost++;
             // TODO: consider if multiple occurences should cost more
         }
+        TextUtils.recycleMatcher(m);
         return cost;
     }
 }
