@@ -110,6 +110,7 @@ public class SURT {
         Matcher m = TextUtils.getMatcher(URI_SPLITTER,s);
         if(!m.matches()) {
             // not an authority-based URI scheme; return unchanged
+            TextUtils.recycleMatcher(m);
             return s;
         }
         // preallocate enough space for SURT form, which includes
@@ -138,6 +139,7 @@ public class SURT {
         for(int i = 0; i < builder.length(); i++) {
             builder.setCharAt(i,Character.toLowerCase(builder.charAt((i))));
         }
+        TextUtils.recycleMatcher(m);
         return builder.toString();
     }
     
