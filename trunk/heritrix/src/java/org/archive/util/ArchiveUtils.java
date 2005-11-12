@@ -488,11 +488,24 @@ public class ArchiveUtils {
      * @return Human readable string version of passed <code>time</code>
      */
     public static String formatMillisecondsToConventional(long time) {
+        return formatMillisecondsToConventional(time,true);
+    }
+    
+    /**
+     * Convert milliseconds value to a human-readable duration
+     * @param time
+     * @param toMs whether to print to the ms
+     * @return Human readable string version of passed <code>time</code>
+     */
+    public static String formatMillisecondsToConventional(long time, boolean toMs) {
         StringBuffer sb = new StringBuffer();
         if(time<0) {
             sb.append("-");
         }
         long absTime = Math.abs(time);
+        if(!toMs && absTime < 1000) {
+            return "0s";
+        }
         if(absTime > DAY_IN_MS) {
             // days
             sb.append(absTime / DAY_IN_MS + "d");
@@ -511,7 +524,9 @@ public class ArchiveUtils {
             sb.append(absTime / 1000 + "s");
             absTime = absTime % 1000;
         }
-        sb.append(absTime + "ms");
+        if(toMs) {
+            sb.append(absTime + "ms");
+        }
         return sb.toString();
     }
 

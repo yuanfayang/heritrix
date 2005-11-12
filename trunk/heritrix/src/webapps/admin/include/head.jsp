@@ -2,6 +2,8 @@
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="org.archive.crawler.Heritrix" %>
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
+<%@ page import="org.archive.util.ArchiveUtils" %>
+<%@ page import="org.archive.util.TextUtils" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 <%
     /**
@@ -29,6 +31,10 @@
      *
      * @author Kristinn Sigurdsson
      */
+    String shortJobStatus = null;
+	if(handler.getCurrentJob() != null) {
+		shortJobStatus = TextUtils.getFirstWord(handler.getCurrentJob().getStatus());
+	}
 %>
 <%@include file="stats.jsp"%>
 
@@ -74,9 +80,10 @@
                                                 sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
                                             %>
                                             <b>
-                                                Status of crawler as of <a style="color: #000000" href="<%=request.getRequestURL()%>"><%=sdf.format(new java.util.Date())%> GMT</a>
+                                                Status as of <a style="color: #000000" href="<%=request.getRequestURL()%>"><%=sdf.format(new java.util.Date())%> GMT</a>
                                             </b>
-                                            &nbsp;&nbsp;&nbsp;
+                                            &nbsp;&nbsp;
+                                            <span style="text-align:right">
                                             <b>
                                                 Alerts: 
                                             </b>
@@ -87,29 +94,33 @@
                                             <% } else { %>
                                                 <a style="color: #000000" href="<%=request.getContextPath()%>/console/alerts.jsp"><%=heritrix.getAlertsCount()%> (<%=heritrix.getNewAlertsCount()%> new)</a>
                                             <% } %>
+                                            </span>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td nowrap>
-                                            <%=handler.isRunning()?"Crawler is running":"Crawler is not running"%>
-                                        </td>
-                                        <td nowrap>
-                                            <%
-                                                if(handler.isRunning() || handler.isCrawling())
-                                                {
-                                                    if(handler.getCurrentJob() != null)
-                                                    {
-                                                        out.println("<b>Current job:</b> " + handler.getCurrentJob().getJobName());
-                                                    }
-                                                    else
-                                                    {
-                                                        out.println("No job ready for crawling <a href=\"");
-                                                        out.println(request.getContextPath());
-                                                        out.println("/jobs/new.jsp\" style='color: #000000'>(create new)</a>");
-                                                    }
-                                                }
-                                            %>
-                                        </td>
+                                        <td valign="top" nowrap>
+										<%= handler.isRunning()
+										    ? "<span class='status'>Crawling Jobs</span>"
+										    : "<span class='status'>Holding Jobs</span>"
+										%><i>&nbsp;</i>
+										</td>
+										<td valign="top" align="right" nowrap>
+										<%
+										if(handler.isRunning() || handler.isCrawling()) {
+										    if(handler.getCurrentJob() != null)
+										    {%>
+										<span class='status'>
+										<%= shortJobStatus %></span> job:
+										<i><%= handler.getCurrentJob().getJobName() %></i>
+										<%
+										    } else {
+										        out.println("No job ready <a href=\"");
+										        out.println(request.getContextPath());
+										        out.println("/jobs.jsp\" style='color: #000000'>(create new)</a>");
+										     }
+										 }
+										%>
+										</td>
                                     </tr>
                                     <tr>
                                         <td nowrap>
@@ -120,28 +131,18 @@
                                             <a style="color: #000000" href="<%=request.getContextPath()%>/jobs.jsp#completed">completed</a>
                                             &nbsp;
                                         </td>
-                                        <td nowrap>
+                                        <td nowrap align="right">
                                             <% if(handler.isCrawling()){ %>
-                                                    Downloaded <%=(stats != null)? stats.successfullyFetchedCount(): 0%> documents in 
-                                            <%
-                                                    long time = (stats != null)?(stats.getCrawlerTotalElapsedTime()/1000): 0;
-                        
-                                                    if(time>3600)
-                                                    {
-                                                        //got hours.
-                                                        out.println(time/3600 + " h., ");
-                                                        time = time % 3600;
-                                                    }
-                        
-                                                    if(time > 60)
-                                                    {
-                                                        out.println(time/60 + " min. and ");
-                                                        time = time % 60;
-                                                    }
-                        
-                                                    out.println(time + " sec.");
-                                                } 
-                                            %>
+                                                    <%=(stats != null)? stats.successfullyFetchedCount(): 0%> URIs in 
+		                                            <%= ArchiveUtils.formatMillisecondsToConventional( 
+		                                            		((stats != null) 
+		                                            		  	? (stats.getCrawlerTotalElapsedTime())
+		                                            		  	: 0),
+		                                            		false
+		                                            	)
+		                                            %>
+		                                            (<%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%>/sec)
+                                            <% } %>
                                         </td>
                                     </tr>
                                 </table>
