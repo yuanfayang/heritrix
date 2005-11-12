@@ -358,7 +358,7 @@ public class UURIFactory extends URI {
     protected UURI validityCheck(UURI uuri) throws URIException {
         if (uuri.getRawURI().length > UURI.MAX_URL_LENGTH) {
            throw new URIException("Created (escaped) uuri > " +
-              UURI.MAX_URL_LENGTH);
+              UURI.MAX_URL_LENGTH +": "+uuri.toString());
         }
         return uuri;
     }
@@ -611,8 +611,7 @@ public class UURIFactory extends URI {
             // keep cache of recent encodings
             label = IDNA.toASCII(label);
         } catch (IDNAException e) {
-            Matcher m = TextUtils.getMatcher(ACCEPTABLE_ASCII_DOMAIN,label);
-            if(m.matches()) {
+            if(TextUtils.matches(ACCEPTABLE_ASCII_DOMAIN,label)) {
                 // domain name has ACE prefix, leading/trailing dash, or 
                 // underscore -- but is still a name we wish to tolerate;
                 // simply continue
@@ -621,7 +620,9 @@ public class UURIFactory extends URI {
                 // nor IDN-punycodable, so throw exception 
                 // TODO: change to HeritrixURIException so distinguishable
                 // from URIExceptions in library code
-                throw new URIException(e+" "+label);
+                URIException ue = new URIException(e+" "+label);
+                ue.initCause(e);
+                throw ue;
             }
         }
         label = label.toLowerCase();
