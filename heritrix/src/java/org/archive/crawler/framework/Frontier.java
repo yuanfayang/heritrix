@@ -221,6 +221,10 @@ public interface Frontier extends Reporter {
      */
     public long queuedUriCount();
 
+    public long deepestUri(); // aka longest queue
+    public long averageDepth(); // aka average queue length
+    public float congestionRatio(); // multiple of threads needed for max progress
+    
     /**
      * Number of URIs that have <i>finished</i> processing.
      *

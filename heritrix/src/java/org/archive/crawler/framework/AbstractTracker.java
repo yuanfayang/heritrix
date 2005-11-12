@@ -150,7 +150,8 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
         return "           timestamp" +
             "  discovered   " +
             "   queued   downloaded       doc/s(avg)  KB/s(avg) " +
-            "  dl-failures   busy-thread   mem-use-KB  heap-size-KB";
+            "  dl-failures   busy-thread   mem-use-KB  heap-size-KB " +
+            "  congestion   max-depth   avg-depth";
     }
 
     /**
