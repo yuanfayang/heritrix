@@ -3,22 +3,12 @@
 <%@ page import="org.archive.crawler.Heritrix" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
 <%@ page import="org.archive.util.ArchiveUtils" %>
+<%@ page import="org.archive.util.TextUtils" %>
 <%@ page import="javax.servlet.jsp.JspWriter" %>
 <%!
 	private void printTime(final JspWriter out,long time)
     throws java.io.IOException {
-	    if(time > 3600) {
-	        //got hours.
-	        out.println(time/3600 + " h., ");
-	        time = time % 3600;
-	    }
-	    
-	    if(time > 60) {
-	        out.println(time/60 + " min. and ");
-	        time = time % 60;
-	    }
-	
-	    out.println(time + " sec.");
+	    out.println(ArchiveUtils.formatMillisecondsToConventional(time,false));
 	}
 %>
 <%
@@ -37,7 +27,7 @@
         }
     }
 
-    String title = "Administrator Console";
+    String title = "Admin Console";
     int tab = 0;
 %>
 
@@ -53,86 +43,45 @@
     
     <table border="0" cellspacing="0" cellpadding="0"><tr><td>
     <fieldset style="width: 750px">
-        <legend>Crawler status</legend>
-        <table border="0" cellspacing="0" cellpadding="0" width="100%">
-            <tr>
-                <td valign="top" width="60%">
-                    <table border="0" cellspacing="0" cellpadding="0" >
-                        <tr>
-                            <td>
-                                <b>Crawler running:</b>&nbsp;
-                            </td>
-                            <td>
-                                <%=handler.isRunning()?"Yes":"No"%>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <b>Current job:</b>&nbsp;
-                            </td>
-                            <td nowrap>
-                                <%=handler.getCurrentJob()!=null?handler.getCurrentJob().getJobName():"None"%>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <b>Jobs pending:</b>&nbsp;
-                            </td>
-                            <td>
-                                <%=handler.getPendingJobs().size()%>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <b>Jobs completed:</b>&nbsp;
-                            </td>
-                            <td>
-                                <%=handler.getCompletedJobs().size()%>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-                <td valign="top" width="40%">
-                    <table border="0" cellspacing="0" cellpadding="0" >
-                        <tr>
-                            <td>
-                                <b>Used memory:</b>&nbsp;
-                            </td>
-                            <td>
-                                <%=(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024%> KB
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <b>Heap size:</b>&nbsp;
-                            </td>
-                            <td>
-                                <%=(Runtime.getRuntime().totalMemory())/1024%> KB
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <b>Max heap size:</b>&nbsp;
-                            </td>
-                            <td>
-                                <%=(Runtime.getRuntime().maxMemory())/1024%> KB
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <b>
-                                    Alerts: 
-                                </b>
-                            </td>
-                            <td>
-                                <a style="color: #000000" 
-                                    href="<%=request.getContextPath()%>/console/alerts.jsp">
-                                    <%=heritrix.getAlertsCount()%> (<%=heritrix.getNewAlertsCount()%> new)
-                                </a>
-                            </td>
-                    </table>
-                </td>
-            </tr>
+        <legend> 
+        <b><span class="legendTitle">Crawler Status:</span> 
+        <%= handler.isRunning() 
+            ? "<span class='status crawling'>CRAWLING JOBS</span></b> | "
+              +"<a href='"+request.getContextPath()+"/console/action.jsp?action=stop'>Hold</a>"
+            : "<span class='status holding'>HOLDING JOBS</span></b> | "
+              +"<a href='"+request.getContextPath()+"/console/action.jsp?action=start'>Start</a>"
+        %> </b>
+        </legend>
+        <div style="float:right;padding-right:50px;">
+	        <b>Memory</b><br>
+	        <div style="padding-left:20px">
+		        <%=(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024%> KB 
+		        used<br>
+		        <%=(Runtime.getRuntime().totalMemory())/1024%> KB
+		        current heap<br>
+		        <%=(Runtime.getRuntime().maxMemory())/1024%> KB
+		        max heap
+	        </div>
+	    </div>
+        <b>Jobs</b>
+        <div style="padding-left:20px">
+			<%= handler.getCurrentJob()!=null
+			    ? shortJobStatus+": <i>"
+			      +handler.getCurrentJob().getJobName()+"</i>"
+			    : ((handler.isRunning()) ? "None available" : "None running")
+			 %><br>
+	        <%= handler.getPendingJobs().size() %> pending,
+	        <%= handler.getCompletedJobs().size() %> completed
+        </div>
+
+        <b>Alerts:</b>
+
+	        <a style="color: #000000" 
+	            href="<%=request.getContextPath()%>/console/alerts.jsp">
+	            <%=heritrix.getAlertsCount()%> (<%=heritrix.getNewAlertsCount()%> new)
+	        </a>
+	        
+         </fieldset>
             <%
             	long begin, end;
 	            if(stats != null) {
@@ -153,7 +102,7 @@
                         timeElapsed= 0;
                         timeRemain = -1;
                     } else {
-	                    timeElapsed = (stats.getCrawlerTotalElapsedTime())/1000;
+	                    timeElapsed = (stats.getCrawlerTotalElapsedTime());
 	                    if(begin == 0) {
 	                        timeRemain = -1;
 	                    } else {
@@ -161,178 +110,119 @@
 	                    }
                     }
             %>
-                    <tr>
-                        <td valign="top">
-                            <table border="0" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td height="5" colspan="2">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <b>Status:</b>&nbsp;
-                                    </td>
-                                    <td>
-                                        <%=handler.getCurrentJob().getStatus()%>
-                                    </td>
-                                </tr>
-                                <%
-                                  if(handler.isCrawling() && stats != null)
-                                  {
-                                %>
-                                <tr>
-                                    <td>
-                                        <b>Processed docs/sec:</b>&nbsp;
-                                    </td>
-                                    <td>
-                                        <%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%> (<%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%>)
-                                        &nbsp;&nbsp;&nbsp;
-                                        <b>KB/sec:</b>&nbsp;<%=stats.currentProcessedKBPerSec()%> (<%=stats.processedKBPerSec()%>)
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <b>Run time:</b>&nbsp;
-                                    </td>
-                                    <td>
-                                        <%
-                                        	printTime(out,timeElapsed);
-                                        %>
-                                    </td>
-                                </tr>
-                                <%
-                                   if(timeRemain != -1)
-                                   {
-                                %>
-                                <tr>
-                                    <td>
-                                        <b>Remaining (estimated):</b>&nbsp;
-                                    </td>
-                                    <td>
-                                        <%
-                                        	printTime(out,timeRemain);
-                                        %>
-                                    </td>
-                                </tr>
-                                <%
-                                   }
-                                %>
-                                <%
-                                }
-                                %>
-                            </table>
-                        </td>
-                        <td valign="top">
-                        	<%
-                                  if(stats != null)
-                                  {
-                            %>
-                            <table border="0" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td height="5" colspan="2">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <b>Active thread count:</b>&nbsp;
-                                    </td>
-                                    <td>
-                                        <%=stats.activeThreadCount()%> of <%=stats.threadCount()%>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <b>Total data received:</b>&nbsp;
-                                    </td>
-                                    <td>
-                                        <%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%>
-                                    </td>
-                                </tr>
-                            </table>
-                        	<%
-                                  }
-                            %>
-                        </td>
-                    </tr>
-            <%    
+            <fieldset style="width: 750px">
+               <legend>
+               <b><span class="legendTitle">Job Status:</span>
+               <%= 
+               "<span class='status "
+               +shortJobStatus+"'>"
+               +shortJobStatus+"</span>"
+               %>
+               </b> | 
+               <%      
+			        if(handler.isCrawling()) {
+			            if ((handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED) ||
+			                    handler.getCurrentJob().getStatus().
+			                        equals(CrawlJob.STATUS_WAITING_FOR_PAUSE))) {
+			                out.println("<a href='/console/action.jsp?action=resume'>" +
+			                    "Resume</a>");
+	                    } else if (!handler.getCurrentJob().getStatus().
+					        equals(CrawlJob.STATUS_CHECKPOINTING)) {
+					                out.println("<a href=\"");
+					                out.println(request.getContextPath());
+					                out.println("/console/action.jsp?action=pause\">Pause</a> ");
+	            		}
+			            out.println(" | <a href='javascript:doTerminateCurrentJob()'>" +
+	    					"Terminate</a>");
+	    			}
+			   %>
+               </legend>
+
+                <%
+                  if(handler.isCrawling() && stats != null)
+                  {
+                %>
+                	<div style="float:right; padding-right:50px;">
+                	    <b>Load</b>
+            			<div style="padding-left:20px">
+			            	<%=stats.activeThreadCount()%> active of <%=stats.threadCount()%> threads
+			            	<br>
+			            	<%=ArchiveUtils.doubleToString((double)stats.congestionRatio(),2)%>
+			            	congestion ratio
+			            	<br>
+			            	<%=stats.deepestUri()%> deepest queue
+			            	<br>
+			            	<%=stats.averageDepth()%> average depth
+						</div>
+					</div>
+	                <b>Rates</b>
+	                <div style="padding-left:20px">
+		                <%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%> 		                
+		                URIs/sec
+		                (<%=ArchiveUtils.doubleToString(stats.processedDocsPerSec(),2)%> avg)
+		                <br>
+		                <%=stats.currentProcessedKBPerSec()%>
+						KB/sec
+						(<%=stats.processedKBPerSec()%> avg)
+					</div>
+
+                    <b>Time</b>
+                    <div class='indent'>
+	                    <%= ArchiveUtils.formatMillisecondsToConventional(timeElapsed,false) %>
+						elapsed
+						<br>
+	                    <%
+	                       if(timeRemain != -1) {
+	                    %>
+		                    <%= ArchiveUtils.formatMillisecondsToConventional(timeRemain,false) %>
+		                    remaining (estimated)
+		               	<%
+	                       }
+                   		%>
+					</div>
+                    <b>Totals</b>
+                	<%
+                          }
                 }
                 if(stats != null)
                 {
 	                int ratio = (int) (100 * begin / end);
             %>
-                    <tr>
-                        <td colspan="2" height="5"> 
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2">
                             <center>
-                            <table border=1 width="500">
-                            <tr>
-                            <td><center><b><u>DOWNLOADED/QUEUED DOCUMENT RATIO</u></b><br>
-                            <table border="0" cellpadding="0" cellspacing= "0" width="100%"> 
+                            <table border="0" cellpadding="0" cellspacing= "0" width="600"> 
                                 <tr>
-                                    <td width="20%"></td>
-                                    <td bgcolor="darkorange" width="<%= (int) (ratio/2) %>%" align="right">
-                                        <strong><%= ratio %></strong>%
+                                    <td align='right' width="25%">downloaded <%= begin %>&nbsp;</td>
+                                    <td class='completedBar' width="<%= (int)ratio/2 %>%" align="right">
+                                    <%= ratio > 50 ? "<b>"+ratio+"</b>%&nbsp;" : "" %>
                                     </td>
-                                    <td bgcolor="lightblue" align="right" width="<%= (int) ((100-ratio)/2) %>%"></td>
-                                    <td nowrap>&nbsp;&nbsp;(<%= begin %> of <%= end %>)</td>
+                                    <td class='queuedBar' align="left" width="<%= (int) ((100-ratio)/2) %>%">
+                                    <%= ratio < 50 ? "&nbsp;<b>"+ratio+"</b>%" : "" %>
+                                    </td>
+                                    <td width="25%" nowrap>&nbsp;<%= stats.queuedUriCount() %> queued</td>
                                 </tr>
-                            </table>        
-                            </td>
-                            </tr>
                             </table>
+                            <%= end %> total downloaded and queued<br>      
+                    		<%=ArchiveUtils.formatBytesForDisplay(stats.totalBytesWritten())%> uncompressed data received
                             </center>
-                        </td>
-                    </tr>
             <%
                 }
+                if (handler.getCurrentJob() != null &&
+                	handler.getCurrentJob().getStatus().equals(CrawlJob.STATUS_PAUSED)) {
             %>
-        </table>
+            		<b>Paused Operations</b>
+            		<div class='indent'>
+            			<a href='<%= request.getContextPath() %>/console/action.jsp?action=checkpoint'>Checkpoint</a>
+	                	| 
+	                	<a href='<%= request.getContextPath() %>/console/frontier.jsp'>View or Edit Frontier URIs</a>
+	                </div>
+	        <%
+            	}
+            %>
     </fieldset>
     </td></tr>
     <tr><td>
-    <%
-        if(handler.isRunning()) {
-            out.println("<a href=\"");
-            out.println(request.getContextPath());
-            out.println("/console/action.jsp?action=stop\">Stop crawling pending jobs</a>");
-        } else {
-            out.println("<a href=\"");
-            out.println(request.getContextPath());
-            out.println("/console/action.jsp?action=start\">Start crawling pending jobs</a>");
-        }
-
-        if(handler.isCrawling()) {
-            out.println(" | <a href='javascript:doTerminateCurrentJob()'>" +
-                "Terminate</a>");
-            if (handler.getCurrentJob().getStatus().
-                        equals(CrawlJob.STATUS_PAUSED) ||
-                    handler.getCurrentJob().getStatus().
-                        equals(CrawlJob.STATUS_WAITING_FOR_PAUSE)) {
-                out.println(" | <a href='/console/action.jsp?action=resume'>" +
-                    "Resume</a>");
-                if(handler.getCurrentJob().getStatus().
-                        equals(CrawlJob.STATUS_PAUSED)) {
-                    out.println(" | <a href=\"");
-                    out.println(request.getContextPath());
-                    out.println("/console/action.jsp?" +
-                        "action=checkpoint\">Checkpoint</a>");
-                    out.println(" | <a href=\"");
-                    out.println(request.getContextPath());
-                    out.println("/console/frontier.jsp\">View or " +
-                        "Edit Frontier URIs</a> ");
-
-                }
-            } else if (!handler.getCurrentJob().getStatus().
-                    equals(CrawlJob.STATUS_CHECKPOINTING)) {
-                out.println(" | <a href=\"");
-                out.println(request.getContextPath());
-                out.println("/console/action.jsp?action=pause\">Pause</a> ");
-            }
-        }
-    %> | <a href="<%=request.getContextPath()%>/">Refresh</a>
+    
+	<a href="<%=request.getContextPath()%>/">Refresh</a>
     </td></tr>
     <tr><td>
         <p>
