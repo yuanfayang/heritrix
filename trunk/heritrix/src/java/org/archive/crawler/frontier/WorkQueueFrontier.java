@@ -157,6 +157,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     protected SortedSet snoozedClassQueues =
         Collections.synchronizedSortedSet(new TreeSet());
 
+    protected WorkQueue longestActiveQueue = null;
+    
     /** how long to wait for a ready queue when there's nothing snoozed */
     private static final long DEFAULT_WAIT = 1000; // 1 second
 
@@ -409,6 +411,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     readyQueue(wq);
                 }
             }
+            WorkQueue laq = longestActiveQueue;
+            if(!wq.isRetired()&&((laq==null) || wq.getCount() > laq.getCount())) {
+                longestActiveQueue = wq; 
+            }
         }
     }
 
@@ -464,6 +470,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         try {
             retiredQueues.put(wq.getClassKey());
             decrementQueuedCount(wq.getCount());
+            wq.setRetired(true);
             wq.setActive(this, false);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -512,6 +519,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      */
     private void unretireQueue(WorkQueue q) {
         deactivateQueue(q);
+        q.setRetired(false); 
         incrementQueuedUriCount(q.getCount());
     }
 
@@ -1237,6 +1245,27 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     
     public FrontierGroup getGroup(CrawlURI curi) {
         return getQueueFor(curi);
+    }
+    
+    
+    public long averageDepth() {
+        int inProcessCount = inProcessQueues.uniqueSet().size();
+        int readyCount = readyClassQueues.getCount();
+        int snoozedCount = snoozedClassQueues.size();
+        int activeCount = inProcessCount + readyCount + snoozedCount;
+        int inactiveCount = inactiveQueues.getCount();
+        return queuedUriCount / (activeCount+inactiveCount);
+    }
+    public float congestionRatio() {
+        int inProcessCount = inProcessQueues.uniqueSet().size();
+        int readyCount = readyClassQueues.getCount();
+        int snoozedCount = snoozedClassQueues.size();
+        int activeCount = inProcessCount + readyCount + snoozedCount;
+        int inactiveCount = inactiveQueues.getCount();
+        return (float)(activeCount + inactiveCount) / (inProcessCount + snoozedCount);
+    }
+    public long deepestUri() {
+        return longestActiveQueue==null ? -1 : longestActiveQueue.getCount();
     }
 }
 

@@ -179,6 +179,10 @@ public interface StatisticsTracking extends Runnable {
      */
     public long totalCount();
     
+    public float congestionRatio();
+    public long deepestUri();
+    public long averageDepth();
+    
     /**
      * Get a SeedRecord iterator for the job being monitored. If job is no 
      * longer running, stored values will be returned. If job is running, 

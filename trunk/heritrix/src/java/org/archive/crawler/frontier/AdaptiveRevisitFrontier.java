@@ -1258,4 +1258,26 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         }
     }
     
+    public long averageDepth() {
+        return -1;
+//        int inProcessCount = inProcessQueues.uniqueSet().size();
+//        int readyCount = readyClassQueues.getCount();
+//        int snoozedCount = snoozedClassQueues.size();
+//        int activeCount = inProcessCount + readyCount + snoozedCount;
+//        int inactiveCount = inactiveQueues.getCount();
+//        return queuedUriCount / (activeCount+inactiveCount);
+    }
+    public float congestionRatio() {
+        return -1;
+//        int inProcessCount = inProcessQueues.uniqueSet().size();
+//        int readyCount = readyClassQueues.getCount();
+//        int snoozedCount = snoozedClassQueues.size();
+//        int activeCount = inProcessCount + readyCount + snoozedCount;
+//        int inactiveCount = inactiveQueues.getCount();
+//        return (activeCount + inactiveCount) / (inProcessCount + snoozedCount);
+    }
+    public long deepestUri() {
+        return -1;
+//        return longestActiveQueue==null ? -1 : longestActiveQueue.getCount();
+    }
 }

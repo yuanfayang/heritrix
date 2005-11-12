@@ -133,7 +133,10 @@ implements CrawlURIDispositionListener, Serializable {
     protected long totalKBPerSec = 0;
     protected int busyThreads = 0;
     protected long totalProcessedBytes = 0;
-
+    protected float congestionRatio = 0; 
+    protected long deepestUri;
+    protected long averageDepth;
+    
     /*
      * Cumulative data
      */
@@ -223,7 +226,10 @@ implements CrawlURIDispositionListener, Serializable {
         downloadFailures = failedFetchAttempts();
         downloadDisregards = disregardedFetchAttempts();
         totalProcessedBytes = totalBytesWritten();
-
+        congestionRatio = congestionRatio();
+        deepestUri = deepestUri();
+        averageDepth = averageDepth();
+        
         if (finishedUriCount() == 0) {
             docsPerSecond = 0;
             totalKBPerSec = 0;
@@ -302,6 +308,9 @@ implements CrawlURIDispositionListener, Serializable {
             .raAppend(113, busyThreads)
             .raAppend(126, (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)
             .raAppend(140, Runtime.getRuntime().totalMemory()/1024)
+            .raAppend(153, ArchiveUtils.doubleToString((double)congestionRatio,2))
+            .raAppend(165, deepestUri)
+            .raAppend(177, averageDepth)
             .toString();
     }
 
@@ -585,6 +594,47 @@ implements CrawlURIDispositionListener, Serializable {
             successfullyFetchedCount();
     }
 
+    /**
+     * Ratio of number of threads that would theoretically allow
+     * maximum crawl progress (if each was as productive as current
+     * threads), to current number of threads.
+     * 
+     * @return float congestion ratio 
+     */
+    public float congestionRatio() {
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ?
+            controller.getFrontier().congestionRatio() : congestionRatio;
+    }
+    
+    /**
+     * Ordinal position of the 'deepest' URI eligible 
+     * for crawling. Essentially, the length of the longest
+     * frontier internal queue. 
+     * 
+     * @return long URI count to deepest URI
+     */
+    public long deepestUri() {
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ?
+            controller.getFrontier().deepestUri() : deepestUri;
+    }
+    
+    /**
+     * Average depth of the last URI in all eligible queues.
+     * That is, the average length of all eligible queues.
+     * 
+     * @return long average depth of last URIs in queues 
+     */
+    public long averageDepth() {
+        // While shouldrun is true we can use info direct from the crawler.
+        // After that our last snapshot will have to do.
+        return shouldrun ?
+            controller.getFrontier().averageDepth() : averageDepth;
+    }
+    
     /**
      * Number of URIs <i>queued</i> up and waiting for processing.
      *

@@ -74,6 +74,8 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
     
     /** Substats for all CrawlURIs in this group */
     protected CrawlSubstats substats = new CrawlSubstats();
+
+    private boolean retired;
     
     public WorkQueue(final String pClassKey) {
         this.classKey = pClassKey;
@@ -563,5 +565,18 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
     
     public CrawlSubstats getSubstats() {
         return substats;
+    }
+
+    /**
+     * Set the retired status of this queue.
+     * 
+     * @param b new value for retired status
+     */
+    public void setRetired(boolean b) {
+        this.retired = b;
+    }
+    
+    public boolean isRetired() {
+        return retired;
     }
 }
