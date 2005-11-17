@@ -38,7 +38,7 @@ public class WebappLifecycle implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
         if (!Heritrix.isCommandLine()) {
             try {
-				this.heritrix = new Heritrix();
+				this.heritrix = new Heritrix(true);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

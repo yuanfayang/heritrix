@@ -84,23 +84,23 @@ public class Canonicalizer {
         String canonical = before;
         for (; rules.hasNext();) {
             CanonicalizationRule r = (CanonicalizationRule)rules.next();
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isLoggable(Level.FINER)) {
                 beforeRule = canonical;
             }
             if (!r.isEnabled(uuri)) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("Rule " + r.getName() + " is disabled.");
+                if (logger.isLoggable(Level.FINER)) {
+                    logger.finer("Rule " + r.getName() + " is disabled.");
                 }
                 continue;
             }
             canonical = r.canonicalize(canonical, uuri);
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Rule " + r.getName() + " " + before + " => " +
+            if (logger.isLoggable(Level.FINER)) {
+                logger.finer("Rule " + r.getName() + " " + before + " => " +
                         canonical);
             }
         }
         if (logger.isLoggable(Level.INFO)) {
-            logger.info(before + " => " + canonical);
+            logger.fine(before + " => " + canonical);
         }
         return canonical;
     }
