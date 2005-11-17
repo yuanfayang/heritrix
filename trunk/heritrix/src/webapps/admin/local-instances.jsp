@@ -6,7 +6,7 @@
     Map m = Heritrix.getInstances();
     String newName = request.getParameter("createName");
     if (newName != null && newName.length() > 0) {
-        Heritrix h = new Heritrix(newName);
+        Heritrix h = new Heritrix(newName, true);
     } else {
         String q = request.getQueryString();
         if (q != null && q.length() > 0) {
