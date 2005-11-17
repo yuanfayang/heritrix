@@ -141,7 +141,7 @@
 		                                            		false
 		                                            	)
 		                                            %>
-		                                            (<%=ArchiveUtils.doubleToString(stats.currentProcessedDocsPerSec(),2)%>/sec)
+		                                            (<%=ArchiveUtils.doubleToString(((stats != null)? stats.currentProcessedDocsPerSec(): 0),2)%>/sec)
                                             <% } %>
                                         </td>
                                     </tr>
