@@ -72,7 +72,7 @@ public class DevUtils {
             ProgressStatisticsReporter tt = (ProgressStatisticsReporter)current;
             try {
                 tt.progressStatisticsLegend(pw);
-                tt.progressStatisticsLegend(pw);
+                tt.progressStatisticsLine(pw);
             } catch (IOException e) {
                 // Not really possible w/ a StringWriter
                 e.printStackTrace();
