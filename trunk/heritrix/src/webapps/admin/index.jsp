@@ -196,7 +196,7 @@
                                     <%= ratio > 50 ? "<b>"+ratio+"</b>%&nbsp;" : "" %>
                                     </td>
                                     <td class='queuedBar' align="left" width="<%= (int) ((100-ratio)/2) %>%">
-                                    <%= ratio < 50 ? "&nbsp;<b>"+ratio+"</b>%" : "" %>
+                                    <%= ratio <= 50 ? "&nbsp;<b>"+ratio+"</b>%" : "" %>
                                     </td>
                                     <td width="25%" nowrap>&nbsp;<%= stats.queuedUriCount() %> queued</td>
                                 </tr>
