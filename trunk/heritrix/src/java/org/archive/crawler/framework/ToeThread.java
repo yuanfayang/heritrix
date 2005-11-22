@@ -162,7 +162,8 @@ Reporter, ProgressStatisticsReporter {
                 
                 setStep(STEP_FINISHING_PROCESS);
                 lastFinishTime = System.currentTimeMillis();
-                controller.releaseContinuePermission();
+// hold all for debug OOM
+//                controller.releaseContinuePermission();
                 if(shouldRetire) {
                     break; // from while(true)
                 }
@@ -175,7 +176,8 @@ Reporter, ProgressStatisticsReporter {
         } catch (OutOfMemoryError err) {
             seriousError(err);
         } finally {
-            controller.releaseContinuePermission();
+//          hold all for debug OOM
+//            controller.releaseContinuePermission();
         }
         setCurrentCuri(null);
         // Do cleanup so that objects can be GC.
@@ -242,7 +244,7 @@ Reporter, ProgressStatisticsReporter {
             pw.flush();
         }
         System.err.println(">>>");
-        DevUtils.sigquitSelf();
+//        DevUtils.sigquitSelf();
         
         String context = "unknown";
 		if(currentCuri!=null) {
