@@ -24,6 +24,7 @@
 */ 
 package org.archive.net;
 
+import java.util.Arrays;
 import java.util.BitSet;
 
 import org.apache.commons.httpclient.URI;
@@ -38,6 +39,8 @@ import org.apache.commons.httpclient.util.EncodingUtil;
  * @author gojomo
  */
 public class LaxURI extends URI {
+    final protected static char[] HTTP_SCHEME = {'h','t','t','p'};
+    final protected static char[] HTTPS_SCHEME = {'h','t','t','p','s'};
     
     protected static final BitSet lax_rel_segment = new BitSet(256);
     // Static initializer for lax_rel_segment
@@ -142,5 +145,55 @@ public class LaxURI extends URI {
         }
         // otherwise, leave as is
         return generous;
+    }
+    
+    /** 
+     * Coalesce the _host and _authority fields where 
+     * possible.
+     * 
+     * In the web crawl/http domain, most URIs have an 
+     * identical _host and _authority. (There is no port
+     * or user info.) However, the superclass always 
+     * creates two separate char[] instances. 
+     * 
+     * Notably, the lengths of these char[] fields are 
+     * equal if and only if their values are identical.
+     * This method makes use of this fact to reduce the
+     * two instances to one where possible, slimming 
+     * instances.  
+     * 
+     * @see org.apache.commons.httpclient.URI#parseAuthority(java.lang.String, boolean)
+     */
+    protected void parseAuthority(String original, boolean escaped)
+            throws URIException {
+        super.parseAuthority(original, escaped);
+        if (_host != null && _authority != null
+                && _host.length == _authority.length) {
+            _host = _authority;
+        }
+    }
+    
+    
+    /** 
+     * Coalesce _scheme to existing instances, where appropriate.
+     * 
+     * In the web-crawl domain, most _schemes are 'http' or 'https',
+     * but the superclass always creates a new char[] instance. For
+     * these two cases, we replace the created instance with a 
+     * long-lived instance from a static field, saving 12-14 bytes
+     * per instance. 
+     * 
+     * @see org.apache.commons.httpclient.URI#setURI()
+     */
+    protected void setURI() {
+        if (_scheme != null) {
+            if (_scheme.length == 4 && Arrays.equals(_scheme, HTTP_SCHEME)) {
+                _scheme = HTTP_SCHEME;
+            } else if (_scheme.length == 5
+                    && Arrays.equals(_scheme, HTTP_SCHEME)) {
+                _scheme = HTTPS_SCHEME;
+            }
+        }
+        super.setURI();
     }
 }

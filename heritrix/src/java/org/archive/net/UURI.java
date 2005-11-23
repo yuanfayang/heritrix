@@ -25,13 +25,8 @@
 package org.archive.net;
 
 import java.io.Serializable;
-import java.util.BitSet;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.net.URLCodec;
-import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
-import org.apache.commons.httpclient.util.EncodingUtil;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.util.SURT;
 import org.archive.util.TextUtils;
@@ -75,11 +70,6 @@ implements CharSequence, Serializable {
      * total elapsed time in URI class.
      */
     private transient String cachedHost = null;
-    
-    /**
-     * Cache of the host base name.
-     */
-    private transient String cachedHostBasename = null;
 
     /**
      * Cache of this uuri escaped as a string.
@@ -242,56 +232,78 @@ implements CharSequence, Serializable {
      * @throws URIException
      */
     public String getHostBasename() throws URIException {
-        if (this.cachedHostBasename == null) {
-            cacheHostBasename();
-        }
-        return this.cachedHostBasename;
-    }
-    
-    protected synchronized void cacheHostBasename() throws URIException {
-        if (this.cachedHostBasename != null) {
-            return;
-        }
-        if (this.getReferencedHost() != null) {
-            this.cachedHostBasename = TextUtils.
-                replaceFirst(MASSAGEHOST_PATTERN, this.getReferencedHost(),
-                UURIFactory.EMPTY_STRING);
-        }
+        // caching eliminated because this is rarely used
+        // (only benefits legacy DomainScope, which should
+        // be retired). Saves 4-byte object pointer in UURI
+        // instances.
+        return (this.getReferencedHost() == null) 
+            ? null 
+            : TextUtils.replaceFirst(MASSAGEHOST_PATTERN, 
+                    this.getReferencedHost(), UURIFactory.EMPTY_STRING);
     }
 
     /**
      * Override to cache result
-     * @return String representation of this URI 
+     * 
+     * @return String representation of this URI
      */
     public synchronized String toString() {
         if (this.cachedString == null) {
             this.cachedString = super.toString();
+            coalesceUriStrings();
         }
         return this.cachedString;
     }
 
-    public String getEscapedURI() {
+    public synchronized String getEscapedURI() {
         if (this.cachedEscapedURI == null) {
-            synchronized (this) {
-                if (this.cachedEscapedURI == null) {
-                    this.cachedEscapedURI = super.getEscapedURI();
-                }
-            }
+            this.cachedEscapedURI = super.getEscapedURI();
+            coalesceUriStrings();
         }
         return this.cachedEscapedURI;
     }
 
+    /**
+     * The two String fields cachedString and cachedEscapedURI are 
+     * usually identical; if so, coalesce into a single instance. 
+     */
+    protected void coalesceUriStrings() {
+        if (this.cachedString != null && this.cachedEscapedURI != null
+                && this.cachedString.length() == this.cachedEscapedURI.length()) {
+            // lengths will only be identical if contents are identical
+            // (deescaping will always shrink length), so coalesce to
+            // use only single cached instance
+            this.cachedString = this.cachedEscapedURI;
+        }
+    }
+    
     public synchronized String getHost() throws URIException {
         if (this.cachedHost == null) {
             // If this._host is null, 3.0 httpclient throws
             // illegalargumentexception.  Don't go there.
             if (this._host != null) {
             	this.cachedHost = super.getHost();
+                coalesceHostAuthorityStrings();
             }
         }
         return this.cachedHost;
     }
     
+    /**
+     * The two String fields cachedHost and cachedAuthorityMinusUserInfo are 
+     * usually identical; if so, coalesce into a single instance. 
+     */
+    protected void coalesceHostAuthorityStrings() {
+        if (this.cachedAuthorityMinusUserinfo != null
+                && this.cachedHost != null
+                && this.cachedHost.length() ==
+                    this.cachedAuthorityMinusUserinfo.length()) {
+            // lengths can only be identical if contents
+            // are identical; use only one instance
+            this.cachedAuthorityMinusUserinfo = this.cachedHost;
+        }
+    }
+
     /**
      * Return the referenced host in the UURI, if any, also extracting the 
      * host of a DNS-lookup URI where necessary. 
@@ -331,17 +343,17 @@ implements CharSequence, Serializable {
      */
 	public String getAuthorityMinusUserinfo()
     throws URIException {
-        if (this.cachedAuthorityMinusUserinfo != null) {
-            return this.cachedAuthorityMinusUserinfo;
-        }
-        String tmp = getAuthority();
-        if (tmp != null && tmp.length() > 0) {
-        	int index = tmp.indexOf('@');
-            if (index >= 0 && index < tmp.length()) {
-                tmp = tmp.substring(index + 1);
+        if (this.cachedAuthorityMinusUserinfo == null) {
+            String tmp = getAuthority();
+            if (tmp != null && tmp.length() > 0) {
+            	int index = tmp.indexOf('@');
+                if (index >= 0 && index < tmp.length()) {
+                    tmp = tmp.substring(index + 1);
+                }
             }
+            this.cachedAuthorityMinusUserinfo = tmp;
+            coalesceHostAuthorityStrings();
         }
-        this.cachedAuthorityMinusUserinfo = tmp;
         return this.cachedAuthorityMinusUserinfo;
 	}
 
