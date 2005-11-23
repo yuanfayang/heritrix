@@ -70,18 +70,20 @@ implements FetchStatusCodes {
             return;
         }
 
-        for (final Iterator iter = curi.getOutLinks().iterator();
-                iter.hasNext();) {
-            Object obj = iter.next();
-            CandidateURI cauri = null;
-            if (obj instanceof CandidateURI) {
-                cauri = (CandidateURI)obj;
-            } else {
-                LOGGER.severe("Unexpected type: " + obj);
-            }
-            
-            if (cauri != null) { 
-                schedule(cauri);
+        synchronized(this) {
+            for (final Iterator iter = curi.getOutLinks().iterator();
+                    iter.hasNext();) {
+                Object obj = iter.next();
+                CandidateURI cauri = null;
+                if (obj instanceof CandidateURI) {
+                    cauri = (CandidateURI)obj;
+                } else {
+                    LOGGER.severe("Unexpected type: " + obj);
+                }
+                
+                if (cauri != null) { 
+                    schedule(cauri);
+                }
             }
         }
     }
