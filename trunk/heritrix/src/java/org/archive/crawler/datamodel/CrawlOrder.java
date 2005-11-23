@@ -224,8 +224,8 @@ public class CrawlOrder extends ModuleType implements Serializable {
         
         e = addElementToDefinition(new SimpleType(ATTR_BDB_CACHE_PERCENT,
                 "Percentage of heap to allocate to BerkeleyDB JE cache. " +
-                "Default of zero means no preference (accept BDB's default" +
-                "or properties setting. This is usually 60%).",
+                "Default of zero means no preference (accept BDB's default, " +
+                "usually 60%, or the je.maxMemoryPercent property value).",
                 DEFAULT_BDB_CACHE_PERCENT));
         e.setExpertSetting(true);
         e.setOverrideable(false);
