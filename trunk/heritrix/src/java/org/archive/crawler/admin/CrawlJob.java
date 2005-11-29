@@ -214,7 +214,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      */
     private transient MBeanServer mbeanServer = null;
     private transient ObjectName mbeanName = null;
-    private static final String CRAWLJOB_JMXMBEAN_TYPE = "CrawlJob";
+    private static final String CRAWLJOB_JMXMBEAN_TYPE =
+        JmxUtils.SERVICE + ".Job";
     private transient JEMBeanHelper bdbjeMBeanHelper = null;
     private transient List bdbjeAttributeNameList = null;
     private transient List bdbjeOperationsNameList = null;

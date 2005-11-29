@@ -53,7 +53,7 @@ public class JmxUtils {
     private static final Logger LOGGER =
         Logger.getLogger(JmxUtils.class.getName());
     public static final String TYPE = "type";
-    public static final String SERVICE = "Service";
+    public static final String SERVICE = "CrawlService";
     public static final String NAME = "name";
     public static final String HOST = "host";
     public static final String JMX_PORT = "jmxport";
