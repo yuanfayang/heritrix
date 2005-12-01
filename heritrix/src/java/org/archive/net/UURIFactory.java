@@ -248,7 +248,7 @@ public class UURIFactory extends URI {
             Arrays.sort(schemes);
         }
         String ignored = System.getProperty(this.getClass().getName() + IGNORED_SCHEMES_KEY);
-        if (s != null && s.length() > 0) {
+        if (ignored != null && ignored.length() > 0) {
             ignoredSchemes  = ignored.split("[, ]+");
             Arrays.sort(ignoredSchemes);
         }

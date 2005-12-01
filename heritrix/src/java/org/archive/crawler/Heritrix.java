@@ -212,6 +212,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private static PrintWriter out = null;
 
     /**
+     * The org.archive package
+     */
+    private static final String ARCHIVE_PACKAGE = "org.archive.";
+
+    /**
      * The crawler package.
      */
 	private static final String CRAWLER_PACKAGE = Heritrix.class.getName().
@@ -744,7 +749,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * 
      * Adds any property that starts with
      * <code>HERITRIX_PROPERTIES_PREFIX</code>
-     * or <code>CRAWLER_PACKAGE</code>
+     * or <code>ARCHIVE_PACKAGE</code>
      * into system properties (except logging '.level' directives).
      * @return Loaded properties.
      * @throws IOException
@@ -754,11 +759,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         Properties properties = new Properties();
         properties.load(getPropertiesInputStream());
         
-        // Any property that begins with CRAWLER_PACKAGE, make it
+        // Any property that begins with ARCHIVE_PACKAGE, make it
         // into a system property.
         for (Enumeration e = properties.keys(); e.hasMoreElements();) {
             String key = ((String)e.nextElement()).trim();
-        	if (key.startsWith(CRAWLER_PACKAGE) ||
+        	if (key.startsWith(ARCHIVE_PACKAGE) ||
                     key.startsWith(HERITRIX_PROPERTIES_PREFIX)) {
                 // Don't add the heritrix.properties entries that are
                 // changing the logging level of particular classes.
