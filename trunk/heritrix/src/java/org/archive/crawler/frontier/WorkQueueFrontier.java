@@ -1254,7 +1254,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
         int inactiveCount = inactiveQueues.getCount();
-        return queuedUriCount / (activeCount+inactiveCount);
+        int totalQueueCount = (activeCount+inactiveCount);
+        return (totalQueueCount == 0) ? 0 : queuedUriCount / totalQueueCount;
     }
     public float congestionRatio() {
         int inProcessCount = inProcessQueues.uniqueSet().size();
