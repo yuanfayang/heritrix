@@ -114,63 +114,81 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
     }
     
     protected void innerProcess(CrawlURI curi) {
+        long fetchQuota, bytesQuota;
+        CrawlSubstats substats;
         // check per-server quotas
         CrawlServer server =
             getController().getServerCache().getServerFor(curi);
-        long fetchQuota = ((Long)getUncheckedAttribute(curi,ATTR_SERVER_MAX_FETCH_SUCCESSES)).longValue();
-        long bytesQuota = 1024*((Long)getUncheckedAttribute(curi,ATTR_SERVER_MAX_SUCCESS_KB)).longValue();
-        CrawlSubstats substats = server.getSubstats();
-        if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(), 
-                "Q:server-fetchSuccesses")) {
-            return;
-        }
-        if (checkQuota(curi, bytesQuota,  substats.getSuccessBytes(), 
-                "Q:server-successBytes")) {
-            return;
+        if (server != null) {
+            fetchQuota = ((Long) getUncheckedAttribute(curi,
+                    ATTR_SERVER_MAX_FETCH_SUCCESSES)).longValue();
+            bytesQuota = 1024 * ((Long) getUncheckedAttribute(curi,
+                    ATTR_SERVER_MAX_SUCCESS_KB)).longValue();
+            substats = server.getSubstats();
+            if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
+                    "Q:server-fetchSuccesses")) {
+                return;
+            }
+            if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
+                    "Q:server-successBytes")) {
+                return;
+            }
         }
 
         // check per-host quotas
         CrawlHost host = 
             getController().getServerCache().getHostFor(curi);
-        fetchQuota = ((Long)getUncheckedAttribute(curi,ATTR_HOST_MAX_FETCH_SUCCESSES)).longValue();
-        bytesQuota = 1024*((Long)getUncheckedAttribute(curi,ATTR_HOST_MAX_SUCCESS_KB)).longValue();
-        substats = host.getSubstats();
-        if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
-                "Q:host-fetchSuccesses")) {
-            return;
-        }
-        if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
-                "Q:host-successBytes")) {
-            return;
+        if (host != null) {
+            fetchQuota = ((Long) getUncheckedAttribute(curi,
+                    ATTR_HOST_MAX_FETCH_SUCCESSES)).longValue();
+            bytesQuota = 1024 * ((Long) getUncheckedAttribute(curi,
+                    ATTR_HOST_MAX_SUCCESS_KB)).longValue();
+            substats = host.getSubstats();
+            if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
+                    "Q:host-fetchSuccesses")) {
+                return;
+            }
+            if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
+                    "Q:host-successBytes")) {
+                return;
+            }
         }
         
         // check per-frontier-group (queue) quotas
         FrontierGroup group = 
             getController().getFrontier().getGroup(curi);
-        fetchQuota = ((Long)getUncheckedAttribute(curi,ATTR_GROUP_MAX_FETCH_SUCCESSES)).longValue();
-        bytesQuota = 1024*((Long)getUncheckedAttribute(curi,ATTR_GROUP_MAX_SUCCESS_KB)).longValue();
-        substats = group.getSubstats();
-        if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
-                "Q:group-fetchSuccesses")) {
-            return;
-        }
-        if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
-                "Q:group-successBytes")) {
-            return;
+        if (group != null) {
+            fetchQuota = ((Long) getUncheckedAttribute(curi,
+                    ATTR_GROUP_MAX_FETCH_SUCCESSES)).longValue();
+            bytesQuota = 1024 * ((Long) getUncheckedAttribute(curi,
+                    ATTR_GROUP_MAX_SUCCESS_KB)).longValue();
+            substats = group.getSubstats();
+            if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
+                    "Q:group-fetchSuccesses")) {
+                return;
+            }
+            if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
+                    "Q:group-successBytes")) {
+                return;
+            }
         }
     }
 
     /**
-     * @param serverFetchQuota
-     * @param fetchSuccesses
-     * @return
+     * Check if the given quota and actual values rule out processing the 
+     * given CrawlURI, and mark up the CrawlURI appropriately if so. 
+     * 
+     * @param curi CrawlURI whose processing is subject to a potential quota limitation
+     * @param quota quota value, or zero if no quota applies
+     * @param actual current value to compare to quota 
+     * @param annotate String to mark CrawlURI if blocked by quota
+     * @return true is CrawlURI is blocked by a quota, false otherwise
      */
     protected boolean checkQuota(CrawlURI curi, long quota, long actual, String annotate) {
-        if(quota >= 0 && actual >= quota) {
+        if (quota >= 0 && actual >= quota) {
             curi.setFetchStatus(S_BLOCKED_BY_QUOTA);
             curi.addAnnotation(annotate);
-            curi.skipToProcessorChain(getController().
-                    getPostprocessorChain());
+            curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }
         return false; 
