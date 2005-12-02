@@ -297,7 +297,7 @@
           the crawler from eclipse. When this property is set, the
           <literal>conf</literal> and <literal>webapps</literal> directories
           will be found in their development locations and startup messages
-          will show on the console.</para>
+          will show on the text console (standard out).</para>
         </sect4>
 
         <sect4>
@@ -357,8 +357,8 @@
     <para>After Heritrix has been launched from the command line, the web
     based user interface (WUI) becomes accessible.</para>
 
-    <para>The URI to access the WUI is printed on the console from which the
-    program was launched (typically
+    <para>The URI to access the WUI is printed on the text console from which
+    the program was launched (typically
     <literal>http://&lt;host&gt;:8080/admin/</literal>).</para>
 
     <para>The WUI is password protected. By default, the username is 'admin'
@@ -386,7 +386,7 @@
     <title>A quick guide to running your first crawl job</title>
 
     <para>Once you've installed Heritrix and logged into the WUI (see above)
-    you are presented with the Console page. Near the top there is a row of
+    you are presented with the web Console page. Near the top there is a row of
     tabs.</para>
 
     <para><emphasis role="bold">Step 1.</emphasis> <emphasis>Create a
@@ -461,15 +461,16 @@
     held.</para>
 
     <para>To start the crawler, click on the Console tab. Once on the Console
-    page, you will find the option <emphasis>Start crawling pending
-    jobs</emphasis> to the far left, below the <emphasis role="bold">Crawler
-    status</emphasis> box. Clicking this option will start the crawler and in
-    turn start crawling the job you just finished creating and
-    configuring.</para>
+    page, you will find the option <emphasis>Start</emphasis> at the top of
+    the <emphasis role="bold">Crawler Status</emphasis> box, just to the 
+    right of the indicator of current status. Clicking this option will put 
+    the crawling into <emphasis>Crawling Jobs</emphasis> mode, where it will 
+    begin crawling any next pending job, such as the job you just created and
+    configured.</para>
 
     <para>The Console will update to display progress information about the
-    on-going crawl. Click the <emphasis>Refresh</emphasis> option to update
-    this information.</para>
+    on-going crawl. Click the <emphasis>Refresh</emphasis> option (or the
+    top-left Heritrix logo) to update this information.</para>
 
     <para>For more information about running a job see <xref
     linkend="running" />.</para>
@@ -1636,8 +1637,8 @@
         <note>
           <title>Logging</title>
 
-          <para>To enable console logging of authentication interactions (for
-          example for debugging), set the FetchHTTP and PrconditionEnforcer
+          <para>To enable text console logging of authentication interactions 
+          (for example for debugging), set the FetchHTTP and PrconditionEnforcer
           log levels to fine</para>
 
           <para><programlisting>org.archive.crawler.fetcher.FetchHTTP.level = FINE
@@ -2518,71 +2519,50 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
     <title>Running a job</title>
 
     <para>Once a crawl job has been created and properly configured it can be
-    run. To start a crawl the user must go to the Console page (via the
+    run. To start a crawl the user must go to the web Console page (via the
     Console tab).</para>
 
     <sect2 id="console">
-      <title>Console</title>
+      <title>Web Console</title>
 
-      <para>The Console presents on overview of the current status of the
+      <para>The web Console presents on overview of the current status of the
       crawler.</para>
 
       <sect3>
-        <title>Crawler status</title>
+        <title>Crawler Status Box</title>
 
-        <para>Regardless of if there is a job being crawled the following
-        information is provided:</para>
+        <para>The following information is always provided:</para>
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">Crawler running</emphasis></para>
+            <para><emphasis role="bold">Crawler Status</emphasis></para>
 
-            <para>Is the crawler running? If yes then the next pending job
-            will be crawled as soon as the current one is completed. For more
-            detail see <xref linkend="runningvcrawling" />.</para>
+            <para>Is the crawler in <emphasis>Holding Jobs</emphasis> or 
+            <emphasis>Crawling Jobs</emphasis> mode? If holding, no new jobs
+            pending or created will be started (but a job already begun will
+            continue). If crawling, the next pending or created job will be 
+            started as soon as possible, for example when a previous job 
+            finishes. For more detail see 
+            <xref linkend="holdingvcrawling" />.</para>
+            
+            <para>To the right of the current crawler status, a control
+            link reading either "Start" or "Hold" will toggle the crawler
+            between the two modes.</para> 
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">Current job</emphasis></para>
+            <para><emphasis role="bold">Jobs</emphasis></para>
 
-            <para>The name of the job currently being crawled. If no job is
-            being crawled this will read <emphasis>none</emphasis>.</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">Jobs pending</emphasis></para>
-
-            <para>The number of jobs pending. That is waiting for their turn
-            to be crawled.</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">Jobs completed</emphasis></para>
-
-            <para>The number of jobs that have been crawled (including those
+            <para>If a current job is in progress, its status and name 
+            will appear. Alternatively, "None running" will appear to 
+            indicate no job is in progress because the crawler is holding,
+            or "None available" if no job is in progress because no jobs
+            have been queued.</para>
+            
+            <para>Below the current job info, the number of jobs pending and
+            completed is shown. The completed count includes those
             that failed to start for some reason (see <xref
             linkend="failedtostart" /> for more on misconfigured jobs).</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">Used memory</emphasis></para>
-
-            <para>The amount of memory (in kilobytes) currently being used by
-            the program.</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">Heap size</emphasis></para>
-
-            <para>The amount of memory (in kilobytes) that the JavaVM has
-            allocated itself.</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">Max heap size</emphasis></para>
-
-            <para>The amount of memory (in kilobytes) that the JavaVM can
-            <emphasis>at most </emphasis>allocate itself.</para>
           </listitem>
 
           <listitem>
@@ -2593,76 +2573,144 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
             <para>See <xref linkend="alerts" /> for more on alerts.</para>
           </listitem>
-        </itemizedlist>
+          
+          <listitem>
+            <para><emphasis role="bold">Memory</emphasis></para>
 
-        <para>If a job is being crawled the following information is also
-        provided:</para>
+            <para>The amount of memory currently used, the size of the 
+            Java heap, and the maximum size to which the heap can possibly
+            grow are all displayed, in kilobytes (KB).</para>
+          </listitem>
+        </itemizedlist>
+      </sect3>
+     
+      <sect3>
+        <title>Job Status Box</title>
+        
+        <para>If a job is in-progress -- running, paused, or between job
+        states -- the following information is also provided in a second
+        area underneath the <emphasis>Crawler Status Box</emphasis>.</para>
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">Status</emphasis></para>
+            <para><emphasis role="bold">Job Status</emphasis></para>
 
             <para>The current status of the job in progress. Jobs being
-            crawled are either running, paused or waiting to pause.</para>
+            crawled are usually running or paused.</para>
+            
+            <para>To the right of the current
+            status, controls for pausing/resuming or terminating the current
+            job will appear as appropriate.</para>
+            
+            <para>When a job is terminated, its status will be marked as
+            'Ended by operator'. All currently active threads will be allowed 
+            to finish behind the scenes even though the WUI will report the 
+            job being terminated at once. If the crawler is in "Crawling Jobs" 
+            mode, a next pending job, if any, will start immediately.</para>
+            
+            <para>When a running job is paused, it may take some time
+            for all the active threads to enter a paused state. Until then the
+            job is considered to be still running and 'pausing'. It is
+            possible to resume from this interim state.</para>
+
+            <para>Once paused a job is considered to be suspended and time
+            spent in that state does not count towards elapsed job time or
+            rates.</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">Processed docs/sec</emphasis></para>
+            <para><emphasis role="bold">Rates</emphasis></para>
 
-            <para>There are two values. The first is the number of documents
-            downloaded per second between the last snapshot of the Frontier's
-            state and the one before that (typically about 10-20 seconds). It
-            gives some indication of the current rate of progress but can
-            fluctuate considerable, especially if the StatisticsTracker has
-            the log interval set to a low value.</para>
+            <para>The number of URIs successfully processed per second is
+            shown, both the rate in the latest sampling interval and (in
+            parentheses) the average rate since the crawl began. The sampling
+            interval is typically about 20 seconds, and is adjustable via
+            the "interval-seconds" setting. The latest rate of progress can
+            fluctuate considerably, as the crawler workload varies and 
+            housekeeping memory and file operations occur -- especially if 
+            the sampling interval has been set to a low value.</para>
 
-            <para>The second value (in parenthesis) is the number of documents
-            downloaded per second since the crawl began.</para>
+            <para>Also show is the rate of successful content collection, 
+            in KB/sec, for the latest sampling interval and (in parentheses)
+            the average since the crawl began. (See <xref linkend="bytes" />.)
+            </para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">Processed KB/sec</emphasis></para>
-
-            <para>These are two values comparable with the docs/sec ones. Only
-            these indicate the number of KB (see <xref linkend="bytes" />)
-            downloaded per second rather then documents.</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">Run time</emphasis></para>
+            <para><emphasis role="bold">Time</emphasis></para>
 
             <para>The amount of time that has elapsed since the crawl began
-            (excluding any time spent paused).</para>
+            (excluding any time spent paused) is displayed, as well as a 
+            very crude estimate of the require time remaining. (This estimate
+            does not yet consider the typical certainty of discovering more
+            URIs to crawl, and ignored other factors, so should not be 
+            relied upon until it can be improved in future releases.)</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">Active thread count</emphasis></para>
+            <para><emphasis role="bold">Load</emphasis></para>
 
-            <para>The number of threads that are processing a URI of the total
-            number of threads that have been created.</para>
+            <para>A number of measures are shown of how busy or loaded the
+            job has made the crawler. The number of active threads, compared to
+            the total available, is shown. Typically, if only a small number of
+            threads are active, it is because activating more threads would 
+            exceed the configured politeness settings, given the remaining URI
+            workload. (For example, if all remaining URIs are on a single host,
+            no more than one thread will be active -- and often none will be, 
+            as polite delays are observed between requests.)</para>
+            
+            <para>The <emphasis>congestion ratio</emphasis> is a rough estimate
+            of how much additional capacity, as a multiple of current capacity, 
+            would be necessary to crawl the current workload at the maximum 
+            rate allowable by politeness settings. (It is calculated by 
+            comparing the number of internal queues that are progressing with
+            those that are waiting for a thread to become available.)</para>
+            
+            <para>The <emphasis>deepest queue</emphasis> number indicates the
+            longest chain of pending URIs that must be processed sequentially,
+            which is a better indicator of the work remaining than the total 
+            number of URIs pending. (A thousand URIs in a thousand independent
+            queues can complete in parallel very quickly; a thousand in one 
+            queue will take longer.)</para>
+            
+            <para>The <emphasis>average depth</emphasis> number indicates
+            the average depth of the last URI in every active sequential
+            queue.</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">Total data written</emphasis></para>
+            <para><emphasis role="bold">Totals</emphasis></para>
 
-            <para>The amount of data downloaded since the crawl began. See
-            <xref linkend="bytes" />.</para>
+            <para>A progress bar indicates the relative percentage of 
+            completed URIs to those known and pending. As with the remaining
+            time estimate, no consideration is given to the liklihood of 
+            discovering additional URIs to crawl. So, the percentage 
+            completed can shrink as well as grow, especially in broader
+            crawls.</para>
+            
+            <para>To the left of the progress bar, the total number of URIs
+            successfully downloaded is shown; to the right, the total number
+            of URIs queued for future processing. Beneath the bar, the total 
+            of downloaded plus queued is shown, as well as the uncompressed 
+            total size of successfully downloaded data in kilobytes. See
+            <xref linkend="bytes" />. (Compressed ARCs on disk will be 
+            somewhat smaller than this figure.)</para>
           </listitem>
-
+          
           <listitem>
-            <para><emphasis role="bold">Downloaded/Queued document
-            ratio</emphasis></para>
-
-            <para>This is the ratio between successfully downloaded (i.e. got
-            a response from the web server, may have been a 404 etc.) and the
-            total number of queued (i.e. waiting to be crawled) and
-            successfully downloaded URIs.</para>
-
-            <para>For broad crawls this will likely never increase, may in
-            fact decrease and is likely to stay at the 5-6% range.</para>
-
-            <para>For more limited crawls (domain or host scoped) this will
-            eventually reach 100% once the relevant scope is exhausted.</para>
+            <para><emphasis role="bold">Paused Operations</emphasis></para>
+            
+            <para>When the job is paused, additional options will appear to 
+            <emphasis>Checkpoint</emphasis> the crawl (see 
+            <xref linkend="checkpoint"/>) or <emphasis>View or 
+            Edit Frontier URIs</emphasis>.</para>
+            
+            <para>The <emphasis>View or Edit Frontier URIs</emphasis> option
+            takes the operator to a page allowing the lookup and deletion of
+            URIs in the frontier by using a regular expression, or addition
+            of URIs from an external file (even URIs that have already
+            been processed).</para>
+            
           </listitem>
         </itemizedlist>
 
@@ -2671,70 +2719,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       </sect3>
 
       <sect3>
-        <title>Options</title>
-
-        <para>Below the status display is a series of options. The exact
-        options available depend on whether the crawler is running or not, and
-        if so if there is a job being crawled and whether or not that job is
-        paused or not.</para>
-
-        <sect4>
-          <title>Start/Stop crawling pending job</title>
-
-          <para>If the crawler is running the option to start it is afforded.
-          If it is already running the option to stop is provided.</para>
-
-          <para>If the crawler is stopped, a job currently running will
-          continue to run until it finishes. Stopping the crawler thus only
-          prevents the next job from being run, it does not affect the current
-          job. A separate option is provided for terminating the current
-          job.<note>
-              <para>See <xref linkend="runningvcrawling" /> for more on those
-              terms.</para>
-            </note></para>
-        </sect4>
-
-        <sect4>
-          <title>Terminate current job</title>
-
-          <para>Terminates the current job. The job's status will be marked as
-          'Aborted by user'.</para>
-
-          <para>All currently active threads will be allowed to finish behind
-          the scenes even though the WUI will report the job being terminated
-          at once.</para>
-
-          <para>The next job (if one is pending) will start immediately
-          despite this.</para>
-        </sect4>
-
-        <sect4>
-          <title>Pause / Resume current job</title>
-
-          <para>Issue a pause or resume (if already paused) order to the crawl
-          in progress. Once the order to pause is issued it may take some time
-          for all the active threads to enter a paused state. Until then the
-          job is considered to be still running and 'waiting to pause'. It is
-          possible to resume from that waiting state.</para>
-
-          <para>Once paused the job is considered to be suspended and time
-          spent in that state does not count towards the total time spent
-          crawling that is used to calculate document per second rates
-          etc.</para>
-        </sect4>
-
-        <sect4>
-          <title>View or Edit Frontier URIs</title>
-
-          <para>Only available for paused jobs (and only for those that
-          <emphasis>have</emphasis> paused, not those that have been told to
-          pause and are waiting for threads to finish).</para>
-
-          <para>Takes the user to a page that allows him to lookup URIs in the
-          frontier and to delete them by using a regular expression, or add
-          URIs to the crawl from an external file (even URIs that have already
-          been processed).</para>
-        </sect4>
+        <title>Console Bottom Operations</title>
 
         <sect4>
           <title>Refresh</title>
@@ -2908,15 +2893,15 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
 
         <para>Right next to it is the number of current and new alerts.</para>
 
-        <para>The second line tells the user if the crawler is running or not
-        (see also <xref linkend="runningvcrawling" />). If a job is being
-        crawled at the moment the name of it will be displayed next.</para>
+        <para>The second line tells the user if the crawler is in "Crawling 
+        Jobs" or "Holding Jobs" mode. (See <xref linkend="holdingvcrawling" />). 
+        If a job is in progress, its status and name will also be shown.</para>
 
-        <para>In the final line the number of pending and completed jobs are
-        displayed. Clicking on either value takes the user to the related
-        overview page. Finally if a job is being crawled the number of
-        documents downloaded and how long the crawl has been running are
-        displayed.</para>
+        <para>At the beginning of the final line the number of pending and 
+        completed jobs are displayed. Clicking on either value takes the user 
+        to the related overview page. Finally if a job is in progress, total
+        current URIs completed, elapsed time, and URIs/sec figures are shown.
+        </para>
       </sect3>
 
       <sect3>
@@ -4027,6 +4012,22 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         </glossdef>
       </glossentry>
 
+      <glossentry id="holdingvcrawling">
+        <glossterm>"Holding Jobs" vs. "Crawling Jobs"</glossterm>
+
+        <glossdef>
+          <para>The mode <emphasis>Crawling Jobs</emphasis> generally means 
+          that the crawler will start executing a job as soon as one is made
+          available in the pending jobs queue (as long as there is not a job
+          already running).</para>
+
+          <para>If the crawler is in the <emphasis>Holding Jobs</emphasis> mode, 
+          jobs added to the pending jobs queue will be held; they will not be
+          started, even if there are no jobs currently being run.</para>
+
+        </glossdef>
+      </glossentry>
+      
       <glossentry>
         <glossterm id="host">Host</glossterm>
 
@@ -4119,25 +4120,6 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
           url="http://java.sun.com/j2se/1.4.2/docs/api/index.html">http://java.sun.com/j2se/1.4.2/docs/api/index.html</ulink>.
           It is recommended you lookup the API for the version of Java that is
           being used to run Heritrix.</para>
-        </glossdef>
-      </glossentry>
-
-      <glossentry id="runningvcrawling">
-        <glossterm>Running Vs. Crawling</glossterm>
-
-        <glossdef>
-          <para>The state <emphasis>running</emphasis> generally means that
-          the crawler will start executing a job as soon as one is made
-          available in the pending jobs queue (as long as there is not a job
-          currently being run).</para>
-
-          <para>If the crawler is not in the running state, jobs added to the
-          pending jobs queue will be held there in stasis; they will not be
-          run, even if there are no jobs currently being run.</para>
-
-          <para>The term <emphasis>crawling</emphasis> generally refers to a
-          state whereby a job's being currently run (crawled): i.e. pages are
-          being fetched, links extracted etc.</para>
         </glossdef>
       </glossentry>
 
