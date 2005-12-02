@@ -4,7 +4,6 @@
 # Lines beginning with # and empty lines are ignored
 org.archive.crawler.prefetch.Preselector|Preselector
 org.archive.crawler.prefetch.PreconditionEnforcer|Preprocessor
-org.archive.crawler.prefetch.CrawlSplitter|CrawlSplitter
 org.archive.crawler.fetcher.FetchDNS|DNS
 org.archive.crawler.fetcher.FetchHTTP|HTTP
 org.archive.crawler.extractor.ExtractorHTTP|ExtractorHTTP
