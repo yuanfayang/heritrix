@@ -43,6 +43,21 @@
         <p>See the <a href="articles/user_manual.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+    <subsection name="Release 1.6.0 12/01/2005">
+      <p>Release 1.6.0 offers improved remote control and monitoring via
+      JMX, a crawl-checkpointing facility, and experimental support for bloom
+      filter already-included testing, partitioning a crawl across multiple 
+      independent crawlers, and per-host/domain/queue-grouping collection 
+      quotas. Performance and stability in large crawls is also improved.
+      Among tracked issues, it includes 39 requested enhancements and fixes 96 
+      reported bugs. See
+      <a href="articles/releasenotes.html#1_6_0">Heritrix Release Notes</a> 
+      for detail and
+      <a href="articles/releasenotes.html#1_6_0_limitations">Known
+      Limitations</a>: e.g. Again you will need to 
+      <a href="articles/releasenotes.html#postselector">tweak your old order
+      files</a> to make them work with the new release.</p>
+    </subsection>
 
     <subsection name="Release 1.4.0 04/28/2005">
       <p>Much improved memory usage, new experimental scoping/filter model,

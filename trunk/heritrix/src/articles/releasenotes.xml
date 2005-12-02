@@ -13,9 +13,9 @@
   </articleinfo>
 
   <sect1 id="1_6_0">
-    <title>Release 1.6.0</title>
+    <title>Release 1.6.0 - 12/01/2005</title>
     <abstract>
-      <para>Release 1.6.0  offers improved remote control and monitoring via
+      <para>Release 1.6.0 offers improved remote control and monitoring via
       JMX, a crawl-checkpointing facility, and experimental support for bloom
       filter already-included testing, partitioning a crawl across multiple 
       independent crawlers, and per-host/domain/queue-grouping collection 
