@@ -285,6 +285,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     
     private final static String START_OPER = "start";
     private final static String STOP_OPER = "stop";
+    private final static String DESTROY_OPER = "destroy";
     private final static String INTERRUPT_OPER = "interrupt";
     private final static String START_CRAWLING_OPER = "startCrawling";
     private final static String STOP_CRAWLING_OPER = "stopCrawling";
@@ -304,7 +305,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             ADD_CRAWL_JOB_OPER, ADD_CRAWL_JOB_BASEDON_OPER,
             DELETE_CRAWL_JOB_OPER, ALERT_OPER, PENDING_JOBS_OPER,
             COMPLETED_JOBS_OPER, CRAWLEND_REPORT_OPER, SHUTDOWN_OPER,
-            LOG_OPER});
+            LOG_OPER, DESTROY_OPER});
     }
     private CompositeType jobCompositeType = null;
     private TabularType jobsTabularType = null;
@@ -1909,6 +1910,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         operations[13] = new OpenMBeanOperationInfoSupport(Heritrix.LOG_OPER,
             "Add a log message", args, SimpleType.VOID,
             MBeanOperationInfo.ACTION);
+        
+        operations[14] = new OpenMBeanOperationInfoSupport(
+            Heritrix.DESTROY_OPER, "Destroy Heritrix instance", null,
+                SimpleType.VOID, MBeanOperationInfo.ACTION);
 
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
@@ -1993,6 +1998,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         if (operationName.equals(STOP_OPER)) {
             JmxUtils.checkParamsCount(STOP_OPER, params, 0);
             stop();
+            return null;
+        }
+        if (operationName.equals(DESTROY_OPER)) {
+            JmxUtils.checkParamsCount(DESTROY_OPER, params, 0);
+            destroy();
             return null;
         }
         if (operationName.equals(SHUTDOWN_OPER)) {
