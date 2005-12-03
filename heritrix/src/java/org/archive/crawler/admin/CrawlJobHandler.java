@@ -166,8 +166,13 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * crawling as soon as the current job (if any) is completed.
      */
     private boolean running = false;
-    
-    private File jobsDir = null;
+
+    /**
+     * Instance hosting this CJH.
+     * 
+     * Needed when comes time to register CrawlJob in JMX.
+     */
+    private final Heritrix heritrix;
     
     /**
      * String to indicate recovery should be based on the recovery log, not
@@ -177,21 +182,24 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * Constructor.
-     * @param jobsDir Jobs dir.
+     * @param h Heritrix instance hosting this CJH instance.
+     * @throws IOException
      */
-    public CrawlJobHandler(final File jobsDir) {
-        this(jobsDir, true, true);
+    public CrawlJobHandler(final Heritrix h) throws IOException {
+        this(h, true, true);
     }
 
     /**
      * Constructor allowing for optional loading of profiles and jobs.
-     * @param jobsDir Jobs directory.
+     * @param h Heritrix instance hosting this CJH instance.
      * @param loadJobs If true then any applicable jobs will be loaded.
      * @param loadProfiles If true then any applicable profiles will be loaded.
+     * @throws IOException 
      */
-    public CrawlJobHandler(final File jobsDir,
-            final boolean loadJobs, final boolean loadProfiles) {
-        this.jobsDir = jobsDir;
+    public CrawlJobHandler(final Heritrix h,
+            final boolean loadJobs, final boolean loadProfiles)
+    throws IOException {
+        this.heritrix = h;
         // Make a comparator for CrawlJobs.
         Comparator comp = new Comparator(){
             public int compare(Object o1, Object o2) {
@@ -242,10 +250,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * <p>
      * Availible jobs are any directory containing a file called
      * <code>state.job</code>. The file must contain valid job information.
+     * @throws IOException 
      */
-    private void loadJobs() {
-        this.jobsDir.mkdirs();
-        File[] jobs = this.jobsDir.listFiles();
+    private void loadJobs() throws IOException {
+        this.heritrix.getJobsdir().mkdirs();
+        File[] jobs = this.heritrix.getJobsdir().listFiles();
         for (int i = 0; i < jobs.length; i++) {
             if (jobs[i].isDirectory()) {
                 File jobFile = getStateJobFile(jobs[i]);
@@ -728,7 +737,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Creates a new job. The new job will be returned and also registered as
      * the handler's 'new job'. The new job will be based on the settings
      * provided but created in a new location on disk.
-     *
      * @param orderFile Order file to use as the template for the new job.
      * @param name The name of the new job.
      * @param description Descriptions of the job.
@@ -739,7 +747,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *             settings.
      */
     public CrawlJob newJob(final File orderFile, final String name,
-            final String description, final String seeds)
+        final String description, final String seeds)
     throws FatalConfigurationException {
         return createNewJob(orderFile, name, description, seeds,
             CrawlJob.PRIORITY_AVERAGE);
@@ -764,7 +772,12 @@ public class CrawlJobHandler implements CrawlStatusListener {
             discardNewJob();
         }
         String UID = getNextJobUID();
-        File jobDir = new File(this.jobsDir, name + "-" + UID);
+        File jobDir;
+        try {
+            jobDir = new File(this.heritrix.getJobsdir(), name + "-" + UID);
+        } catch (IOException e) {
+            throw new FatalConfigurationException(e.getMessage());
+        }
         CrawlJobErrorHandler errorHandler = new CrawlJobErrorHandler();
         XMLSettingsHandler handler =
             createSettingsHandler(orderFile, name, description,
@@ -1128,7 +1141,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
             "pendingCrawlJobs is in an illegal state";
         pendingCrawlJobs.remove(currentJob);
         try {
-            this.currentJob.setupForCrawlStart();
+            this.currentJob.setupForCrawlStart(this.heritrix);
             // This is ugly but needed so I can clear the currentJob
             // reference in the crawlEnding and update the list of completed
             // jobs.  Also, crawlEnded can startup next job.

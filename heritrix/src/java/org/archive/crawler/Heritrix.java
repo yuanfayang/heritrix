@@ -339,7 +339,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     throws IOException {
         super();
         containerInitialization();
-        this.jobHandler = new CrawlJobHandler(getJobsdir());
+        this.jobHandler = new CrawlJobHandler(this);
         this.openMBeanInfo = buildMBeanInfo();
         // Set up the alerting system.  SinkHandler is also a global so will
         // catch alerts for all running Heritrix instances.  Will need to
@@ -397,9 +397,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
     
     /**
-     * Run setup tasks for this 'container'.
-     * Idempotent.
-     * @throws IOException 
+     * Run setup tasks for this 'container'. Idempotent.
+     * 
+     * @throws IOException
      */
     protected static void containerInitialization() throws IOException {
         if (Heritrix.containerInitialized) {
@@ -437,8 +437,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         } catch (InstanceNotFoundException e) {
             e.printStackTrace();
         } catch (MBeanRegistrationException e) {
-            e.printStackTrace();
-        } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
             e.printStackTrace();
@@ -911,8 +909,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         }
         Heritrix h = new Heritrix(true);
         
-        h.setJobHandler(new SelfTestCrawlJobHandler(h.getJobsdir(),
-                oneSelfTestName, selfTestUrl));
+        h.setJobHandler(new SelfTestCrawlJobHandler(h, oneSelfTestName,
+            selfTestUrl));
         CrawlJob job = createCrawlJob(h.getJobHandler(), crawlOrderFile,
                 "Template");
         job = h.getJobHandler().newJob(job, null, SELFTEST,
@@ -1474,46 +1472,38 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * @param h Instance of heritrix to register.
      * @param name Name to use for this Heritrix instance.
      * @param jmxregister True if we are to register this instance with JMX.
-     * @throws NotCompliantMBeanException
-     * @throws MBeanRegistrationException
-     * @throws InstanceAlreadyExistsException
      * @throws NullPointerException
      * @throws MalformedObjectNameException
-     * @throws NotCompliantMBeanException
-     * @throws MBeanRegistrationException
-     * @throws InstanceAlreadyExistsException
-     * @throws MalformedObjectNameException
-     * @throws NullPointerException
+     * @throws NotCompliantMBeanException 
+     * @throws MBeanRegistrationException 
+     * @throws InstanceAlreadyExistsException 
      */
     protected static void registerHeritrix(final Heritrix h,
             final String name, final boolean jmxregister)
-    throws InstanceAlreadyExistsException, MBeanRegistrationException,
-            NotCompliantMBeanException, MalformedObjectNameException {
-        String result = null;
-        ObjectName objName =
-            new ObjectName((name == null || name.length() <= 0)?
-                getJmxName(): getJmxName(name));
-        MBeanServer server = null;
-        server = getMBeanServer();
+    throws MalformedObjectNameException, InstanceAlreadyExistsException,
+    MBeanRegistrationException, NotCompliantMBeanException {
+        MBeanServer server = getMBeanServer();
         if (server != null) {
-            // Are we to manage the jmx registration?
+            // Are we to manage the jmx registration?  Or is it being done for
+            // us by an external process: e.g. This instance was created by
+            // MBeanAgent.
             if (jmxregister) {
-                result = server.registerMBean(h, objName).getObjectName().
-                    getCanonicalName();
+                ObjectName objName = (name == null || name.length() <= 0)?
+                    getJmxObjectName(): getJmxObjectName(name);
+                registerMBean(server, h, objName);
             }
         } else {
             // JMX ain't available. Put this instance into the list of Heritrix
             // instances so findable by the UI (Normally this is done in the
             // JMX postRegister routine below).  When no JMX, can only have
             // one instance of Heritrix so no need to do the deregisteration.
-            result = h.getNoJmxName();
-            Heritrix.instances.put(result, h);
+            Heritrix.instances.put(h.getNoJmxName(), h);
         }
     }
     
     protected static void unregisterHeritrix(final Heritrix h)
     throws InstanceNotFoundException, MBeanRegistrationException,
-    MalformedObjectNameException, NullPointerException {
+            NullPointerException {
         MBeanServer server = getMBeanServer();
         if (server != null) {
             server.unregisterMBean(h.mbeanName);
@@ -1549,27 +1539,35 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
     
     public static MBeanServer registerMBean(final Object objToRegister,
-            final String name, final String type) {
-        String jmxname = getJmxName(name, type);
-        MBeanServer server = null;
-        ObjectName objName = null;
-        try {
-            objName = new ObjectName(jmxname);
-            server = getMBeanServer();
-            if (server != null) {
-                server = registerMBean(server, objToRegister, objName);
-            }
-        } catch (MalformedObjectNameException e) {
-            e.printStackTrace();
+            final String name, final String type, final Heritrix h)
+    throws InstanceAlreadyExistsException, MBeanRegistrationException,
+    NotCompliantMBeanException {
+        MBeanServer server = getMBeanServer();
+        if (server != null) {
+            server = registerMBean(server, objToRegister, name, type, h);
         }
         return server;
     }
     
     public static MBeanServer registerMBean(final MBeanServer server,
-            final Object objToRegister, final String name, final String type) {
+            final Object objToRegister, final String name, final String type,
+            final Heritrix h)
+    throws InstanceAlreadyExistsException, MBeanRegistrationException,
+    NotCompliantMBeanException {
         try {
+            Hashtable ht = new Hashtable();
+            ht.put(JmxUtils.NAME, name);
+            ht.put(JmxUtils.TYPE, type);
+            // If passed instance of Heritrix, add its name (as 'mother'),
+            // jmx port and host to the JMX bean name we're registering.
+            if (h != null && h.getMBeanName() != null) {
+                Hashtable hht = h.getMBeanName().getKeyPropertyList();
+                ht.put(JmxUtils.MOTHER, hht.get(JmxUtils.NAME));
+                ht.put(JmxUtils.JMX_PORT, hht.get(JmxUtils.JMX_PORT));
+                ht.put(JmxUtils.HOST, hht.get(JmxUtils.HOST));
+            }
             registerMBean(server, objToRegister,
-                new ObjectName(getJmxName(name, type)));
+                new ObjectName(CRAWLER_PACKAGE, ht));
         } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         }
@@ -1577,18 +1575,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
         
     public static MBeanServer registerMBean(final MBeanServer server,
-                final Object objToRegister, final ObjectName objName) {
-        try {
-            server.registerMBean(objToRegister, objName);
-        } catch (InstanceAlreadyExistsException e) {
-            e.printStackTrace();
-        } catch (MBeanRegistrationException e) {
-            e.printStackTrace();
-        } catch (NotCompliantMBeanException e) {
-            e.printStackTrace();
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
+                final Object objToRegister, final ObjectName objName)
+    throws InstanceAlreadyExistsException, MBeanRegistrationException,
+    NotCompliantMBeanException {
+        server.registerMBean(objToRegister, objName);
         return server;
     }
     
@@ -1598,7 +1588,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             return;
         }
         try {
-            unregisterMBean(server, new ObjectName(getJmxName(name, type)));
+            unregisterMBean(server, getJmxObjectName(name, type));
         } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         }
@@ -1625,17 +1615,23 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         return this.getClass().getName();
     }
     
-    public static String getJmxName() {
-        return getJmxName("Heritrix", JmxUtils.SERVICE);
+    public static ObjectName getJmxObjectName()
+    throws MalformedObjectNameException, NullPointerException {
+        return getJmxObjectName("Heritrix", JmxUtils.SERVICE);
     }
     
-    public static String getJmxName(final String name) {
-        return getJmxName(name, JmxUtils.SERVICE);
+    public static ObjectName getJmxObjectName(final String name)
+    throws MalformedObjectNameException, NullPointerException {
+        return getJmxObjectName(name, JmxUtils.SERVICE);
     }
     
-    public static String getJmxName(final String name, final String type) {
-        return CRAWLER_PACKAGE + ":" + JmxUtils.TYPE + "=" + type +
-            ",name=" + name;
+    public static ObjectName getJmxObjectName(final String name,
+            final String type)
+    throws MalformedObjectNameException, NullPointerException {
+        Hashtable ht = new Hashtable();
+        ht.put(JmxUtils.NAME, name);
+        ht.put(JmxUtils.TYPE, type);
+        return new ObjectName(CRAWLER_PACKAGE, ht);
     }
     
     /**
@@ -1711,7 +1707,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * Not by the cmdline launched Heritrix. Idempotent.
      * If start is called by JMX, then new instance of Heritrix is automatically
      * registered w/ JMX Agent.  If started by webapp, need to register the new
-     * Heritrix instance.  See {@link #registerHeritrix(Heritrix)}.
+     * Heritrix instance.
      */
     public void start() {
         // Don't start if we've been launched from the command line.
@@ -2147,6 +2143,14 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
 
     public MBeanInfo getMBeanInfo() {
         return this.openMBeanInfo;
+    }
+    
+    /**
+     * @return Name this instance registered in JMX (Only available after JMX
+     * registration).
+     */
+    public ObjectName getMBeanName() {
+        return this.mbeanName;
     }
 
     public ObjectName preRegister(MBeanServer server, ObjectName name)

@@ -44,6 +44,7 @@ import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
+import javax.management.InstanceAlreadyExistsException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
@@ -52,7 +53,9 @@ import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 import javax.management.MBeanRegistration;
+import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 import javax.management.NotificationBroadcasterSupport;
 import javax.management.ObjectName;
@@ -757,7 +760,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         }
     }
     
-    public void setupForCrawlStart()
+    public void setupForCrawlStart(final Heritrix heritrix)
     throws InitializationException {
         try {
             // Check if we're to do a checkpoint recover.  If so, deserialize
@@ -787,8 +790,16 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             ((MBeanCrawlController)this.controller).setCrawlJob(this);
             // Create our mbean description and register our crawljob.
             this.openMBeanInfo = buildMBeanInfo();
-            Heritrix.registerMBean(this, getJmxJobName(),
-                CRAWLJOB_JMXMBEAN_TYPE);
+            try {
+                Heritrix.registerMBean(this, getJmxJobName(),
+                    CRAWLJOB_JMXMBEAN_TYPE, heritrix);
+            } catch (InstanceAlreadyExistsException e) {
+                throw new InitializationException(e);
+            } catch (MBeanRegistrationException e) {
+                throw new InitializationException(e);
+            } catch (NotCompliantMBeanException e) {
+                throw new InitializationException(e);
+            }
         } catch (InitializationException e) {
             // Can't load current job since it is misconfigured.
             setStatus(CrawlJob.STATUS_MISCONFIGURED);
@@ -1997,20 +2008,19 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         return this.controller;
     }
     
-    public ObjectName preRegister(final MBeanServer server, ObjectName name)
+    public ObjectName preRegister(final MBeanServer server, ObjectName on)
     throws Exception {
         this.mbeanServer = server;
-        Hashtable ht = name.getKeyPropertyList();
-        if (!ht.containsKey("name")) {
+        Hashtable ht = on.getKeyPropertyList();
+        if (!ht.containsKey(JmxUtils.NAME)) {
             throw new IllegalArgumentException("Name property required" +
-                    name.getCanonicalName());
+                on.getCanonicalName());
         }
         if (!ht.containsKey(JmxUtils.TYPE)) {
             ht.put(JmxUtils.TYPE, CRAWLJOB_JMXMBEAN_TYPE);
-            name = new ObjectName(name.getDomain(), ht);
         }
-        this.mbeanName = name;
-        return name;
+        this.mbeanName = new ObjectName(on.getDomain(), ht);
+        return this.mbeanName;
     }
 
     public void postRegister(Boolean registrationDone) {
