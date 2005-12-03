@@ -622,7 +622,7 @@
             </properties>
         </dependency>
         <dependency>
-            <id>backport-util-concurrent</id>
+            <id>concurrent</id>
             <version>2.0_01</version>
             <url>http://www.mathcs.emory.edu/dcl/util/backport-util-concurrent/</url>
             <properties>
