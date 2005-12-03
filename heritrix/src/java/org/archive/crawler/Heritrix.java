@@ -290,6 +290,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private final static String START_CRAWLING_OPER = "startCrawling";
     private final static String STOP_CRAWLING_OPER = "stopCrawling";
     private final static String ADD_CRAWL_JOB_OPER = "addJob";
+    private final static String TERMINATE_CRAWL_JOB_OPER =
+        "terminateCurrentJob";
     private final static String DELETE_CRAWL_JOB_OPER = "deleteJob";
     private final static String ALERT_OPER = "alert";
     private final static String ADD_CRAWL_JOB_BASEDON_OPER = "addJobBasedon";
@@ -305,7 +307,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             ADD_CRAWL_JOB_OPER, ADD_CRAWL_JOB_BASEDON_OPER,
             DELETE_CRAWL_JOB_OPER, ALERT_OPER, PENDING_JOBS_OPER,
             COMPLETED_JOBS_OPER, CRAWLEND_REPORT_OPER, SHUTDOWN_OPER,
-            LOG_OPER, DESTROY_OPER});
+            LOG_OPER, DESTROY_OPER, TERMINATE_CRAWL_JOB_OPER});
     }
     private CompositeType jobCompositeType = null;
     private TabularType jobsTabularType = null;
@@ -1910,6 +1912,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         operations[14] = new OpenMBeanOperationInfoSupport(
             Heritrix.DESTROY_OPER, "Destroy Heritrix instance", null,
                 SimpleType.VOID, MBeanOperationInfo.ACTION);
+        
+        operations[15] = new OpenMBeanOperationInfoSupport(
+            Heritrix.TERMINATE_CRAWL_JOB_OPER,
+            "Returns false if no current job", null, SimpleType.BOOLEAN,
+            MBeanOperationInfo.ACTION);
 
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
@@ -2000,6 +2007,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             JmxUtils.checkParamsCount(DESTROY_OPER, params, 0);
             destroy();
             return null;
+        }
+        if (operationName.equals(TERMINATE_CRAWL_JOB_OPER)) {
+            JmxUtils.checkParamsCount(TERMINATE_CRAWL_JOB_OPER, params, 0);
+            return new Boolean(this.jobHandler.terminateCurrentJob());
         }
         if (operationName.equals(SHUTDOWN_OPER)) {
             JmxUtils.checkParamsCount(SHUTDOWN_OPER, params, 0);
