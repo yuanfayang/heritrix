@@ -22,7 +22,7 @@
  */
 package org.archive.crawler.selftest;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -63,16 +63,14 @@ public class SelfTestCrawlJobHandler extends CrawlJobHandler {
     private String selfTestUrl = null;
 
 
-    private SelfTestCrawlJobHandler()
-    throws IOException {
+    private SelfTestCrawlJobHandler() {
         this(null, null, null);
     }
 
-    public SelfTestCrawlJobHandler(final Heritrix h,
-            final String selfTestName, final String url)
-    throws IOException {
+    public SelfTestCrawlJobHandler(final File jobsDir,
+            final String selfTestName, final String url) {
         // No need to load jobs or profiles
-        super(h, false, false);
+        super(jobsDir, false, false);
         this.selfTestName = selfTestName;
         this.selfTestUrl = url;
     }
