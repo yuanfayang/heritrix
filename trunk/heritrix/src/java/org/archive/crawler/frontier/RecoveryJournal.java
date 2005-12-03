@@ -51,7 +51,7 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
 
-import EDU.oswego.cs.dl.util.concurrent.Latch;
+import edu.emory.mathcs.backport.java.util.concurrent.CountDownLatch;
 
 /**
  * Helper class for managing a simple Frontier change-events journal which is
@@ -251,7 +251,7 @@ implements FrontierJournal {
         // now, re-add anything that was in old frontier and not already
         // registered as finished. Do this in a separate thread that signals
         // this thread once ENOUGH_TO_START_CRAWLING URIs have been queued. 
-        final Latch recoveredEnough = new Latch();
+        final CountDownLatch recoveredEnough = new CountDownLatch(1);
         new Thread(new Runnable() {
             public void run() {
                 importQueuesFromLog(source, frontier, lines, recoveredEnough);
@@ -260,7 +260,7 @@ implements FrontierJournal {
         
         try {
             // wait until at least ENOUGH_TO_START_CRAWLING URIs queued
-            recoveredEnough.acquire();
+            recoveredEnough.await();
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -370,7 +370,7 @@ implements FrontierJournal {
      * @param enough latch signalling 'enough' URIs queued to begin crawling
      */
     private static void importQueuesFromLog(File source, Frontier frontier,
-            int lines, Latch enough) {
+            int lines, CountDownLatch enough) {
         BufferedInputStream is;
         // create MutableString of good starting size (will grow if necessary)
         MutableString read = new MutableString(UURI.MAX_URL_LENGTH);
@@ -405,7 +405,7 @@ implements FrontierJournal {
                                 frontier.queuedUriCount() - queuedAtStart;
                             if(((queuedDuringRecovery + 1) %
                                     ENOUGH_TO_START_CRAWLING) == 0) {
-                                enough.release();
+                                enough.countDown();
                             }
                         } catch (URIException e) {
                             e.printStackTrace();
@@ -431,7 +431,7 @@ implements FrontierJournal {
         }
         LOGGER.info("finished recovering frontier from "+source+" "
                 +qLines+" lines processed");
-        enough.release();
+        enough.countDown();
     }
 
     /**

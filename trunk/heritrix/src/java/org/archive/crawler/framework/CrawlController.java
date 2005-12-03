@@ -82,8 +82,6 @@ import org.xbill.DNS.DClass;
 import org.xbill.DNS.Type;
 import org.xbill.DNS.dns;
 
-import EDU.oswego.cs.dl.util.concurrent.ReentrantLock;
-
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.CheckpointConfig;
 import com.sleepycat.je.Database;
@@ -94,6 +92,8 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
+
+import edu.emory.mathcs.backport.java.util.concurrent.locks.ReentrantLock;
 
 /**
  * CrawlController collects all the classes which cooperate to
@@ -1757,12 +1757,8 @@ public class CrawlController implements Serializable, Reporter {
      * lock to allow other threads to proceed one at a time. 
      */
     public void singleThreadMode() {
-        try {
-            this.singleThreadLock.acquire();
-            singleThreadMode = true; 
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        this.singleThreadLock.lock();
+        singleThreadMode = true; 
     }
 
     /**
@@ -1770,12 +1766,10 @@ public class CrawlController implements Serializable, Reporter {
      * ToeThreads may proceed at once
      */
     public void multiThreadMode() {
-        try {
-            this.singleThreadLock.acquire();
-            singleThreadMode = false; 
-            this.singleThreadLock.release(this.singleThreadLock.holds());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        this.singleThreadLock.lock();
+        singleThreadMode = false; 
+        while(this.singleThreadLock.isHeldByCurrentThread()) {
+            this.singleThreadLock.unlock();
         }
     }
     
@@ -1787,10 +1781,12 @@ public class CrawlController implements Serializable, Reporter {
      */
     public void acquireContinuePermission() throws InterruptedException {
         if (singleThreadMode) {
-            this.singleThreadLock.acquire();
+            this.singleThreadLock.lock();
             if(!singleThreadMode) {
                 // If changed while waiting, ignore
-                this.singleThreadLock.release(this.singleThreadLock.holds());
+                while(this.singleThreadLock.isHeldByCurrentThread()) {
+                    this.singleThreadLock.unlock();
+                }
             }
         } // else, permission is automatic
     }
@@ -1801,9 +1797,8 @@ public class CrawlController implements Serializable, Reporter {
      */
     public void releaseContinuePermission() {
         if (singleThreadMode) {
-            if (this.singleThreadLock.holds() > 0) {
-                // Release all
-                this.singleThreadLock.release(this.singleThreadLock.holds());
+            while(this.singleThreadLock.isHeldByCurrentThread()) {
+                this.singleThreadLock.unlock();
             }
         } // else do nothing; 
     }
