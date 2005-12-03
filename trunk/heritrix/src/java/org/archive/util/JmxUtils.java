@@ -59,6 +59,12 @@ public class JmxUtils {
     public static final String JMX_PORT = "jmxport";
     public static final String GUI_PORT = "guiport";
     public static final String KEY = "key";
+    /**
+     * Key for name of the Heritrix instance hosting a Job: i.e. the
+     * CrawlJob's host/'mother'.
+     */
+    public static final String MOTHER = "mother";
+    
     private static final List OPENTYPES =
         Arrays.asList(OpenType.ALLOWED_CLASSNAMES);
     
