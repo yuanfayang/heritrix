@@ -45,7 +45,7 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.HttpRecorder;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
+import edu.emory.mathcs.backport.java.util.concurrent.CopyOnWriteArrayList;
 
 
 /**

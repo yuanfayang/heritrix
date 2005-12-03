@@ -52,10 +52,13 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.net.UURI;
-import org.archive.queue.LinkedQueue;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.collections.StoredIterator;
+
+import edu.emory.mathcs.backport.java.util.concurrent.BlockingQueue;
+import edu.emory.mathcs.backport.java.util.concurrent.LinkedBlockingQueue;
+import edu.emory.mathcs.backport.java.util.concurrent.TimeUnit;
 
 /**
  * A common Frontier base using several queues to hold pending URIs. 
@@ -133,19 +136,19 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * All per-class queues whose first item may be handed out.
      * Linked-list of keys for the queues.
      */
-    protected LinkedQueue readyClassQueues = new LinkedQueue();
+    protected BlockingQueue readyClassQueues = new LinkedBlockingQueue();
 
     /** 
      * All 'inactive' queues, not yet in active rotation.
      * Linked-list of keys for the queues.
      */
-    protected LinkedQueue inactiveQueues = new LinkedQueue();
+    protected BlockingQueue inactiveQueues = new LinkedBlockingQueue();
 
     /**
      * 'retired' queues, no longer considered for activation.
      * Linked-list of keys for queues.
      */
-    protected LinkedQueue retiredQueues = new LinkedQueue();
+    protected BlockingQueue retiredQueues = new LinkedBlockingQueue();
     
     /** all per-class queues from whom a URI is outstanding */
     protected Bag inProcessQueues = 
@@ -492,24 +495,18 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         } catch (FatalConfigurationException fce) {
             throw new RuntimeException(fce);
         }
-        try {
-            // The rules for a 'retired' queue may have changed; so,
-            // unretire all queues to 'inactive'. If they still qualify
-            // as retired/overbudget next time they come up, they'll
-            // be re-retired; if not, they'll get a chance to become
-            // active under the new rules.
-            Object key = this.retiredQueues.poll(0);
-            while (key != null) {
-                WorkQueue q = (WorkQueue)this.allQueues.get(key);
-                if(q != null) {
-                    unretireQueue(q);
-                }
-                key = this.retiredQueues.poll(0);
+        // The rules for a 'retired' queue may have changed; so,
+        // unretire all queues to 'inactive'. If they still qualify
+        // as retired/overbudget next time they come up, they'll
+        // be re-retired; if not, they'll get a chance to become
+        // active under the new rules.
+        Object key = this.retiredQueues.poll();
+        while (key != null) {
+            WorkQueue q = (WorkQueue)this.allQueues.get(key);
+            if(q != null) {
+                unretireQueue(q);
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            // propagate interrupt up 
-            throw new RuntimeException(e);
+            key = this.retiredQueues.poll();
         }
     }
     /**
@@ -574,7 +571,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     0 :Math.min(DEFAULT_WAIT, timeTilWake);
             
             WorkQueue readyQ = null;
-            Object key = readyClassQueues.poll(wait);
+            Object key = readyClassQueues.poll(wait,TimeUnit.MILLISECONDS);
             if (key != null) {
                 readyQ = (WorkQueue)this.allQueues.get(key);
             }
@@ -681,11 +678,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     
     /**
      * Activate an inactive queue, if any are available. 
-     * 
-     * @throws InterruptedException
      */
-    private void activateInactiveQueue() throws InterruptedException {
-        Object key = this.inactiveQueues.poll(0);
+    private void activateInactiveQueue() {
+        Object key = this.inactiveQueues.poll();
         if (key == null) {
             return;
         }
@@ -965,11 +960,11 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     public void singleLineReportTo(PrintWriter w) {
         int allCount = allQueues.size();
         int inProcessCount = inProcessQueues.uniqueSet().size();
-        int readyCount = readyClassQueues.getCount();
+        int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = inactiveQueues.getCount();
-        int retiredCount = retiredQueues.getCount();
+        int inactiveCount = inactiveQueues.size();
+        int retiredCount = retiredQueues.size();
         int exhaustedCount = 
             allCount - activeCount - inactiveCount - retiredCount;
         w.print(allCount);
@@ -1090,11 +1085,11 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     private void standardReportTo(PrintWriter w) {
         int allCount = allQueues.size();
         int inProcessCount = inProcessQueues.uniqueSet().size();
-        int readyCount = readyClassQueues.getCount();
+        int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = inactiveQueues.getCount();
-        int retiredCount = retiredQueues.getCount();
+        int inactiveCount = inactiveQueues.size();
+        int retiredCount = retiredQueues.size();
         int exhaustedCount = 
             allCount - activeCount - inactiveCount - retiredCount;
 
@@ -1163,7 +1158,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         
         w.print("\n -----===== READY QUEUES =====-----\n");
         appendQueueReports(w, this.readyClassQueues.iterator(),
-            this.readyClassQueues.getCount(), REPORT_MAX_QUEUES);
+            this.readyClassQueues.size(), REPORT_MAX_QUEUES);
 
         w.print("\n -----===== SNOOZED QUEUES =====-----\n");
         appendQueueReports(w, this.snoozedClassQueues.iterator(),
@@ -1171,11 +1166,11 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         
         w.print("\n -----===== INACTIVE QUEUES =====-----\n");
         appendQueueReports(w, this.inactiveQueues.iterator(),
-            this.inactiveQueues.getCount(), REPORT_MAX_QUEUES);
+            this.inactiveQueues.size(), REPORT_MAX_QUEUES);
         
         w.print("\n -----===== RETIRED QUEUES =====-----\n");
         appendQueueReports(w, this.retiredQueues.iterator(),
-            this.retiredQueues.getCount(), REPORT_MAX_QUEUES);
+            this.retiredQueues.size(), REPORT_MAX_QUEUES);
 
         w.flush();
     }
@@ -1250,19 +1245,19 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     
     public long averageDepth() {
         int inProcessCount = inProcessQueues.uniqueSet().size();
-        int readyCount = readyClassQueues.getCount();
+        int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = inactiveQueues.getCount();
+        int inactiveCount = inactiveQueues.size();
         int totalQueueCount = (activeCount+inactiveCount);
         return (totalQueueCount == 0) ? 0 : queuedUriCount / totalQueueCount;
     }
     public float congestionRatio() {
         int inProcessCount = inProcessQueues.uniqueSet().size();
-        int readyCount = readyClassQueues.getCount();
+        int readyCount = readyClassQueues.size();
         int snoozedCount = snoozedClassQueues.size();
         int activeCount = inProcessCount + readyCount + snoozedCount;
-        int inactiveCount = inactiveQueues.getCount();
+        int inactiveCount = inactiveQueues.size();
         return (float)(activeCount + inactiveCount) / (inProcessCount + snoozedCount);
     }
     public long deepestUri() {
