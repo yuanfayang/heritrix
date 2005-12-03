@@ -557,11 +557,35 @@ public class CrawlJobHandler implements CrawlStatusListener {
         }
         return null; // Nothing found, return null
     }
+    
+    /**
+     * @return True if we terminated a current job (False if no job to
+     * terminate)
+     */
+    public boolean terminateCurrentJob() {
+        if (this.currentJob == null) {
+            return false;
+        }
+        // requestCrawlStop will cause crawlEnding to be invoked.
+        // It will handle the clean up.
+        this.currentJob.stopCrawling();
+        synchronized (this) {
+            try {
+                // Take a few moments so that the controller can change
+                // states before the UI updates. The CrawlEnding event
+                // will wake us if it occurs sooner than this.
+                wait(3000);
+            } catch (InterruptedException e) {
+                // Ignore.
+            }
+        }
+        return true;
+    }
 
     /**
      * The specified job will be removed from the pending queue or aborted if
      * currently running.  It will be placed in the list of completed jobs with
-     * approprite status info. If the job is already in the completed list or
+     * appropriate status info. If the job is already in the completed list or
      * no job with the given UID is found, no action will be taken.
      *
      * @param jobUID The UID (unique ID) of the job that is to be deleted.
@@ -570,20 +594,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
     public void deleteJob(String jobUID) {
         // First check to see if we are deleting the current job.
         if (currentJob != null && jobUID.equals(currentJob.getUID())) {
-            // Need to terminate the current job.
-            // requestCrawlStop will cause crawlEnding to be invoked.
-            // It will handle the clean up.
-            this.currentJob.stopCrawling();
-            synchronized (this) {
-                try {
-                    // Take a few moments so that the controller can change
-                    // states before the UI updates. The CrawlEnding event
-                    // will wake us if it occurs sooner than this.
-                    wait(3000);
-                } catch (InterruptedException e) {
-                    return;
-                }
-            }
+            terminateCurrentJob();
             return; // We're not going to find another job with the same UID
         }
         
