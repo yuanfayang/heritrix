@@ -267,10 +267,15 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     
     /**
      * Keep reference to all instances of Heritrix.
-     * Used by the UI to figure which of the local Heritrices it should
+     * Used by the UI to figure which of the local Heritrice it should
      * be going against and to figure what to shutdown on the way out (If
      * there was always a JMX Agent, we wouldn't need to keep this list.  We
-     * could always ask the JMX Agent for all instances).
+     * could always ask the JMX Agent for all instances. UPDATE: True we could
+     * always ask the JMX Agent but we might keep around this local reference
+     * because it will allow faster, less awkward -- think of marshalling the args
+     * for JMX invoke operation -- access to local Heritrix instances.  A new
+     * usage for this instances Map is in CrawlJob#preRegister to find the hosting
+     * Heritrix instance).
      */
     private static Map instances = new Hashtable();
     
@@ -341,7 +346,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     throws IOException {
         super();
         containerInitialization();
-        this.jobHandler = new CrawlJobHandler(this);
+        this.jobHandler = new CrawlJobHandler(getJobsdir());
         this.openMBeanInfo = buildMBeanInfo();
         // Set up the alerting system.  SinkHandler is also a global so will
         // catch alerts for all running Heritrix instances.  Will need to
@@ -911,7 +916,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         }
         Heritrix h = new Heritrix(true);
         
-        h.setJobHandler(new SelfTestCrawlJobHandler(h, oneSelfTestName,
+        h.setJobHandler(new SelfTestCrawlJobHandler(h.getJobsdir(), oneSelfTestName,
             selfTestUrl));
         CrawlJob job = createCrawlJob(h.getJobHandler(), crawlOrderFile,
                 "Template");
@@ -1541,33 +1546,24 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
     
     public static MBeanServer registerMBean(final Object objToRegister,
-            final String name, final String type, final Heritrix h)
+            final String name, final String type)
     throws InstanceAlreadyExistsException, MBeanRegistrationException,
     NotCompliantMBeanException {
         MBeanServer server = getMBeanServer();
         if (server != null) {
-            server = registerMBean(server, objToRegister, name, type, h);
+            server = registerMBean(server, objToRegister, name, type);
         }
         return server;
     }
     
     public static MBeanServer registerMBean(final MBeanServer server,
-            final Object objToRegister, final String name, final String type,
-            final Heritrix h)
+            final Object objToRegister, final String name, final String type)
     throws InstanceAlreadyExistsException, MBeanRegistrationException,
     NotCompliantMBeanException {
         try {
             Hashtable ht = new Hashtable();
             ht.put(JmxUtils.NAME, name);
             ht.put(JmxUtils.TYPE, type);
-            // If passed instance of Heritrix, add its name (as 'mother'),
-            // jmx port and host to the JMX bean name we're registering.
-            if (h != null && h.getMBeanName() != null) {
-                Hashtable hht = h.getMBeanName().getKeyPropertyList();
-                ht.put(JmxUtils.MOTHER, hht.get(JmxUtils.NAME));
-                ht.put(JmxUtils.JMX_PORT, hht.get(JmxUtils.JMX_PORT));
-                ht.put(JmxUtils.HOST, hht.get(JmxUtils.HOST));
-            }
             registerMBean(server, objToRegister,
                 new ObjectName(CRAWLER_PACKAGE, ht));
         } catch (MalformedObjectNameException e) {

@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -760,7 +761,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         }
     }
     
-    public void setupForCrawlStart(final Heritrix heritrix)
+    public void setupForCrawlStart()
     throws InitializationException {
         try {
             // Check if we're to do a checkpoint recover.  If so, deserialize
@@ -792,7 +793,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             this.openMBeanInfo = buildMBeanInfo();
             try {
                 Heritrix.registerMBean(this, getJmxJobName(),
-                    CRAWLJOB_JMXMBEAN_TYPE, heritrix);
+                    CRAWLJOB_JMXMBEAN_TYPE);
             } catch (InstanceAlreadyExistsException e) {
                 throw new InitializationException(e);
             } catch (MBeanRegistrationException e) {
@@ -2016,6 +2017,18 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             throw new IllegalArgumentException("Name property required" +
                 on.getCanonicalName());
         }
+        // Now append key/values from hosting heritrix JMX ObjectName so it can be
+        // found just by examination of the CrawlJob JMX ObjectName.  Add heritrix
+        // name attribute as 'mother' attribute.
+        Heritrix h = getHostingHeritrix();
+        if (h == null || h.getMBeanName() == null) {
+            throw new IllegalArgumentException("Hosting heritrix not found " +
+                "or not registered with JMX");
+        }
+        Map hht = h.getMBeanName().getKeyPropertyList();
+        ht.put(JmxUtils.MOTHER, hht.get(JmxUtils.NAME));
+        ht.put(JmxUtils.JMX_PORT, hht.get(JmxUtils.JMX_PORT));
+        ht.put(JmxUtils.HOST, hht.get(JmxUtils.HOST));
         if (!ht.containsKey(JmxUtils.TYPE)) {
             ht.put(JmxUtils.TYPE, CRAWLJOB_JMXMBEAN_TYPE);
         }
@@ -2040,6 +2053,22 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             logger.info(JmxUtils.getLogUnregistrationMsg(
                     this.mbeanName.getCanonicalName(), this.mbeanServer));
         }
+    }
+    
+    /**
+     * @return Heritrix that is hosting this job.
+     */
+    protected Heritrix getHostingHeritrix() {
+        Heritrix hostingHeritrix = null;
+        Map heritrice = Heritrix.getInstances();
+        for (final Iterator i = heritrice.keySet().iterator(); i.hasNext();) {
+            Heritrix h = (Heritrix)heritrice.get(i.next());
+            if (h.getJobHandler().getCurrentJob() == this) {
+                hostingHeritrix = h;
+                break;
+            }
+        }
+        return hostingHeritrix;
     }
     
     /**
