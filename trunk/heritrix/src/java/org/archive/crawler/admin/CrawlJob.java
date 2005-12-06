@@ -204,7 +204,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      * Map of old statistics.
      * Used sending progress statistics notifications.
      */
-    private Map cachedStatistics = new HashMap();
+    private HashMap cachedStatistics = new HashMap();
     
     private String statisticsFileSave = "";
 
@@ -746,14 +746,14 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             super.progressStatisticsEvent(e);
             if (this.cj.getMbeanName() != null) {
                 // Can be null around job startup.
-                Map newStatistics = ((StatisticsTracking)e.getSource()).
+                HashMap newStatistics = ((StatisticsTracking)e.getSource()).
                     getProgressStatistics();
                 sendNotification(new AttributeChangeNotification(
                     this.cj.getMbeanName(), getNotificationsSequenceNumber(),
                     System.currentTimeMillis(),
                     ((StatisticsTracking)e.getSource()).
                         getProgressStatisticsLine(),
-                    "progressStatistics", Map.class.getName(),
+                    "progressStatistics", HashMap.class.getName(),
                     this.cj.getStatistics(), newStatistics));
                 this.cj.setStatistics(newStatistics);
             }
@@ -2100,7 +2100,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 this.controller.getStatistics();
     }
     
-    protected void setStatistics(final Map statistics) {
+    protected void setStatistics(final HashMap statistics) {
         this.cachedStatistics = statistics;
     }
     
