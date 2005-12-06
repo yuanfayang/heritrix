@@ -35,11 +35,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EventObject;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -199,8 +199,13 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     private boolean isRunning = false;
     private int priority;
     private int numberOfJournalEntries = 0;
-
-    private transient StatisticsTracking stats;
+    
+    /**
+     * Map of old statistics.
+     * Used sending progress statistics notifications.
+     */
+    private Map cachedStatistics = new HashMap();
+    
     private String statisticsFileSave = "";
 
     private String errorMessage = null;
@@ -288,14 +293,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      * Sequence number for jmx notifications.
      */
     private static int notificationsSequenceNumber = 1;
-    
-    private final static String CRAWL_PROG_STATS = ".crawlProgressStatistics";
-    
-    /**
-     * Map of old statistics.
-     * Used sending progress statistics notifications.
-     */
-    private Map oldStatistics = new HashMap();
     
     /**
      * A shutdown Constructor.
@@ -658,22 +655,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     /**
-     * Set the stat tracking helper object.
-     *
-     * @param tracker
-     */
-    public void setStatisticsTracking(StatisticsTracking tracker) {
-        this.stats = tracker;
-    }
-
-    /**
-     * @return the stat tracking helper object
-     */
-    public StatisticsTracking getStatisticsTracking() {
-        return stats;
-    }
-
-    /**
      * Returns the settings handler for this job. It will have been initialized.
      * @return the settings handler for this job.
      */
@@ -743,6 +724,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     
     /**
      * Subclass of crawlcontroller that unregisters beans when stopped.
+     * Done as subclass so CrawlController doesn't get any JMX pollution,
+     * so for sure CrawlJob is unregistered with JMX and so any listeners on
+     * the CrawlJob get a chance to get crawl ended message
+     * (These latter notifications may not actually be getting through -- TBD).
      */
     public class MBeanCrawlController extends CrawlController
     implements Serializable {
@@ -761,15 +746,16 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             super.progressStatisticsEvent(e);
             if (this.cj.getMbeanName() != null) {
                 // Can be null around job startup.
-                Map newStatistics =
-                    ((StatisticsTracking)e.getSource()).getProgressStatistics();
+                Map newStatistics = ((StatisticsTracking)e.getSource()).
+                    getProgressStatistics();
                 sendNotification(new AttributeChangeNotification(
                     this.cj.getMbeanName(), getNotificationsSequenceNumber(),
                     System.currentTimeMillis(),
-                    ((StatisticsTracking)e.getSource()).getProgressStatisticsLine(),
-                    StatisticsTracking.class.getName(), Map.class.getName(),
-                    this.cj.oldStatistics, newStatistics));
-                this.cj.oldStatistics = newStatistics;
+                    ((StatisticsTracking)e.getSource()).
+                        getProgressStatisticsLine(),
+                    "progressStatistics", Map.class.getName(),
+                    this.cj.getStatistics(), newStatistics));
+                this.cj.setStatistics(newStatistics);
             }
         }
         
@@ -840,7 +826,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         }
         setStatus(CrawlJob.STATUS_RUNNING);
         setRunning(true);
-        setStatisticsTracking(this.controller.getStatistics());
     }
     
     public void stopCrawling() {
@@ -1089,7 +1074,9 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      * @return the number of URIs deleted
      */
     public long deleteURIsFromPending(String regexpr){
-        return (this.controller != null && this.controller.isPaused())?
+        return (this.controller != null &&
+                this.controller.getFrontier() != null &&
+                this.controller.isPaused())?
             this.controller.getFrontier().deleteURIs(regexpr): 0;
     }
     
@@ -1395,8 +1382,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                     this.getClass().getName() + ".crawlStarted",
                     this.getClass().getName() + ".crawlEnded",
                     this.getClass().getName() + ".crawlPaused",
-                    this.getClass().getName() + ".crawlResuming",
-                    this.getClass().getName() + CRAWL_PROG_STATS},
+                    this.getClass().getName() + ".crawlResuming"},
                 this.getClass().getName() + ".notifications",
                 "CrawlStatusListener events as notifications"));
         MBeanNotificationInfo [] notificationsArray =
@@ -1546,25 +1532,40 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             return getUID();
         }
         if (attribute_name.equals(TOTAL_DATA_ATTR)) {
-            return new Long(this.stats.totalBytesWritten());
+            return new Long(this.controller == null &&
+                    this.controller.getStatistics() != null? 0:
+                this.controller.getStatistics().totalBytesWritten());
         }
         if (attribute_name.equals(CRAWL_TIME_ATTR)) {
-            return new Long(this.stats.getCrawlerTotalElapsedTime()/1000);
+            return new Long(this.controller == null &&
+                    this.controller.getStatistics() != null? 0:
+                this.controller.getStatistics().getCrawlerTotalElapsedTime() /
+                    1000);
         }
         if (attribute_name.equals(CURRENT_DOC_RATE_ATTR)) {
-            return new Double(this.stats.currentProcessedDocsPerSec());
+            return new Double(this.controller == null &&
+                    this.controller.getStatistics() != null? 0:
+                this.controller.getStatistics().currentProcessedDocsPerSec());
         }
         if (attribute_name.equals(DOC_RATE_ATTR)) {
-            return new Double(this.stats.processedDocsPerSec());
+            return new Double(this.controller == null &&
+                    this.controller.getStatistics() != null? 0:
+                this.controller.getStatistics().processedDocsPerSec());
         }
         if (attribute_name.equals(KB_RATE_ATTR)) {
-            return new Long(this.stats.currentProcessedKBPerSec());
+            return new Long(this.controller == null &&
+                    this.controller.getStatistics() != null? 0:
+                this.controller.getStatistics().currentProcessedKBPerSec());
         }
         if (attribute_name.equals(CURRENT_KB_RATE_ATTR)) {
-            return new Long(this.stats.processedKBPerSec());
+            return new Long(this.controller == null &&
+                    this.controller.getStatistics() != null? 0:
+                this.controller.getStatistics().processedKBPerSec());
         }
         if (attribute_name.equals(THREAD_COUNT_ATTR)) {
-            return new Integer(this.stats.activeThreadCount());
+            return new Integer(this.controller == null &&
+                    this.controller.getStatistics() != null? 0:
+                this.controller.getStatistics().activeThreadCount());
         }       
         if (attribute_name.equals(FRONTIER_SHORT_REPORT_ATTR)) {
             return getFrontierOneLine();
@@ -1573,10 +1574,14 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             return getThreadOneLine();
         }
         if (attribute_name.equals(DISCOVERED_COUNT_ATTR)) {
-            return new Long(this.stats.totalCount());
+            return new Long(this.controller == null &&
+                    this.controller.getStatistics() != null? 0:
+                this.controller.getStatistics().totalCount());
         }
         if (attribute_name.equals(DOWNLOAD_COUNT_ATTR)) {
-            return new Long(this.stats.successfullyFetchedCount());
+            return new Long(this.controller == null &&
+                    this.controller.getStatistics() != null? 0:
+                this.controller.getStatistics().successfullyFetchedCount());
         }
         
         throw new AttributeNotFoundException("Attribute " +
@@ -1805,8 +1810,9 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             JmxUtils.checkParamsCount(SEEDS_REPORT_OPER, params, 0);
             mustBeCrawling();
             StringWriter sw = new StringWriter();
-            if (this.stats instanceof StatisticsTracker) {
-                ((StatisticsTracker)this.stats).
+            if (getStatisticsTracking() != null &&
+                    getStatisticsTracking() instanceof StatisticsTracker) {
+                ((StatisticsTracker)getStatisticsTracking()).
                     writeSeedsReportTo(new PrintWriter(sw));
             } else {
                 sw.write("Unsupported");
@@ -1947,7 +1953,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         setReadOnly();
         // Remove the reference so that the old controller can be gc'd.
         this.controller = null;
-        this.stats = null;
     }
 
     public void crawlEnded(String sExitMessage) {
@@ -2085,12 +2090,21 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     protected ObjectName getMbeanName() {
         return this.mbeanName;
     }
-
-    public Map getOldStatistics() {
-        return this.oldStatistics;
+    
+    /**
+     * @return the statistics tracking instance (of null if none yet available).
+     */
+    public StatisticsTracking getStatisticsTracking() {
+        return this.controller == null ||
+            this.controller.getStatistics() == null? null:
+                this.controller.getStatistics();
     }
-
-    public void setOldStatistics(final Map oldStatistics) {
-        this.oldStatistics = oldStatistics;
+    
+    protected void setStatistics(final Map statistics) {
+        this.cachedStatistics = statistics;
+    }
+    
+    public synchronized Map getStatistics() {
+        return this.cachedStatistics;
     }
 }

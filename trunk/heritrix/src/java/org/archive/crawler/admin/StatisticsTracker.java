@@ -302,7 +302,7 @@ implements CrawlURIDispositionListener, Serializable {
             .raAppend(44, queuedUriCount)
             .raAppend(57, downloadedUriCount)
             .raAppend(74, ArchiveUtils.
-                doubleToString(currentDocsPerSecond,2) +
+                doubleToString(currentDocsPerSecond, 2) +
                 "(" + ArchiveUtils.doubleToString(docsPerSecond, 2) + ")")
             .raAppend(85, currentKBPerSec + "(" + totalKBPerSec + ")")
             .raAppend(99, downloadFailures)
@@ -330,6 +330,8 @@ implements CrawlURIDispositionListener, Serializable {
         stats.put("congestionRatio", new Double(congestionRatio));
         stats.put("deepestUri", new Long(deepestUri));
         stats.put("averageDepth", new Long(averageDepth));
+        stats.put("totalMemory", new Long(Runtime.getRuntime().totalMemory()));
+        stats.put("freeMemory", new Long(Runtime.getRuntime().freeMemory()));
         return stats;
     }
 
@@ -605,7 +607,8 @@ implements CrawlURIDispositionListener, Serializable {
     public long successfullyFetchedCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null?
             controller.getFrontier().succeededFetchCount() : downloadedUriCount;
     }
     

@@ -173,7 +173,8 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * This method will be called by run() at intervals specified in
      * the crawl order file.  It is also invoked when pausing or
      * stopping a crawl to capture the state at that point.  Default behavior is
-     * call to {@link CrawlController#logProgressStatistics}.
+     * call to {@link CrawlController#logProgressStatistics} so CrawlController
+     * can act on progress statistics event.
      * <p>
      * It is recommended that for implementations of this method it be
      * carefully considered if it should be synchronized in whole or in
