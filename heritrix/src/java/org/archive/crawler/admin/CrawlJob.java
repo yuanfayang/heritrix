@@ -149,10 +149,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     /** Job was deleted by user, will not be displayed in UI. */
     public static final String STATUS_DELETED = "Deleted";
     /** Job was terminted by user input while crawling */
-    public static final String STATUS_ABORTED = "Ended by operator";
+    public static final String STATUS_ABORTED = "Finished - Ended by operator";
     /** Something went very wrong */
     public static final String STATUS_FINISHED_ABNORMAL =
-        "Abnormal exit from crawling";
+        "Finished - Abnormal exit from crawling";
     /** Job finished normally having completed its crawl. */
     public static final String STATUS_FINISHED = "Finished";
     /** Job finished normally when the specified timelimit was hit. */
@@ -162,7 +162,9 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      * data (MB) had been downloaded */
     public static final String STATUS_FINISHED_DATA_LIMIT =
         "Finished - Maximum amount of data limit hit";
-    /** Job finished normally when the specified number of documents had been fetched. */
+    /** Job finished normally when the specified number of documents had been
+     * fetched.
+     */
     public static final String STATUS_FINISHED_DOCUMENT_LIMIT =
         "Finished - Maximum number of documents limit hit";
     /** Job is going to be temporarly stopped after active threads are finished. */
@@ -1240,30 +1242,29 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         attributes.add(new OpenMBeanAttributeInfoSupport(UID_ATTR,
             "Crawl job UID", SimpleType.STRING, true, false, false));  
         attributes.add(new OpenMBeanAttributeInfoSupport(TOTAL_DATA_ATTR,
-            "Total data received", SimpleType.STRING, true, false, false));
+            "Total data received", SimpleType.LONG, true, false, false));
         attributes.add(new OpenMBeanAttributeInfoSupport(CRAWL_TIME_ATTR,
-            "Crawl time", SimpleType.STRING, true, false, false));
+            "Crawl time", SimpleType.LONG, true, false, false));
         attributes.add(new OpenMBeanAttributeInfoSupport(CURRENT_DOC_RATE_ATTR,
-            "Current crawling rate (Docs/sec)", SimpleType.STRING,
+            "Current crawling rate (Docs/sec)", SimpleType.DOUBLE,
             true, false, false));
         attributes.add(new OpenMBeanAttributeInfoSupport(CURRENT_KB_RATE_ATTR,
-            "Current crawling rate (Kb/sec)", SimpleType.STRING,
+            "Current crawling rate (Kb/sec)", SimpleType.LONG,
             true, false, false));
         attributes.add(new OpenMBeanAttributeInfoSupport(THREAD_COUNT_ATTR,
-            "Active thread count", SimpleType.STRING, true, false, false));
+            "Active thread count", SimpleType.INTEGER, true, false, false));
         attributes.add(new OpenMBeanAttributeInfoSupport(DOC_RATE_ATTR,
-            "Crawling rate (Docs/sec)", SimpleType.STRING,
+            "Crawling rate (Docs/sec)", SimpleType.DOUBLE,
             true, false, false));
         attributes.add(new OpenMBeanAttributeInfoSupport(KB_RATE_ATTR,
-            "Current crawling rate (Kb/sec)", SimpleType.STRING,
+            "Current crawling rate (Kb/sec)", SimpleType.LONG,
             true, false, false));
         attributes.add(new OpenMBeanAttributeInfoSupport(DOWNLOAD_COUNT_ATTR,
-                "Count of downloaded documents", SimpleType.STRING,
-                true, false, false));
-        attributes.add(new OpenMBeanAttributeInfoSupport(
-                DISCOVERED_COUNT_ATTR,
-                "Count of discovered documents", SimpleType.STRING,
-                true, false, false));
+            "Count of downloaded documents", SimpleType.LONG,
+            true, false, false));
+        attributes.add(new OpenMBeanAttributeInfoSupport(DISCOVERED_COUNT_ATTR,
+            "Count of discovered documents", SimpleType.LONG,
+            true, false, false));
         
         // Add in the crawl order attributes.
         addCrawlOrderAttributes(this.getController().getOrder(), attributes);
@@ -1533,29 +1534,25 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             return getUID();
         }
         if (attribute_name.equals(TOTAL_DATA_ATTR)) {
-            return ArchiveUtils.
-                formatBytesForDisplay(this.stats.totalBytesWritten());
+            return new Long(this.stats.totalBytesWritten());
         }
         if (attribute_name.equals(CRAWL_TIME_ATTR)) {
-            return Long.toString(
-                this.stats.getCrawlerTotalElapsedTime()/1000);
+            return new Long(this.stats.getCrawlerTotalElapsedTime()/1000);
         }
         if (attribute_name.equals(CURRENT_DOC_RATE_ATTR)) {
-            return ArchiveUtils.doubleToString(
-                this.stats.currentProcessedDocsPerSec(), 2);
+            return new Double(this.stats.currentProcessedDocsPerSec());
         }
         if (attribute_name.equals(DOC_RATE_ATTR)) {
-            return ArchiveUtils.doubleToString(
-                this.stats.processedDocsPerSec(), 2);
+            return new Double(this.stats.processedDocsPerSec());
         }
         if (attribute_name.equals(KB_RATE_ATTR)) {
-            return Long.toString(this.stats.currentProcessedKBPerSec());
+            return new Long(this.stats.currentProcessedKBPerSec());
         }
         if (attribute_name.equals(CURRENT_KB_RATE_ATTR)) {
-            return Long.toString(this.stats.processedKBPerSec());
+            return new Long(this.stats.processedKBPerSec());
         }
         if (attribute_name.equals(THREAD_COUNT_ATTR)) {
-            return Integer.toString(this.stats.activeThreadCount());
+            return new Integer(this.stats.activeThreadCount());
         }       
         if (attribute_name.equals(FRONTIER_SHORT_REPORT_ATTR)) {
             return getFrontierOneLine();
@@ -1564,10 +1561,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             return getThreadOneLine();
         }
         if (attribute_name.equals(DISCOVERED_COUNT_ATTR)) {
-            return Long.toString(this.stats.totalCount());
+            return new Long(this.stats.totalCount());
         }
         if (attribute_name.equals(DOWNLOAD_COUNT_ATTR)) {
-            return Long.toString(this.stats.successfullyFetchedCount());
+            return new Long(this.stats.successfullyFetchedCount());
         }
         
         throw new AttributeNotFoundException("Attribute " +
