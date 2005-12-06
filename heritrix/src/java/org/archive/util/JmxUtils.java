@@ -235,6 +235,8 @@ public class JmxUtils {
             return SimpleType.INTEGER;
         } else if (classString.equals(Float.class.getName())) {
             return SimpleType.FLOAT;
+        } else if (classString.equals(Double.class.getName())) {
+            return SimpleType.DOUBLE;
         } else if (defaultType != null) {
             return defaultType;
         }
