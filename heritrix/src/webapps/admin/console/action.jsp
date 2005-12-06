@@ -30,10 +30,6 @@
             if(handler.getCurrentJob() != null) {
                 handler.checkpointJob();
             }
-        } else if(sAction.equalsIgnoreCase("rotateLogs")) {
-            if(handler.getCurrentJob() != null) {
-                handler.rotateLogs();
-            }
         }
     }    
     response.sendRedirect(request.getContextPath() + "/index.jsp");
