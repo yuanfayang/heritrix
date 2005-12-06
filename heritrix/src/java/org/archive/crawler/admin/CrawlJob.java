@@ -34,14 +34,17 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EventObject;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
+import javax.management.AttributeChangeNotification;
 import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
@@ -263,7 +266,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     private final static String FRONTIER_REPORT_OPER = "frontierReport";
     private final static String THREADS_REPORT_OPER = "threadsReport";
     private final static String SEEDS_REPORT_OPER = "seedsReport";
-    private final static String ROTATELOGS_OPER = "rotateLogs";
     private final static String CHECKPOINT_OPER = "startCheckpoint";
     private final static String PROGRESS_STATISTICS_OPER =
         "progressStatistics";
@@ -287,6 +289,13 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      */
     private static int notificationsSequenceNumber = 1;
     
+    private final static String CRAWL_PROG_STATS = ".crawlProgressStatistics";
+    
+    /**
+     * Map of old statistics.
+     * Used sending progress statistics notifications.
+     */
+    private Map oldStatistics = new HashMap();
     
     /**
      * A shutdown Constructor.
@@ -748,6 +757,22 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             this.cj = cj;
         }
         
+        public void progressStatisticsEvent(final EventObject e) {
+            super.progressStatisticsEvent(e);
+            if (this.cj.getMbeanName() != null) {
+                // Can be null around job startup.
+                Map newStatistics =
+                    ((StatisticsTracking)e.getSource()).getProgressStatistics();
+                sendNotification(new AttributeChangeNotification(
+                    this.cj.getMbeanName(), getNotificationsSequenceNumber(),
+                    System.currentTimeMillis(),
+                    ((StatisticsTracking)e.getSource()).getProgressStatisticsLine(),
+                    StatisticsTracking.class.getName(), Map.class.getName(),
+                    this.cj.oldStatistics, newStatistics));
+                this.cj.oldStatistics = newStatistics;
+            }
+        }
+        
         protected void completeStop() {
             try {
                 super.completeStop();
@@ -1050,17 +1075,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
     
     /**
-     * @throws IllegalStateException Thrown if crawl is not paused.
-     * @throws IOException
-     * @deprecated Use {@link #checkpoint()} instead.
-     */
-    protected void rotateLogs() throws IOException, IllegalStateException {
-        if (this.controller != null) {
-            this.controller.rotateLogFiles();
-        }
-    }
-    
-    /**
      * If its a HostQueuesFrontier, needs to be flushed for the queued.
      */
     protected void flush() {
@@ -1358,9 +1372,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 "Progress statistics legend", null,
                 SimpleType.STRING, MBeanOperationInfo.INFO));  
         
-        operations.add(new OpenMBeanOperationInfoSupport(ROTATELOGS_OPER,
-            "Rotate logs", null, SimpleType.VOID, MBeanOperationInfo.ACTION));
-        
         operations.add(new OpenMBeanOperationInfoSupport(CHECKPOINT_OPER,
                 "Start a checkpoint", null, SimpleType.VOID,
                 MBeanOperationInfo.ACTION));
@@ -1384,7 +1395,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                     this.getClass().getName() + ".crawlStarted",
                     this.getClass().getName() + ".crawlEnded",
                     this.getClass().getName() + ".crawlPaused",
-                    this.getClass().getName() + ".crawlResuming"},
+                    this.getClass().getName() + ".crawlResuming",
+                    this.getClass().getName() + CRAWL_PROG_STATS},
                 this.getClass().getName() + ".notifications",
                 "CrawlStatusListener events as notifications"));
         MBeanNotificationInfo [] notificationsArray =
@@ -1800,19 +1812,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 sw.write("Unsupported");
             }
             return sw.toString();
-        }
-        
-        if (operationName.equals(ROTATELOGS_OPER)) {
-            JmxUtils.checkParamsCount(ROTATELOGS_OPER, params, 0);
-            mustBeCrawling();
-            try {
-                rotateLogs();
-            } catch (RuntimeException e) {
-                throw new RuntimeOperationsException(e);
-            } catch (IOException e) {
-                throw new RuntimeOperationsException(new RuntimeException(e));
-            }
-            return null;
         }       
         
         if (operationName.equals(CHECKPOINT_OPER)) {
@@ -1829,7 +1828,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         if (operationName.equals(PROGRESS_STATISTICS_OPER)) {
             JmxUtils.checkParamsCount(PROGRESS_STATISTICS_OPER, params, 0);
             mustBeCrawling();
-            return getStatisticsTracking().progressStatisticsLine();
+            return getStatisticsTracking().getProgressStatisticsLine();
         }
         
         if (operationName.equals(PROGRESS_STATISTICS_LEGEND_OPER)) {
@@ -1955,7 +1954,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         if (this.mbeanName != null) {
             sendNotification(new Notification(this.getClass().getName() +
                     ".crawlEnded", this.mbeanName,
-                CrawlJob.notificationsSequenceNumber++, sExitMessage));
+                getNotificationsSequenceNumber(), sExitMessage));
         }
         this.openMBeanInfo = null;
         this.bdbjeMBeanHelper = null;
@@ -1983,8 +1982,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         if (this.mbeanName != null) {
             // Can be null around job startup.
             sendNotification(new Notification(this.getClass().getName() +
-                    ".crawlPaused", this.mbeanName,
-                CrawlJob.notificationsSequenceNumber++, statusMessage));
+                    ".crawlPaused", this.mbeanName, getNotificationsSequenceNumber(),
+                statusMessage));
         }
     }
 
@@ -1994,7 +1993,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             // Can be null around job startup.
             sendNotification(new Notification(this.getClass().getName() +
                     ".crawlResuming", this.mbeanName,
-                CrawlJob.notificationsSequenceNumber++, statusMessage));
+                getNotificationsSequenceNumber(), statusMessage));
         }
     }
 
@@ -2074,5 +2073,24 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      */
     public String getJmxJobName() {
         return getJobName() + "-" + getUID();
+    }
+
+    /**
+     * @return Notification sequence number (Does increment after each access).
+     */
+    protected static int getNotificationsSequenceNumber() {
+        return notificationsSequenceNumber++;
+    }
+
+    protected ObjectName getMbeanName() {
+        return this.mbeanName;
+    }
+
+    public Map getOldStatistics() {
+        return this.oldStatistics;
+    }
+
+    public void setOldStatistics(final Map oldStatistics) {
+        this.oldStatistics = oldStatistics;
     }
 }

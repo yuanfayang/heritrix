@@ -29,10 +29,12 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EventObject;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -217,7 +219,7 @@ implements CrawlURIDispositionListener, Serializable {
         }
     }
 
-    protected synchronized void logActivity() {
+    protected synchronized void progressStatisticsEvent(final EventObject e) {
         // This method loads "snapshot" data.
         discoveredUriCount = discoveredUriCount();
         downloadedUriCount = successfullyFetchedCount();
@@ -282,9 +284,9 @@ implements CrawlURIDispositionListener, Serializable {
             }
         }
 
-        Date now = new Date();
-        controller.progressStats.log(Level.INFO, progressStatisticsLine(now));
+        this.controller.logProgressStatistics(getProgressStatisticsLine());
         lastLogPointTime = System.currentTimeMillis();
+        super.progressStatisticsEvent(e);
     }
 
     /**
@@ -293,7 +295,7 @@ implements CrawlURIDispositionListener, Serializable {
      * @param now
      * @return String of stats
      */
-    public String progressStatisticsLine(Date now) {
+    public String getProgressStatisticsLine(Date now) {
         return new PaddingStringBuffer()
             .append(ArchiveUtils.TIMESTAMP14ISO8601Z.format(now))
             .raAppend(32, discoveredUriCount)
@@ -301,16 +303,34 @@ implements CrawlURIDispositionListener, Serializable {
             .raAppend(57, downloadedUriCount)
             .raAppend(74, ArchiveUtils.
                 doubleToString(currentDocsPerSecond,2) +
-                "(" + ArchiveUtils.doubleToString(docsPerSecond,2) + ")")
+                "(" + ArchiveUtils.doubleToString(docsPerSecond, 2) + ")")
             .raAppend(85, currentKBPerSec + "(" + totalKBPerSec + ")")
             .raAppend(99, downloadFailures)
             .raAppend(113, busyThreads)
-            .raAppend(126, (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)
-            .raAppend(140, Runtime.getRuntime().totalMemory()/1024)
-            .raAppend(153, ArchiveUtils.doubleToString((double)congestionRatio,2))
+            .raAppend(126, (Runtime.getRuntime().totalMemory() -
+                Runtime.getRuntime().freeMemory()) / 1024)
+            .raAppend(140, Runtime.getRuntime().totalMemory() / 1024)
+            .raAppend(153, ArchiveUtils.doubleToString(congestionRatio, 2))
             .raAppend(165, deepestUri)
             .raAppend(177, averageDepth)
             .toString();
+    }
+    
+    public Map getProgressStatistics() {
+        Map stats = new HashMap();
+        stats.put("discoveredUriCount", new Long(discoveredUriCount));
+        stats.put("queuedUriCount", new Long(queuedUriCount));
+        stats.put("downloadedUriCount", new Long(downloadedUriCount));
+        stats.put("currentDocsPerSecond", new Double(currentDocsPerSecond));
+        stats.put("docsPerSecond", new Double(docsPerSecond));
+        stats.put("totalKBPerSec", new Long(totalKBPerSec));
+        stats.put("currentKBPerSec", new Long(currentKBPerSec));
+        stats.put("downloadFailures", new Long(downloadFailures));
+        stats.put("busyThreads", new Integer(busyThreads));
+        stats.put("congestionRatio", new Double(congestionRatio));
+        stats.put("deepestUri", new Long(deepestUri));
+        stats.put("averageDepth", new Long(averageDepth));
+        return stats;
     }
 
     /**
@@ -318,8 +338,8 @@ implements CrawlURIDispositionListener, Serializable {
      * 
      * @return String of stats
      */
-    public String progressStatisticsLine() {
-        return progressStatisticsLine(new Date());
+    public String getProgressStatisticsLine() {
+        return getProgressStatisticsLine(new Date());
     }
     
     public double processedDocsPerSec(){
@@ -578,7 +598,8 @@ implements CrawlURIDispositionListener, Serializable {
     public long disregardedFetchAttempts() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ? controller.getFrontier().disregardedUriCount() : downloadDisregards;
+        return shouldrun?
+            controller.getFrontier().disregardedUriCount() : downloadDisregards;
     }
 
     public long successfullyFetchedCount() {
@@ -672,7 +693,8 @@ implements CrawlURIDispositionListener, Serializable {
     public void crawledURISuccessful(CrawlURI curi) {
         handleSeed(curi,SEED_DISPOSITION_SUCCESS);
         // Save status codes
-        incrementMapCount(statusCodeDistribution,Integer.toString(curi.getFetchStatus()));
+        incrementMapCount(statusCodeDistribution,
+            Integer.toString(curi.getFetchStatus()));
 
         // Save mime types
         String mime = MimetypeUtils.truncate(curi.getContentType());
@@ -698,18 +720,11 @@ implements CrawlURIDispositionListener, Serializable {
                 new Long(System.currentTimeMillis()));
         }
     }
-    
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURINeedRetry(org.archive.crawler.datamodel.CrawlURI)
-     */
     public void crawledURINeedRetry(CrawlURI curi) {
         handleSeed(curi,SEED_DISPOSITION_RETRY);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURIDisregard(org.archive.crawler.datamodel.CrawlURI)
-     */
     public void crawledURIDisregard(CrawlURI curi) {
         handleSeed(curi,SEED_DISPOSITION_DISREGARD);
     }
@@ -919,10 +934,8 @@ implements CrawlURIDispositionListener, Serializable {
     /**
      * @param reportName Name of report.
      * @param w Where to write.
-     * @throws IOException
      */
-    private void writeReportTo(String reportName, PrintWriter w)
-    throws IOException {
+    private void writeReportTo(String reportName, PrintWriter w) {
         if("hosts".equals(reportName)) {
             writeHostsReportTo(w);
         } else if ("mime types".equals(reportName)) {
@@ -945,9 +958,8 @@ implements CrawlURIDispositionListener, Serializable {
     /**
      * Write the Frontier's 'nonempty' report (if available)
      * @param writer to report to
-     * @throws IOException
      */
-    protected void writeFrontierReportTo(PrintWriter writer) throws IOException {
+    protected void writeFrontierReportTo(PrintWriter writer) {
         if(controller.getFrontier().isEmpty()) {
             writer.println("frontier empty");
         } else {

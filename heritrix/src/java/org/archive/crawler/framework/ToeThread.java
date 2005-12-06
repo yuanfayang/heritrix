@@ -573,7 +573,6 @@ Reporter, ProgressStatisticsReporter {
         w.print(" for ");
         w.print(ArchiveUtils.formatMillisecondsToConventional(now-atStepSince));
         w.print("\n");
-
         w.flush();
     }
 
@@ -605,7 +604,7 @@ Reporter, ProgressStatisticsReporter {
 
     public void progressStatisticsLine(PrintWriter writer) {
         writer.print(getController().getStatistics()
-            .progressStatisticsLine());
+            .getProgressStatisticsLine());
         writer.print("\n");
     }
 

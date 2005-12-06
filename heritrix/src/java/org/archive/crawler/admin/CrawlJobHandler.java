@@ -649,17 +649,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
             this.currentJob.checkpoint();
         }
     }
-    
-    /**
-     * Rotate logs.
-     * @throws IllegalStateException Thrown if crawl is not paused.
-     * @throws IOException
-     */
-    public void rotateLogs() throws IOException, IllegalStateException {
-        if (this.currentJob != null) {
-            this.currentJob.rotateLogs();
-        }
-    }
 
     /**
      * Returns a unique job ID.

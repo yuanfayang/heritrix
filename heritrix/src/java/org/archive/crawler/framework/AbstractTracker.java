@@ -20,6 +20,7 @@ package org.archive.crawler.framework;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.EventObject;
 import java.util.logging.Level;
 
 import javax.management.AttributeNotFoundException;
@@ -120,7 +121,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
         shouldrun = true; //If we are starting, this should always be true.
 
         // Log the legend
-        controller.progressStats.log(Level.INFO, progressStatisticsLegend());
+        this.controller.logProgressStatistics(progressStatisticsLegend());
         lastLogPointTime = System.currentTimeMillis(); // The first interval begins now.
 
         // Keep logging until someone calls stop()
@@ -138,7 +139,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
             // In case stop() was invoked while the thread was sleeping or we
             // are paused.
             if (shouldrun && getCrawlPauseStartedTime() == 0) {
-                logActivity();
+                progressStatisticsEvent(new EventObject(this));
             }
         }
     }
@@ -167,17 +168,21 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
     }
 
     /**
-     * A method for logging current state.
-     * <p>
+     * A method for logging current crawler state.
+     *
      * This method will be called by run() at intervals specified in
      * the crawl order file.  It is also invoked when pausing or
-     * stopping a crawl to capture the state at that point.
+     * stopping a crawl to capture the state at that point.  Default behavior is
+     * call to {@link CrawlController#logProgressStatistics}.
      * <p>
      * It is recommended that for implementations of this method it be
      * carefully considered if it should be synchronized in whole or in
-     * part.
+     * part
+     * @param e Progress statistics event.
      */
-    protected abstract void logActivity();
+    protected synchronized void progressStatisticsEvent(final EventObject e) {
+        this.controller.progressStatisticsEvent(e);
+    }
 
     /**
      * Get the starting time of the crawl (as given by
@@ -261,28 +266,19 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
     }
 
     protected void logNote(String note) {
-        controller.progressStats.log(
-                    Level.INFO,
-                    new PaddingStringBuffer()
+        this.controller.logProgressStatistics(new PaddingStringBuffer()
                      .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
                      .append(" ")
                      .append(note)
-                     .toString()
-                );
+                     .toString());
     }
 
-    /**
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
-     */
     public void crawlPaused(String statusMessage) {
         crawlerPauseStarted = System.currentTimeMillis();
-        logActivity();
+        progressStatisticsEvent(new EventObject(this));
         logNote("CRAWL PAUSED");
     }
 
-    /**
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
-     */
     public void crawlResuming(String statusMessage) {
         tallyCurrentPause();
         logNote("CRAWL RESUMED");
@@ -311,7 +307,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
     public void crawlEnded(String sExitMessage) {
         // Note the time when the crawl stops.
         crawlerEndTime = System.currentTimeMillis();
-        logActivity(); //Log end state
+        progressStatisticsEvent(new EventObject(this));
         logNote("CRAWL ENDED - " + sExitMessage);
         shouldrun = false;
         dumpReports();

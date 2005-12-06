@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -260,7 +261,7 @@ public class CrawlController implements Serializable, Reporter {
     /**
      * Statistics tracker writes here at regular intervals.
      */
-    public transient Logger progressStats;
+    private transient Logger progressStats;
 
     /**
      * Logger to hold job summary report.
@@ -853,19 +854,6 @@ public class CrawlController implements Serializable, Reporter {
         addToManifest(filename, MANIFEST_LOG_FILE, shouldManifest);
         logger.setUseParentHandlers(false);
         this.fileHandlers.put(logger, fh);
-    }
-    
-    /**
-     * Rotate off all logs
-     * Rotated get logs get 14 digit date suffix.
-     * @throws IOException
-     * @deprecated Shutdown this api that lets random rotation of
-     * logs. Let log rotation happen as part of checkpointing instead.
-     * @see #rotateLogFiles(String)
-     */
-    public void rotateLogFiles() throws IOException {
-        rotateLogFiles(CURRENT_LOG_SUFFIX + "." +
-            ArchiveUtils.get14DigitDate());
     }
     
     protected void rotateLogFiles(String generationSuffix)
@@ -1985,5 +1973,22 @@ public class CrawlController implements Serializable, Reporter {
             ((CachedBdbMap)obj).sync();
             CheckpointContext.writeObjectToFile(obj, (String)key, cpDir);
         }
+    }
+
+    /**
+     * Called whenever progress statistics logging event.
+     * @param e Progress statistics event.
+     */
+    public void progressStatisticsEvent(final EventObject e) {
+        // Default is to do nothing.  Subclass if you want to catch this event.
+        // Later, if demand, add publisher/listener support.
+    }
+    
+    /**
+     * Log to the progress statistics log.
+     * @param msg Message to write the progress statistics log.
+     */
+    public void logProgressStatistics(final String msg) {
+        this.progressStats.info(msg);
     }
 }
