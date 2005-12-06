@@ -283,8 +283,7 @@ implements CrawlURIDispositionListener, Serializable {
         }
 
         Date now = new Date();
-        controller.progressStats.log(
-            Level.INFO, progressStatisticsLine(now));
+        controller.progressStats.log(Level.INFO, progressStatisticsLine(now));
         lastLogPointTime = System.currentTimeMillis();
     }
 

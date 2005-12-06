@@ -53,10 +53,11 @@ import org.archive.util.PaddingStringBuffer;
  */
 public abstract class AbstractTracker extends ModuleType
 implements StatisticsTracking, CrawlStatusListener, Serializable {
-    /** default period between logging stat values */
+    /** Default period between logging stat values */
     public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL =
         new Integer(20);
-    /** attrbiute name for interval setting */
+    /** Attribute name for logging interval in seconds setting
+     */
     public static final String ATTR_STATS_INTERVAL = "interval-seconds";
 
     /** A reference to the CrawlContoller of the crawl that we are to track
@@ -118,26 +119,25 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
 
         shouldrun = true; //If we are starting, this should always be true.
 
-        // log the legend
+        // Log the legend
         controller.progressStats.log(Level.INFO, progressStatisticsLegend());
         lastLogPointTime = System.currentTimeMillis(); // The first interval begins now.
 
-        // keep logging until someone calls stop()
-        while (shouldrun)
-        {
-            // pause before writing the first entry (so we have real numbers)
+        // Keep logging until someone calls stop()
+        while (shouldrun) {
+            // Pause before writing the first entry (so we have real numbers)
             // and then pause between entries
             try {
                 Thread.sleep(getLogWriteInterval() * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-                controller.runtimeErrors.log(
-                    Level.INFO,
+                controller.runtimeErrors.log(Level.INFO,
                     "Periodic stat logger interrupted while sleeping.");
             }
 
-            // In case stop() was invoked while the thread was sleeping or we are paused.
-            if(shouldrun && getCrawlPauseStartedTime() == 0){
+            // In case stop() was invoked while the thread was sleeping or we
+            // are paused.
+            if (shouldrun && getCrawlPauseStartedTime() == 0) {
                 logActivity();
             }
         }
@@ -240,12 +240,13 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
     /**
      * The number of seconds to wait between writing snapshot data to log file.
      * @return the number of seconds to wait between writing snapshot data to
-     *         log file.
+     * log file.
      */
     protected int getLogWriteInterval() {
         int logInterval;
         try {
-            logInterval = ((Integer) getAttribute(null, ATTR_STATS_INTERVAL)).intValue();
+            logInterval =
+                ((Integer) getAttribute(null, ATTR_STATS_INTERVAL)).intValue();
         } catch (AttributeNotFoundException e) {
             logInterval = 10;
         }
@@ -308,7 +309,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
-        //Note the time when the crawl stops.
+        // Note the time when the crawl stops.
         crawlerEndTime = System.currentTimeMillis();
         logActivity(); //Log end state
         logNote("CRAWL ENDED - " + sExitMessage);
