@@ -19,6 +19,7 @@
 package org.archive.crawler.framework;
 
 import java.util.Iterator;
+import java.util.Map;
 
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 
@@ -207,5 +208,10 @@ public interface StatisticsTracking extends Runnable {
     /**
      * @return line of progress-statistics
      */
-    public String progressStatisticsLine();
+    public String getProgressStatisticsLine();
+    
+    /**
+     * @return Map of progress-statistics.
+     */
+    public Map getProgressStatistics();
 }
