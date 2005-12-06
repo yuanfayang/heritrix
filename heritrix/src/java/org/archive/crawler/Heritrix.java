@@ -1012,7 +1012,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     throws Exception {
         String status = null;
         if (crawlOrderFile != null) {
-            addCrawlJob(crawlOrderFile, "Auto launched.", "", "");
+            addCrawlJob(crawlOrderFile, "Autolaunched", "", "");
             if(runMode) {
                 this.jobHandler.startCrawler();
                 status = "Job being crawled: " + crawlOrderFile;

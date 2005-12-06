@@ -1981,7 +1981,9 @@ public class CrawlController implements Serializable, Reporter {
      */
     public void progressStatisticsEvent(final EventObject e) {
         // Default is to do nothing.  Subclass if you want to catch this event.
-        // Later, if demand, add publisher/listener support.
+        // Later, if demand, add publisher/listener support.  Currently hacked
+        // in so the subclass in CrawlJob added to support JMX can send
+        // notifications of progressStatistics change.
     }
     
     /**
