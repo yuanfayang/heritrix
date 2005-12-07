@@ -436,6 +436,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     /**
      * Do inverse of construction. Used by anyone who does a 'new Heritrix' when
      * they want to cleanup the instance.
+     * Of note, there may be Heritrix threads still hanging around after the
+     * call to destroy completes.  They'll eventually go down after they've
+     * finished their cleanup routines.  In particular, if you are watching
+     * Heritrix via JMX, you can see the Heritrix instance JMX bean unregister
+     * ahead of the CrawlJob JMX bean that its hosting.
      */
     public void destroy() {
         stop();
