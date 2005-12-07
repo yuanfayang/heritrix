@@ -765,9 +765,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             } finally {
                 if (this.cj != null) {
                     this.cj.unregisterMBean();
-                    // Clear these now we're done with them.
-                    this.cj.mbeanServer = null;
-                    this.cj.mbeanName = null;
                 }
                 this.cj = null;
             }
@@ -1497,6 +1494,13 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                  "Cannot call getAttribute with null attribute name");
         }
         
+        // If no controller, we can't do any work in here.
+        if (this.controller == null) {
+            throw new RuntimeOperationsException(
+                 new NullPointerException("Controller is null"),
+                 "Controller is null");
+        }
+        
         // Is it a bdbje attribute?
         if (this.bdbjeAttributeNameList.contains(attribute_name)) {
             try {
@@ -1629,6 +1633,13 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 new IllegalArgumentException("attributeNames[] cannot be " +
                 "null"), "Cannot call getAttributes with null attribute " +
                 "names");
+        }
+        
+        // If no controller, we can't do any work in here.
+        if (this.controller == null) {
+            throw new RuntimeOperationsException(
+                 new NullPointerException("Controller is null"),
+                 "Controller is null");
         }
         
         AttributeList resultList = new AttributeList();
@@ -1951,8 +1962,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         setRunning(false);
         setStatus(sExitMessage);
         setReadOnly();
-        // Remove the reference so that the old controller can be gc'd.
-        this.controller = null;
     }
 
     public void crawlEnded(String sExitMessage) {
@@ -1961,21 +1970,18 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                     ".crawlEnded", this.mbeanName,
                 getNotificationsSequenceNumber(), sExitMessage));
         }
-        this.openMBeanInfo = null;
-        this.bdbjeMBeanHelper = null;
-        this.bdbjeAttributeNameList = null;
-        this.bdbjeOperationsNameList = null;
-        // Don't clear the below two data members.  They're needed by the
-        // MBeanCrawlController#completeStop method. It will clear them.
-        // this.mbeanServer = null;
-        // this.mbeanName = null;
         
         // Let the settings handler be cleaned up by the crawl controller
         // completeStop. Just let go of our reference in here.
         // if (this.settingsHandler != null) {
         //    this.settingsHandler.cleanup();
         // }
-        this.settingsHandler = null;
+        
+        // We used to zero-out datamembers but no longer needed now CrawlJobs
+        // no longer persist after completion (They used to be kept around in
+        // a list so operator could view CrawlJob finish state and reports --
+        // but we now dump actual job and create a new uninitialized CrawlJob
+        // that points at old CrawlJob data. 
     }
 
     public void crawlPausing(String statusMessage) {

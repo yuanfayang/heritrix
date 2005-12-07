@@ -1606,7 +1606,7 @@ public class CrawlController implements Serializable, Reporter {
      * @see ToePool#getToeCount()
      */
     public int getToeCount() {
-        return toePool.getToeCount();
+        return this.toePool == null? 0: this.toePool.getToeCount();
     }
 
     /**
