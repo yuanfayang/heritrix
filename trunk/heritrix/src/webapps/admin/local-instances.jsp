@@ -28,10 +28,21 @@
             href="<%=request.getContextPath()%>/css/heritrix.css">
     </head>
     <body>
-        <a border="0" href="<%=request.getContextPath()%>/index.jsp">
-        <img border="0" src="<%=request.getContextPath()%>/images/logo.gif"
-            height="37" width="145" align="left"></a>
+        <p><a border="0" href="<%=request.getContextPath()%>/index.jsp">
+        <img border="0" src="<%=request.getContextPath()%>/images/logo.gif">
+        </a></p>
         <h1>Local Heritrix Instances</h1>
+        <p>Below is a listing of the Heritrix instances running in this
+        Heritrix <i>container</i> (where container may be a J2EE container like
+        tomcat or jboss or the code run when Heritrix is launched from the
+        command-line).  To create a new Heritrix instance, fill in the
+        textbox and hit <i>Create</i>.  To delete an instance of Heritrix
+        -- any running jobs will be properly terminated -- hit <i>delete</i>.
+        To peruse your newly created instance,
+        select your instance from the below list; it will become bold.  Doing
+        this sets the UI to run against the selected instance. Click on the
+        Heritrix logo to get to the UI now set to run against the selected
+        instance.</p>
         <table border="0" cellspacing="0" cellpadding="2" 
             description="List of all local Heritrix instances">
         <thead>
@@ -76,7 +87,8 @@
         </table>
         <p>
         <form action="<%=baseurl%>" method="POST">
-            Name for new Heritrix instance: <input type="text" name="createName" size="32" />
+            Name for new Heritrix instance: <input type="text"
+                name="createName" size="32" />
             <input type="submit" name="submit" value="Create"/>
         </form>
         </p>
