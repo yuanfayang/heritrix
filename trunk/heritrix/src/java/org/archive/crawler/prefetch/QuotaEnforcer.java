@@ -116,75 +116,60 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
     protected void innerProcess(CrawlURI curi) {
         long fetchQuota, bytesQuota;
         CrawlSubstats substats;
-        // check per-server quotas
+        // Check per-server quotas
         CrawlServer server =
             getController().getServerCache().getServerFor(curi);
-        if (server != null) {
-            fetchQuota = ((Long) getUncheckedAttribute(curi,
-                    ATTR_SERVER_MAX_FETCH_SUCCESSES)).longValue();
-            bytesQuota = 1024 * ((Long) getUncheckedAttribute(curi,
-                    ATTR_SERVER_MAX_SUCCESS_KB)).longValue();
-            substats = server.getSubstats();
-            if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
-                    "Q:server-fetchSuccesses")) {
-                return;
-            }
-            if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
-                    "Q:server-successBytes")) {
-                return;
-            }
+        if (server != null && checkQuota(curi, ATTR_SERVER_MAX_FETCH_SUCCESSES,
+                ATTR_SERVER_MAX_SUCCESS_KB, server.getSubstats(), "server")) {
+            return;
         }
 
-        // check per-host quotas
-        CrawlHost host = 
-            getController().getServerCache().getHostFor(curi);
-        if (host != null) {
-            fetchQuota = ((Long) getUncheckedAttribute(curi,
-                    ATTR_HOST_MAX_FETCH_SUCCESSES)).longValue();
-            bytesQuota = 1024 * ((Long) getUncheckedAttribute(curi,
-                    ATTR_HOST_MAX_SUCCESS_KB)).longValue();
-            substats = host.getSubstats();
-            if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
-                    "Q:host-fetchSuccesses")) {
-                return;
-            }
-            if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
-                    "Q:host-successBytes")) {
-                return;
-            }
+        // Check per-host quotas
+        CrawlHost host =  getController().getServerCache().getHostFor(curi);
+        if (host != null && checkQuota(curi, ATTR_HOST_MAX_FETCH_SUCCESSES,
+                ATTR_HOST_MAX_SUCCESS_KB, host.getSubstats(), "host")) {
+            return;
         }
-        
-        // check per-frontier-group (queue) quotas
-        FrontierGroup group = 
-            getController().getFrontier().getGroup(curi);
-        if (group != null) {
-            fetchQuota = ((Long) getUncheckedAttribute(curi,
-                    ATTR_GROUP_MAX_FETCH_SUCCESSES)).longValue();
-            bytesQuota = 1024 * ((Long) getUncheckedAttribute(curi,
-                    ATTR_GROUP_MAX_SUCCESS_KB)).longValue();
-            substats = group.getSubstats();
-            if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
-                    "Q:group-fetchSuccesses")) {
-                return;
-            }
-            if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
-                    "Q:group-successBytes")) {
-                return;
-            }
+        // Check per-frontier-group (queue) quotas
+        FrontierGroup group =  getController().getFrontier().getGroup(curi);
+        if (group != null && checkQuota(curi, ATTR_GROUP_MAX_FETCH_SUCCESSES,
+                ATTR_GROUP_MAX_SUCCESS_KB, group.getSubstats(), "group")) {
+            return;
         }
+    }
+
+    protected boolean checkQuota(final CrawlURI curi,
+            final String successesKey,
+            final String maxKbKey, final CrawlSubstats substats,
+            final String logKey) {
+        boolean aboveQuota = false;
+        long fetchQuota =
+            ((Long)getUncheckedAttribute(curi, successesKey)).longValue();
+        long bytesQuota = 1024 *
+            ((Long) getUncheckedAttribute(curi, maxKbKey)).longValue();
+        if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
+                "Q:" + logKey + "-fetchSuccesses")) {
+            aboveQuota = true; 
+        } else if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
+                "Q:" + logKey + "-successBytes")) {
+            aboveQuota = true; 
+        }
+        return aboveQuota;
     }
 
     /**
      * Check if the given quota and actual values rule out processing the 
      * given CrawlURI, and mark up the CrawlURI appropriately if so. 
      * 
-     * @param curi CrawlURI whose processing is subject to a potential quota limitation
+     * @param curi CrawlURI whose processing is subject to a potential quota
+     * limitation
      * @param quota quota value, or zero if no quota applies
      * @param actual current value to compare to quota 
      * @param annotate String to mark CrawlURI if blocked by quota
      * @return true is CrawlURI is blocked by a quota, false otherwise
      */
-    protected boolean checkQuota(CrawlURI curi, long quota, long actual, String annotate) {
+    protected boolean checkQuota(CrawlURI curi, long quota, long actual,
+            String annotate) {
         if (quota >= 0 && actual >= quota) {
             curi.setFetchStatus(S_BLOCKED_BY_QUOTA);
             curi.addAnnotation(annotate);
