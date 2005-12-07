@@ -316,8 +316,8 @@ implements CrawlURIDispositionListener, Serializable {
             .toString();
     }
     
-    public HashMap getProgressStatistics() {
-        HashMap stats = new HashMap();
+    public Map getProgressStatistics() {
+        Map stats = new HashMap();
         stats.put("discoveredUriCount", new Long(discoveredUriCount));
         stats.put("queuedUriCount", new Long(queuedUriCount));
         stats.put("downloadedUriCount", new Long(downloadedUriCount));

@@ -23,7 +23,10 @@
 package org.archive.util;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,7 +37,11 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.RuntimeOperationsException;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeDataSupport;
+import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.InvalidOpenTypeException;
+import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenMBeanAttributeInfo;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 import javax.management.openmbean.OpenMBeanOperationInfo;
@@ -43,6 +50,7 @@ import javax.management.openmbean.OpenMBeanParameterInfo;
 import javax.management.openmbean.OpenMBeanParameterInfoSupport;
 import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
+
 
 /**
  * Static utility used by JMX.
@@ -279,5 +287,30 @@ public class JmxUtils {
                 ((prefix != null)? prefix + in.getName(): in.getName()),
                 in.getDescription(), type, in.isReadable(),
                 in.isWritable(), in.isIs());
+    }
+    
+    /**
+     * @param m A map to make a CompositeType of (Assumption is that order does
+     * not matter. If it does, pass a map of sorted keys).
+     * @param compositeTypeName Name to give created compositeType.
+     * @param compositeTypeDescription Description.
+     * @return CompositeType made by examination of passed TreeMap.
+     * @throws OpenDataException
+     */
+    public static CompositeType createCompositeType(final Map m,
+            final String compositeTypeName,
+            final String compositeTypeDescription)
+    throws OpenDataException {
+        String [] keys = new String[m.size()];
+        OpenType [] types = new OpenType[m.size()];
+        int index = 0;
+        for (final Iterator i = m.keySet().iterator(); i.hasNext();) {
+            String key = (String)i.next();
+            keys[index] = key;
+            types[index] = getOpenType(m.get(key).getClass().getName());
+            index++;
+        }
+        return new CompositeType(compositeTypeName, compositeTypeDescription,
+            keys, keys, types);
     }
 }

@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EventObject;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -65,6 +64,10 @@ import javax.management.NotificationBroadcasterSupport;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.RuntimeOperationsException;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeDataSupport;
+import javax.management.openmbean.CompositeType;
+import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 import javax.management.openmbean.OpenMBeanConstructorInfoSupport;
 import javax.management.openmbean.OpenMBeanInfoSupport;
@@ -200,12 +203,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     private int priority;
     private int numberOfJournalEntries = 0;
     
-    /**
-     * Map of old statistics.
-     * Used sending progress statistics notifications.
-     */
-    private HashMap cachedStatistics = new HashMap();
-    
     private String statisticsFileSave = "";
 
     private String errorMessage = null;
@@ -276,6 +273,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         "progressStatistics";
     private final static String PROGRESS_STATISTICS_LEGEND_OPER =
         "progressStatisticsLegend";
+    
+    private final static String PROG_STATS = "progressStatistics";
     
     // Same as JEMBeanHelper.OP_DB_STAT
     private final static String OP_DB_STAT = "getDatabaseStats";
@@ -733,6 +732,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     implements Serializable {
         private static final long serialVersionUID = -4608537998168407222L;
         private CrawlJob cj = null;
+        private CompositeType ct =  null;
         
         public CrawlJob getCrawlJob() {
             return this.cj;
@@ -744,18 +744,31 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         
         public void progressStatisticsEvent(final EventObject e) {
             super.progressStatisticsEvent(e);
-            if (this.cj.getMbeanName() != null) {
-                // Can be null around job startup.
-                HashMap newStatistics = ((StatisticsTracking)e.getSource()).
-                    getProgressStatistics();
-                sendNotification(new AttributeChangeNotification(
+            if (this.cj.getMbeanName() == null) {
+                // Can be null around job startup.  Return w/o doing anything.
+                return;
+            }
+                
+            Map s = ((StatisticsTracking)e.getSource()).getProgressStatistics();
+            // Convert the statistics to OpenType CompositeData and add as
+            // user data to Notification.
+            CompositeData cd = null;
+            try {
+                if (this.ct == null) {
+                    this.ct = JmxUtils.createCompositeType(s, PROG_STATS,
+                        PROG_STATS + " for " + this.cj.getMbeanName());
+                }
+                cd = new CompositeDataSupport(this.ct, s);
+            } catch (OpenDataException ode) {
+                ode.printStackTrace();
+            }
+            if (cd != null) {
+                Notification n = new Notification(PROG_STATS,
                     this.cj.getMbeanName(), getNotificationsSequenceNumber(),
-                    System.currentTimeMillis(),
                     ((StatisticsTracking)e.getSource()).
-                        getProgressStatisticsLine(),
-                    "progressStatistics", HashMap.class.getName(),
-                    this.cj.getStatistics(), newStatistics));
-                this.cj.setStatistics(newStatistics);
+                        getProgressStatisticsLine());
+                n.setUserData(cd);
+                this.cj.sendNotification(n);
             }
         }
         
@@ -1375,13 +1388,11 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         // Register notifications
         List notifications = new ArrayList();
         notifications.add(
-            new MBeanNotificationInfo(new String [] {
-                    this.getClass().getName() + ".crawlStarted",
-                    this.getClass().getName() + ".crawlEnded",
-                    this.getClass().getName() + ".crawlPaused",
-                    this.getClass().getName() + ".crawlResuming"},
+            new MBeanNotificationInfo(new String [] {"crawlStarted",
+                    "crawlEnded", "crawlPaused", "crawlResuming", PROG_STATS},
                 this.getClass().getName() + ".notifications",
-                "CrawlStatusListener events as notifications"));
+                "CrawlStatusListener events and progress statistics as " +
+                    "notifications"));
         MBeanNotificationInfo [] notificationsArray =
             new MBeanNotificationInfo[notifications.size()];
         notifications.toArray(notificationsArray);
@@ -1951,10 +1962,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     public void crawlStarted(String message) {
         if (this.mbeanName != null) {
             // Can be null around job startup.
-            sendNotification(new Notification(this.getClass().getName() +
-                    ".crawlStarted",
-                this.mbeanName, CrawlJob.notificationsSequenceNumber++,
-                message)); 
+            sendNotification(new Notification("crawlStarted",
+                this.mbeanName,  getNotificationsSequenceNumber(), message)); 
         }
     }
 
@@ -1966,8 +1975,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
 
     public void crawlEnded(String sExitMessage) {
         if (this.mbeanName != null) {
-            sendNotification(new Notification(this.getClass().getName() +
-                    ".crawlEnded", this.mbeanName,
+            sendNotification(new Notification("crawlEnded", this.mbeanName,
                 getNotificationsSequenceNumber(), sExitMessage));
         }
         
@@ -1992,9 +2000,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         setStatus(statusMessage);
         if (this.mbeanName != null) {
             // Can be null around job startup.
-            sendNotification(new Notification(this.getClass().getName() +
-                    ".crawlPaused", this.mbeanName, getNotificationsSequenceNumber(),
-                statusMessage));
+            sendNotification(new Notification("crawlPaused", this.mbeanName,
+                getNotificationsSequenceNumber(), statusMessage));
         }
     }
 
@@ -2002,8 +2009,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         setStatus(statusMessage);
         if (this.mbeanName != null) {
             // Can be null around job startup.
-            sendNotification(new Notification(this.getClass().getName() +
-                    ".crawlResuming", this.mbeanName,
+            sendNotification(new Notification("crawlResuming", this.mbeanName,
                 getNotificationsSequenceNumber(), statusMessage));
         }
     }
@@ -2104,13 +2110,5 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         return this.controller == null ||
             this.controller.getStatistics() == null? null:
                 this.controller.getStatistics();
-    }
-    
-    protected void setStatistics(final HashMap statistics) {
-        this.cachedStatistics = statistics;
-    }
-    
-    public synchronized Map getStatistics() {
-        return this.cachedStatistics;
     }
 }
