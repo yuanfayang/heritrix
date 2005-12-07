@@ -564,7 +564,8 @@ implements CrawlURIDispositionListener, Serializable {
     public long discoveredUriCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null?
             controller.getFrontier().discoveredUriCount() : discoveredUriCount;
     }
 
@@ -576,7 +577,8 @@ implements CrawlURIDispositionListener, Serializable {
      * @see org.archive.crawler.framework.Frontier#finishedUriCount()
      */
     public long finishedUriCount() {
-        return shouldrun ?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null ?
             controller.getFrontier().finishedUriCount() : finishedUriCount;
     }
 
@@ -588,7 +590,8 @@ implements CrawlURIDispositionListener, Serializable {
     public long failedFetchAttempts() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null ?
             controller.getFrontier().failedFetchCount() : downloadFailures;
     }
 
@@ -600,7 +603,8 @@ implements CrawlURIDispositionListener, Serializable {
     public long disregardedFetchAttempts() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null?
             controller.getFrontier().disregardedUriCount() : downloadDisregards;
     }
 
@@ -627,7 +631,8 @@ implements CrawlURIDispositionListener, Serializable {
     public float congestionRatio() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null ?
             controller.getFrontier().congestionRatio() : congestionRatio;
     }
     
@@ -641,7 +646,8 @@ implements CrawlURIDispositionListener, Serializable {
     public long deepestUri() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null ?
             controller.getFrontier().deepestUri() : deepestUri;
     }
     
@@ -654,7 +660,8 @@ implements CrawlURIDispositionListener, Serializable {
     public long averageDepth() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null ?
             controller.getFrontier().averageDepth() : averageDepth;
     }
     
@@ -671,12 +678,14 @@ implements CrawlURIDispositionListener, Serializable {
     public long queuedUriCount() {
         // While shouldrun is true we can use info direct from the crawler.
         // After that our last snapshot will have to do.
-        return shouldrun ?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null?
             controller.getFrontier().queuedUriCount() : queuedUriCount;
     }
 
     public long totalBytesWritten() {
-        return shouldrun ?
+        return shouldrun && this.controller != null &&
+                this.controller.getFrontier() != null?
             controller.getFrontier().totalBytesWritten() : totalProcessedBytes;
     }
 
