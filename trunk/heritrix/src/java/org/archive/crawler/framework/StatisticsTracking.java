@@ -18,8 +18,8 @@
  */
 package org.archive.crawler.framework;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 
@@ -211,8 +211,7 @@ public interface StatisticsTracking extends Runnable {
     public String getProgressStatisticsLine();
     
     /**
-     * @return HashMap of progress-statistics (HashMap because HashMaps are
-     * advertised as being serializable).
+     * @return Map of progress-statistics.
      */
-    public HashMap getProgressStatistics();
+    public Map getProgressStatistics();
 }
