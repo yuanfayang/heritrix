@@ -29,6 +29,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
@@ -39,11 +41,22 @@ import org.archive.crawler.datamodel.UriUniqFilter;
  * @author gojomo
  */
 public abstract class SetBasedUriUniqFilter implements UriUniqFilter {
+    private static Logger LOGGER =
+        Logger.getLogger(SetBasedUriUniqFilter.class.getName());
+
     protected HasUriReceiver receiver;
     protected PrintWriter profileLog;
+    protected long duplicateCount = 0;
+    protected long duplicatesAtLastSample = 0;
     
     public SetBasedUriUniqFilter() {
         super();
+        String profileLogFile = 
+            System.getProperty(SetBasedUriUniqFilter.class.getName()
+                + ".profileLogFile");
+        if (profileLogFile != null) {
+            setProfileLog(new File(profileLogFile));
+        }
     }
     
     protected abstract boolean setAdd(CharSequence key);
@@ -73,8 +86,16 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter {
     
     public void add(String key, CandidateURI value) {
         profileLog(key);
-        if(setAdd(key)) {
+        if (setAdd(key)) {
             this.receiver.receive(value);
+            if (setCount() % 50000 == 0) {
+                LOGGER.log(Level.FINE, "count: " + setCount() + " totalDups: "
+                        + duplicateCount + " recentDups: "
+                        + (duplicateCount - duplicatesAtLastSample));
+                duplicatesAtLastSample = duplicateCount;
+            }
+        } else {
+            duplicateCount++;
         }
     }
 
@@ -103,7 +124,9 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter {
     }
 
     public void close() {
-        // Nothing to do.
+        if (profileLog != null) {
+            profileLog.close();
+        }
     }
 
     public void setProfileLog(File logfile) {
