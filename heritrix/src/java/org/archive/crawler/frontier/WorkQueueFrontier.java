@@ -343,7 +343,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     }
 
     /**
-     * Create a memory-based UriUniqFilter that will serve as record 
+     * Create a UriUniqFilter that will serve as record 
      * of already seen URIs.
      *
      * @return A UURISet that will serve as a record of already seen URIs
@@ -1164,6 +1164,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         appendQueueReports(w, this.snoozedClassQueues.iterator(),
             this.snoozedClassQueues.size(), REPORT_MAX_QUEUES);
         
+        WorkQueue longest = longestActiveQueue;
+        if (longest != null) {
+            w.print("\n -----===== LONGEST QUEUE =====-----\n");
+            longest.reportTo(w);
+        }
+
         w.print("\n -----===== INACTIVE QUEUES =====-----\n");
         appendQueueReports(w, this.inactiveQueues.iterator(),
             this.inactiveQueues.size(), REPORT_MAX_QUEUES);
