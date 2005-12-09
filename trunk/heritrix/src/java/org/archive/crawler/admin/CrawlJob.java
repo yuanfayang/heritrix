@@ -1389,7 +1389,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         List notifications = new ArrayList();
         notifications.add(
             new MBeanNotificationInfo(new String [] {"crawlStarted",
-                    "crawlEnded", "crawlPaused", "crawlResuming", PROG_STATS},
+                    "crawlEnding", "crawlPaused", "crawlResuming", PROG_STATS},
                 this.getClass().getName() + ".notifications",
                 "CrawlStatusListener events and progress statistics as " +
                     "notifications"));
@@ -1971,14 +1971,13 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         setRunning(false);
         setStatus(sExitMessage);
         setReadOnly();
+        if (this.mbeanName != null) {
+            sendNotification(new Notification("crawlEnding", this.mbeanName,
+                getNotificationsSequenceNumber(), sExitMessage));
+        }
     }
 
     public void crawlEnded(String sExitMessage) {
-        if (this.mbeanName != null) {
-            sendNotification(new Notification("crawlEnded", this.mbeanName,
-                getNotificationsSequenceNumber(), sExitMessage));
-        }
-        
         // Let the settings handler be cleaned up by the crawl controller
         // completeStop. Just let go of our reference in here.
         // if (this.settingsHandler != null) {
