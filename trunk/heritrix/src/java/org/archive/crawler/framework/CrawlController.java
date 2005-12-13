@@ -1146,12 +1146,15 @@ public class CrawlController implements Serializable, Reporter {
     protected void writeCheckpoint() {
         cpContext.begin();
         try {
+            // Tell registered listeners to checkpoint.
+            sendCheckpointEvent(cpContext.getCheckpointInProgressDirectory());
             this.checkpointTo(cpContext);
         } catch (Exception e) {
             cpContext.checkpointFailed(e);
         } finally {
             cpContext.end();
-            this.state = PAUSED;
+            // Set crawler state back into paused mode.
+            completePause();
         }
     }
 
@@ -1168,13 +1171,11 @@ public class CrawlController implements Serializable, Reporter {
      * @param context Context to use checkpointing.
      * @throws Exception
      */
-    public void checkpointTo(CheckpointContext context)
+    protected void checkpointTo(CheckpointContext context)
     throws Exception {
         long started = System.currentTimeMillis();
-        context.getCheckpointInProgressDirectory().mkdirs();
         
-        // Tell registered listeners to checkpoint.
-        sendCheckpointEvent(context.getCheckpointInProgressDirectory());
+        context.getCheckpointInProgressDirectory().mkdirs();
         
         // Rotate off crawler logs.
         LOGGER.fine("Rotating log files.");
@@ -1207,9 +1208,6 @@ public class CrawlController implements Serializable, Reporter {
         LOGGER.info("Finished: " +
             (context.isCheckpointFailed()? "Failed": "Succeeded") + ", Took " +
             (System.currentTimeMillis() - started) + "ms.");
-        
-        // Set crawler state back into paused mode.
-        completePause();
     }
     
     /**
@@ -1473,7 +1471,7 @@ public class CrawlController implements Serializable, Reporter {
         sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
         frontier.pause();
         sendCrawlStateChangeEvent(PAUSING, this.sExit);
-        if (toePool.getActiveToeCount()==0) {
+        if (toePool.getActiveToeCount() == 0) {
             // if all threads already held, complete pause now
             // (no chance to trigger off later held thread)
             completePause();
@@ -1804,7 +1802,7 @@ public class CrawlController implements Serializable, Reporter {
      */
     public synchronized void toePaused() {
         releaseContinuePermission();
-        if (state ==  PAUSING && toePool.getActiveToeCount()==0) {
+        if (state ==  PAUSING && toePool.getActiveToeCount() == 0) {
             completePause();
         }
     }
