@@ -413,7 +413,7 @@ implements CrawlURIDispositionListener, Serializable {
         }
         LongWrapper lw = (LongWrapper)map.get(key);
         if(lw == null) {
-            map.put(key, new LongWrapper(1));
+            map.put(key, new LongWrapper(increment));
         } else {
             lw.longValue += increment;
         }
