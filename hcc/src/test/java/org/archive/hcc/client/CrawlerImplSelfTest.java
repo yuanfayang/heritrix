@@ -11,7 +11,7 @@ import org.archive.hcc.util.OrderJarFactory;
 
 public class CrawlerImplSelfTest
         extends
-            ClusterControllerClientSelfTest {
+            ClusterControllerClientSelfTestBase {
     private CrawlerImpl c;
 
     protected void setUp() throws Exception {
