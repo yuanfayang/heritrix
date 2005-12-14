@@ -3,9 +3,6 @@ package org.archive.hcc.client;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import org.archive.hcc.client.ClusterException;
-import org.archive.hcc.client.Crawler;
-
 public class ClusterControllerClientImplSelfTest
         extends
             ClusterControllerClientSelfTest {

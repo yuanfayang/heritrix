@@ -27,7 +27,7 @@ import java.net.InetSocketAddress;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
-import org.archive.util.JmxUtils;
+import org.archive.hcc.util.JmxUtils;
 
 public class CurrentCrawlJobImpl extends CrawlJobBase
 implements CurrentCrawlJob {

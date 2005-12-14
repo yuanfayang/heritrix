@@ -7,10 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.archive.hcc.client.ClusterException;
-import org.archive.hcc.client.Crawler;
-import org.archive.hcc.client.CrawlerImpl;
-import org.archive.hcc.client.JobOrder;
 import org.archive.hcc.util.OrderJarFactory;
 
 public class CrawlerImplSelfTest

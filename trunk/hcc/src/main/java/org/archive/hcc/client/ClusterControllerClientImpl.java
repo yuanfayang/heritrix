@@ -23,6 +23,8 @@
 
 package org.archive.hcc.client;
 
+
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.InvalidParameterException;
@@ -49,10 +51,10 @@ import javax.management.openmbean.CompositeData;
 import javax.swing.event.EventListenerList;
 
 import org.archive.hcc.util.ClusterControllerNotification;
+import org.archive.hcc.util.JmxUtils;
 import org.archive.hcc.util.NotificationDelegatableBase;
 import org.archive.hcc.util.NotificationDelegator;
 import org.archive.hcc.util.jmx.MBeanServerConnectionFactory;
-import org.archive.util.JmxUtils;
 
 /**
  * As the workhorse of the cluster controller client, this class is responsible 
@@ -316,29 +318,13 @@ public class ClusterControllerClientImpl {
     }
 
     private void handleCrawlServiceCreated(ObjectName crawlerName) {
-        try {
             Crawler c = new CrawlerImpl(crawlerName, this.connection);
             fireCrawlerCreated(c);
-        } catch (InstanceNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 
     private void handleCrawlServiceDestroyed(ObjectName crawlerName) {
-        try {
-            Crawler c = new CrawlerImpl(crawlerName, this.connection);
-            fireCrawlerDestroyed(c);
-        } catch (InstanceNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        Crawler c = new CrawlerImpl(crawlerName, this.connection);
+        fireCrawlerDestroyed(c);
     }
 
     private void handleCrawlServiceJobStarted(ObjectName crawlJob) {

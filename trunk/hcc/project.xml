@@ -47,6 +47,7 @@
        </license>
     </licenses>
     <dependencies>
+    	<!--
         <dependency>
             <id>MirrorJNDI</id>
             <version>1.0</version>
@@ -75,6 +76,7 @@
                 </license>
             </properties>
         </dependency>
+        -->
     </dependencies>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>

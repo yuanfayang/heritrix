@@ -83,6 +83,8 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 
 import org.archive.hcc.util.ClusterControllerNotification;
+import org.archive.hcc.util.JmxUtils;
+import org.archive.hcc.util.JndiUtils;
 import org.archive.hcc.util.NotificationDelegator;
 import org.archive.hcc.util.Delegator.DelegatorPolicy;
 import org.archive.hcc.util.jmx.MBeanFutureTask;
@@ -90,8 +92,6 @@ import org.archive.hcc.util.jmx.MBeanOperation;
 import org.archive.hcc.util.jmx.OpenMBeanInvocationManager;
 import org.archive.hcc.util.jmx.RegistrationNotificationHandler;
 import org.archive.hcc.util.jmx.SimpleReflectingMBeanOperation;
-import org.archive.util.JmxUtils;
-import org.archive.util.JndiUtils;
 
 /**
  * As the main workhorse of the package, the <code>ClusterControllerBean</code>

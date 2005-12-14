@@ -3,7 +3,6 @@ package org.archive.hcc.client;
 import junit.framework.TestCase;
 
 import org.archive.hcc.ClusterControllerBean;
-import org.archive.hcc.client.ClusterControllerClientImpl;
 
 public class ClusterControllerClientSelfTest
         extends

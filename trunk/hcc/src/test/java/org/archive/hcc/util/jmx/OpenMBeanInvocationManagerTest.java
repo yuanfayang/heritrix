@@ -1,4 +1,4 @@
-/* SimpleReflectingMBeanOperationTest
+/* OpenMBeanInvocationManagerTest
 * 
 * $Id$
 *
@@ -23,38 +23,31 @@
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
  
-package org.archive.util.jmx;
+package org.archive.hcc.util.jmx;
 
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
 import javax.management.openmbean.OpenMBeanOperationInfoSupport;
-import javax.management.openmbean.SimpleType;
 
-import junit.framework.TestCase;
+import org.archive.hcc.util.jmx.OpenMBeanInvocationManager;
+import org.archive.hcc.util.jmx.SimpleReflectingMBeanOperation;
  
-public class SimpleReflectingMBeanOperationTest
+public class OpenMBeanInvocationManagerTest
         extends
             MBeanTestCase {
 
     public void test(){
-        SimpleReflectingMBeanOperation op = 
-            new SimpleReflectingMBeanOperation(this, 
-                    createInfo());
+        OpenMBeanInvocationManager m = 
+               new OpenMBeanInvocationManager();
+        
+        OpenMBeanOperationInfoSupport info = createInfo();
+        m.addMBeanOperation(new SimpleReflectingMBeanOperation(this, info));
+        
         
         try {
-            String returnStr = (String)op.getInvocation(new Object[0]).invoke();
-            assertEquals("test", returnStr);
-        } catch (MBeanException e) {
-            assertFalse(true);
-            e.printStackTrace();
-        } catch (ReflectionException e) {
+            String test = (String)m.invoke(info.getName(),new Object[0], new String[0]);
+            assertEquals("test", test);
+        } catch (Exception e) {
             assertFalse(true);
             e.printStackTrace();
         }
-        
-    }
-    
-    public String invoke(){
-        return "test";
     }
 }
