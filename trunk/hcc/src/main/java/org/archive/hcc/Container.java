@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -31,7 +31,6 @@ import javax.management.ObjectName;
  * Represents the relationship between a container and the crawlers "container"
  * by it.
  * @author Daniel Bernstein (dbernstein@archive.org)
- *
  */
 class Container {
     private ObjectName name;

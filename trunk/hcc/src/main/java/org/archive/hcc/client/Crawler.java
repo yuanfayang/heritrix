@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -28,53 +28,18 @@ import java.util.Collection;
  * An interface representing an instance of a Crawler.
  * 
  * @author dbernstein
- * 
  */
-public interface Crawler extends
-        Proxy {
-
-    /**
-     * 
-     * 
-     */
+public interface Crawler extends Proxy {
     public void startPendingJobQueue();
-
-    /**
-     * 
-     * 
-     */
     public void stopPendingJobQueue();
-
-    /**
-     * 
-     * @return
-     */
     public boolean isPendingJobQueueRunning();
-
     public String addJob(JobOrder order);
-
     public void terminateCurrentJob();
-
-    /**
-     * 
-     * @return
-     */
     public boolean isCrawling();
-
-    /**
-     * 
-     * @return
-     */
     public String getVersion();
-
     public void destroy();
-
     public boolean deletePendingCrawlJob(PendingCrawlJob job);
-
     public boolean deleteCompletedCrawlJob(CompletedCrawlJob job);
-
     public Collection<PendingCrawlJob> listPendingCrawlJobs();
-
     public Collection<CompletedCrawlJob> listCompletedCrawlJobs();
-
 }

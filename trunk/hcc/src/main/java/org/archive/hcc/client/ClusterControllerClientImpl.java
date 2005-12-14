@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -51,30 +51,23 @@ import javax.swing.event.EventListenerList;
 import org.archive.hcc.util.ClusterControllerNotification;
 import org.archive.hcc.util.NotificationDelegatableBase;
 import org.archive.hcc.util.NotificationDelegator;
+import org.archive.hcc.util.jmx.MBeanServerConnectionFactory;
 import org.archive.util.JmxUtils;
-import org.archive.util.jmx.MBeanServerConnectionFactory;
 
 /**
  * As the workhorse of the cluster controller client, this class is responsible 
  * for connecting to the local or remote <code>ClusterControllerBean</code> via
- * its <code>DynamicMBean</code> interface. It hides all the details of connecting
- * to the remote MBean, ie invocations and notifications. 
+ * its <code>DynamicMBean</code> interface. It hides all the details of
+ * connecting to the remote MBean, ie invocations and notifications. 
  * @author dbernstein
- *
  */
 public class ClusterControllerClientImpl {
 
     private static final Logger log = Logger.getLogger(
             ClusterControllerClientImpl.class.getName());
 
-    /**
-     * 
-     */
     private MBeanServerConnection connection;
 
-    /**
-     * 
-     */
     private ObjectName name;
 
     private NotificationDelegator notificationDelegator;
@@ -160,7 +153,8 @@ public class ClusterControllerClientImpl {
                 if (n
                         .getType()
                         .equals(
-                                ClusterControllerNotification.CRAWL_SERVICE_CREATED_NOTIFICATION)) {
+                                ClusterControllerNotification.
+                                    CRAWL_SERVICE_CREATED_NOTIFICATION)) {
                     
                     if (log.isLoggable(Level.FINE)) {
                         log.fine("crawler service created: " + n.getUserData());
@@ -177,7 +171,8 @@ public class ClusterControllerClientImpl {
                 if (n
                         .getType()
                         .equals(
-                                ClusterControllerNotification.CRAWL_SERVICE_DESTROYED_NOTIFICATION)) {
+                                ClusterControllerNotification.
+                                    CRAWL_SERVICE_DESTROYED_NOTIFICATION)) {
                    
                     if (log.isLoggable(Level.INFO)) {
                         log.info("crawler service destroyed: "
@@ -194,7 +189,8 @@ public class ClusterControllerClientImpl {
         d.addDelegatable(new NotificationDelegatableBase() {
             protected boolean delegate(Notification n, Object handbac) {
                 if (n.getType().equals(
-                    ClusterControllerNotification.CRAWL_SERVICE_JOB_STARTED_NOTIFICATION)){
+                    ClusterControllerNotification.
+                        CRAWL_SERVICE_JOB_STARTED_NOTIFICATION)){
                     handleCrawlServiceJobStarted((ObjectName) n.getUserData());
                     return true;
                 }
@@ -205,8 +201,9 @@ public class ClusterControllerClientImpl {
         d.addDelegatable(new NotificationDelegatableBase() {
             protected boolean delegate(Notification n, Object handbac) {
                 if (n.getType().equals(
-                    ClusterControllerNotification.CRAWL_SERVICE_JOB_STARTED_NOTIFICATION)){
-                    handleCrawlServiceJobCompleted((ObjectName) n.getUserData());
+                    ClusterControllerNotification.
+                        CRAWL_SERVICE_JOB_STARTED_NOTIFICATION)){
+                    handleCrawlServiceJobCompleted((ObjectName)n.getUserData());
                     return true;
                 }
                 return false;
@@ -520,5 +517,4 @@ public class ClusterControllerClientImpl {
             e.printStackTrace();
         }
     }
-
 }

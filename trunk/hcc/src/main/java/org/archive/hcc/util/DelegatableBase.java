@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -26,9 +26,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-abstract public class DelegatableBase implements
-        Delegatable {
-    private static Logger log = Logger.getLogger(DelegatableBase.class.getName());
+abstract public class DelegatableBase implements Delegatable {
+    private static Logger log =
+        Logger.getLogger(DelegatableBase.class.getName());
 
     public final boolean delegate(Object object) {
         if (log.isLoggable(Level.FINEST)) {

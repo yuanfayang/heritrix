@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -31,7 +31,6 @@ import javax.management.ObjectName;
  * child crawl job bean.
  * 
  * @author Daniel Bernstein (dbernstein@archive.org)
- *
  */
 class Crawler {
     private DynamicMBean crawlServiceProxy;
@@ -112,5 +111,4 @@ class Crawler {
     public void setCrawlJobProxy(DynamicMBean crawlJobProxy) {
         this.crawlJobProxy = crawlJobProxy;
     }
-
 }

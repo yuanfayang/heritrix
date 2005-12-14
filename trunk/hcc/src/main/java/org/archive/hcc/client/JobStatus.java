@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -24,7 +24,8 @@ package org.archive.hcc.client;
 
 public enum JobStatus {
     RUNNING("RUNNING", false), PAUSED("PAUSED", false), COMPLETED_NORMAL(
-            "COMPLETED_NORMAL", true), USER_TERMINATED("USER_TERMINATED", true), SYSTEM_TIME_LIMIT(
+            "COMPLETED_NORMAL", true), USER_TERMINATED("USER_TERMINATED", true),
+            SYSTEM_TIME_LIMIT(
             "SYSTEM_TIME_LIMIT", true), SYSTEM_URL_LIMIT("SYSTEM_URL_LIMIT",
             true), SYSTEM_DATA_LIMIT("SYSTEM_DATA_LIMIT", true), FAILED(
             "FAILED", true);
@@ -32,8 +33,6 @@ public enum JobStatus {
     private final String key;
 
     private boolean endState;
-
-    private String localizedName = null;
 
     JobStatus(String key, boolean endState) {
         this.key = key;

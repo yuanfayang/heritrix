@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -29,11 +29,9 @@ import javax.management.ObjectName;
 
 import org.archive.util.JmxUtils;
 
-public class CurrentCrawlJobImpl
-        extends
-            CrawlJobBase implements
-        CurrentCrawlJob {
-
+public class CurrentCrawlJobImpl extends CrawlJobBase
+implements CurrentCrawlJob {
+    
     private ObjectName name;
 
     public CurrentCrawlJobImpl(
@@ -97,5 +95,4 @@ public class CurrentCrawlJobImpl
     public Crawler getMother() {
         return this.mother;
     }
-
 }

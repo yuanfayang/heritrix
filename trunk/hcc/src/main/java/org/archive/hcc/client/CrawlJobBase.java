@@ -1,7 +1,7 @@
 
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -25,8 +25,7 @@ package org.archive.hcc.client;
 
 import javax.management.MBeanServerConnection;
 
-abstract public class CrawlJobBase implements
-        CrawlJob {
+abstract public class CrawlJobBase implements CrawlJob {
 
     protected Crawler mother;
 
@@ -50,5 +49,4 @@ abstract public class CrawlJobBase implements
     public Crawler getMother() {
         return mother;
     }
-
 }
