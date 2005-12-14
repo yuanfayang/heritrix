@@ -84,14 +84,15 @@ import javax.naming.NamingException;
 
 import org.archive.hcc.util.ClusterControllerNotification;
 import org.archive.hcc.util.JmxUtils;
-import org.archive.hcc.util.JndiUtils;
 import org.archive.hcc.util.NotificationDelegator;
 import org.archive.hcc.util.Delegator.DelegatorPolicy;
 import org.archive.hcc.util.jmx.MBeanFutureTask;
 import org.archive.hcc.util.jmx.MBeanOperation;
+import org.archive.hcc.util.jmx.MBeanServerConnectionFactory;
 import org.archive.hcc.util.jmx.OpenMBeanInvocationManager;
 import org.archive.hcc.util.jmx.RegistrationNotificationHandler;
 import org.archive.hcc.util.jmx.SimpleReflectingMBeanOperation;
+import org.archive.util.JndiUtils;
 
 /**
  * As the main workhorse of the package, the <code>ClusterControllerBean</code>
@@ -735,7 +736,7 @@ public class ClusterControllerBean implements
     private boolean isJobOnCrawler(ObjectName job, ObjectName crawler) {
         return equals(job, crawler, JmxUtils.JMX_PORT)
                 && equals(job, crawler, JmxUtils.HOST)
-                && job.getKeyProperty(JmxUtils.CONTEXT).equals(
+                && job.getKeyProperty(JmxUtils.MOTHER).equals(
                         crawler.getKeyProperty(JmxUtils.NAME));
     }
 
@@ -953,7 +954,7 @@ public class ClusterControllerBean implements
     protected void registerAddress(InetSocketAddress isa) throws IOException {
         if (!this.connections.keySet().contains(isa)) {
             // create connection.
-            MBeanServerConnection mbc = JmxUtils.createConnection(isa);
+            MBeanServerConnection mbc = MBeanServerConnectionFactory.createConnection(isa);
             this.connections.put(isa, mbc);
         }
     }
@@ -1271,7 +1272,7 @@ public class ClusterControllerBean implements
 
                 Hashtable props = new Hashtable();
                 props.put(JmxUtils.TYPE, JmxUtils.JOB);
-                props.put(JmxUtils.CONTEXT, newCrawler
+                props.put(JmxUtils.MOTHER, newCrawler
                         .getKeyProperty(JmxUtils.NAME));
 
                 try {
