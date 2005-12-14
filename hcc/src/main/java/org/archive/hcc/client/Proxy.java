@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -26,5 +26,4 @@ import javax.management.ObjectName;
 
 public interface Proxy {
     ObjectName getName();
-
 }

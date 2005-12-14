@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -25,9 +25,7 @@ package org.archive.hcc.client;
 /**
  * Defines the interface for interacting with a completed crawl job.
  * @author Daniel Bernstein (dbernstein@archive.org)
- *
  */
-public interface CompletedCrawlJob extends
-        CrawlJob {
-
+public interface CompletedCrawlJob extends CrawlJob {
+    // Empty.
 }

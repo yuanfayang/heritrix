@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -22,22 +22,12 @@
  */
 package org.archive.hcc.client;
 
-import java.io.IOException;
 import java.util.Collection;
-import java.util.logging.Logger;
 
-import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
-public class CrawlerImpl
-        extends
-            ProxyBase implements
-        Crawler {
-
-    private static Logger log = 
-        Logger.getLogger(CrawlerImpl.class.getName());
-
+public class CrawlerImpl extends ProxyBase implements Crawler {
     public void startPendingJobQueue() {
         try {
             this.connection.invoke(
@@ -65,9 +55,7 @@ public class CrawlerImpl
 
     }
 
-    public CrawlerImpl(ObjectName name, MBeanServerConnection connection)
-            throws InstanceNotFoundException,
-            IOException {
+    public CrawlerImpl(ObjectName name, MBeanServerConnection connection) {
         super(name, connection);
     }
 
@@ -163,5 +151,4 @@ public class CrawlerImpl
         // TODO Auto-generated method stub
         return null;
     }
-
 }

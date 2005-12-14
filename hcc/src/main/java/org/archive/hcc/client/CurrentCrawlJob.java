@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -24,9 +24,7 @@ package org.archive.hcc.client;
 
 import java.net.InetSocketAddress;
 
-public interface CurrentCrawlJob extends
-        CrawlJob,
-        Proxy {
+public interface CurrentCrawlJob extends CrawlJob, Proxy {
     public InetSocketAddress getRemoteAddress();
 
     public String getUid();

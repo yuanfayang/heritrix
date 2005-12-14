@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -39,7 +39,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OrderJarFactory {
-    private static Logger log = Logger.getLogger(OrderJarFactory.class.getName());
+    private static Logger log =
+        Logger.getLogger(OrderJarFactory.class.getName());
 
 
     public OrderJarFactory() {
@@ -135,5 +136,4 @@ public class OrderJarFactory {
             throw new RuntimeException(e);
         }
     }
-
 }

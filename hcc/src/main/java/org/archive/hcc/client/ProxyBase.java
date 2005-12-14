@@ -1,6 +1,6 @@
 /* $Id$
  *
- * (Created on Dec 12, 2005
+ * Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -22,8 +22,6 @@
  */
 package org.archive.hcc.client;
 
-import java.util.logging.Logger;
-
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
@@ -31,8 +29,6 @@ public class ProxyBase {
     protected MBeanServerConnection connection;
 
     protected ObjectName name;
-
-    private static Logger log = Logger.getLogger(ProxyBase.class.getName());
 
     public ProxyBase(ObjectName name, MBeanServerConnection connection) {
         this.name = name;
