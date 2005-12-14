@@ -24,7 +24,10 @@
 
 
 <goal name="startHeritrix">
-	<exec command="${env.HERITRIX_HOME}/bin/heritrix --port=9080"/>
+	<exec executable="/bin/bash" dir="${env.HERITRIX_HOME}" >
+	  <arg line="./bin/heritrix --port=9080"/>
+	  
+	</exec>
 
 </goal>
 

@@ -156,7 +156,7 @@ public class ClusterControllerClientImpl {
                         .getType()
                         .equals(
                                 ClusterControllerNotification.
-                                    CRAWL_SERVICE_CREATED_NOTIFICATION)) {
+                                    CRAWL_SERVICE_CREATED_NOTIFICATION.getKey())) {
                     
                     if (log.isLoggable(Level.FINE)) {
                         log.fine("crawler service created: " + n.getUserData());
@@ -174,7 +174,7 @@ public class ClusterControllerClientImpl {
                         .getType()
                         .equals(
                                 ClusterControllerNotification.
-                                    CRAWL_SERVICE_DESTROYED_NOTIFICATION)) {
+                                    CRAWL_SERVICE_DESTROYED_NOTIFICATION.getKey())) {
                    
                     if (log.isLoggable(Level.INFO)) {
                         log.info("crawler service destroyed: "
@@ -192,7 +192,7 @@ public class ClusterControllerClientImpl {
             protected boolean delegate(Notification n, Object handbac) {
                 if (n.getType().equals(
                     ClusterControllerNotification.
-                        CRAWL_SERVICE_JOB_STARTED_NOTIFICATION)){
+                        CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey())){
                     handleCrawlServiceJobStarted((ObjectName) n.getUserData());
                     return true;
                 }
@@ -204,7 +204,7 @@ public class ClusterControllerClientImpl {
             protected boolean delegate(Notification n, Object handbac) {
                 if (n.getType().equals(
                     ClusterControllerNotification.
-                        CRAWL_SERVICE_JOB_STARTED_NOTIFICATION)){
+                        CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey())){
                     handleCrawlServiceJobCompleted((ObjectName)n.getUserData());
                     return true;
                 }

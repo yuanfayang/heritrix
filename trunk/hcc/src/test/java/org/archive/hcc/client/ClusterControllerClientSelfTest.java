@@ -14,6 +14,7 @@ public class ClusterControllerClientSelfTest
         new ClusterControllerBean().init();
 
         cc = new ClusterControllerClientImpl();
+        
 
     }
 
