@@ -1,4 +1,4 @@
-package org.archive.util.jmx;
+package org.archive.hcc.util.jmx;
 
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
@@ -7,7 +7,7 @@ import javax.management.openmbean.OpenMBeanParameterInfo;
 import javax.management.openmbean.OpenMBeanParameterInfoSupport;
 import javax.management.openmbean.SimpleType;
 
-import junit.framework.TestCase;
+import org.archive.hcc.util.jmx.SimpleReflectingMbeanInvocation;
 
 public class SimpleReflectingMBeanInvocationTest
         extends

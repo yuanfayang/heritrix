@@ -9,8 +9,8 @@
 
  <goal name="run-integration-tests" prereqs="test:compile">
  	<property environment="env"/>
-	<exec executable="/bin/sh" dir="${env.JBOSS_HOME}/bin"  spawn="true">
-		<arg line="run.sh"/>
+	<exec executable="/bin/sh" dir="src/test/scripts"  spawn="true">
+		<arg line="runJboss.sh"/>
 	</exec>
 	
     <waitfor verbose="true" maxwait="3" maxwaitunit="minute" checkevery="500">

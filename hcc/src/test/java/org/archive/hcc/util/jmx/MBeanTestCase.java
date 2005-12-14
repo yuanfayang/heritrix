@@ -1,4 +1,4 @@
-/* OpenMBeanInvocationManagerTest
+/* MBeanTestCase
 * 
 * $Id$
 *
@@ -23,28 +23,35 @@
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
  
-package org.archive.util.jmx;
+package org.archive.hcc.util.jmx;
 
 import javax.management.openmbean.OpenMBeanOperationInfoSupport;
- 
-public class OpenMBeanInvocationManagerTest
-        extends
-            MBeanTestCase {
+import javax.management.openmbean.SimpleType;
 
-    public void test(){
-        OpenMBeanInvocationManager m = 
-               new OpenMBeanInvocationManager();
-        
-        OpenMBeanOperationInfoSupport info = createInfo();
-        m.addMBeanOperation(new SimpleReflectingMBeanOperation(this, info));
-        
-        
-        try {
-            String test = (String)m.invoke(info.getName(),new Object[0], new String[0]);
-            assertEquals("test", test);
-        } catch (Exception e) {
-            assertFalse(true);
-            e.printStackTrace();
-        }
+import junit.framework.TestCase;
+ 
+public abstract class MBeanTestCase extends TestCase{
+
+    /**
+     * 
+     */
+    public MBeanTestCase() {
+        super();
+        // TODO Auto-generated constructor stub
     }
+
+    protected static OpenMBeanOperationInfoSupport createInfo(){
+        return new OpenMBeanOperationInfoSupport(
+                "invoke",
+                "test operation",
+                null,
+                SimpleType.STRING,
+                0);
+    }
+    
+    public String invoke(){
+        return "test";
+    }
+    
+    
 }
