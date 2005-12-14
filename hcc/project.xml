@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <pomVersion>3</pomVersion>
+    <artifactId>hcc</artifactId>
+    <name>hcc</name>
+    <groupId>hcc</groupId>
+    <currentVersion>0.1</currentVersion>
+    <organization>
+        <name>The Internet Archive</name>
+        <url>http://www.archive.org</url>
+        <logo>http://www.archive.org/images/logo.jpg</logo>
+    </organization>
+    <inceptionYear>2005</inceptionYear>
+    <package>org.archive.hcc</package>
+    <logo>/images/logo.gif</logo>
+    <description>The Heritrix Cluster Controller is a set of packages that enable easy controller of a cluster of remote heritrix instances across multiple machines. There are two main components - the controller itself and a client API for accessing the component. The controller itself is essentially a facade with an DynamicMBean interface.  Internally it effectively finds all heritrix resources in the jndi scope and then proxies all communication to them.  It provides a set of attributes and methods which perform the general functions of finding, listing, and invoking operations on single remote instances or groups of them.  The client serves to translate the generic MBean interface into an easy to use domain specific interface thus simplying the work of programmers interested in building application specific extensions without having to deal with a generic JMX DynamicMBean interface.</description>
+    <siteAddress>http://crawler.archive.org</siteAddress>
+    <repository />
+    <mailingLists>
+        <mailingList>
+            <name>${pom.name} Dev List</name>
+        </mailingList>
+        <mailingList>
+            <name>${pom.name} User List</name>
+        </mailingList>
+    </mailingLists>
+    <developers>
+        <developer>
+            <name>Daniel Bernstein</name>
+            <id>2</id>
+            <email>dbernstein@archive.org</email>
+            <organization>The Internet Archive</organization>
+            <timezone>Pacific</timezone>
+        </developer>
+        <developer>
+            <name>Michael Stack</name>
+            <id>6</id>
+            <email>stack@archive.org</email>
+            <organization>The Internet Archive</organization>
+        </developer>
+    </developers>
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <unitTestSourceDirectory>src/test/java</unitTestSourceDirectory>
+        <unitTest>
+            <includes>
+                <include>**/*Test.java</include>
+            </includes>
+            <excludes>
+                <exclude>**/*SelfTest.java</exclude>
+            </excludes>
+        </unitTest>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+    </build>
+</project>
+
