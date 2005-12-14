@@ -1194,7 +1194,7 @@ public class ClusterControllerBean implements
                     if (notification
                             .getType()
                             .equals(ClusterControllerNotification.
-                                CRAWL_SERVICE_CREATED_NOTIFICATION)) {
+                                CRAWL_SERVICE_CREATED_NOTIFICATION.getKey())) {
                         Crawler c = remoteNameToCrawlerMap.get(beanName);
                         ObjectName proxy = c.getCrawlServiceProxyObjectName();
                         return (proxy != null && notification
