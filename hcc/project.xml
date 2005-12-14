@@ -47,7 +47,6 @@
        </license>
     </licenses>
     <dependencies>
-    	<!--
         <dependency>
             <id>MirrorJNDI</id>
             <version>1.0</version>
@@ -65,7 +64,7 @@
         <dependency>
             <groupId>heritrix</groupId>
             <artifactId>arc</artifactId>
-            <version>1.5.0</version>
+            <version>1.7.0-200512131659.jar</version>
             <url>http://crawltools.archive.org:8080/</url>
             <properties>
                 <war.bundle>true</war.bundle>
@@ -76,7 +75,6 @@
                 </license>
             </properties>
         </dependency>
-        -->
     </dependencies>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
