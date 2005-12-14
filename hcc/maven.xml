@@ -8,7 +8,7 @@
 
 	<property environment="env"/>
 
-<goal name="startJBoss">
+<goal name="start-jboss">
 	<exec executable="/bin/sh" dir="src/test/scripts"  spawn="true">
 		<arg line="runJboss.sh"/>
 	</exec>
@@ -17,13 +17,15 @@
 	</waitfor>
 </goal>
 
-<goal name="stopJBoss">
-	<exec command="sh ${env.JBOSS_HOME}/bin/shutdown.sh --shutdown"/>
+<goal name="stop-jboss">
+	<exec executable="/bin/sh" dir="${env.JBOSS_HOME}/bin/">
+		<arg line="./shutdown.sh --shutdown"/>
+	</exec>
 </goal>
 
 
 
-<goal name="startHeritrix">
+<goal name="start-crawler">
 	<exec executable="/bin/bash" dir="${env.HERITRIX_HOME}" >
 	  <arg line="./bin/heritrix --port=9080"/>
 	  
@@ -31,7 +33,7 @@
 
 </goal>
 
-<goal name="stopHeritrix">
+<goal name="stop-crawler">
 	<java fork="true" verbose="true"  jar="${env.HERITRIX_HOME}/bin/cmdline-jmxclient-0.10.5.jar">
 		<arg line="controlRole:letmein"/>
 		<arg line="localhost:8849"/>
@@ -42,11 +44,11 @@
 </goal>
 
  <goal name="run-integration-tests" prereqs="test:compile">
-	<maven:maven goals="startJBoss"/>
-	<maven:maven goals="startHeritrix"/>
-	<maven:maven goals="run-self-tests"/>
-	<maven:maven goals="stopHeritrix"/>
-	<maven:maven goals="stopJBoss"/>
+	<maven:maven goals="start-jboss" descriptor="./project.xml"/>
+	<maven:maven goals="start-crawler" descriptor="./project.xml"/>
+	<maven:maven goals="run-self-tests" descriptor="./project.xml"/>
+	<maven:maven goals="stop-crawler" descriptor="./project.xml"/>
+	<maven:maven goals="stop-jboss" descriptor="./project.xml"/>
 	
  </goal>
  
