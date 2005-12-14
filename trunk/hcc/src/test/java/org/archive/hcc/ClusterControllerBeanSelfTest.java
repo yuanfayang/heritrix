@@ -56,30 +56,30 @@ public class ClusterControllerBeanSelfTest
         assertTrue(crawlers.length > 0);
     }
 
-    public void testGetAttributesFromCrawler() throws Exception {
-        ObjectName[] crawlers = (ObjectName[]) ccBean.invoke(
-                "listCrawlers",
-                new Object[] {},
-                new String[] {});
-        MBeanServerConnection c = MBeanServerConnectionFactory
-                .createConnection(JmxUtils.extractAddress(crawlers[0]));
-        AttributeList list = (AttributeList) c.getAttributes(
-                crawlers[0],
-                new String[] { "Status" });
-        assertNotNull(list);
-        System.out.println(((Attribute) list.get(0)).getValue());
-    }
-
-    public void testInvokeCrawler() throws Exception {
-        ObjectName[] crawlers = (ObjectName[]) ccBean.invoke(
-                "listCrawlers",
-                new Object[] {},
-                new String[] {});
-        MBeanServerConnection c = MBeanServerConnectionFactory
-                .createConnection(JmxUtils.extractAddress(crawlers[0]));
-        c.invoke(crawlers[0], "startCrawling", new Object[0], new String[0]);
-
-    }
+//    public void testGetAttributesFromCrawler() throws Exception {
+//        ObjectName[] crawlers = (ObjectName[]) ccBean.invoke(
+//                "listCrawlers",
+//                new Object[] {},
+//                new String[] {});
+//        MBeanServerConnection c = MBeanServerConnectionFactory
+//                .createConnection(JmxUtils.extractAddress(crawlers[0]));
+//        AttributeList list = (AttributeList) c.getAttributes(
+//                crawlers[0],
+//                new String[] { "Status" });
+//        assertNotNull(list);
+//        System.out.println(((Attribute) list.get(0)).getValue());
+//    }
+//
+//    public void testInvokeCrawler() throws Exception {
+//        ObjectName[] crawlers = (ObjectName[]) ccBean.invoke(
+//                "listCrawlers",
+//                new Object[] {},
+//                new String[] {});
+//        MBeanServerConnection c = MBeanServerConnectionFactory
+//                .createConnection(JmxUtils.extractAddress(crawlers[0]));
+//        c.invoke(crawlers[0], "startCrawling", new Object[0], new String[0]);
+//
+//    }
 
     /*
      * Test method for

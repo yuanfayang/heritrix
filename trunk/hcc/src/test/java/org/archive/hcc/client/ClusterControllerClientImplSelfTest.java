@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ClusterControllerClientImplSelfTest
         extends
-            ClusterControllerClientSelfTest {
+            ClusterControllerClientSelfTestBase {
 
     /*
      * Test method for

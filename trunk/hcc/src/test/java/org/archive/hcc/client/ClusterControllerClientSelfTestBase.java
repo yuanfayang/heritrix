@@ -4,7 +4,7 @@ import junit.framework.TestCase;
 
 import org.archive.hcc.ClusterControllerBean;
 
-public class ClusterControllerClientSelfTest
+public class ClusterControllerClientSelfTestBase
         extends
             TestCase {
     protected ClusterControllerClientImpl cc;
