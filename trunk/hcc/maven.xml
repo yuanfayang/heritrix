@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+  xmlns:deploy="deploy"
+  xmlns:ant="jelly:ant"
+  xmlns:j="jelly:core"
+  xmlns:maven="jelly:maven"
+  xmlns:velocity="jelly:org.apache.commons.jelly.tags.velocity.VelocityTagLibrary">
+
+
+ <goal name="run-integration-tests" prereqs="test:compile">
+ 	<property environment="env"/>
+	<exec executable="/bin/sh" dir="${env.JBOSS_HOME}/bin"  spawn="true">
+		<arg line="run.sh"/>
+	</exec>
+	
+    <waitfor verbose="true" maxwait="3" maxwaitunit="minute" checkevery="500">
+        <http url="http://localhost:8080/"/>
+	</waitfor>
+
+	<exec command="${env.HERITRIX_HOME}/bin/heritrix --port=9080"/>
+
+	<junit printsummary="true" fork="true">
+		<jvmarg value="-Djava.naming.factory.initial=org.jnp.interfaces.NamingContextFactory"/>
+		<jvmarg value="-Djava.naming.provider.url=jnp://localhost:1099"/>
+		<jvmarg value="-Djava.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces"/>
+		<jvmarg value="-Dcom.sun.management.jmxremote.port=8850"/>
+		<jvmarg value="-Dcom.sun.management.jmxremote.ssl=false"/>
+		<jvmarg value="-Dcom.sun.management.jmxremote.password.file=./jmxremote.password"/>
+		<jvmarg value="-Dcom.sun.management.jmxremote=true"/>
+						
+			
+		<formatter type="plain"/>
+		  <classpath>
+		    <pathelement location="target/test-classes"/>
+		    <pathelement location="target/classes"/>
+	    	<fileset dir="${env.JBOSS_HOME}/client" includes="*.jar"/>
+		  </classpath>
+
+ 		<batchtest todir="target/test-reports">
+ 			
+	 		<fileset dir="src/test/java">
+			    <include name="**/*SelfTest.java"/>
+			</fileset>
+ 		</batchtest>
+ 	</junit>
+
+	<java fork="true" verbose="true"  jar="${env.HERITRIX_HOME}/bin/cmdline-jmxclient-0.10.5.jar">
+		<arg line="controlRole:letmein"/>
+		<arg line="localhost:8849"/>
+		<arg line="org.archive.crawler:guiport=9080,host=localhost,jmxport=8849,name=Heritrix,type=CrawlService"/>
+		<arg line="shutdown"/>
+	</java>	
+	<exec command="sh ${env.JBOSS_HOME}/bin/shutdown.sh --shutdown"/>
+ </goal>
+  
+
+</project>
