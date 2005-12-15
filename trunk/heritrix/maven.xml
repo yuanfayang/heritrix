@@ -76,7 +76,7 @@
             <ant:arg value="-v" />
             <ant:arg value="-o" />
             <ant:arg
-             value="${maven.build.dir}/arc-${pom.currentVersion}.jar" />
+             value="${maven.build.dir}/archive-commons-${pom.currentVersion}.jar" />
             <ant:arg value="-c" />
             <ant:arg value="${maven.build.dir}/heritrix*jar" />
             <ant:arg value="org.archive.io.arc.ARCReader.class" />
