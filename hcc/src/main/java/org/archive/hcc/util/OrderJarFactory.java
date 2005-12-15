@@ -41,7 +41,10 @@ import java.util.logging.Logger;
 public class OrderJarFactory {
     private static Logger log =
         Logger.getLogger(OrderJarFactory.class.getName());
-
+    
+    public static final String NAME_KEY = "name";
+    public static final String SEEDS_KEY = "seeds";
+    
 
     public OrderJarFactory() {
         super();
@@ -66,9 +69,9 @@ public class OrderJarFactory {
             String date = new SimpleDateFormat("yyyyMMddhhmmss")
                     .format(new Date());
 
-            order = order.replace("$name", parameters.get("name").toString());
+            order = order.replace("$name", parameters.get(NAME_KEY).toString());
             order = order.replace("$arcPrefix", parameters
-                    .get("name")
+                    .get(NAME_KEY)
                     .toString());
             order = order.replace("$date", date);
             ByteArrayOutputStream orderFileOs = new ByteArrayOutputStream();
@@ -81,7 +84,7 @@ public class OrderJarFactory {
             ByteArrayOutputStream seedsOs = new ByteArrayOutputStream();
             int count = 0;
             Collection<String> seeds = (Collection<String>) parameters
-                    .get("seeds");
+                    .get(SEEDS_KEY);
             for (String seed : seeds) {
                 if (count++ > 0) {
                     seedsOs.write("\n".getBytes());
