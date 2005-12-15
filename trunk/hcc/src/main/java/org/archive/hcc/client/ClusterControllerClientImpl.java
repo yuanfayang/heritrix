@@ -23,8 +23,6 @@
 
 package org.archive.hcc.client;
 
-
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.InvalidParameterException;
@@ -51,10 +49,10 @@ import javax.management.openmbean.CompositeData;
 import javax.swing.event.EventListenerList;
 
 import org.archive.hcc.util.ClusterControllerNotification;
-import org.archive.hcc.util.JmxUtils;
 import org.archive.hcc.util.NotificationDelegatableBase;
 import org.archive.hcc.util.NotificationDelegator;
 import org.archive.hcc.util.jmx.MBeanServerConnectionFactory;
+import org.archive.util.JmxUtils;
 
 /**
  * As the workhorse of the cluster controller client, this class is responsible 

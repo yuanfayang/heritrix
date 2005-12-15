@@ -26,8 +26,8 @@ import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.ObjectName;
 
-import org.archive.hcc.util.JmxUtils;
 import org.archive.hcc.util.NotificationDelegatableBase;
+import org.archive.util.JmxUtils;
 
 public abstract class RegistrationNotificationHandler
         extends

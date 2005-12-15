@@ -63,8 +63,8 @@
         </dependency>
         <dependency>
             <groupId>heritrix</groupId>
-            <artifactId>arc</artifactId>
-            <version>1.7.0-200512131659.jar</version>
+            <artifactId>archive-commons</artifactId>
+            <version>1.6.0</version>
             <url>http://crawltools.archive.org:8080/</url>
             <properties>
                 <war.bundle>true</war.bundle>
