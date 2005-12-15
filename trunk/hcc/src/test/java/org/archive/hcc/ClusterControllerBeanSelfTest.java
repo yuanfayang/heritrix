@@ -7,7 +7,7 @@ import javax.management.ObjectName;
 
 import junit.framework.TestCase;
 
-import org.archive.hcc.util.JmxUtils;
+import org.archive.util.JmxUtils;
 import org.archive.hcc.util.jmx.MBeanServerConnectionFactory;
 
 public class ClusterControllerBeanSelfTest
