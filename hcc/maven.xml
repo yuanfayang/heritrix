@@ -78,4 +78,17 @@
  		</batchtest>
  	</junit>
  	</goal>
+
+    <goal name="site:update-sourceforge"
+        description="Copy docs up to sourceforge under crawler project.">
+        <exec executable="rsync" >
+            <arg value="--quiet" />
+            <arg value="--archive" />
+            <arg value="--rsh=ssh" />
+            <arg
+              value="${maven.build.dir}/docs/"/>
+            <arg value="${maven.username}@crawler.archive.org:/home/groups/a/ar/archive-crawler/htdocs/hcc/" />
+        </exec>
+    </goal>
+
 </project>
