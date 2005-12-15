@@ -22,11 +22,11 @@
  */
 package org.archive.util;
 
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,8 +37,6 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.RuntimeOperationsException;
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.InvalidOpenTypeException;
 import javax.management.openmbean.OpenDataException;
@@ -62,16 +60,29 @@ public class JmxUtils {
         Logger.getLogger(JmxUtils.class.getName());
     public static final String TYPE = "type";
     public static final String SERVICE = "CrawlService";
+    public static final String JOB = SERVICE + ".Job";
     public static final String NAME = "name";
     public static final String HOST = "host";
     public static final String JMX_PORT = "jmxport";
     public static final String GUI_PORT = "guiport";
     public static final String KEY = "key";
+
     /**
      * Key for name of the Heritrix instance hosting a Job: i.e. the
      * CrawlJob's host/'mother'.
      */
     public static final String MOTHER = "mother";
+
+    public static final ObjectName MBEAN_SERVER_DELEGATE;
+    static {
+        try {
+            MBEAN_SERVER_DELEGATE = new ObjectName(
+                "JMImplementation:type=MBeanServerDelegate");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
     
     private static final List OPENTYPES =
         Arrays.asList(OpenType.ALLOWED_CLASSNAMES);
@@ -312,5 +323,23 @@ public class JmxUtils {
         }
         return new CompositeType(compositeTypeName, compositeTypeDescription,
             keys, keys, types);
+    }
+
+    public static InetSocketAddress extractAddress(final ObjectName name) {
+        return new InetSocketAddress(name.getKeyProperty(HOST),
+            Integer.parseInt(name.getKeyProperty(JMX_PORT)));
+    }
+
+    /**
+     * Returns the UID portion of the name key property of
+     * an object name representing a "CrawlService.Job" bean.
+     * It is assumed that the name will have the format
+     * {crawl name}-{uid}.
+     * @param on A CrawlServer.Job object name.
+     * @return Uid for a CrawlServer.Job.
+     */
+    public static String getUid(final ObjectName on) {
+        String name = on.getKeyProperty(NAME);
+        return name.substring(name.indexOf("-") + 1);
     }
 }
