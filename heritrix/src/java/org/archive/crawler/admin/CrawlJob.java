@@ -643,14 +643,21 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
 
     /**
+     * @return Status of the crawler (Used by JMX).
+     */
+    public String getCrawlStatus() {
+        return this.controller != null?
+            this.controller.getState().toString(): "Illegal State";
+    }
+    
+    /**
      * Get the current status of this CrawlJob
      *
      * @return The current status of this CrawlJob
      *         (see constants defined here beginning with STATUS)
      */
-    public String getCrawlStatus() {
-        return this.controller != null?
-            this.controller.getState().toString(): "Illegal State";
+    public String getStatus() {
+        return this.status;
     }
 
     /**
