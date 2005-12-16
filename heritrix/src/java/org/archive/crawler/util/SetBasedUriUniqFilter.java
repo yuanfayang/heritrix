@@ -118,7 +118,7 @@ public abstract class SetBasedUriUniqFilter implements UriUniqFilter {
         setRemove(key);
     }
 
-    public long flush() {
+    public long requestFlush() {
         // unnecessary; all actions with set-based uniqfilter are immediate
         return 0;
     }
