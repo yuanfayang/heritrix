@@ -43,7 +43,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
-import javax.management.AttributeChangeNotification;
 import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
@@ -649,8 +648,9 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
      * @return The current status of this CrawlJob
      *         (see constants defined here beginning with STATUS)
      */
-    public String getStatus() {
-        return status;
+    public String getCrawlStatus() {
+        return this.controller != null?
+            this.controller.getState().toString(): "Illegal State";
     }
 
     /**
@@ -1538,7 +1538,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         // on to the AttributeNotFoundException for case where we've an
         // attribute but no handler.
         if (attribute_name.equals(STATUS_ATTR)) {
-            return getStatus();
+            return getCrawlStatus();
         }
         if (attribute_name.equals(NAME_ATTR)) {
             return getJobName();
