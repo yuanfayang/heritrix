@@ -13,22 +13,18 @@ public class CrawlerImplSelfTest
         extends
             ClusterControllerClientSelfTestBase {
     private CrawlerImpl c;
-    private AllPurposeTestListener listener;
     
     protected void setUp() throws Exception {
     
         super.setUp();
         c = (CrawlerImpl) cc.createCrawler();
         c.startPendingJobQueue();
-        listener = new AllPurposeTestListener();
-
     }
 
     protected void tearDown() throws Exception {
         c.destroy();
         super.tearDown();
         c = null;
-        listener = null;
 
     }
 
@@ -49,9 +45,13 @@ public class CrawlerImplSelfTest
     }
 
     public void testCreateJobHearJobFindJobParentStopJob() {
+        AllPurposeTestListener listener;
+        listener = new AllPurposeTestListener();
+        cc.addCrawlerLifecycleListener(listener);
+        cc.addCrawlJobListener(listener);
+
 
         try {
-            cc.addCrawlJobListener(listener);
             String uid = c.addJob(new JobOrder("test", getTestJar()));
 
             try {
@@ -101,7 +101,7 @@ public class CrawlerImplSelfTest
             try {
                 // TODO follow up with Stack about why this pause is required.
                 // if you take it away, sometimes terminateCurrentJob() hangs.
-                Thread.sleep(1);
+                Thread.sleep(1000);
             } catch (InterruptedException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
@@ -121,14 +121,17 @@ public class CrawlerImplSelfTest
             e.printStackTrace();
             assertFalse(true);
         } finally {
+            cc.removeCrawlerLifecycleListener(listener);
             cc.removeCrawlJobListener(listener);
         }
     }
 
     public void testCheckCrawlJobStatus(){
-        
-        //start a new job
+        AllPurposeTestListener listener;
+        listener = new AllPurposeTestListener();
+        cc.addCrawlerLifecycleListener(listener);
         cc.addCrawlJobListener(listener);
+        //start a new job
         String uid = c.addJob(new JobOrder("test", getTestJar()));
 
         try {
@@ -148,9 +151,11 @@ public class CrawlerImplSelfTest
     }
     
     public void testCheckMotherNotNull(){
-        
-        //start a new job
+        AllPurposeTestListener listener;
+        listener = new AllPurposeTestListener();
+        cc.addCrawlerLifecycleListener(listener);
         cc.addCrawlJobListener(listener);
+        //start a new job
         String uid = c.addJob(new JobOrder("test", getTestJar()));
 
         try {

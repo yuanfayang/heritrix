@@ -28,6 +28,8 @@ package org.archive.hcc.client;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.archive.hcc.ClusterControllerBean;
  
 /**
  * This class manages singleton instances of the ClusterControllerClient.
@@ -56,7 +58,8 @@ public class ClusterControllerClientManager {
             if(defaultClient == null){
                 String host = System.getProperty("org.archive.hcc.client.host","localhost");
                 int jmxPort = Integer.parseInt(System.getProperty("org.archive.hcc.client.jmxPort","8849"));
-                defaultClient = new ClusterControllerClientImpl(new InetSocketAddress(host, jmxPort));
+                InetSocketAddress address = new InetSocketAddress(host, jmxPort);
+                defaultClient = new ClusterControllerClientImpl(address);
             }
             
             return defaultClient;
@@ -68,6 +71,14 @@ public class ClusterControllerClientManager {
             
             throw new RuntimeException(e);
         } 
+    }
+    
+    /**
+     * Removes the manager's reference to the default client 
+     * for use with unit tests.
+     */
+    public static void resetDefaultClient(){
+        defaultClient = null;
     }
     
     

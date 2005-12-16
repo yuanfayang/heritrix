@@ -15,13 +15,13 @@ public class ClusterControllerClientSelfTestBase
 
         cc = new ClusterControllerClientImpl();
         
+        
 
     }
 
     protected void tearDown() throws Exception {
         super.tearDown();
         cc.destroy();
-
     }
 
 }

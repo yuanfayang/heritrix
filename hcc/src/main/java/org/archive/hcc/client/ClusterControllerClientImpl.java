@@ -196,7 +196,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             protected boolean delegate(Notification n, Object handbac) {
                 if (n.getType().equals(
                     ClusterControllerNotification.
-                        CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey())){
+                        CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey())){
                     handleCrawlServiceJobCompleted((ObjectName)n.getUserData());
                     return true;
                 }
@@ -288,7 +288,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                 job,
                 findCrawlJobParentInternal(
                         JmxUtils.getUid(job),
-                        extractRemoteAddress(job)),
+                        org.archive.hcc.util.JmxUtils.extractRemoteAddress(job)),
                         connection);
     }
 
@@ -355,11 +355,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
     }
     
     
-    static InetSocketAddress extractRemoteAddress(final ObjectName name) {
-        return new InetSocketAddress(name.getKeyProperty("remoteHost"),
-            Integer.parseInt(name.getKeyProperty("remoteJmxPort")));
-    }
-    
+
     private void handleCrawlServiceJobCompleted(ObjectName crawlJob) {
         try {
             CurrentCrawlJob job = createCurrentCrawlJob(
