@@ -23,6 +23,8 @@
 package org.archive.hcc.client;
 
 public interface CrawlJob {
-    public String getUid();
+    
+    public Long getUid();
+    public String getJobName();
     public Crawler getMother();
 }

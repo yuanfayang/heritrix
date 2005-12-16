@@ -24,15 +24,45 @@ package org.archive.hcc.client;
 
 import javax.management.MBeanServerConnection;
 
+
 public class CompletedCrawlJobImpl
         extends
             CrawlJobBase implements
         CompletedCrawlJob {
 
     public CompletedCrawlJobImpl(
-            String uid,
-            Crawler mother,
+            Long uid, String jobName,
+            CrawlerImpl mother,
             MBeanServerConnection connection) {
-        super(uid, mother, connection);
+        super(uid, jobName,mother, connection);
     }
+    
+    /* (non-Javadoc)
+     * @see org.archive.hcc.client.CompletedCrawlJob#getCrawlReport()
+     */
+    public String getCrawlReport() throws ClusterException {
+        return this.mother.getCrawlReport(this.uid);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.hcc.client.CompletedCrawlJob#getHostReport()
+     */
+    public String getHostReport() throws ClusterException {
+        return this.mother.getHostsReport(this.uid);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.hcc.client.CompletedCrawlJob#getMimeTypeReport()
+     */
+    public String getMimeTypeReport() throws ClusterException {
+        return this.mother.getMimeTypesReport(this.uid);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.hcc.client.CompletedCrawlJob#getSeedReport()
+     */
+    public String getSeedReport() throws ClusterException {
+        return this.mother.getSeedsReport(this.uid);
+    }
+    
 }
