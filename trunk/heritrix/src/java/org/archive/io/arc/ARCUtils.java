@@ -22,14 +22,19 @@
  */
 package org.archive.io.arc;
 
+import it.unimi.dsi.mg4j.io.RepositionableStream;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.archive.io.GzipHeader;
+import org.archive.io.GzippedInputStream;
+import org.archive.io.NoGzipMagicException;
 import org.archive.net.UURI;
 
 public class ARCUtils implements ARCConstants {
@@ -97,29 +102,88 @@ public class ARCUtils implements ARCConstants {
             return compressedARCFile;
         }
         
-        FileInputStream fis = new FileInputStream(arcFile);
+        final InputStream is = new FileInputStream(arcFile);
         try {
-            GzipHeader gh = new GzipHeader(new FileInputStream(arcFile));
-            byte[] fextra = gh.getFextra();
-            // Now make sure following bytes are IA GZIP comment.
-            // First check length. ARC_GZIP_EXTRA_FIELD includes length
-            // so subtract two and start compare to ARC_GZIP_EXTRA_FIELD
-            // at +2.
-            if (ARC_GZIP_EXTRA_FIELD.length - 2 == fextra.length) {
-                compressedARCFile = true;
-                for (int i = 0; i < fextra.length; i++) {
-                    if (fextra[i] != ARC_GZIP_EXTRA_FIELD[i + 2]) {
-                        compressedARCFile = false;
-                        break;
-                    }
-                }
-            }
+            compressedARCFile = testCompressedARCStream(is);
         } finally {
-            fis.close();
+            is.close();
         }
         return compressedARCFile;
     }
-
+    
+    /**
+     * Tests passed stream is gzip stream by reading in the HEAD.
+     * Does not reposition the stream.  That is left up to the caller.
+     * @param is An InputStream.
+     * @return True if compressed stream.
+     * @throws IOException
+     */
+    public static boolean testCompressedARCStream(final InputStream is)
+            throws IOException {
+        boolean compressedARCFile = false;
+        GzipHeader gh = null;
+        try {
+            gh = new GzipHeader(is);
+        } catch (NoGzipMagicException e ) {
+            return compressedARCFile;
+        }
+        
+        byte[] fextra = gh.getFextra();
+        // Now make sure following bytes are IA GZIP comment.
+        // First check length. ARC_GZIP_EXTRA_FIELD includes length
+        // so subtract two and start compare to ARC_GZIP_EXTRA_FIELD
+        // at +2.
+        if (ARC_GZIP_EXTRA_FIELD.length - 2 == fextra.length) {
+            compressedARCFile = true;
+            for (int i = 0; i < fextra.length; i++) {
+                if (fextra[i] != ARC_GZIP_EXTRA_FIELD[i + 2]) {
+                    compressedARCFile = false;
+                    break;
+                }
+            }
+        }
+        return compressedARCFile;
+    }
+    
+    /**
+     * Tests passed stream is gzip stream by reading in the HEAD.
+     * Does reposition of stream when done.
+     * @param rs An InputStream that is Repositionable.
+     * @return True if compressed stream.
+     * @throws IOException
+     */
+    public static boolean testCompressedRepositionalStream(
+            final RepositionableStream rs)
+    throws IOException {
+        boolean compressedARCFile = false;
+        long p = rs.position();
+        try {
+            compressedARCFile = testCompressedStream((InputStream)rs);
+        } finally {
+            rs.position(p);
+        }
+        return compressedARCFile; 
+    }
+    
+    /**
+     * Tests passed stream is gzip stream by reading in the HEAD.
+     * Does reposition of stream when done.
+     * @param is An InputStream.
+     * @return True if compressed stream.
+     * @throws IOException
+     */
+    public static boolean testCompressedStream(final InputStream is)
+    throws IOException {
+        boolean compressedARCFile = false;
+        try {
+            new GzipHeader(is);
+            compressedARCFile = true;
+        } catch (NoGzipMagicException e) {
+            return compressedARCFile;
+        }
+        return compressedARCFile;
+    }
+    
     /**
      * Check file is uncompressed ARC file.
      * 

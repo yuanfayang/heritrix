@@ -107,13 +107,13 @@ public class GzipHeader {
      * Advances the stream past the gzip header.
      * @param in InputStream.
      * 
-     * @throws IOException
+     * @throws IOException Throws if does not start with GZIP Header.
      */
     public void readHeader(InputStream in) throws IOException {
         CRC32 crc = new CRC32();
         crc.reset();
         if (!testGzipMagic(in, crc)) {
-            throw new IOException("Failed to find GZIP MAGIC");
+            throw new NoGzipMagicException();
         }
         this.length += 2;
         if (readByte(in, crc) != Deflater.DEFLATED) {

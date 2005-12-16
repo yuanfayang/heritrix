@@ -74,6 +74,7 @@ public class RandomAccessInputStream extends InputStream
      * 
      * @param file File to get RAFIS on.  Creates an RAF from passed file.
      * Closes the created RAF when this stream is closed.
+     * @throws FileNotFoundException 
      */
     public RandomAccessInputStream(File file) throws FileNotFoundException {
         this(new RandomAccessFile(file, "r"), true);
