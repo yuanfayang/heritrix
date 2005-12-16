@@ -27,24 +27,33 @@ import javax.management.MBeanServerConnection;
 
 abstract public class CrawlJobBase implements CrawlJob {
 
-    protected Crawler mother;
+    protected CrawlerImpl mother;
 
     protected MBeanServerConnection connection;
 
-    protected String uid;
+    protected Long uid;
+    
+    protected String jobName;
 
     public CrawlJobBase(
-            String uid,
-            Crawler mother,
+            Long uid,
+            String jobName,
+            CrawlerImpl mother,
             MBeanServerConnection connection) {
         this.uid = uid;
         this.connection = connection;
         this.mother = mother;
+        this.jobName = jobName;
     }
 
-    public String getUid() {
+    public Long getUid() {
         return uid;
     }
+    
+    public String getJobName(){
+        return this.jobName;
+    }
+    
 
     public Crawler getMother() {
         return mother;

@@ -348,9 +348,14 @@ public class ClusterControllerBean implements
         Container c = resolveLeastLoadedContainer();
 
         if (c == null) {
-            throw new MBeanException(new Exception(
-                    "No space available in remote"
-                            + " containers for new crawler " + "instances."));
+            MBeanException e =  new MBeanException(
+                    new Exception(
+                    "No space available in remote"+
+                    " containers for new crawler " + "instances."),
+                    "insufficent crawler resources"
+            );
+            
+            throw e;
         }
 
         try {

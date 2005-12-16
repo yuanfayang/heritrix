@@ -22,11 +22,20 @@
  */
 package org.archive.hcc.client;
 
+import java.io.IOException;
 import java.util.Collection;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
 
+/**
+ * 
+ * @author Daniel Bernstein (dbernstein@archive.org)
+ *
+ */
 public class CrawlerImpl extends ProxyBase implements Crawler {
     public void startPendingJobQueue() {
         try {
@@ -131,6 +140,46 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
         }
 
     }
+    
+
+    String getCrawlReport(Long uid) throws ClusterException{
+        return getReport("crawl-report", uid);
+    }
+    
+    String getHostsReport(Long uid) throws ClusterException{
+        return getReport("hosts-report", uid);
+    }
+    
+    String getSeedsReport(Long uid) throws ClusterException{
+        return getReport("seeds-report",uid);
+    }
+
+    String getMimeTypesReport(Long uid) throws ClusterException{
+        return getReport("mimetype-report",uid);
+    }
+
+    
+    /**
+     * 
+     * @param reportName
+     * @param uid
+     * @return
+     * @throws ClusterException
+     */
+    String getReport(String reportName, Long uid) throws ClusterException{
+        
+        try {
+            return (String)this.connection.invoke(
+                                this.name, 
+                                "crawlendReport", 
+                                new Object[]{uid.toString(), reportName}, 
+                                new String[]{"java.lang.String", "java.lang.String"});
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ClusterException(e);
+        } 
+    }
+
 
     public boolean deleteCompletedCrawlJob(CompletedCrawlJob job) {
         // TODO Auto-generated method stub

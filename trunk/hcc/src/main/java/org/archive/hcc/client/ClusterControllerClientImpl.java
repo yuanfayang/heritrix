@@ -46,6 +46,7 @@ import javax.management.Notification;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
+import javax.naming.InsufficientResourcesException;
 import javax.swing.event.EventListenerList;
 
 import org.archive.hcc.util.ClusterControllerNotification;
@@ -59,9 +60,9 @@ import org.archive.util.JmxUtils;
  * for connecting to the local or remote <code>ClusterControllerBean</code> via
  * its <code>DynamicMBean</code> interface. It hides all the details of
  * connecting to the remote MBean, ie invocations and notifications. 
- * @author dbernstein
+ * @author Daniel Bernstein (dbernstein@archive.org)
  */
-public class ClusterControllerClientImpl {
+class ClusterControllerClientImpl implements ClusterControllerClient{
 
     private static final Logger log = Logger.getLogger(
             ClusterControllerClientImpl.class.getName());
@@ -81,7 +82,7 @@ public class ClusterControllerClientImpl {
      * @throws InstanceNotFoundException
      * @throws IOException
      */
-    public ClusterControllerClientImpl(InetSocketAddress address)
+    ClusterControllerClientImpl(InetSocketAddress address)
             throws InstanceNotFoundException,
             IOException {
         init(MBeanServerConnectionFactory.createConnection(address));
@@ -121,7 +122,7 @@ public class ClusterControllerClientImpl {
     /**
      * Creates a local instance of the ClusterControllerBean and attaches to it.
      */
-    public ClusterControllerClientImpl() {
+    ClusterControllerClientImpl() {
         try {
             init(createMBeanServer());
         } catch (InstanceNotFoundException e) {
@@ -235,7 +236,7 @@ public class ClusterControllerClientImpl {
                     try {
                         fireCrawlJobResumed(new CurrentCrawlJobImpl(
                                 source,
-                                findCrawlJobParent(
+                                findCrawlJobParentInternal(
                                         JmxUtils.getUid(source),
                                         JmxUtils.extractAddress(source)),
                                 connection));
@@ -255,7 +256,7 @@ public class ClusterControllerClientImpl {
                     try {
                         fireCrawlJobPaused(new CurrentCrawlJobImpl(
                                 source,
-                                findCrawlJobParent(
+                                findCrawlJobParentInternal(
                                         JmxUtils.getUid(source),
                                         JmxUtils.extractAddress(source)),
                                 connection));
@@ -268,6 +269,26 @@ public class ClusterControllerClientImpl {
             }
         });
 
+        
+        d.addDelegatable(new NotificationDelegatableBase() {
+            protected boolean delegate(Notification n, Object handbac) {
+                if (n.getType().equals("crawlEnding")) {
+                    ObjectName source = (ObjectName) n.getSource();
+                    try {
+                        fireCrawlJobStopping(new CurrentCrawlJobImpl(
+                                source,
+                                findCrawlJobParentInternal(
+                                        JmxUtils.getUid(source),
+                                        JmxUtils.extractAddress(source)),
+                                connection));
+                        return true;
+                    } catch (ClusterException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return false;
+            }
+        });
         return d;
     }
 
@@ -301,7 +322,7 @@ public class ClusterControllerClientImpl {
         try {
             CurrentCrawlJobImpl cj = new CurrentCrawlJobImpl(
                     source,
-                    findCrawlJobParent(JmxUtils.getUid(source), JmxUtils
+                    findCrawlJobParentInternal(JmxUtils.getUid(source), JmxUtils
                             .extractAddress(source)),
                     this.connection);
             CurrentCrawlJobListener[] listener = this.listenerList
@@ -329,7 +350,7 @@ public class ClusterControllerClientImpl {
         try {
             CurrentCrawlJob job = new CurrentCrawlJobImpl(
                     crawlJob,
-                    findCrawlJobParent(JmxUtils.getUid(crawlJob), JmxUtils
+                    findCrawlJobParentInternal(JmxUtils.getUid(crawlJob), JmxUtils
                             .extractAddress(crawlJob)),
                     this.connection);
             fireCrawlJobStarted(job);
@@ -344,7 +365,7 @@ public class ClusterControllerClientImpl {
         try {
             job = new CurrentCrawlJobImpl(
                     crawlJob,
-                    findCrawlJobParent(JmxUtils.getUid(crawlJob), JmxUtils
+                    findCrawlJobParentInternal(JmxUtils.getUid(crawlJob), JmxUtils
                             .extractAddress(crawlJob)),
                     this.connection);
             fireCrawlJobCompleted(job);
@@ -386,6 +407,14 @@ public class ClusterControllerClientImpl {
             listener[i].crawlJobPaused(job);
         }
     }
+    
+    private void fireCrawlJobStopping(CurrentCrawlJob job) {
+        CurrentCrawlJobListener[] listener = this.listenerList
+                .getListeners(CurrentCrawlJobListener.class);
+        for (int i = 0; i < listener.length; i++) {
+            listener[i].crawlJobStopping(job);
+        }
+    }
 
     private void fireCrawlJobResumed(CurrentCrawlJob job) {
         CurrentCrawlJobListener[] listener = this.listenerList
@@ -398,15 +427,26 @@ public class ClusterControllerClientImpl {
     private void fireCrawlJobCompleted(CurrentCrawlJob job) {
         CurrentCrawlJobListener[] listener = this.listenerList
                 .getListeners(CurrentCrawlJobListener.class);
-        CompletedCrawlJobImpl cj = new CompletedCrawlJobImpl(job.getUid(), job
-                .getMother(), this.connection);
+        CompletedCrawlJobImpl cj = 
+            new CompletedCrawlJobImpl(
+                    job.getUid(), 
+                    job.getJobName(),
+                    (CrawlerImpl)job.getMother(), 
+                    this.connection);
 
         for (int i = 0; i < listener.length; i++) {
             listener[i].crawlJobCompleted(cj);
         }
     }
+    
 
-    public Crawler findCrawlJobParent(String uid, InetSocketAddress address)
+    public Crawler findCrawlJobParent(String uid, InetSocketAddress address) 
+        throws ClusterException {
+        return findCrawlJobParentInternal(uid, address);
+    }
+    
+
+    public CrawlerImpl findCrawlJobParentInternal(String uid, InetSocketAddress address)
             throws ClusterException {
         try {
             ObjectName parent = (ObjectName) this.connection.invoke(
@@ -446,7 +486,8 @@ public class ClusterControllerClientImpl {
         return result;
     }
 
-    public Crawler createCrawler() throws ClusterException {
+    public Crawler createCrawler() throws 
+            InsufficientCrawlingResourcesException, ClusterException {
         try {
             ObjectName crawler = (ObjectName) this.connection.invoke(
                     this.name,
@@ -454,7 +495,15 @@ public class ClusterControllerClientImpl {
                     new Object[0],
                     new String[0]);
             return new CrawlerImpl(crawler, this.connection);
-        } catch (Exception e) {
+        }catch (MBeanException e) {
+            if(e.getMessage().equals("insufficent crawler resources")){
+                throw new InsufficientCrawlingResourcesException(e);
+            }
+            e.printStackTrace();
+            throw new ClusterException(e);
+        } 
+        
+        catch (Exception e) {
             e.printStackTrace();
             throw new ClusterException(e);
         }

@@ -37,19 +37,21 @@ implements CurrentCrawlJob {
 
     public CurrentCrawlJobImpl(
             ObjectName name,
-            Crawler mother,
+            CrawlerImpl mother,
             MBeanServerConnection connection) {
-        super(JmxUtils.getUid(name), mother, connection);
+        super(new Long(JmxUtils.getUid(name)),extractSeedCollectionName(name), mother, connection);
         this.name = name;
+    }
+    
+    static String extractSeedCollectionName(ObjectName on){
+        String name = on.getKeyProperty(JmxUtils.NAME);
+        return name.substring(0,name.indexOf("-"));
     }
 
     public ObjectName getName() {
         return this.name;
     }
 
-    public String getUid() {
-        return JmxUtils.getUid(getName());
-    }
 
     public InetSocketAddress getRemoteAddress() {
         // TODO Auto-generated method stub
@@ -85,9 +87,9 @@ implements CurrentCrawlJob {
         }
     }
 
-    public String getStatus() {
+    public String getCrawlStatus() {
         try {
-            return this.connection.getAttribute(this.name, "status").toString();
+            return this.connection.getAttribute(this.name, "crawlStatus").toString();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

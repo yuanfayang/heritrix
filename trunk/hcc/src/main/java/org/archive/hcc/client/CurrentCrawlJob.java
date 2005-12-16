@@ -25,13 +25,12 @@ package org.archive.hcc.client;
 import java.net.InetSocketAddress;
 
 public interface CurrentCrawlJob extends CrawlJob, Proxy {
+    
     public InetSocketAddress getRemoteAddress();
-
-    public String getUid();
 
     public void pause();
 
     public void resume();
 
-    public String getStatus();
+    public String getCrawlStatus();
 }

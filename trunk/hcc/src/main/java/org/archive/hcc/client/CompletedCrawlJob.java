@@ -27,5 +27,33 @@ package org.archive.hcc.client;
  * @author Daniel Bernstein (dbernstein@archive.org)
  */
 public interface CompletedCrawlJob extends CrawlJob {
-    // Empty.
+    /**
+     * Returns a crawl report which is some statistics summarizing
+     * the end state of the crawl.
+     * @return
+     * @throws ClusterException
+     */
+    public String getCrawlReport() throws ClusterException;
+    /**
+     * Returns a seed report which details final crawl status of all the seeds.
+     * @return
+     * @throws ClusterException
+     */
+
+    public String getSeedReport() throws ClusterException;
+
+    /**
+     * A count of bytes and docs collected by host.
+     * @return
+     * @throws ClusterException
+     */
+    public String getHostReport() throws ClusterException;
+    
+    /**
+     * A count of bytes and docs collected by mime type.
+     * @return
+     * @throws ClusterException
+     */
+    
+    public String getMimeTypeReport() throws ClusterException;
 }
