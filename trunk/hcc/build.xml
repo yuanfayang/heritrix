@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<project name="hcc"   basedir=".">
 <!--Use maven to build hcc.
 
     (This is a placeholder build.xml. Without it, the maven build of src
     will try to autogenerate an ant build file spewing an ugly exception
     into the build).
  -->
+
+</project>
