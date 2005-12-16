@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.datamodel;
 
+import java.io.File;
 
 /**
  * A UriUniqFilter passes URI objects to a destination
@@ -114,16 +115,24 @@ public interface UriUniqFilter {
     public void forget(String key, CandidateURI value);
     
     /**
-     * Force pending items to be added/dropped.
+     * Request that any pending items be added/dropped. Implementors
+     * may ignore the request if a flush would be too expensive/too 
+     * soon. 
+     * 
      * @return Number added.
      */
-    public long flush();
+    public long requestFlush();
     
     /**
      * Close down any allocated resources.
      * Makes sense calling this when checkpointing.
      */
     public void close();
+    
+    /**
+     * Set a File to receive a log for replay profiling. 
+     */
+    public void setProfileLog(File logfile);
     
     /**
      * URIs that have not been seen before 'visit' this 'Visitor'.

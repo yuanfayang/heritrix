@@ -564,10 +564,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                 this.wakeQueues();
                 timeTilWake = this.nextWakeupTime - now;
             }
-            // Don't wait if there are items buffered in alreadyIncluded or
-            // inactive queues, or wait any longer than interval to next wake
-            long wait = (alreadyIncluded.pending() > 0) ||
-                (!inactiveQueues.isEmpty())?
+            // Don't wait if there are items buffered in inactive queues, 
+            // or wait any longer than interval to next wake / default wait
+            long wait = (!inactiveQueues.isEmpty())?
                     0 :Math.min(DEFAULT_WAIT, timeTilWake);
             
             WorkQueue readyQ = null;
@@ -623,8 +622,11 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                 throw new EndedException("shouldTerminate is true");
             }
                 
-            // Nothing was ready; ensure any piled-up scheduled URIs are considered
-            this.alreadyIncluded.flush(); 
+            if(inProcessQueues.size()==0 && timeTilWake>DEFAULT_WAIT) {
+                // Nothing was ready or in progress or imminent to wake; ensure 
+                // any piled-up pending-scheduled URIs are considered
+                this.alreadyIncluded.requestFlush();
+            }
             
             // if still nothing ready, activate an inactive queue, if available
             if (readyClassQueues.isEmpty()) {
@@ -1122,6 +1124,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         w.print(" Already included size:     ");
         w.print(Long.toString(alreadyIncluded.count()));
         w.print("\n");
+        w.print("               pending:     ");
+        w.print(Long.toString(alreadyIncluded.pending()));
+        w.print("\n");
         w.print("\n All class queues map size: ");
         w.print(Long.toString(allCount));
         w.print("\n");
@@ -1268,6 +1273,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     }
     public long deepestUri() {
         return longestActiveQueue==null ? -1 : longestActiveQueue.getCount();
+    }
+    
+    
+    /* (non-Javadoc)
+     * @see org.archive.crawler.framework.Frontier#isEmpty()
+     */
+    public synchronized boolean isEmpty() {
+        return queuedUriCount == 0 && alreadyIncluded.pending() == 0;
     }
 }
 

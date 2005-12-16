@@ -46,6 +46,8 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.crawler.util.BloomUriUniqFilter;
+import org.archive.crawler.util.DiskFPMergeUriUniqFilter;
+import org.archive.crawler.util.MemFPMergeUriUniqFilter;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.je.DatabaseException;
@@ -70,7 +72,9 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     /** all URI-already-included options available to be chosen */
     private String[] AVAILABLE_INCLUDED_OPTIONS = new String[] {
             BdbUriUniqFilter.class.getName(),
-            BloomUriUniqFilter.class.getName() };
+            BloomUriUniqFilter.class.getName(),
+            MemFPMergeUriUniqFilter.class.getName(),
+            DiskFPMergeUriUniqFilter.class.getName()};
     
     /** URI-already-included to use (by class name) */
     public final static String ATTR_INCLUDED = "uri-included-structure";
@@ -132,11 +136,19 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         } catch (AttributeNotFoundException e) {
             // Do default action if attribute not in order.
         }
+        // TODO: avoid all this special-casing; enable some common
+        // constructor interface usable for all alt implemenations
         if (c != null && c.equals(BloomUriUniqFilter.class.getName())) {
             uuf = this.controller.isCheckpointRecover()?
                     deserializeAlreadySeen(BloomUriUniqFilter.class,
                         this.controller.getCheckpointRecover().getDirectory()):
                     new BloomUriUniqFilter();
+        } else if (c!=null && c.equals(MemFPMergeUriUniqFilter.class.getName())) {
+            // TODO: add checkpointing for MemFPMergeUriUniqFilter
+            uuf = new MemFPMergeUriUniqFilter();
+        } else if (c!=null && c.equals(DiskFPMergeUriUniqFilter.class.getName())) {
+            // TODO: add checkpointing for DiskFPMergeUriUniqFilter
+            uuf = new DiskFPMergeUriUniqFilter(controller.getScratchDisk());
         } else {
             // Assume its BdbUriUniqFilter.
             uuf = this.controller.isCheckpointRecover()?
