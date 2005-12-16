@@ -1991,4 +1991,11 @@ public class CrawlController implements Serializable, Reporter {
     public void logProgressStatistics(final String msg) {
         this.progressStats.info(msg);
     }
+
+    /**
+     * @return CrawlController state.
+     */
+    public Object getState() {
+        return this.state;
+    }
 }
