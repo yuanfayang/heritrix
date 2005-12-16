@@ -89,7 +89,7 @@ implements CurrentCrawlJob {
 
     public String getCrawlStatus() {
         try {
-            return this.connection.getAttribute(this.name, "crawlStatus").toString();
+            return this.connection.getAttribute(this.name, "Status").toString();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

@@ -13,11 +13,14 @@ public class CrawlerImplSelfTest
         extends
             ClusterControllerClientSelfTestBase {
     private CrawlerImpl c;
-
+    private AllPurposeTestListener listener;
+    
     protected void setUp() throws Exception {
+    
         super.setUp();
         c = (CrawlerImpl) cc.createCrawler();
         c.startPendingJobQueue();
+        listener = new AllPurposeTestListener();
 
     }
 
@@ -25,6 +28,8 @@ public class CrawlerImplSelfTest
         c.destroy();
         super.tearDown();
         c = null;
+        listener = null;
+
     }
 
     public void testGetVersion() {
@@ -44,7 +49,6 @@ public class CrawlerImplSelfTest
     }
 
     public void testCreateJobHearJobFindJobParentStopJob() {
-        AllPurposeTestListener listener = new AllPurposeTestListener();
 
         try {
             cc.addCrawlJobListener(listener);
@@ -58,7 +62,7 @@ public class CrawlerImplSelfTest
                 e.printStackTrace();
             }
 
-            assertEquals(uid, listener.j.getUid());
+            assertEquals(new Long(uid), listener.j.getUid());
 
             listener.j.pause();
 
@@ -121,6 +125,49 @@ public class CrawlerImplSelfTest
         }
     }
 
+    public void testCheckCrawlJobStatus(){
+        
+        //start a new job
+        cc.addCrawlJobListener(listener);
+        String uid = c.addJob(new JobOrder("test", getTestJar()));
+
+        try {
+            assertTrue(listener.crawlJobStartedLatch.await(
+                    10 * 1000,
+                    TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        
+        //check status of job once it has started.
+        assertNotNull(listener.j.getCrawlStatus());
+        assertEquals("test", listener.j.getJobName());
+        assertEquals(listener.j.getMother().getName(), c.getName());
+        
+    }
+    
+    public void testCheckMotherNotNull(){
+        
+        //start a new job
+        cc.addCrawlJobListener(listener);
+        String uid = c.addJob(new JobOrder("test", getTestJar()));
+
+        try {
+            assertTrue(listener.crawlJobStartedLatch.await(
+                    10 * 1000,
+                    TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        
+        //check status of job once it has started.
+        assertEquals(listener.j.getMother().getName(), c.getName());
+        
+    }
+
+    
     public static File getTestJar() {
         Map map = new HashMap();
         map.put("name", "test");

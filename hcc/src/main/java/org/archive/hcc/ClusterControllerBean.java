@@ -283,6 +283,7 @@ public class ClusterControllerBean implements
         return false;
     }
 
+    
     public ObjectName findCrawlServiceJobParent(
             String jobUid,
             String host,

@@ -107,15 +107,9 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     null,
                     new Object());
             this.listenerList = new EventListenerList();
-        } catch (MalformedObjectNameException e) {
-            // TODO Auto-generated catch block
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (NullPointerException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -126,8 +120,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
         try {
             init(createMBeanServer());
         } catch (InstanceNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -275,12 +268,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                 if (n.getType().equals("crawlEnding")) {
                     ObjectName source = (ObjectName) n.getSource();
                     try {
-                        fireCrawlJobStopping(new CurrentCrawlJobImpl(
-                                source,
-                                findCrawlJobParentInternal(
-                                        JmxUtils.getUid(source),
-                                        JmxUtils.extractAddress(source)),
-                                connection));
+                        fireCrawlJobStopping(createCurrentCrawlJob(source, connection));
                         return true;
                     } catch (ClusterException e) {
                         e.printStackTrace();
@@ -290,6 +278,18 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             }
         });
         return d;
+    }
+    
+    private CurrentCrawlJobImpl createCurrentCrawlJob(
+                                            ObjectName job, 
+                                            MBeanServerConnection connection) 
+                                            throws ClusterException {
+        return new CurrentCrawlJobImpl(
+                job,
+                findCrawlJobParentInternal(
+                        JmxUtils.getUid(job),
+                        extractRemoteAddress(job)),
+                        connection);
     }
 
     private static Map toMap(Object object) {
@@ -320,11 +320,8 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             Map oldValue,
             Map newValue) {
         try {
-            CurrentCrawlJobImpl cj = new CurrentCrawlJobImpl(
-                    source,
-                    findCrawlJobParentInternal(JmxUtils.getUid(source), JmxUtils
-                            .extractAddress(source)),
-                    this.connection);
+            CurrentCrawlJobImpl cj = createCurrentCrawlJob(
+                    source,this.connection);
             CurrentCrawlJobListener[] listener = this.listenerList
                     .getListeners(CurrentCrawlJobListener.class);
             for (int i = 0; i < listener.length; i++) {
@@ -348,30 +345,28 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
 
     private void handleCrawlServiceJobStarted(ObjectName crawlJob) {
         try {
-            CurrentCrawlJob job = new CurrentCrawlJobImpl(
-                    crawlJob,
-                    findCrawlJobParentInternal(JmxUtils.getUid(crawlJob), JmxUtils
-                            .extractAddress(crawlJob)),
-                    this.connection);
+            CurrentCrawlJob job = createCurrentCrawlJob(
+                                    crawlJob,this.connection);
             fireCrawlJobStarted(job);
         } catch (ClusterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
-
+    
+    
+    static InetSocketAddress extractRemoteAddress(final ObjectName name) {
+        return new InetSocketAddress(name.getKeyProperty("remoteHost"),
+            Integer.parseInt(name.getKeyProperty("remoteJmxPort")));
+    }
+    
     private void handleCrawlServiceJobCompleted(ObjectName crawlJob) {
-        CurrentCrawlJob job;
         try {
-            job = new CurrentCrawlJobImpl(
-                    crawlJob,
-                    findCrawlJobParentInternal(JmxUtils.getUid(crawlJob), JmxUtils
-                            .extractAddress(crawlJob)),
-                    this.connection);
+            CurrentCrawlJob job = createCurrentCrawlJob(
+                    crawlJob,this.connection);
             fireCrawlJobCompleted(job);
 
         } catch (ClusterException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
