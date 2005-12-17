@@ -174,7 +174,7 @@ public class DiskFPMergeUriUniqFilter extends FPMergeUriUniqFilter {
                 throw new NoSuchElementException();
             }
             // 'next' is guaranteed set by a hasNext() which returned true
-            Object returnObj = Long.valueOf(this.next);
+            Object returnObj = new Long(this.next);
             this.nextIsValid = false;
             return returnObj;
         }
