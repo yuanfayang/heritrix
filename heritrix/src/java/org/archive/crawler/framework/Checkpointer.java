@@ -90,7 +90,7 @@ public class Checkpointer implements Serializable {
      */
     private transient Thread checkpointThread = null;
     
-    private transient final CrawlController controller;
+    private final CrawlController controller;
 
     /**
      * Create a new CheckpointContext with the given store directory

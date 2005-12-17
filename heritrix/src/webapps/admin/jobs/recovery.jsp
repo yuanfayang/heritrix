@@ -2,7 +2,7 @@
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.admin.CrawlJobHandler" %>
-<%@ page import="org.archive.crawler.checkpoint.Checkpoint" %>
+<%@ page import="org.archive.crawler.datamodel.Checkpoint" %>
 <%@ page import="java.util.Iterator" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.io.File" %>
