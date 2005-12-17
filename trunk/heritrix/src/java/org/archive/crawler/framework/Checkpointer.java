@@ -170,7 +170,7 @@ public class Checkpointer implements Serializable {
         private synchronized boolean waitOnPaused() {
             while(!getController().isPaused()) {
                 try {
-                    wait();
+                    wait(1000 * 3);
                 } catch (InterruptedException e) {
                     // May be for us.
                 }
