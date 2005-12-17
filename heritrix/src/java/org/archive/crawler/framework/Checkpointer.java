@@ -1,4 +1,4 @@
-/* CheckpointContext
+/* Checkpointer
 *
 * $Id$
 *
@@ -22,38 +22,41 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.checkpoint;
+package org.archive.crawler.framework;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.util.ArchiveUtils;
 
 /**
- * Captures the checkpoint history and upcoming checkpoint name of a crawl.
- * Also has utility to help make checkpoint.  Maintains a directory named for
- * the checkpoint into which checkpointing modules can safely write.
+ * Runs checkpointing.
+ * Also keeps history of crawl checkpoints  Generally used by CrawlController only 
+ * but also has static utility methods classes that need to participate in
+ * a checkpoint can use.
  *
  * @author gojomo
+ * @author stack
  */
-public class CheckpointContext
-implements Serializable {
-    private static final long serialVersionUID = -2339801205500280142L;
+public class Checkpointer implements Serializable {
+    private static final long serialVersionUID = 7610078446694353173L;
 
+    private final static Logger LOGGER =
+        Logger.getLogger(Checkpointer.class.getName());
+
+    private static final String DEFAULT_PREFIX = "";
+    
     /**
      * String to prefix any new checkpoint names.
      */
-    private  String checkpointPrefix = "";
+    private  String checkpointPrefix = DEFAULT_PREFIX;
     
     /**
      * Next  overall series checkpoint number.
@@ -82,22 +85,19 @@ implements Serializable {
      */
     private transient boolean checkpointErrors = false;
     
-
-    private static final String SERIALIZED_CLASS_SUFFIX = ".serialized";
-
     /**
-     * @return Returns the nextCheckpoint.
+     * checkpointThread is set if a checkpoint is currently running.
      */
-    public int getNextCheckpoint() {
-        return nextCheckpoint;
-    }
+    private transient Thread checkpointThread = null;
+    
+    private transient final CrawlController controller;
 
     /**
      * Create a new CheckpointContext with the given store directory
      * @param checkpointDir Where to store checkpoint.
      */
-    public CheckpointContext(File checkpointDir) {
-        this(checkpointDir, "");
+    public Checkpointer(final CrawlController cc, final File checkpointDir) {
+        this(cc, checkpointDir, DEFAULT_PREFIX);
     }
     
     /**
@@ -106,19 +106,95 @@ implements Serializable {
      * @param checkpointDir Where to store checkpoint.
      * @param prefix Prefix for checkpoint label.
      */
-    public CheckpointContext(File checkpointDir, String prefix) {
+    public Checkpointer(final CrawlController cc, final File checkpointDir,
+            final String prefix) {
         super();
+        this.controller = cc;
         this.baseCheckpointDirectory = checkpointDir;
         this.checkpointPrefix = prefix;
     }
-
-    public void begin() {
-        this.checkpointInProgressDir = new File(baseCheckpointDirectory,
-            getNextCheckpointName());
-        // Clear the checkpoint errors.
-        checkpointErrors = false;
+    
+    /**
+     * @return Returns the nextCheckpoint index.
+     */
+    public int getNextCheckpoint() {
+        return this.nextCheckpoint;
     }
 
+    /**
+     * Run a checkpoint of the crawler.
+     */
+    public void checkpoint() {
+        String name = "Checkpoint-" + getNextCheckpointName();
+        this.checkpointThread = new CheckpointingThread(name);
+        this.checkpointThread.setDaemon(true);
+        this.checkpointThread.start();
+    }
+
+    /**
+     * Thread to run the checkpointing.
+     * @author stack
+     */
+    private class CheckpointingThread extends Thread {
+        public CheckpointingThread(final String name) {
+            super(name);
+        }
+        
+        public void run() {
+            LOGGER.info("Started");
+            try {
+                getController().requestCrawlPause();
+                // Clear any checkpoint errors.
+                setCheckpointErrors(false);
+                if (!waitOnPaused()) {
+                    checkpointFailed("Failed wait for complete pause.");
+                } else {
+                    createCheckpointInProgressDirectory();
+                    getController().checkpoint();
+                }
+            } catch (Exception e) {
+                checkpointFailed(e);
+            } finally {
+                if (!isCheckpointErrors()) {
+                    writeValidity();
+                }
+                Checkpointer.this.nextCheckpoint++;
+                clearCheckpointInProgressDirectory();
+                LOGGER.info("Finished");
+                getController().completePause();
+                // Clean up after ourselves.
+                getController().requestCrawlResume();
+            }
+        }
+        
+        private synchronized boolean waitOnPaused() {
+            while(!getController().isPaused()) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    // May be for us.
+                }
+            }
+            return getController().isPaused();
+        }
+    }
+    
+    protected File createCheckpointInProgressDirectory() {
+        this.checkpointInProgressDir =
+            new File(Checkpointer.this.baseCheckpointDirectory,
+                getNextCheckpointName());
+        this.checkpointInProgressDir.mkdirs();
+        return this.checkpointInProgressDir;
+    }
+    
+    protected void clearCheckpointInProgressDirectory() {
+        this.checkpointInProgressDir = null;
+    }
+    
+    protected CrawlController getController() {
+        return this.controller;
+    }
+    
     /**
      * @return next checkpoint name (zero-padding string).
      */
@@ -127,15 +203,7 @@ implements Serializable {
             (new DecimalFormat("00000")).format(nextCheckpoint);
     }
 
-    public void end() {
-        if(checkpointErrors == false) {
-            writeValidity();
-        }
-        this.checkpointInProgressDir = null;
-        this.nextCheckpoint++;
-    }
-
-    private void writeValidity() {
+    protected void writeValidity() {
         File valid = new File(this.checkpointInProgressDir,
             Checkpoint.VALIDITY_STAMP_FILENAME);
         try {
@@ -149,7 +217,7 @@ implements Serializable {
 
     /**
      * @return Checkpoint directory. Name of the directory is the name of this
-     * current checkpoint.
+     * current checkpoint.  Null if no checkpoint in progress.
      */
     public File getCheckpointInProgressDirectory() {
         return this.checkpointInProgressDir;
@@ -158,8 +226,8 @@ implements Serializable {
     /**
      * @return True if a checkpoint is in progress.
      */
-    public boolean isCheckpointInProgress() {
-        return this.checkpointInProgressDir != null;
+    public boolean isCheckpointing() {
+        return this.checkpointThread != null && this.checkpointThread.isAlive();
     }
 
     /**
@@ -167,8 +235,17 @@ implements Serializable {
      *
      * @param e Exception checkpoint failed on.
      */
-    public void checkpointFailed(Exception e) {
+    protected void checkpointFailed(Exception e) {
         e.printStackTrace();
+        checkpointFailed();
+    }
+    
+    protected void checkpointFailed(final String message) {
+        LOGGER.severe(message);
+        checkpointFailed();
+    }
+    
+    protected void checkpointFailed() {
         this.checkpointErrors = true;
     }
     
@@ -188,7 +265,7 @@ implements Serializable {
     }
 
     /**
-     * Call when recovering a checkpoint.
+     * Call when recovering from a checkpoint.
      * Call this after instance has been revivifyied post-serialization to
      * amend counters and directories that effect where checkpoints get stored
      * from here on out.
@@ -209,87 +286,12 @@ implements Serializable {
     public List getPredecessorCheckpoints() {
         return this.predecessorCheckpoints;
     }
-    
-    public static File getBdbSubDirectory(File checkpointDir) {
-        return new File(checkpointDir, "bdbje-logs");
+
+    protected boolean isCheckpointErrors() {
+        return this.checkpointErrors;
     }
-    
-    /**
-     * @return Instance of filename filter that will let through files ending
-     * in '.jdb' (i.e. bdb je log files).
-     */
-    public static FilenameFilter getJeLogsFilter() {
-        return new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name != null && name.toLowerCase().endsWith(".jdb");
-            }
-        };
-    }
-    
-    public static File getClassCheckpointFile(File checkpointDir,
-            final String suffix, Class c) {
-        return new File(checkpointDir, getClassCheckpointFilename(c, suffix));
-    }
-    
-    public static File getClassCheckpointFile(File checkpointDir, Class c) {
-        return new File(checkpointDir, getClassCheckpointFilename(c, null));
-    }
-    
-    public static String getClassCheckpointFilename(final Class c) {
-        return getClassCheckpointFilename(c, null);
-    }
-    
-    public static String getClassCheckpointFilename(final Class c,
-            final String suffix) {
-        return c.getName() + ((suffix == null)? "": "." + suffix) +
-            SERIALIZED_CLASS_SUFFIX;
-    }
-    
-    /**
-     * Utility function to serialize an object to a file in current checkpoint
-     * dir. Facilities
-     * to store related files alongside the serialized object in a directory
-     * named with a <code>.auxillary</code> suffix.
-     *
-     * @param o Object to serialize.
-     * @param dir Directory to serialize into.
-     * @throws IOException
-     */
-    public static void writeObjectToFile(final Object o, final File dir)
-    throws IOException {
-        writeObjectToFile(o, null, dir);
-    }
-        
-    public static void writeObjectToFile(final Object o, final String suffix,
-            final File dir)
-    throws IOException {
-        dir.mkdirs();
-        ObjectOutputStream out = new ObjectOutputStream(
-            new FileOutputStream(getClassCheckpointFile(dir, suffix,
-                o.getClass())));
-        try {
-            out.writeObject(o);
-        } finally {
-            out.close();
-        }
-    }
-    
-    public static Object readObjectFromFile(final Class c, final File dir)
-    throws FileNotFoundException, IOException, ClassNotFoundException {
-        return readObjectFromFile(c, null, dir);
-    }
-    
-    public static Object readObjectFromFile(final Class c, final String suffix,
-            final File dir)
-    throws FileNotFoundException, IOException, ClassNotFoundException {
-        ObjectInputStream in = new ObjectInputStream(
-            new FileInputStream(getClassCheckpointFile(dir, suffix, c)));
-        Object o = null;
-        try {
-            o = in.readObject();
-        } finally {
-            in.close();
-        }
-        return o;
+
+    protected void setCheckpointErrors(boolean checkpointErrors) {
+        this.checkpointErrors = checkpointErrors;
     }
 }

@@ -56,8 +56,7 @@ import javax.management.ReflectionException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.StatisticsTracker;
-import org.archive.crawler.checkpoint.Checkpoint;
-import org.archive.crawler.checkpoint.CheckpointContext;
+import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.ServerCache;
@@ -72,6 +71,7 @@ import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SettingsHandler;
+import org.archive.crawler.util.CheckpointUtils;
 import org.archive.io.GenerationFileHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -198,11 +198,11 @@ public class CrawlController implements Serializable, Reporter {
     private transient File checkpointsDisk;
     
     /**
-     * Checkpoint context.
-     * Knows if checkpoint in progress and what name of checkpoint is. Has
-     * utility methods to aid checkpointing process.
+     * Checkpointer.
+     * Knows if checkpoint in progress and what name of checkpoint is.  Also runs
+     * checkpoints.
      */
-    private CheckpointContext cpContext;
+    private Checkpointer checkpointer;
     
     /**
      * Gets set to checkpoint we're in recovering if in checkpoint recover
@@ -375,7 +375,7 @@ public class CrawlController implements Serializable, Reporter {
             onFailMessage = "Unable to test/run checkpoint recover";
             this.checkpointRecover = getCheckpointRecover();
             if (this.checkpointRecover == null) {
-                this.cpContext = new CheckpointContext(this.checkpointsDisk);
+                this.checkpointer = new Checkpointer(this, this.checkpointsDisk);
             } else {
                 setupCheckpointRecover();
             }
@@ -422,7 +422,7 @@ public class CrawlController implements Serializable, Reporter {
                 this.checkpointRecover.getDisplayName());
         }
         // Mark context we're in a recovery.
-        this.cpContext.recoveryAmendments(this.checkpointsDisk);
+        this.checkpointer.recoveryAmendments(this.checkpointsDisk);
         this.progressStats.info("CHECKPOINT RECOVER " +
             this.checkpointRecover.getDisplayName());
         // Copy the bdb log files to the state dir so we don't damage
@@ -431,10 +431,10 @@ public class CrawlController implements Serializable, Reporter {
         // dependent upon hardware).  If log file already exists over in the
         // target state directory, we do not overwrite -- we assume the log
         // file in the target same as one we'd copy from the checkpoint dir.
-        File bdbSubDir = CheckpointContext.
+        File bdbSubDir = CheckpointUtils.
             getBdbSubDirectory(this.checkpointRecover.getDirectory());
-        FileUtils.copyFiles(bdbSubDir, CheckpointContext.getJeLogsFilter(),
-            getStateDisk(), true, false);
+        FileUtils.copyFiles(bdbSubDir, getJeLogsFilter(), getStateDisk(), true,
+            false);
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.info("Finished recovery setup for checkpoint named " +
                 this.checkpointRecover.getDisplayName() + " in " +
@@ -976,6 +976,11 @@ public class CrawlController implements Serializable, Reporter {
      */
     protected void sendCheckpointEvent(File checkpointDir) throws Exception {
         synchronized (this.registeredCrawlStatusListeners) {
+            if (this.state != PAUSED) {
+                throw new IllegalStateException("Crawler must be completly " +
+                    "paused before checkpointing can start");
+            }
+            this.state = CHECKPOINTING;
             for (Iterator i = this.registeredCrawlStatusListeners.iterator();
                     i.hasNext();) {
                 CrawlStatusListener l = (CrawlStatusListener)i.next();
@@ -1055,7 +1060,7 @@ public class CrawlController implements Serializable, Reporter {
             this.serverCache.cleanup();
             this.serverCache = null;
         }
-        this.cpContext = null;
+        this.checkpointer = null;
         if (this.classCatalogDB != null) {
             try {
                 this.classCatalogDB.close();
@@ -1087,7 +1092,10 @@ public class CrawlController implements Serializable, Reporter {
         LOGGER.fine("Finished crawl.");
     }
     
-    private void completePause() {
+    synchronized void completePause() {
+        // Send a notifyAll. At least checkpointing thread may be waiting on a
+        // complete pause.
+        notifyAll();
         sendCrawlStateChangeEvent(PAUSED, CrawlJob.STATUS_PAUSED);
     }
 
@@ -1123,39 +1131,29 @@ public class CrawlController implements Serializable, Reporter {
      */
     public synchronized void requestCrawlCheckpoint()
     throws IllegalStateException {
-        if (state != PAUSED) {
-            throw new IllegalStateException("Pause crawl before requesting " +
-                "checkpoint.");
+        if (this.checkpointer.isCheckpointing()) {
+            throw new IllegalStateException("Checkpoint already running.");
         }
-        this.state = CHECKPOINTING;
-        new Thread(new CheckpointTask()).start();
+        this.checkpointer.checkpoint();
+    }   
+    
+    /**
+     * @return True if checkpointing.
+     */
+    public boolean isCheckpointing() {
+        return this.state == CHECKPOINTING;
     }
     
     /**
-     * @author gojomo
+     * @return Instance of filename filter that will let through files ending
+     * in '.jdb' (i.e. bdb je log files).
      */
-    public class CheckpointTask implements Runnable {
-        public void run() {
-            CrawlController.this.writeCheckpoint();
-        }
-    }
-
-    /**
-     * Write a checkpoint to disk.
-     */
-    protected void writeCheckpoint() {
-        cpContext.begin();
-        try {
-            // Tell registered listeners to checkpoint.
-            sendCheckpointEvent(cpContext.getCheckpointInProgressDirectory());
-            this.checkpointTo(cpContext);
-        } catch (Exception e) {
-            cpContext.checkpointFailed(e);
-        } finally {
-            cpContext.end();
-            // Set crawler state back into paused mode.
-            completePause();
-        }
+    public FilenameFilter getJeLogsFilter() {
+        return new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name != null && name.toLowerCase().endsWith(".jdb");
+            }
+        };
     }
 
     /**
@@ -1168,46 +1166,41 @@ public class CrawlController implements Serializable, Reporter {
      * or in their #initialTask if a processor, check with the CrawlController
      * if its checkpoint recovery. If it is, read in their old state from the
      * pointed to  checkpoint directory.
-     * @param context Context to use checkpointing.
+     * <p>Default access only to be called by Checkpointer.
      * @throws Exception
      */
-    protected void checkpointTo(CheckpointContext context)
+    void checkpoint()
     throws Exception {
-        long started = System.currentTimeMillis();
-        
-        context.getCheckpointInProgressDirectory().mkdirs();
+        // Tell registered listeners to checkpoint.
+        sendCheckpointEvent(this.checkpointer.getCheckpointInProgressDirectory());
         
         // Rotate off crawler logs.
         LOGGER.fine("Rotating log files.");
-        rotateLogFiles(CURRENT_LOG_SUFFIX + "."
-            + this.cpContext.getNextCheckpointName());
-        
+        rotateLogFiles(CURRENT_LOG_SUFFIX + "." +
+            this.checkpointer.getNextCheckpointName());
+
         // Sync the BigMap contents to bdb, if their bdb bigmaps.
         LOGGER.fine("BigMaps.");
-        checkpointBigMaps(context.getCheckpointInProgressDirectory());
-        
+        checkpointBigMaps(this.checkpointer.getCheckpointInProgressDirectory());
+
         // Note, on deserialization, the super CrawlType#parent
         // needs to be restored. Parent is '/crawl-order/loggers'.
         // The settings handler for this module also needs to be
-        // restored.  Both of these fields are private in the
-        // super class.  Adding the restored ST to crawl order should take
+        // restored. Both of these fields are private in the
+        // super class. Adding the restored ST to crawl order should take
         // care of this.
-        
+
         // Checkpoint bdb environment.
         LOGGER.fine("Bdb environment.");
-        checkpointBdb(context.getCheckpointInProgressDirectory());
-        
+        checkpointBdb(this.checkpointer.getCheckpointInProgressDirectory());
+
         // Make copy of order, seeds, and settings.
         LOGGER.fine("Copying settings.");
-        copySettings(context.getCheckpointInProgressDirectory());       
-        
-        // Checkpoint crawlcontroller.
-        CheckpointContext.writeObjectToFile(this,
-            context.getCheckpointInProgressDirectory());
+        copySettings(this.checkpointer.getCheckpointInProgressDirectory());
 
-        LOGGER.info("Finished: " +
-            (context.isCheckpointFailed()? "Failed": "Succeeded") + ", Took " +
-            (System.currentTimeMillis() - started) + "ms.");
+        // Checkpoint this crawlcontroller.
+        CheckpointUtils.writeObjectToFile(this,
+            this.checkpointer.getCheckpointInProgressDirectory());
     }
     
     /**
@@ -1311,8 +1304,7 @@ public class CrawlController implements Serializable, Reporter {
     
     protected void processBdbLogs(final File checkpointDir,
             final String lastBdbCheckpointLog) throws IOException {
-        FilenameFilter filter = CheckpointContext.getJeLogsFilter();
-        File bdbDir = CheckpointContext.getBdbSubDirectory(checkpointDir);
+        File bdbDir = CheckpointUtils.getBdbSubDirectory(checkpointDir);
         if (!bdbDir.exists()) {
             bdbDir.mkdir();
         }
@@ -1325,6 +1317,7 @@ public class CrawlController implements Serializable, Reporter {
             Set srcFilenames = null;
             final boolean copyFiles = getCheckpointCopyBdbjeLogs();
             do {
+                FilenameFilter filter = getJeLogsFilter();
                 srcFilenames =
                     new HashSet(Arrays.asList(getStateDisk().list(filter)));
                 List tgtFilenames = Arrays.asList(bdbDir.list(filter));
@@ -1762,10 +1755,8 @@ public class CrawlController implements Serializable, Reporter {
     /**
      * Proceed only if allowed, giving CrawlController a chance
      * to enforce single-thread mode.
-     *  
-     * @throws InterruptedException
      */
-    public void acquireContinuePermission() throws InterruptedException {
+    public void acquireContinuePermission() {
         if (singleThreadMode) {
             this.singleThreadLock.lock();
             if(!singleThreadMode) {
@@ -1948,7 +1939,7 @@ public class CrawlController implements Serializable, Reporter {
         CachedBdbMap result = new CachedBdbMap(dbName);
         if (isCheckpointRecover()) {
             File baseDir = getCheckpointRecover().getDirectory();
-            result = (CachedBdbMap)CheckpointContext.
+            result = (CachedBdbMap)CheckpointUtils.
                 readObjectFromFile(result.getClass(), dbName, baseDir);
         }
         result.initialize(getBdbEnvironment(), keyClass, valueClass,
@@ -1969,7 +1960,7 @@ public class CrawlController implements Serializable, Reporter {
             // implementation were not being persisted properly.  Look at
             // why.  For now, do sync in advance of serialization for now.
             ((CachedBdbMap)obj).sync();
-            CheckpointContext.writeObjectToFile(obj, (String)key, cpDir);
+            CheckpointUtils.writeObjectToFile(obj, (String)key, cpDir);
         }
     }
 

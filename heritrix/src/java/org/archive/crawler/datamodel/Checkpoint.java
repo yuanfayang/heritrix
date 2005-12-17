@@ -22,13 +22,15 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-package org.archive.crawler.checkpoint;
+package org.archive.crawler.datamodel;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
+import org.archive.crawler.framework.Checkpointer;
+import org.archive.crawler.util.CheckpointUtils;
 import org.archive.util.FileUtils;
 
 /**
@@ -48,7 +50,7 @@ public class Checkpoint implements Serializable {
     /** 
      * Name of file written with timestamp into valid checkpoints.
      */
-    static final String VALIDITY_STAMP_FILENAME = "valid";
+    public static final String VALIDITY_STAMP_FILENAME = "valid";
     
     
     private transient String timestamp;
@@ -100,21 +102,6 @@ public class Checkpoint implements Serializable {
      */
     public boolean isValid() {
         return timestamp != INVALID;
-    }
-    
-    /**
-     * @return True if this checkpoint contains bdb logs (It won't if we're
-     * doing 'fast' checkpoints).
-     */
-    public boolean hasBdbjeLogs() {
-        boolean decision = false;
-        File bdbjeDir = CheckpointContext.getBdbSubDirectory(this.directory);
-        if (bdbjeDir.exists()) {
-            String [] files =
-                bdbjeDir.list(CheckpointContext.getJeLogsFilter());
-            decision = (files != null && files.length > 0);
-        }
-        return decision;
     }
 
     /**
