@@ -78,11 +78,11 @@ import javax.management.openmbean.SimpleType;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.Heritrix;
-import org.archive.crawler.checkpoint.Checkpoint;
-import org.archive.crawler.checkpoint.CheckpointContext;
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.framework.Checkpointer;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.StatisticsTracking;
@@ -93,6 +93,7 @@ import org.archive.crawler.settings.ComplexType;
 import org.archive.crawler.settings.ModuleAttributeInfo;
 import org.archive.crawler.settings.TextField;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.crawler.util.CheckpointUtils;
 import org.archive.crawler.util.IoUtils;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
@@ -801,7 +802,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 getCheckpointRecover(getSettingsHandler().getOrder());
             if (cp != null) {
                 try {
-                    this.controller = (MBeanCrawlController)CheckpointContext.
+                    this.controller = (MBeanCrawlController)CheckpointUtils.
                         readObjectFromFile(MBeanCrawlController.class,
                             cp.getDirectory());
                 } catch (FileNotFoundException e) {
@@ -1074,6 +1075,13 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         if (this.controller != null) {
             this.controller.requestCrawlCheckpoint();
         }
+    }
+    
+    /**
+     * @return True if checkpointing.
+     */
+    public boolean isCheckpointing() {
+        return this.controller != null? this.controller.isCheckpointing(): false;
     }
     
     /**

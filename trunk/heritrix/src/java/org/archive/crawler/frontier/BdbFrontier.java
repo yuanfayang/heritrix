@@ -36,9 +36,9 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
-import org.archive.crawler.checkpoint.CheckpointContext;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
+import org.archive.crawler.framework.Checkpointer;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -46,6 +46,7 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.crawler.util.BloomUriUniqFilter;
+import org.archive.crawler.util.CheckpointUtils;
 import org.archive.crawler.util.DiskFPMergeUriUniqFilter;
 import org.archive.crawler.util.MemFPMergeUriUniqFilter;
 import org.archive.util.ArchiveUtils;
@@ -176,7 +177,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         try {
             logger.fine("Started deserializing " + cls.getName() +
                 " of checkpoint recover.");
-            uuf = (UriUniqFilter)CheckpointContext.
+            uuf = (UriUniqFilter)CheckpointUtils.
                 readObjectFromFile(cls, dir);
             logger.fine("Finished deserializing bdbje as part " +
                 "of checkpoint recover.");
@@ -290,7 +291,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             // to miss a value.  Perhaps there's a better way?  Introspection?
             BdbFrontier f = null;
             try {
-                f = (BdbFrontier)CheckpointContext.
+                f = (BdbFrontier)CheckpointUtils.
                     readObjectFromFile(this.getClass(),
                         this.controller.getCheckpointRecover().getDirectory());
             } catch (FileNotFoundException e) {
@@ -325,11 +326,10 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         super.crawlCheckpoint(checkpointDir);
         logger.fine("Started serializing already seen as part "
             + "of checkpoint. Can take some time.");
-        CheckpointContext
-            .writeObjectToFile(this.alreadyIncluded, checkpointDir);
+        CheckpointUtils .writeObjectToFile(this.alreadyIncluded, checkpointDir);
         logger.fine("Finished serializing already seen as part "
             + "of checkpoint.");
         // Serialize ourselves.
-        CheckpointContext.writeObjectToFile(this, checkpointDir);
+        CheckpointUtils.writeObjectToFile(this, checkpointDir);
     }
 }
