@@ -433,7 +433,8 @@ public class CrawlController implements Serializable, Reporter {
         // file in the target same as one we'd copy from the checkpoint dir.
         File bdbSubDir = CheckpointUtils.
             getBdbSubDirectory(this.checkpointRecover.getDirectory());
-        FileUtils.copyFiles(bdbSubDir, getJeLogsFilter(), getStateDisk(), true,
+        FileUtils.copyFiles(bdbSubDir, CheckpointUtils.getJeLogsFilter(),
+            getStateDisk(), true,
             false);
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.info("Finished recovery setup for checkpoint named " +
@@ -1145,18 +1146,6 @@ public class CrawlController implements Serializable, Reporter {
     }
     
     /**
-     * @return Instance of filename filter that will let through files ending
-     * in '.jdb' (i.e. bdb je log files).
-     */
-    public FilenameFilter getJeLogsFilter() {
-        return new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name != null && name.toLowerCase().endsWith(".jdb");
-            }
-        };
-    }
-
-    /**
      * Run checkpointing.
      * CrawlController takes care of managing the checkpointing/serializing
      * of bdb, the StatisticsTracker, and the CheckpointContext.  Other
@@ -1317,7 +1306,7 @@ public class CrawlController implements Serializable, Reporter {
             Set srcFilenames = null;
             final boolean copyFiles = getCheckpointCopyBdbjeLogs();
             do {
-                FilenameFilter filter = getJeLogsFilter();
+                FilenameFilter filter = CheckpointUtils.getJeLogsFilter();
                 srcFilenames =
                     new HashSet(Arrays.asList(getStateDisk().list(filter)));
                 List tgtFilenames = Arrays.asList(bdbDir.list(filter));

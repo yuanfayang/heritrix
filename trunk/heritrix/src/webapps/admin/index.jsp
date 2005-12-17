@@ -127,6 +127,11 @@
 			    equals(CrawlJob.STATUS_WAITING_FOR_PAUSE))) {
             out.println("| <a href='/console/action.jsp?action=resume'>" +
                 "Resume</a>");
+            out.println(" | ");
+            out.println("<a href=\"");
+            out.println(request.getContextPath());
+            out.println("/console/action.jsp?action=checkpoint\">" +
+                "Checkpoint</a>");
         } else if (!handler.getCurrentJob().isCheckpointing()) {
             out.println("| <a href=\"");
             out.println(request.getContextPath());

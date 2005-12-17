@@ -82,7 +82,6 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.Checkpointer;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.StatisticsTracking;
@@ -126,7 +125,11 @@ import com.sleepycat.je.Environment;
 
 public class CrawlJob extends NotificationBroadcasterSupport
 implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
-    private static final long serialVersionUID = -5006954139249693422L;
+    /**
+     * Eclipse generated serial number.
+     */
+    private static final long serialVersionUID = 3411161000452525856L;
+    
     private static final Logger logger =
         Logger.getLogger(CrawlJob.class.getName());
     /*

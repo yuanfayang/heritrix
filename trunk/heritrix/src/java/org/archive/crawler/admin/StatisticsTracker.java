@@ -999,5 +999,6 @@ implements CrawlURIDispositionListener, Serializable {
 
     public void crawlCheckpoint(File cpDir) throws Exception {
         // CrawlController is managing the checkpointing of this object.
+        logNote("CRAWL CHECKPOINTING TO " + cpDir.toString());
     }
 }
