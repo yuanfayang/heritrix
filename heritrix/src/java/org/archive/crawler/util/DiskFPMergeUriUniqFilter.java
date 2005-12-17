@@ -110,7 +110,9 @@ public class DiskFPMergeUriUniqFilter extends FPMergeUriUniqFilter {
             if(oldFps!=null) {
                 oldFps.close();
             }
-            oldFpsFile.delete();
+            if(oldFpsFile!=null) {
+                oldFpsFile.delete();
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
