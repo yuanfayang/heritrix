@@ -34,6 +34,11 @@
         </sect3>
         <sect3 id="checkpointing">
          <title>Checkpoints</title>
+         <para>Now when you ask to checkpoint a running crawl, it will
+         manage for you the pause, checkpoint, and resume cycle (If paused
+         when checkpoint is invoked, the crawler will be set back into
+         a paused state upon checkpoint completion).
+         </para>
          <para>Checkpoints made with 1.6.0 software cannot be
          recovered with 1.8.0 software.  Core classes such as
          CrawlController have changed so their serialized representation

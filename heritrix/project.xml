@@ -277,7 +277,11 @@
         <email>Shifra dot Raffel at ucop dot edu</email>
          <organization>California Digital Library</organization>
     </contributor>
-
+    <contributor>
+        <name>Nicolas Baly</name>
+        <email>nicolas dot baly at epfl dot ch</email>
+         <organization />
+    </contributor>
   </contributors>
 
     <licenses>
