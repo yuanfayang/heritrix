@@ -1037,6 +1037,9 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     
     public void crawlCheckpoint(File checkpointDir)
     throws Exception {
+        if (this.recover == null) {
+            return;
+        }
         this.recover.checkpoint(checkpointDir);
     }
     

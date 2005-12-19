@@ -31,6 +31,8 @@ import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.Checkpoint;
@@ -70,11 +72,6 @@ public class Checkpointer implements Serializable {
     private List predecessorCheckpoints = new LinkedList();
 
     /**
-     * Base directory to place checkpoints in.
-     */
-    private transient File baseCheckpointDirectory = null;
-
-    /**
      * If a checkpoint has begun, its directory under
      * <code>checkpointDirectory</code>.
      */
@@ -90,28 +87,69 @@ public class Checkpointer implements Serializable {
      */
     private transient Thread checkpointThread = null;
     
-    private final CrawlController controller;
+    private transient CrawlController controller;
+    
+    /**
+     * Setup in constructor or on a call to revovery.
+     */
+    private transient Timer timerThread = null;
 
     /**
      * Create a new CheckpointContext with the given store directory
+     * @param cc CrawlController instance thats hosting this Checkpointer.
      * @param checkpointDir Where to store checkpoint.
      */
     public Checkpointer(final CrawlController cc, final File checkpointDir) {
-        this(cc, checkpointDir, DEFAULT_PREFIX);
+        this(cc, DEFAULT_PREFIX);
     }
     
     /**
      * Create a new CheckpointContext with the given store directory
      *
-     * @param checkpointDir Where to store checkpoint.
+     * @param cc CrawlController instance thats hosting this Checkpointer.
      * @param prefix Prefix for checkpoint label.
      */
-    public Checkpointer(final CrawlController cc, final File checkpointDir,
-            final String prefix) {
+    public Checkpointer(final CrawlController cc, final String prefix) {
         super();
+        initialize(cc, prefix);
+        
+    }
+    
+    protected void initialize(final CrawlController cc, final String prefix) {
         this.controller = cc;
-        this.baseCheckpointDirectory = checkpointDir;
         this.checkpointPrefix = prefix;
+        // Period is in hours.
+        int period = Integer.parseInt(System.getProperties().getProperty(
+            this.getClass().getName() + ".period", "-1"));
+        if (period <= 0) {
+            return;
+        }
+        // Convert period from hours to milliseconds.
+        long periodMs = period * (1000 * 60 /* RESTORE * 60 */);
+        TimerTask tt = new TimerTask() {
+            private CrawlController cController = cc;
+            public void run() {
+                if (isCheckpointing()) {
+                    LOGGER.info("CheckpointTimerThread skipping checkpoint, " +
+                        "already checkpointing: State: " +
+                        this.cController.getState());
+                    return;
+                }
+                LOGGER.info("TimerThread request checkpoint");
+                this.cController.requestCrawlCheckpoint();
+            }
+        };
+        this.timerThread = new Timer(true);
+        this.timerThread.schedule(tt, periodMs, periodMs);
+        LOGGER.info("Installed Checkpoint TimerThread to checkpoint every " +
+            period + " hour(s).");
+    }
+    
+    void cleanup() {
+        if (this.timerThread != null) {
+            LOGGER.info("Cleanedup Checkpoint TimerThread.");
+            this.timerThread.cancel();
+        }
     }
     
     /**
@@ -187,7 +225,7 @@ public class Checkpointer implements Serializable {
     
     protected File createCheckpointInProgressDirectory() {
         this.checkpointInProgressDir =
-            new File(Checkpointer.this.baseCheckpointDirectory,
+            new File(Checkpointer.this.controller.getCheckpointsDisk(),
                 getNextCheckpointName());
         this.checkpointInProgressDir.mkdirs();
         return this.checkpointInProgressDir;
@@ -275,15 +313,13 @@ public class Checkpointer implements Serializable {
      * Call this after instance has been revivifyied post-serialization to
      * amend counters and directories that effect where checkpoints get stored
      * from here on out.
-     * @param newdir New base dir to use future checkpointing.
+     * @param cc CrawlController instance.
      */
-    public void recoveryAmendments(File newdir) {
-        this.nextCheckpoint += 1;
-        this.baseCheckpointDirectory = newdir;
+    public void recover(final CrawlController cc) {
         // Prepend the checkpoint name with a little 'r' so we tell apart
         // checkpoints made from a recovery.  Allow for there being
         // multiple 'r' prefixes.
-        this.checkpointPrefix = 'r' + this.checkpointPrefix;
+        initialize(cc, 'r' + this.checkpointPrefix);
     }
     
     /**
