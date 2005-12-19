@@ -125,7 +125,7 @@ public class Checkpointer implements Serializable {
             return;
         }
         // Convert period from hours to milliseconds.
-        long periodMs = period * (1000 * 60 /* RESTORE * 60 */);
+        long periodMs = period * (1000 * 60 * 60);
         TimerTask tt = new TimerTask() {
             private CrawlController cController = cc;
             public void run() {
