@@ -11,6 +11,38 @@
       <corpauthor>Internet Archive</corpauthor>
     </authorgroup>
   </articleinfo>
+  <sect1 id="1_8_0">
+    <title>Release 1.8.0 - NOT YET RELEASED</title>
+    <abstract>
+      <para>TODO</para>
+    </abstract>
+
+    <sect2 id="1_8_0_limitations">
+      <title>Known Limitations/Issues</title>
+    </sect2>
+    <sect2 id="1_8_0_changes">
+        <title>Changes</title>
+        <sect3 id="progressstats">
+         <title>Progress Statistics Log</title>
+         <para>The format of progress statistics log messages on changes in
+         crawl status has changed. They now have a tail that tries to
+         add more context about why we're pausing or resuming (e.g.
+         Checkpointing).  TODO: We will be adding originator of the event
+         to the progress statistics likely before 1.8.0 --  e.g. JMX,
+         or operator via UI, etc. -- so be prepared for more progress log
+         changes before 1.8.0 release.</para>
+        </sect3>
+        <sect3 id="checkpointing">
+         <title>Checkpoints</title>
+         <para>Checkpoints made with 1.6.0 software cannot be
+         recovered with 1.8.0 software.  Core classes such as
+         CrawlController have changed so their serialized representation
+         as part of a checkpoint has also changed (We have not done the
+         work to deserialize earlier versions of core classes serialized
+         as part of a checkpoint).</para>
+        </sect3>
+    </sect2>
+  </sect1>
 
   <sect1 id="1_6_0">
     <title>Release 1.6.0 - 12/01/2005</title>

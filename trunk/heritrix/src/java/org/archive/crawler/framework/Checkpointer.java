@@ -142,6 +142,9 @@ public class Checkpointer implements Serializable {
         
         public void run() {
             LOGGER.info("Started");
+            // If crawler already paused, don't resume crawling after
+            // finishing checkpointing.
+            boolean alreadyPaused = getController().isPaused();
             try {
                 getController().requestCrawlPause();
                 // Clear any checkpoint errors.
@@ -162,13 +165,16 @@ public class Checkpointer implements Serializable {
                 clearCheckpointInProgressDirectory();
                 LOGGER.info("Finished");
                 getController().completePause();
-                // Clean up after ourselves.
-                getController().requestCrawlResume();
+                if (!alreadyPaused) {
+                    getController().requestCrawlResume();
+                }
             }
         }
         
         private synchronized boolean waitOnPaused() {
-            while(!getController().isPaused()) {
+            // If we're paused we can exit but also exit if the crawl has been
+            // resumed by the operator.
+            while(!getController().isPaused() && !getController().isRunning()) {
                 try {
                     wait(1000 * 3);
                 } catch (InterruptedException e) {

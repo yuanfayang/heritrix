@@ -168,8 +168,8 @@ public class CrawlController implements Serializable, Reporter {
 
     private static final Object NASCENT = "NASCENT".intern();
     private static final Object RUNNING = "RUNNING".intern();
-    private static final Object PAUSING = "PAUSING".intern();
     private static final Object PAUSED = "PAUSED".intern();
+    private static final Object PAUSING = "PAUSING".intern();
     private static final Object CHECKPOINTING = "CHECKPOINTING".intern();
     private static final Object STOPPING = "STOPPING".intern();
     private static final Object FINISHED = "FINISHED".intern();
@@ -1467,13 +1467,18 @@ public class CrawlController implements Serializable, Reporter {
     public boolean isPaused() {
         return state == PAUSED;
     }
+    
+    public boolean isRunning() {
+        return state == RUNNING;
+    }
 
     /**
      * Resume crawl from paused state
      */
     public synchronized void requestCrawlResume() {
-        if (state != PAUSING && state != PAUSED) {
-            // Can't resume if not been told to pause
+        if (state != PAUSING && state != PAUSED && state != CHECKPOINTING) {
+            // Can't resume if not been told to pause or if we're in middle of
+            // a checkpoint.
             return;
         }
         multiThreadMode();
