@@ -375,7 +375,8 @@ public class CrawlController implements Serializable, Reporter {
             onFailMessage = "Unable to test/run checkpoint recover";
             this.checkpointRecover = getCheckpointRecover();
             if (this.checkpointRecover == null) {
-                this.checkpointer = new Checkpointer(this, this.checkpointsDisk);
+                this.checkpointer =
+                    new Checkpointer(this, this.checkpointsDisk);
             } else {
                 setupCheckpointRecover();
             }
@@ -422,7 +423,7 @@ public class CrawlController implements Serializable, Reporter {
                 this.checkpointRecover.getDisplayName());
         }
         // Mark context we're in a recovery.
-        this.checkpointer.recoveryAmendments(this.checkpointsDisk);
+        this.checkpointer.recover(this);
         this.progressStats.info("CHECKPOINT RECOVER " +
             this.checkpointRecover.getDisplayName());
         // Copy the bdb log files to the state dir so we don't damage
@@ -1061,7 +1062,10 @@ public class CrawlController implements Serializable, Reporter {
             this.serverCache.cleanup();
             this.serverCache = null;
         }
-        this.checkpointer = null;
+        if (this.checkpointer != null) {
+            this.checkpointer.cleanup();
+            this.checkpointer = null;
+        }
         if (this.classCatalogDB != null) {
             try {
                 this.classCatalogDB.close();
@@ -1161,7 +1165,8 @@ public class CrawlController implements Serializable, Reporter {
     void checkpoint()
     throws Exception {
         // Tell registered listeners to checkpoint.
-        sendCheckpointEvent(this.checkpointer.getCheckpointInProgressDirectory());
+        sendCheckpointEvent(this.checkpointer.
+            getCheckpointInProgressDirectory());
         
         // Rotate off crawler logs.
         LOGGER.fine("Rotating log files.");
@@ -1982,5 +1987,9 @@ public class CrawlController implements Serializable, Reporter {
      */
     public Object getState() {
         return this.state;
+    }
+
+    public File getCheckpointsDisk() {
+        return this.checkpointsDisk;
     }
 }

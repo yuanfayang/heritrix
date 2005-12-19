@@ -130,10 +130,12 @@ import sun.net.www.protocol.file.FileURLConnection;
  * 
  * <p>Heritrix can also be embedded or launched by webapp initialization or
  * by JMX bootstrapping.  So far I count 4 methods of instantiation:
- * 1. From this classes main -- the method usually used;
- * 2. From the Heritrix UI (The local-instances.jsp) page;
- * 3. A creation by a JMX agent at the behest of a remote JMX client; and
- * 4. A container such as tomcat or jboss.
+ * <ol>
+ * <li>From this classes main -- the method usually used;</li>
+ * <li>From the Heritrix UI (The local-instances.jsp) page;</li>
+ * <li>A creation by a JMX agent at the behest of a remote JMX client; and</li>
+ * <li>A container such as tomcat or jboss.</li>
+ * </ol>
  *
  * @author gojomo
  * @author Kristinn Sigurdsson
@@ -344,9 +346,23 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     public Heritrix(final String name, final boolean jmxregister)
     throws IOException {
+        this(name, jmxregister, new CrawlJobHandler(getJobsdir()));
+    }
+    
+    /**
+     * Constructor.
+     * @param name If null, we bring up the default Heritrix instance.
+     * @param jmxregister True if we are to register this instance with JMX
+     * agent.
+     * @param cjh CrawlJobHandler to use.
+     * @throws IOException
+     */
+    public Heritrix(final String name, final boolean jmxregister,
+            final CrawlJobHandler cjh)
+    throws IOException {
         super();
         containerInitialization();
-        this.jobHandler = new CrawlJobHandler(getJobsdir());
+        this.jobHandler = cjh;
         this.openMBeanInfo = buildMBeanInfo();
         // Set up the alerting system.  SinkHandler is also a global so will
         // catch alerts for all running Heritrix instances.  Will need to
@@ -419,6 +435,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         // issue if we're running inside a container such as tomcat or jboss.
         Heritrix.loadProperties();
         Heritrix.patchLogging();
+        Heritrix.configureTrustStore();
         // Will run on SIGTERM but not on SIGKILL, unfortunately.
         // Otherwise, ensures we cleanup after ourselves (Deregister from
         // JMX and JNDI).
@@ -478,9 +495,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         File startLog = new File(getHeritrixHome(), STARTLOG);
         Heritrix.out = new PrintWriter(isDevelopment()? 
             System.out: new PrintStream(new FileOutputStream(startLog)));
+        
         try {
             containerInitialization();
-            configureTrustStore();
             String status = doCmdLineArgs(args);
             if (status != null) {
                 Heritrix.out.println(status);
@@ -519,10 +536,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         if (tmpStr != null) {
             Heritrix.guiPort = Integer.parseInt(tmpStr);
         }
-        tmpStr =
-            PropertyUtils.getPropertyOrNull("heritrix.cmdline.admin");
-        String adminLoginPassword = (tmpStr == null)?
-            "admin:letmein": tmpStr;
+        tmpStr = PropertyUtils.getPropertyOrNull("heritrix.cmdline.admin");
+        String adminLoginPassword = (tmpStr == null)? "admin:letmein": tmpStr;
         String crawlOrderFile =
             PropertyUtils.getPropertyOrNull("heritrix.cmdline.order");
         tmpStr = PropertyUtils.getPropertyOrNull("heritrix.cmdline.run");
@@ -677,10 +692,12 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     }
     
     /**
-     * @return The directory into which we put jobs.
+     * @return The directory into which we put jobs.  If the system property
+     * 'heritrix.jobsdir' is set, we will use its value in place of the default
+     * 'jobs' directory in the current working directory.
      * @throws IOException
      */
-    public File getJobsdir() throws IOException {
+    public static File getJobsdir() throws IOException {
         String jobsdirStr = System.getProperty("heritrix.jobsdir", "jobs");
         return jobsdirStr.startsWith(File.separator)?
             new File(jobsdirStr):
@@ -919,12 +936,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         if (oneSelfTestName != null && oneSelfTestName.length() > 0) {
             selfTestUrl += (oneSelfTestName + '/');
         }
-        Heritrix h = new Heritrix(true);
-        
-        h.setJobHandler(new SelfTestCrawlJobHandler(h.getJobsdir(), oneSelfTestName,
-            selfTestUrl));
-        CrawlJob job = createCrawlJob(h.getJobHandler(), crawlOrderFile,
-                "Template");
+        CrawlJobHandler cjh = new SelfTestCrawlJobHandler(getJobsdir(),
+                oneSelfTestName, selfTestUrl);
+        Heritrix h = new Heritrix("Selftest", true, cjh);
+        CrawlJob job = createCrawlJob(cjh, crawlOrderFile, "Template");
         job = h.getJobHandler().newJob(job, null, SELFTEST,
             "Integration self test", selfTestUrl, CrawlJob.PRIORITY_CRITICAL);
         h.getJobHandler().addJob(job);
@@ -1320,14 +1335,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     public CrawlJobHandler getJobHandler() {
         return this.jobHandler;
-    }
-    
-    /**
-     * @param handler Overwrite crawl job handler (Private because only
-     * for use by selftest).
-     */
-    private void setJobHandler(final CrawlJobHandler handler) {
-        this.jobHandler = handler;
     }
 
     /**
