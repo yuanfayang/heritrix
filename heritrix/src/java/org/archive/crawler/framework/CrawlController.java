@@ -1136,6 +1136,9 @@ public class CrawlController implements Serializable, Reporter {
      */
     public synchronized void requestCrawlCheckpoint()
     throws IllegalStateException {
+        if (this.checkpointer == null) {
+            return;
+        }
         if (this.checkpointer.isCheckpointing()) {
             throw new IllegalStateException("Checkpoint already running.");
         }
