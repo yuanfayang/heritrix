@@ -1445,8 +1445,10 @@ public class CrawlController implements Serializable, Reporter {
     public void beginCrawlStop() {
         LOGGER.fine("Started.");
         sendCrawlStateChangeEvent(STOPPING, this.sExit);
-        frontier.terminate();
-        frontier.unpause();
+        if (this.frontier != null) {
+            this.frontier.terminate();
+            this.frontier.unpause();
+        }
         LOGGER.fine("Finished."); 
     }
     
