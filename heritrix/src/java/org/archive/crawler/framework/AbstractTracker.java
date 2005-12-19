@@ -263,10 +263,10 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
      */
     public void crawlPausing(String statusMessage) {
-        logNote("CRAWL WAITING TO PAUSE");
+        logNote("CRAWL WAITING - " + statusMessage);
     }
 
-    protected void logNote(String note) {
+    protected void logNote(final String note) {
         this.controller.logProgressStatistics(new PaddingStringBuffer()
                      .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
                      .append(" ")
@@ -277,12 +277,12 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
     public void crawlPaused(String statusMessage) {
         crawlerPauseStarted = System.currentTimeMillis();
         progressStatisticsEvent(new EventObject(this));
-        logNote("CRAWL PAUSED");
+        logNote("CRAWL PAUSED - " + statusMessage);
     }
 
     public void crawlResuming(String statusMessage) {
         tallyCurrentPause();
-        logNote("CRAWL RESUMED");
+        logNote("CRAWL RESUMED - " + statusMessage);
         lastLogPointTime = System.currentTimeMillis();
     }
 
