@@ -539,20 +539,17 @@ implements ARCConstants {
         if (offset == 0) {
             // If offset is zero, then no records have been read yet
             // and we're reading our first one, the record of ARC file meta
-            // info.  Its special.  Has three lines of meta info. We've just
-            // read the first line.  There are two more.   The second line
-            // has misc. info.  We're only interested in the first field,
-            // the version number.  The third line is the list of field
-            // names. Here's what ARC file version 1 meta content looks like:
+            // info.  Its special.  In ARC versions 1.x, first record has three
+            // lines of meta info. We've just read the first line. There are two
+            // more.  The second line has misc. info.  We're only interested in
+            // the first field, the version number.  The third line is the list
+            // of field names. Here's what ARC file version 1.x meta content
+            // looks like:
             //
             // filedesc://testIsBoundary-JunitIAH200401070157520.arc 0.0.0.0 \\
             //      20040107015752 text/plain 77
             // 1 0 InternetArchive
             // URL IP-address Archive-date Content-type Archive-length
-            //
-            // Cannot read other ARCRecords till this first field has been
-            // read because it has the field names for subsequent record
-            // metadata.
             //
             ArrayList secondLineValues = new ArrayList(20);
             bodyOffset += getTokenizedHeaderLine(is, secondLineValues);
@@ -567,7 +564,7 @@ implements ARCConstants {
         try {
             this.currentRecord = new ARCRecord(is,
                 computeMetaData(this.headerFieldNameKeys, firstLineValues,
-                    this.version, offset), bodyOffset, this.digest,
+                    getVersion(), offset), bodyOffset, this.digest,
                     isStrict(), isParseHttpHeaders());
         } catch (IOException e) {
             IOException newE = new IOException(e.getMessage() + " (Offset " +
@@ -576,6 +573,19 @@ implements ARCConstants {
             throw newE;
         }
         return this.currentRecord;
+    }
+    
+    /**
+     * Returns version of this ARC file.  Usually read from first record of ARC.
+     * If we're reading without having first read the first record -- e.g.
+     * random access into middle of an ARC -- then version will not have been
+     * set.  For now, we return a default, version 1.1.  Later, if more than
+     * just one version of ARC, we could look at such as the meta line to see
+     * what version of ARC this is.
+     * @return Version of this ARC file.
+     */
+    public String getVersion() {
+        return (this.version == null)? "1.1": this.version;
     }
 
     /**
@@ -1263,6 +1273,7 @@ implements ARCConstants {
      */
     public class RecoverableIOException
     extends IOException {
+        private static final long serialVersionUID = -4464928470623109445L;
         private final IOException decoratedIOException;
         
         protected RecoverableIOException(final String message) {
