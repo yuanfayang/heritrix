@@ -124,7 +124,7 @@ public class ARCReaderFactory implements ARCConstants {
         
         ARCReader reader = null;
         try {
-            reader = get(localFile, true);
+            reader = get(localFile, true, 0);
         } catch (IOException e) {
             localFile.delete();
             throw e;
@@ -191,11 +191,22 @@ public class ARCReaderFactory implements ARCConstants {
      * @throws IOException 
      */
     public static ARCReader get(final File arcFile) throws IOException {
-        return get(arcFile, false);
+        return get(arcFile, false, 0);
+    }
+    
+    /**
+     * @param arcFile An arcfile to read.
+     * @param offset Have returned ARCReader set to read at passed offset.
+     * @return An ARCReader.
+     * @throws IOException 
+     */
+    public static ARCReader get(final File arcFile, final long offset)
+    throws IOException {
+        return get(arcFile, false, offset);
     }
     
     protected static ARCReader get(final File arcFile,
-            final boolean skipSuffixTest)
+            final boolean skipSuffixTest, final long offset)
     throws IOException {
         boolean compressed =
             ARCUtils.testCompressedARCFile(arcFile, skipSuffixTest);
@@ -211,6 +222,29 @@ public class ARCReaderFactory implements ARCConstants {
             (ARCReader)ARCReaderFactory.factory.
                 new UncompressedARCReader(arcFile);
     }
+    
+//    
+//    /**
+//     * Get an ARCReader aligned at <code>offset</code>.
+//     * @param url URL of a remote ARC.
+//     * @param offset Offset into ARC at which to start fetching.
+//     * @return An ARCReader aligned at offset.
+//     */
+//    public static ARCReader get(final URL url, final long offset) {
+//        
+//    }
+//    
+//    /**
+//     * Get an ARCReader aligned at <code>offset</code> and that will read no
+//     * more than length bytes.
+//     * @param url URL of a remote ARC.
+//     * @param offset Offset into ARC at which to start fetching.
+//     * @return An ARCReader aligned at offset.
+//     */
+//    public static ARCReader get(final URL url, final long offset,
+//            final long length) {
+//        
+//    }
 
     /**
      * Uncompressed arc file reader.
