@@ -22,7 +22,7 @@ public interface AList {
     public static final int T_LONG = 4;
     public static final int T_STRING = 5;
     public static final int T_INPUTSTREAM = 6;
-    public static final int T_OBJECT = 6;
+    public static final int T_OBJECT = 7;
     public static final int T_UNDEFINED = 0;
 
     /** Returns an iterator of {@link String} containing all keys in
