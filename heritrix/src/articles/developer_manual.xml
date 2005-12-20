@@ -290,6 +290,16 @@ ${package_declaration}</programlisting></para>
       at testee's default access methods and members, something a test in
       another package would not be able to do.</para>
     </sect2>
+    <sect2 id="log_messages">
+    <title>CVS Log Message Format</title>
+    <para>A suggested format for CVS log messages can be found at the
+    subversion site, <ulink 
+    url="http://subversion.tigris.org/hacking.html#log-messages">Log
+    Messages</ulink> (Elsewhere the same recommendations have been made by the
+    same folks regards CVS commits).
+    </para>
+
+    </sect2>
   </sect1>
 
   <sect1>
