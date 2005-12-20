@@ -80,7 +80,7 @@ public class ARCReaderFactoryTest extends TmpDirTestCase {
             for (Iterator i = reader.iterator(); i.hasNext();) {
                 ARCRecord r = (ARCRecord)i.next();
                 if (tmpFile == null) {
-                    tmpFile = r.getMetaData().getArcFile();
+                    tmpFile = new File(r.getMetaData().getArc());
                 }
             }
             assertTrue(tmpFile.exists());

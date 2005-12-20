@@ -90,99 +90,7 @@ public class ARCReaderFactory implements ARCConstants {
      * @throws IOException 
      */
     public static ARCReader get(final URL arcUrl) throws IOException {
-        // If url represents a local file -- i.e. has scheme of 'file' -- then
-        // return the file it points to.
-        if (arcUrl.getPath() != null) {
-            File f = new File(arcUrl.getPath());
-            if (f.exists()) {
-                return get(f);
-            }
-        }
-        
-        URLConnection connection = arcUrl.openConnection();
-        File localFile = null;
-        if (connection instanceof HttpURLConnection) {
-            // If http url connection, bring down the resouce local.
-            localFile = File.createTempFile(ARCReader.class.getName(), ".arc",
-                TMPDIR);
-            connection.connect();
-            try {
-                IoUtils.readFullyToFile(connection.getInputStream(), localFile,
-                        new byte[16 * 1024]);
-            } catch (IOException ioe) {
-                localFile.delete();
-                throw ioe;
-            }
-        } else if (connection instanceof RsyncURLConnection) {
-            // Then, connect and this will create a local file.
-            connection.connect();
-            localFile = ((RsyncURLConnection)connection).getFile();
-        } else {
-            throw new UnsupportedOperationException("No support for " +
-                connection);
-        }
-        
-        ARCReader reader = null;
-        try {
-            reader = get(localFile, true, 0);
-        } catch (IOException e) {
-            localFile.delete();
-            throw e;
-        }
-        
-        // Assign to a final variable so can assign it to inner class
-        // data member.
-        final ARCReader arcreader = reader;
-        
-        // Return a delegate that does cleanup of downloaded file on close.
-        return new ARCReader() {
-            private final ARCReader delegate = arcreader;
-            
-            public void close() throws IOException {
-                this.delegate.close();
-                if (this.delegate.arcFile != null &&
-                        this.delegate.arcFile.exists()) {
-                    this.delegate.arcFile.delete();
-                    this.delegate.arcFile = null;
-                }
-            }
-            
-            public ARCRecord get(long offset) throws IOException {
-                return this.delegate.get(offset);
-            }
-            
-            public boolean isDigest() {
-                return this.delegate.isDigest();
-            }
-            
-            public boolean isParseHttpHeaders() {
-                return this.delegate.isParseHttpHeaders();
-            }
-            
-            public boolean isStrict() {
-                return this.delegate.isStrict();
-            }
-            
-            public Iterator iterator() {
-                return this.delegate.iterator();
-            }
-            
-            public void setDigest(boolean d) {
-                this.delegate.setDigest(d);
-            }
-            
-            public void setParseHttpHeaders(boolean parse) {
-                this.delegate.setParseHttpHeaders(parse);
-            }
-            
-            public void setStrict(boolean s) {
-                this.delegate.setStrict(s);
-            }
-            
-            public List validate() throws IOException {
-                return this.delegate.validate();
-            }
-        };
+        return get(arcUrl, 0);
     }
     
     /**
@@ -223,28 +131,131 @@ public class ARCReaderFactory implements ARCConstants {
                 new UncompressedARCReader(arcFile, offset);
     }
     
-//    
-//    /**
-//     * Get an ARCReader aligned at <code>offset</code>.
-//     * @param url URL of a remote ARC.
-//     * @param offset Offset into ARC at which to start fetching.
-//     * @return An ARCReader aligned at offset.
-//     */
-//    public static ARCReader get(final URL url, final long offset) {
-//        
-//    }
-//    
-//    /**
-//     * Get an ARCReader aligned at <code>offset</code> and that will read no
-//     * more than length bytes.
-//     * @param url URL of a remote ARC.
-//     * @param offset Offset into ARC at which to start fetching.
-//     * @return An ARCReader aligned at offset.
-//     */
-//    public static ARCReader get(final URL url, final long offset,
-//            final long length) {
-//        
-//    }
+    protected static ARCReader get(final String arc, final InputStream is)
+    throws IOException {
+        // For now, assume stream is compressed.  Later add test.
+        return (ARCReader)ARCReaderFactory.factory.
+            new CompressedARCReader(arc, is);
+    }
+    
+    
+    /**
+     * Get an ARCReader aligned at <code>offset</code>.
+     * @param arcUrl URL of a remote ARC.
+     * @param offset Offset into ARC at which to start fetching.
+     * @return An ARCReader aligned at offset.
+     * @throws IOException
+     */
+    public static ARCReader get(final URL arcUrl, final long offset)
+    throws IOException {
+        // If url represents a local file -- i.e. has scheme of 'file' -- then
+        // return the file it points to.
+        if (arcUrl.getPath() != null) {
+            File f = new File(arcUrl.getPath());
+            if (f.exists()) {
+                return get(f, offset);
+            }
+        }
+        
+        URLConnection connection = arcUrl.openConnection();
+        if (connection instanceof HttpURLConnection && offset > 0) {
+            // Special handling for case where its a http URL
+            // and offset is non-zero. In this case, assume we're to
+            // just get a single record from the remote location only;
+            // don't copy down local the complete ARC file. Add
+            // open-ended range header to the request.
+            connection.addRequestProperty("Range", "bytes=" + offset + "-");
+            // TODO: Needs to be repositionable stream.
+            return get(arcUrl.toString(), connection.getInputStream());
+        }
+
+        File localFile = null;
+        if (connection instanceof HttpURLConnection) {
+            // If http url connection, bring down the resouce local.
+            localFile = File.createTempFile(ARCReader.class.getName(), ".arc",
+                    TMPDIR);
+            connection.connect();
+            try {
+                IoUtils.readFullyToFile(connection.getInputStream(), localFile,
+                        new byte[16 * 1024]);
+            } catch (IOException ioe) {
+                localFile.delete();
+                throw ioe;
+            }
+        } else if (connection instanceof RsyncURLConnection) {
+            // Then, connect and this will create a local file.
+            // See implementation of the rsync handler.
+            connection.connect();
+            localFile = ((RsyncURLConnection)connection).getFile();
+        } else {
+            throw new UnsupportedOperationException("No support for " +
+                connection);
+        }
+        
+        ARCReader reader = null;
+        try {
+            reader = get(localFile, true, offset);
+        } catch (IOException e) {
+            localFile.delete();
+            throw e;
+        }
+        
+        // Assign to a final variable so can assign it to inner class
+        // data member.
+        final ARCReader arcreader = reader;
+        
+        // Return a delegate that does cleanup of downloaded file on close.
+        return new ARCReader() {
+            private final ARCReader delegate = arcreader;
+            
+            public void close() throws IOException {
+                this.delegate.close();
+                if (this.delegate.arc != null) {
+                    File f = new File(this.delegate.arc);
+                    if (f.exists()) {
+                        f.delete();
+                    }
+                    this.delegate.arc = null;
+                }
+            }
+            
+            public ARCRecord get(long offset) throws IOException {
+                return this.delegate.get(offset);
+            }
+            
+            public boolean isDigest() {
+                return this.delegate.isDigest();
+            }
+            
+            public boolean isParseHttpHeaders() {
+                return this.delegate.isParseHttpHeaders();
+            }
+            
+            public boolean isStrict() {
+                return this.delegate.isStrict();
+            }
+            
+            public Iterator iterator() {
+                return this.delegate.iterator();
+            }
+            
+            public void setDigest(boolean d) {
+                this.delegate.setDigest(d);
+            }
+            
+            public void setParseHttpHeaders(boolean parse) {
+                this.delegate.setParseHttpHeaders(parse);
+            }
+            
+            public void setStrict(boolean s) {
+                this.delegate.setStrict(s);
+            }
+            
+            public List validate() throws IOException {
+                return this.delegate.validate();
+            }
+        };
+    }
 
     /**
      * Uncompressed arc file reader.
@@ -273,6 +284,19 @@ public class ARCReaderFactory implements ARCConstants {
             // Arc file has been tested for existence by time it has come
             // to here.
             this.in = getInputStream(f, offset);
+            initialize(f.getAbsolutePath());
+        }
+        
+        /**
+         * Constructor.
+         * 
+         * @param f Uncompressed arc to read.
+         * @param is InputStream.
+         */
+        public UncompressedARCReader(final String f, final InputStream is) {
+            // Arc file has been tested for existence by time it has come
+            // to here.
+            this.in = is;
             initialize(f);
         }
     }
@@ -297,8 +321,7 @@ public class ARCReaderFactory implements ARCConstants {
         /**
          * Constructor.
          * 
-         * @param f
-         *            Compressed arcfile to read.
+         * @param f Compressed arcfile to read.
          * @throws IOException
          */
         public CompressedARCReader(final File f, final long offset)
@@ -306,6 +329,22 @@ public class ARCReaderFactory implements ARCConstants {
             // Arc file has been tested for existence by time it has come
             // to here.
             this.in = new GzippedInputStream(getInputStream(f, offset), offset);
+            this.compressed = true;
+            initialize(f.getAbsolutePath());
+        }
+        
+        /**
+         * Constructor.
+         * 
+         * @param f Compressed arcfile.
+         * @param is InputStream to use.
+         * @throws IOException
+         */
+        public CompressedARCReader(final String f, final InputStream is)
+        throws IOException {
+            // Arc file has been tested for existence by time it has come
+            // to here.
+            this.in = new GzippedInputStream(is);
             this.compressed = true;
             initialize(f);
         }

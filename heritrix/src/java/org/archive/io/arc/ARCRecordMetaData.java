@@ -64,9 +64,10 @@ public class ARCRecordMetaData
     private String statusCode = null;
     
     /**
-     * The arc file this metadata came out.
+     * The arc this metadata came out.
+     * Descriptive String, either path or URL.
      */
-    private File arcFile = null;
+    private String arc = null;
     
     /**
      * Shut down the default constructor.
@@ -79,12 +80,12 @@ public class ARCRecordMetaData
     /**
      * Constructor.
      *
-     * @param arcFile The arc file this metadata came out of.
+     * @param arc The arc file this metadata came out of.
      * @param headerFields Hash of meta fields.
      *
      * @throws IOException
      */
-    public ARCRecordMetaData(File arcFile, Map headerFields)
+    public ARCRecordMetaData(final String arc, Map headerFields)
         throws IOException {
         // Make sure the minimum required fields are present,
         for (Iterator i = REQUIRED_VERSION_1_HEADER_FIELDS.iterator();
@@ -92,7 +93,7 @@ public class ARCRecordMetaData
             testRequiredField(headerFields, (String)i.next());
         }
         this.headerFields = headerFields;
-        this.arcFile = arcFile;
+        this.arc = arc;
     }
 
     /**
@@ -195,10 +196,20 @@ public class ARCRecordMetaData
     }
     
     /**
-     * @return Returns the arcFile.
+     * @return Returns identifier for ARC.
+     */
+    public String getArc() {
+        return this.arc;
+    }
+    
+    /**
+     * @return Convenience method that does a
+     * return new File(this.arc) (Be aware this.arc is not always
+     * full path to an ARC file -- may be an URL).  Test
+     * returned file for existence.
      */
     public File getArcFile() {
-        return arcFile;
+        return new File(this.arc);
     }
     
     /**
@@ -230,7 +241,7 @@ public class ARCRecordMetaData
     }
     
     public String toString() {
-        return ((this.arcFile != null)? this.arcFile.getAbsolutePath(): "") +
+        return ((this.arc != null)? this.arc: "") +
            ": " +
            ((this.headerFields != null)? this.headerFields.toString():  "");
     }
