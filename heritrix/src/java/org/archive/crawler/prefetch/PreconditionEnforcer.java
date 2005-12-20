@@ -191,14 +191,13 @@ public class PreconditionEnforcer
                     // annotate URI as excluded, but continue to process normally
                     curi.addAnnotation("robotExcluded");
                     return false; 
-                } else {
-                    // Don't fetch and turn off later stages of processing.
-                    curi.skipToProcessorChain(getController().getPostprocessorChain());
-                    curi.setFetchStatus(S_ROBOTS_PRECLUDED);
-                    curi.putString("error","robots.txt exclusion");
-                    logger.fine("robots.txt precluded " + curi);
-                    return true;
                 }
+                // Don't fetch and turn off later stages of processing.
+                curi.skipToProcessorChain(getController().getPostprocessorChain());
+                curi.setFetchStatus(S_ROBOTS_PRECLUDED);
+                curi.putString("error","robots.txt exclusion");
+                logger.fine("robots.txt precluded " + curi);
+                return true;
             }
             return false;
         }
