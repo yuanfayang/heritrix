@@ -79,16 +79,6 @@ implements RepositionableStream {
      * Buffer size used skipping over gzip members.
      */
     private static final int LINUX_PAGE_SIZE = 4 * 1024;
-
-    /**
-     * Offset at time of creation.
-     * Passed in constructor.  Though passed stream must be
-     * repositionable, don't know graceful way to capture
-     * stream position before passing superclass (On return,
-     * super class has read in the gzip header so has moved
-     * stream on past original position).
-     */
-    private final long originalOffset;
     
     
     public GzippedInputStream(InputStream is) throws IOException {
@@ -96,33 +86,25 @@ implements RepositionableStream {
         this(is, LINUX_PAGE_SIZE);
     }
     
-    public GzippedInputStream(InputStream is, int size)
-    throws IOException {
-        this(is, size, 0);
-    }
-    
-    public GzippedInputStream(final InputStream is, final long offset)
-    throws IOException {
-        this(is, LINUX_PAGE_SIZE, offset);
-    }
-    
     /**
-     * @param is An InputStream that implements RespositionableStream.
+     * @param is An InputStream that implements RespositionableStream and
+     * returns <code>true</code> when we call
+     * {@link InputStream#markSupported()} (Latter is needed so can setup
+     * an {@link Iterator} against the Gzip stream).
      * @param size Size of blocks to use reading.
-     * @param offset Offset into stream.  Needed for case where want an
-     * iterator on a stream starting at OTHER THAN offset zero.
      * @throws IOException
      */
-    public GzippedInputStream(final InputStream is, final int size,
-        final long offset)
+    public GzippedInputStream(final InputStream is, final int size)
     throws IOException {
         super(checkStream(is), size);
-        this.originalOffset = offset;
     }
     
     protected static InputStream checkStream(final InputStream is)
     throws IOException {
         if (is instanceof RepositionableStream) {
+            // Mark the stream.  The constructor will do a reset to move us
+            // back to the start of the first gzip member.
+            is.mark(10 * GzipHeader.MINIMAL_GZIP_HEADER_LENGTH);
             return is;
         }
         throw new IOException("Passed stream does not" +
@@ -174,11 +156,16 @@ implements RepositionableStream {
         return bytesSkipped;
     }
     
+    /**
+     * Returns a GZIP Member Iterator.
+     * Has limitations. Can only get one Iterator per instance of this class;
+     * you must get new instance if you want to get Iterator again.
+     * @return Iterator over GZIP Members.
+     */
     public Iterator iterator() {
         try {
-            // Set stream back to original position so each get of a member
-            // will be aligned at gzip magic.
-            this.position(this.originalOffset);
+            // We called mark in the constructor (See checkStream method).
+            this.in.reset();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -196,7 +183,7 @@ implements RepositionableStream {
             }
             
             /**
-             * @return An InputStream.
+             * @return An InputStream onto a GZIP Member.
              */
             public Object next() {
                 try {
