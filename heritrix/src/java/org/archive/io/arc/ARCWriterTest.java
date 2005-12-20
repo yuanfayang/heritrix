@@ -205,7 +205,6 @@ extends TmpDirTestCase implements ARCConstants {
         reader = ARCReaderFactory.get(arcFile, offset);
         int count = 0;
         for (final Iterator i = reader.iterator(); i.hasNext(); i.next()) {
-            i.next();
             count++;
         }
         reader.close();
