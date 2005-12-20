@@ -64,14 +64,6 @@ import java.util.zip.Inflater;
 public class GzippedInputStream
 extends GZIPInputStream
 implements RepositionableStream {
-    
-    /**
-     * Length of minimal GZIP header.
-     *
-     * See RFC1952 for explaination of value of 10.
-     */
-    public static final int MINIMAL_GZIP_HEADER_LENGTH = 10;
-    
     /**
      * Tail on gzip members (The CRC).
      */
@@ -81,12 +73,23 @@ implements RepositionableStream {
      * Utility class used probing for gzip members in stream.
      * We need this instance to get at the readByte method.
      */
-    private GzipHeader gzipHeader = new GzipHeader();
+    private final GzipHeader gzipHeader = new GzipHeader();
     
     /**
      * Buffer size used skipping over gzip members.
      */
     private static final int LINUX_PAGE_SIZE = 4 * 1024;
+
+    /**
+     * Offset at time of creation.
+     * Passed in constructor.  Though passed stream must be
+     * repositionable, don't know graceful way to capture
+     * stream position before passing superclass (On return,
+     * super class has read in the gzip header so has moved
+     * stream on past original position).
+     */
+    private final long originalOffset;
+    
     
     public GzippedInputStream(InputStream is) throws IOException {
         // Have buffer match linux page size.
@@ -95,11 +98,35 @@ implements RepositionableStream {
     
     public GzippedInputStream(InputStream is, int size)
     throws IOException {
-        super(is, size);
-        if (!(this.in instanceof RepositionableStream)) {
-            throw new IOException("Passed stream does not" +
-                    " implement PositionableStream");
+        this(is, size, 0);
+    }
+    
+    public GzippedInputStream(final InputStream is, final long offset)
+    throws IOException {
+        this(is, LINUX_PAGE_SIZE, offset);
+    }
+    
+    /**
+     * @param is An InputStream that implements RespositionableStream.
+     * @param size Size of blocks to use reading.
+     * @param offset Offset into stream.  Needed for case where want an
+     * iterator on a stream starting at OTHER THAN offset zero.
+     * @throws IOException
+     */
+    public GzippedInputStream(final InputStream is, final int size,
+        final long offset)
+    throws IOException {
+        super(checkStream(is), size);
+        this.originalOffset = offset;
+    }
+    
+    protected static InputStream checkStream(final InputStream is)
+    throws IOException {
+        if (is instanceof RepositionableStream) {
+            return is;
         }
+        throw new IOException("Passed stream does not" +
+            " implement PositionableStream");
     }
     
     /**
@@ -138,8 +165,7 @@ implements RepositionableStream {
      */
     public long gotoEOR() throws IOException {
         long bytesSkipped = 0;
-        // If at start of file, we ain't setup to read.
-        if (position() == 0) {
+        if (this.inf.getTotalIn() <= 0) {
             return bytesSkipped;
         }
         while(!this.inf.finished()) {
@@ -150,18 +176,16 @@ implements RepositionableStream {
     
     public Iterator iterator() {
         try {
-            // Reset.
-            position(0);
+            // Set stream back to original position so each get of a member
+            // will be aligned at gzip magic.
+            this.position(this.originalOffset);
         } catch (IOException e) {
-            throw new RuntimeException("Failed seeking to 0: " +
-                e.getMessage());
+            throw new RuntimeException(e);
         }
-        // Need pointer to compressed stream to pass the Iterator.
-        final GzippedInputStream gis = this;
-        
-        // Return an anonymous iterator instance.
         return new Iterator() {
-            private GzippedInputStream compressedStream = gis;
+            private GzippedInputStream compressedStream =
+                GzippedInputStream.this;
+            
             public boolean hasNext() {
                 try {
                     gotoEOR();
@@ -224,7 +248,7 @@ implements RepositionableStream {
             int read = -1;
             int headerRead = 0;
             while (getInputStream().available() >
-                    MINIMAL_GZIP_HEADER_LENGTH) {
+                    GzipHeader.MINIMAL_GZIP_HEADER_LENGTH) {
                 read = getGzipHeader().readByte(getInputStream());
                 if ((byte)read == (byte)GZIPInputStream.GZIP_MAGIC) {
                     headerRead++;

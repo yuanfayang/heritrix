@@ -74,7 +74,7 @@ import org.archive.util.TextUtils;
  *
  * <p>Profiling java.io vs. memory-mapped ByteBufferInputStream shows the
  * latter slightly slower -- but not by much.  TODO: Test more.  Just
- * change {@link #getInputStream(File)}.
+ * change {@link #getInputStream(File, long)}.
  *
  * @author stack
  * @version $Date$ $Revision$
@@ -191,6 +191,8 @@ implements ARCConstants {
     
     private static String cachedShortArcFileName = null;
 
+    static final String DEFAULT_DIGEST_METHOD = "SHA-1";
+
     /**
      * Convenience method used by subclass constructors.
      * @param f ARC that this reader goes against.
@@ -239,6 +241,15 @@ implements ARCConstants {
     }
     
     /**
+     * @return Return ARCRecord at current offset.
+     * @throws IOException
+     */
+    public ARCRecord get() throws IOException {
+        return createARCRecord(this.in,
+            ((RepositionableStream)this.in).position());
+    }
+    
+    /**
      * Convenience method for constructors.
      * 
      * @param arcfile File to read.
@@ -246,9 +257,10 @@ implements ARCConstants {
      * @throws IOException If failed open or fail to get a memory
      * mapped byte buffer on file.
      */
-    protected InputStream getInputStream(File arcfile) throws IOException {
+    protected InputStream getInputStream(final File arcfile, final long offset)
+    throws IOException {
         return new RepositionableBufferedInputStream(
-            new RandomAccessInputStream(arcfile));
+            new RandomAccessInputStream(arcfile, offset));
     }
 
     /**
@@ -1029,13 +1041,18 @@ implements ARCConstants {
      * @param format What format to use outputting.
      * @throws IOException
      */
-    protected static void outputARCRecord(ARCRecord r, String format)
+    protected static void outputARCRecord(final ARCReader arc, final ARCRecord r,
+        final String format)
     throws IOException {
         if (format.equals(CDX_OUTPUT)) {
-            outputARCRecordCdx(r);
+            System.out.println(outputARCRecordCdx(r));
         } else if(format.equals(DUMP_OUTPUT)) {
+            // No point digesting if dumping content.
+            arc.setDigest(false);
             outputARCRecordDump(r);
         } else if(format.equals(NOHEAD_OUTPUT)) {
+            // No point digesting if dumping content.
+            arc.setDigest(false);
             outputARCRecordNohead(r);
         } else {
             throw new IOException("Unsupported format" +
@@ -1161,14 +1178,13 @@ implements ARCConstants {
      */
     public static void main(String [] args)
     throws ParseException, IOException, java.text.ParseException {
-
         Options options = new Options();
         options.addOption(new Option("h","help", false,
             "Prints this message and exits."));
         options.addOption(new Option("o","offset", true,
             "Outputs record at this offset into arc file."));
         options.addOption(new Option("d","digest", true,
-            "Calculate digest. Expensive. Default: true."));
+            "Pass true|false. Expensive. Default: true (SHA-1)."));
         options.addOption(new Option("s","strict", false,
             "Strict mode. Fails parse if incorrectly formatted ARC."));
         options.addOption(new Option("f","format", true,
@@ -1207,9 +1223,9 @@ implements ARCConstants {
                     
                 case 'd':
                     if (cmdlineOptions[i].getValue() != null) {
-                        if (Boolean.FALSE.toString().
-                                equals(cmdlineOptions[i].getValue().
-                                    toLowerCase())) {
+                        String tmp =
+                            cmdlineOptions[i].getValue().toLowerCase();
+                        if (Boolean.FALSE.toString().equals(tmp)) {
                             digest = false;
                         }
                     }
@@ -1240,10 +1256,10 @@ implements ARCConstants {
                 System.out.println("Error: Pass one arcfile only.");
                 usage(formatter, options, 1);
             }
-            ARCReader arc = ARCReaderFactory.get((String)cmdlineArgs.get(0));
+            ARCReader arc =
+                ARCReaderFactory.get(new File((String)cmdlineArgs.get(0)), offset);
             arc.setStrict(strict);
-            ARCRecord rec = arc.get(offset);
-            outputARCRecord(rec, format);
+            outputARCRecord(arc, arc.get(), format);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 String urlOrPath = (String)i.next();

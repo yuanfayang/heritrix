@@ -171,6 +171,46 @@ extends TmpDirTestCase implements ARCConstants {
                 DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
         validate(arcFile, recordCount  + 1); // Header record.
     }
+    
+    public void testRandomAccess() throws IOException {
+        final int recordCount = 3;
+        File arcFile = writeRecords("writeRecord", true,
+            DEFAULT_MAX_ARC_FILE_SIZE, recordCount);
+        ARCReader reader = ARCReaderFactory.get(arcFile);
+        // Get to second record.  Get its offset for later use.
+        boolean readFirst = false;
+        String url = null;
+        long offset = -1;
+        long totalRecords = 0;
+        boolean readSecond = false;
+        for (final Iterator i = reader.iterator(); i.hasNext(); totalRecords++) {
+            ARCRecord ar = (ARCRecord)i.next();
+            if (!readFirst) {
+                readFirst = true;
+                continue;
+            }
+            if (!readSecond) {
+                url = ar.getMetaData().getUrl();
+                offset = ar.getMetaData().getOffset();
+                readSecond = true;
+            }
+        }
+        
+        reader = ARCReaderFactory.get(arcFile, offset);
+        ARCRecord ar = reader.get();
+        assertEquals(ar.getMetaData().getUrl(), url);
+        ar.close();
+        
+        // Get reader again.  See how iterator works with offset
+        reader = ARCReaderFactory.get(arcFile, offset);
+        int count = 0;
+        for (final Iterator i = reader.iterator(); i.hasNext(); i.next()) {
+            i.next();
+            count++;
+        }
+        reader.close();
+        assertEquals(totalRecords - 1, count);
+    }
 
     public void testWriteRecordCompressed() throws IOException {
         final int recordCount = 2;
