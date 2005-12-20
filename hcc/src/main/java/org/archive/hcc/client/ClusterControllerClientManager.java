@@ -25,6 +25,7 @@
 
 package org.archive.hcc.client;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -56,8 +57,12 @@ public class ClusterControllerClientManager {
     public static ClusterControllerClient getDefaultClient(){
         try {
             if(defaultClient == null){
-                String host = System.getProperty("org.archive.hcc.client.host","localhost");
-                int jmxPort = Integer.parseInt(System.getProperty("org.archive.hcc.client.jmxPort","8849"));
+                String host = System.getProperty(
+                        "org.archive.hcc.client.host",
+                        InetAddress.getLocalHost().getHostName());
+                
+                int jmxPort = Integer.parseInt(
+                        System.getProperty("org.archive.hcc.client.jmxPort","8849"));
                 InetSocketAddress address = new InetSocketAddress(host, jmxPort);
                 defaultClient = new ClusterControllerClientImpl(address);
             }

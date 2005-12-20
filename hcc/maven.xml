@@ -33,6 +33,8 @@
 
 </goal>
 
+
+ 
 <goal name="stop-crawler">
 	<java fork="true" verbose="true"  jar="${env.HERITRIX_HOME}/bin/cmdline-jmxclient-0.10.5.jar">
 		<arg line="controlRole:letmein"/>
