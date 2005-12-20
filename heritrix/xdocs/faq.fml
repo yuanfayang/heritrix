@@ -212,6 +212,9 @@
         do I get an OutOfMemoryException ten minutes after starting 
         a broad scoped crawl?</question>
         <answer>
+        <p>If using 64-bit JVM, see Gordon's note to the list on
+        12/19/2005, <a href="http://groups.yahoo.com/group/archive-crawler/message/2450">Re: Large crawl experience (like, 500M links)</a>.
+        </p>
         <p>See the note in
         <a hef="https://sourceforge.net/tracker/?func=detail&amp;atid=539102&amp;aid=896772&amp;group_id=73833">[ 896772 ] "Site-first"/'frontline' prioritization</a> and this Release Note, <a href="http://crawler.archive.org/articles/releasenotes.html#1_0_0_limitations">5.1.1 Crawl Size Upper Bounds</a>.
         See this note by Kris from the list, <a href="http://groups.yahoo.com/group/archive-crawler/message/1027">1027</a> for how
