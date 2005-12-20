@@ -328,7 +328,7 @@ public class ARCReaderFactory implements ARCConstants {
                 throws IOException {
             // Arc file has been tested for existence by time it has come
             // to here.
-            this.in = new GzippedInputStream(getInputStream(f, offset), offset);
+            this.in = new GzippedInputStream(getInputStream(f, offset));
             this.compressed = true;
             initialize(f.getAbsolutePath());
         }

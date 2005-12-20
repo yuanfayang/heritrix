@@ -124,7 +124,7 @@ public class GzippedInputStreamTest extends TmpDirTestCase {
         // starting at second record.
         is = new RepositionableRandomAccessInputStream(this.compressedFile,
             offsetOfSecondRecord);
-        gis = new GzippedInputStream(is, offsetOfSecondRecord);
+        gis = new GzippedInputStream(is);
         records = 0;
         for (final Iterator i = gis.iterator(); i.hasNext(); i.next()) {
             records++;
