@@ -155,9 +155,10 @@ implements ARCConstants {
         Arrays.asList(this.headerFieldNameKeysArray);
     
     /**
-     * The file this arcreader is going against.
+     * Descriptive string for the ARC we're going against
+     * (full path, url, etc.).
      */
-    protected File arcFile = null;
+    protected String arc = null;
 
     private boolean digest = true;
     
@@ -197,8 +198,8 @@ implements ARCConstants {
      * Convenience method used by subclass constructors.
      * @param f ARC that this reader goes against.
      */
-    protected void initialize(File f) {
-        this.arcFile = f;
+    protected void initialize(final String f) {
+        this.arc = f;
     }
     
     public boolean isCompressed() {
@@ -348,7 +349,7 @@ implements ARCConstants {
                     record.getMetaData(): null;
                 throw new IOException("Read " + (char)c +
                     " when only " + LINE_SEPARATOR + " expected. " + 
-                    this.arcFile + ((meta != null)?
+                    this.arc + ((meta != null)?
                         meta.getHeaderFields().toString(): ""));
             }
         }
@@ -713,7 +714,7 @@ implements ARCConstants {
         headerFields.put(VERSION_HEADER_FIELD_KEY, v);
         headerFields.put(ABSOLUTE_OFFSET_KEY, new  Long(offset));
 
-        return new ARCRecordMetaData(this.arcFile, headerFields);
+        return new ARCRecordMetaData(this.arc, headerFields);
     }
     
     /**
@@ -969,7 +970,10 @@ implements ARCConstants {
                 }
                 List listOfMetadata = new ArrayList();
                 listOfMetadata.add(baos.toString(ARCWriter.UTF8));
-                writer = new ARCWriter(System.out, meta.getArcFile(),
+                // Assume getArc returns full path to file.  ARCWriter
+                // or new File will complain if it is otherwise.
+                writer = new ARCWriter(System.out,
+                    new File(meta.getArc()),
                     compressed, listOfMetadata, meta.getDate());
                 continue;
             }
@@ -985,8 +989,8 @@ implements ARCConstants {
     throws IOException {
         BufferedWriter cdxWriter = null;
         if (toFile) {
-            String cdxFilename = stripExtension(arc.arcFile.getAbsolutePath(),
-                    DOT_COMPRESSED_FILE_EXTENSION);
+            String cdxFilename = stripExtension(arc.arc,
+                DOT_COMPRESSED_FILE_EXTENSION);
             cdxFilename = stripExtension(cdxFilename, '.' + ARC_FILE_EXTENSION);
             cdxFilename += ".cdx";
             cdxWriter = new BufferedWriter(new FileWriter(cdxFilename));
@@ -1026,11 +1030,11 @@ implements ARCConstants {
      */
     protected static String getShortArcFileName(ARCRecordMetaData meta) {
         if (cachedShortArcFileName == null) {
-            String arcFileName = meta.getArcFile().getName();
+            String arcFileName = (new File(meta.getArc()).getName());
             arcFileName = stripExtension(arcFileName,
-                    DOT_COMPRESSED_FILE_EXTENSION);
+                DOT_COMPRESSED_FILE_EXTENSION);
             cachedShortArcFileName = stripExtension(arcFileName,
-                    '.' + ARC_FILE_EXTENSION);
+                '.' + ARC_FILE_EXTENSION);
         }
         return cachedShortArcFileName;
     }
