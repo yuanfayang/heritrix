@@ -444,7 +444,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         } finally {
             // ensure recording has stopped
             rec.closeRecorders();
-            if (!((HttpMethodBase)method).isAborted()) {
+            if (!method.isAborted()) {
                 method.releaseConnection();
             }
             // Note completion time
