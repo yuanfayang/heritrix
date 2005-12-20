@@ -26,7 +26,6 @@ import it.unimi.dsi.mg4j.io.RepositionableStream;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +44,20 @@ public class GzippedInputStreamTest extends TmpDirTestCase {
      */
     final static int GZIPMEMBER_COUNT = 4;
     final static String TEXT = "Some old text to compress.";
+    // Create file to use in tests below.
+    private File compressedFile = null;
+    
+    protected void setUp() throws Exception {
+        super.setUp();
+        this.compressedFile = createMultiGzipMembers();
+    }
+    
+    protected void tearDown() throws Exception {
+        if (this.compressedFile != null) {
+            this.compressedFile.delete();
+        }
+        super.tearDown();
+    }
 
     public static void main(String [] args) {
         junit.textui.TestRunner.run(GzippedInputStreamTest.class);
@@ -53,37 +66,40 @@ public class GzippedInputStreamTest extends TmpDirTestCase {
     protected class RepositionableRandomAccessInputStream
     extends RandomAccessInputStream
     implements RepositionableStream {
-        public RepositionableRandomAccessInputStream(File file)
-        throws FileNotFoundException {
+        public RepositionableRandomAccessInputStream(final File file)
+        throws IOException {
             super(file);
+        }
+        
+        public RepositionableRandomAccessInputStream(final File file,
+            final long offset)
+        throws IOException {
+            super(file, offset);
         }
     }
 
     protected File createMultiGzipMembers() throws IOException {
-        // Make a file made up of gzipped members.
-        final File compressedFile =
+        final File f =
             new File(getTmpDir(), this.getClass().getName() + ".gz");
-        OutputStream os =
-            new BufferedOutputStream(new FileOutputStream(compressedFile));
+        OutputStream os = new BufferedOutputStream(new FileOutputStream(f));
         for (int i = 0; i < GZIPMEMBER_COUNT; i++) {
             os.write(GzippedInputStream.gzip(TEXT.getBytes()));
         }
         os.close();
-        return compressedFile;
+        return f;
     }
     
-    public void testGzippedInputStreamInputStream()
+    public void testCountOfMembers()
     throws IOException {
-        File compressedFile = createMultiGzipMembers();
-        // Test we get right count of members.
         InputStream is =
-            new RepositionableRandomAccessInputStream(compressedFile);
+            new RepositionableRandomAccessInputStream(this.compressedFile);
         GzippedInputStream gis = new GzippedInputStream(is);
         int records = 0;
+        // Get offset of second record.  Will use it later in tests below.
         long offsetOfSecondRecord = -1;
         for (Iterator i = gis.iterator(); i.hasNext();) {
             long offset = gis.position();
-            if (records == 2) {
+            if (records == 1) {
                 offsetOfSecondRecord = offset;
             }
             is = (InputStream)i.next();
@@ -91,9 +107,10 @@ public class GzippedInputStreamTest extends TmpDirTestCase {
         }
         assertTrue("Record count is off " + records,
             records == GZIPMEMBER_COUNT);
+        gis.close();
         
         // Test random record read.
-        is = new RepositionableRandomAccessInputStream(compressedFile);
+        is = new RepositionableRandomAccessInputStream(this.compressedFile);
         gis = new GzippedInputStream(is);
         byte [] buffer = new byte[TEXT.length()];
         // Seek to second record, read in gzip header.
@@ -101,5 +118,19 @@ public class GzippedInputStreamTest extends TmpDirTestCase {
         gis.read(buffer);
         String readString = new String(buffer);
         assertEquals("Failed read", TEXT, readString);
+        gis.close();
+        
+        // Test the count we get makes sense after iterating through
+        // starting at second record.
+        is = new RepositionableRandomAccessInputStream(this.compressedFile,
+            offsetOfSecondRecord);
+        gis = new GzippedInputStream(is, offsetOfSecondRecord);
+        records = 0;
+        for (final Iterator i = gis.iterator(); i.hasNext(); i.next()) {
+            records++;
+        }
+        assertEquals(records,
+            GZIPMEMBER_COUNT - 1 /*We started at 2nd record*/);
+        gis.close();
     }
 }

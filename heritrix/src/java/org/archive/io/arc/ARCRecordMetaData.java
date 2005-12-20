@@ -164,7 +164,7 @@ public class ARCRecordMetaData
     }
 
     /**
-     * @return Offse into arcfile at which this record begins.
+     * @return Offset into arcfile at which this record begins.
      */
     public long getOffset() {
         return ((Long)this.headerFields.get(ABSOLUTE_OFFSET_KEY)).longValue();

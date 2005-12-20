@@ -218,9 +218,9 @@ public class ARCReaderFactory implements ARCConstants {
         }
         return compressed?
             (ARCReader)ARCReaderFactory.factory.
-                new CompressedARCReader(arcFile):
+                new CompressedARCReader(arcFile, offset):
             (ARCReader)ARCReaderFactory.factory.
-                new UncompressedARCReader(arcFile);
+                new UncompressedARCReader(arcFile, offset);
     }
     
 //    
@@ -256,30 +256,56 @@ public class ARCReaderFactory implements ARCConstants {
          * @param f Uncompressed arcfile to read.
          * @throws IOException
          */
-        public UncompressedARCReader(File f)
+        public UncompressedARCReader(final File f)
+        throws IOException {
+            this(f, 0);
+        }
+
+        /**
+         * Constructor.
+         * 
+         * @param f Uncompressed arcfile to read.
+         * @param offset Offset at which to position ARCReader.
+         * @throws IOException
+         */
+        public UncompressedARCReader(final File f, final long offset)
         throws IOException {
             // Arc file has been tested for existence by time it has come
             // to here.
-            this.in = getInputStream(f);
+            this.in = getInputStream(f, offset);
             initialize(f);
         }
     }
     
     /**
      * Compressed arc file reader.
+     * 
      * @author stack
      */
     private class CompressedARCReader extends ARCReader {
         /**
          * Constructor.
-         * @param f Compressed arcfile to read.
+         * 
+         * @param f
+         *            Compressed arcfile to read.
          * @throws IOException
          */
-        public CompressedARCReader(File f)
-        throws IOException {
+        public CompressedARCReader(final File f) throws IOException {
+            this(f, 0);
+        }
+
+        /**
+         * Constructor.
+         * 
+         * @param f
+         *            Compressed arcfile to read.
+         * @throws IOException
+         */
+        public CompressedARCReader(final File f, final long offset)
+                throws IOException {
             // Arc file has been tested for existence by time it has come
             // to here.
-            this.in = new GzippedInputStream(getInputStream(f));
+            this.in = new GzippedInputStream(getInputStream(f, offset), offset);
             this.compressed = true;
             initialize(f);
         }
@@ -287,7 +313,8 @@ public class ARCReaderFactory implements ARCConstants {
         /**
          * Get record at passed <code>offset</code>.
          * 
-         * @param offset Byte index into arcfile at which a record starts.
+         * @param offset
+         *            Byte index into arcfile at which a record starts.
          * @return An ARCRecord reference.
          * @throws IOException
          */

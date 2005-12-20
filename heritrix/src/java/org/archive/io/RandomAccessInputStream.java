@@ -25,7 +25,6 @@ package org.archive.io;
 import it.unimi.dsi.mg4j.io.RepositionableStream;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -64,9 +63,11 @@ public class RandomAccessInputStream extends InputStream
      * is not called if this constructor is used on close of this stream.
      * 
      * @param raf RandomAccessFile to wrap.
+     * @throws IOException
      */
-    public RandomAccessInputStream(RandomAccessFile raf) {
-        this(raf, false);
+    public RandomAccessInputStream(RandomAccessFile raf)
+    throws IOException {
+        this(raf, false, 0);
     }
     
     /**
@@ -74,22 +75,40 @@ public class RandomAccessInputStream extends InputStream
      * 
      * @param file File to get RAFIS on.  Creates an RAF from passed file.
      * Closes the created RAF when this stream is closed.
-     * @throws FileNotFoundException 
+     * @throws IOException 
      */
-    public RandomAccessInputStream(File file) throws FileNotFoundException {
-        this(new RandomAccessFile(file, "r"), true);
+    public RandomAccessInputStream(final File file)
+    throws IOException {
+        this(new RandomAccessFile(file, "r"), true, 0);
+    }
+    
+    /**
+     * Constructor.
+     * 
+     * @param file File to get RAFIS on.  Creates an RAF from passed file.
+     * Closes the created RAF when this stream is closed.
+     * @throws IOException 
+     */
+    public RandomAccessInputStream(final File file, final long offset)
+    throws IOException {
+        this(new RandomAccessFile(file, "r"), true, offset);
     }
     
     /**
      * @param raf RandomAccessFile to wrap.
      * @param sympathyClose Set to true if we are to close the RAF
      * file when this stream is closed.
+     * @throws IOException
      */
-    public RandomAccessInputStream(RandomAccessFile raf,
-            boolean sympathyClose) {
+    public RandomAccessInputStream(final RandomAccessFile raf,
+            final boolean sympathyClose, final long offset)
+    throws IOException {
         super();
         this.sympathyClose = sympathyClose;
         this.raf = raf;
+        if (offset > 0) {
+            this.raf.seek(offset);
+        }
     }
 
     /* (non-Javadoc)

@@ -47,6 +47,12 @@ import java.util.zip.GZIPInputStream;
  * @author stack
  */
 public class GzipHeader {
+    /**
+     * Length of minimal GZIP header.
+     *
+     * See RFC1952 for explaination of value of 10.
+     */
+    public static final int MINIMAL_GZIP_HEADER_LENGTH = 10;
     
     /**
      * Total length of the gzip header.
