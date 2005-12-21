@@ -43,6 +43,10 @@ public class OrderJarFactory {
         Logger.getLogger(OrderJarFactory.class.getName());
     
     public static final String NAME_KEY = "name";
+    public static final String DURATION_KEY = "duration";
+    public static final String DOCUMENT_LIMIT_KEY = "documentLimitKey";
+
+    
     public static final String SEEDS_KEY = "seeds";
     
 
@@ -74,6 +78,23 @@ public class OrderJarFactory {
                     .get(NAME_KEY)
                     .toString());
             order = order.replace("$date", date);
+            
+            int duration = 60*60*24*3;
+            Object durationStr = parameters.get(DURATION_KEY);
+            if(durationStr != null){
+                duration = Integer.parseInt(durationStr.toString())*1000;
+            }
+            
+            order = order.replace("$duration", duration +"");
+            
+            int documentLimit = 1000*1000;
+            
+            Object documentLimitStr = parameters.get(DOCUMENT_LIMIT_KEY);
+            if(documentLimitStr != null){
+                documentLimit = Integer.parseInt(documentLimitStr.toString());
+            }
+            order = order.replace("$documentLimit", documentLimit+"");
+
             ByteArrayOutputStream orderFileOs = new ByteArrayOutputStream();
             orderFileOs.write(order.getBytes());
             map.put("order.xml", new ByteArrayInputStream(orderFileOs

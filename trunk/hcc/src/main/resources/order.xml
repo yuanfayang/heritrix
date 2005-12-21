@@ -16,8 +16,8 @@
      <string name="state-path">state</string>
      <string name="scratch-path">scratch</string>
      <long name="max-bytes-download">0</long>
-     <long name="max-document-download">0</long>
-     <long name="max-time-sec">0</long>
+     <long name="max-document-download">$documentLimit</long>
+     <long name="max-time-sec">$duration</long>
      <integer name="max-toe-threads">50</integer>
      <integer name="recorder-out-buffer-bytes">4096</integer>
      <integer name="recorder-in-buffer-bytes">65536</integer>
