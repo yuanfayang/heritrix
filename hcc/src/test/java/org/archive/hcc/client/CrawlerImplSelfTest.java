@@ -173,13 +173,6 @@ public class CrawlerImplSelfTest
     }
 
     
-    public static File getTestJar() {
-        Map map = new HashMap();
-        map.put("name", "test");
-        List<String> seeds = new LinkedList<String>();
-        seeds.add("http://crawler.archive.org");
-        map.put("seeds", seeds);
-        return OrderJarFactory.createOrderJar(map);
-    }
+
 
 }
