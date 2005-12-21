@@ -1297,16 +1297,12 @@ implements ARCConstants {
         private final IOException decoratedIOException;
         
         protected RecoverableIOException(final String message) {
-            this.decoratedIOException = new IOException(message);
+            this(new IOException(message));
         }
         
         protected RecoverableIOException(final IOException ioe) {
             super();
             this.decoratedIOException = ioe;
-        }
-
-        public synchronized Throwable fillInStackTrace() {
-            return this.decoratedIOException.fillInStackTrace();
         }
 
         public Throwable getCause() {

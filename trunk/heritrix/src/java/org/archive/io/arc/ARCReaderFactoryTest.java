@@ -33,21 +33,18 @@ import java.util.Iterator;
 import org.archive.util.TmpDirTestCase;
 
 public class ARCReaderFactoryTest extends TmpDirTestCase {
-// Commented out net-dependent test.
 //    public void testGetHttpURL() throws MalformedURLException, IOException {
 //        ARCReader reader = null;
 //        File tmpFile = null;
 //        try {
-//            reader = ARCReaderFactory.
-//                get(new URL("http://www.archive.org/~stack/IA-000026.arc.gz"));
-//            tmpFile = null;
-//            for (Iterator i = reader.iterator(); i.hasNext();) {
-//                ARCRecord r = (ARCRecord)i.next();
-//                if (tmpFile == null) {
-//                    tmpFile = r.getMetaData().getArcFile();
-//                }
+//            // TODO: I can get a single ARCRecord but trying to iterate from
+//            // a certain point is getting an EOR when I go to read GZIP header.
+//            reader = ARCReaderFactory.get(
+//                new URL("http://localhost:8080/test.arc.gz"), 54916);
+//            for (final Iterator i = reader.iterator(); i.hasNext();) {
+//                ARCRecord ar = (ARCRecord)i.next();
+//                System.out.println(ar.getMetaData().getUrl());
 //            }
-//            assertTrue(tmpFile.exists());
 //        } finally {
 //            if (reader != null) {
 //                reader.close();
