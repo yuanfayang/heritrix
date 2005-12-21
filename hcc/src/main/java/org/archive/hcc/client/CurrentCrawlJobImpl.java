@@ -98,4 +98,12 @@ implements CurrentCrawlJob {
     public Crawler getMother() {
         return this.mother;
     }
+    
+    public boolean equals(Object o) {
+        return ((CurrentCrawlJob) o).getName().equals(this.name);
+    }
+
+    public int hashCode() {
+        return this.name.hashCode();
+    }
 }

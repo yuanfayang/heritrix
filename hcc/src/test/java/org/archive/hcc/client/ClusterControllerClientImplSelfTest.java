@@ -281,5 +281,55 @@ public class ClusterControllerClientImplSelfTest
         }
     }
 
-    
+    public void testGetCurrentCrawlJob() {
+        AllPurposeTestListener l = new AllPurposeTestListener();
+        try {
+            cc.addCrawlerLifecycleListener(l);
+            cc.addCrawlJobListener(l);
+            cc.createCrawler();
+
+            try {
+                assertTrue(l.crawlerCreatedLatch.await(
+                        10 * 1000,
+                        TimeUnit.MILLISECONDS));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            l.c.addJob(new JobOrder("test1", getTestJar()));
+            l.c.startPendingJobQueue();
+
+            try {
+                assertTrue(l.crawlJobStartedLatch.await(
+                        10 * 1000,
+                        TimeUnit.MILLISECONDS));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            
+            CurrentCrawlJob ccj = cc.getCurrentCrawlJob(l.c);
+            
+            assertTrue(ccj.equals(l.j));
+            
+
+            
+            l.c.destroy();
+
+            try {
+                assertTrue(l.crawlerDestroyedLatch.await(
+                        10 * 1000,
+                        TimeUnit.MILLISECONDS));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        } catch (ClusterException e) {
+            e.printStackTrace();
+            assertFalse(true);
+        } finally {
+            cc.removeCrawlerLifecycleListener(l);
+            cc.removeCrawlJobListener(l);
+        }
+    }
+     
 }
