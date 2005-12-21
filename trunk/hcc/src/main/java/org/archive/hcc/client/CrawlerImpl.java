@@ -79,6 +79,7 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
         }
     }
 
+    
     public boolean isPendingJobQueueRunning() {
         try {
             return this.connection

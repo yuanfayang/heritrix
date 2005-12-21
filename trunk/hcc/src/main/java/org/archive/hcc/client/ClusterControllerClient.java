@@ -68,6 +68,15 @@ public interface ClusterControllerClient {
     public Crawler findCrawlJobParent(String uid, InetSocketAddress address)
                                             throws ClusterException;
     
+    
+    /**
+     * Returns the current job running on the specified crawler. If the crawler is not
+     * found or the crawler is not currently running a job, null will be returned.
+     * @param crawler
+     * @return
+     * @throws ClusterException
+     */
+    public CurrentCrawlJob getCurrentCrawlJob(Crawler crawler) throws ClusterException;
     /**
      * Adds a crawler lifecycle listener.
      * @param l

@@ -25,6 +25,7 @@ package org.archive.hcc;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -339,6 +340,29 @@ public class ClusterControllerBean implements
         return null;
     }
 
+    
+    /**
+     * Returns the current job object name associated with the specified crawler. 
+     * Returns null if no job was running.
+     * @param mother
+     * @return
+     */
+    public ObjectName getCurrentCrawlJob(ObjectName mother) {
+        InetSocketAddress remoteAddress = org.archive.hcc.util.JmxUtils.extractRemoteAddress(mother);
+        Container container = getContainerOn(remoteAddress);
+
+        if (container == null) {
+            return null;
+        }
+
+        for (Crawler crawler : new LinkedList<Crawler>(container.getCrawlers())) {
+            if(crawler.getCrawlServiceProxyObjectName().equals(mother)){
+                return  crawler.getCrawlJobProxyObjectName();
+            }
+        }
+        return null;
+    }
+    
     /**
      * Creates a new crawler on the least loaded machine on the cluster.
      * 
@@ -438,6 +462,22 @@ public class ClusterControllerBean implements
                                             "remotePort",
                                             "The remote port",
                                             SimpleType.INTEGER) },
+                            SimpleType.OBJECTNAME,
+                            OpenMBeanOperationInfoSupport.INFO)));
+            
+            addOperation(new SimpleReflectingMBeanOperation(
+                    ClusterControllerBean.this,
+                    new OpenMBeanOperationInfoSupport(
+                            "getCurrentCrawlJob", "returns the current " +
+                                "crawl job name of the crawl job running" +
+                                " on the specified crawler Returns null" +
+                                " if either the mother is not found or " +
+                                "if the crawler does not have a current job.",
+                            new OpenMBeanParameterInfo[] {
+                                    new OpenMBeanParameterInfoSupport(
+                                            "mother",
+                                            "The job's mother (CrawlService)",
+                                            SimpleType.OBJECTNAME)},
                             SimpleType.OBJECTNAME,
                             OpenMBeanOperationInfoSupport.INFO)));
         } catch (OpenDataException e) {

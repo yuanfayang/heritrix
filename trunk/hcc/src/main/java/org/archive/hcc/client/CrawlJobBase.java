@@ -58,4 +58,6 @@ abstract public class CrawlJobBase implements CrawlJob {
     public Crawler getMother() {
         return mother;
     }
+    
+    
 }

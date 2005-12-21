@@ -46,6 +46,7 @@ import javax.management.Notification;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.SimpleType;
 import javax.naming.InsufficientResourcesException;
 import javax.swing.event.EventListenerList;
 
@@ -540,5 +541,28 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+    
+    /* (non-Javadoc)
+     * @see org.archive.hcc.client.ClusterControllerClient#getCurrentCrawlJob(org.archive.hcc.client.Crawler)
+     */
+    public CurrentCrawlJob getCurrentCrawlJob(Crawler crawler) throws ClusterException {
+        try {
+            ObjectName currentCrawlJob = (ObjectName) this.connection.invoke(
+                    this.name,
+                    "getCurrentCrawlJob",
+                    new Object[]{crawler.getName()},
+                    new String[]{SimpleType.OBJECTNAME.getClassName()});
+            
+            if(currentCrawlJob == null){
+                return null;
+            }
+
+            return new CurrentCrawlJobImpl(currentCrawlJob, (CrawlerImpl)crawler, this.connection);
+        }catch (Exception e) {
+            e.printStackTrace();
+            throw new ClusterException(e);
+        }
+
     }
 }
