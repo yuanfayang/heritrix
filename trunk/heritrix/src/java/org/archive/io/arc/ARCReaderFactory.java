@@ -168,6 +168,9 @@ public class ARCReaderFactory implements ARCConstants {
             // (Assumes HTTP 1.1 on other end). Add open-ended range header to
             // the request.
             connection.addRequestProperty("Range", "bytes=" + offset + "-");
+            // TODO: Get feedback on this ARCReader maker.  If fetching single
+            // record remotely, might make sense to do a slimmed down
+            // ARCRecord getter.
             return get(arcUrl.toString(),
                 new RepositionableInputStream(connection.getInputStream()));
         }
