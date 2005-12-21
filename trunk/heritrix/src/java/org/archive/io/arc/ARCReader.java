@@ -84,6 +84,17 @@ implements ARCConstants {
     Logger logger = Logger.getLogger(ARCReader.class.getName());
     
     /**
+     * Set to true if we are aligned on first record on creation
+     * of ARCReader.
+     * We used depend on offset.  If offset was zero, then we were
+     * aligned on first record.  This is no longer necessarily the
+     * case when ARCReader is created at an offset into an ARC:
+     * The offset is zero but its relative to where we started
+     * reading the ARC.
+     */
+    protected boolean alignedOnFirstRecord = true;
+    
+    /**
      * Maximum amount of recoverable exceptions in a row.
      * If more than this amount in a row, we'll let out the exception rather
      * than go back in for a retry.
@@ -242,7 +253,7 @@ implements ARCConstants {
     }
     
     /**
-     * @return Return ARCRecord at current offset.
+     * @return Return ARCRecord created against current offset.
      * @throws IOException
      */
     public ARCRecord get() throws IOException {
@@ -549,15 +560,16 @@ implements ARCConstants {
         ArrayList firstLineValues = new ArrayList(20);
         getTokenizedHeaderLine(is, firstLineValues);
         int bodyOffset = 0;
-        if (offset == 0) {
-            // If offset is zero, then no records have been read yet
-            // and we're reading our first one, the record of ARC file meta
-            // info.  Its special.  In ARC versions 1.x, first record has three
-            // lines of meta info. We've just read the first line. There are two
-            // more.  The second line has misc. info.  We're only interested in
-            // the first field, the version number.  The third line is the list
-            // of field names. Here's what ARC file version 1.x meta content
-            // looks like:
+        if (offset == 0 && this.alignedOnFirstRecord) {
+            // If offset is zero and we were aligned at first record on
+            // creation (See #alignedOnFirstRecord for more on this), then no
+            // records have been read yet and we're reading our first one, the
+            // record of ARC file meta info.  Its special.  In ARC versions
+            // 1.x, first record has three lines of meta info. We've just read
+            // the first line. There are two more.  The second line has misc.
+            // info.  We're only interested in the first field, the version
+            // number.  The third line is the list of field names. Here's what
+            // ARC file version 1.x meta content looks like:
             //
             // filedesc://testIsBoundary-JunitIAH200401070157520.arc 0.0.0.0 \\
             //      20040107015752 text/plain 77
@@ -867,6 +879,7 @@ implements ARCConstants {
     /**
      * @return The current ARC record or null if none.
      * After construction has the arcfile header record.
+     * @see {@link #get()}
      */
     protected ARCRecord getCurrentRecord() {
         return this.currentRecord;

@@ -39,8 +39,8 @@ public class ARCReaderFactoryTest extends TmpDirTestCase {
 //        try {
 //            // TODO: I can get a single ARCRecord but trying to iterate from
 //            // a certain point is getting an EOR when I go to read GZIP header.
-//            reader = ARCReaderFactory.get(
-//                new URL("http://localhost:8080/test.arc.gz"), 54916);
+//            reader = ARCReaderFactory.
+//                get(new URL("http://localhost:8080/test.arc.gz"), 0);
 //            for (final Iterator i = reader.iterator(); i.hasNext();) {
 //                ARCRecord ar = (ARCRecord)i.next();
 //                System.out.println(ar.getMetaData().getUrl());

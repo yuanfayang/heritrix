@@ -32,8 +32,17 @@ import java.io.InputStream;
 
 /**
  * Wrapper around an {@link InputStream} to make a primitive Repositionable
- * stream. Uses a {@link BufferedInputStream}. Has limitations.
- * TODO: More robust implementation.
+ * stream. Uses a {@link BufferedInputStream}. Has limitations as we come
+ * across buffer boundaries.  At least if the access is over the top end of
+ * the buffer, could be fixed by calling a buffer fill.  Going back is
+ * probably not possible.  Mitigate against buffer boundary problems by
+ * having the inflater buffer -- if stream is gzipped -- be at least half
+ * size of the backing buffer used here.
+ * <p>TODO: More robust implementation.  Tried to use the it.unimi.dsi.io
+ * FastBufferdInputStream but relies on FileChannel ByteBuffers and if not
+ * present -- as would be the case reading from a network stream, the main
+ * application for this instance -- then it expects the underlying stream 
+ * implements RepositionableStream interface.
  * @author stack
  */
 public class RepositionableInputStream extends BufferedInputStream implements
@@ -44,13 +53,34 @@ public class RepositionableInputStream extends BufferedInputStream implements
     public RepositionableInputStream(InputStream in) {
         super(in);
     }
+    
+    public RepositionableInputStream(InputStream in, int size) {
+        super(in, size);
+    }
 
+    public int read(byte[] b) throws IOException {
+        int read = super.read(b);
+        if (read != -1) {
+            position += read;
+        }
+        return read;
+    }
+    
+    public synchronized int read(byte[] b, int offset, int count)
+    throws IOException {
+        int read = super.read(b, offset, count);
+        if (read != -1) {
+            position += read;
+        }
+        return read;
+    }
+    
     public int read() throws IOException {
-        int r = this.in.read();
-        if (r != -1) {
+        int c = super.read();
+        if (c != -1) {
             position++;
         }
-        return r;
+        return c;
     }
 
     /**
@@ -59,14 +89,18 @@ public class RepositionableInputStream extends BufferedInputStream implements
      * @throws IOException 
      */
     public void position(final long offset) throws IOException {
-        if (offset > this.buf.length) {
-            int newPos = (int)(offset % this.buf.length);
-            this.position = this.position - this.pos + newPos;
-            this.pos = newPos;
-        } else {
-            this.pos = (int)offset;
-            this.position = this.pos;
+        if (this.position == offset) {
+            return;
         }
+        int diff =  (int)(offset - this.position);
+        long lowerBound = this.position - this.pos;
+        long upperBound = lowerBound + this.count;
+        if (offset < lowerBound || offset >= upperBound) {
+            throw new IllegalAccessError("Offset outside goes outside " +
+                "current this.buf (TODO: At least do fills if positive)");
+        }
+        this.position = offset;
+        this.pos += diff;
     }
 
     public void mark(int readlimit) {
