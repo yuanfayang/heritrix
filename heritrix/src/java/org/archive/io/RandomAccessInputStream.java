@@ -87,6 +87,7 @@ public class RandomAccessInputStream extends InputStream
      * 
      * @param file File to get RAFIS on.  Creates an RAF from passed file.
      * Closes the created RAF when this stream is closed.
+     * @param offset 
      * @throws IOException 
      */
     public RandomAccessInputStream(final File file, final long offset)
@@ -98,6 +99,7 @@ public class RandomAccessInputStream extends InputStream
      * @param raf RandomAccessFile to wrap.
      * @param sympathyClose Set to true if we are to close the RAF
      * file when this stream is closed.
+     * @param offset 
      * @throws IOException
      */
     public RandomAccessInputStream(final RandomAccessFile raf,
