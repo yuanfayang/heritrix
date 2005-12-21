@@ -935,7 +935,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // TODO: DANGER/ values() may not work right from CachedBdbMap
         Iterator iter = allQueues.keySet().iterator(); 
         while(iter.hasNext()) {
-            WorkQueue wq = (WorkQueue)getQueueFor(((String)iter.next()));
+            WorkQueue wq = getQueueFor(((String)iter.next()));
             wq.unpeek();
             count += wq.deleteMatching(this, match);
         }
@@ -960,6 +960,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param w Where to write to.
      */
     public void singleLineReportTo(PrintWriter w) {
+        if (this.allQueues == null) {
+            return;
+        }
         int allCount = allQueues.size();
         int inProcessCount = inProcessQueues.uniqueSet().size();
         int readyCount = readyClassQueues.size();
