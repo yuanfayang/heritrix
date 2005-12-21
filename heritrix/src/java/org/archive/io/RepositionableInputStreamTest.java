@@ -47,22 +47,30 @@ public class RepositionableInputStreamTest extends TmpDirTestCase {
         super.tearDown();
     }
     public void testname() throws Exception {
+        // Make buffer awkward size so we run into buffers spanning issues.
         RepositionableInputStream ris =
-            new RepositionableInputStream(new FileInputStream(this.testFile));
-        if (!ris.markSupported()) {
-            throw new Exception("Mark unsupported.");
-        }
-        long p = ris.position();
+            new RepositionableInputStream(new FileInputStream(this.testFile),
+                57);
+        int c = ris.read();
+        assertEquals(1, ris.position());
         ris.read();
-        p = ris.position();
         ris.position(0);
         assertEquals(0, ris.position());
+        int c1 = ris.read();
+        assertEquals(c, c1);
+        ris.position(0);
         byte [] bytes = new byte[LINE.length()];
+        long offset = 0;
         for (int i = 0; i < 10; i++) {
             ris.read(bytes, 0, LINE.length());
-            System.out.println(new String(bytes));
+            assertEquals(LINE, new String(bytes));
+            offset += LINE.length();
+            assertEquals(offset, ris.position());
         }
-        ris.position(0);
-        assertEquals(0, ris.position());
+        long p = ris.position();
+        ris.position(p - LINE.length());
+        assertEquals(p - LINE.length(), ris.position());
+        c = ris.read();
+        assertEquals(c, c1);
     }
 }

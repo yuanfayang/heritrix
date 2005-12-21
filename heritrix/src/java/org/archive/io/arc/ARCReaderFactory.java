@@ -81,20 +81,6 @@ public class ARCReaderFactory implements ARCConstants {
     }
     
     /**
-     * Pass an URL to an ARC.
-     * Pulls the ARC local into whereever the System Property
-     * <code>java.io.tmpdir</code> points. It then hands back an ARCReader that
-     * points at this local copy.  A close on this ARCReader instance will
-     * remove the local copy.
-     * @param arcUrl An URL that points at an ARC.
-     * @return An ARCReader.
-     * @throws IOException 
-     */
-    public static ARCReader get(final URL arcUrl) throws IOException {
-        return get(arcUrl, 0);
-    }
-    
-    /**
      * @param arcFile An arcfile to read.
      * @return An ARCReader.
      * @throws IOException 
@@ -133,54 +119,73 @@ public class ARCReaderFactory implements ARCConstants {
                 new UncompressedARCReader(arcFile, offset);
     }
     
-    protected static ARCReader get(final String arc, final InputStream is)
+    protected static ARCReader get(final String arc, final InputStream is,
+        final boolean atFirstRecord)
     throws IOException {
         // For now, assume stream is compressed.  Later add test of input
         // stream or handle exception thrown when figure not compressed stream.
-        return ARCReaderFactory.factory.new CompressedARCReader(arc, is);
+        return ARCReaderFactory.factory.new CompressedARCReader(arc,
+            is, atFirstRecord);
     }
     
     /**
      * Get an ARCReader aligned at <code>offset</code>.
-     * @param arcUrl URL of an ARC -- local or remote, file or http or rsync.
-     * @param offset Offset into ARC at which to start fetching.  If
-     * non-zero, we will not bring the ARC local.
+     * This version of get will not bring the ARC local but will try to
+     * stream across the net making an HTTP 1.1 Range request on remote
+     * http server (RFC1435 Section 14.35).
+     * @param arcUrl HTTP URL for an ARC (All ARCs considered remote).
+     * @param offset Offset into ARC at which to start fetching.
      * @return An ARCReader aligned at offset.
      * @throws IOException
      */
     public static ARCReader get(final URL arcUrl, final long offset)
     throws IOException {
+        // Get URL connection.
+        URLConnection connection = arcUrl.openConnection();
+        if (!(connection instanceof HttpURLConnection)) {
+            throw new IOException("This method only handles HTTP connections.");
+        }
+        // Use a Range request (Assumes HTTP 1.1 on other end). If length <= 0,
+        // add open-ended range header to the request.  Else, because end-byte
+        // is inclusive, subtract 1.
+        connection.addRequestProperty("Range", "bytes=" + offset + "-");
+        // TODO: Get feedback on this ARCReader maker. If fetching single
+        // record remotely, might make sense to do a slimmed down
+        // ARCRecord getter.
+        // Good if size 2 * inflator buffer to avoid buffer boundaries
+        // (TODO: Implement better handling across buffer boundaries).
+        return get(arcUrl.toString(),
+            new RepositionableInputStream(connection.getInputStream(),
+                16 * 1024),
+            (offset == 0));
+    }
+    
+    /**
+     * Get an ARCReader.
+     * Pulls the ARC local into whereever the System Property
+     * <code>java.io.tmpdir</code> points. It then hands back an ARCReader that
+     * points at this local copy.  A close on this ARCReader instance will
+     * remove the local copy.
+     * @param arcUrl An URL that points at an ARC.
+     * @return An ARCReader.
+     * @throws IOException 
+     */
+    public static ARCReader get(final URL arcUrl)
+    throws IOException {
         // If url represents a local file then return file it points to.
         if (arcUrl.getPath() != null) {
+            // TODO: Add scheme check and host check.
             File f = new File(arcUrl.getPath());
             if (f.exists()) {
-                return get(f, offset);
+                return get(f, 0);
             }
         }
         
-        // Get URL connection.
-        URLConnection connection = arcUrl.openConnection();
-        if (connection instanceof HttpURLConnection && offset > 0) {
-            // Special handling for case where its a http URL
-            // and offset is non-zero. In this case, optimize for getting
-            // a single record from the remote location only;
-            // don't copy down local the complete ARC file. Use a Range request
-            // (Assumes HTTP 1.1 on other end). Add open-ended range header to
-            // the request.
-            connection.addRequestProperty("Range", "bytes=" + offset + "-");
-            // TODO: Get feedback on this ARCReader maker.  If fetching single
-            // record remotely, might make sense to do a slimmed down
-            // ARCRecord getter.
-            return get(arcUrl.toString(),
-                new RepositionableInputStream(connection.getInputStream()));
-        }
-        
         // Else bring the ARC local.
-        return makeARCLocal(connection, offset);
+        return makeARCLocal(arcUrl.openConnection());
     }
     
-    protected static ARCReader makeARCLocal(final URLConnection connection,
-            final long offset)
+    protected static ARCReader makeARCLocal(final URLConnection connection)
     throws IOException {
         File localFile = null;
         if (connection instanceof HttpURLConnection) {
@@ -207,7 +212,7 @@ public class ARCReaderFactory implements ARCConstants {
         
         ARCReader reader = null;
         try {
-            reader = get(localFile, true, offset);
+            reader = get(localFile, true, 0);
         } catch (IOException e) {
             localFile.delete();
             throw e;
@@ -320,6 +325,7 @@ public class ARCReaderFactory implements ARCConstants {
      * @author stack
      */
     private class CompressedARCReader extends ARCReader {
+
         /**
          * Constructor.
          * 
@@ -343,7 +349,7 @@ public class ARCReaderFactory implements ARCConstants {
             // Arc file has been tested for existence by time it has come
             // to here.
             this.in = new GzippedInputStream(getInputStream(f, offset));
-            this.compressed = true;
+            this.compressed = (offset == 0);
             initialize(f.getAbsolutePath());
         }
         
@@ -354,12 +360,14 @@ public class ARCReaderFactory implements ARCConstants {
          * @param is InputStream to use.
          * @throws IOException
          */
-        public CompressedARCReader(final String f, final InputStream is)
+        public CompressedARCReader(final String f, final InputStream is,
+            final boolean atFirstRecord)
         throws IOException {
             // Arc file has been tested for existence by time it has come
             // to here.
             this.in = new GzippedInputStream(is);
             this.compressed = true;
+            this.alignedOnFirstRecord = atFirstRecord;
             initialize(f);
         }
         
