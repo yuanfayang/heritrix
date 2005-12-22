@@ -27,17 +27,26 @@
     <developers>
         <developer>
             <name>Daniel Bernstein</name>
-            <id>2</id>
+            <id>danny</id>
             <email>dbernstein@archive.org</email>
             <organization>The Internet Archive</organization>
             <timezone>Pacific</timezone>
         </developer>
         <developer>
             <name>Michael Stack</name>
-            <id>6</id>
+            <id>stack</id>
             <email>stack@archive.org</email>
             <organization>The Internet Archive</organization>
         </developer>
+        
+	    <developer>
+	        <name>Karl Thiessen</name>
+	        <id>karl</id>
+	        <email>karl@archive.org</email>
+	         <organization>Internet Archive</organization>
+	         <url>http://www.archive.org</url>
+	         <timezone>-8</timezone>
+	    </developer>    
     </developers>
     <licenses>
         <license>
