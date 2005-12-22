@@ -30,63 +30,63 @@ import java.net.InetSocketAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.hcc.ClusterControllerBean;
- 
 /**
- * This class manages singleton instances of the ClusterControllerClient.
- * Within a jvm there will be one instance of ClusterControllerClient for
- * each jmx socket address (assuming that a ClusterControllerBean is running
- * on that local or remote socket).
+ * This class manages singleton instances of the ClusterControllerClient. Within
+ * a jvm there will be one instance of ClusterControllerClient for each jmx
+ * socket address (assuming that a ClusterControllerBean is running on that
+ * local or remote socket).
+ * 
  * @author Daniel Bernstein (dbernstein@archive.org)
- *
+ * 
  */
 public class ClusterControllerClientManager {
-    private static Logger log = Logger.getLogger(ClusterControllerClientManager.class.getName());
+    private static Logger log = Logger
+            .getLogger(ClusterControllerClientManager.class.getName());
+
     private static ClusterControllerClient defaultClient;
-    
+
     /**
      * Returns this singleton instance of the default cluster controller client.
-     * The host and jmx port can be set in the following command line options. 
+     * The host and jmx port can be set in the following command line options.
      * -Dorg.archive.hcc.client.host={your host}
      * -Dorg.archive.hcc.client.jmxPort={your port}
      * 
-     * If you do not specify these values on the command line, 
-     * the client will connect to the local jmx server on port 8849.
+     * If you do not specify these values on the command line, the client will
+     * connect to the local jmx server on port 8849.
+     * 
      * @return
      */
-    public static ClusterControllerClient getDefaultClient(){
+    public static ClusterControllerClient getDefaultClient() {
         try {
-            if(defaultClient == null){
+            if (defaultClient == null) {
                 String host = System.getProperty(
                         "org.archive.hcc.client.host",
                         InetAddress.getLocalHost().getHostName());
-                
-                int jmxPort = Integer.parseInt(
-                        System.getProperty("org.archive.hcc.client.jmxPort","8849"));
+
+                int jmxPort = Integer.parseInt(System.getProperty(
+                        "org.archive.hcc.client.jmxPort",
+                        "8849"));
                 InetSocketAddress address = new InetSocketAddress(host, jmxPort);
                 defaultClient = new ClusterControllerClientImpl(address);
             }
-            
+
             return defaultClient;
         } catch (Exception e) {
             e.printStackTrace();
             if (log.isLoggable(Level.SEVERE)) {
                 log.severe(": " + e.getMessage());
             }
-            
+
             throw new RuntimeException(e);
-        } 
+        }
     }
-    
+
     /**
-     * Removes the manager's reference to the default client 
-     * for use with unit tests.
+     * Removes the manager's reference to the default client for use with unit
+     * tests.
      */
-    public static void resetDefaultClient(){
+    public static void resetDefaultClient() {
         defaultClient = null;
     }
-    
-    
 
-    
 }

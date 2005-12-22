@@ -182,23 +182,32 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
     }
 
 
-    public boolean deleteCompletedCrawlJob(CompletedCrawlJob job) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean deleteCompletedCrawlJob(CompletedCrawlJob job) throws ClusterException{
+        try {
+            this.connection.invoke(
+                                this.name, 
+                                "deleteJob", 
+                                new Object[]{job.getUid().toString()}, 
+                                new String[]{"java.lang.String"});
+                                return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ClusterException(e);
+        } 
     }
 
     public boolean deletePendingCrawlJob(PendingCrawlJob job) {
-        // TODO Auto-generated method stub
-        return false;
+        //TODO implement this 
+        throw new UnsupportedOperationException("deletePendingCrawlJob not implemented yet!");
     }
 
     public Collection<CompletedCrawlJob> listCompletedCrawlJobs() {
-        // TODO Auto-generated method stub
-        return null;
+        //TODO implement this 
+        throw new UnsupportedOperationException("listCompletedCrawlJobs not implemented yet!");
     }
 
     public Collection<PendingCrawlJob> listPendingCrawlJobs() {
-        // TODO Auto-generated method stub
-        return null;
+        //TODO implement this 
+        throw new UnsupportedOperationException("listPendingCrawlJobs not implemented yet!");
     }
 }

@@ -14,16 +14,12 @@ import org.archive.hcc.util.OrderJarFactory;
 public class ClusterControllerClientSelfTestBase
         extends
             TestCase {
-    protected ClusterControllerClientImpl cc;
+    protected ClusterControllerClient cc;
 
     protected void setUp() throws Exception {
         super.setUp();
         new ClusterControllerBean().init();
-
-        cc = new ClusterControllerClientImpl();
-        
-        
-
+        cc = ClusterControllerClientManager.getDefaultClient();
     }
 
     protected void tearDown() throws Exception {

@@ -91,8 +91,9 @@ public interface Crawler extends Proxy {
      * Deletes a job from the completed list.
      * @param job
      * @return
+     * @throws ClusterException
      */
-    public boolean deleteCompletedCrawlJob(CompletedCrawlJob job);
+    public boolean deleteCompletedCrawlJob(CompletedCrawlJob job) throws ClusterException;
 
     /**
      * Returns a list of pending jobs.
