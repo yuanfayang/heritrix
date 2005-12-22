@@ -52,6 +52,8 @@ implements FetchStatusCodes {
     public static final String ATTR_BLOCK_ALL = "block-all";
     /** indicator allowing all matching URIs to be blocked at this step */
     public static final String ATTR_BLOCK_BY_REGEXP = "block-by-regexp";
+    /** indicator allowing all matching URIs */
+    public static final String ATTR_ALLOW_BY_REGEXP = "allow-by-regexp";
 
     /**
      * Constructor.
@@ -80,6 +82,11 @@ implements FetchStatusCodes {
                 "Block all URIs matching the regular expression from being" +
                 " processed.", ""));
         e.setExpertSetting(true);
+
+        e = addElementToDefinition(new SimpleType(ATTR_ALLOW_BY_REGEXP,
+                "Allow only URIs matching the regular expression to be" +
+                " processed.", ""));
+        e.setExpertSetting(true);
     }
 
     protected void innerProcess(CrawlURI curi) {
@@ -93,6 +100,21 @@ implements FetchStatusCodes {
         } catch (AttributeNotFoundException e) {
             // Act as attribute was false, that is: do nothing.
         }
+
+        // Check if allowed by regular expression
+        try {
+            String regexp = (String) getAttribute(ATTR_ALLOW_BY_REGEXP, curi);
+            if (regexp != null && !regexp.equals("")) {
+                if (!TextUtils.matches(regexp, curi.toString())) {
+                    curi.setFetchStatus(S_BLOCKED_BY_USER);
+                    curi.skipToProcessorChain(getController().
+                        getPostprocessorChain());
+                }
+            }
+        } catch (AttributeNotFoundException e) {
+            // Act as regexp was null, that is: do nothing.
+        }
+
 
         // Check if blocked by regular expression
         try {
