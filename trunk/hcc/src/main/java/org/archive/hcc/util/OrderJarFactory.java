@@ -82,12 +82,12 @@ public class OrderJarFactory {
             int duration = 60*60*24*3;
             Object durationStr = parameters.get(DURATION_KEY);
             if(durationStr != null){
-                duration = Integer.parseInt(durationStr.toString())*1000;
+                duration = Integer.parseInt(durationStr.toString())/1000;
             }
             
             order = order.replace("$duration", duration +"");
             
-            int documentLimit = 1000*1000;
+            int documentLimit = 0;
             
             Object documentLimitStr = parameters.get(DOCUMENT_LIMIT_KEY);
             if(documentLimitStr != null){
