@@ -34,7 +34,6 @@ import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.util.DNSJavaUtil;
 
 
 /**

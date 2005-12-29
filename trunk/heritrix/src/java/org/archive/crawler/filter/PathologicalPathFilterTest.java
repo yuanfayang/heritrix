@@ -24,25 +24,13 @@
  */
 package org.archive.crawler.filter;
 
-import java.net.URISyntaxException;
-
 import junit.framework.TestCase;
 
-
 /**
- *
  * @author John Erik Halse
- *
  */
 public class PathologicalPathFilterTest extends TestCase {
-
-    public final void testGetRegexp() {
-        PathologicalPathFilter filter = new PathologicalPathFilter("Filter");
-        //assertEquals(".*(/.*/){" + PathologicalPathFilter.DEFAULT_REPETITIONS
-        //        + ",}/.*", filter.getRegexp(null));
-    }
-
-    public final void testAccepts() throws URISyntaxException {
+    public final void testAccepts() {
         PathologicalPathFilter filter = new PathologicalPathFilter("Filter");
 
         String uri = "http://www.archive.org/";
@@ -57,5 +45,4 @@ public class PathologicalPathFilterTest extends TestCase {
         uri = "http://www.archive.org/img/doc/img/doc/img/doc/img.gif";
         assertTrue(filter.accepts(uri));
     }
-
 }
