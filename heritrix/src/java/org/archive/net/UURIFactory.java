@@ -327,7 +327,7 @@ public class UURIFactory extends URI {
     }
     
     /**
-     * @param base UURI to us as a base resolving <code>relative</code>.
+     * @param base UURI to use as a base resolving <code>relative</code>.
      * @param relative Relative URI.
      * @return Instance of UURI.
      * @throws URIException
