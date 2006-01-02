@@ -34,6 +34,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.RuntimeOperationsException;
@@ -341,5 +342,29 @@ public class JmxUtils {
     public static String getUid(final ObjectName on) {
         String name = on.getKeyProperty(NAME);
         return name.substring(name.indexOf("-") + 1);
+    }
+    
+    /**
+     * Get MBeanServer.
+     * Currently uses first MBeanServer found.  This will definetly not be whats
+     * always wanted. TODO: Make which server settable. Also, if none, put up
+     * our own MBeanServer.
+     * @return An MBeanServer to register with or null.
+     */
+    public static MBeanServer getMBeanServer() {
+        MBeanServer result = null;
+        List servers = MBeanServerFactory.findMBeanServer(null);
+        if (servers == null) {
+            return result;
+        }
+        for (Iterator i = servers.iterator(); i.hasNext();) {
+            MBeanServer server = (MBeanServer)i.next();
+            if (server == null) {
+                continue;
+            }
+            result = server;
+            break;
+        }
+        return result;
     }
 }

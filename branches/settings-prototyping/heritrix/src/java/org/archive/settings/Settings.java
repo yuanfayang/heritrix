@@ -24,6 +24,11 @@
  */
 package org.archive.settings;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
@@ -31,20 +36,144 @@ import javax.management.DynamicMBean;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
+import javax.management.MBeanNotificationInfo;
+import javax.management.MBeanOperationInfo;
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.RuntimeOperationsException;
+import javax.management.openmbean.ArrayType;
+import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.OpenMBeanAttributeInfo;
+import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
+import javax.management.openmbean.OpenMBeanConstructorInfo;
+import javax.management.openmbean.OpenMBeanInfoSupport;
+import javax.management.openmbean.OpenMBeanOperationInfo;
+import javax.management.openmbean.OpenMBeanOperationInfoSupport;
+import javax.management.openmbean.SimpleType;
 
 /**
  * Configuration for a component homed on a domain.
+ * <<abstract>>
+ * <p>Based on OpenMBeans.</p>
+ * <p>Subclasses add population of OpenMBean Attributes reading from
+ * a store.  A subclass might use an xml file to populate a Settings
+ * instance with attributes. TODO: In constructor or add a 'load'.</p>
  * @author stack
+ * @version $Date$, $Revision$.
  */
-public class Settings implements DynamicMBean, MBeanRegistration {
-    public Object getAttribute(final String attributeName)
-    throws AttributeNotFoundException, MBeanException, ReflectionException {
-        // TODO Auto-generated method stub
-        return null;
+public abstract class Settings implements DynamicMBean, MBeanRegistration {
+    private static final String NONEXPERT_OPERATION = "nonexpert";
+    private static final String OVERRIDEABLE_OPERATION = "overrideable";
+    protected static final Object [] TRUE_FALSE_LEGAL_VALUES =
+        new Object [] {"true", "false"};
+    
+    private static final String ENABLED_ATTRIBUTE = "Enabled";
+    private boolean enabled = true;
+ 
+    /**
+     * List of nonexpert Attribute names.
+     */
+    private final List nonexpert;
+    
+    /**
+     * List of overrideable Attribute names.
+     */
+    private final List overrideable;
+    
+    private final List attributeNames;
+    
+    private final List operationNames;
+    
+    private final MBeanInfo mbeanInfo;
+    
+    
+    public Settings() throws OpenDataException {
+        super();
+        this.mbeanInfo = createMBeanInfo(this.getClass().getName(),
+            "Base abstract settings instance.");
+        this.attributeNames = getAttributeNames();
+        this.nonexpert = getNonexpert();
+        this.overrideable = getOverrideable();
+        this.operationNames = getOperationNames();
+    }
+    
+    protected List getAttributeNames() {
+        return Arrays.asList(new String [] {ENABLED_ATTRIBUTE});
+    }
+   
+    protected List getNonexpert() {
+        return getAttributeNames();
+    }
+    
+    protected List getOverrideable() {
+        return getAttributeNames();
+    }
+    
+    protected List getOperationNames() {
+        return Arrays.asList(new String [] {
+            NONEXPERT_OPERATION, OVERRIDEABLE_OPERATION});
+    }
+    
+    /**
+     * Create OpenMBeanInfo instance.
+     * Called from constructor.  Shouldn't need to override.
+     * Override {@link #createAttributeInfo()} and
+     * {@link #createOperationInfo()} instead.
+     * @param className Full name of class these settings are for.
+     * @param description Description of this Settings.
+     * @return An OpenMBeanInfo instance.
+     * @throws OpenDataException
+     */
+    protected MBeanInfo createMBeanInfo(final String className,
+            final String description)
+    throws OpenDataException {
+        return new OpenMBeanInfoSupport(className, description,
+            createAttributeInfo(),
+            new OpenMBeanConstructorInfo [] {},
+            createOperationInfo(),
+            new MBeanNotificationInfo [] {});
+    }
+    
+    /**
+     * @return Array of OpenMBeanAttributes.
+     * @throws OpenDataException
+     */
+    protected OpenMBeanAttributeInfo [] createAttributeInfo()
+    throws OpenDataException {
+        List attributes = new ArrayList();
+        attributes.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
+            "Enabled if true", SimpleType.STRING,
+            true, false, false, "true", TRUE_FALSE_LEGAL_VALUES));
+        return (OpenMBeanAttributeInfo [])attributes.toArray();
+    }
+    
+    /**
+     * @return Array of OpenMBeanOperationInfos.
+     * @throws OpenDataException
+     */
+    protected OpenMBeanOperationInfo[] createOperationInfo()
+    throws OpenDataException {
+        List operations = new ArrayList();
+        operations.add(new OpenMBeanOperationInfoSupport(NONEXPERT_OPERATION,
+            "List of all nonexpert Attributes", null,
+            new ArrayType(0, SimpleType.STRING),
+            MBeanOperationInfo.INFO));
+        operations.add(new OpenMBeanOperationInfoSupport(
+            OVERRIDEABLE_OPERATION,
+            "List of all overrideable Attributes", null,
+            new ArrayType(0, SimpleType.STRING),
+            MBeanOperationInfo.INFO));
+        return (OpenMBeanOperationInfo [])operations.toArray();
+    }
+    
+    protected void checkValidAttributeName(final String attributeName)
+    throws AttributeNotFoundException {
+        if (!attributeNames.contains(attributeName)) {
+            throw new AttributeNotFoundException("Unknown Attribute " +
+                attributeName);
+        }
     }
     
     public Object get(final String attributeName) {
@@ -68,32 +197,77 @@ public class Settings implements DynamicMBean, MBeanRegistration {
     public String getString(final String attributeName) {
         return (String)get(attributeName);
     }
+    
+    public Object getAttribute(final String attributeName)
+    throws AttributeNotFoundException, MBeanException, ReflectionException {
+        if (attributeName == null) {
+            throw new AttributeNotFoundException("Null Attribute name");
+        }
+        checkValidAttributeName(attributeName);
+        // Else attribute is known and is ENABLED_ATTRIBUTE.
+        return new Boolean(this.enabled);
+    }
+    
+    public AttributeList getAttributes(String[] attributes) {
+        AttributeList result = new AttributeList(attributes.length);
+        if (attributes.length == 0) {
+            return result;
+        }
+        for (int i = 0; i < attributes.length; i++) {
+            try {
+                result.add(new Attribute(attributes[i],
+                    getAttribute(attributes[i])));
+            } catch (AttributeNotFoundException e) {
+                e.printStackTrace();
+            } catch (MBeanException e) {
+                e.printStackTrace();
+            } catch (ReflectionException e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
 
     public void setAttribute(Attribute attribute)
     throws AttributeNotFoundException, InvalidAttributeValueException,
     MBeanException, ReflectionException {
-        // TODO Auto-generated method stub
-        
-    }
-
-    public AttributeList getAttributes(String[] attributes) {
-        // TODO Auto-generated method stub
-        return null;
+        checkValidAttributeName(attribute.getName());
+        // Else its ENABLED_ATTRIBUTE, only attribute we do in here.
+        this.enabled = ((Boolean)attribute.getValue()).booleanValue();
     }
 
     public AttributeList setAttributes(AttributeList attributes) {
-        // TODO Auto-generated method stub
-        return null;
+        AttributeList result = new AttributeList(attributes.size());
+        for (final Iterator i = attributes.iterator(); i.hasNext();) {
+            try {
+                Attribute a = (Attribute) i.next();
+                setAttribute(a);
+                result.add(a);
+            } catch (AttributeNotFoundException e) {
+                e.printStackTrace();
+            } catch (InvalidAttributeValueException e) {
+                e.printStackTrace();
+            } catch (MBeanException e) {
+                e.printStackTrace();
+            } catch (ReflectionException e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
     }
     
     public Object invoke(String actionName, Object[] params, String[] signature)
     throws MBeanException, ReflectionException {
-        // Add getNonExpertAttributes and getOverrideables and getTransients.
-        return null;
+        if (!this.operationNames.contains(actionName)) {
+            throw new RuntimeOperationsException(
+                new RuntimeException(actionName + " unknown operation"));
+        }
+        // Assume nonexpert... implement. TODO.
+        return this.nonexpert.toArray();
     }
 
     public MBeanInfo getMBeanInfo() {
-        return null;
+        return this.mbeanInfo;
     }
 
     public ObjectName preRegister(MBeanServer server, ObjectName on)
