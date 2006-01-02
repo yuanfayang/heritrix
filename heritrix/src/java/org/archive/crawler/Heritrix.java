@@ -1501,7 +1501,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             final String name, final boolean jmxregister)
     throws MalformedObjectNameException, InstanceAlreadyExistsException,
     MBeanRegistrationException, NotCompliantMBeanException {
-        MBeanServer server = getMBeanServer();
+        MBeanServer server = JmxUtils.getMBeanServer();
         if (server != null) {
             // Are we to manage the jmx registration?  Or is it being done for
             // us by an external process: e.g. This instance was created by
@@ -1523,7 +1523,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     protected static void unregisterHeritrix(final Heritrix h)
     throws InstanceNotFoundException, MBeanRegistrationException,
             NullPointerException {
-        MBeanServer server = getMBeanServer();
+        MBeanServer server = JmxUtils.getMBeanServer();
         if (server != null) {
             server.unregisterMBean(h.mbeanName);
         } else {
@@ -1533,35 +1533,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         }
     }
     
-    /**
-     * Get MBeanServer.
-     * Currently uses first MBeanServer found.  This will definetly not be whats
-     * always wanted. TODO: Make which server settable. Also, if none, put up
-     * our own MBeanServer.
-     * @return An MBeanServer to register with or null.
-     */
-    public static MBeanServer getMBeanServer() {
-        MBeanServer result = null;
-        List servers = MBeanServerFactory.findMBeanServer(null);
-        if (servers == null) {
-            return result;
-        }
-        for (Iterator i = servers.iterator(); i.hasNext();) {
-            MBeanServer server = (MBeanServer)i.next();
-            if (server == null) {
-                continue;
-            }
-            result = server;
-            break;
-        }
-        return result;
-    }
-    
     public static MBeanServer registerMBean(final Object objToRegister,
             final String name, final String type)
     throws InstanceAlreadyExistsException, MBeanRegistrationException,
     NotCompliantMBeanException {
-        MBeanServer server = getMBeanServer();
+        MBeanServer server = JmxUtils.getMBeanServer();
         if (server != null) {
             server = registerMBean(server, objToRegister, name, type);
         }
