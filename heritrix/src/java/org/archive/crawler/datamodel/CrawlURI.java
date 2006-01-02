@@ -1156,11 +1156,12 @@ implements CoreAttributeConstants, FetchStatusCodes {
 
     /**
      * Convenience method for creating a Link with the given string and
-     * context, relative to a previously set base HREF
+     * context, relative to a previously set base HREF if available (or
+     * relative to the current CrawlURI if no other base has been set)
      * 
-     * @param url
-     * @param context
-     * @param hopType
+     * @param url String URL to add as destination of link
+     * @param context String context where link was discovered
+     * @param hopType char hop-type indicator
      * @throws URIException
      */
     public void createAndAddLinkRelativeToBase(String url,
@@ -1171,17 +1172,24 @@ implements CoreAttributeConstants, FetchStatusCodes {
     
     /**
      * Convenience method for creating a Link with the given string and
-     * context, relative to this CrawlURI's via UURI
+     * context, relative to this CrawlURI's via UURI if available. (If
+     * a via is not available, falls back to using 
+     * #createAndAddLinkRelativeToBase.)
      * 
-     * @param url
-     * @param context
-     * @param hopType
+     * @param url String URL to add as destination of link
+     * @param context String context where link was discovered
+     * @param hopType char hop-type indicator
      * @throws URIException
      */
     public void createAndAddLinkRelativeToVia(String url,
             CharSequence context, char hopType) throws URIException {
-        addOutLink(new Link(getUURI(), UURIFactory.getInstance(
-            getVia(), url), context, hopType));
+        if(getVia()!=null) {
+            addOutLink(new Link(getUURI(), UURIFactory.getInstance(
+                getVia(), url), context, hopType));
+        } else {
+            // if no 'via', fall back to base/self
+            createAndAddLinkRelativeToBase(url,context,hopType);
+        }
     }
     
     /**
