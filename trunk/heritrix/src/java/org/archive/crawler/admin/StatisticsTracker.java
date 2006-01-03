@@ -324,6 +324,7 @@ implements CrawlURIDispositionListener, Serializable {
         stats.put("currentDocsPerSecond", new Double(currentDocsPerSecond));
         stats.put("docsPerSecond", new Double(docsPerSecond));
         stats.put("totalKBPerSec", new Long(totalKBPerSec));
+        stats.put("totalProcessedBytes", new Long(totalProcessedBytes));
         stats.put("currentKBPerSec", new Long(currentKBPerSec));
         stats.put("downloadFailures", new Long(downloadFailures));
         stats.put("busyThreads", new Integer(busyThreads));
