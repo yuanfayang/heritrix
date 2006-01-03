@@ -67,6 +67,8 @@ public class JmxUtils {
     public static final String JMX_PORT = "jmxport";
     public static final String GUI_PORT = "guiport";
     public static final String KEY = "key";
+    public static final String SERVER_DELEGATE_STR =
+        "JMImplementation:type=MBeanServerDelegate";
 
     /**
      * Key for name of the Heritrix instance hosting a Job: i.e. the
@@ -77,8 +79,7 @@ public class JmxUtils {
     public static final ObjectName MBEAN_SERVER_DELEGATE;
     static {
         try {
-            MBEAN_SERVER_DELEGATE = new ObjectName(
-                "JMImplementation:type=MBeanServerDelegate");
+            MBEAN_SERVER_DELEGATE = new ObjectName(SERVER_DELEGATE_STR);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -112,31 +113,22 @@ public class JmxUtils {
     }
     
     public static String getServerDetail(final MBeanServer server) {
-        ObjectName delegateName = null;
-        try {
-            delegateName = new ObjectName(
-                    "JMImplementation:type=MBeanServerDelegate");
-        } catch (MalformedObjectNameException e) {
-            LOGGER.log(Level.SEVERE, "Failed to create ObjectName for " +
-                    "JMImplementation:type=MBeanServerDelegate", e);
-            return null;
-        }
         StringBuffer buffer = new StringBuffer("MBeanServerId=");
         try {
-            buffer.append((String) server.getAttribute(delegateName,
-                    "MBeanServerId"));
+            buffer.append((String) server.getAttribute(MBEAN_SERVER_DELEGATE,
+                "MBeanServerId"));
             buffer.append(", SpecificationVersion=");
-            buffer.append((String) server.getAttribute(delegateName,
-                    "SpecificationVersion"));
+            buffer.append((String) server.getAttribute(MBEAN_SERVER_DELEGATE,
+                "SpecificationVersion"));
             buffer.append(", ImplementationVersion=");
-            buffer.append((String) server.getAttribute(delegateName,
-                    "ImplementationVersion"));
+            buffer.append((String) server.getAttribute(MBEAN_SERVER_DELEGATE,
+                "ImplementationVersion"));
             buffer.append(", SpecificationVendor=");
-            buffer.append((String) server.getAttribute(delegateName,
-                    "SpecificationVendor"));
+            buffer.append((String) server.getAttribute(MBEAN_SERVER_DELEGATE,
+                "SpecificationVendor"));
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed gettting server detail for " +
-                    "JMImplementation:type=MBeanServerDelegate", e);
+                SERVER_DELEGATE_STR, e);
         }
         return buffer.toString();
     }

@@ -1,4 +1,4 @@
-/* Settings.java
+/* Configuration
  *
  * $Id$
  *
@@ -22,12 +22,14 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.settings;
+package org.archive.configuration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -53,50 +55,65 @@ import javax.management.openmbean.OpenMBeanOperationInfo;
 import javax.management.openmbean.OpenMBeanOperationInfoSupport;
 import javax.management.openmbean.SimpleType;
 
+import org.archive.util.JmxUtils;
+
 /**
  * Configuration for a component homed on a domain.
  * <<abstract>>
- * <p>Based on OpenMBeans.</p>
- * <p>Subclasses add population of OpenMBean Attributes reading from
- * a store.  A subclass might use an xml file to populate a Settings
- * instance with attributes. TODO: In constructor or add a 'load'.</p>
+ * <p>Based on OpenMBeans.  A Configuration has (MBean) Attributes.</p>
+ * <p>Subclasses add reading of definition and population of OpenMBean
+ * Attributes from a <i>store</i>.  A subclass might use an xml file to
+ * populate a Configuration instance with definition of contained Attributes
+ * and their values.</p>
  * @author stack
  * @version $Date$, $Revision$.
  */
-public abstract class Settings implements DynamicMBean, MBeanRegistration {
+public abstract class Configuration
+implements DynamicMBean, MBeanRegistration {
+    private final static Logger LOGGER =
+        Logger.getLogger(Configuration.class.getName());
+    
     private static final String NONEXPERT_OPERATION = "nonexpert";
     private static final String OVERRIDEABLE_OPERATION = "overrideable";
     protected static final Object [] TRUE_FALSE_LEGAL_VALUES =
-        new Object [] {"true", "false"};
+        new Object [] {Boolean.TRUE, Boolean.FALSE};
+    public static final String ENABLED_ATTRIBUTE = "Enabled";
+    private Boolean enabled = Boolean.TRUE;
     
-    private static final String ENABLED_ATTRIBUTE = "Enabled";
-    private boolean enabled = true;
- 
+    private static ArrayType STR_ARRAY_TYPE;
+    static {
+        try {
+            STR_ARRAY_TYPE = new ArrayType(1, SimpleType.STRING);
+        } catch (OpenDataException e) {
+            e.printStackTrace();
+        }
+    }
+    
     /**
      * List of nonexpert Attribute names.
      */
-    private final List nonexpert;
+    private List nonexpert = null;
     
     /**
      * List of overrideable Attribute names.
      */
-    private final List overrideable;
+    private List overrideables = null;
     
-    private final List attributeNames;
+    private List attributeNames = null;
     
-    private final List operationNames;
+    private List operationNames = null;
+   
+    private MBeanInfo mbeanInfo = null;
     
-    private final MBeanInfo mbeanInfo;
     
-    
-    public Settings() throws OpenDataException {
+    public Configuration() throws OpenDataException {
         super();
-        this.mbeanInfo = createMBeanInfo(this.getClass().getName(),
-            "Base abstract settings instance.");
         this.attributeNames = getAttributeNames();
         this.nonexpert = getNonexpert();
-        this.overrideable = getOverrideable();
+        this.overrideables = getOverrideable();
         this.operationNames = getOperationNames();
+        this.mbeanInfo = createMBeanInfo(this.getClass().getName(),
+            "Base abstract settings instance.");
     }
     
     protected List getAttributeNames() {
@@ -144,9 +161,15 @@ public abstract class Settings implements DynamicMBean, MBeanRegistration {
     throws OpenDataException {
         List attributes = new ArrayList();
         attributes.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
-            "Enabled if true", SimpleType.STRING,
-            true, false, false, "true", TRUE_FALSE_LEGAL_VALUES));
-        return (OpenMBeanAttributeInfo [])attributes.toArray();
+            "Enabled if true", SimpleType.BOOLEAN,
+            true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
+        // Need to precreate the array of OpenMBeanAttributeInfos and
+        // pass this to attributes.toArray because can't case an Object []
+        // array to array of OpenMBeanAttributeInfos without CCE.
+        OpenMBeanAttributeInfo [] ombai =
+            new OpenMBeanAttributeInfo[attributes.size()];
+        attributes.toArray(ombai);
+        return ombai;
     }
     
     /**
@@ -157,15 +180,16 @@ public abstract class Settings implements DynamicMBean, MBeanRegistration {
     throws OpenDataException {
         List operations = new ArrayList();
         operations.add(new OpenMBeanOperationInfoSupport(NONEXPERT_OPERATION,
-            "List of all nonexpert Attributes", null,
-            new ArrayType(0, SimpleType.STRING),
+            "List of all nonexpert Attributes", null, STR_ARRAY_TYPE,
             MBeanOperationInfo.INFO));
         operations.add(new OpenMBeanOperationInfoSupport(
             OVERRIDEABLE_OPERATION,
-            "List of all overrideable Attributes", null,
-            new ArrayType(0, SimpleType.STRING),
+            "List of all overrideable Attributes", null, STR_ARRAY_TYPE,
             MBeanOperationInfo.INFO));
-        return (OpenMBeanOperationInfo [])operations.toArray();
+        OpenMBeanOperationInfo [] omboi =
+            new OpenMBeanOperationInfo[operations.size()];
+        operations.toArray(omboi);
+        return omboi;
     }
     
     protected void checkValidAttributeName(final String attributeName)
@@ -205,7 +229,7 @@ public abstract class Settings implements DynamicMBean, MBeanRegistration {
         }
         checkValidAttributeName(attributeName);
         // Else attribute is known and is ENABLED_ATTRIBUTE.
-        return new Boolean(this.enabled);
+        return this.enabled;
     }
     
     public AttributeList getAttributes(String[] attributes) {
@@ -233,7 +257,7 @@ public abstract class Settings implements DynamicMBean, MBeanRegistration {
     MBeanException, ReflectionException {
         checkValidAttributeName(attribute.getName());
         // Else its ENABLED_ATTRIBUTE, only attribute we do in here.
-        this.enabled = ((Boolean)attribute.getValue()).booleanValue();
+        this.enabled = (Boolean)attribute.getValue();
     }
 
     public AttributeList setAttributes(AttributeList attributes) {
@@ -272,19 +296,23 @@ public abstract class Settings implements DynamicMBean, MBeanRegistration {
 
     public ObjectName preRegister(MBeanServer server, ObjectName on)
     throws Exception {
-        return null;
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine(JmxUtils.getServerDetail(server) + " " +
+                on.toString());
+        }
+        return on;
     }
 
-    public void postRegister(Boolean arg0) {
-        // TODO Auto-generated method stub
+    public void postRegister(Boolean b) {
+        // TODO
     }
 
     public void preDeregister() throws Exception {
-        // TODO Auto-generated method stub
+        // TODO
     }
 
     public void postDeregister() {
-        // TODO Auto-generated method stub
+        // TODO
     }
     
     public static void main(String[] args) {
