@@ -22,14 +22,14 @@
  */
 package org.archive.hcc.client;
 
-import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Set;
 
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
-import javax.management.ReflectionException;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.TabularData;
 
 /**
  * 
@@ -202,8 +202,39 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
     }
 
     public Collection<CompletedCrawlJob> listCompletedCrawlJobs() {
-        //TODO implement this 
-        throw new UnsupportedOperationException("listCompletedCrawlJobs not implemented yet!");
+        Collection<CompletedCrawlJob> completedJobs = new LinkedList<CompletedCrawlJob>();
+
+        try {
+            
+            TabularData td = (TabularData)this.connection.invoke(
+                    this.name, 
+                    "completedJobs", 
+                    new Object[0], 
+                    new String[0]);
+            
+
+            if(td != null){
+                for(CompositeData cd: (Collection<CompositeData>)td.values()){
+                    
+                    CompletedCrawlJobImpl ccj = 
+                        new CompletedCrawlJobImpl(
+                                new Long((String)cd.get("uid")), 
+                                (String)cd.get("name"), 
+                                this, 
+                                this.connection);
+                    
+                    completedJobs.add(ccj);
+                    
+                }
+                
+            }
+            
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } 
+        
+        return completedJobs;
     }
 
     public Collection<PendingCrawlJob> listPendingCrawlJobs() {

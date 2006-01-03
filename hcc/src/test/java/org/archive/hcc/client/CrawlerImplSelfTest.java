@@ -173,7 +173,76 @@ public class CrawlerImplSelfTest
     }
 
     
+    public void testListCompletedCrawlJobs(){
+        AllPurposeTestListener listener;
+        listener = new AllPurposeTestListener();
+        cc.addCrawlerLifecycleListener(listener);
+        cc.addCrawlJobListener(listener);
+        //start a new job
+        String uid = c.addJob(new JobOrder("test", getTestJar()));
+
+
+        int completedJobCount = c.listCompletedCrawlJobs().size();
+        try {
+            assertTrue(listener.crawlJobStatisticsChangedLatch.await(
+                    30 * 1000,
+                    TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        c.terminateCurrentJob();
+        
+        try {
+            assertTrue(listener.crawlJobCompletedLatch.await(
+                    10 * 1000,
+                    TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+      
+        assertEquals(completedJobCount+1, c.listCompletedCrawlJobs().size());
+
+    }
     
+    public void testDeleteCrawlJob(){
+        AllPurposeTestListener listener;
+        listener = new AllPurposeTestListener();
+        cc.addCrawlerLifecycleListener(listener);
+        cc.addCrawlJobListener(listener);
+        //start a new job
+        String uid = c.addJob(new JobOrder("test", getTestJar()));
+
+        try {
+            assertTrue(listener.crawlJobStatisticsChangedLatch.await(
+                    30 * 1000,
+                    TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        c.terminateCurrentJob();
+        
+        try {
+            assertTrue(listener.crawlJobCompletedLatch.await(
+                    10 * 1000,
+                    TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        int completedJobCount = c.listCompletedCrawlJobs().size();
+
+        try {
+            c.deleteCompletedCrawlJob(listener.completedj);
+        } catch (ClusterException e) {
+            e.printStackTrace();
+            assertFalse(true);
+        }
+        
+        assertEquals(completedJobCount-1, c.listCompletedCrawlJobs().size());
+
+    }
 
 
 }
