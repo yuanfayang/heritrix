@@ -24,14 +24,17 @@
  */
 package org.archive.configuration;
 
-import java.io.IOException;
+import java.util.Hashtable;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.OpenDataException;
 
 import junit.framework.TestCase;
@@ -44,11 +47,12 @@ public class JmxRegistryHandlerTest extends TestCase {
     private static final Logger LOGGER =
         Logger.getLogger(JmxRegistryHandlerTest.class.getName());
 
-    private static final String TEST_SETTING_NAME = "test";
+    private static final String TEST_SETTING_NAME = "TestComponent";
     private static final String DOMAIN = "a.b.c";
     
     private Object baseInstanceReference = null;
     private Object domainInstanceReference = null;
+    private Object configurations = null;
     private Handler handler = null;
 
     public static void main(String[] args) {
@@ -59,14 +63,53 @@ public class JmxRegistryHandlerTest extends TestCase {
         super.setUp();
         this.handler = new JmxRegistryHandler();       
         this.baseInstanceReference = this.handler.register(TEST_SETTING_NAME,
-            null, getSettings(new Attribute(Configuration.ENABLED_ATTRIBUTE,
+            null,
+            getConfiguration(new Attribute(Configuration.ENABLED_ATTRIBUTE,
                 Boolean.TRUE)));
         this.domainInstanceReference = this.handler.register(TEST_SETTING_NAME,
-           DOMAIN, getSettings(new Attribute(Configuration.ENABLED_ATTRIBUTE,
+           DOMAIN,
+           getConfiguration(new Attribute(Configuration.ENABLED_ATTRIBUTE,
                Boolean.FALSE)));
+        this.configurations = this.handler.register("TestFilters", DOMAIN,
+                new ConfigurationList() {
+                    public Object getAttribute(String attributeName)
+                    throws AttributeNotFoundException, MBeanException,
+                            ReflectionException {
+                        // Call parents method but ignore result. Parent checks
+                        // valid attributeName.
+                        super.getAttribute(attributeName);
+                        // Else attribute is known and is
+                        // CONFIGURATIONS_ATTRIBUTE. TESTING CODE.
+                        Hashtable ht = new Hashtable();
+                        ht.put("apple", "orange");
+                        ht.put("zebra", "octopus");
+                        ht.put("mercedes", "volkswagen");
+                        Object[] result = null;
+                        try {
+                            ObjectName on1 = new ObjectName("org.archive.1", ht);
+                            ObjectName on2 = new ObjectName("org.archive.2", ht);
+                            result = new Object[] {
+                                new CompositeDataSupport(ON_COMPOSITE_TYPE,
+                                    new String[] {DOMAIN_KEY, LIST_STR_KEY},
+                                    new String[] {on1.getDomain(),
+                                        on1.getCanonicalKeyPropertyListString()}),
+                                new CompositeDataSupport(ON_COMPOSITE_TYPE,
+                                    new String[] {DOMAIN_KEY, LIST_STR_KEY },
+                                    new String[] {on2.getDomain(),
+                                        on2.getCanonicalKeyPropertyListString()})};
+                        } catch (OpenDataException e) {
+                            e.printStackTrace();
+                        } catch (MalformedObjectNameException e) {
+                            e.printStackTrace();
+                        } catch (NullPointerException e) {
+                            e.printStackTrace();
+                        }
+                        return result;
+                    }
+                });
     }
     
-    protected Configuration getSettings(final Attribute attr)
+    protected Configuration getConfiguration(final Attribute attr)
     throws AttributeNotFoundException, InvalidAttributeValueException,
             MBeanException, ReflectionException, OpenDataException {
         Configuration s =  new Configuration() {
@@ -79,10 +122,10 @@ public class JmxRegistryHandlerTest extends TestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         if (this.handler !=  null && this.baseInstanceReference != null) {
-            this.handler.unregister(this.baseInstanceReference);
+            this.handler.deregister(this.baseInstanceReference);
         }
         if (this.handler !=  null && this.domainInstanceReference != null) {
-            this.handler.unregister(this.domainInstanceReference);
+            this.handler.deregister(this.domainInstanceReference);
         }
     }
     

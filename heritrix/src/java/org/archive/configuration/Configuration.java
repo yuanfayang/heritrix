@@ -80,6 +80,9 @@ implements DynamicMBean, MBeanRegistration {
     public static final String ENABLED_ATTRIBUTE = "Enabled";
     private Boolean enabled = Boolean.TRUE;
     
+    /**
+     * Make a String ArrayType to use later in definitions.
+     */
     private static ArrayType STR_ARRAY_TYPE;
     static {
         try {
@@ -179,14 +182,18 @@ implements DynamicMBean, MBeanRegistration {
     protected OpenMBeanOperationInfo[] createOperationInfo()
     throws OpenDataException {
         List operations = new ArrayList();
-        operations.add(new OpenMBeanOperationInfoSupport(NONEXPERT_OPERATION,
-            "List of all nonexpert Attributes", null, STR_ARRAY_TYPE,
-            MBeanOperationInfo.INFO));
-        operations.add(new OpenMBeanOperationInfoSupport(
-            OVERRIDEABLE_OPERATION,
-            "List of all overrideable Attributes", null, STR_ARRAY_TYPE,
-            MBeanOperationInfo.INFO));
-        OpenMBeanOperationInfo [] omboi =
+        if (this.operationNames.contains(NONEXPERT_OPERATION)) {
+            operations.add(new OpenMBeanOperationInfoSupport(
+                NONEXPERT_OPERATION, "List of all nonexpert Attributes",
+                null, STR_ARRAY_TYPE, MBeanOperationInfo.INFO));
+        }
+        if (this.operationNames.contains(OVERRIDEABLE_OPERATION)) {
+            operations.add(new OpenMBeanOperationInfoSupport(
+                OVERRIDEABLE_OPERATION,
+                "List of all overrideable Attributes", null,
+                STR_ARRAY_TYPE, MBeanOperationInfo.INFO));
+        }
+        OpenMBeanOperationInfo[] omboi =
             new OpenMBeanOperationInfo[operations.size()];
         operations.toArray(omboi);
         return omboi;
