@@ -64,7 +64,7 @@ public interface Handler {
      * @param domain Domain to register against.
      * @param instance Object to register.
      * @return Object to use referring to instance (Pass this object
-     * to {@link #unregister(Object)}.
+     * to {@link #deregister(Object)}.
      */
     public Object register(final String component, final String domain,
             final Object instance);
@@ -73,5 +73,5 @@ public interface Handler {
      * Unregister named object.
      * @param registeredObjectName Identifier for registered Settings.
      */
-    public void unregister(final Object registeredObjectName);
+    public void deregister(final Object registeredObjectName);
 }

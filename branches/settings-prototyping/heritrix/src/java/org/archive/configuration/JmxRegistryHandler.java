@@ -47,7 +47,7 @@ import org.archive.util.JmxUtils;
  * -- Interceptors or home-grown agent -- but will work prototyping, for
  * globals, and a small number of overrides.
  * <p>TODO: Get via a HandlerFactory.
- * 
+ * <p>Can ask the MBeanServer for list of registered domains.
  * @author stack
  * @version $Date$ $Revision$
  */
@@ -118,7 +118,7 @@ class JmxRegistryHandler implements Handler {
         return result;
     }
     
-    public void unregister(final Object on) {
+    public void deregister(final Object on) {
         try {
             this.registry.unregisterMBean(((ObjectInstance)on).
                 getObjectName());
