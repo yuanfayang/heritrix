@@ -66,8 +66,7 @@ public class ReplayInputStream extends InputStream
      * The readlimit passed the last time mark was called.
      */
     private long readlimit = -1;
-
-
+    
     /**
      * Constructor.
      *
@@ -113,7 +112,7 @@ public class ReplayInputStream extends InputStream
         }
     }
 
-    public long setToResponseBodyStart() {
+	public long setToResponseBodyStart() {
         this.position = responseBodyStart;
         return this.position;
     }

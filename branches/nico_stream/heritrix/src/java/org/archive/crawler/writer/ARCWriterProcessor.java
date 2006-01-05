@@ -25,6 +25,7 @@
  */
 package org.archive.crawler.writer;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -64,6 +65,7 @@ import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.fetcher.FetchSTREAM;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
@@ -127,7 +129,7 @@ ARCWriterSettings, FetchStatusCodes {
     /**
      * Key to use asking settings for arc path value.
      */
-    public static final String ATTR_PATH ="path";
+    public static final String ATTR_PATH = "path";
 
     /**
      * Key to get maximum pool size.
@@ -392,6 +394,8 @@ ARCWriterSettings, FetchStatusCodes {
                 writeDns(curi);
             } else if (scheme.equals("http") || scheme.equals("https")) {
                 writeHttp(curi);
+            } else if (FetchSTREAM.SCHEME.contains(scheme)) {
+            	writeStream(curi);
             }
         } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e, "WriteARCRecord: " +
@@ -401,7 +405,36 @@ ARCWriterSettings, FetchStatusCodes {
         }
     }
 
-    protected void writeHttp(CrawlURI curi)
+    protected void writeStream(final CrawlURI curi)
+    throws IOException {
+    	if (curi.getFetchStatus() <= 0) {
+    		return;
+    	}
+    	File streamFile = (File)curi.getObject(FetchSTREAM.FILE_KEY);
+    	if (!streamFile.exists() || !streamFile.canRead()) {
+    		throw new IOException(streamFile.toString() +
+    		    " does not exist or is not readable.");
+    	}
+        long recordLength = (int)curi.getContentSize();
+        if (recordLength == 0) {
+        	if (logger.isLoggable(Level.FINE)) {
+        		logger.fine(streamFile.toString() + " is empty -- skipping");
+        	}
+            // Write nothing.
+            return;
+        }
+        if (recordLength >= Integer.MAX_VALUE) {
+        	throw new IOException(streamFile.toString() +
+        	    " is too long.");
+        	// HEY CLEAN IT UP....
+        }
+        
+        write(curi, (int)recordLength,
+            new BufferedInputStream(new FileInputStream(streamFile)),
+        		getHostAddress(curi));
+	}
+
+	protected void writeHttp(CrawlURI curi)
     throws IOException {
         if (curi.getFetchStatus() <= 0 && curi.isHttpTransaction()) {
             // Error; do not write to ARC (for now)
