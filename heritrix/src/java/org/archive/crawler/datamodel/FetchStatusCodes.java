@@ -107,6 +107,9 @@ public interface FetchStatusCodes {
 
     /** DNS success */
     public static final int S_DNS_SUCCESS = 1;
+    public static final int S_STREAM_SUCCESS = S_DNS_SUCCESS;
+    public static final int S_STREAM_NOTFOUND = 404;
+    
     /** InetAddress.getByName success */
     public static final int S_GETBYNAME_SUCCESS = 1001;
 }
