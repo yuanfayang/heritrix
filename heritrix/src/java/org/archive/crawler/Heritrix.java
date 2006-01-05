@@ -788,7 +788,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         properties.load(getPropertiesInputStream());
         
         // Any property that begins with ARCHIVE_PACKAGE, make it
-        // into a system property.
+        // into a system property. While iterating, check to see if anything
+        // defined on command-line, and if so, it overrules whats in
+        // heritrix.properties.
         for (Enumeration e = properties.keys(); e.hasMoreElements();) {
             String key = ((String)e.nextElement()).trim();
         	if (key.startsWith(ARCHIVE_PACKAGE) ||
@@ -796,8 +798,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 // Don't add the heritrix.properties entries that are
                 // changing the logging level of particular classes.
                 if (key.indexOf(".level") < 0) {
-                	System.setProperty(key,
-                        properties.getProperty(key).trim());
+                    if (System.getProperty(key) == null ||
+                        System.getProperty(key).length() == 0) {
+                	    System.setProperty(key,
+                            properties.getProperty(key).trim());
+                    }
                 }
             }
         }
