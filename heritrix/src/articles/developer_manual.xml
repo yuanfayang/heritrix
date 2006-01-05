@@ -82,7 +82,7 @@
       <title>Building Heritrix</title>
 
       <para>You can build Heritrix from source using Maven. Heritrix build has
-      been tested against maven-1.0.2. See <ulink
+      been tested against maven-1.0.2. Do not use Maven 2.x to build Heritrix.  See <ulink
       url="http://maven.apache.org">maven.apache.org</ulink> for how to obtain
       the binary and setup of your maven environment.</para>
 
@@ -2471,7 +2471,7 @@ public class SimpleExtractor extends Processor
 
     <para>[major ] .[minor/mode ] .[patchlevel ]</para>
 
-    <para>The major version number, currently at zero, increments upon
+    <para>The major version number, currently at one, increments upon
     significant architectural changes or the achievement of important
     milestones in capabilities. The minor/mode version number increments as
     progress is made within a major version, with the added constraint that
@@ -2686,7 +2686,7 @@ public class SimpleExtractor extends Processor
       web archeology. Research Report 174</ulink></title>
 
       <publisher>
-        <publishername>Compaq Systems Research Center, Paolo Alto,
+        <publishername>Compaq Systems Research Center, Palo Alto,
         CA</publishername>
       </publisher>
 
@@ -2727,7 +2727,7 @@ public class SimpleExtractor extends Processor
       High-Performance Web Crawling. Research Report 173</ulink></title>
 
       <publisher>
-        <publishername>Compaq Systems Research Center, Paolo Alto,
+        <publishername>Compaq Systems Research Center, Palo Alto,
         CA</publishername>
       </publisher>
 
@@ -2756,7 +2756,7 @@ public class SimpleExtractor extends Processor
       Scalable, Extensible Web Crawler</ulink></title>
 
       <publisher>
-        <publishername>Compaq Systems Research Center, Paolo Alto,
+        <publishername>Compaq Systems Research Center, Palo Alto,
         CA</publishername>
       </publisher>
 
