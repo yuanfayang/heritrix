@@ -34,6 +34,8 @@ import javax.management.MBeanException;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.openmbean.ArrayType;
+import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.OpenDataException;
 
@@ -70,43 +72,33 @@ public class JmxRegistryHandlerTest extends TestCase {
            DOMAIN,
            getConfiguration(new Attribute(Configuration.ENABLED_ATTRIBUTE,
                Boolean.FALSE)));
+        // Create a ConfigurationArray and load it with some References.
+        Hashtable ht = new Hashtable();
+        ht.put("apple", "orange");
+        ht.put("zebra", "octopus");
+        ht.put("mercedes", "volkswagen");
+        Object[] references = null;
+        try {
+            references = new Object[] {
+                Reference.get(new ObjectName("org.archive.1", ht)),
+                Reference.get(new ObjectName("org.archive.2", ht))};
+        } catch (OpenDataException e) {
+            e.printStackTrace();
+        } catch (MalformedObjectNameException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        ConfigurationArray array = new ConfigurationArray() {
+            protected ArrayType getArrayType()
+            throws OpenDataException {
+                return new ArrayType(1, Reference.COMPOSITE_TYPE);
+            }
+        };
+        array.setAttribute(new Attribute(ConfigurationArray.ARRAYS_ATTRIBUTE,
+            references));
         this.configurations = this.handler.register("TestFilters", DOMAIN,
-                new ConfigurationList() {
-                    public Object getAttribute(String attributeName)
-                    throws AttributeNotFoundException, MBeanException,
-                            ReflectionException {
-                        // Call parents method but ignore result. Parent checks
-                        // valid attributeName.
-                        super.getAttribute(attributeName);
-                        // Else attribute is known and is
-                        // CONFIGURATIONS_ATTRIBUTE. TESTING CODE.
-                        Hashtable ht = new Hashtable();
-                        ht.put("apple", "orange");
-                        ht.put("zebra", "octopus");
-                        ht.put("mercedes", "volkswagen");
-                        Object[] result = null;
-                        try {
-                            ObjectName on1 = new ObjectName("org.archive.1", ht);
-                            ObjectName on2 = new ObjectName("org.archive.2", ht);
-                            result = new Object[] {
-                                new CompositeDataSupport(ON_COMPOSITE_TYPE,
-                                    new String[] {DOMAIN_KEY, LIST_STR_KEY},
-                                    new String[] {on1.getDomain(),
-                                        on1.getCanonicalKeyPropertyListString()}),
-                                new CompositeDataSupport(ON_COMPOSITE_TYPE,
-                                    new String[] {DOMAIN_KEY, LIST_STR_KEY },
-                                    new String[] {on2.getDomain(),
-                                        on2.getCanonicalKeyPropertyListString()})};
-                        } catch (OpenDataException e) {
-                            e.printStackTrace();
-                        } catch (MalformedObjectNameException e) {
-                            e.printStackTrace();
-                        } catch (NullPointerException e) {
-                            e.printStackTrace();
-                        }
-                        return result;
-                    }
-                });
+            array);
     }
     
     protected Configuration getConfiguration(final Attribute attr)

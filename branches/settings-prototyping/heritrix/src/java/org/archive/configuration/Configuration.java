@@ -78,6 +78,8 @@ implements DynamicMBean, MBeanRegistration {
     protected static final Object [] TRUE_FALSE_LEGAL_VALUES =
         new Object [] {Boolean.TRUE, Boolean.FALSE};
     public static final String ENABLED_ATTRIBUTE = "Enabled";
+    private static final List ATTRIBUTE_NAMES =
+        Arrays.asList(new String [] {ENABLED_ATTRIBUTE});
     private Boolean enabled = Boolean.TRUE;
     
     /**
@@ -102,7 +104,13 @@ implements DynamicMBean, MBeanRegistration {
      */
     private List overrideables = null;
     
-    private List attributeNames = null;
+    /**
+     * List of all attribute names.
+     * Make it protected so accessible in subclass constructors.
+     * Make it an ArrayList rather than just a List so have an
+     * 'addAll' operation to bulk add attribute names.
+     */
+    protected ArrayList attributeNames = null;
     
     private List operationNames = null;
    
@@ -111,16 +119,18 @@ implements DynamicMBean, MBeanRegistration {
     
     public Configuration() throws OpenDataException {
         super();
-        this.attributeNames = getAttributeNames();
+        this.attributeNames =
+            new ArrayList(Arrays.asList(new String [] {ENABLED_ATTRIBUTE}));
         this.nonexpert = getNonexpert();
         this.overrideables = getOverrideable();
-        this.operationNames = getOperationNames();
+        this.operationNames = Arrays.asList(new String [] {
+            NONEXPERT_OPERATION, OVERRIDEABLE_OPERATION});
         this.mbeanInfo = createMBeanInfo(this.getClass().getName(),
             "Base abstract settings instance.");
     }
     
     protected List getAttributeNames() {
-        return Arrays.asList(new String [] {ENABLED_ATTRIBUTE});
+        return this.attributeNames;
     }
    
     protected List getNonexpert() {
@@ -132,8 +142,7 @@ implements DynamicMBean, MBeanRegistration {
     }
     
     protected List getOperationNames() {
-        return Arrays.asList(new String [] {
-            NONEXPERT_OPERATION, OVERRIDEABLE_OPERATION});
+        return this.operationNames;
     }
     
     /**
@@ -162,10 +171,7 @@ implements DynamicMBean, MBeanRegistration {
      */
     protected OpenMBeanAttributeInfo [] createAttributeInfo()
     throws OpenDataException {
-        List attributes = new ArrayList();
-        attributes.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
-            "Enabled if true", SimpleType.BOOLEAN,
-            true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
+        List attributes = addAttributes(new ArrayList());
         // Need to precreate the array of OpenMBeanAttributeInfos and
         // pass this to attributes.toArray because can't case an Object []
         // array to array of OpenMBeanAttributeInfos without CCE.
@@ -173,6 +179,14 @@ implements DynamicMBean, MBeanRegistration {
             new OpenMBeanAttributeInfo[attributes.size()];
         attributes.toArray(ombai);
         return ombai;
+    }
+    
+    protected List addAttributes(final List attributes)
+    throws OpenDataException {
+        attributes.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
+            "Enabled if true", SimpleType.BOOLEAN,
+            true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
+        return attributes;
     }
     
     /**
@@ -201,7 +215,10 @@ implements DynamicMBean, MBeanRegistration {
     
     protected void checkValidAttributeName(final String attributeName)
     throws AttributeNotFoundException {
-        if (!attributeNames.contains(attributeName)) {
+        if (attributeName == null) {
+            throw new AttributeNotFoundException("Null Attribute name");
+        }
+        if (!this.attributeNames.contains(attributeName)) {
             throw new AttributeNotFoundException("Unknown Attribute " +
                 attributeName);
         }
@@ -231,12 +248,9 @@ implements DynamicMBean, MBeanRegistration {
     
     public Object getAttribute(final String attributeName)
     throws AttributeNotFoundException, MBeanException, ReflectionException {
-        if (attributeName == null) {
-            throw new AttributeNotFoundException("Null Attribute name");
-        }
         checkValidAttributeName(attributeName);
-        // Else attribute is known and is ENABLED_ATTRIBUTE.
-        return this.enabled;
+        // Else attribute is known.  Is it from this class or a subclass?
+        return (ATTRIBUTE_NAMES.contains(attributeName))? this.enabled: null;
     }
     
     public AttributeList getAttributes(String[] attributes) {
@@ -263,8 +277,10 @@ implements DynamicMBean, MBeanRegistration {
     throws AttributeNotFoundException, InvalidAttributeValueException,
     MBeanException, ReflectionException {
         checkValidAttributeName(attribute.getName());
-        // Else its ENABLED_ATTRIBUTE, only attribute we do in here.
-        this.enabled = (Boolean)attribute.getValue();
+        if (attribute.getName().equals(ENABLED_ATTRIBUTE)) {
+            this.enabled = (Boolean)attribute.getValue();
+        }
+        // Else its for subclass to handle.
     }
 
     public AttributeList setAttributes(AttributeList attributes) {
