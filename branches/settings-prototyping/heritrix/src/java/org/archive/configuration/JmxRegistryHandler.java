@@ -24,6 +24,7 @@
  */
 package org.archive.configuration;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -154,5 +155,13 @@ class JmxRegistryHandler implements Handler {
             e.printStackTrace();
         }
         return result;
+    }
+
+    public void load() throws IOException {
+        // TODO Auto-generated method stub
+    }
+
+    public void load(String domain) throws IOException {
+        // TODO Auto-generated method stub   
     }
 }
