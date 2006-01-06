@@ -101,7 +101,7 @@ public class CrawlerImplSelfTest
             try {
                 // TODO follow up with Stack about why this pause is required.
                 // if you take it away, sometimes terminateCurrentJob() hangs.
-                Thread.sleep(1000);
+                Thread.sleep(2000);
             } catch (InterruptedException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
