@@ -40,6 +40,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
@@ -206,7 +207,7 @@ public class SurtPrefixSet extends TreeSet {
      */
     public static String prefixFromPlain(String u) {
         u = ArchiveUtils.addImpliedHttpIfNecessary(u);
-        u = coerceFromHttpsForPrefixPurposesIfNecessary(u);
+        u = coerceFromHttpsForComparison(u);
         boolean trailingSlash = u.endsWith("/");
         // ensure all typical UURI cleanup (incl. IDN-punycoding) is done
         try {
@@ -230,13 +231,13 @@ public class SurtPrefixSet extends TreeSet {
     }
 
     /**
-     * For SURT prefix comparisons, we treat https URIs as if they
-     * were http. 
+     * For SURT comparisons -- prefixes or candidates being checked against
+     * those prefixes -- we treat https URIs as if they were http.
      * 
      * @param u string to coerce if it has https scheme
      * @return string converted to http scheme, or original if not necessary
      */
-    private static String coerceFromHttpsForPrefixPurposesIfNecessary(String u) {
+    private static String coerceFromHttpsForComparison(String u) {
         if (u.startsWith("https://")) {
             u = "http" + u.substring("https".length());
         }
@@ -275,6 +276,23 @@ public class SurtPrefixSet extends TreeSet {
         return s;
     }
 
+    /**
+     * Calculate the SURT form URI to use as a candidate against prefixes
+     * from the given Object (CandidateURI or UURI)
+     * 
+     * @param object CandidateURI or UURI
+     * @return SURT form of URI for evaluation, or null if unavailable
+     */
+    public static String getCandidateSurt(Object object) {
+        UURI u = UURI.from(object);
+        if (u == null) {
+            return null;
+        }
+        String candidateSurt = u.getSurtForm();
+        // also want to treat https as http
+        candidateSurt = coerceFromHttpsForComparison(candidateSurt);
+        return candidateSurt;
+    }
     /**
      * @param fw
      * @throws IOException
