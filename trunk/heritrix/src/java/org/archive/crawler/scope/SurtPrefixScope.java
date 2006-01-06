@@ -28,10 +28,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
-import org.archive.net.UURI;
 import org.archive.util.SurtPrefixSet;
 
 /**
@@ -55,6 +55,15 @@ public class SurtPrefixScope extends RefinedScope {
     
     private static final Boolean DEFAULT_SEEDS_AS_SURT_PREFIXES = new Boolean(true);
 
+    /**
+     * Whether the 'via' of CrawlURIs should also be checked
+     * to see if it is prefixed by the set of SURT prefixes
+     */
+    public static final String 
+        ATTR_ALSO_CHECK_VIA = "also-check-via";
+    public static final Boolean
+        DEFAULT_ALSO_CHECK_VIA = Boolean.FALSE;
+    
     SurtPrefixSet surtPrefixes = null;
 
     public SurtPrefixScope(String name) {
@@ -78,6 +87,15 @@ public class SurtPrefixScope extends RefinedScope {
                         "Dump file to save SURT prefixes actually used.", 
                         ""));
         t.setExpertSetting(true);
+        t = addElementToDefinition(new SimpleType(ATTR_ALSO_CHECK_VIA,
+                "Whether to also rule URI in-scope if a " +
+                "URI's 'via' URI (the URI from which it was discovered) " +
+                "in SURT form begins with any of the established prefixes. " +
+                "For example, can be used to accept URIs that are 'one hop " +
+                "off' URIs fitting the SURT prefixes. Default is false.",
+                DEFAULT_ALSO_CHECK_VIA));
+        t.setOverrideable(false);
+        t.setExpertSetting(true);
 
     }
 
@@ -97,19 +115,21 @@ public class SurtPrefixScope extends RefinedScope {
      *            An instance of UURI or of CandidateURI.
      * @return True if focus filter accepts passed object.
      */
-    protected synchronized boolean focusAccepts(Object o) {
+    protected synchronized boolean focusAccepts(Object object) {
+        // TODO: eliminate duplication wrt/SurtPrefixedDecideRule.evaluate
         if (surtPrefixes == null) {
             readPrefixes();
         }
-        
-        UURI u = UURI.from(o);
-        if (u == null) {
-            return false;
+        if ( (object instanceof CandidateURI) && 
+                ((Boolean) getUncheckedAttribute(null, ATTR_ALSO_CHECK_VIA))
+                    .booleanValue()) {
+            if(focusAccepts(((CandidateURI)object).getVia())) {
+                return true;
+            }
         }
-        String candidateSurt = u.getSurtForm();
-        // also want to treat https as http
-        if(candidateSurt.startsWith("https:")) {
-            candidateSurt = "http:"+candidateSurt.substring(6);
+        String candidateSurt = SurtPrefixSet.getCandidateSurt(object);
+        if(candidateSurt == null) {
+            return false; 
         }
         return surtPrefixes.containsPrefixOf(candidateSurt);
     }

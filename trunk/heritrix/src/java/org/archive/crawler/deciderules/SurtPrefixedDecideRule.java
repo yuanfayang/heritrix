@@ -31,12 +31,10 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.scope.SeedListener;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
-import org.archive.net.UURI;
 import org.archive.util.SurtPrefixSet;
 
 
@@ -135,7 +133,6 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
      * @return true if item, as SURT form URI, is prefixed by an item in the set
      */
     protected boolean evaluate(Object object) {
-        String candidateSurt;
         if ( (object instanceof CandidateURI) && 
                 ((Boolean) getUncheckedAttribute(null, ATTR_ALSO_CHECK_VIA))
                     .booleanValue()) {
@@ -143,31 +140,12 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
                 return true;
             }
         }
-        candidateSurt = getCandidateSurt(object);
+        String candidateSurt;
+        candidateSurt = SurtPrefixSet.getCandidateSurt(object);
         if (candidateSurt == null) {
             return false;
         }
         return getPrefixes().containsPrefixOf(candidateSurt);
-    }
-
-    /**
-     * Calculate the SURT form URI to evaluate from the given 
-     * Object (CandidateURI ior UURI)
-     * 
-     * @param object CandidateURI or UURI
-     * @return SURT form of URI for evaluation, or null if unavailable
-     */
-    private String getCandidateSurt(Object object) {
-        UURI u = UURI.from(object);
-        if (u == null) {
-            return null;
-        }
-        String candidateSurt = u.getSurtForm();
-        // also want to treat https as http
-        if (candidateSurt.startsWith("https:")) {
-            candidateSurt = "http:" + candidateSurt.substring(6);
-        }
-        return candidateSurt;
     }
 
     /**
