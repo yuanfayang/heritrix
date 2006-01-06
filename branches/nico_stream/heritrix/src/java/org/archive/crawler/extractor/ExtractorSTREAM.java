@@ -110,7 +110,7 @@ public class ExtractorSTREAM extends Extractor implements CoreAttributeConstants
         	return;
         }
         
-        /* Second criterion is HEADER CONTENT
+        /* Second criterion is MAGIC HEADER
          * The 16 first bytes (Hexadecimal encoding):
          * Microsoft mediafiles: 3026b275 8e66cf11 a6d900aa 0062ce6c
          * Real mediafiles: .rmf or 2e524d46, 2e7261fd ?
