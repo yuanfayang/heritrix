@@ -45,7 +45,8 @@ public class OrderJarFactory {
     public static final String NAME_KEY = "name";
     public static final String DURATION_KEY = "duration";
     public static final String DOCUMENT_LIMIT_KEY = "documentLimitKey";
-
+    public static final String USER_AGENT_KEY = "userAgent";
+    public static final String FROM_EMAIL_KEY = "fromEmail";
     
     public static final String SEEDS_KEY = "seeds";
     
@@ -95,6 +96,8 @@ public class OrderJarFactory {
             }
             order = order.replace("$documentLimit", documentLimit+"");
 
+            order = order.replace("$userAgent", parameters.get(USER_AGENT_KEY).toString());
+            order = order.replace("$fromEmail", parameters.get(FROM_EMAIL_KEY).toString());
             ByteArrayOutputStream orderFileOs = new ByteArrayOutputStream();
             orderFileOs.write(order.getBytes());
             map.put("order.xml", new ByteArrayInputStream(orderFileOs

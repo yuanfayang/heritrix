@@ -29,10 +29,13 @@ public class ClusterControllerClientSelfTestBase
     
     public File getTestJar() {
         Map map = new HashMap();
-        map.put("name", "test");
+        map.put(OrderJarFactory.NAME_KEY, "test");
+        map.put(OrderJarFactory.USER_AGENT_KEY, "Mozilla/5.0 (compatible;archive.org_bot/1.7.0; Heritrix Cluster Controller Test; +http://hcc.archive.org)");
+        map.put(OrderJarFactory.FROM_EMAIL_KEY, "hccTest@archive.org");
         List<String> seeds = new LinkedList<String>();
         seeds.add("http://crawler.archive.org");
-        map.put("seeds", seeds);
+        
+        map.put(OrderJarFactory.SEEDS_KEY, seeds);
         return OrderJarFactory.createOrderJar(map);
     }
 
