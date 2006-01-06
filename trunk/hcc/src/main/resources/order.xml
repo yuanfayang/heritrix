@@ -62,8 +62,8 @@
 	      </newObject>
 	 </newObject>
      <map name="http-headers">
-       <string name="user-agent">Mozilla/5.0 (compatible;archive.org_bot/1.5.0-200508301637; Archive-It; +http://archiveit.archive.org)</string>
-       <string name="from">archiveit@archive.org</string>
+       <string name="user-agent">$userAgent</string>
+       <string name="from">$fromEmail</string>
      </map>
      <newObject name="robots-honoring-policy"  
 class="org.archive.crawler.datamodel.RobotsHonoringPolicy">
