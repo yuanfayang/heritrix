@@ -24,6 +24,8 @@
 */
 package org.archive.configuration;
 
+import java.io.IOException;
+
 
 
 /**
@@ -39,8 +41,8 @@ package org.archive.configuration;
 public interface Handler {
     /**
      * Get <code>attributeName</code> on <code>component</code>.
-     * @param attributeName Name of atribute to get.
-     * @param component Component settings to find.
+     * @param attributeName Name of component atribute to get.
+     * @param component Name of component that has <code>attributeName</code>.
      * @return Value of <code>attributeName</code>.
      */
     public Object get(final String attributeName, final String component);
@@ -48,8 +50,8 @@ public interface Handler {
     /**
      * Get <code>attributeName</code> on <code>component</code>
      * in <code>domain</code>.
-     * @param attributeName Name of atribute to get.
-     * @param component Component settings to find.
+     * @param attributeName Name of component atribute to get.
+     * @param component Name of component that has <code>attributeName</code>.
      * @param domain Domain scope for Settings.  Domain should be
      * specified reversed as is done in java packaging: e.g. To find Settings
      * for 'archive.org', pass the domain written as 'org.archive'.
@@ -60,11 +62,13 @@ public interface Handler {
     
     /**
      * Register a settings object.
-     * @param component Component to register the object against.
-     * @param domain Domain to register against.
+     * @param component Component name to register the object against.
+     * @param domain Domain to register against. Domain should be
+     * specified reversed as is done in java packaging: e.g. To find Settings
+     * for 'archive.org', pass the domain written as 'org.archive'.
      * @param instance Object to register.
-     * @return Object to use referring to instance (Pass this object
-     * to {@link #deregister(Object)}.
+     * @return Object to use referring subsequently to instance (Pass this
+     * object to {@link #deregister(Object)}.
      */
     public Object register(final String component, final String domain,
             final Object instance);
@@ -74,4 +78,15 @@ public interface Handler {
      * @param registeredObjectName Identifier for registered Settings.
      */
     public void deregister(final Object registeredObjectName);
+    
+    /**
+     * Load (or reload) settings from store.
+     */
+    public void load() throws IOException;
+    
+    /**
+     * Load (or reload) settings from store.
+     * @param domain Do loading of items from this <code>domain</code> only.
+     */
+    public void load(final String domain) throws IOException;
 }
