@@ -26,8 +26,8 @@ public class MPlayerDumpstream {
 			
 			System.out.println ("Fetching " + curi);
 				
-			proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\" -really-quiet -dumpstream -dumpfile " + streamFilePath + " " + curi);
-				
+			proc = rt.exec("mplayer -really-quiet -dumpstream -dumpfile " + streamFilePath + " '" + curi + "'");
+				// \"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
 			// kick them off

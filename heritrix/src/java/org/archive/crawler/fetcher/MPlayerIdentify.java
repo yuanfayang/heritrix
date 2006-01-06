@@ -126,8 +126,8 @@ public class MPlayerIdentify {
 			
 			System.out.println ("Identifying " + curi);
 				
-			proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\" -vo null -ao null -identify -cache-min 0 -frames 0 " + curi);
-				
+			proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 '" + curi + "'");
+				// \"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
 
