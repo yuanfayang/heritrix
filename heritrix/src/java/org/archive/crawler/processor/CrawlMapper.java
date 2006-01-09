@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
@@ -62,7 +61,7 @@ import st.ata.util.FPGenerator;
  * its CandidateURI outlinks (late in the processing chain, after 
  * LinksScoper), or both (if inserted and configured in both places). 
  * 
- * Uses lexical comparisons of classKeys to map URIs to crawlers. The
+ * <p>Uses lexical comparisons of classKeys to map URIs to crawlers. The
  * 'map' is specified via either a local or HTTP-fetchable file. Each
  * line of this file should contain two space-separated tokens, the
  * first a key and the second a crawler node name (which should be
@@ -71,31 +70,32 @@ import st.ata.util.FPGenerator;
  * to the URI's own classKey. If there are no mapping keys equal or 
  * after the classKey, the mapping 'wraps around' to the first mapping key.
  * 
- * One crawler name is distinguished as the 'local name'; URIs mapped to
+ * <p>One crawler name is distinguished as the 'local name'; URIs mapped to
  * this name are not diverted, but continue to be processed normally.
  * 
- * For example, assume a SurtAuthorityQueueAssignmentPolicy and
+ * <p>For example, assume a SurtAuthorityQueueAssignmentPolicy and
  * a simple mapping file:
  * 
+ * <pre>
  *  d crawlerA
  *  ~ crawlerB
- * 
- * All URIs with "com," classKeys will find the 'd' key as the nearest
+ * </pre>
+ * <p>All URIs with "com," classKeys will find the 'd' key as the nearest
  * subsequent mapping key, and thus be mapped to 'crawlerA'. If that's
  * the 'local name', the URIs will be processed normally; otherwise, the
  * URI will be written to a diversion log aimed for 'crawlerA'. 
+ * 
+ * <p>If using the JMX importUris operation importing URLs dropped by
+ * a {@link CrawlMapper} instance, use <code>recoveryLog</code> style.
  * 
  * @author gojomo
  * @version $Date$, $Revision$
  */
 public class CrawlMapper extends Processor implements FetchStatusCodes {
-    private static final Logger LOGGER =
-        Logger.getLogger(CrawlMapper.class.getName());
-    
     /**
      * PrintWriter which remembers the File to which it writes. 
      */
-    public class FilePrintWriter extends PrintWriter {
+    private class FilePrintWriter extends PrintWriter {
         File file; 
         public FilePrintWriter(File file) throws FileNotFoundException {
             super(new BufferedOutputStream(new FileOutputStream(file)));
@@ -227,12 +227,15 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
                     continue;
                 }
                 CandidateURI cauri = (CandidateURI)next; 
+                // TODO: The 'getHost' call below goes unused.  We used assign
+                // to a local 'host' variable.  Remove (or add explaination of
+                // why here.
                 try {
-                    String host = cauri.getUURI().getHost();
+                    cauri.getUURI().getHost();
                 } catch (URIException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
+
                 // apply mapping to the CandidateURI
                 String target = map(cauri);
                 if(!localName.equals(target)) {

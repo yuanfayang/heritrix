@@ -1147,6 +1147,18 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         return importUris(is, style, forceRevisit, false);
     }
     
+    /**
+     * Import URIs.
+     * @param is Stream to use as URI source.
+     * @param style Style in which URIs are rendored.  Currently support for
+     * <code>recoveryJournal</code>, <code>crawlLog</code>, and seeds file
+     * format (i.e <code>default</code>) where <code>default</code> style is
+     * a UURI per line (comments allowed).
+     * @param forceRevisit Whether we should revisit this URI even if we've
+     * visited it previously.
+     * @param areSeeds Are the imported URIs seeds?
+     * @return Count of added URIs.
+     */
     protected int importUris(InputStream is, String style,
             boolean forceRevisit, final boolean areSeeds) {
         // Figure the regex to use parsing each line of input stream.
