@@ -1267,8 +1267,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     /**
      * @param fileOrUrl Name of file w/ seeds.
-     * @param style What style of seeds -- crawl log, recovery journal, or
-     * seeds file.
+     * @param style What style of seeds -- crawl log (<code>crawlLog</code>
+     * style) or recovery journal (<code>recoveryJournal</code> style), or
+     * seeds file style (Pass <code>default</code> style).
      * @param forceRevisit Should we revisit even if seen before?
      * @return A display string that has a count of all added.
      */
