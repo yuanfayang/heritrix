@@ -363,7 +363,7 @@ implements CoreAttributeConstants {
     // will find false positives
     // TODO: add '/' check, suppress strings being concatenated via '+'?
     static final String JAVASCRIPT_LIKELY_URI_EXTRACTOR =
-     "(\\\\*\"|\\\\*\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";
+     "(\\\\{0,8}+\"|\\\\{0,8}+\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";
 
     /**
      * @param curi
