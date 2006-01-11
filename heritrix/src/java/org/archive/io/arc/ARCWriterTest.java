@@ -449,6 +449,7 @@ extends TmpDirTestCase implements ARCConstants {
      * Write an arc file for other tests to use.
      * @param arcdir Directory to write to.
      * @param compress True if file should be compressed.
+     * @return ARC written.
      * @throws IOException 
      */
     public static File createARCFile(File arcdir, boolean compress)
@@ -476,4 +477,18 @@ extends TmpDirTestCase implements ARCConstants {
 //        writer.close();
 //        logger.info("Finished speed write test.");
 //    }
+    
+    
+    public void testValidateMetaLine() throws Exception {
+        final String line = "http://www.aandw.net/images/walden2.png " +
+            "128.197.34.86 20060111174224 image/png 2160";
+        ARCWriter w = createARCWriter("testValidateMetaLine", true);
+        try {
+            w.validateMetaLine(line);
+            w.validateMetaLine(line + LINE_SEPARATOR);
+            w.validateMetaLine(line + "\\r\\n");
+        } finally {
+            w.close();
+        }
+    }
 }
