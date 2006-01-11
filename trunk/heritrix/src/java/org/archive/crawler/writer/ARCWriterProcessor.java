@@ -489,8 +489,8 @@ ARCWriterSettings, FetchStatusCodes {
             writer = null;
             throw e;
         } finally {
-            this.totalBytesWritten += (writer.getPosition() - position);
             if (writer != null) {
+                this.totalBytesWritten += (writer.getPosition() - position);
                 this.pool.returnARCWriter(writer);
             }
         }
