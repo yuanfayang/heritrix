@@ -58,7 +58,6 @@ public class MPlayerIdentify {
 	static final String UNFETCHABLE = "Unable\\sto\\sopen\\sURL:.+";
 	static final String START = "Starting\\splayback\\.\\.\\.";
 	static final String EXIT = "Exiting\\.\\.\\.\\s\\(End\\sof\\sfile\\)";
-	//static final String ERROR_404 = "Server\\sreturn\\s404:Not\\sFound";
 	
 	static final int LIVE_TIME = 120;
 	
@@ -126,7 +125,7 @@ public class MPlayerIdentify {
 			
 			System.out.println ("Identifying " + curi);
 				
-			proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 '" + curi + "'");
+			proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 \"" + curi + "\"");
 				// \"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
@@ -293,10 +292,6 @@ public class MPlayerIdentify {
 						}
 					}
 					else {
-						/*
-						if (Pattern.matches(ERROR_404, line)) {
-							status = 1;
-						}*/
 						if (Pattern.matches(TIMEOUT, line)) {
 							status = 1;
 						}
