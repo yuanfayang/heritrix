@@ -13,7 +13,10 @@ public class MPlayerDumpstream {
 	private static final Logger LOGGER =
 		Logger.getLogger(MPlayerIdentify.class.getName());
 	
+	static int TOLERANCE = 300; // time tolerance: 5 minutes (300s)
+	
 	int exitVal = -1;
+	int margin; // time margin added before timeout
 	Process proc = null;
 	
 	public MPlayerDumpstream() {
@@ -22,11 +25,20 @@ public class MPlayerDumpstream {
 	
 	public int dumpstream(CrawlURI curi, String streamFilePath) {
 		try {
+			// in case of LIVE stream
+			// cannot wait for exitVal
+			// hence no need for tolerance
+			if ( curi.getString("TYPE") == "live") {
+				margin = 0;
+			}
+			else {
+				margin = TOLERANCE;
+			}
 			Runtime rt = Runtime.getRuntime();
 			
 			System.out.println ("Fetching " + curi);
 				
-			proc = rt.exec("mplayer -really-quiet -dumpstream -dumpfile " + streamFilePath + " '" + curi + "'");
+			proc = rt.exec("mplayer -really-quiet -dumpstream -dumpfile " + streamFilePath + " \"" + curi + "\"");
 				// \"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
@@ -39,10 +51,15 @@ public class MPlayerDumpstream {
 			while (true) {
 				// wait delay
 				Thread.sleep(30000);
-				// if capture not finished after media length + 5 minutes (300s)
-				if (time > curi.getInt("TIME") + 300) {
+				// if capture not finished after media length + tolerance
+				if (time > curi.getInt("TIME") + margin) {
 					proc.destroy();
-					exitVal = 1; // TIMEOUT
+					if (margin == 0){
+						exitVal = 0; // OK
+					}
+					else {
+						exitVal = 1; // TIMEOUT	
+					}
 					break;
 				}
 				try {

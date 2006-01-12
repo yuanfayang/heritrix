@@ -82,66 +82,46 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                "LOCATION OF MPLAYER" + " using file " +
                streamFile.toString());
         }
-        try {
-            // Send URL to MPLAYER.  Wait.  Later add timeout.
-            // Check the return code from MPLAYER.  Check for success or
-            // failure.
+        
+        // Send URL to MPLAYER.  Wait.  Later add timeout.
+        // Check the return code from MPLAYER.  Check for success or
+        // failure.
         	
-        	// Identify STREAM (URL)
-        	// Get Stream Length Time for timeout
-        	MPlayerIdentify mpi = new MPlayerIdentify();
-        	statusCode = mpi.identify(curi);
+        // Identify STREAM (URL)
+        // Get Stream Length Time for timeout
+        MPlayerIdentify mpi = new MPlayerIdentify();
+        statusCode = mpi.identify(curi);
         	
-        	if (statusCode == 0) {	
-        		MPlayerDumpstream mpd = new MPlayerDumpstream();
-        		exitVal = mpd.dumpstream(curi, streamFile.getAbsolutePath());
+        if (statusCode == 0) {	
+        	MPlayerDumpstream mpd = new MPlayerDumpstream();
+        	exitVal = mpd.dumpstream(curi, streamFile.getAbsolutePath());
         		
-        		if (exitVal == 0) {
-        			long size = streamFile.length();
-        			curi.setContentSize(size);
-        			curi.setFetchStatus(S_STREAM_SUCCESS);
-        		}
-        		else {
-        			// requeue this uri
-        			curi.setFetchStatus(S_UNATTEMPTED);
-        		}
+        	if (exitVal == 0) {
+        		long size = streamFile.length();
+        		curi.setContentSize(size);
+        		curi.setFetchStatus(S_STREAM_SUCCESS);
         	}
         	else {
-        		// skip this uri
-        		switch (statusCode) {
-        			//case 1: curi.setFetchStatus(S_STREAM_NOTFOUND); break;
-        			case 1: curi.setFetchStatus(S_TIMEOUT); break;
-        			case 2: curi.setFetchStatus(S_UNFETCHABLE_URI); break;
-        		}
+        		// requeue this uri
+        		curi.setFetchStatus(S_UNATTEMPTED);
         	}
-        	        	
-            if (LOGGER.isLoggable(Level.FINE)) {
-            	LOGGER.fine("Result of " + curi.toString() + " to mplayer " +
-                   "LOCATION OF MPLAYER" + " using file " +
-                   streamFile.toString());
-            }
-            // Make a method to populate curi with result of fetch
-            // including status code, mimetype, and error from MPLAYER
-            // curi.setFetchStatus(method.getStatusCode());
-            // curi.setContentType((ct == null)? null: ct.getValue());
-        } finally {
-        	// DO CLEANUP ???
-        	if (statusCode != 0 && exitVal != 0)
-        		cleanup(curi, new RuntimeException("dummyval"), "", -1);
         }
-    }
-    
-    /**
-     * Cleanup after a failed method execute.
-     * @param curi CrawlURI we failed on.
-     * @param exception Exception we failed with.
-     * @param message Message to log with failure.
-     * @param status Status to set on the fetch.
-     */
-    private void cleanup(final CrawlURI curi, final Exception exception,
-            final String message, final int status) {
-        curi.addLocalizedError(this.getName(), exception, message);
-        curi.setFetchStatus(status);
+        else {
+        	// skip this uri
+        	switch (statusCode) {
+        	case 1: curi.setFetchStatus(S_TIMEOUT); break;
+        	case 2: curi.setFetchStatus(S_UNFETCHABLE_URI); break;
+        	}
+        }
+        	        	
+        if (LOGGER.isLoggable(Level.FINE)) {
+        	LOGGER.fine("Result of " + curi.toString() + " to mplayer " +
+        			"LOCATION OF MPLAYER" + " using file " +
+        			streamFile.toString());
+            
+        	// Make a method to populate curi with result of fetch
+        	// including status code, mimetype, and error from MPLAYER     
+        }
     }
 
     /**
