@@ -14,6 +14,7 @@ public class MPlayerDumpstream {
 		Logger.getLogger(MPlayerIdentify.class.getName());
 	
 	static int TOLERANCE = 300; // time tolerance: 5 minutes (300s)
+	String os = System.getProperty("org.archive.crawler.fetcher.MPlayerDumpstream.os", "LINUX");
 	
 	int exitVal = -1;
 	int margin; // time margin added before timeout
@@ -28,7 +29,7 @@ public class MPlayerDumpstream {
 			// in case of LIVE stream
 			// cannot wait for exitVal
 			// hence no need for tolerance
-			if ( curi.getString("TYPE") == "live") {
+			if ( curi.getString("TYPE").equals("live") ) {
 				margin = 0;
 			}
 			else {
@@ -38,8 +39,13 @@ public class MPlayerDumpstream {
 			
 			System.out.println ("Fetching " + curi);
 				
-			proc = rt.exec("mplayer -really-quiet -dumpstream -dumpfile " + streamFilePath + " \"" + curi + "\"");
-				// \"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"
+			if ( os.equals("LINUX") ) {
+				proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 \'" + curi + "\'");
+			}
+			else {
+				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"" +
+						"-vo null -ao null -identify -cache-min 0 -frames 0 \"" + curi + "\"");
+			}
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
 			// kick them off
