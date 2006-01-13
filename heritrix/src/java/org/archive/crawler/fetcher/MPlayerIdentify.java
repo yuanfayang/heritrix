@@ -125,7 +125,7 @@ public class MPlayerIdentify {
 			System.out.println ("Identifying " + curi);
 			
 			if ( os.equals("LINUX") ) {
-				proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 \'" + curi + "\'");
+				proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 " + curi);
 			}
 			else {
 				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"" +
