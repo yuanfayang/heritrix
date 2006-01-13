@@ -53,17 +53,16 @@ public class MPlayerIdentify {
 	static final String AUDIO_NCH = "(?:ID_AUDIO_NCH=(.+))";
     // (G1) STREAM NUMBER OF CHANNEL
 	
-	// MPLAYER ERROR
-	static final String TIMEOUT = "Connection\\stimeout";
-	static final String UNFETCHABLE = "Unable\\sto\\sopen\\sURL:.+";
+	// MPLAYER OUTPUT
 	static final String START = "Starting\\splayback\\.\\.\\.";
 	static final String EXIT = "Exiting\\.\\.\\.\\s\\(End\\sof\\sfile\\)";
 	
 	static final int LIVE_TIME = 120;
-	
+	String os = System.getProperty("org.archive.crawler.fetcher.MPlayerIdentify.os", "LINUX");
+		
 	Process proc = null;
 	volatile int exit = -1;
-	volatile int status = -1;
+	volatile int status = 2;
 	
 	String mime_type;
 	String name;
@@ -124,9 +123,14 @@ public class MPlayerIdentify {
 			Runtime rt = Runtime.getRuntime();
 			
 			System.out.println ("Identifying " + curi);
-				
-			proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 \"" + curi + "\"");
-				// \"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"
+			
+			if ( os.equals("LINUX") ) {
+				proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 \'" + curi + "\'");
+			}
+			else {
+				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"" +
+						"-vo null -ao null -identify -cache-min 0 -frames 0 \"" + curi + "\"");
+			}
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
 
@@ -289,14 +293,6 @@ public class MPlayerIdentify {
 						}
 						if (Pattern.matches(EXIT, line)) {
 							exit = 0;
-						}
-					}
-					else {
-						if (Pattern.matches(TIMEOUT, line)) {
-							status = 1;
-						}
-						if (Pattern.matches(UNFETCHABLE, line)) {
-							status = 2;
 						}
 					}
 					matLen.reset();
