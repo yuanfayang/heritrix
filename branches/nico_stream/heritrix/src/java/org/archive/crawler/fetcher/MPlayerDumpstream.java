@@ -13,7 +13,13 @@ public class MPlayerDumpstream {
 	private static final Logger LOGGER =
 		Logger.getLogger(MPlayerIdentify.class.getName());
 	
-	static int TOLERANCE = 300; // time tolerance: 5 minutes (300s)
+//	 time tolerance: 5 minutes (300s)
+	static final int TOLERANCE = 300;
+	
+	// in case of LIVE stream (ID_LENGTH=0)
+	// set length to 2min (120sec)
+	static final int LIVE_TIME = 120;
+	
 	String os = System.getProperty("org.archive.crawler.fetcher.MPlayerDumpstream.os", "LINUX");
 	
 	int exitVal = -1;
@@ -26,11 +32,10 @@ public class MPlayerDumpstream {
 	
 	public int dumpstream(CrawlURI curi, String streamFilePath) {
 		try {
-			// in case of LIVE stream
-			// cannot wait for exitVal
-			// hence no need for tolerance
-			if ( curi.getString("TYPE").equals("live") ) {
-				margin = 0;
+			// if LIVE stream (TIME = 0), then no exitVal
+			// then set capture length 
+			if ( curi.getInt("TIME") == 0 ) {
+				margin = LIVE_TIME;
 			}
 			else {
 				margin = TOLERANCE;
@@ -40,15 +45,15 @@ public class MPlayerDumpstream {
 			System.out.println ("Fetching " + curi);
 				
 			if ( os.equals("LINUX") ) {
-				proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 " + curi);
+				proc = rt.exec("mplayer -really-quiet -dumpstream -dumpfile " + streamFilePath + " " + curi);
 			}
 			else {
-				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"" +
-						"-vo null -ao null -identify -cache-min 0 -frames 0 \"" + curi + "\"");
+				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\" " +
+						"-really-quiet -dumpstream -dumpfile " + streamFilePath + " \"" + curi + "\"");
 			}
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
-			// kick them off
+			
 			errorGobbler.start();
 			outputGobbler.start();
 		
@@ -60,7 +65,7 @@ public class MPlayerDumpstream {
 				// if capture not finished after media length + tolerance
 				if (time > curi.getInt("TIME") + margin) {
 					proc.destroy();
-					if (margin == 0){
+					if (curi.getInt("TIME") == 0){
 						exitVal = 0; // OK
 					}
 					else {
@@ -91,6 +96,7 @@ public class MPlayerDumpstream {
 		return exitVal;
 	}
 
+	
 	class StreamGobbler extends Thread {
     
 		InputStream is;
