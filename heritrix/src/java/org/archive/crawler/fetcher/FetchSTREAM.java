@@ -92,7 +92,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         MPlayerIdentify mpi = new MPlayerIdentify();
         statusCode = mpi.identify(curi);
         	
-        if (statusCode == 0) {	
+        if (statusCode == 0) {
         	MPlayerDumpstream mpd = new MPlayerDumpstream();
         	exitVal = mpd.dumpstream(curi, streamFile.getAbsolutePath());
         		

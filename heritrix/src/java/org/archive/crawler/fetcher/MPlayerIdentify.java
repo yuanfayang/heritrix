@@ -57,12 +57,11 @@ public class MPlayerIdentify {
 	static final String START = "Starting\\splayback\\.\\.\\.";
 	static final String EXIT = "Exiting\\.\\.\\.\\s\\(End\\sof\\sfile\\)";
 	
-	static final int LIVE_TIME = 120;
 	String os = System.getProperty("org.archive.crawler.fetcher.MPlayerIdentify.os", "LINUX");
 		
 	Process proc = null;
-	volatile int exit = -1;
-	volatile int status = 2;
+	volatile int exit = 1; // MPlayer exit value (1: no exit, 0: normal exit)
+	volatile int status = 2; // Identification status (2: broken, 1: timeout, 0: OK)
 	
 	String mime_type;
 	String name;
@@ -128,7 +127,7 @@ public class MPlayerIdentify {
 				proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 " + curi);
 			}
 			else {
-				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\"" +
+				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\" " +
 						"-vo null -ao null -identify -cache-min 0 -frames 0 \"" + curi + "\"");
 			}
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
@@ -168,17 +167,10 @@ public class MPlayerIdentify {
 		}
 		
 		if (status == 0) {
-			// in case of LIVE stream (ID_LENGTH=0)
-			// set length to 2min (120sec)
-			if (length == 0) {
-				length = LIVE_TIME;
-				curi.putString("TYPE", "live");
-			}
-			else {
-				curi.putString("TYPE", "on-demand");
-			}
+
+
 			curi.putInt("TIME", length);
-			if (mime_type == null && audio_codec == "ffwmav2") {
+			if (mime_type == null && audio_codec.equals("ffwmav2")) {
 				mime_type = "audio/x-ms-wma";
 			}
 			curi.setContentType(mime_type);
@@ -203,6 +195,7 @@ public class MPlayerIdentify {
 		return status;
 	}
 
+	
 	class StreamGobbler extends Thread {
     
 		InputStream is;
@@ -220,26 +213,26 @@ public class MPlayerIdentify {
 				BufferedReader br = new BufferedReader(isr);
 				String line = null;
 				
-				while ((line = br.readLine()) != null) {
-					
-					matLen = patLen.matcher(line);
-					matMim = patMim.matcher(line);
-					matCod = patCod.matcher(line);
-					matBit = patBit.matcher(line);
-					matWid = patWid.matcher(line);
-					matHei = patHei.matcher(line);
-					matFPS = patFPS.matcher(line);
-					matNCH = patNCH.matcher(line);
-					matRat = patRat.matcher(line);
-					matNam = patNam.matcher(line);
-					matAut = patAut.matcher(line);
-					matCop = patCop.matcher(line);
-					matCom = patCom.matcher(line);
-					matDes = patDes.matcher(line);
-					matAF  = patAF.matcher(line);
-					matVF  = patVF.matcher(line);
-					
-					if (type == "OUTPUT") {
+				while ((line = br.readLine()) != null) {			
+
+					if (type.equals("OUTPUT")) {
+						matLen = patLen.matcher(line);
+						matMim = patMim.matcher(line);
+						matCod = patCod.matcher(line);
+						matBit = patBit.matcher(line);
+						matWid = patWid.matcher(line);
+						matHei = patHei.matcher(line);
+						matFPS = patFPS.matcher(line);
+						matNCH = patNCH.matcher(line);
+						matRat = patRat.matcher(line);
+						matNam = patNam.matcher(line);
+						matAut = patAut.matcher(line);
+						matCop = patCop.matcher(line);
+						matCom = patCom.matcher(line);
+						matDes = patDes.matcher(line);
+						matAF  = patAF.matcher(line);
+						matVF  = patVF.matcher(line);
+						
 						if (matLen.matches()) {
 							length = Integer.parseInt(matLen.group(1));
 						}
@@ -294,23 +287,23 @@ public class MPlayerIdentify {
 						if (Pattern.matches(EXIT, line)) {
 							exit = 0;
 						}
+						matLen.reset();
+						matMim.reset();
+						matCod.reset();
+						matBit.reset();
+						matWid.reset();
+						matHei.reset();
+						matFPS.reset();
+						matNCH.reset();
+						matRat.reset();
+						matNam.reset();
+						matAut.reset();
+						matCop.reset();
+						matCom.reset();
+						matDes.reset();
+						matAF.reset();
+						matVF.reset();
 					}
-					matLen.reset();
-					matMim.reset();
-					matCod.reset();
-					matBit.reset();
-					matWid.reset();
-					matHei.reset();
-					matFPS.reset();
-					matNCH.reset();
-					matRat.reset();
-					matNam.reset();
-					matAut.reset();
-					matCop.reset();
-					matCom.reset();
-					matDes.reset();
-					matAF.reset();
-					matVF.reset();
 					
 					LOGGER.info(type + ">" + line); 
 				}
