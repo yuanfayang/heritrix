@@ -58,7 +58,9 @@ public class MPlayerIdentify {
 	static final String EXIT = "Exiting\\.\\.\\.\\s\\(End\\sof\\sfile\\)";
 	
 	String os = System.getProperty("org.archive.crawler.fetcher.MPlayerIdentify.os", "LINUX");
-		
+	String[] cmd = new String[3];
+	String osName = System.getProperty("os.name", "Linux");
+	
 	Process proc = null;
 	volatile int exit = 1; // MPlayer exit value (1: no exit, 0: normal exit)
 	volatile int status = 2; // Identification status (2: broken, 1: timeout, 0: OK)
@@ -119,17 +121,22 @@ public class MPlayerIdentify {
 	
 	public int identify(CrawlURI curi) {
 		try {
+
 			Runtime rt = Runtime.getRuntime();
-			
 			System.out.println ("Identifying " + curi);
 			
-			if ( os.equals("LINUX") ) {
-				proc = rt.exec("mplayer -vo null -ao null -identify -cache-min 0 -frames 0 " + curi);
-			}
-			else {
+			if(osName.equals( "Windows XP" )) {
 				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\" " +
-						"-vo null -ao null -identify -cache-min 0 -frames 0 \"" + curi + "\"");
+								"-vo null -ao null -identify -cache-min 0 -frames 0 \"" + curi + "\"");
 			}
+			else if(osName.equals( "Linux" )) {
+                cmd[0] = "/bin/bash";
+                cmd[1] = "-c";
+                cmd[2] = "mplayer -vo null -ao null -identify -cache-min 0 -frames 0 \"" + curi + "\"";
+                
+                proc = rt.exec(cmd);
+			}		
+	
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
 
