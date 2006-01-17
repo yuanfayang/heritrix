@@ -21,6 +21,8 @@ public class MPlayerDumpstream {
 	static final int LIVE_TIME = 120;
 	
 	String os = System.getProperty("org.archive.crawler.fetcher.MPlayerDumpstream.os", "LINUX");
+	String[] cmd = new String[3];
+	String osName = System.getProperty("os.name", "Linux");
 	
 	int exitVal = -1;
 	int margin; // time margin added before timeout
@@ -40,17 +42,22 @@ public class MPlayerDumpstream {
 			else {
 				margin = TOLERANCE;
 			}
-			Runtime rt = Runtime.getRuntime();
 			
+			Runtime rt = Runtime.getRuntime();
 			System.out.println ("Fetching " + curi);
-				
-			if ( os.equals("LINUX") ) {
-				proc = rt.exec("mplayer -really-quiet -dumpstream -dumpfile " + streamFilePath + " " + curi);
-			}
-			else {
+			
+			if(osName.equals( "Windows XP" )) {
 				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\" " +
-						"-really-quiet -dumpstream -dumpfile " + streamFilePath + " \"" + curi + "\"");
+								"-really-quiet -dumpstream -dumpfile " + streamFilePath + " \"" + curi + "\"");
 			}
+			else if(osName.equals( "Linux" )) {
+                cmd[0] = "/bin/bash";
+                cmd[1] = "-c";
+                cmd[2] = "mplayer -really-quiet -dumpstream -dumpfile " + streamFilePath + " \"" + curi + "\"";
+                
+                proc = rt.exec(cmd);
+			}	
+
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
 			
