@@ -587,6 +587,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         }
 
         localizedErrors.add(new LocalizedError(processorName, ex, message));
+        addAnnotation("le:"+ex.getClass().getSimpleName()+"@"+processorName);
     }
 
     /**
