@@ -26,9 +26,6 @@
 package org.archive.hcc.util.jmx;
 
 import javax.management.openmbean.OpenMBeanOperationInfoSupport;
-
-import org.archive.hcc.util.jmx.OpenMBeanInvocationManager;
-import org.archive.hcc.util.jmx.SimpleReflectingMBeanOperation;
  
 public class OpenMBeanInvocationManagerTest
         extends
