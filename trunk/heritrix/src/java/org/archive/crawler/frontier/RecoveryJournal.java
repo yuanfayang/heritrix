@@ -24,7 +24,7 @@
  */
 package org.archive.crawler.frontier;
 
-import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 import it.unimi.dsi.mg4j.util.MutableString;
 
 import java.io.BufferedInputStream;
