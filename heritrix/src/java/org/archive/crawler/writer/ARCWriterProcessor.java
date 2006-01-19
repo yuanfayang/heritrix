@@ -457,7 +457,8 @@ ARCWriterSettings, FetchStatusCodes {
         ARCWriter writer = this.pool.borrowARCWriter();
         long position = writer.getPosition();
         // See if we need to open a new ARC because we've exceeed maxBytes
-        // per ARC.
+        // per ARC. Call to checkARCFileSize will open new ARC if we're at
+        // maximum for current file.
         writer.checkARCFileSize();
         if (writer.getPosition() != position) {
             // We just closed the ARC because it was larger than maxBytes.
@@ -465,9 +466,6 @@ ARCWriterSettings, FetchStatusCodes {
             // in the ARC.
             this.totalBytesWritten += (writer.getPosition() - position);
             position = writer.getPosition();
-        }
-        if (writer == null) {
-            throw new IOException("Writer is null");
         }
         
         try {

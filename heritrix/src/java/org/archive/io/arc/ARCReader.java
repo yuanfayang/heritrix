@@ -24,7 +24,7 @@
  */
 package org.archive.io.arc;
 
-import it.unimi.dsi.mg4j.io.RepositionableStream;
+import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;

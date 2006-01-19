@@ -22,7 +22,7 @@
  */
 package org.archive.util;
 
-import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.BufferedInputStream;
 import java.io.File;

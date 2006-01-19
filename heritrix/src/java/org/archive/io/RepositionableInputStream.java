@@ -24,7 +24,7 @@
  */
 package org.archive.io;
 
-import it.unimi.dsi.mg4j.io.RepositionableStream;
+import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -66,9 +66,9 @@ public class RepositionableInputStream extends BufferedInputStream implements
         return read;
     }
     
-    public synchronized int read(byte[] b, int offset, int count)
+    public synchronized int read(byte[] b, int offset, int ct)
     throws IOException {
-        int read = super.read(b, offset, count);
+        int read = super.read(b, offset, ct);
         if (read != -1) {
             position += read;
         }
@@ -86,9 +86,8 @@ public class RepositionableInputStream extends BufferedInputStream implements
     /**
      * @param offset Offset is ignored.  We call reset on underlying stream. Use
      * sparingly and only after a call to position.
-     * @throws IOException 
      */
-    public void position(final long offset) throws IOException {
+    public void position(final long offset) {
         if (this.position == offset) {
             return;
         }
@@ -113,7 +112,7 @@ public class RepositionableInputStream extends BufferedInputStream implements
         this.position = this.markPosition;
     }
 
-    public long position() throws IOException {
+    public long position() {
         return this.position;
     }
 }

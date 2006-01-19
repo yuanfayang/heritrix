@@ -24,7 +24,7 @@
 */
 package org.archive.io;
 
-import it.unimi.dsi.mg4j.io.RepositionableStream;
+import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -24,11 +24,11 @@
 	<classpathentry kind="lib" path="lib/backport-util-concurrent-2.0_01.jar"/>
 	<classpathentry kind="lib" path="lib/dnsjava-1.6.2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-pool-1.2.jar"/>
-	<classpathentry kind="lib" path="lib/dsi-unimi-it-1.0.0.kb.jar"/>
 	<classpathentry kind="lib" path="lib/colt-subset-1.2.0.kb.jar"/>
 	<classpathentry kind="lib" path="lib/j5compat-0.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/MirrorJNDI-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/libidn-0.5.9.jar"/>
 	<classpathentry kind="lib" path="lib/je-2.0.90.jar"/>
+	<classpathentry kind="lib" path="lib/dsi.unimi.it-1.2.0.jar"/>
 	<classpathentry kind="output" path="target"/>
 </classpath>
