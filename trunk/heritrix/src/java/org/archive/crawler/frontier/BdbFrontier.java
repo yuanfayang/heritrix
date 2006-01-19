@@ -38,7 +38,6 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
-import org.archive.crawler.framework.Checkpointer;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
