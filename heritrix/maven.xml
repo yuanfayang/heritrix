@@ -80,6 +80,7 @@
             <ant:arg value="-c" />
             <ant:arg value="${maven.build.dir}/heritrix*jar" />
             <ant:arg value="org.archive.io.arc.ARCReader.class" />
+            <ant:arg value="org.archive.io.arc.ARCWriterPool.class" />
             <ant:arg value="org.archive.io.arc.ARCWriter.class" />
             <ant:arg value="org.archive.io.arc.ARCLocation.class" />
             <ant:arg value="org.archive.util.JmxUtils.class" />
