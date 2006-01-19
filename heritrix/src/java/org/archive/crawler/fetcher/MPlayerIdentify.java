@@ -123,7 +123,7 @@ public class MPlayerIdentify {
 		try {
 
 			Runtime rt = Runtime.getRuntime();
-			System.out.println ("Identifying " + curi);
+			//System.out.println ("Identifying " + curi);
 			
 			if(osName.equals( "Windows XP" )) {
 				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\" " +
@@ -136,7 +136,7 @@ public class MPlayerIdentify {
                 
                 proc = rt.exec(cmd);
 			}		
-	
+			LOGGER.info("IDENTIFY>" + curi);
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
 			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
 
@@ -172,32 +172,32 @@ public class MPlayerIdentify {
 			if (proc != null)
 				proc.destroy();
 		}
-		
+		System.out.println("status: " + status);
 		if (status == 0) {
-
-
-			curi.putInt("TIME", length);
+			
 			if (mime_type == null && audio_codec.equals("ffwmav2")) {
 				mime_type = "audio/x-ms-wma";
 			}
 			curi.setContentType(mime_type);
+			curi.putInt("TIME", length);
+			
+			LOGGER.info("INFO>curi: " + curi);
+			LOGGER.info("INFO>mime-type: " + mime_type);
+			LOGGER.info("INFO>length: " + length);
+			LOGGER.info("INFO>audio codec: " + audio_codec);
+			LOGGER.info("INFO>audio format: " + audio_format);
+			LOGGER.info("INFO>audio bitrate: " + audio_bitrate);
+			LOGGER.info("INFO>sample rate: " + audio_rate);
+			LOGGER.info("INFO>number of channel: " + audio_nch);
+			LOGGER.info("INFO>video format: " + video_format);
+			LOGGER.info("INFO>video size: " + video_width + " x " + video_height);
+			LOGGER.info("INFO>frames per second: " + video_fps);
+			LOGGER.info("INFO>name: " + name);
+			LOGGER.info("INFO>author: " + author);
+			LOGGER.info("INFO>copyright: " + copyright);
+			LOGGER.info("INFO>comments: " + comments);
+			LOGGER.info("INFO>description: " + description);
 		}
-		System.out.println("status: " + status);
-		System.out.println("mime-type: " + mime_type);
-		System.out.println("length: " + length);
-		System.out.println("audio codec: " + audio_codec);
-		System.out.println("audio format: " + audio_format);
-		System.out.println("audio bitrate: " + audio_bitrate);
-		System.out.println("sample rate: " + audio_rate);
-		System.out.println("number of channel: " + audio_nch);
-		System.out.println("video format: " + video_format);
-		System.out.println("video size: " + video_width + " x " + video_height);
-		System.out.println("frames per second: " + video_fps);
-		System.out.println("name: " + name);
-		System.out.println("author: " + author);
-		System.out.println("copyright: " + copyright);
-		System.out.println("comments: " + comments);
-		System.out.println("description: " + description);
 		
 		return status;
 	}
@@ -311,8 +311,9 @@ public class MPlayerIdentify {
 						matAF.reset();
 						matVF.reset();
 					}
-					
-					LOGGER.info(type + ">" + line); 
+					else if(type.equals("ERROR")) {
+						LOGGER.info("ERROR>" + line); 
+					}
 				}
 			}
 			catch (IOException ioe) {

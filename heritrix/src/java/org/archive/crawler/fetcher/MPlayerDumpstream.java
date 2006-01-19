@@ -13,14 +13,13 @@ public class MPlayerDumpstream {
 	private static final Logger LOGGER =
 		Logger.getLogger(MPlayerIdentify.class.getName());
 	
-//	 time tolerance: 5 minutes (300s)
+	// time tolerance: 5 minutes (300s)
 	static final int TOLERANCE = 300;
 	
 	// in case of LIVE stream (ID_LENGTH=0)
 	// set length to 2min (120sec)
 	static final int LIVE_TIME = 120;
 	
-	String os = System.getProperty("org.archive.crawler.fetcher.MPlayerDumpstream.os", "LINUX");
 	String[] cmd = new String[3];
 	String osName = System.getProperty("os.name", "Linux");
 	
@@ -44,7 +43,7 @@ public class MPlayerDumpstream {
 			}
 			
 			Runtime rt = Runtime.getRuntime();
-			System.out.println ("Fetching " + curi);
+			//System.out.println ("Fetching " + curi);
 			
 			if(osName.equals( "Windows XP" )) {
 				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\" " +
@@ -57,12 +56,12 @@ public class MPlayerDumpstream {
                 
                 proc = rt.exec(cmd);
 			}	
-
+			LOGGER.info("DUMPSTREAM>" + curi);
 			StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR");
-			StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
+			//StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT");
 			
 			errorGobbler.start();
-			outputGobbler.start();
+			//outputGobbler.start();
 		
 			int time = 0;
 			// Wait for stream length TIME
@@ -91,7 +90,7 @@ public class MPlayerDumpstream {
 			//exitVal = proc.waitFor();
 			
 			proc = null;
-			System.out.println("Process exitValue: " + exitVal);
+			//System.out.println("Process exitValue: " + exitVal);
 		}
 		catch (Throwable t) {
 			t.printStackTrace();
