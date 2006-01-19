@@ -25,7 +25,7 @@
  */
 package org.archive.io.arc;
 
-import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -274,6 +274,20 @@ public class ARCWriter implements ARCConstants {
                     ", size " + this.arcFile.length());
         }
     }
+    
+    /**
+     * Write the first record, the metadata record.
+     * There is no need to call this method explicitly. You only need call this
+     * method if you want to get the offset of the first non-metadata ARC 
+     * record.  Call this method after construction but before you write
+     * anything else to the ARC.  Then call {@link #getPosition()} and it will
+     * return the end-of-metadata and start of first ARC record in current file.
+     * Is a noop if we've already moved past writing of metadata.
+     * @throws IOException 
+     */
+    public void writeARCMetaRecord() throws IOException {
+        checkARCFileSize();
+    }
 
     /**
      * Call this method just before we start to write a new record to the ARC.
@@ -281,13 +295,18 @@ public class ARCWriter implements ARCConstants {
      * Call at the end of the writing of a record or just before we start
      * writing a new record.  Will close current ARC file and open a new file
      * if ARC file size has passed out maxSize.
+     * 
+     * <p>Creates and opens an ARC if none already open writing the ARC meta
+     * info.  One use of this method then is after construction, call this 
+     * method to add the arc metadata, then call {@link #getPosition()} to find
+     * offset of first record.
      *
      * @exception IOException
      */
     public void checkARCFileSize() throws IOException {
         if (this.out == null ||
-                (this.settings.getArcMaxSize() != -1 &&
-                   (this.arcFile.length() > this.settings.getArcMaxSize()))) {
+            (this.settings.getArcMaxSize() != -1 &&
+               (this.arcFile.length() > this.settings.getArcMaxSize()))) {
             createARCFile();
         }
     }
@@ -740,7 +759,6 @@ public class ARCWriter implements ARCConstants {
             o.finish();
             o.flush();
             this.out = o.getOut();
-            o = null;
         }
     }
     
@@ -920,11 +938,23 @@ public class ARCWriter implements ARCConstants {
     
     /**
      * @return Position in underlying file. Returns 0 if underlying stream
-     * does not support getting position.  Position returned cannot always
-     * be trusted.  Call before or after writing records only to be safe.
+     * does not support getting position (or there is no stream yet -- can
+     * happen after construction before call to write or to
+     * {@link #checkARCFileSize()}).  Position returned cannot always
+     * be trusted.  Call before or after writing records *only* to be safe.
      * @throws IOException
      */
     public long getPosition() throws IOException {
-        return this.fos != null? this.fos.getChannel().position(): 0;
+        long position = 0;
+        if (this.out != null) {
+            this.out.flush();
+        }
+        if (this.fos != null) {
+            // Call flush on underlying file though probably not needed assuming
+            // above this.out.flush called through to this.fos.
+            this.fos.flush();
+            position = this.fos.getChannel().position();
+        }
+        return position;
     }
 }

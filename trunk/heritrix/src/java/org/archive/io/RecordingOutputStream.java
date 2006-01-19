@@ -24,7 +24,7 @@
  */
 package org.archive.io;
 
-import it.unimi.dsi.mg4j.io.FastBufferedOutputStream;
+import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.FileOutputStream;
 import java.io.IOException;

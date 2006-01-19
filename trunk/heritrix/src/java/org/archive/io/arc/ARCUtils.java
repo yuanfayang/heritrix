@@ -22,7 +22,7 @@
  */
 package org.archive.io.arc;
 
-import it.unimi.dsi.mg4j.io.RepositionableStream;
+import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,7 +33,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.archive.io.GzipHeader;
-import org.archive.io.GzippedInputStream;
 import org.archive.io.NoGzipMagicException;
 import org.archive.net.UURI;
 

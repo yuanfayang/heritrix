@@ -22,16 +22,15 @@
  */
 package org.archive.io.arc;
 
-import it.unimi.dsi.mg4j.io.RepositionableStream;
+import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import org.archive.io.GzippedInputStream;
-import org.archive.io.RandomAccessInputStream;
-
 import junit.framework.TestCase;
+
+import org.archive.io.GzippedInputStream;
 
 public class ARCUtilsTest extends TestCase {
     public void testGetArcfileName() throws URISyntaxException {

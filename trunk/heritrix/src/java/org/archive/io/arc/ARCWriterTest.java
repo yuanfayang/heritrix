@@ -124,8 +124,7 @@ extends TmpDirTestCase implements ARCConstants {
     }
 
     private void validate(File arcFile, int recordCount)
-        throws FileNotFoundException, IOException
-    {
+    throws FileNotFoundException, IOException {
         ARCReader reader = ARCReaderFactory.get(arcFile);
         assertNotNull(reader);
         List metaDatas = null;
