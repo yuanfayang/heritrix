@@ -205,12 +205,5 @@ public class FilePatternFilterTest extends TestCase {
        assertTrue(filter.accepts(stringURI));
        assertTrue(stringURI.matches(FilePatternFilter.VIDEO_PATTERNS));
 
-       stringURI = "http://foo.boo/moo.asf";
-       assertFalse(filter.accepts(stringURI));
-       assertFalse(stringURI.matches(FilePatternFilter.MISC_PATTERNS));
-       stringURI.toUpperCase();
-       assertFalse(filter.accepts(stringURI));
-       assertFalse(stringURI.matches(FilePatternFilter.MISC_PATTERNS));
-
     }
 }
