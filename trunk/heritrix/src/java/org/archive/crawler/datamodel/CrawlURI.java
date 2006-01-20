@@ -576,18 +576,27 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * @param ex Throwable to log.
      * @param message Extra message to log beyond exception message.
      */
-    public void addLocalizedError(String processorName, Throwable ex,
-        	String message) {
+    public void addLocalizedError(final String processorName,
+            final Throwable ex, final String message) {
         List localizedErrors;
-        if(containsKey(A_LOCALIZED_ERRORS)) {
-            localizedErrors = (List)getObject(A_LOCALIZED_ERRORS);
+        if (containsKey(A_LOCALIZED_ERRORS)) {
+            localizedErrors = (List) getObject(A_LOCALIZED_ERRORS);
         } else {
             localizedErrors = new ArrayList();
-            putObject(A_LOCALIZED_ERRORS,localizedErrors);
+            putObject(A_LOCALIZED_ERRORS, localizedErrors);
         }
 
         localizedErrors.add(new LocalizedError(processorName, ex, message));
-        addAnnotation("le:"+ex.getClass().getSimpleName()+"@"+processorName);
+        addAnnotation("le:" + getClassSimpleName(ex.getClass()) + "@" +
+            processorName);
+    }
+    
+    // TODO: Move to utils.
+    protected String getClassSimpleName(final Class c) {
+        String classname = c.getName();
+        int index = classname.lastIndexOf('.');
+        return ((index > 0 && (index + 1) < classname.length())?
+            classname.substring(index + 1): classname);
     }
 
     /**
