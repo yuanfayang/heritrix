@@ -46,13 +46,16 @@ public class FilePatternFilter extends URIRegExpFilter {
     private static final Logger logger =
         Logger.getLogger(FilePatternFilter.class.getName());
     public static final String ATTR_USE_DEFAULT = "use-default-patterns";
-    public static final String IMAGES_PATTERNS = ".*(?i)(\\.(bmp|gif|jpe?g|png|tiff?))$";
-    public static final String AUDIO_PATTERNS = ".*(?i)(\\.(mid|mp2|mp3|mp4|wav|wma|wax|ra|s?ram|asf|asx|m3u|pls|ogg))$";
-    public static final String VIDEO_PATTERNS = ".*(?i)(\\.(avi|mov|mpe?g|s?ram|rm|smil?|wmv|wvx|asf|asx))$";
+    public static final String IMAGES_PATTERNS = ".*(?i)(\\.(bmp|gif|jpe?g" +
+    		"|png|tiff?))$";
+    public static final String AUDIO_PATTERNS = ".*(?i)(\\.(mid|mp2|mp3|mp4" +
+    		"|wav|wma|wax|ra|s?ram|asf|asx|m3u|pls|ogg))$";
+    public static final String VIDEO_PATTERNS = ".*(?i)(\\.(avi|mov|mpe?g|s?ram" +
+    		"|rm|smil?|wmv|wvx|asf|asx))$";
     public static final String MISC_PATTERNS = ".*(?i)(\\.(doc|pdf|ppt|swf))$";
     public static final String ALL_DEFAULT_PATTERNS = ".*(?i)(\\.(bmp|gif" +
-        "|jpe?g|png|tiff?|mid|mp2|mp3|mp4|m3u|wav|avi|mov|mpe?g|s?ram|rm|ra" +
-        "|smil?|wmv|wvx|wma|wax|asf|asx|pls|ogg|doc|pdf|ppt|swf))$";
+        "|jpe?g|png|tiff?|mid|mp2|mp3|mp4|wav|avi|mov|mpe?g|s?ram|rm|smil?|wmv" +
+        "|doc|pdf|ppt|swf|wma|wax|ra|asf|asx|m3u|pls|ogg|wvx))$";
 
     public static final String ALL = "All";
     public static final String IMAGES = "Images";
@@ -69,7 +72,7 @@ public class FilePatternFilter extends URIRegExpFilter {
         setDescription("A URI path suffix filter.\n " +
             "All URLs that end with the specified pattern(s) will be added " +
             "to the scope's focus. Default file patterns are:\n.avi, .bmp, " +
-            ".doc, .gif, .jp(e)g, .mid, .mov, .mp2, .mp3, .m3u, .mp4, .mp(e)g, " +
+            ".doc, .gif, .jp(e)g, .mid, .mov, .mp2, .mp3, .mp4, .mp(e)g, " +
             ".pdf, .png, .ppt, .(s)ram, .rm, .ra, .smi(l), .swf, .tif(f), " +
             ".wav, .wmv, .wvx, .wma, .wax, .asf, .asx, .pls, .ogg\n" +
             "It is also possible to specifiy custom regular expressions " +
