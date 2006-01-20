@@ -101,7 +101,17 @@ public class ARCReaderFactory implements ARCConstants {
         return get(arcFile, false, offset);
     }
     
-    protected static ARCReader get(final File arcFile,
+    /**
+     * @param arcFile An arcfile to read.
+     * @param skipSuffixTest Set to true if want to test that ARC has proper
+     * suffix. Use this method and pass <code>false</code> to open ARCs
+     * with the <code>.open</code> or otherwise suffix.
+     * @param offset Have returned ARCReader set to start reading at passed
+     * offset.
+     * @return An ARCReader.
+     * @throws IOException 
+     */
+    public static ARCReader get(final File arcFile,
             final boolean skipSuffixTest, final long offset)
     throws IOException {
         boolean compressed =
