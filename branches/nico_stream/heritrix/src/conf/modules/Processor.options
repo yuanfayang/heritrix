@@ -11,6 +11,7 @@ org.archive.crawler.extractor.ExtractorHTTP|ExtractorHTTP
 org.archive.crawler.extractor.ExtractorHTML|ExtractorHTML
 org.archive.crawler.extractor.AggressiveExtractorHTML|AggressiveExtractorHTML
 org.archive.crawler.extractor.ExtractorCSS|ExtractorCSS
+org.archive.crawler.extractor.ExtractorSMIL|ExtractorSMIL
 org.archive.crawler.extractor.ExtractorSTREAM|ExtractorSTREAM
 org.archive.crawler.extractor.ExtractorSWF|ExtractorSWF
 org.archive.crawler.extractor.ExtractorJS|ExtractorJS

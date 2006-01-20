@@ -175,8 +175,13 @@ public class MPlayerIdentify {
 		System.out.println("status: " + status);
 		if (status == 0) {
 			
-			if (mime_type == null && audio_codec.equals("ffwmav2")) {
-				mime_type = "audio/x-ms-wma";
+			if ( mime_type == null ) {
+				if ( video_format == null && audio_codec.equals("ffwmav2") ) {
+					mime_type = "audio/x-ms-wma";
+				}
+				else {
+					mime_type = "audio/x-ms-wmv";
+				}
 			}
 			curi.setContentType(mime_type);
 			curi.putInt("TIME", length);

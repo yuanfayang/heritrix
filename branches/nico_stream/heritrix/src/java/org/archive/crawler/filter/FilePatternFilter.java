@@ -49,13 +49,13 @@ public class FilePatternFilter extends URIRegExpFilter {
     public static final String IMAGES_PATTERNS = ".*(?i)(\\.(bmp|gif|jpe?g" +
         "|png|tiff?))$";
     public static final String AUDIO_PATTERNS = ".*(?i)(\\.(mid|mp2|mp3|mp4" +
-        "|wav))$";
-    public static final String VIDEO_PATTERNS = ".*(?i)(\\.(avi|mov|mpeg|ram" +
-        "|rm|smil|wmv))$";
+        "|wav|wma|wax|ra|s?ram|asf|asx|m3u|pls|ogg))$";
+    public static final String VIDEO_PATTERNS = ".*(?i)(\\.(avi|mov|mpe?g|s?ram" +
+        "|rm|smil?|wmv|wvx|asf|asx))$";
     public static final String MISC_PATTERNS = ".*(?i)(\\.(doc|pdf|ppt|swf))$";
     public static final String ALL_DEFAULT_PATTERNS = ".*(?i)(\\.(bmp|gif" +
-        "|jpe?g|png|tiff?|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|rm|smil|wmv" +
-        "|doc|pdf|ppt|swf))$";
+        "|jpe?g|png|tiff?|mid|mp2|mp3|mp4|m3u|wav|avi|mov|mpe?g|s?ram|rm|ra" +
+        "|smil?|wmv|wvx|wma|wax|asf|asx|pls|ogg|doc|pdf|ppt|swf))$";
 
     public static final String ALL = "All";
     public static final String IMAGES = "Images";
@@ -72,8 +72,9 @@ public class FilePatternFilter extends URIRegExpFilter {
         setDescription("A URI path suffix filter.\n " +
             "All URLs that end with the specified pattern(s) will be added " +
             "to the scope's focus. Default file patterns are:\n.avi, .bmp, " +
-            ".doc, .gif, .jp(e)g, .mid, .mov, .mp2, .mp3, .mp4, .mpeg, " +
-            ".pdf, .png, .ppt, .ram, .rm,.smil, .swf, .tif(f), .wav, .wmv\n" +
+            ".doc, .gif, .jp(e)g, .mid, .mov, .mp2, .mp3, .m3u, .mp4, .mp(e)g, " +
+            ".pdf, .png, .ppt, .(s)ram, .rm, .ra, .smi(l), .swf, .tif(f), " +
+            ".wav, .wmv, .wvx, .wma, .wax, .asf, .asx, .pls, .ogg\n" +
             "It is also possible to specifiy custom regular expressions " +
             "for this filter, turning it into (effectively) a generic " +
             "regular expression filter.");
@@ -84,9 +85,12 @@ public class FilePatternFilter extends URIRegExpFilter {
         addElementToDefinition(
             new SimpleType(ATTR_USE_DEFAULT, "URLs that match selected file " +
                 "patterns will be crawled. Default file patterns are:\n" +
-                "Images: .bmp, .gif, .jp(e)g, .png, .tif(f)\nAudio: .mid, " +
-                ".mp2, .mp3, .mp4, .wav\nVideo: .avi, .mov, .mpeg, .ram, " +
-                ".rm, .smil, .wmv\nMiscellaneous: .doc, .pdf, .ppt, .swf\n" +
+                "Images: .bmp, .gif, .jp(e)g, .png, .tif(f)\n" +
+                "Audio: .mid, .mp2, .mp3, .m3u, .mp4, .wav, .wma, " +
+                ".wax, .asf, .asx, .ra, .(s)ram, .ogg, .pls\n" +
+                "Video: .avi, .mov, .mp(e)g, .(s)ram, " +
+                ".rm, .smi(l), .wmv, .wvx, .asf, .asx\n" +
+                "Miscellaneous: .doc, .pdf, .ppt, .swf\n" +
                 "All: All above patterns\nChoose 'Custom' to specify your own" +
                 " pattern. These default patterns are case insensitive.",
                 "All", options));
