@@ -2,15 +2,15 @@
 <crawl-order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="heritrix_settings.xsd">
    <meta>
      <name>$name</name>
-     <description>Default Profile</description>
-     <operator>ArchiveIT</operator>
+     <description>Default profile for $name</description>
+     <operator>Archive-It</operator>
      <organization/>
      <audience/>
      <date>$date</date>
    </meta>
    <controller>
      <string name="settings-directory">settings</string>
-     <string name="disk-path"/>
+     <string name="disk-path">$diskPath</string>
      <string name="logs-path">logs</string>
      <string name="checkpoints-path">checkpoints</string>
      <string name="state-path">state</string>
