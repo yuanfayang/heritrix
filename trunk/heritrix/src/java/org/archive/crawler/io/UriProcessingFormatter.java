@@ -51,7 +51,7 @@ extends Formatter implements CoreAttributeConstants {
      */
     private final static int GUESS_AT_LOG_LENGTH =
         17 + 1 + 3 + 1 + 10 + 128 + + 1 + 10 + 1 + 128 + 1 + 10 + 1 + 3 +
-        14 + 1 + 32 + 4 + 1;
+        14 + 1 + 32 + 4 + 128 + 1;
     
     /**
      * Reuseable assembly buffer.
@@ -96,6 +96,10 @@ extends Formatter implements CoreAttributeConstants {
             digest = Base32.encode((byte [])digest);
         }
 
+        String sourceTag = curi.containsKey(A_SOURCE_TAG) 
+                ? curi.getString(A_SOURCE_TAG)
+                : null;
+                
         this.buffer.length(0);
         return this.buffer.append(ArchiveUtils.getLog17Date(time))
             .append(" ")
@@ -119,6 +123,8 @@ extends Formatter implements CoreAttributeConstants {
             .append(arcTimeAndDuration)
             .append(" ")
             .append(checkForNull((String)digest))
+            .append(" ")
+            .append(checkForNull(sourceTag))
             .append(" ")
             .append(checkForNull(curi.getAnnotations()))
             .append("\n").toString();

@@ -162,6 +162,10 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     public final static String ATTR_PAUSE_AT_START = "pause-at-start";
     protected final static Boolean DEFAULT_PAUSE_AT_START = Boolean.FALSE;
     
+    /** whether to pause at crawl start */
+    public final static String ATTR_SOURCE_TAG_SEEDS = "source-tag-seeds";
+    protected final static Boolean DEFAULT_SOURCE_TAG_SEEDS = Boolean.FALSE;
+
     /**
      * Recover log on or off attribute.
      */
@@ -307,6 +311,15 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
                 + "opportunity to view crawl results, and possibly add URIs or "
                 + "adjust settings, while the crawl state is still available. "
                 + "Default is false.", DEFAULT_PAUSE_AT_FINISH));
+        t.setOverrideable(false);
+        
+        t = addElementToDefinition(new SimpleType(
+                ATTR_SOURCE_TAG_SEEDS,
+                "Whether to tag seeds with their own URI as a heritable " +
+                "'source' String, which will be carried-forward to all URIs " +
+                "discovered on paths originating from that seed. When " +
+                "present, such source tags appear in the second-to-last " +
+                "crawl.log field.", DEFAULT_SOURCE_TAG_SEEDS));
         t.setOverrideable(false);
         
         t = addElementToDefinition(new SimpleType(ATTR_RECOVERY_ENABLED,
@@ -529,6 +542,11 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             UURI u = (UURI)iter.next();
             CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
             caUri.setSchedulingDirective(CandidateURI.MEDIUM);
+            if (((Boolean)getUncheckedAttribute(null, ATTR_SOURCE_TAG_SEEDS))
+                    .booleanValue()) {
+                caUri.putString(CoreAttributeConstants.A_SOURCE_TAG,caUri.toString());
+                caUri.makeHeritable(CoreAttributeConstants.A_SOURCE_TAG);
+            }
             schedule(caUri);
             count++;
             if(count%1000==0) {
