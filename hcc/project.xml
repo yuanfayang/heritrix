@@ -89,6 +89,11 @@
         <sourceDirectory>src/main/java</sourceDirectory>
         <unitTestSourceDirectory>src/test/java</unitTestSourceDirectory>
         <unitTest>
+	        <resources>
+	        <resource>
+	          <directory>src/test/java</directory>
+	        </resource>
+	      </resources>
             <includes>
                 <include>**/*Test.java</include>
             </includes>
