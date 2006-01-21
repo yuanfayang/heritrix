@@ -109,4 +109,12 @@ public interface AList {
     public AList newAList();
 
     public void clear();
+
+    /**
+     * Copy the iterator's keys from one AList to another. 
+     * 
+     * @param keys Iterator of String keys
+     * @param other source AList
+     */
+    public void copyKeysFrom(Iterator keys, AList other);
 }
