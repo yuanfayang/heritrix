@@ -8,20 +8,10 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.hcc.util.SmartPropertiesResolverTest;
 
 public class SmartPropertiesResolver {
-	private static final Logger log = Logger.getLogger(SmartPropertiesResolverTest.class.getName());
-	public static Properties getPropertiesFromSystemProperty(String systemProperty){
-		if(systemProperty == null){
-			throw new NullPointerException("systemProperty must be non null");
-		} else{
-			return getProperties(System.getProperty(systemProperty));
-		}
+	private static final Logger log = Logger.getLogger(SmartPropertiesResolver.class.getName());
 
-		
-	}
-			
 	public static Properties getProperties(String filePath) {
 		if(filePath == null){
 			throw new NullPointerException("filePath must be non null");
