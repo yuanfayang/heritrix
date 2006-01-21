@@ -48,14 +48,15 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
                            // (both failures and temp deferrals)
     
     public synchronized void tally(CrawlURI curi) {
+        if(curi.getFetchStatus()<=0) {
+            fetchNonResponses++;
+            return;
+        }
+        fetchResponses++;
+        totalBytes += curi.getContentSize();
         if(curi.getFetchStatus()==HttpStatus.SC_OK) {
             fetchSuccesses++;
             successBytes += curi.getContentSize();
-        } else if (curi.getFetchStatus()>0) {
-            fetchResponses++;
-            totalBytes += curi.getContentSize();
-        } else {
-            fetchNonResponses++;
         }
     }
     

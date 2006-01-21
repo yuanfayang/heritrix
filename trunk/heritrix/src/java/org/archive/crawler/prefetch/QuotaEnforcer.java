@@ -24,13 +24,10 @@ package org.archive.crawler.prefetch;
 
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CrawlHost;
-import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
-import org.archive.crawler.framework.Frontier.FrontierGroup;
 import org.archive.crawler.settings.SimpleType;
 
 /**
@@ -45,40 +42,109 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
     private static final Logger LOGGER =
         Logger.getLogger(QuotaEnforcer.class.getName());
     
+    // indexed table of reused string categorical names/keys
+    protected static final int SERVER = 0;
+    protected static final int HOST = 1;
+    protected static final int GROUP = 2;
+    protected static final int NAME = 0;
+    protected static final int SUCCESSES = 1;
+    protected static final int SUCCESS_KB = 2;
+    protected static final int RESPONSES = 3;
+    protected static final int RESPONSE_KB = 4;
+    protected static final String[][] keys = new String[][] {
+            {
+                "server",
+                "server-max-fetch-successes",
+                "server-max-success-kb",
+                "server-max-fetch-responses",
+                "server-max-all-kb"
+            },
+            {
+                "host",
+                "host-max-fetch-successes",
+                "host-max-success-kb",
+                "host-max-fetch-responses",
+                "host-max-all-kb"
+            },
+            {
+                "group",
+                "group-max-fetch-successes",
+                "group-max-success-kb",
+                "group-max-fetch-responses",
+                "group-max-all-kb"
+            }
+    };
+    
    // server quotas
+   // successes
    /** server max successful fetches */
    protected static final String ATTR_SERVER_MAX_FETCH_SUCCESSES = 
-       "server-max-fetch-successes";
+       keys[SERVER][SUCCESSES];
    protected static final Long DEFAULT_SERVER_MAX_FETCH_SUCCESSES =
        new Long(-1);
    /** server max successful fetch bytes */
    protected static final String ATTR_SERVER_MAX_SUCCESS_KB = 
-       "server-max-success-kb";
+       keys[SERVER][SUCCESS_KB];;
    protected static final Long DEFAULT_SERVER_MAX_SUCCESS_KB =
+       new Long(-1);
+   // all-responses
+   /** server max fetch responses (including error codes) */
+   protected static final String ATTR_SERVER_MAX_FETCH_RESPONSES = 
+       keys[SERVER][RESPONSES];
+   protected static final Long DEFAULT_SERVER_MAX_FETCH_RESPONSES =
+       new Long(-1);
+   /** server max all fetch bytes (including error responses) */
+   protected static final String ATTR_SERVER_MAX_ALL_KB = 
+       keys[SERVER][RESPONSE_KB];
+   protected static final Long DEFAULT_SERVER_MAX_ALL_KB =
        new Long(-1);
    
    // host quotas
+   // successes
    /** host max successful fetches */
    protected static final String ATTR_HOST_MAX_FETCH_SUCCESSES = 
-       "host-max-fetch-successes";
+       keys[HOST][SUCCESSES];;
    protected static final Long DEFAULT_HOST_MAX_FETCH_SUCCESSES =
        new Long(-1);
    /** host max successful fetch bytes */
    protected static final String ATTR_HOST_MAX_SUCCESS_KB = 
-       "host-max-success-kb";
+       keys[HOST][SUCCESS_KB];;
    protected static final Long DEFAULT_HOST_MAX_SUCCESS_KB =
+       new Long(-1);
+   // all-responses
+   /** host max fetch responses (including error codes) */
+   protected static final String ATTR_HOST_MAX_FETCH_RESPONSES = 
+       keys[HOST][RESPONSES];
+   protected static final Long DEFAULT_HOST_MAX_FETCH_RESPONSES =
+       new Long(-1);
+   /** host max all fetch bytes (including error responses) */
+   protected static final String ATTR_HOST_MAX_ALL_KB = 
+       keys[HOST][RESPONSE_KB];
+   protected static final Long DEFAULT_HOST_MAX_ALL_KB =
        new Long(-1);
    
    // group quotas
+   // successes
    /** group max successful fetches */
    protected static final String ATTR_GROUP_MAX_FETCH_SUCCESSES = 
-       "group-max-fetch-successes";
+       keys[GROUP][SUCCESSES];
    protected static final Long DEFAULT_GROUP_MAX_FETCH_SUCCESSES =
        new Long(-1);
    /** group max successful fetch bytes */
    protected static final String ATTR_GROUP_MAX_SUCCESS_KB = 
-       "group-max-success-kb";
+       keys[GROUP][SUCCESS_KB];
    protected static final Long DEFAULT_GROUP_MAX_SUCCESS_KB =
+       new Long(-1);
+   // all-responses
+   /** group max fetch responses (including error codes) */
+   protected static final String ATTR_GROUP_MAX_FETCH_RESPONSES = 
+       keys[GROUP][RESPONSES];
+   protected static final Long DEFAULT_GROUP_MAX_FETCH_RESPONSES =
+       new Long(-1);
+   /** group max all fetch bytes (including error responses) */
+   protected static final String ATTR_GROUP_MAX_ALL_KB = 
+       keys[GROUP][RESPONSE_KB];
+   protected static final Long DEFAULT_GROUP_MAX_ALL_KB =
        new Long(-1);
    
     /**
@@ -87,92 +153,122 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
      */
     public QuotaEnforcer(String name) {
         super(name, "QuotaEnforcer.");
+        String maxFetchSuccessesDesc = "Maximum number of fetch successes " +
+            "(e.g. 200 responses) to collect from one $CATEGORY. " +
+            "Default is -1, meaning no limit.";
+        String maxSuccessKbDesc = "Maximum amount of fetch success content " +
+            "(e.g. 200 responses) in KB to collect from one $CATEGORY. " +
+            "Default is -1, meaning no limit.";
+        String maxFetchResponsesDesc = "Maximum number of fetch responses " +
+            "(incl. error responses) to collect from one $CATEGORY. " +
+            "Default is -1, meaning no limit.";
+        String maxAllKbDesc = "Maximum amount of response content " +
+            "(incl. error responses) in KB to collect from one $CATEGORY. " +
+            "Default is -1, meaning no limit.";
+        // server successes
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_FETCH_SUCCESSES,
-            "Maximum number of successful fetches to collect from a single " +
-            "server. Default is -1, meaning no limit.",
+            maxFetchSuccessesDesc.replace("$CATEGORY","server"),
             DEFAULT_SERVER_MAX_FETCH_SUCCESSES));
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_SUCCESS_KB,
-            "Maximum amount of content in KB to collect from a single " +
-            "server. Default is -1, meaning no limit.",
+            maxSuccessKbDesc.replace("$CATEGORY","server"),
             DEFAULT_SERVER_MAX_SUCCESS_KB));
+        // server all-responses
+        addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_FETCH_RESPONSES,
+            maxFetchResponsesDesc.replace("$CATEGORY","server"),
+            DEFAULT_SERVER_MAX_FETCH_RESPONSES));
+        addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_ALL_KB,
+            maxAllKbDesc.replace("$CATEGORY","server"),
+            DEFAULT_SERVER_MAX_ALL_KB));
+        // host successes
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_FETCH_SUCCESSES,
-            "Maximum number of successful fetches to collect from a single " +
-            "host. Default is -1, meaning no limit.",
+            maxFetchSuccessesDesc.replace("$CATEGORY","host"),
             DEFAULT_HOST_MAX_FETCH_SUCCESSES));
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_SUCCESS_KB,
-            "Maximum amount of content in KB to collect from a single " +
-            "host. Default is -1, meaning no limit.",
+            maxSuccessKbDesc.replace("$CATEGORY","host"),
             DEFAULT_HOST_MAX_SUCCESS_KB));
+        // host all-responses
+        addElementToDefinition(new SimpleType(ATTR_HOST_MAX_FETCH_RESPONSES,
+            maxFetchResponsesDesc.replace("$CATEGORY","host"),
+            DEFAULT_HOST_MAX_FETCH_RESPONSES));
+        addElementToDefinition(new SimpleType(ATTR_HOST_MAX_ALL_KB,
+            maxAllKbDesc.replace("$CATEGORY","host"),
+            DEFAULT_HOST_MAX_ALL_KB));        
+        // group successes
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_FETCH_SUCCESSES,
-            "Maximum number of successful fetches to collect from a single " +
-            "frontier group (queue). Default is -1, meaning no limit.",
+            maxFetchSuccessesDesc.replace("$CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_FETCH_SUCCESSES));
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_SUCCESS_KB,
-            "Maximum amount of content in KB to collect from a single " +
-            "frontier group (queue). Default is -1, meaning no limit.",
+            maxSuccessKbDesc.replace("$CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_SUCCESS_KB));
+        // group all-responses
+        addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_FETCH_RESPONSES,
+            maxFetchResponsesDesc.replace("$CATEGORY","group (queue)"),
+            DEFAULT_GROUP_MAX_FETCH_RESPONSES));
+        addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_ALL_KB,
+            maxAllKbDesc.replace("$CATEGORY","group (queue)"),
+            DEFAULT_GROUP_MAX_ALL_KB));  
     }
     
     protected void innerProcess(CrawlURI curi) {
-        long fetchQuota, bytesQuota;
         CrawlSubstats substats;
-        // Check per-server quotas
-        CrawlServer server =
-            getController().getServerCache().getServerFor(curi);
-        if (server != null && checkQuota(curi, ATTR_SERVER_MAX_FETCH_SUCCESSES,
-                ATTR_SERVER_MAX_SUCCESS_KB, server.getSubstats(), "server")) {
-            return;
+        CrawlSubstats.HasCrawlSubstats[] haveStats = 
+            new CrawlSubstats.HasCrawlSubstats[] {
+                getController().getServerCache().getServerFor(curi), // server
+                getController().getServerCache().getHostFor(curi), // host
+                getController().getFrontier().getGroup(curi) // group
+            };
+        
+        for(int cat=SERVER;cat<=GROUP;cat++) {
+            if (checkQuotas(curi,haveStats[cat],cat)) {
+                return;
+            }
         }
-
-        // Check per-host quotas
-        CrawlHost host =  getController().getServerCache().getHostFor(curi);
-        if (host != null && checkQuota(curi, ATTR_HOST_MAX_FETCH_SUCCESSES,
-                ATTR_HOST_MAX_SUCCESS_KB, host.getSubstats(), "host")) {
-            return;
-        }
-        // Check per-frontier-group (queue) quotas
-        FrontierGroup group =  getController().getFrontier().getGroup(curi);
-        if (group != null && checkQuota(curi, ATTR_GROUP_MAX_FETCH_SUCCESSES,
-                ATTR_GROUP_MAX_SUCCESS_KB, group.getSubstats(), "group")) {
-            return;
-        }
-    }
-
-    protected boolean checkQuota(final CrawlURI curi,
-            final String successesKey,
-            final String maxKbKey, final CrawlSubstats substats,
-            final String logKey) {
-        boolean aboveQuota = false;
-        long fetchQuota =
-            ((Long)getUncheckedAttribute(curi, successesKey)).longValue();
-        long bytesQuota = 1024 *
-            ((Long) getUncheckedAttribute(curi, maxKbKey)).longValue();
-        if (checkQuota(curi, fetchQuota, substats.getFetchSuccesses(),
-                "Q:" + logKey + "-fetchSuccesses")) {
-            aboveQuota = true; 
-        } else if (checkQuota(curi, bytesQuota, substats.getSuccessBytes(),
-                "Q:" + logKey + "-successBytes")) {
-            aboveQuota = true; 
-        }
-        return aboveQuota;
     }
 
     /**
-     * Check if the given quota and actual values rule out processing the 
-     * given CrawlURI, and mark up the CrawlURI appropriately if so. 
+     * Check all quotas for the given substats and category (server, host, or
+     * group). 
+     * 
+     * @param curi CrawlURI to mark up with results
+     * @param substats CrawlSubstats with actual values to test
+     * @param CAT category index (SERVER, HOST, GROUP) to quota settings keys
+     * @return true if quota precludes fetching of CrawlURI
+     */
+    protected boolean checkQuotas(final CrawlURI curi,
+            final CrawlSubstats.HasCrawlSubstats hasStats,
+            final int CAT) {
+        CrawlSubstats substats = hasStats.getSubstats();
+        long[] actuals = new long[] {
+                -1, // dummy
+                substats.getFetchSuccesses(),
+                substats.getSuccessBytes()/1024,
+                substats.getFetchResponses(),
+                substats.getTotalBytes()/1024,
+        };
+        for(int q=SUCCESSES; q<=RESPONSE_KB;q++) {
+            if(applyQuota(curi,keys[CAT][q],actuals[q])) {
+                return true; 
+            }
+        }
+        return false; 
+    }
+
+    /**
+     * Apply the quota specified by the given key against the actual 
+     * value provided. If the quota and actual values rule out processing the 
+     * given CrawlURI,  mark up the CrawlURI appropriately. 
      * 
      * @param curi CrawlURI whose processing is subject to a potential quota
      * limitation
-     * @param quota quota value, or zero if no quota applies
+     * @param quotaKey settings key to get applicable quota
      * @param actual current value to compare to quota 
-     * @param annotate String to mark CrawlURI if blocked by quota
      * @return true is CrawlURI is blocked by a quota, false otherwise
      */
-    protected boolean checkQuota(CrawlURI curi, long quota, long actual,
-            String annotate) {
+    protected boolean applyQuota(CrawlURI curi, String quotaKey, long actual) {
+        long quota = ((Long)getUncheckedAttribute(curi, quotaKey)).longValue();
         if (quota >= 0 && actual >= quota) {
             curi.setFetchStatus(S_BLOCKED_BY_QUOTA);
-            curi.addAnnotation(annotate);
+            curi.addAnnotation("Q:"+quotaKey);
             curi.skipToProcessorChain(getController().getPostprocessorChain());
             return true;
         }
