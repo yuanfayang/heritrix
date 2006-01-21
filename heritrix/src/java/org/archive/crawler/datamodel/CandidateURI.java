@@ -28,7 +28,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.extractor.Link;
@@ -55,7 +57,7 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CandidateURI
-implements Serializable, Reporter {
+implements Serializable, Reporter, CoreAttributeConstants {
     private static final long serialVersionUID = -7152937921526560388L;
 
     /** Highest scheduling priority.
@@ -433,10 +435,12 @@ implements Serializable, Reporter {
             (UURI)link.getDestination():
             UURIFactory.getInstance(baseUURI,
                 link.getDestination().toString());
-        return new CandidateURI(u, getPathFromSeed() + link.getHopType(),
-            getUURI(), link.getContext());
+        CandidateURI newCaURI = new CandidateURI(u, getPathFromSeed() + link.getHopType(),
+                getUURI(), link.getContext());
+        newCaURI.inheritFrom(this);
+        return newCaURI;
     }
-    
+
     /**
      * Utility method for creation of CandidateURIs found extracting
      * links from this CrawlURI.
@@ -456,7 +460,18 @@ implements Serializable, Reporter {
         return caURI;
     }
     
-
+    /**
+     * Inherit (copy) the relevant keys-values from the ancestor. 
+     * 
+     * @param ancestor
+     */
+    protected void inheritFrom(CandidateURI ancestor) {
+        List heritableKeys = (List) ancestor.getObject(A_HERITABLE_KEYS);
+        if(heritableKeys!=null) {
+            getAList().copyKeysFrom(heritableKeys.iterator(),ancestor.getAList());
+        }
+    }
+    
     /**
      * Get the token (usually the hostname + port) which indicates
      * what "class" this CrawlURI should be grouped with,
@@ -663,5 +678,40 @@ implements Serializable, Reporter {
      */
     public void reportTo(PrintWriter writer) throws IOException {
         reportTo(null,writer);
+    }
+
+    /** Make the given key 'heritable', meaning its value will be 
+     * added to descendant CandidateURIs. Only keys with immutable
+     * values should be made heritable -- the value instance may 
+     * be shared until the AList is serialized/deserialized. 
+     * 
+     * @param key to make heritable
+     */
+    public void makeHeritable(String key) {
+        List heritableKeys = (List) getObject(A_HERITABLE_KEYS);
+        if(heritableKeys==null) {
+            heritableKeys = new ArrayList();
+            heritableKeys.add(A_HERITABLE_KEYS);
+            putObject(A_HERITABLE_KEYS,heritableKeys);
+        }
+        heritableKeys.add(key);
+    }
+    
+    /** Make the given key non-'heritable', meaning its value will 
+     * not be added to descendant CandidateURIs. Only meaningful if
+     * key was previously made heritable.  
+     * 
+     * @param key to make non-heritable
+     */
+    public void makeNonHeritable(String key) {
+        List heritableKeys = (List) getObject(A_HERITABLE_KEYS);
+        if(heritableKeys==null) {
+            return;
+        }
+        heritableKeys.remove(key);
+        if(heritableKeys.size()==1) {
+            // only remaining heritable key is itself; disable completely
+            remove(A_HERITABLE_KEYS);
+        }
     }
 }

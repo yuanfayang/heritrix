@@ -77,4 +77,20 @@ public interface CoreAttributeConstants {
      * Define for org.archive.crawler.writer.MirrorWriterProcessor.
      */
     public static String A_MIRROR_PATH = "mirror-path";
+
+    /**
+     * Key to get credential avatars from A_LIST.
+     */
+    public static final String A_CREDENTIAL_AVATARS_KEY =
+        "credential-avatars";
+    
+    /** a 'source' (usu. URI) that's inherited by discovered URIs */
+    public static String A_SOURCE_TAG = "source";
+    
+    /**
+     * Key to (optional) attribute specifying a list of keys that
+     * are passed to CandidateURIs that 'descend' (are discovered 
+     * via) this URI. 
+     */
+    public static final String A_HERITABLE_KEYS = "heritable";
 }

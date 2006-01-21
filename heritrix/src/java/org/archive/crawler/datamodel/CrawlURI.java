@@ -45,6 +45,9 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.HttpRecorder;
 
+import st.ata.util.AList;
+import st.ata.util.HashtableAList;
+
 import edu.emory.mathcs.backport.java.util.concurrent.CopyOnWriteArrayList;
 
 
@@ -61,7 +64,7 @@ import edu.emory.mathcs.backport.java.util.concurrent.CopyOnWriteArrayList;
  * @author Gordon Mohr
  */
 public class CrawlURI extends CandidateURI
-implements CoreAttributeConstants, FetchStatusCodes {
+implements FetchStatusCodes {
     public static final int UNCALCULATED = -1;
     
     // INHERITED FROM CANDIDATEURI
@@ -119,12 +122,6 @@ implements CoreAttributeConstants, FetchStatusCodes {
     private String contentType = null;
 
     /**
-     * Key to get credential avatars from A_LIST.
-     */
-    private static final String A_CREDENTIAL_AVATARS_KEY =
-        "credential-avatars";
-
-    /**
      * True if this CrawlURI has been deemed a prerequisite by the
      * {@link org.archive.crawler.prefetch.PreconditionEnforcer}.
      *
@@ -164,7 +161,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * of a pass down the processing chain.
      */
     private static final List alistPersistentMember = new CopyOnWriteArrayList(
-            Arrays.asList(new String [] {A_CREDENTIAL_AVATARS_KEY}));
+            new String [] {A_CREDENTIAL_AVATARS_KEY});
 
     /**
      * A digest (hash, usually SHA1) of retrieved content-body. 
@@ -817,33 +814,21 @@ implements CoreAttributeConstants, FetchStatusCodes {
         // Clear 'links extracted' flag.
         this.linkExtractorFinished = false;
         // Clean the alist of all but registered permanent members.
-        for (Iterator i = keys(); i != null && i.hasNext();) {
-            String key = (String)i.next();
-            if(isPersistentAlistMember(key)) {
-                continue;
-            }
-            i.remove();
-        }
+        setAList(getPersistentAList());
     }
     
-    protected boolean isPersistentAlistMember(String key) {
-        boolean result = false;
-        if (key == null || key.length() <= 0) {
-            return result;
+    protected AList getPersistentAList() {
+        AList newAList = new HashtableAList();
+        // copy declared persistent keys
+        if(alistPersistentMember!=null && alistPersistentMember.size() > 0) {
+            newAList.copyKeysFrom(alistPersistentMember.iterator(), getAList());
+        } 
+        // also copy declared 'heritable' keys
+        List heritableKeys = (List) getObject(A_HERITABLE_KEYS);
+        if(heritableKeys!=null) {
+            newAList.copyKeysFrom(heritableKeys.iterator(), getAList());
         }
-        if (alistPersistentMember != null && alistPersistentMember.size() > 0) {
-            for (Iterator i = alistPersistentMember.iterator(); i.hasNext();) {
-                String permanent = (String)i.next();
-                if (permanent == null || permanent.length() <= 0) {
-                    continue;
-                }
-                if (permanent.equals(key)) {
-                    result = true;
-                    break;
-                }
-            }
-        }       
-        return result;
+        return newAList;
     }
 
     /**
