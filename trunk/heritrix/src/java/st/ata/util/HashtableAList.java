@@ -136,7 +136,19 @@ public class HashtableAList implements MutableAList, Serializable {
             }
         }
     }
-
+    
+    public void copyKeysFrom(Iterator keys, AList other) {
+        for (; keys.hasNext();) {
+            String key = (String)keys.next();
+            Object value = other.getObject(key);
+            // TODO: consider shallow or deep copy in some cases?
+            // perhaps controlled by a third parameter?
+            if(value!=null) {
+                putObject(key,value);
+            }
+        }
+    }
+    
     public Object getObject(String key) {
         return mTable.get(key);
     }
