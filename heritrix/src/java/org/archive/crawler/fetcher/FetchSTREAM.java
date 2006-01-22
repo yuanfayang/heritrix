@@ -14,6 +14,8 @@ import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.fetcher.MPlayerIdentify;
 import org.archive.crawler.fetcher.MPlayerDumpstream;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -30,7 +32,11 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     private static Logger LOGGER =
     	Logger.getLogger(FetchSTREAM.class.getName());
    
-    //private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
+    private static Integer DEFAULT_LIVE_TIME_SECONDS = new Integer(120);
+    private static Integer DEFAULT_TOLERANCE_SECONDS = new Integer(300);
+    
+    public static final String LIVE_TIME_SECONDS = "live-time-seconds";
+    public static final String TOLERANCE_SECONDS = "tolerance-seconds";
     
     public final static String FILE_KEY =
     	FetchSTREAM.class.getName() + ".streamFile";
@@ -56,6 +62,20 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      */
     public FetchSTREAM(String name) {
         super(name, "STREAM Fetcher");
+        
+         addElementToDefinition(new SimpleType(LIVE_TIME_SECONDS,
+                "Sets the LIVE capture time (length) in seconds. " +
+                "As LIVE streaming media duration is unbounded " +
+                "(ID_LENGTH=0), the " + LIVE_TIME_SECONDS + 
+                " must be specified.", DEFAULT_LIVE_TIME_SECONDS));
+
+         Type e = addElementToDefinition(new SimpleType(TOLERANCE_SECONDS,
+        		"Sets a margin of tolerance for MPlayer's streaming " +
+        		"capture. As mplayer -dumpstream requires some time " +
+        		"for connexion, a " + TOLERANCE_SECONDS + " must be " +
+        		"added to the media length (duration).",
+        		DEFAULT_TOLERANCE_SECONDS));
+        e.setExpertSetting(true);
     }
 
     protected void innerProcess(final CrawlURI curi)
@@ -94,7 +114,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         	
         if (statusCode == 0) {
         	MPlayerDumpstream mpd = new MPlayerDumpstream();
-        	exitVal = mpd.dumpstream(curi, streamFile.getAbsolutePath());
+        	exitVal = mpd.dumpstream(curi, streamFile.getAbsolutePath(), getLiveTime(curi), getTolerance(curi));
         		
         	if (exitVal == 0) {
         		long size = streamFile.length();
@@ -156,7 +176,35 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     	// cleanup all dumped stream files
         super.finalTasks();
     }
-
+ 
+    /**
+     * @param curi Current CrawlURI.  Used to get context.
+     * @return LIVE time value for LIVE capture length.
+     */
+    private int getLiveTime(CrawlURI curi) {
+        Integer res;
+        try {
+            res = (Integer) getAttribute(LIVE_TIME_SECONDS, curi);
+        } catch (Exception e) {
+            res = DEFAULT_LIVE_TIME_SECONDS;
+        }
+        return res.intValue();
+    }
+    
+    /**
+     * @param curi Current CrawlURI.  Used to get context.
+     * @return Tolerance margin value.
+     */
+    private int getTolerance(CrawlURI curi) {
+        Integer res;
+        try {
+            res = (Integer) getAttribute(TOLERANCE_SECONDS, curi);
+        } catch (Exception e) {
+            res = DEFAULT_TOLERANCE_SECONDS;
+        }
+        return res.intValue();
+    }
+    
     public String report() {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: " + this.getClass().getName() + "\n");

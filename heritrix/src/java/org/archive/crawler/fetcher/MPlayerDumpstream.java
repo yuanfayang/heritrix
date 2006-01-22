@@ -31,20 +31,20 @@ public class MPlayerDumpstream {
 		super();
 	}
 	
-	public int dumpstream(CrawlURI curi, String streamFilePath) {
+	public int dumpstream(CrawlURI curi, String streamFilePath, int liveTime, int tolerance) {
 		try {
 			// if LIVE stream (TIME = 0), then no exitVal
 			// then set capture length 
 			if ( curi.getInt("TIME") == 0 ) {
-				margin = LIVE_TIME;
+				margin = liveTime; //LIVE_TIME;
 			}
 			else {
-				margin = TOLERANCE;
+				margin = tolerance; //TOLERANCE;
 			}
 			
 			Runtime rt = Runtime.getRuntime();
 			//System.out.println ("Fetching " + curi);
-			
+					
 			if(osName.equals( "Windows XP" )) {
 				proc = rt.exec("\"C:\\Documents and Settings\\Nico\\Desktop\\mplayer\\mplayer.exe\" " +
 								"-really-quiet -dumpstream -dumpfile " + streamFilePath + " \"" + curi + "\"");
