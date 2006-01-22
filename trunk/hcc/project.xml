@@ -94,6 +94,7 @@
 	          <directory>src/test/java</directory>
 	        </resource>
 	      </resources>
+        	
             <includes>
                 <include>**/*Test.java</include>
             </includes>
