@@ -54,7 +54,7 @@
 	
  </goal>
  
- <goal name="run-self-tests">
+ <goal name="run-self-tests" >
  	<junit verbose="true" printsummary="true" >
 		<jvmarg value="-Djava.naming.factory.initial=org.jnp.interfaces.NamingContextFactory"/>
 		<jvmarg value="-Djava.naming.provider.url=jnp://localhost:1099"/>
@@ -63,6 +63,7 @@
 		<jvmarg value="-Dcom.sun.management.jmxremote.ssl=false"/>
 		<jvmarg value="-Dcom.sun.management.jmxremote.password.file=./jmxremote.password"/>
 		<jvmarg value="-Dcom.sun.management.jmxremote=true"/>
+		<jvmarg value="-Dorg.archive.hcc.client.jmxPort=8850"/>
 						
 			
 		<formatter type="plain"/>
@@ -71,10 +72,11 @@
 	    <pathelement location="${maven.build.dir}/classes"/>
 	    <pathelement location="${maven.build.dir}/test-classes"/>
     	<fileset dir="${env.JBOSS_HOME}/client" includes="*.jar"/>
+    	<fileset dir="lib" includes="*.jar"/>
+
 	  </classpath>
 
  		<batchtest todir="${maven.build.dir}/test-reports" fork="true">
- 			
 	 		<fileset dir="src/test/java">
 			    <include name="**/*SelfTest.java"/>
 			</fileset>
