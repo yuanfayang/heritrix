@@ -63,12 +63,11 @@ public class ExtractorSTREAM extends Extractor implements CoreAttributeConstants
      * Added by nico
      * 0	belong		0x 30 26 b2 75 8e 66 cf 11 a6 d9 00 aa 00 62 ce 6c		
      * 					video/x-ms-{asf|asx|wmv|wvx|wma|wax}
-     */
-    
+     */  
     static final String MAGIC_HEADER =
     	"(?:^\\x30\\x26\\xb2\\x75|" + // Microsoft Media Format
     	"(?i)^\\.RMF|^\\x2e\\x72\\x61\\xfd|" + // Real Media Format
-    	"(?i)^.{4}moov|(?i)^.{4}mdat|(?i)^.{4}wide|(?i)^.{4}skip|(?i)^.{4}free)"; // Apple MOV Format
+    	"(?i)^.{4}moov.{3}lmvhd|(?i)^.{4}mdat|(?i)^.{4}wide|(?i)^.{4}skip|(?i)^.{4}free)"; // Apple MOV Format
     
     /* STREAM URIs contained in a metafile or playlist
      * usually a simple http://, rtsp://, mms://, pnm:// or ftp:// url
@@ -100,7 +99,7 @@ public class ExtractorSTREAM extends Extractor implements CoreAttributeConstants
             return;
         }
          
-        /* First main criterion is file EXTENSION
+        /* First main criterion: file EXTENSION
          * .asf .asx .wmv .wvx .wma .wax
          * .ram .sram .rm .ra
          * .pls .m3u  - playlists
@@ -110,7 +109,7 @@ public class ExtractorSTREAM extends Extractor implements CoreAttributeConstants
         	return;
         }
         
-        /* Second criterion is MAGIC HEADER
+        /* Second criterion: MAGIC HEADER
          * The 16 first bytes (Hexadecimal encoding):
          * Microsoft mediafiles: 3026b275 8e66cf11 a6d900aa 0062ce6c
          * Real mediafiles: .rmf or 2e524d46, 2e7261fd ?
