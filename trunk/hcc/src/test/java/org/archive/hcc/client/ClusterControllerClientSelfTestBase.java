@@ -19,11 +19,15 @@ public class ClusterControllerClientSelfTestBase
     protected void setUp() throws Exception {
         super.setUp();
         new ClusterControllerBean().init();
+        ClusterControllerClientManager.resetDefaultClient();
+
         cc = ClusterControllerClientManager.getDefaultClient();
+        
     }
 
     protected void tearDown() throws Exception {
         super.tearDown();
+        cc.destroyAllCrawlers();
         cc.destroy();
     }
     

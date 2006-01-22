@@ -433,6 +433,22 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
     }
     
 
+    public void destroyAllCrawlers() throws ClusterException{
+        try {
+            ObjectName parent = (ObjectName) this.connection.invoke(
+                    this.name,
+                    "destroyAllCrawlers",
+                    new Object[] {},
+                    new String[] {});
+
+           
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ClusterException(e);
+        }
+    }
+
+    
     public Crawler findCrawlJobParent(String uid, InetSocketAddress address) 
         throws ClusterException {
         return findCrawlJobParentInternal(uid, address);

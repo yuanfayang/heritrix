@@ -38,7 +38,7 @@ public class ClusterControllerClientImplSelfTest
 
             try {
                 assertTrue(l.crawlerCreatedLatch.await(
-                        10 * 1000,
+                        20 * 1000,
                         TimeUnit.MILLISECONDS));
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -49,14 +49,14 @@ public class ClusterControllerClientImplSelfTest
             c.destroy();
             try {
                 assertTrue(l.crawlerDestroyedLatch.await(
-                        10 * 1000,
+                		20 * 1000,
                         TimeUnit.MILLISECONDS));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
             assertEquals(c, l.c);
-
+            
         } catch (ClusterException e) {
             e.printStackTrace();
             assertFalse(true);
@@ -68,7 +68,7 @@ public class ClusterControllerClientImplSelfTest
     public void testCreateMultipleCrawlersInRapidSuccession() {
         final List<Crawler> crawlers = new LinkedList<Crawler>();
         
-        final CountDownLatch createdLatch = new CountDownLatch(20);
+        final CountDownLatch createdLatch = new CountDownLatch(10);
         final CountDownLatch destroyedLatch = new CountDownLatch((int)createdLatch.getCount());
         
         class MyListener implements CrawlerLifecycleListener{
@@ -94,7 +94,7 @@ public class ClusterControllerClientImplSelfTest
         MyListener l = new MyListener();
         try {
             cc.addCrawlerLifecycleListener(l);
-
+            int currentCount = cc.listCrawlers().size();
             int count = (int)createdLatch.getCount();
             for(int i = 0; i < count; i++){
                 Crawler c = cc.createCrawler();
@@ -102,7 +102,7 @@ public class ClusterControllerClientImplSelfTest
 
             try {
                 assertTrue(createdLatch.await(
-                        30 * 1000,
+                        60 * 1000,
                         TimeUnit.MILLISECONDS));
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -122,6 +122,7 @@ public class ClusterControllerClientImplSelfTest
                 e.printStackTrace();
             }
             
+            assertEquals(currentCount, cc.listCrawlers().size());
 
             
         } catch (ClusterException e) {
@@ -278,6 +279,15 @@ public class ClusterControllerClientImplSelfTest
         } finally {
             cc.removeCrawlerLifecycleListener(l);
             cc.removeCrawlJobListener(l);
+            
+            try {
+				for(Crawler c :cc.listCrawlers()){
+				    c.destroy();
+				}
+			} catch (ClusterException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
     }
 

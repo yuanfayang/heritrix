@@ -85,7 +85,7 @@ public class ClusterControllerClientManager {
      * Removes the manager's reference to the default client for use with unit
      * tests.
      */
-    public static void resetDefaultClient() {
+    static void resetDefaultClient() {
         defaultClient = null;
     }
 

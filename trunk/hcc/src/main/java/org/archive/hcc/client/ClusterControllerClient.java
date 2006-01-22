@@ -50,6 +50,13 @@ public interface ClusterControllerClient {
      */
     public Collection<Crawler> listCrawlers() throws ClusterException;
     
+    
+    /**
+     * Issues destroy commands to all the crawlers managed by the controller.
+     * @throws ClusterException
+     */
+    public void destroyAllCrawlers() throws ClusterException;
+    
     /**
      * Destroys the cluster controller bean which the client is communicating with.
 	 * It doesn't actually affect any objects within the cluster - ie containers,
