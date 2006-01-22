@@ -27,7 +27,7 @@ public class ClusterControllerClientSelfTestBase
 
     protected void tearDown() throws Exception {
         super.tearDown();
-        cc.destroyAllCrawlers();
+        //cc.destroyAllCrawlers();
         cc.destroy();
     }
     

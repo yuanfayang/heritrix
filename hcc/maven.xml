@@ -39,7 +39,7 @@
 	<java fork="true" verbose="true"  jar="${env.HERITRIX_HOME}/bin/cmdline-jmxclient-0.10.5.jar">
 		<arg line="controlRole:letmein"/>
 		<arg line="localhost:8849"/>
-		<arg line="org.archive.crawler:guiport=9080,host=localhost,jmxport=8849,name=Heritrix,type=CrawlService"/>
+		<arg line="org.archive.crawler:guiport=9080,host=${env.HOSTNAME},jmxport=8849,name=Heritrix,type=CrawlService"/>
 		<arg line="shutdown"/>
 	</java>	
 
@@ -55,7 +55,7 @@
  </goal>
  
  <goal name="run-self-tests">
- 	<junit printsummary="true" fork="true">
+ 	<junit verbose="true" printsummary="true" >
 		<jvmarg value="-Djava.naming.factory.initial=org.jnp.interfaces.NamingContextFactory"/>
 		<jvmarg value="-Djava.naming.provider.url=jnp://localhost:1099"/>
 		<jvmarg value="-Djava.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces"/>
@@ -66,19 +66,21 @@
 						
 			
 		<formatter type="plain"/>
-		  <classpath>
-		    <pathelement location="target/test-classes"/>
-		    <pathelement location="target/classes"/>
-	    	<fileset dir="${env.JBOSS_HOME}/client" includes="*.jar"/>
-		  </classpath>
+		
+	  <classpath>
+	    <pathelement location="${maven.build.dir}/classes"/>
+	    <pathelement location="${maven.build.dir}/test-classes"/>
+    	<fileset dir="${env.JBOSS_HOME}/client" includes="*.jar"/>
+	  </classpath>
 
- 		<batchtest todir="target/test-reports">
+ 		<batchtest todir="${maven.build.dir}/test-reports" fork="true">
  			
 	 		<fileset dir="src/test/java">
 			    <include name="**/*SelfTest.java"/>
 			</fileset>
  		</batchtest>
  	</junit>
+
  	</goal>
 
     <goal name="site:update-sourceforge"
