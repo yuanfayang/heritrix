@@ -23,6 +23,7 @@ public class CrawlerImplSelfTest
 
     protected void tearDown() throws Exception {
         c.destroy();
+        Thread.sleep(5*1000);
         super.tearDown();
         c = null;
 

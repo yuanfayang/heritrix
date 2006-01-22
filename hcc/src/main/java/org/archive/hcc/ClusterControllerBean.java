@@ -297,7 +297,9 @@ public class ClusterControllerBean implements
             return null;
         }
 
-        for (Crawler crawler : container.getCrawlers()) {
+        List<Crawler> crawlers = 
+        	new LinkedList<Crawler>(container.getCrawlers());
+        for (Crawler crawler : crawlers) {
             DynamicMBean p = crawler.getCrawlServiceProxy();
             try {
 
@@ -444,6 +446,18 @@ public class ClusterControllerBean implements
                             new ArrayType(1, SimpleType.OBJECTNAME),
                             OpenMBeanOperationInfoSupport.INFO)));
 
+
+            addOperation(new SimpleReflectingMBeanOperation(
+                    ClusterControllerBean.this,
+                    new OpenMBeanOperationInfoSupport(
+                            "destroyAllCrawlers",
+                            "destroys all crawlers that are managed by the cluster" +
+                            " controller",
+                            null,
+                            SimpleType.VOID,
+                            OpenMBeanOperationInfoSupport.ACTION)));
+
+            
             addOperation(new SimpleReflectingMBeanOperation(
                     ClusterControllerBean.this,
                     new OpenMBeanOperationInfoSupport(
@@ -500,6 +514,23 @@ public class ClusterControllerBean implements
             count++;
         }
         return crawlers;
+    }
+    
+    public void destroyAllCrawlers(){
+    	List<Crawler> list = 
+    		new LinkedList<Crawler>(this.remoteNameToCrawlerMap.values());
+    	for(Crawler c : list){
+    		try {
+				c.getCrawlServiceProxy().invoke("destroy", new Object[0], new String[0]);
+			} catch (MBeanException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ReflectionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    	
     }
 
     private void addOperation(MBeanOperation operation) {
