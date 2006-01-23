@@ -24,8 +24,6 @@
  */
 package org.archive.configuration;
 
-import java.util.Map;
-
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
@@ -62,17 +60,51 @@ public class Reference  {
         }
     }
     
+    private final CompositeData compositeData;
+    
     /**
      * Shutdown constructor so no accidental instantiation of Reference.
      */
     private Reference() {
-        super();
+        this((CompositeData)null);
     }
     
-    public static CompositeData get(final ObjectName on)
+    public Reference(final ObjectName on) throws OpenDataException {
+        this(create(on));
+    }
+    
+    public Reference(final CompositeData cd) {
+        super();
+        this.compositeData = cd;
+    }
+    
+    public CompositeData getCompositeData() {
+        return this.compositeData;
+    }
+    
+    protected static CompositeData create(final ObjectName on)
     throws OpenDataException {
+        if (on == null) {
+            throw new NullPointerException("Can't pass null ObjectName");
+        }
         return new CompositeDataSupport(COMPOSITE_TYPE, KEYS,
             new String [] {on.getDomain(),
                 on.getCanonicalKeyPropertyListString()});
+    }
+    
+    /**
+     * Test if a CompositeData is a Reference.
+     * @param cd CompositeData to test.
+     * @return True if a reference.
+     */
+    public static boolean isReference(final CompositeData cd) {
+        boolean result = true;
+        for (int i = 0; i < KEYS.length; i++) {
+            if (!cd.containsKey(KEYS[i])) {
+                result = false;
+                break;
+            }
+        }
+        return result;
     }
 }

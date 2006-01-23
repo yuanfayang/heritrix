@@ -725,7 +725,6 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         }
         try {
             this.mbeanServer.unregisterMBean(this.mbeanName);
-            this.mbeanName = null;
             this.mbeanServer = null;
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed with " + this.mbeanName, e);
@@ -2083,6 +2082,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             logger.info(JmxUtils.getLogUnregistrationMsg(
                     this.mbeanName.getCanonicalName(), this.mbeanServer));
         }
+        this.mbeanName = null;
     }
     
     /**

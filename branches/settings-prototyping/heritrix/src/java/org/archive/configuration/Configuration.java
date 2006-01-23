@@ -73,7 +73,7 @@ implements DynamicMBean, MBeanRegistration {
     private final static Logger LOGGER =
         Logger.getLogger(Configuration.class.getName());
     
-    private static final String NONEXPERT_OPERATION = "nonexpert";
+    private static final String NON_EXPERT_OPERATION = "nonexpert";
     private static final String OVERRIDEABLE_OPERATION = "overrideable";
     protected static final Object [] TRUE_FALSE_LEGAL_VALUES =
         new Object [] {Boolean.TRUE, Boolean.FALSE};
@@ -106,43 +106,59 @@ implements DynamicMBean, MBeanRegistration {
     
     /**
      * List of all attribute names.
-     * Make it protected so accessible in subclass constructors.
      * Make it an ArrayList rather than just a List so have an
      * 'addAll' operation to bulk add attribute names.
      */
-    protected ArrayList attributeNames = null;
+    private ArrayList attributeNames = null;
     
-    private List operationNames = null;
+    private ArrayList operationNames = null;
    
     private MBeanInfo mbeanInfo = null;
     
-    
     public Configuration() throws OpenDataException {
+        this(new ArrayList(Arrays.asList(new String [] {ENABLED_ATTRIBUTE})),
+            new ArrayList(Arrays.asList(new String [] {
+                NON_EXPERT_OPERATION, OVERRIDEABLE_OPERATION})));
+    }
+    
+    public Configuration(ArrayList attributeNames, ArrayList operationNames)
+    throws OpenDataException {
+        this(attributeNames, operationNames, null, attributeNames);
+    }
+    
+    public Configuration(ArrayList attributeNames, ArrayList operationNames,
+            final List expert, final List overrideableAttributes)
+    throws OpenDataException {
         super();
-        this.attributeNames =
-            new ArrayList(Arrays.asList(new String [] {ENABLED_ATTRIBUTE}));
-        this.nonexpert = getNonexpert();
-        this.overrideables = getOverrideable();
-        this.operationNames = Arrays.asList(new String [] {
-            NONEXPERT_OPERATION, OVERRIDEABLE_OPERATION});
+        this.attributeNames = attributeNames;
+        this.operationNames = operationNames;
         this.mbeanInfo = createMBeanInfo(this.getClass().getName(),
-            "Base abstract settings instance.");
+            "Base abstract configuration instance.");
+        this.nonexpert = (List)this.attributeNames.clone();
+        if (expert != null && expert.size() > 0) {
+            this.nonexpert.removeAll(expert);
+        }
+        this.overrideables =
+            (overrideableAttributes != null &&
+                overrideableAttributes.size() > 0)?
+                    overrideableAttributes:
+                    (List)this.attributeNames.clone();
     }
     
     protected List getAttributeNames() {
         return this.attributeNames;
     }
-   
-    protected List getNonexpert() {
-        return getAttributeNames();
-    }
-    
-    protected List getOverrideable() {
-        return getAttributeNames();
-    }
     
     protected List getOperationNames() {
         return this.operationNames;
+    }
+
+    protected List getNonexpert() {
+        return this.nonexpert;
+    }
+    
+    protected List getOverrideable() {
+        return this.overrideables;
     }
     
     /**
@@ -173,7 +189,7 @@ implements DynamicMBean, MBeanRegistration {
     throws OpenDataException {
         List attributes = addAttributes(new ArrayList());
         // Need to precreate the array of OpenMBeanAttributeInfos and
-        // pass this to attributes.toArray because can't case an Object []
+        // pass this to attributes.toArray because can't cast an Object []
         // array to array of OpenMBeanAttributeInfos without CCE.
         OpenMBeanAttributeInfo [] ombai =
             new OpenMBeanAttributeInfo[attributes.size()];
@@ -183,9 +199,11 @@ implements DynamicMBean, MBeanRegistration {
     
     protected List addAttributes(final List attributes)
     throws OpenDataException {
-        attributes.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
-            "Enabled if true", SimpleType.BOOLEAN,
-            true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
+        if (this.attributeNames.contains(ENABLED_ATTRIBUTE)) {
+            attributes.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
+                "Enabled if true", SimpleType.BOOLEAN,
+                true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
+        }
         return attributes;
     }
     
@@ -195,10 +213,17 @@ implements DynamicMBean, MBeanRegistration {
      */
     protected OpenMBeanOperationInfo[] createOperationInfo()
     throws OpenDataException {
-        List operations = new ArrayList();
-        if (this.operationNames.contains(NONEXPERT_OPERATION)) {
+        List operations = addOperations(new ArrayList());
+        OpenMBeanOperationInfo[] omboi =
+            new OpenMBeanOperationInfo[operations.size()];
+        operations.toArray(omboi);
+        return omboi;
+    }
+    
+    protected List addOperations(ArrayList operations) {
+        if (this.operationNames.contains(NON_EXPERT_OPERATION)) {
             operations.add(new OpenMBeanOperationInfoSupport(
-                NONEXPERT_OPERATION, "List of all nonexpert Attributes",
+                NON_EXPERT_OPERATION, "List of all nonexpert Attributes",
                 null, STR_ARRAY_TYPE, MBeanOperationInfo.INFO));
         }
         if (this.operationNames.contains(OVERRIDEABLE_OPERATION)) {
@@ -207,10 +232,7 @@ implements DynamicMBean, MBeanRegistration {
                 "List of all overrideable Attributes", null,
                 STR_ARRAY_TYPE, MBeanOperationInfo.INFO));
         }
-        OpenMBeanOperationInfo[] omboi =
-            new OpenMBeanOperationInfo[operations.size()];
-        operations.toArray(omboi);
-        return omboi;
+        return operations;
     }
     
     protected void checkValidAttributeName(final String attributeName)
@@ -310,7 +332,7 @@ implements DynamicMBean, MBeanRegistration {
                 new RuntimeException(actionName + " unknown operation"));
         }
         // Assume nonexpert... implement. TODO.
-        return this.nonexpert.toArray();
+        return getNonexpert().toArray();
     }
 
     public MBeanInfo getMBeanInfo() {

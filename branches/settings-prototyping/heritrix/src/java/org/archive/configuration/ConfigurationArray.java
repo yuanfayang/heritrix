@@ -50,7 +50,8 @@ public abstract class ConfigurationArray extends Configuration {
     
     public ConfigurationArray() throws OpenDataException {
         super();
-        this.attributeNames.addAll(ATTRIBUTE_NAMES);
+        // Add my attributes to those of the base.
+        getAttributeNames().addAll(ATTRIBUTE_NAMES);
     }
     
     protected List addAttributes(List attributes)
@@ -68,7 +69,14 @@ public abstract class ConfigurationArray extends Configuration {
         return "Ordered list";
     }
     
-    protected abstract ArrayType getArrayType() throws OpenDataException;
+    /**
+     * Has to be one of the OpenMBean types if its to show up as
+     * other than 'unknown' in a remote JMX client.
+     * @return The ArrayType for this ConfigurationArray.
+     * @throws OpenDataException
+     */
+    protected abstract ArrayType getArrayType()
+    throws OpenDataException;
     
     public Object getAttribute(String attributeName)
     throws AttributeNotFoundException, MBeanException, ReflectionException {
