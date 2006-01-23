@@ -35,8 +35,13 @@ import javax.management.openmbean.SimpleType;
 /**
  * Utility class to build References.
  * Creates pointers back into the registry.
- * Tried to do as subclass of CompositeDataSupport but then in remote client,
- * the resultant Reference composite is unrecognizable.
+ * Based on OpenMBean CompositeType.
+ * <p>Tried to do as subclass of CompositeDataSupport but then in remote
+ * client, the resultant Reference composite is unrecognizable. Means
+ * have to always register CompositeData rather than Reference and
+ * that ConfigurationArrays should be Arrays of CompositeData rather
+ * than Reference.  Added a {@link Reference#isReference(CompositeData)}
+ * to test CompositeData for Reference.
  * @author stack
  * @version $Date$ $Revision$
  */
