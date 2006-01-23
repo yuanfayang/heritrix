@@ -35,8 +35,6 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.ArrayType;
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.OpenDataException;
 
 import junit.framework.TestCase;
@@ -80,8 +78,10 @@ public class JmxRegistryHandlerTest extends TestCase {
         Object[] references = null;
         try {
             references = new Object[] {
-                Reference.get(new ObjectName("org.archive.1", ht)),
-                Reference.get(new ObjectName("org.archive.2", ht))};
+                new Reference(new ObjectName("org.archive.1", ht)).
+                    getCompositeData(),
+                new Reference(new ObjectName("org.archive.2", ht)).
+                    getCompositeData()};
         } catch (OpenDataException e) {
             e.printStackTrace();
         } catch (MalformedObjectNameException e) {
@@ -113,6 +113,9 @@ public class JmxRegistryHandlerTest extends TestCase {
 
     protected void tearDown() throws Exception {
         super.tearDown();
+        if (this.handler !=  null && this.configurations != null) {
+            this.handler.deregister(this.configurations);
+        }
         if (this.handler !=  null && this.baseInstanceReference != null) {
             this.handler.deregister(this.baseInstanceReference);
         }
