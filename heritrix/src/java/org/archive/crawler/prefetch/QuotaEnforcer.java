@@ -167,45 +167,45 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
             "Default is -1, meaning no limit.";
         // server successes
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_FETCH_SUCCESSES,
-            maxFetchSuccessesDesc.replace("$CATEGORY","server"),
+            maxFetchSuccessesDesc.replaceAll("$CATEGORY","server"),
             DEFAULT_SERVER_MAX_FETCH_SUCCESSES));
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_SUCCESS_KB,
-            maxSuccessKbDesc.replace("$CATEGORY","server"),
+            maxSuccessKbDesc.replaceAll("$CATEGORY","server"),
             DEFAULT_SERVER_MAX_SUCCESS_KB));
         // server all-responses
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_FETCH_RESPONSES,
-            maxFetchResponsesDesc.replace("$CATEGORY","server"),
+            maxFetchResponsesDesc.replaceAll("$CATEGORY","server"),
             DEFAULT_SERVER_MAX_FETCH_RESPONSES));
         addElementToDefinition(new SimpleType(ATTR_SERVER_MAX_ALL_KB,
-            maxAllKbDesc.replace("$CATEGORY","server"),
+            maxAllKbDesc.replaceAll("$CATEGORY","server"),
             DEFAULT_SERVER_MAX_ALL_KB));
         // host successes
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_FETCH_SUCCESSES,
-            maxFetchSuccessesDesc.replace("$CATEGORY","host"),
+            maxFetchSuccessesDesc.replaceAll("$CATEGORY","host"),
             DEFAULT_HOST_MAX_FETCH_SUCCESSES));
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_SUCCESS_KB,
-            maxSuccessKbDesc.replace("$CATEGORY","host"),
+            maxSuccessKbDesc.replaceAll("$CATEGORY","host"),
             DEFAULT_HOST_MAX_SUCCESS_KB));
         // host all-responses
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_FETCH_RESPONSES,
-            maxFetchResponsesDesc.replace("$CATEGORY","host"),
+            maxFetchResponsesDesc.replaceAll("$CATEGORY","host"),
             DEFAULT_HOST_MAX_FETCH_RESPONSES));
         addElementToDefinition(new SimpleType(ATTR_HOST_MAX_ALL_KB,
-            maxAllKbDesc.replace("$CATEGORY","host"),
+            maxAllKbDesc.replaceAll("$CATEGORY","host"),
             DEFAULT_HOST_MAX_ALL_KB));        
         // group successes
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_FETCH_SUCCESSES,
-            maxFetchSuccessesDesc.replace("$CATEGORY","group (queue)"),
+            maxFetchSuccessesDesc.replaceAll("$CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_FETCH_SUCCESSES));
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_SUCCESS_KB,
-            maxSuccessKbDesc.replace("$CATEGORY","group (queue)"),
+            maxSuccessKbDesc.replaceAll("$CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_SUCCESS_KB));
         // group all-responses
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_FETCH_RESPONSES,
-            maxFetchResponsesDesc.replace("$CATEGORY","group (queue)"),
+            maxFetchResponsesDesc.replaceAll("$CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_FETCH_RESPONSES));
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_ALL_KB,
-            maxAllKbDesc.replace("$CATEGORY","group (queue)"),
+            maxAllKbDesc.replaceAll("$CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_ALL_KB));  
     }
     
