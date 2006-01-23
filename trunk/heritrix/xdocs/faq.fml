@@ -102,12 +102,12 @@
         on windows -- See <a href="requirements.html">requirements</a> -- 
         mostly because we don't have the resources
         to support any more than the linux platform we use internally
-        at the Internet Archive.  That said, here is a pointer to
-        a <a 
-        href="http://groups.yahoo.com/group/archive-crawler/message/2072">bat
-        script</a> and some discussion of issues running on windows xp
-        that should get you going (provided by Subramanya C R).
-        Also see <a 
+        at the Internet Archive.  That said, <code>bat</code> scripts that
+        load jars in the right order have been pasted to the mailing list
+        (Here is one <a 
+        href="http://groups.yahoo.com/group/archive-crawler/message/2072">2072</a> and  here is another, 
+        <a href="http://groups.yahoo.com/group/archive-crawler/message/2576">2576</a>), and some discussion of issues running on windows XP
+        has been provided by Subramanya C R.  Also see <a 
     href="http://groups.yahoo.com/group/archive-crawler/message/2085">2085</a>
         and the items below that pertain to windows:
         <a href="#windowsstart">dns</a> and <a  href="#windowsmkdir">mkdir</a>.
