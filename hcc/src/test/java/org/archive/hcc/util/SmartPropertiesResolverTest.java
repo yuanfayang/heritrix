@@ -14,7 +14,7 @@ public class SmartPropertiesResolverTest extends TestCase {
 		try{
 		SmartPropertiesResolver.getProperties("/org/archive/hcc/util/test-not-found.properties");
 		assertTrue(false);
-		}catch(Error e){
+		}catch(Throwable e){
 			assertTrue(true);
 		}
 	}
@@ -29,7 +29,7 @@ public class SmartPropertiesResolverTest extends TestCase {
 				
 				SmartPropertiesResolver.getProperties("/org/archive/hcc/util/myTest.properties");
 				assertTrue(true);
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				e.printStackTrace();
 
 				assertFalse(true);
