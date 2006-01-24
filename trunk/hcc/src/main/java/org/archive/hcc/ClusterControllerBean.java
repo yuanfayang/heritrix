@@ -64,6 +64,7 @@ import javax.management.NotificationEmitter;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import javax.management.QueryExp;
 import javax.management.ReflectionException;
 import javax.management.openmbean.ArrayType;
 import javax.management.openmbean.CompositeData;
@@ -1353,11 +1354,19 @@ public class ClusterControllerBean implements
                         .getKeyProperty(JmxUtils.NAME));
 
                 try {
-                    Set<ObjectName> jobs = c.queryNames(new ObjectName(
-                            newCrawler.getDomain(),
-                            props), null);
-                    if (jobs.size() > 0) {
-                        addCrawlJob(jobs.iterator().next());
+                	//TODO - design the query to pick up only the one job.
+                    Set<ObjectName> jobs = c.queryNames(null,null);
+                    for(ObjectName job : jobs){
+                        if (JmxUtils.JOB.equals(job.getKeyProperty(JmxUtils.TYPE)) &&
+                        		newCrawler
+                                .getKeyProperty(JmxUtils.NAME).equals(
+                                		job.getKeyProperty(JmxUtils.MOTHER))
+                        		
+                        	) {
+                            addCrawlJob(job);
+                            break;
+                        }
+                    	
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

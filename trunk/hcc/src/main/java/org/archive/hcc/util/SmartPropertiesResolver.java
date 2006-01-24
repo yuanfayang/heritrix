@@ -45,7 +45,7 @@ public class SmartPropertiesResolver {
 				if(!f.exists()){
 					is = SmartPropertiesResolver.class.getResourceAsStream(filePath);
 					if(is == null){
-						throw new Error(new FileNotFoundException("cannot find resource: " + filePath));
+						throw new RuntimeException(new FileNotFoundException("cannot find resource: " + filePath));
 					}
 				}else{
 					is = new FileInputStream(f);
@@ -60,12 +60,11 @@ public class SmartPropertiesResolver {
 				return p;
 
 			}catch(Exception e){
-				e.printStackTrace();
 
 				if(log.isLoggable(Level.SEVERE)){
 					log.severe("Failed to load property file: " + (f.exists()?f.getAbsolutePath():filePath) + "; message=" + e.getMessage());
 				}
-				throw new Error(e);
+				throw new RuntimeException(e);
 
 			}
 		}
@@ -73,7 +72,7 @@ public class SmartPropertiesResolver {
 		if(log.isLoggable(Level.SEVERE))
 			log.severe("Neither File (" + filePath + ")  not found anywhere.");
 
-		throw new Error(new FileNotFoundException(filePath));
+		throw new RuntimeException(new FileNotFoundException(filePath));
 			
 		
 	}
