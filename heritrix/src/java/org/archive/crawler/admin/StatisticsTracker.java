@@ -284,7 +284,9 @@ implements CrawlURIDispositionListener, Serializable {
             }
         }
 
-        this.controller.logProgressStatistics(getProgressStatisticsLine());
+        if (this.controller != null) {
+            this.controller.logProgressStatistics(getProgressStatisticsLine());
+        }
         lastLogPointTime = System.currentTimeMillis();
         super.progressStatisticsEvent(e);
     }
