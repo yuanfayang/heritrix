@@ -2064,7 +2064,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         Heritrix h = getHostingHeritrix();
         if (h == null || h.getMBeanName() == null) {
             throw new IllegalArgumentException("Hosting heritrix not found " +
-                "or not registered with JMX");
+                "or not registered with JMX: " + on.getCanonicalName());
         }
         Map hht = h.getMBeanName().getKeyPropertyList();
         ht.put(JmxUtils.MOTHER, hht.get(JmxUtils.NAME));
