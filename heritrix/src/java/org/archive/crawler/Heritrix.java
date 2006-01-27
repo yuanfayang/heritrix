@@ -1404,6 +1404,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             deregisterJndi(getJndiContainerName());
         } catch (NameNotFoundException e) {
             // We were probably unbound already. Ignore.
+            logger.log(Level.WARNING, "deregistration of jndi", e);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -2189,7 +2190,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             ht.put(JmxUtils.TYPE, JmxUtils.SERVICE);
             name = new ObjectName(name.getDomain(), ht);
         }
-        this.mbeanName = addVitals(name);
+        this.mbeanName = addGuiPort(addVitals(name));
         Heritrix.instances.put(this.mbeanName.
             getCanonicalKeyPropertyListString(), this);
         return this.mbeanName;
@@ -2222,6 +2223,12 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 name = new ObjectName(name.getDomain(), ht);
             }
         }
+        return name;
+    }
+    
+    protected static ObjectName addGuiPort(ObjectName name)
+    throws MalformedObjectNameException, NullPointerException {
+        Hashtable ht = name.getKeyPropertyList();
         if (!ht.containsKey(JmxUtils.GUI_PORT)) {
             // Add gui port if this instance was started with a gui.
             if (Heritrix.gui) {
