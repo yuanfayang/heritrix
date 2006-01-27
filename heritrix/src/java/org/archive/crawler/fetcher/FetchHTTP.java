@@ -76,6 +76,7 @@ import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CredentialStore;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.datamodel.ServerCache;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
@@ -422,7 +423,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         long hardMax = getMaxLength(curi);
 
         try {
-            if (!((HttpMethodBase)method).isAborted()) {
+            if (!method.isAborted()) {
                 // Force read-to-end, so that any socket hangs occur here,
                 // not in later modules.
                 rec.getRecordedInput().readFullyOrUntil(softMax,
@@ -956,8 +957,6 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     }
     
     public void finalTasks() {
-        // Release all associated resources.
-        HeritrixProtocolSocketFactory.cleanup();
         // At the end save cookies to the file specified in the order file.
         saveCookies();
         cleanupHttp();
@@ -1006,9 +1005,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         
         // Use our own protocol factory, one that gets IP to use from
         // heritrix cache (They're cached in CrawlHost instances).
+        final ServerCache cache = getController().getServerCache();
         Protocol.registerProtocol("http", new Protocol("http",
-            HeritrixProtocolSocketFactory.getSocketFactory(), 80));
-        HeritrixProtocolSocketFactory.initialize(getController());
+            new HeritrixProtocolSocketFactory(cache), 80));
 
         // Put in place a configurable trustmanager as well.  This
         // below https protocol handler also depends on
@@ -1016,10 +1015,10 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // its getHostAddress to get host IPs from heritrix cache.
         try {
             String trustLevel = (String) getAttribute(ATTR_TRUST);
-            Protocol.registerProtocol("https", new Protocol("https",
-                ((ProtocolSocketFactory)
-                    new HeritrixSSLProtocolSocketFactory(
-                        trustLevel)), 443));
+            Protocol.registerProtocol("https",
+                new Protocol("https", ((ProtocolSocketFactory)
+                    new HeritrixSSLProtocolSocketFactory(cache, trustLevel)),
+                        443));
         } catch (Exception e) {
             // Convert all to RuntimeException so get an exception out if
             // initialization fails.
