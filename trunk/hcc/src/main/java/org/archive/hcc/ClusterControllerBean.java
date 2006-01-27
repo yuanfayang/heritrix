@@ -25,7 +25,6 @@ package org.archive.hcc;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -33,6 +32,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -64,7 +64,6 @@ import javax.management.NotificationEmitter;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
-import javax.management.QueryExp;
 import javax.management.ReflectionException;
 import javax.management.openmbean.ArrayType;
 import javax.management.openmbean.CompositeData;
@@ -84,8 +83,8 @@ import javax.naming.NameClassPair;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 
-import org.archive.hcc.util.ClusterControllerNotification;
 import org.archive.hcc.util.NotificationDelegator;
+import org.archive.hcc.util.SmartPropertiesResolver;
 import org.archive.hcc.util.Delegator.DelegatorPolicy;
 import org.archive.hcc.util.jmx.MBeanFutureTask;
 import org.archive.hcc.util.jmx.MBeanOperation;
@@ -181,6 +180,11 @@ public class ClusterControllerBean implements
      * remote Heritrix instances and the heritrix cluster controller.
      */
     private NotificationListener spyListener;
+    
+    /**
+     * Upperbound on crawlers per container.
+     */
+    private int maxPerContainer = 1;
 
     /**
      * Creates a cluster controller bean. This object uses a two step
@@ -402,6 +406,9 @@ public class ClusterControllerBean implements
         Container leastLoaded = null;
 
         for (Container n : this.containers.values()) {
+            if (n.getCrawlers().size() >= this.maxPerContainer) {
+                continue;
+            }
             if (leastLoaded == null) {
                 leastLoaded = n;
             }
@@ -575,6 +582,13 @@ public class ClusterControllerBean implements
      */
     public void init() {
         try {
+            Properties p =
+                SmartPropertiesResolver.getProperties("hcc.properties");
+            this.maxPerContainer = Integer.parseInt(
+                p.getProperty(ClusterControllerBean.class.getName() +
+                    ".maxPerContainer", "1"));
+            log.info("maxPerContainer setting: " + this.maxPerContainer);
+            
             context = JndiUtils.getSubContext("org.archive.crawler");
             this.name = new ObjectName("org.archive.hcc:"
                     + "type=ClusterControllerBean"
