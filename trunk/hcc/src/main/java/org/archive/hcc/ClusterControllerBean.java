@@ -83,6 +83,7 @@ import javax.naming.NameClassPair;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 
+import org.archive.hcc.util.ClusterControllerNotification;
 import org.archive.hcc.util.NotificationDelegator;
 import org.archive.hcc.util.SmartPropertiesResolver;
 import org.archive.hcc.util.Delegator.DelegatorPolicy;
