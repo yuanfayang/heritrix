@@ -22,6 +22,7 @@
  */
 package org.archive.httpclient;
 
+import java.io.File;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -29,16 +30,18 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Logger;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.protocol.Protocol;
-import org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
-import org.archive.crawler.fetcher.*;
+import org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory;
+import org.archive.crawler.datamodel.ServerCache;
+import org.archive.crawler.fetcher.HeritrixSSLProtocolSocketFactory;
+import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.util.TmpDirTestCase;
 
 /**
  * Test configurable trust.
@@ -60,8 +63,7 @@ import org.archive.crawler.fetcher.*;
  * @author stack
  * @version $Id$
  */
-public class ConfigurableX509TrustManagerTest extends TestCase
-{
+public class ConfigurableX509TrustManagerTest extends TmpDirTestCase {
     /**
      * Logging instance.
      */
@@ -148,11 +150,20 @@ public class ConfigurableX509TrustManagerTest extends TestCase
         // "https://wwwmil.kadena.af.mil/18ceg/718/house.asp",
     };
 
+    private ServerCache cache = null;
+
     /**
      * @param test Name of the test to run.
      */
     public ConfigurableX509TrustManagerTest(String test) {
         super(test);
+    }
+    
+    protected void setUp() throws Exception {
+        // TODO Auto-generated method stub
+        super.setUp();
+        this.cache  = new ServerCache(new XMLSettingsHandler(
+            new File(getTmpDir(), "order.xml")));
     }
 
     /**
@@ -195,14 +206,10 @@ public class ConfigurableX509TrustManagerTest extends TestCase
 
     /**
      * Test the configurable trust manager set to OPEN.
-     *
-     * @throws KeyManagementException
-     * @throws KeyStoreException
-     * @throws NoSuchAlgorithmException
+     * @throws Exception 
      */
     public void testOpenConfigurableX509TrustManagerTest()
-    throws KeyManagementException, KeyStoreException,
-            NoSuchAlgorithmException {
+    throws Exception {
         HttpClient client = new HttpClient();
         Protocol.registerProtocol("https",
             new Protocol("https",
@@ -212,7 +219,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
         Protocol.registerProtocol("https",
             new Protocol("https",
                 (ProtocolSocketFactory)
-                    (new HeritrixSSLProtocolSocketFactory(
+                    (new HeritrixSSLProtocolSocketFactory(this.cache,
                         ConfigurableX509TrustManager.OPEN)), 443));
         runURLs(client, OPEN_URLS, false);
     }
@@ -237,7 +244,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
         Protocol.registerProtocol("https",
            new Protocol("https",
                 (ProtocolSocketFactory)
-                    (new HeritrixSSLProtocolSocketFactory(
+                    (new HeritrixSSLProtocolSocketFactory(this.cache,
            		        ConfigurableX509TrustManager.LOOSE)), 443));
         runURLs(client, LOOSE_URLS, false);
     }
@@ -268,7 +275,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
         Protocol.registerProtocol("https",
            new Protocol("https",
                 ((ProtocolSocketFactory)
-                    new HeritrixSSLProtocolSocketFactory(
+                    new HeritrixSSLProtocolSocketFactory(this.cache,
            		    ConfigurableX509TrustManager.NORMAL)), 443));
         runURLs(client, OPEN_URLS, true);
     }
@@ -305,7 +312,7 @@ public class ConfigurableX509TrustManagerTest extends TestCase
         Protocol.registerProtocol("https",
            new Protocol("https",
                 ((ProtocolSocketFactory)
-                    new HeritrixSSLProtocolSocketFactory(
+                    new HeritrixSSLProtocolSocketFactory(this.cache,
            		    ConfigurableX509TrustManager.NORMAL)), 443));
         // TODO: Set the javax.net.ssl.trustStore before calling next method.
         // See org.archive.crawler.Heritrix#configureTrustStore().

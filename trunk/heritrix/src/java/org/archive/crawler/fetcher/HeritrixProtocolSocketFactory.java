@@ -33,7 +33,7 @@ import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.archive.crawler.datamodel.CrawlHost;
-import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.datamodel.ServerCache;
 
 
 /**
@@ -48,24 +48,10 @@ import org.archive.crawler.framework.CrawlController;
  */
 public class HeritrixProtocolSocketFactory
 implements ProtocolSocketFactory {
-    /**
-     * The factory singleton.
-     */
-    private static final HeritrixProtocolSocketFactory factory =
-        new HeritrixProtocolSocketFactory();
-    
-    /**
-     * A crawlcontroller instance.
-     * 
-     * Used to get at cache of IPs.
-     */
-	private static CrawlController controller;
+	private ServerCache cache;
 
-    /**
-     * @return a ProtocolSocketFactory
-     */
-    public static ProtocolSocketFactory getSocketFactory() {
-        return factory;
+    public HeritrixProtocolSocketFactory(final ServerCache c) {
+        this.cache = c;
     }
     
     /**
@@ -74,24 +60,6 @@ implements ProtocolSocketFactory {
      */
     private HeritrixProtocolSocketFactory() {
         super();
-    }
-    
-    /**
-     * Initialize this factory.
-     * Must be answered by a call to {@link #cleanup} so we can release
-     * referenced resources.
-     * @param c A crawlcontroller instance.
-     */
-    public static void initialize(CrawlController c) {
-    	    controller = c;
-    }
-    
-    /**
-     * Cleanup this factory.
-     * Call when done with this factory.  Releases any held references.
-     */
-    public static void cleanup() {
-        controller = null;
     }
 
     /**
@@ -103,7 +71,7 @@ implements ProtocolSocketFactory {
         InetAddress localAddress,
         int localPort
     ) throws IOException, UnknownHostException {
-        InetAddress hostAddress = getHostAddress(host);
+        InetAddress hostAddress = getHostAddress(this.cache, host);
         // If we didn't get a remoteHost, fall back on the old manner
         // of obtaining a socket.
         return (hostAddress == null)?
@@ -163,7 +131,7 @@ implements ProtocolSocketFactory {
             socket = createSocket(host, port, localAddress, localPort);
         } else {
             socket = new Socket();
-            InetAddress hostAddress = getHostAddress(host);
+            InetAddress hostAddress = getHostAddress(this.cache, host);
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
@@ -183,17 +151,19 @@ implements ProtocolSocketFactory {
      * Get host address using first the heritrix cache of addresses, then,
      * failing that, go to the dnsjava cache.
      * 
-     * Default access so can be used by other classes in this package.
+     * Default access and static so can be used by other classes in this
+     * package.
      *
      * @param host Host whose address we're to fetch.
      * @return an IP address for this host or null if one can't be found
      * in caches.
      * @exception IOException If we fail to get host IP from ServerCache.
      */
-    static InetAddress getHostAddress(String host) throws IOException {
+    static InetAddress getHostAddress(final ServerCache cache,
+            final String host) throws IOException {
         InetAddress result = null;
-        if (controller != null) {
-        	CrawlHost ch = controller.getServerCache().getHostFor(host);
+        if (cache != null) {
+        	CrawlHost ch = cache.getHostFor(host);
             if (ch != null) {
                 result = ch.getIP();
             }
@@ -210,7 +180,7 @@ implements ProtocolSocketFactory {
      */
     public Socket createSocket(String host, int port)
             throws IOException, UnknownHostException {
-        InetAddress hostAddress = getHostAddress(host);
+        InetAddress hostAddress = getHostAddress(this.cache, host);
         // If we didn't get a remoteHost, fall back on the old manner
         // of obtaining a socket.
         return (hostAddress == null)?

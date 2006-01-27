@@ -38,6 +38,7 @@ import javax.net.ssl.TrustManager;
 
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
+import org.archive.crawler.datamodel.ServerCache;
 import org.archive.httpclient.ConfigurableX509TrustManager;
 
 
@@ -49,7 +50,7 @@ import org.archive.httpclient.ConfigurableX509TrustManager;
  * We also go to the heritrix cache to get IPs to use making connection.
  * To this, we have dependency on {@link HeritrixProtocolSocketFactory};
  * its assumed this class and it are used together.
- * See {@link #getHostAddress(String)}.
+ * See {@link HeritrixProtocolSocketFactory#getHostAddress(ServerCache,String)}.
  *
  * @author stack
  * @version $Id$
@@ -57,30 +58,46 @@ import org.archive.httpclient.ConfigurableX509TrustManager;
  */
 public class HeritrixSSLProtocolSocketFactory
 implements SecureProtocolSocketFactory {
-    /**
+    /***
      * Socket factory that has the configurable trust manager installed.
      */
     private SSLSocketFactory sslfactory = null;
-
-
-    public HeritrixSSLProtocolSocketFactory()
+    
+    private final ServerCache cache;
+    
+    /**
+     * Shutdown constructor.
+     * @throws KeyManagementException
+     * @throws KeyStoreException
+     * @throws NoSuchAlgorithmException
+     */
+    private HeritrixSSLProtocolSocketFactory()
     throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException{
-        this(ConfigurableX509TrustManager.DEFAULT);
+        this(null, ConfigurableX509TrustManager.DEFAULT);
+    }
+    
+    public HeritrixSSLProtocolSocketFactory(final ServerCache cache)
+    throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException {
+        this(cache, ConfigurableX509TrustManager.DEFAULT);
     }
 
     /**
      * Constructor.
+     * @param cache Cache to get server instance from.
      *
      * @param level Level of trust to effect.
+     * @throws KeyManagementException 
      *
      * @throws NoSuchAlgorithmException
      * @throws KeyStoreException
      * @see ConfigurableX509TrustManager
      */
-    public HeritrixSSLProtocolSocketFactory(String level)
+    public HeritrixSSLProtocolSocketFactory(final ServerCache cache,
+            final String level)
     throws KeyManagementException, KeyStoreException,
             NoSuchAlgorithmException {
         super();
+        this.cache = cache;
 
         // Get an SSL context and initialize it.
         SSLContext context = SSLContext.getInstance("SSL");
@@ -96,7 +113,8 @@ implements SecureProtocolSocketFactory {
     public Socket createSocket(String host, int port, InetAddress clientHost,
         int clientPort)
     throws IOException, UnknownHostException {
-        InetAddress hostAddress = getHostAddress(host);
+        InetAddress hostAddress =
+            HeritrixProtocolSocketFactory.getHostAddress(this.cache, host);
         return (hostAddress == null)?
             this.sslfactory.createSocket(host, port, clientHost, clientPort):
             this.sslfactory.createSocket(hostAddress, port, clientHost,
@@ -105,7 +123,8 @@ implements SecureProtocolSocketFactory {
 
     public Socket createSocket(String host, int port)
     throws IOException, UnknownHostException {
-        InetAddress hostAddress = getHostAddress(host);
+        InetAddress hostAddress =
+            HeritrixProtocolSocketFactory.getHostAddress(this.cache, host);
         return (hostAddress == null)?
             this.sslfactory.createSocket(host, port):
             this.sslfactory.createSocket(hostAddress, port);
@@ -126,7 +145,8 @@ implements SecureProtocolSocketFactory {
             socket = createSocket(host, port, localAddress, localPort);
         } else {
             socket = this.sslfactory.createSocket();
-            InetAddress hostAddress = getHostAddress(host);
+            InetAddress hostAddress =
+                HeritrixProtocolSocketFactory.getHostAddress(this.cache, host);
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
@@ -155,21 +175,5 @@ implements SecureProtocolSocketFactory {
 
     public int hashCode() {
         return HeritrixSSLProtocolSocketFactory.class.hashCode();
-    }
-    
-    /**
-     * Get host address using first the heritrix cache of addresses, then,
-     * failing that, go to the dnsjava cache.
-     * 
-     * This method is dependent on {@link HeritrixProtocolSocketFactory}.
-     * It must have been configured before this method will work optimally.
-     * 
-     * @param host Host whose address we're to fetch.
-     * @return an IP address for this host or null if one can't be found
-     * in caches.
-     * @exception IOException If we failed to get host from ServerCache.
-     */
-    static InetAddress getHostAddress(String host) throws IOException {
-        return HeritrixProtocolSocketFactory.getHostAddress(host);
     }
 }
