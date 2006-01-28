@@ -2076,8 +2076,14 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         }       
         if (operationName.equals(ALERT_OPER)) {
             JmxUtils.checkParamsCount(ALERT_OPER, params, 1);
-            SinkHandlerLogRecord slr =
-                this.alertManager.get((String)params[0]);
+            SinkHandlerLogRecord slr = null;
+            if (this.alertManager.getCount() > 0) {
+                // This is creating a vector of all alerts just so I can then
+                // use passed index into resultant vector -- needs to be
+                // improved.
+                slr = (SinkHandlerLogRecord)this.alertManager.getAll().
+                    get(((Integer)params[0]).intValue());
+            }
             return (slr != null)? slr.toString(): null;
         }
         
