@@ -37,11 +37,12 @@ class Container {
 
     private Collection<Crawler> crawlers = new LinkedList<Crawler>();
     
-    private int maxInstances = 10;
+    private int maxInstances = 1;
 
-    public Container(ObjectName name) {
+    public Container(ObjectName name, int maxInstances) {
         super();
         this.name = name;
+        this.maxInstances = maxInstances;
     }
 
     public Collection<Crawler> getCrawlers() {
