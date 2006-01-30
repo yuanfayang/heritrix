@@ -28,7 +28,7 @@
 	<classpathentry kind="lib" path="lib/j5compat-0.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/MirrorJNDI-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/libidn-0.5.9.jar"/>
-	<classpathentry kind="lib" path="lib/je-2.0.90.jar"/>
+	<classpathentry kind="lib" path="lib/je-2.1.30.jar"/>
 	<classpathentry kind="lib" path="lib/dsi.unimi.it-1.2.0.jar"/>
 	<classpathentry kind="output" path="target"/>
 </classpath>
