@@ -394,6 +394,12 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 PRIORITY_AVERAGE, null, null, false, true);
         this.jobDir = jobFile.getParentFile();
         
+        // Check for corrupt job.state files (can be corrupt if we crash).
+        if (jobFile.length() == 0) {
+            throw new InvalidJobFileException(jobFile.getCanonicalPath() +
+                " is corrupt (length is zero)");
+        }
+        
         // Open file. Read data and set up class variables accordingly...
         BufferedReader jobReader =
             new BufferedReader(new FileReader(jobFile), 4096);
