@@ -55,6 +55,8 @@ public class ClusterControllerBeanSelfTest
         assertNotNull(crawlers);
         assertTrue(crawlers.length > 0);
     }
+    
+
 
 //    public void testGetAttributesFromCrawler() throws Exception {
 //        ObjectName[] crawlers = (ObjectName[]) ccBean.invoke(

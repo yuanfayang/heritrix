@@ -108,4 +108,25 @@ public interface ClusterControllerClient {
      */
     public void removeCrawlJobListener(CurrentCrawlJobListener l);
     
+    /**
+     * Returns the maximum number of instances allowed for this container.
+     * If the container does not exist, -1 is returned.
+     * @param hostname
+     * @param port
+     * @return
+     */
+    public int getMaxInstances(String hostname, int port) 
+    	throws ClusterException;
+    
+    /**
+     * Sets the maximum number of instances that may run on a 
+     * specified container defined by a host and port.
+     * @param hostname
+     * @param port
+     * @param maxInstances
+     */
+    public void setMaxInstances(String hostname, int port, int maxInstances)
+    	throws ClusterException;
+   
+    
 }

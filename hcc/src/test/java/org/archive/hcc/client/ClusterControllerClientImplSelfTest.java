@@ -1,5 +1,6 @@
 package org.archive.hcc.client;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.archive.hcc.util.OrderJarFactory;
+import org.archive.hcc.util.JmxUtils;
 
 public class ClusterControllerClientImplSelfTest
         extends
@@ -340,6 +341,22 @@ public class ClusterControllerClientImplSelfTest
             cc.removeCrawlerLifecycleListener(l);
             cc.removeCrawlJobListener(l);
         }
+    }
+    
+    public void testGetSetMaxInstances(){
+    	try{
+    		Crawler c = cc.listCrawlers().iterator().next();
+    		InetSocketAddress a  = JmxUtils.extractRemoteAddress(c.getName());
+    		int max = cc.getMaxInstances(a.getHostName(), a.getPort());
+    		assertTrue(max > 0);
+    		cc.setMaxInstances(a.getHostName(), a.getPort(), ++max);
+    		
+    		int newMax = cc.getMaxInstances(a.getHostName(), a.getPort());
+    		assertEquals(max, newMax);
+    	}catch(Exception e){
+            e.printStackTrace();
+            assertFalse(true);
+    	}
     }
      
 }

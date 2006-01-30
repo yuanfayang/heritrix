@@ -25,6 +25,7 @@ package org.archive.hcc;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -372,6 +373,51 @@ public class ClusterControllerBean implements
     }
     
     /**
+     * Returns the maximum number of instances allowed for this container.
+     * If the container does not exist, -1 is returned.
+     * @param hostname
+     * @param port
+     * @return
+     */
+    public int getMaxInstances(String hostname, Integer port){
+    	Collection<Container> list = 
+    		new LinkedList<Container>(this.containers.values());
+    	
+    	for(Container c : list){
+    		InetSocketAddress a = JmxUtils.extractAddress(c.getName());
+    		if(a.getHostName().equals(hostname) && port == a.getPort()){
+    			return c.getMaxInstances();
+    		}
+    	}
+    	
+    	return -1;
+    }
+
+    /**
+     * Sets the maximum number of instances that may run on a 
+     * specified container defined by a host and port.
+     * @param hostname
+     * @param port
+     * @param maxInstances
+     */
+    public void setMaxInstances(String hostname, Integer port, Integer maxInstances){
+    	Collection<Container> list = 
+    		new LinkedList<Container>(this.containers.values());
+    	
+    	if(maxInstances < -1){
+    		maxInstances = -1;
+    	}
+    	
+    	for(Container c : list){
+    		InetSocketAddress a = JmxUtils.extractAddress(c.getName());
+    		if(a.getHostName().equals(hostname) && port == a.getPort()){
+    			c.setMaxInstances(maxInstances);
+    			break;
+    		}
+    	}
+    }
+    
+    /**
      * Creates a new crawler on the least loaded machine on the cluster.
      * 
      * @return ObjectName of created crawler.
@@ -503,6 +549,50 @@ public class ClusterControllerBean implements
                                             SimpleType.OBJECTNAME)},
                             SimpleType.OBJECTNAME,
                             OpenMBeanOperationInfoSupport.INFO)));
+            
+
+            addOperation(new SimpleReflectingMBeanOperation(
+                    ClusterControllerBean.this,
+                    new OpenMBeanOperationInfoSupport(
+                            "setMaxInstances", "sets the max number of " +
+                            		"instances of heritrix that a heritrix " +
+                            		"enabled jvm can serve.",
+                            new OpenMBeanParameterInfo[] {
+                                    new OpenMBeanParameterInfoSupport(
+                                            "host",
+                                            "The jvm's host",
+                                            SimpleType.STRING),
+                                    new OpenMBeanParameterInfoSupport(
+                                            "port",
+                                            "The jvm's jmx port",
+                                            SimpleType.INTEGER),
+                                    new OpenMBeanParameterInfoSupport(
+                                            "maxInstances",
+                                            "The max number of instances",
+                                            SimpleType.INTEGER) },
+                            SimpleType.VOID,
+                            OpenMBeanOperationInfoSupport.ACTION)));  
+            
+
+            addOperation(new SimpleReflectingMBeanOperation(
+                    ClusterControllerBean.this,
+                    new OpenMBeanOperationInfoSupport(
+                            "getMaxInstances", "returns the max number of " +
+                            		"instances of heritrix that a heritrix " +
+                            		"enabled jvm can serve.",
+                            new OpenMBeanParameterInfo[] {
+                                    new OpenMBeanParameterInfoSupport(
+                                            "host",
+                                            "The jvm's host",
+                                            SimpleType.STRING),
+                                    new OpenMBeanParameterInfoSupport(
+                                            "port",
+                                            "The jvm's jmx port",
+                                            SimpleType.INTEGER)
+                                            },
+                            SimpleType.INTEGER,
+                            OpenMBeanOperationInfoSupport.INFO)));     
+            
         } catch (OpenDataException e) {
             e.printStackTrace();
         }

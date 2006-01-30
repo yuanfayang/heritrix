@@ -580,6 +580,57 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             e.printStackTrace();
             throw new ClusterException(e);
         }
-
+    }
+    
+    /**
+     * Returns the maximum number of instances allowed for this container.
+     * If the container does not exist, -1 is returned.
+     * @param hostname
+     * @param port
+     * @return
+     */
+    public int getMaxInstances(String hostname, int port) throws ClusterException{
+        try {
+            Integer maxInstances = (Integer) this.connection.invoke(
+                    this.name,
+                    "getMaxInstances",
+                    new Object[]{hostname, new Integer(port)},
+                    new String[]{SimpleType.STRING.getClassName(), 
+                    				SimpleType.INTEGER.getClassName()});
+            return maxInstances;
+           
+        }catch (Exception e) {
+            e.printStackTrace();
+            throw new ClusterException(e);
+        }
+    }
+    
+    /**
+     * Sets the maximum number of instances that may run on a 
+     * specified container defined by a host and port.
+     * @param hostname
+     * @param port
+     * @param maxInstances
+     */
+    public void setMaxInstances(String hostname, int port, int maxInstances) 
+    	throws ClusterException{
+        try {
+            this.connection.invoke(
+                    this.name,
+                    "setMaxInstances",
+                    new Object[]{
+                    			hostname, 
+                    			new Integer(port),
+                    			new Integer(maxInstances)},
+                    new String[]{
+                    			SimpleType.STRING.getClassName(),
+                    			SimpleType.INTEGER.getClassName(),
+                    			SimpleType.INTEGER.getClassName()});
+            
+           
+        }catch (Exception e) {
+            e.printStackTrace();
+            throw new ClusterException(e);
+        }
     }
 }
