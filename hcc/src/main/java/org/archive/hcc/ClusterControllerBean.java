@@ -186,7 +186,7 @@ public class ClusterControllerBean implements
     /**
      * Upperbound on crawlers per container.
      */
-    private int maxPerContainer = 1;
+    private int defaultMaxPerContainer = 1;
 
     /**
      * Creates a cluster controller bean. This object uses a two step
@@ -453,7 +453,7 @@ public class ClusterControllerBean implements
         Container leastLoaded = null;
 
         for (Container n : this.containers.values()) {
-            if (n.getCrawlers().size() >= this.maxPerContainer) {
+            if (n.getCrawlers().size() >= n.getMaxInstances()) {
                 continue;
             }
             if (leastLoaded == null) {
@@ -675,10 +675,10 @@ public class ClusterControllerBean implements
         try {
             Properties p =
                 SmartPropertiesResolver.getProperties("hcc.properties");
-            this.maxPerContainer = Integer.parseInt(
+            this.defaultMaxPerContainer = Integer.parseInt(
                 p.getProperty(ClusterControllerBean.class.getName() +
                     ".maxPerContainer", "1"));
-            log.info("maxPerContainer setting: " + this.maxPerContainer);
+            log.info("maxPerContainer setting: " + this.defaultMaxPerContainer);
             
             context = JndiUtils.getSubContext("org.archive.crawler");
             this.name = new ObjectName("org.archive.hcc:"
@@ -1200,7 +1200,7 @@ public class ClusterControllerBean implements
             throw new NullPointerException(
                     "no mbean server connection found on " + address);
         }
-        Container container = new Container(c);
+        Container container = new Container(c, this.defaultMaxPerContainer);
 
         this.containers.put(c, container);
         try {
