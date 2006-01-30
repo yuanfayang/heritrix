@@ -85,16 +85,16 @@ public class BdbMultipleWorkQueuesTest extends TestCase {
             // ensure that key1 (with lower ordinal) sorts before key2 (higher
             // ordinal)
             assertTrue("lower ordinal sorting first (" + ordinalOrigin + ")",
-                    Key.compareKeys(key1, key2) < 0);
+                    Key.compareKeys(key1, key2, null) < 0);
             // ensure that key3 (with HIGH scheduling) sorts before key2 (even
             // though
             // it has lower ordinal)
             assertTrue("lower directive sorting first (" + ordinalOrigin + ")",
-                    Key.compareKeys(key3, key2) < 0);
+                    Key.compareKeys(key3, key2, null) < 0);
             // ensure that key5 (with lower cost) sorts before key4 (even though 
             // key4  has lower ordinal and same default NORMAL scheduling directive)
             assertTrue("lower cost sorting first (" + ordinalOrigin + ")", Key
-                    .compareKeys(key5, key4) < 0);
+                    .compareKeys(key5, key4, null) < 0);
         }
     }
 }
