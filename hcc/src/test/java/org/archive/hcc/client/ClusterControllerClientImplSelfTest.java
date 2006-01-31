@@ -69,7 +69,7 @@ public class ClusterControllerClientImplSelfTest
     public void testCreateMultipleCrawlersInRapidSuccession() {
         final List<Crawler> crawlers = new LinkedList<Crawler>();
         
-        final CountDownLatch createdLatch = new CountDownLatch(10);
+        final CountDownLatch createdLatch = new CountDownLatch(5);
         final CountDownLatch destroyedLatch = new CountDownLatch((int)createdLatch.getCount());
         
         class MyListener implements CrawlerLifecycleListener{
@@ -138,7 +138,7 @@ public class ClusterControllerClientImplSelfTest
     public void testCreateMultipleJobsInRapidSuccession() {
         final List<Crawler> crawlers = new LinkedList<Crawler>();
         
-        final CountDownLatch createdLatch = new CountDownLatch(10);
+        final CountDownLatch createdLatch = new CountDownLatch(5);
         final CountDownLatch destroyedLatch = new CountDownLatch((int)createdLatch.getCount());
         final CountDownLatch crawlJobStarted  = new CountDownLatch((int)createdLatch.getCount());
         final CountDownLatch crawlJobCompleted  = new CountDownLatch((int)createdLatch.getCount());
@@ -253,7 +253,7 @@ public class ClusterControllerClientImplSelfTest
             }
             try {
                 assertTrue(crawlJobCompleted.await(
-                        40 * 1000,
+                        80 * 1000,
                         TimeUnit.MILLISECONDS));
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -345,7 +345,8 @@ public class ClusterControllerClientImplSelfTest
     
     public void testGetSetMaxInstances(){
     	try{
-    		Crawler c = cc.listCrawlers().iterator().next();
+    		Crawler c = cc.createCrawler();
+    		
     		InetSocketAddress a  = JmxUtils.extractRemoteAddress(c.getName());
     		int max = cc.getMaxInstances(a.getHostName(), a.getPort());
     		assertTrue(max > 0);
@@ -353,6 +354,7 @@ public class ClusterControllerClientImplSelfTest
     		
     		int newMax = cc.getMaxInstances(a.getHostName(), a.getPort());
     		assertEquals(max, newMax);
+    		c.destroy();
     	}catch(Exception e){
             e.printStackTrace();
             assertFalse(true);

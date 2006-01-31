@@ -807,8 +807,10 @@ public class ClusterControllerBean implements
     private void dereferenceCrawler(Crawler crawler) {
 
         crawler.removeFromParent();
-        this.remoteNameToCrawlerMap.remove(crawler
-                .getCrawlJobRemoteObjectName());
+        if(crawler.getCrawlJobRemoteObjectName()!= null){
+            this.remoteNameToCrawlerMap.remove(
+            		new RemoteMapKey(crawler.getCrawlJobRemoteObjectName()));
+        }
 
         try {
             this.mbeanServer.unregisterMBean(crawler
@@ -1053,7 +1055,7 @@ public class ClusterControllerBean implements
     }
 
     protected void handleCrawlerRemoved(ObjectName name) {
-        Crawler c = this.remoteNameToCrawlerMap.remove(name);
+        Crawler c = this.remoteNameToCrawlerMap.remove(new RemoteMapKey(name));
         if (c != null) {
             removeCrawlerAndNotify(c);
         }
