@@ -174,8 +174,8 @@ public class ClusterControllerBean implements
      * A map of the remote crawler handles to the local Crawler dynamic proxy
      * instances.
      */
-    private Map<ObjectName, Crawler> remoteNameToCrawlerMap =
-        new HashMap<ObjectName, Crawler>();
+    private Map<RemoteMapKey, Crawler> remoteNameToCrawlerMap =
+        new HashMap<RemoteMapKey, Crawler>();
 
     /**
      * Watches all traffic (invocations and notifications) moving between the
@@ -214,6 +214,45 @@ public class ClusterControllerBean implements
                 fireNotificationEvent(notification);
             }
         };
+    }
+    
+    private class RemoteMapKey {
+    	private ObjectName name;
+    	private String id;
+    	public ObjectName getObjectName(){
+    		return name;
+    		
+    	}
+    	
+    	public RemoteMapKey(ObjectName on){
+    		this.name = on;
+    		this.id = extractId(on);
+    	}
+    	
+    	@Override
+    	public boolean equals(Object obj) {
+    		if(!(obj instanceof RemoteMapKey)){
+    			return false;
+    		}
+    		
+    		RemoteMapKey o = (RemoteMapKey)obj;
+    		
+    		return (o.id.equals(id));
+    	}
+    	
+	    private String extractId(ObjectName name){
+	    	StringBuffer b = new StringBuffer();
+	    	b.append(name.getKeyProperty(JmxUtils.NAME));
+	    	b.append(name.getKeyProperty(JmxUtils.HOST));
+	    	b.append(name.getKeyProperty(JmxUtils.JMX_PORT));
+	    	b.append(name.getKeyProperty(JmxUtils.TYPE));
+	    	return b.toString();
+	    }
+    	@Override
+    	public int hashCode() {
+    		// TODO Auto-generated method stub
+    		return id.hashCode();
+    	}
     }
 
     private static MBeanServer createMBeanServer() {
@@ -917,16 +956,17 @@ public class ClusterControllerBean implements
     }
 
     private boolean isJobOnCrawler(ObjectName job, ObjectName crawler) {
-        return equals(job, crawler, JmxUtils.JMX_PORT)
+        
+    	return equals(job, crawler, JmxUtils.JMX_PORT)
                 && equals(job, crawler, JmxUtils.HOST)
                 && job.getKeyProperty(JmxUtils.MOTHER).equals(
                         crawler.getKeyProperty(JmxUtils.NAME));
     }
 
     private Crawler getJobContext(ObjectName job) {
-        for (ObjectName n : this.remoteNameToCrawlerMap.keySet()) {
-            if (isJobOnCrawler(job, n)) {
-                return this.remoteNameToCrawlerMap.get(n);
+        for (RemoteMapKey key : this.remoteNameToCrawlerMap.keySet()) {
+            if (isJobOnCrawler(job, key.getObjectName())) {
+                return this.remoteNameToCrawlerMap.get(key);
             }
         }
 
@@ -1090,6 +1130,7 @@ public class ClusterControllerBean implements
                     InetSocketAddress address = JmxUtils.extractAddress(n);
                     registerAddress(address);
                     synchronizeContainer(n);
+                    
                     attachMBeanServerDelegateNotificationListener(
                             address,
                             this.remoteNotificationDelegator);
@@ -1348,7 +1389,9 @@ public class ClusterControllerBean implements
             ht.put(JmxUtils.TYPE, JmxUtils.SERVICE);
             ht.put(JmxUtils.NAME, name);
             ht.put(JmxUtils.JMX_PORT, String.valueOf(address.getPort()));
-            ht.put(JmxUtils.GUI_PORT, guiPort);
+            if(guiPort != null){
+                ht.put(JmxUtils.GUI_PORT, guiPort);
+            }
 
             return new ObjectName("org.archive.crawler", ht);
         } catch (Exception e) {
@@ -1356,6 +1399,7 @@ public class ClusterControllerBean implements
             throw new RuntimeException(e);
         }
     }
+
 
     private ObjectName createCrawlerIn(Container container) throws Exception {
         InetSocketAddress address = JmxUtils
@@ -1379,7 +1423,7 @@ public class ClusterControllerBean implements
                             .getType()
                             .equals(ClusterControllerNotification.
                                 CRAWL_SERVICE_CREATED_NOTIFICATION.getKey())) {
-                        Crawler c = remoteNameToCrawlerMap.get(beanName);
+                        Crawler c = remoteNameToCrawlerMap.get(new RemoteMapKey(beanName));
                         ObjectName proxy = c.getCrawlServiceProxyObjectName();
                         return (proxy != null && notification
                                 .getUserData()
@@ -1450,7 +1494,7 @@ public class ClusterControllerBean implements
 
                 Crawler crawler = new Crawler(proxy, null, container);
                 container.addCrawler(crawler);
-                remoteNameToCrawlerMap.put(newCrawler, crawler);
+                remoteNameToCrawlerMap.put(new RemoteMapKey(newCrawler), crawler);
                 this.mbeanServer.registerMBean(proxy, proxyName);
 
                 Hashtable props = new Hashtable();

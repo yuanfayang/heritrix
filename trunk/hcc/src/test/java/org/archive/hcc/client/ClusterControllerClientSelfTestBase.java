@@ -23,6 +23,7 @@ public class ClusterControllerClientSelfTestBase
 
         cc = ClusterControllerClientManager.getDefaultClient();
         
+        cc.setMaxInstances("linux", 8849, 20);
     }
 
     protected void tearDown() throws Exception {
