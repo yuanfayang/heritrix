@@ -210,7 +210,7 @@ class="org.archive.crawler.writer.ARCWriterProcessor">
          <map name="filters">
          </map>
          <boolean name="compress">true</boolean>
-         <string name="prefix">$arcPrefix</string>
+         <string name="prefix">ARCHIVEIT-$arcPrefix</string>
          <string name="suffix">${HOSTNAME}</string>
          <integer name="max-size-bytes">100000000</integer>
          <stringList name="path">
