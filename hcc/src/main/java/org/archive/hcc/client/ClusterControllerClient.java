@@ -129,4 +129,21 @@ public interface ClusterControllerClient {
     	throws ClusterException;
    
     
-}
+    /**
+     * 
+     * @return true if pause was successfully invoked on all running jobs.
+     * @throws ClusterControllerException
+     */
+    public boolean pauseAllJobs() 
+    	throws ClusterException;
+    
+    /**
+     * 
+     * @return true if resume was successfully invoked on all paused or pausing jobs.
+     * @throws ClusterControllerException
+     */
+    public boolean resumeAllPausedJobs() 
+    	throws ClusterException;
+    
+
+}	

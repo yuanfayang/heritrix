@@ -135,13 +135,18 @@ public class ClusterControllerClientImplSelfTest
     }
 
 
-    public void testCreateMultipleJobsInRapidSuccession() {
+
+    
+    
+    public void testCreatePauseAllResumeAllMultipleJobsInRapidSuccession() {
         final List<Crawler> crawlers = new LinkedList<Crawler>();
         
         final CountDownLatch createdLatch = new CountDownLatch(5);
         final CountDownLatch destroyedLatch = new CountDownLatch((int)createdLatch.getCount());
         final CountDownLatch crawlJobStarted  = new CountDownLatch((int)createdLatch.getCount());
         final CountDownLatch crawlJobCompleted  = new CountDownLatch((int)createdLatch.getCount());
+        final CountDownLatch crawlJobPaused = new CountDownLatch((int)createdLatch.getCount());
+        final CountDownLatch crawlJobResumed = new CountDownLatch((int)createdLatch.getCount());
                
         class MyListener implements CrawlerLifecycleListener,CurrentCrawlJobListener{
             
@@ -179,15 +184,14 @@ public class ClusterControllerClientImplSelfTest
              * @see org.archive.hcc.client.CurrentCrawlJobListener#crawlJobPaused(org.archive.hcc.client.CurrentCrawlJob)
              */
             public void crawlJobPaused(CurrentCrawlJob job) {
-                // TODO Auto-generated method stub
-                
+                crawlJobPaused.countDown();
             }
             
             /* (non-Javadoc)
              * @see org.archive.hcc.client.CurrentCrawlJobListener#crawlJobResumed(org.archive.hcc.client.CurrentCrawlJob)
              */
             public void crawlJobResumed(CurrentCrawlJob job) {
-                // TODO Auto-generated method stub
+                crawlJobResumed.countDown();
                 
             }
             
@@ -195,10 +199,11 @@ public class ClusterControllerClientImplSelfTest
              * @see org.archive.hcc.client.CurrentCrawlJobListener#crawlJobStarted(org.archive.hcc.client.CurrentCrawlJob)
              */
             public void crawlJobStarted(CurrentCrawlJob job) {
-                crawlJobStarted.countDown();
-                assertTrue(job.getCrawlStatus().equals("RUNNING") 
+            	assertTrue(job.getCrawlStatus().equals("RUNNING") 
                         || job.getCrawlStatus().equals("PREPARING"));
-                
+
+                crawlJobStarted.countDown();
+
             }
             
             /* (non-Javadoc)
@@ -247,7 +252,28 @@ public class ClusterControllerClientImplSelfTest
                 e.printStackTrace();
             }
             
+            assertTrue(cc.pauseAllJobs());
 
+            try {
+                assertTrue(crawlJobPaused.await(
+                        40 * 1000,
+                        TimeUnit.MILLISECONDS));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+
+            assertTrue(cc.resumeAllPausedJobs());
+
+            try {
+                assertTrue(crawlJobResumed.await(
+                        40 * 1000,
+                        TimeUnit.MILLISECONDS));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            
+            
             for(Crawler c : new LinkedList<Crawler>(crawlers)){
                 c.terminateCurrentJob();
             }
@@ -291,7 +317,7 @@ public class ClusterControllerClientImplSelfTest
 			}
         }
     }
-
+    
     public void testGetCurrentCrawlJob() {
         AllPurposeTestListener l = new AllPurposeTestListener();
         try {

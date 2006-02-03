@@ -448,6 +448,35 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
         }
     }
 
+    public boolean pauseAllJobs() throws ClusterException {
+    	try {
+            return (Boolean) this.connection.invoke(
+                    this.name,
+                    "pauseAllJobs",
+                    new Object[] {},
+                    new String[] {});
+
+           
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ClusterException(e);
+        }
+    }
+    
+    public boolean resumeAllPausedJobs() throws ClusterException {
+    	try {
+            return (Boolean) this.connection.invoke(
+                    this.name,
+                    "resumeAllPausedJobs",
+                    new Object[] {},
+                    new String[] {});
+
+           
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ClusterException(e);
+        }
+    }
     
     public Crawler findCrawlJobParent(String uid, InetSocketAddress address) 
         throws ClusterException {
