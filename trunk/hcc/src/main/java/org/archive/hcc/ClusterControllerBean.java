@@ -555,6 +555,27 @@ public class ClusterControllerBean implements
             addOperation(new SimpleReflectingMBeanOperation(
                     ClusterControllerBean.this,
                     new OpenMBeanOperationInfoSupport(
+                            "pauseAllJobs",
+                            "pauses all jobs that are managed by the cluster" +
+                            " controller",
+                            null,
+                            SimpleType.BOOLEAN,
+                            OpenMBeanOperationInfoSupport.ACTION)));
+            
+            addOperation(new SimpleReflectingMBeanOperation(
+                    ClusterControllerBean.this,
+                    new OpenMBeanOperationInfoSupport(
+                            "resumeAllPausedJobs",
+                            "resumes crawling of all paused jobs that are managed by the cluster" +
+                            " controller",
+                            null,
+                            SimpleType.BOOLEAN,
+                            OpenMBeanOperationInfoSupport.ACTION)));
+
+            
+            addOperation(new SimpleReflectingMBeanOperation(
+                    ClusterControllerBean.this,
+                    new OpenMBeanOperationInfoSupport(
                             "findCrawlServiceJobParent", "returns the parent" +
                                 "name of the specified crawl job.",
                             new OpenMBeanParameterInfo[] {
@@ -668,7 +689,67 @@ public class ClusterControllerBean implements
 				e.printStackTrace();
 			}
     	}
+    }
+
+
+    public boolean pauseAllJobs(){
+    	List<Crawler> list = 
+    		new LinkedList<Crawler>(this.remoteNameToCrawlerMap.values());
     	
+    	boolean success = true;
+    	for(Crawler c : list){
+    		try {
+    			DynamicMBean m = c.getCrawlJobProxy();
+    			if(m == null){
+    				continue;
+    			}
+    			String status = (String)m.getAttribute("Status");
+    			
+    			if("RUNNING".equals(status)){
+    				m.invoke("pause",  new Object[0], new String[0]);
+    			}
+			} catch (AttributeNotFoundException e) {
+				e.printStackTrace();
+			} catch (MBeanException e) {
+				e.printStackTrace();
+				success = false;
+			} catch (ReflectionException e) {
+				e.printStackTrace();
+				success = false;
+			}
+    	}
+    	
+    	return success;
+    }
+    
+    public boolean resumeAllPausedJobs(){
+    	List<Crawler> list = 
+    		new LinkedList<Crawler>(this.remoteNameToCrawlerMap.values());
+    	
+    	boolean success = true;
+    	for(Crawler c : list){
+    		try {
+    			DynamicMBean m = c.getCrawlJobProxy();
+    			if(m == null){
+    				continue;
+    			}
+
+    			String status = (String)m.getAttribute("Status");
+    			if("PAUSED".equals(status) || "PAUSING".equals(status)){
+    				m.invoke("resume",  new Object[0], new String[0]);
+    			}
+			} catch (AttributeNotFoundException e) {
+				e.printStackTrace();
+			} catch (MBeanException e) {
+				e.printStackTrace();
+				success = false;
+			} catch (ReflectionException e) {
+				e.printStackTrace();
+				success = false;
+			}
+    	}
+    	
+    	return success;
     }
 
     private void addOperation(MBeanOperation operation) {
