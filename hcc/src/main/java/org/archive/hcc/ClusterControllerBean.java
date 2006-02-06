@@ -1011,31 +1011,50 @@ public class ClusterControllerBean implements
     }
 
     protected void handleJobRemoved(ObjectName job) {
+    	if(log.isLoggable(Level.INFO)){
+    		log.info("entering: job=" + job);
+    	}
         // locate crawler
         Crawler c = getJobContext(job);
-        // remove job reference from crawler
-        if (c != null) {
-            // unregister job proxy.
-            ObjectName jobProxy = c.getCrawlJobProxyObjectName();
-
-            if (jobProxy != null) {
-                try {
-                    this.mbeanServer.unregisterMBean(jobProxy);
-                } catch (InstanceNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (MBeanRegistrationException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-
-            c.setCrawlJobProxy(null);
-            fireNotification(
-                    jobProxy,
-                    ClusterControllerNotification.
-                        CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey());
+        
+        if(c == null){
+        	if(log.isLoggable(Level.WARNING)){
+        		log.warning("no crawler context found for job=" + job);
+        	}
+        	
+        	return;
         }
+        // remove job reference from crawler
+        // unregister job proxy.
+        ObjectName jobProxy = c.getCrawlJobProxyObjectName();
+        if(jobProxy == null){
+        	if(log.isLoggable(Level.WARNING)){
+        		log.warning("jobProxy was not found on crawler=" + c.getCrawlJobProxyObjectName());
+        	}
+        	return;
+        }
+        
+        try {
+            this.mbeanServer.unregisterMBean(jobProxy);
+        } catch (InstanceNotFoundException e) {
+       		log.severe("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job + "; error.class=" + e.getClass() + ";  error.message=" + e.getMessage());
+
+            e.printStackTrace();
+        } catch (MBeanRegistrationException e) {
+       		log.severe("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job  + "; error.class=" + e.getClass() + "; message=" + e.getMessage());
+            e.printStackTrace();
+        }
+
+        c.setCrawlJobProxy(null);
+        fireNotification(
+                jobProxy,
+                ClusterControllerNotification.
+                    CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey());
+            
+    	if(log.isLoggable(Level.INFO)){
+    		log.info("exitting successfully: job=" + job);
+    	}
+            
     }
 
     private boolean isJobOnCrawler(ObjectName job, ObjectName crawler) {

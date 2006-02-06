@@ -22,6 +22,9 @@
  */
 package org.archive.hcc.util.jmx;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.ObjectName;
@@ -32,7 +35,9 @@ import org.archive.util.JmxUtils;
 public abstract class RegistrationNotificationHandler
         extends
             NotificationDelegatableBase {
-    @Override
+	private static final Logger log = Logger.getLogger(RegistrationNotificationHandler.class.getName());
+	
+	@Override
     protected boolean delegate(Notification n, Object handback) {
         if (n instanceof MBeanServerNotification) {
             MBeanServerNotification msn = (MBeanServerNotification) n;
@@ -41,11 +46,17 @@ public abstract class RegistrationNotificationHandler
             if (name.getKeyProperty(JmxUtils.TYPE).equals(getType())) {
                 if (msn.getType().equals(
                         MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
+                	if(log.isLoggable(Level.FINE)){
+                		log.fine("handling registration of " + name);
+                	}
                     handleRegistered(name);
                     return true;
                 } else if (msn.getType().equals(
                         MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
-                    handleUnregistered(name);
+                	if(log.isLoggable(Level.FINE)){
+                		log.fine("handling deregistration of " + name);
+                	}
+                	handleUnregistered(name);
                     return true;
                 }
             }
