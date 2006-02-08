@@ -1053,9 +1053,9 @@
           of DecideRules. A URI under consideration begins with no assumed
           status. Each rule is applied in turn to the candidate URI. If the
           rule decides ACCEPT or REJECT, the URI's status is set accordingly.
-          After all rules have been applied, if the URI's status is ACCEPT it
-          is "in scope" and scheduled for crawling; if its status is REJECT it
-          is discarded.</para>
+          After all rules have been applied, if the URI's final status is
+          ACCEPT, it is ruled "in scope" and scheduled for crawling; if its
+          final status is REJECT it is discarded.</para>
 
           <para>There are no branches, but much of what nested conditionals
           can achieve is possible, in a form that should be be easier to
