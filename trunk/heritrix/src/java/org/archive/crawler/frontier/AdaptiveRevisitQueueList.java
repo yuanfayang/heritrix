@@ -209,14 +209,61 @@ public class AdaptiveRevisitQueueList implements Reporter {
      * Returns the number of URIs in all the HQs in this list
      * @return the number of URIs in all the HQs in this list
      */
-     public int getSize() {
-        int size = 0;
+    public long getSize() {
+    	long size = 0;
         for (Iterator it = sortedHostQueues.iterator(); it.hasNext();) {
             AdaptiveRevisitHostQueue hq = ((AdaptiveRevisitHostQueueWrapper)it
                     .next()).hq;
             size += hq.getSize();
         }
         return size;
+	}
+    
+    /**
+     * Returns the average depth of all the HQs in this list
+     * @return the average depth of all the HQs in this list (rounded down)
+     */
+    public long getAverageDepth() {
+    	long size = getSize();
+    	return size/hostQueues.size();
+    }
+    
+    /**
+     * Returns the size of the largest (deepest) queue.
+     * @return the size of the largest (deepest) queue.
+     */
+    public long getDeepestQueueSize(){
+    	long size = 0;
+        for (Iterator it = sortedHostQueues.iterator(); it.hasNext();) {
+            AdaptiveRevisitHostQueue hq = ((AdaptiveRevisitHostQueueWrapper)it
+                    .next()).hq;
+            if(hq.getSize() > size){
+            	size = hq.getSize();
+            }
+        }
+        return size;
+    }
+    
+    /**
+     * Returns the congestion ratio.
+     * <p>
+     * The congestion ratio is equal to the total number of queues divided
+     * by the number of queues currently being processed or are snozzed (i.e. 
+     * not ready). A congestion ratio of 1 indicates no congestion.
+     * @return the congestion ratio
+     */
+    public float getCongestionRatio(){
+    	int readyQueues = 0;
+        for (Iterator it = sortedHostQueues.iterator(); it.hasNext();) {
+            AdaptiveRevisitHostQueue hq = ((AdaptiveRevisitHostQueueWrapper)it
+                    .next()).hq;
+            if(hq.getState() == AdaptiveRevisitHostQueue.HQSTATE_READY){
+            	readyQueues++;
+            }
+        }
+        int totalQueues = hostQueues.size();
+        
+        return (float)(totalQueues) / (totalQueues-readyQueues);
     }
     
     /**
@@ -359,18 +406,25 @@ public class AdaptiveRevisitQueueList implements Reporter {
      * @see org.archive.util.Reporter#reportTo(java.io.Writer)
      */
     public void reportTo(PrintWriter writer) {
-        reportTo(null,writer);
-    }
-    
-    public void reportTo(String name, PrintWriter writer) {
-        // ignore name for now, only one default report
         Iterator it = sortedHostQueues.iterator();
         while(it.hasNext()){
             AdaptiveRevisitHostQueueWrapper wrapper =
                 (AdaptiveRevisitHostQueueWrapper)it.next();
           
-            writer.print(wrapper.hq.report());
+            writer.print(wrapper.hq.report(10));
             writer.print("\n\n");
+        }
+    }
+    
+    public void reportTo(String name, PrintWriter writer) {
+        if(name==null || hostQueues.containsKey(name)==false){
+        	reportTo(writer);
+        } else {
+	    	AdaptiveRevisitHostQueueWrapper wrapper =
+	                (AdaptiveRevisitHostQueueWrapper)hostQueues.get(name);
+	          
+	        writer.print(wrapper.hq.report(0));
+	        writer.print("\n\n");
         }
     }
     
