@@ -193,11 +193,11 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                     DEFAULT_RETRY_DELAY));
             addElementToDefinition(new SimpleType(ATTR_PREFERENCE_EMBED_HOPS,
                     "Number of embedded (or redirected) hops up to which " +
-                    "a URI has higher priority scheduling. For example, if set" +
-                    "to 1 (the default), items such as inline images (1-hop" +
-                    "embedded resources) will be scheduled ahead of all regular" +
-                    "links (or many-hop resources, like nested frames). If set to" +
-                    "zero, no preferencing will occur, and embeds/redirects are" +
+                    "a URI has higher priority scheduling. For example, if set " +
+                    "to 1 (the default), items such as inline images (1-hop " +
+                    "embedded resources) will be scheduled ahead of all regular " +
+                    "links (or many-hop resources, like nested frames). If set to " +
+                    "zero, no preferencing will occur, and embeds/redirects are " +
                     "scheduled the same as regular links.",
                     DEFAULT_PREFERENCE_EMBED_HOPS));
             Type t;
@@ -1182,7 +1182,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     public synchronized void reportTo(String name, PrintWriter writer) {
         // ignore name; only one report for now
-        hostQueues.reportTo(writer);
+        hostQueues.reportTo(name, writer);
     }
 
     /* (non-Javadoc)
@@ -1259,25 +1259,14 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     }
     
     public long averageDepth() {
-        return -1;
-//        int inProcessCount = inProcessQueues.uniqueSet().size();
-//        int readyCount = readyClassQueues.getCount();
-//        int snoozedCount = snoozedClassQueues.size();
-//        int activeCount = inProcessCount + readyCount + snoozedCount;
-//        int inactiveCount = inactiveQueues.getCount();
-//        return queuedUriCount / (activeCount+inactiveCount);
+        return hostQueues.getAverageDepth();
     }
+    
     public float congestionRatio() {
-        return -1;
-//        int inProcessCount = inProcessQueues.uniqueSet().size();
-//        int readyCount = readyClassQueues.getCount();
-//        int snoozedCount = snoozedClassQueues.size();
-//        int activeCount = inProcessCount + readyCount + snoozedCount;
-//        int inactiveCount = inactiveQueues.getCount();
-//        return (activeCount + inactiveCount) / (inProcessCount + snoozedCount);
+        return hostQueues.getCongestionRatio();
     }
+    
     public long deepestUri() {
-        return -1;
-//        return longestActiveQueue==null ? -1 : longestActiveQueue.getCount();
+        return hostQueues.getDeepestQueueSize();
     }
 }

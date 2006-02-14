@@ -1015,9 +1015,10 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
     
     /**
      * Returns a report detailing the status of this HQ.
+     * @param max Maximum number of URIs to show. 0 equals no limit.
      * @return a report detailing the status of this HQ.
      */
-    public String report(){
+    public String report(int max){
         try{
             StringBuffer ret = new StringBuffer(256);
             ret.append("AdaptiveRevisitHostQueue: " + hostName + "\n");
@@ -1037,7 +1038,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             ret.append("Top URIs: \n");
             
             Cursor secondaryCursor = secondaryUriDB.openCursor(null,null);
-            reportURIs(ret,secondaryCursor,10);
+            reportURIs(ret,secondaryCursor,max);
             secondaryCursor.close();
             return ret.toString();
         } catch( DatabaseException e ){
@@ -1061,7 +1062,10 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
         DatabaseEntry dataEntry = new DatabaseEntry();
         OperationStatus opStatus = 
             cursor.getFirst(keyEntry,dataEntry,LockMode.DEFAULT);
-        
+        if(max == 0){
+        	// No limit on the number of values returned.
+        	max = Integer.MAX_VALUE;
+        }
         int i = 0;
         while(i<max && opStatus == OperationStatus.SUCCESS){
             CrawlURI tmp = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
