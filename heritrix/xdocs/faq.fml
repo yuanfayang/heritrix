@@ -476,6 +476,14 @@ list below, send a description of a couple of lines to the mailing list).
         </answer>
       </faq>
 
+<faq id="compareto">
+<question>
+How do I resolve the compile error in Eclipse that says "The method compareTo(String) in the type String is not applicable for the arguments (Object)".
+</question>
+<answer>
+If this error happens, this means the JRE used with Eclipse must be changed to JRE 1.4.2.  In Windows->Preferences->Java->Installed JREs add the path to an installed JRE 1.4.2.  Select the 1.4.2 JRE as the default JRE to use for build and compile.
+</answer>
+</faq>
   </part>
 
   <part id="references">
