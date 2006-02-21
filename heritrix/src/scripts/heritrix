@@ -97,7 +97,7 @@ then
   JAVA_OPTS=" -Xmx256m"
 fi
 
-if [ -n "${JMX_OFF}" ]
+if [ -z "${JMX_OFF}" ]
 then
   if [ -z "${JMX_PORT}" ]
   then
