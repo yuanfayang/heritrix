@@ -850,7 +850,7 @@ public class ReplayCharSequenceFactory {
                 throw new IOException("Can't get array from CharBuffer.");
             }
 
-            boolean isException = false;
+            IOException exceptionThrown = null;
             try {
                 // Get a writer.  Output in our WRITE_ENCODING.
                 writer = new BufferedWriter(new OutputStreamWriter(
@@ -889,7 +889,7 @@ public class ReplayCharSequenceFactory {
             }
 
             catch (IOException e) {
-                isException = true;
+                exceptionThrown = e;
                 throw e;
             }
 
@@ -898,8 +898,8 @@ public class ReplayCharSequenceFactory {
                     writer.flush();
                     writer.close();
                 }
-                if (isException) {
-                    deleteFile(unicode);
+                if (exceptionThrown != null) {
+                    deleteFile(unicode, exceptionThrown);
                 }
             }
 
@@ -983,6 +983,16 @@ public class ReplayCharSequenceFactory {
         }
 
         private void deleteFile(File fileToDelete) {
+            deleteFile(fileToDelete, null);        
+        }
+
+        private void deleteFile(File fileToDelete, final Exception e) {
+            if (e != null) {
+                // Log why the delete to help with debug of java.io.FileNotFoundException:
+                // ....tt53http.ris.UTF-16BE.
+                logger.severe("Deleting " + fileToDelete + " because of "
+                    + e.toString());
+            }
             if (fileToDelete != null && fileToDelete.exists()) {
                 fileToDelete.delete();
             }
