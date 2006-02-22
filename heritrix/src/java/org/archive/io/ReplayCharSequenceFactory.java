@@ -743,6 +743,12 @@ public class ReplayCharSequenceFactory {
                     getReadOnlyMemoryMappedBuffer(backingFile)};
                 this.decodedFile = decodeToFile(buffers, decoder,
                     backingFilename + "." + WRITE_ENCODING);
+                if (this.decodedFile == null || !this.decodedFile.exists()) {
+                    throw new FileNotFoundException("Decoded file " +
+                        this.decodedFile + ", backingFile " +
+                        backingFile + ", size " + backingFile.length() +
+                        "buffer.length " + buffer.length);
+                }
                 charBuffer = getReadOnlyMemoryMappedBuffer(this.decodedFile).
                     asCharBuffer();
             }
@@ -790,13 +796,10 @@ public class ReplayCharSequenceFactory {
          * @throws IOException
          */
         private ByteBuffer getReadOnlyMemoryMappedBuffer(File file)
-            throws IOException {
-
+        throws IOException {
             ByteBuffer bb = null;
             FileInputStream in = null;
             FileChannel c = null;
-            assert file.exists(): "No file " + file.getAbsolutePath();
-
             try {
                 in = new FileInputStream(file);
                 c = in.getChannel();
