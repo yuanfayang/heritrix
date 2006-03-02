@@ -116,7 +116,7 @@ public class SurtPrefixSet extends TreeSet {
 
         while (iter.hasNext()) {
             s = (String) iter.next();
-            add(s);
+            add(s.toLowerCase());
         }
     }
 
