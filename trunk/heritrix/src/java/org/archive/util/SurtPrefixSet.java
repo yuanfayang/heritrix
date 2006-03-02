@@ -165,8 +165,8 @@ public class SurtPrefixSet extends TreeSet {
                 // it's specifically a SURT prefix line
                 String u = s.substring(SURT_PREFIX_DIRECTIVE.length()).trim();
                 if(u.indexOf("(")>0) {
-                    // formal SURT prefix
-                    add(u);
+                    // formal SURT prefix; toLowerCase just in case
+                    add(u.toLowerCase());
                 } else {
                     // hostname/normal form URI from which 
                     // to deduce SURT prefix
