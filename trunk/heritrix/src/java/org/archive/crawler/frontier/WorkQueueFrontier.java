@@ -657,9 +657,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     protected void noteAboutToEmit(CrawlURI curi, WorkQueue q) {
         super.noteAboutToEmit(curi, q);
         q.expend(getCost(curi));
-        // TODO: is this the best way to be sensitive to potential mid-crawl changes
-        long totalBudget = ((Long)getUncheckedAttribute(curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue();
-        q.setTotalBudget(totalBudget);
     }
 
     /**
@@ -725,6 +722,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // TODO: consider confusing cross-effects of this and IP-based politeness
         queue.setSessionBalance(((Integer) getUncheckedAttribute(contextUri,
                 ATTR_BALANCE_REPLENISH_AMOUNT)).intValue());
+        // reset total budget (it may have changed)
+        // TODO: is this the best way to be sensitive to potential mid-crawl changes
+        long totalBudget = ((Long)getUncheckedAttribute(contextUri,ATTR_QUEUE_TOTAL_BUDGET)).longValue();
+        queue.setTotalBudget(totalBudget);
         queue.unpeek(); // don't insist on that URI being next released
     }
 
