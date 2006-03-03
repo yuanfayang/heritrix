@@ -123,11 +123,11 @@ implements CoreAttributeConstants {
      +"|((?:src)|(?:lowsrc)|(?:background)|(?:cite)|(?:longdesc)" // ...
      +"|(?:usemap)|(?:profile)|(?:datasrc))" // 5
      +"|(codebase)|((?:classid)|(?:data))|(archive)|(code)" // 6, 7, 8, 9
-     +"|(value)|([-\\w]{1,"+MAX_ATTR_NAME_LENGTH+"}))" // 10, 11
+     +"|(value)|(style)|([-\\w]{1,"+MAX_ATTR_NAME_LENGTH+"}))" // 10, 11, 12
      +"\\s*=\\s*"
-     +"(?:(?:\"(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:\"|$))" // 12
-     +"|(?:'(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:'|$))" // 13
-     +"|(\\S{1,"+MAX_ATTR_VAL_LENGTH+"}))"; // 14
+     +"(?:(?:\"(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:\"|$))" // 13
+     +"|(?:'(.{0,"+MAX_ATTR_VAL_LENGTH+"}?)(?:'|$))" // 14
+     +"|(\\S{1,"+MAX_ATTR_VAL_LENGTH+"}))"; // 15
     // groups:
     // 1: attribute name
     // 2: HREF - single URI relative to doc base, or occasionally javascript:
@@ -142,10 +142,11 @@ implements CoreAttributeConstants {
     //    (if supplied)
     // 9: CODE - a single URI relative to the CODEBASE (is specified).
     // 10: VALUE - often includes a uri path on forms
-    // 11: any other attribute
-    // 12: double-quote delimited attr value
-    // 13: single-quote delimited attr value
-    // 14: space-delimited attr value
+    // 11: STYLE - inline attribute style info
+    // 12: any other attribute
+    // 13: double-quote delimited attr value
+    // 14: single-quote delimited attr value
+    // 15: space-delimited attr value
 
 
     // much like the javascript likely-URI extractor, but
@@ -213,7 +214,7 @@ implements CoreAttributeConstants {
 
         while (attr.find()) {
             int valueGroup =
-                (attr.start(12) > -1) ? 12 : (attr.start(13) > -1) ? 13 : 14;
+                (attr.start(13) > -1) ? 13 : (attr.start(14) > -1) ? 14 : 15;
             int start = attr.start(valueGroup);
             int end = attr.end(valueGroup);
             assert start >= 0: "Start is: " + start + ", " + curi;
@@ -317,6 +318,12 @@ implements CoreAttributeConstants {
                 }
 
             } else if (attr.start(11) > -1) {
+                // STYLE inline attribute
+                // then, parse for URIs
+                this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(
+                    curi, value, getController());
+                
+            } else if (attr.start(12) > -1) {
                 // any other attribute
                 // ignore for now
                 // could probe for path- or script-looking strings, but
@@ -621,7 +628,7 @@ implements CoreAttributeConstants {
         String content = null;
         while (attr.find()) {
             int valueGroup =
-                (attr.start(12) > -1) ? 12 : (attr.start(13) > -1) ? 13 : 14;
+                (attr.start(13) > -1) ? 13 : (attr.start(14) > -1) ? 14 : 15;
             CharSequence value =
                 cs.subSequence(attr.start(valueGroup), attr.end(valueGroup));
             if (attr.group(1).equalsIgnoreCase("name")) {

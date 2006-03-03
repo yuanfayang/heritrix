@@ -149,7 +149,7 @@ public class ExtractorCSS extends Extractor implements CoreAttributeConstants {
                         "$1");
                 foundLinks++;
                 try {
-                    curi.createAndAddLink(cssUri,Link.EMBED_MISC,
+                    curi.createAndAddLinkRelativeToBase(cssUri,Link.EMBED_MISC,
                             Link.EMBED_HOP);
                 } catch (URIException e) {
                     // There may not be a controller (e.g. If we're being run
