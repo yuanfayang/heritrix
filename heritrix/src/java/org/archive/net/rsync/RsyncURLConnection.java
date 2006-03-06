@@ -49,7 +49,7 @@ public class RsyncURLConnection extends URLConnection {
     private static final String RSYNC =
         System.getProperty(CLASSNAME + ".path", "rsync");
     private static final String RSYNC_TIMEOUT =
-        System.getProperty(CLASSNAME + ".timeout", "10");
+        System.getProperty(CLASSNAME + ".timeout", "300");
     private File downloadFile = null;
 
     protected RsyncURLConnection(URL u) {
