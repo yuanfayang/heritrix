@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.SortedMap;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -95,6 +96,7 @@ import org.archive.util.PaddingStringBuffer;
  *   <li> Amount of data per host
  *   <li> Disposition of all seeds (this is written to 'reports.log' at end of
  *        crawl)
+ *   <li> Successfully downloaded documents per host per source
  * </ul>
  *
  * @author Parker Thompson
@@ -162,6 +164,9 @@ implements CrawlURIDispositionListener, Serializable {
     protected transient Map hostsBytes = null;
     protected transient Map hostsLastFinished = null;
 
+    /** Keep track of URL counts per host per seed */
+    protected transient Map sourceHostDistribution = null;
+
     /**
      * Record of seeds' latest actions.
      */
@@ -183,6 +188,8 @@ implements CrawlURIDispositionListener, Serializable {
     throws FatalConfigurationException {
         super.initialize(c);
         try {
+            this.sourceHostDistribution = c.getBigMap("sourceHostDistribution",
+            	    String.class, HashMap.class);
             this.hostsDistribution = c.getBigMap("hostsDistribution",
                 String.class, LongWrapper.class);
             this.hostsBytes = c.getBigMap("hostsBytes", String.class,
@@ -217,6 +224,11 @@ implements CrawlURIDispositionListener, Serializable {
             this.processedSeedsRecords.clear();
             this.processedSeedsRecords = null;
         }
+        if (this.sourceHostDistribution != null) {
+            this.sourceHostDistribution.clear();
+            this.sourceHostDistribution = null;
+        }
+
     }
 
     protected synchronized void progressStatisticsEvent(final EventObject e) {
@@ -721,6 +733,23 @@ implements CrawlURIDispositionListener, Serializable {
                 this.controller.getServerCache().
                 getHostFor(curi).getHostName(),
                 curi.getContentSize());
+        
+        if (curi.containsKey(CrawlURI.A_SOURCE_TAG)){
+            saveSourceStats(curi.getString(CrawlURI.A_SOURCE_TAG), 
+                    this.controller.getServerCache().getHostFor(curi).
+                    getHostName()); 
+        }
+    }
+         
+    protected void saveSourceStats(String source, String hostname) {
+        synchronized(sourceHostDistribution) {
+            Hashtable hostUriCount = (Hashtable)sourceHostDistribution.get(source);
+            if (hostUriCount == null) {
+                hostUriCount = new Hashtable();
+            }
+            incrementMapCount(hostUriCount, hostname);
+            sourceHostDistribution.put(source, hostUriCount);
+        }
     }
     
     protected void saveHostStats(String hostname, long size) {
@@ -744,9 +773,6 @@ implements CrawlURIDispositionListener, Serializable {
         handleSeed(curi,SEED_DISPOSITION_DISREGARD);
     }
 
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlURIDispositionListener#crawledURIFailure(org.archive.crawler.datamodel.CrawlURI)
-     */
     public void crawledURIFailure(CrawlURI curi) {
         handleSeed(curi,SEED_DISPOSITION_FAILURE);
     }
@@ -841,6 +867,42 @@ implements CrawlURIDispositionListener, Serializable {
             writer.print("\n");
         }
     }
+    
+    protected void writeSourceReportTo(PrintWriter writer) {
+        
+        writer.print("[source] [host] [#urls]\n");
+        // for each source
+        for (Iterator i = sourceHostDistribution.keySet().iterator(); i.hasNext();) {
+            Object sourceKey = i.next();
+            Hashtable hostCounts = (Hashtable)sourceHostDistribution.get(sourceKey);
+            // sort hosts by #urls
+            SortedMap sortedHostCounts = getReverseSortedHostCounts(hostCounts);
+            // for each host
+            for (Iterator j = sortedHostCounts.keySet().iterator(); j.hasNext();) {
+                Object hostKey = j.next();
+                LongWrapper hostCount = (LongWrapper) hostCounts.get(hostKey);
+                writer.print(sourceKey.toString());
+                writer.print(" ");
+                writer.print(hostKey.toString());
+                writer.print(" ");
+                writer.print(hostCount.longValue);
+                writer.print("\n");
+            }
+        }
+    }
+  
+    /**
+     * Return a copy of the hosts distribution in reverse-sorted (largest first)
+     * order.
+     * 
+     * @return SortedMap of hosts distribution
+     */
+    public SortedMap getReverseSortedHostCounts(Map hostCounts) {
+        synchronized(hostCounts){
+            return getReverseSortedCopy(hostCounts);
+        }
+    }
+
     
     protected void writeHostsReportTo(PrintWriter writer) {
         SortedMap hd = getReverseSortedHostsDistribution();
@@ -967,7 +1029,9 @@ implements CrawlURIDispositionListener, Serializable {
             writeManifestReportTo(w);
         } else if ("frontier".equals(reportName)) {
             writeFrontierReportTo(w);
-        } /// TODO else default/error
+        } else if ("source".equals(reportName)) {
+            writeSourceReportTo(w);
+        }// / TODO else default/error
     }
 
     /**
@@ -997,6 +1061,9 @@ implements CrawlURIDispositionListener, Serializable {
         writeReportFile("processors","processors-report.txt");
         writeReportFile("manifest","crawl-manifest.txt");
         writeReportFile("frontier","frontier-report.txt");
+        if (!sourceHostDistribution.isEmpty()) {
+            writeReportFile("source","source-report.txt");
+        }
         // TODO: Save object to disk?
     }
 
