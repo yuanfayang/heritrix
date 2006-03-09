@@ -38,8 +38,6 @@ import javax.management.remote.JMXServiceURL;
 
 import org.archive.hcc.util.SmartPropertiesResolver;
 
-/* import sun.security.krb5.internal.p; */
-
 public class MBeanServerConnectionFactory {
   
     private static Logger log = Logger.getLogger(MBeanServerConnectionFactory.class.getName());
