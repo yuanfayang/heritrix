@@ -50,7 +50,14 @@ public class CompletedCrawlJobImpl
     public String getHostReport() throws ClusterException {
         return this.mother.getHostsReport(this.uid);
     }
-    
+ 
+    /* (non-Javadoc)
+     * @see org.archive.hcc.client.CompletedCrawlJob#getHostReport()
+     */
+    public String getSourceReport() throws ClusterException {
+        return this.mother.getSourceReport(this.uid);
+    }
+
     /* (non-Javadoc)
      * @see org.archive.hcc.client.CompletedCrawlJob#getMimeTypeReport()
      */

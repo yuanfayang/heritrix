@@ -48,7 +48,14 @@ public interface CompletedCrawlJob extends CrawlJob {
      * @throws ClusterException
      */
     public String getHostReport() throws ClusterException;
-    
+   
+    /**
+     * A count of docs per host per source seed.
+     * @return
+     * @throws ClusterException
+     */
+    public String getSourceReport() throws ClusterException;
+
     /**
      * A count of bytes and docs collected by mime type.
      * @return

@@ -151,6 +151,10 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
         return getReport("hosts-report", uid);
     }
     
+    String getSourceReport(Long uid) throws ClusterException{
+        return getReport("source-report", uid);
+    }
+
     String getSeedsReport(Long uid) throws ClusterException{
         return getReport("seeds-report",uid);
     }
