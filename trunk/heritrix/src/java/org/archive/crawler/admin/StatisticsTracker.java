@@ -743,10 +743,16 @@ implements CrawlURIDispositionListener, Serializable {
          
     protected void saveSourceStats(String source, String hostname) {
         synchronized(sourceHostDistribution) {
-            Hashtable hostUriCount = (Hashtable)sourceHostDistribution.get(source);
+            Hashtable hostUriCount =
+                (Hashtable)sourceHostDistribution.get(source);
             if (hostUriCount == null) {
                 hostUriCount = new Hashtable();
             }
+            // TODO: Dan suggests we don't need a hashtable value.  Might
+            // be faster if we went without. Could just have keys of:
+            //  seed | host (concatenated as string)
+            // and values of: 
+            //  #urls
             incrementMapCount(hostUriCount, hostname);
             sourceHostDistribution.put(source, hostUriCount);
         }
