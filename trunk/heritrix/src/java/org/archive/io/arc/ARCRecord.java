@@ -257,7 +257,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
             eolCharCount = getEolCharsCount(lineBytes);
             if (eolCharCount <= 0) {
                 throw new IOException("Failed reading http headers: " +
-                    new String(lineBytes));
+                    ((lineBytes != null)? new String(lineBytes): null));
             }
             // Save the bytes read.
             baos.write(lineBytes);
