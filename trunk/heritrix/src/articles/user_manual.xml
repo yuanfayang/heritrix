@@ -276,29 +276,86 @@
         <para>Below we document the system properties passed on the
         command-line that can influence Heritrix's behavior. If you are using
         the /bin/heritrix script to launch Heritrix you may have to edit it to
-        change/set these properties.</para>
+        change/set these properties or else pass them as part of JAVA_OPTS.
+	</para>
 
         <sect4 id="heritrix.properties">
           <title>heritrix.properties</title>
 
-          <para>Set this property on the command-line (i.e.
-          "-Dheritrix.properties" or include as part of
-          <literal>JAVA_OPTS</literal> environment value) when you want
-          heritrix to use a properties file other than that found at
-          <literal>conf/heritrix.properties</literal>.</para>
+          <para>Set this property to point at an alternate
+          heritrix.properties file --
+	<literal>e.g.: -Dheritrix.properties=/tmp/alternate.properties</literal>
+          -- when you want heritrix to use a properties file other than that
+	found at <literal>conf/heritrix.properties</literal>.</para>
         </sect4>
 
         <sect4>
           <title>heritrix.development</title>
 
-          <para>Set this property on the command-line (i.e.
-          "-Dheritrix.development" or include as part of
-          <literal>JAVA_OPTS</literal> environment value) when you want to run
-          the crawler from eclipse. When this property is set, the
+          <para>Set this property when you want to run
+          the crawler from eclipse.  This property takes no arguments.
+		When this property is set, the
           <literal>conf</literal> and <literal>webapps</literal> directories
           will be found in their development locations and startup messages
           will show on the text console (standard out).</para>
         </sect4>
+
+        <sect4>
+          <title>heritrix.home</title>
+          <para>Where heritrix is homed usually passed by the heritrix
+	launch script.
+          </para>
+        </sect4>
+        <sect4>
+          <title>heritrix.out</title>
+          <para>Where stdout/stderr are sent, usually heritrix_out.log and
+	passed by the heritrix launch script.
+          </para>
+        </sect4>
+        <sect4>
+          <title>heritrix.version</title>
+          <para>Version of heritrix set by the heritrix build into
+		heritrix.properties.
+          </para>
+        </sect4>
+        <sect4>
+          <title>heritrix.jobsdir</title>
+          <para>Where to drop heritrix jobs.  Usually empty.  Default
+          location is ${HERITRIX_HOME}/jobs.
+          </para>
+        </sect4>
+	
+
+	<sect4>
+		<title>heritrix.cmdline</title>
+	<para>This set of system properties are rarely used.
+        They are for use when Heritrix has NOT been started from the
+        command-line -- e.g. its been embedded in another application -- and
+	the startup configuration that is set usually by command-line options,
+        instead needs to be done via system properties alone.
+        </para>
+	<sect5>
+          <title>heritrix.cmdline.admin</title>
+		<para>Value is a colon-delimited String  user name and
+		password for admin GUI</para>
+	</sect5>
+	<sect5>
+          <title>heritrix.cmdline.nowui</title>
+		<para>If set to true, will start up embedded web server.</para>
+	</sect5>
+	<sect5>
+          <title>heritrix.cmdline.order</title>
+		<para>If set to true, will start up embedded web server.</para>
+	</sect5>
+	<sect5>
+          <title>heritrix.cmdline.port</title>
+		<para>Value is port GUI is to run on.</para>
+	</sect5>
+	<sect5>
+          <title>heritrix.cmdline.run</title>
+		<para>If true, crawler is set into run mode on startup.</para>
+	</sect5>
+	</sect4>
 
         <sect4>
           <title>javax.net.ssl.trustStore</title>
@@ -311,8 +368,6 @@
           alternate truststore, point at the alternate by supplying the JSSE
           <literal>javax.net.ssl.trustStore</literal> property on the command
           line: e.g.</para>
-
-          <para><programlisting>  java -Djavax.net.ssl.trustStore=/tmp/truststore org.archive.crawler.Heritrix</programlisting></para>
         </sect4>
 
         <sect4>
@@ -320,7 +375,7 @@
 
           <para>The Heritrix <filename><literal>conf</literal></filename>
           directory includes a file named
-          <filename>heritrix.properties</filename> . A section of this file
+          <filename>heritrix.properties</filename>. A section of this file
           specifies the default Heritrix logging configuration. To override
           these settings, point
           <literal>java.util.logging.config.file</literal> at a properties
@@ -347,6 +402,18 @@
 
           <para>Alternatively you could edit the default file.</para>
         </sect4>
+        <sect4>
+		<title>java.io.tmpdir</title>
+		<para>Specify an alternate tmp directory.  Default is /tmp.
+                </para>
+        </sect4>
+        <sect4>
+		<title>com.sun.management.jmxremote.port</title>
+		<para>What port to start up JMX Agent on.  Default is 8849.
+                See also the environment variable JMX_PORT.
+                </para>
+        </sect4>
+         
       </sect3>
     </sect2>
   </sect1>
