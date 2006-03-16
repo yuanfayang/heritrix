@@ -366,15 +366,7 @@ implements ARCConstants {
         }
     }
     
-    /**
-     * Call close when done so we can cleanup after ourselves.
-     * When parsing through an ARC writing out CDX info, we spend
-     * 45% of CPU in here skipping over ARC Record body (~34% is
-     * spent in the ARCRecord#read).
-     * @throws IOException
-     */
     public void close() throws IOException {
-        cleanupCurrentRecord();
         if (this.in != null) {
             this.in.close();
             this.in = null;
