@@ -89,7 +89,7 @@ public class SeedFileIterator extends TransformingIteratorWrapper {
             // TODO: ignore lines beginning with non-word char
             return UURIFactory.getInstance(uri);
         } catch (URIException e) {
-            logger.log(Level.WARNING, "line in seed file ignored: "
+            logger.log(Level.INFO, "line in seed file ignored: "
                     + e.getMessage(), e);
             if(ignored!=null) {
                 try {
