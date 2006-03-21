@@ -14,13 +14,17 @@
   <sect1 id="1_8_0">
     <title>Release 1.8.0 - NOT YET RELEASED</title>
     <abstract>
-      <para>Release 1.8.0 adds a number of minor imnprovements and fixes. 
+      <para>Release 1.8.0 adds a number of minor improvements and fixes. 
       Most notably, checkpointing can now be achieved with a single command
       (with the requisite pause/resume done automatically), and all URIs 
       fetched may be tagged with the original seed URI from which they were
       discovered. (This source URI information is both in the crawl.log and 
       a new 'source-report.txt' report available among the disk file 
       reports.)</para>
+      
+      <para>We expect release 1.8.0 to be the last release officially 
+      supported on JDK 1.4.x ("Java 2") Java; future releases will require 
+      JDK 1.5.x ("Java 5") Java facilities.</para>
     </abstract>
 
     <sect2 id="1_8_0_limitations">
@@ -77,7 +81,7 @@
             <tbody>
 <!-- additions -->
 
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1119608&amp;group_id=73833&amp;atid=539102">1119608</ulink></entry><entry>Add</entry><entry>Carry forward (& log) 'originating URL/seed' for all URLs</entry><entry>2005-02-09</entry><entry>gojomo</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1119608&amp;group_id=73833&amp;atid=539102">1119608</ulink></entry><entry>Add</entry><entry>Carry forward (&amp; log) 'originating URL/seed' for all URLs</entry><entry>2005-02-09</entry><entry>gojomo</entry><entry>gojomo</entry></row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1393254&amp;group_id=73833&amp;atid=539102">1393254</ulink></entry><entry>Add</entry><entry>'total' bytes/fetches quota options in QuotaEnforcer</entry><entry>2005-12-29</entry><entry>gojomo</entry><entry>gojomo</entry></row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1388275&amp;group_id=73833&amp;atid=539102">1388275</ulink></entry><entry>Add</entry><entry>[contrib] Preselector ATTR_ALLOW_BY_REGEXP</entry><entry>2005-12-22</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1374947&amp;group_id=73833&amp;atid=539102">1374947</ulink></entry><entry>Add</entry><entry>[jmx] progress statistics as notification</entry><entry>2005-12-06</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
