@@ -14,11 +14,23 @@
   <sect1 id="1_8_0">
     <title>Release 1.8.0 - NOT YET RELEASED</title>
     <abstract>
-      <para>TODO</para>
+      <para>Release 1.8.0 adds a number of minor imnprovements and fixes. 
+      Most notably, checkpointing can now be achieved with a single command
+      (with the requisite pause/resume done automatically), and all URIs 
+      fetched may be tagged with the original seed URI from which they were
+      discovered. (This source URI information is both in the crawl.log and 
+      a new 'source-report.txt' report available among the disk file 
+      reports.)</para>
     </abstract>
 
     <sect2 id="1_8_0_limitations">
       <title>Known Limitations/Issues</title>
+       <sect3 id="bdb_nfs"><title>java.io.IOException: No locks available</title>
+        <para>BDB will complain 'No locks available' when crawler is being
+        built/run on an NFS mount. Workaround is not run on an NFS-mounted
+        volume.
+        </para>
+      </sect3>
     </sect2>
     <sect2 id="1_8_0_changes">
         <title>Changes</title>
@@ -46,6 +58,59 @@
          work to deserialize earlier versions of core classes serialized
          as part of a checkpoint).</para>
         </sect3>
+        
+        <para><table>
+          <title>All Tracked Changes</title>
+
+          <tgroup cols="5">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+                <entry>Open Date</entry>
+                <entry>By</entry>
+                <entry>Filer</entry>
+              </row>
+            </thead>
+
+            <tbody>
+<!-- additions -->
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1119608&amp;group_id=73833&amp;atid=539102">1119608</ulink></entry><entry>Add</entry><entry>Carry forward (& log) 'originating URL/seed' for all URLs</entry><entry>2005-02-09</entry><entry>gojomo</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1393254&amp;group_id=73833&amp;atid=539102">1393254</ulink></entry><entry>Add</entry><entry>'total' bytes/fetches quota options in QuotaEnforcer</entry><entry>2005-12-29</entry><entry>gojomo</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1388275&amp;group_id=73833&amp;atid=539102">1388275</ulink></entry><entry>Add</entry><entry>[contrib] Preselector ATTR_ALLOW_BY_REGEXP</entry><entry>2005-12-22</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1374947&amp;group_id=73833&amp;atid=539102">1374947</ulink></entry><entry>Add</entry><entry>[jmx] progress statistics as notification</entry><entry>2005-12-06</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1365804&amp;group_id=73833&amp;atid=539102">1365804</ulink></entry><entry>Add</entry><entry>JmxUtils.getOpenType() must handle Doubles</entry><entry>2005-11-24</entry><entry>stack-sf</entry><entry>nobody</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1371202&amp;group_id=73833&amp;atid=539102">1371202</ulink></entry><entry>Add</entry><entry>[jmx] Regularize crawl end state messages</entry><entry>2005-12-01</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1233079&amp;group_id=73833&amp;atid=539102">1233079</ulink></entry><entry>Add</entry><entry>replace util.concurrent with java.util.concurrent</entry><entry>2005-07-05</entry><entry>gojomo</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1371178&amp;group_id=73833&amp;atid=539102">1371178</ulink></entry><entry>Add</entry><entry>[jmx] Add name of heritrix 'host' as att</entry><entry>2005-12-01</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1445970&amp;group_id=73833&amp;atid=539102">1445970</ulink></entry><entry>Add</entry><entry>New "seed source report" of # of URLs per host per source</entry><entry>2006-03-08</entry><entry>karl-ia</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1387423&amp;group_id=73833&amp;atid=539102">1387423</ulink></entry><entry>Add</entry><entry>[arcreader] Fetch records and iterate remote ARCs</entry><entry>2005-12-21</entry><entry>karl-ia</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1358617&amp;group_id=73833&amp;atid=539102">1358617</ulink></entry><entry>Add</entry><entry>Add destroy to JMX API</entry><entry>2005-11-16</entry><entry>karl-ia</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1302207&amp;group_id=73833&amp;atid=539102">1302207</ulink></entry><entry>Add</entry><entry>unattended checkpointing</entry><entry>2005-09-23</entry><entry>karl-ia</entry><entry>gojomo</entry></row>
+
+<!-- fixes -->     
+
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1442207&amp;group_id=73833&amp;atid=539099">1442207</ulink></entry><entry>Fix</entry><entry>stop alerts 'line in seed file ignored' for mixed seed/surt</entry><entry>2006-03-02</entry><entry>gojomo</entry><entry>ia_igor</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1419272&amp;group_id=73833&amp;atid=539099">1419272</ulink></entry><entry>Fix</entry><entry>Corrupt job.state files obstruct crawl resumption</entry><entry>2006-01-30</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1417062&amp;group_id=73833&amp;atid=539099">1417062</ulink></entry><entry>Fix</entry><entry>JMX get alert by index broken.</entry><entry>2006-01-27</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1415942&amp;group_id=73833&amp;atid=539099">1415942</ulink></entry><entry>Fix</entry><entry>When multiple instances, there's always a runt in the litter</entry><entry>2006-01-26</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1415940&amp;group_id=73833&amp;atid=539099">1415940</ulink></entry><entry>Fix</entry><entry>Failed deregistration of container with jndi</entry><entry>2006-01-26</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1379208&amp;group_id=73833&amp;atid=539099">1379208</ulink></entry><entry>Fix</entry><entry>crawl report/hosts-report stats leave out robots.txt</entry><entry>2005-12-12</entry><entry>gojomo</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1371326&amp;group_id=73833&amp;atid=539099">1371326</ulink></entry><entry>Fix</entry><entry>refactor/compact QuotaEnforcer code</entry><entry>2005-12-01</entry><entry>stack-sf</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1371195&amp;group_id=73833&amp;atid=539099">1371195</ulink></entry><entry>Fix</entry><entry>[jmx] Make downloaded data count have constant units</entry><entry>2005-12-01</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1440656&amp;group_id=73833&amp;atid=539099">1440656</ulink></entry><entry>Fix</entry><entry>upping total budget doesn't update/unretire queues</entry><entry>2006-02-28</entry><entry>karl-ia</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1404316&amp;group_id=73833&amp;atid=539099">1404316</ulink></entry><entry>Fix</entry><entry>ExtractorCSS does not resolve relative URIs against BASE</entry><entry>2006-01-12</entry><entry>karl-ia</entry><entry>ia_igor</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1400646&amp;group_id=73833&amp;atid=539099">1400646</ulink></entry><entry>Fix</entry><entry>ExtractorHTML/ExtractorJS 'hang' on many-backslash input</entry><entry>2006-01-09</entry><entry>karl-ia</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1395637&amp;group_id=73833&amp;atid=539099">1395637</ulink></entry><entry>Fix</entry><entry>crawl.log entires do not reflect 'no space left' error</entry><entry>2006-01-02</entry><entry>karl-ia</entry><entry>ia_igor</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1392104&amp;group_id=73833&amp;atid=539099">1392104</ulink></entry><entry>Fix</entry><entry>ExtractorJS NPE doing speculative extraction</entry><entry>2005-12-28</entry><entry>karl-ia</entry><entry>stack-sf</entry></row>
+
+        
+            </tbody>
+          </tgroup>
+        </table></para>
+        
     </sect2>
   </sect1>
 
