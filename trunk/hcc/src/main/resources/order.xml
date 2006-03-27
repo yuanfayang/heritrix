@@ -2,9 +2,9 @@
 <crawl-order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="heritrix_settings.xsd">
    <meta>
      <name>$name</name>
-     <description>Default profile for $name</description>
+     <description>$description</description>
      <operator>Archive-It</operator>
-     <organization/>
+     <organization>$organization</organization>
      <audience/>
      <date>$date</date>
    </meta>

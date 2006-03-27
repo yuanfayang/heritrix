@@ -48,6 +48,8 @@ public class OrderJarFactory {
     public static final String USER_AGENT_KEY = "userAgent";
     public static final String FROM_EMAIL_KEY = "fromEmail";
     public static final String DISK_PATH_KEY = "diskPath";
+    public static final String DESCRIPTION = "description";
+    public static final String ORGANIZATION = "organization";
     
     public static final String SEEDS_KEY = "seeds";
     
@@ -107,6 +109,24 @@ public class OrderJarFactory {
             
             order = order.replace("$diskPath", diskPath);
 
+            String organization = (String)parameters.get(ORGANIZATION);
+            
+            if(organization == null){
+            	organization = "";
+            }
+            
+            order = order.replace("$organization", organization);
+
+            String description = (String)parameters.get(DESCRIPTION);
+            
+            if(description == null){
+            	description = "";
+            }
+            
+            order = order.replace("$description", description);
+            
+            
+            
             
             ByteArrayOutputStream orderFileOs = new ByteArrayOutputStream();
             orderFileOs.write(order.getBytes());
