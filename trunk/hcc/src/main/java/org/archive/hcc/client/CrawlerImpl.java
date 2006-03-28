@@ -119,7 +119,7 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
                     this.name,
                     "addJob",
                     new Object[] { order.getJarFile().getAbsolutePath(),
-                            order.getName(), "started via jmx api", "" },
+                            order.getName(), "", "" },
                     new String[] { "java.lang.String", "java.lang.String",
                             "java.lang.String", "java.lang.String" });
 
