@@ -3232,41 +3232,43 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para><programlisting>2004-07-21T23:29:40.438Z   200        310 http://127.0.0.1:9999/selftest/Charset/charsetselftest_end.html LLLL http://127.0.0.1:9999/selftest/Charset/shiftjis.jsp text/html #000 20040721232940401+10 M77KNTBZH2IU6V2SIG5EEG45EJICNQNM -
 2004-07-21T23:29:40.502Z   200        225 http://127.0.0.1:9999/selftest/MaxLinkHops/5.html LLLLL http://127.0.0.1:9999/selftest/MaxLinkHops/4.html text/html #000 20040721232940481+12 M77KNTBZH2IU6V2SIG5EEG45EJICNQNM -</programlisting></para>
 
-        <para>The <emphasis rule="bold">first</emphasis> column is a timestamp
+        <para>The <emphasis rule="bold">1st</emphasis> column is a timestamp
         in ISO8601 format, to millisecond resolution. The time is the instant
-        of logging. The <emphasis rule="bold">second</emphasis> column is the
+        of logging. The <emphasis rule="bold">2nd</emphasis> column is the
         fetch status code. Usually this is the HTTP status code but it can
         also be a negative number if URL processing was unexpectedly
         terminated. See <xref linkend="statuscodes" /> for a listing of
         possible values.</para>
 
-        <para>The <emphasis rule="bold">third</emphasis> column is the size of
+        <para>The <emphasis rule="bold">3rd</emphasis> column is the size of
         the downloaded document in bytes. For HTTP, Size is the size of the
         content-only. It excludes the size of the HTTP response headers. For
         DNS, its the total size of the DNS response. The <emphasis
-        rule="bold">fourth</emphasis> column is the URI of the document
-        downloaded. The <emphasis rule="bold">fifth</emphasis> column holds
+        rule="bold">4th</emphasis> column is the URI of the document
+        downloaded. The <emphasis rule="bold">5th</emphasis> column holds
         breadcrumb codes showing the trail of downloads that got us to the
         current URI. See <xref linkend="discoverypath" /> for description of
-        possible code values. The <emphasis rule="bold">sixth</emphasis>
+        possible code values. The <emphasis rule="bold">6th</emphasis>
         column holds the URI that immediately referenced this URI
         ('referrer'). Both of the latter two fields -- the discovery path and
         the referrer URL -- will be empty for such as the seed URIs.</para>
 
-        <para>The <emphasis rule="bold">seventh</emphasis> holds the document
-        mime type, the <emphasis rule="bold">eighth</emphasis> column has the
+        <para>The <emphasis rule="bold">7th</emphasis> holds the document
+        mime type, the <emphasis rule="bold">8th</emphasis> column has the
         id of the worker thread that downloaded this document, the <emphasis
-        rule="bold">ninth</emphasis> column holds a timestamp (in RFC2550/ARC
+        rule="bold">9th</emphasis> column holds a timestamp (in RFC2550/ARC
         condensed digits-only format) indicating when a network fetch was
         begun, and if appropriate, the millisecond duration of the fetch,
         separated from the begin-time by a '+' character.</para>
 
-        <para>The <emphasis rule="bold">tenth</emphasis> fields is a sha-1
-        digest of the content only (headers are not digested), and finally (if
-        pertinent), the <emphasis rule="bold">eleventh</emphasis> column holds
-        <quote>annotations</quote>. Possible annontations include: The number
-        of times the URI had to be tried (This field is '-' if the download
-        was never retried); The literal <literal>lenTrunc</literal> if the
+        <para>The <emphasis rule="bold">10th</emphasis> field is a SHA1
+        digest of the content only (headers are not digested). The <emphasis
+        rule="bold">11th</emphasis> column is the 'source tag' inherited 
+        by this URI, if that feature is enabled. Finally, the <emphasis 
+        rule="bold">12th</emphasis> column holds <quote>annotations</quote>,
+        if any have been set. Possible annontations include: the number
+        of times the URI was tried (This field is '-' if the download
+        was never retried); the literal <literal>lenTrunc</literal> if the
         download was truncated because it exceeded configured limits;
         <literal>timeTrunc</literal> if the download was truncated because the
         download time exceeded configured limits; or
