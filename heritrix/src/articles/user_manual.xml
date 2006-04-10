@@ -3961,14 +3961,22 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       <para>As of release 1.4.0, Heritrix will start up the JVM's JMX Agent if
       deployed in a SUN 1.5.0 JVM. It password protects the JMX Agent using
       whatever was specified as the Heritrix admin password so to login,
-      you'll used 'monitorRole' or 'controlRole' for login and the Heritrix
+      you'll use 'monitorRole' or 'controlRole' for login and the Heritrix
       admin password as password. By default, the JMX Agent is started up on
       port 8849 (To change any of the JMX settings, set the JMX_OPTS
-      environment variable). After starting up the JMX agent, Heritrix will
-      then register itself with the JVM JMX Agent publishing attributes and
-      operations that can be run remotely. To see whats available via JMX, use
+      environment variable).</para>
+      <para>On startup, Heritrix looks if any JMX Agent running in current 
+      context and registers itself with the first JMX Agent found publishing
+      attributes and operations that can be run remotely.  If running in
+      a SUN 1.5.0 JVM where the JVM JMX Agent has been started, Heritrix
+      will attach to the JVM JMX Agent (If running inside JBOSS, Heritrix
+      will register with the JBOSS JMX Agent).
+      </para>
+      <para>To see what Attributes and Operations are  available via JMX, use
       the SUN 1.5.0 JDK jconsole application -- its in $JAVA_HOME/bin -- or
-      use <xref linkend="jmxclient" />. To learn more about the SUN 1.5.0 JDK
+      use <xref linkend="jmxclient" />.</para>
+
+      <para>To learn more about the SUN 1.5.0 JDK
       JMX managements and jconsole, see <ulink
       url="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html">Monitoring
       and Management Using JMX</ulink>. This O'Reilly article is also a good
