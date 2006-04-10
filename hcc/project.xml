@@ -112,12 +112,6 @@
                 <exclude>**/*SelfTest.java</exclude>
             </excludes>
         </unitTest>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>false</filtering>
-            </resource>
-        </resources>
     </build>
 </project>
 
