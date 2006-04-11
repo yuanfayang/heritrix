@@ -879,7 +879,7 @@ implements CrawlURIDispositionListener, Serializable {
         // for each source
         for (Iterator i = sourceHostDistribution.keySet().iterator(); i.hasNext();) {
             Object sourceKey = i.next();
-            Hashtable hostCounts = (Hashtable)sourceHostDistribution.get(sourceKey);
+            Map hostCounts = (Map)sourceHostDistribution.get(sourceKey);
             // sort hosts by #urls
             SortedMap sortedHostCounts = getReverseSortedHostCounts(hostCounts);
             // for each host
