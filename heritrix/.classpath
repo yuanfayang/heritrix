@@ -23,7 +23,7 @@
 	<classpathentry kind="lib" path="lib/jmxtools-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/backport-util-concurrent-2.0_01.jar"/>
 	<classpathentry kind="lib" path="lib/dnsjava-1.6.2.jar"/>
-	<classpathentry kind="lib" path="lib/commons-pool-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-pool-1.3.jar"/>
 	<classpathentry kind="lib" path="lib/colt-subset-1.2.0.kb.jar"/>
 	<classpathentry kind="lib" path="lib/j5compat-0.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/MirrorJNDI-1.0.jar"/>
