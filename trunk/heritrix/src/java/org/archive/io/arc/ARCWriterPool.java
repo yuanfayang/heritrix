@@ -148,10 +148,11 @@ public class ARCWriterPool {
             } catch (NoSuchElementException e) {
                 // Let this exception out. Unit test at least depends on it.
                 // Log current state of the pool.
-                logger.severe(e.getMessage() + ": Retry #" + i + " of "
+                logger.warning(e.getMessage() + ": Retry #" + i + " of "
                     + " max of " + this.arbitraryRetryMax
                     + ": NSEE Pool State: " + getPoolState(waitStart));
                 if (i >= this.arbitraryRetryMax) {
+                    logger.log(Level.SEVERE,"maximum retries exceeded; rethrowing",e);
                     throw e;
                 }
             } catch (Exception e) {
