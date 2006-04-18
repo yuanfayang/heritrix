@@ -234,7 +234,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 " FALSE, the fetch is aborted. Prerequisites such as" +
                 " robots.txt by-pass filtering (i.e. they cannot be" +
                 " midfetch aborted.", Filter.class));
-        this.midfetchfilters.setExpertSetting(true);
+// see [ 1379040 ] regex for midfetch filter not being stored in crawl order
+// http://sourceforge.net/support/tracker.php?aid=1379040
+//        this.midfetchfilters.setExpertSetting(true);
         
         addElementToDefinition(new SimpleType(ATTR_TIMEOUT_SECONDS,
             "If the fetch is not completed in this number of seconds,"
