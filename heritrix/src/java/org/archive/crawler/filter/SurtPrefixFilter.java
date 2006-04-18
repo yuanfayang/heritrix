@@ -54,8 +54,12 @@ public class SurtPrefixFilter extends Filter {
             new SimpleType(ATTR_MATCH_RETURN_VALUE, "What to return when " +
                     "a prefix matches.\n", new Boolean(true)));
         addElementToDefinition(
-                new SimpleType(ATTR_SURTS_SOURCE_FILE, "Source file from which to " +
-                        "read SURT prefixes.", ""));
+                new SimpleType(ATTR_SURTS_SOURCE_FILE, 
+                		"Source file from which to infer SURT prefixes. Any URLs " +
+                        "in file will be converted to the implied SURT prefix, and " +
+                        "literal SURT prefixes may be listed on lines beginning " +
+                        "with a '+' character.", 
+                        ""));
     }
     
     /* (non-Javadoc)

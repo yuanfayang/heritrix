@@ -97,7 +97,11 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
                 + "with any of the established prefixes (from either seeds "
                 + "specification or an external file).");
         addElementToDefinition(new SimpleType(ATTR_SURTS_SOURCE_FILE,
-                "Source file from which to read SURT prefixes.", ""));
+                "Source file from which to infer SURT prefixes. Any URLs " +
+                "in file will be converted to the implied SURT prefix, and " +
+                "literal SURT prefixes may be listed on lines beginning " +
+                "with a '+' character.",
+                ""));
         addElementToDefinition(new SimpleType(ATTR_SEEDS_AS_SURT_PREFIXES,
                 "Should seeds also be interpreted as SURT prefixes.",
                 DEFAULT_SEEDS_AS_SURT_PREFIXES));

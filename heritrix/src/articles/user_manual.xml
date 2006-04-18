@@ -866,7 +866,10 @@
             <literal>http-headers</literal>.</para>
 
             <para>Use the <literal>surts-source-file</literal> setting to
-            supply an external file with a list of SURT prefixes, if desired.
+            supply an external file from which to infer SURT prefixes, if 
+            desired. Any URLs in this file will be converted to the implied
+            SURT prefix, and any line beginning with a '+' will be 
+            interpreted as a literal, precise SURT prefix. 
             Use the <literal>seeds-as-surt-prefixes</literal> setting to
             establish whether SURT prefixes should be deduced from the seeds,
             in accordance with the rules given at the <xref
