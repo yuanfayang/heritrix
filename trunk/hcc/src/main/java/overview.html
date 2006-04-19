@@ -9,10 +9,107 @@
     </p>
 
 <h2>Requirements</h2>
-<p>TODO</p>
-
+<p>
+	In order to bring up a cluster controller, you need the following pieces:
+</p>
+	<ul>
+		<li>An installation of Heritrix 1.7.2 or greater.</li>
+		<li>A JNDI server that can be accessed by both teh Heritrix JVM and the Cluster Controller JVM.</li>
+	</ul>
+<p>
+	
+	It should be noted that since JNDI is basically a passive service, it must be running BEFORE you 
+	ty to bring up heritrix. Be sure to read the instructions in the jndi.properties file in the 
+	heritrix jar in order to learn how to configure heritrix to talk to an external jndi server. 
+	Another tip: at least last time I checked, it is necessary to execute heritrix from the $HERITRIX_HOME
+	directory if you want Heritrix to read the jndi.properties file in $HERITRIX_HOME.
+	
+	We've been using JBOSS's jndi service to fulfill this requirement. The aforementioned jndi.properties file
+	contains instructions for configuring the JBOSS jndi server and client jars.  
+</p>
 <h2>Getting Started</h2>
-<p>TODO</p>
+
+<h3>Setup</h3>
+<p>
+	So let us assume you have your instance of heritrix started and it has successfully registered with
+	the JNDI server. (You can verify using any JNDI viewer. JBoss is comes with a web based JNDI viewer 
+	which we've found quite handy.)   
+</p>
+
+<h3>Simple Configuration</h3>
+<p>
+	Now it is possible to run the ClusterControllerBean in a jvm separate from the ClusterControllerClient interface.
+	For the present, let us look at the simplest configuration: the ClusterControllerBean is running in the same
+	JVM as the ClusterControllerClient. Both jmx bean and client are running on the same box as the jndi server (in turn running
+	on the standard port of 1099).
+</p>
+
+<p>
+	Given the above, your main class should  look something like this:
+</p>
+<pre>
+		public void main(String[] args){
+			//initialize the cluster controller bean
+			ClusterControllerBean ccbean = new ClusterControllerBean();
+			ccbean.init();
+		
+			//obtain a handle to the cluster controller client.	
+		    ClusterControllerClient cc = 
+		    	ClusterControllerClientManager.getDefaultClient();
+		    
+		    //list crawlers
+		    Collection crawlers = cc.listCrawlers();
+		    
+		    //create a new crawler 
+		    Crawler crawler = cc.createCrawler();
+		    
+		    //etc...
+		}
+		
+	</pre>
+<p>
+	Once you've initialized the cluster controller bean, you should be able to view it using 
+	jconsole or any other standard jmx viewer.
+</p>
+<h3>Other Configuration Options</h3>
+<p>
+	Given the above simple configuration, the assumption is that the ClusterControllerClient will
+	communicate with ClusterControllerBean (MBean) via the standard jmx port on the local machine (localhost:8849). If you need to 
+	change the host/port of the bean (ie you want to run the client on a different machine or in a process
+	separate from jmx bean), you can alter it by specifying the following commandline parameter:
+	
+
+</p>
+	<pre>
+		-Dorg.archive.hcc.client.jmxPort=8850 -Dorg.archive.hcc.client.host=myhost
+	</pre>
+<p>
+	Other properties pertaining to the HeritrixClusterControllerBean can be specified in the 
+	hcc.properties file.  The HeritrixClusterControllerBean will attempt to resolve hcc.properties in the following
+	order:
+	
+
+</p>
+		<ol>
+			<li>User's home directory</li>
+			<li>JVM execution directory (ie user.dir system property)</li>
+		</ol>
+
+<h4>the hcc.properties file</h4>
+<p>
+Currently there is only one property in the hcc.properties.
+
+</p>
+<table border="1">
+	<tr>
+		<td>org.archive.hcc.ClusterControllerBean.maxPerContainer
+		</td>
+		<td>This property controls the default max number of heritrix instances
+		per JVM. The max number can be set explicitly by host:port at runtime using
+		the ClusterControllerClient if you need that level of specificity.</td>
+	</tr>
+</table>
+
 </body>
 </html>
 
