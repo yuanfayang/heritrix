@@ -316,22 +316,30 @@ public class SurtPrefixSet extends TreeSet {
         Iterator iter = iterCopy.iterator();
         while (iter.hasNext()) {
             String prefix = (String) iter.next();
-            if(prefix.endsWith(")")) {
-                continue; // no change necessary
+            String convPrefix = convertPrefixToHost(prefix);
+            if(prefix!=convPrefix) {
+            	// if returned value not unchanged, update set
+            	this.remove(prefix);
+            	this.add(convPrefix);
             }
-            this.remove(prefix);
-            if(prefix.indexOf(')')<0) {
-                // open-ended domain prefix
-                if(!prefix.endsWith(",")) {
-                    prefix += ",";
-                }
-                prefix += ")";
-            } else {
-                // prefix with excess path-info
-                prefix = prefix.substring(0,prefix.indexOf(')')+1);
-            }
-            this.add(prefix);
         }
+    }
+    
+    public static String convertPrefixToHost(String prefix) {
+        if(prefix.endsWith(")")) {
+            return prefix; // no change necessary
+        }
+        if(prefix.indexOf(')')<0) {
+            // open-ended domain prefix
+            if(!prefix.endsWith(",")) {
+                prefix += ",";
+            }
+            prefix += ")";
+        } else {
+            // prefix with excess path-info
+            prefix = prefix.substring(0,prefix.indexOf(')')+1);
+        }
+        return prefix;
     }
 
     /**
@@ -346,16 +354,24 @@ public class SurtPrefixSet extends TreeSet {
         Iterator iter = iterCopy.iterator();
         while (iter.hasNext()) {
             String prefix = (String) iter.next();
-            if(prefix.indexOf(')')<0) {
-                continue; // no change necessary
+            String convPrefix = convertPrefixToDomain(prefix);
+            if(prefix!=convPrefix) {
+            	// if returned value not unchanged, update set
+            	this.remove(prefix);
+            	this.add(convPrefix);
             }
-            this.remove(prefix);
-            prefix = prefix.substring(0,prefix.indexOf(')'));
-            if(prefix.endsWith("www,")) {
-                prefix = prefix.substring(0,prefix.length()-4);
-            }
-            this.add(prefix);
         } 
+    }
+    
+    public static String convertPrefixToDomain(String prefix) {
+        if(prefix.indexOf(')')<0) {
+            return prefix; // no change necessary
+        }
+        prefix = prefix.substring(0,prefix.indexOf(')'));
+        if(prefix.endsWith("www,")) {
+            prefix = prefix.substring(0,prefix.length()-4);
+        }
+        return prefix;
     }
     
     /**

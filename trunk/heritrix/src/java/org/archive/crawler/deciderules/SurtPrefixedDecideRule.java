@@ -276,7 +276,11 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
 
     public synchronized void addedSeed(final CandidateURI curi) {
         SurtPrefixSet newSurtPrefixes = (SurtPrefixSet) surtPrefixes.clone();
-        newSurtPrefixes.add(SurtPrefixSet.prefixFromPlain(curi.toString()));
+        newSurtPrefixes.add(prefixFrom(curi.toString()));
         surtPrefixes = newSurtPrefixes;
+    }
+    
+    protected String prefixFrom(String uri) {
+    	return SurtPrefixSet.prefixFromPlain(uri);
     }
 }
