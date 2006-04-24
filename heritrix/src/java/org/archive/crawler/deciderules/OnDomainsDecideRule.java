@@ -26,6 +26,8 @@ package org.archive.crawler.deciderules;
 
 import java.util.logging.Logger;
 
+import org.archive.util.SurtPrefixSet;
+
 /**
  * Rule applies configured decision to any URIs that
  * are on one of the domains in the configured set of
@@ -64,4 +66,8 @@ public class OnDomainsDecideRule extends SurtPrefixedDecideRule {
         surtPrefixes.convertAllPrefixesToDomains();
         dumpSurtPrefixSet();
     }
+    
+	protected String prefixFrom(String uri) {
+		return SurtPrefixSet.convertPrefixToDomain(super.prefixFrom(uri));
+	}
 }

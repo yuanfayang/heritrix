@@ -26,6 +26,8 @@ package org.archive.crawler.deciderules;
 
 import java.util.logging.Logger;
 
+import org.archive.util.SurtPrefixSet;
+
 
 
 /**
@@ -66,4 +68,8 @@ public class OnHostsDecideRule extends SurtPrefixedDecideRule {
         surtPrefixes.convertAllPrefixesToHosts();
         dumpSurtPrefixSet();
     }
+
+	protected String prefixFrom(String uri) {
+		return SurtPrefixSet.convertPrefixToHost(super.prefixFrom(uri));
+	}
 }
