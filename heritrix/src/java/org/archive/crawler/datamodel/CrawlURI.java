@@ -913,7 +913,8 @@ implements FetchStatusCodes {
      *
      * Only makes sense to call this method after execution of
      * HttpMethod#execute. Regard any status larger then 0 as success
-     * except for below caveat regarding 401s.
+     * except for below caveat regarding 401s.  Use {@link #is2XXSuccess()} if
+     * looking for a status code in the 200 range.
      *
      * <p>401s caveat: If any rfc2617 credential data present and we got a 401
      * assume it got loaded in FetchHTTP on expectation that we're to go around
@@ -922,6 +923,7 @@ implements FetchStatusCodes {
      * use of the loaded credential data.
      *
      * @return True if ths URI has been successfully processed.
+     * @see #is2XXSuccess()
      */
     public boolean isSuccess() {
         boolean result = false;
@@ -933,6 +935,14 @@ implements FetchStatusCodes {
             result = (statusCode > 0);
         }
         return result;
+    }
+    
+    /**
+     * @return True if status code is in the 2xx range.
+     * @see #isSuccess()
+     */
+    public boolean is2XXSuccess() {
+    	return this.fetchStatus >= 200 && this.fetchStatus < 300;
     }
 
     /**

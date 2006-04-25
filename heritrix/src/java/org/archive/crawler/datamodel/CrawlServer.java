@@ -130,15 +130,16 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
         }
         validRobots = true;
         
-        if (curi.getFetchStatus() != 200 ||
+        if (!curi.is2XXSuccess() ||
                 honoringPolicy.getType(getSettings(curi)) ==
-                    RobotsHonoringPolicy.IGNORE)
-        {
-            // not found or other errors == all ok for now
+                    RobotsHonoringPolicy.IGNORE) {
+            // Not found or anything but a status code in the 2xx range is
+        	// treated as giving access to all of a sites' content.
             // TODO: consider handling server errors, redirects differently
             robots = RobotsExclusionPolicy.ALLOWALL;
             return;
         }
+        
 //      PREVAILING PRACTICE PER GOOGLE: treat these errors as all-allowed,
 //      since they're usually indicative of a mistake
 //      Thus these lines are commented out:
