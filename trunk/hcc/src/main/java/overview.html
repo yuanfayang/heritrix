@@ -30,6 +30,9 @@
 <p>Now it is possible to run the ClusterControllerBean in a jvm separate from the ClusterControllerClient interface.  For the present, let us look at the simplest configuration: the ClusterControllerBean is running in the same JVM as the ClusterControllerClient. Both jmx bean and client are running on the same box as the jndi server (in turn running on the standard port of 1099).
 </p>
 
+<p>Note that, to enable the JMX agent for local access, you need to set the
+sytem property <code>com.sun.management.jmxremote</code>.  See <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html#local">Monitoring and Management Using JMX</a>.</p>
+
 <p>Given the above, your main class should  look something like this:
 </p>
 <pre>
