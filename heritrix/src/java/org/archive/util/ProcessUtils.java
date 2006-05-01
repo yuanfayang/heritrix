@@ -132,8 +132,12 @@ public class ProcessUtils {
         ProcessUtils pu = new ProcessUtils();
         // Gobble up any output.
         StreamGobbler err = pu.new StreamGobbler(p.getErrorStream(), "stderr");
+        err.setDaemon(true);
+        err.setDaemon(true);
         err.start();
+        out.setDaemon(true);
         StreamGobbler out = pu.new StreamGobbler(p.getInputStream(), "stdout");
+        out.setDaemon(true);
         out.start();
         int exitVal;
         try {
