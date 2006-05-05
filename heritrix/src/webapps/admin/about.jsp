@@ -11,7 +11,7 @@
     
     Heritrix - version <%=Heritrix.getVersion()%>
     
-    Copyright (C) 2003 Internet Archive.
+    Copyright (C) 2003-2006 Internet Archive.
     
     Heritrix is free software; you can redistribute it and/or modify
     it under the terms of the GNU Lesser Public License as published by
