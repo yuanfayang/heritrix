@@ -43,6 +43,16 @@
         <p>See the <a href="articles/user_manual.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+    
+    <subsection name="Release 1.8.0 05/05/2006">
+      <p>Release 1.8.0 offers a number of improvements, including 13 requested 
+      enhancements and fixes for 18 reported bugs. See
+      <a href="articles/releasenotes.html#1_8_0">Heritrix Release Notes</a> 
+      for detail and
+      <a href="articles/releasenotes.html#1_8_0_limitations">Known
+      Limitations</a>.</p>
+    </subsection>
+    
     <subsection name="Release 1.6.0 12/01/2005">
       <p>Release 1.6.0 offers improved remote control and monitoring via
       JMX, a crawl-checkpointing facility, and experimental support for bloom
