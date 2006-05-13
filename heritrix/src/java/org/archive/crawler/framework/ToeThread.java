@@ -162,8 +162,7 @@ Reporter, ProgressStatisticsReporter {
                 
                 setStep(STEP_FINISHING_PROCESS);
                 lastFinishTime = System.currentTimeMillis();
-// hold all for debug OOM
-//                controller.releaseContinuePermission();
+                controller.releaseContinuePermission();
                 if(shouldRetire) {
                     break; // from while(true)
                 }
@@ -176,8 +175,7 @@ Reporter, ProgressStatisticsReporter {
         } catch (OutOfMemoryError err) {
             seriousError(err);
         } finally {
-//          hold all for debug OOM
-//            controller.releaseContinuePermission();
+            controller.releaseContinuePermission();
         }
         setCurrentCuri(null);
         // Do cleanup so that objects can be GC.
