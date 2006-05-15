@@ -490,4 +490,30 @@ extends TmpDirTestCase implements ARCConstants {
             w.close();
         }
     }
+    
+    public void testArcRecordOffsetReads() throws Exception {
+    	// Get an ARC with one record.
+		ARCWriter w =
+			createArcWithOneRecord("testArcRecordInBufferStream", true);
+		w.close();
+		// Get reader on said ARC.
+		ARCReader r = ARCReaderFactory.get(w.getArcFile());
+		final Iterator i = r.iterator();
+		// Skip first ARC meta record.
+		ARCRecord ar = (ARCRecord) i.next();
+		i.hasNext();
+		// Now we're at first and only record in ARC.
+		ar = (ARCRecord) i.next();
+		// Now try getting some random set of bytes out of it 
+		// at an odd offset (used to fail because we were
+		// doing bad math to find where in buffer to read).
+		final byte[] buffer = new byte[17];
+		final int maxRead = 4;
+		int totalRead = 0;
+		while (totalRead < maxRead) {
+			totalRead = totalRead
+			    + ar.read(buffer, 13 + totalRead, maxRead - totalRead);
+			assertTrue(totalRead > 0);
+		}
+	}
 }
