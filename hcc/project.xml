@@ -4,7 +4,7 @@
     <artifactId>hcc</artifactId>
     <name>hcc</name>
     <groupId>hcc</groupId>
-    <currentVersion>0.1.0${version.build.suffix}</currentVersion>
+    <currentVersion>0.2.0${version.build.suffix}</currentVersion>
     <organization>
         <name>The Internet Archive</name>
         <url>http://www.archive.org</url>
@@ -27,7 +27,7 @@
     <developers>
         <developer>
             <name>Daniel Bernstein</name>
-            <id>danny</id>
+            <id>dbernstein</id>
             <email>dbernstein@archive.org</email>
             <organization>The Internet Archive</organization>
             <timezone>Pacific</timezone>

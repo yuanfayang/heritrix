@@ -25,13 +25,17 @@ package org.archive.hcc.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -52,6 +56,7 @@ public class OrderJarFactory {
     public static final String ORGANIZATION = "organization";
     
     public static final String SEEDS_KEY = "seeds";
+    public static final String HOST_CONSTRAINTS_KEY = "hostConstraints";
     
 
     public OrderJarFactory() {
@@ -158,6 +163,16 @@ public class OrderJarFactory {
             JarOutputStream jos = new JarOutputStream(new FileOutputStream(
                     jarFile));
             byte[] buf = new byte[1024];
+            
+            
+            //create hostConstraints hierarchy
+            Map<String,InputStream> files = 
+            	writeHostConstraints(
+            			(List<HostConstraint>)parameters.get(HOST_CONSTRAINTS_KEY));
+            
+            //add files to map
+            map.putAll(files);
+            
             // for each map entry
             for (String filename : map.keySet()) {
                 // Add ZIP entry to output stream.
@@ -192,5 +207,62 @@ public class OrderJarFactory {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+    
+    
+    protected static Map<String, InputStream> writeHostConstraints(List<HostConstraint> hostConstraints) throws IOException{
+    		
+    	Map<String, InputStream> files = new HashMap<String, InputStream>();
+    	if(hostConstraints != null){
+    		//for each constraint
+    		for(HostConstraint hc : hostConstraints){
+    			//put filename path into list.
+    			File file = writeSettingsFile(hc);
+    			files.put(hc.getSettingsFilePath(), new FileInputStream(file));
+    			
+    			
+    		}
+    	}
+    	
+    	return files;
+    
+    }
+    
+    protected static File writeSettingsFile(HostConstraint hc) throws IOException{
+		//create directory hierarchy if doesn't exist
+		File directory = new File(hc.getSettingsFileDirectory());
+		directory.mkdirs();
+		File file = File.createTempFile("order", "xml", directory);
+		file.deleteOnExit();
+		//write order file
+		FileWriter w = new FileWriter(file);
+		
+		w.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		w.append("<crawl-settings xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"heritrix_settings.xsd\">");
+		/*
+		w.append("<meta>");
+		w.append("<name></name>");
+		w.append("<description></description>");
+		w.append("<operator>Admin</operator>");
+		w.append("<audience></audience>");
+		w.append("<organization></organization>");
+		w.append("<date></date>");
+		w.append("</meta>");
+		*/
+		if(hc.getIgnoreRobots() != null && hc.getIgnoreRobots()){
+			w.append("<object name=\"robots-honoring-policy\"><string name=\"type\">ignore</string></object>");
+		}
+		
+		if(hc.getBlock()  != null && hc.getBlock()){
+			w.append("<object name=\"scope\"><boolean name=\"enabled\">false</boolean></object>");
+		}
+		
+		if(hc.getRegex() != null){
+			w.append("<object name=\"acceptByType\"><string name=\"regexp\">"+ hc.getRegex() +"</string></object>");
+		}
+		w.append("</crawl-settings>");
+		w.close();
+
+		return file;
     }
 }
