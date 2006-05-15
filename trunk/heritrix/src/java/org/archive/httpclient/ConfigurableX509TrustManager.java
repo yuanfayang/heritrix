@@ -94,7 +94,7 @@ public class ConfigurableX509TrustManager implements X509TrustManager
      *
      * Ensure server has same name as cert DN.
      */
-    public final static String STRICT = "stict";
+    public final static String STRICT = "strict";
 
     /**
      * All the levels of trust as an array from babe-in-the-wood to strict.
