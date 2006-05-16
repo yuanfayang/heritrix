@@ -38,7 +38,7 @@ import org.archive.crawler.datamodel.ServerCache;
 
 /**
  * Version of protocol socket factory that tries to get IP from heritrix IP
- * cache.
+ * cache -- if its been set into the HttpConnectionParameters.
  * 
  * Copied the guts of DefaultProtocolSocketFactory.  This factory gets
  * setup by {@link FetchHTTP}.
@@ -48,17 +48,10 @@ import org.archive.crawler.datamodel.ServerCache;
  */
 public class HeritrixProtocolSocketFactory
 implements ProtocolSocketFactory {
-	private ServerCache cache;
-
-    public HeritrixProtocolSocketFactory(final ServerCache c) {
-        this.cache = c;
-    }
-    
     /**
      * Constructor.
-     * Private so only can be used internally creating singleton.
      */
-    private HeritrixProtocolSocketFactory() {
+    public HeritrixProtocolSocketFactory() {
         super();
     }
 
@@ -71,12 +64,7 @@ implements ProtocolSocketFactory {
         InetAddress localAddress,
         int localPort
     ) throws IOException, UnknownHostException {
-        InetAddress hostAddress = getHostAddress(this.cache, host);
-        // If we didn't get a remoteHost, fall back on the old manner
-        // of obtaining a socket.
-        return (hostAddress == null)?
-            new Socket(host, port, localAddress, localPort):
-            new Socket(hostAddress, port, localAddress, localPort);
+        return new Socket(host, port, localAddress, localPort);
     }
 
     /**
@@ -112,7 +100,7 @@ implements ProtocolSocketFactory {
      *
      * @since 3.0
      */
-    public Socket createSocket(
+    public synchronized Socket createSocket(
         final String host,
         final int port,
         final InetAddress localAddress,
@@ -131,7 +119,10 @@ implements ProtocolSocketFactory {
             socket = createSocket(host, port, localAddress, localPort);
         } else {
             socket = new Socket();
-            InetAddress hostAddress = getHostAddress(this.cache, host);
+            ServerCache cache = (ServerCache)params.
+                getParameter(FetchHTTP.SERVER_CACHE_KEY);
+            InetAddress hostAddress =
+            	(cache != null)? getHostAddress(cache, host): null;
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
@@ -180,11 +171,7 @@ implements ProtocolSocketFactory {
      */
     public Socket createSocket(String host, int port)
             throws IOException, UnknownHostException {
-        InetAddress hostAddress = getHostAddress(this.cache, host);
-        // If we didn't get a remoteHost, fall back on the old manner
-        // of obtaining a socket.
-        return (hostAddress == null)?
-            new Socket(host, port): new Socket(hostAddress, port);
+        return new Socket(host, port);
     }
 
     /**
