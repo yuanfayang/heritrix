@@ -15,11 +15,11 @@ public class HostConstraintTest extends TestCase{
 	}
 	
 	public void testGetOrderFileDirectory(){
-		assertEquals("com/test/www", h.getSettingsFileDirectory());
+		assertEquals("settings/com/test/www", h.getSettingsFileDirectory());
 	}
 
 	public void testGetOrderFilePath(){
-		assertEquals("com/test/www/order.xml", h.getSettingsFilePath());
+		assertEquals("settings/com/test/www/settings.xml", h.getSettingsFilePath());
 	}
 
 }
