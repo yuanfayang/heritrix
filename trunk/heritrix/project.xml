@@ -305,24 +305,6 @@
     -->
     <dependencies>
         <dependency>
-            <id>j5compat</id>
-            <version>0.1.0</version>
-            <url>http://crawler.archive.org/j5compat-0.1.tar.gz
-            </url>
-            <properties>
-                <war.bundle>true</war.bundle>
-                <ear.bundle>true</ear.bundle>
-                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>Java 5.0 compatibility layer
-                Copyright (c) 2005 Christian Kohlschuetter.
-                Source (and build) can be found here:
-                http://crawler.archive.org/j5compat-0.1.tar.gz.
-                </description>
-                <license>http://www.gnu.org/licenses/lgpl.txt
-                </license>
-            </properties>
-        </dependency>
-        <dependency>
             <id>je</id>
             <version>2.1.30</version>
             <url>http://www.sleepycat.com/products/je.shtml</url>

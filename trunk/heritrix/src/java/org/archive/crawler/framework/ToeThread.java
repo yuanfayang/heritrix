@@ -512,7 +512,7 @@ Reporter, ProgressStatisticsReporter {
         pw.print(ArchiveUtils.formatMillisecondsToConventional(System.currentTimeMillis()-atStepSince));
         pw.println();
 
-        StackTraceElement[] ste = de.kohlschuetter.j5compat.Instances.STACKTRACES.getStackTrace(this);
+        StackTraceElement[] ste = this.getStackTrace();
         for(int i=0;i<ste.length;i++) {
             pw.print("    ");
             pw.print(ste[i].toString());
