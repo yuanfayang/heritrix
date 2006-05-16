@@ -14,8 +14,8 @@
         that the only true requirement for running it is that you have a
         JRE installed.</p>
 		
-		<p>The Heritrix crawler makes use of Java 1.4 features so your JRE must 
-		be at least of a 1.4.0 pedigree.</p>
+		<p>The Heritrix crawler makes use of Java 5.0 features so your JRE must 
+		be at least of a 5.0 (1.5.0+) pedigree.</p>
 		
 		<p>We currently include all of the free/open source third-party
         libraries necessary to run Heritrix in the distribution package.
