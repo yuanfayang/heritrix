@@ -94,7 +94,7 @@ import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.dbi.EnvironmentImpl;
 import com.sleepycat.je.utilint.DbLsn;
 
-import edu.emory.mathcs.backport.java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * CrawlController collects all the classes which cooperate to

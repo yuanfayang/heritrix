@@ -51,7 +51,7 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
 
-import edu.emory.mathcs.backport.java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Helper class for managing a simple Frontier change-events journal which is
