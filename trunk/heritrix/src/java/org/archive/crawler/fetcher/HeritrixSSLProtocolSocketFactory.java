@@ -59,11 +59,9 @@ import org.archive.httpclient.ConfigurableX509TrustManager;
 public class HeritrixSSLProtocolSocketFactory
 implements SecureProtocolSocketFactory {
     /***
-     * Socket factory that has the configurable trust manager installed.
+     * Socket factory with default trust manager installed.
      */
-    private SSLSocketFactory sslfactory = null;
-    
-    private final ServerCache cache;
+    private SSLSocketFactory sslDefaultFactory = null;
     
     /**
      * Shutdown constructor.
@@ -71,67 +69,34 @@ implements SecureProtocolSocketFactory {
      * @throws KeyStoreException
      * @throws NoSuchAlgorithmException
      */
-    private HeritrixSSLProtocolSocketFactory()
+    public HeritrixSSLProtocolSocketFactory()
     throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException{
-        this(null, ConfigurableX509TrustManager.DEFAULT);
-    }
-    
-    public HeritrixSSLProtocolSocketFactory(final ServerCache cache)
-    throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException {
-        this(cache, ConfigurableX509TrustManager.DEFAULT);
-    }
-
-    /**
-     * Constructor.
-     * @param cache Cache to get server instance from.
-     *
-     * @param level Level of trust to effect.
-     * @throws KeyManagementException 
-     *
-     * @throws NoSuchAlgorithmException
-     * @throws KeyStoreException
-     * @see ConfigurableX509TrustManager
-     */
-    public HeritrixSSLProtocolSocketFactory(final ServerCache cache,
-            final String level)
-    throws KeyManagementException, KeyStoreException,
-            NoSuchAlgorithmException {
-        super();
-        this.cache = cache;
-
         // Get an SSL context and initialize it.
         SSLContext context = SSLContext.getInstance("SSL");
 
         // I tried to get the default KeyManagers but doesn't work unless you
         // point at a physical keystore. Passing null seems to do the right
         // thing so we'll go w/ that.
-        context.init(null,
-            new TrustManager[] {new ConfigurableX509TrustManager(level)}, null);
-        this.sslfactory = context.getSocketFactory();
+        context.init(null, new TrustManager[] {
+            new ConfigurableX509TrustManager(
+                ConfigurableX509TrustManager.DEFAULT)}, null);
+        this.sslDefaultFactory = context.getSocketFactory();
     }
 
     public Socket createSocket(String host, int port, InetAddress clientHost,
         int clientPort)
     throws IOException, UnknownHostException {
-        InetAddress hostAddress =
-            HeritrixProtocolSocketFactory.getHostAddress(this.cache, host);
-        return (hostAddress == null)?
-            this.sslfactory.createSocket(host, port, clientHost, clientPort):
-            this.sslfactory.createSocket(hostAddress, port, clientHost,
-                clientPort);    
+    	return this.sslDefaultFactory.createSocket(host, port,
+    	    clientHost, clientPort);
     }
 
     public Socket createSocket(String host, int port)
     throws IOException, UnknownHostException {
-        InetAddress hostAddress =
-            HeritrixProtocolSocketFactory.getHostAddress(this.cache, host);
-        return (hostAddress == null)?
-            this.sslfactory.createSocket(host, port):
-            this.sslfactory.createSocket(hostAddress, port);
+        return this.sslDefaultFactory.createSocket(host, port);
     }
 
-    public Socket createSocket(String host, int port, InetAddress localAddress,
-        int localPort, HttpConnectionParams params)
+    public synchronized Socket createSocket(String host, int port,
+    	InetAddress localAddress, int localPort, HttpConnectionParams params)
     throws IOException, UnknownHostException {
         // Below code is from the DefaultSSLProtocolSocketFactory#createSocket
         // method only it has workarounds to deal with pre-1.4 JVMs.  I've
@@ -144,9 +109,14 @@ implements SecureProtocolSocketFactory {
         if (timeout == 0) {
             socket = createSocket(host, port, localAddress, localPort);
         } else {
-            socket = this.sslfactory.createSocket();
-            InetAddress hostAddress =
-                HeritrixProtocolSocketFactory.getHostAddress(this.cache, host);
+        	SSLSocketFactory factory = (SSLSocketFactory)params.
+                getParameter(FetchHTTP.SSL_FACTORY_KEY);
+        	SSLSocketFactory f = (factory != null)? factory: this.sslDefaultFactory;
+            socket = f.createSocket();
+            ServerCache cache = (ServerCache)params.
+                getParameter(FetchHTTP.SERVER_CACHE_KEY);
+            InetAddress hostAddress = (cache !=  null)?
+                HeritrixProtocolSocketFactory.getHostAddress(cache, host): null;
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
@@ -165,7 +135,8 @@ implements SecureProtocolSocketFactory {
 	public Socket createSocket(Socket socket, String host, int port,
         boolean autoClose)
     throws IOException, UnknownHostException {
-        return this.sslfactory.createSocket(socket, host, port, autoClose);
+        return this.sslDefaultFactory.createSocket(socket, host,
+            port, autoClose);
 	}
     
     public boolean equals(Object obj) {

@@ -33,6 +33,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -45,6 +48,9 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
@@ -219,6 +225,30 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * Name of cookie BDB Database
      */
     public static final String COOKIEDB_NAME = "http_cookies";
+    
+    static {
+    	Protocol.registerProtocol("http", new Protocol("http",
+            new HeritrixProtocolSocketFactory(), 80));
+    	try {
+			Protocol.registerProtocol("https",
+			    new Protocol("https", ((ProtocolSocketFactory)
+			        new HeritrixSSLProtocolSocketFactory()), 443));
+		} catch (KeyManagementException e) {
+			e.printStackTrace();
+		} catch (KeyStoreException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+    }
+    static final String SERVER_CACHE_KEY = "heritrix.server.cache";
+    static final String SSL_FACTORY_KEY = "heritrix.ssl.factory";
+    
+    /***
+     * Socket factory that has the configurable trust manager installed.
+     */
+    private SSLSocketFactory sslfactory = null;
+    
 
     /**
      * Constructor.
@@ -956,6 +986,20 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
 
         // load cookies from a file if specified in the order file.
         loadCookies();
+
+        // I tried to get the default KeyManagers but doesn't work unless you
+        // point at a physical keystore. Passing null seems to do the right
+        // thing so we'll go w/ that.
+        try {
+        	SSLContext context = SSLContext.getInstance("SSL");
+			context.init(null, new TrustManager[] {
+			    new ConfigurableX509TrustManager((String)
+			        getAttribute(ATTR_TRUST))}, null);
+	        this.sslfactory = context.getSocketFactory();
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "Failed configure of ssl context "
+			    + e.getMessage(), e);
+		}
     }
     
     public void finalTasks() {
@@ -1008,25 +1052,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // Use our own protocol factory, one that gets IP to use from
         // heritrix cache (They're cached in CrawlHost instances).
         final ServerCache cache = getController().getServerCache();
-        Protocol.registerProtocol("http", new Protocol("http",
-            new HeritrixProtocolSocketFactory(cache), 80));
-
-        // Put in place a configurable trustmanager as well.  This
-        // below https protocol handler also depends on
-        // heritrixprotocol socket factory being in place; it uses
-        // its getHostAddress to get host IPs from heritrix cache.
-        try {
-            String trustLevel = (String) getAttribute(ATTR_TRUST);
-            Protocol.registerProtocol("https",
-                new Protocol("https", ((ProtocolSocketFactory)
-                    new HeritrixSSLProtocolSocketFactory(cache, trustLevel)),
-                        443));
-        } catch (Exception e) {
-            // Convert all to RuntimeException so get an exception out if
-            // initialization fails.
-            throw new RuntimeException("Failed initialization getting" +
-                " attributes: " + e.getMessage());
-        }
+        hcmp.setParameter(SERVER_CACHE_KEY, cache);
+        hcmp.setParameter(SSL_FACTORY_KEY, this.sslfactory);
 	}
 
     /**
