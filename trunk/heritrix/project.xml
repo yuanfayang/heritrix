@@ -458,36 +458,6 @@
             </properties>
         </dependency>
         <dependency>
-            <id>jmxri</id>
-            <version />
-            <url>http://java.sun.com/products/JavaManagement/index.jsp</url>
-            <properties>
-                <war.bundle>true</war.bundle>
-                <ear.bundle>true</ear.bundle>
-                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>JMX Reference Implementation.
-                </description>
-                <license>SUN Binary Code License
-                http://java.com/en/download/license.jsp
-                </license>
-            </properties>
-        </dependency>
-        <dependency>
-            <id>jmxtools</id>
-            <version />
-            <url>http://java.sun.com/products/JavaManagement/index.jsp</url>
-            <properties>
-                <war.bundle>true</war.bundle>
-                <ear.bundle>true</ear.bundle>
-                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>JMX tools.
-                </description>
-                <license>SUN Binary Code License
-                http://java.com/en/download/license.jsp
-                </license>
-            </properties>
-        </dependency>
-        <dependency>
             <id>poi</id>
             <version>2.0-RC1-20031102</version>
             <url>http://jakarta.apache.org/poi/</url>

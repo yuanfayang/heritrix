@@ -59,7 +59,7 @@
     </para>
 
     <para>Because Heritrix is a pure Java program it can (in theory anyway) be
-    run on any platform that has a Java 1.4 VM. However we are only committed
+    run on any platform that has a Java 5.0 VM. However we are only committed
     to supporting its operation on Linux and so this chapter only covers setup
     on that platform.  Because of this, what follows assumes
     basic Linux administration skills.  Other chapters in the user manual are
@@ -101,8 +101,8 @@
           that the only true requirement for running it is that you have a JRE
           installed (Building will require a JDK).</para>
 
-          <para>The Heritrix crawler makes use of Java 1.4 features so your
-          JRE must be at least of a 1.4.x pedigree.</para>
+          <para>The Heritrix crawler makes use of Java 5.0 features so your
+          JRE must be at least of a 5.0 (1.5.0+) pedigree.</para>
 
           <para>We currently include all of the free/open source third-party
           libraries necessary to run Heritrix in the distribution package. See
