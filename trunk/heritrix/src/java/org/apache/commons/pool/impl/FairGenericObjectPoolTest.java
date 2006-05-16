@@ -24,16 +24,16 @@ import org.apache.commons.pool.BasePoolableObjectFactory;
  * @author gojomo
  */
 public class FairGenericObjectPoolTest extends TestCase {
-    public void testUnfair() throws InterruptedException {
-//        System.out.println("unfair");
-        GenericObjectPool pool = new GenericObjectPool();
-        
-        Object[] borrowOrder = tryPool(pool);
-        
-        Object[] sortedOrder = (Object[]) borrowOrder.clone();
-        Arrays.sort(sortedOrder);
-        assertFalse("unexpectedly fair", Arrays.equals(borrowOrder,sortedOrder));
-    }
+//    public void testUnfair() throws InterruptedException {
+////        System.out.println("unfair");
+//        GenericObjectPool pool = new GenericObjectPool();
+//        
+//        Object[] borrowOrder = tryPool(pool);
+//        
+//        Object[] sortedOrder = (Object[]) borrowOrder.clone();
+//        Arrays.sort(sortedOrder);
+//        assertFalse("unexpectedly fair", Arrays.equals(borrowOrder,sortedOrder));
+//    }
     
     public void testFair() throws InterruptedException {
 //        System.out.println("fair");
