@@ -585,6 +585,27 @@ public class UURIFactoryTest extends TestCase {
         assertTrue("URI not equal", tmp.equals(uri));
         */
 	}
+
+	/**
+	 * Test user info + port
+	 * @throws URIException
+	 */
+	public final void testUserinfoPlusPort() throws URIException {
+		final String userInfo = "stack:StAcK";
+        final String authority = "www.tyopaikat.com";
+        final int port = 8080;
+        final String uri = "http://" + userInfo + "@" + authority + ":" + port 
+        	+ "/robots.txt";
+		UURI uuri = UURIFactory.getInstance(uri);
+		assertEquals("Host not equal", authority,uuri.getHost());
+		assertEquals("Userinfo Not equal",userInfo,uuri.getUserinfo());
+		assertEquals("Port not equal",port,uuri.getPort());
+		assertEquals("Authority wrong","stack:StAcK@www.tyopaikat.com:8080",
+				uuri.getAuthority());
+		assertEquals("AuthorityMinusUserinfo wrong","www.tyopaikat.com:8080",
+				uuri.getAuthorityMinusUserinfo());
+		
+	}
 	
 	/**
 	 * Tests from rfc2396 with amendments to accomodate differences

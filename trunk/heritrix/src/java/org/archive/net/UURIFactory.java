@@ -585,7 +585,7 @@ public class UURIFactory extends URI {
             } else {
                 // uncommon: userinfo, port
                 String userinfo = uriAuthority.substring(0,atIndex+1);
-                String domain = fixupDomainlabel(uriAuthority.substring(atIndex+1));
+                String domain = fixupDomainlabel(uriAuthority.substring(atIndex+1,portColonIndex));
                 String port = uriAuthority.substring(portColonIndex);
                 return userinfo + domain + port;
             }
