@@ -48,7 +48,7 @@ import org.archive.util.HttpRecorder;
 import st.ata.util.AList;
 import st.ata.util.HashtableAList;
 
-import edu.emory.mathcs.backport.java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 /**
