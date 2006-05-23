@@ -36,6 +36,7 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.ArrayType;
 import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.OpenType;
 
 import junit.framework.TestCase;
 
@@ -78,9 +79,9 @@ public class JmxRegistryHandlerTest extends TestCase {
         Object[] references = null;
         try {
             references = new Object[] {
-                new Reference(new ObjectName("org.archive.1", ht)).
+                new ConfigurationPointer(new ObjectName("org.archive.1", ht)).
                     getCompositeData(),
-                new Reference(new ObjectName("org.archive.2", ht)).
+                new ConfigurationPointer(new ObjectName("org.archive.2", ht)).
                     getCompositeData()};
         } catch (OpenDataException e) {
             e.printStackTrace();
@@ -92,7 +93,7 @@ public class JmxRegistryHandlerTest extends TestCase {
         ConfigurationArray array = new ConfigurationArray() {
             protected ArrayType getArrayType()
             throws OpenDataException {
-                return new ArrayType(1, Reference.COMPOSITE_TYPE);
+                return new ArrayType<OpenType>(1, ConfigurationPointer.COMPOSITE_TYPE);
             }
         };
         array.setAttribute(new Attribute(ConfigurationArray.ARRAYS_ATTRIBUTE,

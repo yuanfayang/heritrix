@@ -36,6 +36,7 @@ import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
@@ -50,9 +51,11 @@ import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenMBeanAttributeInfo;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 import javax.management.openmbean.OpenMBeanConstructorInfo;
+import javax.management.openmbean.OpenMBeanInfo;
 import javax.management.openmbean.OpenMBeanInfoSupport;
 import javax.management.openmbean.OpenMBeanOperationInfo;
 import javax.management.openmbean.OpenMBeanOperationInfoSupport;
+import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
 import org.archive.util.JmxUtils;
@@ -70,25 +73,35 @@ import org.archive.util.JmxUtils;
  */
 public abstract class Configuration
 implements DynamicMBean, MBeanRegistration {
-    private final static Logger LOGGER =
-        Logger.getLogger(Configuration.class.getName());
+    private final Logger LOGGER = Logger.getLogger(this.getClass().getName());
     
     private static final String NON_EXPERT_OPERATION = "nonexpert";
     private static final String OVERRIDEABLE_OPERATION = "overrideable";
-    protected static final Object [] TRUE_FALSE_LEGAL_VALUES =
-        new Object [] {Boolean.TRUE, Boolean.FALSE};
+    
+    public static final Boolean [] TRUE_FALSE_LEGAL_VALUES =
+        new Boolean [] {Boolean.TRUE, Boolean.FALSE};
+    
     public static final String ENABLED_ATTRIBUTE = "Enabled";
-    private static final List ATTRIBUTE_NAMES =
-        Arrays.asList(new String [] {ENABLED_ATTRIBUTE});
+    
+    /**
+     * Is the configured item enabled?
+     */
     private Boolean enabled = Boolean.TRUE;
+    
+    /**
+     * List of attribute  names.
+     */
+    private static final List<String> ATTRIBUTE_NAMES =
+        Arrays.asList(new String [] {ENABLED_ATTRIBUTE});
+    
     
     /**
      * Make a String ArrayType to use later in definitions.
      */
-    private static ArrayType STR_ARRAY_TYPE;
+    private static ArrayType<OpenType> STR_ARRAY_TYPE;
     static {
         try {
-            STR_ARRAY_TYPE = new ArrayType(1, SimpleType.STRING);
+            STR_ARRAY_TYPE = new ArrayType<OpenType>(1, SimpleType.STRING);
         } catch (OpenDataException e) {
             e.printStackTrace();
         }
@@ -97,67 +110,70 @@ implements DynamicMBean, MBeanRegistration {
     /**
      * List of nonexpert Attribute names.
      */
-    private List nonexpert = null;
+    private List<String> nonexpert = null;
     
     /**
      * List of overrideable Attribute names.
      */
-    private List overrideables = null;
+    private List<String> overrideables = null;
     
     /**
      * List of all attribute names.
      * Make it an ArrayList rather than just a List so have an
      * 'addAll' operation to bulk add attribute names.
      */
-    private ArrayList attributeNames = null;
+    private ArrayList<String> attributeNames = null;
     
-    private ArrayList operationNames = null;
+    private ArrayList<String> operationNames = null;
    
     private MBeanInfo mbeanInfo = null;
     
     public Configuration() throws OpenDataException {
-        this(new ArrayList(Arrays.asList(new String [] {ENABLED_ATTRIBUTE})),
-            new ArrayList(Arrays.asList(new String [] {
+        this(new ArrayList<String> (Arrays.asList(new String []
+                {ENABLED_ATTRIBUTE})),
+            new ArrayList<String> (Arrays.asList(new String [] {
                 NON_EXPERT_OPERATION, OVERRIDEABLE_OPERATION})));
     }
     
-    public Configuration(ArrayList attributeNames, ArrayList operationNames)
+    public Configuration(ArrayList<String> attributeNames,
+    	ArrayList<String> operationNames)
     throws OpenDataException {
         this(attributeNames, operationNames, null, attributeNames);
     }
     
-    public Configuration(ArrayList attributeNames, ArrayList operationNames,
-            final List expert, final List overrideableAttributes)
+    public Configuration(ArrayList<String> attributeNames,
+    		ArrayList<String> operationNames,
+            final List expert, final List<String> overrideableAttributes)
     throws OpenDataException {
         super();
         this.attributeNames = attributeNames;
         this.operationNames = operationNames;
         this.mbeanInfo = createMBeanInfo(this.getClass().getName(),
             "Base abstract configuration instance.");
-        this.nonexpert = (List)this.attributeNames.clone();
+        this.nonexpert = (List<String>) this.attributeNames.clone();
         if (expert != null && expert.size() > 0) {
             this.nonexpert.removeAll(expert);
         }
         this.overrideables =
-            (overrideableAttributes != null &&
-                overrideableAttributes.size() > 0)?
+            (overrideableAttributes != null) &&
+                (overrideableAttributes.size() > 0)?
                     overrideableAttributes:
-                    (List)this.attributeNames.clone();
+                    (List<String>)this.attributeNames.clone();
     }
     
-    protected List getAttributeNames() {
+    protected List<String> getAttributeNames() {
         return this.attributeNames;
     }
     
-    protected List getOperationNames() {
+    protected List<String> getOperationNames() {
         return this.operationNames;
     }
 
-    protected List getNonexpert() {
+    protected List<String> getNonexpert() {
         return this.nonexpert;
     }
     
-    protected List getOverrideable() {
+    protected List<String> getOverrideable() {
         return this.overrideables;
     }
     
@@ -187,7 +203,8 @@ implements DynamicMBean, MBeanRegistration {
      */
     protected OpenMBeanAttributeInfo [] createAttributeInfo()
     throws OpenDataException {
-        List attributes = addAttributes(new ArrayList());
+        List<OpenMBeanAttributeInfo> attributes =
+        	addAttributes(new ArrayList<OpenMBeanAttributeInfo>());
         // Need to precreate the array of OpenMBeanAttributeInfos and
         // pass this to attributes.toArray because can't cast an Object []
         // array to array of OpenMBeanAttributeInfos without CCE.
@@ -197,11 +214,12 @@ implements DynamicMBean, MBeanRegistration {
         return ombai;
     }
     
-    protected List addAttributes(final List attributes)
+    protected List<OpenMBeanAttributeInfo> addAttributes(
+    	final List<OpenMBeanAttributeInfo> attributes)
     throws OpenDataException {
         if (this.attributeNames.contains(ENABLED_ATTRIBUTE)) {
             attributes.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
-                "Enabled if true", SimpleType.BOOLEAN,
+                "Enabled if true", (OpenType)SimpleType.BOOLEAN,
                 true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
         }
         return attributes;
@@ -213,14 +231,16 @@ implements DynamicMBean, MBeanRegistration {
      */
     protected OpenMBeanOperationInfo[] createOperationInfo()
     throws OpenDataException {
-        List operations = addOperations(new ArrayList());
+        List<MBeanOperationInfo> operations =
+        	addOperations(new ArrayList<MBeanOperationInfo>());
         OpenMBeanOperationInfo[] omboi =
             new OpenMBeanOperationInfo[operations.size()];
         operations.toArray(omboi);
         return omboi;
     }
     
-    protected List addOperations(ArrayList operations) {
+    protected List<MBeanOperationInfo> addOperations(
+    	ArrayList<MBeanOperationInfo> operations) {
         if (this.operationNames.contains(NON_EXPERT_OPERATION)) {
             operations.add(new OpenMBeanOperationInfoSupport(
                 NON_EXPERT_OPERATION, "List of all nonexpert Attributes",

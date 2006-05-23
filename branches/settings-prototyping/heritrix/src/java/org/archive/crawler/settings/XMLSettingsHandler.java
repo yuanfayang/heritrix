@@ -411,7 +411,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         TreeSet confirmedSubDomains = new TreeSet(new Comparator() {
                 public int compare(Object o1, Object o2) {
                     if(o1 instanceof String && o2 instanceof String){
-                        return ((String)o1).compareTo(o2);
+                        return ((String)o1).compareTo((String) o2);
                     } else {
                         // We only account for strings.
                         return 0;

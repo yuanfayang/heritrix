@@ -53,8 +53,8 @@ import org.archive.util.JmxUtils;
  * @version $Date$ $Revision$
  */
 class JmxRegistryHandler implements Handler {
-    private static final Logger LOGGER =
-        Logger.getLogger(JmxRegistryHandler.class.getName());
+    private final Logger LOGGER =
+        Logger.getLogger(this.getClass().getName());
     private final MBeanServer registry;
     private final String basis;
     

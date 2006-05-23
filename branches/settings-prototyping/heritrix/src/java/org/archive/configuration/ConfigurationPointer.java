@@ -38,14 +38,14 @@ import javax.management.openmbean.SimpleType;
  * Based on OpenMBean CompositeType.
  * <p>Tried to do as subclass of CompositeDataSupport but then in remote
  * client, the resultant Reference composite is unrecognizable. Means
- * have to always register CompositeData rather than Reference and
+ * have to always register CompositeData rather than Pointer and
  * that ConfigurationArrays should be Arrays of CompositeData rather
- * than Reference.  Added a {@link Reference#isReference(CompositeData)}
- * to test CompositeData for Reference.
+ * than Pointer.  Added a {@link ConfigurationPointer#isPointer(CompositeData)}
+ * to test CompositeData for Pointer.
  * @author stack
  * @version $Date$ $Revision$
  */
-public class Reference  {
+public class ConfigurationPointer  {
     private static final long serialVersionUID = -4313585767623925356L;
     private static final String DOMAIN_KEY = "domain";
     private static final String LIST_STR_KEY = "keyPropertyListString";
@@ -54,7 +54,7 @@ public class Reference  {
     static CompositeType COMPOSITE_TYPE;
     static {
         try {
-            COMPOSITE_TYPE = new CompositeType(Reference.class.getName(),
+            COMPOSITE_TYPE = new CompositeType(ConfigurationPointer.class.getName(),
                 "ObjectName as CompositeType Reference to a " +
                     "Configuration in registry", KEYS,
                 new String [] {"ObjectName domain",
@@ -70,15 +70,15 @@ public class Reference  {
     /**
      * Shutdown constructor so no accidental instantiation of Reference.
      */
-    private Reference() {
+    private ConfigurationPointer() {
         this((CompositeData)null);
     }
     
-    public Reference(final ObjectName on) throws OpenDataException {
+    public ConfigurationPointer(final ObjectName on) throws OpenDataException {
         this(create(on));
     }
     
-    public Reference(final CompositeData cd) {
+    public ConfigurationPointer(final CompositeData cd) {
         super();
         this.compositeData = cd;
     }
@@ -102,7 +102,7 @@ public class Reference  {
      * @param cd CompositeData to test.
      * @return True if a reference.
      */
-    public static boolean isReference(final CompositeData cd) {
+    public static boolean isPointer(final CompositeData cd) {
         boolean result = true;
         for (int i = 0; i < KEYS.length; i++) {
             if (!cd.containsKey(KEYS[i])) {
