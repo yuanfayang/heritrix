@@ -382,7 +382,7 @@ implements CharSequence, Serializable {
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(Object arg0) {
-        return getEscapedURI().compareTo(arg0);
+        return getEscapedURI().compareTo((String) arg0);
     }
     
     /**

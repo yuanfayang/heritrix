@@ -34,6 +34,7 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 import javax.management.openmbean.ArrayType;
 import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.OpenMBeanAttributeInfo;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 
 /**
@@ -44,7 +45,7 @@ import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
  */
 public abstract class ConfigurationArray extends Configuration {
     public static final String ARRAYS_ATTRIBUTE = "Array";
-    private static final List ATTRIBUTE_NAMES =
+    private static final List<String> ATTRIBUTE_NAMES =
         Arrays.asList(new String [] {ARRAYS_ATTRIBUTE});
     private Object [] array = null;
     
@@ -54,7 +55,7 @@ public abstract class ConfigurationArray extends Configuration {
         getAttributeNames().addAll(ATTRIBUTE_NAMES);
     }
     
-    protected List addAttributes(List attributes)
+    protected List<OpenMBeanAttributeInfo> addAttributes(List attributes)
     throws OpenDataException {
         attributes = super.addAttributes(attributes);
         attributes.add(new OpenMBeanAttributeInfoSupport(
