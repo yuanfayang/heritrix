@@ -33,19 +33,19 @@ import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
 /**
- * Utility class to build References.
+ * Utility class to build Configuration Pointers.
  * Creates pointers back into the registry.
  * Based on OpenMBean CompositeType.
  * <p>Tried to do as subclass of CompositeDataSupport but then in remote
  * client, the resultant Reference composite is unrecognizable. Means
  * have to always register CompositeData rather than Pointer and
  * that ConfigurationArrays should be Arrays of CompositeData rather
- * than Pointer.  Added a {@link ConfigurationPointer#isPointer(CompositeData)}
+ * than Pointer.  Added a {@link Pointer#isPointer(CompositeData)}
  * to test CompositeData for Pointer.
  * @author stack
  * @version $Date$ $Revision$
  */
-public class ConfigurationPointer  {
+public class Pointer  {
     private static final long serialVersionUID = -4313585767623925356L;
     private static final String DOMAIN_KEY = "domain";
     private static final String LIST_STR_KEY = "keyPropertyListString";
@@ -54,12 +54,13 @@ public class ConfigurationPointer  {
     static CompositeType COMPOSITE_TYPE;
     static {
         try {
-            COMPOSITE_TYPE = new CompositeType(ConfigurationPointer.class.getName(),
-                "ObjectName as CompositeType Reference to a " +
-                    "Configuration in registry", KEYS,
-                new String [] {"ObjectName domain",
-                    "ObjectName#getCanonicalKeyPropertyListString() output"},
-                new OpenType [] {SimpleType.STRING, SimpleType.STRING});
+            COMPOSITE_TYPE =
+                new CompositeType(Pointer.class.getName(),
+                    "ObjectName as CompositeType Reference to a " +
+                        "Configuration in registry", KEYS,
+                    new String [] {"ObjectName domain",
+                        "ObjectName#getCanonicalKeyPropertyListString() output"},
+                    new OpenType [] {SimpleType.STRING, SimpleType.STRING});
         } catch (OpenDataException e) {
             e.printStackTrace();
         }
@@ -70,17 +71,21 @@ public class ConfigurationPointer  {
     /**
      * Shutdown constructor so no accidental instantiation of Reference.
      */
-    private ConfigurationPointer() {
+    private Pointer() {
         this((CompositeData)null);
     }
     
-    public ConfigurationPointer(final ObjectName on) throws OpenDataException {
+    public Pointer(final ObjectName on) throws OpenDataException {
         this(create(on));
     }
     
-    public ConfigurationPointer(final CompositeData cd) {
+    public Pointer(final CompositeData cd) {
         super();
         this.compositeData = cd;
+    }
+    
+    public static CompositeType getCompositeType() {
+        return Pointer.COMPOSITE_TYPE;
     }
     
     public CompositeData getCompositeData() {
@@ -98,9 +103,9 @@ public class ConfigurationPointer  {
     }
     
     /**
-     * Test if a CompositeData is a Reference.
+     * Test if a CompositeData is a Pointer.
      * @param cd CompositeData to test.
-     * @return True if a reference.
+     * @return True if a pointer.
      */
     public static boolean isPointer(final CompositeData cd) {
         boolean result = true;

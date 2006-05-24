@@ -1,4 +1,4 @@
-/* Handler
+/* Registry
 *
 * $Id$
 *
@@ -29,8 +29,8 @@ import java.io.IOException;
 
 
 /**
- * Handler is gateway into configuration system.
- * Use to obtain component configuration.
+ * Registry of application configuration.
+ * Come here to get component configuration.
  * <p><<Prototype>>
  * <p>TODO: Add serializing Visitor.  Pass on construction or to an init.
  * The Visitor will know how to load configuration.  Must work on a
@@ -38,7 +38,7 @@ import java.io.IOException;
  * @author stack
  * @see <a href="http://crawler.archive.org/cgi-bin/wiki.pl?SettingsFrameworkRefactoring">Settings Framework Refactoring</a>
  */
-public interface Handler {
+public interface Registry {
     /**
      * Get <code>attributeName</code> on <code>component</code>.
      * @param attributeName Name of component atribute to get.
@@ -61,7 +61,18 @@ public interface Handler {
             final String domain);
     
     /**
-     * Register a settings object.
+     * Register a configuration object.
+     * Used by configuration applications such as UI adding in new configurations.
+     * @param component Component name to register the object against.
+     * @param instance Object to register.
+     * @return Object to use referring subsequently to instance (Pass this
+     * object to {@link #deregister(Object)}.
+     */
+    public Object register(final String component, final Object instance);
+    
+    /**
+     * Register a configuration object.
+     * Used by configuration applications such as UI adding in new configurations.
      * @param component Component name to register the object against.
      * @param domain Domain to register against. Domain should be
      * specified reversed as is done in java packaging: e.g. To find Settings
@@ -74,6 +85,21 @@ public interface Handler {
             final Object instance);
     
     /**
+     * @param component Component name to look for.
+     * @return True if registered.
+     */
+    public boolean isRegistered(final String component);
+    
+    /**
+     * @param component Component name to look for.
+     * @param domain Domain to search against. Domain should be
+     * specified reversed as is done in java packaging: e.g. To find Settings
+     * for 'archive.org', pass the domain written as 'org.archive'.
+     * @return True if registered.
+     */
+    public boolean isRegistered(final String component, final String domain);
+    
+    /**
      * Unregister named object.
      * @param registeredObjectName Identifier for registered Settings.
      */
@@ -81,12 +107,18 @@ public interface Handler {
     
     /**
      * Load (or reload) settings from store.
-     */
-    public void load() throws IOException;
-    
-    /**
-     * Load (or reload) settings from store.
-     * @param domain Do loading of items from this <code>domain</code> only.
+     * Part of loading is registering each component.  Should be synchronized.
+     * @param domain Do loading of items from this <code>domain</code>.  Can
+     * be subdomain or base domain.
+     * @throws IOException
      */
     public void load(final String domain) throws IOException;
+    
+    /**
+     * Save current state of settings.
+     * Part of saving is unregistering each component.  Should be synchronized.
+     * @param domain Do loading of items from this <code>domain</code> only.
+     * @throws IOException
+     */
+    public void save(final String domain) throws IOException;
 }
