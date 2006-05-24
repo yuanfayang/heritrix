@@ -39,7 +39,6 @@ import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 
 /**
  * Holds array of Configurations.
- * 
  * @author stack
  * @version $Date$ $Revision$
  */
@@ -49,13 +48,14 @@ public abstract class ConfigurationArray extends Configuration {
         Arrays.asList(new String [] {ARRAYS_ATTRIBUTE});
     private Object [] array = null;
     
-    public ConfigurationArray() throws OpenDataException {
+    public ConfigurationArray() throws ConfigurationException {
         super();
         // Add my attributes to those of the base.
         getAttributeNames().addAll(ATTRIBUTE_NAMES);
     }
     
-    protected List<OpenMBeanAttributeInfo> addAttributes(List attributes)
+    protected List<OpenMBeanAttributeInfo> addAttributes(
+        List<OpenMBeanAttributeInfo> attributes)
     throws OpenDataException {
         attributes = super.addAttributes(attributes);
         attributes.add(new OpenMBeanAttributeInfoSupport(

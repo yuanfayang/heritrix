@@ -91,6 +91,10 @@ import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 
 import org.apache.commons.cli.Option;
+import org.archive.configuration.Configurable;
+import org.archive.configuration.Configuration;
+import org.archive.configuration.ConfigurationException;
+import org.archive.configuration.Registry;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobErrorHandler;
 import org.archive.crawler.admin.CrawlJobHandler;
@@ -141,7 +145,9 @@ import sun.net.www.protocol.file.FileURLConnection;
  * @author Kristinn Sigurdsson
  * @author Stack
  */
-public class Heritrix implements DynamicMBean, MBeanRegistration {
+public class Heritrix implements Configurable {
+    private Registry registry = null;
+    
     /**
      * Heritrix logging instance.
      */
@@ -2297,5 +2303,18 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             null:
             (Heritrix)Heritrix.instances.
                 get(Heritrix.instances.keySet().iterator().next());
+    }
+
+    public Configuration getConfiguration() {
+        return null;
+    }
+
+    public void initialize(Registry registry) {
+        this.registry = registry;
+    }
+
+    public void configure(Registry r) throws ConfigurationException {
+        // TODO Auto-generated method stub
+        
     }
 }
