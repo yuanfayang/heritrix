@@ -26,7 +26,7 @@ package org.archive.configuration;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -37,6 +37,7 @@ import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.DynamicMBean;
 import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
@@ -56,6 +57,7 @@ import javax.management.openmbean.SimpleType;
 
 import org.archive.util.JmxUtils;
 
+
 /**
  * Configuration for a component homed on a domain.
  * <<abstract>>
@@ -73,7 +75,7 @@ import org.archive.util.JmxUtils;
  * @author stack
  * @version $Date$, $Revision$.
  */
-public class Configuration
+public abstract class Configuration
 implements DynamicMBean, Registration, Serializable {
     private final Logger LOGGER = Logger.getLogger(this.getClass().getName());
     
@@ -83,25 +85,13 @@ implements DynamicMBean, Registration, Serializable {
     public static final String ENABLED_ATTRIBUTE = "Enabled";
     
     /**
-     * Is the configured item enabled?
-     */
-    private Boolean enabled = Boolean.TRUE;
-    
-    /**
-     * List of attribute  names.
-     */
-    private static final List<String> ATTRIBUTE_NAMES =
-        Arrays.asList(new String [] {ENABLED_ATTRIBUTE});
-    
-    
-    /**
      * Make a String ArrayType to use later in definitions.
      */
     @SuppressWarnings("unused")
-    private static ArrayType STR_ARRAY_TYPE;
+    private static ArrayType<String> STR_ARRAY_TYPE;
     static {
         try {
-            STR_ARRAY_TYPE = new ArrayType(1, SimpleType.STRING);
+            STR_ARRAY_TYPE = new ArrayType<String>(1, SimpleType.STRING);
         } catch (OpenDataException e) {
             e.printStackTrace();
         }
@@ -113,16 +103,20 @@ implements DynamicMBean, Registration, Serializable {
      * 'addAll' operation to bulk add attribute names.  These are convenience
      * lists. Otherwise would have to parse through MBeanInfo each time.
      */
-    private ArrayList<String> attributeNames =
-        new ArrayList<String>(Arrays.asList(new String [] {ENABLED_ATTRIBUTE}));
+    private ArrayList<String> attributeNames = new ArrayList<String>();
     
-    private ArrayList<String> operationNames =
-        new ArrayList<String>(Arrays.asList(new String [] {}));
+    private ArrayList<String> operationNames = new ArrayList<String>();
    
     /**
      * This is used to package up all of the config. contained herein.
      */
     private MBeanInfo mbeanInfo = null;
+    
+    /**
+     * Cache of attributes.
+     */
+    private HashMap<String, Object> attributes = new HashMap<String, Object>();
+    
     
     public Configuration() throws ConfigurationException {
         super();
@@ -132,6 +126,12 @@ implements DynamicMBean, Registration, Serializable {
         } catch (OpenDataException e) {
             throw new ConfigurationException(e);
         }
+    }
+    
+    protected Configuration(final AttributeList al)
+    throws ConfigurationException {
+    	this();
+    	
     }
     
     protected List<String> getAttributeNames() {
@@ -168,26 +168,30 @@ implements DynamicMBean, Registration, Serializable {
      */
     protected OpenMBeanAttributeInfo [] createAttributeInfo()
     throws OpenDataException {
-        List<OpenMBeanAttributeInfo> attributes =
-        	addAttributes(new ArrayList<OpenMBeanAttributeInfo>());
+        List<OpenMBeanAttributeInfo> attributeInfos =
+        	addAttributeInfos(new ArrayList<OpenMBeanAttributeInfo>());
+        // Calculate the attribute names array.
+        for (final Iterator<OpenMBeanAttributeInfo> i = attributeInfos.iterator();
+        		i.hasNext();) {
+        	OpenMBeanAttributeInfo ombai = i.next();
+        	this.attributeNames.add(ombai.getName());
+        }
         // Need to precreate the array of OpenMBeanAttributeInfos and
         // pass this to attributes.toArray because can't cast an Object []
         // array to array of OpenMBeanAttributeInfos without CCE.
         OpenMBeanAttributeInfo [] ombai =
-            new OpenMBeanAttributeInfo[attributes.size()];
-        attributes.toArray(ombai);
+            new OpenMBeanAttributeInfo[attributeInfos.size()];
+        attributeInfos.toArray(ombai);
         return ombai;
     }
     
-    protected List<OpenMBeanAttributeInfo> addAttributes(
-    	final List<OpenMBeanAttributeInfo> attributes)
+    protected List<OpenMBeanAttributeInfo> addAttributeInfos(
+    	final List<OpenMBeanAttributeInfo> infos)
     throws OpenDataException {
-        if (this.attributeNames.contains(ENABLED_ATTRIBUTE)) {
-            attributes.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
-                "Enabled if true", SimpleType.BOOLEAN,
-                true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
-        }
-        return attributes;
+        infos.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
+            "Enabled if true", SimpleType.BOOLEAN,
+            true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
+        return infos;
     }
     
     /**
@@ -244,11 +248,34 @@ implements DynamicMBean, Registration, Serializable {
     }
     
     @SuppressWarnings("unused")
-    public Object getAttribute(final String attributeName)
+    public synchronized Object getAttribute(final String attributeName)
     throws AttributeNotFoundException, MBeanException, ReflectionException {
         checkValidAttributeName(attributeName);
-        // Else attribute is known.  Is it from this class or a subclass?
-        return (ATTRIBUTE_NAMES.contains(attributeName))? this.enabled: null;
+        // Else attribute is known.  Do we have it in our cache?  If not,
+        // create.
+        return this.attributes.containsKey(attributeName)?
+            this.attributes.get(attributeName):
+            addAttribute(attributeName);
+    }
+    
+    protected Object addAttribute(final String attributeName)
+    throws AttributeNotFoundException {
+    	MBeanAttributeInfo [] mbai = this.mbeanInfo.getAttributes();
+    	Object result = null;
+    	for (int i = 0; i < mbai.length; i++) {
+    		OpenMBeanAttributeInfo info = (OpenMBeanAttributeInfo)mbai[i];
+    		if (info.getName().equals(attributeName)) {
+    			result = info.getDefaultValue();
+    			// Add to cache.
+    			this.attributes.put(attributeName, result);
+    			break;
+    		}
+    	}
+    	if (result == null) {
+    		throw new AttributeNotFoundException("No value for " +
+    		    attributeName);
+    	}
+    	return result;
     }
     
     public AttributeList getAttributes(String[] attributes) {
@@ -272,14 +299,11 @@ implements DynamicMBean, Registration, Serializable {
     }
 
     @SuppressWarnings("unused")
-    public void setAttribute(Attribute attribute)
+    public synchronized void setAttribute(Attribute attribute)
     throws AttributeNotFoundException, InvalidAttributeValueException,
     MBeanException, ReflectionException {
         checkValidAttributeName(attribute.getName());
-        if (attribute.getName().equals(ENABLED_ATTRIBUTE)) {
-            this.enabled = (Boolean)attribute.getValue();
-        }
-        // Else its for subclass to handle.
+        this.attributes.put(attribute.getName(), attribute.getValue());
     }
 
     public AttributeList setAttributes(AttributeList attributes) {

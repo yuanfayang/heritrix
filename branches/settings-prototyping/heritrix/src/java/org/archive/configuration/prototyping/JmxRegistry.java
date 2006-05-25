@@ -24,11 +24,19 @@
  */
 package org.archive.configuration.prototyping;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -44,9 +52,8 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import org.archive.configuration.Configuration;
+import org.archive.configuration.ConfigurationException;
 import org.archive.configuration.Registry;
-import org.archive.crawler.framework.exceptions.ConfigurationException;
 import org.archive.util.JmxUtils;
 
 /**
@@ -65,7 +72,14 @@ class JmxRegistry implements Registry {
     
     private final MBeanServer registry;
     private String baseDomain = null;
+    private boolean load = false;
     
+    /**
+     * Make configurable.
+     * Make it so can have different store implementations.
+     */
+	private final File store = new File("/tmp", this.getClass().getName());
+	
     
     public JmxRegistry() {
         super();
@@ -74,11 +88,6 @@ class JmxRegistry implements Registry {
             throw new NullPointerException("MBeanServer cannot " +
                 "be null");
         }
-    }
-    
-    ObjectName getObjectName(final String type)
-    throws MalformedObjectNameException {
-        return getObjectName(type, null);
     }
     
     /**
@@ -109,11 +118,36 @@ class JmxRegistry implements Registry {
     }
     
     public Object register(final String component,
-            final String domain, final Object instance) {
+            final String domain, final Object instance)
+    throws ConfigurationException {
         Object result = null;
         try {
             result = this.registry.registerMBean(instance,
                 getObjectName(component, domain));
+            if (this.load) {
+            	ObjectName on = ((ObjectInstance)result).getObjectName();
+            	AttributeList al = null;
+				try {
+					al = load(on);
+				} catch (FileNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+            	if (al != null) {
+            		try {
+						this.registry.setAttributes(on, al);
+					} catch (InstanceNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (ReflectionException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+            	}
+            }
         } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         } catch (InstanceAlreadyExistsException e) {
@@ -126,7 +160,8 @@ class JmxRegistry implements Registry {
         return result;
     }
 
-    public Object register(String component, Object instance) {
+    public Object register(String component, Object instance)
+    throws ConfigurationException {
         return register(component, getBaseDomain(), instance);
     }
 
@@ -181,16 +216,47 @@ class JmxRegistry implements Registry {
     protected String getBaseDomain() {
         return this.baseDomain;
     }
-
+    
+    protected File getDomainSubDir(final File storeDir,
+    		final String domain) {
+    	// TODO
+    	storeDir.mkdirs();
+    	return storeDir;
+    }
+    
     @SuppressWarnings("unused")
     public synchronized void load(String domain) throws IOException {
         // TODO: Do domain calculation.  If the based domain is a subdomain,
         // do not override our baseDomain.  If passed domain is super
         // domain, do put it in place of our baseDomain.
         this.baseDomain = domain;
+        this.load = true;
+    }
+    
+    protected synchronized AttributeList load(final ObjectName on)
+    throws FileNotFoundException, IOException {
+        AttributeList result = null;
+        final File subdir = getDomainSubDir(this.store, on.getDomain());
+        File f = new File(subdir, on.getCanonicalKeyPropertyListString());
+        if (!f.exists()) {
+        	return result;
+        }
+        ObjectInputStream ois =
+            new ObjectInputStream(new FileInputStream(f));
+        try {
+        	ois.readObject();
+        	result = (AttributeList)ois.readObject();
+        } catch (IOException e) {
+        	// TODO Auto-generated catch block
+        	e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+        	// TODO Auto-generated catch block
+        	e.printStackTrace();
+        }
+        return result;
     }
 
-    public void save(String domain) throws IOException {
+	public void save(String domain) throws IOException {
         // TODO Auto-generated method stub
         ObjectName on = null;
         try {
@@ -198,8 +264,17 @@ class JmxRegistry implements Registry {
         } catch (MalformedObjectNameException e) {
             throw new IOException("Failed query of mbeans: " + e.toString());
         }
-        Set mbeans = this.registry.queryMBeans(on, null);
-        for (final Iterator i = mbeans.iterator(); i.hasNext();) {
+        save(store, domain, this.registry.queryMBeans(on, null));
+    }
+    
+    protected void save(final File storeDir, final String domain,
+    		final Set objectInstances) throws IOException {
+    	if (objectInstances == null || objectInstances.size() <= 0) {
+    		return;
+    	}
+    	
+    	final File subdir = getDomainSubDir(storeDir, domain);
+        for (final Iterator i = objectInstances.iterator(); i.hasNext();) {
             ObjectInstance oi = (ObjectInstance)i.next();
             MBeanInfo mi = null;
             try {
@@ -215,9 +290,34 @@ class JmxRegistry implements Registry {
                 e.printStackTrace();
             }
             MBeanAttributeInfo [] mbai = mi.getAttributes();
+            String [] attributeNames = new String[mbai.length];
             for (int j = 0; j < mbai.length; j++) {
-                System.out.println(mbai[j].getName());
+                attributeNames[j] = mbai[j].getName();
             }
+            try {
+				AttributeList al = this.registry.getAttributes(oi.getObjectName(), attributeNames);
+				for (final Iterator k = al.iterator(); k.hasNext();) {
+					Attribute a = (Attribute)k.next();
+					System.out.println(a.getName() + " " + a.getValue());
+				}
+				File beanFile = new File(subdir, oi.getObjectName().getCanonicalKeyPropertyListString());
+				if (beanFile.exists()) {
+					beanFile.delete();
+				}
+				ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(beanFile));
+				try {
+					oos.writeObject(oi);
+					oos.writeObject(al);
+				} finally {
+					oos.close();
+				}
+			} catch (InstanceNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ReflectionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
     }
 }

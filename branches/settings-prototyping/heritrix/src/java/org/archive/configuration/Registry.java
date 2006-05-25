@@ -68,7 +68,8 @@ public interface Registry {
      * @return Object to use referring subsequently to instance (Pass this
      * object to {@link #deregister(Object)}.
      */
-    public Object register(final String component, final Object instance);
+    public Object register(final String component, final Object instance)
+    throws ConfigurationException;
     
     /**
      * Register a configuration object.
@@ -82,7 +83,8 @@ public interface Registry {
      * object to {@link #deregister(Object)}.
      */
     public Object register(final String component, final String domain,
-            final Object instance);
+            final Object instance)
+    throws ConfigurationException;
     
     /**
      * @param component Component name to look for.
