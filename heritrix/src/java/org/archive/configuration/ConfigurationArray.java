@@ -55,15 +55,15 @@ public abstract class ConfigurationArray extends Configuration {
     }
     
     protected List<OpenMBeanAttributeInfo> addAttributes(
-        List<OpenMBeanAttributeInfo> attributes)
+        List<OpenMBeanAttributeInfo> infos)
     throws OpenDataException {
-        attributes = super.addAttributes(attributes);
-        attributes.add(new OpenMBeanAttributeInfoSupport(
+    	infos = super.addAttributeInfos(infos);
+    	infos.add(new OpenMBeanAttributeInfoSupport(
             ARRAYS_ATTRIBUTE,
             getArrayDescription(),
             getArrayType(),
             true, true, false));
-        return attributes;
+        return infos;
     }
     
     protected String getArrayDescription() {

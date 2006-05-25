@@ -2,8 +2,6 @@ package org.archive.configuration.prototyping;
 
 import java.io.IOException;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 import javax.management.openmbean.SimpleType;
 
@@ -47,11 +45,25 @@ public class Bootstrapper implements Configurable {
     
     protected Configuration getDefaultConfiguration()
     throws ConfigurationException {
-        return new BootstrapperDefaultConfiguration();
+        return new Configuration() {
+        protected java.util.List<javax.management.openmbean.OpenMBeanAttributeInfo> addAttributeInfos(java.util.List<javax.management.openmbean.OpenMBeanAttributeInfo> infos)
+        throws javax.management.openmbean.OpenDataException {
+        	infos = super.addAttributeInfos(infos);
+        	infos.add(new OpenMBeanAttributeInfoSupport("Two",
+                "Enabled if true xxxxxxxxxxx", SimpleType.BOOLEAN,
+                true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
+            return infos;
+        }
+    };
     }
     
     public boolean isEnabled() {
         return ((Boolean)this.registry.get("Enabled", this.name)).
+            booleanValue();
+    }
+    
+    public boolean isNew() {
+        return ((Boolean)this.registry.get("Two", this.name)).
             booleanValue();
     }
     
@@ -63,6 +75,7 @@ public class Bootstrapper implements Configurable {
         Bootstrapper b = new Bootstrapper("Bootstrapper");
         b.configure(r);
         boolean x = b.isEnabled();
+        x = b.isNew();
         r.save(BASE_DOMAIN);
     }
 }
