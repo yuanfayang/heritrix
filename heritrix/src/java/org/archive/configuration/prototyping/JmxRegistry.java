@@ -31,7 +31,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -52,6 +58,8 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
+import org.archive.configuration.Configurable;
+import org.archive.configuration.Configuration;
 import org.archive.configuration.ConfigurationException;
 import org.archive.configuration.Registry;
 import org.archive.util.JmxUtils;
@@ -93,13 +101,13 @@ class JmxRegistry implements Registry {
     /**
      * Create an ObjectName
      * Default access so can be used by unit tests.
-     * @param type
+     * @param name
      * @param domain
      * @return An ObjectName made from passed <code>name</code>
      * and <code>domain</code>.
      * @throws MalformedObjectNameException
      */
-    ObjectName getObjectName(final String type, final String domain)
+    ObjectName getObjectName(final String name, final String domain)
     throws MalformedObjectNameException {
         /*
         String totalDomain = null;
@@ -113,8 +121,12 @@ class JmxRegistry implements Registry {
             }
         }
         return new ObjectName(totalDomain, "type", type);
-        */
-        return new ObjectName(domain, "type", type);
+        
+    	Hashtable<String, String> ht = new Hashtable<String, String>();
+    	ht.put("name", name);
+    	ht.put("type", instance.getClass().getName());
+    	*/
+        return new ObjectName(domain, "name", name);
     }
     
     public Object register(final String component,
@@ -124,6 +136,8 @@ class JmxRegistry implements Registry {
         try {
             result = this.registry.registerMBean(instance,
                 getObjectName(component, domain));
+         
+            /*
             if (this.load) {
             	ObjectName on = ((ObjectInstance)result).getObjectName();
             	AttributeList al = null;
@@ -147,7 +161,8 @@ class JmxRegistry implements Registry {
 						e.printStackTrace();
 					}
             	}
-            }
+               
+            }*/
         } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         } catch (InstanceAlreadyExistsException e) {
@@ -230,9 +245,16 @@ class JmxRegistry implements Registry {
         // do not override our baseDomain.  If passed domain is super
         // domain, do put it in place of our baseDomain.
         this.baseDomain = domain;
-        this.load = true;
+        
+        final File subdir = getDomainSubDir(this.store, domain);
+        File [] files = subdir.listFiles();
+        for (int i = 0; i < files.length; i++) {
+            Configuration c = load(files[i]);
+            // Register?
+        }
     }
     
+    // Is this needed anymore?
     protected synchronized AttributeList load(final ObjectName on)
     throws FileNotFoundException, IOException {
         AttributeList result = null;
@@ -241,17 +263,49 @@ class JmxRegistry implements Registry {
         if (!f.exists()) {
         	return result;
         }
+        return load(f).getAttributes(new String [] {});
+    }
+        
+    protected synchronized Configuration load(final File f)
+        throws FileNotFoundException, IOException {
+        Configuration result = null; 
         ObjectInputStream ois =
             new ObjectInputStream(new FileInputStream(f));
         try {
-        	ois.readObject();
-        	result = (AttributeList)ois.readObject();
+        	ObjectInstance oi = (ObjectInstance)ois.readObject();
+        	String name = oi.getObjectName().getKeyProperty("name");
+        	AttributeList al = (AttributeList)ois.readObject();
+            Class c = Class.forName(oi.getClassName());
+            c = c.getEnclosingClass();
+            Constructor cons = c.getConstructor(new Class [] {String.class});
+            Configurable configurable = (Configurable)cons.newInstance(new Object [] {name});
+            Method defaultConfigMethod = c.getDeclaredMethod("getInitialConfiguration", new Class [] {});
+            result = (Configuration) defaultConfigMethod.invoke(configurable, new Object [] {});
+            result.setAttributes(al);
         } catch (IOException e) {
         	// TODO Auto-generated catch block
         	e.printStackTrace();
         } catch (ClassNotFoundException e) {
         	// TODO Auto-generated catch block
         	e.printStackTrace();
+        } catch (SecurityException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
         return result;
     }

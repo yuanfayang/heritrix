@@ -1,14 +1,11 @@
 package org.archive.configuration.prototyping;
 
 import org.archive.configuration.Configurable;
+import org.archive.configuration.Configuration;
 import org.archive.configuration.ConfigurationException;
 import org.archive.configuration.Registry;
 
 public class Processor implements Configurable {
-    public void initialize(Registry r) {
-        
-    }
-
     /**
      * @param args
      */
@@ -16,8 +13,13 @@ public class Processor implements Configurable {
         // TODO Auto-generated method stub
     }
 
-    public void configure(Registry r) throws ConfigurationException {
+    public void initialize(Registry r) throws ConfigurationException {
         // TODO Auto-generated method stub
         
     }
+
+	public Configuration getInitialConfiguration() throws ConfigurationException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

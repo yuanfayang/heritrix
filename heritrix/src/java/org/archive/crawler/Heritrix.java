@@ -145,7 +145,7 @@ import sun.net.www.protocol.file.FileURLConnection;
  * @author Kristinn Sigurdsson
  * @author Stack
  */
-public class Heritrix implements Configurable {
+public class Heritrix {
     private Registry registry = null;
     
     /**

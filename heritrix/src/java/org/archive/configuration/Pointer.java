@@ -46,8 +46,7 @@ import javax.management.openmbean.SimpleType;
  * @version $Date$ $Revision$
  */
 public class Pointer  {
-    private static final long serialVersionUID = -4313585767623925356L;
-    private static final String DOMAIN_KEY = "domain";
+    private static final String OI_KEY = "domain";
     private static final String LIST_STR_KEY = "keyPropertyListString";
     private static final String [] KEYS =
         new String [] {DOMAIN_KEY, LIST_STR_KEY};
@@ -116,5 +115,13 @@ public class Pointer  {
             }
         }
         return result;
+    }
+    
+    public static Configurable getConfiguredConfigurable(final Registry r,
+    		final Pointer ptr) {
+    	String list = (String)ptr.getCompositeData().get(LIST_STR_KEY);
+    	String domain = (String)ptr.getCompositeData().get(DOMAIN_KEY);
+    	ObjectName on = new ObjectName(domain + ":" + list);
+    	r.
     }
 }
