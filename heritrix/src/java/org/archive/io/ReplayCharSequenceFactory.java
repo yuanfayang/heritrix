@@ -680,7 +680,7 @@ public class ReplayCharSequenceFactory {
 
             this.content = decode(buffer, backingFilename, size,
                 responseBodyStart, encoding);
-        }
+         }
 
         /**
          * Decode passed buffer and backing file into a CharBuffer.
@@ -741,8 +741,16 @@ public class ReplayCharSequenceFactory {
                 // a byte array and an input stream, is why I'm using Channels.
                 ByteBuffer [] buffers = {ByteBuffer.wrap(buffer),
                     getReadOnlyMemoryMappedBuffer(backingFile)};
-                this.decodedFile = decodeToFile(buffers, decoder,
-                    backingFilename + "." + WRITE_ENCODING);
+                try {
+                    this.decodedFile = decodeToFile(buffers, decoder,
+                        backingFilename + "." + WRITE_ENCODING);
+                } catch (IOException e) {
+                    logger.info("Adding info to " + e + ": " +
+                        backingFile.toString() +
+                        " " + backingFile.length() + " " + backingFile.exists() +
+                        size + " " + buffer.length);
+                    throw e;
+                }
                 charBuffer = getReadOnlyMemoryMappedBuffer(this.decodedFile).
                     asCharBuffer();
             }
@@ -838,10 +846,7 @@ public class ReplayCharSequenceFactory {
             if (buffers.length <= 0) {
                 throw new IllegalArgumentException("No bytebuffers to read.");
             }
-
-            File unicode = new File(name);
-            Writer writer = null;
-
+            
             // Place to catch decodings in memory. I'll then write to writer. If
             // I can't get a character array from it, then there is going to
             // be probs so throw exception here.
@@ -850,12 +855,17 @@ public class ReplayCharSequenceFactory {
                 throw new IOException("Can't get array from CharBuffer.");
             }
 
+            File unicode = new File(name);
+            if (unicode.exists()) {
+                logger.warning(unicode.toString() + " already exists");
+            }
+            Writer writer = null;
+
             IOException exceptionThrown = null;
             try {
                 // Get a writer.  Output in our WRITE_ENCODING.
                 writer = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(unicode), WRITE_ENCODING));
-                assert writer != null: "Writer is null: " + name;
                 CoderResult result = null;
                 ByteBuffer bb = null;
                 for (int i = 0; i < buffers.length; i++) {
@@ -895,8 +905,19 @@ public class ReplayCharSequenceFactory {
 
             finally {
                 if (writer != null) {
-                    writer.flush();
-                    writer.close();
+                    try {
+                        writer.flush();
+                        writer.close();
+                    } catch (IOException e) {
+                        if (exceptionThrown != null) {
+                            exceptionThrown.printStackTrace();
+                        }
+                        logger.log(Level.WARNING, "Failed close.  Check logs", e);
+                    }
+                }
+                if (!unicode.exists()) {
+                    logger.warning(unicode.toString() + " does not exist, " +
+                        buffers.length);
                 }
                 if (exceptionThrown != null) {
                     deleteFile(unicode, exceptionThrown);
