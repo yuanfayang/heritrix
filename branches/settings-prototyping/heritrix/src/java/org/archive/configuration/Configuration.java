@@ -47,6 +47,7 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.RuntimeOperationsException;
 import javax.management.openmbean.ArrayType;
+import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenMBeanAttributeInfo;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
@@ -61,17 +62,18 @@ import org.archive.util.JmxUtils;
 /**
  * Configuration for a component homed on a domain.
  * <<abstract>>
- * <p>Based on OpenMBeans.  A Configuration has (MBean) Attributes.</p>
- * <p>Subclasses add reading of definition and population of OpenMBean
- * Attributes from a <i>store</i>.  A subclass might use an xml file to
- * populate a Configuration instance with definition of contained Attributes
- * and their values.</p>
- * Configuration implements DynamicMBean.  It has getAttribute, setAttribute,
- * etc.<p>
- * An odd thing is invoke and perhaps getMBeanInfo.  Latter is ok as
- * means of getting a package of all the Attributes -- their types,
- * descriptions, etc. -- but the invoke is a little odd.  Leave it for
- * now (TODO).
+ * <p>This class has settings and description of whats 
+ * settable, defaults, and value ranges. Implements DynamicMBean
+ * and uses OpenMBeans exclusively. Subclasses are meant to add
+ * the Attributes particular to a Configurable. Use the 
+ * DynamicMBean getAttribute, setAttribute,
+ * etc., to set/get values.  This class adds
+ * convenience methods to mostly to help build up your MBeanInfo
+ * object.<p>
+ * An odd thing is {@link #invoke(String, Object[], String[])} and
+ * perhaps getMBeanInfo.  Latter is ok as means of getting a package
+ * of all the Attributes -- their types, descriptions, etc. -- but the
+ * invoke is a little odd.  Leave it for now (TODO).
  * @author stack
  * @version $Date$, $Revision$.
  */
@@ -82,22 +84,12 @@ implements DynamicMBean, Registration, Serializable {
     public static final Boolean [] TRUE_FALSE_LEGAL_VALUES =
         new Boolean [] {Boolean.TRUE, Boolean.FALSE};
     
+    /**
+     * Base Configuration adds the Enabled attribute.
+     */
     public static final String ENABLED_ATTRIBUTE = "Enabled";
     
-    /**
-     * Make a String ArrayType to use later in definitions.
-     */
-    @SuppressWarnings("unused")
-    private static ArrayType<String> STR_ARRAY_TYPE;
-    static {
-        try {
-            STR_ARRAY_TYPE = new ArrayType<String>(1, SimpleType.STRING);
-        } catch (OpenDataException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    /**
+    /** 
      * List of all attribute names.
      * Make it an ArrayList rather than just a List so have an
      * 'addAll' operation to bulk add attribute names.  These are convenience
@@ -117,6 +109,34 @@ implements DynamicMBean, Registration, Serializable {
      */
     private HashMap<String, Object> attributes = new HashMap<String, Object>();
     
+    /**
+     * Make a String ArrayType to use later in definitions.
+     * Base Configuration adds the Enabled attribute.
+     */
+    @SuppressWarnings("unused")
+    public static ArrayType<String[]> STR_ARRAY_TYPE;
+    static {
+    	try {
+    		STR_ARRAY_TYPE = ArrayType.getArrayType(SimpleType.STRING);
+    	} catch (OpenDataException e) {
+    		e.printStackTrace();
+    	}
+    }
+    
+    /**
+     * Make a String ArrayType to use later in definitions.
+     * Base Configuration adds the Enabled attribute.
+     */
+    @SuppressWarnings("unused")
+    public static ArrayType<CompositeData[]> PTR_ARRAY_TYPE;
+    static {
+    	try {
+    		PTR_ARRAY_TYPE =
+    			ArrayType.getArrayType(Pointer.getCompositeType());
+    	} catch (OpenDataException e) {
+    		e.printStackTrace();
+    	}
+    }
     
     public Configuration() throws ConfigurationException {
         super();
@@ -126,12 +146,6 @@ implements DynamicMBean, Registration, Serializable {
         } catch (OpenDataException e) {
             throw new ConfigurationException(e);
         }
-    }
-    
-    protected Configuration(final AttributeList al)
-    throws ConfigurationException {
-    	this();
-    	
     }
     
     protected List<String> getAttributeNames() {
@@ -278,15 +292,14 @@ implements DynamicMBean, Registration, Serializable {
     	return result;
     }
     
-    public AttributeList getAttributes(String[] attributes) {
-        AttributeList result = new AttributeList(attributes.length);
-        if (attributes.length == 0) {
+    public AttributeList getAttributes(String[] atts) {
+        AttributeList result = new AttributeList(atts.length);
+        if (atts.length == 0) {
             return result;
         }
-        for (int i = 0; i < attributes.length; i++) {
+        for (int i = 0; i < atts.length; i++) {
             try {
-                result.add(new Attribute(attributes[i],
-                    getAttribute(attributes[i])));
+                result.add(new Attribute(atts[i], getAttribute(atts[i])));
             } catch (AttributeNotFoundException e) {
                 e.printStackTrace();
             } catch (MBeanException e) {
