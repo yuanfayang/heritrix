@@ -97,7 +97,13 @@
     </dependencies>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
+        <resources>
+	      <resource>
+	        <directory>src/main/resources</directory>
+	      </resource>
+	    </resources>
         <unitTestSourceDirectory>src/test/java</unitTestSourceDirectory>
+
         <unitTest>
 	        <resources>
 	        <resource>
