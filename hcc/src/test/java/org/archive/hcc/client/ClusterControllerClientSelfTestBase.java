@@ -35,6 +35,9 @@ public class ClusterControllerClientSelfTestBase
     public File getTestJar() {
         Map map = new HashMap();
         map.put(OrderJarFactory.NAME_KEY, "test");
+        map.put(OrderJarFactory.DESCRIPTION, "This is a <b>TEST</b> description.");
+        map.put(OrderJarFactory.ORGANIZATION, "The Test Organization");
+
         map.put(OrderJarFactory.USER_AGENT_KEY, "Mozilla/5.0 (compatible;archive.org_bot/1.7.0; Heritrix Cluster Controller Test; +http://hcc.archive.org)");
         map.put(OrderJarFactory.FROM_EMAIL_KEY, "hccTest@archive.org");
         List<String> seeds = new LinkedList<String>();
