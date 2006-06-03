@@ -306,7 +306,7 @@
     <dependencies>
         <dependency>
             <id>je</id>
-            <version>2.1.30</version>
+            <version>3.0.12</version>
             <url>http://www.sleepycat.com/products/je.shtml</url>
             <properties>
                 <war.bundle>true</war.bundle>
