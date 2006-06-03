@@ -26,6 +26,8 @@ package org.archive.configuration;
 
 import java.io.IOException;
 
+import javax.management.AttributeNotFoundException;
+
 
 
 /**
@@ -42,39 +44,59 @@ public interface Registry {
     /**
      * Get <code>attributeName</code> on <code>component</code>.
      * @param attributeName Name of component atribute to get.
-     * @param component Name of component that has <code>attributeName</code>.
+     * @param name Name of component that has <code>attributeName</code>.
      * @return Value of <code>attributeName</code>.
+     * @throws AttributeNotFoundException
      */
-    public Object get(final String attributeName, final String component);
+    public Object get(final String attributeName, final String name)
+    throws AttributeNotFoundException;
+    
+    /**
+     * Get <code>attributeName</code> on <code>component</code>.
+     * @param attributeName Name of component atribute to get.
+     * @param name Name of component that has <code>attributeName</code>.
+     * @param type Type of component.
+     * @return Value of <code>attributeName</code>.
+     * @throws AttributeNotFoundException
+     */
+    public Object get(final String attributeName, final String name,
+    		final String type)
+    throws AttributeNotFoundException;
     
     /**
      * Get <code>attributeName</code> on <code>component</code>
      * in <code>domain</code>.
      * @param attributeName Name of component atribute to get.
-     * @param component Name of component that has <code>attributeName</code>.
+     * @param name Name of component that has <code>attributeName</code>.
+     * @param type Type of component.
      * @param domain Domain scope for Settings.  Domain should be
      * specified reversed as is done in java packaging: e.g. To find Settings
      * for 'archive.org', pass the domain written as 'org.archive'.
      * @return Value of <code>attributeName</code>.
+     * @throws AttributeNotFoundException
      */
-    public Object get(final String attributeName, final String component,
-            final String domain);
+    public Object get(final String attributeName, final String name,
+    		final String type, final String domain)
+    throws AttributeNotFoundException;
     
     /**
      * Register a configuration object.
      * Used by configuration applications such as UI adding in new configurations.
-     * @param component Component name to register the object against.
+     * @param name Component name to register the object against.
+     * @param type Type of component.
      * @param instance Object to register.
      * @return Object to use referring subsequently to instance (Pass this
      * object to {@link #deregister(Object)}.
      */
-    public Object register(final String component, final Object instance)
+    public Object register(final String name, final String type,
+    		final Object instance)
     throws ConfigurationException;
     
     /**
      * Register a configuration object.
      * Used by configuration applications such as UI adding in new configurations.
-     * @param component Component name to register the object against.
+     * @param name Component name to register the object against.
+     * @param type Type of component.
      * @param domain Domain to register against. Domain should be
      * specified reversed as is done in java packaging: e.g. To find Settings
      * for 'archive.org', pass the domain written as 'org.archive'.
@@ -82,24 +104,27 @@ public interface Registry {
      * @return Object to use referring subsequently to instance (Pass this
      * object to {@link #deregister(Object)}.
      */
-    public Object register(final String component, final String domain,
-            final Object instance)
+    public Object register(final String name, final String type,
+    		final String domain, final Object instance)
     throws ConfigurationException;
     
     /**
-     * @param component Component name to look for.
+     * @param name Component name to look for.
+     * @param type Type of component.
      * @return True if registered.
      */
-    public boolean isRegistered(final String component);
+    public boolean isRegistered(final String name, final String type);
     
     /**
      * @param component Component name to look for.
+     * @param type Type of component.
      * @param domain Domain to search against. Domain should be
      * specified reversed as is done in java packaging: e.g. To find Settings
      * for 'archive.org', pass the domain written as 'org.archive'.
      * @return True if registered.
      */
-    public boolean isRegistered(final String component, final String domain);
+    public boolean isRegistered(final String component, final String type,
+    		final String domain);
     
     /**
      * Unregister named object.

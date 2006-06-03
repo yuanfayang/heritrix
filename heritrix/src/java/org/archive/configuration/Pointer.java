@@ -24,6 +24,10 @@
  */
 package org.archive.configuration;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
@@ -46,20 +50,18 @@ import javax.management.openmbean.SimpleType;
  * @version $Date$ $Revision$
  */
 public class Pointer  {
-    private static final String OI_KEY = "domain";
-    private static final String LIST_STR_KEY = "keyPropertyListString";
+    private static final String OBJNAME_KEY = "objname";
     private static final String [] KEYS =
-        new String [] {DOMAIN_KEY, LIST_STR_KEY};
+        new String [] {OBJNAME_KEY};
     static CompositeType COMPOSITE_TYPE;
     static {
         try {
             COMPOSITE_TYPE =
                 new CompositeType(Pointer.class.getName(),
-                    "ObjectName as CompositeType Reference to a " +
+                    "ObjectName-as-String Reference to a " +
                         "Configuration in registry", KEYS,
-                    new String [] {"ObjectName domain",
-                        "ObjectName#getCanonicalKeyPropertyListString() output"},
-                    new OpenType [] {SimpleType.STRING, SimpleType.STRING});
+                    new String [] {"ObjectName as String"},
+                    new OpenType [] {SimpleType.STRING});
         } catch (OpenDataException e) {
             e.printStackTrace();
         }
@@ -91,6 +93,11 @@ public class Pointer  {
         return this.compositeData;
     }
     
+    public ObjectName getObjectName()
+    throws MalformedObjectNameException, NullPointerException {
+    	return new ObjectName((String)getCompositeData().get(OBJNAME_KEY));
+    }
+    
     protected static CompositeData create(final ObjectName on)
     throws OpenDataException {
         if (on == null) {
@@ -117,11 +124,43 @@ public class Pointer  {
         return result;
     }
     
-    public static Configurable getConfiguredConfigurable(final Registry r,
-    		final Pointer ptr) {
-    	String list = (String)ptr.getCompositeData().get(LIST_STR_KEY);
-    	String domain = (String)ptr.getCompositeData().get(DOMAIN_KEY);
-    	ObjectName on = new ObjectName(domain + ":" + list);
-    	r.
+    public static Configurable getInstance(final Registry r, final Pointer ptr)
+    throws ConfigurationException {
+    	ObjectName on;
+    	try {
+			on = ptr.getObjectName();
+		} catch (MalformedObjectNameException e) {
+			throw new ConfigurationException(e);
+		}
+		final String name = on.getKeyProperty("name");
+		final String type = on.getKeyProperty("type");
+        Class c;
+		try {
+			c = Class.forName(type);
+		} catch (ClassNotFoundException e) {
+			throw new ConfigurationException("Failed to find class " + type,
+			    e);
+		}
+        
+        Configurable configurable = null;
+		try {
+			// Get the constructor that takes a String argument.
+			Constructor cons = c.getConstructor(new Class [] {String.class});
+			configurable =
+				(Configurable)cons.newInstance(new Object [] {name});
+		} catch (SecurityException e) {
+			throw new ConfigurationException(e);
+		} catch (NoSuchMethodException e) {
+			throw new ConfigurationException(e);
+		} catch (IllegalArgumentException e) {
+			throw new ConfigurationException(e);
+		} catch (InstantiationException e) {
+			throw new ConfigurationException(e);
+		} catch (IllegalAccessException e) {
+			throw new ConfigurationException(e);
+		} catch (InvocationTargetException e) {
+			throw new ConfigurationException(e);
+		}
+        return configurable.initialize(r);
     }
 }

@@ -17,9 +17,11 @@ public interface Configurable {
 	 * components.  Its ok to keep a reference to the registry for
 	 * life of the configured code or to just use here in the configure
 	 * method and then let it go.
+	 * @return This configurable.
 	 * @throws ConfigurationException
 	 */
-    public void initialize(final Registry r) throws ConfigurationException;
+    public Configurable initialize(final Registry r)
+    throws ConfigurationException;
     
     /**
      * Return a Configuration instance set with defaults and initial
@@ -27,5 +29,6 @@ public interface Configurable {
      * as defaults and value ranges.
      * @return Initial configuration of the Configurable.  
      */
-    public Configuration getInitialConfiguration() throws ConfigurationException;
+    public Configuration getInitialConfiguration()
+    throws ConfigurationException;
 }

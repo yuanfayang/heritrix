@@ -34,10 +34,7 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -80,7 +77,6 @@ class JmxRegistry implements Registry {
     
     private final MBeanServer registry;
     private String baseDomain = null;
-    private boolean load = false;
     
     /**
      * Make configurable.
@@ -129,13 +125,13 @@ class JmxRegistry implements Registry {
         return new ObjectName(domain, "name", name);
     }
     
-    public Object register(final String component,
+    public Object register(final String name, final String type,
             final String domain, final Object instance)
     throws ConfigurationException {
         Object result = null;
         try {
             result = this.registry.registerMBean(instance,
-                getObjectName(component, domain));
+                getObjectName(name, domain));
          
             /*
             if (this.load) {
@@ -175,17 +171,18 @@ class JmxRegistry implements Registry {
         return result;
     }
 
-    public Object register(String component, Object instance)
+    public Object register(String name, String type, Object instance)
     throws ConfigurationException {
-        return register(component, getBaseDomain(), instance);
+        return register(name, type, getBaseDomain(), instance);
     }
 
-    public boolean isRegistered(final String component) {
+    public boolean isRegistered(final String name, final String type) {
         // TODO Auto-generated method stub
         return false;
     }
 
-    public boolean isRegistered(final String component, final String domain) {
+    public boolean isRegistered(final String name,
+    		final String type, final String domain) {
         // TODO Auto-generated method stub
         return false;
     }
@@ -201,15 +198,19 @@ class JmxRegistry implements Registry {
         }
     }
 
-    public Object get(String attributeName, String component) {
-        return get(attributeName, component, getBaseDomain());
+    public Object get(String attributeName, String name) {
+        return get(attributeName, name, null, getBaseDomain());
+    }
+    
+    public Object get(String attributeName, String name, String type) {
+        return get(attributeName, name, null, getBaseDomain());
     }
 
-    public Object get(String attributeName, String component,
-            String domain) {
+    public Object get(String attributeName, String name,
+    		final String type, final String domain) {
         ObjectName on = null;
         try {
-            on = getObjectName(component, domain);
+            on = getObjectName(name, domain);
         } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         }

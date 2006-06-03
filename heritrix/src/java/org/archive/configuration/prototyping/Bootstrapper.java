@@ -9,7 +9,6 @@ import javax.management.MBeanException;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-import javax.management.openmbean.ArrayType;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
@@ -40,17 +39,29 @@ public class Bootstrapper implements Configurable {
         this.name = n;
     }
     
-    public void initialize(final Registry r) throws ConfigurationException {
+    public Configurable initialize(final Registry r)
+    throws ConfigurationException {
         this.registry = r;
-        if (!this.registry.isRegistered(this.name)) {
-            this.registry.register(this.name, getInitialConfiguration());
-        }
-        Object [] objs = (Object[])this.registry.get("processors", this.name);
+        if (!this.registry.isRegistered(this.name, this.getClass().getName())) {
+            this.registry.register(this.name, this.getClass().getName(),
+            		getInitialConfiguration());
+        } else {
+        	// Its registered already. Get all config. now or
+        	// just do get as I need config. during processing?
+        	
+        Object[] objs = null;
+		try {
+			objs = (Object[])this.registry.get("processors", this.name);
+		} catch (AttributeNotFoundException e) {
+			throw new ConfigurationException(e);
+		}
         for (int i = 0; i < objs.length; i++) {
         	if (Pointer.isPointer((CompositeData)objs[i])) {
         		
         	}
         }
+        }
+        return this;
     }
     
     public Configuration getInitialConfiguration()
@@ -104,19 +115,20 @@ public class Bootstrapper implements Configurable {
     	return c;
     }
     
-    public boolean isEnabled() {
+    public boolean isEnabled() throws AttributeNotFoundException {
         return ((Boolean)this.registry.get("Enabled", this.name)).
             booleanValue();
     }
     
-    public boolean isNew() {
+    public boolean isNew() throws AttributeNotFoundException {
         return ((Boolean)this.registry.get("Two", this.name)).
             booleanValue();
     }
     
     public static void main(String[] args)
     throws InstantiationException, IllegalAccessException,
-            ClassNotFoundException, IOException, ConfigurationException {
+            ClassNotFoundException, IOException, ConfigurationException,
+            AttributeNotFoundException {
         Registry r = (Registry)Class.forName(REGISTRY).newInstance();
         r.load(BASE_DOMAIN);
         Bootstrapper b = new Bootstrapper("Bootstrapper");
