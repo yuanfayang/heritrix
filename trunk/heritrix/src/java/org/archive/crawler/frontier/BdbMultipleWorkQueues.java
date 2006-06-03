@@ -88,6 +88,10 @@ public class BdbMultipleWorkQueues {
                 // Ignored
             }
         }
+        // Make database deferred write: URLs that are added then removed 
+        // before a page-out is required need never cause disk IO.
+        dbConfig.setDeferredWrite(true);
+
         this.pendingUrisDB = env.openDatabase(null, "pending", dbConfig);
         crawlUriBinding =
             new RecyclingSerialBinding(classCatalog, CrawlURI.class);
