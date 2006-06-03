@@ -131,7 +131,7 @@ public class JmxRegistryTest extends TestCase {
         }
     }
     
-    public void testGet() {
+    public void testGet() throws AttributeNotFoundException {
         // In setup we added a Setting to base that is TRUE and to the domain
         // one that is FALSE.  Test that they were properly registered.
         Object obj = this.handler.get(Configuration.ENABLED_ATTRIBUTE,

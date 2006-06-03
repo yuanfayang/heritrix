@@ -114,10 +114,10 @@ implements DynamicMBean, Registration, Serializable {
      * Base Configuration adds the Enabled attribute.
      */
     @SuppressWarnings("unused")
-    public static ArrayType<String[]> STR_ARRAY_TYPE;
+    public static ArrayType STR_ARRAY_TYPE;
     static {
     	try {
-    		STR_ARRAY_TYPE = ArrayType.getArrayType(SimpleType.STRING);
+    		STR_ARRAY_TYPE = new ArrayType(1, SimpleType.STRING);
     	} catch (OpenDataException e) {
     		e.printStackTrace();
     	}
@@ -128,11 +128,10 @@ implements DynamicMBean, Registration, Serializable {
      * Base Configuration adds the Enabled attribute.
      */
     @SuppressWarnings("unused")
-    public static ArrayType<CompositeData[]> PTR_ARRAY_TYPE;
+    public static ArrayType PTR_ARRAY_TYPE;
     static {
     	try {
-    		PTR_ARRAY_TYPE =
-    			ArrayType.getArrayType(Pointer.getCompositeType());
+    		PTR_ARRAY_TYPE = new ArrayType(1, Pointer.getCompositeType());
     	} catch (OpenDataException e) {
     		e.printStackTrace();
     	}

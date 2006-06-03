@@ -13,9 +13,9 @@ public class Processor implements Configurable {
         // TODO Auto-generated method stub
     }
 
-    public void initialize(Registry r) throws ConfigurationException {
-        // TODO Auto-generated method stub
-        
+    public Configurable initialize(Registry r)
+    throws ConfigurationException {
+    	return this;
     }
 
 	public Configuration getInitialConfiguration() throws ConfigurationException {
