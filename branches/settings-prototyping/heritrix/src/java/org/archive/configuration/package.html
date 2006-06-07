@@ -22,9 +22,24 @@ For overviews, tutorials, examples, guides, and tool documentation, please see:
 <ul>
     <li>Classes that can be configured export their configuration including
     defaults, allowed values, etc.
+    <li>Registry implementation can be swapped out and an alternate used
+	just by changing system property.
+	<ul>
+		<li>TODO: Do same for serialization.</li>
+	</ul>
+	</li>
     </li>
     <li>Components have name and type.  For now, assumption is that I'm passed
     classname as type.</li>
+</ul>
+
+<h2>TODOs</h2>
+<ul>
+    <li>How to do Notifications?  Invocation of Operations? For former seems
+	easy enough.  Component updates its config.   Config. sends out
+	notifications.  For invocations, then config. needs reference to
+	Component -- somehow.
+    </li>
 </ul>
 
 </body>

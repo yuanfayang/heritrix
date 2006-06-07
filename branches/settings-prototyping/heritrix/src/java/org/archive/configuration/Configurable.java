@@ -24,11 +24,14 @@ public interface Configurable {
     throws ConfigurationException;
     
     /**
-     * Return a Configuration instance set with defaults and initial
-     * values.  Used to learn what in Configurable is settable as well
-     * as defaults and value ranges.
-     * @return Initial configuration of the Configurable.  
+     * Return a Configuration.
+     * When called on a newly instantiated Configurable, has initial
+     * Configuration with defaults, value ranges, etc. Note
+     * that any Configuration gotten other than by going via the
+     * Registry is dead Configuration: Always go via Registry to
+     * read values.
+     * @return Configuration of the Configurable.  
      */
-    public Configuration getInitialConfiguration()
+    public Configuration getConfiguration()
     throws ConfigurationException;
 }

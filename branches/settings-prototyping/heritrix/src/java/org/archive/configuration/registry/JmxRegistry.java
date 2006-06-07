@@ -22,7 +22,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.configuration.prototyping;
+package org.archive.configuration.registry;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,8 +34,10 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.Attribute;
@@ -76,34 +78,49 @@ class JmxRegistry implements Registry {
         Logger.getLogger(this.getClass().getName());
     
     private final MBeanServer registry;
-    private String baseDomain = null;
+    private final String baseDomain;
     
     /**
      * Make configurable.
      * Make it so can have different store implementations.
      */
-	private final File store = new File("/tmp", this.getClass().getName());
+	private final File store =
+        new File(System.getProperty(STORE_DIR_KEY, 
+                System.getProperty("java.io.tmpdir", "/tmp")),
+            this.getClass().getName());
 	
-    
     public JmxRegistry() {
+        this("default.domain");
+
+    }
+    
+    public JmxRegistry(final String d) {
         super();
         this.registry = JmxUtils.getMBeanServer();
         if (this.registry == null) {
             throw new NullPointerException("MBeanServer cannot " +
                 "be null");
         }
+        this.baseDomain = d;
+    }
+    
+    ObjectName getObjectName(final String name, final Class type)
+    throws MalformedObjectNameException {
+        return getObjectName(name, type, this.baseDomain);
     }
     
     /**
      * Create an ObjectName
      * Default access so can be used by unit tests.
+     * TODO: Create queryable ObjectNames.
      * @param name
      * @param domain
      * @return An ObjectName made from passed <code>name</code>
      * and <code>domain</code>.
      * @throws MalformedObjectNameException
      */
-    ObjectName getObjectName(final String name, final String domain)
+    ObjectName getObjectName(final String name, final Class type,
+            final String domain)
     throws MalformedObjectNameException {
         /*
         String totalDomain = null;
@@ -116,22 +133,21 @@ class JmxRegistry implements Registry {
                 totalDomain = this.basis + "." + domain;
             }
         }
-        return new ObjectName(totalDomain, "type", type);
-        
-    	Hashtable<String, String> ht = new Hashtable<String, String>();
-    	ht.put("name", name);
-    	ht.put("type", instance.getClass().getName());
     	*/
-        return new ObjectName(domain, "name", name);
+        Hashtable<String, String> ht = new Hashtable<String, String>();
+        ht.put(NAME_KEY, name);
+        ht.put(TYPE_KEY, type.getName());
+        return new ObjectName(domain, ht);
     }
     
-    public Object register(final String name, final String type,
+    @SuppressWarnings("unused")
+    public Object register(final String name, final Class type,
             final String domain, final Object instance)
     throws ConfigurationException {
         Object result = null;
         try {
             result = this.registry.registerMBean(instance,
-                getObjectName(name, domain));
+                getObjectName(name, type, domain));
          
             /*
             if (this.load) {
@@ -171,20 +187,24 @@ class JmxRegistry implements Registry {
         return result;
     }
 
-    public Object register(String name, String type, Object instance)
+    public Object register(String name, Class type, Object instance)
     throws ConfigurationException {
         return register(name, type, getBaseDomain(), instance);
     }
 
-    public boolean isRegistered(final String name, final String type) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean isRegistered(final String name, final Class type) {
+        return isRegistered(name, type, getBaseDomain());
     }
 
     public boolean isRegistered(final String name,
-    		final String type, final String domain) {
-        // TODO Auto-generated method stub
-        return false;
+    		    final Class type, final String domain) {
+        boolean result = false;
+        try {
+            result = this.registry.isRegistered(getObjectName(name, type, domain));
+        } catch (MalformedObjectNameException e) {
+            LOGGER.log(Level.WARNING, "Failed check", e);
+        }
+        return result;
     }
     
     public void deregister(final Object on) {
@@ -198,27 +218,31 @@ class JmxRegistry implements Registry {
         }
     }
 
-    public Object get(String attributeName, String name) {
+    public Object get(String attributeName, String name)
+    throws AttributeNotFoundException {
         return get(attributeName, name, null, getBaseDomain());
     }
     
-    public Object get(String attributeName, String name, String type) {
-        return get(attributeName, name, null, getBaseDomain());
+    public Object get(String attributeName, String name, Class type)
+    throws AttributeNotFoundException {
+        return get(attributeName, name, type, getBaseDomain());
     }
 
     public Object get(String attributeName, String name,
-    		final String type, final String domain) {
+    		final Class type, final String domain)
+    throws AttributeNotFoundException {
         ObjectName on = null;
         try {
-            on = getObjectName(name, domain);
+            // TODO: Add support for querying.  type or name could be
+            // null so should use the incomplete ObjectName spec.
+            // instead to do queries.
+            on = getObjectName(name, type, domain);
         } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         }
         Object result = null;
         try {
             result = this.registry.getAttribute(on, attributeName);
-        } catch (AttributeNotFoundException e) {
-            e.printStackTrace();
         } catch (ReflectionException e) {
             e.printStackTrace();
         } catch (InstanceNotFoundException e) {
@@ -242,11 +266,6 @@ class JmxRegistry implements Registry {
     
     @SuppressWarnings("unused")
     public synchronized void load(String domain) throws IOException {
-        // TODO: Do domain calculation.  If the based domain is a subdomain,
-        // do not override our baseDomain.  If passed domain is super
-        // domain, do put it in place of our baseDomain.
-        this.baseDomain = domain;
-        
         final File subdir = getDomainSubDir(this.store, domain);
         File [] files = subdir.listFiles();
         for (int i = 0; i < files.length; i++) {

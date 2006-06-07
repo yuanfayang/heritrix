@@ -47,7 +47,6 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.RuntimeOperationsException;
 import javax.management.openmbean.ArrayType;
-import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenMBeanAttributeInfo;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
@@ -98,6 +97,16 @@ implements DynamicMBean, Registration, Serializable {
     private ArrayList<String> attributeNames = new ArrayList<String>();
     
     private ArrayList<String> operationNames = new ArrayList<String>();
+    
+    /**
+     * List of overrideable attributes.
+     */
+    private final List<String> overrideables;
+    
+    /**
+     * List of expert attributes.
+     */
+    private final List<String> expert;
    
     /**
      * This is used to package up all of the config. contained herein.
@@ -107,7 +116,8 @@ implements DynamicMBean, Registration, Serializable {
     /**
      * Cache of attributes.
      */
-    private HashMap<String, Object> attributes = new HashMap<String, Object>();
+    private HashMap<String, Object> attributes =
+        new HashMap<String, Object>();
     
     /**
      * Make a String ArrayType to use later in definitions.
@@ -116,11 +126,11 @@ implements DynamicMBean, Registration, Serializable {
     @SuppressWarnings("unused")
     public static ArrayType STR_ARRAY_TYPE;
     static {
-    	try {
-    		STR_ARRAY_TYPE = new ArrayType(1, SimpleType.STRING);
-    	} catch (OpenDataException e) {
-    		e.printStackTrace();
-    	}
+    	    try {
+    		    STR_ARRAY_TYPE = new ArrayType(1, SimpleType.STRING);
+    	    } catch (OpenDataException e) {
+    		    e.printStackTrace();
+    	    }
     }
     
     /**
@@ -130,21 +140,40 @@ implements DynamicMBean, Registration, Serializable {
     @SuppressWarnings("unused")
     public static ArrayType PTR_ARRAY_TYPE;
     static {
-    	try {
-    		PTR_ARRAY_TYPE = new ArrayType(1, Pointer.getCompositeType());
-    	} catch (OpenDataException e) {
-    		e.printStackTrace();
-    	}
+    	    try {
+    		    PTR_ARRAY_TYPE = new ArrayType(1, Pointer.getCompositeType());
+    	    } catch (OpenDataException e) {
+    		    e.printStackTrace();
+    	    }
     }
     
-    public Configuration() throws ConfigurationException {
+    /**
+     * Shutdown constructor.
+     * @throws ConfigurationException
+     */
+    private Configuration()
+    throws ConfigurationException {
+        this(null);
+    }
+    
+    public Configuration(final String description)
+    throws ConfigurationException {
+        this(description, null, null);
+    }
+        
+    public Configuration(final String description,
+            final List<String> ov,
+            final List<String> ex)
+    throws ConfigurationException {
         super();
         try {
             this.mbeanInfo = createMBeanInfo(this.getClass().getName(),
-                "Base abstract configuration instance.");
+                description);
         } catch (OpenDataException e) {
             throw new ConfigurationException(e);
         }
+        this.overrideables = ov;
+        this.expert = ex;
     }
     
     protected List<String> getAttributeNames() {
@@ -238,31 +267,24 @@ implements DynamicMBean, Registration, Serializable {
         }
     }
     
-    public Object get(final String attributeName) {
-        Object result = null;
-        try {
-            result = getAttribute(attributeName);
-        } catch (AttributeNotFoundException e) {
-            e.printStackTrace();
-        } catch (MBeanException e) {
-            e.printStackTrace();
-        } catch (ReflectionException e) {
-            e.printStackTrace();
-        }
-        return result;
+    public Object get(final String attributeName)
+    throws AttributeNotFoundException {
+        return getAttribute(attributeName);
     }
     
-    public Integer getInteger(final String attributeName) {
+    public Integer getInteger(final String attributeName)
+    throws AttributeNotFoundException {
         return (Integer)get(attributeName);
     }
     
-    public String getString(final String attributeName) {
+    public String getString(final String attributeName)
+    throws AttributeNotFoundException {
         return (String)get(attributeName);
     }
     
     @SuppressWarnings("unused")
     public synchronized Object getAttribute(final String attributeName)
-    throws AttributeNotFoundException, MBeanException, ReflectionException {
+    throws AttributeNotFoundException {
         checkValidAttributeName(attributeName);
         // Else attribute is known.  Do we have it in our cache?  If not,
         // create.
@@ -300,10 +322,6 @@ implements DynamicMBean, Registration, Serializable {
             try {
                 result.add(new Attribute(atts[i], getAttribute(atts[i])));
             } catch (AttributeNotFoundException e) {
-                e.printStackTrace();
-            } catch (MBeanException e) {
-                e.printStackTrace();
-            } catch (ReflectionException e) {
                 e.printStackTrace();
             }
         }

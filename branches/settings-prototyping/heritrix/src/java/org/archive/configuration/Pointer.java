@@ -95,7 +95,7 @@ public class Pointer  {
     
     public ObjectName getObjectName()
     throws MalformedObjectNameException, NullPointerException {
-    	return new ObjectName((String)getCompositeData().get(OBJNAME_KEY));
+    	    return new ObjectName((String)getCompositeData().get(OBJNAME_KEY));
     }
     
     protected static CompositeData create(final ObjectName on)
@@ -104,8 +104,7 @@ public class Pointer  {
             throw new NullPointerException("Can't pass null ObjectName");
         }
         return new CompositeDataSupport(COMPOSITE_TYPE, KEYS,
-            new String [] {on.getDomain(),
-                on.getCanonicalKeyPropertyListString()});
+            new String [] {on.getCanonicalName()});
     }
     
     /**
@@ -124,17 +123,17 @@ public class Pointer  {
         return result;
     }
     
-    public static Configurable getInstance(final Registry r, final Pointer ptr)
+    public Configurable getRegisteredInstance(final Registry r)
     throws ConfigurationException {
     	ObjectName on;
+    Class c;
     	try {
-			on = ptr.getObjectName();
+			on = getObjectName();
 		} catch (MalformedObjectNameException e) {
 			throw new ConfigurationException(e);
 		}
 		final String name = on.getKeyProperty("name");
 		final String type = on.getKeyProperty("type");
-        Class c;
 		try {
 			c = Class.forName(type);
 		} catch (ClassNotFoundException e) {
@@ -161,6 +160,9 @@ public class Pointer  {
 		} catch (InvocationTargetException e) {
 			throw new ConfigurationException(e);
 		}
+        if (!r.isRegistered(name, c, on.getCanonicalKeyPropertyListString())) {
+            r.register(name, c, on.getDomain(), configurable.getConfiguration());
+        }
         return configurable.initialize(r);
     }
 }
