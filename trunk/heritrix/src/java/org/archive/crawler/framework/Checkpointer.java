@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.Checkpoint;
@@ -280,12 +281,12 @@ public class Checkpointer implements Serializable {
      * @param e Exception checkpoint failed on.
      */
     protected void checkpointFailed(Exception e) {
-        e.printStackTrace();
+        LOGGER.log(Level.WARNING, " Checkpoint failed", e);
         checkpointFailed();
     }
     
     protected void checkpointFailed(final String message) {
-        LOGGER.severe(message);
+        LOGGER.warning(message);
         checkpointFailed();
     }
     
