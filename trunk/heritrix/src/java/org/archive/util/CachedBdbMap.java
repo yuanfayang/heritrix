@@ -348,7 +348,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         for (; i.hasNext();) {
             allKeys.add(i.next());
         }
-        ((StoredIterator)i).close();
+        StoredIterator.close(i);
         return Collections.unmodifiableSet(allKeys);
     }
     
