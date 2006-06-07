@@ -27,6 +27,7 @@ package org.archive.configuration;
 import java.io.IOException;
 
 import javax.management.AttributeNotFoundException;
+import javax.management.ObjectName;
 
 
 
@@ -41,6 +42,16 @@ import javax.management.AttributeNotFoundException;
  * @see <a href="http://crawler.archive.org/cgi-bin/wiki.pl?SettingsFrameworkRefactoring">Settings Framework Refactoring</a>
  */
 public interface Registry {
+    /**
+     * System property key of where on disk to persist configuration.
+     */
+    public static final String STORE_DIR_KEY =
+        "org.archive.configuration.store-dir";
+    
+    public static final String NAME_KEY = "name";
+    public static final String TYPE_KEY = "type";
+    
+    
     /**
      * Get <code>attributeName</code> on <code>component</code>.
      * @param attributeName Name of component atribute to get.
@@ -60,7 +71,7 @@ public interface Registry {
      * @throws AttributeNotFoundException
      */
     public Object get(final String attributeName, final String name,
-    		final String type)
+    		final Class<?> type)
     throws AttributeNotFoundException;
     
     /**
@@ -76,7 +87,7 @@ public interface Registry {
      * @throws AttributeNotFoundException
      */
     public Object get(final String attributeName, final String name,
-    		final String type, final String domain)
+    		final Class<?> type, final String domain)
     throws AttributeNotFoundException;
     
     /**
@@ -88,7 +99,7 @@ public interface Registry {
      * @return Object to use referring subsequently to instance (Pass this
      * object to {@link #deregister(Object)}.
      */
-    public Object register(final String name, final String type,
+    public Object register(final String name, final Class<?> type,
     		final Object instance)
     throws ConfigurationException;
     
@@ -104,7 +115,7 @@ public interface Registry {
      * @return Object to use referring subsequently to instance (Pass this
      * object to {@link #deregister(Object)}.
      */
-    public Object register(final String name, final String type,
+    public Object register(final String name, final Class<?> type,
     		final String domain, final Object instance)
     throws ConfigurationException;
     
@@ -113,7 +124,7 @@ public interface Registry {
      * @param type Type of component.
      * @return True if registered.
      */
-    public boolean isRegistered(final String name, final String type);
+    public boolean isRegistered(final String name, final Class<?> type);
     
     /**
      * @param component Component name to look for.
@@ -123,7 +134,7 @@ public interface Registry {
      * for 'archive.org', pass the domain written as 'org.archive'.
      * @return True if registered.
      */
-    public boolean isRegistered(final String component, final String type,
+    public boolean isRegistered(final String component, final Class<?> type,
     		final String domain);
     
     /**
