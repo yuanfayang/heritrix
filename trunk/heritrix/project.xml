@@ -95,7 +95,7 @@
      -->
     <repository>
        <connection>scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/archive-crawler:ArchiveOpenCrawler</connection>
-        <url>http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler</url>
+        <url>http://archive-crawler.cvs.sourceforge.net/archive-crawler/ArchiveOpenCrawler/</url>
     </repository>
 
     <versions />
