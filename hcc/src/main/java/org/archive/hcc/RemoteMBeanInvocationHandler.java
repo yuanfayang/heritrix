@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -41,12 +41,12 @@ import javax.management.ObjectName;
  * This invocation handler is responsible for proxying calls to and
  * remote notifications from remote mbean instances.
  * @author Daniel Bernstein (dbernstein@archive.org)
+ *
  */
 public class RemoteMBeanInvocationHandler implements
         InvocationHandler {
     
-    private static Logger log =
-        Logger.getLogger(RemoteMBeanInvocationHandler.class.getName());
+    private static Logger log = Logger.getLogger(RemoteMBeanInvocationHandler.class.getName());
 
     private ObjectName remoteObjectName;
 
@@ -82,15 +82,9 @@ public class RemoteMBeanInvocationHandler implements
     }
 
     /**
-     * Invokes the specified method on the remote mbean. If the method doesn't
-     * match a method on the DynamicMBean or NotificationEmitter, the method is
-     * invoked on the remote invocation handler directly (ie equals and
-     * hashCode);
-     * @param proxy 
-     * @param method 
-     * @param args 
-     * @return Result object.
-     * @throws Throwable 
+     * Invokes the specified method on the remote mbean. If the method doesn't match
+     * a method on the DynamicMBean or NotificationEmitter, the method is invoked on the 
+     * remote invocation handler directly (ie equals and hashCode);
      */
     public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable {
@@ -199,4 +193,5 @@ public class RemoteMBeanInvocationHandler implements
     public ObjectName getProxyObjectName() {
         return proxyObjectName;
     }
+
 }

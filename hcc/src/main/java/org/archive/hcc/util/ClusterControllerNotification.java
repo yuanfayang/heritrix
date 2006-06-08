@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -35,7 +35,9 @@ public enum ClusterControllerNotification {
         this.key = key;
     }
     
-    public String getKey() {
+    public String getKey(){
         return this.key;
     }
+ 
+
 }

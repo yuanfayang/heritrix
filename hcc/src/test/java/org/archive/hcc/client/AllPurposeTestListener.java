@@ -3,6 +3,12 @@ package org.archive.hcc.client;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import org.archive.hcc.client.CompletedCrawlJob;
+import org.archive.hcc.client.Crawler;
+import org.archive.hcc.client.CrawlerLifecycleListener;
+import org.archive.hcc.client.CurrentCrawlJob;
+import org.archive.hcc.client.CurrentCrawlJobListener;
+
 public class AllPurposeTestListener implements
         CrawlerLifecycleListener,
         CurrentCrawlJobListener {

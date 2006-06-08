@@ -1,7 +1,7 @@
 
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -25,39 +25,30 @@ package org.archive.hcc.client;
 
 import javax.management.MBeanServerConnection;
 
-abstract public class CrawlJobBase implements CrawlJob {
+abstract public class CrawlJobBase implements
+        CrawlJob {
 
-    protected CrawlerImpl mother;
+    protected Crawler mother;
 
     protected MBeanServerConnection connection;
 
-    protected Long uid;
-    
-    protected String jobName;
+    protected String uid;
 
     public CrawlJobBase(
-            Long uid,
-            String jobName,
-            CrawlerImpl mother,
+            String uid,
+            Crawler mother,
             MBeanServerConnection connection) {
         this.uid = uid;
         this.connection = connection;
         this.mother = mother;
-        this.jobName = jobName;
     }
 
-    public Long getUid() {
+    public String getUid() {
         return uid;
     }
-    
-    public String getJobName(){
-        return this.jobName;
-    }
-    
 
     public Crawler getMother() {
         return mother;
     }
-    
-    
+
 }

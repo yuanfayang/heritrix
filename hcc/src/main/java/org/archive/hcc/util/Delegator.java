@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -24,9 +24,12 @@ package org.archive.hcc.util;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 
 
 public class Delegator {
+
+    private static Logger log = Logger.getLogger(Delegator.class.getName());
 
     public enum DelegatorPolicy {
         ACCEPT_ALL, ACCEPT_FIRST

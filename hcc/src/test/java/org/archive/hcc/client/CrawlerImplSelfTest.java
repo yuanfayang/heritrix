@@ -7,26 +7,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.archive.hcc.client.ClusterException;
+import org.archive.hcc.client.Crawler;
+import org.archive.hcc.client.CrawlerImpl;
+import org.archive.hcc.client.JobOrder;
 import org.archive.hcc.util.OrderJarFactory;
 
 public class CrawlerImplSelfTest
         extends
-            ClusterControllerClientSelfTestBase {
+            ClusterControllerClientSelfTest {
     private CrawlerImpl c;
-    
+
     protected void setUp() throws Exception {
-    
         super.setUp();
         c = (CrawlerImpl) cc.createCrawler();
         c.startPendingJobQueue();
+
     }
 
     protected void tearDown() throws Exception {
         c.destroy();
-        Thread.sleep(5*1000);
         super.tearDown();
         c = null;
-
     }
 
     public void testGetVersion() {
@@ -46,13 +48,10 @@ public class CrawlerImplSelfTest
     }
 
     public void testCreateJobHearJobFindJobParentStopJob() {
-        AllPurposeTestListener listener;
-        listener = new AllPurposeTestListener();
-        cc.addCrawlerLifecycleListener(listener);
-        cc.addCrawlJobListener(listener);
-
+        AllPurposeTestListener listener = new AllPurposeTestListener();
 
         try {
+            cc.addCrawlJobListener(listener);
             String uid = c.addJob(new JobOrder("test", getTestJar()));
 
             try {
@@ -63,7 +62,7 @@ public class CrawlerImplSelfTest
                 e.printStackTrace();
             }
 
-            assertEquals(new Long(uid), listener.j.getUid());
+            assertEquals(uid, listener.j.getUid());
 
             listener.j.pause();
 
@@ -102,7 +101,7 @@ public class CrawlerImplSelfTest
             try {
                 // TODO follow up with Stack about why this pause is required.
                 // if you take it away, sometimes terminateCurrentJob() hangs.
-                Thread.sleep(2000);
+                Thread.sleep(1);
             } catch (InterruptedException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
@@ -122,128 +121,17 @@ public class CrawlerImplSelfTest
             e.printStackTrace();
             assertFalse(true);
         } finally {
-            cc.removeCrawlerLifecycleListener(listener);
             cc.removeCrawlJobListener(listener);
         }
     }
 
-    public void testCheckCrawlJobStatus(){
-        AllPurposeTestListener listener;
-        listener = new AllPurposeTestListener();
-        cc.addCrawlerLifecycleListener(listener);
-        cc.addCrawlJobListener(listener);
-        //start a new job
-        String uid = c.addJob(new JobOrder("test", getTestJar()));
-
-        try {
-            assertTrue(listener.crawlJobStartedLatch.await(
-                    10 * 1000,
-                    TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        
-        //check status of job once it has started.
-        assertNotNull(listener.j.getCrawlStatus());
-        assertEquals("test", listener.j.getJobName());
-        assertEquals(listener.j.getMother().getName(), c.getName());
-        
+    public static File getTestJar() {
+        Map map = new HashMap();
+        map.put("name", "test");
+        List<String> seeds = new LinkedList<String>();
+        seeds.add("http://crawler.archive.org");
+        map.put("seeds", seeds);
+        return OrderJarFactory.createOrderJar(map);
     }
-    
-    public void testCheckMotherNotNull(){
-        AllPurposeTestListener listener;
-        listener = new AllPurposeTestListener();
-        cc.addCrawlerLifecycleListener(listener);
-        cc.addCrawlJobListener(listener);
-        //start a new job
-        String uid = c.addJob(new JobOrder("test", getTestJar()));
-
-        try {
-            assertTrue(listener.crawlJobStartedLatch.await(
-                    10 * 1000,
-                    TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        
-        //check status of job once it has started.
-        assertEquals(listener.j.getMother().getName(), c.getName());
-        
-    }
-
-    
-    public void testListCompletedCrawlJobs(){
-        AllPurposeTestListener listener;
-        listener = new AllPurposeTestListener();
-        cc.addCrawlerLifecycleListener(listener);
-        cc.addCrawlJobListener(listener);
-        //start a new job
-        String uid = c.addJob(new JobOrder("test", getTestJar()));
-
-
-        int completedJobCount = c.listCompletedCrawlJobs().size();
-        try {
-            assertTrue(listener.crawlJobStatisticsChangedLatch.await(
-                    30 * 1000,
-                    TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        c.terminateCurrentJob();
-        
-        try {
-            assertTrue(listener.crawlJobCompletedLatch.await(
-                    10 * 1000,
-                    TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-      
-        assertEquals(completedJobCount+1, c.listCompletedCrawlJobs().size());
-
-    }
-    
-    public void testDeleteCrawlJob(){
-        AllPurposeTestListener listener;
-        listener = new AllPurposeTestListener();
-        cc.addCrawlerLifecycleListener(listener);
-        cc.addCrawlJobListener(listener);
-        //start a new job
-        String uid = c.addJob(new JobOrder("test", getTestJar()));
-
-        try {
-            assertTrue(listener.crawlJobStatisticsChangedLatch.await(
-                    30 * 1000,
-                    TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        c.terminateCurrentJob();
-        
-        try {
-            assertTrue(listener.crawlJobCompletedLatch.await(
-                    10 * 1000,
-                    TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        int completedJobCount = c.listCompletedCrawlJobs().size();
-
-        try {
-            c.deleteCompletedCrawlJob(listener.completedj);
-        } catch (ClusterException e) {
-            e.printStackTrace();
-            assertFalse(true);
-        }
-        
-        assertEquals(completedJobCount-1, c.listCompletedCrawlJobs().size());
-
-    }
-
 
 }

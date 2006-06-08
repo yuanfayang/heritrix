@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -24,52 +24,15 @@ package org.archive.hcc.client;
 
 import javax.management.MBeanServerConnection;
 
-
 public class CompletedCrawlJobImpl
         extends
             CrawlJobBase implements
         CompletedCrawlJob {
 
     public CompletedCrawlJobImpl(
-            Long uid, String jobName,
-            CrawlerImpl mother,
+            String uid,
+            Crawler mother,
             MBeanServerConnection connection) {
-        super(uid, jobName,mother, connection);
+        super(uid, mother, connection);
     }
-    
-    /* (non-Javadoc)
-     * @see org.archive.hcc.client.CompletedCrawlJob#getCrawlReport()
-     */
-    public String getCrawlReport() throws ClusterException {
-        return this.mother.getCrawlReport(this.uid);
-    }
-    
-    /* (non-Javadoc)
-     * @see org.archive.hcc.client.CompletedCrawlJob#getHostReport()
-     */
-    public String getHostReport() throws ClusterException {
-        return this.mother.getHostsReport(this.uid);
-    }
- 
-    /* (non-Javadoc)
-     * @see org.archive.hcc.client.CompletedCrawlJob#getHostReport()
-     */
-    public String getSourceReport() throws ClusterException {
-        return this.mother.getSourceReport(this.uid);
-    }
-
-    /* (non-Javadoc)
-     * @see org.archive.hcc.client.CompletedCrawlJob#getMimeTypeReport()
-     */
-    public String getMimeTypeReport() throws ClusterException {
-        return this.mother.getMimeTypesReport(this.uid);
-    }
-    
-    /* (non-Javadoc)
-     * @see org.archive.hcc.client.CompletedCrawlJob#getSeedReport()
-     */
-    public String getSeedReport() throws ClusterException {
-        return this.mother.getSeedsReport(this.uid);
-    }
-    
 }

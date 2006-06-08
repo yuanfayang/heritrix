@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -46,30 +46,35 @@ import javax.management.Notification;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.SimpleType;
-import javax.naming.InsufficientResourcesException;
 import javax.swing.event.EventListenerList;
 
 import org.archive.hcc.util.ClusterControllerNotification;
 import org.archive.hcc.util.NotificationDelegatableBase;
 import org.archive.hcc.util.NotificationDelegator;
-import org.archive.hcc.util.jmx.MBeanServerConnectionFactory;
 import org.archive.util.JmxUtils;
+import org.archive.util.jmx.MBeanServerConnectionFactory;
 
 /**
  * As the workhorse of the cluster controller client, this class is responsible 
  * for connecting to the local or remote <code>ClusterControllerBean</code> via
- * its <code>DynamicMBean</code> interface. It hides all the details of
- * connecting to the remote MBean, ie invocations and notifications. 
- * @author Daniel Bernstein (dbernstein@archive.org)
+ * its <code>DynamicMBean</code> interface. It hides all the details of connecting
+ * to the remote MBean, ie invocations and notifications. 
+ * @author dbernstein
+ *
  */
-class ClusterControllerClientImpl implements ClusterControllerClient{
+public class ClusterControllerClientImpl {
 
     private static final Logger log = Logger.getLogger(
             ClusterControllerClientImpl.class.getName());
 
+    /**
+     * 
+     */
     private MBeanServerConnection connection;
 
+    /**
+     * 
+     */
     private ObjectName name;
 
     private NotificationDelegator notificationDelegator;
@@ -83,7 +88,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
      * @throws InstanceNotFoundException
      * @throws IOException
      */
-    ClusterControllerClientImpl(InetSocketAddress address)
+    public ClusterControllerClientImpl(InetSocketAddress address)
             throws InstanceNotFoundException,
             IOException {
         init(MBeanServerConnectionFactory.createConnection(address));
@@ -108,20 +113,27 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     null,
                     new Object());
             this.listenerList = new EventListenerList();
-        } catch (Exception e) {
+        } catch (MalformedObjectNameException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
-            throw new RuntimeException(e);
+        } catch (NullPointerException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 
     /**
      * Creates a local instance of the ClusterControllerBean and attaches to it.
      */
-    ClusterControllerClientImpl() {
+    public ClusterControllerClientImpl() {
         try {
             init(createMBeanServer());
         } catch (InstanceNotFoundException e) {
-            throw new RuntimeException(e);
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 
@@ -148,8 +160,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                 if (n
                         .getType()
                         .equals(
-                                ClusterControllerNotification.
-                                    CRAWL_SERVICE_CREATED_NOTIFICATION.getKey())) {
+                                ClusterControllerNotification.CRAWL_SERVICE_CREATED_NOTIFICATION)) {
                     
                     if (log.isLoggable(Level.FINE)) {
                         log.fine("crawler service created: " + n.getUserData());
@@ -166,8 +177,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                 if (n
                         .getType()
                         .equals(
-                                ClusterControllerNotification.
-                                    CRAWL_SERVICE_DESTROYED_NOTIFICATION.getKey())) {
+                                ClusterControllerNotification.CRAWL_SERVICE_DESTROYED_NOTIFICATION)) {
                    
                     if (log.isLoggable(Level.INFO)) {
                         log.info("crawler service destroyed: "
@@ -184,8 +194,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
         d.addDelegatable(new NotificationDelegatableBase() {
             protected boolean delegate(Notification n, Object handbac) {
                 if (n.getType().equals(
-                    ClusterControllerNotification.
-                        CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey())){
+                    ClusterControllerNotification.CRAWL_SERVICE_JOB_STARTED_NOTIFICATION)){
                     handleCrawlServiceJobStarted((ObjectName) n.getUserData());
                     return true;
                 }
@@ -196,9 +205,8 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
         d.addDelegatable(new NotificationDelegatableBase() {
             protected boolean delegate(Notification n, Object handbac) {
                 if (n.getType().equals(
-                    ClusterControllerNotification.
-                        CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey())){
-                    handleCrawlServiceJobCompleted((ObjectName)n.getUserData());
+                    ClusterControllerNotification.CRAWL_SERVICE_JOB_STARTED_NOTIFICATION)){
+                    handleCrawlServiceJobCompleted((ObjectName) n.getUserData());
                     return true;
                 }
                 return false;
@@ -230,7 +238,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     try {
                         fireCrawlJobResumed(new CurrentCrawlJobImpl(
                                 source,
-                                findCrawlJobParentInternal(
+                                findCrawlJobParent(
                                         JmxUtils.getUid(source),
                                         JmxUtils.extractAddress(source)),
                                 connection));
@@ -250,7 +258,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     try {
                         fireCrawlJobPaused(new CurrentCrawlJobImpl(
                                 source,
-                                findCrawlJobParentInternal(
+                                findCrawlJobParent(
                                         JmxUtils.getUid(source),
                                         JmxUtils.extractAddress(source)),
                                 connection));
@@ -263,34 +271,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             }
         });
 
-        
-        d.addDelegatable(new NotificationDelegatableBase() {
-            protected boolean delegate(Notification n, Object handbac) {
-                if (n.getType().equals("crawlEnding")) {
-                    ObjectName source = (ObjectName) n.getSource();
-                    try {
-                        fireCrawlJobStopping(createCurrentCrawlJob(source, connection));
-                        return true;
-                    } catch (ClusterException e) {
-                        e.printStackTrace();
-                    }
-                }
-                return false;
-            }
-        });
         return d;
-    }
-    
-    private CurrentCrawlJobImpl createCurrentCrawlJob(
-                                            ObjectName job, 
-                                            MBeanServerConnection connection) 
-                                            throws ClusterException {
-        return new CurrentCrawlJobImpl(
-                job,
-                findCrawlJobParentInternal(
-                        JmxUtils.getUid(job),
-                        org.archive.hcc.util.JmxUtils.extractRemoteAddress(job)),
-                        connection);
     }
 
     private static Map toMap(Object object) {
@@ -302,9 +283,8 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     "queuedUriCount", "docsPerSecond", "freeMemory",
                     "downloadFailures", "totalKBPerSec", "totalMemory",
                     "currentKBPerSec", "currentDocsPerSecond", "busyThreads",
-                    "averageDepth", "discoveredUriCount", "congestionRatio","totalProcessedBytes" };
+                    "averageDepth", "discoveredUriCount", "congestionRatio" };
             Map map = new HashMap();
-            
             Object[] values = cd.getAll(keys);
             for (int i = 0; i < keys.length; i++) {
                 map.put(keys[i], values[i]);
@@ -322,8 +302,11 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             Map oldValue,
             Map newValue) {
         try {
-            CurrentCrawlJobImpl cj = createCurrentCrawlJob(
-                    source,this.connection);
+            CurrentCrawlJobImpl cj = new CurrentCrawlJobImpl(
+                    source,
+                    findCrawlJobParent(JmxUtils.getUid(source), JmxUtils
+                            .extractAddress(source)),
+                    this.connection);
             CurrentCrawlJobListener[] listener = this.listenerList
                     .getListeners(CurrentCrawlJobListener.class);
             for (int i = 0; i < listener.length; i++) {
@@ -336,35 +319,57 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
     }
 
     private void handleCrawlServiceCreated(ObjectName crawlerName) {
+        try {
             Crawler c = new CrawlerImpl(crawlerName, this.connection);
             fireCrawlerCreated(c);
+        } catch (InstanceNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     private void handleCrawlServiceDestroyed(ObjectName crawlerName) {
-        Crawler c = new CrawlerImpl(crawlerName, this.connection);
-        fireCrawlerDestroyed(c);
+        try {
+            Crawler c = new CrawlerImpl(crawlerName, this.connection);
+            fireCrawlerDestroyed(c);
+        } catch (InstanceNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     private void handleCrawlServiceJobStarted(ObjectName crawlJob) {
         try {
-            CurrentCrawlJob job = createCurrentCrawlJob(
-                                    crawlJob,this.connection);
+            CurrentCrawlJob job = new CurrentCrawlJobImpl(
+                    crawlJob,
+                    findCrawlJobParent(JmxUtils.getUid(crawlJob), JmxUtils
+                            .extractAddress(crawlJob)),
+                    this.connection);
             fireCrawlJobStarted(job);
         } catch (ClusterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
-    
-    
 
     private void handleCrawlServiceJobCompleted(ObjectName crawlJob) {
+        CurrentCrawlJob job;
         try {
-            CurrentCrawlJob job = createCurrentCrawlJob(
-                    crawlJob,this.connection);
+            job = new CurrentCrawlJobImpl(
+                    crawlJob,
+                    findCrawlJobParent(JmxUtils.getUid(crawlJob), JmxUtils
+                            .extractAddress(crawlJob)),
+                    this.connection);
             fireCrawlJobCompleted(job);
 
         } catch (ClusterException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -400,14 +405,6 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             listener[i].crawlJobPaused(job);
         }
     }
-    
-    private void fireCrawlJobStopping(CurrentCrawlJob job) {
-        CurrentCrawlJobListener[] listener = this.listenerList
-                .getListeners(CurrentCrawlJobListener.class);
-        for (int i = 0; i < listener.length; i++) {
-            listener[i].crawlJobStopping(job);
-        }
-    }
 
     private void fireCrawlJobResumed(CurrentCrawlJob job) {
         CurrentCrawlJobListener[] listener = this.listenerList
@@ -420,71 +417,15 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
     private void fireCrawlJobCompleted(CurrentCrawlJob job) {
         CurrentCrawlJobListener[] listener = this.listenerList
                 .getListeners(CurrentCrawlJobListener.class);
-        CompletedCrawlJobImpl cj = 
-            new CompletedCrawlJobImpl(
-                    job.getUid(), 
-                    job.getJobName(),
-                    (CrawlerImpl)job.getMother(), 
-                    this.connection);
+        CompletedCrawlJobImpl cj = new CompletedCrawlJobImpl(job.getUid(), job
+                .getMother(), this.connection);
 
         for (int i = 0; i < listener.length; i++) {
             listener[i].crawlJobCompleted(cj);
         }
     }
-    
 
-    public void destroyAllCrawlers() throws ClusterException{
-        try {
-            ObjectName parent = (ObjectName) this.connection.invoke(
-                    this.name,
-                    "destroyAllCrawlers",
-                    new Object[] {},
-                    new String[] {});
-
-           
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ClusterException(e);
-        }
-    }
-
-    public boolean pauseAllJobs() throws ClusterException {
-    	try {
-            return (Boolean) this.connection.invoke(
-                    this.name,
-                    "pauseAllJobs",
-                    new Object[] {},
-                    new String[] {});
-
-           
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ClusterException(e);
-        }
-    }
-    
-    public boolean resumeAllPausedJobs() throws ClusterException {
-    	try {
-            return (Boolean) this.connection.invoke(
-                    this.name,
-                    "resumeAllPausedJobs",
-                    new Object[] {},
-                    new String[] {});
-
-           
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ClusterException(e);
-        }
-    }
-    
-    public Crawler findCrawlJobParent(String uid, InetSocketAddress address) 
-        throws ClusterException {
-        return findCrawlJobParentInternal(uid, address);
-    }
-    
-
-    public CrawlerImpl findCrawlJobParentInternal(String uid, InetSocketAddress address)
+    public Crawler findCrawlJobParent(String uid, InetSocketAddress address)
             throws ClusterException {
         try {
             ObjectName parent = (ObjectName) this.connection.invoke(
@@ -524,8 +465,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
         return result;
     }
 
-    public Crawler createCrawler() throws 
-            InsufficientCrawlingResourcesException, ClusterException {
+    public Crawler createCrawler() throws ClusterException {
         try {
             ObjectName crawler = (ObjectName) this.connection.invoke(
                     this.name,
@@ -533,15 +473,7 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
                     new Object[0],
                     new String[0]);
             return new CrawlerImpl(crawler, this.connection);
-        }catch (MBeanException e) {
-            if("insufficent crawler resources".equals(e.getMessage())){
-                throw new InsufficientCrawlingResourcesException(e);
-            }
-            e.printStackTrace();
-            throw new ClusterException(e);
-        } 
-        
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             throw new ClusterException(e);
         }
@@ -588,78 +520,5 @@ class ClusterControllerClientImpl implements ClusterControllerClient{
             e.printStackTrace();
         }
     }
-    
-    /* (non-Javadoc)
-     * @see org.archive.hcc.client.ClusterControllerClient#getCurrentCrawlJob(org.archive.hcc.client.Crawler)
-     */
-    public CurrentCrawlJob getCurrentCrawlJob(Crawler crawler) throws ClusterException {
-        try {
-            ObjectName currentCrawlJob = (ObjectName) this.connection.invoke(
-                    this.name,
-                    "getCurrentCrawlJob",
-                    new Object[]{crawler.getName()},
-                    new String[]{SimpleType.OBJECTNAME.getClassName()});
-            
-            if(currentCrawlJob == null){
-                return null;
-            }
 
-            return new CurrentCrawlJobImpl(currentCrawlJob, (CrawlerImpl)crawler, this.connection);
-        }catch (Exception e) {
-            e.printStackTrace();
-            throw new ClusterException(e);
-        }
-    }
-    
-    /**
-     * Returns the maximum number of instances allowed for this container.
-     * If the container does not exist, -1 is returned.
-     * @param hostname
-     * @param port
-     * @return
-     */
-    public int getMaxInstances(String hostname, int port) throws ClusterException{
-        try {
-            Integer maxInstances = (Integer) this.connection.invoke(
-                    this.name,
-                    "getMaxInstances",
-                    new Object[]{hostname, new Integer(port)},
-                    new String[]{SimpleType.STRING.getClassName(), 
-                    				SimpleType.INTEGER.getClassName()});
-            return maxInstances;
-           
-        }catch (Exception e) {
-            e.printStackTrace();
-            throw new ClusterException(e);
-        }
-    }
-    
-    /**
-     * Sets the maximum number of instances that may run on a 
-     * specified container defined by a host and port.
-     * @param hostname
-     * @param port
-     * @param maxInstances
-     */
-    public void setMaxInstances(String hostname, int port, int maxInstances) 
-    	throws ClusterException{
-        try {
-            this.connection.invoke(
-                    this.name,
-                    "setMaxInstances",
-                    new Object[]{
-                    			hostname, 
-                    			new Integer(port),
-                    			new Integer(maxInstances)},
-                    new String[]{
-                    			SimpleType.STRING.getClassName(),
-                    			SimpleType.INTEGER.getClassName(),
-                    			SimpleType.INTEGER.getClassName()});
-            
-           
-        }catch (Exception e) {
-            e.printStackTrace();
-            throw new ClusterException(e);
-        }
-    }
 }

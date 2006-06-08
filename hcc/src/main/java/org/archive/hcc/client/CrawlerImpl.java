@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -22,21 +22,22 @@
  */
 package org.archive.hcc.client;
 
+import java.io.IOException;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.logging.Logger;
 
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.TabularData;
 
-/**
- * 
- * @author Daniel Bernstein (dbernstein@archive.org)
- *
- */
-public class CrawlerImpl extends ProxyBase implements Crawler {
+public class CrawlerImpl
+        extends
+            ProxyBase implements
+        Crawler {
+
+    private static Logger log = 
+        Logger.getLogger(CrawlerImpl.class.getName());
+
     public void startPendingJobQueue() {
         try {
             this.connection.invoke(
@@ -64,7 +65,9 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
 
     }
 
-    public CrawlerImpl(ObjectName name, MBeanServerConnection connection) {
+    public CrawlerImpl(ObjectName name, MBeanServerConnection connection)
+            throws InstanceNotFoundException,
+            IOException {
         super(name, connection);
     }
 
@@ -79,7 +82,6 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
         }
     }
 
-    
     public boolean isPendingJobQueueRunning() {
         try {
             return this.connection
@@ -119,7 +121,7 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
                     this.name,
                     "addJob",
                     new Object[] { order.getJarFile().getAbsolutePath(),
-                            order.getName(), "", "" },
+                            order.getName(), "started via jmx api", "" },
                     new String[] { "java.lang.String", "java.lang.String",
                             "java.lang.String", "java.lang.String" });
 
@@ -141,108 +143,25 @@ public class CrawlerImpl extends ProxyBase implements Crawler {
         }
 
     }
-    
 
-    String getCrawlReport(Long uid) throws ClusterException{
-        return getReport("crawl-report", uid);
-    }
-    
-    String getHostsReport(Long uid) throws ClusterException{
-        return getReport("hosts-report", uid);
-    }
-    
-    String getSourceReport(Long uid) throws ClusterException{
-        return getReport("source-report", uid);
-    }
-
-    String getSeedsReport(Long uid) throws ClusterException{
-        return getReport("seeds-report",uid);
-    }
-
-    String getMimeTypesReport(Long uid) throws ClusterException{
-        return getReport("mimetype-report",uid);
-    }
-
-    
-    /**
-     * 
-     * @param reportName
-     * @param uid
-     * @return
-     * @throws ClusterException
-     */
-    String getReport(String reportName, Long uid) throws ClusterException{
-        
-        try {
-            return (String)this.connection.invoke(
-                                this.name, 
-                                "crawlendReport", 
-                                new Object[]{uid.toString(), reportName}, 
-                                new String[]{"java.lang.String", "java.lang.String"});
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ClusterException(e);
-        } 
-    }
-
-
-    public boolean deleteCompletedCrawlJob(CompletedCrawlJob job) throws ClusterException{
-        try {
-            this.connection.invoke(
-                                this.name, 
-                                "deleteJob", 
-                                new Object[]{job.getUid().toString()}, 
-                                new String[]{"java.lang.String"});
-                                return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ClusterException(e);
-        } 
+    public boolean deleteCompletedCrawlJob(CompletedCrawlJob job) {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     public boolean deletePendingCrawlJob(PendingCrawlJob job) {
-        //TODO implement this 
-        throw new UnsupportedOperationException("deletePendingCrawlJob not implemented yet!");
+        // TODO Auto-generated method stub
+        return false;
     }
 
     public Collection<CompletedCrawlJob> listCompletedCrawlJobs() {
-        Collection<CompletedCrawlJob> completedJobs = new LinkedList<CompletedCrawlJob>();
-
-        try {
-            
-            TabularData td = (TabularData)this.connection.invoke(
-                    this.name, 
-                    "completedJobs", 
-                    new Object[0], 
-                    new String[0]);
-            
-
-            if(td != null){
-                for(CompositeData cd: (Collection<CompositeData>)td.values()){
-                    
-                    CompletedCrawlJobImpl ccj = 
-                        new CompletedCrawlJobImpl(
-                                new Long((String)cd.get("uid")), 
-                                (String)cd.get("name"), 
-                                this, 
-                                this.connection);
-                    
-                    completedJobs.add(ccj);
-                    
-                }
-                
-            }
-            
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        } 
-        
-        return completedJobs;
+        // TODO Auto-generated method stub
+        return null;
     }
 
     public Collection<PendingCrawlJob> listPendingCrawlJobs() {
-        //TODO implement this 
-        throw new UnsupportedOperationException("listPendingCrawlJobs not implemented yet!");
+        // TODO Auto-generated method stub
+        return null;
     }
+
 }

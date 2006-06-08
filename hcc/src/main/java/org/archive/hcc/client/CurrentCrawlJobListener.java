@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -38,4 +38,5 @@ public interface CurrentCrawlJobListener extends
     public void crawlJobCompleted(CompletedCrawlJob job);
 
     public void statisticsChanged(CurrentCrawlJob job, Map statistics);
+
 }

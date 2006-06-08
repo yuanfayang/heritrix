@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -20,12 +20,12 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 package org.archive.hcc;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -33,7 +33,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -86,16 +85,14 @@ import javax.naming.NamingException;
 
 import org.archive.hcc.util.ClusterControllerNotification;
 import org.archive.hcc.util.NotificationDelegator;
-import org.archive.hcc.util.SmartPropertiesResolver;
 import org.archive.hcc.util.Delegator.DelegatorPolicy;
-import org.archive.hcc.util.jmx.MBeanFutureTask;
-import org.archive.hcc.util.jmx.MBeanOperation;
-import org.archive.hcc.util.jmx.MBeanServerConnectionFactory;
-import org.archive.hcc.util.jmx.OpenMBeanInvocationManager;
-import org.archive.hcc.util.jmx.RegistrationNotificationHandler;
-import org.archive.hcc.util.jmx.SimpleReflectingMBeanOperation;
 import org.archive.util.JmxUtils;
 import org.archive.util.JndiUtils;
+import org.archive.util.jmx.MBeanFutureTask;
+import org.archive.util.jmx.MBeanOperation;
+import org.archive.util.jmx.OpenMBeanInvocationManager;
+import org.archive.util.jmx.RegistrationNotificationHandler;
+import org.archive.util.jmx.SimpleReflectingMBeanOperation;
 
 /**
  * As the main workhorse of the package, the <code>ClusterControllerBean</code>
@@ -140,8 +137,7 @@ public class ClusterControllerBean implements
      * A map of mbean server connections mapped by address. TODO make
      * configuratable
      */
-    private Map<InetSocketAddress, MBeanServerConnection> connections =
-        new HashMap<InetSocketAddress, MBeanServerConnection>();
+    private Map<InetSocketAddress, MBeanServerConnection> connections = new HashMap<InetSocketAddress, MBeanServerConnection>();
 
     /**
      * A list of remote container references
@@ -174,19 +170,13 @@ public class ClusterControllerBean implements
      * A map of the remote crawler handles to the local Crawler dynamic proxy
      * instances.
      */
-    private Map<RemoteMapKey, Crawler> remoteNameToCrawlerMap =
-        new HashMap<RemoteMapKey, Crawler>();
+    private Map<ObjectName, Crawler> remoteNameToCrawlerMap = new HashMap<ObjectName, Crawler>();
 
     /**
      * Watches all traffic (invocations and notifications) moving between the
      * remote Heritrix instances and the heritrix cluster controller.
      */
     private NotificationListener spyListener;
-    
-    /**
-     * Upperbound on crawlers per container.
-     */
-    private int defaultMaxPerContainer = 1;
 
     /**
      * Creates a cluster controller bean. This object uses a two step
@@ -194,6 +184,7 @@ public class ClusterControllerBean implements
      * any options.
      */
     public ClusterControllerBean() {
+
         this.remoteNotificationDelegator = buildRemoteNotificationDelegator();
         jndiPoller = new Timer();
         this.broadCaster = new NotificationBroadcasterSupport();
@@ -215,45 +206,6 @@ public class ClusterControllerBean implements
             }
         };
     }
-    
-    private class RemoteMapKey {
-    	private ObjectName name;
-    	private String id;
-    	public ObjectName getObjectName(){
-    		return name;
-    		
-    	}
-    	
-    	public RemoteMapKey(ObjectName on){
-    		this.name = on;
-    		this.id = extractId(on);
-    	}
-    	
-    	@Override
-    	public boolean equals(Object obj) {
-    		if(!(obj instanceof RemoteMapKey)){
-    			return false;
-    		}
-    		
-    		RemoteMapKey o = (RemoteMapKey)obj;
-    		
-    		return (o.id.equals(id));
-    	}
-    	
-	    private String extractId(ObjectName name){
-	    	StringBuffer b = new StringBuffer();
-	    	b.append(name.getKeyProperty(JmxUtils.NAME));
-	    	b.append(name.getKeyProperty(JmxUtils.HOST));
-	    	b.append(name.getKeyProperty(JmxUtils.JMX_PORT));
-	    	b.append(name.getKeyProperty(JmxUtils.TYPE));
-	    	return b.toString();
-	    }
-    	@Override
-    	public int hashCode() {
-    		// TODO Auto-generated method stub
-    		return id.hashCode();
-    	}
-    }
 
     private static MBeanServer createMBeanServer() {
         MBeanServer result = null;
@@ -273,14 +225,16 @@ public class ClusterControllerBean implements
     }
 
     /**
-     * @return Returns the total count of all crawlers within the cluster.
+     * Returns the total count of all crawlers within the cluster.
+     * 
+     * @return
      */
     public Integer getTotalCrawlerCount() {
         return this.remoteNameToCrawlerMap.size();
     }
 
     private OpenMBeanInfoSupport buildOpenMBeanInfo() {
-       return new OpenMBeanInfoSupport(
+        OpenMBeanInfoSupport support = new OpenMBeanInfoSupport(
                 ClusterControllerBean.class.getName(),
                 "A controller for a pool of Heritrix "
                         + "containers and their contents.",
@@ -288,12 +242,13 @@ public class ClusterControllerBean implements
                 buildConstructors(),
                 buildOperations(),
                 buildNotifications());
+
+        return support;
     }
 
     private OpenMBeanAttributeInfo[] buildAttributes() {
         try {
-            return new OpenMBeanAttributeInfo[] {
-                new OpenMBeanAttributeInfoSupport(
+            return new OpenMBeanAttributeInfo[] { new OpenMBeanAttributeInfoSupport(
                     "TotalCrawlerCount",
                     "Total number of crawlers that are "
                             + "currently initialized in the system.",
@@ -330,7 +285,6 @@ public class ClusterControllerBean implements
         return false;
     }
 
-    
     public ObjectName findCrawlServiceJobParent(
             String jobUid,
             String host,
@@ -343,9 +297,7 @@ public class ClusterControllerBean implements
             return null;
         }
 
-        List<Crawler> crawlers = 
-        	new LinkedList<Crawler>(container.getCrawlers());
-        for (Crawler crawler : crawlers) {
+        for (Crawler crawler : container.getCrawlers()) {
             DynamicMBean p = crawler.getCrawlServiceProxy();
             try {
 
@@ -388,92 +340,19 @@ public class ClusterControllerBean implements
         return null;
     }
 
-    
-    /**
-     * Returns the current job object name associated with the specified crawler. 
-     * Returns null if no job was running.
-     * @param mother
-     * @return
-     */
-    public ObjectName getCurrentCrawlJob(ObjectName mother) {
-        InetSocketAddress remoteAddress = org.archive.hcc.util.JmxUtils.extractRemoteAddress(mother);
-        Container container = getContainerOn(remoteAddress);
-
-        if (container == null) {
-            return null;
-        }
-
-        for (Crawler crawler : new LinkedList<Crawler>(container.getCrawlers())) {
-            if(crawler.getCrawlServiceProxyObjectName().equals(mother)){
-                return  crawler.getCrawlJobProxyObjectName();
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * Returns the maximum number of instances allowed for this container.
-     * If the container does not exist, -1 is returned.
-     * @param hostname
-     * @param port
-     * @return
-     */
-    public int getMaxInstances(String hostname, Integer port){
-    	Collection<Container> list = 
-    		new LinkedList<Container>(this.containers.values());
-    	
-    	for(Container c : list){
-    		InetSocketAddress a = JmxUtils.extractAddress(c.getName());
-    		if(a.getHostName().equals(hostname) && port == a.getPort()){
-    			return c.getMaxInstances();
-    		}
-    	}
-    	
-    	return -1;
-    }
-
-    /**
-     * Sets the maximum number of instances that may run on a 
-     * specified container defined by a host and port.
-     * @param hostname
-     * @param port
-     * @param maxInstances
-     */
-    public void setMaxInstances(String hostname, Integer port, Integer maxInstances){
-    	Collection<Container> list = 
-    		new LinkedList<Container>(this.containers.values());
-    	
-    	if(maxInstances < -1){
-    		maxInstances = -1;
-    	}
-    	
-    	for(Container c : list){
-    		InetSocketAddress a = JmxUtils.extractAddress(c.getName());
-    		if(a.getHostName().equals(hostname) && port == a.getPort()){
-    			c.setMaxInstances(maxInstances);
-    			break;
-    		}
-    	}
-    }
-    
     /**
      * Creates a new crawler on the least loaded machine on the cluster.
      * 
-     * @return ObjectName of created crawler.
+     * @return
      * @throws MBeanException
      */
     public ObjectName createCrawler() throws MBeanException {
         Container c = resolveLeastLoadedContainer();
 
         if (c == null) {
-            MBeanException e =  new MBeanException(
-                    new Exception(
-                    "No space available in remote"+
-                    " containers for new crawler " + "instances."),
-                    "insufficent crawler resources"
-            );
-            
-            throw e;
+            throw new MBeanException(new Exception(
+                    "No space available in remote"
+                            + " containers for new crawler " + "instances."));
         }
 
         try {
@@ -485,16 +364,15 @@ public class ClusterControllerBean implements
     }
 
     /**
-     * @return Currently returns the least loaded going by a dumb count.
+     * Currently resolves the least loaded by a dumb count.
+     * 
+     * @return
      */
     protected Container resolveLeastLoadedContainer() {
 
         Container leastLoaded = null;
 
         for (Container n : this.containers.values()) {
-            if (n.getCrawlers().size() >= n.getMaxInstances()) {
-                continue;
-            }
             if (leastLoaded == null) {
                 leastLoaded = n;
             }
@@ -523,10 +401,10 @@ public class ClusterControllerBean implements
                     ClusterControllerBean.this,
                     new OpenMBeanOperationInfoSupport(
                             "destroy",
-                            "Effectively \"detaches\" the bean from the " +
-                                "containers, crawl services and jobs that it " +
-                                "is managing. The remote objects are not " +
-                                "affected. ",
+                            "Effectively \"detaches\" the bean from the "
+                                    + "containers, crawl services and jobs that it "
+                                    + "is managing. The remote objects are not "
+                                    + "affected. ",
                             null,
                             SimpleType.VOID,
                             OpenMBeanOperationInfoSupport.ACTION)));
@@ -540,44 +418,11 @@ public class ClusterControllerBean implements
                             new ArrayType(1, SimpleType.OBJECTNAME),
                             OpenMBeanOperationInfoSupport.INFO)));
 
-
             addOperation(new SimpleReflectingMBeanOperation(
                     ClusterControllerBean.this,
                     new OpenMBeanOperationInfoSupport(
-                            "destroyAllCrawlers",
-                            "destroys all crawlers that are managed by the cluster" +
-                            " controller",
-                            null,
-                            SimpleType.VOID,
-                            OpenMBeanOperationInfoSupport.ACTION)));
-
-            
-            addOperation(new SimpleReflectingMBeanOperation(
-                    ClusterControllerBean.this,
-                    new OpenMBeanOperationInfoSupport(
-                            "pauseAllJobs",
-                            "pauses all jobs that are managed by the cluster" +
-                            " controller",
-                            null,
-                            SimpleType.BOOLEAN,
-                            OpenMBeanOperationInfoSupport.ACTION)));
-            
-            addOperation(new SimpleReflectingMBeanOperation(
-                    ClusterControllerBean.this,
-                    new OpenMBeanOperationInfoSupport(
-                            "resumeAllPausedJobs",
-                            "resumes crawling of all paused jobs that are managed by the cluster" +
-                            " controller",
-                            null,
-                            SimpleType.BOOLEAN,
-                            OpenMBeanOperationInfoSupport.ACTION)));
-
-            
-            addOperation(new SimpleReflectingMBeanOperation(
-                    ClusterControllerBean.this,
-                    new OpenMBeanOperationInfoSupport(
-                            "findCrawlServiceJobParent", "returns the parent" +
-                                "name of the specified crawl job.",
+                            "findCrawlServiceJobParent",
+                            "returns the parent name of the specified crawl job.",
                             new OpenMBeanParameterInfo[] {
                                     new OpenMBeanParameterInfoSupport(
                                             "uid",
@@ -593,66 +438,6 @@ public class ClusterControllerBean implements
                                             SimpleType.INTEGER) },
                             SimpleType.OBJECTNAME,
                             OpenMBeanOperationInfoSupport.INFO)));
-            
-            addOperation(new SimpleReflectingMBeanOperation(
-                    ClusterControllerBean.this,
-                    new OpenMBeanOperationInfoSupport(
-                            "getCurrentCrawlJob", "returns the current " +
-                                "crawl job name of the crawl job running" +
-                                " on the specified crawler Returns null" +
-                                " if either the mother is not found or " +
-                                "if the crawler does not have a current job.",
-                            new OpenMBeanParameterInfo[] {
-                                    new OpenMBeanParameterInfoSupport(
-                                            "mother",
-                                            "The job's mother (CrawlService)",
-                                            SimpleType.OBJECTNAME)},
-                            SimpleType.OBJECTNAME,
-                            OpenMBeanOperationInfoSupport.INFO)));
-            
-
-            addOperation(new SimpleReflectingMBeanOperation(
-                    ClusterControllerBean.this,
-                    new OpenMBeanOperationInfoSupport(
-                            "setMaxInstances", "sets the max number of " +
-                            		"instances of heritrix that a heritrix " +
-                            		"enabled jvm can serve.",
-                            new OpenMBeanParameterInfo[] {
-                                    new OpenMBeanParameterInfoSupport(
-                                            "host",
-                                            "The jvm's host",
-                                            SimpleType.STRING),
-                                    new OpenMBeanParameterInfoSupport(
-                                            "port",
-                                            "The jvm's jmx port",
-                                            SimpleType.INTEGER),
-                                    new OpenMBeanParameterInfoSupport(
-                                            "maxInstances",
-                                            "The max number of instances",
-                                            SimpleType.INTEGER) },
-                            SimpleType.VOID,
-                            OpenMBeanOperationInfoSupport.ACTION)));  
-            
-
-            addOperation(new SimpleReflectingMBeanOperation(
-                    ClusterControllerBean.this,
-                    new OpenMBeanOperationInfoSupport(
-                            "getMaxInstances", "returns the max number of " +
-                            		"instances of heritrix that a heritrix " +
-                            		"enabled jvm can serve.",
-                            new OpenMBeanParameterInfo[] {
-                                    new OpenMBeanParameterInfoSupport(
-                                            "host",
-                                            "The jvm's host",
-                                            SimpleType.STRING),
-                                    new OpenMBeanParameterInfoSupport(
-                                            "port",
-                                            "The jvm's jmx port",
-                                            SimpleType.INTEGER)
-                                            },
-                            SimpleType.INTEGER,
-                            OpenMBeanOperationInfoSupport.INFO)));     
-            
         } catch (OpenDataException e) {
             e.printStackTrace();
         }
@@ -661,8 +446,9 @@ public class ClusterControllerBean implements
     }
 
     /**
-     * @return Returns a list of all crawler instances within the hcc's jndi
-     * scope.
+     * Returns a list of all crawler instances within the hcc's jndi scope.
+     * 
+     * @return
      */
     public ObjectName[] listCrawlers() {
         int size = this.remoteNameToCrawlerMap.keySet().size();
@@ -674,116 +460,33 @@ public class ClusterControllerBean implements
         }
         return crawlers;
     }
-    
-    public void destroyAllCrawlers(){
-    	List<Crawler> list = 
-    		new LinkedList<Crawler>(this.remoteNameToCrawlerMap.values());
-    	for(Crawler c : list){
-    		try {
-				c.getCrawlServiceProxy().invoke("destroy", new Object[0], new String[0]);
-			} catch (MBeanException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ReflectionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-    	}
-    }
-
-
-    public boolean pauseAllJobs(){
-    	List<Crawler> list = 
-    		new LinkedList<Crawler>(this.remoteNameToCrawlerMap.values());
-    	
-    	boolean success = true;
-    	for(Crawler c : list){
-    		try {
-    			DynamicMBean m = c.getCrawlJobProxy();
-    			if(m == null){
-    				continue;
-    			}
-    			String status = (String)m.getAttribute("Status");
-    			
-    			if("RUNNING".equals(status)){
-    				m.invoke("pause",  new Object[0], new String[0]);
-    			}
-			} catch (AttributeNotFoundException e) {
-				e.printStackTrace();
-			} catch (MBeanException e) {
-				e.printStackTrace();
-				success = false;
-			} catch (ReflectionException e) {
-				e.printStackTrace();
-				success = false;
-			}
-    	}
-    	
-    	return success;
-    }
-    
-    public boolean resumeAllPausedJobs(){
-    	List<Crawler> list = 
-    		new LinkedList<Crawler>(this.remoteNameToCrawlerMap.values());
-    	
-    	boolean success = true;
-    	for(Crawler c : list){
-    		try {
-    			DynamicMBean m = c.getCrawlJobProxy();
-    			if(m == null){
-    				continue;
-    			}
-
-    			String status = (String)m.getAttribute("Status");
-    			if("PAUSED".equals(status) || "PAUSING".equals(status)){
-    				m.invoke("resume",  new Object[0], new String[0]);
-    			}
-			} catch (AttributeNotFoundException e) {
-				e.printStackTrace();
-			} catch (MBeanException e) {
-				e.printStackTrace();
-				success = false;
-			} catch (ReflectionException e) {
-				e.printStackTrace();
-				success = false;
-			}
-    	}
-    	
-    	return success;
-    }
 
     private void addOperation(MBeanOperation operation) {
         this.invocationManager.addMBeanOperation(operation);
     }
 
     private MBeanNotificationInfo[] buildNotifications() {
-        List<MBeanNotificationInfo> info =
-            new LinkedList<MBeanNotificationInfo>();
+        List<MBeanNotificationInfo> info = new LinkedList<MBeanNotificationInfo>();
 
         info.add(new MBeanNotificationInfo(
-            new String[] {ClusterControllerNotification.
-                    CRAWL_SERVICE_CREATED_NOTIFICATION.getKey() },
-                ClusterControllerBean.class.getName(),
-                "Notifies when a new instance of the crawl service comes up"));
+                        new String[] { ClusterControllerNotification.CRAWL_SERVICE_CREATED_NOTIFICATION.getKey() },
+                        ClusterControllerBean.class.getName(),
+                        "Notifies when a new instance of the crawl service comes up"));
 
         info.add(new MBeanNotificationInfo(
-            new String[] { ClusterControllerNotification.
-                    CRAWL_SERVICE_DESTROYED_NOTIFICATION.getKey() },
-                ClusterControllerBean.class.getName(),
-                "Notifies when an instance of the crawl service goes away"));
+                        new String[] { ClusterControllerNotification.CRAWL_SERVICE_DESTROYED_NOTIFICATION.getKey() },
+                        ClusterControllerBean.class.getName(),
+                        "Notifies when an instance of the crawl service goes away"));
 
         info.add(new MBeanNotificationInfo(
-            new String[] { ClusterControllerNotification.
-                    CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey() },
-                ClusterControllerBean.class.getName(),
-                "Notifies when a new crawl service job starts"));
+                        new String[] { ClusterControllerNotification.CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey() },
+                        ClusterControllerBean.class.getName(),
+                        "Notifies when a new crawl service job starts"));
 
         info.add(new MBeanNotificationInfo(
-            new String[] { ClusterControllerNotification.
-                    CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey() },
-                ClusterControllerBean.class.getName(),
-                "Notifies when a new instance of the crawl service job " +
-                "completes"));
+                        new String[] { ClusterControllerNotification.CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey() },
+                        ClusterControllerBean.class.getName(),
+                        "Notifies when a new instance of the crawl service job completes"));
 
         return info.toArray(new MBeanNotificationInfo[0]);
     }
@@ -793,13 +496,6 @@ public class ClusterControllerBean implements
      */
     public void init() {
         try {
-            Properties p =
-                SmartPropertiesResolver.getProperties("hcc.properties");
-            this.defaultMaxPerContainer = Integer.parseInt(
-                p.getProperty(ClusterControllerBean.class.getName() +
-                    ".maxPerContainer", "1"));
-            log.info("maxPerContainer setting: " + this.defaultMaxPerContainer);
-            
             context = JndiUtils.getSubContext("org.archive.crawler");
             this.name = new ObjectName("org.archive.hcc:"
                     + "type=ClusterControllerBean"
@@ -826,6 +522,7 @@ public class ClusterControllerBean implements
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+
     }
 
     private void registerMBean() {
@@ -870,28 +567,23 @@ public class ClusterControllerBean implements
             }
 
             context.close();
+
+            this.mbeanServer.unregisterMBean(this.name);
+
+        } catch (InstanceNotFoundException e) {
+            e.printStackTrace();
+        } catch (MBeanRegistrationException e) {
+            e.printStackTrace();
         } catch (NamingException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                this.mbeanServer.unregisterMBean(this.name);
-            } catch (InstanceNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (MBeanRegistrationException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
         }
     }
 
     private void dereferenceCrawler(Crawler crawler) {
 
         crawler.removeFromParent();
-        if(crawler.getCrawlJobRemoteObjectName()!= null){
-            this.remoteNameToCrawlerMap.remove(
-            		new RemoteMapKey(crawler.getCrawlJobRemoteObjectName()));
-        }
+        this.remoteNameToCrawlerMap.remove(crawler
+                .getCrawlJobRemoteObjectName());
 
         try {
             this.mbeanServer.unregisterMBean(crawler
@@ -928,11 +620,13 @@ public class ClusterControllerBean implements
 
             e.printStackTrace();
         }
+
     }
 
     /**
      * Initializes the notification forwarder.
-     * @return Returns notification delegator.
+     * 
+     * @return
      */
     private NotificationDelegator buildRemoteNotificationDelegator() {
         NotificationDelegator d = new NotificationDelegator(
@@ -982,7 +676,7 @@ public class ClusterControllerBean implements
 
         @Override
         protected void handleRegistered(ObjectName name) {
-            // Empty.
+
         }
 
         @Override
@@ -1011,64 +705,43 @@ public class ClusterControllerBean implements
     }
 
     protected void handleJobRemoved(ObjectName job) {
-    	if(log.isLoggable(Level.INFO)){
-    		log.info("entering: job=" + job);
-    	}
         // locate crawler
         Crawler c = getJobContext(job);
-        
-        if(c == null){
-        	if(log.isLoggable(Level.WARNING)){
-        		log.warning("no crawler context found for job=" + job);
-        	}
-        	
-        	return;
-        }
         // remove job reference from crawler
-        // unregister job proxy.
-        ObjectName jobProxy = c.getCrawlJobProxyObjectName();
-        if(jobProxy == null){
-        	if(log.isLoggable(Level.WARNING)){
-        		log.warning("jobProxy was not found on crawler=" + c.getCrawlJobProxyObjectName());
-        	}
-        	return;
-        }
-        
-        try {
-            this.mbeanServer.unregisterMBean(jobProxy);
-        } catch (InstanceNotFoundException e) {
-       		log.severe("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job + "; error.class=" + e.getClass() + ";  error.message=" + e.getMessage());
+        if (c != null) {
+            // unregister job proxy.
+            ObjectName jobProxy = c.getCrawlJobProxyObjectName();
 
-            e.printStackTrace();
-        } catch (MBeanRegistrationException e) {
-       		log.severe("failed to unregister job proxy: " + jobProxy  + "; remote job=" + job  + "; error.class=" + e.getClass() + "; message=" + e.getMessage());
-            e.printStackTrace();
-        }
+            if (jobProxy != null) {
+                try {
+                    this.mbeanServer.unregisterMBean(jobProxy);
+                } catch (InstanceNotFoundException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (MBeanRegistrationException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
 
-        c.setCrawlJobProxy(null);
-        fireNotification(
-                jobProxy,
-                ClusterControllerNotification.
-                    CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey());
-            
-    	if(log.isLoggable(Level.INFO)){
-    		log.info("exitting successfully: job=" + job);
-    	}
-            
+            c.setCrawlJobProxy(null);
+            fireNotification(
+                    jobProxy,
+                    ClusterControllerNotification.CRAWL_SERVICE_JOB_COMPLETED_NOTIFICATION.getKey());
+        }
     }
 
     private boolean isJobOnCrawler(ObjectName job, ObjectName crawler) {
-        
-    	return equals(job, crawler, JmxUtils.JMX_PORT)
+        return equals(job, crawler, JmxUtils.JMX_PORT)
                 && equals(job, crawler, JmxUtils.HOST)
-                && job.getKeyProperty(JmxUtils.MOTHER).equals(
+                && job.getKeyProperty(JmxUtils.CONTEXT).equals(
                         crawler.getKeyProperty(JmxUtils.NAME));
     }
 
     private Crawler getJobContext(ObjectName job) {
-        for (RemoteMapKey key : this.remoteNameToCrawlerMap.keySet()) {
-            if (isJobOnCrawler(job, key.getObjectName())) {
-                return this.remoteNameToCrawlerMap.get(key);
+        for (ObjectName n : this.remoteNameToCrawlerMap.keySet()) {
+            if (isJobOnCrawler(job, n)) {
+                return this.remoteNameToCrawlerMap.get(n);
             }
         }
 
@@ -1082,8 +755,7 @@ public class ClusterControllerBean implements
             // fire event
             fireNotification(
                     proxyName,
-                    ClusterControllerNotification.
-                        CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey());
+                    ClusterControllerNotification.CRAWL_SERVICE_JOB_STARTED_NOTIFICATION.getKey());
         } catch (RuntimeException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -1155,14 +827,16 @@ public class ClusterControllerBean implements
     }
 
     protected void handleCrawlerRemoved(ObjectName name) {
-        Crawler c = this.remoteNameToCrawlerMap.remove(new RemoteMapKey(name));
+        Crawler c = this.remoteNameToCrawlerMap.remove(name);
         if (c != null) {
             removeCrawlerAndNotify(c);
         }
     }
 
     /**
-     * @return Returns a list of containers registered with the jndi service.
+     * Returns a list of containers registered with the jndi service.
+     * 
+     * @return
      */
     protected final List<ObjectName> retrieveContainerListFromJndi() {
         List<ObjectName> list = new LinkedList<ObjectName>();
@@ -1193,7 +867,11 @@ public class ClusterControllerBean implements
 
         return list;
     }
-    
+
+    /**
+     * 
+     * 
+     */
     protected final void refreshRegistry() {
         List<ObjectName> containerNameList = this
                 .retrieveContainerListFromJndi();
@@ -1209,7 +887,7 @@ public class ClusterControllerBean implements
      * 
      * @param containers
      * @param freshContainers
-     * @return Map of container object names.
+     * @return
      */
     protected final Map<ObjectName, Container> synchronizeContainers(
             Map<ObjectName, Container> containers,
@@ -1232,7 +910,6 @@ public class ClusterControllerBean implements
                     InetSocketAddress address = JmxUtils.extractAddress(n);
                     registerAddress(address);
                     synchronizeContainer(n);
-                    
                     attachMBeanServerDelegateNotificationListener(
                             address,
                             this.remoteNotificationDelegator);
@@ -1248,8 +925,8 @@ public class ClusterControllerBean implements
     /**
      * Attaches a notification listener to the remote mbean server delegate at
      * the specified address..
-     * @param address 
-     * @param listener
+     * 
+     * @param c
      */
     protected void attachMBeanServerDelegateNotificationListener(
             InetSocketAddress address,
@@ -1280,14 +957,16 @@ public class ClusterControllerBean implements
     protected void registerAddress(InetSocketAddress isa) throws IOException {
         if (!this.connections.keySet().contains(isa)) {
             // create connection.
-            MBeanServerConnection mbc = MBeanServerConnectionFactory.createConnection(isa);
+            MBeanServerConnection mbc = JmxUtils.createConnection(isa);
             this.connections.put(isa, mbc);
         }
     }
 
     /**
      * Unhooks container from the bus.
-     * @param c Container to remove.
+     * 
+     * @param on
+     * @return
      */
     protected void dereferenceContainer(Container c) {
         Container removed = containers.remove(c.getName());
@@ -1333,7 +1012,7 @@ public class ClusterControllerBean implements
      * container is polled for instances of mbeans, listeners are attached, to
      * the remote mbeans,
      * 
-     * @param c Container to check.
+     * @param c
      */
     protected void synchronizeContainer(ObjectName c) {
         InetSocketAddress address = JmxUtils.extractAddress(c);
@@ -1343,7 +1022,7 @@ public class ClusterControllerBean implements
             throw new NullPointerException(
                     "no mbean server connection found on " + address);
         }
-        Container container = new Container(c, this.defaultMaxPerContainer);
+        Container container = new Container(c);
 
         this.containers.put(c, container);
         try {
@@ -1491,9 +1170,7 @@ public class ClusterControllerBean implements
             ht.put(JmxUtils.TYPE, JmxUtils.SERVICE);
             ht.put(JmxUtils.NAME, name);
             ht.put(JmxUtils.JMX_PORT, String.valueOf(address.getPort()));
-            if(guiPort != null){
-                ht.put(JmxUtils.GUI_PORT, guiPort);
-            }
+            ht.put(JmxUtils.GUI_PORT, guiPort);
 
             return new ObjectName("org.archive.crawler", ht);
         } catch (Exception e) {
@@ -1501,7 +1178,6 @@ public class ClusterControllerBean implements
             throw new RuntimeException(e);
         }
     }
-
 
     private ObjectName createCrawlerIn(Container container) throws Exception {
         InetSocketAddress address = JmxUtils
@@ -1523,15 +1199,16 @@ public class ClusterControllerBean implements
                 public boolean isNotificationEnabled(Notification notification) {
                     if (notification
                             .getType()
-                            .equals(ClusterControllerNotification.
-                                CRAWL_SERVICE_CREATED_NOTIFICATION.getKey())) {
-                        Crawler c = remoteNameToCrawlerMap.get(new RemoteMapKey(beanName));
+                            .equals(
+                                    ClusterControllerNotification.CRAWL_SERVICE_CREATED_NOTIFICATION)) {
+                        Crawler c = remoteNameToCrawlerMap.get(beanName);
                         ObjectName proxy = c.getCrawlServiceProxyObjectName();
                         return (proxy != null && notification
                                 .getUserData()
                                 .equals(proxy));
+                    } else {
+                        return false;
                     }
-                    return false;
                 }
             };
 
@@ -1596,28 +1273,20 @@ public class ClusterControllerBean implements
 
                 Crawler crawler = new Crawler(proxy, null, container);
                 container.addCrawler(crawler);
-                remoteNameToCrawlerMap.put(new RemoteMapKey(newCrawler), crawler);
+                remoteNameToCrawlerMap.put(newCrawler, crawler);
                 this.mbeanServer.registerMBean(proxy, proxyName);
 
                 Hashtable props = new Hashtable();
                 props.put(JmxUtils.TYPE, JmxUtils.JOB);
-                props.put(JmxUtils.MOTHER, newCrawler
+                props.put(JmxUtils.CONTEXT, newCrawler
                         .getKeyProperty(JmxUtils.NAME));
 
                 try {
-                	//TODO - design the query to pick up only the one job.
-                    Set<ObjectName> jobs = c.queryNames(null,null);
-                    for(ObjectName job : jobs){
-                        if (JmxUtils.JOB.equals(job.getKeyProperty(JmxUtils.TYPE)) &&
-                        		newCrawler
-                                .getKeyProperty(JmxUtils.NAME).equals(
-                                		job.getKeyProperty(JmxUtils.MOTHER))
-                        		
-                        	) {
-                            addCrawlJob(job);
-                            break;
-                        }
-                    	
+                    Set<ObjectName> jobs = c.queryNames(new ObjectName(
+                            newCrawler.getDomain(),
+                            props), null);
+                    if (jobs.size() > 0) {
+                        addCrawlJob(jobs.iterator().next());
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1662,8 +1331,7 @@ public class ClusterControllerBean implements
     private void fireCrawlerCreated(ObjectName proxyName) {
         fireNotification(
             proxyName,
-            ClusterControllerNotification.
-                CRAWL_SERVICE_CREATED_NOTIFICATION.getKey());
+            ClusterControllerNotification.CRAWL_SERVICE_CREATED_NOTIFICATION.getKey());
     }
 
     private ObjectName createClientProxyName(ObjectName remote) {

@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -22,6 +22,7 @@
  */
 package org.archive.hcc.client;
 
-public interface PendingCrawlJob extends CrawlJob {
-    // Empty.
+public interface PendingCrawlJob extends
+        CrawlJob {
+
 }

@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -25,42 +25,9 @@ package org.archive.hcc.client;
 /**
  * Defines the interface for interacting with a completed crawl job.
  * @author Daniel Bernstein (dbernstein@archive.org)
+ *
  */
-public interface CompletedCrawlJob extends CrawlJob {
-    /**
-     * Returns a crawl report which is some statistics summarizing
-     * the end state of the crawl.
-     * @return
-     * @throws ClusterException
-     */
-    public String getCrawlReport() throws ClusterException;
-    /**
-     * Returns a seed report which details final crawl status of all the seeds.
-     * @return
-     * @throws ClusterException
-     */
+public interface CompletedCrawlJob extends
+        CrawlJob {
 
-    public String getSeedReport() throws ClusterException;
-
-    /**
-     * A count of bytes and docs collected by host.
-     * @return
-     * @throws ClusterException
-     */
-    public String getHostReport() throws ClusterException;
-   
-    /**
-     * A count of docs per host per source seed.
-     * @return
-     * @throws ClusterException
-     */
-    public String getSourceReport() throws ClusterException;
-
-    /**
-     * A count of bytes and docs collected by mime type.
-     * @return
-     * @throws ClusterException
-     */
-    
-    public String getMimeTypeReport() throws ClusterException;
 }

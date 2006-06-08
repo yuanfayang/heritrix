@@ -20,14 +20,24 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.hcc.client;
+package org.archive.util.jmx;
 
-import java.util.EventListener;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+import javax.management.openmbean.OpenMBeanOperationInfo;
 
-public interface CrawlerLifecycleListener extends
-        EventListener {
-    public void crawlerCreated(Crawler c);
+public interface MBeanOperation {
+    public boolean matches(String name, String[] signature);
 
-    public void crawlerDestroyed(Crawler c);
+    public MBeanInvocation createInvocation(
+            Object[] parameters,
+            String[] signature) throws MBeanException, ReflectionException;
+
+    public boolean validate(
+            String operationName,
+            Object[] params,
+            String[] signature);
+
+    public OpenMBeanOperationInfo getInfo();
 
 }

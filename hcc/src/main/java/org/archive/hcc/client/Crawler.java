@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -27,83 +27,54 @@ import java.util.Collection;
 /**
  * An interface representing an instance of a Crawler.
  * 
- * @author Daniel Bernstein (dbernstein@archive.org)
+ * @author dbernstein
+ * 
  */
-public interface Crawler extends Proxy {
+public interface Crawler extends
+        Proxy {
+
     /**
-     * Starts the pending job queue. Does nothing 
-     * if the queue is already started.
+     * 
+     * 
      */
     public void startPendingJobQueue();
 
     /**
-     * Stops the pending job queue. Does nothing if the 
-     * queue is already stopped.
-     *
+     * 
+     * 
      */
     public void stopPendingJobQueue();
 
     /**
-     * Returns true if the pending job queue is running.
+     * 
      * @return
      */
     public boolean isPendingJobQueueRunning();
 
-    /**
-     * Adds a job to the pending job queue. 
-     * @param order
-     * @return
-     */
     public String addJob(JobOrder order);
 
-    /**
-     * Terminates the currently running job. Does nothing if 
-     * if no job is currently running.
-     */
     public void terminateCurrentJob();
 
     /**
-     * Returns true if the crawler has a currently running job.
+     * 
      * @return
      */
     public boolean isCrawling();
 
     /**
-     * Returns the Heritrix version.
+     * 
      * @return
      */
     public String getVersion();
 
-    /**
-     * Destroys the crawler instance and all dependent objects.
-     *
-     */
     public void destroy();
 
-    /**
-     * Deletes a job from the pending queue.
-     * @param job
-     * @return
-     */
     public boolean deletePendingCrawlJob(PendingCrawlJob job);
 
-    /**
-     * Deletes a job from the completed list.
-     * @param job
-     * @return
-     * @throws ClusterException
-     */
-    public boolean deleteCompletedCrawlJob(CompletedCrawlJob job) throws ClusterException;
+    public boolean deleteCompletedCrawlJob(CompletedCrawlJob job);
 
-    /**
-     * Returns a list of pending jobs.
-     * @return
-     */
     public Collection<PendingCrawlJob> listPendingCrawlJobs();
 
-    /**
-     * Returns a list of completed jobs.
-     * @return
-     */
     public Collection<CompletedCrawlJob> listCompletedCrawlJobs();
+
 }

@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -31,18 +31,16 @@ import javax.management.ObjectName;
  * Represents the relationship between a container and the crawlers "container"
  * by it.
  * @author Daniel Bernstein (dbernstein@archive.org)
+ *
  */
 class Container {
     private ObjectName name;
 
     private Collection<Crawler> crawlers = new LinkedList<Crawler>();
-    
-    private int maxInstances = 1;
 
-    public Container(ObjectName name, int maxInstances) {
+    public Container(ObjectName name) {
         super();
         this.name = name;
-        this.maxInstances = maxInstances;
     }
 
     public Collection<Crawler> getCrawlers() {
@@ -58,12 +56,4 @@ class Container {
         this.crawlers.add(crawler);
         crawler.setParent(this);
     }
-
-	public int getMaxInstances() {
-		return maxInstances;
-	}
-
-	public void setMaxInstances(int maxInstances) {
-		this.maxInstances = maxInstances;
-	}
 }

@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Created on Dec 12, 2005
+ * (Created on Dec 12, 2005
  *
  * Copyright (C) 2005 Internet Archive.
  *  
@@ -29,29 +29,28 @@ import javax.management.ObjectName;
 
 import org.archive.util.JmxUtils;
 
+public class CurrentCrawlJobImpl
+        extends
+            CrawlJobBase implements
+        CurrentCrawlJob {
 
-public class CurrentCrawlJobImpl extends CrawlJobBase
-implements CurrentCrawlJob {
-    
     private ObjectName name;
 
     public CurrentCrawlJobImpl(
             ObjectName name,
-            CrawlerImpl mother,
+            Crawler mother,
             MBeanServerConnection connection) {
-        super(new Long(JmxUtils.getUid(name)),extractSeedCollectionName(name), mother, connection);
+        super(JmxUtils.getUid(name), mother, connection);
         this.name = name;
-    }
-    
-    static String extractSeedCollectionName(ObjectName on){
-        String name = on.getKeyProperty(JmxUtils.NAME);
-        return name.substring(0,name.indexOf("-"));
     }
 
     public ObjectName getName() {
         return this.name;
     }
 
+    public String getUid() {
+        return JmxUtils.getUid(getName());
+    }
 
     public InetSocketAddress getRemoteAddress() {
         // TODO Auto-generated method stub
@@ -87,9 +86,9 @@ implements CurrentCrawlJob {
         }
     }
 
-    public String getCrawlStatus() {
+    public String getStatus() {
         try {
-            return this.connection.getAttribute(this.name, "Status").toString();
+            return this.connection.getAttribute(this.name, "status").toString();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -98,12 +97,5 @@ implements CurrentCrawlJob {
     public Crawler getMother() {
         return this.mother;
     }
-    
-    public boolean equals(Object o) {
-        return ((CurrentCrawlJob) o).getName().equals(this.name);
-    }
 
-    public int hashCode() {
-        return this.name.hashCode();
-    }
 }

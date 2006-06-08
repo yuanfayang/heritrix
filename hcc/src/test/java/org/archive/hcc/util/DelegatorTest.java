@@ -4,6 +4,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
+import org.archive.hcc.util.Delegatable;
+import org.archive.hcc.util.Delegator;
 import org.archive.hcc.util.Delegator.DelegatorPolicy;
 
 public class DelegatorTest
