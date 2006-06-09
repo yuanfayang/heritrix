@@ -102,6 +102,7 @@ import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
+import org.archive.io.RecorderTooMuchHeaderException;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
 
@@ -436,6 +437,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         
         try {
             this.http.executeMethod(method);
+        } catch (RecorderTooMuchHeaderException ex) {
+            // when too much header material, abort like other truncations
+            doAbort(curi, method, "headerTrunc");
         } catch (IOException e) {
         	failedExecuteCleanup(method, curi, e);
         	return;

@@ -109,6 +109,13 @@ public class RecordingOutputStream extends OutputStream {
      * Define for SHA1 alogarithm.
      */
     private static final String SHA1 = "SHA1";
+
+    /**
+     * Maximum amount of header material to accept without the content
+     * body beginning -- if more, throw a RecorderTooMuchHeaderException.
+     * TODO: make configurable? make smaller?
+     */
+    protected static final long MAX_HEADER_MATERIAL = 1024*1024; // 1MB
     
     
     /**
@@ -158,6 +165,7 @@ public class RecordingOutputStream extends OutputStream {
         this.out = wrappedStream;
         this.position = 0;
         this.size = 0;
+        this.contentBeginMark = -1;
         // ensure recording turned on
         this.recording = true;
         // Always begins false; must use startDigest() to begin
@@ -180,6 +188,7 @@ public class RecordingOutputStream extends OutputStream {
         if (this.out != null) {
             this.out.write(b);
         }
+        checkLimits();
     }
 
     public void write(byte[] b) throws IOException {
@@ -189,6 +198,7 @@ public class RecordingOutputStream extends OutputStream {
         if (this.out != null) {
             this.out.write(b);
         }
+        checkLimits();
     }
 
     public void write(byte[] b, int off, int len) throws IOException {
@@ -197,6 +207,20 @@ public class RecordingOutputStream extends OutputStream {
         }
         if (this.out != null) {
             this.out.write(b, off, len);
+        }
+        checkLimits();
+    }
+
+    /**
+     * Check any enforced limits. For now, this only checks MAX_HEADER_MATERIAL
+     * if markContentBegin() has not yet been called.
+     */
+    protected void checkLimits() throws RecorderTooMuchHeaderException {
+        if (contentBeginMark<0) {
+            // no mark yet
+            if(position>MAX_HEADER_MATERIAL) {
+                throw new RecorderTooMuchHeaderException();
+            }
         }
     }
 
@@ -271,6 +295,11 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     public void close() throws IOException {
+        if(contentBeginMark<0) {
+            // if unset, consider 0 posn as content-start
+            // (so that a -1 never survives to replay step)
+            contentBeginMark = 0;
+        }
         if (this.out != null) {
             this.out.close();
             this.out = null;
