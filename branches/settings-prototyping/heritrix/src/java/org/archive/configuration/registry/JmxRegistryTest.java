@@ -84,8 +84,8 @@ public class JmxRegistryTest extends TestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         if (this.registry != null) {
-            this.registry.deregister(this.domainInstanceReference);
-            this.registry.deregister(this.baseInstanceReference);
+            this.registry.deRegister(this.domainInstanceReference);
+            this.registry.deRegister(this.baseInstanceReference);
         }
     }
     
@@ -110,7 +110,7 @@ public class JmxRegistryTest extends TestCase {
         for (int i = 0; i < ptrs.length; i++) {
             CompositeData cd = (CompositeData)ptrs[i];
             Pointer p = new Pointer(cd);
-            Configurable c = p.getConfiguredInstance(this.registry);
+            Configurable c = p.getRegisteredInstance(this.registry);
         }
     }
 }

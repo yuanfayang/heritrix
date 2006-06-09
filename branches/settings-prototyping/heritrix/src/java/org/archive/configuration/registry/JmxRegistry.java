@@ -142,7 +142,7 @@ class JmxRegistry implements Registry {
     
     @SuppressWarnings("unused")
     public Object register(final String name, final Class type,
-            final String domain, final Object instance)
+            final String domain, final Configuration instance)
     throws ConfigurationException {
         Object result = null;
         try {
@@ -187,7 +187,7 @@ class JmxRegistry implements Registry {
         return result;
     }
 
-    public Object register(String name, Class type, Object instance)
+    public Object register(String name, Class type, Configuration instance)
     throws ConfigurationException {
         return register(name, type, getBaseDomain(), instance);
     }
@@ -207,7 +207,7 @@ class JmxRegistry implements Registry {
         return result;
     }
     
-    public void deregister(final Object on) {
+    public void deRegister(final Object on) {
         try {
             this.registry.unregisterMBean(((ObjectInstance)on).
                 getObjectName());
@@ -216,6 +216,15 @@ class JmxRegistry implements Registry {
         } catch (MBeanRegistrationException e) {
             e.printStackTrace();
         }
+    }
+    
+    public void deRegister(final String name, final Class type,
+            final String domain) {
+        // TODO
+    }
+    
+    public void deRegister(final String name, final Class type) {
+        // TODO
     }
 
     public Object get(String attributeName, String name)
