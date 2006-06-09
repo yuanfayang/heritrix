@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
+import org.apache.commons.pool.impl.FairGenericObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.archive.util.ArchiveUtils;
 
@@ -105,7 +106,7 @@ public class ARCWriterPool {
                 ", maxActive=" + poolMaximumActive +
                 ", maxWait=" + poolMaximumWait);
         this.settings = settings;
-        this.pool = new GenericObjectPool(new ARCWriterFactory(),
+        this.pool = new FairGenericObjectPool(new ARCWriterFactory(),
             poolMaximumActive,
             GenericObjectPool.WHEN_EXHAUSTED_BLOCK,
             poolMaximumWait, NO_MAX_IDLE);

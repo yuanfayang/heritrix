@@ -188,11 +188,13 @@ public class FairGenericObjectPool extends GenericObjectPool {
         assertOpen();
         long starttime = System.currentTimeMillis();
         
-        // use borrowerQueue
-        _borrowerQueue.add(Thread.currentThread());
+        
         
         try {
             synchronized(this) {
+                // use borrowerQueue
+                _borrowerQueue.add(Thread.currentThread());
+                
                 for(;;) {
                     ObjectTimestampPair pair = null;
     
@@ -259,6 +261,7 @@ public class FairGenericObjectPool extends GenericObjectPool {
                             Object obj = _factory.makeObject();
                             pair = new ObjectTimestampPair(obj);
                             newlyCreated = true;
+                            return pair.value;
                         } finally {
                             if (!newlyCreated) {
                                 // object cannot be created
