@@ -307,6 +307,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private final static String CRAWLEND_REPORT_OPER = "crawlendReport";
     private final static String SHUTDOWN_OPER = "shutdown";
     private final static String LOG_OPER = "log";
+    private final static String REBIND_JNDI_OPER = "rebindJNDI";
     private final static List OPERATION_LIST;
     static {
         OPERATION_LIST = Arrays.asList(new String [] {START_OPER, STOP_OPER,
@@ -314,7 +315,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             ADD_CRAWL_JOB_OPER, ADD_CRAWL_JOB_BASEDON_OPER,
             DELETE_CRAWL_JOB_OPER, ALERT_OPER, PENDING_JOBS_OPER,
             COMPLETED_JOBS_OPER, CRAWLEND_REPORT_OPER, SHUTDOWN_OPER,
-            LOG_OPER, DESTROY_OPER, TERMINATE_CRAWL_JOB_OPER});
+            LOG_OPER, DESTROY_OPER, TERMINATE_CRAWL_JOB_OPER,
+            REBIND_JNDI_OPER});
     }
     private CompositeType jobCompositeType = null;
     private TabularType jobsTabularType = null;
@@ -444,7 +446,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         // Register this heritrix 'container' though we may be inside another
         // tomcat or jboss container.
         try {
-            registerJndi(getJndiContainerName());
+            registerContainerJndi();
         } catch (Exception e) {
             logger.log(Level.WARNING, "Failed jndi container registration.", e);
         }
@@ -1931,6 +1933,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             Heritrix.TERMINATE_CRAWL_JOB_OPER,
             "Returns false if no current job", null, SimpleType.BOOLEAN,
             MBeanOperationInfo.ACTION);
+        
+        operations[16] = new OpenMBeanOperationInfoSupport(
+            Heritrix.REBIND_JNDI_OPER,
+            "Rebinds this Heritrix with JNDI.", null,
+            SimpleType.VOID, MBeanOperationInfo.ACTION);
 
         // Build the info object.
         return new OpenMBeanInfoSupport(this.getClass().getName(),
@@ -2025,6 +2032,19 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         if (operationName.equals(TERMINATE_CRAWL_JOB_OPER)) {
             JmxUtils.checkParamsCount(TERMINATE_CRAWL_JOB_OPER, params, 0);
             return new Boolean(this.jobHandler.terminateCurrentJob());
+        }
+        if (operationName.equals(REBIND_JNDI_OPER)) {
+            JmxUtils.checkParamsCount(REBIND_JNDI_OPER, params, 0);
+            try {
+				registerContainerJndi();
+			} catch (MalformedObjectNameException e) {
+				throw new RuntimeOperationsException(new RuntimeException(e));
+			} catch (UnknownHostException e) {
+				throw new RuntimeOperationsException(new RuntimeException(e));
+			} catch (NamingException e) {
+				throw new RuntimeOperationsException(new RuntimeException(e));
+			}
+            return null;
         }
         if (operationName.equals(SHUTDOWN_OPER)) {
             JmxUtils.checkParamsCount(SHUTDOWN_OPER, params, 0);
@@ -2269,6 +2289,12 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             logger.info(JmxUtils.getLogUnregistrationMsg(
                     this.mbeanName.getCanonicalName(), this.mbeanServer));
         }
+    }
+    
+    protected static void registerContainerJndi()
+    throws MalformedObjectNameException, NullPointerException,
+    		UnknownHostException, NamingException {
+    	registerJndi(getJndiContainerName());
     }
 
     protected static void registerJndi(final ObjectName name)
