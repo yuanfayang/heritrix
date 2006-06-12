@@ -35,6 +35,8 @@
 	if(handler.getCurrentJob() != null) {
 		shortJobStatus = TextUtils.getFirstWord(handler.getCurrentJob().getStatus());
 	}
+	String favicon = System.getProperties().getProperty("heritrix.favicon","h.ico");
+	
 %>
 <%@include file="stats.jsp"%>
 
@@ -43,8 +45,8 @@
         <title>Heritrix: <%=title%></title>
         <link rel="stylesheet" 
             href="<%=request.getContextPath()%>/css/heritrix.css">
-        <link rel="icon" href="<%=request.getContextPath()%>/images/<%=handler.getFavicon()%>" type="image/x-icon" />
-        <link rel="shortcut icon" href="<%=request.getContextPath()%>/images/<%=handler.getFavicon()%>" type="image/x-icon" />
+        <link rel="icon" href="<%=request.getContextPath()%>/images/<%=favicon%>" type="image/x-icon" />
+        <link rel="shortcut icon" href="<%=request.getContextPath()%>/images/<%=favicon%>" type="image/x-icon" />
         <script src="/js/util.js">
         </script>
     </head>

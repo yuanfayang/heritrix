@@ -179,11 +179,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
     private final File jobsDir;
     
     /**
-     * Favicon to use
-     */
-    private String favicon = "h.ico";
-    
-    /**
      * Constructor.
      * @param jobsDir Jobs directory.
      */
@@ -1397,13 +1392,5 @@ public class CrawlJobHandler implements CrawlStatusListener {
 
     public void crawlCheckpoint(File checkpointDir) throws Exception {
         // TODO Auto-generated method stub
-    }
-
-    public String getFavicon() {
-        return favicon;
-    }
-
-    public void setFavicon(String favicon) {
-        this.favicon = favicon;
     }
 }
