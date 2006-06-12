@@ -157,7 +157,7 @@
                         <td>
                         </td>
                         <td>
-                            <font color="red"><%=error%></font>
+                            <span class="error"><%=error%></span>
                         </td>
                     </tr>
                 <% } %>

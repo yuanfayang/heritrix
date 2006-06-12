@@ -34,9 +34,9 @@
         <p>
             <b>Are you sure you wan't to shut Heritrix down?</b>
         <p>
-            <font color="red"><b>Warning:</b> Doing so will end any current job 
+            <span class="warning"><b>Warning:</b> Doing so will end any current job 
             and terminate this web access.<br> The program can only be restarted via
-            command line launching</font>
+            command line launching</span>
         <p>
             <input type="button" value="I'm sure, shut it down" onClick="doShutDown()">
             <input type="button" value="Cancel" onClick="document.location='<%=request.getContextPath()%>/index.jsp'">
