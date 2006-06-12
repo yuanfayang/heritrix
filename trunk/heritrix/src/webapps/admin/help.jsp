@@ -3,6 +3,10 @@
 <%
     String title = "Help";
     int tab = 6;
+    String favicon = request.getParameter("favicon");
+    if(favicon!=null) {
+        handler.setFavicon(favicon);
+    }
 %>
 
 <%@include file="/include/head.jsp"%>
@@ -40,11 +44,24 @@
 </p>
 <p>
     <b><a href="<%=request.getContextPath()%>/help/regexpr.jsp">Regular Expressions</a></b><br />
-    Information about the regular expressions used in Heritrix and a handy tool to double check that your regular expressions are valid and that they correctly identify the desired strings.
+    Information about the regular expressions used in Heritrix and a tool to double check that your regular expressions are valid and that they correctly identify the desired strings.
 </p>
 <p>
     <b><a href="<%=request.getContextPath()%>/help/codes.jsp">URI Fetch Status Codes</a></b><br />
-    This handy reference details what each of the fetch status codes assigned to URIs means.
+    This reference details what each of the fetch status codes assigned to URIs means.
+</p>
+<p>
+    <b>Reset Favicon</b><br />
+    To help distinguish multiple crawler web interfaces, you may choose this 
+    web interface's 'favicon' by clicking any of the following: 
+    <a href="<%=request.getContextPath()%>?favicon=h.ico"><img src="<%=request.getContextPath()%>/images/h.ico"/></a>
+    <a href="<%=request.getContextPath()%>?favicon=h-blue.ico"><img src="<%=request.getContextPath()%>/images/h-blue.ico"/></a>
+    <a href="<%=request.getContextPath()%>?favicon=h-purple.ico"><img src="<%=request.getContextPath()%>/images/h-purple.ico"/></a>
+    <a href="<%=request.getContextPath()%>?favicon=h-red.ico"><img src="<%=request.getContextPath()%>/images/h-red.ico"/></a>
+    <a href="<%=request.getContextPath()%>?favicon=h-orange.ico"><img src="<%=request.getContextPath()%>/images/h-orange.ico"/></a>
+    <a href="<%=request.getContextPath()%>?favicon=h-yellow.ico"><img src="<%=request.getContextPath()%>/images/h-yellow.ico"/></a>
+    <a href="<%=request.getContextPath()%>?favicon=h-green.ico"><img src="<%=request.getContextPath()%>/images/h-green.ico"/></a>
+    <a href="<%=request.getContextPath()%>?favicon=h-teal.ico"><img src="<%=request.getContextPath()%>/images/h-teal.ico"/></a>
 </p>
 <hr />
 <font size="-1">Heritrix version @VERSION@</font>

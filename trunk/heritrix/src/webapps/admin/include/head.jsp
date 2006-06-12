@@ -43,6 +43,8 @@
         <title>Heritrix: <%=title%></title>
         <link rel="stylesheet" 
             href="<%=request.getContextPath()%>/css/heritrix.css">
+        <link rel="icon" href="<%=request.getContextPath()%>/images/<%=handler.getFavicon()%>" type="image/x-icon" />
+        <link rel="shortcut icon" href="<%=request.getContextPath()%>/images/<%=handler.getFavicon()%>" type="image/x-icon" />
         <script src="/js/util.js">
         </script>
     </head>
