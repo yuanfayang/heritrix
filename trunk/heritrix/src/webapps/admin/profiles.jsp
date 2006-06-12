@@ -25,7 +25,7 @@
 <%@include file="/include/head.jsp"%>
 <% if(request.getParameter("message")!=null && request.getParameter("message").length() >0){ %>
     <p>
-        <font color="red"><b><%=request.getParameter("message")%></b></font>
+        <span class="flashMessage"><b><%=request.getParameter("message")%></b></span>
 <% } %>
 <table border="0" cellspacing="0" cellpadding="1">
     <tr>

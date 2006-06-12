@@ -21,7 +21,7 @@
         request.getParameter("message").length() > 0) {
 %>
     <p>
-        <font color="red"><b><%=request.getParameter("message")%></b></font>
+        <span class="flashMessage">><b><%=request.getParameter("message")%></b></span>
 <% } %>
 
 <% if(handler.isCrawling()){ %>
@@ -175,7 +175,7 @@ Jobs(<%=handler.getCompletedJobs().size()%>)</h2>
                     <tr bgcolor='<%=alt?"#DDDDFF":"#EEEEFF"%>'>
                         <td></td>
                         <td colspan="3">
-                            <pre><font color="red"><%=job.getErrorMessage()%></font></pre>
+                            <pre><<span class="error"><%=job.getErrorMessage()%></span></pre>
                         </td>
                     </tr>
                     <% } %>

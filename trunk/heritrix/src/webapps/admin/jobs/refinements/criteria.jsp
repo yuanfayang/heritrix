@@ -127,7 +127,7 @@
     </script>   
     <% if(message != null && message.length() > 0){ %>
         <p>
-            <font color="red"><b><%=message%></b></font>
+            <span class="flashMessage"><b><%=message%></b></span>
     <% } %>
     <p>
         <b>Refinement '<%=refinement.getReference()%>' on '<%=global?"global settings":currDomain%>' of
