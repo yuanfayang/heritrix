@@ -32,27 +32,22 @@ import junit.framework.TestCase;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class StripWWWRuleTest extends TestCase {
+public class StripWWWNRuleTest extends TestCase {
 
     public void testCanonicalize() throws URIException {
         String url = "http://WWW.aRchive.Org/index.html";
-        String expectedResult = "http://aRchive.Org/index.html";
-        String result = (new StripWWWRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
-        assertTrue("Failed " + result, expectedResult.equals(result));
-        url = "http://wWWW.aRchive.Org/index.html";
-        expectedResult = "http://wWWW.aRchive.Org/index.html";
-        result = (new StripWWWRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
-        assertTrue("Failed " + result, expectedResult.equals(result));
-        url = "http://ww.aRchive.Org/index.html";
-        expectedResult = "http://ww.aRchive.Org/index.html";
-        result = (new StripWWWRule("test")).
+        String expectedResult = "http://WWW.aRchive.Org/index.html";
+        String result = (new StripWWWNRule("test")).
             canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
         url = "http://www001.aRchive.Org/index.html";
-        expectedResult = "http://www001.aRchive.Org/index.html";
-        result = (new StripWWWRule("test")).
+        expectedResult = "http://aRchive.Org/index.html";
+        result = (new StripWWWNRule("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
+        assertTrue("Failed " + result, expectedResult.equals(result));
+        url = "http://www3.aRchive.Org/index.html";
+        expectedResult = "http://aRchive.Org/index.html";
+        result = (new StripWWWNRule("test")).
             canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
     }

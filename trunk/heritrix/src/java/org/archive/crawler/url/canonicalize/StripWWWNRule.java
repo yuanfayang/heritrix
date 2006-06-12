@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 
 /**
- * Strip any 'www' found on http/https URLs, IF they have some
+ * Strip any 'www[0-9]+' found on http/https URLs, IF they have some
  * path/query component (content after third slash). (Top 'slash page' 
  * URIs are left unstripped, so that we prefer crawling redundant
  * top pages to missing an entire site only available from either
@@ -35,18 +35,21 @@ import java.util.regex.Pattern;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class StripWWWRule extends BaseRule {
-    private static final String DESCRIPTION = "Strip any 'www' found. " +
-        "Use this rule to equate 'http://www.archive.org/index.html' and" +
+public class StripWWWNRule extends BaseRule {
+    private static final String DESCRIPTION = "Strip any 'www[0-9]+' found. " +
+        "Use this rule to equate 'http://www001.archive.org/index.html' and" +
         " 'http://archive.org/index.html'. The resulting canonicalization" +
-        " returns 'http://archive.org/index.html'.  It removes any www's " +
-        "found, except on URIs that have no path/query component " +
-        "('slash' pages).  Operates on http and https schemes only.";
+        " returns 'http://archive.org/index.html'.  It removes any wwwN's " +
+        "found, where 'N' is one or more numerics, except on URIs that " +
+        "have no path/query component " +
+        "('slash' pages).  Operates on http and https schemes only. " +
+        "Use StripWWWRule to strip lone 'www' (This rule does not strip " +
+        "lone www's).";
     
     private static final Pattern REGEX =
-        Pattern.compile("(?i)^(https?://)(?:www\\.)([^/]*/.+)$");
+        Pattern.compile("(?i)^(https?://)(?:www[0-9]+\\.)([^/]*/.+)$");
 
-    public StripWWWRule(String name) {
+    public StripWWWNRule(String name) {
         super(name, DESCRIPTION);
     }
 
