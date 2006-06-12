@@ -256,6 +256,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     private static int guiPort = SimpleHttpServer.DEFAULT_PORT;
     
+    /**
+     * Web UI server, realm, context name.
+     */
+    private static String ADMIN = "admin";
+    
     // OpenMBean support.
     /**
      * The MBean server we're registered with (May be null).
@@ -322,6 +327,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private TabularType jobsTabularType = null;
     private static final String [] JOB_KEYS =
         new String [] {"uid", "name", "status"};
+
+    private static String adminUsername;
+
+    private static String adminPassword;
     
     /**
      * Constructor.
@@ -1067,15 +1076,12 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     protected static String startEmbeddedWebserver(final int port,
         final String adminLoginPassword)
     throws Exception {
-        String adminUN =
-            adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
-        String adminPW =
-            adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
+        adminUsername = adminLoginPassword.substring(0, adminLoginPassword.indexOf(":"));
+        adminPassword = adminLoginPassword.substring(adminLoginPassword.indexOf(":") + 1);
         Heritrix.httpServer =
             new SimpleHttpServer("admin", ROOT_CONTEXT, port, false);
         
         final String DOTWAR = ".war";
-        final String ADMIN = "admin";
         final String SELFTEST = "selftest";
         
         // Look for additional WAR files beyond 'selftest' and 'admin'.
@@ -1097,8 +1103,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         // Name of passed 'realm' must match what is in configured in web.xml.
         // We'll use ROLE for 'realm' and 'role'.
         final String ROLE = ADMIN;
-        Heritrix.httpServer.setAuthentication(ROLE, ROOT_CONTEXT, adminUN,
-            adminPW, ROLE);
+        Heritrix.httpServer.setAuthentication(ROLE, ROOT_CONTEXT, adminUsername,
+            adminPassword, ROLE);
         Heritrix.httpServer.startServer();
         InetAddress addr = InetAddress.getLocalHost();
         String uiLocation = "http://" + addr.getHostName() + ":" + port;
@@ -1106,8 +1112,23 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         buffer.append("Heritrix " + Heritrix.getVersion() + " is running.");
         buffer.append("\nWeb console is at: " + uiLocation);
         buffer.append("\nWeb console login and password: " +
-            adminUN + "/" + adminPW);
+            adminUsername + "/" + adminPassword);
         return buffer.toString();
+    }
+    
+    /**
+     * Replace existing administrator login info with new info.
+     * 
+     * @param newUsername new administrator login username
+     * @param newPassword new administrator login password
+     */
+    public static void resetAuthentication(String newUsername, String newPassword) {
+        Heritrix.httpServer.resetAuthentication(ADMIN, adminUsername,
+                newUsername, newPassword);
+        adminUsername = newUsername;
+        adminPassword = newPassword; 
+        logger.info("administrative login changed to "
+                +newUsername+":"+newPassword);
     }
 
     protected static CrawlJob createCrawlJob(CrawlJobHandler handler,

@@ -337,6 +337,23 @@ public class SimpleHttpServer
         realm.put(username, password);
         realm.addUserToRole(username, role);
     }
+    
+
+    /**
+     * Reset the administrator login info. 
+     * 
+     * @param realmAndRoleName for our use, always 'admin'
+     * @param oldUsername previous username to replace/disable
+     * @param newUsername new username (may be same as old)
+     * @param newPassword new password
+     */
+    public void resetAuthentication(String realmAndRoleName, String oldUsername, 
+            String newUsername, String newPassword) {
+        HashUserRealm realm = (HashUserRealm) this.server.getRealm(realmAndRoleName);
+        realm.remove(oldUsername);
+        realm.put(newUsername,newPassword);
+        realm.addUserToRole(newUsername, realmAndRoleName);
+    }
 
     /**
      * Get path to named webapp.
