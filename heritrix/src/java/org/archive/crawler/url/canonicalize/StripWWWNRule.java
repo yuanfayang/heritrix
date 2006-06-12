@@ -36,15 +36,18 @@ import java.util.regex.Pattern;
  * @version $Date$, $Revision$
  */
 public class StripWWWNRule extends BaseRule {
-    private static final String DESCRIPTION = "Strip any 'www[0-9]+' found. " +
-        "Use this rule to equate 'http://www001.archive.org/index.html' and" +
-        " 'http://archive.org/index.html'. The resulting canonicalization" +
-        " returns 'http://archive.org/index.html'.  It removes any wwwN's " +
+    private static final String DESCRIPTION = "Strip any 'www[0-9]*' found. " +
+        "Use this rule to equate 'http://www.archive.org/index.html' and " +
+        "'http://www0001.archive.org/index.html' with " +
+        " 'http://archive.org/index.html'. " +
+        "The resulting canonicalization" +
+        " returns 'http://archive.org/index.html'.  It removes any www's " +
+        " or wwwNNN's " +
         "found, where 'N' is one or more numerics, except on URIs that " +
         "have no path/query component " +
         "('slash' pages).  Operates on http and https schemes only. " +
-        "Use StripWWWRule to strip lone 'www' (This rule does not strip " +
-        "lone www's).";
+        "Use StripWWWRule to strip a lone 'www' only (This rule is " +
+        "more general version of StripWWWRule).";
     
     private static final Pattern REGEX =
         Pattern.compile("(?i)^(https?://)(?:www[0-9]+\\.)([^/]*/.+)$");
