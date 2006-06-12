@@ -3,9 +3,9 @@
 <%
     String title = "Help";
     int tab = 6;
-    String favicon = request.getParameter("favicon");
-    if(favicon!=null) {
-        handler.setFavicon(favicon);
+    String setFavicon = request.getParameter("favicon");
+    if(setFavicon!=null) {
+        System.getProperties().setProperty("heritrix.favicon",setFavicon);
     }
 %>
 
