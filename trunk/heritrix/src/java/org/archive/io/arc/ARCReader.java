@@ -1296,7 +1296,7 @@ implements ARCConstants {
      * @author stack
      * @version $Date$, $Revision$
      */
-    public class RecoverableIOException
+    public static class RecoverableIOException
     extends IOException {
         private static final long serialVersionUID = -4464928470623109445L;
         private final IOException decoratedIOException;
