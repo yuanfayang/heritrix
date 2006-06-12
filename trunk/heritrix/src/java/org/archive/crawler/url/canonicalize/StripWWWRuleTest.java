@@ -50,5 +50,10 @@ public class StripWWWRuleTest extends TestCase {
         result = (new StripWWWRule("test")).
             canonicalize(url, UURIFactory.getInstance(url));
         assertTrue("Failed " + result, expectedResult.equals(result));
+        url = "http://www001.aRchive.Org/index.html";
+        expectedResult = "http://aRchive.Org/index.html";
+        result = (new StripWWWRule("test")).
+            canonicalize(url, UURIFactory.getInstance(url));
+        assertTrue("Failed " + result, expectedResult.equals(result));
     }
 }
