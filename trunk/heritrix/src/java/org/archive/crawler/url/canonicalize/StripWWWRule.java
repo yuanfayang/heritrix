@@ -41,7 +41,9 @@ public class StripWWWRule extends BaseRule {
         " 'http://archive.org/index.html'. The resulting canonicalization" +
         " returns 'http://archive.org/index.html'.  It removes any www's " +
         "found, except on URIs that have no path/query component " +
-        "('slash' pages).  Operates on http and https schemes only.";
+        "('slash' pages).  Operates on http and https schemes only. " +
+        "Use the more general StripWWWNRule if you want to strip both 'www' " +
+        "and 'www01', 'www02', etc.";
     
     private static final Pattern REGEX =
         Pattern.compile("(?i)^(https?://)(?:www\\.)([^/]*/.+)$");
