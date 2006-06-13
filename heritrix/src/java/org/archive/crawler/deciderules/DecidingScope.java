@@ -31,12 +31,8 @@ import org.archive.crawler.framework.CrawlScope;
 
 /**
  * DecidingScope: a Scope which makes its accept/reject decision based on 
- * whatever DecideRules have been set up inside it, allowing 
- * initial experimentation with new model in minimally-changed
- * old framework. 
- *
+ * whatever DecideRules have been set up inside it.
  * @author gojomo
- *
  */
 public class DecidingScope extends CrawlScope {
     private static Logger logger =
@@ -46,7 +42,7 @@ public class DecidingScope extends CrawlScope {
     public DecidingScope(String name) {
         super(name);
         setDescription(
-            "DecidingScope (Experimental). A Scope that applies one or " +
+            "DecidingScope. A Scope that applies one or " +
             "more DecideRules to determine whether a URI is accepted " +
             "or rejected (returns false).");
         addElementToDefinition(new DecideRuleSequence(
