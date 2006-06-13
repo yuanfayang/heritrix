@@ -1192,8 +1192,9 @@
         PrerequisiteAcceptDecideRule   // but always accept a prerequisite of other URI
         </programlisting></para>
 
-          <para>A predefined Profile with this set of DecideRules is available
-          starting in 1.4 under the profile name "deciding-default".</para>
+          <para>In Heritirx 1.10.0, the default profile was changed to use
+          the above set of DecideRules (Previous to this, the operator had to
+          choose the 'deciding-default' profile, since removed).</para>
 
           <para>The naming, behavior, and user-interface for DecideRule-based
           scoping is subject to significant change based on feedback and
