@@ -9,38 +9,75 @@ Provides application configuration.
 
 <h2>Package Specification</h2>
 
-<h2>Related Documentation</h2>
-
-For overviews, tutorials, examples, guides, and tool documentation, please see:
-<ul>
-  <li><a href="">##### REFER TO NON-SPEC DOCUMENTATION HERE #####</a>
-</ul>
-
-<!-- Put @see and @since tags down here. -->
-
 <h2>Axioms and Assumptions</h2>
 <ul>
-    <li>Classes that can be configured export their configuration including
-    defaults, allowed values, etc.
-    <li>Registry implementation can be swapped out and an alternate used
-	just by changing system property.
-	<ul>
-		<li>TODO: Do same for serialization.</li>
-	</ul>
-	</li>
+<li>Every setting/configuration is done as an OpenMBean JMX Attribute.
+OpenMBean JMX Attributes have name, value, description, default,
+and constraints.</li>
+    <li>Classes that are configurable implement
+    <i>Configurable</i> and have a
+    <i>Configuration</i>.  A Configuration describes whats configurable,
+    defaults and constraints using OpenMBean JMX Attributes.
     </li>
-    <li>Components have name and type.  For now, assumption is that I'm passed
-    classname as type.</li>
+    <li>Configurable Classes look up Configuration in the <i>Registry</i>.
+    Registry is passed on initialization.  Configurable Classes can keep
+    reference to Registry for future use or configure all on initialization
+    and then let the Registry go.</li>
+    <li><i>Registry</i> implementation can be swapped out and an alternate used
+	just by changing system property.  Same for Configuration <i>Store</i>.
+	</li>
+    <li>Classes that are Configurable are uniquely identified by by name, type,
+    and domain.  For now, assumption is that classname is the type.</li>
 </ul>
+
+<h2>Example Configurable Class Implementation</h2>
+<pre>
+TODO
+</pre>
+
+<h2>Model</h2>
+<img alt="Configuration model" src="configuration.gif" />
 
 <h2>TODOs</h2>
 <ul>
-    <li>How to do Notifications?  Invocation of Operations? For former seems
-	easy enough.  Component updates its config.   Config. sends out
-	notifications.  For invocations, then config. needs reference to
-	Component -- somehow.
+    <li>Notifications: Missing from the Model below are setters.
+    If we add setters, then Notifications are done by the Registry
+    implementation (E.g. JMX or JNDI Notification implementations).
     </li>
+    <li>Invocations: JMX advertises operations. JNDI has similar.
+    Implication is that Configuration has reference to Configurable Class.
+    </li>
+    <li>Configuration Design: How does it know list of implementations. Once
+    it has a Configurable Class, it can query for allowed values but bootstrapping    and then adding in new implementations and having them noticed?
+    Can't this just be a list in Configuration?  And then add to the list via
+    the UI?  Add new implementations?
+    </li>
+    <li>Serializing: Write out all values or just whats other than default?
+    Option?</li>
 </ul>
+
+
+<h2>Risks</h2>
+<ul>
+<li>Lookup into JMXRegistry will be too slow (Worst-case would be
+Registry is a Singleton that all threads go via).  Should this be the case,
+if caching is insufficent, things to try:
+    <ul><li>Alternate JMX implementation.  In the past, the JVM Reference
+    Implementation has been slammed as being dog slow. Other JMX
+    implementations to try include MX4J (tomcat, geronimo, etc.) or
+    JBOSS or our own JBOSS-like Map based version that shortcircuits
+    JMX Agent if all in same JVM.
+    </li>
+    <li>Do Configuration once at head of processing chain.</li>
+    </ul>
+</li>
+</ul>
+</p>
+
+<h2>Context</h2>
+<p>This package is a refactoring of the org.archive.crawler.settings
+package.  See <a href="">Settings Framework Refactoring</a> document
+for a lead in on how this package came about.</p>
 
 </body>
 </html>
