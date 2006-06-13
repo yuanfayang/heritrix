@@ -85,7 +85,8 @@
       <newObject name="Userinfo" class="org.archive.crawler.url.canonicalize.StripUserinfoRule">
         <boolean name="enabled">true</boolean>
       </newObject>
-      <newObject name="WWW" class="org.archive.crawler.url.canonicalize.StripWWWRule">
+      <newObject name="WWW[0-9]*"
+        class="org.archive.crawler.url.canonicalize.StripWWWNRule">
         <boolean name="enabled">true</boolean>
       </newObject>
       <newObject name="SessionIDs" class="org.archive.crawler.url.canonicalize.StripSessionIDs">

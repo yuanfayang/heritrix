@@ -81,8 +81,8 @@
       <newObject name="Userinfo" 
         class="org.archive.crawler.url.canonicalize.StripUserinfoRule">
       </newObject>
-      <newObject name="WWW"
-        class="org.archive.crawler.url.canonicalize.StripWWWRule">
+      <newObject name="WWW[0-9]*"
+        class="org.archive.crawler.url.canonicalize.StripWWWNRule">
       </newObject>
       <newObject name="SessionIDs" 
         class="org.archive.crawler.url.canonicalize.StripSessionIDs">
