@@ -184,6 +184,14 @@ implements DynamicMBean, Registration, Serializable {
         return this.operationNames;
     }
     
+	protected List<String> getExpert() {
+		return this.expert;
+	}
+
+	protected List<String> getOverrideables() {
+		return this.overrideables;
+	}
+    
     /**
      * Create OpenMBeanInfo instance.
      * Called from constructor.  Shouldn't need to override.
