@@ -350,10 +350,6 @@ public class CrawlJobHandler implements CrawlStatusListener {
         if (!loadedDefault) {
             loadProfile(new File(parent + DEFAULT_PROFILE, ORDER_FILE_NAME));
         }
-        // Load the deciding-default profile from classpath (TODO: Figure
-        // how to get a listing of all that is in /profiles on classpath).
-        loadProfile(new File(parent + "deciding-default", ORDER_FILE_NAME));
-        
         // Look to see if a default profile system property has been
         // supplied. If so, use it instead.
         // TODO: Try and read default profile from some permanent storage.
