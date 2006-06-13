@@ -84,11 +84,11 @@ class JmxRegistry implements Registry {
      * Make configurable.
      * Make it so can have different store implementations.
      */
-	private final File store =
+     private final File store =
         new File(System.getProperty(STORE_DIR_KEY, 
                 System.getProperty("java.io.tmpdir", "/tmp")),
             this.getClass().getName());
-	
+     
     public JmxRegistry() {
         this("default.domain");
 
@@ -133,7 +133,7 @@ class JmxRegistry implements Registry {
                 totalDomain = this.basis + "." + domain;
             }
         }
-    	*/
+         */
         Hashtable<String, String> ht = new Hashtable<String, String>();
         ht.put(NAME_KEY, name);
         ht.put(TYPE_KEY, type.getName());
@@ -151,28 +151,28 @@ class JmxRegistry implements Registry {
          
             /*
             if (this.load) {
-            	ObjectName on = ((ObjectInstance)result).getObjectName();
-            	AttributeList al = null;
-				try {
-					al = load(on);
-				} catch (FileNotFoundException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-            	if (al != null) {
-            		try {
-						this.registry.setAttributes(on, al);
-					} catch (InstanceNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (ReflectionException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-            	}
+                 ObjectName on = ((ObjectInstance)result).getObjectName();
+                 AttributeList al = null;
+     			try {
+     				al = load(on);
+     			} catch (FileNotFoundException e1) {
+     				// TODO Auto-generated catch block
+     				e1.printStackTrace();
+     			} catch (IOException e1) {
+     				// TODO Auto-generated catch block
+     				e1.printStackTrace();
+     			}
+                 if (al != null) {
+                 	try {
+     					this.registry.setAttributes(on, al);
+     				} catch (InstanceNotFoundException e) {
+     					// TODO Auto-generated catch block
+     					e.printStackTrace();
+     				} catch (ReflectionException e) {
+     					// TODO Auto-generated catch block
+     					e.printStackTrace();
+     				}
+                 }
                
             }*/
         } catch (MalformedObjectNameException e) {
@@ -197,7 +197,7 @@ class JmxRegistry implements Registry {
     }
 
     public boolean isRegistered(final String name,
-    		    final Class type, final String domain) {
+         	    final Class type, final String domain) {
         boolean result = false;
         try {
             result = this.registry.isRegistered(getObjectName(name, type, domain));
@@ -238,7 +238,7 @@ class JmxRegistry implements Registry {
     }
 
     public Object get(String attributeName, String name,
-    		final Class type, final String domain)
+         	final Class type, final String domain)
     throws AttributeNotFoundException {
         ObjectName on = null;
         try {
@@ -267,10 +267,10 @@ class JmxRegistry implements Registry {
     }
     
     protected File getDomainSubDir(final File storeDir,
-    		final String domain) {
-    	// TODO
-    	storeDir.mkdirs();
-    	return storeDir;
+         	final String domain) {
+         // TODO
+         storeDir.mkdirs();
+         return storeDir;
     }
     
     @SuppressWarnings("unused")
@@ -290,7 +290,7 @@ class JmxRegistry implements Registry {
         final File subdir = getDomainSubDir(this.store, on.getDomain());
         File f = new File(subdir, on.getCanonicalKeyPropertyListString());
         if (!f.exists()) {
-        	return result;
+             return result;
         }
         return load(f).getAttributes(new String [] {});
     }
@@ -301,9 +301,9 @@ class JmxRegistry implements Registry {
         ObjectInputStream ois =
             new ObjectInputStream(new FileInputStream(f));
         try {
-        	ObjectInstance oi = (ObjectInstance)ois.readObject();
-        	String name = oi.getObjectName().getKeyProperty("name");
-        	AttributeList al = (AttributeList)ois.readObject();
+             ObjectInstance oi = (ObjectInstance)ois.readObject();
+             String name = oi.getObjectName().getKeyProperty("name");
+             AttributeList al = (AttributeList)ois.readObject();
             Class c = Class.forName(oi.getClassName());
             c = c.getEnclosingClass();
             Constructor cons = c.getConstructor(new Class [] {String.class});
@@ -312,11 +312,11 @@ class JmxRegistry implements Registry {
             result = (Configuration) defaultConfigMethod.invoke(configurable, new Object [] {});
             result.setAttributes(al);
         } catch (IOException e) {
-        	// TODO Auto-generated catch block
-        	e.printStackTrace();
+             // TODO Auto-generated catch block
+             e.printStackTrace();
         } catch (ClassNotFoundException e) {
-        	// TODO Auto-generated catch block
-        	e.printStackTrace();
+             // TODO Auto-generated catch block
+             e.printStackTrace();
         } catch (SecurityException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -339,7 +339,7 @@ class JmxRegistry implements Registry {
         return result;
     }
 
-	public void save(String domain) throws IOException {
+     public void save(String domain) throws IOException {
         // TODO Auto-generated method stub
         ObjectName on = null;
         try {
@@ -351,12 +351,12 @@ class JmxRegistry implements Registry {
     }
     
     protected void save(final File storeDir, final String domain,
-    		final Set objectInstances) throws IOException {
-    	if (objectInstances == null || objectInstances.size() <= 0) {
-    		return;
-    	}
-    	
-    	final File subdir = getDomainSubDir(storeDir, domain);
+         	final Set objectInstances) throws IOException {
+         if (objectInstances == null || objectInstances.size() <= 0) {
+         	return;
+         }
+         
+         final File subdir = getDomainSubDir(storeDir, domain);
         for (final Iterator i = objectInstances.iterator(); i.hasNext();) {
             ObjectInstance oi = (ObjectInstance)i.next();
             MBeanInfo mi = null;
@@ -378,29 +378,29 @@ class JmxRegistry implements Registry {
                 attributeNames[j] = mbai[j].getName();
             }
             try {
-				AttributeList al = this.registry.getAttributes(oi.getObjectName(), attributeNames);
-				for (final Iterator k = al.iterator(); k.hasNext();) {
-					Attribute a = (Attribute)k.next();
-					System.out.println(a.getName() + " " + a.getValue());
-				}
-				File beanFile = new File(subdir, oi.getObjectName().getCanonicalKeyPropertyListString());
-				if (beanFile.exists()) {
-					beanFile.delete();
-				}
-				ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(beanFile));
-				try {
-					oos.writeObject(oi);
-					oos.writeObject(al);
-				} finally {
-					oos.close();
-				}
-			} catch (InstanceNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ReflectionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+     			AttributeList al = this.registry.getAttributes(oi.getObjectName(), attributeNames);
+     			for (final Iterator k = al.iterator(); k.hasNext();) {
+     				Attribute a = (Attribute)k.next();
+     				System.out.println(a.getName() + " " + a.getValue());
+     			}
+     			File beanFile = new File(subdir, oi.getObjectName().getCanonicalKeyPropertyListString());
+     			if (beanFile.exists()) {
+     				beanFile.delete();
+     			}
+     			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(beanFile));
+     			try {
+     				oos.writeObject(oi);
+     				oos.writeObject(al);
+     			} finally {
+     				oos.close();
+     			}
+     		} catch (InstanceNotFoundException e) {
+     			// TODO Auto-generated catch block
+     			e.printStackTrace();
+     		} catch (ReflectionException e) {
+     			// TODO Auto-generated catch block
+     			e.printStackTrace();
+     		}
         }
     }
 }

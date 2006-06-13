@@ -37,7 +37,7 @@ public class TestProcessor implements Configurable {
         return this;
     }
 
-	public synchronized Configuration getConfiguration()
+     public synchronized Configuration getConfiguration()
             throws ConfigurationException {
         Configuration configuration = new Configuration("Test processor.") {
             protected java.util.List<javax.management.openmbean.OpenMBeanAttributeInfo> addAttributeInfos(
