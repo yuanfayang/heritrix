@@ -61,13 +61,19 @@ public class JmxRegistryTest extends TestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        this.registry = new JmxRegistry(BASE_DOMAIN);
+        this.registry = new JmxRegistry();
+        this.registry.initialize(BASE_DOMAIN, null);
+        
         // Populate the registry.
+        // Add TestProcessor at BASE_DOMAIN.
         if (!this.registry.isRegistered(BASE_NAME, TP.getClass())) {
             this.baseInstanceReference =
                 this.registry.register(BASE_NAME, TP.getClass(),
                     BASE_DOMAIN, TP.getConfiguration());
         }
+        
+        // Add TestProcessor at SUB_DOMAIN with BOOLEAN_ATTRIBUTE set to
+        // opposite of default.
         if (!this.registry.isRegistered(BASE_NAME, TP.getClass(),
                 SUB_DOMAIN)) {
             Configuration c = TP.getConfiguration();
