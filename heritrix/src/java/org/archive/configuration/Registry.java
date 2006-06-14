@@ -40,15 +40,13 @@ import javax.management.AttributeNotFoundException;
  * @author stack
  * @see <a href="http://crawler.archive.org/cgi-bin/wiki.pl?SettingsFrameworkRefactoring">Settings Framework Refactoring</a>
  */
-public interface Registry {
+public interface Registry {    
     /**
-     * System property key of where on disk to persist configuration.
+     * Initialize the registry.
+     * @param baseDomain Domain to base the registry on.
+     * @param store Store to persist registry to.
      */
-    public static final String STORE_DIR_KEY =
-        "org.archive.configuration.store-dir";
-    
-    public static final String NAME_KEY = "name";
-    public static final String TYPE_KEY = "type";
+    public void initialize(final String baseDomain, final Store store);
     
     
     /**
@@ -168,17 +166,21 @@ public interface Registry {
     /**
      * Load (or reload) settings from store.
      * Part of loading is registering each component.  Should be synchronized.
+     * @param store Where to load registry from.
      * @param domain Do loading of items from this <code>domain</code>.  Can
      * be subdomain or base domain.
      * @throws IOException
      */
-    public void load(final String domain) throws IOException;
+    public void load(final Store store, final String domain)
+    throws IOException;
     
     /**
      * Save current state of settings.
      * Part of saving is unregistering each component.  Should be synchronized.
+     * @param store Where to persist registry to.
      * @param domain Do loading of items from this <code>domain</code> only.
      * @throws IOException
      */
-    public void save(final String domain) throws IOException;
+    public void save(final Store store, final String domain)
+    throws IOException;
 }

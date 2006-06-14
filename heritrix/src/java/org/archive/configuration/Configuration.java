@@ -80,6 +80,9 @@ public abstract class Configuration
 implements DynamicMBean, Registration, Serializable {
     private final Logger LOGGER = Logger.getLogger(this.getClass().getName());
     
+    public static final String NAME_KEY = "name";
+    public static final String TYPE_KEY = "type";
+    
     public static final Boolean [] TRUE_FALSE_LEGAL_VALUES =
         new Boolean [] {Boolean.TRUE, Boolean.FALSE};
     
@@ -97,16 +100,6 @@ implements DynamicMBean, Registration, Serializable {
     private ArrayList<String> attributeNames = new ArrayList<String>();
     
     private ArrayList<String> operationNames = new ArrayList<String>();
-    
-    /**
-     * List of overrideable attributes.
-     */
-    private final List<String> overrideables;
-    
-    /**
-     * List of expert attributes.
-     */
-    private final List<String> expert;
    
     /**
      * This is used to package up all of the config. contained herein.
@@ -153,17 +146,10 @@ implements DynamicMBean, Registration, Serializable {
      */
     private Configuration()
     throws ConfigurationException {
-        this(null);
-    }
-    
-    public Configuration(final String description)
-    throws ConfigurationException {
-        this(description, null, null);
+        this((String)null);
     }
         
-    public Configuration(final String description,
-            final List<String> ov,
-            final List<String> ex)
+    public Configuration(final String description)
     throws ConfigurationException {
         super();
         try {
@@ -172,8 +158,14 @@ implements DynamicMBean, Registration, Serializable {
         } catch (OpenDataException e) {
             throw new ConfigurationException(e);
         }
-        this.overrideables = ov;
-        this.expert = ex;
+    }
+    
+    public Configuration(final MBeanInfo m) {
+        this.mbeanInfo = m;
+        MBeanAttributeInfo [] mbai = this.mbeanInfo.getAttributes();
+        for (int i = 0; i < mbai.length; i++) {
+            this.attributeNames.add(mbai[i].getName());
+        }
     }
     
     protected List<String> getAttributeNames() {
@@ -183,14 +175,6 @@ implements DynamicMBean, Registration, Serializable {
     protected List<String> getOperationNames() {
         return this.operationNames;
     }
-    
-	protected List<String> getExpert() {
-		return this.expert;
-	}
-
-	protected List<String> getOverrideables() {
-		return this.overrideables;
-	}
     
     /**
      * Create OpenMBeanInfo instance.
@@ -219,12 +203,12 @@ implements DynamicMBean, Registration, Serializable {
     protected OpenMBeanAttributeInfo [] createAttributeInfo()
     throws OpenDataException {
         List<OpenMBeanAttributeInfo> attributeInfos =
-        	addAttributeInfos(new ArrayList<OpenMBeanAttributeInfo>());
+            addAttributeInfos(new ArrayList<OpenMBeanAttributeInfo>());
         // Calculate the attribute names array.
         for (final Iterator<OpenMBeanAttributeInfo> i = attributeInfos.iterator();
-        		i.hasNext();) {
-        	OpenMBeanAttributeInfo ombai = i.next();
-        	this.attributeNames.add(ombai.getName());
+        		    i.hasNext();) {
+        	    OpenMBeanAttributeInfo ombai = i.next();
+        	    this.attributeNames.add(ombai.getName());
         }
         // Need to precreate the array of OpenMBeanAttributeInfos and
         // pass this to attributes.toArray because can't cast an Object []
@@ -334,6 +318,11 @@ implements DynamicMBean, Registration, Serializable {
             }
         }
         return result;
+    }
+    
+    public AttributeList getAttributes() {
+        List<String> names = getAttributeNames();
+        return getAttributes(names.toArray(new String [names.size()]));
     }
 
     @SuppressWarnings("unused")
