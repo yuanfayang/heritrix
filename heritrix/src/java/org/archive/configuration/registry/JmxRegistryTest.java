@@ -119,4 +119,16 @@ public class JmxRegistryTest extends TestCase {
             Configurable c = p.getRegisteredInstance(this.registry);
         }
     }
+    
+    public void testCrawlOrder() throws ConfigurationException {
+        CrawlOrder co = new CrawlOrder("crawl-order");
+        Object ptr = null;
+        if (!this.registry.isRegistered(co.getName(), co.getClass())) {
+            ptr = this.registry.register(co.getName(), co.getClass(),
+                co.getConfiguration());
+        }
+        if (ptr != null) {
+            this.registry.deRegister(ptr);
+        }
+    }
 }

@@ -12,27 +12,44 @@ Provides application configuration.
 <h2>Axioms and Assumptions</h2>
 <ul>
 <li>Every setting/configuration is done as an OpenMBean JMX Attribute.
+OpenMBeans are the basis of new Settings.
 OpenMBean JMX Attributes have name, value, description, default,
 and constraints.</li>
+<li>Because of above, equires java 5.0 (Uses javax.management).</li>
     <li>Classes that are configurable implement
     <i>Configurable</i> and have a
     <i>Configuration</i>.  A Configuration describes whats configurable,
-    defaults and constraints using OpenMBean JMX Attributes.
+    defaults and constraints using an MBean composition, the
+	MBeanInfo: Has means of interrogating list of 
+	OpenMBean JMX Attributes, etc.
     </li>
     <li>Configurable Classes look up Configuration in the <i>Registry</i>.
+    Configuration gotten any other way is dead as oppposed to live
+    Configuration.  Only Registry has true state of Configuration.
     Registry is passed on initialization.  Configurable Classes can keep
     reference to Registry for future use or configure all on initialization
     and then let the Registry go.</li>
     <li><i>Registry</i> implementation can be swapped out and an alternate used
 	just by changing system property.  Same for Configuration <i>Store</i>.
 	</li>
-    <li>Classes that are Configurable are uniquely identified by name, type,
-    and domain.  For now, assumption is that classname is the type.</li>
+    <li>For naming in the Registry, we use another MBean feature, 
+	<code>java.management.ObjectName</code>.
+	ObjectNames look like:
+	<code>domain:key1=value1,key2=value2,etc.</code>. Here is an
+	example: <code>org.archive.crawler:name=Heritrix,type=Crawler</code>.
+	ObjectName has convenience methods for parsing ObjectName strings into
+	domain and key/value parts.
+	We'll use ObjectNames for Configuration instances in Registry.
+	Configuration must have a name and type (and domain).
+	For now, type is class name of Configurations' Configurable.	
+	Overrides will be done with the domain part of ObjectName.
+    </li>
 </ul>
 
 <h2>Example Configurable Class Implementation</h2>
 <pre>
-TODO
+TODO Static inner class.
+TODO Static dynamic class.
 </pre>
 
 <h2>Model</h2>
@@ -54,6 +71,27 @@ TODO
     </li>
     <li>Serializing: Write out all values or just whats other than default?
     Option?</li>
+    <li>Checkpointing: Do I just have to write out Configurations?
+	If the Configuration carries current state of an object?  If
+	the Configuration is updated with the state of all counters,
+	should be sufficent?  Test.
+	</li>
+	<li>Pointers to Pointers of configuration so can have one instance
+	of a configuration used by many?
+	</li>
+	<li>Groups of Configurables?</li>
+	<li>Not reproducing complete Configurable in override, just
+	the values that are overrideable and the differences?</li>
+	<li>Set the not-writeable in Overriddes if Attribute is not
+	overrideable?  How?</li>
+</ul>
+
+<h2>Comparison to old Settings system</h2>
+<ul>
+	<li>No boostrapping of core components is done by this system.
+	Should make it so don't have to instantiate all that comes
+	before in the hierarchy testing or reusing in another context.
+	</li>
 </ul>
 
 

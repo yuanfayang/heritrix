@@ -18,6 +18,10 @@ import org.archive.configuration.Configuration;
 import org.archive.configuration.Store;
 import org.archive.configuration.StoreElement;
 
+/**
+ * Simple Store that Serializes passed StoreElements to disk.
+ * TODO: Get via a StoreFactory.
+ */
 public class SerializeStore implements Store {
     private final File storeDir;
     
@@ -58,6 +62,11 @@ public class SerializeStore implements Store {
         }
     }
     
+    public void save(@SuppressWarnings("unused") final String domain,
+            @SuppressWarnings("unused") final Iterator<StoreElement> i) {
+        throw new RuntimeException("Unimplemented");
+    }
+    
     public Iterator<StoreElement> load()
     throws IOException {
         // TODO: For now, just load up all the files in this.storeDir.
@@ -88,8 +97,7 @@ public class SerializeStore implements Store {
             MBeanInfo mi = (MBeanInfo)ois.readObject();
             AttributeList al = (AttributeList) ois.readObject();
             // Configuration is abstract.  Change that?
-            configuration = new Configuration(mi) {};
-            configuration.setAttributes(al);
+            configuration = new Configuration(mi, al);
         } catch (ClassNotFoundException e) {
             throw new IOException(e.toString()); 
         } catch (SecurityException e) {

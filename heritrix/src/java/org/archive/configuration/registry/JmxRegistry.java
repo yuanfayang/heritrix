@@ -24,31 +24,15 @@
  */
 package org.archive.configuration.registry;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
-import javax.management.IntrospectionException;
-import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
-import javax.management.MBeanInfo;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -57,7 +41,6 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import org.archive.configuration.Configurable;
 import org.archive.configuration.Configuration;
 import org.archive.configuration.ConfigurationException;
 import org.archive.configuration.Registry;
@@ -101,14 +84,15 @@ class JmxRegistry implements Registry {
         return getObjectName(name, type, this.baseDomain);
     }
     
-    public void save(Store store, String domain) throws IOException {
+    public void save(Store store, String domain)
+    throws IOException {
         // TODO Auto-generated method stub
-        
     }
     
-    public void load(Store store, String domain) throws IOException {
+    public void load(Store store, String domain)
+    
+    throws IOException {
         // TODO Auto-generated method stub
-        
     }
     
     /**
@@ -125,6 +109,7 @@ class JmxRegistry implements Registry {
             final String domain)
     throws MalformedObjectNameException {
         /*
+         * TODO Ensure the passed domain is in this Registry's namespace.
         String totalDomain = null;
         if (this.basis ==  null || this.basis.length() <= 0) {
             totalDomain = (domain == null || domain.length() <= 0)? "": domain;
@@ -150,33 +135,6 @@ class JmxRegistry implements Registry {
         try {
             result = this.registry.registerMBean(instance,
                 getObjectName(name, type, domain));
-         
-            /*
-            if (this.load) {
-                 ObjectName on = ((ObjectInstance)result).getObjectName();
-                 AttributeList al = null;
-     			try {
-     				al = load(on);
-     			} catch (FileNotFoundException e1) {
-     				// TODO Auto-generated catch block
-     				e1.printStackTrace();
-     			} catch (IOException e1) {
-     				// TODO Auto-generated catch block
-     				e1.printStackTrace();
-     			}
-                 if (al != null) {
-                 	try {
-     					this.registry.setAttributes(on, al);
-     				} catch (InstanceNotFoundException e) {
-     					// TODO Auto-generated catch block
-     					e.printStackTrace();
-     				} catch (ReflectionException e) {
-     					// TODO Auto-generated catch block
-     					e.printStackTrace();
-     				}
-                 }
-               
-            }*/
         } catch (MalformedObjectNameException e) {
             e.printStackTrace();
         } catch (InstanceAlreadyExistsException e) {
@@ -202,7 +160,8 @@ class JmxRegistry implements Registry {
          	    final Class type, final String domain) {
         boolean result = false;
         try {
-            result = this.registry.isRegistered(getObjectName(name, type, domain));
+            result = this.registry.
+                isRegistered(getObjectName(name, type, domain));
         } catch (MalformedObjectNameException e) {
             LOGGER.log(Level.WARNING, "Failed check", e);
         }
