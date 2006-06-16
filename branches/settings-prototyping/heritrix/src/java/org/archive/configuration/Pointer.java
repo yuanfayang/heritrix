@@ -37,22 +37,23 @@ import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
 /**
- * Utility class to build Configuration Pointers.
- * Creates pointers back into the registry.
- * Based on OpenMBean CompositeType.
- * <p>Tried to do as subclass of CompositeDataSupport but then in remote
+ * Utility class to build {@link Configuration} Pointers. Pointers are
+ * OpenMBean CompositeTypes. They point at other {@link Configuration}s
+ * back in the Registry.  Their data are ObjectNames as Strings.<p>
+ * Tried to do as subclass of CompositeDataSupport but then in remote
  * client, the resultant Reference composite is unrecognizable. Means
  * have to always register CompositeData rather than Pointer and
  * that ConfigurationArrays should be Arrays of CompositeData rather
  * than Pointer.  Added a {@link Pointer#isPointer(CompositeData)}
- * to test CompositeData for Pointer.
+ * to test CompositeData for Pointer.  Because of this, Pointer is
+ * mostly utilty for building a Pointer CompositeType.
  * @author stack
  * @version $Date$ $Revision$
  */
 public class Pointer  {
-    private static final String OBJNAME_KEY = "objname";
+    private static final String OBJECTNAME_KEY = "objectname";
     private static final String [] KEYS =
-        new String [] {OBJNAME_KEY};
+        new String [] {OBJECTNAME_KEY};
     static CompositeType COMPOSITE_TYPE;
     static {
         try {
@@ -76,6 +77,10 @@ public class Pointer  {
         this((CompositeData)null);
     }
     
+    /**
+     * @param on ObjectName of an extant registered Configuration.
+     * @throws OpenDataException
+     */
     public Pointer(final ObjectName on) throws OpenDataException {
         this(create(on));
     }
@@ -94,8 +99,9 @@ public class Pointer  {
     }
     
     public ObjectName getObjectName()
-    throws MalformedObjectNameException, NullPointerException {
-    	    return new ObjectName((String)getCompositeData().get(OBJNAME_KEY));
+    throws MalformedObjectNameException {
+    	    return new ObjectName((String)getCompositeData().
+            get(OBJECTNAME_KEY));
     }
     
     protected static CompositeData create(final ObjectName on)
@@ -113,33 +119,34 @@ public class Pointer  {
      * @return True if a pointer.
      */
     public static boolean isPointer(final CompositeData cd) {
-        boolean result = true;
-        for (int i = 0; i < KEYS.length; i++) {
-            if (!cd.containsKey(KEYS[i])) {
-                result = false;
-                break;
-            }
-        }
-        return result;
+        return cd.getCompositeType().equals(COMPOSITE_TYPE);
     }
     
+    /**
+     * Create an instance of pointed to Configurable with its
+     * Configuration registered in the passed Registry.
+     * @param r Registry to register with.
+     * @return Configurable.
+     * @throws ConfigurationException
+     */
     public Configurable getRegisteredInstance(final Registry r)
     throws ConfigurationException {
-    	ObjectName on;
-    Class c;
-    	try {
+        ObjectName on = null;
+    	    try {
 			on = getObjectName();
-		} catch (MalformedObjectNameException e) {
-			throw new ConfigurationException(e);
-		}
-		final String name = on.getKeyProperty("name");
-		final String type = on.getKeyProperty("type");
-		try {
+    	    } catch (MalformedObjectNameException e) {
+            throw new ConfigurationException(e);
+        }
+		
+        final String name = on.getKeyProperty("name");
+        final String type = on.getKeyProperty("type");
+        Class c;
+        try {
 			c = Class.forName(type);
 		} catch (ClassNotFoundException e) {
-			throw new ConfigurationException("Failed to find class " + type,
-			    e);
-		}
+			throw new ConfigurationException("Failed to find class " +
+                type, e);
+        }
         
         Configurable configurable = null;
 		try {
@@ -160,7 +167,7 @@ public class Pointer  {
 		} catch (InvocationTargetException e) {
 			throw new ConfigurationException(e);
 		}
-        if (!r.isRegistered(name, c, on.getCanonicalKeyPropertyListString())) {
+        if (!r.isRegistered(name, c, on.getDomain())) {
             r.register(name, c, on.getDomain(), configurable.getConfiguration());
         }
         return configurable.initialize(r);

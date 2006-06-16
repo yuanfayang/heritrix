@@ -59,25 +59,30 @@ import org.archive.util.JmxUtils;
 
 
 /**
- * Configuration for a component homed on a domain.
+ * Configuration for a named component homed on a domain.
  * <<abstract>>
  * <p>This class has settings and description of whats 
- * settable, defaults, and value ranges. Implements DynamicMBean
- * and uses OpenMBeans exclusively. Subclasses are meant to add
- * the Attributes particular to a Configurable. Use the 
- * DynamicMBean getAttribute, setAttribute,
- * etc., to set/get values.  This class adds
- * convenience methods to mostly to help build up your MBeanInfo
- * object.<p>
- * An odd thing is {@link #invoke(String, Object[], String[])} and
- * perhaps getMBeanInfo.  Latter is ok as means of getting a package
- * of all the Attributes -- their types, descriptions, etc. -- but the
- * invoke is a little odd.  Leave it for now (TODO).
+ * settable, defaults, and value ranges. Uses OpenMBeans.
+ * Implements DynamicMBean. Subclasses are meant to add
+ * the Attributes particular to the associated {@link Configurable}.
+ * Use the (DynamicMBean) getAttribute, setAttribute,
+ * etc., to set/get values (or {@link #getMBeanInfo()} to get a
+ * concise description of a particular Configuration instance.
+ * This class adds convenience methods.<p>
+ * See the package documentation for examples on how you'd add a
+ * Configuration to a Configurable.<p>
+ * An anamoly that comes of our implementing DynamicMBean is
+ * {@link #invoke(String, Object[], String[])} (and being able to
+ * describe constructors, etc.). Leave it for now.  Perhaps shut
+ * it down? TODO.
+ * <p>TODO: Should I add list of expert and overrideables here or
+ * in subclass?
  * @author stack
  * @version $Date$, $Revision$.
  */
-public abstract class Configuration
+public class Configuration
 implements DynamicMBean, Registration, Serializable {
+    private static final long serialVersionUID = -1092504843609309721L;
     private final Logger LOGGER = Logger.getLogger(this.getClass().getName());
     
     public static final String NAME_KEY = "name";
@@ -87,9 +92,12 @@ implements DynamicMBean, Registration, Serializable {
         new Boolean [] {Boolean.TRUE, Boolean.FALSE};
     
     /**
-     * Base Configuration adds the Enabled attribute.
+     * This base Configuration adds the Enabled attribute, expert
+     * list and overrideable list.
      */
-    public static final String ENABLED_ATTRIBUTE = "Enabled";
+    public static final String ATTR_ENABLED = "Enabled";
+    public static final String ATTR_EXPERT = "Expert";
+    public static final String ATTR_NO_OVERRIDE = "NotOverrideable";
     
     /** 
      * List of all attribute names.
@@ -104,7 +112,7 @@ implements DynamicMBean, Registration, Serializable {
     /**
      * This is used to package up all of the config. contained herein.
      */
-    private MBeanInfo mbeanInfo = null;
+    private final MBeanInfo mbeanInfo;
     
     /**
      * Cache of attributes.
@@ -113,8 +121,7 @@ implements DynamicMBean, Registration, Serializable {
         new HashMap<String, Object>();
     
     /**
-     * Make a String ArrayType to use later in definitions.
-     * Base Configuration adds the Enabled attribute.
+     * Make a String ArrayType used later in subclass definitions.
      */
     @SuppressWarnings("unused")
     public static ArrayType STR_ARRAY_TYPE;
@@ -127,8 +134,7 @@ implements DynamicMBean, Registration, Serializable {
     }
     
     /**
-     * Make a String ArrayType to use later in definitions.
-     * Base Configuration adds the Enabled attribute.
+     * Make a Pointer ArrayType used later in subclass definitions.
      */
     @SuppressWarnings("unused")
     public static ArrayType PTR_ARRAY_TYPE;
@@ -141,7 +147,7 @@ implements DynamicMBean, Registration, Serializable {
     }
     
     /**
-     * Shutdown constructor.
+     * Closed down constructor.
      * @throws ConfigurationException
      */
     private Configuration()
@@ -149,6 +155,14 @@ implements DynamicMBean, Registration, Serializable {
         this((String)null);
     }
         
+    /**
+     * Constructor.
+     * For use by Configurables.  They subclass, add attribute info
+     * by calling {@link #addAttributeInfos(List)} then set values
+     * in {@link #initialize()}.
+     * @param description
+     * @throws ConfigurationException
+     */
     public Configuration(final String description)
     throws ConfigurationException {
         super();
@@ -158,14 +172,46 @@ implements DynamicMBean, Registration, Serializable {
         } catch (OpenDataException e) {
             throw new ConfigurationException(e);
         }
+        
+        // Finish off the construction by calling initialize.
+        try {
+            initialize();
+        } catch (AttributeNotFoundException e) {
+            throw new ConfigurationException(e);
+        } catch (InvalidAttributeValueException e) {
+            throw new ConfigurationException(e);
+        } catch (MBeanException e) {
+            throw new ConfigurationException(e);
+        } catch (ReflectionException e) {
+            throw new ConfigurationException(e);
+        }
     }
     
-    public Configuration(final MBeanInfo m) {
+    /**
+     * Constructor.
+     * Used by Registry reconstituting a Configuration read from
+     * Store so it can register the restored instance..
+     * @param m
+     * @param al
+     */
+    public Configuration(final MBeanInfo m, final AttributeList al) {
         this.mbeanInfo = m;
         MBeanAttributeInfo [] mbai = this.mbeanInfo.getAttributes();
         for (int i = 0; i < mbai.length; i++) {
             this.attributeNames.add(mbai[i].getName());
         }
+        MBeanOperationInfo [] mboi = this.mbeanInfo.getOperations();
+        for (int i = 0; i < mboi.length; i++) {
+            this.operationNames.add(mboi[i].getName());
+        }
+        setAttributes(al);
+    }
+    
+    @SuppressWarnings("unused")
+    protected void initialize()
+    throws AttributeNotFoundException, InvalidAttributeValueException,
+            MBeanException, ReflectionException {
+        // Does nothing.  Called by subclasses to finish up construction.
     }
     
     protected List<String> getAttributeNames() {
@@ -180,7 +226,8 @@ implements DynamicMBean, Registration, Serializable {
      * Create OpenMBeanInfo instance.
      * Called from constructor.  Shouldn't need to override.
      * Override {@link #createAttributeInfo()} and
-     * {@link #createOperationInfo()} instead.
+     * {@link #createOperationInfo()} instead.<p>
+     * TOOD: Allow adding notifications at least, perhaps operations.
      * @param className Full name of class these settings are for.
      * @param description Description of this Settings.
      * @return An OpenMBeanInfo instance.
@@ -219,12 +266,26 @@ implements DynamicMBean, Registration, Serializable {
         return ombai;
     }
     
+    /**
+     * Override, call super and then add {@link Configurable}
+     * attributes.
+     * @param infos
+     * @return List of attribute info.
+     * @throws OpenDataException
+     */
     protected List<OpenMBeanAttributeInfo> addAttributeInfos(
     	final List<OpenMBeanAttributeInfo> infos)
     throws OpenDataException {
-        infos.add(new OpenMBeanAttributeInfoSupport(ENABLED_ATTRIBUTE,
+        infos.add(new OpenMBeanAttributeInfoSupport(ATTR_ENABLED,
             "Enabled if true", SimpleType.BOOLEAN,
             true, true, true, Boolean.TRUE, TRUE_FALSE_LEGAL_VALUES));
+        ArrayType at = new ArrayType(1, SimpleType.STRING);
+        infos.add(new OpenMBeanAttributeInfoSupport(ATTR_EXPERT,
+            "Array of expert attribute names", at,
+            true, true, false));
+        infos.add(new OpenMBeanAttributeInfoSupport(ATTR_NO_OVERRIDE,
+            "Array of overrideable attribute names", at,
+            true, true, false));
         return infos;
     }
     
@@ -279,7 +340,7 @@ implements DynamicMBean, Registration, Serializable {
     throws AttributeNotFoundException {
         checkValidAttributeName(attributeName);
         // Else attribute is known.  Do we have it in our cache?  If not,
-        // create.
+        // create and add.
         return this.attributes.containsKey(attributeName)?
             this.attributes.get(attributeName):
             addAttribute(attributeName);
@@ -287,22 +348,22 @@ implements DynamicMBean, Registration, Serializable {
     
     protected Object addAttribute(final String attributeName)
     throws AttributeNotFoundException {
-    	MBeanAttributeInfo [] mbai = this.mbeanInfo.getAttributes();
-    	Object result = null;
-    	for (int i = 0; i < mbai.length; i++) {
-    		OpenMBeanAttributeInfo info = (OpenMBeanAttributeInfo)mbai[i];
-    		if (info.getName().equals(attributeName)) {
-    			result = info.getDefaultValue();
-    			// Add to cache.
-    			this.attributes.put(attributeName, result);
-    			break;
-    		}
-    	}
-    	if (result == null) {
-    		throw new AttributeNotFoundException("No value for " +
-    		    attributeName);
-    	}
-    	return result;
+        MBeanAttributeInfo [] mbai = this.mbeanInfo.getAttributes();
+    	    Object result = null;
+    	    for (int i = 0; i < mbai.length; i++) {
+    	        OpenMBeanAttributeInfo info = (OpenMBeanAttributeInfo)mbai[i];
+    	        if (info.getName().equals(attributeName)) {
+    	            result = info.getDefaultValue();
+    	            // Add to cache.
+    	            this.attributes.put(attributeName, result);
+    	            break;
+    	        }
+    	    }
+    	    if (result == null) {
+    	        throw new AttributeNotFoundException("No value for " +
+    	                attributeName);
+    	    }
+    	    return result;
     }
     
     public AttributeList getAttributes(String[] atts) {
@@ -328,7 +389,7 @@ implements DynamicMBean, Registration, Serializable {
     @SuppressWarnings("unused")
     public synchronized void setAttribute(Attribute attribute)
     throws AttributeNotFoundException, InvalidAttributeValueException,
-    MBeanException, ReflectionException {
+            MBeanException, ReflectionException {
         checkValidAttributeName(attribute.getName());
         this.attributes.put(attribute.getName(), attribute.getValue());
     }
@@ -390,9 +451,5 @@ implements DynamicMBean, Registration, Serializable {
 
     public void postDeregister() {
         // TODO
-    }
-    
-    public static void main(String[] args) {
-        // TODO: How to get in context.
     }
 }

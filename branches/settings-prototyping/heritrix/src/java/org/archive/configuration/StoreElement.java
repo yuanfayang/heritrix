@@ -1,8 +1,11 @@
 package org.archive.configuration;
 
+import java.io.Serializable;
+
 import javax.management.ObjectName;
 
-public class StoreElement {
+@SuppressWarnings("serial")
+public class StoreElement implements Serializable {
     private final Configuration configuration;
     private final ObjectName objectName;
     

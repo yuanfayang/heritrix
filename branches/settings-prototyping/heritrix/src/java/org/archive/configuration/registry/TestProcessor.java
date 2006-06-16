@@ -94,4 +94,9 @@ public class TestProcessor implements Configurable {
         }
         return configuration;
     }
+
+    public String getName() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

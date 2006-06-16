@@ -29,31 +29,27 @@ import java.io.IOException;
 import javax.management.AttributeNotFoundException;
 
 
-
 /**
- * Registry of application configuration.
- * Come here to get component configuration.
- * <p><<Prototype>>
- * <p>TODO: Add serializing Visitor.  Pass on construction or to an init.
- * The Visitor will know how to load configuration.  Must work on a
- * per-component basis so can load single component's config. only.
+ * Registry of application Configurations.
+ * Come here to get {@link Configurable} component configuration.
  * @author stack
- * @see <a href="http://crawler.archive.org/cgi-bin/wiki.pl?SettingsFrameworkRefactoring">Settings Framework Refactoring</a>
- */
+  */
 public interface Registry {    
     /**
      * Initialize the registry.
-     * @param baseDomain Domain to base the registry on.
+     * @param baseDomain Domain to home the registry on.
      * @param store Store to persist registry to.
      */
     public void initialize(final String baseDomain, final Store store);
     
     
     /**
-     * Get <code>attributeName</code> on <code>component</code>.
-     * @param attributeName Name of component atribute to get.
-     * @param componentName Name of component that has
-     * <code>attributeName</code>.
+     * Get <code>attributeName</code> on {@link Configurable}
+     * <code>component</code>.
+     * @param attributeName Name of {@link Configurable} component
+     * atribute to get.
+     * @param componentName Name of {@link Configurable} component
+     * that has <code>attributeName</code>.
      * @return Value of <code>attributeName</code>.
      * @throws AttributeNotFoundException
      */
@@ -61,10 +57,12 @@ public interface Registry {
     throws AttributeNotFoundException;
     
     /**
-     * Get <code>attributeName</code> on <code>component</code>.
-     * @param attributeName Name of component atribute to get.
-     * @param componentName Name of component that has
-     * <code>attributeName</code>.
+     * Get <code>attributeName</code> on {@link Configurable}
+     * <code>component</code>.
+     * @param attributeName Name of {@link Configurable} component
+     * atribute to get.
+     * @param componentName Name of {@link Configurable} component
+     * that has <code>attributeName</code>.
      * @param componentType Type of component.
      * @return Value of <code>attributeName</code>.
      * @throws AttributeNotFoundException
@@ -74,11 +72,12 @@ public interface Registry {
     throws AttributeNotFoundException;
     
     /**
-     * Get <code>attributeName</code> on <code>component</code>
-     * in <code>domain</code>.
-     * @param attributeName Name of component atribute to get.
-     * @param componentName Name of component that has
-     * <code>attributeName</code>.
+     * Get <code>attributeName</code> on {@link Configurable}
+     * <code>component</code>.
+     * @param attributeName Name of {@link Configurable} component
+     * atribute to get.
+     * @param componentName Name of {@link Configurable} component
+     * that has <code>attributeName</code>.
      * @param componentType Type of component.
      * @param domain Domain scope for Settings.  Domain should be
      * specified reversed as is done in java packaging: e.g. To find Settings
