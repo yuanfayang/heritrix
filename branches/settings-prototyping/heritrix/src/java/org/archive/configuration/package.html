@@ -9,22 +9,22 @@ Provides application configuration.
 
 <h2>Package Specification</h2>
 
-<h2>Axioms and Assumptions</h2>
+<h3>Axioms and Assumptions</h3>
 <ul>
-<li>Every setting/configuration is done as an OpenMBean JMX Attribute.
-OpenMBeans are the basis of new Settings.
-OpenMBean JMX Attributes have name, value, description, default,
-and constraints.</li>
-<li>Because of above, equires java 5.0 (Uses javax.management).</li>
-    <li>Classes that are configurable implement
+<li>Every setting/configuration is a <a 
+href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/openmbean/package-summary.html">javax.management.openmbean</a> JMX Attribute.  OpenMBeans are the basis of the *new* Settings system
+(This package replaces the *old* <code>org.archive.crawler.settings</code>
+package).  OpenMBean JMX Attributes have name, value, description, default, and
+constraints.</li>
+    <li>Classes that are <i>configurable</i> implement
     <i>Configurable</i> and have a
     <i>Configuration</i>.  A Configuration describes whats configurable,
-    defaults and constraints using an MBean composition, the
-	MBeanInfo: Has means of interrogating list of 
+    defaults and constraints using an MBean composition,
+	<a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanInfo.html">MBeanInfo</a>: Has means of interrogating list of 
 	OpenMBean JMX Attributes, etc.
     </li>
     <li>Configurable Classes look up Configuration in the <i>Registry</i>.
-    Configuration gotten any other way is dead as oppposed to live
+    Configuration gotten any other way is *dead* as oppposed to *live*
     Configuration.  Only Registry has true state of Configuration.
     Registry is passed on initialization.  Configurable Classes can keep
     reference to Registry for future use or configure all on initialization
@@ -46,16 +46,16 @@ and constraints.</li>
     </li>
 </ul>
 
-<h2>Example Configurable Class Implementation</h2>
+<h3>Example Configurable Class Implementation</h3>
 <pre>
 TODO Static inner class.
 TODO Static dynamic class.
 </pre>
 
-<h2>Model</h2>
+<h3>Model</h3>
 <img alt="Configuration model" src="configuration.gif" />
 
-<h2>TODOs</h2>
+<h3>TODOs</h3>
 <ul>
     <li>Notifications: Missing from the Model below are setters.
     If we add setters, then Notifications are done by the Registry
@@ -86,7 +86,7 @@ TODO Static dynamic class.
 	overrideable?  How?</li>
 </ul>
 
-<h2>Comparison to old Settings system</h2>
+<h3>Comparison to old Settings system</h3>
 <ul>
 	<li>No boostrapping of core components is done by this system.
 	Should make it so don't have to instantiate all that comes
