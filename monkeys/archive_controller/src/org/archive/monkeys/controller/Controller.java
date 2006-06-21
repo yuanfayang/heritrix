@@ -19,6 +19,8 @@ public class Controller implements Serializable {
 	private Map<Long, Task> assignedTasks;
 
 	private List<Task> completedTasks;
+	
+	private Map<Long, Task> allTasks;
 
 	private NanoContainer nano;
 
@@ -30,14 +32,17 @@ public class Controller implements Serializable {
 		freeTasks = new LinkedList<Task>();
 		assignedTasks = new HashMap<Long, Task>();
 		completedTasks = new LinkedList<Task>();
+		allTasks = new HashMap<Long, Task>();
 		nano = NanoContainer.getInstance();
 		nanoId = nano.put(this);
 		taskCounter = 0;
 	}
 	
 	public void submitTask(JSONObject taskData) throws Exception {
-		Task t = new Task(taskData, nextTaskId());
+		long tId = nextTaskId();
+		Task t = new Task(taskData, tId);
 		freeTasks.add(t);
+		allTasks.put(tId, t);
 	}
 	
 	public Iterator<Task> getFreeTasksIterator() {
@@ -46,6 +51,19 @@ public class Controller implements Serializable {
 	
 	public Iterator<Task> getAssignedTasksIterator() {
 		return assignedTasks.values().iterator();
+	}
+	
+	public Task.Status getTaskStatus(long taskId) throws IllegalArgumentException {
+		Task t = allTasks.get(taskId);
+		if (t == null) {
+			throw new IllegalArgumentException("Task with given ID doesn't exist");
+		} else {
+			return t.getStatus();
+		}
+	}
+	
+	public void cancelTask(long taskId) throws Exception {
+		
 	}
 	
 	private long nextTaskId() {
