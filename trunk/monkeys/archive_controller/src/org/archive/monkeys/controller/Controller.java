@@ -96,6 +96,22 @@ public class Controller implements Serializable {
 		return t.getTaskData();
 	}
 	
+	public void completeTask(long taskId, String monkeyId) throws Exception {
+		Task t = allTasks.get(taskId);
+		if (t == null) {
+			throw new Exception("Invalid task ID");
+		}
+		
+		if (t.getStatus() != Task.Status.ASSIGNED) {
+			throw new Exception("Task was not assigned");
+		}
+		
+		t.setStatus(Task.Status.COMPLETE);
+		
+		assignedTasks.remove(taskId);
+		completedTasks.add(t);
+	}
+	
 	// helper methods 
 	
 	protected void removeTaskFromCollections(Task t) {
