@@ -1,0 +1,6 @@
+content monkey chrome/content/
+overlay chrome://browser/content/browser.xul chrome://monkey/content/overlay.xul
+
+locale monkey en-US chrome/locale/en-US/
+
+skin monkey classic/1.0 chrome/skin/
