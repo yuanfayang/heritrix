@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 
 import org.json.simple.JSONObject;
@@ -20,6 +21,8 @@ public class Controller implements Serializable {
 
 	private List<Task> completedTasks;
 	
+	private List<Task> failedTasks;
+	
 	private Map<Long, Task> allTasks;
 
 	private NanoContainer nano;
@@ -32,15 +35,18 @@ public class Controller implements Serializable {
 		freeTasks = new LinkedList<Task>();
 		assignedTasks = new HashMap<Long, Task>();
 		completedTasks = new LinkedList<Task>();
+		failedTasks = new LinkedList<Task>();
 		allTasks = new HashMap<Long, Task>();
 		nano = NanoContainer.getInstance();
 		nanoId = nano.put(this);
 		taskCounter = 0;
 	}
 	
+	// Methods used by the operator-controller interface
+	
 	public void submitTask(JSONObject taskData) throws Exception {
 		long tId = nextTaskId();
-		Task t = new Task(taskData, tId);
+		Task t = new Task(taskData, this, tId);
 		freeTasks.add(t);
 		allTasks.put(tId, t);
 	}
@@ -63,7 +69,41 @@ public class Controller implements Serializable {
 	}
 	
 	public void cancelTask(long taskId) throws Exception {
+		Task t = allTasks.get(taskId);
+		if (t == null) {
+			throw new IllegalArgumentException("Task with given ID doesn't exist");
+		}
 		
+		t.cancel();
+	}
+	
+	public Iterator<Task> getFailedTasksIterator() {
+		return failedTasks.iterator();
+	}
+	
+	// methods used by the monkey-controller interface
+	
+	public JSONObject getTask(String monkeyId) throws Exception {
+		Task t = freeTasks.poll();
+		
+		if (t == null) {
+			throw new Exception("There are no free tasks.");
+		}
+		
+		t.setMonkeyId(monkeyId);
+		t.setStatus(Task.Status.ASSIGNED);
+		assignedTasks.put(t.getId(), t);
+		return t.getTaskData();
+	}
+	
+	// helper methods 
+	
+	protected void removeTaskFromCollections(Task t) {
+		freeTasks.remove(t);
+		assignedTasks.remove(t.getId());
+		completedTasks.remove(t);
+		failedTasks.remove(t);
+		allTasks.remove(t.getId());
 	}
 	
 	private long nextTaskId() {
