@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="1"
+   name=""
+   committed-date="2006-05-29T19:21:09.302994Z"
+   url="file:///home/pesachzon/repos/google_soc/firefox_monkeys/helloworld/locale"
+   last-author="pesachzon"
+   kind="dir"
+   uuid="08002733-f214-0410-99d5-a2670d45c179"
+   revision="1"/>
+<entry
+   name="en-US"
+   kind="dir"/>
+</wc-entries>

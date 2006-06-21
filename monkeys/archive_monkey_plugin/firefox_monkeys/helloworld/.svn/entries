@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="1"
+   name=""
+   committed-date="2006-05-29T19:21:09.302994Z"
+   url="file:///home/pesachzon/repos/google_soc/firefox_monkeys/helloworld"
+   last-author="pesachzon"
+   kind="dir"
+   uuid="08002733-f214-0410-99d5-a2670d45c179"
+   revision="1"/>
+<entry
+   name="locale"
+   kind="dir"/>
+<entry
+   committed-rev="1"
+   name="install.rdf"
+   text-time="2006-05-29T19:22:05.000000Z"
+   committed-date="2006-05-29T19:21:09.302994Z"
+   checksum="8af12deb0ea34582bbb05c1c322277c4"
+   last-author="pesachzon"
+   kind="file"
+   prop-time="2006-05-29T19:22:05.000000Z"/>
+<entry
+   committed-rev="1"
+   name="chrome.manifest"
+   text-time="2006-05-29T19:22:05.000000Z"
+   committed-date="2006-05-29T19:21:09.302994Z"
+   checksum="56376f3831a8fd371ce5e036356796b3"
+   last-author="pesachzon"
+   kind="file"
+   prop-time="2006-05-29T19:22:05.000000Z"/>
+<entry
+   name="skin"
+   kind="dir"/>
+<entry
+   committed-rev="1"
+   name="helloworld@mozilla.doslash.org"
+   text-time="2006-05-29T19:22:05.000000Z"
+   committed-date="2006-05-29T19:21:09.302994Z"
+   checksum="c1bd33f9665fa9d5dac3f10c4fd16bd6"
+   last-author="pesachzon"
+   kind="file"
+   prop-time="2006-05-29T19:22:05.000000Z"/>
+<entry
+   committed-rev="1"
+   name="build.sh"
+   text-time="2006-05-29T19:22:05.000000Z"
+   committed-date="2006-05-29T19:21:09.302994Z"
+   checksum="7b7735442777667f54cc3b081bb2610b"
+   last-author="pesachzon"
+   kind="file"
+   prop-time="2006-05-29T19:22:05.000000Z"/>
+<entry
+   name="content"
+   kind="dir"/>
+<entry
+   committed-rev="1"
+   name="helloworld.xpi"
+   text-time="2006-05-29T19:22:05.000000Z"
+   committed-date="2006-05-29T19:21:09.302994Z"
+   checksum="2d07e608dfebeadb3329c0691b7534a7"
+   last-author="pesachzon"
+   kind="file"
+   prop-time="2006-05-29T19:22:05.000000Z"/>
+<entry
+   committed-rev="1"
+   name="readme.txt"
+   text-time="2006-05-29T19:22:05.000000Z"
+   committed-date="2006-05-29T19:21:09.302994Z"
+   checksum="0f7ef95003c9cdfdc3becaea5bcec102"
+   last-author="pesachzon"
+   kind="file"
+   prop-time="2006-05-29T19:22:05.000000Z"/>
+<entry
+   committed-rev="1"
+   name="config_build.sh"
+   text-time="2006-05-29T19:22:05.000000Z"
+   committed-date="2006-05-29T19:21:09.302994Z"
+   checksum="24069922539d7ba764a12b1d5755d73d"
+   last-author="pesachzon"
+   kind="file"
+   prop-time="2006-05-29T19:22:05.000000Z"/>
+</wc-entries>
