@@ -68,6 +68,16 @@ public class Task {
 		}
 	}
 	
+	public void assign(String monkeyId) {
+		setMonkeyId(monkeyId);
+		setStatus(Status.ASSIGNED);
+		controller.taskAssigned(this);
+	}
+	
+	public void success() {
+		
+	}
+	
 	public void fail() {
 		//TODO implement
 	}

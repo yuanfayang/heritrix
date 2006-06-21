@@ -18,6 +18,8 @@ public class Controller implements Serializable {
 	private Queue<Task> freeTasks;
 
 	private Map<Long, Task> assignedTasks;
+	
+	private Map<String, Task> monkeyToAssignedTask;
 
 	private List<Task> completedTasks;
 	
@@ -34,6 +36,7 @@ public class Controller implements Serializable {
 	public Controller() {
 		freeTasks = new LinkedList<Task>();
 		assignedTasks = new HashMap<Long, Task>();
+		monkeyToAssignedTask = new HashMap<String, Task>();
 		completedTasks = new LinkedList<Task>();
 		failedTasks = new LinkedList<Task>();
 		allTasks = new HashMap<Long, Task>();
@@ -84,35 +87,39 @@ public class Controller implements Serializable {
 	// methods used by the monkey-controller interface
 	
 	public JSONObject getTask(String monkeyId) throws Exception {
+		if (monkeyToAssignedTask.get(monkeyId) != null) {
+			monkeyToAssignedTask.get(monkeyId).fail();
+		}
+		
 		Task t = freeTasks.poll();
 		
 		if (t == null) {
 			throw new Exception("There are no free tasks.");
 		}
 		
-		t.setMonkeyId(monkeyId);
-		t.setStatus(Task.Status.ASSIGNED);
-		assignedTasks.put(t.getId(), t);
+		t.assign(monkeyId);
+		
 		return t.getTaskData();
 	}
 	
-	public void completeTask(long taskId, String monkeyId) throws Exception {
-		Task t = allTasks.get(taskId);
-		if (t == null) {
-			throw new Exception("Invalid task ID");
+	public void completeTask(String monkeyId, long taskId) throws Exception {
+		Task t = monkeyToAssignedTask.get(monkeyId);
+		
+		//TODO handle null
+		if (t.getId() != taskId) {
+			t.fail();
+			throw new Exception("Completed the wrong task.");
+		} else {
+			
 		}
-		
-		if (t.getStatus() != Task.Status.ASSIGNED) {
-			throw new Exception("Task was not assigned");
-		}
-		
-		t.setStatus(Task.Status.COMPLETE);
-		
-		assignedTasks.remove(taskId);
-		completedTasks.add(t);
 	}
 	
 	// helper methods 
+	
+	protected void taskAssigned(Task t) {
+		assignedTasks.put(t.getId(), t);
+		monkeyToAssignedTask.put(t.getMonkeyId(), t);
+	}
 	
 	protected void removeTaskFromCollections(Task t) {
 		freeTasks.remove(t);
@@ -120,6 +127,10 @@ public class Controller implements Serializable {
 		completedTasks.remove(t);
 		failedTasks.remove(t);
 		allTasks.remove(t.getId());
+		
+		if (monkeyToAssignedTask.get(t.getMonkeyId()).equals(t)) {
+			monkeyToAssignedTask.remove(t.getMonkeyId());
+		}
 	}
 	
 	private long nextTaskId() {
