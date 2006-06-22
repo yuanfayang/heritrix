@@ -82,7 +82,6 @@ public class SimpleHttpServer
 
 
     public SimpleHttpServer() throws Exception {
-
         this(DEFAULT_PORT, true);
     }
 
@@ -100,10 +99,10 @@ public class SimpleHttpServer
      * @param expandWebapps True if we're to expand the webapp passed.
      * @throws Exception
      */
-    public SimpleHttpServer(String name, String context, int port,
-        boolean expandWebapps)
+    public SimpleHttpServer(boolean localhostOnly, String name, String context,
+        int port, boolean expandWebapps)
     throws Exception {
-        initialize(port);
+        initialize(port,localhostOnly);
         addWebapp(name, context, expandWebapps);
         this.server.setRequestLog(getServerLogging());
     }
@@ -116,7 +115,7 @@ public class SimpleHttpServer
      */
     public SimpleHttpServer(List webapps, int port, boolean expandWebapps)
     throws Exception {
-        initialize(port);
+        initialize(port,false);
         
         // Add each of the webapps in turn. If we're passed the root webapp,
         // give it special handling -- assume its meant to be server root and
@@ -167,11 +166,25 @@ public class SimpleHttpServer
      * Called from constructors.
      * @param port Port to start the server on.
      */
-    protected void initialize(int port) {
+    protected void initialize(int port, boolean localhostOnly) {
         this.server = new Server();
         this.port = port;
-        SocketListener listener = new SocketListener();
-        listener.setPort(port);
+        SocketListener listener = null;
+        if (localhostOnly) {
+            try {
+                org.mortbay.util.InetAddrPort localInetAddr = 
+                    new org.mortbay.util.InetAddrPort(
+                        java.net.InetAddress.getLocalHost(),port);
+                listener = new SocketListener(localInetAddr);
+            } catch (java.net.UnknownHostException e) {
+                // Output localhost ain't working.
+                e.printStackTrace();
+            }
+        }
+        if (listener == null) {
+            listener = new SocketListener();
+            listener.setPort(port);
+        }
         this.server.addListener(listener);
     }
     
@@ -347,9 +360,10 @@ public class SimpleHttpServer
      * @param newUsername new username (may be same as old)
      * @param newPassword new password
      */
-    public void resetAuthentication(String realmAndRoleName, String oldUsername, 
-            String newUsername, String newPassword) {
-        HashUserRealm realm = (HashUserRealm) this.server.getRealm(realmAndRoleName);
+    public void resetAuthentication(String realmAndRoleName,
+        String oldUsername, String newUsername, String newPassword) {
+        HashUserRealm realm = (HashUserRealm)this.server.
+            getRealm(realmAndRoleName);
         realm.remove(oldUsername);
         realm.put(newUsername,newPassword);
         realm.addUserToRole(newUsername, realmAndRoleName);
