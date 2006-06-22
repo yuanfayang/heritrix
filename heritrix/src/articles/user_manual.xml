@@ -290,6 +290,19 @@
         </sect4>
 
         <sect4>
+          <title>heritrix.context</title>
+          <para>Provide an alternate context for the Heritrix admin
+	UI.  Usually the admin webapp is mounted on root: i.e. '/'.
+          </para>
+        </sect4>
+        <sect4>
+          <title>heritrix.localhostonly</title>
+          <para>Have the Heritrix UI listen for connections from
+		localhost only.
+          </para>
+        </sect4>
+
+        <sect4>
           <title>heritrix.development</title>
 
           <para>Set this property when you want to run
