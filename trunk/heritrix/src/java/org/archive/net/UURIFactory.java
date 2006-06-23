@@ -411,9 +411,7 @@ public class UURIFactory extends URI {
         }
         
         // Kill newlines etc
-        if (uri.indexOf(NEWLINE) >= 0) {
-            uri = TextUtils.replaceAll(NEWLINE, uri, EMPTY_STRING);
-        }
+        uri = TextUtils.replaceAll(NEWLINE, uri, EMPTY_STRING);
         
         // Test for the case of more than two slashes after the http(s) scheme.
         // Replace with two slashes as mozilla does if found.
