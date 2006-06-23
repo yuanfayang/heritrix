@@ -143,6 +143,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     public static final String ATTR_ACCEPT_HEADERS = "accept-headers";
     public static final String ATTR_DEFAULT_ENCODING = "default-encoding";
     public static final String ATTR_SHA1_CONTENT = "sha1-content";
+    public static final String ATTR_FETCH_BANDWIDTH_MAX = "fetch-bandwidth";
    
     /**
      * SSL trust level setting attribute name.
@@ -152,7 +153,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     private static Integer DEFAULT_TIMEOUT_SECONDS = new Integer(1200);
     private static Integer DEFAULT_SOTIMEOUT_MS = new Integer(20000);
     private static Long DEFAULT_MAX_LENGTH_BYTES = new Long(0);
-    
+    private static Integer DEFAULT_FETCH_BANDWIDTH_MAX = 0;
+
     /**
      * This is the default value pre-1.4. Needs special handling else
      * treated as negative number doing math later in processing.
@@ -284,6 +286,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             " configuration: ensures at least one retry read.",
                 DEFAULT_SOTIMEOUT_MS));
         e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(ATTR_FETCH_BANDWIDTH_MAX,
+            "The maximum KB/sec to use when fetching data from a server. " +
+            "0 means no maximum.  Default: "+ DEFAULT_FETCH_BANDWIDTH_MAX
+             + ".", DEFAULT_FETCH_BANDWIDTH_MAX));
+        e.setExpertSetting(true);
+        e.setOverrideable(true);
         addElementToDefinition(new SimpleType(ATTR_MAX_LENGTH_BYTES,
             "Maximum length in bytes to fetch.\n" +
             "Fetch is truncated at this length. A value of 0 means no limit.",
@@ -458,12 +466,16 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // set hardMax on bytes (if set by operator)
         long hardMax = getMaxLength(curi);
 
+	// Get max fetch rate (bytes/ms). It comes in in KB/sec, which
+	// requires nothing to normalize.
+        int maxFetchRate = getMaxFetchRate(curi);
+
         try {
             if (!method.isAborted()) {
                 // Force read-to-end, so that any socket hangs occur here,
                 // not in later modules.
                 rec.getRecordedInput().readFullyOrUntil(softMax,
-                        hardMax, 1000 * getTimeout(curi));
+                        hardMax, 1000 * getTimeout(curi), maxFetchRate);
             }
         } catch (RecorderTimeoutException ex) {
             doAbort(curi, method, "timeTrunc");
@@ -1111,6 +1123,17 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             res = (Integer) getAttribute(ATTR_TIMEOUT_SECONDS, curi);
         } catch (Exception e) {
             res = DEFAULT_TIMEOUT_SECONDS;
+        }
+        return res.intValue();
+    }
+
+    private int getMaxFetchRate(CrawlURI curi) {
+        Integer res;
+        try {
+            res = (Integer)getAttribute(ATTR_FETCH_BANDWIDTH_MAX, curi);
+        }
+        catch (Exception e) {
+            res = DEFAULT_FETCH_BANDWIDTH_MAX;
         }
         return res.intValue();
     }
