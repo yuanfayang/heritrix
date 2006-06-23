@@ -65,7 +65,7 @@ public class RecordingInputStreamTest extends TmpDirTestCase
                 "abcdefghijklmnopqrstuvwxyz".getBytes());
         // test soft max
         ris.open(bais);
-        ris.readFullyOrUntil(7,10,0);
+        ris.readFullyOrUntil(7,10,0,0);
         ris.close();
         ReplayInputStream res = ris.getReplayInputStream();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -77,7 +77,7 @@ public class RecordingInputStreamTest extends TmpDirTestCase
         ris.open(bais);
         boolean exceptionThrown = false; 
         try {
-            ris.readFullyOrUntil(13,10,0);
+            ris.readFullyOrUntil(13,10,0,0);
         } catch (RecorderLengthExceededException ex) {
             exceptionThrown = true;
         }

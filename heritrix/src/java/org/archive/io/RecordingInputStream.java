@@ -167,19 +167,26 @@ public class RecordingInputStream
      * @param timeout Timeout in milliseconds for total read; if zero or
      * negative, timeout is <code>Long.MAX_VALUE</code>. If exceeded, throw
      * RecorderTimeoutException
+     * @param maxBytesPerMs How many bytes per millisecond.
      * @throws IOException failed read.
      * @throws RecorderLengthExceededException
      * @throws RecorderTimeoutException
      * @throws InterruptedException
      */
-    public void readFullyOrUntil(long softMaxLength, long hardMaxLength, long timeout)
+    public void readFullyOrUntil(long softMaxLength, long hardMaxLength,
+	long timeout, int maxBytesPerMs)
         throws IOException, RecorderLengthExceededException,
-            RecorderTimeoutException, InterruptedException
-    {
+            RecorderTimeoutException, InterruptedException {
         // Check we're open before proceeding.
         if (!isOpen()) {
             // TODO: should this be a noisier exception-raising error? 
             return;
+        }
+
+        // We need the rate limit in ms per byte, so turn it over
+        double minMsPerByte = 0.0;
+        if (maxBytesPerMs != 0) {
+            minMsPerByte = ((double)1.0)/(double)maxBytesPerMs;
         }
 
         long maxLength;
@@ -206,20 +213,47 @@ public class RecordingInputStream
             timeoutTime = Long.MAX_VALUE;
         }
 
-        long totalBytes = 0;
-        long bytesRead = -1;
+        long totalReadingTime = 0L;
+        long totalBytes = 0L;
+        long bytesRead = -1L;
         int maxToRead = -1; 
         while (true) {
             try {
                 maxToRead = (maxLength <= 0) 
                     ? drainBuffer.length 
-                    : (int) Math.min(drainBuffer.length, maxLength - totalBytes); 
+                    : (int) Math.min(drainBuffer.length, maxLength - totalBytes);
+                // Now, decide if (and for how long) to sleep, prior to reading,
+                // in order to yield the average fetch rate desired.
+                if (minMsPerByte != 0.0 && totalBytes > 0L) {
+                    // We've already fetched something, so we can estimate the
+                    // actual bandwidth we've been getting. This number is used
+                    // to figure out how many ms we need to wait before
+                    // starting the next read.  We want the stats at the end of
+                    // that read to be within the specified bounds.
+                    double actualMsPerByte =
+                        ((double)totalReadingTime)/(double)totalBytes;
+                    // Calculate the minimum time
+                    long minTime =
+                        (long)((totalBytes + maxToRead) * minMsPerByte);
+                    // Calculate the actual time spent, plus the estimated time
+                    // for the bytes to read
+                    long estTime = System.currentTimeMillis() - startTime +
+                        (long)(maxToRead * actualMsPerByte);
+                    // If estTime <  minTime, sleep for the difference
+                    if (estTime < minTime) {
+                        Thread.sleep(minTime - estTime);
+                    }
+                }
+
+                long readStartTime = System.currentTimeMillis();
                 bytesRead = read(drainBuffer,0,maxToRead);
                 if (bytesRead == -1) {
                     break;
                 }
                 totalBytes += bytesRead;
-                if(Thread.interrupted()) {
+                totalReadingTime += System.currentTimeMillis() - readStartTime;
+
+                if (Thread.interrupted()) {
                     throw new InterruptedException("Interrupted during IO");
                 }
             } catch (SocketTimeoutException e) {
