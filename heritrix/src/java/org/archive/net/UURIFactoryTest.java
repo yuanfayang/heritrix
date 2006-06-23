@@ -815,4 +815,10 @@ public class UURIFactoryTest extends TestCase {
         assertEquals("encoding of " + idn2, puny2, UURIFactory
                 .getInstance(idn2).toString());
     }
+    
+    public void testNewLineInURL() throws URIException {
+    	UURI uuri = UURIFactory.getInstance("http://www.ar\rchive\n." +
+    	    "org/i\n\n\r\rndex.html");
+    	assertEquals("http://www.archive.org/index.html", uuri.toString());
+    }
 }
