@@ -3,6 +3,7 @@ function magic_button() {
     getBrowser().contentDocument.location = "http://www.eggkeg.com";
 }
 
+/* Sends a ping request to the harness servlet */
 function pinger() {
 	//getBrowser().contentDocument.write("pinging...<br/>");
 	http_request = new XMLHttpRequest();
@@ -15,6 +16,7 @@ function showResponse() {
 	getBrowser().contentDocument.write("["+http_request.responseText+"]");
 }
 
+/* Initializes the monkey plugin. */
 function monkey_load() {
 	try {
 		netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
