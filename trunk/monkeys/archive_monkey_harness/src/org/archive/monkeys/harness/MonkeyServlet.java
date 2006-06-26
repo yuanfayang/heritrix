@@ -9,6 +9,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * The Monkey Servlet is responsible for accepting pings from the browser monkey
+ * and performing other operations requested by the monkey.
+ * @author Eugene Vahlis
+ */
 public class MonkeyServlet extends HttpServlet {
 
 	/**
@@ -19,6 +24,9 @@ public class MonkeyServlet extends HttpServlet {
 	private MonkeyHeartbeatTracker heartbeat;
 
 	@Override
+	/**
+	 * Initializes the servlet. A new heart beat tracker is created and started.
+	 */
 	public void init(ServletConfig conf) throws ServletException {
 		// TODO Auto-generated method stub
 		heartbeat = new MonkeyHeartbeatTracker();
@@ -27,6 +35,11 @@ public class MonkeyServlet extends HttpServlet {
 		System.err.println("In monkey servlet init..");
 	}
 
+	/**
+	 * Handles a method call by the monkey. The monkey's HTTP request
+	 * should contain a parameter 'method' which is used to determine which method to call.
+	 * For example: if method is 'test' then doTest will be executed.
+	 */
 	protected void service(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		// get the special method name if any
@@ -75,6 +88,9 @@ public class MonkeyServlet extends HttpServlet {
 		response.getWriter().println("<h1>This is doTest</h1>");
 	}
 
+	/**
+	 * Accepts a ping from the monkey and pings the heart beat tracker.
+	 */
 	public void doHeartBeat(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		this.heartbeat.ping();
@@ -94,6 +110,9 @@ public class MonkeyServlet extends HttpServlet {
 	}
 
 	@Override
+	/**
+	 * Destroys the servlet. The heart beat tracker is shut down.
+	 */
 	public void destroy() {
 		this.heartbeat.interrupt();
 		try {
