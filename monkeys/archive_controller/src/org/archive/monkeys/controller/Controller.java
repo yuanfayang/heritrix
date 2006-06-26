@@ -11,6 +11,12 @@ import java.util.Queue;
 
 import org.json.simple.JSONObject;
 
+/**
+ * The core class of the Controller part, as defined in the design documentation.
+ * A Controller object contains all the data structures of the controller part and the
+ * necessary methods needed to manipulate them.
+ * @author Eugene Vahlis
+ */
 public class Controller implements Serializable {
 
 	private static final long serialVersionUID = -5287018642282073804L;
@@ -33,6 +39,9 @@ public class Controller implements Serializable {
 	
 	private long taskCounter;
 
+	/**
+	 * Creates a new controller with all data structures empty.
+	 */
 	public Controller() {
 		freeTasks = new LinkedList<Task>();
 		assignedTasks = new HashMap<Long, Task>();
@@ -47,6 +56,11 @@ public class Controller implements Serializable {
 	
 	// Methods used by the operator-controller interface
 	
+	/**
+	 * Creates a new task using the given task data, if the data is valid,
+	 * and inserts it into the free tasks queue.
+	 * @param taskData The task data of the new task
+	 */
 	public void submitTask(JSONObject taskData) throws Exception {
 		long tId = nextTaskId();
 		Task t = new Task(taskData, this, tId);
@@ -54,14 +68,27 @@ public class Controller implements Serializable {
 		allTasks.put(tId, t);
 	}
 	
+	/**
+	 * Returns an iterator over free (unassigned) tasks.
+	 */
 	public Iterator<Task> getFreeTasksIterator() {
 		return freeTasks.iterator();
 	}
 	
+	/**
+	 * Returns an iterator over assigned tasks.
+	 */
 	public Iterator<Task> getAssignedTasksIterator() {
 		return assignedTasks.values().iterator();
 	}
 	
+	/**
+	 * Returns the status of a task.
+	 * @param taskId The id of the task
+	 * @return The status of the requested task
+	 * @throws IllegalArgumentException If a task with the specified id
+	 * doesn't exist
+	 */
 	public Task.Status getTaskStatus(long taskId) throws IllegalArgumentException {
 		Task t = allTasks.get(taskId);
 		if (t == null) {
@@ -71,6 +98,11 @@ public class Controller implements Serializable {
 		}
 	}
 	
+	/**
+	 * Attempts to cancel a task
+	 * @param taskId The task id
+	 * @throws Exception If the task doesn't exist or cannot be cancelled
+	 */
 	public void cancelTask(long taskId) throws Exception {
 		Task t = allTasks.get(taskId);
 		if (t == null) {
@@ -80,12 +112,20 @@ public class Controller implements Serializable {
 		t.cancel();
 	}
 	
+	/**
+	 * Returns an iterator over the failed tasks
+	 */
 	public Iterator<Task> getFailedTasksIterator() {
 		return failedTasks.iterator();
 	}
 	
 	// methods used by the monkey-controller interface
-	
+
+	/**
+	 * Retrieves a task from the free tasks queue, assigns it to the
+	 * monkey with the specified ID and returns the associated task data.
+	 * @throws Exception If there are no free tasks.
+	 */
 	public JSONObject getTask(String monkeyId) throws Exception {
 		if (monkeyToAssignedTask.get(monkeyId) != null) {
 			monkeyToAssignedTask.get(monkeyId).fail();
@@ -102,6 +142,12 @@ public class Controller implements Serializable {
 		return t.getTaskData();
 	}
 	
+	/**
+	 * Processes a task as complete. 
+	 * @param monkeyId id of the monkey that completed the task
+	 * @param taskId id of the task
+	 * @throws Exception
+	 */
 	public void completeTask(String monkeyId, long taskId) throws Exception {
 		Task t = monkeyToAssignedTask.get(monkeyId);
 		
@@ -116,11 +162,19 @@ public class Controller implements Serializable {
 	
 	// helper methods 
 	
+	/**
+	 * Performs the necessary data structure changes when a task is assigned.
+	 */
 	protected void taskAssigned(Task t) {
 		assignedTasks.put(t.getId(), t);
 		monkeyToAssignedTask.put(t.getMonkeyId(), t);
 	}
 	
+	/**
+	 * Removes a task from all the data structures. This is used when a task
+	 * is cancelled.
+	 * @param t The task to be removed
+	 */
 	protected void removeTaskFromCollections(Task t) {
 		freeTasks.remove(t);
 		assignedTasks.remove(t.getId());
@@ -133,6 +187,9 @@ public class Controller implements Serializable {
 		}
 	}
 	
+	/**
+	 * Returns the next free task ID.
+	 */
 	private long nextTaskId() {
 		return taskCounter++;
 	}
