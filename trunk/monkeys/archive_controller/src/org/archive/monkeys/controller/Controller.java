@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Queue;
 
 import org.json.simple.JSONObject;
@@ -138,6 +137,7 @@ public class Controller implements Serializable {
 		}
 		
 		t.assign(monkeyId);
+		taskAssigned(t);
 		
 		return t.getTaskData();
 	}
@@ -151,23 +151,62 @@ public class Controller implements Serializable {
 	public void completeTask(String monkeyId, long taskId) throws Exception {
 		Task t = monkeyToAssignedTask.get(monkeyId);
 		
-		//TODO handle null
+		if (t == null) {
+			throw new Exception("Monkey does not have an assigned task");
+		}
+		
 		if (t.getId() != taskId) {
 			t.fail();
 			throw new Exception("Completed the wrong task.");
 		} else {
-			
+			taskCompleted(t);
+			t.success();
+		}
+	}
+	
+	public void failTask(String monkeyId, long taskId) throws Exception {
+		Task t = monkeyToAssignedTask.get(monkeyId);
+		
+		if (t == null) {
+			throw new Exception("Monkey does not have an assigned task");
+		}
+		
+		if (t.getId() != taskId) {
+			t.fail();
+			throw new Exception("Failesd the wrong task.");
+		} else {
+			taskFailed(t);
+			t.fail();
+		}
+	}
+	
+	public void hungMonkey(String monkeyId) throws Exception {
+		Task t = monkeyToAssignedTask.get(monkeyId);
+		if (t != null) {
+			failTask(monkeyId, t.getId());
 		}
 	}
 	
 	// helper methods 
 	
+	protected void taskFailed(Task t) {
+		assignedTasks.remove(t.getId());
+		monkeyToAssignedTask.remove(t.getMonkeyId());
+		failedTasks.add(t);
+	}
+
 	/**
 	 * Performs the necessary data structure changes when a task is assigned.
 	 */
 	protected void taskAssigned(Task t) {
 		assignedTasks.put(t.getId(), t);
 		monkeyToAssignedTask.put(t.getMonkeyId(), t);
+	}
+	
+	protected void taskCompleted(Task t) {
+		assignedTasks.remove(t.getId());
+		monkeyToAssignedTask.remove(t.getMonkeyId());
+		completedTasks.add(t);
 	}
 	
 	/**

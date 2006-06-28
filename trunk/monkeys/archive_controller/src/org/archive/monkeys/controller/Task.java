@@ -45,6 +45,7 @@ public class Task {
 		this.controller = controller;
 		this.id = id;
 		this.taskData.put("id", id);
+		this.status = Status.FREE;
 	}
 
 	/**
@@ -115,7 +116,7 @@ public class Task {
 	public void assign(String monkeyId) {
 		setMonkeyId(monkeyId);
 		setStatus(Status.ASSIGNED);
-		controller.taskAssigned(this);
+//		controller.taskAssigned(this);
 	}
 	
 	/**
@@ -123,7 +124,8 @@ public class Task {
 	 * controller methods.
 	 */
 	public void success() {
-		
+//		controller.taskCompleted(this);
+		this.setStatus(Status.COMPLETE);
 	}
 	
 	/**
@@ -131,7 +133,7 @@ public class Task {
 	 * methods.
 	 */
 	public void fail() {
-		//TODO implement
+		setStatus(Status.FAILED);
 	}
 
 	@Override
