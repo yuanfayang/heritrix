@@ -48,6 +48,8 @@ public class OrderJarFactory {
     
     public static final String NAME_KEY = "name";
     public static final String DURATION_KEY = "duration";
+    public static final String TEST_CRAWL_KEY = "isTest";
+
     public static final String DOCUMENT_LIMIT_KEY = "documentLimitKey";
     public static final String USER_AGENT_KEY = "userAgent";
     public static final String FROM_EMAIL_KEY = "fromEmail";
@@ -87,7 +89,14 @@ public class OrderJarFactory {
                     .get(NAME_KEY)
                     .toString());
             order = order.replace("$date", date);
+            Object isTest = parameters.get(TEST_CRAWL_KEY);
+    
+            boolean isTestFlag = isTest != null && new Boolean(isTest.toString()).booleanValue();
+            order = order.replace("$writeEnabled", String.valueOf(!isTestFlag));
+	        
             
+            order = order.replace("$date", date);
+
             int duration = 60*60*24*3;
             Object durationStr = parameters.get(DURATION_KEY);
             if(durationStr != null){

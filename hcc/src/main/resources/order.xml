@@ -207,7 +207,7 @@ class="org.archive.crawler.extractor.ExtractorSWF">
      <map name="write-processors">
        <newObject name="Archiver"  
 class="org.archive.crawler.writer.ARCWriterProcessor">
-         <boolean name="enabled">true</boolean>
+         <boolean name="enabled">$writeEnabled</boolean>
          <map name="filters">
          </map>
          <boolean name="compress">true</boolean>
