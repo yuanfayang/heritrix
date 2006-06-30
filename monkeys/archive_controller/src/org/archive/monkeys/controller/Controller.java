@@ -59,12 +59,14 @@ public class Controller implements Serializable {
 	 * Creates a new task using the given task data, if the data is valid,
 	 * and inserts it into the free tasks queue.
 	 * @param taskData The task data of the new task
+	 * @return the new task's ID
 	 */
-	public void submitTask(JSONObject taskData) throws Exception {
+	public long submitTask(JSONObject taskData) throws Exception {
 		long tId = nextTaskId();
 		Task t = new Task(taskData, this, tId);
 		freeTasks.add(t);
 		allTasks.put(tId, t);
+		return tId;
 	}
 	
 	/**
@@ -186,9 +188,13 @@ public class Controller implements Serializable {
 			failTask(monkeyId, t.getId());
 		}
 	}
-	
+
 	// helper methods 
-	
+
+	public long getNanoId() {
+		return nanoId;
+	}
+
 	protected void taskFailed(Task t) {
 		assignedTasks.remove(t.getId());
 		monkeyToAssignedTask.remove(t.getMonkeyId());
