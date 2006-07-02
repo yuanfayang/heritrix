@@ -40,29 +40,4 @@ public class TfIdfComputation {
         return computeTF(numOccursInDoc)*computeIDF(dtSize,dSize);
     }
     
-    /**
-     * Returns cosine distance between lexicographically sorted string arrays a and b according to formula:
-     * (Number of common strings to arrays a and b)/(length(a)*length(b)) 
-     * 
-     * @param a - Lexicographically sorted string array
-     * @param b - Lexicographically sorted string array
-     * @return
-     */
-    public static double computeCosineDistance(String[] a, String[] b){
-        int i=0,j=0, commonSum=0;
-        while (i<a.length && j<b.length){
-            if(a[i].compareTo(b[j])>0){
-                j++;
-                continue;
-            }
-            if (a[i].compareTo(b[j])<0){
-                i++;
-                continue;
-            }
-            commonSum++;
-            i++;
-            j++;
-        }
-        return commonSum/(a.length*b.length);
-    }
 }

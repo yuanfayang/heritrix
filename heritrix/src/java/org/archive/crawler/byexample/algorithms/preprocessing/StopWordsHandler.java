@@ -5,13 +5,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileHandler;
 
 
 public class StopWordsHandler {
     
-    //TO DO: take the value from some configuration file
-    public static final String stopWordsFilePath="D:\\Java Projects/ArchiveOpenCrawler/src/java/org/archive/crawler/byexample/stopwords.txt";
+    public static final String stopWordsFilePath=OutputConstants.CONFIG_HOME+OutputConstants.STOP_WORDS_FILENAME;
     private Set<String> stopWordSet; 
     
     public StopWordsHandler() throws Exception{
