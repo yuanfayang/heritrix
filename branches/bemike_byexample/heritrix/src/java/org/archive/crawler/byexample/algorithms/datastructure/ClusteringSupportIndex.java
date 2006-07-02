@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileHandler;
 
 public class ClusteringSupportIndex{
@@ -38,7 +39,6 @@ public class ClusteringSupportIndex{
         }
     }
     
-    public static final String KEY_SEPARATOR="~";
     
     private Map<ItemSet,SupportRow> myClusteringHash;
     
@@ -75,7 +75,7 @@ public class ClusteringSupportIndex{
         for (Iterator<ItemSet> iter = getIndexKeysIterator(); iter.hasNext();) {
             currKey=iter.next();
             dump.append(currKey);
-            dump.append(KEY_SEPARATOR);
+            dump.append(OutputConstants.KEY_SEPARATOR);
             dump.append(getRow(currKey).toString());
             dump.append("\n");
         }

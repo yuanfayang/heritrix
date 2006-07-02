@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileHandler;
 
 
@@ -39,6 +40,10 @@ public class InvertedIndex {
             return myEntryValue;
         }
         
+        public void setEntryValue(double ev) {
+            myEntryValue=ev;
+        }
+        
         public void scaleEntryValue(double scale) {
             myEntryValue/=scale;
         }
@@ -49,7 +54,7 @@ public class InvertedIndex {
         }
         
         public String toString(){
-            return myEntryId+ENTRY_SEPARATOR+myEntryValue;
+            return myEntryId+OutputConstants.ENTRY_SEPARATOR+myEntryValue;
         }        
     }
     
@@ -139,7 +144,7 @@ public class InvertedIndex {
         }
         
         public String toString(){
-            return rowList.toString()+KEY_SEPARATOR+String.valueOf(totalRowValue);
+            return rowList.toString()+OutputConstants.KEY_SEPARATOR+String.valueOf(totalRowValue);
         }
         
         public void addEntriesFromString(String valuesString, String totalCountString){
@@ -148,17 +153,14 @@ public class InvertedIndex {
             //Remove "[]" and split to entries            
             arrayValues=valuesString.substring(1,valuesString.length()-1).split(", ");
             for (int i = 0; i < arrayValues.length; i++) {
-                entryValues=arrayValues[i].split(ENTRY_SEPARATOR);
+                entryValues=arrayValues[i].split(OutputConstants.ENTRY_SEPARATOR);
                 this.addRowEntry(entryValues[0],Double.parseDouble(entryValues[1]));                
             }
             this.totalRowValue=Integer.parseInt(totalCountString);
         }
         
     }
-    
-    public static final String KEY_SEPARATOR="~~";
-    public static final String ENTRY_SEPARATOR="::";
-    
+        
     private Map<String,IndexRow> indexRowsHash; 
             
     public InvertedIndex(){        
@@ -195,7 +197,7 @@ public class InvertedIndex {
         for (Iterator<String> iter = getIndexKeysIterator(); iter.hasNext();) {
             currKey=iter.next();
             dump.append(currKey);
-            dump.append(KEY_SEPARATOR);
+            dump.append(OutputConstants.KEY_SEPARATOR);
             dump.append(getRow(currKey).toString());
             dump.append("\n");
         }
@@ -212,7 +214,7 @@ public class InvertedIndex {
             return;
         
         while (!(iter==null)){         
-            parts=iter.split(KEY_SEPARATOR);
+            parts=iter.split(OutputConstants.KEY_SEPARATOR);
             //Add row for the keyword
             addRow(parts[0]);
             getRow(parts[0]).addEntriesFromString(parts[1],parts[2]);

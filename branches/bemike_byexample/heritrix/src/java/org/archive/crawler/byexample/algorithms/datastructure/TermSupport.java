@@ -1,10 +1,11 @@
 package org.archive.crawler.byexample.algorithms.datastructure;
 
-public class TermSupport{
+import org.archive.crawler.byexample.constants.OutputConstants;
+
+public class TermSupport implements Comparable{
     
     private String myTerm;
     private double mySupport;
-    public static final String ENTRY_SEPARATOR=":";
     
     public TermSupport(String term, double support){
         myTerm=term;
@@ -20,7 +21,7 @@ public class TermSupport{
     }
     
     public String toString(){
-        return myTerm+ENTRY_SEPARATOR+mySupport;
+        return myTerm+OutputConstants.ENTRY_SEPARATOR+mySupport;
     }
 
     public double getSupport() {
@@ -29,5 +30,13 @@ public class TermSupport{
 
     public void setSupport(double mySupport) {
         this.mySupport = mySupport;
+    }
+    
+    public int compareTo(Object anotherTS){
+        if (this.mySupport>((TermSupport)anotherTS).mySupport)
+            return 1;
+        if (this.mySupport<((TermSupport)anotherTS).mySupport)
+            return -1;
+        return 0;
     }
 }

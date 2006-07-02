@@ -6,7 +6,6 @@ import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex;
 import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IdComparator;
 import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IndexEntry;
 import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IndexRow;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.ValueComparator;
 
 
 
@@ -98,6 +97,10 @@ public class DocumentIndexManipulator {
      * @return
      */
     public boolean valueExistsAtKey(String key, String valueToSearch){
+        // No key found
+        if (!myIndex.containsKey(key))
+            return false;
+        //Key found, use binary search to find the value
         if (binarySearch(key,valueToSearch)>=0)
             return true;
         return false;
@@ -111,6 +114,10 @@ public class DocumentIndexManipulator {
      * @return
      */
     public double getTermTfidfInDoc(String term, String docId){
+        // No key found
+        if (!myIndex.containsKey(docId))
+            return 0;
+        //Key found, use binary search to find the term tfidf
         int index=binarySearch(docId,term);
         if (index==-1)  
             return 0;

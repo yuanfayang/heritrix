@@ -6,14 +6,21 @@ package org.archive.crawler.byexample.processors;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.logging.Logger;
 
+import org.archive.crawler.admin.CrawlJobHandler;
+import org.archive.crawler.byexample.algorithms.datastructure.DocumentListing;
+import org.archive.crawler.byexample.algorithms.datastructure.PreprocessInfo;
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
+import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileHandler;
 import org.archive.crawler.byexample.utils.ParseHandler;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
 
 import org.htmlparser.util.ParserException;
@@ -31,21 +38,29 @@ public class TermsIndexingProcessor extends Processor {
     
     public static final String PROCESSOR_FULL_NAME=TermsIndexingProcessor.class.getName();
     
-    public static final String PROCESSOR_DESCRIPTION=" This processor is used to create an inverted index of terms in the crawled pages";
+    public static final String PROCESSOR_DESCRIPTION=" Creates an inverted index of terms in the crawled pages";
     
-    public static final String DEFAULT_PATH="clustering";
+    private String jobID;
+    
+    private String filesPath;
     
    
     // File where all crawled documents will be dumped as collections of terms
-    private BufferedWriter dumpFile=null;
+    private BufferedWriter indexDumpFile=null;
     
-    
+    // File where document listing will be dumped
+    private BufferedWriter documentDumpFile=null;
+        
     //Stop Words set
     private StopWordsHandler stopWordsHandler=null;
     
-    // HashTables containing key terms and their IDF rank
-    private TermIndexManipulator termsIndexHandler=new TermIndexManipulator(); 
+    // Terms-documents index handler
+    private TermIndexManipulator termsIndexHandler=new TermIndexManipulator();
     
+    // Documents listing
+    private DocumentListing docList=new DocumentListing();
+    
+    // Number of documents processed by this processor
     long numOfProcessedDocs=0;
     
     static Logger logger =
@@ -55,18 +70,17 @@ public class TermsIndexingProcessor extends Processor {
         super (name,PROCESSOR_NAME);
     }
     
-    protected void initialTasks(){
+    protected void initialTasks(){        
         
-        //Create the path for writing the processor files
-        File path=new File(getController().getDisk(), DEFAULT_PATH);
-        if (!path.exists())
-            path.mkdir();
+        jobID=OutputConstants.JOB_NAME_PREFIX+ArchiveUtils.TIMESTAMP17.format(new Date());
+        filesPath=OutputConstants.JOBS_HOME+jobID+OutputConstants.PREPROCESS_FILES_HOME;
         
         try {
             //Create dump file
-            dumpFile =FileHandler.createFileAtPath(path,"termsInvertedIndex.txt");
+            indexDumpFile =FileHandler.createFileAtPath(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.TERMS_INDEX_FILENAME);
+            documentDumpFile= FileHandler.createFileAtPath(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.DOCUMENT_LISTING_FILENAME);
         } catch (Exception e1) {
-            logger.severe("Could not create file at path: "+path.getAbsolutePath());
+            logger.severe("Could not create file at path: "+filesPath);
         }
         
         try {
@@ -109,16 +123,31 @@ public class TermsIndexingProcessor extends Processor {
         } catch (IOException e) {
             return;
         }
-      
+        
+        //Parse it to terms and add to the terms inverted index
         try {
             termsIndexHandler.addDocumentToIndex(ParseHandler.tokenizer(cs),numOfProcessedDocs,stopWordsHandler);
         } catch (ParserException e) {
             logger.severe("Failed to parse document: "+currURL);
         }   
         
+        //Add the document to Documents listing
+        docList.addToListing(numOfProcessedDocs,uriToProcess.toString(),true);
+        
         //Increase the number of processed docs
         numOfProcessedDocs++;
-        
+    }
+    
+    public void createPreprocessXmlFile(){
+        try {
+            PreprocessInfo info=new PreprocessInfo
+                                (filesPath+OutputConstants.TERMS_INDEX_FILENAME,
+                                 filesPath+OutputConstants.DOCUMENT_LISTING_FILENAME,
+                                 numOfProcessedDocs,termsIndexHandler.getIndex().getSize());
+            info.toXML(OutputConstants.JOBS_HOME+jobID,OutputConstants.PREPROCESS_XML_FILENAME);
+        } catch (Exception e) {
+            logger.severe("Unable to create preprocess xml file: "+e.getMessage());
+        }
     }
 
     
@@ -136,11 +165,15 @@ public class TermsIndexingProcessor extends Processor {
 
     protected void finalTasks(){
         try {
-            termsIndexHandler.getIndex().dumpIndexToFile(dumpFile);
-            FileHandler.closeFile(dumpFile);           
+            termsIndexHandler.getIndex().dumpIndexToFile(indexDumpFile);
+            FileHandler.closeFile(indexDumpFile);     
+            docList.dumpListingToFile(documentDumpFile);
+            FileHandler.closeFile(documentDumpFile);            
         } catch (Exception e) {
-            logger.severe("Problems with file dump: "+e.getStackTrace());
+            logger.severe("Problems with file dump: "+e.getMessage());
         }        
+        
+        createPreprocessXmlFile();
     }
     
 } //END OF CLASS

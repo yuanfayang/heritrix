@@ -74,6 +74,21 @@ public class ItemSet {
            return itemSet.contains(item);
         }
         
+        public boolean contains(ItemSet is) {
+            short countContains=0;
+            if (is.getSize()>this.getSize())
+                return false;
+            for (String s1 : this.itemSet) {
+               for (String s2: is.itemSet){
+                   if (s1.equals(s2))
+                       countContains++;
+               }
+            }
+            if (countContains==is.getSize())
+                return true;
+            return false;
+        }
+        
         public boolean equals(ItemSet other){
             Iterator<String> iter1=this.itemSet.iterator();
             Iterator<String> iter2=other.itemSet.iterator();            

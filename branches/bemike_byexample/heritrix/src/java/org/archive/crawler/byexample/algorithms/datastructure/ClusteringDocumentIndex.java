@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileHandler;
 
 public class ClusteringDocumentIndex {
@@ -21,22 +22,32 @@ public class ClusteringDocumentIndex {
             idList.add(value);
         }
         
+        public void addListToRow(DocumentRow aRow){
+            idList.addAll(aRow.idList);
+        }
+        
         public void removeValueFromRow(String value){
             idList.remove(value);
         }
         
+        public void removeAll(){
+            idList.clear();
+        }
+                
         public String[] toArray(){
             String[] s=new String[idList.size()];
             return idList.toArray(s);
+        }
+        
+        public int getRowSize(){
+            return idList.size();
         }
         
         public String toString(){
             return idList.toString();
         }
     }
-    
-    public static final String KEY_SEPARATOR="~";
-    
+          
     private Map<ItemSet,DocumentRow> myClusteringHash;
     
     public ClusteringDocumentIndex(){
@@ -65,13 +76,23 @@ public class ClusteringDocumentIndex {
         return myClusteringHash.get(key);
     }
     
+    public void removeEmptyRows(){
+        ItemSet currIS;        
+        for (Iterator<ItemSet> iter = getIndexKeysIterator(); iter.hasNext();) {
+            currIS=iter.next();
+            if (getRow(currIS).getRowSize()==0)
+                myClusteringHash.remove(currIS);            
+        }
+    }
+    
+    
     public void dumpIndexToFile(BufferedWriter bw)throws Exception{
         StringBuffer dump=new StringBuffer();
         ItemSet currKey;
         for (Iterator<ItemSet> iter = getIndexKeysIterator(); iter.hasNext();) {
             currKey=iter.next();
             dump.append(currKey);
-            dump.append(KEY_SEPARATOR);
+            dump.append(OutputConstants.KEY_SEPARATOR);
             dump.append(getRow(currKey).toString());
             dump.append("\n");
         }
