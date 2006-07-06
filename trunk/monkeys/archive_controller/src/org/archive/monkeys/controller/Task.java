@@ -40,7 +40,10 @@ public class Task {
 	 * @param controller The controller which will be managing this task
 	 * @param id The controller assigned id for this task
 	 */
-	public Task(JSONObject taskData, Controller controller, long id) {
+	public Task(JSONObject taskData, Controller controller, long id) throws Exception {
+		if (taskData == null) {
+			throw new Exception("Task data cannot be null");
+		}
 		this.taskData = taskData;
 		this.controller = controller;
 		this.id = id;
