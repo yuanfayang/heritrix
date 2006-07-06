@@ -36,7 +36,7 @@
 	            <string name="surts-source-file"></string>
 	            <boolean name="seeds-as-surt-prefixes">true</boolean>
 	            <string name="surts-dump-file">surts.dump</string>
-	            <boolean name="also-check-via">false</boolean>
+	            <boolean name="also-check-via">$oneHopOff</boolean>
 	            <boolean name="rebuild-on-reconfig">true</boolean>
 	          </newObject>
 	          <newObject name="rejectIfTooManyHops" class="org.archive.crawler.deciderules.TooManyHopsDecideRule">

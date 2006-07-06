@@ -229,7 +229,7 @@ public class ClusterControllerClientImplSelfTest
             int count = (int)createdLatch.getCount();
             for(int i = 0; i < count; i++){
                 Crawler c = cc.createCrawler();
-                c.addJob(new JobOrder("test"+i, getTestJar()));
+                c.addJob(new JobOrder("test"+i, "", getTestJar()));
                 c.startPendingJobQueue();
             }
             
@@ -333,7 +333,7 @@ public class ClusterControllerClientImplSelfTest
                 e.printStackTrace();
             }
 
-            l.c.addJob(new JobOrder("test1", getTestJar()));
+            l.c.addJob(new JobOrder("test1", "",getTestJar()));
             l.c.startPendingJobQueue();
 
             try {

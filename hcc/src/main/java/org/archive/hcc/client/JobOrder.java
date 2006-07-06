@@ -28,14 +28,23 @@ public class JobOrder {
     private File jarFile;
 
     private String name;
-
-    public JobOrder(String name, File orderJar) {
+    private String description;
+    public JobOrder(String name, String description, File orderJar) {
         this.jarFile = orderJar;
         this.name = name;
+        this.description = description;
     }
 
     public String getName() {
         return name;
+    }
+    
+    public String getDescription(){
+    	if(description == null){
+    		return "";
+    	}
+    	
+    	return description;
     }
 
     File getJarFile() {

@@ -49,6 +49,7 @@ public class OrderJarFactory {
     public static final String NAME_KEY = "name";
     public static final String DURATION_KEY = "duration";
     public static final String TEST_CRAWL_KEY = "isTest";
+    public static final String ONE_HOP_OFF_KEY = "oneHopOff";
 
     public static final String DOCUMENT_LIMIT_KEY = "documentLimitKey";
     public static final String USER_AGENT_KEY = "userAgent";
@@ -94,6 +95,13 @@ public class OrderJarFactory {
             boolean isTestFlag = isTest != null && new Boolean(isTest.toString()).booleanValue();
             order = order.replace("$writeEnabled", String.valueOf(!isTestFlag));
 	        
+            Object oneHopOff = parameters.get(ONE_HOP_OFF_KEY);
+            
+            order = order.replace(
+            			"$oneHopOff", 
+            			String.valueOf(
+            					oneHopOff != null && new Boolean(oneHopOff.toString())));
+	       
             
             order = order.replace("$date", date);
 
@@ -269,7 +277,21 @@ public class OrderJarFactory {
 		if(hc.getRegex() != null){
 			w.append("<object name=\"acceptByType\"><string name=\"regexp\">"+ hc.getRegex() +"</string></object>");
 		}
+		
+		Long docLimit = hc.getDocumentLimit();
+		if(docLimit != null && docLimit > 0){	
+			int errorPenalty = docLimit.intValue()/100;
+			if(errorPenalty == 0){
+				errorPenalty = 1;
+			}
+		   w.append("<object name=\"frontier\">");
+		   w.append("<integer name=\"error-penalty-amount\">"+errorPenalty+"</integer>"); 
+		   w.append("<long name=\"queue-total-budget\">"+docLimit+"</long>"); 
+		   w.append("</object>");
+		}  
+			  
 		w.append("</crawl-settings>");
+			
 		w.close();
 
 		return file;
