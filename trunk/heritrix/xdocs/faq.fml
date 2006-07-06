@@ -49,6 +49,17 @@
         </p>
       </answer>
     </faq>
+    <faq id="license">
+      <question>What license does Heritrix use?
+      </question>
+      <answer>
+        <p>The <a href="license.html">GNU LESSER GENERAL PUBLIC LICENSE</a>.
+	For discussion of 3rd party applications making use of LGPL code,
+	see David Turner on 
+	<a href="http://www.gnu.org/licenses/lgpl-java.html">The LGPL
+	and Java</a>.</p>
+      </answer>
+    </faq>
   </part>
 
   <part id="problems">
