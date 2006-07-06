@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 
 /**
@@ -37,6 +39,8 @@ public class Controller implements Serializable {
 	private long nanoId;
 	
 	private long taskCounter;
+	
+	private Logger log;
 
 	/**
 	 * Creates a new controller with all data structures empty.
@@ -51,6 +55,9 @@ public class Controller implements Serializable {
 		nano = NanoContainer.getInstance();
 		nanoId = nano.put(this);
 		taskCounter = 0;
+		log = Logger.getLogger(this.getClass());
+		BasicConfigurator.configure();
+		//log.info("Controller created successfully, nano id: " + nanoId);
 	}
 	
 	// Methods used by the operator-controller interface
