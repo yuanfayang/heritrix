@@ -13,9 +13,7 @@ public class FileHandler {
 
    /**
     * Create file at path:  filePath/fileName
-    * @param filePath
-    * @param fileName
-    * @return
+    * @return BufferedWriter to created file
     * @throws Exception
     */ 
    public static BufferedWriter createFileAtPath (String filePath,String fileName) throws Exception{
@@ -44,14 +42,18 @@ public class FileHandler {
       return new BufferedWriter(new FileWriter(new File(filePath,fileName)));                           
     }
    
+
    /**
-    * Create file at path:  filePath/jobNo/fileName
-    * @param filePath
-    * @param fileName
+    * Create file at path:  JOBS_HOME/jobNo/filePath/fileName
+    * 
+    * @param jobNo Job Number
+    * @param filePath File path for created file under JOBS_HOME 
+    * @param fileName File name for created file
+    * @param append if true, then data will be written to the end of the file rather than the beginning
     * @return
     * @throws Exception
-    */ 
-   public static BufferedWriter createFileAtPath (String jobNo,String filePath, String fileName) throws Exception{
+    */
+   public static BufferedWriter createFileAtPath (String jobNo,String filePath, String fileName, boolean append) throws Exception{
        
        //Check if BYEXAMPLE_HOME directory exists
        File path=new File(OutputConstants.BYEXAMPLE_HOME);
@@ -74,7 +76,7 @@ public class FileHandler {
        if (!path.exists())
            path.mkdir();
        
-       filePath=OutputConstants.JOBS_HOME+jobNo+filePath;
+       filePath=OutputConstants.getJobPath(jobNo)+filePath;
        
        path=new File(filePath);
        if (!path.exists())
@@ -82,26 +84,32 @@ public class FileHandler {
       
        
        //Create new file under specified path
-      return new BufferedWriter(new FileWriter(new File(filePath,fileName)));                           
+      return new BufferedWriter(new FileWriter(new File(filePath,fileName),append));                           
     }
    
    /**
     * Dump StringBuffer to file
-    * @param dumpFile
-    * @param sb
+    * @param dumpFile BufferedWriter for a file
+    * @param sb StringBuffer to dump
     * @throws Exception
     */
    public static void dumpBufferToFile(BufferedWriter dumpFile,StringBuffer sb) throws Exception{   
            dumpFile.write(sb.toString());       
    }
    
+   /**
+    * Read file from filePath to BufferedReader
+    * @param filePath path to read file
+    * @return BufferedReader with file contents 
+    * @throws Exception
+    */
    public static BufferedReader readBufferFromFile(String filePath) throws Exception{
        return new BufferedReader(new FileReader(filePath));           
    }
    
    /**
-    * Close file
-    * @param dumpFile
+    * Close dumpFile
+    * @param dumpFile BufferedWriter for a file
     * @throws Exception
     */
    public static void closeFile(BufferedWriter dumpFile) throws Exception{
