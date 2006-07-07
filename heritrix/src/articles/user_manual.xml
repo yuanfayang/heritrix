@@ -4287,6 +4287,9 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
   -5000 Out of scope upon reexamination (only happens if scope changes during 
         crawl)
   -5001 Blocked from fetch by user setting
+  -5002 Blocked by a custom processor
+  -5003 Blocked due to exceeding an established quota
+  -5004 Blocked due to exceeding an established runtime
   -6000 Deleted from Frontier by user
   -7000 Processing thread was killed by the operator (perhaps because of a
         hung condition)
