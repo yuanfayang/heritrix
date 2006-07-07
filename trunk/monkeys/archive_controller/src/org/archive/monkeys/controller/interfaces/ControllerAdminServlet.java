@@ -1,84 +1,65 @@
 package org.archive.monkeys.controller.interfaces;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 import org.archive.monkeys.controller.Controller;
 import org.archive.monkeys.controller.NanoContainer;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-public class ControllerAdminServlet extends HttpServlet {
+public class ControllerAdminServlet extends ControllerInterfaceServlet {
 
 	private static final long serialVersionUID = -4464454056276630172L;
-	
-	private Controller controller;
-
-	protected void service(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		// get the special method name if any
-		String method = request.getParameter("method");
-		System.out.println("Got method " + method);
-		if (method == null || method.equals("")) {
-			// if it's not a special method then handle the regular
-			// POST / GET request
-			super.service(request, response);
-		} else {
-			// otherwise try to call the appropriate instance method
-			method = Character.toUpperCase(method.charAt(0))
-					+ method.substring(1);
-			Class[] argTypes = { HttpServletRequest.class,
-					HttpServletResponse.class };
-			Object[] args = { request, response };
-			try {
-				Method handler = this.getClass().getMethod("do" + method,
-						argTypes);
-				handler.invoke(this, args);
-			} catch (NoSuchMethodException e) {
-				// If an instance method wasn't found
-				// return an error code
-				response.setContentType("text/html");
-				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				response.getWriter().println(
-						"The method " + method + " is not handled.");
-			} catch (Exception e) {
-				throw new ServletException(e);
-			}
-		}
-	}
-
-	public void doInitController(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		long id = Long.parseLong(request.getParameter("cid"));
-		controller = (Controller) NanoContainer.getInstance().get(id);
-		response.setContentType("text/html");
-		response.setStatus(200);
-	}
 	
 	public void doSubmitTask(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 
 		response.setContentType("text/html");
 		if (!request.getMethod().equals("POST")) {
+			log.warn("Request wasn't POST, returning error.");
 			response.setStatus(400);
 			response.getWriter().println(
 					"This request should be a POST request.");
 		} else {
+			log.debug("Request OK, parsing data.");
+			log.debug("Content length is: " + request.getContentLength());
+			log.debug("Query string is: " + request.getQueryString());
+			log.debug("Resuest URL was: " + request.getRequestURI());
+			log.debug(request.getInputStream().available());
+			log.debug("before reader");
+			BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
+			log.debug("reading");
+			String content = "";
+			while (br.ready()) {
+				content += br.readLine();
+			}
+			log.debug("!!! " + content);
 			JSONObject taskData = (JSONObject) JSONValue
-					.parse(new InputStreamReader(request.getInputStream()));
+					.parse(content);
+			//JSONObject taskData = null;
 			try {
 				long taskId = controller.submitTask(taskData);
+				log.debug("Submitted task status: " + controller.getTaskStatus(taskId));
+				
 				response.setStatus(200);
 				response.getWriter().println(taskId);
 			} catch (Exception e) {
+				log.error("Request failed. Reason was: " + e.getMessage() );
 				response.setStatus(400);
 				response.getWriter().println(e.getMessage());
+			} finally {
+				response.flushBuffer();
 			}
 		}
 	}

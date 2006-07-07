@@ -17,64 +17,13 @@ import org.archive.monkeys.controller.NanoContainer;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-public class ControllerMonkeyServlet extends HttpServlet {
+public class ControllerMonkeyServlet extends ControllerInterfaceServlet {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -4388736212099937045L;
 	
-	private Controller controller;
-	
-	private Logger log;
-	
-	public void init(ServletConfig conf) throws ServletException {
-		log = Logger.getLogger(this.getClass());
-		BasicConfigurator.configure();
-	}
-
-	protected void service(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		// get the special method name if any
-		String method = request.getParameter("method");
-		System.out.println("Got method " + method);
-		if (method == null || method.equals("")) {
-			// if it's not a special method then handle the regular
-			// POST / GET request
-			super.service(request, response);
-		} else {
-			// otherwise try to call the appropriate instance method
-			method = Character.toUpperCase(method.charAt(0))
-					+ method.substring(1);
-			Class[] argTypes = { HttpServletRequest.class,
-					HttpServletResponse.class };
-			Object[] args = { request, response };
-			try {
-				Method handler = this.getClass().getMethod("do" + method,
-						argTypes);
-				handler.invoke(this, args);
-			} catch (NoSuchMethodException e) {
-				// If an instance method wasn't found
-				// return an error code
-				response.setContentType("text/html");
-				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				response.getWriter().println(
-						"The method " + method + " is not handled.");
-			} catch (Exception e) {
-				throw new ServletException(e);
-			}
-		}
-	}
-	
-	public void doInitController(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		long id = Long.parseLong(request.getParameter("cid"));
-		controller = (Controller) NanoContainer.getInstance().get(id);
-		response.setContentType("text/html");
-		response.setStatus(200);
-		log.info("Initing Monkey Servlet.");
-	}
-
 	public void doGetTask(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 

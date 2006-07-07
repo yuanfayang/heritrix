@@ -1,37 +1,39 @@
 package org.archive.monkeys.controller.test;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 
 import org.archive.monkeys.controller.Controller;
 import org.json.simple.JSONObject;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.http.HttpContext;
+import org.mortbay.http.HttpServer;
 import org.mortbay.jetty.servlet.ServletHandler;
 
 public class Tester {
+	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		Controller controller = new Controller();
 
-		Server server = new Server();
-		Connector connector = new SelectChannelConnector();
-		connector.setPort(8081);
-		server.setConnectors(new Connector[] { connector });
+		HttpServer server = new HttpServer();
+		try {
+			server.addListener(":8081");
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		HttpContext context = server.getContext("/");
+		ServletHandler handler= new ServletHandler();
+		handler.addServlet("monkey","/monkey",
+		                   "org.archive.monkeys.controller.interfaces.ControllerMonkeyServlet");
+		handler.addServlet("admin","/admin",
+        					"org.archive.monkeys.controller.interfaces.ControllerAdminServlet");
+		context.addHandler(handler);
 
-		ServletHandler handler = new ServletHandler();
-
-		server.setHandler(handler);
-
-		handler.addServletWithMapping(
-						"org.archive.monkeys.controller.interfaces.ControllerMonkeyServlet",
-						"/monkey");
-		handler.addServletWithMapping(
-				"org.archive.monkeys.controller.interfaces.ControllerAdminServlet",
-				"/admin");
 		try {
 			server.start();
 		} catch (Exception e) {
@@ -56,17 +58,9 @@ public class Tester {
 				c.connect();
 			}
 			
-			c = (HttpURLConnection) (new URL(
-					"http://localhost:8081/admin?method=submitTask").openConnection());
-			c.setDoOutput(true);
-			c.setRequestMethod("POST");
-			JSONObject taskData = new JSONObject();
-			taskData.put("URL", "http://www.google.com");
-			(new OutputStreamWriter(c.getOutputStream())).write(taskData.toString());
-			c.connect();
-			while (c.getResponseCode() != 200) {
-				c.connect();
-			}
+			// Trying to submit a new task
+			
+			createTask();
 			
 			server.join();
 		} catch (MalformedURLException e) {
@@ -80,5 +74,30 @@ public class Tester {
 			e.printStackTrace();
 		}
 
+	}
+
+	private static void createTask() throws IOException, MalformedURLException, ProtocolException {
+		HttpURLConnection c;
+		c = (HttpURLConnection) (new URL(
+				"http://localhost:8081/admin?method=submitTask").openConnection());
+		c.setDoOutput(true);
+		c.setRequestMethod("POST");
+		c.setUseCaches(false);
+		c.setRequestProperty("Content-Type", "text/plain");
+
+		DataOutputStream po = new DataOutputStream(c.getOutputStream());
+		JSONObject taskData = new JSONObject();
+		taskData.put("URL", "http://www.google.com");
+		String content = taskData.toString();
+		po.writeBytes(content);
+		po.flush();
+		po.close();
+		
+		DataInputStream di = new DataInputStream(c.getInputStream());
+		String str;
+		while ((str = di.readLine()) != null) {
+			System.out.println(str);
+		}
+		
 	}
 }
