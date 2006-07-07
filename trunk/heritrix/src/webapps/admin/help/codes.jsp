@@ -57,6 +57,9 @@
 	<tr><td align=right valign=top>-4002</td><td>Too many embed/transitive hops away from last URI in scope</td></tr>
 	<tr><td align=right valign=top>-5000</td><td>Out of scope upon reexamination (only happens if scope changes during crawl)</td></tr>
 	<tr><td align=right valign=top>-5001</td><td>Blocked from fetch by user setting</td></tr>
+	<tr><td align=right valign=top>-5002</td><td>Blocked by a custom processor</td></tr>
+	<tr><td align=right valign=top>-5003</td><td>Blocked due to exceeding an established quota</td></tr>
+	<tr><td align=right valign=top>-5004</td><td>Blocked due to exceeding an established runtime</td></tr>
 	<tr><td align=right valign=top>-6000</td><td>Deleted from Frontier by user</td></tr>
 	<tr><td align=right valign=top>-7000</td><td>Processing thread was killed by the operator (perhaps because of a hung condition)</td></tr>
 	<tr><td align=right valign=top>-9998</td><td>Robots.txt rules precluded fetch</td></tr>

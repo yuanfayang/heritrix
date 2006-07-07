@@ -128,7 +128,7 @@ public class RuntimeLimitEnforcer
                     getController().requestCrawlStop(
                             CrawlJob.STATUS_FINISHED_TIME_LIMIT);
                 } else if(op.equals(OP_BLOCK_URIS)){
-                    curi.setFetchStatus(S_BLOCKED_BY_CUSTOM_PROCESSOR);
+                    curi.setFetchStatus(S_BLOCKED_BY_RUNTIME_LIMIT);
                     curi.addAnnotation("Runtime exceeded " + allowedRuntime + 
                             "ms");
                     curi.skipToProcessorChain(
