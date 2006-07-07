@@ -5,7 +5,9 @@ import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
+import org.archive.crawler.byexample.algorithms.clustering.ClusteringRunner;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileHandler;
 
@@ -31,13 +33,33 @@ public class DocumentListing {
         }
     }
     
+    static int MAX_ENTRIES_IN_MEMORY=1000;
+    
     List<DocumentEntry> docList;
+    BufferedWriter dumpFile=null;
+    private static Logger logger =
+        Logger.getLogger(DocumentListing.class.getName());
     
     public DocumentListing(){
         docList=new ArrayList<DocumentEntry>(); 
     }
     
+    public DocumentListing(BufferedWriter bw){
+        docList=new ArrayList<DocumentEntry>();
+        dumpFile=bw;
+    }
+    
     public void addToListing(long id, String url, boolean isAutoIn){
+        
+        if (docList.size()>MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
+            try {
+                dumpListingToFile();
+                docList.clear();
+            } catch (Exception e) {
+                logger.info("Could not dump documents list from memory to file...");
+            }
+        }
+          
         docList.add(new DocumentEntry(id,url,isAutoIn));
     }
     
@@ -45,12 +67,16 @@ public class DocumentListing {
         return docList.iterator();
     }
     
-    public void dumpListingToFile(BufferedWriter bw) throws Exception{
+    public void dumpListingToFile() throws Exception{
+        //No dump file defined - do nothing
+        if (dumpFile==null)
+            return;
+        
         StringBuffer dump=new StringBuffer();
         for (DocumentEntry currKey : docList) {            
             dump.append(currKey+"\n");
         }
-        FileHandler.dumpBufferToFile(bw,dump);   
+        FileHandler.dumpBufferToFile(dumpFile,dump);  
     }
     
     public void readListingFromFile(String filePath) throws Exception{
