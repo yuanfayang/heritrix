@@ -38,6 +38,7 @@ Release 4
 /**
 * Stemmer, implementing the Porter Stemming Algorithm
 *
+* For more information see <a href="http://www.tartarus.org/~martin/PorterStemmer">this link</a>
 * The Stemmer class transforms a word into its root form.  The input
 * word can be provided a character at time (by calling add()), or at once
 * by calling one of the various stem(something) methods.

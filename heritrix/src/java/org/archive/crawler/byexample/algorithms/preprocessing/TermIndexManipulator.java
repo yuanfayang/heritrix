@@ -4,14 +4,32 @@ package org.archive.crawler.byexample.algorithms.preprocessing;
 import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex;
 import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IndexRow;
 
+/**
+ * This class manipulation wrapper around InvertedIndex
+ * Manipulations implemented here are specific to Terms Inverted Index
+ * 
+ * @see  org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class TermIndexManipulator {
     
     private InvertedIndex myIndex;
     
+    /**
+     * Constructor that creates new Inverted index
+     * and builds manipulator for it
+     *
+     */
     public TermIndexManipulator(){
         myIndex=new InvertedIndex();
     }
     
+    /**
+     * Constructor that build manipulator on existing Inverted Index
+     * @param index existing Inverted Index
+     */
     public TermIndexManipulator(InvertedIndex index){
         myIndex=index;
     }
@@ -43,7 +61,8 @@ public class TermIndexManipulator {
         return;
     }
     
-    public void addRowEntry(String rowKey, String entryID){
+    // Add entry to list
+    private void addRowEntry(String rowKey, String entryID){
         IndexRow currRow=myIndex.getRow(rowKey);
         // If this key doesn't have an assigned row, create it
         if (currRow==null){
@@ -62,9 +81,9 @@ public class TermIndexManipulator {
 
     /**
      * Returns true if valueToSearch exists at key row
-     * @param comparator
-     * @param value
-     * @return
+     * @param key  row key 
+     * @param value value to search
+     * @return TRUE if value exists at key row, else otherwise
      */
     public boolean valueExistsAtKey(String key, String valueToSearch){
         IndexRow currRow=myIndex.getRow(key);
@@ -75,6 +94,9 @@ public class TermIndexManipulator {
         return false;
     }
     
+    /**
+     * Get the InvertedIndex of the manipulato
+     */
     public InvertedIndex getIndex() {
         return myIndex;
     }
