@@ -19,15 +19,25 @@ import org.archive.crawler.byexample.utils.TimerHandler;
  * 
  * As an input this class receives pre-processing results for a job.
  * As an output it provides clustering of the crawled documents.
- * Clustering output is created under $BYEXAMPLE_HOME/JOBS_HOME/JOB_ID folder.  
- *  
+ * Clustering output is created under
+ * <p>
+ * $HERITRIX_HOME/BYEXAMPLE_HOME/JOBS_HOME/JOB_ID folder.  
+ * <p>
+ * <p>
+ * Clustering is based on FIHC algorithm. More details about algorithm outline can be found
+ * <a href="http://www.cs.sfu.ca/~ddm/pub/FWE03_FIHC.pdf">here</a>
+ * <p>
+ * See following classes for algorithm implementation: 
+ * @see org.archive.crawler.byexample.algorithms.clustering.fihc.ClusterGenerator
+ * @see org.archive.crawler.byexample.algorithms.clustering.apriori.AprioriItemSetComputation
+ * 
  * @author Michael Bendersky
  *
  */
 public class ClusteringRunner {
     
     private static Logger logger =
-        Logger.getLogger(TimerHandler.class.getName());
+        Logger.getLogger(ClusteringRunner.class.getName());
     
     /**
      * Main function that runs the clustering.
@@ -35,12 +45,12 @@ public class ClusteringRunner {
      * 
      * @param args
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception{
         
         long docCount;
-        BufferedWriter dumpFile=null;
-        TimerHandler myTimer=new TimerHandler();
-        PreprocessInfo info=null;
+        BufferedWriter dumpFile = null;
+        TimerHandler myTimer = new TimerHandler();
+        PreprocessInfo info  =null;
         
         if (args.length==0){
             logger.severe("Missing argument: JOB_ID");
@@ -51,23 +61,26 @@ public class ClusteringRunner {
         
         try {
             AlgorithmConstants.readPropeties(OutputConstants.CONFIG_HOME+OutputConstants.PROPERTIES_FILENAME);
-        } catch (Exception e2) {
-            logger.severe("Failed to load properties file: "+e2.getMessage());
+        } catch (Exception e) {
+            logger.severe("Failed to load properties file: "+e.getMessage());
+            return;
         }
         
         try {
             //Create dump file
             dumpFile =FileHandler.createFileAtPath(jobID,OutputConstants.CLUSTERING_FILES_HOME,
-                                                   OutputConstants.DOCUMENTS_CLUSTERING_LISTING_FILENAME);
-        } catch (Exception e1) {
-          logger.severe("Could not create clustering output file: "+e1.getMessage());
+                                                   OutputConstants.DOCUMENTS_CLUSTERING_LISTING_FILENAME,false);
+        } catch (Exception e) {
+          logger.severe("Could not create clustering output file: "+e.getMessage());
+          return;
         }
         
         try {
             info=new PreprocessInfo();
-            info.fromXML(OutputConstants.JOBS_HOME+jobID+"/",OutputConstants.PREPROCESS_XML_FILENAME);
-        } catch (Exception e1) {
-            logger.severe("Could not load preprocess xml file: "+e1.getMessage());
+            info.fromXML(OutputConstants.getJobPath(jobID),OutputConstants.PREPROCESS_XML_FILENAME);
+        } catch (Exception e) {
+            logger.severe("Could not load preprocess.xml file: "+e.getMessage());
+            return;
         }
         
         InvertedIndex index=new InvertedIndex();
@@ -78,6 +91,7 @@ public class ClusteringRunner {
             docListing.readListingFromFile(info.getDocsFN());
         } catch (Exception e) {
            logger.severe("Failed to load input pre-process files: "+e.getMessage());
+           return;
         }
         
         docCount=info.getDocsNo();
