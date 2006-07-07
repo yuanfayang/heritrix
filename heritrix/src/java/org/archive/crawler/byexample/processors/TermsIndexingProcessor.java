@@ -58,7 +58,7 @@ public class TermsIndexingProcessor extends Processor {
     private TermIndexManipulator termsIndexHandler=new TermIndexManipulator();
     
     // Documents listing
-    private DocumentListing docList=new DocumentListing();
+    private DocumentListing docList=null;
     
     // Number of documents processed by this processor
     long numOfProcessedDocs=0;
@@ -73,12 +73,13 @@ public class TermsIndexingProcessor extends Processor {
     protected void initialTasks(){        
         
         jobID=OutputConstants.JOB_NAME_PREFIX+ArchiveUtils.TIMESTAMP17.format(new Date());
-        filesPath=OutputConstants.JOBS_HOME+jobID+OutputConstants.PREPROCESS_FILES_HOME;
+        filesPath=OutputConstants.getPreprocessPath(jobID);
         
         try {
             //Create dump file
-            indexDumpFile =FileHandler.createFileAtPath(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.TERMS_INDEX_FILENAME);
-            documentDumpFile= FileHandler.createFileAtPath(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.DOCUMENT_LISTING_FILENAME);
+            indexDumpFile =FileHandler.createFileAtPath(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.TERMS_INDEX_FILENAME,true);
+            documentDumpFile= FileHandler.createFileAtPath(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.DOCUMENT_LISTING_FILENAME,true);
+            docList=new DocumentListing(documentDumpFile);
         } catch (Exception e1) {
             logger.severe("Could not create file at path: "+filesPath);
         }
@@ -144,7 +145,7 @@ public class TermsIndexingProcessor extends Processor {
                                 (filesPath+OutputConstants.TERMS_INDEX_FILENAME,
                                  filesPath+OutputConstants.DOCUMENT_LISTING_FILENAME,
                                  numOfProcessedDocs,termsIndexHandler.getIndex().getSize());
-            info.toXML(OutputConstants.JOBS_HOME+jobID,OutputConstants.PREPROCESS_XML_FILENAME);
+            info.toXML(OutputConstants.getJobPath(jobID),OutputConstants.PREPROCESS_XML_FILENAME);
         } catch (Exception e) {
             logger.severe("Unable to create preprocess xml file: "+e.getMessage());
         }
@@ -167,7 +168,7 @@ public class TermsIndexingProcessor extends Processor {
         try {
             termsIndexHandler.getIndex().dumpIndexToFile(indexDumpFile);
             FileHandler.closeFile(indexDumpFile);     
-            docList.dumpListingToFile(documentDumpFile);
+            docList.dumpListingToFile();
             FileHandler.closeFile(documentDumpFile);            
         } catch (Exception e) {
             logger.severe("Problems with file dump: "+e.getMessage());
