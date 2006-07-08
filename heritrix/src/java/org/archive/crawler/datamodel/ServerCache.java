@@ -111,23 +111,23 @@ public class ServerCache {
 
     /**
      * Get the {@link CrawlServer} associated with <code>curi</code>.
-     * @param curi CrawlURI we're to get server from.
-     * @return CrawlServer instance that matches the passed CrawlURI.
+     * @param cauri CandidateURI we're to get server from.
+     * @return CrawlServer instance that matches the passed CandidateURI.
      */
-    public CrawlServer getServerFor(CrawlURI curi) {
+    public CrawlServer getServerFor(CandidateURI cauri) {
         CrawlServer cs = null;
         try {
-            String key = CrawlServer.getServerKey(curi);
+            String key = CrawlServer.getServerKey(cauri);
             // TODOSOMEDAY: make this robust against those rare cases
             // where authority is not a hostname.
             if (key != null) {
                 cs = getServerFor(key);
             }
         } catch (URIException e) {
-            logger.severe(e.getMessage() + ": " + curi);
+            logger.severe(e.getMessage() + ": " + cauri);
             e.printStackTrace();
         } catch (NullPointerException npe) {
-            logger.severe(npe.getMessage() + ": " + curi);
+            logger.severe(npe.getMessage() + ": " + cauri);
             npe.printStackTrace();
         }
         return cs;
@@ -165,13 +165,13 @@ public class ServerCache {
     
     /**
      * Get the {@link CrawlHost} associated with <code>curi</code>.
-     * @param curi CrawlURI we're to return Host for.
-     * @return CrawlHost instance that matches the passed Host name.
+     * @param cauri CandidateURI we're to return Host for.
+     * @return CandidateURI instance that matches the passed Host name.
      */
-    public CrawlHost getHostFor(CrawlURI curi) {
+    public CrawlHost getHostFor(CandidateURI cauri) {
         CrawlHost h = null;
         try {
-            h = getHostFor(curi.getUURI().getReferencedHost());
+            h = getHostFor(cauri.getUURI().getReferencedHost());
         } catch (URIException e) {
             e.printStackTrace();
         }
