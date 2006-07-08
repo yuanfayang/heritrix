@@ -380,7 +380,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     public void receive(CandidateURI caUri) {
         CrawlURI curi = asCrawlUri(caUri);
         applySpecialHandling(curi);
-        incrementQueuedUriCount();
         sendToQueue(curi);
         // Update recovery log.
         doJournalAdded(curi);
@@ -401,10 +400,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * 
      * @param curi
      */
-    public void sendToQueue(CrawlURI curi) {
+    protected void sendToQueue(CrawlURI curi) {
         WorkQueue wq = getQueueFor(curi);
         synchronized (wq) {
             wq.enqueue(this, curi);
+            if(!wq.isRetired()) {
+                incrementQueuedUriCount();
+            }
             if(!wq.isHeld()) {
                 wq.setHeld();
                 if(holdQueues()) {
@@ -593,8 +595,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                             // known). Requeue to new queue.
                             curi.setClassKey(currentQueueKey);
                             readyQ.dequeue(this);
+                            decrementQueuedCount(1);
                             curi.setHolderKey(null);
-                            // curi will be sent to true queue after lock
+                            // curi will be requeued to true queue after lock
                             //  on readyQ is released, to prevent deadlock
                         } else {
                             // readyQ is empty and ready: it's exhausted
