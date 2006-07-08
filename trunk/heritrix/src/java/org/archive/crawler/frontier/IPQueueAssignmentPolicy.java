@@ -24,6 +24,7 @@
 */ 
 package org.archive.crawler.frontier;
 
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
@@ -36,11 +37,11 @@ import org.archive.crawler.framework.CrawlController;
  */
 public class IPQueueAssignmentPolicy
 extends HostnameQueueAssignmentPolicy {
-    public String getClassKey(CrawlController controller, CrawlURI curi) {
-        CrawlHost host = controller.getServerCache().getHostFor(curi);
+    public String getClassKey(CrawlController controller, CandidateURI cauri) {
+        CrawlHost host = controller.getServerCache().getHostFor(cauri);
         if (host == null || host.getIP() == null) {
             // if no server or no IP, use superclass implementation
-            return super.getClassKey(controller, curi);
+            return super.getClassKey(controller, cauri);
         }
         // use dotted-decimal IP address
         return host.getIP().getHostAddress();

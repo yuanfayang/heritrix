@@ -296,21 +296,21 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
     
     /**
      * Get key to use doing lookup on server instances.
-     * @param curi CrawlURI we're to get server key for.
+     * @param cauri CandidateURI we're to get server key for.
      * @return String to use as server key.
      * @throws URIException
      */
-	public static String getServerKey(CrawlURI curi)
+	public static String getServerKey(CandidateURI cauri)
 	throws URIException {
 	    // TODO: evaluate if this is really necessary -- why not 
-	    // make the server of a dns CrawlURI the looked-up domain,
+	    // make the server of a dns CandidateURI the looked-up domain,
 	    // also simplifying FetchDNS?
-	    String key = curi.getUURI().getAuthorityMinusUserinfo();
+	    String key = cauri.getUURI().getAuthorityMinusUserinfo();
 	    if (key == null) {
 	        // Fallback for cases where getAuthority() fails (eg 'dns:'.
 	        // DNS UURIs have the 'domain' in the 'path' parameter, not
 	        // in the authority).
-	        key = curi.getUURI().getCurrentHierPath();
+	        key = cauri.getUURI().getCurrentHierPath();
 	        if(key != null && !key.matches("[-_\\w\\.:]+")) {
 	            // Not just word chars and dots and colons and dashes and
 	            // underscores; throw away
@@ -318,7 +318,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
 	        }
 	    }
 	    if (key != null &&
-	            curi.getUURI().getScheme().equals(UURIFactory.HTTPS)) {
+	            cauri.getUURI().getScheme().equals(UURIFactory.HTTPS)) {
 	        // If https and no port specified, add default https port to
 	        // distinuish https from http server without a port.
 	        if (!key.matches(".+:[0-9]+")) {
