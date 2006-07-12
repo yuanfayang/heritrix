@@ -21,7 +21,7 @@
         request.getParameter("message").length() > 0) {
 %>
     <p>
-        <span class="flashMessage">><b><%=request.getParameter("message")%></b></span>
+        <span class="flashMessage"><b><%=request.getParameter("message")%></b></span>
 <% } %>
 
 <% if(handler.isCrawling()){ %>
