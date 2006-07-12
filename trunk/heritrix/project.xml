@@ -341,6 +341,20 @@
             </properties>
         </dependency>
         <dependency>
+            <id>commons-lang-local</id>
+            <version>2.1</version>
+            <url>http://jakarta.apache.org/commons/lang/</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <ear.bundle>true</ear.bundle>
+                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
+                <description>Provides helper classes for java.lang.
+                </description>
+                <license>Apache 2.0
+                http://www.apache.org/licenses/LICENSE-2.0</license>
+            </properties>
+        </dependency>
+        <dependency>
             <id>commons-logging-local</id>
             <version>1.0.4</version>
             <url>http://jakarta.apache.org/commons/logging.html</url>
