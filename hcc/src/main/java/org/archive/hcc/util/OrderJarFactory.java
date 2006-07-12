@@ -271,7 +271,8 @@ public class OrderJarFactory {
 		}
 		
 		if(hc.getBlock()  != null && hc.getBlock()){
-			w.append("<object name=\"scope\"><boolean name=\"enabled\">false</boolean></object>");
+			/*w.append("<object name=\"scope\"><boolean name=\"enabled\">false</boolean></object>");*/
+            w.append("<object name=\"Preselector\"><boolean name=\"block-all\">true</boolean></object>");
 		}
 		
 		if(hc.getRegex() != null){
