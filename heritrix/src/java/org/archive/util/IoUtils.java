@@ -185,4 +185,15 @@ public class IoUtils {
         }
         return totalcount;
     }
+
+    /**
+     * Wrap generic Throwable as a checked IOException
+     * @param e wrapped exception
+     * @return IOException
+     */
+    public static IOException wrapAsIOException(Throwable e) {
+        IOException ioe = new IOException(e.toString());
+        ioe.initCause(e);
+        return ioe;
+    }
 }

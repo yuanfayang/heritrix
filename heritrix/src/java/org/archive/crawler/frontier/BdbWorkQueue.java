@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.IoUtils;
 
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
@@ -78,7 +79,7 @@ implements Comparable, Serializable {
             return queues.deleteMatchingFromQueue(match, classKey,
                 new DatabaseEntry(origin));
         } catch (DatabaseException e) {
-            throw (IOException) new IOException(e.getMessage()).initCause(e);
+            throw IoUtils.wrapAsIOException(e);
         }
     }
 
@@ -90,7 +91,7 @@ implements Comparable, Serializable {
              queues.delete(peekItem);
         } catch (DatabaseException e) {
             e.printStackTrace();
-            throw (IOException) new IOException(e.getMessage()).initCause(e);
+            throw IoUtils.wrapAsIOException(e);
         }
     }
 
@@ -151,7 +152,7 @@ implements Comparable, Serializable {
                         curi.toString());
             }
         } catch (DatabaseException e) {
-            throw (IOException)new IOException(e.getMessage()).initCause(e);
+            throw IoUtils.wrapAsIOException(e);
         }
     }
     
