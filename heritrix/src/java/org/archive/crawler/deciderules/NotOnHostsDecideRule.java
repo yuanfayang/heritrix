@@ -35,7 +35,7 @@ import java.util.logging.Logger;
  *
  * @author gojomo
  */
-public class NotOnHostsDecideRule extends SurtPrefixedDecideRule {
+public class NotOnHostsDecideRule extends OnHostsDecideRule {
     private static final Logger logger =
         Logger.getLogger(NotOnHostsDecideRule.class.getName());
     /**
@@ -59,6 +59,7 @@ public class NotOnHostsDecideRule extends SurtPrefixedDecideRule {
      * @return true if URI not in set
      */
     protected boolean evaluate(Object object) {
-        return !super.evaluate(object);
+        boolean superDecision = super.evaluate(object);
+        return !superDecision;
     }
 }
