@@ -592,45 +592,40 @@
             </properties>
         </dependency>
         <dependency>
-            <id>dsi-unimi-it</id>
-            <version>1.2.0</version>
+            <id>MG4J</id>
+            <version>1.0.1</version>
             <url>http://mg4j.dsi.unimi.it/</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <ear.bundle>true</ear.bundle>
                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>Alternatives to String, StringBuffer, buffered I/0, and a
-                ConsistentHashFunction.  Made with fastutils-4.4.2, mg4j-1.0.1, and ubix-1.0.3  
-                from ubicrawler (http://ubi.imc.pi.cnr.it/projects/ubicrawler/). Made with autojar:
-                % java -jar autojar-1.2.2.jar -v -o -v -o dsi.unimi.it-1.2.0.jar  \
-         -c ./fastutil-4.4.2/fastutil-4.4.2.jar:./mg4j-1.0.1/mg4j-1.0.1.jar:./ubix-1.0.3/ubix-1.0.3.jar \
-         it.unimi.dsi.mg4j.util.MutableString.class it.unimi.dsi.fastutil.io.FastBufferedInputStream.class it.unimi.dsi.fastutil.io.FastBufferedOutputStream.class it.unimi.dsi.mg4j.io.FastBufferedReader.class it.unimi.dsi.mg4j.io.FastByteArrayInputStream.class it.unimi.dsi.mg4j.io.FastByteArrayOutputStream.class it.unimi.dsi.mg4j.io.FastMultiByteArrayInputStream.class it.unimi.dsi.ubix.ConsistentHashFunction.class it.unimi.dsi.fastutil.io.RepositionableStream.class
+                <description>Managing Gigabytes for Java; required for 
+                MutableString and NullInputStream classes.
                 </description>
-                <license>MG4J, ConsistentHashFunction, and fastutils are
-                LGPL</license>
+                <license>GNU Lesser General Public License 
+                http://www.gnu.org/licenses/lgpl.txt</license>
             </properties>
         </dependency>
         <dependency>
-            <id>colt-subset</id>
-            <version>1.2.0</version>
-            <url>http://dsd.lbl.gov/~hoschek/colt/</url>
+            <id>fastutil-5.0.3-heritrix-subset</id>
+            <version>1.0</version>
+            <url>http://fastutil.dsi.unimi.it/</url>
             <properties>
                 <war.bundle>true</war.bundle>
                 <ear.bundle>true</ear.bundle>
                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>MerseeneTwister/RandomEngine required by the ubi
-                ConsistentHashFunction. Copyright (c) 1999
-                CERN - European Organization for Nuclear Research. Made with
-                autojar: java -jar 
-                ~/workspace/autojar-1.2.2/autojar-1.2.2.jar 
-                -v -o colt-subset-1.2.0.jar -c colt/lib/colt.jar
-                cern.jet.random.engine.MersenneTwister.class 
-                cern.jet.random.engine.RandomEngine.class 
-                cern.colt.PersistentObject.class 
-                cern.colt.function.DoubleFunction.class 
-                cern.colt.function.IntFunction.class
+                <description>Fastutil: Fast & compact type-specific 
+                collections for Java. required for FastBufferedOutputStream,
+                LongIterator, LongIterators, Long2ObjectOpenHashMap, 
+                LongArrayList, RepositionableStream, and possibly others. 
+                
+                Subsetted from the full (12MB!) fastutil-5.0.3.jar using
+                autojar (1.3) and the command:
+                
+                java -jar autojar.jar -v -o fastutil-5.0.3-heritrix-subset-1.0.jar -c ../fastutil-5.0.3/fastutil-5.0.3.jar it.unimi.dsi.fastutil.io.FastBufferedInputStream.class it.unimi.dsi.fastutil.io.FastBufferedOutputStream.class it.unimi.dsi.fastutil.io.RepositionableStream.class it.unimi.dsi.fastutil.longs.LongIterators.class it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap.class
                 </description>
-                <license>http://dsd.lbl.gov/~hoschek/colt/license.html</license>
+                <license>GNU Lesser General Public License 
+                http://www.gnu.org/licenses/lgpl.txt</license>
             </properties>
         </dependency>
         <dependency>
