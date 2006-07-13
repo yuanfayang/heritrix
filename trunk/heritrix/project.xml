@@ -322,7 +322,7 @@
         </dependency>
         <dependency>
             <id>commons-httpclient-local</id>
-            <version>3.0-rc3</version>
+            <version>3.0.1</version>
             <url>http://jakarta.apache.org/commons/httpclient/</url>
             <properties>
                 <war.bundle>true</war.bundle>
@@ -592,7 +592,7 @@
             </properties>
         </dependency>
         <dependency>
-            <id>MG4J</id>
+            <id>mg4j-local</id>
             <version>1.0.1</version>
             <url>http://mg4j.dsi.unimi.it/</url>
             <properties>
@@ -607,7 +607,7 @@
             </properties>
         </dependency>
         <dependency>
-            <id>fastutil-5.0.3-heritrix-subset</id>
+            <id>fastutil-local</id>
             <version>1.0</version>
             <url>http://fastutil.dsi.unimi.it/</url>
             <properties>
@@ -619,10 +619,10 @@
                 LongIterator, LongIterators, Long2ObjectOpenHashMap, 
                 LongArrayList, RepositionableStream, and possibly others. 
                 
-                Subsetted from the full (12MB!) fastutil-5.0.3.jar using
-                autojar (1.3) and the command:
+                Subsetted from the full (12MB!) fastutil-5.0.4.jar using
+                autojar (1.3.1) and the command:
                 
-                java -jar autojar.jar -v -o fastutil-5.0.3-heritrix-subset-1.0.jar -c ../fastutil-5.0.3/fastutil-5.0.3.jar it.unimi.dsi.fastutil.io.FastBufferedInputStream.class it.unimi.dsi.fastutil.io.FastBufferedOutputStream.class it.unimi.dsi.fastutil.io.RepositionableStream.class it.unimi.dsi.fastutil.longs.LongIterators.class it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap.class
+                java -jar autojar.jar -v -o fastutil-5.0.4-heritrix-subset-1.0.jar -c ../fastutil-5.0.3/fastutil-5.0.3.jar it.unimi.dsi.fastutil.io.FastBufferedInputStream.class it.unimi.dsi.fastutil.io.FastBufferedOutputStream.class it.unimi.dsi.fastutil.io.RepositionableStream.class it.unimi.dsi.fastutil.longs.LongIterators.class it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap.class
                 </description>
                 <license>GNU Lesser General Public License 
                 http://www.gnu.org/licenses/lgpl.txt</license>
