@@ -614,7 +614,7 @@
                 <war.bundle>true</war.bundle>
                 <ear.bundle>true</ear.bundle>
                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>Fastutil: Fast & compact type-specific 
+                <description>Fastutil: Fast and compact type-specific 
                 collections for Java. required for FastBufferedOutputStream,
                 LongIterator, LongIterators, Long2ObjectOpenHashMap, 
                 LongArrayList, RepositionableStream, and possibly others. 
