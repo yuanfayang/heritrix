@@ -24,7 +24,7 @@
 */ 
 package org.archive.crawler.util;
 
-import it.unimi.dsi.fastutil.Iterators;
+import it.unimi.dsi.fastutil.longs.LongIterators;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 
 import java.io.BufferedInputStream;
@@ -77,7 +77,7 @@ public class DiskFPMergeUriUniqFilter extends FPMergeUriUniqFilter {
         }
         newCount = 0;
         if(currentFps==null) {
-            return Iterators.EMPTY_ITERATOR;
+            return LongIterators.EMPTY_ITERATOR;
         }
         try {
             oldFps = new DataInputStream(new BufferedInputStream(new FileInputStream(currentFps)));
@@ -171,12 +171,12 @@ public class DiskFPMergeUriUniqFilter extends FPMergeUriUniqFilter {
          * 
          * @see java.util.Iterator#next()
          */
-        public Object next() {
+        public Long next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
             // 'next' is guaranteed set by a hasNext() which returned true
-            Object returnObj = new Long(this.next);
+            Long returnObj = new Long(this.next);
             this.nextIsValid = false;
             return returnObj;
         }
