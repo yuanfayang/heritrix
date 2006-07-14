@@ -70,12 +70,6 @@ implements FetchStatusCodes {
     public static final String ATTR_LOG_REJECT_FILTERS =
         "scope-rejected-url-filters";
     
-    public static final String ATTR_SCOPE_EMBEDDED_LINKS =
-        "scope-embedded-links";
-
-    private final static Boolean DEFAULT_SCOPE_EMBEDDED_LINKS =
-        new Boolean(true);
-    
     /**
      * Instance of rejected uris log filters.
      */
@@ -94,11 +88,6 @@ implements FetchStatusCodes {
             "If enabled, any URL found because a seed redirected to it " +
             "(original seed returned 301 or 302), will also be treated " +
             "as a seed.", DEFAULT_SEED_REDIRECTS_NEW_SEEDS));
-        t.setExpertSetting(true);
-
-        t = addElementToDefinition(new SimpleType(ATTR_SCOPE_EMBEDDED_LINKS,
-            "If enabled, embeded links (images etc.) are tested against " +
-            "scope.", DEFAULT_SCOPE_EMBEDDED_LINKS));
         t.setExpertSetting(true);
         
         this.rejectLogFilters = (MapType)addElementToDefinition(
@@ -132,8 +121,6 @@ implements FetchStatusCodes {
             return;
         }
 
-        final boolean scheduleEmbeds = ((Boolean)getUncheckedAttribute(curi,
-            ATTR_SCOPE_EMBEDDED_LINKS)).booleanValue();
         final boolean redirectsNewSeeds = ((Boolean)getUncheckedAttribute(curi,
             ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue();
         Collection inScopeLinks = new HashSet();
@@ -142,10 +129,7 @@ implements FetchStatusCodes {
             if(o instanceof Link){
                 final Link wref = (Link)o;
                 try {
-                    final int directive = getSchedulingFor(wref, scheduleEmbeds);
-                    if (directive == CandidateURI.DONT_SCHEDULE) {
-                        continue;
-                    }
+                    final int directive = getSchedulingFor(wref);
                     final CandidateURI caURI =
                         curi.createCandidateURI(curi.getBaseURI(), wref, directive,
                             considerAsSeed(curi, wref, redirectsNewSeeds));
@@ -236,17 +220,12 @@ implements FetchStatusCodes {
         return false;
     }
     
-    protected int getSchedulingFor(final Link wref,
-            final boolean scheduleEmbeds) {
+    protected int getSchedulingFor(final Link wref) {
         final char c = wref.getHopType();
         switch (c) {
             case Link.REFER_HOP:
                 // treat redirects somewhat urgently
                 return CandidateURI.MEDIUM;
-            case Link.EMBED_HOP:
-                if(!scheduleEmbeds) {
-                    return CandidateURI.DONT_SCHEDULE;
-                }
             default:
                 // everything else normal (at least for now)
                 return CandidateURI.NORMAL;

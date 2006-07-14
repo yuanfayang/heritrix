@@ -80,11 +80,6 @@ implements Serializable, Reporter, CoreAttributeConstants {
      */
     public static final int NORMAL = 3;
     
-    /**
-     * Marks URI as not schedulable.
-     */
-    public static final int DONT_SCHEDULE = -1;
-    
     private int schedulingDirective = NORMAL;
     
     /** 
