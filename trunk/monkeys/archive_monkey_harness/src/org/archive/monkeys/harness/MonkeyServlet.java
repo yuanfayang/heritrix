@@ -28,11 +28,14 @@ public class MonkeyServlet extends HttpServlet {
 	 * Initializes the servlet. A new heart beat tracker is created and started.
 	 */
 	public void init(ServletConfig conf) throws ServletException {
-		// TODO Auto-generated method stub
-		heartbeat = new MonkeyHeartbeatTracker();
-		heartbeat.start();
-		super.init(conf);
-		System.err.println("In monkey servlet init..");
+		try {
+			heartbeat = new MonkeyHeartbeatTracker();
+			heartbeat.start();
+			super.init(conf);
+			System.err.println("In monkey servlet init..");
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
 	}
 
 	/**
