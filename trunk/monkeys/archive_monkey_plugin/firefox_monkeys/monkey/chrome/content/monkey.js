@@ -1,6 +1,16 @@
-function magic_button() {
+function old_magic_button() {
     window.addEventListener("load", linksGetter, true);
-    getBrowser().contentDocument.location = "http://www.eggkeg.com";
+    getBrowser().contentDocument.location = "http://www.google.com";
+}
+
+function magic_button() {
+    //window.addEventListener("load", linksGetter, true);
+    //getBrowser().contentDocument.location = "http://www.google.com";
+	
+	http_request = new XMLHttpRequest();
+	http_request.onreadystatechange = showResponse;
+	http_request.open('GET', 'http://localhost:8081/monkey?method=getTask&mid=MonkeyOne', true);
+	http_request.send(null);
 }
 
 /* Sends a ping request to the harness servlet */
@@ -8,12 +18,14 @@ function pinger() {
 	//getBrowser().contentDocument.write("pinging...<br/>");
 	http_request = new XMLHttpRequest();
 	//http_request.onreadystatechange = showResponse;
-	http_request.open('GET', 'http://0.0.0.0:8080/?method=heartBeat', true);
+	http_request.open('GET', 'http://0.0.0.0:8082/harness?method=heartBeat', true);
 	http_request.send(null);
 }
 
 function showResponse() {
-	getBrowser().contentDocument.write("["+http_request.responseText+"]");
+	if (http_request.readyState == 4) {
+		getBrowser().contentDocument.write("["+http_request.responseText+"]");
+	}
 }
 
 /* Initializes the monkey plugin. */
