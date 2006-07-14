@@ -21,5 +21,5 @@ public class HostConstraintTest extends TestCase{
 	public void testGetOrderFilePath(){
 		assertEquals("settings/com/test/www/settings.xml", h.getSettingsFilePath());
 	}
-
+	
 }
