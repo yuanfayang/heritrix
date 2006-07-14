@@ -24,8 +24,9 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 	
 	public void doSubmitTask(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
-
 		response.setContentType("text/html");
+		
+		// check that we got the correct HTTP method in the request
 		if (!request.getMethod().equals("POST")) {
 			log.warn("Request wasn't POST, returning error.");
 			response.setStatus(400);
@@ -38,6 +39,8 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 			log.debug("Resuest URL was: " + request.getRequestURI());
 			log.debug(request.getInputStream().available());
 			log.debug("before reader");
+			
+			// read POST data
 			BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
 			log.debug("reading");
 			String content = "";
@@ -45,10 +48,13 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 				content += br.readLine();
 			}
 			log.debug("!!! " + content);
+			
+			// parse the JSON data read from the stream
 			JSONObject taskData = (JSONObject) JSONValue
 					.parse(content);
-			//JSONObject taskData = null;
+
 			try {
+				// try to submit the task to the controller
 				long taskId = controller.submitTask(taskData);
 				log.debug("Submitted task status: " + controller.getTaskStatus(taskId));
 				
@@ -61,6 +67,23 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 			} finally {
 				response.flushBuffer();
 			}
+		}
+	}
+	
+	public void doGetTaskStatus(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+
+		response.setContentType("text/html");
+		if (!request.getMethod().equals("GET")) {
+			log.warn("Request wasn't GET, returning error.");
+			response.setStatus(400);
+			response.getWriter().println(
+					"This request should be a GET request.");
+		} else {
+			long taskId = Long.parseLong(request.getParameter("tid"));
+			String status = controller.getTaskStatus(taskId).toString();
+			response.setStatus(200);
+			response.getWriter().println(status);
 		}
 	}
 
