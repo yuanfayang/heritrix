@@ -1,6 +1,8 @@
 package org.archive.monkeys.harness;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Properties;
 
 /**
  * The heartbeat tracker is responsible for making sure that the browser process
@@ -10,14 +12,20 @@ import java.io.IOException;
  * @author Eugene Vahlis
  */
 public class MonkeyHeartbeatTracker extends Thread {
-	private static final int HEART_BEAT_LENGTH = 20000;
+	private int heartBeatLength = 20000;
 
-	private static final String BROWSER_COMMAND = "/usr/lib/firefox/firefox -P dev";
+	private String browserCommand;
 
 	private boolean pinged;
 
 	private Process browserProc;
 
+	public MonkeyHeartbeatTracker() throws Exception {
+		Properties conf = Harness.loadOrCreateProperties();
+		this.browserCommand = conf.getProperty("browser.command");
+		this.heartBeatLength = Integer.parseInt(conf.getProperty("browser.timeout"));
+	}
+	
 	/**
 	 * Notifies the tracker that the browser is still alive.
 	 */
@@ -36,7 +44,7 @@ public class MonkeyHeartbeatTracker extends Thread {
 		try {
 			startBrowserProc();
 			while (!interrupted()) {
-				sleep(HEART_BEAT_LENGTH);
+				sleep(heartBeatLength);
 				validateOrRestart();
 			}
 		} catch (InterruptedException e) {
@@ -83,7 +91,7 @@ public class MonkeyHeartbeatTracker extends Thread {
 	 * Starts a browser process.
 	 */
 	private void startBrowserProc() throws IOException {
-		this.browserProc = Runtime.getRuntime().exec(BROWSER_COMMAND);
+		this.browserProc = Runtime.getRuntime().exec(browserCommand);
 		this.pinged = false;
 	}
 

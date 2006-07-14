@@ -1,11 +1,18 @@
 package org.archive.monkeys.harness;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Properties;
 
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
+import org.mortbay.http.HttpContext;
+import org.mortbay.http.HttpServer;
 import org.mortbay.jetty.servlet.ServletHandler;
 
 /**
@@ -17,26 +24,36 @@ import org.mortbay.jetty.servlet.ServletHandler;
  * @author Eugene Vahlis
  */
 public class Harness {
-	private Server server;
+	private HttpServer server;
+
 	private ServletHandler handler;
+
+	private Logger log;
+
+	private Properties conf;
 
 	/**
 	 * Creates a new harness. All necessary initializations are done but the
 	 * browser and http servers are not started. User the run method to start
 	 * them.
+	 * 
+	 * @throws IOException
+	 *             in case the server fails to start.
+	 * @throws FileNotFoundException
+	 *             in case the config file cannot be created.
 	 */
-	public Harness() {
-		server = new Server();
-		Connector connector = new SelectChannelConnector();
-		connector.setPort(8080);
-		server.setConnectors(new Connector[] { connector });
+	public Harness() throws FileNotFoundException, IOException {
+		log = Logger.getLogger(this.getClass());
+		BasicConfigurator.configure();
+		conf = loadOrCreateProperties();
+		this.server = new HttpServer();
+		this.server.addListener(":" + conf.getProperty("port"));
 
-		handler = new ServletHandler();
-		
-		server.setHandler(handler);
-
-		handler.addServletWithMapping(
-				"org.archive.monkeys.harness.MonkeyServlet", "/");
+		HttpContext context = this.server.getContext("/");
+		ServletHandler handler = new ServletHandler();
+		handler.addServlet("harness", conf.getProperty("harness.mapping"),
+				"org.archive.monkeys.harness.MonkeyServlet");
+		context.addHandler(handler);
 	}
 
 	/**
@@ -46,25 +63,53 @@ public class Harness {
 	 *             In case of an error in starting one of the processes.
 	 */
 	public void start() throws Exception {
-		server.start();
-		HttpURLConnection c = (HttpURLConnection) (new URL("http://localhost:8080/")).openConnection();
+		this.server.start();
+		HttpURLConnection c = (HttpURLConnection) (new URL("http://localhost:"
+				+ conf.getProperty("port")
+				+ conf.getProperty("harness.mapping"))).openConnection();
 		c.connect();
 		while (c.getResponseCode() != 200) {
 			c.connect();
 		}
-		server.join();
+		this.server.join();
 	}
 
 	/**
 	 * Creates a new harness and runs it.
 	 */
 	public static void main(String[] args) {
-		Harness h = new Harness();
 		try {
+			Harness h = new Harness();
 			h.start();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	protected static Properties loadOrCreateProperties() throws FileNotFoundException,
+			IOException {
+		String confDirPath = System.getProperty("user.home")
+				+ "/.archive_monkey";
+		File confDir = new File(confDirPath);
+		if (!confDir.exists()) {
+			confDir.mkdir();
+		}
+
+		File conf = new File(confDirPath + "/harness_settings.properties");
+		Properties p = new Properties();
+		if (conf.exists()) {
+			p.load(new FileInputStream(conf));
+		} else {
+			// load defaults
+			p.setProperty("port", "8082");
+			p.setProperty("harness.mapping", "/harness");
+			p.setProperty("browser.command", "firefox -P dev");
+			p.setProperty("browser.timeout", "20000");
+			p.store(new FileOutputStream(conf),
+					"Archive Monkey Harness Config File");
+		}
+
+		return p;
 	}
 }
