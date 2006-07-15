@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
+import java.util.Iterator;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -15,6 +16,8 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.archive.monkeys.controller.Controller;
 import org.archive.monkeys.controller.NanoContainer;
+import org.archive.monkeys.controller.Task;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -84,6 +87,25 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 			String status = controller.getTaskStatus(taskId).toString();
 			response.setStatus(200);
 			response.getWriter().println(status);
+		}
+	}
+	
+	public void doShowQueue(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+
+		response.setContentType("text/html");
+		if (!request.getMethod().equals("GET")) {
+			log.warn("Request wasn't GET, returning error.");
+			response.setStatus(400);
+			response.getWriter().println(
+					"This request should be a GET request.");
+		} else {
+			response.setStatus(200);
+			JSONArray res = new JSONArray();
+			for (Iterator<Task> it = controller.getFreeTasksIterator(); it.hasNext();) {
+				res.add(it.next().getTaskData());
+			}
+			response.getWriter().println(res.toString());
 		}
 	}
 
