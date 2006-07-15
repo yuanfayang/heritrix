@@ -30,8 +30,15 @@ import java.util.regex.Pattern;
 
 import javax.servlet.jsp.JspWriter;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 public class TextUtils {
     private static final String FIRSTWORD = "^([^\\s]*).*$";
+    
+    /**
+     * Allowable range between & and ;
+     */
+    private static final int MAX_ENTITY_WIDTH = 9;
     
     private static final ThreadLocal TL_MATCHER_MAP = new ThreadLocal() {
         protected Object initialValue() {
@@ -168,69 +175,77 @@ public class TextUtils {
      * @return The same string escaped.
      */
     public static String escapeForJavascript(String s) {
-        if(s.indexOf('\'') < 0 && s.indexOf('\n') < 0){
-            return s;
-        }
-        StringBuffer buffer = new StringBuffer(s.length() + 10);
-        char[] characters = s.toCharArray();
-        for(int j=0 ; j<characters.length ; j++){
-            if(characters[j] == '\''){
-                buffer.append('\\');
-            } else if(characters[j]=='\n') {
-                buffer.append("\\n");
-            }
-            buffer.append(characters[j]);
-        }
-        return buffer.toString();
+        return StringEscapeUtils.escapeJavaScript(s);
     }
     
     /**
      * Escapes a string so that it can be placed inside XML/HTML attribute.
      * Replaces ampersand, less-than, greater-than, single-quote, and 
-     * double-quote with escaped versions. 
-     * 
+     * double-quote with escaped versions.
      * @param s The string to escape
      * @return The same string escaped.
      */
     public static String escapeForMarkupAttribute(String s) {
-        // TODO: do this in a single pass instead of creating 5 junk strings
-        String escaped = s.replaceAll("&","&amp;");
-        escaped = escaped.replaceAll("<","&lt;");
-        escaped = escaped.replaceAll(">","&gt;");
-        escaped = escaped.replaceAll("\'","&apos;");
-        escaped = escaped.replaceAll("\"","&quot;");
-        return escaped; 
+        return StringEscapeUtils.escapeXml(s);
     }
-
+    
     /**
-     * Escapes a string so that it can be placed inside XML/HTML attribute.
-     * Replaces ampersand, less-than, greater-than, single-quote, and 
-     * double-quote with escaped versions. 
-     * 
+     * Minimally escapes a string so that it can be placed inside XML/HTML
+     * attribute.
+     * Escapes lt and amp.
      * @param s The string to escape
      * @return The same string escaped.
      */
     public static String escapeForHTML(String s) {
         // TODO: do this in a single pass instead of creating 5 junk strings
         String escaped = s.replaceAll("&","&amp;");
-        escaped = escaped.replaceAll("<","&lt;");
-        return escaped; 
+        return escaped.replaceAll("<","&lt;");
     }
-    
+
     /**
      * Utility method for writing a (potentially large) String to a JspWriter,
-     * escaping it for HTML display, withouth constructing another large String
+     * escaping it for HTML display, without constructing another large String
      * of the whole content. 
      * @param s String to write
      * @param out destination JspWriter
      * @throws IOException
      */
-    public static void writeEscapedForHTML(String s, JspWriter out) throws IOException {
+    public static void writeEscapedForHTML(String s, JspWriter out)
+    throws IOException {
         BufferedReader reader = new BufferedReader(new StringReader(s));
         String line;
-        while((line=reader.readLine())!=null){
-            out.println(escapeForHTML(line));
+        while((line=reader.readLine()) != null){
+            out.println(StringEscapeUtils.escapeHtml(line));
         }
+    }
+    
+    /**
+     * Replaces HTML Entity Encodings.
+     * @param cs The CharSequence to remove html codes from
+     * @return the same CharSequence or an escaped String.
+     */
+    public static CharSequence unescapeHtml(final CharSequence cs) {
+        if (cs == null) {
+            return cs;
+        }
+        
+        // If both of these do not equal zero, then cs has entity code
+        int startEntityCode = -1;
+        int endEntityCode = -1;
+    
+        // Check for encodings, make sure start and end are within certain range
+        for (int i = 0; i < cs.length(); i++) {
+            if (cs.charAt(i) == '&') {
+                startEntityCode = i;
+            } else if (cs.charAt(i) == ';' && startEntityCode >= 0 &&
+                    i > startEntityCode &&
+                    ((i - startEntityCode) < MAX_ENTITY_WIDTH)) {
+                endEntityCode = i;
+            }
+        }
+
+        return (startEntityCode != 0 && endEntityCode != 0)?
+            StringEscapeUtils.unescapeHtml(cs.toString()): cs;
     }
     
     /**
