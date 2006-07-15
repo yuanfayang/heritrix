@@ -90,5 +90,26 @@ public class TextUtilsTest extends TestCase {
         assertTrue("Failed to get first word 2 " + tmpStr,
             tmpStr.equals(firstWord));       
     }
+    
+    public void testUnescapeHtml() {
+        final String abc = "abc";
+        CharSequence cs = TextUtils.unescapeHtml("abc");
+        assertEquals(cs, abc);
+        final String backwards = "aaa;lt&aaa";
+        cs = TextUtils.unescapeHtml(backwards);
+        assertEquals(cs, backwards);
+        final String ampersand = "aaa&aaa";
+        cs = TextUtils.unescapeHtml(ampersand);
+        assertEquals(cs, ampersand);
+        final String encodedAmpersand = "aaa&amp;aaa";
+        cs = TextUtils.unescapeHtml(encodedAmpersand);
+        assertEquals(cs, ampersand);
+        final String encodedQuote = "aaa&#39;aaa";
+        cs = TextUtils.unescapeHtml(encodedQuote);
+        assertEquals(cs, "aaa'aaa");
+        final String entityQuote = "aaa&quot;aaa";
+        cs = TextUtils.unescapeHtml(entityQuote);
+        assertEquals(cs, "aaa\"aaa");
+    }
 }
 

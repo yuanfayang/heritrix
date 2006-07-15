@@ -52,8 +52,8 @@ import org.archive.util.TextUtils;
  */
 public class ExtractorHTML extends Extractor
 implements CoreAttributeConstants {
-    //  TODO: add config param to change
-    protected boolean ignoreUnexpectedHTML = true;
+    
+
 
     private static Logger logger =
         Logger.getLogger(ExtractorHTML.class.getName());
@@ -155,8 +155,6 @@ implements CoreAttributeConstants {
     // URI might be one anyway, as in form-tag VALUE attributes
     static final String LIKELY_URI_PATH =
      "(\\.{0,2}[^\\.\\n\\r\\s\"']*(\\.[^\\.\\n\\r\\s\"']+)+)";
-    static final String ESCAPED_AMP = "&amp;";
-    static final String AMP ="&";
     static final String WHITESPACE = "\\s";
     static final String CLASSEXT =".class";
     static final String APPLET = "applet";
@@ -170,6 +168,12 @@ implements CoreAttributeConstants {
     
     public static final String ATTR_IGNORE_FORM_ACTION_URLS =
         "ignore-form-action-urls";
+    
+    public static final String ATTR_OVERLY_EAGER_LINK_DETECTION =
+        "overly-eager-link-detection";
+    
+    public static final String ATTR_IGNORE_UNEXPECTED_HTML = 
+        "ignore-unexpected-html";
 
     
     protected long numberOfCURIsHandled = 0;
@@ -187,12 +191,24 @@ implements CoreAttributeConstants {
             "resources (IMG etc.), otherwise they are treated as " +
             "navigational links", Boolean.TRUE));
         t.setExpertSetting(true);
-        Type t2 = addElementToDefinition(
+        t = addElementToDefinition(
             new SimpleType(ATTR_IGNORE_FORM_ACTION_URLS,
             "If enabled, links appearing as the ACTION attribute in " +
             "FORMs are not extracted.",
             Boolean.FALSE));
-        t2.setExpertSetting(true);
+        t.setExpertSetting(true);
+        t = addElementToDefinition(
+                new SimpleType(ATTR_OVERLY_EAGER_LINK_DETECTION,
+                "If disabled (default is enabled), possible links will not be "+
+                "queued if they are placed in (somewhat) unlikely places " + 
+                "such as the value of <option> in <select> drop downs.",
+                Boolean.TRUE));
+        t.setExpertSetting(true);
+        t = addElementToDefinition(
+                new SimpleType(ATTR_IGNORE_UNEXPECTED_HTML,
+                "If enabled, html that is detected in unusual or unexpected " +
+                "places is not considerd for processing.", Boolean.TRUE));
+        t.setExpertSetting(true);
     }
 
     protected void processGeneralTag(CrawlURI curi, CharSequence element,
@@ -207,8 +223,11 @@ implements CoreAttributeConstants {
         final boolean framesAsEmbeds = ((Boolean)getUncheckedAttribute(curi,
             ATTR_TREAT_FRAMES_AS_EMBED_LINKS)).booleanValue();
 
-            final boolean ignoreFormActions = ((Boolean)getUncheckedAttribute(curi,
+        final boolean ignoreFormActions = ((Boolean)getUncheckedAttribute(curi,
                 ATTR_IGNORE_FORM_ACTION_URLS)).booleanValue();
+        
+        final boolean overlyEagerLinkDetection = ((Boolean)getUncheckedAttribute
+                (curi, ATTR_OVERLY_EAGER_LINK_DETECTION)).booleanValue();
         
         final String elementStr = element.toString();
 
@@ -220,6 +239,7 @@ implements CoreAttributeConstants {
             assert start >= 0: "Start is: " + start + ", " + curi;
             assert end >= 0: "End is :" + end + ", " + curi;
             CharSequence value = cs.subSequence(start, end);
+            value = TextUtils.unescapeHtml(value);
             if (attr.start(2) > -1) {
                 // HREF
                 CharSequence context =
@@ -275,11 +295,11 @@ implements CoreAttributeConstants {
                 processEmbed(curi, value, context, hopType);
             } else if (attr.start(6) > -1) {
                 // CODEBASE
-                // TODO: more HTML deescaping?
-                codebase = TextUtils.replaceAll(ESCAPED_AMP, value, AMP);
+                codebase = (value instanceof String)?
+                    (String)value: value.toString();
                 CharSequence context = Link.elementContext(element,
                     attr.group(6));
-                processEmbed(curi,codebase, context);
+                processEmbed(curi, codebase, context);
             } else if (attr.start(7) > -1) {
                 // CLASSID, DATA
                 if (resources == null) {
@@ -308,10 +328,10 @@ implements CoreAttributeConstants {
                 } else {
                     resources.add(value.toString());
                 }
-
             } else if (attr.start(10) > -1) {
-                // VALUE
-                if(TextUtils.matches(LIKELY_URI_PATH, value)) {
+                // VALUE, with possibility of URI
+                if (TextUtils.matches(LIKELY_URI_PATH, value)
+                        && overlyEagerLinkDetection) {
                     CharSequence context = Link.elementContext(element,
                         attr.group(10));
                     processLink(curi,value, context);
@@ -348,8 +368,7 @@ implements CoreAttributeConstants {
             }
             while(iter.hasNext()) {
                 res = iter.next().toString();
-                // TODO: more HTML deescaping?
-                res = TextUtils.replaceAll(ESCAPED_AMP, res, AMP);
+                res = (String) TextUtils.unescapeHtml(res);
                 if (codebaseURI != null) {
                     res = codebaseURI.resolve(res).toString();
                 }
@@ -390,16 +409,18 @@ implements CoreAttributeConstants {
      * @param value
      * @param context
      */
-    protected void processLink(CrawlURI curi, CharSequence value,
+    protected void processLink(CrawlURI curi, final CharSequence value,
             CharSequence context) {
-        String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-        if(TextUtils.matches(JAVASCRIPT, link)) {
+        if (TextUtils.matches(JAVASCRIPT, value)) {
             processScriptCode(curi, value. subSequence(11, value.length()));
         } else {    
             if (logger.isLoggable(Level.FINEST)) {
-                logger.finest("link: " + link + " from " + curi);
+                logger.finest("link: " + value.toString() + " from " + curi);
             }
-            addLinkFromString(curi, link, context, Link.NAVLINK_HOP);
+            addLinkFromString(curi,
+                (value instanceof String)?
+                    (String)value: value.toString(),
+                context, Link.NAVLINK_HOP);
             this.numberOfLinksExtracted++;
         }
     }
@@ -428,14 +449,17 @@ implements CoreAttributeConstants {
             CharSequence context) {
         processEmbed(curi, value, context, Link.EMBED_HOP);
     }
-    protected void processEmbed(CrawlURI curi, CharSequence value,
+
+    protected void processEmbed(CrawlURI curi, final CharSequence value,
             CharSequence context, char hopType) {
-        String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
         if (logger.isLoggable(Level.FINEST)) {
-            logger.finest("embed (" + hopType + "): " + embed + " from " +
-                curi);
+            logger.finest("embed (" + hopType + "): " + value.toString() +
+                " from " + curi);
         }
-        addLinkFromString(curi, embed, context, hopType);
+        addLinkFromString(curi,
+            (value instanceof String)?
+                (String)value: value.toString(),
+            context, hopType);
         this.numberOfLinksExtracted++;
     }
 
@@ -445,7 +469,11 @@ implements CoreAttributeConstants {
             return;
         }
 
-        if (this.ignoreUnexpectedHTML) {
+        final boolean ignoreUnexpectedHTML =
+             ((Boolean)getUncheckedAttribute(curi, 
+                 ATTR_IGNORE_UNEXPECTED_HTML)).booleanValue();        
+
+        if (ignoreUnexpectedHTML) {
             try {
                 if(!isHtmlExpectedHere(curi)) {
                     // HTML was not expected (eg a GIF was expected) so ignore
@@ -685,8 +713,7 @@ implements CoreAttributeConstants {
      * @param endOfOpenTag
      */
     protected void processStyle(CrawlURI curi, CharSequence sequence,
-            int endOfOpenTag)
-    {
+            int endOfOpenTag) {
         // First, get attributes of script-open tag as per any other tag.
         processGeneralTag(curi, sequence.subSequence(0,6),
             sequence.subSequence(0,endOfOpenTag));
@@ -696,6 +723,8 @@ implements CoreAttributeConstants {
             curi, sequence.subSequence(endOfOpenTag,sequence.length()),
                 getController());
     }
+    
+
 
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.Processor#report()
