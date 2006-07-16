@@ -6,19 +6,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.archive.crawler.byexample.algorithms.datastructure.ClusterScore;
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringDocumentIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringSupportIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.DocumentListing;
-import org.archive.crawler.byexample.algorithms.datastructure.FrequentItemSets;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.ItemSet;
-import org.archive.crawler.byexample.algorithms.datastructure.TermSupport;
-import org.archive.crawler.byexample.algorithms.datastructure.DocumentListing.DocumentEntry;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.IdListing;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing.DocumentEntry;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexEntry;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexRow;
+import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
+import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
+import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterScore;
+import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.support.DocumentSupportIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
+import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupportListing;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
 import org.archive.crawler.byexample.constants.AlgorithmConstants;
-import org.archive.crawler.byexample.utils.TimerHandler;
+import org.archive.crawler.byexample.utils.TimerUtils;
 
 /**
  * Class that constructs the clustering structure
@@ -30,8 +35,9 @@ public class StructureBuilder {
 
     private TermIndexManipulator myTermsIndex;
     private DocumentIndexManipulator myTFIDFIndex;   
-    private ClusteringDocumentIndex myDocumentClusteringIndex;
-    private ClusteringSupportIndex myClusterSupportIndex;
+    private ClusterDocumentsIndex myDocumentClusteringIndex;
+    private ClusterSupportIndex myClusterSupportIndex;
+    private DocumentSupportIndex myDocumentSupportIndex;
     private List<TermSupport> myGlobalSupportIndex;
     private DocumentListing myDocListing;    
     
@@ -42,10 +48,11 @@ public class StructureBuilder {
         myTermsIndex=new TermIndexManipulator(termsIndex);
         myTFIDFIndex=new DocumentIndexManipulator(termsIndex, docCount);
         myTFIDFIndex.createSortedByIdTFIDFIndex();
-        myDocumentClusteringIndex=new ClusteringDocumentIndex();
-        myClusterSupportIndex=new ClusteringSupportIndex();
+        myDocumentClusteringIndex=new ClusterDocumentsIndex();
+        myClusterSupportIndex=new ClusterSupportIndex();
         myGlobalSupportIndex=termSupport;
         myDocListing=allDocs;
+        myDocumentSupportIndex=new DocumentSupportIndex();
     }
     
     /**
@@ -84,32 +91,57 @@ public class StructureBuilder {
         }        
     }
     
-    /**
-     * Creates initial clustering support based on given FrequentItemSets.
-     */
-    public void createInitialClusterSupport(FrequentItemSets fis){
-        ItemSet currIS;
-        String[] currRow;
-        String currDoc;
-        String termId;
-        TermSupport se=null;
+    public void calculateClusterSupport(){
+        ItemSet currIS=null;
+        IdListing currDocs=null;
+        int currDocsNo=0;
+        myClusterSupportIndex.clearIndex();
         for (Iterator<ItemSet> iter = myDocumentClusteringIndex.getIndexKeysIterator(); iter.hasNext();) {
             currIS=iter.next();            
-            currRow=myDocumentClusteringIndex.getRow(currIS).toArray();
-            for (int i=0; i<myGlobalSupportIndex.size(); i++){
-                termId = myGlobalSupportIndex.get(i).getTerm();
-                myClusterSupportIndex.addIndexValue(currIS,new TermSupport(termId,0));
-                for (int j = 0; j < currRow.length; j++) {
-                    currDoc=currRow[j];                               
-                    se=myClusterSupportIndex.getRow(currIS).getEntry(termId);
-                    if (myTermsIndex.valueExistsAtKey(termId,currDoc))                      
-                      se.increaseSupport();
+            currDocs=myDocumentClusteringIndex.getRow(currIS);     
+            currDocsNo=currDocs.getRowSize();       
+            //No documents in the cluster. Do not calculate support
+            if (currDocsNo==0)
+                continue;
+            //else calculate support for each 1-frequent item
+            myClusterSupportIndex.initializeKey(currIS,myGlobalSupportIndex);
+            for (int i = 0; i <myGlobalSupportIndex.size(); i++) {
+                for (int j = 0; j < currDocsNo; j++) {
+                    myClusterSupportIndex.getRow(currIS).getEntryAtIndex(i).setSupport(
+                    (myDocumentSupportIndex.getRow(currDocs.getValueAtPos(j)).getEntryAtIndex(i).getSupport()+
+                    myClusterSupportIndex.getRow(currIS).getEntryAtIndex(i).getSupport()));
                 }
-                se.setSupport(se.getSupport()/currRow.length);
+                myClusterSupportIndex.getRow(currIS).getEntryAtIndex(i).setSupport(
+                        myClusterSupportIndex.getRow(currIS).getEntryAtIndex(i).getSupport()/currDocsNo);
             }            
         }
     }
     
+    public void calculateDocumentSupport(){
+        String currDocId=null;
+        IndexRow currIR=null;
+        TermSupport currSE=null;
+        for (Iterator<DocumentEntry> iter = myDocListing.getListingIterator(); iter.hasNext();) {
+            currDocId=String.valueOf(iter.next().getId());
+            myDocumentSupportIndex.initializeKey(currDocId,myGlobalSupportIndex);
+            for (int i=0; i<myGlobalSupportIndex.size(); i++){
+                currSE=myDocumentSupportIndex.getRow(currDocId).getEntryAtIndex(i);
+                currIR=myTermsIndex. getIndex().getRow(myGlobalSupportIndex.get(i).getTerm());
+                currSE.setSupport(getTermSupport(currDocId,currIR));                
+            }            
+        }
+    }
+    
+    public double getTermSupport(String s, IndexRow ir){
+        IndexEntry ie=null;
+        for (int i = 0; i < ir.getRowSize(); i++) {
+            ie=ir.getIndex(i);
+            if (ie.getEntryId().equals(s))
+                return 1;
+        }
+        return 0;
+    }
+
     /**
      * Creates initial clustering based on given FrequentItemSets.
      * At this point, each document can belong to several clusters.
@@ -155,26 +187,26 @@ public class StructureBuilder {
     /**
      * @return current document clustering index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.ClusteringDocumentIndex
+     * @see org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex
      */
-    public ClusteringDocumentIndex getClusterDocuments(){
+    public ClusterDocumentsIndex getClusterDocuments(){
         return myDocumentClusteringIndex;
     }
     
     /**
      * @return current support index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.ClusteringSupportIndex
+     * @see org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex
      * 
      */
-    public ClusteringSupportIndex getClusterSupport(){
+    public ClusterSupportIndex getClusterSupport(){
         return myClusterSupportIndex;
     }
     
     /**
      * @return current TFIDF index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex
+     * @see org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex
      */
     public InvertedIndex getTFIDFIndex(){
         return myTFIDFIndex.getIndex();
@@ -186,15 +218,19 @@ public class StructureBuilder {
      * @param fis given FrequentItemSets
      */
     public void buildStructure(FrequentItemSets fis){
-        TimerHandler myTH=new TimerHandler();
+        TimerUtils myTH=new TimerUtils();
         
         myTH.startTimer();
         createInitialDocumentClusters(fis);
         myTH.reportActionTimer("CREATING INITIAL CLUSTERS");
         
         myTH.startTimer();
-        createInitialClusterSupport(fis);
-        myTH.reportActionTimer("CALCULATING CLUSTERS SUPPORT");
+        calculateDocumentSupport();
+        myTH.reportActionTimer("CALCULATING DOCUMENTS SUPPORT SCORES");
+        
+        myTH.startTimer();        
+        calculateClusterSupport();
+        myTH.reportActionTimer("CALCULATING INITIAL CLUSTERS SUPPORT SCORES");
         
         myTH.startTimer();
         disjoinClusters();
