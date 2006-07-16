@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure;
+package org.archive.crawler.byexample.algorithms.datastructure.info;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -7,7 +7,7 @@ import org.w3c.dom.NodeList;
 
 
 
-public class PreprocessInfo extends XMLProperties{
+public class PreprocessInfo extends XMLInfo{
     
     protected static String ROOT_TAG_LABEL="preProcess-output";
     

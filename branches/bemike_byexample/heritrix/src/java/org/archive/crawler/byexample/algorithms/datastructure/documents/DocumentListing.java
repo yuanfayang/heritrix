@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure;
+package org.archive.crawler.byexample.algorithms.datastructure.documents;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.byexample.algorithms.clustering.ClusteringRunner;
 import org.archive.crawler.byexample.constants.OutputConstants;
-import org.archive.crawler.byexample.utils.FileHandler;
+import org.archive.crawler.byexample.utils.FileUtils;
 
 public class DocumentListing {
     
@@ -76,11 +76,11 @@ public class DocumentListing {
         for (DocumentEntry currKey : docList) {            
             dump.append(currKey+"\n");
         }
-        FileHandler.dumpBufferToFile(dumpFile,dump);  
+        FileUtils.dumpBufferToFile(dumpFile,dump);  
     }
     
     public void readListingFromFile(String filePath) throws Exception{
-        BufferedReader in=FileHandler.readBufferFromFile(filePath);
+        BufferedReader in=FileUtils.readBufferFromFile(filePath);
         String iter = in.readLine();
         String[] parts;
         
