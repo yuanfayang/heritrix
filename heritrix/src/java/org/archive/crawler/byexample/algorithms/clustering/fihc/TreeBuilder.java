@@ -4,15 +4,15 @@ package org.archive.crawler.byexample.algorithms.clustering.fihc;
 import java.util.Iterator;
 import java.util.List;
 
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringDocumentIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringInfo;
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringSupportIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.FrequentItemSets;
-import org.archive.crawler.byexample.algorithms.datastructure.ItemSet;
-import org.archive.crawler.byexample.algorithms.datastructure.TermSupport;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.info.ClusteringInfo;
+import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
+import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
+import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
 import org.archive.crawler.byexample.constants.AlgorithmConstants;
-import org.archive.crawler.byexample.utils.TimerHandler;
+import org.archive.crawler.byexample.utils.TimerUtils;
 
 /**
  * Receives as input clustering structure created by StructureBuilder and prunes and merges redundant clusters
@@ -22,8 +22,8 @@ import org.archive.crawler.byexample.utils.TimerHandler;
  */
 public class TreeBuilder {
 
-    private ClusteringDocumentIndex myDocumentClusteringIndex;
-    private ClusteringSupportIndex myClusterSupportIndex;
+    private ClusterDocumentsIndex myDocumentClusteringIndex;
+    private ClusterSupportIndex myClusterSupportIndex;
     private DocumentIndexManipulator myTFIDFIndex;
     private List<TermSupport> myGlobalSupportIndex;
     private long myDocCount;
@@ -31,8 +31,8 @@ public class TreeBuilder {
     /**
      * Default constructor
      */
-    public TreeBuilder(long docCount, ClusteringDocumentIndex cdi, DocumentIndexManipulator mti, List<TermSupport> gsi, 
-                        ClusteringSupportIndex csi){
+    public TreeBuilder(long docCount, ClusterDocumentsIndex cdi, DocumentIndexManipulator mti, List<TermSupport> gsi, 
+                        ClusterSupportIndex csi){
         myDocumentClusteringIndex=cdi;
         myTFIDFIndex=mti;
         myGlobalSupportIndex=gsi;
@@ -40,9 +40,7 @@ public class TreeBuilder {
         myDocCount=docCount;
     }
 
-    /**
-     * Builds tree levels according to k (1st level - 1-frequent item sets, 2nd level - 2-frequent item sets, etc...)
-     */
+/**
     public FrequentItemSets[] buildLevels(){
         ItemSet currIS=null;
         FrequentItemSets[] itemSetLevels=new FrequentItemSets[AlgorithmConstants.MAX_DEPTH];
@@ -57,6 +55,7 @@ public class TreeBuilder {
         }
         return itemSetLevels;
     }
+    **/
     
     /**
      * Merges most similar clusters between different levels, if clusters size is less than MIN_SIZE_TO_PRUNE
@@ -100,6 +99,11 @@ public class TreeBuilder {
                     myDocumentClusteringIndex.getRow(tempParent).addListToRow(
                                                                  myDocumentClusteringIndex.getRow(currChild));
                     myDocumentClusteringIndex.getRow(currChild).removeAll();
+                    myClusterSupportIndex.getRow(tempParent).
+                        truncateAndMerge(AlgorithmConstants.MIN_CLUSTER_SUPPORT,myClusterSupportIndex.getRow(currChild),
+                                         myDocumentClusteringIndex.getRow(tempParent).getRowSize(),
+                                         myDocumentClusteringIndex.getRow(currChild).getRowSize());
+                    myClusterSupportIndex.removeRow(currChild);
                 } catch (RuntimeException e) {
                     e.printStackTrace();
                 }
@@ -113,10 +117,15 @@ public class TreeBuilder {
     }
     
     /**
-     * Removes empty clusters
+     * Removes empty clusters and terms that have no minimal support in clusters
      */
     public void pruneLevels(){
-        myDocumentClusteringIndex.removeEmptyRows();
+        FrequentItemSets removedIS=myDocumentClusteringIndex.removeEmptyRows();
+        for (Iterator<ItemSet> iter =removedIS.getSetsIterator(); iter.hasNext();) {
+            ItemSet is=iter.next();
+            myClusterSupportIndex.removeRow(is);
+        }
+        myClusterSupportIndex.truncateAllRows(AlgorithmConstants.MIN_CLUSTER_SUPPORT);
     }
     
     /**
@@ -125,32 +134,34 @@ public class TreeBuilder {
      * @param filename file name
      * @throws Exception
      */
-    public void createClusteringInfoOutput(String path, String filename) throws Exception{
+    public void createClusteringInfoOutput(String path, String filename, ClusteringInfo info) throws Exception{
         ItemSet currIS=null;
-        ClusteringInfo info=new ClusteringInfo();
+        String assocTerms=null;
         
         for (Iterator<ItemSet> iter = myDocumentClusteringIndex.getIndexKeysIterator(); iter.hasNext();) {
             currIS=iter.next();
+            assocTerms=myClusterSupportIndex.getRow(currIS).termsToString();
             //TO DO: Determine relevance
-            info.addCluster(currIS,myDocumentClusteringIndex.getRow(currIS).getRowSize(),true);            
+            info.addCluster(currIS,myDocumentClusteringIndex.getRow(currIS).getRowSize(),true,assocTerms);            
         }
         
         info.toXML(path, filename);
     }
 
-    /**
-     * Builds clustering tree, prunes and merges levels.
-     * Outputs resulting tree as an XML file and reports invocation times for each step.
-     * This is the only method that should be invoked by outside classes 
-     * @param path file path 
-     * @param filename file name
-     * @throws Exception
-     */
-    public void buildTree(String path, String filename) throws Exception{
-        TimerHandler myTH=new TimerHandler();
+/**
+* Builds clustering tree, prunes and merges levels.
+* Outputs resulting tree as an XML file and reports invocation times for each step.
+* This is the only method that should be invoked by outside classes 
+ * @param path file path
+ * @param filename file name
+ * @param fis FrequenItemSet based on which the tree will be built
+ * @throws Exception
+ */
+    public void buildTree(String path, String filename, FrequentItemSets fis, ClusteringInfo info) throws Exception{
+        TimerUtils myTH=new TimerUtils();
         
         myTH.startTimer();
-        mergeLevels(buildLevels());
+        mergeLevels(fis.splitLevelsByK(AlgorithmConstants.MAX_DEPTH));
         myTH.reportActionTimer("MERGING SMALL CLUSTERS");
         
         myTH.startTimer();
@@ -158,7 +169,7 @@ public class TreeBuilder {
         myTH.reportActionTimer("PRUNING EMPTY CLUSTERS");
         
         myTH.startTimer();
-        createClusteringInfoOutput(path, filename);
+        createClusteringInfoOutput(path, filename, info);
         myTH.reportActionTimer("CREATING CLUSTERING OUTPUT XML FILE");
     }
     

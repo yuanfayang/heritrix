@@ -5,14 +5,15 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.byexample.algorithms.clustering.apriori.AprioriItemSetComputation;
 import org.archive.crawler.byexample.algorithms.clustering.fihc.ClusterGenerator;
-import org.archive.crawler.byexample.algorithms.datastructure.DocumentListing;
-import org.archive.crawler.byexample.algorithms.datastructure.FrequentItemSets;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.PreprocessInfo;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing;
+import org.archive.crawler.byexample.algorithms.datastructure.info.ClusteringInfo;
+import org.archive.crawler.byexample.algorithms.datastructure.info.PreprocessInfo;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
 import org.archive.crawler.byexample.constants.AlgorithmConstants;
 import org.archive.crawler.byexample.constants.OutputConstants;
-import org.archive.crawler.byexample.utils.FileHandler;
-import org.archive.crawler.byexample.utils.TimerHandler;
+import org.archive.crawler.byexample.utils.FileUtils;
+import org.archive.crawler.byexample.utils.TimerUtils;
 
 /**
  * Main class for running clustering algorithm.
@@ -48,9 +49,11 @@ public class ClusteringRunner {
     public static void main(String[] args) throws Exception{
         
         long docCount;
-        BufferedWriter dumpFile = null;
-        TimerHandler myTimer = new TimerHandler();
-        PreprocessInfo info  =null;
+        BufferedWriter docsDumpFile = null;
+        BufferedWriter supportDumpFile = null;
+        TimerUtils myTimer = new TimerUtils();
+        PreprocessInfo preProcessInfo  =null;
+        ClusteringInfo clusteringInfo=null;
         
         if (args.length==0){
             logger.severe("Missing argument: JOB_ID");
@@ -67,17 +70,20 @@ public class ClusteringRunner {
         }
         
         try {
-            //Create dump file
-            dumpFile =FileHandler.createFileAtPath(jobID,OutputConstants.CLUSTERING_FILES_HOME,
+            //Create docs dump file
+            docsDumpFile =FileUtils.createFileForJob(jobID,OutputConstants.CLUSTERING_FILES_HOME,
                                                    OutputConstants.DOCUMENTS_CLUSTERING_LISTING_FILENAME,false);
+            //Create term supports dump file
+            supportDumpFile =FileUtils.createFileForJob(jobID,OutputConstants.CLUSTERING_FILES_HOME,
+                    OutputConstants.TERMS_SUPPORT_LISTING_FILENAME,false);
         } catch (Exception e) {
           logger.severe("Could not create clustering output file: "+e.getMessage());
           return;
         }
         
         try {
-            info=new PreprocessInfo();
-            info.fromXML(OutputConstants.getJobPath(jobID),OutputConstants.PREPROCESS_XML_FILENAME);
+            preProcessInfo=new PreprocessInfo();
+            preProcessInfo.fromXML(OutputConstants.getJobPath(jobID),OutputConstants.PREPROCESS_XML_FILENAME);
         } catch (Exception e) {
             logger.severe("Could not load preprocess.xml file: "+e.getMessage());
             return;
@@ -87,14 +93,14 @@ public class ClusteringRunner {
         DocumentListing docListing=new DocumentListing();
         
         try {
-            index.readIndexFromFile(info.getTermsFN());
-            docListing.readListingFromFile(info.getDocsFN());
+            index.readIndexFromFile(preProcessInfo.getTermsFN());
+            docListing.readListingFromFile(preProcessInfo.getDocsFN());
         } catch (Exception e) {
            logger.severe("Failed to load input pre-process files: "+e.getMessage());
            return;
         }
         
-        docCount=info.getDocsNo();
+        docCount=preProcessInfo.getDocsNo();
         
         // Create freq. ItemSets
         AprioriItemSetComputation apriori=new AprioriItemSetComputation(docCount,index);
@@ -103,17 +109,24 @@ public class ClusteringRunner {
         FrequentItemSets fis=apriori.findKFrequentItemSets();
         myTimer.reportActionTimer("CREATING "+fis.getSize()+" FREQUENT ITEM SETS");
         
-        //Create Clustering
+        
+        //Create clustering info xml
+        clusteringInfo = new ClusteringInfo(OutputConstants.getClusteringPath(jobID)+OutputConstants.DOCUMENTS_CLUSTERING_LISTING_FILENAME,
+                OutputConstants.getClusteringPath(jobID)+OutputConstants.TERMS_SUPPORT_LISTING_FILENAME);
+        //Create Clustering Generator
         ClusterGenerator clusterGen=new ClusterGenerator(docCount,apriori.getFrequentItemSetsIndex(), 
                                     apriori.getFrequentItemSupport(),docListing);
         
         
         try {
-            clusterGen.doClustering(fis,OutputConstants.JOBS_HOME+jobID,OutputConstants.CLUSTERING_XML_FILENAME);
-            clusterGen.getClusterDocuments().dumpIndexToFile(dumpFile);
-            FileHandler.closeFile(dumpFile);
+            clusterGen.doClustering(fis,OutputConstants.JOBS_HOME+jobID,OutputConstants.CLUSTERING_XML_FILENAME, clusteringInfo);
+            clusterGen.getClusterDocuments().dumpIndexToFile(docsDumpFile);
+            clusterGen.getClusterSupport().dumpIndexToFile(supportDumpFile);
+            FileUtils.closeFile(docsDumpFile);
+            FileUtils.closeFile(supportDumpFile);
         } catch (Exception e) {
-            logger.severe("Failed to write output clustering file: "+e.getMessage());
+            logger.severe("Failed to write output clustering file: ");
+            e.printStackTrace();
         }
         
     }

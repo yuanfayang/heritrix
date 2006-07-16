@@ -2,12 +2,13 @@ package org.archive.crawler.byexample.algorithms.clustering.fihc;
 
 import java.util.List;
 
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringDocumentIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringSupportIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.DocumentListing;
-import org.archive.crawler.byexample.algorithms.datastructure.FrequentItemSets;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.TermSupport;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing;
+import org.archive.crawler.byexample.algorithms.datastructure.info.ClusteringInfo;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
+import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
 
@@ -21,8 +22,8 @@ public class ClusterGenerator {
     
     private TermIndexManipulator myTermsIndex;
     private DocumentIndexManipulator myTFIDFIndex;   
-    private ClusteringDocumentIndex myDocumentClusteringIndex;
-    private ClusteringSupportIndex myClusterSupportIndex;
+    private ClusterDocumentsIndex myDocumentClusteringIndex;
+    private ClusterSupportIndex myClusterSupportIndex;
     private List<TermSupport> myGlobalSupportIndex;
     private long myDocCount;
     
@@ -40,8 +41,8 @@ public class ClusterGenerator {
         myTermsIndex=new TermIndexManipulator(termsIndex);
         myTFIDFIndex=new DocumentIndexManipulator(termsIndex, docCount);
         myTFIDFIndex.createSortedByIdTFIDFIndex();
-        myDocumentClusteringIndex=new ClusteringDocumentIndex();
-        myClusterSupportIndex=new ClusteringSupportIndex();
+        myDocumentClusteringIndex=new ClusterDocumentsIndex();
+        myClusterSupportIndex=new ClusterSupportIndex();
         myGlobalSupportIndex=termSupport;
         myDocCount=docCount;
         
@@ -51,26 +52,26 @@ public class ClusterGenerator {
     /**
      * @return current document clustering index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.ClusteringDocumentIndex
+     * @see org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex
      */
-    public ClusteringDocumentIndex getClusterDocuments(){
+    public ClusterDocumentsIndex getClusterDocuments(){
         return myDocumentClusteringIndex;
     }
     
     /**
      * @return current support index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.ClusteringSupportIndex
+     * @see org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex
      * 
      */
-    public ClusteringSupportIndex getClusterSupport(){
+    public ClusterSupportIndex getClusterSupport(){
         return myClusterSupportIndex;
     }
     
     /**
      * @return current TFIDF index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex
+     * @see org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex
      */
     public InvertedIndex getTFIDFIndex(){
         return myTFIDFIndex.getIndex();
@@ -84,7 +85,7 @@ public class ClusterGenerator {
      * @param filename name of clustering XML file
      * @throws Exception
      */
-    public void doClustering(FrequentItemSets fis, String path, String filename) throws Exception{        
+    public void doClustering(FrequentItemSets fis, String path, String filename, ClusteringInfo info) throws Exception{        
 
         structureBuilder.buildStructure(fis);
         
@@ -94,7 +95,7 @@ public class ClusterGenerator {
         treeBuilder=new TreeBuilder(myDocCount,myDocumentClusteringIndex,myTFIDFIndex,myGlobalSupportIndex,
                                     myClusterSupportIndex); 
 
-        treeBuilder.buildTree(path,filename);       
+        treeBuilder.buildTree(path,filename,fis, info);       
     }
     
 } //END OF CLASS
