@@ -1,8 +1,11 @@
-package org.archive.crawler.byexample.algorithms.datastructure;
+package org.archive.crawler.byexample.algorithms.datastructure.itemset;
 
 import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.utils.HashCodeUtils;
 
 public class ItemSet {
         SortedSet<String> itemSet;
@@ -36,6 +39,7 @@ public class ItemSet {
             itemSet.remove(term);
         }
         
+        
         public String[] getItems(){  
             
             //Return null for empty item set
@@ -59,17 +63,6 @@ public class ItemSet {
             return getItems()[position];
         }
         
-        public String toString(){
-            StringBuffer sb=new StringBuffer();
-            sb.append("{");
-            for (String s : getItems()) {
-                sb.append(s);
-                sb.append(";");
-            }
-            sb.append("}");
-            return sb.toString();
-        }
-        
         public boolean contains(String item){
            return itemSet.contains(item);
         }
@@ -89,7 +82,11 @@ public class ItemSet {
             return false;
         }
         
-        public boolean equals(ItemSet other){
+        public boolean equals(Object otherObj){
+            if ( this == otherObj ) return true;
+            if ( !(otherObj instanceof ItemSet) ) return false;
+            
+            ItemSet other=(ItemSet)otherObj;
             Iterator<String> iter1=this.itemSet.iterator();
             Iterator<String> iter2=other.itemSet.iterator();            
             //Find non-matchning items
@@ -104,4 +101,37 @@ public class ItemSet {
             //No non-matching items found but one set is larger than other 
             return false;
         }
-}
+        
+        public int hashCode(){
+            int result = HashCodeUtils.SEED;
+            String[] allItems=getItems();
+            String separator=OutputConstants.ENTRY_SEPARATOR;
+            for (int i = 0; i < allItems.length; i++) {
+                result = HashCodeUtils.hash(result, allItems[i]);
+                result = HashCodeUtils.hash(result, separator);
+            }
+            return result;            
+        }
+        
+        public String toString(){
+            StringBuffer sb=new StringBuffer();
+            sb.append("{");
+            for (String s : getItems()) {
+                sb.append(s);
+                sb.append(OutputConstants.LIST_SEPARATOR);
+            }
+            sb.append("}");
+            return sb.toString();
+        }
+        
+        public static ItemSet createfromString(String s){
+            s=s.substring(1,s.length()-1);
+            String[] items=s.split(";");
+            ItemSet is=new ItemSet();
+            for (int i=0; i<items.length; i++){
+                is.insertToSet(items[i]);   
+            }  
+            return is;
+        }
+
+} //END OF CLASS

@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure;
+package org.archive.crawler.byexample.algorithms.datastructure.support;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
 

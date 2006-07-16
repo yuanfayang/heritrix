@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure;
+package org.archive.crawler.byexample.algorithms.datastructure.info;
 
 import java.io.BufferedWriter;
 
@@ -9,19 +9,19 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.archive.crawler.byexample.utils.FileHandler;
+import org.archive.crawler.byexample.utils.FileUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
-public class XMLProperties {
+public class XMLInfo {
     
     protected static String ROOT_TAG_LABEL="ROOT";
     
     protected Element rootElement;
     protected Document xmlDoc=null;
     
-    public XMLProperties(String label) throws Exception{        
+    public XMLInfo(String label) throws Exception{        
         ROOT_TAG_LABEL=label;
     }
 
@@ -45,15 +45,15 @@ public class XMLProperties {
     }
     
     protected void dumpToFile(String path, String filename) throws Exception{
-        BufferedWriter bw=FileHandler.createFileAtPath(path,filename);
+        BufferedWriter bw=FileUtils.createFileAtPath(path,filename);
         Transformer t=TransformerFactory.newInstance().newTransformer();
         t.transform(new DOMSource(xmlDoc),new StreamResult(bw));
-        FileHandler.closeFile(bw);
+        FileUtils.closeFile(bw);
     }
     
     protected void readFromFile(String path, String filename)throws Exception{
         DocumentBuilder builder=DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        xmlDoc=builder.parse(new InputSource(FileHandler.readBufferFromFile(path+filename)));
+        xmlDoc=builder.parse(new InputSource(FileUtils.readBufferFromFile(path+filename)));
         rootElement=xmlDoc.getDocumentElement();
         checkRootLabel();
     }

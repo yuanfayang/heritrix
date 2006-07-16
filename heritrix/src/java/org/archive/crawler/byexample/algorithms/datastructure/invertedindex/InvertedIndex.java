@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure;
+package org.archive.crawler.byexample.algorithms.datastructure.invertedindex;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,10 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
-import org.archive.crawler.byexample.utils.FileHandler;
-
-
-
+import org.archive.crawler.byexample.utils.FileUtils;
 
 
 public class InvertedIndex {
@@ -201,11 +198,11 @@ public class InvertedIndex {
             dump.append(getRow(currKey).toString());
             dump.append("\n");
         }
-        FileHandler.dumpBufferToFile(bw,dump);        
+        FileUtils.dumpBufferToFile(bw,dump);        
     }
 
     public void readIndexFromFile(String filePath) throws Exception{
-        BufferedReader in=FileHandler.readBufferFromFile(filePath);
+        BufferedReader in=FileUtils.readBufferFromFile(filePath);
         String iter = in.readLine();
         String[] parts;
         
