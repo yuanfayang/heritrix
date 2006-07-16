@@ -2,10 +2,10 @@ package org.archive.crawler.byexample.algorithms.tfidf;
 
 import java.util.Iterator;
 
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IdComparator;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IndexEntry;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IndexRow;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IdComparator;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexEntry;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexRow;
 
 
 

@@ -1,23 +1,16 @@
-/**
- * 
- */
 package org.archive.crawler.byexample.processors;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Logger;
-
-import org.archive.crawler.admin.CrawlJobHandler;
-import org.archive.crawler.byexample.algorithms.datastructure.DocumentListing;
-import org.archive.crawler.byexample.algorithms.datastructure.PreprocessInfo;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing;
+import org.archive.crawler.byexample.algorithms.datastructure.info.PreprocessInfo;
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.constants.OutputConstants;
-import org.archive.crawler.byexample.utils.FileHandler;
-import org.archive.crawler.byexample.utils.ParseHandler;
+import org.archive.crawler.byexample.utils.FileUtils;
+import org.archive.crawler.byexample.utils.ParseUtils;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.util.ArchiveUtils;
@@ -77,8 +70,8 @@ public class TermsIndexingProcessor extends Processor {
         
         try {
             //Create dump file
-            indexDumpFile =FileHandler.createFileAtPath(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.TERMS_INDEX_FILENAME,true);
-            documentDumpFile= FileHandler.createFileAtPath(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.DOCUMENT_LISTING_FILENAME,true);
+            indexDumpFile =FileUtils.createFileForJob(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.TERMS_INDEX_FILENAME,true);
+            documentDumpFile= FileUtils.createFileForJob(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.DOCUMENT_LISTING_FILENAME,true);
             docList=new DocumentListing(documentDumpFile);
         } catch (Exception e1) {
             logger.severe("Could not create file at path: "+filesPath);
@@ -127,7 +120,7 @@ public class TermsIndexingProcessor extends Processor {
         
         //Parse it to terms and add to the terms inverted index
         try {
-            termsIndexHandler.addDocumentToIndex(ParseHandler.tokenizer(cs),numOfProcessedDocs,stopWordsHandler);
+            termsIndexHandler.addDocumentToIndex(ParseUtils.tokenizer(cs),numOfProcessedDocs,stopWordsHandler);
         } catch (ParserException e) {
             logger.severe("Failed to parse document: "+currURL);
         }   
@@ -167,9 +160,9 @@ public class TermsIndexingProcessor extends Processor {
     protected void finalTasks(){
         try {
             termsIndexHandler.getIndex().dumpIndexToFile(indexDumpFile);
-            FileHandler.closeFile(indexDumpFile);     
+            FileUtils.closeFile(indexDumpFile);     
             docList.dumpListingToFile();
-            FileHandler.closeFile(documentDumpFile);            
+            FileUtils.closeFile(documentDumpFile);            
         } catch (Exception e) {
             logger.severe("Problems with file dump: "+e.getMessage());
         }        
