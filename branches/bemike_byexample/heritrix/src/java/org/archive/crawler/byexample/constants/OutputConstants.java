@@ -4,10 +4,10 @@ import java.io.File;
 
 public class OutputConstants {
     
-    // Print-out Constants
-    
+    // Print-out Constants    
     public static final String KEY_SEPARATOR="~";
     public static final String ENTRY_SEPARATOR=":";
+    public static final String LIST_SEPARATOR=";";
     public static final String PATH_SEPARATOR=File.separator;
     
     // Folder structure constants
@@ -25,6 +25,8 @@ public class OutputConstants {
     public static final String TERMS_INDEX_FILENAME="termIndex.txt";
     public static final String DOCUMENT_LISTING_FILENAME="documentListing.txt";
     public static final String DOCUMENTS_CLUSTERING_LISTING_FILENAME="clusteringDocs.txt";
+    public static final String TERMS_SUPPORT_LISTING_FILENAME="clusteringTermSupport.txt";  
+    public static final String CLASSIFICATION_DOCUMENT_LISTING="classifiedDocs.txt";  
     public static final String PREPROCESS_XML_FILENAME="preprocess-results.xml";
     public static final String CLUSTERING_XML_FILENAME="clustering-results.xml";
     
