@@ -9,7 +9,7 @@ import java.io.FileWriter;
 import org.archive.crawler.byexample.constants.OutputConstants;
 
 
-public class FileHandler {
+public class FileUtils {
 
    /**
     * Create file at path:  filePath/fileName
@@ -53,7 +53,7 @@ public class FileHandler {
     * @return
     * @throws Exception
     */
-   public static BufferedWriter createFileAtPath (String jobNo,String filePath, String fileName, boolean append) throws Exception{
+   public static BufferedWriter createFileForJob (String jobNo,String filePath, String fileName, boolean append) throws Exception{
        
        //Check if BYEXAMPLE_HOME directory exists
        File path=new File(OutputConstants.BYEXAMPLE_HOME);

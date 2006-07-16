@@ -3,11 +3,11 @@ package org.archive.crawler.byexample.algorithms.clustering.fihc;
 import java.util.Iterator;
 import java.util.List;
 
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringDocumentIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringSupportIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.ItemSet;
-import org.archive.crawler.byexample.algorithms.datastructure.TermSupport;
-import org.archive.crawler.byexample.algorithms.datastructure.ClusteringSupportIndex.SupportRow;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
+import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
+import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupportListing;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
 import org.archive.crawler.byexample.constants.AlgorithmConstants;
 
@@ -24,12 +24,12 @@ public class ScoreComputation {
      * The higher the score, the higher the probability that document belongs to cluster, labeled by this set
      */
     public static double calculateClusterDocumentScore(ItemSet is, String docID,
-                                                ClusteringSupportIndex myClusterSupportIndex, 
+                                                ClusterSupportIndex myClusterSupportIndex, 
                                                 DocumentIndexManipulator myTFIDFIndex,
                                                 List<TermSupport> myGlobalSupportIndex){
         double minSupportPercent=(double)AlgorithmConstants.MIN_CLUSTER_SUPPORT/100;
         double score=0;
-        SupportRow currRow=myClusterSupportIndex.getRow(is);
+        TermSupportListing currRow=myClusterSupportIndex.getRow(is);
         TermSupport currEntry=null;
         String currTerm=null;
         
@@ -51,8 +51,8 @@ public class ScoreComputation {
      * The higher the score, the higher the probability that two clusters can be merged into one
      */
     public static double interClusterSimilarity(ItemSet is1, ItemSet is2,
-                                                ClusteringDocumentIndex myDocumentClusterIndex,
-                                                ClusteringSupportIndex myClusterSupportIndex, 
+                                                ClusterDocumentsIndex myDocumentClusterIndex,
+                                                ClusterSupportIndex myClusterSupportIndex, 
                                                 DocumentIndexManipulator myTFIDFIndex,
                                                 List<TermSupport> myGlobalSupportIndex){
         String[] docsToCompare=myDocumentClusterIndex.getRow(is2).toArray();

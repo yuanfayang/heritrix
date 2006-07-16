@@ -4,7 +4,7 @@ import org.htmlparser.Parser;
 import org.htmlparser.beans.StringBean;
 import org.htmlparser.util.ParserException;
 
-public class ParseHandler {
+public class ParseUtils {
     
     /**
      * Receives a web page and converts it to array of terms

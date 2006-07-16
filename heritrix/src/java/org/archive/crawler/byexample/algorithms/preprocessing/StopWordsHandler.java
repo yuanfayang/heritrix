@@ -7,7 +7,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
-import org.archive.crawler.byexample.utils.FileHandler;
+import org.archive.crawler.byexample.utils.FileUtils;
 
 /**
  * Loads file containing common stop words into memory
@@ -17,7 +17,8 @@ import org.archive.crawler.byexample.utils.FileHandler;
  * and can be edited to add/remove/change stop-words.
  * <p>
  * Initial list of words was taken from a research paper: 
- * Fox, Christopher, "A Stop List for General Text", SIGIR Forum, v 24, n 1-2, Fall 89/Winter 90, p 19-35
+ * <p>
+ * <i>Fox, Christopher, "A Stop List for General Text", SIGIR Forum, v 24, n 1-2, Fall 89/Winter 90, p 19-35</i>
  * 
  * @author Michael Bendersky
  */
@@ -44,7 +45,7 @@ public class StopWordsHandler {
     public SortedSet<String> createStopWordSet() throws Exception{
         SortedSet<String> stopWordsHash=Collections.synchronizedSortedSet(new TreeSet<String>());
       
-        BufferedReader in=FileHandler.readBufferFromFile(stopWordsFilePath);
+        BufferedReader in=FileUtils.readBufferFromFile(stopWordsFilePath);
         String iter = in.readLine();
         
         //Stopwords file is empty

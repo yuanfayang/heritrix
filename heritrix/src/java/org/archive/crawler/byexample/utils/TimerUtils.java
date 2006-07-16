@@ -2,12 +2,12 @@ package org.archive.crawler.byexample.utils;
 
 import java.util.logging.Logger;
 
-public class TimerHandler {
+public class TimerUtils {
     
     long timeCounter=0;
     
     private static Logger logger =
-        Logger.getLogger(TimerHandler.class.getName());
+        Logger.getLogger(TimerUtils.class.getName());
 
     public void startTimer(){
         timeCounter=System.currentTimeMillis();

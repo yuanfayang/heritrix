@@ -1,14 +1,14 @@
 package org.archive.crawler.byexample.algorithms.preprocessing;
 
 
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IndexRow;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexRow;
 
 /**
  * This class manipulation wrapper around InvertedIndex
  * Manipulations implemented here are specific to Terms Inverted Index
  * 
- * @see  org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex
+ * @see  org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex
  * 
  * @author Michael Bendersky
  *
