@@ -5,12 +5,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.archive.crawler.byexample.algorithms.datastructure.FrequentItemSets;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.ItemSet;
-import org.archive.crawler.byexample.algorithms.datastructure.TermSupport;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IndexEntry;
-import org.archive.crawler.byexample.algorithms.datastructure.InvertedIndex.IndexRow;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexEntry;
+import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexRow;
+import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
+import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
+import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
 import org.archive.crawler.byexample.constants.AlgorithmConstants;
 import org.archive.crawler.byexample.constants.OutputConstants;
 
@@ -95,7 +95,7 @@ public class AprioriItemSetComputation {
      * @return TRUE - item set is supported, FALSE - else
      */
     public boolean isMinSupported(ItemSet kSet){
-        if (findMinSupport(kSet)>AlgorithmConstants.MIN_SUPPORT)
+        if (findMinSupport(kSet)>AlgorithmConstants.MIN_GLOBAL_SUPPORT)
             return true;
         return false;            
     }
@@ -206,7 +206,8 @@ public class AprioriItemSetComputation {
     }
     
     /**
-     * Returns non-matching item if ItemSets differ in only one item. Otherwise: -1
+     * Returns non-matching item if ItemSets differ in only one item. 
+     * Otherwise returns null
      * @param is1 ItemSet
      * @param is2 ItemSet
      * @return non-matching item
@@ -270,7 +271,7 @@ public class AprioriItemSetComputation {
             term=iter.next();
             candidateSet=new ItemSet(term);
             candidateSupport=findMinSupport(candidateSet);
-            if (candidateSupport>AlgorithmConstants.MIN_SUPPORT){
+            if (candidateSupport>AlgorithmConstants.MIN_GLOBAL_SUPPORT){
                 frequentItemSupport.add(new TermSupport(term,candidateSupport));
             }
         }
