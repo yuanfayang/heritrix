@@ -108,5 +108,42 @@ public class ControllerAdminServlet extends ControllerInterfaceServlet {
 			response.getWriter().println(res.toString());
 		}
 	}
+	
+	public void doShowAssignedState(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
 
+		response.setContentType("text/html");
+		if (!request.getMethod().equals("GET")) {
+			log.warn("Request wasn't GET, returning error.");
+			response.setStatus(400);
+			response.getWriter().println(
+					"This request should be a GET request.");
+		} else {
+			response.setStatus(200);
+			JSONArray res = new JSONArray();
+			for (Iterator<Task> it = controller.getAssignedTasksIterator(); it.hasNext();) {
+				res.add(it.next().getTaskData());
+			}
+			response.getWriter().println(res.toString());
+		}
+	}
+	public void doShowFailedTasks(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+
+		response.setContentType("text/html");
+		if (!request.getMethod().equals("GET")) {
+			log.warn("Request wasn't GET, returning error.");
+			response.setStatus(400);
+			response.getWriter().println(
+					"This request should be a GET request.");
+		} else {
+			response.setStatus(200);
+			JSONArray res = new JSONArray();
+			for (Iterator<Task> it = controller.getFailedTasksIterator(); it.hasNext();) {
+				res.add(it.next().getTaskData());
+			}
+			response.getWriter().println(res.toString());
+		}
+	}
+	
 }
