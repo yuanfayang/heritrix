@@ -133,6 +133,11 @@ public class LaxURLCodec extends URLCodec {
         // Tests indicate Firefox (1.0.7-1) doesn't escape curlies in query str.
         QUERY_SAFE.set('{');
         QUERY_SAFE.set('}');
+        // nor any of these: [ ] ^ ? 
+        QUERY_SAFE.set('[');
+        QUERY_SAFE.set(']');
+        QUERY_SAFE.set('^');
+        QUERY_SAFE.set('?');
     }
     
     /**

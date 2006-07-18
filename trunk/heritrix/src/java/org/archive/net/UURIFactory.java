@@ -456,17 +456,6 @@ public class UURIFactory extends URI {
             if (base == null) {
                 throw new URIException("Relative URI but no base: " + uri);
             }
-            if (uriPath != null && uriPath.length() > 0) {
-                // The parent class has a bug in that if dbl-slashes in a
-                // relative path, then it thinks all before the dbl-slashes
-                // a scheme -- it doesn't look for a colon. Remove
-                // dbl-slashes in relative paths. Here is an example of what
-                // it does. With a base of "http://www.archive.org/index.html"
-                // and a relative uri of "JIGOU//KYC//INDEX.HTM", its making
-                // a product of "http://KYC/INDEX.HTM".
-                matcher = MULTIPLE_SLASHES.matcher(uriPath);
-                uriPath = matcher.replaceAll("/");
-            }
         }
         
         // fixup authority portion: lowercase/IDN-punycode any domain; 
@@ -502,6 +491,15 @@ public class UURIFactory extends URI {
             // Strip any prefix dot or tail dots from the authority.
             uriAuthority = stripTail(uriAuthority, DOT);
             uriAuthority = stripPrefix(uriAuthority, DOT);
+        } else {
+            // no authority; may be relative. consider stripping scheme
+            // to work-around org.apache.commons.httpclient.URI bug
+            // ( http://issues.apache.org/jira/browse/HTTPCLIENT-587 )
+            if (uriScheme != null && base != null
+                    && uriScheme.equals(base.getScheme())) {
+                // uriScheme redundant and will only confound httpclient.URI
+                uriScheme = null; 
+            }
         }
         
         // Ensure minimal escaping. Use of 'lax' URI and URLCodec 
