@@ -86,6 +86,10 @@
             <ant:arg value="org.archive.util.JmxUtils.class" />
             <ant:arg value="org.archive.util.JndiUtils.class" />
             <ant:arg value="org.archive.net.rsync.Handler.class" />
+            <ant:arg value="org.apache.commons.pool.impl.FairGenericObjectPool"
+                />
+            <ant:arg value="org.apache.commons.pool.impl.GenericObjectPool"/>
+            <ant:arg value="org.archive.net.rsync.Handler.class" />
         </ant:exec>
     </goal>
 
