@@ -81,7 +81,7 @@ public class UURIFactoryTest extends TestCase {
         UURI uuri = UURIFactory.getInstance(base, "one//index.html");
         assertTrue("Doesn't do right thing with two slashes " + uuri,
             uuri.toString().equals(
-                "http://www.archive.org/one/index.html"));
+                "http://www.archive.org/one//index.html"));
     }
     
     public final void testTrailingEncodedSpace() throws URIException {
@@ -224,8 +224,15 @@ public class UURIFactoryTest extends TestCase {
 		UURI base = UURIFactory.getInstance("http://www.archive.org/index.html");
 		UURI uuri = UURIFactory.getInstance(base, "JIGOU//KYC//INDEX.HTM");
         assertTrue("Double slash not working " + uuri.toString(),
-                uuri.getPath().equals("/JIGOU/KYC/INDEX.HTM"));
+                uuri.getPath().equals("/JIGOU//KYC//INDEX.HTM"));
 	}
+    
+    public final void testRelativeWithScheme() throws URIException {
+        UURI base = UURIFactory.getInstance("http://www.example.com/some/page");
+        UURI uuri = UURIFactory.getInstance(base, "http:boo");
+        assertTrue("Relative with scheme not working " + uuri.toString(),
+                uuri.toString().equals("http://www.example.com/some/boo"));
+    }
     
     public final void testBadBaseResolve() throws URIException {
         UURI base = UURIFactory.getInstance("http://license.joins.com/board/" +
@@ -820,5 +827,14 @@ public class UURIFactoryTest extends TestCase {
     	UURI uuri = UURIFactory.getInstance("http://www.ar\rchive\n." +
     	    "org/i\n\n\r\rndex.html");
     	assertEquals("http://www.archive.org/index.html", uuri.toString());
+    }
+    
+    public void testQueryEscaping() throws URIException {
+        UURI uuri = UURIFactory.getInstance(
+            "http://www.yahoo.com/foo?somechars!@$%^&*()_-+={[}]|\'\";:/?.>,<");
+        assertEquals(
+            // tests in FF1.5 indicate it only escapes " < > 
+            "http://www.yahoo.com/foo?somechars!@$%^&*()_-+={[}]|\'%22;:/?.%3E,%3C",
+            uuri.toString());
     }
 }
