@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
 
-import com.lowagie.text.pdf.hyphenation.TernaryTree;
 
 public class TermSupportListing{
     private ArrayList<TermSupport> termList;

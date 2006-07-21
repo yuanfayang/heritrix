@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.archive.crawler.byexample.algorithms.clustering.ClusteringRunner;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileUtils;
 
@@ -31,6 +30,10 @@ public class DocumentListing {
         public long getId(){
             return this.id;
         }
+        
+        public boolean isAutoIn(){
+            return isAutoIn;
+        }
     }
     
     static int MAX_ENTRIES_IN_MEMORY=1000;
@@ -47,6 +50,10 @@ public class DocumentListing {
     public DocumentListing(BufferedWriter bw){
         docList=new ArrayList<DocumentEntry>();
         dumpFile=bw;
+    }
+    
+    public DocumentEntry getEntryAtPos(int i){
+        return docList.get(i);
     }
     
     public void addToListing(long id, String url, boolean isAutoIn){
@@ -95,6 +102,15 @@ public class DocumentListing {
             iter=in.readLine();
         }        
         in.close(); 
+    }
+    
+    public double getAutoInRatio(){
+        double ratio=0;
+        for (DocumentEntry de : docList) {
+            if (de.isAutoIn)
+                ratio++;
+        }
+        return ratio/docList.size();
     }
     
 }

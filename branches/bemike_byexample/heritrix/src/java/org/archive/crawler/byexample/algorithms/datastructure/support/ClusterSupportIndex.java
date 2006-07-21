@@ -101,11 +101,15 @@ public class ClusterSupportIndex{
     public void addEntriesFromString(ItemSet key, String valuesString){
         String[] arrayValues;
         String[] entryValues;
-        //Remove "[]" and split to entries            
-        arrayValues=valuesString.substring(1,valuesString.length()-1).split(", ");
-        for (int i = 0; i < arrayValues.length; i++) {
-            entryValues=arrayValues[i].split(OutputConstants.ENTRY_SEPARATOR);
-            this.addIndexValue(key,new TermSupport(entryValues[0],Double.parseDouble(entryValues[1])));                
+        //Remove "[]"
+        valuesString=valuesString.substring(1,valuesString.length()-1);
+        //Split to entries            
+        if (valuesString.length()>0) {
+            arrayValues=valuesString.split(", ");
+            for (int i = 0; i < arrayValues.length; i++) {
+                entryValues=arrayValues[i].split(OutputConstants.ENTRY_SEPARATOR);
+                this.addIndexValue(key,new TermSupport(entryValues[0],Double.parseDouble(entryValues[1])));                
+            }
         }
     }
 }
