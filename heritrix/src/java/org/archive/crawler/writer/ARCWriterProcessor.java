@@ -55,10 +55,10 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.FilePoolProcessor;
+import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.crawler.settings.XMLSettingsHandler;
-import org.archive.io.FilePoolMember;
-import org.archive.io.FilePoolSettings;
+import org.archive.io.WriterPoolMember;
+import org.archive.io.WriterPoolSettings;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
@@ -75,9 +75,9 @@ import org.archive.io.arc.ARCWriterPool;
  *
  * @author Parker Thompson
  */
-public class ARCWriterProcessor extends FilePoolProcessor
+public class ARCWriterProcessor extends WriterPoolProcessor
 implements CoreAttributeConstants, ARCConstants, CrawlStatusListener,
-FilePoolSettings, FetchStatusCodes {
+WriterPoolSettings, FetchStatusCodes {
 	private static final long serialVersionUID = 1957518408532644531L;
 
 	private final Logger logger = Logger.getLogger(this.getClass().getName());
@@ -190,12 +190,12 @@ FilePoolSettings, FetchStatusCodes {
     protected void write(CrawlURI curi, int recordLength, InputStream in,
         String ip)
     throws IOException {
-        FilePoolMember writer = getPool().borrowFile();
+        WriterPoolMember writer = getPool().borrowFile();
         long position = writer.getPosition();
         // See if we need to open a new file because we've exceeed maxBytes.
         // Call to checkFileSize will open new file if we're at maximum for
         // current file.
-        writer.checkFileSize();
+        writer.checkSize();
         if (writer.getPosition() != position) {
             // We just closed the file because it was larger than maxBytes.
             // Add to the totalBytesWritten the size of the first record

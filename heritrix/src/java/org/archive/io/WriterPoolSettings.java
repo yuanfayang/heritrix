@@ -25,11 +25,12 @@ package org.archive.io;
 import java.util.List;
 
 /**
- * Settings object for {@link FilePoolMember}s.
+ * Settings object for a {@link WriterPool}.
+ * Used creating {@link WriterPoolMember}s.
  * @author stack
  * @version $Date$, $Revision$
  */
-public interface FilePoolSettings {
+public interface WriterPoolSettings {
     public int getMaxSize();
     public String getPrefix();
     public String getSuffix(); 

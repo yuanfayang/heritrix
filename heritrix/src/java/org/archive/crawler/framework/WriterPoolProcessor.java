@@ -1,4 +1,4 @@
-/* FilePoolProcessor
+/* WriterPoolProcessor
  *
  * $Id$
  *
@@ -26,7 +26,6 @@ package org.archive.crawler.framework;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -34,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -45,24 +43,22 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.Type;
 import org.archive.io.ObjectPlusFilesInputStream;
-import org.archive.io.ReplayInputStream;
-import org.archive.io.FilePoolMember;
-import org.archive.io.FilePool;
+import org.archive.io.WriterPool;
+import org.archive.io.WriterPoolMember;
 
 
 /**
  * Abstract implementation of a file pool processor.
- * Subclass to implement for a particular {@link FilePoolMember} instance.
+ * Subclass to implement for a particular {@link WriterPoolMember} instance.
  * @author Parker Thompson
  * @author stack
  */
-public abstract class FilePoolProcessor extends Processor
+public abstract class WriterPoolProcessor extends Processor
 implements CoreAttributeConstants, CrawlStatusListener {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
 
@@ -149,7 +145,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
     /**
      * Reference to pool.
      */
-    transient private FilePool pool = null;
+    transient private WriterPool pool = null;
     
     /**
      * Total number of bytes written to disc.
@@ -160,7 +156,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
     /**
      * @param name Name of this processor.
      */
-    public FilePoolProcessor(String name) {
+    public WriterPoolProcessor(String name) {
     	this(name, "Pool of files processor");
     }
     	
@@ -168,7 +164,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
      * @param name Name of this processor.
      * @param description Description for this processor.
      */
-    public FilePoolProcessor(final String name,
+    public WriterPoolProcessor(final String name,
         		final String description) {
         super(name, description);
         Type e = addElementToDefinition(
@@ -179,7 +175,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
             new SimpleType(ATTR_PREFIX, 
                 "File prefix. " +
                 "The text supplied here will be used as a prefix naming " +
-                "files.  For example if the prefix is 'IAH', " +
+                "writer files.  For example if the prefix is 'IAH', " +
                 "then file names will look like " +
                 "IAH-20040808101010-0001-HOSTNAME.arc.gz " +
                 "...if writing ARCs (The prefix will be " +
@@ -208,13 +204,13 @@ implements CoreAttributeConstants, CrawlStatusListener {
         e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
             "Maximum active files in pool. " +
             "This setting cannot be varied over the life of a crawl.",
-            new Integer(FilePool.DEFAULT_MAX_ACTIVE)));
+            new Integer(WriterPool.DEFAULT_MAX_ACTIVE)));
         e.setOverrideable(false);
         e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_WAIT,
             "Maximum time to wait on pool element" +
             " (milliseconds). This setting cannot be varied over the life" +
             " of a crawl.",
-            new Integer(FilePool.DEFAULT_MAXIMUM_WAIT)));
+            new Integer(WriterPool.DEFAULT_MAXIMUM_WAIT)));
         e.setOverrideable(false);
         e = addElementToDefinition(new SimpleType(ATTR_MAX_BYTES_WRITTEN,
             "Total file bytes to write to disk." +
@@ -363,7 +359,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
      */
     public int getPoolMaximumActive() {
         Object obj = getAttributeUnchecked(ATTR_POOL_MAX_ACTIVE);
-        return (obj == null)? FilePool.DEFAULT_MAX_ACTIVE:
+        return (obj == null)? WriterPool.DEFAULT_MAX_ACTIVE:
             ((Integer)obj).intValue();
     }
 
@@ -372,7 +368,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
      */
     public int getPoolMaximumWait() {
         Object obj = getAttributeUnchecked(ATTR_POOL_MAX_WAIT);
-        return (obj == null)? FilePool.DEFAULT_MAXIMUM_WAIT:
+        return (obj == null)? WriterPool.DEFAULT_MAXIMUM_WAIT:
             ((Integer)obj).intValue();
     }
 
@@ -450,11 +446,11 @@ implements CoreAttributeConstants, CrawlStatusListener {
         });
     }
 
-	protected FilePool getPool() {
+	protected WriterPool getPool() {
 		return pool;
 	}
 
-	protected void setPool(FilePool pool) {
+	protected void setPool(WriterPool pool) {
 		this.pool = pool;
 	}
 

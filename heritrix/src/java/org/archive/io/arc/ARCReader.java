@@ -52,7 +52,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.archive.io.RandomAccessInputStream;
-import org.archive.io.FilePoolMember;
+import org.archive.io.WriterPoolMember;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.InetAddressUtil;
 import org.archive.util.MimetypeUtils;
@@ -977,7 +977,7 @@ implements ARCConstants {
                     baos.write(r.read());
                 }
                 List<String> listOfMetadata = new ArrayList<String>();
-                listOfMetadata.add(baos.toString(FilePoolMember.UTF8));
+                listOfMetadata.add(baos.toString(WriterPoolMember.UTF8));
                 // Assume getArc returns full path to file.  ARCWriter
                 // or new File will complain if it is otherwise.
                 writer = new ARCWriter(System.out,

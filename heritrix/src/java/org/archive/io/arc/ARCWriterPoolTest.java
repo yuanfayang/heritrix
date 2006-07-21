@@ -31,9 +31,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.archive.io.FilePoolMember;
-import org.archive.io.FilePool;
-import org.archive.io.FilePoolSettings;
+import org.archive.io.WriterPoolMember;
+import org.archive.io.WriterPool;
+import org.archive.io.WriterPoolSettings;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -48,9 +48,9 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         final int MAX_ACTIVE = 3;
         final int MAX_WAIT_MILLISECONDS = 100;
         cleanUpOldFiles(PREFIX);
-        FilePool pool = new ARCWriterPool(getSettings(true),
+        WriterPool pool = new ARCWriterPool(getSettings(true),
             MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
-        FilePoolMember [] writers = new FilePoolMember[MAX_ACTIVE];
+        WriterPoolMember [] writers = new WriterPoolMember[MAX_ACTIVE];
         final String CONTENT = "Any old content";
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(CONTENT.getBytes());
@@ -93,9 +93,9 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         final int MAX_ACTIVE = 3;
         final int MAX_WAIT_MILLISECONDS = 100;
         cleanUpOldFiles(PREFIX);
-        FilePool pool = new ARCWriterPool(getSettings(true),
+        WriterPool pool = new ARCWriterPool(getSettings(true),
             MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
-        FilePoolMember [] writers = new FilePoolMember[MAX_ACTIVE];
+        WriterPoolMember [] writers = new WriterPoolMember[MAX_ACTIVE];
         final String CONTENT = "Any old content";
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(CONTENT.getBytes());
@@ -106,7 +106,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
             	"0.0.0.0", 1234567890, CONTENT.length(), baos);
         }
      
-        FilePoolMember writer2Invalidate = writers[pool.getNumActive() - 1];
+        WriterPoolMember writer2Invalidate = writers[pool.getNumActive() - 1];
         writers[pool.getNumActive() - 1] = null;
         pool.invalidateFile(writer2Invalidate);
         for (int i = 0; i < (MAX_ACTIVE - 1); i++) {
@@ -131,8 +131,8 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         pool.close();
     }
     
-    private FilePoolSettings getSettings(final boolean isCompressed) {
-        return new FilePoolSettings() {
+    private WriterPoolSettings getSettings(final boolean isCompressed) {
+        return new WriterPoolSettings() {
             public int getMaxSize() {
                 return ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE;
             }
