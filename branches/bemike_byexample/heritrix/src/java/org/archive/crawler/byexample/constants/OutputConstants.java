@@ -5,8 +5,8 @@ import java.io.File;
 public class OutputConstants {
     
     // Print-out Constants    
-    public static final String KEY_SEPARATOR="~";
-    public static final String ENTRY_SEPARATOR=":";
+    public static final String KEY_SEPARATOR="~~";
+    public static final String ENTRY_SEPARATOR="::";
     public static final String LIST_SEPARATOR=";";
     public static final String PATH_SEPARATOR=File.separator;
     
