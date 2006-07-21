@@ -46,7 +46,7 @@ public class TermIndexManipulator {
         String iter=new String();        
         PorterStemmer stemmer=new PorterStemmer();
     
-        if (terms.length > 0) {
+        if (terms!=null) {
           for (int i=1; i<terms.length; i++) {
               iter=terms[i];
               
