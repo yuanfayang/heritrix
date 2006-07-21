@@ -25,9 +25,9 @@
 package org.archive.io.arc;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
-import org.archive.io.FilePool;
-import org.archive.io.FilePoolMember;
-import org.archive.io.FilePoolSettings;
+import org.archive.io.WriterPool;
+import org.archive.io.WriterPoolMember;
+import org.archive.io.WriterPoolSettings;
 
 
 /**
@@ -35,7 +35,7 @@ import org.archive.io.FilePoolSettings;
  *
  * @author stack
  */
-public class ARCWriterPool extends FilePool {
+public class ARCWriterPool extends WriterPool {
     /**
      * Constructor
      *
@@ -43,7 +43,7 @@ public class ARCWriterPool extends FilePool {
      * @param poolMaximumActive
      * @param poolMaximumWait
      */
-    public ARCWriterPool(final FilePoolSettings settings,
+    public ARCWriterPool(final WriterPoolSettings settings,
             final int poolMaximumActive, final int poolMaximumWait) {
     	super(new BasePoolableObjectFactory() {
             public Object makeObject() throws Exception {
@@ -52,7 +52,7 @@ public class ARCWriterPool extends FilePool {
 
             public void destroyObject(Object arcWriter)
             throws Exception {
-                ((FilePoolMember)arcWriter).close();
+                ((WriterPoolMember)arcWriter).close();
                 super.destroyObject(arcWriter);
             }
     	}, settings, poolMaximumActive, poolMaximumWait);

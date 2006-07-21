@@ -1,4 +1,4 @@
-/* FilePoolMember
+/* WriterPoolMember
  *
  * $Id$
  *
@@ -28,14 +28,29 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Member of {@link FilePool}.
+ * Member of {@link WriterPool}.
+ * 
+ * Occupies a slot in a {@link WriterPool}.  Implementations rotate off actual
+ * file instances after they exceed a threshold inside the {@link checkSize}
+ * implementation.  Clients must call {@link checkSize} before/after any major
+ * write operation to give this facility a chance to function.
+ * 
+ * <p>Does not specify write methods since they can vary widely across
+ * implementations.
+ * 
  * @author stack
+ * @see {@link WriterPool}
  */
-public interface FilePoolMember {
+public interface WriterPoolMember {
 	/**
 	 * Suffix given to files currently in use by the pool.
 	 */
 	public static final String OCCUPIED_SUFFIX = ".open";
+    
+    /**
+     * Suffix appended to 'broken' files.
+     */
+    public static final String INVALID_SUFFIX = ".invalid";
 
 	public static final String UTF8 = "UTF-8";
 
@@ -47,7 +62,7 @@ public interface FilePoolMember {
 	public abstract void close() throws IOException;
 
 	/**
-	 * Call this method just before we start to write a new record.
+	 * Call this method just before/after any significant write.
 	 *
 	 * Call at the end of the writing of a record or just before we start
 	 * writing a new record.  Will close current file and open a new file
@@ -59,23 +74,23 @@ public interface FilePoolMember {
 	 *
 	 * @exception IOException
 	 */
-	public abstract void checkFileSize() throws IOException;
+	public abstract void checkSize() throws IOException;
 
 	/**
 	 * Get this file.
 	 *
-	 * Used by junit test to test for creation.
+	 * Used by junit test to test for creation and when {@link WriterPool} wants
+     * to invalidate a file.
 	 *
-	 * @return Current arcFile.
+	 * @return The current file.
 	 */
 	public abstract File getFile();
 
 	/**
-	 * @return Position in underlying file. Returns 0 if underlying stream
-	 * does not support getting position (or there is no stream yet -- can
-	 * happen after construction before call to write or to
-	 * {@link #checkFileSize()}).  Position returned cannot always
-	 * be trusted.  Call before or after writing records *only* to be safe.
+     * Postion in current physical file.
+     * Used making accounting of bytes written.
+	 * @return Position in underlying file.  Call before or after writing
+     * records *only* to be safe.
 	 * @throws IOException
 	 */
 	public abstract long getPosition() throws IOException;

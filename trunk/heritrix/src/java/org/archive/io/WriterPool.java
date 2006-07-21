@@ -1,4 +1,4 @@
-/* FilePool
+/* WriterPool
  *
  * $Id$
  *
@@ -35,19 +35,21 @@ import org.apache.commons.pool.impl.FairGenericObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
 /**
- * Pool of files.
- * Usually used writing. Support for replacing pool member when file exceeds
- * predefined size.
+ * Pool of Writers.
+ * 
+ * Abstract. Override and pass in the Constructor a factory that knows how to
+ * make the Writers to pool.
+ * 
  * @author stack
  */
-public class FilePool {
+public abstract class WriterPool {
     final Logger logger =  Logger.getLogger(this.getClass().getName());
     
     /**
      * Don't enforce a maximum number of idle instances in pool.
      * To do so means GenericObjectPool will close files prematurely.
      */
-    public static final int NO_MAX_IDLE = -1;
+    protected static final int NO_MAX_IDLE = -1;
     
     /**
      * Retry getting a file on fail the below arbitrary amount of times.
@@ -65,11 +67,6 @@ public class FilePool {
 	 * Maximum time to wait on a free file..
 	 */
 	public static final int DEFAULT_MAXIMUM_WAIT = 1000 * 60 * 5;
-	
-	/**
-	 * Suffix appended to 'broken' files.
-	 */
-    public static final String INVALID_SUFFIX = ".invalid";
     
     /**
      * Pool instance.
@@ -77,26 +74,27 @@ public class FilePool {
     private GenericObjectPool pool = null;
     
     /**
-     * Instance of arc writer settings.
+     * File settings.
+     * Keep in data structure rather than as individual values.
      */
-    private final FilePoolSettings settings;
+    private final WriterPoolSettings settings;
     
     /**
      * Shutdown default constructor.
      */
-    private FilePool() {
+    private WriterPool() {
     	this(null, null, -1, -1);
     }
     
     /**
      * Constructor
-     *
+     * @param factory Factory that knows how to make a {@link WriterPoolMember}.
      * @param settings Settings for this pool.
      * @param poolMaximumActive
      * @param poolMaximumWait
      */
-    public FilePool(final BasePoolableObjectFactory factory,
-    		final FilePoolSettings settings,
+    public WriterPool(final BasePoolableObjectFactory factory,
+    		final WriterPoolSettings settings,
             final int poolMaximumActive, final int poolMaximumWait) {
         logger.info("Initial configuration:" +
                 " prefix=" + settings.getPrefix() +
@@ -112,24 +110,24 @@ public class FilePool {
     }
 
 	/**
-	 * Check out a {@link FilePoolMember}.
+	 * Check out a {@link WriterPoolMember}.
 	 * 
 	 * This method must be answered by a call to
-	 * {@link #returnWriter(FilePoolMember)}.
+	 * {@link #returnWriter(WriterPoolMember)} else pool starts leaking.
 	 * 
-	 * @return File checked out of a pool of files.
-	 * @throws IOException Problem getting File from pool (Converted
+	 * @return Writer checked out of a pool of files.
+	 * @throws IOException Problem getting Writer from pool (Converted
 	 * from Exception to IOException so this pool can live as a good citizen
 	 * down in depths of ARCSocketFactory).
 	 * @throws NoSuchElementException If we time out waiting on a pool member.
 	 */
-    public FilePoolMember borrowFile()
+    public WriterPoolMember borrowFile()
     throws IOException {
-        FilePoolMember f = null;
+        WriterPoolMember f = null;
         for (int i = 0; f == null; i++) {
             long waitStart = System.currentTimeMillis();
             try {
-                f = (FilePoolMember)this.pool.borrowObject();
+                f = (WriterPoolMember)this.pool.borrowObject();
                 if (logger.getLevel() == Level.FINE) {
                     logger.fine("Borrowed " + f + " (Pool State: "
                         + getPoolState(waitStart) + ").");
@@ -149,7 +147,7 @@ public class FilePool {
                 // Convert.
                 logger.severe(e.getMessage() + ": E Pool State: " +
                     getPoolState(waitStart));
-                throw new IOException("Failed getting file from pool: " +
+                throw new IOException("Failed getting writer from pool: " +
                     e.getMessage());
             }
         }
@@ -160,7 +158,7 @@ public class FilePool {
 	 * @param f File to return to the pool.
 	 * @throws IOException Problem returning File to pool.
 	 */
-    public void returnFile(FilePoolMember writer)
+    public void returnFile(WriterPoolMember writer)
     throws IOException {
         try {
             if (logger.getLevel() == Level.FINE) {
@@ -170,12 +168,12 @@ public class FilePool {
         }
         catch(Exception e)
         {
-            throw new IOException("Failed restoring ARCWriter to pool: " +
+            throw new IOException("Failed restoring writer to pool: " +
                     e.getMessage());
         }
     }
 
-    public void invalidateFile(FilePoolMember f)
+    public void invalidateFile(WriterPoolMember f)
     throws IOException {
         try {
             this.pool.invalidateObject(f);
@@ -186,11 +184,12 @@ public class FilePool {
         // It'll have been closed.  Rename with an '.invalid' suffix so it
         // gets attention.
         File file = f.getFile();
-        file.renameTo(new File(file.getAbsoluteFile() + INVALID_SUFFIX));
+        file.renameTo(new File(file.getAbsoluteFile() +
+                WriterPoolMember.INVALID_SUFFIX));
     }
 
 	/**
-	 * @return Number of {@link FilePoolMember}s checked out of pool.
+	 * @return Number of {@link WriterPoolMember}s checked out of pool.
 	 * @throws java.lang.UnsupportedOperationException
 	 */
     public int getNumActive()
@@ -208,7 +207,7 @@ public class FilePool {
     }
     
 	/**
-	 * Close all {@link FilePoolMember}s in pool.
+	 * Close all {@link WriterPoolMember}s in pool.
 	 */
     public void close() {
         this.pool.clear();
@@ -217,7 +216,7 @@ public class FilePool {
 	/**
 	 * @return Returns settings.
 	 */
-    public FilePoolSettings getSettings() {
+    public WriterPoolSettings getSettings() {
         return this.settings;
     }
     

@@ -48,8 +48,8 @@ import java.util.zip.GZIPOutputStream;
 
 import org.archive.io.GzippedInputStream;
 import org.archive.io.ReplayInputStream;
-import org.archive.io.FilePoolMember;
-import org.archive.io.FilePoolSettings;
+import org.archive.io.WriterPoolMember;
+import org.archive.io.WriterPoolSettings;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.IoUtils;
@@ -124,10 +124,10 @@ import org.archive.util.TimestampSerialno;
  *
  * @author stack
  */
-public class ARCWriter implements ARCConstants, FilePoolMember {
+public class ARCWriter implements ARCConstants, WriterPoolMember {
     private static final Logger logger =
         Logger.getLogger(ARCWriter.class.getName());
-    private FilePoolSettings settings = null;
+    private WriterPoolSettings settings = null;
 
     /**
      * Reference to ARC file we're currently writing.
@@ -237,7 +237,7 @@ public class ARCWriter implements ARCConstants, FilePoolMember {
      * Constructor.
      * @param settings
      */
-    public ARCWriter(FilePoolSettings settings) {
+    public ARCWriter(WriterPoolSettings settings) {
         this.settings = settings;
     }
     
@@ -270,13 +270,13 @@ public class ARCWriter implements ARCConstants, FilePoolMember {
 	 * @see org.archive.io.arc.Writer#writeARCMetaRecord()
 	 */
     public void writeARCMetaRecord() throws IOException {
-        checkFileSize();
+        checkSize();
     }
 
     /* (non-Javadoc)
 	 * @see org.archive.io.arc.Writer#checkARCFileSize()
 	 */
-    public void checkFileSize() throws IOException {
+    public void checkSize() throws IOException {
         if (this.out == null ||
             (this.settings.getMaxSize() != -1 &&
                (this.arcFile.length() > this.settings.getMaxSize()))) {
@@ -364,7 +364,7 @@ public class ARCWriter implements ARCConstants, FilePoolMember {
      * @return Instance of data structure that has timestamp and serial no.
      */
     private static synchronized TimestampSerialno
-    		getTimestampSerialNo(FilePoolMember writer) {
+    		getTimestampSerialNo(WriterPoolMember writer) {
         return new TimestampSerialno(ArchiveUtils.get14DigitDate(),
             ARCWriter.serialNo++);
     }
@@ -679,7 +679,7 @@ public class ARCWriter implements ARCConstants, FilePoolMember {
      */
     private void preWriteRecordTasks()
     throws IOException {
-        checkFileSize();
+        checkSize();
         if (this.settings.isCompressed()) {
             // The below construction immediately writes the GZIP 'default'
             // header out on the underlying stream.
@@ -770,7 +770,7 @@ public class ARCWriter implements ARCConstants, FilePoolMember {
      * @version $Date$, $Revision$
      */
     protected class ARCWriterSettingsImpl
-    implements FilePoolSettings {
+    implements WriterPoolSettings {
         private final List arcDirs;
         private final int arcMaxSize;
         private final String arcPrefix;

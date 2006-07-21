@@ -36,7 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.io.ReplayInputStream;
-import org.archive.io.FilePoolMember;
+import org.archive.io.WriterPoolMember;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
@@ -493,7 +493,7 @@ extends TmpDirTestCase implements ARCConstants {
     
     public void testArcRecordOffsetReads() throws Exception {
     	// Get an ARC with one record.
-		FilePoolMember w =
+		WriterPoolMember w =
 			createArcWithOneRecord("testArcRecordInBufferStream", true);
 		w.close();
 		// Get reader on said ARC.
