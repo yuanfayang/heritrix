@@ -19,7 +19,6 @@ import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSco
 import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
 import org.archive.crawler.byexample.algorithms.datastructure.support.DocumentSupportIndex;
 import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
-import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupportListing;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
 import org.archive.crawler.byexample.constants.AlgorithmConstants;
@@ -148,7 +147,7 @@ public class StructureBuilder {
      */
     public void createInitialDocumentClusters(FrequentItemSets fis){
         String docId;
-
+        
         ItemSet currItemSet;
         boolean isClassified=false;
         ItemSet unClassified=new ItemSet(AlgorithmConstants.UNCLASSIFIED_LABEL);
@@ -156,6 +155,7 @@ public class StructureBuilder {
         for (Iterator<DocumentEntry> docIter = myDocListing.getListingIterator(); docIter.hasNext();) {
             isClassified=false;
             docId=String.valueOf(docIter.next().getId());
+            
             for (Iterator<ItemSet> itemIter = fis.getSetsIterator(); itemIter.hasNext();) {
                 currItemSet=itemIter.next();
                 if (containsItemSet(currItemSet,docId)){
