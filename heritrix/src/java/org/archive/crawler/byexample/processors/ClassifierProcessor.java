@@ -12,6 +12,7 @@ import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSco
 import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
 import org.archive.crawler.byexample.algorithms.preprocessing.PorterStemmer;
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
+import org.archive.crawler.byexample.constants.AlgorithmConstants;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileUtils;
 import org.archive.crawler.byexample.utils.ParseUtils;
@@ -111,15 +112,23 @@ public class ClassifierProcessor extends Processor {
         }
         
         // Create classifier instance
-        myClassifier=new Classifier(csi);
-                
+        myClassifier=new Classifier(csi, clusteringInfo);
+        
+        //Load algorithm parameters
+        try {
+            AlgorithmConstants.readPropeties(OutputConstants.CONFIG_HOME+OutputConstants.PROPERTIES_FILENAME);
+        } catch (Exception e) {
+            logger.severe("Failed to load properties file: "+e.getMessage());
+            return;
+        }
+        
         //Create Job ID
-        jobID=OutputConstants.KEY_SEPARATOR+ArchiveUtils.TIMESTAMP17.format(new Date());
+        jobID=ArchiveUtils.TIMESTAMP17.format(new Date())+OutputConstants.KEY_SEPARATOR;
         
         //Create output files
         try {
             docListDumpFile=FileUtils.createFileForJob(basedOnJob,OutputConstants.CLASSIFICATION_FILES_HOME,
-                                                    OutputConstants.CLASSIFICATION_DOCUMENT_LISTING+jobID,true);
+                                                    jobID+OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,true);
         } catch (Exception e1) {
             logger.severe("Failed to create classified docs file: "+e1.getMessage());
         }
@@ -183,7 +192,7 @@ public class ClassifierProcessor extends Processor {
         }
         
         //Add document classifications to listing
-        myClassificationDocListing.addClassification(currURL,classifications,"good");
+        myClassificationDocListing.addClassification(currURL,classifications,myClassifier.scopeIdentifier(classifications));
         
         numOfProcessedDocs++;
     }
