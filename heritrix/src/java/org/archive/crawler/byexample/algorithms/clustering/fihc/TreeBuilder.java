@@ -5,6 +5,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.IdListing;
+import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing.DocumentEntry;
 import org.archive.crawler.byexample.algorithms.datastructure.info.ClusteringInfo;
 import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
 import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
@@ -15,8 +18,9 @@ import org.archive.crawler.byexample.constants.AlgorithmConstants;
 import org.archive.crawler.byexample.utils.TimerUtils;
 
 /**
- * Receives as input clustering structure created by StructureBuilder and prunes and merges redundant clusters
- * 
+ * Receives as input clustering structure created by StructureBuilder, 
+ * prunes and merges redundant clusters and builds clustering structure including relevance assignment to each cluster
+ *  
  * @author Michael Bendersky
  *
  */
@@ -26,36 +30,23 @@ public class TreeBuilder {
     private ClusterSupportIndex myClusterSupportIndex;
     private DocumentIndexManipulator myTFIDFIndex;
     private List<TermSupport> myGlobalSupportIndex;
+    private DocumentListing allDocs;
     private long myDocCount;
+    private double avgRelevanceRatio;
     
     /**
      * Default constructor
      */
-    public TreeBuilder(long docCount, ClusterDocumentsIndex cdi, DocumentIndexManipulator mti, List<TermSupport> gsi, 
+    public TreeBuilder(long docCount, DocumentListing dl, ClusterDocumentsIndex cdi, DocumentIndexManipulator mti, List<TermSupport> gsi, 
                         ClusterSupportIndex csi){
         myDocumentClusteringIndex=cdi;
         myTFIDFIndex=mti;
         myGlobalSupportIndex=gsi;
         myClusterSupportIndex=csi;
         myDocCount=docCount;
+        allDocs=dl;
+        avgRelevanceRatio=dl.getAutoInRatio();
     }
-
-/**
-    public FrequentItemSets[] buildLevels(){
-        ItemSet currIS=null;
-        FrequentItemSets[] itemSetLevels=new FrequentItemSets[AlgorithmConstants.MAX_DEPTH];
-        
-        for (int i = 0; i < itemSetLevels.length; i++) {
-            itemSetLevels[i]=new FrequentItemSets();
-        }
-        
-        for (Iterator<ItemSet> iter = myDocumentClusteringIndex.getIndexKeysIterator(); iter.hasNext();) {
-            currIS=iter.next();
-            itemSetLevels[currIS.getSize()-1].insertToSet(currIS);            
-        }
-        return itemSetLevels;
-    }
-    **/
     
     /**
      * Merges most similar clusters between different levels, if clusters size is less than MIN_SIZE_TO_PRUNE
@@ -129,6 +120,30 @@ public class TreeBuilder {
     }
     
     /**
+     * Determines if cluster should be counted as relevant or not.
+     * Cluster is deemed relevant if its relevance ratio is above average relevance ratio in all crawled documents
+     * @param clusterDocs IdListing of all cluster documents
+     * @return true if cluster is relevant, false - otherwise.
+     */
+    public boolean determineClusterRelevance(IdListing clusterDocs){
+        double relevanceRatio=0;
+                
+        for (int i = 0; i < clusterDocs.getRowSize(); i++) {
+            //Count all relevant documents
+            if (allDocs.getEntryAtPos(Integer.parseInt(clusterDocs.getValueAtPos(i))).isAutoIn())
+                relevanceRatio++;
+        }
+        
+        relevanceRatio/=clusterDocs.getRowSize();
+        //Cluster is deemed relevant if it's relevance ratio is above average relevance ratio in
+        //all crawled documents
+        if (relevanceRatio>=avgRelevanceRatio)
+            return true;
+        
+        return false;        
+    }
+    
+    /**
      * Writes clustering structure into XML
      * @param path file path 
      * @param filename file name
@@ -142,7 +157,8 @@ public class TreeBuilder {
             currIS=iter.next();
             assocTerms=myClusterSupportIndex.getRow(currIS).termsToString();
             //TO DO: Determine relevance
-            info.addCluster(currIS,myDocumentClusteringIndex.getRow(currIS).getRowSize(),true,assocTerms);            
+            info.addCluster(currIS,myDocumentClusteringIndex.getRow(currIS).getRowSize(),
+                            determineClusterRelevance(myDocumentClusteringIndex.getRow(currIS)),assocTerms);            
         }
         
         info.toXML(path, filename);

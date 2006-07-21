@@ -26,6 +26,7 @@ public class ClusterGenerator {
     private ClusterSupportIndex myClusterSupportIndex;
     private List<TermSupport> myGlobalSupportIndex;
     private long myDocCount;
+    private DocumentListing myDocumentListing;
     
     private StructureBuilder structureBuilder;
     private TreeBuilder treeBuilder;
@@ -45,8 +46,9 @@ public class ClusterGenerator {
         myClusterSupportIndex=new ClusterSupportIndex();
         myGlobalSupportIndex=termSupport;
         myDocCount=docCount;
+        myDocumentListing=allDocs; 
         
-        structureBuilder=new StructureBuilder(myDocCount, termsIndex, termSupport, allDocs);        
+        structureBuilder=new StructureBuilder(myDocCount, termsIndex, termSupport, myDocumentListing);        
     }    
     
     /**
@@ -92,8 +94,8 @@ public class ClusterGenerator {
         myClusterSupportIndex=structureBuilder.getClusterSupport();
         myDocumentClusteringIndex=structureBuilder.getClusterDocuments();
         
-        treeBuilder=new TreeBuilder(myDocCount,myDocumentClusteringIndex,myTFIDFIndex,myGlobalSupportIndex,
-                                    myClusterSupportIndex); 
+        treeBuilder=new TreeBuilder(myDocCount,myDocumentListing,myDocumentClusteringIndex,
+                                    myTFIDFIndex,myGlobalSupportIndex,myClusterSupportIndex); 
 
         treeBuilder.buildTree(path,filename,fis, info);       
     }
