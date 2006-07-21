@@ -9,9 +9,11 @@ import org.archive.crawler.byexample.algorithms.datastructure.info.PreprocessInf
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.rules.DocumentRelevanceDecideRule;
 import org.archive.crawler.byexample.utils.FileUtils;
 import org.archive.crawler.byexample.utils.ParseUtils;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecideRule;
 import org.archive.crawler.framework.Processor;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
@@ -36,8 +38,7 @@ public class TermsIndexingProcessor extends Processor {
     private String jobID;
     
     private String filesPath;
-    
-   
+        
     // File where all crawled documents will be dumped as collections of terms
     private BufferedWriter indexDumpFile=null;
     
@@ -86,8 +87,7 @@ public class TermsIndexingProcessor extends Processor {
         
     }
     
-    protected void innerProcess(CrawlURI uriToProcess){
-
+    protected void processURI(CrawlURI uriToProcess, boolean isAccepted){
         // Get the URI from the CrawlURI
         String currURL = uriToProcess.toString();
         
@@ -123,13 +123,20 @@ public class TermsIndexingProcessor extends Processor {
             termsIndexHandler.addDocumentToIndex(ParseUtils.tokenizer(cs),numOfProcessedDocs,stopWordsHandler);
         } catch (ParserException e) {
             logger.severe("Failed to parse document: "+currURL);
-        }   
-        
-        //Add the document to Documents listing
-        docList.addToListing(numOfProcessedDocs,uriToProcess.toString(),true);
+        }         
+       
+        docList.addToListing(numOfProcessedDocs,uriToProcess.toString(),isAccepted);
         
         //Increase the number of processed docs
         numOfProcessedDocs++;
+    }
+    
+    protected void innerProcess(CrawlURI uriToProcess){
+        processURI(uriToProcess,true);
+    }
+    
+    protected void innerRejectProcess(CrawlURI uriToProcess){
+        processURI(uriToProcess,false);
     }
     
     public void createPreprocessXmlFile(){
@@ -144,7 +151,6 @@ public class TermsIndexingProcessor extends Processor {
         }
     }
 
-    
     
     public String report() {
         StringBuffer ret = new StringBuffer();
