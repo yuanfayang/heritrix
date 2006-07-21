@@ -52,6 +52,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.archive.io.RandomAccessInputStream;
+import org.archive.io.FilePoolMember;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.InetAddressUtil;
 import org.archive.util.MimetypeUtils;
@@ -162,7 +163,7 @@ implements ARCConstants {
      * We used to read these in from the arc file first record 3rd line but
      * now we hardcode them for sake of improved performance.
      */
-    private final List headerFieldNameKeys =
+    private final List<String> headerFieldNameKeys =
         Arrays.asList(this.headerFieldNameKeysArray);
     
     /**
@@ -549,7 +550,7 @@ implements ARCConstants {
      */
     protected ARCRecord createARCRecord(InputStream is, long offset)
     throws IOException {
-        ArrayList firstLineValues = new ArrayList(20);
+        ArrayList<String> firstLineValues = new ArrayList<String>(20);
         getTokenizedHeaderLine(is, firstLineValues);
         int bodyOffset = 0;
         if (offset == 0 && this.alignedOnFirstRecord) {
@@ -568,7 +569,7 @@ implements ARCConstants {
             // 1 0 InternetArchive
             // URL IP-address Archive-date Content-type Archive-length
             //
-            ArrayList secondLineValues = new ArrayList(20);
+            ArrayList<String> secondLineValues = new ArrayList<String>(20);
             bodyOffset += getTokenizedHeaderLine(is, secondLineValues);
             this.version = (String)secondLineValues.get(0) +
                 "." + (String)secondLineValues.get(1) ;
@@ -618,7 +619,7 @@ implements ARCConstants {
      * found or EOF before EOL or we didn't get minimum header fields.
      */
     private int getTokenizedHeaderLine(final InputStream stream,
-            List list) throws IOException {
+            List<String> list) throws IOException {
         // Preallocate usual line size.
         // TODO: Replace StringBuffer with more lightweight.  We burn
         // alot of our parse CPU in this method.
@@ -684,11 +685,11 @@ implements ARCConstants {
      *
      * @exception IOException  If no. of keys doesn't match no. of values.
      */
-    private ARCRecordMetaData computeMetaData(List keys, List values, String v,
-            long offset)
+    private ARCRecordMetaData computeMetaData(List<String> keys,
+    		List<String> values, String v, long offset)
     throws IOException {
         if (keys.size() != values.size()) {
-            List originalValues = values;
+            List<String> originalValues = values;
             if (!isStrict()) {
                 values = fixSpaceInMetadataLine(values, keys.size());
             }
@@ -701,7 +702,8 @@ implements ARCConstants {
                 " Original: " + originalValues + ", New: " + values);
         }
         
-        Map headerFields = new HashMap(keys.size() + 2);
+        Map<Object, Object> headerFields =
+        	new HashMap<Object, Object>(keys.size() + 2);
         for (int i = 0; i < keys.size(); i++) {
             headerFields.put(keys.get(i), values.get(i));
         }
@@ -749,7 +751,8 @@ implements ARCConstants {
      * @return New list if we successfully fixed up values or original if
      * fixup failed.
      */
-    protected List fixSpaceInMetadataLine(List values, int requiredSize) {
+    protected List<String> fixSpaceInMetadataLine(List<String> values,
+    		int requiredSize) {
         // Do validity check. 3rd from last is a date of 14 numeric
         // characters.  The 4th from last is IP, all before the IP
         // should be concatenated together with a '%20' joiner.
@@ -771,7 +774,7 @@ implements ARCConstants {
         String ip = (String)values.get(values.size() - 4);
         Matcher m = InetAddressUtil.IPV4_QUADS.matcher(ip);
         if (ip == "-" || m.matches()) {
-            List newValues = new ArrayList(requiredSize);
+            List<String> newValues = new ArrayList<String>(requiredSize);
             StringBuffer url = new StringBuffer();
             for (int i = 0; i < (values.size() - 4); i++) {
                 if (i > 0) {
@@ -822,7 +825,7 @@ implements ARCConstants {
      * @throws IOException
      */
     protected List validate(int noRecords) throws IOException {
-        List metaDatas = new ArrayList();
+        List<ARCRecordMetaData> metaDatas = new ArrayList<ARCRecordMetaData>();
         int count = 0;
         setStrict(true);
         for (Iterator i = iterator(); i.hasNext();) {
@@ -973,8 +976,8 @@ implements ARCConstants {
                 while (r.available() > 0) {
                     baos.write(r.read());
                 }
-                List listOfMetadata = new ArrayList();
-                listOfMetadata.add(baos.toString(ARCWriter.UTF8));
+                List<String> listOfMetadata = new ArrayList<String>();
+                listOfMetadata.add(baos.toString(FilePoolMember.UTF8));
                 // Assume getArc returns full path to file.  ARCWriter
                 // or new File will complain if it is otherwise.
                 writer = new ARCWriter(System.out,

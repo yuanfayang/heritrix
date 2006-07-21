@@ -31,6 +31,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.archive.io.FilePoolMember;
+import org.archive.io.FilePool;
+import org.archive.io.FilePoolSettings;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -45,17 +48,17 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         final int MAX_ACTIVE = 3;
         final int MAX_WAIT_MILLISECONDS = 100;
         cleanUpOldFiles(PREFIX);
-        ARCWriterPool pool = new ARCWriterPool(getSettings(true),
+        FilePool pool = new ARCWriterPool(getSettings(true),
             MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
-        ARCWriter [] writers = new ARCWriter[MAX_ACTIVE];
+        FilePoolMember [] writers = new FilePoolMember[MAX_ACTIVE];
         final String CONTENT = "Any old content";
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(CONTENT.getBytes());
         for (int i = 0; i < MAX_ACTIVE; i++) {
-            writers[i] = pool.borrowARCWriter();
+            writers[i] = pool.borrowFile();
             assertEquals("Number active", i + 1, pool.getNumActive());
-            writers[i].write("http://one.two.three", "no-type", "0.0.0.0",
-                1234567890, CONTENT.length(), baos);
+            ((ARCWriter)writers[i]).write("http://one.two.three", "no-type",
+            	"0.0.0.0", 1234567890, CONTENT.length(), baos);
         }
 
         // Pool is maxed out.  Try and get a new ARCWriter.  We'll block for
@@ -63,7 +66,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         long start = (new Date()).getTime();
         boolean isException = false;
         try {
-            pool.borrowARCWriter();
+            pool.borrowFile();
         } catch(NoSuchElementException e) {
             isException = true;
             long end = (new Date()).getTime();
@@ -78,7 +81,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         assertTrue("Did not get NoSuchElementException", isException);
 
         for (int i = (MAX_ACTIVE - 1); i >= 0; i--) {
-            pool.returnARCWriter(writers[i]);
+            pool.returnFile(writers[i]);
             assertEquals("Number active", i, pool.getNumActive());
             assertEquals("Number idle", MAX_ACTIVE - pool.getNumActive(),
                     pool.getNumIdle());
@@ -90,37 +93,37 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         final int MAX_ACTIVE = 3;
         final int MAX_WAIT_MILLISECONDS = 100;
         cleanUpOldFiles(PREFIX);
-        ARCWriterPool pool = new ARCWriterPool(getSettings(true),
+        FilePool pool = new ARCWriterPool(getSettings(true),
             MAX_ACTIVE, MAX_WAIT_MILLISECONDS);
-        ARCWriter [] writers = new ARCWriter[MAX_ACTIVE];
+        FilePoolMember [] writers = new FilePoolMember[MAX_ACTIVE];
         final String CONTENT = "Any old content";
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(CONTENT.getBytes());
         for (int i = 0; i < MAX_ACTIVE; i++) {
-            writers[i] = pool.borrowARCWriter();
+            writers[i] = pool.borrowFile();
             assertEquals("Number active", i + 1, pool.getNumActive());
-            writers[i].write("http://one.two.three", "no-type", "0.0.0.0",
-                1234567890, CONTENT.length(), baos);
+            ((ARCWriter)writers[i]).write("http://one.two.three", "no-type",
+            	"0.0.0.0", 1234567890, CONTENT.length(), baos);
         }
      
-        ARCWriter writer2Invalidate = writers[pool.getNumActive() - 1];
+        FilePoolMember writer2Invalidate = writers[pool.getNumActive() - 1];
         writers[pool.getNumActive() - 1] = null;
-        pool.invalidateARCWriter(writer2Invalidate);
+        pool.invalidateFile(writer2Invalidate);
         for (int i = 0; i < (MAX_ACTIVE - 1); i++) {
             if (writers[i] == null) {
                 continue;
             }
-            pool.returnARCWriter(writers[i]);
+            pool.returnFile(writers[i]);
         }
         
         for (int i = 0; i < MAX_ACTIVE; i++) {
-            writers[i] = pool.borrowARCWriter();
+            writers[i] = pool.borrowFile();
             assertEquals("Number active", i + 1, pool.getNumActive());
-            writers[i].write("http://one.two.three", "no-type", "0.0.0.0",
-                1234567890, CONTENT.length(), baos);
+            ((ARCWriter)writers[i]).write("http://one.two.three", "no-type",
+            	"0.0.0.0", 1234567890, CONTENT.length(), baos);
         }
         for (int i = (MAX_ACTIVE - 1); i >= 0; i--) {
-            pool.returnARCWriter(writers[i]);
+            pool.returnFile(writers[i]);
             assertEquals("Number active", i, pool.getNumActive());
             assertEquals("Number idle", MAX_ACTIVE - pool.getNumActive(),
                     pool.getNumIdle());
@@ -128,17 +131,17 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
         pool.close();
     }
     
-    private ARCWriterSettings getSettings(final boolean isCompressed) {
-        return new ARCWriterSettings() {
-            public int getArcMaxSize() {
+    private FilePoolSettings getSettings(final boolean isCompressed) {
+        return new FilePoolSettings() {
+            public int getMaxSize() {
                 return ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE;
             }
             
-            public String getArcPrefix() {
+            public String getPrefix() {
                 return PREFIX;
             }
             
-            public String getArcSuffix() {
+            public String getSuffix() {
                 return "";
             }
             
@@ -152,7 +155,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
             }
             
             public List getMetadata() {
-                return null;
+            	return null;
             }
         };
     }

@@ -48,10 +48,13 @@ import java.util.zip.GZIPOutputStream;
 
 import org.archive.io.GzippedInputStream;
 import org.archive.io.ReplayInputStream;
+import org.archive.io.FilePoolMember;
+import org.archive.io.FilePoolSettings;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.MimetypeUtils;
+import org.archive.util.TimestampSerialno;
 
 
 /**
@@ -121,10 +124,10 @@ import org.archive.util.MimetypeUtils;
  *
  * @author stack
  */
-public class ARCWriter implements ARCConstants {
+public class ARCWriter implements ARCConstants, FilePoolMember {
     private static final Logger logger =
         Logger.getLogger(ARCWriter.class.getName());
-    private ARCWriterSettings settings = null;
+    private FilePoolSettings settings = null;
 
     /**
      * Reference to ARC file we're currently writing.
@@ -160,13 +163,6 @@ public class ARCWriter implements ARCConstants {
     private static final Pattern METADATA_LINE_PATTERN =
         Pattern.compile("^\\S+ \\S+ \\S+ \\S+ \\S+(" + LINE_SEPARATOR + "?)$");
 
-    /**
-     * Suffix given to files currently being written by Heritrix.
-     */
-    public static final String OCCUPIED_SUFFIX = ".open";
-    
-    public static final String UTF8 = "UTF-8";
-    
     /**
      * Buffer to reuse writing streams.
      */
@@ -241,18 +237,13 @@ public class ARCWriter implements ARCConstants {
      * Constructor.
      * @param settings
      */
-    public ARCWriter(ARCWriterSettings settings) {
+    public ARCWriter(FilePoolSettings settings) {
         this.settings = settings;
     }
     
-    /**
-     * Close any extant ARC file.
-     *
-     * Will close current ARC file.  Any subsequent attempts at using ARC file
-     * will open a new file.
-     *
-     * @throws IOException
-     */
+    /* (non-Javadoc)
+	 * @see org.archive.io.arc.Writer#close()
+	 */
     public void close() throws IOException {
         if (this.out == null) {
             return;
@@ -275,38 +266,20 @@ public class ARCWriter implements ARCConstants {
         }
     }
     
-    /**
-     * Write the first record, the metadata record.
-     * There is no need to call this method explicitly. You only need call this
-     * method if you want to get the offset of the first non-metadata ARC 
-     * record.  Call this method after construction but before you write
-     * anything else to the ARC.  Then call {@link #getPosition()} and it will
-     * return the end-of-metadata and start of first ARC record in current file.
-     * Is a noop if we've already moved past writing of metadata.
-     * @throws IOException 
-     */
+    /* (non-Javadoc)
+	 * @see org.archive.io.arc.Writer#writeARCMetaRecord()
+	 */
     public void writeARCMetaRecord() throws IOException {
-        checkARCFileSize();
+        checkFileSize();
     }
 
-    /**
-     * Call this method just before we start to write a new record to the ARC.
-     *
-     * Call at the end of the writing of a record or just before we start
-     * writing a new record.  Will close current ARC file and open a new file
-     * if ARC file size has passed out maxSize.
-     * 
-     * <p>Creates and opens an ARC if none already open writing the ARC meta
-     * info.  One use of this method then is after construction, call this 
-     * method to add the arc metadata, then call {@link #getPosition()} to find
-     * offset of first record.
-     *
-     * @exception IOException
-     */
-    public void checkARCFileSize() throws IOException {
+    /* (non-Javadoc)
+	 * @see org.archive.io.arc.Writer#checkARCFileSize()
+	 */
+    public void checkFileSize() throws IOException {
         if (this.out == null ||
-            (this.settings.getArcMaxSize() != -1 &&
-               (this.arcFile.length() > this.settings.getArcMaxSize()))) {
+            (this.settings.getMaxSize() != -1 &&
+               (this.arcFile.length() > this.settings.getMaxSize()))) {
             createARCFile();
         }
     }
@@ -318,12 +291,12 @@ public class ARCWriter implements ARCConstants {
      */
     private void createARCFile() throws IOException {
         close();
-        TimestampSerialNumber tsn = getTimestampSerialNumber(this);
-        String name = this.settings.getArcPrefix() + '-' +
+        TimestampSerialno tsn = getTimestampSerialNo(this);
+        String name = this.settings.getPrefix() + '-' +
             getUniqueBasename(tsn) +
-            ((this.settings.getArcSuffix() == null ||
-                    this.settings.getArcSuffix().length() <= 0)?
-                "": "-" + this.settings.getArcSuffix()) +
+            ((this.settings.getSuffix() == null ||
+                    this.settings.getSuffix().length() <= 0)?
+                "": "-" + this.settings.getSuffix()) +
             '.' + ARC_FILE_EXTENSION +
             ((this.settings.isCompressed())?
                 '.' + COMPRESSED_FILE_EXTENSION: "") +
@@ -390,9 +363,9 @@ public class ARCWriter implements ARCConstants {
      * @param writer An instance of ARCWriter.
      * @return Instance of data structure that has timestamp and serial no.
      */
-    private static synchronized TimestampSerialNumber
-    		getTimestampSerialNumber(ARCWriter writer) {
-        return writer.new TimestampSerialNumber(ArchiveUtils.get14DigitDate(),
+    private static synchronized TimestampSerialno
+    		getTimestampSerialNo(FilePoolMember writer) {
+        return new TimestampSerialno(ArchiveUtils.get14DigitDate(),
             ARCWriter.serialNo++);
     }
 
@@ -405,13 +378,13 @@ public class ARCWriter implements ARCConstants {
      *
      * @return Unique basename.
      */
-    private String getUniqueBasename(TimestampSerialNumber tsn) {
-        return tsn.getNow() + "-" + 
+    private String getUniqueBasename(TimestampSerialno tsn) {
+        return tsn.getNow() + "-" +
         	ARCWriter.serialNoFormatter.format(tsn.getSerialNumber());
     }
 
     /**
-     * Reset the serial number.
+     * Reset serial number.
      */
     public static synchronized void resetSerialNo() {
         ARCWriter.serialNo = 0;
@@ -623,19 +596,9 @@ public class ARCWriter implements ARCConstants {
         return result;
     }
 
-    /**
-     * Write a record to ARC file.
-     *
-     * @param uri URI of page we're writing metaline for.  Candidate URI would
-     *        be output of curi.getURIString().
-     * @param contentType Content type of content meta line describes.
-     * @param hostIP IP of host we got content from.
-     * @param fetchBeginTimeStamp Time at which fetch began.
-     * @param recordLength Length of the content fetched.
-     * @param baos Where to read record content from.
-     *
-     * @throws IOException
-     */
+    /* (non-Javadoc)
+	 * @see org.archive.io.arc.Writer#write(java.lang.String, java.lang.String, java.lang.String, long, int, java.io.ByteArrayOutputStream)
+	 */
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength,
             ByteArrayOutputStream baos)
@@ -651,20 +614,9 @@ public class ARCWriter implements ARCConstants {
         }
     }
     
-    /**
-     * Write a record to ARC file.
-     *
-     * @param uri URI of page we're writing metaline for.  Candidate URI would
-     *        be output of curi.getURIString().
-     * @param contentType Content type of content meta line describes.
-     * @param hostIP IP of host we got content from.
-     * @param fetchBeginTimeStamp Time at which fetch began.
-     * @param recordLength Length of the content fetched.
-     * @param in Where to read record content from.
-     * @throws IOException
-     *
-     * @throws IOException
-     */
+    /* (non-Javadoc)
+	 * @see org.archive.io.arc.Writer#write(java.lang.String, java.lang.String, java.lang.String, long, int, java.io.InputStream)
+	 */
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength, InputStream in)
     throws IOException {
@@ -682,21 +634,9 @@ public class ARCWriter implements ARCConstants {
         }
     }
 
-    /**
-     * Write a record to ARC file.
-     *
-     * TODO: Clean up and have it call the above method that takes a BAOS.
-     *
-     * @param uri URI of page we're writing metaline for.  Candidate URI would
-     *        be output of curi.getURIString().
-     * @param contentType Content type of content meta line describes.
-     * @param hostIP IP of host we got content from.
-     * @param fetchBeginTimeStamp Time at which fetch began.
-     * @param recordLength Length of the content fetched.
-     * @param ris ReplayInputStream to read from.
-     *
-     * @throws IOException
-     */
+    /* (non-Javadoc)
+	 * @see org.archive.io.arc.Writer#write(java.lang.String, java.lang.String, java.lang.String, long, int, org.archive.io.ReplayInputStream)
+	 */
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength,
             ReplayInputStream ris)
@@ -713,7 +653,7 @@ public class ARCWriter implements ARCConstants {
                 if (remaining != 0) {
                     String message = "Gap between expected and actual: " +
                         remaining + LINE_SEPARATOR + DevUtils.extraInfo() +
-                        " writing arc " + this.getArcFile().getAbsolutePath();
+                        " writing arc " + this.getFile().getAbsolutePath();
                     DevUtils.warnHandle(new Throwable(message), message);
                     throw new IOException(message);
                 }
@@ -739,7 +679,7 @@ public class ARCWriter implements ARCConstants {
      */
     private void preWriteRecordTasks()
     throws IOException {
-        checkARCFileSize();
+        checkFileSize();
         if (this.settings.isCompressed()) {
             // The below construction immediately writes the GZIP 'default'
             // header out on the underlying stream.
@@ -785,6 +725,9 @@ public class ARCWriter implements ARCConstants {
             Integer.toString(recordLength)));
     }
     
+    /* (non-Javadoc)
+	 * @see org.archive.io.arc.Writer#makeMetaline(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
     public String makeMetaline(String uri, String hostIP,
             String timeStamp, String mimetype, String recordLength) {
         return uri + HEADER_FIELD_SEPARATOR + hostIP +
@@ -814,21 +757,10 @@ public class ARCWriter implements ARCConstants {
         return metaLineStr;
     }
 
-    /**
-     * @return Settings used by this writer.
-     */
-    public ARCWriterSettings getSettings() {
-        return this.settings;
-    }
-
-    /**
-     * Get arcFile.
-     *
-     * Used by junit test to test for creation.
-     *
-     * @return Current arcFile.
-     */
-    public File getArcFile() {
+    /* (non-Javadoc)
+	 * @see org.archive.io.arc.Writer#getArcFile()
+	 */
+    public File getFile() {
         return this.arcFile;
     }
     
@@ -838,7 +770,7 @@ public class ARCWriter implements ARCConstants {
      * @version $Date$, $Revision$
      */
     protected class ARCWriterSettingsImpl
-    implements ARCWriterSettings {
+    implements FilePoolSettings {
         private final List arcDirs;
         private final int arcMaxSize;
         private final String arcPrefix;
@@ -860,16 +792,16 @@ public class ARCWriter implements ARCConstants {
             this.metadata = metadata;
         }
         
-        public int getArcMaxSize() {
+        public int getMaxSize() {
             return this.arcMaxSize;
         }
         
-        public String getArcPrefix() {
-            return (this.arcPrefix == null)?
-                DEFAULT_ARC_FILE_PREFIX: this.arcPrefix;
+        public String getPrefix() {
+            return (this.arcPrefix == null)? "IAH" /*
+                DEFAULT_ARC_FILE_PREFIX TODO*/: this.arcPrefix;
         }
         
-        public String getArcSuffix() {
+        public String getSuffix() {
             return (this.arcSuffix == null)? "": this.arcSuffix;
         }
         
@@ -904,46 +836,9 @@ public class ARCWriter implements ARCConstants {
         }
     }
     
-    /**
-     * Immutable data structure that holds a timestamp and an accompanying
-     * serial number.
-	 * 
-	 * For Igor!
-     *
-     * @author stack
-     */
-    private class TimestampSerialNumber {
-        private final String now;
-        private final int serialNumber;
-        
-        private TimestampSerialNumber(String now, int serialNo) {
-            this.now = now;
-            this.serialNumber = serialNo;
-        }
-        
-        /**
-         * @return Returns the now.
-         */
-        public String getNow() {
-            return this.now;
-        }
-        
-        /**
-         * @return Returns the serialNumber.
-         */
-        public int getSerialNumber() {
-            return this.serialNumber;
-        }
-    }
-    
-    /**
-     * @return Position in underlying file. Returns 0 if underlying stream
-     * does not support getting position (or there is no stream yet -- can
-     * happen after construction before call to write or to
-     * {@link #checkARCFileSize()}).  Position returned cannot always
-     * be trusted.  Call before or after writing records *only* to be safe.
-     * @throws IOException
-     */
+    /* (non-Javadoc)
+	 * @see org.archive.io.arc.Writer#getPosition()
+	 */
     public long getPosition() throws IOException {
         long position = 0;
         if (this.out != null) {

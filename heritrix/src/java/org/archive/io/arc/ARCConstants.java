@@ -37,18 +37,6 @@ import java.util.zip.GZIPInputStream;
  */
 public interface ARCConstants {
     /**
-     * Default ARC file prefix.
-     * 
-     * Stands for Internet Archive Heritrix.
-     */
-    public static final String DEFAULT_ARC_FILE_PREFIX = "IAH";
-
-    /**
-     * Default as to whether we do compression of ARC files.
-     */
-    public static final boolean DEFAULT_COMPRESS = true;
-
-    /**
      * Default maximum ARC file size.
      */
     public static final int DEFAULT_MAX_ARC_FILE_SIZE = 100000000;
