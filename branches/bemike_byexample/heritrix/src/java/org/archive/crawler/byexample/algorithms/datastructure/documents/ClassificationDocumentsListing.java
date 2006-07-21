@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterScore;
 import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.constants.ScopeDecisionConstants;
 import org.archive.crawler.byexample.utils.FileUtils;
 
 public class ClassificationDocumentsListing{
@@ -12,9 +13,9 @@ public class ClassificationDocumentsListing{
     public class DocumentClassification{
         String url;
         ClusterScore[] labeling;
-        String scoping;
+        ScopeDecisionConstants scoping;
         
-        public DocumentClassification(String url, ClusterScore[] labeling, String scoping){
+        public DocumentClassification(String url, ClusterScore[] labeling, ScopeDecisionConstants scoping){
             this.url=url;
             this.labeling=labeling;
             this.scoping=scoping;
@@ -45,7 +46,7 @@ public class ClassificationDocumentsListing{
         dumpFile=bw;
     }
     
-    public void addClassification(String crawledURL, ClusterScore[] scores, String scopeResult){        
+    public void addClassification(String crawledURL, ClusterScore[] scores, ScopeDecisionConstants scopeResult){        
         if (docClasses.size()>MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
             try {
                 dumpListingToFile();
