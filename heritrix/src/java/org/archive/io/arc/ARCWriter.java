@@ -49,7 +49,6 @@ import java.util.zip.GZIPOutputStream;
 import org.archive.io.GzippedInputStream;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
-import org.archive.io.WriterPoolSettings;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.IoUtils;
@@ -127,7 +126,6 @@ import org.archive.util.TimestampSerialno;
 public class ARCWriter implements ARCConstants, WriterPoolMember {
     private static final Logger logger =
         Logger.getLogger(ARCWriter.class.getName());
-    private WriterPoolSettings settings = null;
 
     /**
      * Reference to ARC file we're currently writing.
@@ -169,6 +167,13 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
     private byte [] readbuffer = new byte[4 * 1024];
     
     private FileOutputStream fos = null;
+    
+    private final boolean compress;
+    private final List metadata;
+    private List writeDirs = null;
+    private String prefix = DEFAULT_PREFIX;
+    private String suffix = DEFAULT_SUFFIX;
+    private int maxSize = -1;
 
     
     /**
@@ -188,7 +193,8 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
             final boolean cmprs, final List metadata,
             String a14DigitDate)
     throws IOException {
-        this.settings = new ARCWriterSettingsImpl(cmprs, metadata);
+        this.compress = cmprs;
+        this.metadata = metadata;
         this.out = out;
         this.arcFile = arc;
         a14DigitDate = (a14DigitDate == null)?
@@ -229,16 +235,12 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
     public ARCWriter(final List dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final List meta) {
-        this.settings =  new ARCWriterSettingsImpl(dirs, maxSize, prefix,
-            cmprs, suffix, meta);
-    }
-    
-    /**
-     * Constructor.
-     * @param settings
-     */
-    public ARCWriter(WriterPoolSettings settings) {
-        this.settings = settings;
+        this.suffix = suffix;
+        this.prefix = prefix;
+        this.maxSize = maxSize;
+        this.metadata = meta;
+        this.writeDirs = dirs;
+        this.compress = cmprs;
     }
     
     /* (non-Javadoc)
@@ -278,8 +280,8 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
 	 */
     public void checkSize() throws IOException {
         if (this.out == null ||
-            (this.settings.getMaxSize() != -1 &&
-               (this.arcFile.length() > this.settings.getMaxSize()))) {
+            (this.maxSize != -1 &&
+               (this.arcFile.length() > this.maxSize))) {
             createARCFile();
         }
     }
@@ -292,16 +294,16 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
     private void createARCFile() throws IOException {
         close();
         TimestampSerialno tsn = getTimestampSerialNo(this);
-        String name = this.settings.getPrefix() + '-' +
+        String name = this.prefix + '-' +
             getUniqueBasename(tsn) +
-            ((this.settings.getSuffix() == null ||
-                    this.settings.getSuffix().length() <= 0)?
-                "": "-" + this.settings.getSuffix()) +
+            ((this.suffix == null ||
+                    this.suffix.length() <= 0)?
+                "": "-" + this.suffix) +
             '.' + ARC_FILE_EXTENSION +
-            ((this.settings.isCompressed())?
+            ((this.compress)?
                 '.' + COMPRESSED_FILE_EXTENSION: "") +
             OCCUPIED_SUFFIX;
-        File dir = getNextDirectory(this.settings.getOutputDirs());
+        File dir = getNextDirectory(this.writeDirs);
         this.arcFile = new File(dir, name);
         this.fos = new FileOutputStream(this.arcFile);
         this.out = new FastBufferedOutputStream(this.fos);
@@ -466,7 +468,7 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
         // Now get bytes of all just written and compress if flag set.
         byte [] bytes = metabaos.toByteArray();
         
-        if(this.settings.isCompressed()) {
+        if(this.compress) {
             // GZIP the header but catch the gzipping into a byte array so we
             // can add the special IA GZIP header to the product.  After
             // manipulations, write to the output stream (The JAVA GZIP
@@ -519,10 +521,10 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
      */
     private String getArcName() {
         String name = this.arcFile.getName();
-        if(this.settings.isCompressed() &&
+        if(this.compress &&
                 name.endsWith(DOT_COMPRESSED_FILE_EXTENSION)) {
             return name.substring(0,name.length() - 3);
-        } else if(this.settings.isCompressed() &&
+        } else if(this.compress &&
                 name.endsWith(DOT_COMPRESSED_FILE_EXTENSION +
                     OCCUPIED_SUFFIX)) {
             return name.substring(0, name.length() -
@@ -541,11 +543,11 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
      */
     private void writeMetaData(ByteArrayOutputStream baos)
             throws UnsupportedEncodingException, IOException {
-        if (this.settings.getMetadata() == null) {
+        if (this.metadata == null) {
             return;
         }
 
-        for (Iterator i = this.settings.getMetadata().iterator();
+        for (Iterator i = this.metadata.iterator();
                 i.hasNext();) {
             Object obj = i.next();
             if (obj instanceof String) {
@@ -578,10 +580,10 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
     private int getMetadataLength()
     throws UnsupportedEncodingException {
         int result = -1;
-        if (this.settings.getMetadata() == null) {
+        if (this.metadata == null) {
             result = 0;
         } else {
-            for (Iterator i = this.settings.getMetadata().iterator();
+            for (Iterator i = this.metadata.iterator();
                     i.hasNext();) {
                 Object obj = i.next();
                 if (obj instanceof String) {
@@ -680,7 +682,7 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
     private void preWriteRecordTasks()
     throws IOException {
         checkSize();
-        if (this.settings.isCompressed()) {
+        if (this.compress) {
             // The below construction immediately writes the GZIP 'default'
             // header out on the underlying stream.
             this.out = new ARCWriterGZIPOutputStream(this.out);
@@ -694,7 +696,7 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
      */
     private void postWriteRecordTasks()
     throws IOException {
-        if (this.settings.isCompressed()) {
+        if (this.compress) {
             ARCWriterGZIPOutputStream o = (ARCWriterGZIPOutputStream)this.out;
             o.finish();
             o.flush();
@@ -762,60 +764,6 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
 	 */
     public File getFile() {
         return this.arcFile;
-    }
-    
-    /**
-     * Class to hold ARCWriter settings.
-     * @author stack
-     * @version $Date$, $Revision$
-     */
-    protected class ARCWriterSettingsImpl
-    implements WriterPoolSettings {
-        private final List arcDirs;
-        private final int arcMaxSize;
-        private final String arcPrefix;
-        private final boolean compress;
-        private final String arcSuffix;
-        private final List metadata;
-        
-        protected ARCWriterSettingsImpl(boolean compress, List metadata) {
-            this(null, -1, null, compress, null, metadata);
-        }
-        
-        protected ARCWriterSettingsImpl(List dirs, int maxSize, String prefix, 
-                boolean compress, String suffix, List metadata) {
-            this.arcDirs = dirs;
-            this.arcMaxSize = maxSize;
-            this.arcPrefix = prefix;
-            this.compress = compress;
-            this.arcSuffix = suffix;
-            this.metadata = metadata;
-        }
-        
-        public int getMaxSize() {
-            return this.arcMaxSize;
-        }
-        
-        public String getPrefix() {
-            return (this.arcPrefix == null)? "IAH" /*
-                DEFAULT_ARC_FILE_PREFIX TODO*/: this.arcPrefix;
-        }
-        
-        public String getSuffix() {
-            return (this.arcSuffix == null)? "": this.arcSuffix;
-        }
-        
-        public List getOutputDirs() {
-            return this.arcDirs;
-        }
-        
-        public boolean isCompressed() {
-            return this.compress;
-        }
-        
-        public List getMetadata() {
-            return this.metadata;
-        }
     }
     
     /**

@@ -51,8 +51,25 @@ public interface WriterPoolMember {
      * Suffix appended to 'broken' files.
      */
     public static final String INVALID_SUFFIX = ".invalid";
-
-	public static final String UTF8 = "UTF-8";
+    
+    public static final String UTF8 = "UTF-8";
+    
+    /**
+     * Default file prefix.
+     * 
+     * Stands for Internet Archive Heritrix.
+     */
+    public static final String DEFAULT_PREFIX = "IAH";
+    
+    /**
+     * Value to interpolate with actual hostname.
+     */
+    public static final String HOSTNAME_VARIABLE = "${HOSTNAME}";
+    
+    /**
+     * Default for file suffix.
+     */
+    public static final String DEFAULT_SUFFIX = HOSTNAME_VARIABLE;
 
 	/**
 	 * Close file.

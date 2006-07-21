@@ -47,7 +47,10 @@ public class ARCWriterPool extends WriterPool {
             final int poolMaximumActive, final int poolMaximumWait) {
     	super(new BasePoolableObjectFactory() {
             public Object makeObject() throws Exception {
-                return new ARCWriter(settings);
+                return new ARCWriter(settings.getOutputDirs(),
+                        settings.getPrefix(), settings.getSuffix(),
+                        settings.isCompressed(), settings.getMaxSize(),
+                        settings.getMetadata());
             }
 
             public void destroyObject(Object arcWriter)
