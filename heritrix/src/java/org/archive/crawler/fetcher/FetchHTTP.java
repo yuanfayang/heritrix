@@ -169,7 +169,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     /**
      * Default whether to perform on-the-fly SHA1 hashing of content-bodies.
      */
-    private static Boolean DEFAULT_SHA1_CONTENT = new Boolean(true);
+    static Boolean DEFAULT_SHA1_CONTENT = new Boolean(true);
 
     private transient HttpClient http = null;
 

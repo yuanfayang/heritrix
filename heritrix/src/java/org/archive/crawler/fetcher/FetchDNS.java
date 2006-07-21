@@ -23,6 +23,10 @@
  */
 package org.archive.crawler.fetcher;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
@@ -36,6 +40,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.util.ArchiveUtils;
+import org.archive.util.HttpRecorder;
 import org.archive.util.InetAddressUtil;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
@@ -54,8 +60,9 @@ import org.xbill.DNS.dns;
  */
 public class FetchDNS extends Processor
 implements CoreAttributeConstants, FetchStatusCodes {
-    private static Logger logger =
-        Logger.getLogger(FetchDNS.class.getName());
+	private static final long serialVersionUID = 4686199203459704426L;
+
+	private Logger logger = Logger.getLogger(this.getClass().getName());
 
     // Defaults.
     private short ClassType = DClass.IN;
@@ -68,6 +75,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
         Boolean.FALSE;
     private static final long DEFAULT_TTL_FOR_NON_DNS_RESOLVES
         = 6 * 60 * 60; // 6 hrs
+    
+    private byte [] reusableBuffer = new byte[1024];
 
     /** 
      * Create a new instance of FetchDNS.
@@ -82,6 +91,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 "InetAddress resolution, which may use local 'hosts' files " +
                 "or other mechanisms.", DEFAULT_ACCEPT_NON_DNS_RESOLVES));
         e.setExpertSetting(true);
+        e = addElementToDefinition(new SimpleType(FetchHTTP.ATTR_SHA1_CONTENT,
+        	"Whether or not to perform an on-the-fly SHA1 hash of" +
+            "retrieved content-bodies.",
+            FetchHTTP.DEFAULT_SHA1_CONTENT));
+        e.setExpertSetting(true);
     }
 
     protected void innerProcess(CrawlURI curi) {
@@ -89,14 +103,15 @@ implements CoreAttributeConstants, FetchStatusCodes {
             // Only handles dns
             return;
         }
-        Record[] rrecordSet = null; // Store retrieved dns records
+        Record[] rrecordSet = null; // Retrieved dns records
         String dnsName = null;
         try {
             dnsName = curi.getUURI().getReferencedHost();
         } catch (URIException e) {
             logger.log(Level.SEVERE, "Failed parse of dns record " + curi, e);
         }
-        if(dnsName==null) {
+        
+        if(dnsName == null) {
             curi.setFetchStatus(S_UNFETCHABLE_URI);
             return;
         }
@@ -106,59 +121,28 @@ implements CoreAttributeConstants, FetchStatusCodes {
         CrawlHost targetHost = null;
         if (getController() != null &&
                 getController().getServerCache() != null) {
-            targetHost =
-                getController().getServerCache().getHostFor(dnsName);
+            targetHost = getController().getServerCache().getHostFor(dnsName);
         } else {
             // Standalone operation (mostly for test cases/potential other uses)
             targetHost = new CrawlHost(dnsName);
         }
-        
-        Matcher matcher = InetAddressUtil.IPV4_QUADS.matcher(dnsName);
-        // If it's an ip no need to do a lookup
-        if (matcher != null && matcher.matches()) {
-            // Ideally this branch would never be reached: no CrawlURI
-            // would be created for numerical IPs
-            if (logger.isLoggable(Level.WARNING)) {
-                logger.warning("Unnecessary DNS CrawlURI created: " + curi);
-            }
-            try {
-                targetHost.setIP(InetAddress.getByAddress(dnsName,
-                        new byte[] {
-                            (byte)(new Integer(matcher.group(1)).intValue()),
-                            (byte)(new Integer(matcher.group(2)).intValue()),
-                            (byte)(new Integer(matcher.group(3)).intValue()),
-                            (byte)(new Integer(matcher.group(4)).intValue())}),
-                     CrawlHost.IP_NEVER_EXPIRES); // Never expire numeric IPs
-            } catch (UnknownHostException e) {
-                // This should never happen as a dns lookup is not made
-                e.printStackTrace();
-            }
-            curi.setFetchStatus(S_DNS_SUCCESS);
-
-            // No further lookup necessary
-            return;
+        if (isQuadAddress(curi, dnsName, targetHost)) {
+        	// We're done processing.
+        	return;
         }
-
+        
+        // Do actual DNS lookup.
         curi.putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
 
         // Try to get the records for this host (assume domain name)
         // TODO: Bug #935119 concerns potential hang here
         rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
+        curi.setContentType("text/dns");
         if (rrecordSet != null) {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("Found recordset for " + dnsName);
             }
-            curi.setFetchStatus(S_DNS_SUCCESS);
-            curi.setContentType("text/dns");
-            curi.putObject(A_RRECORD_SET_LABEL, rrecordSet);
-            // Get TTL and IP info from the first A record (there may be
-            // multiple, e.g. www.washington.edu) then update the CrawlServer
-            ARecord arecord = getFirstARecord(rrecordSet);
-            if (arecord == null) {
-                throw new NullPointerException("Got null arecord for " +
-                    dnsName);
-            }
-            targetHost.setIP(arecord.getAddress(), arecord.getTTL());
+        	storeDNSRecord(curi, dnsName, targetHost, rrecordSet);
         } else {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("Failed find of recordset for " + dnsName);
@@ -190,9 +174,111 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 setUnresolvable(curi, targetHost);
             }
         }
-        // Add the IP of the dns server to this dns crawluri.
-        curi.putString(A_DNS_SERVER_IP_LABEL, FindServer.server());
         curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
+    }
+    
+    protected void storeDNSRecord(final CrawlURI curi, final String dnsName,
+    		final CrawlHost targetHost, final Record[] rrecordSet) {
+        // Get TTL and IP info from the first A record (there may be
+        // multiple, e.g. www.washington.edu) then update the CrawlServer
+        ARecord arecord = getFirstARecord(rrecordSet);
+        if (arecord == null) {
+            throw new NullPointerException("Got null arecord for " +
+                dnsName);
+        }
+        targetHost.setIP(arecord.getAddress(), arecord.getTTL());
+        try {
+        	recordDNS(curi, rrecordSet);
+            curi.setFetchStatus(S_DNS_SUCCESS);
+            curi.putString(A_DNS_SERVER_IP_LABEL, FindServer.server());
+        } catch (IOException e) {
+        	logger.log(Level.SEVERE, "Failed store of DNS Record for " +
+        		curi.toString(), e);
+        	setUnresolvable(curi, targetHost);
+        }
+    }
+    
+    protected boolean isQuadAddress(final CrawlURI curi, final String dnsName,
+			final CrawlHost targetHost) {
+		boolean result = false;
+		Matcher matcher = InetAddressUtil.IPV4_QUADS.matcher(dnsName);
+		// If it's an ip no need to do a lookup
+		if (matcher == null || !matcher.matches()) {
+			return result;
+		}
+		
+		result = true;
+		// Ideally this branch would never be reached: no CrawlURI
+		// would be created for numerical IPs
+		if (logger.isLoggable(Level.WARNING)) {
+			logger.warning("Unnecessary DNS CrawlURI created: " + curi);
+		}
+		try {
+			targetHost.setIP(InetAddress.getByAddress(dnsName, new byte[] {
+					(byte) (new Integer(matcher.group(1)).intValue()),
+					(byte) (new Integer(matcher.group(2)).intValue()),
+					(byte) (new Integer(matcher.group(3)).intValue()),
+					(byte) (new Integer(matcher.group(4)).intValue()) }),
+					CrawlHost.IP_NEVER_EXPIRES); // Never expire numeric IPs
+			curi.setFetchStatus(S_DNS_SUCCESS);
+		} catch (UnknownHostException e) {
+			logger.log(Level.SEVERE, "Should never be " + e.getMessage(), e);
+			setUnresolvable(curi, targetHost);
+		}
+		return result;
+	}
+    
+    protected void recordDNS(final CrawlURI curi, final Record[] rrecordSet)
+	throws IOException {
+		final byte[] dnsRecord =
+			getDNSRecord(curi.getLong(A_FETCH_BEGAN_TIME), rrecordSet);
+		HttpRecorder rec = HttpRecorder.getHttpRecorder();
+        // Shall we get a digest on the content downloaded?
+        boolean sha1Content = ((Boolean)getUncheckedAttribute(curi,
+            FetchHTTP.ATTR_SHA1_CONTENT)).booleanValue();
+        if(sha1Content) {
+            rec.getRecordedInput().setSha1Digest();
+        } else {
+            rec.getRecordedInput().setDigest(null);
+        }
+		curi.setHttpRecorder(rec);
+		InputStream is = curi.getHttpRecorder().inputWrap(
+				new ByteArrayInputStream(dnsRecord));
+		// Reading from the wrapped stream, behind the scenes, will write
+		// files into scratch space
+		try {
+			while (is.read(this.reusableBuffer) != -1) {
+				continue;
+			}
+		} finally {
+			is.close();
+			rec.closeRecorders();
+		}
+		curi.setContentSize(dnsRecord.length);
+        curi.setContentDigest(rec.getRecordedInput().getDigestValue());
+	}
+    
+    protected byte [] getDNSRecord(final long fetchStart,
+    		final Record[] rrecordSet)
+    throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        // Start the record with a 14-digit date per RFC 2540
+        byte[] fetchDate = ArchiveUtils.get14DigitDate(fetchStart).getBytes();
+        baos.write(fetchDate);
+        // Don't forget the newline
+        baos.write("\n".getBytes());
+        int recordLength = fetchDate.length + 1;
+        if (rrecordSet != null) {
+            for (int i = 0; i < rrecordSet.length; i++) {
+                byte[] record = rrecordSet[i].toString().getBytes();
+                recordLength += record.length;
+                baos.write(record);
+                // Add the newline between records back in
+                baos.write("\n".getBytes());
+                recordLength += 1;
+            }
+        }
+        return baos.toByteArray();
     }
     
     protected void setUnresolvable(CrawlURI curi, CrawlHost host) {
