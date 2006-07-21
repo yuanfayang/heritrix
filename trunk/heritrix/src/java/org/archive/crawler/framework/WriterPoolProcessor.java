@@ -81,13 +81,6 @@ implements CoreAttributeConstants, CrawlStatusListener {
      * Key to use asking settings for arc path value.
      */
     public static final String ATTR_PATH ="path";
-    
-    /**
-     * Default file prefix.
-     * 
-     * Stands for Internet Archive Heritrix.
-     */
-    public static final String DEFAULT_FILE_PREFIX = "IAH";
 
     /**
      * Key to use asking settings for file suffix value.
@@ -117,16 +110,6 @@ implements CoreAttributeConstants, CrawlStatusListener {
      */
     public static final String ATTR_MAX_BYTES_WRITTEN =
     	"total-bytes-to-write";
-    
-    /**
-     * Value to interpolate with actual hostname.
-     */
-    public static final String HOSTNAME_VARIABLE = "${HOSTNAME}";
-    
-    /**
-     * Default for file suffix.
-     */
-    public static final String DEFAULT_SUFFIX = HOSTNAME_VARIABLE;
     
     /**
      * Default maximum file size.
@@ -180,12 +163,12 @@ implements CoreAttributeConstants, CrawlStatusListener {
                 "IAH-20040808101010-0001-HOSTNAME.arc.gz " +
                 "...if writing ARCs (The prefix will be " +
                 "separated from the date by a hyphen).",
-                DEFAULT_FILE_PREFIX));
+                WriterPoolMember.DEFAULT_PREFIX));
         e = addElementToDefinition(
             new SimpleType(ATTR_SUFFIX, "Suffix to tag onto " +
                 "files. If value is '${HOSTNAME}', will use hostname for " +
                 "suffix. If empty, no suffix will be added.",
-                DEFAULT_SUFFIX));
+                WriterPoolMember.DEFAULT_SUFFIX));
         e.setOverrideable(false);
         e = addElementToDefinition(
             new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of each file",
@@ -322,7 +305,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
 
     public String getPrefix() {
         Object obj = getAttributeUnchecked(ATTR_PREFIX);
-        return (obj == null)? DEFAULT_FILE_PREFIX: (String)obj;
+        return (obj == null)? WriterPoolMember.DEFAULT_PREFIX: (String)obj;
     }
 
     public List getOutputDirs() {
@@ -374,8 +357,10 @@ implements CoreAttributeConstants, CrawlStatusListener {
 
     public String getSuffix() {
         Object obj = getAttributeUnchecked(ATTR_SUFFIX);
-        String sfx = (obj == null)? DEFAULT_SUFFIX: (String)obj;
-        if (sfx != null && sfx.trim().equals(HOSTNAME_VARIABLE)) {
+        String sfx = (obj == null)?
+            WriterPoolMember.DEFAULT_SUFFIX: (String)obj;
+        if (sfx != null && sfx.trim().
+                equals(WriterPoolMember.HOSTNAME_VARIABLE)) {
             String str = "localhost.localdomain";
             try {
                 str = InetAddress.getLocalHost().getHostName();
