@@ -1,6 +1,5 @@
 package org.archive.crawler.byexample.algorithms.datastructure.support;
 
-import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 

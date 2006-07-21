@@ -1,9 +1,8 @@
 package org.archive.crawler.byexample.algorithms.datastructure.info;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.w3c.dom.Element;
@@ -17,13 +16,13 @@ public class ClusteringInfo extends XMLInfo{
     public class ClusterStruct{      
         private ItemSet clusterLabel;                   
         private int clusterDocNo;                        
-        private boolean clusterRelevance;
+        private boolean isRelevant;
         private String associatedTerms;
         
         public ClusterStruct(ItemSet is, int docNo, boolean relevance, String at){
             clusterLabel=is;
             clusterDocNo=docNo;
-            clusterRelevance=relevance;
+            isRelevant=relevance;
             associatedTerms=at;
         }
         
@@ -40,19 +39,32 @@ public class ClusteringInfo extends XMLInfo{
             this.clusterLabel = clusterLabel;
         }
         public boolean isClusterRelevance() {
-            return clusterRelevance;
+            return isRelevant;
         }
         public void setClusterRelevance(boolean clusterRelevance) {
-            this.clusterRelevance = clusterRelevance;
+            this.isRelevant = clusterRelevance;
         }          
         public String getAssociatedTerms(){
             return associatedTerms;
         }
+        
         public String toString(){
             return  clusterLabel+OutputConstants.ENTRY_SEPARATOR+
                     clusterDocNo+OutputConstants.ENTRY_SEPARATOR+
-                    clusterRelevance+OutputConstants.ENTRY_SEPARATOR;
+                    isRelevant+OutputConstants.ENTRY_SEPARATOR;
         }
+        
+        public boolean equals(Object other){
+            if (!(other instanceof ItemSet))
+                return false;
+            
+            ItemSet otherIS=(ItemSet)other;
+            if (otherIS.equals(this.clusterLabel))
+                return true;
+            
+            return false;
+        }
+        
     }
     
     protected static String ROOT_LABEL="clustering-output";
@@ -65,35 +77,28 @@ public class ClusteringInfo extends XMLInfo{
     public static String CLUSTER_DOCS_NO_TAG_LABEL="clusterDocsNo";
     public static String CLUSTER_RELEVANCE_TAG_LABEL="clusterRelevance";
     public static String CLUSTER_ASSOCIATED_TERMS_TAG_LABEL="associatedTerms";
-    private Set<ClusterStruct> clusters;
+    private Map<ItemSet, ClusterStruct> clusters;
     
     public ClusteringInfo(String docList,String termSupportIndex) throws Exception{
         super(ROOT_LABEL);
         this.clusterDocsFN=docList;
         this.clusterTermSupportFN=termSupportIndex;
-        clusters=new HashSet<ClusterStruct>();
+        clusters=new ConcurrentHashMap<ItemSet, ClusterStruct>();
     }
 
     public ClusteringInfo() throws Exception{
         super(ROOT_LABEL);
-        clusters=new HashSet<ClusterStruct>();
+        clusters=new ConcurrentHashMap<ItemSet, ClusterStruct>();
     }
     
     public void addCluster(ItemSet label, int docNo, boolean rel, String associatedTermsList){
-        clusters.add(new ClusterStruct(label, docNo, rel, associatedTermsList));
+        clusters.put(label, new ClusterStruct(label, docNo, rel, associatedTermsList));
     }
     
-   /**
-    * Returns FrequentItemSets containing all cluster labels item sets
-    */
-    public FrequentItemSets getClusterLabels(){
-        FrequentItemSets fis=new FrequentItemSets();
-        for (ClusterStruct struct : clusters) {
-            fis.insertToSet(struct.clusterLabel);
-        }
-        return fis;
+            
+    public boolean getClusterRelevance(ItemSet is){       
+        return clusters.get(is).isRelevant;
     }
-        
     
     public String getClusterDocsFN() {
         return clusterDocsFN;
@@ -113,6 +118,7 @@ public class ClusteringInfo extends XMLInfo{
 
     public void toXML(String path, String filename) throws Exception{
         
+        ClusterStruct currStruct=null;
         Element clusterElement=null;
         createNewXmlDoc();
         
@@ -121,12 +127,13 @@ public class ClusteringInfo extends XMLInfo{
         addElement(rootElement,CLUSTER_TERM_SUPPORT_INDEX_TAG_LABEL,clusterTermSupportFN);
         
         // Add clustering info
-        for (ClusterStruct iter : clusters) {
+        for (Iterator<ItemSet> iter = clusters.keySet().iterator(); iter.hasNext();) {
+            currStruct=clusters.get(iter.next());       
             clusterElement=addElement(rootElement,CLUSTERING_GROUP_TAG_LABEL);
-            addElement(clusterElement,CLUSTER_NAME_TAG_LABEL,iter.clusterLabel.toString());
-            addElement(clusterElement,CLUSTER_DOCS_NO_TAG_LABEL,String.valueOf(iter.clusterDocNo));
-            addElement(clusterElement,CLUSTER_RELEVANCE_TAG_LABEL,String.valueOf(iter.clusterRelevance));
-            addElement(clusterElement,CLUSTER_ASSOCIATED_TERMS_TAG_LABEL,iter.associatedTerms);
+            addElement(clusterElement,CLUSTER_NAME_TAG_LABEL,currStruct.clusterLabel.toString());
+            addElement(clusterElement,CLUSTER_DOCS_NO_TAG_LABEL,String.valueOf(currStruct.clusterDocNo));
+            addElement(clusterElement,CLUSTER_RELEVANCE_TAG_LABEL,String.valueOf(currStruct.isRelevant));
+            addElement(clusterElement,CLUSTER_ASSOCIATED_TERMS_TAG_LABEL,currStruct.associatedTerms);
         }
         
         dumpToFile(path,filename);

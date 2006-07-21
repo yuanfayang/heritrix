@@ -1,7 +1,6 @@
 package org.archive.crawler.byexample.algorithms.datastructure.documents;
 
 import java.io.BufferedWriter;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,8 +11,7 @@ import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileUtils;
 
 public class ClusterDocumentsIndex {
-    
-   
+
           
     private Map<ItemSet,IdListing> myClusteringHash;
     
@@ -28,9 +26,9 @@ public class ClusterDocumentsIndex {
     public void addIndexValue(ItemSet key, String value){
         if (!myClusteringHash.containsKey(key))
             addIndexKey(key);        
-        myClusteringHash.get(key).addValueToRow(value);
+        myClusteringHash.get(key).addValueToRow(value);       
     }
-    
+
     public Iterator<ItemSet> getIndexKeysIterator(){
         return myClusteringHash.keySet().iterator();
     }
