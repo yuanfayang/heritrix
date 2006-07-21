@@ -415,40 +415,15 @@ ARCWriterSettings, FetchStatusCodes {
         }
         
         write(curi, recordLength,
-            curi.getHttpRecorder().getRecordedInput().
-                   getReplayInputStream(), getHostAddress(curi));
+            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
+            getHostAddress(curi));
     }
 
     protected void writeDns(CrawlURI curi)
     throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        // Start the record with a 14-digit date per RFC 2540
-        long ts = curi.getLong(A_FETCH_BEGAN_TIME);
-        byte[] fetchDate = ArchiveUtils.get14DigitDate(ts).getBytes();
-        baos.write(fetchDate);
-        // Don't forget the newline
-        baos.write("\n".getBytes());
-        int recordLength = fetchDate.length + 1;
-        Record[] rrSet = (Record[]) curi.getObject(A_RRECORD_SET_LABEL);
-        if (rrSet != null) {
-            for (int i = 0; i < rrSet.length; i++) {
-                byte[] record = rrSet[i].toString().getBytes();
-                recordLength += record.length;
-                baos.write(record);
-                // Add the newline between records back in
-                baos.write("\n".getBytes());
-                recordLength += 1;
-            }
-        }
-        
-        write(curi, recordLength,
-            new ByteArrayInputStream(baos.toByteArray()),
+        write(curi, (int)curi.getContentSize(),
+            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
             curi.getString(A_DNS_SERVER_IP_LABEL));
-
-        // Save the calculated contentSize for logging purposes
-        // TODO handle this need more sensibly.  The length setting
-        // should be done back in the DNSFetcher.
-        curi.setContentSize(recordLength);
     }
     
     protected void write(CrawlURI curi, int recordLength, InputStream in,
