@@ -25,8 +25,6 @@
  */
 package org.archive.crawler.writer;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -35,20 +33,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
 import javax.xml.transform.SourceLocator;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
@@ -60,23 +52,17 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.StringList;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.framework.FilePoolProcessor;
 import org.archive.crawler.settings.XMLSettingsHandler;
-import org.archive.io.ObjectPlusFilesInputStream;
+import org.archive.io.FilePoolMember;
+import org.archive.io.FilePoolSettings;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
-import org.archive.io.arc.ARCWriterSettings;
-import org.archive.util.ArchiveUtils;
-import org.xbill.DNS.Record;
 
 
 /**
@@ -89,195 +75,163 @@ import org.xbill.DNS.Record;
  *
  * @author Parker Thompson
  */
-public class ARCWriterProcessor extends Processor
+public class ARCWriterProcessor extends FilePoolProcessor
 implements CoreAttributeConstants, ARCConstants, CrawlStatusListener,
-ARCWriterSettings, FetchStatusCodes {
-    /**
-     * Logger.
-     */
-    private static final Logger logger =
-        Logger.getLogger(ARCWriterProcessor.class.getName());
+FilePoolSettings, FetchStatusCodes {
+	private static final long serialVersionUID = 1957518408532644531L;
 
-    /**
-     * Key to use asking settings for compression value.
-     */
-    public static final String ATTR_COMPRESS = "compress";
-
-    /**
-     * Key to use asking settings for prefix value.
-     */
-    public static final String ATTR_PREFIX = "prefix";
-
-    /**
-     * Key to use asking settings for suffix value.
-     */
-    public static final String ATTR_SUFFIX = "suffix";
-
-    /**
-     * Key to use asking settings for max size value.
-     */
-    public static final String ATTR_MAX_SIZE_BYTES = "max-size-bytes";
-    
-    /**
-     * Key for the maximum ARC bytes to write attribute.
-     */
-    public static final String ATTR_MAX_BYTES_WRITTEN =
-        "total-bytes-to-write";
-
-    /**
-     * Key to use asking settings for arc path value.
-     */
-    public static final String ATTR_PATH ="path";
-
-    /**
-     * Key to get maximum pool size.
-     *
-     * This key is for maximum ARC writers active in the pool of ARC writers.
-     */
-    public static final String ATTR_POOL_MAX_ACTIVE = "pool-max-active";
-
-    /**
-     * Key to get maximum wait on pool object before we give up and
-     * throw IOException.
-     */
-    public static final String ATTR_POOL_MAX_WAIT = "pool-max-wait";
-    
-    /**
-     * Value to interpolate with actual hostname.
-     */
-    public static final String HOSTNAME_VARIABLE = "${HOSTNAME}";
-    
-    /**
-     * Default for arc suffix.
-     */
-    private static final String DEFAULT_SUFFIX = HOSTNAME_VARIABLE;
+	private final Logger logger = Logger.getLogger(this.getClass().getName());
     
     /**
      * Default path list.
+     * 
+     * TODO: Confirm this one gets picked up.
      */
     private static final String [] DEFAULT_PATH = {"arcs"};
 
     /**
      * Calculate metadata once only.
      */
-    transient private List cachedMetadata = null;
-
-    /**
-     * Reference to an ARCWriter.
-     */
-    transient private ARCWriterPool pool = null;
-    
-    /**
-     * Total number of bytes written to disc.
-     */
-    private long totalBytesWritten = 0;
-    
-    /**
-     * Name of file to keep state in when checkpointing.
-     */
-    private static final String STATE_FILENAME =
-        ARCWriterProcessor.class.getName() + ".state";
-    
+    transient private List<String> cachedMetadata = null;
 
     /**
      * @param name Name of this writer.
      */
     public ARCWriterProcessor(String name) {
         super(name, "ARCWriter processor");
-        Type e = addElementToDefinition(
-            new SimpleType(ATTR_COMPRESS, "Compress ARC files when writing" +
-                    " to disk.",
-                new Boolean(DEFAULT_COMPRESS)));
-        e.setOverrideable(false);
-        e = addElementToDefinition(
-            new SimpleType(ATTR_PREFIX, 
-                "ARC file prefix. " +
-                "The text supplied here will be used as a prefix naming " +
-                "ARC files.  For example if the prefix is 'IAH', then " +
-                "ARC names will look like " +
-                "IAH-20040808101010-0001-HOSTNAME.arc.gz " +
-                "(The prefix will be separated from the date by a hyphen).",
-                DEFAULT_ARC_FILE_PREFIX));
-        e = addElementToDefinition(
-            new SimpleType(ATTR_SUFFIX, "Suffix to tag onto ARC files. " +
-                "If value is '${HOSTNAME}', will use hostname for suffix." +
-                " If empty, no suffix will be added.",
-                DEFAULT_SUFFIX));
-        e.setOverrideable(false);
-        e = addElementToDefinition(
-            new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of each ARC file",
-                new Integer(DEFAULT_MAX_ARC_FILE_SIZE)));
-        e.setOverrideable(false);
-        e = addElementToDefinition(
-            new StringList(ATTR_PATH, "Where to store ARC files. " +
-                "Supply absolute or relative path.  If relative, ARCs will" +
-                " will be written relative to the 'disk-path' setting." +
-                " If more than one path specified, we'll round-robin" +
-                " dropping files to each.  This setting is safe" +
-                " to change midcrawl (You can remove and add new dirs" +
-                " as the crawler progresses).", DEFAULT_PATH));
-        e.setOverrideable(false);
-        e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
-            "Maximum active ARC writers in pool. " +
-            "This setting cannot be varied over the life of a crawl.",
-            new Integer(ARCWriterPool.DEFAULT_MAX_ACTIVE)));
-        e.setOverrideable(false);
-        e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_WAIT,
-            "Maximum time to wait on ARC writer pool element" +
-            " (milliseconds). This setting cannot be varied over the life" +
-            " of a crawl.",
-            new Integer(ARCWriterPool.DEFAULT_MAXIMUM_WAIT)));
-        e.setOverrideable(false);
-        e = addElementToDefinition(new SimpleType(ATTR_MAX_BYTES_WRITTEN,
-            "Total ARC bytes to write to disk." +
-            " Once the size of all ARCs on disk has exceeded this limit," +
-            " this processor will stop the crawler. " +
-            "A value of zero means no upper limit.", new Long(0)));
-        e.setOverrideable(false);
-        e.setExpertSetting(true);
     }
-
-    public synchronized void initialTasks() {
-        // Add this class to crawl state listeners
-        getSettingsHandler().getOrder().getController().
-            addCrawlStatusListener(this);
-        setupPool();
-        if (getSettingsHandler().getOrder().getController().
-                isCheckpointRecover()) {
-            // If in recover mode, read in the ARCWriter serial number saved
-            // off when we checkpointed.
-            File stateFile = new File(getSettingsHandler().getOrder().
-                getController().getCheckpointRecover().getDirectory(),
-                    STATE_FILENAME);
-            if (!stateFile.exists()) {
-                logger.info(stateFile.getAbsolutePath() +
-                    " doesn't exist so cannot restore ARC serial number.");
-            } else {
-                DataInputStream dis = null;
+    
+    protected String [] getDefaultPath() {
+    	return DEFAULT_PATH;
+	}
+    
+    /**
+     * @see #crawlCheckpoint(File);
+     */
+    @Override
+    protected void checkpointRecover() {
+        // If in recover mode, read in the ARCWriter serial number saved
+        // off when we checkpointed.
+        File stateFile = new File(getSettingsHandler().getOrder().
+            getController().getCheckpointRecover().getDirectory(),
+                getCheckpointStateFile());
+        if (!stateFile.exists()) {
+            logger.info(stateFile.getAbsolutePath() +
+                " doesn't exist so cannot restore ARC serial number.");
+        } else {
+            DataInputStream dis = null;
+            try {
+                dis = new DataInputStream(new FileInputStream(stateFile));
+                ARCWriter.setSerialNo(dis.readShort());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
                 try {
-                    dis = new DataInputStream(new FileInputStream(stateFile));
-                    ARCWriter.setSerialNo(dis.readShort());
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                    if (dis != null) {
+                        dis.close();
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
-                } finally {
-                    try {
-                        if (dis != null) {
-                            dis.close();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                 }
             }
         }
     }
 
-    void setupPool() {
-		// Set up the pool of ARCWriters.
-		this.pool = new ARCWriterPool(this, getPoolMaximumActive(),
-            getPoolMaximumWait());
+    protected void setupPool() {
+		setPool(new ARCWriterPool(this, getPoolMaximumActive(),
+            getPoolMaximumWait()));
+    }
+    
+    /**
+     * Writes a CrawlURI and its associated data to store file.
+     *
+     * Currently this method understands the following uri types: dns, http, 
+     * and https.
+     *
+     * @param curi CrawlURI to process.
+     */
+    protected void innerProcess(CrawlURI curi) {
+        // If failure, or we haven't fetched the resource yet, return
+        if (curi.getFetchStatus() <= 0) {
+            return;
+        }
+        
+        // If no content, don't write record.
+        int recordLength = (int)curi.getContentSize();
+        if (recordLength <= 0) {
+        	// Write nothing.
+        	return;
+        }
+        
+        String scheme = curi.getUURI().getScheme().toLowerCase();
+        try {
+            if ((scheme.equals("dns") &&
+            		curi.getFetchStatus() == S_DNS_SUCCESS)) {
+            	InputStream is = curi.getHttpRecorder().getRecordedInput().
+            		getReplayInputStream();
+                write(curi, recordLength, is,
+                    curi.getString(A_DNS_SERVER_IP_LABEL));
+            } else if ((scheme.equals("http") || scheme.equals("https")) &&
+            		curi.getFetchStatus() > 0 && curi.isHttpTransaction()) {
+                InputStream is = curi.getHttpRecorder().getRecordedInput().
+            		getReplayInputStream();
+                write(curi, recordLength, is, getHostAddress(curi));
+            }
+        } catch (IOException e) {
+            curi.addLocalizedError(this.getName(), e, "WriteRecord: " +
+                curi.toString());
+            logger.log(Level.SEVERE, "Failed write of Record: " +
+                curi.toString(), e);
+        }
+    }
+    
+    protected void write(CrawlURI curi, int recordLength, InputStream in,
+        String ip)
+    throws IOException {
+        FilePoolMember writer = getPool().borrowFile();
+        long position = writer.getPosition();
+        // See if we need to open a new file because we've exceeed maxBytes.
+        // Call to checkFileSize will open new file if we're at maximum for
+        // current file.
+        writer.checkFileSize();
+        if (writer.getPosition() != position) {
+            // We just closed the file because it was larger than maxBytes.
+            // Add to the totalBytesWritten the size of the first record
+            // in the file, if any.
+            setTotalBytesWritten(getTotalBytesWritten() +
+            	(writer.getPosition() - position));
+            position = writer.getPosition();
+        }
+        
+        ARCWriter w = (ARCWriter)writer;
+        try {
+            if (in instanceof ReplayInputStream) {
+                w.write(curi.toString(), curi.getContentType(),
+                    ip, curi.getLong(A_FETCH_BEGAN_TIME),
+                    recordLength, (ReplayInputStream)in);
+            } else {
+                w.write(curi.toString(), curi.getContentType(),
+                    ip, curi.getLong(A_FETCH_BEGAN_TIME),
+                    recordLength, in);
+            }
+        } catch (IOException e) {
+            // Invalidate this file (It gets a '.invalid' suffix).
+            getPool().invalidateFile(writer);
+            // Set the writer to null otherwise the pool accounting
+            // of how many active writers gets skewed if we subsequently
+            // do a returnWriter call on this object in the finally block.
+            writer = null;
+            throw e;
+        } finally {
+            if (writer != null) {
+            	setTotalBytesWritten(getTotalBytesWritten() +
+            	     (writer.getPosition() - position));
+                getPool().returnFile(writer);
+            }
+        }
+        checkBytesWritten();
     }
 
     /**
@@ -289,19 +243,19 @@ ARCWriterSettings, FetchStatusCodes {
      * @return List of strings and/or files to add to arc file as metadata or
      * null.
      */
-    public List getMetadata() {
+    public synchronized List<String> getMetadata() {
         if (this.cachedMetadata != null) {
             return this.cachedMetadata;
         }
         return cacheMetadata();
     }
     
-    protected synchronized List cacheMetadata() {
+    protected synchronized List<String> cacheMetadata() {
         if (this.cachedMetadata != null) {
             return this.cachedMetadata;
         }
         
-        List result = null;
+        List<String> result = null;
         if (!XMLSettingsHandler.class.isInstance(getSettingsHandler())) {
             logger.warning("Expected xml settings handler (No arcmetadata).");
             // Early return
@@ -314,8 +268,8 @@ ARCWriterSettings, FetchStatusCodes {
                 logger.severe("File " + orderFile.getAbsolutePath() +
                     " is does not exist or is not readable.");
         } else {
-                result = new ArrayList(1);
-                result.add(getMetadataBody(orderFile));
+            result = new ArrayList<String>(1);
+            result.add(getMetadataBody(orderFile));
         }
         this.cachedMetadata = result;
         return this.cachedMetadata;
@@ -372,296 +326,21 @@ ARCWriterSettings, FetchStatusCodes {
         return result;
     }
 
-    /**
-     * Takes a CrawlURI and generates an arc record, writing it to disk.
-     *
-     * Currently this method understands the following uri types: dns, http.
-     *
-     * @param curi CrawlURI to process.
-     */
-    protected void innerProcess(CrawlURI curi) {
-        // If failure, or we haven't fetched the resource yet, return
-        if (curi.getFetchStatus() <= 0) {
-            return;
-        }
-
-        String scheme = curi.getUURI().getScheme().toLowerCase();
-        try {
-            if (scheme.equals("dns") && curi.getFetchStatus() ==
-                    S_DNS_SUCCESS) {
-                writeDns(curi);
-            } else if (scheme.equals("http") || scheme.equals("https")) {
-                writeHttp(curi);
-            }
-        } catch (IOException e) {
-            curi.addLocalizedError(this.getName(), e, "WriteARCRecord: " +
-                curi.toString());
-            logger.log(Level.SEVERE, "Failed write of ARC Record: " +
-                curi.toString(), e);
-        }
-    }
-
-    protected void writeHttp(CrawlURI curi)
-    throws IOException {
-        if (curi.getFetchStatus() <= 0 && curi.isHttpTransaction()) {
-            // Error; do not write to ARC (for now)
-            return;
-        }
-
-        int recordLength = (int)curi.getContentSize();
-        if (recordLength == 0) {
-            // Write nothing.
-            return;
-        }
-        
-        write(curi, recordLength,
-            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
-            getHostAddress(curi));
-    }
-
-    protected void writeDns(CrawlURI curi)
-    throws IOException {
-        write(curi, (int)curi.getContentSize(),
-            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
-            curi.getString(A_DNS_SERVER_IP_LABEL));
-    }
-    
-    protected void write(CrawlURI curi, int recordLength, InputStream in,
-        String ip)
-    throws IOException {
-        ARCWriter writer = this.pool.borrowARCWriter();
-        long position = writer.getPosition();
-        // See if we need to open a new ARC because we've exceeed maxBytes
-        // per ARC. Call to checkARCFileSize will open new ARC if we're at
-        // maximum for current file.
-        writer.checkARCFileSize();
-        if (writer.getPosition() != position) {
-            // We just closed the ARC because it was larger than maxBytes.
-            // Add to the totalBytesWritten the size of the first record
-            // in the ARC.
-            this.totalBytesWritten += (writer.getPosition() - position);
-            position = writer.getPosition();
-        }
-        
-        try {
-            if (in instanceof ReplayInputStream) {
-                writer.write(curi.toString(), curi.getContentType(),
-                    ip, curi.getLong(A_FETCH_BEGAN_TIME),
-                    recordLength, (ReplayInputStream)in);
-            } else {
-                writer.write(curi.toString(), curi.getContentType(),
-                    ip, curi.getLong(A_FETCH_BEGAN_TIME),
-                    recordLength, in);
-            }
-        } catch (IOException e) {
-            // Invalidate this arc file (It gets a '.invalid' suffix).
-            this.pool.invalidateARCWriter(writer);
-            // Set the writer to null otherwise the pool accounting
-            // of how many active writers gets skewed if we subsequently
-            // do a returnARCWriter call on this object in the finally block.
-            writer = null;
-            throw e;
-        } finally {
-            if (writer != null) {
-                this.totalBytesWritten += (writer.getPosition() - position);
-                this.pool.returnARCWriter(writer);
-            }
-        }
-        checkBytesWritten();
-    }
-    
-    protected void checkBytesWritten() {
-        long max = getMaxToWrite();
-        if (max <= 0) {
-            return;
-        }
-        if (max <= this.totalBytesWritten) {
-            getController().requestCrawlStop("Finished - Maximum bytes (" +
-                Long.toString(max) + ") written");
-        }
-    }
-    
-    private String getHostAddress(CrawlURI curi) {
-        CrawlHost h = getController().getServerCache().getHostFor(curi);
-        if (h == null) {
-            throw new NullPointerException("Crawlhost is null for " +
-                curi + " " + curi.getVia());
-        }
-        InetAddress a = h.getIP();
-        if (a == null) {
-            throw new NullPointerException("Address is null for " +
-                curi + " " + curi.getVia() + ". Address " +
-                ((h.getIpFetched() == CrawlHost.IP_NEVER_LOOKED_UP)?
-                     "was never looked up.":
-                     (System.currentTimeMillis() - h.getIpFetched()) +
-                         " ms ago."));
-        }
-        return h.getIP().getHostAddress();
-    }
-    
-    /**
-     * Version of getAttributes that catches and logs exceptions
-     * and returns null if failure to fetch the attribute.
-     * @param name Attribute name.
-     * @return Attribute or null.
-     */
-    public Object getAttributeUnchecked(String name) {
-        Object result = null;
-        try {
-            result = super.getAttribute(name);
-        } catch (AttributeNotFoundException e) {
-            logger.warning(e.getLocalizedMessage());
-        } catch (MBeanException e) {
-            logger.warning(e.getLocalizedMessage());
-        } catch (ReflectionException e) {
-            logger.warning(e.getLocalizedMessage());
-        }
-        return result;
-    }
-
-   /**
-    * Max size we want ARC files to be (bytes).
-    *
-    * Default is ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE.  Note that ARC
-    * files will usually be bigger than maxSize; they'll be maxSize + length
-    * to next boundary.
-    * @return ARC maximum size.
-    */
-    public int getArcMaxSize() {
-        Object obj = getAttributeUnchecked(ATTR_MAX_SIZE_BYTES);
-        return (obj == null)? DEFAULT_MAX_ARC_FILE_SIZE:
-            ((Integer)obj).intValue();
-    }
-
-    public String getArcPrefix() {
-        Object obj = getAttributeUnchecked(ATTR_PREFIX);
-        return (obj == null)? DEFAULT_ARC_FILE_PREFIX: (String)obj;
-    }
-
-    public List getOutputDirs() {
-        Object obj = getAttributeUnchecked(ATTR_PATH);
-        List list = (obj == null)? Arrays.asList(DEFAULT_PATH): (StringList)obj;
-        ArrayList results = new ArrayList();
-        for (Iterator i = list.iterator(); i.hasNext();) {
-            String path = (String)i.next();
-            File f = new File(path);
-            if (!f.isAbsolute()) {
-                f = new File(getController().getDisk(), path);
-            }
-            if (!f.exists()) {
-                try {
-                    f.mkdirs();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    continue;
-                }
-            }
-            results.add(f);
-        }
-        return results;
-    }
-    
-    public boolean isCompressed() {
-        Object obj = getAttributeUnchecked(ATTR_COMPRESS);
-        return (obj == null)? DEFAULT_COMPRESS:
-            ((Boolean)obj).booleanValue();
-    }
-
-    /**
-     * @return Returns the poolMaximumActive.
-     */
-    public int getPoolMaximumActive() {
-        Object obj = getAttributeUnchecked(ATTR_POOL_MAX_ACTIVE);
-        return (obj == null)? ARCWriterPool.DEFAULT_MAX_ACTIVE:
-            ((Integer)obj).intValue();
-    }
-
-    /**
-     * @return Returns the poolMaximumWait.
-     */
-    public int getPoolMaximumWait() {
-        Object obj = getAttributeUnchecked(ATTR_POOL_MAX_WAIT);
-        return (obj == null)? ARCWriterPool.DEFAULT_MAXIMUM_WAIT:
-            ((Integer)obj).intValue();
-    }
-
-    public String getArcSuffix() {
-        Object obj = getAttributeUnchecked(ATTR_SUFFIX);
-        String sfx = (obj == null)? DEFAULT_SUFFIX: (String)obj;
-        if (sfx != null && sfx.trim().equals(HOSTNAME_VARIABLE)) {
-            String str = "localhost.localdomain";
-            try {
-                str = InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException ue) {
-                logger.severe("Failed getHostAddress for this host: " + ue);
-            }
-            sfx = str;
-        }
-        return sfx;
-    }
-    
-    public long getMaxToWrite() {
-        Object obj = getAttributeUnchecked(ATTR_MAX_BYTES_WRITTEN);
-        return (obj == null)? 0: ((Long)obj).longValue();
-    }
-
 	public void crawlEnding(String sExitMessage) {
-		// sExitMessage is unused.
 		ARCWriter.resetSerialNo();
-        this.pool.close();
+        super.crawlEnding(sExitMessage);
 	}
-
-	public void crawlEnded(String sExitMessage) {
-        // sExitMessage is unused.
-	}
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
-     */
-    public void crawlStarted(String message) {
-        // TODO Auto-generated method stub
-    }
     
     public void crawlCheckpoint(File checkpointDir)
     throws IOException {
         // Write out the current state of the ARCWriter serial number.
-        File f = new File(checkpointDir, STATE_FILENAME);
+        File f = new File(checkpointDir, getCheckpointStateFile());
         DataOutputStream dos = new DataOutputStream(new FileOutputStream(f));
         try {
             dos.writeShort(ARCWriter.getSerialNo());
         } finally {
             dos.close();
         }
-        // Close all ARCs on checkpoint.
-        try {
-            this.pool.close();
-        } finally {
-            // Reopen on checkpoint.
-            setupPool();
-        }
-    }
-    
-	public void crawlPausing(String statusMessage) {
-        // sExitMessage is unused.
-	}
-
-	public void crawlPaused(String statusMessage) {
-        // sExitMessage is unused.
-	}
-
-	public void crawlResuming(String statusMessage) {
-        // sExitMessage is unused.
-	}
-	
-    private void readObject(ObjectInputStream stream)
-    throws IOException, ClassNotFoundException {
-        stream.defaultReadObject();
-        ObjectPlusFilesInputStream coistream =
-            (ObjectPlusFilesInputStream)stream;
-        coistream.registerFinishTask( new Runnable() {
-            public void run() {
-                setupPool();
-            }
-        });
+        super.crawlCheckpoint(checkpointDir);
     }
 }
