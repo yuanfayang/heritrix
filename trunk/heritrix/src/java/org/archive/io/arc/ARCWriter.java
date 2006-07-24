@@ -25,33 +25,25 @@
  */
 package org.archive.io.arc;
 
-import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPOutputStream;
 
 import org.archive.io.GzippedInputStream;
 import org.archive.io.ReplayInputStream;
-import org.archive.io.WriterPoolMember;
+import org.archive.io.WriterPoolMemberImpl;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
-import org.archive.util.IoUtils;
 import org.archive.util.MimetypeUtils;
 import org.archive.util.TimestampSerialno;
 
@@ -123,37 +115,9 @@ import org.archive.util.TimestampSerialno;
  *
  * @author stack
  */
-public class ARCWriter implements ARCConstants, WriterPoolMember {
+public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
     private static final Logger logger =
         Logger.getLogger(ARCWriter.class.getName());
-
-    /**
-     * Reference to ARC file we're currently writing.
-     */
-    private File arcFile = null;
-
-    /**
-     *  Output stream for arcFile.
-     */
-    private OutputStream out = null;
-
-    /**
-     * A running sequence used making unique ARC file names.
-     */
-    private static int serialNo = 0;
-    
-    /**
-     * Directories round-robin index.
-     */
-    private static int roundRobinIndex = 0;
-
-    /**
-     * NumberFormat instance for formatting serial number.
-     *
-     * Pads serial number with zeros.
-     */
-    private static NumberFormat serialNoFormatter =
-        new DecimalFormat("00000");
     
     /**
      * Metadata line pattern.
@@ -164,17 +128,10 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
     /**
      * Buffer to reuse writing streams.
      */
-    private byte [] readbuffer = new byte[4 * 1024];
+    private final byte [] readbuffer = new byte[4 * 1024];
     
-    private FileOutputStream fos = null;
+    private List metadata = null;
     
-    private final boolean compress;
-    private final List metadata;
-    private List writeDirs = null;
-    private String prefix = DEFAULT_PREFIX;
-    private String suffix = DEFAULT_SUFFIX;
-    private int maxSize = -1;
-
     
     /**
      * Constructor.
@@ -190,16 +147,11 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
      * @throws IOException
      */
     public ARCWriter(final PrintStream out, final File arc,
-            final boolean cmprs, final List metadata,
-            String a14DigitDate)
+            final boolean cmprs, String a14DigitDate, final List metadata)
     throws IOException {
-        this.compress = cmprs;
+        super(out, arc, cmprs, a14DigitDate);
         this.metadata = metadata;
-        this.out = out;
-        this.arcFile = arc;
-        a14DigitDate = (a14DigitDate == null)?
-            ArchiveUtils.get14DigitDate(): a14DigitDate;
-        this.out.write(generateARCFileMetaData(a14DigitDate));
+        writeFirstRecord(getTimestampSerialNo(a14DigitDate));
     }
     
     /**
@@ -235,55 +187,8 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
     public ARCWriter(final List dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final List meta) {
-        this.suffix = suffix;
-        this.prefix = prefix;
-        this.maxSize = maxSize;
+        super(dirs, prefix, suffix, cmprs, maxSize, ARC_FILE_EXTENSION);
         this.metadata = meta;
-        this.writeDirs = dirs;
-        this.compress = cmprs;
-    }
-    
-    /* (non-Javadoc)
-	 * @see org.archive.io.arc.Writer#close()
-	 */
-    public void close() throws IOException {
-        if (this.out == null) {
-            return;
-        }
-        this.out.close();
-        this.out = null;
-        this.fos = null;
-        if (this.arcFile != null && this.arcFile.exists()) {
-            String path = this.arcFile.getAbsolutePath();
-            if (path.endsWith(OCCUPIED_SUFFIX)) {
-                File f = new File(path.substring(0,
-                        path.length() - OCCUPIED_SUFFIX.length()));
-                if (!this.arcFile.renameTo(f)) {
-                    logger.warning("Failed rename of " + path);
-                }
-                this.arcFile = f;
-            }
-            logger.info("Closed " + this.arcFile.getAbsolutePath() +
-                    ", size " + this.arcFile.length());
-        }
-    }
-    
-    /* (non-Javadoc)
-	 * @see org.archive.io.arc.Writer#writeARCMetaRecord()
-	 */
-    public void writeARCMetaRecord() throws IOException {
-        checkSize();
-    }
-
-    /* (non-Javadoc)
-	 * @see org.archive.io.arc.Writer#checkARCFileSize()
-	 */
-    public void checkSize() throws IOException {
-        if (this.out == null ||
-            (this.maxSize != -1 &&
-               (this.arcFile.length() > this.maxSize))) {
-            createARCFile();
-        }
     }
 
     /**
@@ -291,122 +196,18 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
      *
      * @throws IOException
      */
-    private void createARCFile() throws IOException {
-        close();
-        TimestampSerialno tsn = getTimestampSerialNo(this);
-        String name = this.prefix + '-' +
-            getUniqueBasename(tsn) +
-            ((this.suffix == null ||
-                    this.suffix.length() <= 0)?
-                "": "-" + this.suffix) +
-            '.' + ARC_FILE_EXTENSION +
-            ((this.compress)?
-                '.' + COMPRESSED_FILE_EXTENSION: "") +
-            OCCUPIED_SUFFIX;
-        File dir = getNextDirectory(this.writeDirs);
-        this.arcFile = new File(dir, name);
-        this.fos = new FileOutputStream(this.arcFile);
-        this.out = new FastBufferedOutputStream(this.fos);
-        this.out.write(generateARCFileMetaData(tsn.getNow()));
-        logger.info("Opened " + this.arcFile.getAbsolutePath());
-    }
-    
-    /**
-     * @param dirs List of File objects that point at directories.
-     * @return Find next directory to write an arc too.  If more
-     * than one, it tries to round-robin through each in turn.
-     * @throws IOException
-     */
-    protected File getNextDirectory(List dirs)
+    protected TimestampSerialno createFile()
     throws IOException {
-        if (ARCWriter.roundRobinIndex >= dirs.size()) {
-            ARCWriter.roundRobinIndex = 0;
-        }
-        File d = null;
-        try {
-            d = checkWriteable((File)dirs.get(ARCWriter.roundRobinIndex));
-        } catch (IndexOutOfBoundsException e) {
-            // Dirs list might be altered underneath us.
-            // If so, we get this exception -- just keep on going.
-        }
-        if (d == null && dirs.size() > 1) {
-            for (Iterator i = dirs.iterator(); d == null && i.hasNext();) {
-                d = checkWriteable((File)i.next());
-            }
-        } else {
-            ARCWriter.roundRobinIndex++;
-        }
-        if (d == null) {
-            throw new IOException("ARC directories unusable.");
-        }
-        return d;
+        TimestampSerialno tsn = super.createFile();
+        writeFirstRecord(tsn);
+        return tsn;
+    }
+    
+    private void writeFirstRecord(final TimestampSerialno tsn)
+    throws IOException {
+        getOutputStream().write(generateARCFileMetaData(tsn.getNow()));
     }
         
-    protected File checkWriteable(File d) {
-        if (d == null) {
-            return d;
-        }
-        
-        try {
-            IoUtils.ensureWriteableDirectory(d);
-        } catch(IOException e) {
-            logger.warning("Directory " + d.getPath() + " is not" +
-                " writeable or cannot be created: " + e.getMessage());
-            d = null;
-        }
-        return d;
-    }
-    
-    /**
-     * Do static synchronization around getting of counter and timestamp so
-     * no chance of a thread getting in between the getting of timestamp and
-     * allocation of serial number throwing the two out of alignment.
-     * 
-     * @param writer An instance of ARCWriter.
-     * @return Instance of data structure that has timestamp and serial no.
-     */
-    private static synchronized TimestampSerialno
-    		getTimestampSerialNo(WriterPoolMember writer) {
-        return new TimestampSerialno(ArchiveUtils.get14DigitDate(),
-            ARCWriter.serialNo++);
-    }
-
-    /**
-     * Return a unique basename.
-     *
-     * Name is timestamp + an every increasing sequence number.
-     *
-     * @param tsn Structure with timestamp and serial number.
-     *
-     * @return Unique basename.
-     */
-    private String getUniqueBasename(TimestampSerialno tsn) {
-        return tsn.getNow() + "-" +
-        	ARCWriter.serialNoFormatter.format(tsn.getSerialNumber());
-    }
-
-    /**
-     * Reset serial number.
-     */
-    public static synchronized void resetSerialNo() {
-        ARCWriter.serialNo = 0;
-    }
-    
-    /**
-     * @return Serial number.
-     */
-    public static int getSerialNo() {
-        return ARCWriter.serialNo;
-    }
-    
-    /**
-     * Call when recovering from checkpointing.
-     * @param no Number to set serial number too.
-     */
-    public static void setSerialNo(int no) {
-        ARCWriter.serialNo = no;
-    }
-
 	/**
      * Write out the ARCMetaData.
      *
@@ -450,7 +251,7 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
                 ((metadataBodyLength > 0)? "1": "0"));
         int recordLength = metadataBodyLength +
             metadataHeaderLinesTwoAndThree.getBytes(DEFAULT_ENCODING).length;
-        String metadataHeaderStr = ARC_MAGIC_NUMBER + getArcName() +
+        String metadataHeaderStr = ARC_MAGIC_NUMBER + generateName() +
             " 0.0.0.0 " + date + " text/plain " + recordLength +
             metadataHeaderLinesTwoAndThree;
         ByteArrayOutputStream metabaos =
@@ -468,7 +269,7 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
         // Now get bytes of all just written and compress if flag set.
         byte [] bytes = metabaos.toByteArray();
         
-        if(this.compress) {
+        if(isCompressed()) {
             // GZIP the header but catch the gzipping into a byte array so we
             // can add the special IA GZIP header to the product.  After
             // manipulations, write to the output stream (The JAVA GZIP
@@ -512,26 +313,6 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
         buffer.append("URL IP-address Archive-date Content-type Archive-length");
         buffer.append(LINE_SEPARATOR);
         return buffer.toString();
-    }
-
-    /**
-     * Get the (uncompressed) ARC name
-     * 
-     * @return the filename, as if uncompressed
-     */
-    private String getArcName() {
-        String name = this.arcFile.getName();
-        if(this.compress &&
-                name.endsWith(DOT_COMPRESSED_FILE_EXTENSION)) {
-            return name.substring(0,name.length() - 3);
-        } else if(this.compress &&
-                name.endsWith(DOT_COMPRESSED_FILE_EXTENSION +
-                    OCCUPIED_SUFFIX)) {
-            return name.substring(0, name.length() -
-                (3 + OCCUPIED_SUFFIX.length()));
-        } else {
-            return name;
-        }
     }
 
     /**
@@ -598,57 +379,48 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
         return result;
     }
 
-    /* (non-Javadoc)
-	 * @see org.archive.io.arc.Writer#write(java.lang.String, java.lang.String, java.lang.String, long, int, java.io.ByteArrayOutputStream)
-	 */
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength,
             ByteArrayOutputStream baos)
     throws IOException {
         preWriteRecordTasks();
         try {
-            this.out.write(getMetaLine(uri, contentType, hostIP,
+            getOutputStream().write(getMetaLine(uri, contentType, hostIP,
                 fetchBeginTimeStamp, recordLength).getBytes(UTF8));
-            baos.writeTo(this.out);
-            this.out.write(LINE_SEPARATOR);
-        } finally {
-            postWriteRecordTasks();
-        }
-    }
-    
-    /* (non-Javadoc)
-	 * @see org.archive.io.arc.Writer#write(java.lang.String, java.lang.String, java.lang.String, long, int, java.io.InputStream)
-	 */
-    public void write(String uri, String contentType, String hostIP,
-            long fetchBeginTimeStamp, int recordLength, InputStream in)
-    throws IOException {
-        preWriteRecordTasks();
-        try {
-            this.out.write(getMetaLine(uri, contentType, hostIP,
-                    fetchBeginTimeStamp, recordLength).getBytes(UTF8));
-            int read = this.readbuffer.length;
-            while((read = in.read(this.readbuffer)) != -1) {
-                this.out.write(this.readbuffer, 0, read);
-            }
-            this.out.write(LINE_SEPARATOR);
+            baos.writeTo(getOutputStream());
+            getOutputStream().write(LINE_SEPARATOR);
         } finally {
             postWriteRecordTasks();
         }
     }
 
-    /* (non-Javadoc)
-	 * @see org.archive.io.arc.Writer#write(java.lang.String, java.lang.String, java.lang.String, long, int, org.archive.io.ReplayInputStream)
-	 */
+    public void write(String uri, String contentType, String hostIP,
+            long fetchBeginTimeStamp, int recordLength, InputStream in)
+    throws IOException {
+        preWriteRecordTasks();
+        try {
+            getOutputStream().write(getMetaLine(uri, contentType, hostIP,
+                    fetchBeginTimeStamp, recordLength).getBytes(UTF8));
+            int read = this.readbuffer.length;
+            while((read = in.read(this.readbuffer)) != -1) {
+                getOutputStream().write(this.readbuffer, 0, read);
+            }
+            getOutputStream().write(LINE_SEPARATOR);
+        } finally {
+            postWriteRecordTasks();
+        }
+    }
+
     public void write(String uri, String contentType, String hostIP,
             long fetchBeginTimeStamp, int recordLength,
             ReplayInputStream ris)
     throws IOException {
         preWriteRecordTasks();
         try {
-            this.out.write(getMetaLine(uri, contentType, hostIP,
+            getOutputStream().write(getMetaLine(uri, contentType, hostIP,
                     fetchBeginTimeStamp, recordLength).getBytes(UTF8));
             try {
-                ris.readFullyTo(this.out);
+                ris.readFullyTo(getOutputStream());
                 long remaining = ris.remaining();
                 // Should be zero at this stage.  If not, something is
                 // wrong.
@@ -664,43 +436,9 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
             } 
             
             // Write out trailing newline
-            this.out.write(LINE_SEPARATOR);
+            getOutputStream().write(LINE_SEPARATOR);
         } finally {
             postWriteRecordTasks();
-        }
-    }
-
-    /**
-     * Post write tasks.
-     * 
-     * Has side effects.  Will open new ARC if we're at the upperbound.
-     * If we're writing compressed ARCs, it will write the GZIP header
-     * out on the stream.
-     *
-     * @exception IOException
-     */
-    private void preWriteRecordTasks()
-    throws IOException {
-        checkSize();
-        if (this.compress) {
-            // The below construction immediately writes the GZIP 'default'
-            // header out on the underlying stream.
-            this.out = new ARCWriterGZIPOutputStream(this.out);
-        }
-    }
-
-    /**
-     * Post write tasks.
-     *
-     * @exception IOException
-     */
-    private void postWriteRecordTasks()
-    throws IOException {
-        if (this.compress) {
-            ARCWriterGZIPOutputStream o = (ARCWriterGZIPOutputStream)this.out;
-            o.finish();
-            o.flush();
-            this.out = o.getOut();
         }
     }
     
@@ -721,16 +459,13 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
                 Long.toString(fetchBeginTimeStamp));
         }
 
-        return validateMetaLine(makeMetaline(uri, hostIP, 
+        return validateMetaLine(createMetaline(uri, hostIP, 
             ArchiveUtils.get14DigitDate(fetchBeginTimeStamp),
             MimetypeUtils.truncate(contentType),
             Integer.toString(recordLength)));
     }
     
-    /* (non-Javadoc)
-	 * @see org.archive.io.arc.Writer#makeMetaline(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
-	 */
-    public String makeMetaline(String uri, String hostIP,
+    public String createMetaline(String uri, String hostIP,
             String timeStamp, String mimetype, String recordLength) {
         return uri + HEADER_FIELD_SEPARATOR + hostIP +
             HEADER_FIELD_SEPARATOR + timeStamp +
@@ -757,47 +492,5 @@ public class ARCWriter implements ARCConstants, WriterPoolMember {
                 " pattern: " + metaLineStr);
         }
         return metaLineStr;
-    }
-
-    /* (non-Javadoc)
-	 * @see org.archive.io.arc.Writer#getArcFile()
-	 */
-    public File getFile() {
-        return this.arcFile;
-    }
-    
-    /**
-     * An override so we get access to underlying output stream.
-     *
-     * @author stack
-     */
-    private class ARCWriterGZIPOutputStream extends GZIPOutputStream {
-        public ARCWriterGZIPOutputStream(OutputStream out) throws IOException {
-            super(out);
-        }
-        
-        /**
-         * @return Reference to stream being compressed.
-         */
-        OutputStream getOut() {
-            return this.out;
-        }
-    }
-    
-    /* (non-Javadoc)
-	 * @see org.archive.io.arc.Writer#getPosition()
-	 */
-    public long getPosition() throws IOException {
-        long position = 0;
-        if (this.out != null) {
-            this.out.flush();
-        }
-        if (this.fos != null) {
-            // Call flush on underlying file though probably not needed assuming
-            // above this.out.flush called through to this.fos.
-            this.fos.flush();
-            position = this.fos.getChannel().position();
-        }
-        return position;
     }
 }

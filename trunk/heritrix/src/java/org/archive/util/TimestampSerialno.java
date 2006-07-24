@@ -40,6 +40,11 @@ public class TimestampSerialno {
 		this.now = now;
 		this.serialNumber = serialNo;
 	}
+    
+    public TimestampSerialno(int serialNo) {
+        this.now = ArchiveUtils.get14DigitDate();
+        this.serialNumber = serialNo;
+    }
 
 	/**
 	 * @return Returns the now.

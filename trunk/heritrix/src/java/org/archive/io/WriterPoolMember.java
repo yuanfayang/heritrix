@@ -52,6 +52,17 @@ public interface WriterPoolMember {
      */
     public static final String INVALID_SUFFIX = ".invalid";
     
+    /**
+     * Compressed file extention.
+     */
+    public static final String COMPRESSED_FILE_EXTENSION = "gz";
+   
+    /**
+     * Dot plus compressed file extention.
+     */
+    public static final String DOT_COMPRESSED_FILE_EXTENSION = "." +
+        COMPRESSED_FILE_EXTENSION;
+    
     public static final String UTF8 = "UTF-8";
     
     /**
