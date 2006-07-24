@@ -982,7 +982,7 @@ implements ARCConstants {
                 // or new File will complain if it is otherwise.
                 writer = new ARCWriter(System.out,
                     new File(meta.getArc()),
-                    compressed, listOfMetadata, meta.getDate());
+                    compressed, meta.getDate(), listOfMetadata);
                 continue;
             }
             

@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 
+import org.archive.io.WriterPoolMember;
+
 /**
  * Constants used by ARC files and in ARC file processing.
  * 
@@ -56,17 +58,9 @@ public interface ARCConstants {
      */
     public static final String DOT_ARC_FILE_EXTENSION =
         "." + ARC_FILE_EXTENSION;
-
-    /**
-     * Compressed file extention.
-     */
-    public static final String COMPRESSED_FILE_EXTENSION = "gz";
     
-    /**
-     * Dot plus compressed file extention.
-     */
-    public static final String DOT_COMPRESSED_FILE_EXTENSION = "." +
-        COMPRESSED_FILE_EXTENSION;
+    public static final String DOT_COMPRESSED_FILE_EXTENSION =
+        WriterPoolMember.DOT_COMPRESSED_FILE_EXTENSION;
 
     /**
      * Compressed arc file extension.
