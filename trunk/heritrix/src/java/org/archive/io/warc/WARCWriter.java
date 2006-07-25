@@ -25,28 +25,16 @@
  */
 package org.archive.io.warc;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.archive.io.GzippedInputStream;
-import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMemberImpl;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.DevUtils;
-import org.archive.util.MimetypeUtils;
 import org.archive.util.TimestampSerialno;
-import org.mortbay.jetty.servlet.WebApplicationContext;
 
 
 /**
@@ -91,7 +79,8 @@ public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
     
     /**
      * Constructor.
-     * Takes a stream.
+     * Takes a stream. Use with caution. There is no upperbound check on size.
+     * Will just keep writing.
      * @param out Where to write.
      * @param f File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
@@ -100,7 +89,7 @@ public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    public WARCWriter(final PrintStream out, final File f,
+    WARCWriter(final PrintStream out, final File f,
             final boolean cmprs, String a14DigitDate, final List metadata)
     throws IOException {
         super(out, f, cmprs, a14DigitDate);

@@ -46,7 +46,7 @@ import org.archive.util.TimestampSerialno;
 /**
  * Abstract implementation of {@link WriterPoolMember} functionality.
  * Implements rotating off files, file naming with some guarantee of
- * uniqueness and position in file. Subclass to pick up functionality for a
+ * uniqueness, and position in file. Subclass to pick up functionality for a
  * particular Writer type.
  * @author stack
  */
@@ -95,14 +95,15 @@ public abstract class WriterPoolMemberImpl implements WriterPoolMember {
     
     /**
      * Constructor.
-     * Takes a stream.
+     * Takes a stream. Use with caution. There is no upperbound check on size.
+     * Will just keep writing.
      * @param out Where to write.
      * @param f File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    public WriterPoolMemberImpl(final PrintStream out, final File file,
+    protected WriterPoolMemberImpl(final PrintStream out, final File file,
             final boolean cmprs, String a14DigitDate)
     throws IOException {
         this(null, null, cmprs, -1, null);
@@ -252,6 +253,7 @@ public abstract class WriterPoolMemberImpl implements WriterPoolMember {
     protected synchronized TimestampSerialno getTimestampSerialNo() {
         return getTimestampSerialNo(null);
     }
+    
     /**
      * Do static synchronization around getting of counter and timestamp so
      * no chance of a thread getting in between the getting of timestamp and
@@ -311,7 +313,7 @@ public abstract class WriterPoolMemberImpl implements WriterPoolMember {
      */
     protected String generateName() {
         String name = this.f.getName();
-        if(this.compressed && name.endsWith(DOT_COMPRESSED_FILE_EXTENSION)) {
+        if (this.compressed && name.endsWith(DOT_COMPRESSED_FILE_EXTENSION)) {
             return name.substring(0,name.length() - 3);
         } else if(this.compressed &&
                 name.endsWith(DOT_COMPRESSED_FILE_EXTENSION +
