@@ -137,11 +137,9 @@ public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
      * Constructor.
      * Takes a stream.
      * @param out Where to write.
-     * @param arc What to use as arc file.
-     * @param cmprs Compress the ARC files written.  The compression is done
-     * by individually gzipping each record added to the ARC file: i.e. the
-     * ARC file is a bunch of gzipped records concatenated together.
-     * @param metadata Arc file meta data.  Can be null.  Is list of File and/or
+     * @param f File the <code>out</code> is connected to.
+     * @param cmprs Compress the content written.
+     * @param metadata File meta data.  Can be null.  Is list of File and/or
      * String objects.
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
@@ -173,15 +171,12 @@ public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
     /**
      * Constructor.
      *
-     * @param dirs Where to drop the ARC files.
-     * @param prefix ARC file prefix to use.  If null, we use
-     * DEFAULT_ARC_FILE_PREFIX.
-     * @param cmprs Compress the ARC files written.  The compression is done
-     * by individually gzipping each record added to the ARC file: i.e. the
-     * ARC file is a bunch of gzipped records concatenated together.
+     * @param dirs Where to drop files.
+     * @param prefix File prefix to use.
+     * @param cmprs Compress the records written. 
      * @param maxSize Maximum size for ARC files written.
-     * @param suffix ARC file tail to use.  If null, unused.
-     * @param meta Arc file meta data.  Can be null.  Is list of File and/or
+     * @param suffix File tail to use.  If null, unused.
+     * @param meta File meta data.  Can be null.  Is list of File and/or
      * String objects.
      */
     public ARCWriter(final List dirs, final String prefix, 

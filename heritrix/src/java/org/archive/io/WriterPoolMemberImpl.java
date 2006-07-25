@@ -97,10 +97,8 @@ public abstract class WriterPoolMemberImpl implements WriterPoolMember {
      * Constructor.
      * Takes a stream.
      * @param out Where to write.
-     * @param file File we're writing.
-     * @param cmprs Compress the ARC files written.  The compression is done
-     * by individually gzipping each record added to the ARC file: i.e. the
-     * ARC file is a bunch of gzipped records concatenated together.
+     * @param f File the <code>out</code> is connected to.
+     * @param cmprs Compress the content written.
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
@@ -116,11 +114,9 @@ public abstract class WriterPoolMemberImpl implements WriterPoolMember {
      * Constructor.
      *
      * @param dirs Where to drop files.
-     * @param prefix File prefix to use.  If null, we use
-     * {@link #DEFAULT_FILE_PREFIX}.
-     * @param cmprs Compress the files written.  The compression is done
-     * by individually gzipping each record added to the file.
-     * @param maxSize Maximum size for files written.
+     * @param prefix File prefix to use.
+     * @param cmprs Compress the records written. 
+     * @param maxSize Maximum size for ARC files written.
      * @param extension Extension to give file.
      */
     public WriterPoolMemberImpl(final List dirs, final String prefix, 
@@ -132,11 +128,9 @@ public abstract class WriterPoolMemberImpl implements WriterPoolMember {
      * Constructor.
      *
      * @param dirs Where to drop files.
-     * @param prefix File prefix to use.  If null, we use
-     * {@link #DEFAULT_FILE_PREFIX}.
-     * @param cmprs Compress the files written.  The compression is done
-     * by individually gzipping each record added to the file.
-     * @param maxSize Maximum size for files written.
+     * @param prefix File prefix to use.
+     * @param cmprs Compress the records written. 
+     * @param maxSize Maximum size for ARC files written.
      * @param suffix File tail to use.  If null, unused.
      * @param meta File meta data.  Can be null.  Is list of File and/or
      * String objects.
