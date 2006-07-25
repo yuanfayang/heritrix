@@ -37,8 +37,8 @@ import org.apache.commons.pool.impl.GenericObjectPool;
 /**
  * Pool of Writers.
  * 
- * Abstract. Override and pass in the Constructor a factory that knows how to
- * make the Writers to pool.
+ * Abstract. Override and pass in the Constructor a factory that creates
+ * {@link WriterPoolMember} implementations.
  * 
  * @author stack
  */

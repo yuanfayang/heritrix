@@ -135,7 +135,8 @@ public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
     
     /**
      * Constructor.
-     * Takes a stream.
+     * Takes a stream. Use with caution. There is no upperbound check on size.
+     * Will just keep writing.
      * @param out Where to write.
      * @param f File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
@@ -144,7 +145,7 @@ public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    public ARCWriter(final PrintStream out, final File arc,
+    ARCWriter(final PrintStream out, final File arc,
             final boolean cmprs, String a14DigitDate, final List metadata)
     throws IOException {
         super(out, arc, cmprs, a14DigitDate);

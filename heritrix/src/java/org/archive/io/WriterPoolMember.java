@@ -35,9 +35,6 @@ import java.io.IOException;
  * implementation.  Clients must call {@link checkSize} before/after any major
  * write operation to give this facility a chance to function.
  * 
- * <p>Does not specify write methods since they can vary widely across
- * implementations.
- * 
  * @author stack
  * @see {@link WriterPool}
  */
@@ -83,8 +80,8 @@ public interface WriterPoolMember {
     public static final String DEFAULT_SUFFIX = HOSTNAME_VARIABLE;
 
 	/**
-	 * Close file.
-	 *
+	 * Close current file.
+	 * 
 	 * @throws IOException
 	 */
 	public abstract void close() throws IOException;
