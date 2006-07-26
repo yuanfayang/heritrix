@@ -1,5 +1,5 @@
 /*
- * WARCWriter
+ * ExperimentalWARCWriter
  *
  * $Id$
  *
@@ -30,27 +30,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
-import org.archive.io.WriterPoolMemberImpl;
+import org.archive.io.WriterPoolMember;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.TimestampSerialno;
 
 
 /**
- * Experimental WARC implementation.
- * Based on as unreleased version of <a 
+ * <b>Experimental</b> WARC implementation.
+ * 
+ * Based on unreleased version of <a 
  * href="http://archive-access.sourceforge.net//warc/warc_file_format.html">WARC
- * File Format</a> document.
+ * File Format</a> document.  Specification and implementation subject to
+ * change.
  *
- * Assumption is that the caller is managing access to this WARCWritexr ensuring
- * only one thread accessing this WARC instance at any one time.
+ * <p>Assumption is that the caller is managing access to this ExperimentalWARCWriter
+ * ensuring only one thread accessing this WARC instance at any one time.
  * 
  * <p>While being written, WARCs have a '.open' suffix appended.
  *
  * @author stack
  */
-public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
+public class ExperimentalWARCWriter extends WriterPoolMember implements WARCConstants {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     
     /**
@@ -58,12 +61,10 @@ public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
      */
     private final byte [] readbuffer = new byte[16 * 1024];
     
-    private final List metadata;
-    
-    public static final byte [] NEWLINE_BYTES = null;
+    public static byte [] NEWLINE_BYTES;
     static {
         try {
-            NEWLINE.getBytes(DEFAULT_ENCODING);
+        	NEWLINE_BYTES = NEWLINE.getBytes(DEFAULT_ENCODING);
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -71,9 +72,9 @@ public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
     
     /**
      * Shutdown Constructor
-     * For unit tests only.
+     * For unit testing utility methods.
      */
-    WARCWriter() {
+    ExperimentalWARCWriter() {
         this(null, "", true, -1);
     }
     
@@ -89,11 +90,11 @@ public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    WARCWriter(final PrintStream out, final File f,
-            final boolean cmprs, String a14DigitDate, final List metadata)
+    ExperimentalWARCWriter(final PrintStream out, final File f, final boolean cmprs,
+    		final String a14DigitDate, final Map metadata)
     throws IOException {
         super(out, f, cmprs, a14DigitDate);
-        this.metadata = metadata;
+        // TODO: If passed file metadata, write it out.
     }
     
     /**
@@ -104,7 +105,7 @@ public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
      * @param cmprs Compress the records written. 
      * @param maxSize Maximum size for ARC files written.
      */
-    public WARCWriter(final List dirs, final String prefix, 
+    public ExperimentalWARCWriter(final List dirs, final String prefix, 
             final boolean cmprs, final int maxSize) {
         this(dirs, prefix, "", cmprs, maxSize, null);
     }
@@ -120,16 +121,17 @@ public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
      * @param meta File meta data.  Can be null.  Is list of File and/or
      * String objects.
      */
-    public WARCWriter(final List dirs, final String prefix, 
+    public ExperimentalWARCWriter(final List dirs, final String prefix, 
             final String suffix, final boolean cmprs,
-            final int maxSize, final List meta) {
+            final int maxSize, final Map meta) {
         super(dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);
-        this.metadata = meta;
+        // TODO: this.metadata = meta;
     }
 
     /**
      * Create an WARC file.
-     *
+     * @return Instance of datastructure with serial number and timestamp used
+     * making this file.
      * @throws IOException
      */
     protected TimestampSerialno createFile()
@@ -141,7 +143,7 @@ public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
     
     protected String checkHeaderLineValue(final String value)
     throws IOException {
-        // TODO: A version that will replace at least space and tab.
+        // TODO: A version that will collapse space and tab for mimetypes.
         for (int i = 0; i < value.length(); i++) {
             if (value.charAt(i) <= ' ') {
                 throw new IOException("Contains illegal character: " + value);
@@ -151,61 +153,83 @@ public class WARCWriter extends WriterPoolMemberImpl implements WARCConstants {
     }
     
     protected String getUid() {
-        // TODO:
+        // TODO: Needs to be pluggable.  Factory.
         return "unique-id-todo";
     }
     
-    protected String createRecordHeaderline(final String type, final String url,
-            final String mimetype, final long contentLength)
+    protected byte [] serializeMetadata(final Map metaMap) {
+    	return new byte [0];
+    }
+    
+    protected byte [] createRecordHeaderline(final String type,
+    		final String url, final String mimetype, final String id,
+    		final int metadataLength, final long contentLength)
     throws IOException {
-        final String timestamp = ArchiveUtils.get14DigitDate();
-        final String id = getUid();
-        
-        // Calculate total length.
-        long length = WARC_ID.length();
-        length += SEPARATORS_PLUS_LENGTH_WIDTH_PLUS_NEWLINE;
-        length += checkHeaderLineValue(type).length();
-        length += checkHeaderLineValue(url).length();
-        length += timestamp.length();
-        length += checkHeaderLineValue(type).length();
-        length += id.length();
-        length += contentLength;
-        
-        final String lenStr = Long.toString(length);
-       
-        StringBuffer sb = new StringBuffer();
-        sb.append(WARC_ID);
-        sb.append(HEADER_FIELD_SEPARATOR);
-        sb.append(lenStr);
-        for (int i = 0; i < (LENGTH_WIDTH - lenStr.length()); i++) {
-            sb.append(HEADER_FIELD_SEPARATOR);
-        }
-        sb.append(type);
-        sb.append(HEADER_FIELD_SEPARATOR);
-        sb.append(url);
-        sb.append(HEADER_FIELD_SEPARATOR);
-        sb.append(timestamp);
-        sb.append(HEADER_FIELD_SEPARATOR);
-        sb.append(mimetype);
-        sb.append(HEADER_FIELD_SEPARATOR);
-        sb.append(id);
-        
-        return sb.toString();
+    	final StringBuilder sb =
+    		new StringBuilder(2048/*A SWAG: TODO: Do analysis.*/);
+    	sb.append(WARC_ID);
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(PLACEHOLDER_LENGTH_STRING);
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(type);
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(checkHeaderLineValue(url));
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(ArchiveUtils.get14DigitDate());
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(checkHeaderLineValue(mimetype));
+    	sb.append(HEADER_FIELD_SEPARATOR);
+    	sb.append(checkHeaderLineValue(id));
+    	
+    	long length = sb.length() + metadataLength + contentLength;
+    	
+    	// Insert length and pad out to fixed width with spaces.
+    	int start = WARC_ID.length() + 1 /*HEADER_FIELD_SEPARATOR */;
+    	String lenStr = Long.toString(length);
+    	int end = start + lenStr.length();
+    	sb.replace(start, end, lenStr);
+    	end = start + LENGTH_FIELD_FIXED_WIDTH;
+    	for (int i = start + lenStr.length(); i < end; i++) {
+    		sb.setCharAt(i, HEADER_FIELD_SEPARATOR);
+    	}
+    	
+    	// TODO: Ensure all characters within a particular charset.
+        return sb.toString().getBytes(HEADER_LINE_ENCODING);
     }
     
     protected void writeRecord(final String type, final String url,
-            final String mimetype, final InputStream contentStream,
-            final long contentLength)
+            final String mimetype, final String id, final Map metaMap,
+            final InputStream contentStream, final long contentLength)
     throws IOException {
+    	if (!TYPES_LIST.contains(type)) {
+    		throw new IllegalArgumentException("Unknown record type: " + type);
+    	}
+    	if (contentLength == 0 && (metaMap == null || metaMap.size() <= 0)) {
+    		throw new IllegalArgumentException("Cannot have a record made " +
+    		    "of a Header line only");
+    	}
+    	
         preWriteRecordTasks();
         try {
-            String header = createRecordHeaderline(type, url, mimetype,
-                contentLength);
-            getOutputStream().write(header.getBytes(DEFAULT_ENCODING));
-            // Write out the two blank lines we put at end of all records.
-            // TODO: Why? Not in grammar.
-            getOutputStream().write(NEWLINE_BYTES);
-            getOutputStream().write(NEWLINE_BYTES);
+        	// Serialize metadata first so we have metadata length.
+        	final byte [] metadata = serializeMetadata(metaMap);
+        	// Now serialize the Header line.
+            final byte [] header = createRecordHeaderline(type, url,
+            	mimetype, id, metadata.length, contentLength);
+            write(header);
+            if (metadata != null && metadata.length > 0) {
+            	write(NEWLINE_BYTES);
+            	write(metadata);
+            }
+            if (contentStream != null && contentLength > 0) {
+            	write(NEWLINE_BYTES);
+            	readFullyFrom(contentStream, contentLength, this.readbuffer);
+            }
+            
+            // Write out the two blank lines at end of all records.
+            // TODO: Why? Messes up skipping through file. Also not in grammar.
+            write(NEWLINE_BYTES);
+            write(NEWLINE_BYTES);
         } finally {
             postWriteRecordTasks();
         }

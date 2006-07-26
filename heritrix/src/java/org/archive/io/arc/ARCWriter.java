@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
 
 import org.archive.io.GzippedInputStream;
 import org.archive.io.ReplayInputStream;
-import org.archive.io.WriterPoolMemberImpl;
+import org.archive.io.WriterPoolMember;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.MimetypeUtils;
@@ -115,7 +115,7 @@ import org.archive.util.TimestampSerialno;
  *
  * @author stack
  */
-public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
+public class ARCWriter extends WriterPoolMember implements ARCConstants {
     private static final Logger logger =
         Logger.getLogger(ARCWriter.class.getName());
     
@@ -201,7 +201,7 @@ public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
     
     private void writeFirstRecord(final TimestampSerialno tsn)
     throws IOException {
-        getOutputStream().write(generateARCFileMetaData(tsn.getNow()));
+        write(generateARCFileMetaData(tsn.getNow()));
     }
         
 	/**
@@ -381,10 +381,10 @@ public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
     throws IOException {
         preWriteRecordTasks();
         try {
-            getOutputStream().write(getMetaLine(uri, contentType, hostIP,
+            write(getMetaLine(uri, contentType, hostIP,
                 fetchBeginTimeStamp, recordLength).getBytes(UTF8));
             baos.writeTo(getOutputStream());
-            getOutputStream().write(LINE_SEPARATOR);
+            write(LINE_SEPARATOR);
         } finally {
             postWriteRecordTasks();
         }
@@ -395,13 +395,10 @@ public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
     throws IOException {
         preWriteRecordTasks();
         try {
-            getOutputStream().write(getMetaLine(uri, contentType, hostIP,
+            write(getMetaLine(uri, contentType, hostIP,
                     fetchBeginTimeStamp, recordLength).getBytes(UTF8));
-            int read = this.readbuffer.length;
-            while((read = in.read(this.readbuffer)) != -1) {
-                getOutputStream().write(this.readbuffer, 0, read);
-            }
-            getOutputStream().write(LINE_SEPARATOR);
+            readFullyFrom(in, recordLength, this.readbuffer);
+            write(LINE_SEPARATOR);
         } finally {
             postWriteRecordTasks();
         }
@@ -413,7 +410,7 @@ public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
     throws IOException {
         preWriteRecordTasks();
         try {
-            getOutputStream().write(getMetaLine(uri, contentType, hostIP,
+            write(getMetaLine(uri, contentType, hostIP,
                     fetchBeginTimeStamp, recordLength).getBytes(UTF8));
             try {
                 ris.readFullyTo(getOutputStream());
@@ -432,7 +429,7 @@ public class ARCWriter extends WriterPoolMemberImpl implements ARCConstants {
             } 
             
             // Write out trailing newline
-            getOutputStream().write(LINE_SEPARATOR);
+            write(LINE_SEPARATOR);
         } finally {
             postWriteRecordTasks();
         }

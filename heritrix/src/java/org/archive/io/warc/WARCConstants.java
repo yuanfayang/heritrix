@@ -1,5 +1,5 @@
 /*
- * WARCWriter
+ * ExperimentalWARCWriter
  *
  * $Id$
  *
@@ -40,24 +40,46 @@ public interface WARCConstants {
      * Specify an encoding rather than leave it to chance: i.e whatever the
      * JVMs encoding.  Use an encoding that gets the stream as bytes, not chars.
      * 
-     * <p>ARC uses ISO-8859-1 by default.  Lets go with UTF-8.
+     * <p>TODO: ARC uses ISO-8859-1.  In general, we should use UTF-8 but we
+     * probably need a single byte encoding if we're out for preserving the
+     * binary data as received over the net (We probably don't want to transform
+     * the supra-ASCII characters to UTF-8 before storing in ARC).  For now,
+     * till we figure it, DEFAULT_ENCODING is single-byte charset -- same as
+     * ARCs.
      */
-    public static final String DEFAULT_ENCODING = "UTF-8";
+    public static final String DEFAULT_ENCODING = "ISO-8859-1";
+    public static final String HEADER_LINE_ENCODING = DEFAULT_ENCODING;
+    
+    /**
     
     /**
      * WARC Record Types.
      */
-    public final static String [] TYPES = {"warcinfo", "response", "resource",
-        "request", "metadata", "revisit", "conversion", "continuation"};
-    public final static int WARCINFO_INDEX = 0;
-    public final static int RESPONSE_INDEX = 1;
-    public final static int RESOURCE_INDEX = 2;
-    public final static int REQUEST_INDEX = 3;
-    public final static int METADATA_INDEX = 4;
-    public final static int REVISIT_INDEX = 5;
-    public final static int CONVERSION_INDEX = 6;
-    public final static int CONTINUATION_INDEX = 7;
-    public final static List TYPES_LIST = Arrays.asList(TYPES);
+    public static final String WARCINFO = "warcinfo";
+    public static final String RESPONSE = "response";
+    public static final String RESOURCE = "resource";
+    public static final String REQUEST = "request";
+    public static final String METADATA = "metadata";
+    public static final String REVISIT = "revist";
+    public static final String CONVERSION = "conversion";
+    public static final String CONTINUATION = "continuation";
+    
+    // List of all WARC Record TYPES
+    public static final String [] TYPES = {WARCINFO, RESPONSE, RESOURCE,
+    	REQUEST, METADATA, REVISIT, CONVERSION, CONTINUATION};
+    
+    // Indices into TYPES array.
+    public static final int WARCINFO_INDEX = 0;
+    public static final int RESPONSE_INDEX = 1;
+    public static final int RESOURCE_INDEX = 2;
+    public static final int REQUEST_INDEX = 3;
+    public static final int METADATA_INDEX = 4;
+    public static final int REVISIT_INDEX = 5;
+    public static final int CONVERSION_INDEX = 6;
+    public static final int CONTINUATION_INDEX = 7;
+    
+    // TYPES as List.
+    public static final List TYPES_LIST = Arrays.asList(TYPES);
     
     /**
      * WARC-ID
@@ -82,14 +104,11 @@ public interface WARCConstants {
     public static final Character [] WSP = {HEADER_FIELD_SEPARATOR, '\t'};
 
     /**
-     * Amount of space to leave for the length string.
-     * Will pad with spaces to 
+     * Placeholder for length in Header line.
+     * Placeholder is same size as the fixed field size allocated for length,
+     * 12 characters.  12 characters allows records of size almost 1TB.
      */
-    public static final int LENGTH_WIDTH = 12;
-
-    public static final int SEPARATORS_PLUS_LENGTH_WIDTH_PLUS_NEWLINE =
-        HEADER_FIELD_SEPARATOR * 6 /* Separators between seven Header fields */
-        + NEWLINE.length()
-        + LENGTH_WIDTH;
-
+    public static final String PLACEHOLDER_LENGTH_STRING = "PLACE_HOLDER";
+    public static final int LENGTH_FIELD_FIXED_WIDTH =
+    	PLACEHOLDER_LENGTH_STRING.length();
 }
