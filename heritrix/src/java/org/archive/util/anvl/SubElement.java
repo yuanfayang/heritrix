@@ -51,10 +51,10 @@ abstract class SubElement {
                 throw new IllegalArgumentException(s +
                     " contains a control character(s): 0x" +
                     Integer.toHexString(i));
-            } else if (s.charAt(i) == Record.CRLF.charAt(0) &&
-            		(i + 1 < s.length()) &&
-            		s.charAt(i + 1) == Record.CRLF.charAt(1)) {
-                throw new IllegalArgumentException(s + " contains CRLF");
+            } else if (c == Record.CRLF.charAt(0) ||
+            			c == Record.CRLF.charAt(1)) {
+                throw new IllegalArgumentException(s + " CR or LF (TODO: " +
+                	"Allow for folding and then only check for CRLF)");
             }
         }
         return s;

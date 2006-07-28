@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.archive.io.UTF8Bytes;
+
 /**
  * An ordered {@link List} with 'data' {@link Element} values.
  * @see <a
@@ -36,14 +38,12 @@ import java.util.Iterator;
  * Language (ANVL)</a>
  * @author stack
  */
-public class Record extends ArrayList<Element> {
+public class Record extends ArrayList<Element> implements UTF8Bytes {
 	/**
 	 * An ANVL 'newline'.
 	 * @see http://en.wikipedia.org/wiki/CRLF
 	 */
     static final String CRLF = "\r\n";
-    
-    static final String UTF8 = "UTF-8";
     
     public Record() {
         super();

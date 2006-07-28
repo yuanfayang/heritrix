@@ -24,6 +24,11 @@
 */
 package org.archive.util.anvl;
 
+/**
+ * TODO: Implement 'folding'.
+ * @author stack
+ * @version $Date$ $Version$
+ */
 public class Value extends SubElement {
     private Value() {
         this(null);
@@ -35,7 +40,6 @@ public class Value extends SubElement {
     
     @Override
     public String toString() {
-        // TODO: Folding.
         return "\t" + super.toString();
     }
 }
