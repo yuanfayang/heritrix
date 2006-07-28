@@ -1,11 +1,11 @@
 /*
- * ExperimentalWARCWriter
+ * WARCConstants
  *
  * $Id$
  *
- * Created on Jun 5, 2003
+ * Created on July 27th, 2006
  *
- * Copyright (C) 2003 Internet Archive.
+ * Copyright (C) 2006 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -51,8 +51,6 @@ public interface WARCConstants {
     public static final String HEADER_LINE_ENCODING = DEFAULT_ENCODING;
     
     /**
-    
-    /**
      * WARC Record Types.
      */
     public static final String WARCINFO = "warcinfo";
@@ -63,6 +61,8 @@ public interface WARCConstants {
     public static final String REVISIT = "revist";
     public static final String CONVERSION = "conversion";
     public static final String CONTINUATION = "continuation";
+    
+    public static final String TYPE = "type";
     
     // List of all WARC Record TYPES
     public static final String [] TYPES = {WARCINFO, RESPONSE, RESOURCE,

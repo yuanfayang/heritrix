@@ -24,18 +24,26 @@
 */
 package org.archive.util.anvl;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
 /**
- * An ordered {@link List} with {@link Element} values as specified by <a
+ * An ordered {@link List} with 'data' {@link Element} values.
+ * @see <a
  * href="http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf">A Name-Value
- * Language (ANVL)</a>.
+ * Language (ANVL)</a>
  * @author stack
  */
 public class Record extends ArrayList<Element> {
-    private static final String CRLF = "\r\n";
+	/**
+	 * An ANVL 'newline'.
+	 * @see http://en.wikipedia.org/wiki/CRLF
+	 */
+    static final String CRLF = "\r\n";
+    
+    static final String UTF8 = "UTF-8";
     
     public Record() {
         super();
@@ -59,5 +67,14 @@ public class Record extends ArrayList<Element> {
         }
         sb.append(CRLF);
         return sb.toString();
+    }
+    
+    /**
+     * @return Record encoded as UTF-8 bytes.
+     * @throws UnsupportedEncodingException 
+     */
+    public byte [] getUTF8Bytes()
+    throws UnsupportedEncodingException {
+        return toString().getBytes(UTF8);
     }
 }

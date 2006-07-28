@@ -32,7 +32,9 @@ import java.io.UnsupportedEncodingException;
  * {@link Value}.
  * 
  * @author stack
- * @see http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf
+ * @see <a
+ * href="http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf">A Name-Value
+ * Language (ANVL)</a>
  */
 public class Element {
     private final SubElement [] subElements;
@@ -56,13 +58,5 @@ public class Element {
             sb.append(subElements[i].toString());
         }
         return sb.toString();
-    }
-    
-    /**
-     * @return Element as UTF-8 bytes.
-     * @throws UnsupportedEncodingException 
-     */
-    public byte [] getBytes() throws UnsupportedEncodingException {
-        return toString().getBytes("UTF-8");
     }
 }
