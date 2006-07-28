@@ -57,35 +57,49 @@ public class SeedRecord implements CoreAttributeConstants, Serializable {
         this.uri = curi.toString();
         this.statusCode = curi.getFetchStatus();
         this.disposition = disposition;
-        if(statusCode==301 || statusCode == 302) {
+        if (statusCode==301 || statusCode == 302) {
             Iterator iter = curi.getOutLinks().iterator();
-            while(iter.hasNext()) {
+            while (iter.hasNext()) {
                 Object o = iter.next();
                 if (o instanceof CandidateURI) {
                     CandidateURI cauri = (CandidateURI)o;
-                    if("location:".equalsIgnoreCase(cauri.getViaContext().toString())) {
+                    if("location:".equalsIgnoreCase(cauri.getViaContext().
+                    		toString())) {
                         redirectUri = cauri.toString();
                     }
                 }
             }
         }
     }
-
     
     /**
      * Constructor for when a CrawlURI is unavailable; such
-     * as wehn considering seeds not yet passed through as
+     * as when considering seeds not yet passed through as
      * CrawlURIs. 
      * 
      * @param uri
      * @param disposition
      */
     public SeedRecord(String uri, String disposition) {
-        super();
-        this.uri = uri;
-        this.disposition = disposition; 
+    	this(uri, disposition, -1, null);
     }
 
+    /**
+     * Create a record from the given URI, disposition, HTTP status code,
+     * and redirect URI.
+     * @param uri
+     * @param disposition
+     * @param statusCode
+     * @param redirectUri
+     */
+    public SeedRecord(String uri, String disposition, int statusCode,
+    		String redirectUri) {
+        super();
+        this.uri = uri;
+        this.statusCode = statusCode;
+        this.disposition = disposition;
+        this.redirectUri = redirectUri;        
+    }
 
     /**
      * @return Returns the disposition.
