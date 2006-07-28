@@ -34,7 +34,7 @@ public class RecordTest extends TestCase {
         am.add(new Element(new Label("who"),
             new Value("Gilbert, W.S. | Sullivan, Arthur")));
         am.add(new Element(new Label("what"),
-            new Value("The Yeoman of\nthe guard")));
+            new Value("The Yeoman of the guard")));
         am.add(new Element(new Label("when/created"),
             new Value("18888")));
         System.out.println(am.toString());
