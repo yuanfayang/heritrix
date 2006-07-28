@@ -36,6 +36,6 @@ public class Comment extends SubElement {
     @Override
     public String toString() {
         String s = super.toString();
-        return s != null && s.charAt(0) == '#'? s: '#' + s;
+        return s != null && s.charAt(0) == '#'? s: "# " + s;
     }
 }
