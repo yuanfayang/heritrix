@@ -1,11 +1,8 @@
-/*
- * ExperimentalWARCWriter
+/*  $Id$
  *
- * $Id$
+ * Created on July 27th, 2006
  *
- * Created on Jun 5, 2003
- *
- * Copyright (C) 2003 Internet Archive.
+ * Copyright (C) 2006 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -29,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.URI;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
@@ -48,12 +46,14 @@ import org.archive.util.TimestampSerialno;
  * File Format</a> document.  Specification and implementation subject to
  * change.
  *
- * <p>Assumption is that the caller is managing access to this ExperimentalWARCWriter
- * ensuring only one thread accessing this WARC instance at any one time.
+ * <p>Assumption is that the caller is managing access to this
+ * ExperimentalWARCWriter ensuring only one thread accessing this WARC instance
+ * at any one time.
  * 
  * <p>While being written, WARCs have a '.open' suffix appended.
  *
  * @author stack
+ * @version $Revision$ $Date$
  */
 public class ExperimentalWARCWriter
 extends WriterPoolMember implements WARCConstants {
@@ -97,7 +97,7 @@ extends WriterPoolMember implements WARCConstants {
      * @throws IOException
      */
     ExperimentalWARCWriter(final PrintStream out, final File f,
-            final boolean cmprs, final String a14DigitDate, final Map metadata)
+    		final boolean cmprs, final String a14DigitDate, final Map metadata)
     throws IOException {
         super(out, f, cmprs, a14DigitDate);
         // TODO: If passed file metadata, write it out.
@@ -152,15 +152,16 @@ extends WriterPoolMember implements WARCConstants {
         // TODO: A version that will collapse space and tab for mimetypes.
         // TODO: Below check may be too strict?
         for (int i = 0; i < value.length(); i++) {
-            if (Character.isISOControl(value.charAt(i))) {
+        	char c = value.charAt(i);
+            if (Character.isISOControl(c) || Character.isWhitespace(c)) {
                 throw new IOException("Contains illegal character 0x" +
-                    Integer.toHexString(value.charAt(i)) + ": " + value);
+                    Integer.toHexString(c) + ": " + value);
             }
         }
         return value;
     }
     
-    protected String getUid() {
+    protected String getRecordId() {
         // TODO: Needs to be pluggable.  Factory.
         return "unique-id-todo";
     }
@@ -170,8 +171,8 @@ extends WriterPoolMember implements WARCConstants {
     }
     
     protected byte [] createRecordHeaderline(final String type,
-    		final String url, final String mimetype, final String id,
-    		final int anvlFieldsLength, final long contentLength)
+    		final String url, final String mimetype, final URI recordId,
+    		final int namedFieldsLength, final long contentLength)
     throws IOException {
     	final StringBuilder sb =
     		new StringBuilder(2048/*A SWAG: TODO: Do analysis.*/);
@@ -187,9 +188,9 @@ extends WriterPoolMember implements WARCConstants {
     	sb.append(HEADER_FIELD_SEPARATOR);
     	sb.append(checkHeaderLineValue(mimetype));
     	sb.append(HEADER_FIELD_SEPARATOR);
-    	sb.append(checkHeaderLineValue(id));
+    	sb.append(checkHeaderLineValue(recordId.toString()));
     	
-    	long length = sb.length() + anvlFieldsLength + contentLength;
+    	long length = sb.length() + namedFieldsLength + contentLength;
     	
     	// Insert length and pad out to fixed width with zero prefix to
         // highlight 'fixed-widthness' of length.
@@ -203,7 +204,7 @@ extends WriterPoolMember implements WARCConstants {
     }
     
     protected void writeRecord(final String type, final String url,
-            final String mimetype, final String id, final Map namedFields,
+            final String mimetype, final URI recordId, final Map namedFields,
             final InputStream contentStream, final long contentLength)
     throws IOException {
     	if (!TYPES_LIST.contains(type)) {
@@ -221,7 +222,7 @@ extends WriterPoolMember implements WARCConstants {
         	final byte [] namedFieldsBlock = serializeNamedFields(namedFields);
         	// Now serialize the Header line.
             final byte [] header = createRecordHeaderline(type, url,
-            	mimetype, id, namedFieldsBlock.length, contentLength);
+            	mimetype, recordId, namedFieldsBlock.length, contentLength);
             write(header);
             if (namedFieldsBlock != null && namedFieldsBlock.length > 0) {
             	write(NEWLINE_BYTES);

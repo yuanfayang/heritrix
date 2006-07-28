@@ -25,9 +25,8 @@
 package org.archive.util.anvl;
 
 /**
- * Abstract ANVL 'data element' part.
+ * Abstract ANVL 'data element' sub-part.
  * @author stack
- * @see http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf
  */
 abstract class SubElement {
     private final String e;
@@ -52,10 +51,10 @@ abstract class SubElement {
                 throw new IllegalArgumentException(s +
                     " contains a control character(s): 0x" +
                     Integer.toHexString(i));
-            } else if (s.charAt(i) == '\r' && (i + 1 < s.length())
-                    && s.charAt(i + 1) == '\n') {
-                throw new IllegalArgumentException(s + " contains CRLF: " +
-                    "http://en.wikipedia.org/wiki/CRLF");
+            } else if (s.charAt(i) == Record.CRLF.charAt(0) &&
+            		(i + 1 < s.length()) &&
+            		s.charAt(i + 1) == Record.CRLF.charAt(1)) {
+                throw new IllegalArgumentException(s + " contains CRLF");
             }
         }
         return s;
