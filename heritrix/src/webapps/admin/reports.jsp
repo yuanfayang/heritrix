@@ -36,7 +36,7 @@
 <b>Reports on ongoing crawl/current status</b><br>
 <ul>
 	<% if(handler.getCurrentJob() != null) { %>
-    <li><a href="<%=request.getContextPath()%>/reports/crawljob.jsp?job=<%=handler.getCurrentJob().getUID()%>">Crawl report</a></li>
+	<li><a href="<%=request.getContextPath()%>/reports/crawljob.jsp">Crawl report</a></li>
     <li><a href="<%=request.getContextPath()%>/reports/seeds.jsp?job=<%=handler.getCurrentJob().getUID()%>">Seed report</a></li>
     <% } else { %>
     <li>Crawl report (unavailable)</li>
@@ -94,6 +94,12 @@
                 <tr <%=alt?"bgcolor='#EEEEFF'":""%>>
                     <td>
                         <%=job.getJobName()%>&nbsp;&nbsp;
+                    </td>
+                    <td>
+                    	<a href="<%=request.getContextPath()%>/reports/crawljob.jsp?job=<%=job.getUID()%>">Crawl report</a> &nbsp;
+                    </td>
+                    <td>
+                    	<a href="<%=request.getContextPath()%>/reports/seeds.jsp?job=<%=job.getUID()%>">Seed report</a> &nbsp;
                     </td>
                     <td>
                         <i><%=job.getStatus()%></i>&nbsp;&nbsp;

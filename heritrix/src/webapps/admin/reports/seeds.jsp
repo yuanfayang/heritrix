@@ -2,6 +2,7 @@
 
 <%@ page import="org.archive.crawler.admin.CrawlJob" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
+<%@ page import="org.archive.crawler.admin.StatisticsSummary" %>
 <%@ page import="org.archive.util.LongWrapper" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.archive.crawler.admin.SeedRecord" %>
@@ -13,8 +14,22 @@
      * StatisticsTracker for a completed job.
      * Parameter: job - UID for the job.
      */
+     
+    StatisticsSummary summary = null;
+
+    boolean viewingCurrentJob = false;
     String job = request.getParameter("job");
-    CrawlJob cjob = (job != null)? handler.getJob(job): handler.getCurrentJob();
+    
+    CrawlJob cjob = null;
+    if (job == null) {
+        // Get job that is currently running or paused
+    	cjob = handler.getCurrentJob();
+    	viewingCurrentJob = true;
+    } else {
+		// Get job indicated in query string
+    	cjob = handler.getJob(job);
+    }
+    
     String title = "Seeds report";
     int tab = 4;
 %>
@@ -27,14 +42,21 @@
 %>
         <p>&nbsp;<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Invalid job selected</b>
 <%
-    } else if(stats == null) {
-        out.println("<b>No statistics associated with job.</b><p>" +
-            "<b>Job status:</b> " + cjob.getStatus());            
-        if (cjob.getErrorMessage()!=null) {
-            out.println("<p><pre><font color='red'>" +
-                cjob.getErrorMessage() + "</font></pre>");
-        }
-    } else {
+    } else if (stats == null) {
+    	if (!viewingCurrentJob) {
+    		summary = new StatisticsSummary(cjob);
+    	}
+        if (viewingCurrentJob || !summary.isStats()) {
+	        out.println("<b>No statistics associated with job.</b><p>" +
+	            "<b>Job status:</b> " + cjob.getStatus());            
+	        if (cjob.getErrorMessage()!=null) {
+	            out.println("<p><pre><font color='red'>" +
+	                cjob.getErrorMessage() + "</font></pre>");
+	        }
+    	}
+    }
+    
+	if ((summary != null && summary.isStats()) || stats != null) {
         String ignoredSeeds = cjob.getIgnoredSeeds(); 
         if (ignoredSeeds != null && ignoredSeeds.length() > 0) {
 %>
@@ -54,7 +76,9 @@
                 </th>
             </tr>
             <%
-                Iterator seeds = stats.getSeedRecordsSortedByStatusCode();
+            	Iterator seeds = summary == null ? stats.getSeedRecordsSortedByStatusCode() :
+            		summary.getSeedRecordsSortedByStatusCode();
+                //Iterator seeds = stats.getSeedRecordsSortedByStatusCode();
                 while (seeds.hasNext()) {
                     SeedRecord sr = (SeedRecord)seeds.next();
                     int code = sr.getStatusCode();
