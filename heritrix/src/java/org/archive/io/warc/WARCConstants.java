@@ -108,7 +108,6 @@ public interface WARCConstants {
      * Placeholder is same size as the fixed field size allocated for length,
      * 12 characters.  12 characters allows records of size almost 1TB.
      */
-    public static final String PLACEHOLDER_LENGTH_STRING = "PLACE_HOLDER";
-    public static final int LENGTH_FIELD_FIXED_WIDTH =
-    	PLACEHOLDER_LENGTH_STRING.length();
+    public static final String PLACEHOLDER_RECORD_LENGTH_STRING =
+        "000000000000";
 }
