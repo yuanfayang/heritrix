@@ -4,17 +4,16 @@ package org.archive.crawler.byexample.algorithms.clustering.fihc;
 import java.util.Iterator;
 import java.util.List;
 
-import org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing;
-import org.archive.crawler.byexample.algorithms.datastructure.documents.IdListing;
-import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing.DocumentEntry;
-import org.archive.crawler.byexample.algorithms.datastructure.info.ClusteringInfo;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
-import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
-import org.archive.crawler.byexample.constants.AlgorithmConstants;
+import org.archive.crawler.byexample.constants.ByExampleProperties;
+import org.archive.crawler.byexample.datastructure.documents.ClusterDocumentsIndex;
+import org.archive.crawler.byexample.datastructure.documents.DocumentListing;
+import org.archive.crawler.byexample.datastructure.documents.IdListing;
+import org.archive.crawler.byexample.datastructure.info.ClusteringInfo;
+import org.archive.crawler.byexample.datastructure.itemset.FrequentItemSets;
+import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
+import org.archive.crawler.byexample.datastructure.support.ClusterSupportIndex;
+import org.archive.crawler.byexample.datastructure.support.TermSupport;
 import org.archive.crawler.byexample.utils.TimerUtils;
 
 /**
@@ -51,7 +50,7 @@ public class TreeBuilder {
     /**
      * Merges most similar clusters between different levels, if clusters size is less than MIN_SIZE_TO_PRUNE
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.AlgorithmConstants
+     * @see org.archive.crawler.byexample.datastructure.ByExampleProperties
      * @param fis Tree levels structure
      */
     public void mergeLevels(FrequentItemSets[] fis){
@@ -65,10 +64,10 @@ public class TreeBuilder {
         int childClusterSize=0;
         double currScore=0;
         double tempScore=0;
-        long sizeToPrune=Math.round(myDocCount*((double)AlgorithmConstants.MIN_SIZE_TO_PRUNE/100));
+        long sizeToPrune=Math.round(myDocCount*((double)ByExampleProperties.MIN_SIZE_TO_PRUNE/100));
         for (Iterator<ItemSet> iter1=fis[fis.length-1].getSetsIterator(); iter1.hasNext();){
             currChild=iter1.next();
-            childClusterSize=myDocumentClusteringIndex.getRow(currChild).getRowSize();
+            childClusterSize=myDocumentClusteringIndex.getRow(currChild).getListSize();
             //Merge all non-empty children of small size with their parents
             if (childClusterSize>0 && childClusterSize<sizeToPrune){
                 for (Iterator<ItemSet> iter2=fis[fis.length-2].getSetsIterator(); iter2.hasNext();){
@@ -87,13 +86,13 @@ public class TreeBuilder {
                     }
                 }
                 try {
-                    myDocumentClusteringIndex.getRow(tempParent).addListToRow(
+                    myDocumentClusteringIndex.getRow(tempParent).addList(
                                                                  myDocumentClusteringIndex.getRow(currChild));
                     myDocumentClusteringIndex.getRow(currChild).removeAll();
                     myClusterSupportIndex.getRow(tempParent).
-                        truncateAndMerge(AlgorithmConstants.MIN_CLUSTER_SUPPORT,myClusterSupportIndex.getRow(currChild),
-                                         myDocumentClusteringIndex.getRow(tempParent).getRowSize(),
-                                         myDocumentClusteringIndex.getRow(currChild).getRowSize());
+                        truncateAndMerge(ByExampleProperties.MIN_CLUSTER_SUPPORT,myClusterSupportIndex.getRow(currChild),
+                                         myDocumentClusteringIndex.getRow(tempParent).getListSize(),
+                                         myDocumentClusteringIndex.getRow(currChild).getListSize());
                     myClusterSupportIndex.removeRow(currChild);
                 } catch (RuntimeException e) {
                     e.printStackTrace();
@@ -116,7 +115,7 @@ public class TreeBuilder {
             ItemSet is=iter.next();
             myClusterSupportIndex.removeRow(is);
         }
-        myClusterSupportIndex.truncateAllRows(AlgorithmConstants.MIN_CLUSTER_SUPPORT);
+        myClusterSupportIndex.truncateAllRows(ByExampleProperties.MIN_CLUSTER_SUPPORT);
     }
     
     /**
@@ -128,13 +127,13 @@ public class TreeBuilder {
     public boolean determineClusterRelevance(IdListing clusterDocs){
         double relevanceRatio=0;
                 
-        for (int i = 0; i < clusterDocs.getRowSize(); i++) {
+        for (int i = 0; i < clusterDocs.getListSize(); i++) {
             //Count all relevant documents
-            if (allDocs.getEntryAtPos(Integer.parseInt(clusterDocs.getValueAtPos(i))).isAutoIn())
+            if (allDocs.getEntryAtPos(Integer.parseInt(clusterDocs.getValueAtPos(i))).isRelevant())
                 relevanceRatio++;
         }
         
-        relevanceRatio/=clusterDocs.getRowSize();
+        relevanceRatio/=clusterDocs.getListSize();
         //Cluster is deemed relevant if it's relevance ratio is above average relevance ratio in
         //all crawled documents
         if (relevanceRatio>=avgRelevanceRatio)
@@ -157,7 +156,7 @@ public class TreeBuilder {
             currIS=iter.next();
             assocTerms=myClusterSupportIndex.getRow(currIS).termsToString();
             //TO DO: Determine relevance
-            info.addCluster(currIS,myDocumentClusteringIndex.getRow(currIS).getRowSize(),
+            info.addCluster(currIS,myDocumentClusteringIndex.getRow(currIS).getListSize(),
                             determineClusterRelevance(myDocumentClusteringIndex.getRow(currIS)),assocTerms);            
         }
         
@@ -177,7 +176,7 @@ public class TreeBuilder {
         TimerUtils myTH=new TimerUtils();
         
         myTH.startTimer();
-        mergeLevels(fis.splitLevelsByK(AlgorithmConstants.MAX_DEPTH));
+        mergeLevels(fis.splitLevelsByK(ByExampleProperties.MAX_DEPTH));
         myTH.reportActionTimer("MERGING SMALL CLUSTERS");
         
         myTH.startTimer();

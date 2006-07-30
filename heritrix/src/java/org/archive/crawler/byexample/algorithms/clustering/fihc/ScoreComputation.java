@@ -3,13 +3,13 @@ package org.archive.crawler.byexample.algorithms.clustering.fihc;
 import java.util.Iterator;
 import java.util.List;
 
-import org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
-import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
-import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupportListing;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
-import org.archive.crawler.byexample.constants.AlgorithmConstants;
+import org.archive.crawler.byexample.constants.ByExampleProperties;
+import org.archive.crawler.byexample.datastructure.documents.ClusterDocumentsIndex;
+import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
+import org.archive.crawler.byexample.datastructure.support.ClusterSupportIndex;
+import org.archive.crawler.byexample.datastructure.support.TermSupport;
+import org.archive.crawler.byexample.datastructure.support.TermSupportListing;
 
 /**
  * Class that provides static methods for similarity scores computation between documents and clusters
@@ -27,7 +27,7 @@ public class ScoreComputation {
                                                 ClusterSupportIndex myClusterSupportIndex, 
                                                 DocumentIndexManipulator myTFIDFIndex,
                                                 List<TermSupport> myGlobalSupportIndex){
-        double minSupportPercent=(double)AlgorithmConstants.MIN_CLUSTER_SUPPORT/100;
+        double minSupportPercent=(double)ByExampleProperties.MIN_CLUSTER_SUPPORT/100;
         double score=0;
         TermSupportListing currRow=myClusterSupportIndex.getRow(is);
         TermSupport currEntry=null;
@@ -61,8 +61,8 @@ public class ScoreComputation {
             totalSimilarity=calculateClusterDocumentScore(is1,docsToCompare[i],myClusterSupportIndex,myTFIDFIndex,myGlobalSupportIndex);            
         }
         //Normalize the similarity by clusters size
-        return normalizeSimilarity(totalSimilarity,myDocumentClusterIndex.getRow(is1).getRowSize(), 
-                                   myDocumentClusterIndex.getRow(is2).getRowSize());
+        return normalizeSimilarity(totalSimilarity,myDocumentClusterIndex.getRow(is1).getListSize(), 
+                                   myDocumentClusterIndex.getRow(is2).getListSize());
     }
    
     //Normalize similarity by clusters size

@@ -1,14 +1,18 @@
 package org.archive.crawler.byexample.algorithms.preprocessing;
 
 
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexRow;
+import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.datastructure.invertedindex.BdbIndex;
+import org.archive.crawler.byexample.datastructure.invertedindex.InMemoryIndex;
+import org.archive.crawler.byexample.datastructure.invertedindex.IndexEntry;
+import org.archive.crawler.byexample.datastructure.invertedindex.IndexRow;
+import org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex;
 
 /**
- * This class manipulation wrapper around InvertedIndex
+ * This class is a manipulation wrapper around InvertedIndex
  * Manipulations implemented here are specific to Terms Inverted Index
  * 
- * @see  org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex
+ * @see  org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex
  * 
  * @author Michael Bendersky
  *
@@ -22,8 +26,14 @@ public class TermIndexManipulator {
      * and builds manipulator for it
      *
      */
-    public TermIndexManipulator(){
-        myIndex=new InvertedIndex();
+    public TermIndexManipulator(String indexType, String indexFilePath) throws Exception{
+        
+        if (indexType.equals(OutputConstants.IN_MEMORY_INDEX))
+                myIndex=new InMemoryIndex();
+        else if (indexType.equals(OutputConstants.BDB_INDEX))
+                myIndex=new BdbIndex(indexFilePath);
+        
+        else throw new Exception("Invalid inverted index type");
     }
     
     /**
@@ -71,11 +81,11 @@ public class TermIndexManipulator {
         }
         //Add unique entry mapping to the rowKey 
         //Mapping to key is added only once per entry 
-        if (!currRow.getLatestEntryId().equals(entryID))
-            currRow.addRowEntry(entryID,1);                    
+        if (!myIndex.getRowLatestEntryId(rowKey).equals(entryID))
+            myIndex.addEntry(rowKey, new IndexEntry(entryID,1));                    
         //Entry already exists for a key. Increase entry occurences count
         else
-            currRow.increaseRowLatestEntryValue();
+            myIndex.increaseRowLatestEntryValue(rowKey);
             //indexRowsHash.put(rowKey,currRow.increaseRowLatestEntryValue(entryID));
     }
 
