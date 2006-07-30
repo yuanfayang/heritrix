@@ -5,20 +5,20 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexEntry;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexRow;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
-import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
-import org.archive.crawler.byexample.constants.AlgorithmConstants;
+import org.archive.crawler.byexample.constants.ByExampleProperties;
 import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.datastructure.invertedindex.IndexEntry;
+import org.archive.crawler.byexample.datastructure.invertedindex.IndexRow;
+import org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.datastructure.itemset.FrequentItemSets;
+import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
+import org.archive.crawler.byexample.datastructure.support.TermSupport;
 
 /**
  * Creates k-frequent Item Sets for the crawled documents according to APRIORI algorithm
  * k-frequent item set is a collection of k terms which appears in at least MIN_SUPPORT  
  * per cent of the documents. 
- * @see org.archive.crawler.byexample.constants.AlgorithmConstants
+ * @see org.archive.crawler.byexample.constants.ByExampleProperties
  * 
  * @author Michael Bendersky
  *
@@ -95,7 +95,7 @@ public class AprioriItemSetComputation {
      * @return TRUE - item set is supported, FALSE - else
      */
     public boolean isMinSupported(ItemSet kSet){
-        if (findMinSupport(kSet)>AlgorithmConstants.MIN_GLOBAL_SUPPORT)
+        if (findMinSupport(kSet)>ByExampleProperties.MIN_GLOBAL_SUPPORT)
             return true;
         return false;            
     }
@@ -118,7 +118,7 @@ public class AprioriItemSetComputation {
         
         Iterator<IndexEntry>iter1=r1.getRowIterator();
         Iterator<IndexEntry>iter2=r2.getRowIterator();
-        IndexRow mergedRow=myTermsIndex.new IndexRow();
+        IndexRow mergedRow=new IndexRow();
         String d1,d2;    
         d1=iter1.next().getEntryId();        
         d2=iter2.next().getEntryId();        
@@ -131,7 +131,7 @@ public class AprioriItemSetComputation {
                 d1=iter1.next().getEntryId();
                 continue;
             }            
-            mergedRow.addRowEntry(d1,1);
+            mergedRow.addRowEntry(new IndexEntry(d1,1));
             d1=iter1.next().getEntryId();
             d2=iter2.next().getEntryId();
         }
@@ -142,14 +142,14 @@ public class AprioriItemSetComputation {
      * Recursive method, which generates k-frequent item sets.
      * Stops when: either no more k-frequent item sets to generate or MAX_DEPTH is reached
      * 
-     * @see org.archive.crawler.byexample.constants.AlgorithmConstants
+     * @see org.archive.crawler.byexample.constants.ByExampleProperties
      * 
      * @param prevSets previous k-frequent items
      * @param counter recursion depth
      */
     public void generateAll(FrequentItemSets prevSets, int counter){
         
-        if (prevSets.getSize()==0 || counter==AlgorithmConstants.MAX_DEPTH) 
+        if (prevSets.getSize()==0 || counter==ByExampleProperties.MAX_DEPTH) 
             return;
         
         generateAll(selfJoin(prevSets),++counter);
@@ -259,7 +259,7 @@ public class AprioriItemSetComputation {
      * Creates 1-frequent item sets and sorts them by support.
      * If number of 1-frequent item sets exceeds MAX_1_FREQUENT_TERMS, only top MAX_1_FREQUENT_TERMS will be returned
      * 
-     * @see org.archive.crawler.byexample.constants.AlgorithmConstants
+     * @see org.archive.crawler.byexample.constants.ByExampleProperties
      */
     public void find1FrequentItemSets(){        
         String term;        
@@ -271,16 +271,16 @@ public class AprioriItemSetComputation {
             term=iter.next();
             candidateSet=new ItemSet(term);
             candidateSupport=findMinSupport(candidateSet);
-            if (candidateSupport>AlgorithmConstants.MIN_GLOBAL_SUPPORT){
+            if (candidateSupport>ByExampleProperties.MIN_GLOBAL_SUPPORT){
                 frequentItemSupport.add(new TermSupport(term,candidateSupport));
             }
         }
 
         //If there are many 1-frequent items, include only top MAX_1_FREQUENT_TERMS items in 1-frequent items set
-        if (frequentItemSupport.size()>AlgorithmConstants.MAX_1_FREQUENT_TERMS){       
+        if (frequentItemSupport.size()>ByExampleProperties.MAX_1_FREQUENT_TERMS){       
             Collections.sort(frequentItemSupport);
             frequentItemSupport=
-                frequentItemSupport.subList(frequentItemSupport.size()-1-AlgorithmConstants.MAX_1_FREQUENT_TERMS,
+                frequentItemSupport.subList(frequentItemSupport.size()-1-ByExampleProperties.MAX_1_FREQUENT_TERMS,
                                             frequentItemSupport.size()-1);
         }
         
@@ -296,11 +296,15 @@ public class AprioriItemSetComputation {
      */
     public void buildFrequentItemSetsIndex(){
         String term;
+        ItemSet itemsToRemove=new ItemSet();
         for (Iterator<String> iter  = myTermsIndex.getIndexKeysIterator(); iter.hasNext();) {
             term =iter.next();
             if (!myFrequentItemSets.contains(new ItemSet(term))){
-                myTermsIndex.removeRow(term);
+                itemsToRemove.insertToSet(term);
             }
+        }
+        for (int i = 0; i < itemsToRemove.getSize(); i++) {
+            myTermsIndex.removeRow(itemsToRemove.getItemAtPosition(i));
         }
     }
     

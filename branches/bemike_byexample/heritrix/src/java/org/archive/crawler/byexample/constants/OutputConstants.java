@@ -3,6 +3,14 @@ package org.archive.crawler.byexample.constants;
 import java.io.File;
 
 public class OutputConstants {
+        
+    // Inverted index constants
+   public static final String DEFAULT_ENCODING="UTF-8";
+   public static final String IN_MEMORY_INDEX="IN_MEMORY_INDEX";
+   public static final String BDB_INDEX="BDB_INDEX";
+   
+    // Listing constants
+    public static final int MAX_ENTRIES_IN_MEMORY=1000;
     
     // Print-out Constants    
     public static final String KEY_SEPARATOR="~~";
@@ -27,9 +35,11 @@ public class OutputConstants {
     public static final String DOCUMENTS_CLUSTERING_LISTING_FILENAME="clusteringDocs.txt";
     public static final String TERMS_SUPPORT_LISTING_FILENAME="clusteringTermSupport.txt";  
     public static final String CLASSIFICATION_DOCUMENT_LISTING="classifiedDocs.txt";  
+    public static final String AUTO_IN_LISTING="autoInList.txt";
+    public static final String AUTO_OUT_LISTING="autoOutList.txt";    
     public static final String PREPROCESS_XML_FILENAME="preprocess-results.xml";
     public static final String CLUSTERING_XML_FILENAME="clustering-results.xml";
-    
+    public static final String CLASSIFICATION_XML_FILENAME="classification-results.xml";
     
     /**
      * Returns path under JOBS_HOME for a job of given id

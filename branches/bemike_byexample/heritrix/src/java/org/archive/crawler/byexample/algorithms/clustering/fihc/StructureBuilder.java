@@ -6,22 +6,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing;
-import org.archive.crawler.byexample.algorithms.datastructure.documents.IdListing;
-import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing.DocumentEntry;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexEntry;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexRow;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
-import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterScore;
-import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.support.DocumentSupportIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
-import org.archive.crawler.byexample.constants.AlgorithmConstants;
+import org.archive.crawler.byexample.constants.ByExampleProperties;
+import org.archive.crawler.byexample.datastructure.documents.ClusterDocumentsIndex;
+import org.archive.crawler.byexample.datastructure.documents.DocumentListing;
+import org.archive.crawler.byexample.datastructure.documents.IdListing;
+import org.archive.crawler.byexample.datastructure.documents.DocumentEntry;
+import org.archive.crawler.byexample.datastructure.invertedindex.IndexEntry;
+import org.archive.crawler.byexample.datastructure.invertedindex.IndexRow;
+import org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.datastructure.itemset.FrequentItemSets;
+import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
+import org.archive.crawler.byexample.datastructure.support.ClusterScore;
+import org.archive.crawler.byexample.datastructure.support.ClusterSupportIndex;
+import org.archive.crawler.byexample.datastructure.support.DocumentSupportIndex;
+import org.archive.crawler.byexample.datastructure.support.TermSupport;
 import org.archive.crawler.byexample.utils.TimerUtils;
 
 /**
@@ -43,9 +43,11 @@ public class StructureBuilder {
     /**
      * Default Constructor
      */
-    public StructureBuilder(long docCount, InvertedIndex termsIndex, List<TermSupport> termSupport, DocumentListing allDocs){
+    public StructureBuilder(long docCount, InvertedIndex termsIndex, 
+            List<TermSupport> termSupport, DocumentListing allDocs, String indexFilePath) 
+    throws Exception{
         myTermsIndex=new TermIndexManipulator(termsIndex);
-        myTFIDFIndex=new DocumentIndexManipulator(termsIndex, docCount);
+        myTFIDFIndex=new DocumentIndexManipulator(ByExampleProperties.INVERTED_INDEX_TYPE,indexFilePath, termsIndex, docCount);
         myTFIDFIndex.createSortedByIdTFIDFIndex();
         myDocumentClusteringIndex=new ClusterDocumentsIndex();
         myClusterSupportIndex=new ClusterSupportIndex();
@@ -80,12 +82,12 @@ public class StructureBuilder {
                 }
                 //Update best cluster and score and remove document from previously best cluster
                 if (currScore>=clusterScoresHash.get(currDocID).getClusterScore()){
-                    myDocumentClusteringIndex.getRow(clusterScoresHash.get(currDocID).getClusterLabel()).removeValueFromRow(currDocID);                    
+                    myDocumentClusteringIndex.getRow(clusterScoresHash.get(currDocID).getClusterLabel()).removeValue(currDocID);                    
                     clusterScoresHash.put(currDocID,new ClusterScore(currIS,currScore));
                 }
                 //
                 else
-                    myDocumentClusteringIndex.getRow(currIS).removeValueFromRow(currDocID);
+                    myDocumentClusteringIndex.getRow(currIS).removeValue(currDocID);
             }                
         }        
     }
@@ -98,7 +100,7 @@ public class StructureBuilder {
         for (Iterator<ItemSet> iter = myDocumentClusteringIndex.getIndexKeysIterator(); iter.hasNext();) {
             currIS=iter.next();            
             currDocs=myDocumentClusteringIndex.getRow(currIS);     
-            currDocsNo=currDocs.getRowSize();       
+            currDocsNo=currDocs.getListSize();       
             //No documents in the cluster. Do not calculate support
             if (currDocsNo==0)
                 continue;
@@ -150,7 +152,7 @@ public class StructureBuilder {
         
         ItemSet currItemSet;
         boolean isClassified=false;
-        ItemSet unClassified=new ItemSet(AlgorithmConstants.UNCLASSIFIED_LABEL);
+        ItemSet unClassified=new ItemSet(ByExampleProperties.UNCLASSIFIED_LABEL);
         
         for (Iterator<DocumentEntry> docIter = myDocListing.getListingIterator(); docIter.hasNext();) {
             isClassified=false;
@@ -187,7 +189,7 @@ public class StructureBuilder {
     /**
      * @return current document clustering index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex
+     * @see org.archive.crawler.byexample.datastructure.documents.ClusterDocumentsIndex
      */
     public ClusterDocumentsIndex getClusterDocuments(){
         return myDocumentClusteringIndex;
@@ -196,7 +198,7 @@ public class StructureBuilder {
     /**
      * @return current support index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex
+     * @see org.archive.crawler.byexample.datastructure.support.ClusterSupportIndex
      * 
      */
     public ClusterSupportIndex getClusterSupport(){
@@ -206,7 +208,7 @@ public class StructureBuilder {
     /**
      * @return current TFIDF index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex
+     * @see org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex
      */
     public InvertedIndex getTFIDFIndex(){
         return myTFIDFIndex.getIndex();

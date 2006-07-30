@@ -2,10 +2,13 @@ package org.archive.crawler.byexample.algorithms.tfidf;
 
 import java.util.Iterator;
 
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IdComparator;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexEntry;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex.IndexRow;
+import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.datastructure.invertedindex.BdbIndex;
+import org.archive.crawler.byexample.datastructure.invertedindex.InMemoryIndex;
+import org.archive.crawler.byexample.datastructure.invertedindex.IdComparator;
+import org.archive.crawler.byexample.datastructure.invertedindex.IndexEntry;
+import org.archive.crawler.byexample.datastructure.invertedindex.IndexRow;
+import org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex;
 
 
 
@@ -15,8 +18,15 @@ public class DocumentIndexManipulator {
     private InvertedIndex termsIndex;
     private long myDocCount;
     
-    public DocumentIndexManipulator(InvertedIndex ti, long docCount){
-        myIndex=new InvertedIndex();
+    public DocumentIndexManipulator(String indexType, String indexFilePath, InvertedIndex ti, long docCount)
+    throws Exception{
+                
+        if (indexType.equals(OutputConstants.IN_MEMORY_INDEX))
+                myIndex=new InMemoryIndex();
+        else if (indexType.equals(OutputConstants.BDB_INDEX))
+                myIndex=new BdbIndex(indexFilePath);        
+        else throw new Exception("Invalid inverted index type");
+        
         termsIndex=ti;
         myDocCount=docCount;
     }
@@ -45,13 +55,15 @@ public class DocumentIndexManipulator {
     
     public void sortByDocId(){
         IndexRow currRow;   
-        IdComparator idComparator=myIndex.new IdComparator();     
+        IdComparator idComparator=new IdComparator();     
+        String currKey;
         for (Iterator<String> iter=myIndex.getIndexKeysIterator();iter.hasNext();){
-            currRow=myIndex.getRow(iter.next());
+            currKey=iter.next();
+            currRow=myIndex.getRow(currKey);
             //Normalize TFIDF values
-            currRow.normalizeRow();
+            myIndex.normalizeRow(currKey);
             //Sort lexicographically
-            currRow.sortRow(idComparator);
+            myIndex.sortRow(currKey,idComparator);            
         }
     }
     
@@ -64,7 +76,7 @@ public class DocumentIndexManipulator {
             currRow=myIndex.getRow(docID);
         }
         // Add term TFIDF count to the document row 
-        currRow.addRowEntry(termEntryID,termEntryValue);
+        myIndex.addEntry(docID,new IndexEntry(termEntryID,termEntryValue));
     }
    
     /**

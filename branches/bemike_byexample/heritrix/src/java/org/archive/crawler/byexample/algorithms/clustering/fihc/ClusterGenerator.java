@@ -2,15 +2,16 @@ package org.archive.crawler.byexample.algorithms.clustering.fihc;
 
 import java.util.List;
 
-import org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing;
-import org.archive.crawler.byexample.algorithms.datastructure.info.ClusteringInfo;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
-import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.support.TermSupport;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
+import org.archive.crawler.byexample.constants.ByExampleProperties;
+import org.archive.crawler.byexample.datastructure.documents.ClusterDocumentsIndex;
+import org.archive.crawler.byexample.datastructure.documents.DocumentListing;
+import org.archive.crawler.byexample.datastructure.info.ClusteringInfo;
+import org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.datastructure.itemset.FrequentItemSets;
+import org.archive.crawler.byexample.datastructure.support.ClusterSupportIndex;
+import org.archive.crawler.byexample.datastructure.support.TermSupport;
 
 /**
  * Cluster Generation class.
@@ -38,9 +39,11 @@ public class ClusterGenerator {
      * @param termSupport TermSupport list
      * @param allDocs list of documents in collection
      */
-    public ClusterGenerator(long docCount, InvertedIndex termsIndex, List<TermSupport> termSupport, DocumentListing allDocs){
+    public ClusterGenerator(long docCount, InvertedIndex termsIndex, 
+                            List<TermSupport> termSupport, DocumentListing allDocs, String indexFilePath)
+    throws Exception{
         myTermsIndex=new TermIndexManipulator(termsIndex);
-        myTFIDFIndex=new DocumentIndexManipulator(termsIndex, docCount);
+        myTFIDFIndex=new DocumentIndexManipulator(ByExampleProperties.INVERTED_INDEX_TYPE,indexFilePath,termsIndex, docCount);
         myTFIDFIndex.createSortedByIdTFIDFIndex();
         myDocumentClusteringIndex=new ClusterDocumentsIndex();
         myClusterSupportIndex=new ClusterSupportIndex();
@@ -48,13 +51,13 @@ public class ClusterGenerator {
         myDocCount=docCount;
         myDocumentListing=allDocs; 
         
-        structureBuilder=new StructureBuilder(myDocCount, termsIndex, termSupport, myDocumentListing);        
+        structureBuilder=new StructureBuilder(myDocCount, termsIndex, termSupport, myDocumentListing, indexFilePath);        
     }    
     
     /**
      * @return current document clustering index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.documents.ClusterDocumentsIndex
+     * @see org.archive.crawler.byexample.datastructure.documents.ClusterDocumentsIndex
      */
     public ClusterDocumentsIndex getClusterDocuments(){
         return myDocumentClusteringIndex;
@@ -63,7 +66,7 @@ public class ClusterGenerator {
     /**
      * @return current support index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex
+     * @see org.archive.crawler.byexample.datastructure.support.ClusterSupportIndex
      * 
      */
     public ClusterSupportIndex getClusterSupport(){
@@ -73,7 +76,7 @@ public class ClusterGenerator {
     /**
      * @return current TFIDF index
      * 
-     * @see org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex
+     * @see org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex
      */
     public InvertedIndex getTFIDFIndex(){
         return myTFIDFIndex.getIndex();

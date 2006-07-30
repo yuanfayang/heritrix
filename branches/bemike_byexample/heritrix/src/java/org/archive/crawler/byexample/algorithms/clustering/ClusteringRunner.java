@@ -5,13 +5,15 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.byexample.algorithms.clustering.apriori.AprioriItemSetComputation;
 import org.archive.crawler.byexample.algorithms.clustering.fihc.ClusterGenerator;
-import org.archive.crawler.byexample.algorithms.datastructure.documents.DocumentListing;
-import org.archive.crawler.byexample.algorithms.datastructure.info.ClusteringInfo;
-import org.archive.crawler.byexample.algorithms.datastructure.info.PreprocessInfo;
-import org.archive.crawler.byexample.algorithms.datastructure.invertedindex.InvertedIndex;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.FrequentItemSets;
-import org.archive.crawler.byexample.constants.AlgorithmConstants;
+import org.archive.crawler.byexample.constants.ByExampleProperties;
 import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.datastructure.documents.DocumentListing;
+import org.archive.crawler.byexample.datastructure.info.ClusteringInfo;
+import org.archive.crawler.byexample.datastructure.info.PreprocessInfo;
+import org.archive.crawler.byexample.datastructure.invertedindex.BdbIndex;
+import org.archive.crawler.byexample.datastructure.invertedindex.InMemoryIndex;
+import org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex;
+import org.archive.crawler.byexample.datastructure.itemset.FrequentItemSets;
 import org.archive.crawler.byexample.utils.FileUtils;
 import org.archive.crawler.byexample.utils.TimerUtils;
 
@@ -63,7 +65,7 @@ public class ClusteringRunner {
         String jobID=args[0];
         
         try {
-            AlgorithmConstants.readPropeties(OutputConstants.CONFIG_HOME+OutputConstants.PROPERTIES_FILENAME);
+            ByExampleProperties.readPropeties(OutputConstants.CONFIG_HOME+OutputConstants.PROPERTIES_FILENAME);
         } catch (Exception e) {
             logger.severe("Failed to load properties file: "+e.getMessage());
             return;
@@ -89,11 +91,19 @@ public class ClusteringRunner {
             return;
         }
         
-        InvertedIndex index=new InvertedIndex();
+        InvertedIndex index;
+        if (ByExampleProperties.INVERTED_INDEX_TYPE.equals(OutputConstants.IN_MEMORY_INDEX)){
+            index=new InMemoryIndex();
+            index.openIndex(preProcessInfo.getTermsFN());
+        }
+        else if (ByExampleProperties.INVERTED_INDEX_TYPE.equals(OutputConstants.BDB_INDEX))
+            index=new BdbIndex(OutputConstants.getPreprocessPath(jobID));
+        else
+            throw new Exception("Invalid index type");
+        
         DocumentListing docListing=new DocumentListing();
         
-        try {
-            index.readIndexFromFile(preProcessInfo.getTermsFN());
+        try {            
             docListing.readListingFromFile(preProcessInfo.getDocsFN());
         } catch (Exception e) {
            logger.severe("Failed to load input pre-process files: "+e.getMessage());
@@ -115,7 +125,7 @@ public class ClusteringRunner {
                 OutputConstants.getClusteringPath(jobID)+OutputConstants.TERMS_SUPPORT_LISTING_FILENAME);
         //Create Clustering Generator
         ClusterGenerator clusterGen=new ClusterGenerator(docCount,apriori.getFrequentItemSetsIndex(), 
-                                    apriori.getFrequentItemSupport(),docListing);
+                                    apriori.getFrequentItemSupport(),docListing,OutputConstants.getClusteringPath(jobID));
         
         
         try {
