@@ -11,6 +11,7 @@ import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
 import org.archive.crawler.byexample.constants.ByExampleProperties;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.constants.ScopeDecisionConstants;
+import org.archive.crawler.byexample.datastructure.documents.DocumentClassificationEntry;
 import org.archive.crawler.byexample.datastructure.documents.DocumentClassificationListing;
 import org.archive.crawler.byexample.datastructure.documents.IdListing;
 import org.archive.crawler.byexample.datastructure.info.ClassificationInfo;
@@ -71,15 +72,8 @@ public class ClassifierProcessor extends Processor {
     
     //Classification Documents listing
     private DocumentClassificationListing myClassificationDocListing=null;
-    private BufferedWriter fullListDumpFile=null;
+    private BufferedWriter listDumpFile=null;
     
-    //Auto-in file listing
-    private IdListing myAutoInListing=null;
-    private BufferedWriter autoInListDumpFile=null;
-    
-//  Auto-out file listing
-    private IdListing myAutoOutListing=null;
-    private BufferedWriter autoOutListDumpFile=null;
     
     
     public ClassifierProcessor(String name){
@@ -139,21 +133,15 @@ public class ClassifierProcessor extends Processor {
         
         //Create output files
         try {
-            fullListDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
+            listDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
                                                     OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,true);
-            autoInListDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
-                                                    OutputConstants.AUTO_IN_LISTING,true);
-            autoOutListDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
-                                                    OutputConstants.AUTO_OUT_LISTING,true);
         } catch (Exception e1) {
             logger.severe("Failed to create classified docs file: "+e1.getMessage());
         }
         
         //Create documents listings
         try {
-            myClassificationDocListing=new DocumentClassificationListing(fullListDumpFile);
-            myAutoInListing=new IdListing(autoInListDumpFile);
-            myAutoOutListing=new IdListing(autoOutListDumpFile);
+            myClassificationDocListing=new DocumentClassificationListing(listDumpFile);
         } catch (Exception e1) {
            logger.severe("Couldn't create classification listing file: "+e1.getMessage());
         }
@@ -174,9 +162,7 @@ public class ClassifierProcessor extends Processor {
         // Get the URI from the CrawlURI
         String currURL = uriToProcess.toString();
         //Document top classification scores
-        ClusterScore[] classifications=null;
-        //Document scoping decision
-        ScopeDecisionConstants scoping=null;
+        DocumentClassificationEntry currUrlClassifications=null;
         
         
         // Handles only HTTP at the moment
@@ -207,19 +193,14 @@ public class ClassifierProcessor extends Processor {
         
         //Get document classification and scoping
         try {
-            classifications=myClassifier.classify(cs,stopWordsHandler,stemmer);
-            scoping=myClassifier.scopeIdentifier(classifications);
+            currUrlClassifications=myClassifier.classify(currURL,cs,stopWordsHandler,stemmer);
         } catch (ParserException e) {
             logger.severe("Failed to parse page"+e.getMessage());
             return;
         }
                         
         //Add document classifications to listing
-        myClassificationDocListing.addClassification(currURL,classifications,scoping);
-        if (scoping==ScopeDecisionConstants.AUTO_IN)
-            myAutoInListing.addValue(currURL);
-        if  (scoping==ScopeDecisionConstants.AUTO_OUT)
-            myAutoOutListing.addValue(currURL);
+        myClassificationDocListing.addClassification(currUrlClassifications);
                 
         numOfProcessedDocs++;
     }
@@ -229,8 +210,6 @@ public class ClassifierProcessor extends Processor {
         try {
             ClassificationInfo info=new ClassificationInfo
                                 (OutputConstants.getJobPath(basedOnJob),
-                                 filesPath+OutputConstants.AUTO_IN_LISTING,
-                                 filesPath+OutputConstants.AUTO_OUT_LISTING,
                                  filesPath+OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,numOfProcessedDocs);
             info.toXML(OutputConstants.getJobPath(jobID),OutputConstants.CLASSIFICATION_XML_FILENAME);
         } catch (Exception e) {
@@ -250,7 +229,7 @@ public class ClassifierProcessor extends Processor {
     protected void finalTasks(){
         try {
             myClassificationDocListing.dumpListingToFile();
-            FileUtils.closeFile(fullListDumpFile);
+            FileUtils.closeFile(listDumpFile);
         } catch (Exception e) {
             logger.severe("Couldn't close dump files: "+e.getMessage());
         }

@@ -4,6 +4,7 @@ import org.archive.crawler.byexample.algorithms.preprocessing.PorterStemmer;
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
 import org.archive.crawler.byexample.constants.ByExampleProperties;
 import org.archive.crawler.byexample.constants.ScopeDecisionConstants;
+import org.archive.crawler.byexample.datastructure.documents.DocumentClassificationEntry;
 import org.archive.crawler.byexample.datastructure.info.ClusteringInfo;
 import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 import org.archive.crawler.byexample.datastructure.support.ClusterScore;
@@ -92,10 +93,10 @@ public class Classifier {
      * <p>
      * 3. Assigning score to each cluster based on cluster-frequent terms
      * <p>
-     * 4. Returning page classification as vector of assignment probabilities to clusters with highest scores. 
-     * Vector size depends on TOP_CLASSIFICATION parameter
+     * 4. Returning DocumentClassificationEntry object for the document
      * 
      * @see org.archive.crawler.byexample.constants.ByExampleProperties
+     * @see org.archive.crawler.byexample.datastructure.documents.DocumentClassificationEntry
      * 
      * @param cs - CharSequence stream
      * @param swh - StopWordsHandler instance
@@ -103,12 +104,13 @@ public class Classifier {
      * @return ClusterScore[] Array containing assignment probabilities 
      * @throws ParserException
      */
-    public synchronized ClusterScore[] classify(CharSequence cs, StopWordsHandler swh, PorterStemmer stemmer) throws ParserException{
-        
+    public synchronized DocumentClassificationEntry classify(String url, CharSequence cs, 
+                                                             StopWordsHandler swh, PorterStemmer stemmer) 
+                                                    throws ParserException{        
         String[] allTerms=parsePage(cs);
         String iter;
         ClusterScoreListing pageScores=new ClusterScoreListing();
-        ClusterScoreListing termScores=null;
+        ClusterScoreListing termScores=null;        
         
         //Process parsed page
         if (allTerms!=null) {
@@ -128,7 +130,18 @@ public class Classifier {
         }
         
         pageScores.sortListing();
-        return normalizeRelevanceScores(pageScores.getTopScores(ByExampleProperties.TOP_CLASSIFICATIONS));      
+        ClusterScore[] topScores=pageScores.getTopScores(ByExampleProperties.TOP_CLASSIFICATIONS);
+        return new DocumentClassificationEntry(url, normalizeRelevanceScores(topScores), getRelevanceScore(topScores));      
+    }
+    
+    public synchronized double getRelevanceScore(ClusterScore[] cs){
+        double relevanceScore=0;
+        for (int i = 0; i < cs.length; i++) {
+            if (myRelevanceInfo.getClusterRelevance(cs[i].getClusterLabel()))
+                //Increase relevance score for each relevant cluster
+                relevanceScore+=cs[i].getClusterScore();
+        }
+        return relevanceScore;        
     }
     
     /**

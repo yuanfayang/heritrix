@@ -12,14 +12,14 @@ import org.archive.crawler.byexample.utils.FileUtils;
  * Datastructure class implementing listing of document possible classifications.
  * Each listing record is an object of type DocumentClassification
  * 
- * @see org.archive.crawler.byexample.datastructure.documents.DocumentClassification
+ * @see org.archive.crawler.byexample.datastructure.documents.DocumentClassificationEntry
  * 
  * @author Michael Bendersky
  *
  */
 public class DocumentClassificationListing{
         
-    private ArrayList<DocumentClassification> docClasses;
+    private ArrayList<DocumentClassificationEntry> docClasses;
     BufferedWriter dumpFile=null;
     private static Logger logger =
         Logger.getLogger(DocumentClassificationListing.class.getName());
@@ -30,7 +30,7 @@ public class DocumentClassificationListing{
      * @throws Exception
      */
     public DocumentClassificationListing(BufferedWriter bw) throws Exception{
-        docClasses=new ArrayList<DocumentClassification>();
+        docClasses=new ArrayList<DocumentClassificationEntry>();
         dumpFile=bw;
     }
     
@@ -40,7 +40,7 @@ public class DocumentClassificationListing{
      * @param scores
      * @param scopeResult
      */
-    public void addClassification(String crawledURL, ClusterScore[] scores, ScopeDecisionConstants scopeResult){        
+    public void addClassification(DocumentClassificationEntry dce){        
         if (docClasses.size()>OutputConstants.MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
             try {
                 dumpListingToFile();
@@ -49,7 +49,7 @@ public class DocumentClassificationListing{
                 logger.info("Could not dump documents list from memory to file...");
             }
         }          
-        docClasses.add(new DocumentClassification(crawledURL,scores,scopeResult));
+        docClasses.add(dce);
     }
     
     /**
@@ -62,7 +62,7 @@ public class DocumentClassificationListing{
             return;
         
         StringBuffer dump=new StringBuffer();
-        for (DocumentClassification currKey : docClasses) {            
+        for (DocumentClassificationEntry currKey : docClasses) {            
             dump.append(currKey.toString()+"\n");
         }
         FileUtils.dumpBufferToFile(dumpFile,dump);  
