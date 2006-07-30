@@ -94,7 +94,8 @@ public class FileUtils {
     * @throws Exception
     */
    public static void dumpBufferToFile(BufferedWriter dumpFile,StringBuffer sb) throws Exception{   
-           dumpFile.write(sb.toString());       
+           dumpFile.write(sb.toString());  
+           dumpFile.flush();
    }
    
    /**
