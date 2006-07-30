@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure.documents;
+package org.archive.crawler.byexample.datastructure.documents;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,55 +10,56 @@ import java.util.logging.Logger;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileUtils;
 
+/**
+ * Datastructure class implementing listing of crawled documents.
+ * Each listing record is an object of type DocumentEntry
+ * 
+ * @see org.archive.crawler.byexample.datastructure.documents.DocumentEntry
+ * @author Michael Bendersky
+ *
+ */
 public class DocumentListing {
-    
-    public class DocumentEntry{
-        long id;
-        String url;
-        boolean isAutoIn;
-        
-        public DocumentEntry(long id, String url, boolean isAutoIn){
-            this.id=id;
-            this.url=url;
-            this.isAutoIn=isAutoIn;
-        }
-        
-        public String toString(){
-            return id+OutputConstants.ENTRY_SEPARATOR+url+OutputConstants.ENTRY_SEPARATOR+isAutoIn;
-        }
-        
-        public long getId(){
-            return this.id;
-        }
-        
-        public boolean isAutoIn(){
-            return isAutoIn;
-        }
-    }
-    
-    static int MAX_ENTRIES_IN_MEMORY=1000;
     
     List<DocumentEntry> docList;
     BufferedWriter dumpFile=null;
     private static Logger logger =
         Logger.getLogger(DocumentListing.class.getName());
     
+    /**
+     * Default constructor
+     *
+     */
     public DocumentListing(){
         docList=new ArrayList<DocumentEntry>(); 
     }
     
+    /**
+     * Constructor with specified output file
+     * @param bw BufferedWriter for the output file
+     */
     public DocumentListing(BufferedWriter bw){
         docList=new ArrayList<DocumentEntry>();
         dumpFile=bw;
     }
     
+    /**
+     * Return entry at specified position
+     * @param i position to return
+     * @return DocumentEntry at position i
+     */
     public DocumentEntry getEntryAtPos(int i){
         return docList.get(i);
     }
     
+    /**
+     * Add new DocumentEntry to the list, according to specified parameters
+     * @param id
+     * @param url
+     * @param isAutoIn
+     */
     public void addToListing(long id, String url, boolean isAutoIn){
         
-        if (docList.size()>MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
+        if (docList.size()>OutputConstants.MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
             try {
                 dumpListingToFile();
                 docList.clear();
@@ -70,10 +71,17 @@ public class DocumentListing {
         docList.add(new DocumentEntry(id,url,isAutoIn));
     }
     
+    /**
+     * Returns iterator over list rows
+     */
     public Iterator<DocumentEntry> getListingIterator(){
         return docList.iterator();
     }
     
+    /**
+     * Write listing to designated output file
+     * @throws Exception
+     */
     public void dumpListingToFile() throws Exception{
         //No dump file defined - do nothing
         if (dumpFile==null)
@@ -86,6 +94,11 @@ public class DocumentListing {
         FileUtils.dumpBufferToFile(dumpFile,dump);  
     }
     
+    /**
+     * Read listing from file at specified file path
+     * @param filePath String representing the input file path
+     * @throws Exception
+     */
     public void readListingFromFile(String filePath) throws Exception{
         BufferedReader in=FileUtils.readBufferFromFile(filePath);
         String iter = in.readLine();
@@ -104,13 +117,16 @@ public class DocumentListing {
         in.close(); 
     }
     
+    /**
+     * Get ratio of relevant documents in the listing
+     */
     public double getAutoInRatio(){
         double ratio=0;
         for (DocumentEntry de : docList) {
-            if (de.isAutoIn)
+            if (de.isRelevant)
                 ratio++;
         }
         return ratio/docList.size();
     }
     
-}
+} //END_OF_CLASS

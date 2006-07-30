@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure.support;
+package org.archive.crawler.byexample.datastructure.support;
 
 import java.util.ArrayList;
 import java.util.Iterator;

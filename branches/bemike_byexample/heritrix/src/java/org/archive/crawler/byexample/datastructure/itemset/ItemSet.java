@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure.itemset;
+package org.archive.crawler.byexample.datastructure.itemset;
 
 import java.util.Iterator;
 import java.util.SortedSet;

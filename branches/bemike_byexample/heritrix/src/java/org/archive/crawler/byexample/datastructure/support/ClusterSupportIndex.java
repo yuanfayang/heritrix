@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure.support;
+package org.archive.crawler.byexample.datastructure.support;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
 import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 import org.archive.crawler.byexample.utils.FileUtils;
 
 public class ClusterSupportIndex{

@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure.info;
+package org.archive.crawler.byexample.datastructure.info;
 
 import java.io.BufferedWriter;
 
