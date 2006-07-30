@@ -6,14 +6,18 @@ import java.util.Date;
 import java.util.logging.Logger;
 
 import org.archive.crawler.byexample.algorithms.classification.Classifier;
-import org.archive.crawler.byexample.algorithms.datastructure.documents.ClassificationDocumentsListing;
-import org.archive.crawler.byexample.algorithms.datastructure.info.ClusteringInfo;
-import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterScore;
-import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterSupportIndex;
 import org.archive.crawler.byexample.algorithms.preprocessing.PorterStemmer;
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
-import org.archive.crawler.byexample.constants.AlgorithmConstants;
+import org.archive.crawler.byexample.constants.ByExampleProperties;
 import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.constants.ScopeDecisionConstants;
+import org.archive.crawler.byexample.datastructure.documents.DocumentClassificationListing;
+import org.archive.crawler.byexample.datastructure.documents.IdListing;
+import org.archive.crawler.byexample.datastructure.info.ClassificationInfo;
+import org.archive.crawler.byexample.datastructure.info.ClusteringInfo;
+import org.archive.crawler.byexample.datastructure.info.PreprocessInfo;
+import org.archive.crawler.byexample.datastructure.support.ClusterScore;
+import org.archive.crawler.byexample.datastructure.support.ClusterSupportIndex;
 import org.archive.crawler.byexample.utils.FileUtils;
 import org.archive.crawler.byexample.utils.ParseUtils;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -41,7 +45,7 @@ public class ClassifierProcessor extends Processor {
     
     // Clustering info    
     private ClusteringInfo clusteringInfo=null;
-
+    
     //Cluster Support index
     private ClusterSupportIndex csi=null; 
     
@@ -66,8 +70,16 @@ public class ClassifierProcessor extends Processor {
     private Classifier myClassifier=null;
     
     //Classification Documents listing
-    private ClassificationDocumentsListing myClassificationDocListing=null;
-    private BufferedWriter docListDumpFile=null;
+    private DocumentClassificationListing myClassificationDocListing=null;
+    private BufferedWriter fullListDumpFile=null;
+    
+    //Auto-in file listing
+    private IdListing myAutoInListing=null;
+    private BufferedWriter autoInListDumpFile=null;
+    
+//  Auto-out file listing
+    private IdListing myAutoOutListing=null;
+    private BufferedWriter autoOutListDumpFile=null;
     
     
     public ClassifierProcessor(String name){
@@ -116,30 +128,36 @@ public class ClassifierProcessor extends Processor {
         
         //Load algorithm parameters
         try {
-            AlgorithmConstants.readPropeties(OutputConstants.CONFIG_HOME+OutputConstants.PROPERTIES_FILENAME);
+            ByExampleProperties.readPropeties(OutputConstants.CONFIG_HOME+OutputConstants.PROPERTIES_FILENAME);
         } catch (Exception e) {
             logger.severe("Failed to load properties file: "+e.getMessage());
             return;
         }
         
         //Create Job ID
-        jobID=ArchiveUtils.TIMESTAMP17.format(new Date())+OutputConstants.KEY_SEPARATOR;
+        jobID=OutputConstants.JOB_NAME_PREFIX+ArchiveUtils.TIMESTAMP17.format(new Date());
         
         //Create output files
         try {
-            docListDumpFile=FileUtils.createFileForJob(basedOnJob,OutputConstants.CLASSIFICATION_FILES_HOME,
-                                                    jobID+OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,true);
+            fullListDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
+                                                    OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,true);
+            autoInListDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
+                                                    OutputConstants.AUTO_IN_LISTING,true);
+            autoOutListDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
+                                                    OutputConstants.AUTO_OUT_LISTING,true);
         } catch (Exception e1) {
             logger.severe("Failed to create classified docs file: "+e1.getMessage());
         }
         
-        //Create documents listing
+        //Create documents listings
         try {
-            myClassificationDocListing=new ClassificationDocumentsListing(docListDumpFile);
+            myClassificationDocListing=new DocumentClassificationListing(fullListDumpFile);
+            myAutoInListing=new IdListing(autoInListDumpFile);
+            myAutoOutListing=new IdListing(autoOutListDumpFile);
         } catch (Exception e1) {
            logger.severe("Couldn't create classification listing file: "+e1.getMessage());
         }
-        
+                 
         //Create stop words removal and stemming handlers
         try {
             stopWordsHandler=new StopWordsHandler();
@@ -155,9 +173,12 @@ public class ClassifierProcessor extends Processor {
         
         // Get the URI from the CrawlURI
         String currURL = uriToProcess.toString();
-        
+        //Document top classification scores
         ClusterScore[] classifications=null;
-
+        //Document scoping decision
+        ScopeDecisionConstants scoping=null;
+        
+        
         // Handles only HTTP at the moment
         if (!uriToProcess.isHttpTransaction())
             return; //ignore dns fetches
@@ -184,19 +205,38 @@ public class ClassifierProcessor extends Processor {
             return;
         }
         
+        //Get document classification and scoping
         try {
             classifications=myClassifier.classify(cs,stopWordsHandler,stemmer);
+            scoping=myClassifier.scopeIdentifier(classifications);
         } catch (ParserException e) {
             logger.severe("Failed to parse page"+e.getMessage());
             return;
         }
-        
+                        
         //Add document classifications to listing
-        myClassificationDocListing.addClassification(currURL,classifications,myClassifier.scopeIdentifier(classifications));
-        
+        myClassificationDocListing.addClassification(currURL,classifications,scoping);
+        if (scoping==ScopeDecisionConstants.AUTO_IN)
+            myAutoInListing.addValue(currURL);
+        if  (scoping==ScopeDecisionConstants.AUTO_OUT)
+            myAutoOutListing.addValue(currURL);
+                
         numOfProcessedDocs++;
     }
     
+    public void createClassificaionXmlFile(){
+        String filesPath=OutputConstants.getClassificationPath(jobID);
+        try {
+            ClassificationInfo info=new ClassificationInfo
+                                (OutputConstants.getJobPath(basedOnJob),
+                                 filesPath+OutputConstants.AUTO_IN_LISTING,
+                                 filesPath+OutputConstants.AUTO_OUT_LISTING,
+                                 filesPath+OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,numOfProcessedDocs);
+            info.toXML(OutputConstants.getJobPath(jobID),OutputConstants.CLASSIFICATION_XML_FILENAME);
+        } catch (Exception e) {
+            logger.severe("Unable to create preprocess xml file: "+e.getMessage());
+        }
+    }
     
     public String report() {
         StringBuffer ret = new StringBuffer();
@@ -210,10 +250,12 @@ public class ClassifierProcessor extends Processor {
     protected void finalTasks(){
         try {
             myClassificationDocListing.dumpListingToFile();
-            FileUtils.closeFile(docListDumpFile);
+            FileUtils.closeFile(fullListDumpFile);
         } catch (Exception e) {
             logger.severe("Couldn't close dump files: "+e.getMessage());
         }
+        
+        createClassificaionXmlFile();
     }
     
 
