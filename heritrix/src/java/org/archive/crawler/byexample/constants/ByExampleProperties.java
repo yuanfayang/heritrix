@@ -10,7 +10,16 @@ import java.util.Properties;
  * @author Michael Bendersky
  *
  */
-public class AlgorithmConstants {
+public class ByExampleProperties {
+    
+    // Inverted Index type constants
+    
+    /**
+     * Denotes the type of inverted index in use
+     * 
+     *  @see org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex
+     */
+    public static String INVERTED_INDEX_TYPE;
     
     // Apriori algorithm constants
     
@@ -69,6 +78,8 @@ public class AlgorithmConstants {
         // Read properties file.
         Properties properties = new Properties();
         properties.load(new FileInputStream(path));
+        
+        INVERTED_INDEX_TYPE=properties.getProperty("inverted_index_type");
         
         MIN_GLOBAL_SUPPORT=Integer.parseInt(properties.getProperty("min_global_support"));
         MAX_DEPTH=Integer.parseInt(properties.getProperty("max_depth"));
