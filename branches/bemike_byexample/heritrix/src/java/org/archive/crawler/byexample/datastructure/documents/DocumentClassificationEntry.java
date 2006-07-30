@@ -20,10 +20,10 @@ import org.archive.crawler.byexample.datastructure.support.ClusterScore;
  * @author Michael Bendersky
  *
  */
-public class DocumentClassification{
+public class DocumentClassificationEntry{
     String url;
     ClusterScore[] labeling;
-    ScopeDecisionConstants scoping;
+    double classificationRelevanceScore;
     
     /**
      * Default construct
@@ -31,10 +31,10 @@ public class DocumentClassification{
      * @param labeling
      * @param scoping
      */
-    public DocumentClassification(String url, ClusterScore[] labeling, ScopeDecisionConstants scoping){
+    public DocumentClassificationEntry(String url, ClusterScore[] labeling, double relScore){
         this.url=url;
         this.labeling=labeling;
-        this.scoping=scoping;
+        this.classificationRelevanceScore=relScore;
     }
     
     /**
@@ -48,7 +48,7 @@ public class DocumentClassification{
             append(OutputConstants.ENTRY_SEPARATOR).append(labeling[i].getClusterScore()).append(";");
         }
         
-        return url+OutputConstants.KEY_SEPARATOR+labelingString+OutputConstants.KEY_SEPARATOR+scoping;                           
+        return url+OutputConstants.KEY_SEPARATOR+labelingString+OutputConstants.KEY_SEPARATOR+classificationRelevanceScore;                           
     }
     
 } //END OF CLASS
