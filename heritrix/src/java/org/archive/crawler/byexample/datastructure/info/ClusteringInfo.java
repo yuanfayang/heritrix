@@ -1,10 +1,10 @@
-package org.archive.crawler.byexample.algorithms.datastructure.info;
+package org.archive.crawler.byexample.datastructure.info;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
 import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -69,9 +69,9 @@ public class ClusteringInfo extends XMLInfo{
     
     protected static String ROOT_LABEL="clustering-output";
     public static String CLUSTER_DOCS_LISTING_TAG_LABEL="clusterDocsListingFN";
-    public String clusterDocsFN;
+    private String clusterDocsFN;
     public static String CLUSTER_TERM_SUPPORT_INDEX_TAG_LABEL="clusterTermSupportIndexFN";
-    public String clusterTermSupportFN;
+    private String clusterTermSupportFN;
     public static String CLUSTERING_GROUP_TAG_LABEL="cluster";
     public static String CLUSTER_NAME_TAG_LABEL="clusterLabel";
     public static String CLUSTER_DOCS_NO_TAG_LABEL="clusterDocsNo";

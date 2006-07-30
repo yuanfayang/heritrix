@@ -1,4 +1,4 @@
-package org.archive.crawler.byexample.algorithms.datastructure.info;
+package org.archive.crawler.byexample.datastructure.info;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

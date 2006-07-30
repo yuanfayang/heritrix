@@ -1,7 +1,7 @@
-package org.archive.crawler.byexample.algorithms.datastructure.support;
+package org.archive.crawler.byexample.datastructure.support;
 
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
 import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 
 public class ClusterScore implements Comparable{
     private ItemSet clusterLabel;
@@ -11,6 +11,11 @@ public class ClusterScore implements Comparable{
         this.clusterLabel=clusterLabel;
         this.clusterScore=clusterScore;
     }      
+    
+    public ClusterScore(ClusterScore anotherCS){
+        this.clusterLabel=anotherCS.clusterLabel;
+        this.clusterScore=anotherCS.clusterScore;
+    }
 
     public ItemSet getClusterLabel() {
         return clusterLabel;

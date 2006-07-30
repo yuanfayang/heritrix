@@ -1,53 +1,47 @@
-package org.archive.crawler.byexample.algorithms.datastructure.documents;
+package org.archive.crawler.byexample.datastructure.documents;
 
 import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.logging.Logger;
-import org.archive.crawler.byexample.algorithms.datastructure.support.ClusterScore;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.constants.ScopeDecisionConstants;
+import org.archive.crawler.byexample.datastructure.support.ClusterScore;
 import org.archive.crawler.byexample.utils.FileUtils;
 
-public class ClassificationDocumentsListing{
-    
-    public class DocumentClassification{
-        String url;
-        ClusterScore[] labeling;
-        ScopeDecisionConstants scoping;
+/**
+ * Datastructure class implementing listing of document possible classifications.
+ * Each listing record is an object of type DocumentClassification
+ * 
+ * @see org.archive.crawler.byexample.datastructure.documents.DocumentClassification
+ * 
+ * @author Michael Bendersky
+ *
+ */
+public class DocumentClassificationListing{
         
-        public DocumentClassification(String url, ClusterScore[] labeling, ScopeDecisionConstants scoping){
-            this.url=url;
-            this.labeling=labeling;
-            this.scoping=scoping;
-        }
-        
-        public String toString(){
-            
-            StringBuffer labelingString=new StringBuffer();
-            for (int i = 0; i < labeling.length; i++) {
-                labelingString.append(labeling[i].getClusterLabel()).
-                append(OutputConstants.ENTRY_SEPARATOR).append(labeling[i].getClusterScore()).append(";");
-            }
-            
-            return url+OutputConstants.KEY_SEPARATOR+labelingString+OutputConstants.KEY_SEPARATOR+scoping;           
-                    
-        }
-    }
-    
     private ArrayList<DocumentClassification> docClasses;
-    private static int MAX_ENTRIES_IN_MEMORY=1000;
     BufferedWriter dumpFile=null;
     private static Logger logger =
-        Logger.getLogger(ClassificationDocumentsListing.class.getName());
+        Logger.getLogger(DocumentClassificationListing.class.getName());
     
-    
-    public ClassificationDocumentsListing(BufferedWriter bw) throws Exception{
+    /**
+     * Default constructor
+     * @param bw Listing output file
+     * @throws Exception
+     */
+    public DocumentClassificationListing(BufferedWriter bw) throws Exception{
         docClasses=new ArrayList<DocumentClassification>();
         dumpFile=bw;
     }
     
+    /**
+     * Adds new classification to listing
+     * @param crawledURL
+     * @param scores
+     * @param scopeResult
+     */
     public void addClassification(String crawledURL, ClusterScore[] scores, ScopeDecisionConstants scopeResult){        
-        if (docClasses.size()>MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
+        if (docClasses.size()>OutputConstants.MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
             try {
                 dumpListingToFile();
                 docClasses.clear();
@@ -58,6 +52,10 @@ public class ClassificationDocumentsListing{
         docClasses.add(new DocumentClassification(crawledURL,scores,scopeResult));
     }
     
+    /**
+     * Write listing to designated output file
+     * @throws Exception
+     */
     public void dumpListingToFile() throws Exception{
         //No dump file defined - do nothing
         if (dumpFile==null)
@@ -70,6 +68,10 @@ public class ClassificationDocumentsListing{
         FileUtils.dumpBufferToFile(dumpFile,dump);  
     }
     
+    
+    /**
+     * String represantion of this list
+     */
     public String toString(){
         return docClasses.toString();
     }

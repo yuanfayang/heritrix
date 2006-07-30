@@ -1,9 +1,9 @@
-package org.archive.crawler.byexample.algorithms.datastructure.support;
+package org.archive.crawler.byexample.datastructure.support;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
-import org.archive.crawler.byexample.algorithms.datastructure.itemset.ItemSet;
+import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 
 public class ClusterScoreListing {
         
@@ -30,10 +30,10 @@ public class ClusterScoreListing {
         ClusterScore newScore=null;
         ClusterScore currScore=null;
         for (int i = 0; i < aRow.getRowSize(); i++) {
-            newScore=aRow.scoreList.get(i);
+            newScore=new ClusterScore(aRow.scoreList.get(i));
             itemPos=getListPos(newScore.getClusterLabel());
             if (itemPos!=-1){
-                currScore=this.scoreList.get(i);
+                currScore=this.scoreList.get(itemPos);
                 currScore.setClusterScore(currScore.getClusterScore()+newScore.getClusterScore());
             }
             else

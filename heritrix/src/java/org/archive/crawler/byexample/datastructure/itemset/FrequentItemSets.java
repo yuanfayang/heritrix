@@ -1,10 +1,10 @@
-package org.archive.crawler.byexample.algorithms.datastructure.itemset;
+package org.archive.crawler.byexample.datastructure.itemset;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.archive.crawler.byexample.constants.AlgorithmConstants;
+import org.archive.crawler.byexample.constants.ByExampleProperties;
 
 public class FrequentItemSets{
 
