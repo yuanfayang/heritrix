@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.archive.crawler.byexample.constants.ByExampleProperties;
 import org.archive.crawler.byexample.constants.OutputConstants;
+import org.archive.crawler.byexample.datastructure.invertedindex.InMemoryIndex;
 import org.archive.crawler.byexample.datastructure.invertedindex.IndexEntry;
 import org.archive.crawler.byexample.datastructure.invertedindex.IndexRow;
 import org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex;
@@ -296,16 +297,20 @@ public class AprioriItemSetComputation {
      */
     public void buildFrequentItemSetsIndex(){
         String term;
-        ItemSet itemsToRemove=new ItemSet();
+        //ItemSet itemsToRemove=new ItemSet();
+        InvertedIndex frequentTermsIndex=new InMemoryIndex();
         for (Iterator<String> iter  = myTermsIndex.getIndexKeysIterator(); iter.hasNext();) {
             term =iter.next();
-            if (!myFrequentItemSets.contains(new ItemSet(term))){
-                itemsToRemove.insertToSet(term);
-            }
+            if (myFrequentItemSets.contains(new ItemSet(term)))
+                frequentTermsIndex.addRow(term,myTermsIndex.getRow(term));
+           // if (!myFrequentItemSets.contains(new ItemSet(term))){
+           //     itemsToRemove.insertToSet(term);
+           // }
         }
-        for (int i = 0; i < itemsToRemove.getSize(); i++) {
-            myTermsIndex.removeRow(itemsToRemove.getItemAtPosition(i));
-        }
+        myTermsIndex=frequentTermsIndex;
+        //for (int i = 0; i < itemsToRemove.getSize(); i++) {
+        //    myTermsIndex.removeRow(itemsToRemove.getItemAtPosition(i));
+       // }
     }
     
     /**    

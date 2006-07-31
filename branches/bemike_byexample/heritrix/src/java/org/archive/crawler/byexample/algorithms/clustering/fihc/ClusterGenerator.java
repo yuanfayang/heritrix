@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.algorithms.tfidf.DocumentIndexManipulator;
-import org.archive.crawler.byexample.constants.ByExampleProperties;
+import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.datastructure.documents.ClusterDocumentsIndex;
 import org.archive.crawler.byexample.datastructure.documents.DocumentListing;
 import org.archive.crawler.byexample.datastructure.info.ClusteringInfo;
@@ -43,15 +43,20 @@ public class ClusterGenerator {
                             List<TermSupport> termSupport, DocumentListing allDocs, String indexFilePath)
     throws Exception{
         myTermsIndex=new TermIndexManipulator(termsIndex);
-        myTFIDFIndex=new DocumentIndexManipulator(ByExampleProperties.INVERTED_INDEX_TYPE,indexFilePath,termsIndex, docCount);
+        
+        // TFIDF index is always created as IN_MEMORY_INDEX to improve clustering performance.
+        // This can be done, as only MAX_1_FREQUENT_ITEMS are included in the index, so it should be
+        // compact enough to fit into memory even for large document collections
+        myTFIDFIndex=new DocumentIndexManipulator(OutputConstants.IN_MEMORY_INDEX,indexFilePath,termsIndex, docCount);
         myTFIDFIndex.createSortedByIdTFIDFIndex();
+        
         myDocumentClusteringIndex=new ClusterDocumentsIndex();
         myClusterSupportIndex=new ClusterSupportIndex();
         myGlobalSupportIndex=termSupport;
         myDocCount=docCount;
         myDocumentListing=allDocs; 
         
-        structureBuilder=new StructureBuilder(myDocCount, termsIndex, termSupport, myDocumentListing, indexFilePath);        
+        structureBuilder=new StructureBuilder(myDocCount, termsIndex, termSupport, myDocumentListing, myTFIDFIndex);        
     }    
     
     /**
