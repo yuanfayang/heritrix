@@ -20,7 +20,7 @@ import org.archive.crawler.byexample.utils.FileUtils;
 public class DocumentClassificationListing{
         
     private ArrayList<DocumentClassificationEntry> docClasses;
-    BufferedWriter dumpFile=null;
+    private BufferedWriter dumpFile=null;
     private static Logger logger =
         Logger.getLogger(DocumentClassificationListing.class.getName());
     
@@ -75,7 +75,7 @@ public class DocumentClassificationListing{
     public String toString(){
         return docClasses.toString();
     }
-   
+
 
     
 } //END OF CLASS

@@ -35,8 +35,8 @@ public class OutputConstants {
     public static final String DOCUMENTS_CLUSTERING_LISTING_FILENAME="clusteringDocs.txt";
     public static final String TERMS_SUPPORT_LISTING_FILENAME="clusteringTermSupport.txt";  
     public static final String CLASSIFICATION_DOCUMENT_LISTING="classifiedDocs.txt";  
-    public static final String AUTO_IN_LISTING="autoInList.txt";
-    public static final String AUTO_OUT_LISTING="autoOutList.txt";    
+    public static final String MOST_RELEVANT_LISTING="mostRelevantList.txt";
+    public static final String LEAST_RELEVANT_LISTING="leastRelevantList.txt";    
     public static final String PREPROCESS_XML_FILENAME="preprocess-results.xml";
     public static final String CLUSTERING_XML_FILENAME="clustering-results.xml";
     public static final String CLASSIFICATION_XML_FILENAME="classification-results.xml";
