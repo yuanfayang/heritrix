@@ -132,7 +132,8 @@ public class ARCUtils implements ARCConstants {
         // First check length. ARC_GZIP_EXTRA_FIELD includes length
         // so subtract two and start compare to ARC_GZIP_EXTRA_FIELD
         // at +2.
-        if (ARC_GZIP_EXTRA_FIELD.length - 2 == fextra.length) {
+        if (fextra != null &&
+        		ARC_GZIP_EXTRA_FIELD.length - 2 == fextra.length) {
             compressedARCFile = true;
             for (int i = 0; i < fextra.length; i++) {
                 if (fextra[i] != ARC_GZIP_EXTRA_FIELD[i + 2]) {
