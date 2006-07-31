@@ -1,7 +1,6 @@
 package org.archive.crawler.byexample.datastructure.documents;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
-import org.archive.crawler.byexample.constants.ScopeDecisionConstants;
 import org.archive.crawler.byexample.datastructure.support.ClusterScore;
 
 /**
@@ -21,9 +20,9 @@ import org.archive.crawler.byexample.datastructure.support.ClusterScore;
  *
  */
 public class DocumentClassificationEntry{
-    String url;
-    ClusterScore[] labeling;
-    double classificationRelevanceScore;
+    private String url;
+    private ClusterScore[] labeling;
+    private double classificationRelevanceScore;
     
     /**
      * Default construct
@@ -49,6 +48,18 @@ public class DocumentClassificationEntry{
         }
         
         return url+OutputConstants.KEY_SEPARATOR+labelingString+OutputConstants.KEY_SEPARATOR+classificationRelevanceScore;                           
+    }
+
+    public double getClassificationRelevanceScore() {
+        return classificationRelevanceScore;
+    }
+
+    public ClusterScore[] getLabeling() {
+        return labeling;
+    }
+
+    public String getUrl() {
+        return url;
     }
     
 } //END OF CLASS

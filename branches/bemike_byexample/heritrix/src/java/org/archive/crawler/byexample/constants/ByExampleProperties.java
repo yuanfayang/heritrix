@@ -70,6 +70,12 @@ public class ByExampleProperties {
     public static int TOP_CLASSIFICATIONS;
     
     /**
+     * After classification is completed, most/least relevant pages lists will be created, 
+     * each containing <i>TOP_RELEVANT</i> pages 
+     */
+    public static int TOP_RELEVANT;
+    
+    /**
      * Reads algorithm parameters from properties file
      * @param path properties file path
      * @throws Exception
@@ -90,6 +96,7 @@ public class ByExampleProperties {
         UNCLASSIFIED_LABEL=properties.getProperty("unclassified_label");
         
         TOP_CLASSIFICATIONS=Integer.parseInt(properties.getProperty("top_classifications"));
+        TOP_RELEVANT=Integer.parseInt(properties.getProperty("top_relevant"));
     }     
    
    

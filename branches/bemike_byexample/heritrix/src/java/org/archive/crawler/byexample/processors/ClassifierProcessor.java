@@ -10,17 +10,15 @@ import org.archive.crawler.byexample.algorithms.preprocessing.PorterStemmer;
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
 import org.archive.crawler.byexample.constants.ByExampleProperties;
 import org.archive.crawler.byexample.constants.OutputConstants;
-import org.archive.crawler.byexample.constants.ScopeDecisionConstants;
+import org.archive.crawler.byexample.datastructure.documents.BottomUpComparator;
 import org.archive.crawler.byexample.datastructure.documents.DocumentClassificationEntry;
 import org.archive.crawler.byexample.datastructure.documents.DocumentClassificationListing;
-import org.archive.crawler.byexample.datastructure.documents.IdListing;
+import org.archive.crawler.byexample.datastructure.documents.TopClassificationSet;
+import org.archive.crawler.byexample.datastructure.documents.TopDownComparator;
 import org.archive.crawler.byexample.datastructure.info.ClassificationInfo;
 import org.archive.crawler.byexample.datastructure.info.ClusteringInfo;
-import org.archive.crawler.byexample.datastructure.info.PreprocessInfo;
-import org.archive.crawler.byexample.datastructure.support.ClusterScore;
 import org.archive.crawler.byexample.datastructure.support.ClusterSupportIndex;
 import org.archive.crawler.byexample.utils.FileUtils;
-import org.archive.crawler.byexample.utils.ParseUtils;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
@@ -73,6 +71,14 @@ public class ClassifierProcessor extends Processor {
     //Classification Documents listing
     private DocumentClassificationListing myClassificationDocListing=null;
     private BufferedWriter listDumpFile=null;
+    
+    //Most relevant documents set
+    private TopClassificationSet myMostRelevantSet=null;
+    private BufferedWriter mostRelevantDumpFile=null;
+    
+    //Least relevant documents set
+    private TopClassificationSet myLeastRelevantSet=null;
+    private BufferedWriter leastRelevantDumpFile=null;
     
     
     
@@ -135,6 +141,10 @@ public class ClassifierProcessor extends Processor {
         try {
             listDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
                                                     OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,true);
+            mostRelevantDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
+                                                    OutputConstants.MOST_RELEVANT_LISTING,true);
+            leastRelevantDumpFile=FileUtils.createFileForJob(jobID,OutputConstants.CLASSIFICATION_FILES_HOME,
+                    OutputConstants.LEAST_RELEVANT_LISTING,true);
         } catch (Exception e1) {
             logger.severe("Failed to create classified docs file: "+e1.getMessage());
         }
@@ -142,6 +152,10 @@ public class ClassifierProcessor extends Processor {
         //Create documents listings
         try {
             myClassificationDocListing=new DocumentClassificationListing(listDumpFile);
+            myMostRelevantSet=
+                new TopClassificationSet(new TopDownComparator(),ByExampleProperties.TOP_RELEVANT,mostRelevantDumpFile);
+            myLeastRelevantSet=
+                new TopClassificationSet(new BottomUpComparator(),ByExampleProperties.TOP_RELEVANT,leastRelevantDumpFile);
         } catch (Exception e1) {
            logger.severe("Couldn't create classification listing file: "+e1.getMessage());
         }
@@ -201,6 +215,8 @@ public class ClassifierProcessor extends Processor {
                         
         //Add document classifications to listing
         myClassificationDocListing.addClassification(currUrlClassifications);
+        myMostRelevantSet.addEntry(currUrlClassifications);
+        myLeastRelevantSet.addEntry(currUrlClassifications);
                 
         numOfProcessedDocs++;
     }
@@ -209,8 +225,11 @@ public class ClassifierProcessor extends Processor {
         String filesPath=OutputConstants.getClassificationPath(jobID);
         try {
             ClassificationInfo info=new ClassificationInfo
-                                (OutputConstants.getJobPath(basedOnJob),
-                                 filesPath+OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,numOfProcessedDocs);
+                                (OutputConstants.getJobPath(basedOnJob),                                        
+                                 filesPath+OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,
+                                 filesPath+OutputConstants.MOST_RELEVANT_LISTING,
+                                 filesPath+OutputConstants.LEAST_RELEVANT_LISTING,
+                                 numOfProcessedDocs);
             info.toXML(OutputConstants.getJobPath(jobID),OutputConstants.CLASSIFICATION_XML_FILENAME);
         } catch (Exception e) {
             logger.severe("Unable to create preprocess xml file: "+e.getMessage());
@@ -230,6 +249,10 @@ public class ClassifierProcessor extends Processor {
         try {
             myClassificationDocListing.dumpListingToFile();
             FileUtils.closeFile(listDumpFile);
+            myMostRelevantSet.dumpListingToFile();
+            FileUtils.closeFile(mostRelevantDumpFile);
+            myLeastRelevantSet.dumpListingToFile();
+            FileUtils.closeFile(leastRelevantDumpFile);
         } catch (Exception e) {
             logger.severe("Couldn't close dump files: "+e.getMessage());
         }
