@@ -76,7 +76,7 @@ public class TermIndexManipulator {
         IndexRow currRow=myIndex.getRow(rowKey);
         // If this key doesn't have an assigned row, create it
         if (currRow==null){
-            myIndex.addRow(rowKey);
+            myIndex.addNewRow(rowKey);
             currRow=myIndex.getRow(rowKey);
         }
         //Add unique entry mapping to the rowKey 

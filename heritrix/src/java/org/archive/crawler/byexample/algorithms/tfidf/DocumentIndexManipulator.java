@@ -72,7 +72,7 @@ public class DocumentIndexManipulator {
         IndexRow currRow=myIndex.getRow(docID);
         //If this key doesn't have an assigned row, create it
         if (currRow==null){
-            myIndex.addRow(docID);
+            myIndex.addNewRow(docID);
             currRow=myIndex.getRow(docID);
         }
         // Add term TFIDF count to the document row 

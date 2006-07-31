@@ -202,7 +202,7 @@ public class BdbIndex implements InvertedIndex {
         return myEnv;
     }
 
-    public void addRow (String rowKey){
+    public void addNewRow (String rowKey){
         try {
             //Create database key
             DatabaseEntry dbKey = new DatabaseEntry(rowKey.getBytes(OutputConstants.DEFAULT_ENCODING));
@@ -220,7 +220,25 @@ public class BdbIndex implements InvertedIndex {
             logger.severe("Problems in adding index row: "+e.getMessage());
         }
     }
-
+    
+    public void addRow(String rowKey, IndexRow row) {
+        try {
+            //Create database key
+            DatabaseEntry dbKey = new DatabaseEntry(rowKey.getBytes(OutputConstants.DEFAULT_ENCODING));
+            //Create database entry
+            DatabaseEntry dbEntry=new DatabaseEntry();       
+            row.objectToEntry(row,dbEntry);
+            //Write to database
+            indexDb.put(null,dbKey,dbEntry);
+            //Increase number of database records
+            numOfRecords++;
+            //Update key set
+            indexCache.put(rowKey,new CachedIndexEntry(row.getIndex(row.getRowSize()),row.getTotalValue()));
+        } catch (Exception e) {
+            logger.severe("Problems in adding index row: "+e.getMessage());
+        }
+    }
+    
     public IndexRow getRow(String rowKey) {
         //Get row for key
         try {

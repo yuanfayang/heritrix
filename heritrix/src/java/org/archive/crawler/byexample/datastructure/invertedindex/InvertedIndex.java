@@ -9,7 +9,9 @@ public interface InvertedIndex {
     
     public abstract void closeIndex(String jobId, String filePath) throws Exception;
         
-    public abstract void addRow(String rowKey);
+    public abstract void addNewRow(String rowKey);
+    
+    public abstract void addRow(String rowKey, IndexRow row);
     
     public abstract void addEntry(String rowKey, IndexEntry rowEntry);
     

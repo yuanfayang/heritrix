@@ -44,10 +44,10 @@ public class StructureBuilder {
      * Default Constructor
      */
     public StructureBuilder(long docCount, InvertedIndex termsIndex, 
-            List<TermSupport> termSupport, DocumentListing allDocs, String indexFilePath) 
+            List<TermSupport> termSupport, DocumentListing allDocs, DocumentIndexManipulator dim) 
     throws Exception{
         myTermsIndex=new TermIndexManipulator(termsIndex);
-        myTFIDFIndex=new DocumentIndexManipulator(ByExampleProperties.INVERTED_INDEX_TYPE,indexFilePath, termsIndex, docCount);
+        myTFIDFIndex=dim;
         myTFIDFIndex.createSortedByIdTFIDFIndex();
         myDocumentClusteringIndex=new ClusterDocumentsIndex();
         myClusterSupportIndex=new ClusterSupportIndex();

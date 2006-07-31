@@ -19,8 +19,12 @@ public class InMemoryIndex implements InvertedIndex {
        indexRowsHash=new ConcurrentHashMap<String,IndexRow>();
     }
     
-    public void addRow(String rowKey){
+    public void addNewRow(String rowKey){
         indexRowsHash.put(rowKey,new IndexRow());
+    }
+    
+    public void addRow(String rowKey, IndexRow row) {
+        indexRowsHash.put(rowKey,row);
     }
     
     public void addEntry(String rowKey, IndexEntry rowEntry) {
@@ -91,7 +95,7 @@ public class InMemoryIndex implements InvertedIndex {
         while (!(iter==null)){         
             parts=iter.split(OutputConstants.KEY_SEPARATOR);
             //Add row for the keyword
-            addRow(parts[0]);
+            addNewRow(parts[0]);
             getRow(parts[0]).addEntriesFromString(parts[1],parts[2]);
             iter=in.readLine();
         }        
