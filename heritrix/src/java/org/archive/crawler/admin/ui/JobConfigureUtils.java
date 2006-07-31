@@ -36,6 +36,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -191,12 +192,23 @@ public class JobConfigureUtils {
                                 .equals("true"));
                 if (settings == null || override) {
                     if (currentAttribute instanceof ListType) {
-                        ListType list = (ListType) currentAttribute;
-                        list.clear();
-                        String[] elems = request
-                                .getParameterValues(attAbsoluteName);
-                        for (int i = 0; elems != null && i < elems.length; i++) {
-                            list.add(elems[i]);
+                        try {
+                            ListType list = (ListType)currentAttribute;
+                            Class cls = list.getClass();
+                            Constructor constructor = cls.getConstructor(String.class, String.class);
+                            list = (ListType) constructor.newInstance(list.getName(), list.getDescription());
+                            String[] elems = request
+                                    .getParameterValues(attAbsoluteName);
+                            for (int i = 0; elems != null && i < elems.length; i++) {
+                                list.add(elems[i]);
+                            }
+                            writeAttribute(attName, attAbsoluteName, mbean,
+                                    settings, list);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            logger.severe("Setting new list values on "
+                                    + attAbsoluteName + ": " + e.getMessage());
+                            return;
                         }
                     } else {
                         writeAttribute(attName, attAbsoluteName, mbean,
@@ -236,7 +248,7 @@ public class JobConfigureUtils {
      */
     protected static void writeAttribute(String attName,
             String attAbsoluteName, ComplexType mbean,
-            CrawlerSettings settings, String value) {
+            CrawlerSettings settings, Object value) {
         try {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("MBEAN SET: " + attAbsoluteName + " " + value);
