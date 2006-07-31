@@ -73,7 +73,7 @@ public class ExtractorCSS extends Extractor implements CoreAttributeConstants {
 //    static final String CSS_URI_EXTRACTOR =
 //        "url[(]\\s*([\"\']?)([^\\\"\\'].*?)\\1\\s*[)]";
     static final String CSS_URI_EXTRACTOR =    
-    "(?:@import (?:url[(]|)|url[(])\\s*([\\\"\']?)" + // G1
+    "(?i)(?:@import (?:url[(]|)|url[(])\\s*([\\\"\']?)" + // G1
     "([^\\\"\'].{0,"+UURI.MAX_URL_LENGTH+"}?)\\1\\s*[);]"; // G2
     // GROUPS:
     // (G1) optional ' or "
