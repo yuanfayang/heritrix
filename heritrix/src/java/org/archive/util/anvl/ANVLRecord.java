@@ -67,6 +67,7 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
         super(initialCapacity);
     }
     
+    // TODO: Remove support for 'Comment'?
     public boolean addComment(final String s) {
     	return super.add(new Element(new Comment(s)));
     }
@@ -90,6 +91,11 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
         // ANVL Records end in a blank line.
         sb.append(CRLF);
         return sb.toString();
+    }
+    
+    @Override
+    public ANVLRecord clone() {
+        return new ANVLRecord(this);
     }
     
     /**

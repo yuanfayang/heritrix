@@ -255,7 +255,8 @@ implements CoreAttributeConstants, FetchStatusCodes {
 			rec.closeRecorders();
 		}
 		curi.setContentSize(dnsRecord.length);
-        curi.setContentDigest(rec.getRecordedInput().getDigestValue());
+        curi.setContentDigest(FetchHTTP.SHA1,
+            rec.getRecordedInput().getDigestValue());
 	}
     
     protected byte [] getDNSRecord(final long fetchStart,

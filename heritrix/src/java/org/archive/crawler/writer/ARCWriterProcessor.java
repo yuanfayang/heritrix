@@ -84,8 +84,6 @@ WriterPoolSettings, FetchStatusCodes {
     
     /**
      * Default path list.
-     * 
-     * TODO: Confirm this one gets picked up.
      */
     private static final String [] DEFAULT_PATH = {"arcs"};
 
@@ -110,33 +108,21 @@ WriterPoolSettings, FetchStatusCodes {
      */
     @Override
     protected void checkpointRecover() {
-        // If in recover mode, read in the ARCWriter serial number saved
-        // off when we checkpointed.
-        File stateFile = new File(getSettingsHandler().getOrder().
-            getController().getCheckpointRecover().getDirectory(),
-                getCheckpointStateFile());
-        if (!stateFile.exists()) {
-            logger.info(stateFile.getAbsolutePath() +
-                " doesn't exist so cannot restore ARC serial number.");
-        } else {
-            DataInputStream dis = null;
-            try {
-                dis = new DataInputStream(new FileInputStream(stateFile));
-                ARCWriter.setSerialNo(dis.readShort());
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (dis != null) {
-                        dis.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+        int serialNo = loadCheckpointSerialNumber();
+        if (serialNo != -1) {
+            ARCWriter.setSerialNo(serialNo);
         }
+    }
+    
+    public void crawlCheckpoint(File checkpointDir)
+    throws IOException {
+        saveCheckpointSerialNumber(checkpointDir, ARCWriter.getSerialNo());
+        super.crawlCheckpoint(checkpointDir);
+    }
+
+    public void crawlEnding(String sExitMessage) {
+        ARCWriter.resetSerialNo();
+        super.crawlEnding(sExitMessage);
     }
 
     protected void setupPool() {
@@ -324,23 +310,5 @@ WriterPoolSettings, FetchStatusCodes {
         }
 
         return result;
-    }
-
-	public void crawlEnding(String sExitMessage) {
-		ARCWriter.resetSerialNo();
-        super.crawlEnding(sExitMessage);
-	}
-    
-    public void crawlCheckpoint(File checkpointDir)
-    throws IOException {
-        // Write out the current state of the ARCWriter serial number.
-        File f = new File(checkpointDir, getCheckpointStateFile());
-        DataOutputStream dos = new DataOutputStream(new FileOutputStream(f));
-        try {
-            dos.writeShort(ARCWriter.getSerialNo());
-        } finally {
-            dos.close();
-        }
-        super.crawlCheckpoint(checkpointDir);
     }
 }

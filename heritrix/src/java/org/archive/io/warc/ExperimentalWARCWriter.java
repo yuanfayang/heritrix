@@ -95,7 +95,7 @@ extends WriterPoolMember implements WARCConstants {
      * Has default access so can make instance to test utility methods.
      */
     ExperimentalWARCWriter() {
-        this(null, "", "", true, -1);
+        this(null, "", "", true, -1, null);
     }
     
     /**
@@ -111,9 +111,12 @@ extends WriterPoolMember implements WARCConstants {
      * @throws IOException
      */
     ExperimentalWARCWriter(final PrintStream out, final File f,
-    		final boolean cmprs, final String a14DigitDate)
+    		final boolean cmprs, final String a14DigitDate,
+            final List warcinfoData)
     throws IOException {
         super(out, f, cmprs, a14DigitDate);
+        // TODO: What to do w/ metadata?  If present write a warcinfo record
+        // immediately?
     }
             
     /**
@@ -124,10 +127,11 @@ extends WriterPoolMember implements WARCConstants {
      * @param cmprs Compress the records written. 
      * @param maxSize Maximum size for ARC files written.
      * @param suffix File tail to use.  If null, unused.
+     * @param warcinfoData File metadata for warcinfo record.
      */
     public ExperimentalWARCWriter(final List dirs, final String prefix, 
             final String suffix, final boolean cmprs,
-            final int maxSize) {
+            final int maxSize, final List warcinfoData) {
         super(dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);
         // TODO: Should there be a constructor that takes file metadata and
         // writes a warcinfo record automatically on construction?
@@ -315,5 +319,38 @@ extends WriterPoolMember implements WARCConstants {
     throws IOException {
     	writeRecord(WARCINFO, url, create14DigitDate, mimetype,
         		recordId, namedFields, fileMetadata, fileMetadataLength);
+    }
+    
+    public void writeRequestRecord(final String url,
+        final String create14DigitDate, final String mimetype,
+        final URI recordId,
+        final ANVLRecord namedFields, final InputStream request,
+        final long requestLength)
+    throws IOException {
+        writeRecord(REQUEST, url, create14DigitDate,
+            mimetype, recordId, namedFields, request,
+            requestLength);
+    }
+    
+    public void writeResponseRecord(final String url,
+            final String create14DigitDate, final String mimetype,
+            final URI recordId,
+            final ANVLRecord namedFields, final InputStream response,
+            final long responseLength)
+    throws IOException {
+        writeRecord(RESPONSE, url, create14DigitDate,
+            mimetype, recordId, namedFields, response,
+            responseLength);
+    }
+    
+    public void writeMetadataRecord(final String url,
+            final String create14DigitDate, final String mimetype,
+            final URI recordId,
+            final ANVLRecord namedFields, final InputStream metadata,
+            final long metadataLength)
+    throws IOException {
+        writeRecord(METADATA, url, create14DigitDate,
+            mimetype, recordId, namedFields, metadata,
+            metadataLength);
     }
 }

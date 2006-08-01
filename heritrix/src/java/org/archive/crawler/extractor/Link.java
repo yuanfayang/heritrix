@@ -128,4 +128,9 @@ public class Link implements Serializable {
     public static CharSequence elementContext(CharSequence element, CharSequence attribute) {
         return attribute == null? "": element + "/@" + attribute;
     }
+    
+    @Override
+    public String toString() {
+        return this.destination + " " + this.hopType + " " + this.context;
+    }
 }

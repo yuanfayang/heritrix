@@ -27,12 +27,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
@@ -43,12 +43,11 @@ import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.util.Base32;
 import org.archive.util.HttpRecorder;
 
 import st.ata.util.AList;
 import st.ata.util.HashtableAList;
-
-import java.util.concurrent.CopyOnWriteArrayList;
 
 
 /**
@@ -168,6 +167,7 @@ implements FetchStatusCodes {
      * 
      */
     private byte[] contentDigest = null;
+    private String contentDigestScheme = null;
 
 
     /**
@@ -990,9 +990,20 @@ implements FetchStatusCodes {
      * Set the retained content-digest value (usu. SHA1). 
      * 
      * @param digestValue
+     * @deprecated Use {@link #setContentDigest(String scheme, byte[])}
      */
     public void setContentDigest(byte[] digestValue) {
-        contentDigest = digestValue;
+        setContentDigest("SHA1", digestValue);
+    }
+    
+    public void setContentDigest(final String scheme,
+            final byte [] digestValue) {
+        this.contentDigest = digestValue;
+        this.contentDigestScheme = scheme;
+    }
+    
+    public String getContentDigestSchemeString() {
+        return this.contentDigestScheme + ":" + getContentDigestString();
     }
 
     /**
@@ -1002,6 +1013,10 @@ implements FetchStatusCodes {
      */
     public Object getContentDigest() {
         return contentDigest;
+    }
+    
+    public String getContentDigestString() {
+        return Base32.encode(this.contentDigest);
     }
 
     transient Object holder;
@@ -1262,4 +1277,6 @@ implements FetchStatusCodes {
         HashSet ol = (HashSet) stream.readObject();
         outLinks = (ol == null) ? new HashSet() : ol;
     }
+
+
 }

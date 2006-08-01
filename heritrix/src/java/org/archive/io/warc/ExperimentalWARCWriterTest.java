@@ -63,27 +63,27 @@ extends TmpDirTestCase implements WARCConstants {
     
     public void testWriteRecord() throws IOException {
     	File [] files = {getTmpDir()};
+        
     	// Write uncompressed.
         ExperimentalWARCWriter writer =
         	new ExperimentalWARCWriter(Arrays.asList(files),
-        			this.getClass().getName(), "suffix", false, -1);
-        writer.checkSize();
-        try {
-        	writeWarcinfoRecord(writer);
-        	writeBasicRecords(writer);
-        } finally {
-        	writer.close();
-        	writer.getFile().delete();
-        }
+        			this.getClass().getName(), "suffix", false, -1, null);
+        writeFile(writer);
+        
         // Write compressed.
         writer = new ExperimentalWARCWriter(Arrays.asList(files),
-        		this.getClass().getName(), "suffix", true, -1);
+        		this.getClass().getName(), "suffix", true, -1, null);
+        writeFile(writer);
+    }
+    
+    private void writeFile(final ExperimentalWARCWriter writer)
+    throws IOException {
         try {
-           	writeWarcinfoRecord(writer);
-        	writeBasicRecords(writer);
+            writeWarcinfoRecord(writer);
+            writeBasicRecords(writer);
         } finally {
-        	writer.close();
-        	writer.getFile().delete();
+            writer.close();
+            writer.getFile().delete();
         }
     }
     

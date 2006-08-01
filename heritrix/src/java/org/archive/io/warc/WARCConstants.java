@@ -110,4 +110,8 @@ public interface WARCConstants {
      */
     public static final String PLACEHOLDER_RECORD_LENGTH_STRING =
         "000000000000";
+    
+    public static final String NAMED_FIELD_IP_LABEL = "IP-Address";
+    public static final String NAMED_FIELD_CHECKSUM_LABEL = "Checksum";
+    public static final String NAMED_FIELD_RELATED_LABEL = "Related-Record-ID";
 }
