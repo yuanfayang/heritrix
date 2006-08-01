@@ -48,7 +48,7 @@ public class OnDomainsDecideRule extends SurtPrefixedDecideRule {
                  "OnDomainsDecideRule. Makes the configured decision " +
                  "for any URI which is inside one of the domains in the " +
                  "configured set of domains (derived from the seed" +
-                 "list, with \"www\" removed when present).");
+                 "list, with 'www' removed when present).");
         // disable direct setting of SURTs-related options
        //getElementFromDefinition(ATTR_SEEDS_AS_SURT_PREFIXES).setTransient(true);
        //getElementFromDefinition(ATTR_SURTS_SOURCE_FILE).setTransient(true);
