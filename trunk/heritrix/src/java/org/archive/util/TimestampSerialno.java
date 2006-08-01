@@ -33,24 +33,24 @@ package org.archive.util;
  * @author stack
  */
 public class TimestampSerialno {
-	private final String now;
+	private final String ts;
 	private final int serialNumber;
 
-	public TimestampSerialno(String now, int serialNo) {
-		this.now = now;
+	public TimestampSerialno(String ts, int serialNo) {
+		this.ts = ts;
 		this.serialNumber = serialNo;
 	}
     
     public TimestampSerialno(int serialNo) {
-        this.now = ArchiveUtils.get14DigitDate();
+        this.ts = ArchiveUtils.get14DigitDate();
         this.serialNumber = serialNo;
     }
 
 	/**
 	 * @return Returns the now.
 	 */
-	public String getNow() {
-		return this.now;
+	public String getTimestamp() {
+		return this.ts;
 	}
 
 	/**

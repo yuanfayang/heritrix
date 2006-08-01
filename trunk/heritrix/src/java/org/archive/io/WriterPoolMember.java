@@ -117,6 +117,12 @@ public abstract class WriterPoolMember {
     private String suffix = DEFAULT_SUFFIX;
     private final int maxSize;
     private final String extension;
+
+    /**
+     * Creation date for the current file.
+     * Set by {@link #createFile()}.
+     */
+	private String createTimestamp = "UNSET!!!";
     
     /**
      * A running sequence used making unique file names.
@@ -211,10 +217,12 @@ public abstract class WriterPoolMember {
 
     /**
      * Create a new file.
-     * @returns Timestamp and serial number used making new file. 
+     * Rotates off the current Writer and creates a new in its place
+     * to take subsequent writes.  Usually called from {@link #checkSize()}.
+     * @return Name of file created.
      * @throws IOException
      */
-    protected TimestampSerialno createFile() throws IOException {
+    protected String createFile() throws IOException {
         close();
         TimestampSerialno tsn = getTimestampSerialNo();
         String name = this.prefix + '-' + getUniqueBasename(tsn) +
@@ -224,10 +232,11 @@ public abstract class WriterPoolMember {
             OCCUPIED_SUFFIX;
         File dir = getNextDirectory(this.writeDirs);
         this.f = new File(dir, name);
+        this.createTimestamp = tsn.getTimestamp();
         this.fos = new FileOutputStream(this.f);
         this.out = new FastBufferedOutputStream(this.fos);
         logger.info("Opened " + this.f.getAbsolutePath());
-        return tsn;
+        return name;
     }
     
     /**
@@ -307,7 +316,7 @@ public abstract class WriterPoolMember {
      * @return Unique basename.
      */
     private String getUniqueBasename(TimestampSerialno tsn) {
-        return tsn.getNow() + "-" +
+        return tsn.getTimestamp() + "-" +
            WriterPoolMember.serialNoFormatter.format(tsn.getSerialNumber());
     }
 
@@ -338,7 +347,7 @@ public abstract class WriterPoolMember {
      * 
      * @return the filename, as if uncompressed
      */
-    protected String generateName() {
+    protected String getBaseFilename() {
         String name = this.f.getName();
         if (this.compressed && name.endsWith(DOT_COMPRESSED_FILE_EXTENSION)) {
             return name.substring(0,name.length() - 3);
@@ -479,6 +488,10 @@ public abstract class WriterPoolMember {
     protected OutputStream getOutputStream() {
     	return this.out;
     }
+    
+	protected String getCreateTimestamp() {
+		return createTimestamp;
+	}
     
     /**
      * An override so we get access to underlying output stream.
