@@ -24,6 +24,8 @@
 */
 package org.archive.util.anvl;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,6 +52,8 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
 	 * @see http://en.wikipedia.org/wiki/CRLF
 	 */
     static final String CRLF = "\r\n";
+    
+    static final String FOLD_PREFIX = CRLF + ' ';
     
     public ANVLRecord() {
         super();
@@ -95,5 +99,13 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
     public byte [] getUTF8Bytes()
     throws UnsupportedEncodingException {
         return toString().getBytes(UTF8);
+    }
+    
+    public ANVLRecord [] load(final InputStream is)
+    throws IOException {
+        if (true) {
+            throw new IOException("UNIMPLEMENTED");
+        }
+        return null;
     }
 }
