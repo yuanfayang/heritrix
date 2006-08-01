@@ -320,27 +320,6 @@ public abstract class WriterPoolMember {
            WriterPoolMember.serialNoFormatter.format(tsn.getSerialNumber());
     }
 
-    /**
-     * Reset serial number.
-     */
-    public static synchronized void resetSerialNo() {
-        setSerialNo(0);
-    }
-    
-    /**
-     * @return Serial number.
-     */
-    public static int getSerialNo() {
-        return WriterPoolMember.serialNo;
-    }
-    
-    /**
-     * Call when recovering from checkpointing.
-     * @param no Number to set serial number too.
-     */
-    public static void setSerialNo(int no) {
-        WriterPoolMember.serialNo = no;
-    }
 
     /**
      * Get the file name
@@ -509,5 +488,27 @@ public abstract class WriterPoolMember {
         OutputStream getWrappedStream() {
             return this.out;
         }
+    }
+    
+    /**
+     * Reset serial number.
+     */
+    public static synchronized void resetSerialNo() {
+        setSerialNo(0);
+    }
+    
+    /**
+     * @return Serial number.
+     */
+    public static int getSerialNo() {
+        return WriterPoolMember.serialNo;
+    }
+    
+    /**
+     * Call when recovering from checkpointing.
+     * @param no Number to set serial number too.
+     */
+    public static void setSerialNo(int no) {
+        WriterPoolMember.serialNo = no;
     }
 }

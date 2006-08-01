@@ -24,7 +24,12 @@
  */
 package org.archive.crawler.framework;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.InetAddress;
@@ -50,7 +55,6 @@ import org.archive.crawler.settings.Type;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
-
 
 /**
  * Abstract implementation of a file pool processor.
@@ -444,6 +448,56 @@ implements CoreAttributeConstants, CrawlStatusListener {
 	}
 
 	protected void setTotalBytesWritten(long totalBytesWritten) {
-		this.totalBytesWritten = totalBytesWritten;
-	}
+        this.totalBytesWritten = totalBytesWritten;
+    }
+
+    /**
+     * @return Serial number from checkpoint state file or if unreadable, -1
+     * (Client should check for -1).
+     */
+    protected int loadCheckpointSerialNumber() {
+        int result = -1;
+        
+        // If in recover mode, read in the Writer serial number saved
+        // off when we checkpointed.
+        File stateFile = new File(getSettingsHandler().getOrder()
+                .getController().getCheckpointRecover().getDirectory(),
+                getCheckpointStateFile());
+        if (!stateFile.exists()) {
+            logger.info(stateFile.getAbsolutePath()
+                    + " doesn't exist so cannot restore Writer serial number.");
+        } else {
+            DataInputStream dis = null;
+            try {
+                dis = new DataInputStream(new FileInputStream(stateFile));
+                result = dis.readShort();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (dis != null) {
+                        dis.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return result;
+    }
+    
+    protected void saveCheckpointSerialNumber(final File checkpointDir,
+            final int serialNo)
+    throws IOException {
+        // Write out the current state of the ARCWriter serial number.
+        File f = new File(checkpointDir, getCheckpointStateFile());
+        DataOutputStream dos = new DataOutputStream(new FileOutputStream(f));
+        try {
+            dos.writeShort(serialNo);
+        } finally {
+            dos.close();
+        }
+    }
 }

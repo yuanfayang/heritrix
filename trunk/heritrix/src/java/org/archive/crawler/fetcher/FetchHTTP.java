@@ -170,6 +170,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * Default whether to perform on-the-fly SHA1 hashing of content-bodies.
      */
     static Boolean DEFAULT_SHA1_CONTENT = new Boolean(true);
+    public static final String SHA1 = "sha1";
 
     private transient HttpClient http = null;
 
@@ -503,7 +504,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             curi.setContentSize(rec.getRecordedInput().getSize());
         }
         
-        curi.setContentDigest(rec.getRecordedInput().getDigestValue());
+        curi.setContentDigest(SHA1, rec.getRecordedInput().getDigestValue());
         if (logger.isLoggable(Level.INFO)) {
             logger.info((curi.isPost()? "POST": "GET") + " " +
                 curi.getUURI().toString() + " " + method.getStatusCode() +

@@ -41,7 +41,7 @@ import org.archive.util.TextUtils;
 
 /**
  * A processor for calculating custum HTTP content digests in place of the 
- * default (if any) computed by the HTTP fetcer processors.
+ * default (if any) computed by the HTTP fetcher processors.
  * <p>
  * This processor allows the user to specify a regular expression called 
  * <i>strip-reg-expr<i>. Any segment of a document (text only, binary files will
@@ -76,6 +76,8 @@ public class HTTPContentDigest extends Processor {
     /** Maximum file size for - longer files will be ignored. -1 = unlimited*/
     public final static String ATTR_MAX_SIZE_BYTES = "max-size-bytes";
     protected final static Long DEFAULT_MAX_SIZE_BYTES = new Long(1048576); // 1 Megabyte
+    
+    private static final String SHA1 = "SHA1";
 
     
     /**
@@ -172,7 +174,7 @@ public class HTTPContentDigest extends Processor {
         // Create a MessageDigest 
         MessageDigest digest = null;
         try {
-            digest = MessageDigest.getInstance("SHA1");
+            digest = MessageDigest.getInstance(SHA1);
         } catch (NoSuchAlgorithmException e1) {
             e1.printStackTrace();
             return;
@@ -203,6 +205,6 @@ public class HTTPContentDigest extends Processor {
                     ", new: " + Base32.encode(newDigestValue));
         }
         // Save new digest value
-        curi.setContentDigest(newDigestValue);
+        curi.setContentDigest(SHA1, newDigestValue);
     }
 }
