@@ -36,7 +36,7 @@ import java.io.UnsupportedEncodingException;
  * href="http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf">A Name-Value
  * Language (ANVL)</a>
  */
-public class Element {
+class Element {
     private final SubElement [] subElements;
     
     public Element(final Comment c) {

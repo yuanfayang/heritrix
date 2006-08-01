@@ -54,12 +54,13 @@ abstract class SubElement {
     
     protected void checkCharacter(final char c, final String srcStr,
     		final int index) {
-    	if (Character.isISOControl(c) && !Character.isWhitespace(c)) {
+    	if (Character.isISOControl(c) && !Character.isWhitespace(c) ||
+    			!Character.isValidCodePoint(c)) {
             throw new IllegalArgumentException(srcStr +
-                " contains a control character(s): 0x" +
+                " contains a control character(s) or invalid code point: 0x" +
                 Integer.toHexString(index));
-        } else if (c == Record.CRLF.charAt(0) ||
-        			c == Record.CRLF.charAt(1)) {
+        } else if (c == ANVLRecord.CRLF.charAt(0) ||
+        			c == ANVLRecord.CRLF.charAt(1)) {
             throw new IllegalArgumentException(srcStr + " CR or LF (TODO: " +
             	"Allow for folding and then only check for CRLF)");
         }
