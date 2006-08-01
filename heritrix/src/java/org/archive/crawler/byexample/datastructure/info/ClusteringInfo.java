@@ -9,11 +9,15 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+/**
+ * This class handles XMLInfo presentation of clustering results 
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class ClusteringInfo extends XMLInfo{
-    
-    
-    
-    public class ClusterStruct{      
+
+    private class ClusterStruct{      
         private ItemSet clusterLabel;                   
         private int clusterDocNo;                        
         private boolean isRelevant;
@@ -79,6 +83,7 @@ public class ClusteringInfo extends XMLInfo{
     public static String CLUSTER_ASSOCIATED_TERMS_TAG_LABEL="associatedTerms";
     private Map<ItemSet, ClusterStruct> clusters;
     
+
     public ClusteringInfo(String docList,String termSupportIndex) throws Exception{
         super(ROOT_LABEL);
         this.clusterDocsFN=docList;
@@ -116,6 +121,12 @@ public class ClusteringInfo extends XMLInfo{
         this.clusterTermSupportFN = clusterTermSupportFN;
     }
 
+    /**
+     * Convert data to XML and dump xml contents to file
+     * @param path
+     * @param filename
+     * @throws Exception
+     */
     public void toXML(String path, String filename) throws Exception{
         
         ClusterStruct currStruct=null;
@@ -139,6 +150,12 @@ public class ClusteringInfo extends XMLInfo{
         dumpToFile(path,filename);
     }
     
+    /**
+     * Read data from a file and create XML document if possible
+     * @param path
+     * @param filename
+     * @throws Exception
+     */
     public void fromXML(String path, String filename) throws Exception{
         readFromFile(path,filename);        
         NodeList rootChildren=rootElement.getChildNodes();

@@ -3,6 +3,13 @@ package org.archive.crawler.byexample.datastructure.invertedindex;
 import java.util.Comparator;
 import java.util.Iterator;
 
+/**
+ * Interface of Inverted Index datastructure. Inverted Index maps key string to an index row  
+ * 
+ * @see org.archive.crawler.byexample.datastructure.invertedindex.IndexRow
+ * @author Michael Bendersky
+ *
+ */
 public interface InvertedIndex {
     
     public abstract void openIndex(String filePath) throws Exception;

@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.crawler.byexample.constants.ByExampleProperties;
-import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.datastructure.invertedindex.InMemoryIndex;
 import org.archive.crawler.byexample.datastructure.invertedindex.IndexEntry;
 import org.archive.crawler.byexample.datastructure.invertedindex.IndexRow;
@@ -293,24 +292,16 @@ public class AprioriItemSetComputation {
     
     /**
      * Removes from inverted index all the terms that are not 1-frequent
-     *
      */
     public void buildFrequentItemSetsIndex(){
         String term;
-        //ItemSet itemsToRemove=new ItemSet();
         InvertedIndex frequentTermsIndex=new InMemoryIndex();
         for (Iterator<String> iter  = myTermsIndex.getIndexKeysIterator(); iter.hasNext();) {
             term =iter.next();
             if (myFrequentItemSets.contains(new ItemSet(term)))
                 frequentTermsIndex.addRow(term,myTermsIndex.getRow(term));
-           // if (!myFrequentItemSets.contains(new ItemSet(term))){
-           //     itemsToRemove.insertToSet(term);
-           // }
         }
         myTermsIndex=frequentTermsIndex;
-        //for (int i = 0; i < itemsToRemove.getSize(); i++) {
-        //    myTermsIndex.removeRow(itemsToRemove.getItemAtPosition(i));
-       // }
     }
     
     /**    

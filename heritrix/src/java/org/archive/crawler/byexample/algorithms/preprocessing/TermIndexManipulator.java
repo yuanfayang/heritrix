@@ -11,6 +11,9 @@ import org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex;
 /**
  * This class is a manipulation wrapper around InvertedIndex
  * Manipulations implemented here are specific to Terms Inverted Index
+ * Terms Inverted Index contains mappings of type: 
+ * <p>
+ * [TERM] - [LIST OF DOCUMENTS APPEARANCES]
  * 
  * @see  org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex
  * 

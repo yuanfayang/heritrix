@@ -11,7 +11,7 @@ import org.archive.crawler.byexample.datastructure.support.ClusterScore;
  * <p>
  * - Array of ClusterScores for each possible cluster of the url
  * <p>
- * - ScopeDecisionConstant indicating the scoping decision for the url
+ * - Relevance score of the url
  * 
  * @see org.archive.crawler.byexample.datastructure.support.ClusterScore
  * @see org.archive.crawler.byexample.constants.ScopeDecisionConstants
@@ -28,7 +28,7 @@ public class DocumentClassificationEntry{
      * Default construct
      * @param url
      * @param labeling
-     * @param scoping
+     * @param relScore
      */
     public DocumentClassificationEntry(String url, ClusterScore[] labeling, double relScore){
         this.url=url;

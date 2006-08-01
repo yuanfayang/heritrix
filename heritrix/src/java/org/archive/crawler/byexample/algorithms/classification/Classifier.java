@@ -134,6 +134,13 @@ public class Classifier {
         return new DocumentClassificationEntry(url, normalizeRelevanceScores(topScores), getRelevanceScore(topScores));      
     }
     
+    /**
+     * Return relevance score for a document based on its top cluster scores.
+     * Relevance score is simply a sum of all relevant cluster scores
+     * 
+     * @param cs ClusterScore[] - top cluster scores
+     * @return relevance score for a document
+     */
     public synchronized double getRelevanceScore(ClusterScore[] cs){
         double relevanceScore=0;
         for (int i = 0; i < cs.length; i++) {
