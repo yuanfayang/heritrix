@@ -26,6 +26,7 @@ package org.archive.util.anvl;
 
 /**
  * Abstract ANVL 'data element' sub-part.
+ * Subclass to make a Comment, a Label, or a Value.
  * @author stack
  */
 abstract class SubElement {
@@ -46,18 +47,22 @@ abstract class SubElement {
         }
         // Check for CRLF.
         for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (Character.isISOControl(c) && !Character.isWhitespace(c)) {
-                throw new IllegalArgumentException(s +
-                    " contains a control character(s): 0x" +
-                    Integer.toHexString(i));
-            } else if (c == Record.CRLF.charAt(0) ||
-            			c == Record.CRLF.charAt(1)) {
-                throw new IllegalArgumentException(s + " CR or LF (TODO: " +
-                	"Allow for folding and then only check for CRLF)");
-            }
+            checkCharacter(s.charAt(i), s, i);
         }
         return s;
+    }
+    
+    protected void checkCharacter(final char c, final String srcStr,
+    		final int index) {
+    	if (Character.isISOControl(c) && !Character.isWhitespace(c)) {
+            throw new IllegalArgumentException(srcStr +
+                " contains a control character(s): 0x" +
+                Integer.toHexString(index));
+        } else if (c == Record.CRLF.charAt(0) ||
+        			c == Record.CRLF.charAt(1)) {
+            throw new IllegalArgumentException(srcStr + " CR or LF (TODO: " +
+            	"Allow for folding and then only check for CRLF)");
+        }
     }
     
     @Override

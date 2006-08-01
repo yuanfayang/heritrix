@@ -31,6 +31,8 @@ package org.archive.util.anvl;
  * @version $Date$ $Version$
  */
 public class Value extends SubElement {
+	private static final String PREFIX = " ";
+	
     private Value() {
         this(null);
     }
@@ -41,6 +43,6 @@ public class Value extends SubElement {
     
     @Override
     public String toString() {
-        return "\t" + super.toString();
+        return PREFIX + super.toString();
     }
 }

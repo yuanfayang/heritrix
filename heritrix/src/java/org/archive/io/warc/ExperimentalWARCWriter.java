@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
@@ -34,8 +35,9 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.archive.io.WriterPoolMember;
+import org.archive.io.warc.recordid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.TimestampSerialno;
+import org.archive.util.anvl.Record;
 
 
 /**
@@ -77,43 +79,33 @@ extends WriterPoolMember implements WARCConstants {
         new DecimalFormat(PLACEHOLDER_RECORD_LENGTH_STRING);
     
     /**
+     * URL scheme for ARC files.
+     */
+    private static final String RFC2397_PREFIX =
+    	"data:text/plain;charset=utf-8,";
+    
+    /**
      * Shutdown Constructor
-     * For unit testing utility methods.
+     * Has default access so can make instance to test utility methods.
      */
     ExperimentalWARCWriter() {
-        this(null, "", true, -1);
+        this(null, "", "", true, -1);
     }
     
     /**
      * Constructor.
      * Takes a stream. Use with caution. There is no upperbound check on size.
-     * Will just keep writing.
+     * Will just keep writing.  Only pass Streams that are bounded.
      * @param out Where to write.
      * @param f File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
-     * @param metadata File meta data.  Can be null.  Is list of File and/or
-     * String objects.
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
     ExperimentalWARCWriter(final PrintStream out, final File f,
-    		final boolean cmprs, final String a14DigitDate, final Map metadata)
+    		final boolean cmprs, final String a14DigitDate)
     throws IOException {
         super(out, f, cmprs, a14DigitDate);
-        // TODO: If passed file metadata, write it out.
-    }
-    
-    /**
-     * Constructor.
-     *
-     * @param dirs Where to drop files.
-     * @param prefix File prefix to use.
-     * @param cmprs Compress the records written. 
-     * @param maxSize Maximum size for ARC files written.
-     */
-    public ExperimentalWARCWriter(final List dirs, final String prefix, 
-            final boolean cmprs, final int maxSize) {
-        this(dirs, prefix, "", cmprs, maxSize, null);
     }
             
     /**
@@ -124,27 +116,20 @@ extends WriterPoolMember implements WARCConstants {
      * @param cmprs Compress the records written. 
      * @param maxSize Maximum size for ARC files written.
      * @param suffix File tail to use.  If null, unused.
-     * @param meta File meta data.  Can be null.  Is list of File and/or
-     * String objects.
      */
     public ExperimentalWARCWriter(final List dirs, final String prefix, 
             final String suffix, final boolean cmprs,
-            final int maxSize, final Map meta) {
+            final int maxSize) {
         super(dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);
-        // TODO: this.metadata = meta;
+        // TODO: Should there be a constructor that takes file metadata and
+        // writes a warcinfo record automatically?
     }
 
-    /**
-     * Create an WARC file.
-     * @return Instance of datastructure with serial number and timestamp used
-     * making this file.
-     * @throws IOException
-     */
-    protected TimestampSerialno createFile()
+    protected String createFile()
     throws IOException {
-        TimestampSerialno tsn = super.createFile();
-        writeWarcinfoRecord(tsn);
-        return tsn;
+    	// TODO: Do I need to automatically write a warcinfo record here, just
+    	// after call to super.createFile()?
+        return super.createFile();
     }
     
     protected String checkHeaderLineValue(final String value)
@@ -161,17 +146,9 @@ extends WriterPoolMember implements WARCConstants {
         return value;
     }
     
-    protected String getRecordId() {
-        // TODO: Needs to be pluggable.  Factory.
-        return "unique-id-todo";
-    }
-    
-    protected byte [] serializeNamedFields(final Map namedFields) {
-    	return new byte [0];
-    }
-    
     protected byte [] createRecordHeaderline(final String type,
-    		final String url, final String mimetype, final URI recordId,
+    		final String url, final String create14DigitDate,
+    		final String mimetype, final URI recordId,
     		final int namedFieldsLength, final long contentLength)
     throws IOException {
     	final StringBuilder sb =
@@ -184,7 +161,7 @@ extends WriterPoolMember implements WARCConstants {
     	sb.append(HEADER_FIELD_SEPARATOR);
     	sb.append(checkHeaderLineValue(url));
     	sb.append(HEADER_FIELD_SEPARATOR);
-    	sb.append(ArchiveUtils.get14DigitDate());
+    	sb.append(checkHeaderLineValue(create14DigitDate));
     	sb.append(HEADER_FIELD_SEPARATOR);
     	sb.append(checkHeaderLineValue(mimetype));
     	sb.append(HEADER_FIELD_SEPARATOR);
@@ -202,9 +179,10 @@ extends WriterPoolMember implements WARCConstants {
     	// TODO: Ensure all characters within a particular charset.
         return sb.toString().getBytes(HEADER_LINE_ENCODING);
     }
-    
+
     protected void writeRecord(final String type, final String url,
-            final String mimetype, final URI recordId, final Map namedFields,
+    		final String create14DigitDate, final String mimetype,
+    		final URI recordId, final Record namedFields,
             final InputStream contentStream, final long contentLength)
     throws IOException {
     	if (!TYPES_LIST.contains(type)) {
@@ -219,13 +197,15 @@ extends WriterPoolMember implements WARCConstants {
         preWriteRecordTasks();
         try {
         	// Serialize metadata first so we have metadata length.
-        	final byte [] namedFieldsBlock = serializeNamedFields(namedFields);
+        	final byte [] namedFieldsBlock = (namedFields != null)?
+        			namedFields.getUTF8Bytes(): new byte[0];
         	// Now serialize the Header line.
             final byte [] header = createRecordHeaderline(type, url,
-            	mimetype, recordId, namedFieldsBlock.length, contentLength);
+            	create14DigitDate, mimetype, recordId, namedFieldsBlock.length,
+            	contentLength);
             write(header);
+            write(NEWLINE_BYTES);
             if (namedFieldsBlock != null && namedFieldsBlock.length > 0) {
-            	write(NEWLINE_BYTES);
             	write(namedFieldsBlock);
             }
             if (contentStream != null && contentLength > 0) {
@@ -242,9 +222,86 @@ extends WriterPoolMember implements WARCConstants {
         }
     }
     
-    private void writeWarcinfoRecord(final TimestampSerialno tsn)
+    /**
+     * @return A RFC2397 URL made of the current filename.
+     * @throws IOException 
+     */
+    protected String generateWarcinfoRecordURL()
     throws IOException {
-        // TODO: getOutputStream().write(generateARCFileMetaData(tsn.getNow()));
+    	if (getFile() == null) {
+    		// Then, file hasn't been created yet.  Call createFile.
+    		// TODO: If createFile automatically makes a warcinfo, remove this
+    		// call to createFile.
+    		createFile();
+    	}
+    	return RFC2397_PREFIX + getBaseFilename();
+    }
+    
+    protected URI generateRecordId(final Map<String, String> qualifiers)
+    throws IOException {
+    	URI rid = null;
+    	try {
+    		rid = GeneratorFactory.getFactory().
+    			getQualifiedRecordID(qualifiers);
+    	} catch (URISyntaxException e) {
+    		// Convert to IOE so can let it out.
+    		throw new IOException(e.getMessage());
+    	}
+    	return rid;
+    }
+    
+    protected URI generateRecordId(final String key, final String value)
+    throws IOException {
+    	URI rid = null;
+    	try {
+    		rid = GeneratorFactory.getFactory().
+    			getQualifiedRecordID(key, value);
+    	} catch (URISyntaxException e) {
+    		// Convert to IOE so can let it out.
+    		throw new IOException(e.getMessage());
+    	}
+    	return rid;
+    }
+    
+    /**
+     * Write a warcinfo to current file.
+     * @param url If empty, we'll create an URL of 'data:FILENAME'.
+     * @param create14DigitDate Creation date as 14 digit date.
+     * @param mimetype Mimetype of the <code>fileMetadata</code>.
+     * @param fileMetadata Metadata about this WARC.
+     * @param fileMetadataLength Length.
+     * @throws IOException
+     * @return Record-Id.
+     */
+    public URI writeWarcinfoRecord(final String mimetype,
+    	final InputStream fileMetadata, final long fileMetadataLength)
+    throws IOException {
+    	final URI recordid = generateRecordId(TYPE, WARCINFO);
+    	writeWarcinfoRecord(generateWarcinfoRecordURL(),
+    		ArchiveUtils.get14DigitDate(), mimetype, recordid, null,
+    		fileMetadata, fileMetadataLength);
+    	return recordid;
+    }
+    
+    /**
+     * Write a warcinfo to current file.
+     * @param url If empty, we'll create an URL of the filename using
+     * the 'data' scheme (See
+     * <a href="http://en.wikipedia.org/wiki/Data:_URL"></a>).
+     * @param create14DigitDate Creation date as 14 digit date.
+     * @param mimetype Mimetype of the <code>fileMetadata</code>.
+     * @param namedFields Named fields.
+     * @param fileMetadata Metadata about this WARC.
+     * @param fileMetadataLength Length.
+     * @throws IOException
+     */
+    public void writeWarcinfoRecord(final String url,
+    	final String create14DigitDate, final String mimetype,
+    	final URI recordId, final Record namedFields,
+    	final InputStream fileMetadata, final long fileMetadataLength)
+    throws IOException {
+    	writeRecord(WARCINFO, url, create14DigitDate, mimetype,
+        		recordId, namedFields, fileMetadata, fileMetadataLength);
     }
         
 	/**

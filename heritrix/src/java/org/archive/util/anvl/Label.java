@@ -25,15 +25,22 @@
 package org.archive.util.anvl;
 
 public class Label extends SubElement {
+	private static final char COLON = ':';
+	
     private Label() {
         this(null);
     }
     
     public Label(final String s) {
         super(s);
-        if (s.indexOf(':') >= 0) {
-            throw new IllegalArgumentException("Label cannot contain a ':'");
-        }
+    }
+    
+    @Override
+    protected void checkCharacter(char c, String srcStr, int index) {
+    	super.checkCharacter(c, srcStr, index);
+    	if (c == COLON) {
+    		throw new IllegalArgumentException("Label cannot contain " + COLON);
+    	}
     }
     
     @Override

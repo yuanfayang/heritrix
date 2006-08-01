@@ -150,7 +150,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
     throws IOException {
         super(out, arc, cmprs, a14DigitDate);
         this.metadata = metadata;
-        writeFirstRecord(getTimestampSerialNo(a14DigitDate));
+        writeFirstRecord(a14DigitDate);
     }
     
     /**
@@ -187,21 +187,16 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
         this.metadata = meta;
     }
 
-    /**
-     * Create an ARC file.
-     *
-     * @throws IOException
-     */
-    protected TimestampSerialno createFile()
+    protected String createFile()
     throws IOException {
-        TimestampSerialno tsn = super.createFile();
-        writeFirstRecord(tsn);
-        return tsn;
+        String name = super.createFile();
+        writeFirstRecord(getCreateTimestamp());
+        return name;
     }
     
-    private void writeFirstRecord(final TimestampSerialno tsn)
+    private void writeFirstRecord(final String ts)
     throws IOException {
-        write(generateARCFileMetaData(tsn.getNow()));
+        write(generateARCFileMetaData(ts));
     }
         
 	/**
@@ -247,7 +242,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
                 ((metadataBodyLength > 0)? "1": "0"));
         int recordLength = metadataBodyLength +
             metadataHeaderLinesTwoAndThree.getBytes(DEFAULT_ENCODING).length;
-        String metadataHeaderStr = ARC_MAGIC_NUMBER + generateName() +
+        String metadataHeaderStr = ARC_MAGIC_NUMBER + getBaseFilename() +
             " 0.0.0.0 " + date + " text/plain " + recordLength +
             metadataHeaderLinesTwoAndThree;
         ByteArrayOutputStream metabaos =

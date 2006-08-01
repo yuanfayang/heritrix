@@ -35,10 +35,14 @@ import org.archive.io.UTF8Bytes;
  * An ordered {@link List} with 'data' {@link Element} values.
  * @see <a
  * href="http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf">A Name-Value
- * Language (ANVL)</a>
+ * Language (ANVL)</a>.  Always adds a {@link CRLF} at EOR (End-Of-Record).
  * @author stack
  */
 public class Record extends ArrayList<Element> implements UTF8Bytes {
+	private static final long serialVersionUID = -4610638888453052958L;
+	
+	public static final String MIMETYPE = "text/anvl";
+	
 	/**
 	 * An ANVL 'newline'.
 	 * @see http://en.wikipedia.org/wiki/CRLF
@@ -57,6 +61,18 @@ public class Record extends ArrayList<Element> implements UTF8Bytes {
         super(initialCapacity);
     }
     
+    public boolean addComment(final String s) {
+    	return super.add(new Element(new Comment(s)));
+    }
+    
+    public boolean addLabel(final String l) {
+    	return super.add(new Element(new Label(l)));
+    }
+
+    public boolean addLabelValue(final String l, final String v) {
+    	return super.add(new Element(new Label(l), new Value(v)));
+    }
+    
     @Override
     public String toString() {
         // TODO: What to emit for empty Record?
@@ -65,7 +81,6 @@ public class Record extends ArrayList<Element> implements UTF8Bytes {
             sb.append(i.next());
             sb.append(CRLF);
         }
-        sb.append(CRLF);
         return sb.toString();
     }
     

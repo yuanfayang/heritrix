@@ -25,16 +25,19 @@
  */
 package org.archive.io.warc;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
+import org.archive.io.UTF8Bytes;
 import org.archive.io.warc.recordid.GeneratorFactory;
+import org.archive.util.ArchiveUtils;
 import org.archive.util.TmpDirTestCase;
+import org.archive.util.anvl.Record;
 
 
 public class ExperimentalWARCWriterTest
@@ -63,8 +66,10 @@ extends TmpDirTestCase implements WARCConstants {
     	// Write uncompressed.
         ExperimentalWARCWriter writer =
         	new ExperimentalWARCWriter(Arrays.asList(files),
-        			this.getClass().getName(), false, -1);
+        			this.getClass().getName(), "suffix", false, -1);
+        writer.checkSize();
         try {
+        	writeWarcinfoRecord(writer);
         	writeBasicRecords(writer);
         } finally {
         	writer.close();
@@ -72,9 +77,9 @@ extends TmpDirTestCase implements WARCConstants {
         }
         // Write compressed.
         writer = new ExperimentalWARCWriter(Arrays.asList(files),
-        		this.getClass().getName(),
-            true, -1);
+        		this.getClass().getName(), "suffix", true, -1);
         try {
+           	writeWarcinfoRecord(writer);
         	writeBasicRecords(writer);
         } finally {
         	writer.close();
@@ -82,21 +87,39 @@ extends TmpDirTestCase implements WARCConstants {
         }
     }
     
-    protected void writeBasicRecords(final ExperimentalWARCWriter writer)
+    private void writeWarcinfoRecord(ExperimentalWARCWriter writer)
     throws IOException {
-    	Map<String, String> m = new HashMap<String, String>();
-    	m.put("x", "y");
+    	Record meta = new Record();
+    	meta.addLabelValue("size", "500mb");
+    	meta.addLabelValue("operator", "igor");
+    	byte [] bytes = meta.getUTF8Bytes();
+    	writer.writeWarcinfoRecord(Record.MIMETYPE,
+    		new ByteArrayInputStream(bytes), bytes.length);
+	}
+
+	protected void writeBasicRecords(final ExperimentalWARCWriter writer)
+    throws IOException {
+    	Record headerFields = new Record();
+    	headerFields.addLabelValue("x", "y");
+    	headerFields.addLabelValue("a", "b");
+    	
     	URI rid = null;
     	try {
-    		rid = GeneratorFactory.getFactory().getQualifiedRecordID(TYPE,
-    			METADATA);
+    		rid = GeneratorFactory.getFactory().
+    			getQualifiedRecordID(TYPE, METADATA);
     	} catch (URISyntaxException e) {
     		// Convert to IOE so can let it out.
     		throw new IOException(e.getMessage());
     	}
+    	final String content = "Any old content.";
     	for (int i = 0; i < 10; i++) {
-    		writer.writeRecord(METADATA, "http://www.archive.org/", "no/type",
-    			rid, m, null, 0);
+    		String body = i + ". " + content;
+    		byte [] bodyBytes = body.getBytes(UTF8Bytes.UTF8);
+    		writer.writeRecord(METADATA, "http://www.archive.org/",
+    			ArchiveUtils.get14DigitDate(), "no/type",
+    			rid, headerFields,
+    			(InputStream)new ByteArrayInputStream(bodyBytes),
+    			(long)bodyBytes.length);
     	}
     }
 }
