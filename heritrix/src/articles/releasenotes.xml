@@ -11,6 +11,76 @@
       <corpauthor>Internet Archive</corpauthor>
     </authorgroup>
   </articleinfo>
+   <sect1 id="1_10_0">
+    <title>Release 1.10.0 - TBD</title>
+    <abstract>
+      <para>Release 1.10.0 adds...</para>
+      
+      <para>Release 1.10.0 requires JDK 1.5.x ("Java 5") Java 
+      facilities.</para>
+    </abstract>
+
+    <sect2 id="1_10_0_limitations">
+      <title>Known Limitations/Issues</title>
+       <sect3 id="bdb_nfs"><title>java.io.IOException: No locks available</title>
+        <para>BDB-JE will complain 'No locks available' when crawler is being
+        built/run on an NFS mount. Workaround is to locate the 'state'
+        directory on a non-NFS-mounted volume.
+        </para>
+      </sect3>
+    </sect2>
+    <sect2 id="1_10_0_changes">
+        <title>Changes</title>
+        <sect3 id="quotaretire">
+         <title>QuotaEnforcer 'force-retire' option</title>
+         <para>The optional QuotaEnforcer processor has a new setting, 
+         'force-retire', which is by default 'true', and changes the 
+         default behavior of QuotaEnforcer. Previously, when a URI was
+         noted as being over-quota, it would be marked with a special 
+         over-quota failure code which caused it to complete processing
+         as an error. As a result, all over-quota URIs would quickly be
+         finished as errors and appear in the crawl.log, but there would
+         be no opportunity to raise the quota and continue crawling.</para>
+         <para>The new default behavior instead marks the URI with a 
+         directive requesting its frontier queue be retired. If the 
+         frontier supports this directive, the URI will be returned to 
+         its queue as if never tried, and the whole queue retired from 
+         active crawling. This offers the opportunity to raise the quota
+         and continue crawling the URI and others of its queue. (All
+         settings changes cause all retired queues to be reevaluated.)
+         However, the over-quota URIs will not appear as errors in the 
+         crawl.log.</para>
+         <para>If the old behavior is preferred,  set 'force-retire' to 
+         'false'.</para>
+        </sect3>
+        
+        <para><table>
+          <title>All Tracked Changes</title>
+
+          <tgroup cols="5">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+                <entry>Open Date</entry>
+                <entry>By</entry>
+                <entry>Filer</entry>
+              </row>
+            </thead>
+
+            <tbody>
+<!-- additions -->
+<row><entry>id-link</entry><entry>Fix/Add</entry><entry>title</entry><entry>date</entry><entry>owner</entry><entry>reporter</entry></row>
+<!-- fixes -->     
+
+        
+            </tbody>
+          </tgroup>
+        </table></para>
+        
+    </sect2>
+  </sect1>
   <sect1 id="1_8_0">
     <title>Release 1.8.0 - 05/05/2006</title>
     <abstract>

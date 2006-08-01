@@ -93,4 +93,7 @@ public interface CoreAttributeConstants {
      * via) this URI. 
      */
     public static final String A_HERITABLE_KEYS = "heritable";
+    
+    /** flag indicating the containing queue should be retired */ 
+    public static final String A_FORCE_RETIRE = "force-retire";
 }
