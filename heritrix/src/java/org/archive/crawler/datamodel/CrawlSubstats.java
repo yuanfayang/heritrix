@@ -54,7 +54,8 @@ public class CrawlSubstats implements Serializable, FetchStatusCodes {
         }
         fetchResponses++;
         totalBytes += curi.getContentSize();
-        if(curi.getFetchStatus()==HttpStatus.SC_OK) {
+        if(curi.getFetchStatus()>=HttpStatus.SC_OK && 
+                curi.getFetchStatus()<300) {
             fetchSuccesses++;
             successBytes += curi.getContentSize();
         }
