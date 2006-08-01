@@ -1,4 +1,4 @@
-/* RecordTest
+/* ANVLRecordTest
 *
 * $Id$
 *
@@ -26,9 +26,9 @@ package org.archive.util.anvl;
 
 import junit.framework.TestCase;
 
-public class RecordTest extends TestCase {
+public class ANVLRecordTest extends TestCase {
     public void testAdd() throws Exception {
-        Record am = new Record();
+        ANVLRecord am = new ANVLRecord();
         am.add(new Element(new Label("entry")));
         am.add(new Element(new Comment("First draft")));
         am.add(new Element(new Label("who"),
@@ -38,5 +38,12 @@ public class RecordTest extends TestCase {
         am.add(new Element(new Label("when/created"),
             new Value("18888")));
         System.out.println(am.toString());
+    }
+    
+    public void testEmptyRecord() throws Exception {
+    	byte [] b = ANVLRecord.EMPTY_ANVL_RECORD.getUTF8Bytes();
+    	assertEquals(b.length, 2);
+    	assertEquals(b[0], '\r');
+    	assertEquals(b[1], '\n');
     }
 }

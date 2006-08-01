@@ -37,7 +37,7 @@ import org.archive.io.UTF8Bytes;
 import org.archive.io.warc.recordid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.TmpDirTestCase;
-import org.archive.util.anvl.Record;
+import org.archive.util.anvl.ANVLRecord;
 
 
 public class ExperimentalWARCWriterTest
@@ -89,17 +89,17 @@ extends TmpDirTestCase implements WARCConstants {
     
     private void writeWarcinfoRecord(ExperimentalWARCWriter writer)
     throws IOException {
-    	Record meta = new Record();
+    	ANVLRecord meta = new ANVLRecord();
     	meta.addLabelValue("size", "500mb");
     	meta.addLabelValue("operator", "igor");
     	byte [] bytes = meta.getUTF8Bytes();
-    	writer.writeWarcinfoRecord(Record.MIMETYPE,
+    	writer.writeWarcinfoRecord(ANVLRecord.MIMETYPE, null,
     		new ByteArrayInputStream(bytes), bytes.length);
 	}
 
 	protected void writeBasicRecords(final ExperimentalWARCWriter writer)
     throws IOException {
-    	Record headerFields = new Record();
+    	ANVLRecord headerFields = new ANVLRecord();
     	headerFields.addLabelValue("x", "y");
     	headerFields.addLabelValue("a", "b");
     	

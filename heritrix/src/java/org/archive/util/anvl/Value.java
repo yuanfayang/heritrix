@@ -30,7 +30,7 @@ package org.archive.util.anvl;
  * @author stack
  * @version $Date$ $Version$
  */
-public class Value extends SubElement {
+class Value extends SubElement {
 	private static final String PREFIX = " ";
 	
     private Value() {

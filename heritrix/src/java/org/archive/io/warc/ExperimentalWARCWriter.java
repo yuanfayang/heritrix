@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.warc.recordid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.anvl.Record;
+import org.archive.util.anvl.ANVLRecord;
 
 
 /**
@@ -66,6 +66,9 @@ extends WriterPoolMember implements WARCConstants {
      */
     private final byte [] readbuffer = new byte[16 * 1024];
     
+    /**
+     * NEWLINE as bytes.
+     */
     public static byte [] NEWLINE_BYTES;
     static {
         try {
@@ -75,11 +78,14 @@ extends WriterPoolMember implements WARCConstants {
         }
     };
     
+    /**
+     * Formatter for the length.
+     */
     private static NumberFormat RECORD_LENGTH_FORMATTER =
         new DecimalFormat(PLACEHOLDER_RECORD_LENGTH_STRING);
     
     /**
-     * URL scheme for ARC files.
+     * Default URL scheme prefix for WARC file warcinfo records.
      */
     private static final String RFC2397_PREFIX =
     	"data:text/plain;charset=utf-8,";
@@ -95,7 +101,9 @@ extends WriterPoolMember implements WARCConstants {
     /**
      * Constructor.
      * Takes a stream. Use with caution. There is no upperbound check on size.
-     * Will just keep writing.  Only pass Streams that are bounded.
+     * Will just keep writing.  Only pass Streams that are bounded. Has
+     * default access only because usually only used by {@link WARCReader}
+     * dumping output.
      * @param out Where to write.
      * @param f File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
@@ -122,13 +130,16 @@ extends WriterPoolMember implements WARCConstants {
             final int maxSize) {
         super(dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);
         // TODO: Should there be a constructor that takes file metadata and
-        // writes a warcinfo record automatically?
+        // writes a warcinfo record automatically on construction?
     }
 
     protected String createFile()
     throws IOException {
     	// TODO: Do I need to automatically write a warcinfo record here, just
-    	// after call to super.createFile()?
+    	// after call to super.createFile()?  Yes.  But what to write in the
+    	// second warcinfos?  Pointer at first?
+    	// TODO: If at start of file, and we're writing compressed,
+    	// write out our distinctive GZIP extensions.
         return super.createFile();
     }
     
@@ -138,7 +149,8 @@ extends WriterPoolMember implements WARCConstants {
         // TODO: Below check may be too strict?
         for (int i = 0; i < value.length(); i++) {
         	char c = value.charAt(i);
-            if (Character.isISOControl(c) || Character.isWhitespace(c)) {
+            if (Character.isISOControl(c) || Character.isWhitespace(c) ||
+            		!Character.isValidCodePoint(c)) {
                 throw new IOException("Contains illegal character 0x" +
                     Integer.toHexString(c) + ": " + value);
             }
@@ -175,14 +187,13 @@ extends WriterPoolMember implements WARCConstants {
         int end = start + PLACEHOLDER_RECORD_LENGTH_STRING.length();
     	String lenStr = RECORD_LENGTH_FORMATTER.format(length);
     	sb.replace(start, end, lenStr);
-    	
-    	// TODO: Ensure all characters within a particular charset.
+
         return sb.toString().getBytes(HEADER_LINE_ENCODING);
     }
 
     protected void writeRecord(final String type, final String url,
     		final String create14DigitDate, final String mimetype,
-    		final URI recordId, final Record namedFields,
+    		final URI recordId, ANVLRecord namedFields,
             final InputStream contentStream, final long contentLength)
     throws IOException {
     	if (!TYPES_LIST.contains(type)) {
@@ -191,25 +202,27 @@ extends WriterPoolMember implements WARCConstants {
     	if (contentLength == 0 &&
                 (namedFields == null || namedFields.size() <= 0)) {
     		throw new IllegalArgumentException("Cannot have a record made " +
-    		    "of a Header line only");
+    		    "of a Header line only (Content and Named Fields are empty).");
     	}
     	
         preWriteRecordTasks();
         try {
+        	if (namedFields == null) {
+        		// Use the empty anvl record so the length of blank line on
+        		// end gets counted as part of the record length.
+        		namedFields = ANVLRecord.EMPTY_ANVL_RECORD;
+        	}
+        	
         	// Serialize metadata first so we have metadata length.
-        	final byte [] namedFieldsBlock = (namedFields != null)?
-        			namedFields.getUTF8Bytes(): new byte[0];
+        	final byte [] namedFieldsBlock = namedFields.getUTF8Bytes();
         	// Now serialize the Header line.
             final byte [] header = createRecordHeaderline(type, url,
             	create14DigitDate, mimetype, recordId, namedFieldsBlock.length,
             	contentLength);
             write(header);
             write(NEWLINE_BYTES);
-            if (namedFieldsBlock != null && namedFieldsBlock.length > 0) {
-            	write(namedFieldsBlock);
-            }
+            write(namedFieldsBlock);
             if (contentStream != null && contentLength > 0) {
-            	write(NEWLINE_BYTES);
             	readFullyFrom(contentStream, contentLength, this.readbuffer);
             }
             
@@ -229,9 +242,9 @@ extends WriterPoolMember implements WARCConstants {
     protected String generateWarcinfoRecordURL()
     throws IOException {
     	if (getFile() == null) {
-    		// Then, file hasn't been created yet.  Call createFile.
-    		// TODO: If createFile automatically makes a warcinfo, remove this
-    		// call to createFile.
+    		// Then, a current file hasn't been created yet.  Call createFile.
+    		// TODO: If createFile automatically makes a warcinfo record,
+    		// remove this call to createFile.
     		createFile();
     	}
     	return RFC2397_PREFIX + getBaseFilename();
@@ -265,181 +278,42 @@ extends WriterPoolMember implements WARCConstants {
     
     /**
      * Write a warcinfo to current file.
-     * @param url If empty, we'll create an URL of 'data:FILENAME'.
-     * @param create14DigitDate Creation date as 14 digit date.
-     * @param mimetype Mimetype of the <code>fileMetadata</code>.
-     * @param fileMetadata Metadata about this WARC.
-     * @param fileMetadataLength Length.
+     * @param mimetype Mimetype of the <code>fileMetadata</code> block.
+     * @param namedFields Named fields. Pass <code>null</code> if none.
+     * @param fileMetadata Metadata about this WARC as RDF, ANVL, etc.
+     * @param fileMetadataLength Length of <code>fileMetadata</code>.
      * @throws IOException
-     * @return Record-Id.
+     * @return Generated record-id made with
+     * <a href="http://en.wikipedia.org/wiki/Data:_URL">data: scheme</a> and
+     * the current filename.
      */
     public URI writeWarcinfoRecord(final String mimetype,
-    	final InputStream fileMetadata, final long fileMetadataLength)
+    	final ANVLRecord namedFields, final InputStream fileMetadata,
+    	final long fileMetadataLength)
     throws IOException {
     	final URI recordid = generateRecordId(TYPE, WARCINFO);
     	writeWarcinfoRecord(generateWarcinfoRecordURL(),
-    		ArchiveUtils.get14DigitDate(), mimetype, recordid, null,
+    		ArchiveUtils.get14DigitDate(), mimetype, recordid, namedFields,
     		fileMetadata, fileMetadataLength);
     	return recordid;
     }
     
     /**
      * Write a warcinfo to current file.
-     * @param url If empty, we'll create an URL of the filename using
-     * the 'data' scheme (See
-     * <a href="http://en.wikipedia.org/wiki/Data:_URL"></a>).
-     * @param create14DigitDate Creation date as 14 digit date.
+     * @param url URL to use for this warcinfo.
+     * @param create14DigitDate Record creation date as 14 digit date.
      * @param mimetype Mimetype of the <code>fileMetadata</code>.
      * @param namedFields Named fields.
-     * @param fileMetadata Metadata about this WARC.
-     * @param fileMetadataLength Length.
+     * @param fileMetadata Metadata about this WARC as RDF, ANVL, etc.
+     * @param fileMetadataLength Length of <code>fileMetadata</code>.
      * @throws IOException
      */
     public void writeWarcinfoRecord(final String url,
     	final String create14DigitDate, final String mimetype,
-    	final URI recordId, final Record namedFields,
+    	final URI recordId, final ANVLRecord namedFields,
     	final InputStream fileMetadata, final long fileMetadataLength)
     throws IOException {
     	writeRecord(WARCINFO, url, create14DigitDate, mimetype,
         		recordId, namedFields, fileMetadata, fileMetadataLength);
     }
-        
-	/**
-     * Write out the WARCMetaData.
-     *
-     * @param date Date to put into the ARC metadata.
-     * @return Byte array filled w/ the arc header.
-	 * @throws IOException
-     *//*
-    private byte [] generateFileMetaData(String date)
-    throws IOException {
-        int metadataBodyLength = getMetadataLength();
-        // If metadata body, then the minor part of the version is '1' rather
-        // than '0'.
-        String metadataHeaderLinesTwoAndThree =
-            getMetadataHeaderLinesTwoAndThree("1 " +
-                ((metadataBodyLength > 0)? "1": "0"));
-        int recordLength = metadataBodyLength +
-            metadataHeaderLinesTwoAndThree.getBytes(DEFAULT_ENCODING).length;
-        String metadataHeaderStr = ARC_MAGIC_NUMBER + generateName() +
-            " 0.0.0.0 " + date + " text/plain " + recordLength +
-            metadataHeaderLinesTwoAndThree;
-        ByteArrayOutputStream metabaos =
-            new ByteArrayOutputStream(recordLength);
-        // Write the metadata header.
-        metabaos.write(metadataHeaderStr.getBytes(DEFAULT_ENCODING));
-        // Write the metadata body, if anything to write.
-        if (metadataBodyLength > 0) {
-            writeMetaData(metabaos);
-        }
-        
-        // Write out a LINE_SEPARATORs to end this record.
-        metabaos.write(LINE_SEPARATOR);
-        
-        // Now get bytes of all just written and compress if flag set.
-        byte [] bytes = metabaos.toByteArray();
-        
-        if(isCompressed()) {
-            // GZIP the header but catch the gzipping into a byte array so we
-            // can add the special IA GZIP header to the product.  After
-            // manipulations, write to the output stream (The JAVA GZIP
-            // implementation does not give access to GZIP header. It
-            // produces a 'default' header only).  We can get away w/ these
-            // maniupulations because the GZIP 'default' header doesn't
-            // do the 'optional' CRC'ing of the header.
-            byte [] gzippedMetaData = GzippedInputStream.gzip(bytes);
-            if (gzippedMetaData[3] != 0) {
-                throw new IOException("The GZIP FLG header is unexpectedly " +
-                    " non-zero.  Need to add smarter code that can deal " +
-                    " when already extant extra GZIP header fields.");
-            }
-            // Set the GZIP FLG header to '4' which says that the GZIP header
-            // has extra fields.  Then insert the alex {'L', 'X', '0', '0', '0,
-            // '0'} 'extra' field.  The IA GZIP header will also set byte
-            // 9 (zero-based), the OS byte, to 3 (Unix).  We'll do the same.
-            gzippedMetaData[3] = 4;
-            gzippedMetaData[9] = 3;
-            byte [] assemblyBuffer = new byte[gzippedMetaData.length +
-                ARC_GZIP_EXTRA_FIELD.length];
-            // '10' in the below is a pointer past the following bytes of the
-            // GZIP header: ID1 ID2 CM FLG + MTIME(4-bytes) XFL OS.  See
-            // RFC1952 for explaination of the abbreviations just used.
-            System.arraycopy(gzippedMetaData, 0, assemblyBuffer, 0, 10);
-            System.arraycopy(ARC_GZIP_EXTRA_FIELD, 0, assemblyBuffer, 10,
-                ARC_GZIP_EXTRA_FIELD.length);
-            System.arraycopy(gzippedMetaData, 10, assemblyBuffer,
-                10 + ARC_GZIP_EXTRA_FIELD.length, gzippedMetaData.length - 10);
-            bytes = assemblyBuffer;
-        }
-        return bytes;
-    }
-    */
-
-    /**
-     * Write all metadata to passed <code>baos</code>.
-     *
-     * @param baos Byte array to write to.
-     * @throws UnsupportedEncodingException
-     * @throws IOException
-     */
-    /*
-    private void writeMetaData(ByteArrayOutputStream baos)
-            throws UnsupportedEncodingException, IOException {
-        if (this.metadata == null) {
-            return;
-        }
-
-        for (Iterator i = this.metadata.iterator();
-                i.hasNext();) {
-            Object obj = i.next();
-            if (obj instanceof String) {
-                baos.write(((String)obj).getBytes(DEFAULT_ENCODING));
-            } else if (obj instanceof File) {
-                InputStream is = null;
-                try {
-                    is = new BufferedInputStream(
-                        new FileInputStream((File)obj));
-                    byte [] buffer = new byte[4096];
-                    for (int read = -1; (read = is.read(buffer)) != -1;) {
-                        baos.write(buffer, 0, read);
-                    }
-                } finally {
-                    if (is != null) {
-                        is.close();
-                    }
-                }
-            } else if (obj != null) {
-                logger.severe("Unsupported metadata type: " + obj);
-            }
-        }
-        return;
-    }
-    */
-    
-    /**
-     * @return Total length of metadata.
-     * @throws UnsupportedEncodingException
-     */
-    /*
-    private int getMetadataLength()
-    throws UnsupportedEncodingException {
-        int result = -1;
-        if (this.metadata == null) {
-            result = 0;
-        } else {
-            for (Iterator i = this.metadata.iterator();
-                    i.hasNext();) {
-                Object obj = i.next();
-                if (obj instanceof String) {
-                    result += ((String)obj).getBytes(DEFAULT_ENCODING).length;
-                } else if (obj instanceof File) {
-                    result += ((File)obj).length();
-                } else {
-                    logger.severe("Unsupported metadata type: " + obj);
-                }
-            }
-        }
-        return result;
-    }
-    */
 }

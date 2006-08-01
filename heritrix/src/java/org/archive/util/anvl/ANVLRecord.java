@@ -1,4 +1,4 @@
-/* Record
+/* ANVLRecord
 *
 * $Id$
 *
@@ -35,13 +35,15 @@ import org.archive.io.UTF8Bytes;
  * An ordered {@link List} with 'data' {@link Element} values.
  * @see <a
  * href="http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf">A Name-Value
- * Language (ANVL)</a>.  Always adds a {@link CRLF} at EOR (End-Of-Record).
+ * Language (ANVL)</a>.  Always adds a {@link CRLF} at EOR (End-Of-ANVLRecord).
  * @author stack
  */
-public class Record extends ArrayList<Element> implements UTF8Bytes {
+public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
 	private static final long serialVersionUID = -4610638888453052958L;
 	
 	public static final String MIMETYPE = "text/anvl";
+	
+	public static final ANVLRecord EMPTY_ANVL_RECORD = new ANVLRecord();
 	
 	/**
 	 * An ANVL 'newline'.
@@ -49,15 +51,15 @@ public class Record extends ArrayList<Element> implements UTF8Bytes {
 	 */
     static final String CRLF = "\r\n";
     
-    public Record() {
+    public ANVLRecord() {
         super();
     }
 
-    public Record(Collection<? extends Element> c) {
+    public ANVLRecord(Collection<? extends Element> c) {
         super(c);
     }
 
-    public Record(int initialCapacity) {
+    public ANVLRecord(int initialCapacity) {
         super(initialCapacity);
     }
     
@@ -75,17 +77,19 @@ public class Record extends ArrayList<Element> implements UTF8Bytes {
     
     @Override
     public String toString() {
-        // TODO: What to emit for empty Record?
+        // TODO: What to emit for empty ANVLRecord?
         StringBuilder sb = new StringBuilder();
         for (final Iterator i = iterator(); i.hasNext();) {
             sb.append(i.next());
             sb.append(CRLF);
         }
+        // ANVL Records end in a blank line.
+        sb.append(CRLF);
         return sb.toString();
     }
     
     /**
-     * @return Record encoded as UTF-8 bytes.
+     * @return ANVLRecord encoded as UTF-8 bytes.
      * @throws UnsupportedEncodingException 
      */
     public byte [] getUTF8Bytes()

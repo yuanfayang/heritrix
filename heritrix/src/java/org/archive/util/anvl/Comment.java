@@ -24,7 +24,7 @@
 */
 package org.archive.util.anvl;
 
-public class Comment extends SubElement {
+class Comment extends SubElement {
     private Comment() {
         this(null);
     }
