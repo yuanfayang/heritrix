@@ -6,7 +6,12 @@ import org.w3c.dom.NodeList;
 
 
 
-
+/**
+ * This class handles XMLInfo presentation of preprocessing results 
+ *
+ * @author Michael
+ *
+ */
 public class PreprocessInfo extends XMLInfo{
     
     protected static String ROOT_TAG_LABEL="preProcess-output";
@@ -61,6 +66,12 @@ public class PreprocessInfo extends XMLInfo{
         this.termsNo = termsNo;
     }
 
+    /**
+     * Convert data to XML and dump xml contents to file
+     * @param path
+     * @param filename
+     * @throws Exception
+     */
     public void toXML(String path, String filename) throws Exception{
         
         createNewXmlDoc();
@@ -73,6 +84,12 @@ public class PreprocessInfo extends XMLInfo{
         dumpToFile(path, filename);
     }
     
+    /**
+     * Read data from a file and create XML document if possible
+     * @param path
+     * @param filename
+     * @throws Exception
+     */    
     public void fromXML(String path, String filename) throws Exception{
        readFromFile(path,filename);        
        NodeList children=rootElement.getChildNodes();

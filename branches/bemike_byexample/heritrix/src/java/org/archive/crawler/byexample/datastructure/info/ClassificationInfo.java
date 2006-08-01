@@ -1,6 +1,11 @@
 package org.archive.crawler.byexample.datastructure.info;
 
-
+/**
+ * This class handles XMLInfo presentation of classification results 
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class ClassificationInfo extends XMLInfo {
 
     protected static String ROOT_TAG_LABEL="classification-output";
@@ -25,6 +30,12 @@ public class ClassificationInfo extends XMLInfo {
         this.docsNo=docsNo;
     }
     
+    /**
+     * Convert data to XML and dump xml contents to file
+     * @param path
+     * @param filename
+     * @throws Exception
+     */
     public void toXML(String path, String filename) throws Exception{                
         createNewXmlDoc();        
         //Add info

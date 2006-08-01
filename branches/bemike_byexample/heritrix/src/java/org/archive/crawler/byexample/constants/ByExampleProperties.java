@@ -18,6 +18,7 @@ public class ByExampleProperties {
      * Denotes the type of inverted index in use
      * 
      *  @see org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex
+     *  @see rg.archive.crawler.byexample.constants.OutputConstants
      */
     public static String INVERTED_INDEX_TYPE;
     

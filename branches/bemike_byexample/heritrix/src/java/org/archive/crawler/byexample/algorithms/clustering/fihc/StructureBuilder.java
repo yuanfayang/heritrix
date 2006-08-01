@@ -92,6 +92,10 @@ public class StructureBuilder {
         }        
     }
     
+    /**
+     * Builds cluster support index
+     *
+     */
     public void calculateClusterSupport(){
         ItemSet currIS=null;
         IdListing currDocs=null;
@@ -118,6 +122,10 @@ public class StructureBuilder {
         }
     }
     
+    /**
+     * Build document support index
+     *
+     */
     public void calculateDocumentSupport(){
         String currDocId=null;
         IndexRow currIR=null;
@@ -133,6 +141,13 @@ public class StructureBuilder {
         }
     }
     
+    /**
+     * Get term support in a given index row
+     * 
+     * @param s String representing the term
+     * @param ir IndexRow
+     * @return term support in a row 
+     */
     public double getTermSupport(String s, IndexRow ir){
         IndexEntry ie=null;
         for (int i = 0; i < ir.getRowSize(); i++) {

@@ -11,13 +11,29 @@ import org.archive.crawler.byexample.datastructure.invertedindex.IndexRow;
 import org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex;
 
 
-
+/**
+ * This class is a manipulation wrapper around InvertedIndex.
+ * Manipulations implemented here are specific to TFIDF Index.
+ * TFIDF Index contains mappings of type: 
+ * <p>
+ * [DOC_ID] - [LIST OF DOCUMENT TERM TFIDF SCORES]
+ * 
+ * @see  org.archive.crawler.byexample.datastructure.invertedindex.InvertedIndex
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class DocumentIndexManipulator {
     
     private InvertedIndex myIndex;
     private InvertedIndex termsIndex;
     private long myDocCount;
     
+    /**
+     * Constructor that creates new Inverted index
+     * and builds manipulator for it
+     *
+     */
     public DocumentIndexManipulator(String indexType, String indexFilePath, InvertedIndex ti, long docCount)
     throws Exception{
                 
@@ -31,12 +47,17 @@ public class DocumentIndexManipulator {
         myDocCount=docCount;
     }
     
+    /**
+     * Creates tfidf index based on term inverted index and 
+     * sorts index rows in terms lexicographical order 
+     *
+     */
     public void createSortedByIdTFIDFIndex(){
         createTermTFIDFIndex(myDocCount);
-        sortByDocId();
+        sortTfidfRows();
     }
     
-    public void createTermTFIDFIndex(long docCount){
+    private void createTermTFIDFIndex(long docCount){
         String currTerm;
         IndexRow currRow;
         Iterator<IndexEntry> currRowIterator;
@@ -53,13 +74,11 @@ public class DocumentIndexManipulator {
         }
     }
     
-    public void sortByDocId(){
-        IndexRow currRow;   
+    private void sortTfidfRows(){
         IdComparator idComparator=new IdComparator();     
         String currKey;
         for (Iterator<String> iter=myIndex.getIndexKeysIterator();iter.hasNext();){
             currKey=iter.next();
-            currRow=myIndex.getRow(currKey);
             //Normalize TFIDF values
             myIndex.normalizeRow(currKey);
             //Sort lexicographically
@@ -68,6 +87,12 @@ public class DocumentIndexManipulator {
     }
     
     
+    /**
+     * Add term TFIDF count to the document row in the index 
+     * @param termEntryID 
+     * @param termEntryValue
+     * @param docID
+     */
     public void addTermTFIDFToIndex(String termEntryID, double termEntryValue, String docID){
         IndexRow currRow=myIndex.getRow(docID);
         //If this key doesn't have an assigned row, create it
@@ -137,6 +162,9 @@ public class DocumentIndexManipulator {
     }
     
     
+    /**     
+     * @return InvertedIndex inverted index that is wrapped by this manipulator
+     */
     public InvertedIndex getIndex(){
         return myIndex;
     }

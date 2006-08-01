@@ -163,15 +163,15 @@ public class TreeBuilder {
         info.toXML(path, filename);
     }
 
-/**
-* Builds clustering tree, prunes and merges levels.
-* Outputs resulting tree as an XML file and reports invocation times for each step.
-* This is the only method that should be invoked by outside classes 
- * @param path file path
- * @param filename file name
- * @param fis FrequenItemSet based on which the tree will be built
- * @throws Exception
- */
+    /**
+    * Builds clustering tree, prunes and merges levels.
+    * Outputs resulting tree as an XML file and reports invocation times for each step.
+    * This is the only method that should be invoked by outside classes 
+     * @param path file path
+     * @param filename file name
+     * @param fis FrequenItemSet based on which the tree will be built
+     * @throws Exception
+     */
     public void buildTree(String path, String filename, FrequentItemSets fis, ClusteringInfo info) throws Exception{
         TimerUtils myTH=new TimerUtils();
         

@@ -7,6 +7,16 @@ import java.util.TreeSet;
 
 import org.archive.crawler.byexample.utils.FileUtils;
 
+/**
+ * Set containing top DocumentClassificationEntry objects, sorted by one of the
+ * available DocumentClassificationEntry Comparators.
+ * 
+ * @see org.archive.crawler.byexample.datastructure.documents.BottomUpComparator
+ * @see org.archive.crawler.byexample.datastructure.documents.TopDownComparator
+ * @see org.archive.crawler.byexample.datastructure.documents.DocumentClassificationEntry
+ * @author Michael Bendersky
+ *
+ */
 public class TopClassificationSet {
     private SortedSet<DocumentClassificationEntry> topClassificationSet;
     private int maxSize;
@@ -18,7 +28,7 @@ public class TopClassificationSet {
      * @param maxSize set maximum allowed size
      * @param dumpFile BufferedWriter for dump file
      */
-    public TopClassificationSet(Comparator c, int maxSize, BufferedWriter dumpFile){
+    public TopClassificationSet(Comparator<DocumentClassificationEntry> c, int maxSize, BufferedWriter dumpFile){
         topClassificationSet=new TreeSet<DocumentClassificationEntry>(c);
         this.maxSize=maxSize; 
         this.dumpFile=dumpFile;

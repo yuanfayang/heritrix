@@ -4,8 +4,6 @@ import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 import org.archive.crawler.byexample.constants.OutputConstants;
-import org.archive.crawler.byexample.constants.ScopeDecisionConstants;
-import org.archive.crawler.byexample.datastructure.support.ClusterScore;
 import org.archive.crawler.byexample.utils.FileUtils;
 
 /**
