@@ -194,11 +194,10 @@ implements CrawlURIDispositionListener, Serializable {
                 String.class, LongWrapper.class);
             this.hostsBytes = c.getBigMap("hostsBytes", String.class,
                 LongWrapper.class);
-            this.hostsLastFinished =  c.getBigMap("hostsLastFinished",
+            this.hostsLastFinished = c.getBigMap("hostsLastFinished",
                 String.class, Long.class);
-            this.processedSeedsRecords =
-                Collections.synchronizedMap(c.getBigMap("processedSeedsRecords",
-                    String.class, SeedRecord.class));
+            this.processedSeedsRecords = c.getBigMap("processedSeedsRecords",
+                    String.class, SeedRecord.class);
         } catch (Exception e) {
             throw new FatalConfigurationException("Failed setup of" +
                 " StatisticsTracker: " + e);
