@@ -33,19 +33,26 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.util.iterator.CompositeIterator;
+
+import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
+import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.collections.StoredIterator;
 import com.sleepycat.collections.StoredMap;
+import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseException;
@@ -55,17 +62,8 @@ import com.sleepycat.je.EnvironmentConfig;
 /**
  * A BDB JE backed hashmap. It extends the normal BDB JE map implementation by
  * holding a cache of soft referenced objects. That is objects are not written
- * to disk until they are not refrenced by any other object and therefore can be
+ * to disk until they are not referenced by any other object and therefore can be
  * Garbage Collected.
- * <p>
- * Requires external synchronization for accesses and modifications to be
- * stable. Simply wrapping using Collections.synchronizedMap() may not work
- * as expected, as it makes assumptions about, and essentially caches, 
- * keySet/entrySet/values. (TODO: fix or guard against this.)
- * <p>
- * An entry will exist in the memMap, or on disk, but not in both places. So,
- * a resume from disk state (for example for checkpointing/crash-recovery) is
- * not well-supported. This behavior could be revisited to enable such use. 
  * 
  * @author John Erik Halse
  * @author stack
@@ -95,14 +93,14 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     protected transient Database db;
 
     /** The Collection view of the BDB JE database used for this instance. */
-    protected transient StoredMap diskMap;
+    protected transient StoredSortedMap diskMap;
 
     /** The softreferenced cache */
     private transient Map memMap;
 
     protected transient ReferenceQueue refQueue;
 
-    /** The number of objects stored in the BDB JE database. 
+    /** The number of objects in the diskMap StoredMap. 
      *  (Package access for unit testing.) */
     protected int diskMapSize = 0;
 
@@ -229,7 +227,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * @param classCatalog
      * @throws DatabaseException
      */
-    public void initialize(final Environment env, final Class keyClass,
+    public synchronized void initialize(final Environment env, final Class keyClass,
             final Class valueClass, final StoredClassCatalog classCatalog)
     throws DatabaseException {
         initializeInstance();
@@ -247,10 +245,17 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         this.refQueue = new ReferenceQueue();
     }
     
-    protected StoredMap createDiskMap(Database database,
+    protected StoredSortedMap createDiskMap(Database database,
             StoredClassCatalog classCatalog, Class keyClass, Class valueClass) {
-        return new StoredMap(database, new SerialBinding(classCatalog,
-            keyClass), new SerialBinding(classCatalog, valueClass), true);
+        EntryBinding keyBinding = TupleBinding.getPrimitiveBinding(keyClass);
+        if(keyBinding == null) {
+            keyBinding = new SerialBinding(classCatalog, keyClass);
+        }
+        EntryBinding valueBinding = TupleBinding.getPrimitiveBinding(valueClass);
+        if(valueBinding == null) {
+            valueBinding = new SerialBinding(classCatalog, valueClass);
+        }
+        return new StoredSortedMap(database, keyBinding, valueBinding, true);
     }
 
     /**
@@ -264,7 +269,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * @return a datastructure containing the environment and a default database
      *         for storing class definitions.
      */
-    private synchronized DbEnvironmentEntry getDbEnvironment(File dbDir) {
+    private DbEnvironmentEntry getDbEnvironment(File dbDir) {
         if (dbEnvironmentMap.containsKey(dbDir.getAbsolutePath())) {
             return (DbEnvironmentEntry) dbEnvironmentMap.get(dbDir
                     .getAbsolutePath());
@@ -297,7 +302,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         return env;
     }
 
-    protected synchronized Database openDatabase(final Environment environment,
+    protected Database openDatabase(final Environment environment,
             final String dbName) throws DatabaseException {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setTransactional(false);
@@ -333,23 +338,12 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     }
 
     /**
-     * As this keySet is a union of the cache and diskMap KeySets,
-     * it does not support the remove operations typical of keySet views
-     * on underlying maps.
+     * The keySet of the diskMap is all relevant keys. 
      * 
      * @see java.util.Map#keySet()
      */
     public Set keySet() {
-        // Return unmodifiable union of cache and diskMap keySets
-        HashSet allKeys = new HashSet(memMap.keySet());
-        // Bdb iterators have to be closed so can't use addAll w/o
-        // getting annoying complaints about cursors being left open.
-        Iterator i = diskMap.keySet().iterator();
-        for (; i.hasNext();) {
-            allKeys.add(i.next());
-        }
-        StoredIterator.close(i);
-        return Collections.unmodifiableSet(allKeys);
+        return diskMap.keySet();
     }
     
     public Set entrySet() {
@@ -358,7 +352,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         throw new UnsupportedOperationException();
     }
 
-    public Object get(final Object key) {
+    public synchronized Object get(final Object key) {
         countOfGets++;
         expungeStaleEntries();
         if (countOfGets % 10000 == 0) {
@@ -376,13 +370,10 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
             expungeStaleEntry(entry);
         }
 
-        // In case ref was cleared after last expunge
-        // we remove so that any key is either in memory, or on disk, but 
-        // not both.
-        Object o = this.diskMap.remove(key);
+        // check backing diskMap
+        Object o = this.diskMap.get(key);
         if (o != null) {
             diskHit++;
-            diskMapSize--;
             memMap.put(key, new SoftEntry(key, o, refQueue));
         }
         return o;
@@ -409,6 +400,10 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     public synchronized Object put(Object key, Object value) {
         Object prevVal = get(key);
         memMap.put(key, new SoftEntry(key, value, refQueue));
+        diskMap.put(key,value); // dummy
+        if(prevVal==null) {
+            diskMapSize++;
+        }
         return prevVal;
     }
 
@@ -418,7 +413,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * We close the db here because if this BigMap is being treated as a plain
      * Map, this is only opportunity for cleanup.
      */
-    public void clear() {
+    public synchronized void clear() {
         this.memMap.clear();
         this.diskMap.clear();
         this.diskMapSize = 0;
@@ -429,38 +424,42 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         }
     }
 
-    public Object remove(final Object key) {
+    public synchronized Object remove(final Object key) {
         Object prevValue = get(key);
         memMap.remove(key);
+        expungeStaleEntries();
+        diskMap.remove(key);
+        diskMapSize--;
         return prevValue;
     }
 
-    public boolean containsKey(Object key) {
+    public synchronized boolean containsKey(Object key) {
         if (quickContainsKey(key)) {
             return true;
         }
         return diskMap.containsKey(key);
     }
 
-    public boolean quickContainsKey(Object key) {
+    public synchronized boolean quickContainsKey(Object key) {
         expungeStaleEntries();
         return memMap.containsKey(key);
     }
 
-    public boolean containsValue(Object value) {
+    public synchronized boolean containsValue(Object value) {
         if (quickContainsValue(value)) {
             return true;
         }
         return diskMap.containsValue(value);
     }
 
-    public boolean quickContainsValue(Object value) {
+    public synchronized boolean quickContainsValue(Object value) {
         expungeStaleEntries();
+        // FIXME this isn't really right, as memMap is of SoftEntries
         return memMap.containsValue(value);
     }
 
     public int size() {
-        return diskMapSize + memMap.size();
+        return diskMapSize;
     }
     
     protected String getDatabaseName() {
@@ -479,10 +478,8 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * Sync in-memory map entries to backing disk store.
      * When done, the memory map will be cleared and all entries stored
      * on disk.
-     * Assumes external synchronization, that no putting/getting happening
-     * when this method is called.
      */
-    public void sync() {
+    public synchronized void sync() {
         String dbName = null;
         // Sync. memory and disk.
         long startTime = 0;
@@ -492,6 +489,8 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
             logger.info(dbName + " start sizes: disk " + this.diskMapSize +
                 ", mem " + this.memMap.size());
         }
+        expungeStaleEntries();
+        LinkedList<SoftEntry> stale = new LinkedList<SoftEntry>(); 
         for (Iterator i = this.memMap.keySet().iterator(); i.hasNext();) {
             Object key = i.next();
             SoftEntry entry = (SoftEntry) memMap.get(key);
@@ -500,17 +499,16 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
                 Object value = entry.get();
                 if (value != null) {
                     this.diskMap.put(key, value);
-                    diskMapSize++;
+                } else {
+                    stale.add(entry);
                 }
             }
         }
-        // Call expunge in case we got some null values in above (They're off
-        // in the phantom queue still).
-        expungeStaleEntries();
+        // for any entries above that had been cleared, ensure expunged
+        for (SoftEntry entry : stale) {
+            expungeStaleEntry(entry);
+        }   
         
-        // Now, clear the memmap so entries are in mem or on disk only, not in
-        // both places at once.
-        this.memMap.clear();
         if (logger.isLoggable(Level.INFO)) {
             logger.info(dbName + " sync took " +
                 (System.currentTimeMillis() - startTime) + "ms. " +
@@ -551,7 +549,6 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
             memMap.remove(entry.getPhantom().getKey());
             diskMap.put(entry.getPhantom().getKey(),
                 entry.getPhantom().doctoredGet());
-            diskMapSize++;
         }
         entry.clearPhantom();
     }
