@@ -24,6 +24,7 @@ package org.archive.crawler.prefetch;
 
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -147,12 +148,28 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
    protected static final Long DEFAULT_GROUP_MAX_ALL_KB =
        new Long(-1);
    
+   /** whether to force-retire when over-quote detected */
+   protected static final String ATTR_FORCE_RETIRE = 
+       "force-retire";
+   protected static final Boolean DEFAULT_FORCE_RETIRE = true;
+   
     /**
      * Constructor.
      * @param name Name of this processor.
      */
     public QuotaEnforcer(String name) {
         super(name, "QuotaEnforcer.");
+        
+        addElementToDefinition(new SimpleType(ATTR_FORCE_RETIRE,
+                "Whether an over-quota situation should result in the " +
+                "containing queue being force-retired (if the Frontier " +
+                "supports this). Note that if your queues combine URIs " +
+                "that are different with regard to the quota category, " +
+                "the retirement may hold back URIs not in the same " +
+                "quota category. " +
+                "Default is false.",
+                DEFAULT_FORCE_RETIRE)); 
+        
         String maxFetchSuccessesDesc = "Maximum number of fetch successes " +
             "(e.g. 200 responses) to collect from one $CATEGORY. " +
             "Default is -1, meaning no limit.";
@@ -207,10 +224,10 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
         addElementToDefinition(new SimpleType(ATTR_GROUP_MAX_ALL_KB,
             maxAllKbDesc.replaceAll("$CATEGORY","group (queue)"),
             DEFAULT_GROUP_MAX_ALL_KB));  
+       
     }
     
     protected void innerProcess(CrawlURI curi) {
-        CrawlSubstats substats;
         CrawlSubstats.HasCrawlSubstats[] haveStats = 
             new CrawlSubstats.HasCrawlSubstats[] {
                 getController().getServerCache().getServerFor(curi), // server
@@ -270,6 +287,9 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
             curi.setFetchStatus(S_BLOCKED_BY_QUOTA);
             curi.addAnnotation("Q:"+quotaKey);
             curi.skipToProcessorChain(getController().getPostprocessorChain());
+            if((Boolean)getUncheckedAttribute(curi,ATTR_FORCE_RETIRE)) {
+                curi.putObject(CoreAttributeConstants.A_FORCE_RETIRE, (Boolean) true);
+            }
             return true;
         }
         return false; 
