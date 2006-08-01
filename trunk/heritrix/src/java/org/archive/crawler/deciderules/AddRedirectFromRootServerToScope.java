@@ -53,7 +53,7 @@ public class AddRedirectFromRootServerToScope extends PredicatedDecideRule {
 			// Mark URI as seed if via is from different host, URI is not a seed
 			// already, URI is redirect and via is root server
 			if (!curi.getUURI().getHostBasename().equals(via.getHostBasename())
-					&& !curi.isSeed() && curi.isLocation()
+				    && curi.isLocation()
 					&& via.getPath().equals(SLASH)) {
 				curi.setIsSeed(true);
 				LOGGER.info("Adding " + object.toString() + " to seeds via "
@@ -63,7 +63,8 @@ public class AddRedirectFromRootServerToScope extends PredicatedDecideRule {
 		} catch (URIException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
-			// Retrun false since we could not get hostname or something else 
+            e.printStackTrace();
+			// Return false since we could not get hostname or something else 
 			// went wrong
 		}		
 		return false;
