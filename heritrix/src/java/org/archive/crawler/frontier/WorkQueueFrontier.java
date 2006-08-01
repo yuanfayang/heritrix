@@ -638,30 +638,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         }
     }
 
-// CURRENTLY INADVISABLE TO DISCARD QUEUE; loses running tallies
-// but retained in commented form for potential future use
-//    /**
-//     * Discard the given queue, allowing it to be garbage collected.
-//     * 
-//     * @param emptyQ
-//     */
-//    private void discardQueue(ClassKeyQueue emptyQ) {
-//        synchronized(allQueues) {
-//            allQueues.remove(emptyQ.getClassKey());
-//            // release held, allowing
-//            // subsequent enqueues to ready
-//            // readyQ.clearHeld();
-//        }
-//    }
-
-    /* (non-Javadoc)
-     * @see org.archive.crawler.frontier.AbstractFrontier#noteAboutToEmit(org.archive.crawler.datamodel.CrawlURI, org.archive.crawler.frontier.ClassKeyQueue)
-     */
-    protected void noteAboutToEmit(CrawlURI curi, WorkQueue q) {
-        super.noteAboutToEmit(curi, q);
-        q.expend(getCost(curi));
-    }
-
     /**
      * Return the 'cost' of a CrawlURI (how much of its associated
      * queue's budget it depletes upon attempted processing)
@@ -801,14 +777,19 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         assert (wq.peek(this) == curi) : "unexpected peek " + wq;
         inProcessQueues.remove(wq, 1);
 
+        if(includesRetireDirective(curi)) {
+            // CrawlURI is marked to trigger retirement of its queue
+            curi.processingCleanup();
+            wq.unpeek();
+            wq.update(this, curi); // rewrite any changes
+            retireQueue(wq);
+            return;
+        } 
+        
         if (needsRetrying(curi)) {
             // Consider errors which can be retried, leaving uri atop queue
-            if(curi.getFetchStatus()==S_DEFERRED) {
-                // wasn't tried; cost shouldn't have been charged against queue
-                wq.refund(getCost(curi));
-                // TODO: potentially factor out a deservesRefund() test; move
-                // charging against budget to finished so that refunds are 
-                // unnecessary 
+            if(curi.getFetchStatus()!=S_DEFERRED) {
+                wq.expend(getCost(curi)); // all retries but DEFERRED cost
             }
             long delay_sec = retryDelayFor(curi);
             curi.processingCleanup(); // lose state that shouldn't burden retry
@@ -840,13 +821,11 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             // Let everyone know in case they want to do something before we strip the curi.
             controller.fireCrawledURISuccessfulEvent(curi);
             doJournalFinishedSuccess(curi);
+            wq.expend(getCost(curi)); // successes cost
         } else if (isDisregarded(curi)) {
             // Check for codes that mean that while we the crawler did
             // manage to schedule it, it must be disregarded for some reason.
             incrementDisregardedUriCount();
-            // refund amount charged against queue
-            // TODO: consider if charging should just be deferred to finished?
-            wq.refund(getCost(curi));
             //Let interested listeners know of disregard disposition.
             controller.fireCrawledURIDisregardEvent(curi);
             // if exception, also send to crawlErrors
@@ -871,6 +850,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             wq.noteError(((Integer) getUncheckedAttribute(curi,
                     ATTR_ERROR_PENALTY_AMOUNT)).intValue()); 
             doJournalFinishedFailure(curi);
+            wq.expend(getCost(curi)); // failures cost
         }
 
         long delay_ms = politenessDelayFor(curi);
@@ -885,6 +865,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         curi.stripToMinimal();
         curi.processingCleanup();
 
+    }
+
+    private boolean includesRetireDirective(CrawlURI curi) {
+        return curi.containsKey(A_FORCE_RETIRE) && (Boolean)curi.getObject(A_FORCE_RETIRE);
     }
 
     /**
