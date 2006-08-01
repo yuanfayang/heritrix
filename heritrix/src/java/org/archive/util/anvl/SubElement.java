@@ -54,16 +54,38 @@ abstract class SubElement {
     
     protected void checkCharacter(final char c, final String srcStr,
     		final int index) {
-    	if (Character.isISOControl(c) && !Character.isWhitespace(c) ||
-    			!Character.isValidCodePoint(c)) {
+        checkControlCharacter(c, srcStr, index);
+        checkCRLF(c, srcStr, index);
+    }
+    
+    protected void checkControlCharacter(final char c, final String srcStr,
+            final int index) {
+        if (Character.isISOControl(c) && !Character.isWhitespace(c) ||
+                !Character.isValidCodePoint(c)) {
             throw new IllegalArgumentException(srcStr +
                 " contains a control character(s) or invalid code point: 0x" +
                 Integer.toHexString(index));
-        } else if (c == ANVLRecord.CRLF.charAt(0) ||
-        			c == ANVLRecord.CRLF.charAt(1)) {
-            throw new IllegalArgumentException(srcStr + " CR or LF (TODO: " +
-            	"Allow for folding and then only check for CRLF)");
         }
+    }
+    
+    protected void checkCRLF(final char c, final String srcStr,
+            final int index) {
+        if (isCROrLF(c)) {
+            throw new IllegalArgumentException(srcStr + " CR or LF (TODO: " +
+                "Allow for folding and then only check for CRLF)");
+        }
+    }
+    
+    protected boolean isCROrLF(final char c) {
+        return isCR(c) || isLF(c);
+    }
+    
+    protected boolean isCR(final char c) {
+        return c == ANVLRecord.CRLF.charAt(0);
+    }
+    
+    protected boolean isLF(final char c) {
+        return c == ANVLRecord.CRLF.charAt(1);
     }
     
     @Override

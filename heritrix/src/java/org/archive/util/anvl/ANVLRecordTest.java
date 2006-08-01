@@ -34,9 +34,15 @@ public class ANVLRecordTest extends TestCase {
         am.add(new Element(new Label("who"),
             new Value("Gilbert, W.S. | Sullivan, Arthur")));
         am.add(new Element(new Label("what"),
-            new Value("The Yeoman of the guard")));
+                new Value("\rThe Yeoman of \rthe guard")));
+        am.add(new Element(new Label("what"),
+            new Value("The Yeoman of\r\n  the guard")));
+        am.add(new Element(new Label("what"),
+                new Value("The Yeoman of \n\tthe guard")));
+        am.add(new Element(new Label("what"),
+                new Value("The Yeoman of \r        the guard")));
         am.add(new Element(new Label("when/created"),
-            new Value("18888")));
+            new Value("1888")));
         System.out.println(am.toString());
     }
     
@@ -45,5 +51,17 @@ public class ANVLRecordTest extends TestCase {
     	assertEquals(b.length, 2);
     	assertEquals(b[0], '\r');
     	assertEquals(b[1], '\n');
+    }
+    
+    public void testFolding() throws Exception {
+        ANVLRecord am = new ANVLRecord();
+        Exception e = null;
+        try {
+            am.addLabel("Label with \n in it");
+        } catch (IllegalArgumentException iae) {
+            e = iae;
+        }
+        assertTrue(e != null && e instanceof IllegalArgumentException);
+        am.addLabelValue("label", "value with \n in it");
     }
 }
