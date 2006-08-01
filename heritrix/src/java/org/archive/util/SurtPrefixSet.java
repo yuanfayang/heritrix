@@ -364,10 +364,10 @@ public class SurtPrefixSet extends TreeSet {
     }
     
     public static String convertPrefixToDomain(String prefix) {
-        if(prefix.indexOf(')')<0) {
-            return prefix; // no change necessary
+        if(prefix.indexOf(')')>=0) {
+            prefix = prefix.substring(0,prefix.indexOf(')'));
         }
-        prefix = prefix.substring(0,prefix.indexOf(')'));
+        // strip 'www,' when present
         if(prefix.endsWith("www,")) {
             prefix = prefix.substring(0,prefix.length()-4);
         }
