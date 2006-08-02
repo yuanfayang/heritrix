@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.archive.io.WriterPoolMember;
-import org.archive.io.warc.recordid.GeneratorFactory;
+import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
 

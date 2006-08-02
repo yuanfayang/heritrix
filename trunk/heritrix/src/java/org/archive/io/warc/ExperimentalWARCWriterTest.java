@@ -34,7 +34,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 
 import org.archive.io.UTF8Bytes;
-import org.archive.io.warc.recordid.GeneratorFactory;
+import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.TmpDirTestCase;
 import org.archive.util.anvl.ANVLRecord;

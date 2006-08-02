@@ -20,14 +20,14 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc.recordid;
+package org.archive.uid;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
 /**
- * A WARC Record <code>record-id</code> generator.
+ * A <code>record-id</code> generator.
  * {@link GeneratorFactory} assumes implementations have a no-arg Constructor.
  * @see {@link GeneratorFactory}.
  * @author stack
@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public interface Generator {
 	/**
-	 * @return A URI that can serve as a WARC Record record-id.
+	 * @return A URI that can serve as a record-id.
 	 * @throws URISyntaxException
 	 */
 	public URI getRecordID() throws URISyntaxException;
