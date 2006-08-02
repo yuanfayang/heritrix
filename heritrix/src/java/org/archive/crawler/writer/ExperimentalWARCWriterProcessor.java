@@ -47,7 +47,7 @@ import org.archive.io.arc.ARCWriter;
 import org.archive.io.warc.ExperimentalWARCWriter;
 import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCWriterPool;
-import org.archive.io.warc.recordid.GeneratorFactory;
+import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
 

@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc.recordid;
+package org.archive.uid;
 
 import java.net.URI;
 import java.net.URISyntaxException;

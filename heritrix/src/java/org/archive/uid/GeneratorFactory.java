@@ -20,14 +20,14 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.io.warc.recordid;
+package org.archive.uid;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
 /**
- * Factory for <code>record-id</code>
+ * Factory that generates uids.
  * Singleton.  Default implementation is {@link UUIDGenerator}. To
  * change, specify alternate implementation of {@link Generator} with
  * {@link #SYSTEM_PROPERTY_GENERATOR_KEY} system property.
@@ -35,10 +35,10 @@ import java.util.Map;
  * @version $Revision$ $Date$
  */
 public class GeneratorFactory implements Generator {
-	private final String SYSTEM_PROPERTY_GENERATOR_KEY =
+	public final String SYSTEM_PROPERTY_GENERATOR_KEY =
 		this.getClass().toString() + ".generator";
 	private static final String DEFAULT_GENERATOR =
-		"org.archive.io.warc.recordid.UUIDGenerator";
+		"org.archive.uid.UUIDGenerator";
 	private static final GeneratorFactory factory = new GeneratorFactory();
 	private final Generator generator;
 	
