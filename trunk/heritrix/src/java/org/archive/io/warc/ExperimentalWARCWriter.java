@@ -43,7 +43,7 @@ import org.archive.util.anvl.ANVLRecord;
 /**
  * <b>Experimental</b> WARC implementation.
  * 
- * Based on unreleased version of <a 
+ * Based on unreleased version 0.9 of <a 
  * href="http://archive-access.sourceforge.net//warc/warc_file_format.html">WARC
  * File Format</a> document.  Specification and implementation subject to
  * change.

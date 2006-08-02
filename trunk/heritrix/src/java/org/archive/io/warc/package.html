@@ -5,11 +5,12 @@
 </head>
 <body>
 Experimental WARC Writer and Readers.  Code and specification subject to change.
-Code implemented against <a href=""></a>.
+Code implemented against (unreleased?)
+<a href="http://archive-access.sourceforge.net/warc/warc_file_format.html">The WARC File Format (Version 0.9)</a>.
 <h2>Implementation Notes</h2>
 <h3>Suggested Spec. Amendments</h3>
 <h4>Drop response record type</h4>
-<p>resource is sufficent. Let mimetype distingush if capture with response
+<p><code>resource</code> is sufficent. Let mimetype distingush if capture with response
 headers or not.</p>
 <h4>mimetype in header line</h4>
 <p>Lets change spec so proper mimetypes are allowed as per RFC2045 rather than
@@ -40,9 +41,9 @@ write parts <code>Content-Type: application/http; msgtype=request</code>,
 </ul>
 </p>
 <h4>Allow multiple instances of a single Named Parameter</h4>
-<p>ALlow that there may be multiple instances of same Named Parameter. Spec.
-is currently silent on this. E.g. Might have multiple
-<code>Related-Record-ID</code>.
+<p>Allow that there may be multiple instances of same Named Parameter. Spec.
+is currently silent on this. E.g. Multiple <code>Related-Record-ID</code>s
+could prove of use.
 
 <h2>TODOs</h2>
 <ul>
