@@ -43,6 +43,7 @@ import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.DatabaseNotFoundException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.OperationStatus;
+import com.sleepycat.util.RuntimeExceptionWrapper;
 
 
 /**
@@ -258,7 +259,16 @@ public class BdbMultipleWorkQueues {
                     + BdbWorkQueue.getPrefixClassKey(headKey.getData()));
             return null;
         }
-        retVal = (CrawlURI)crawlUriBinding.entryToObject(result);
+        try {
+            retVal = (CrawlURI)crawlUriBinding.entryToObject(result);
+        } catch (RuntimeExceptionWrapper rw) {
+            LOGGER.log(
+                Level.SEVERE,
+                "expected object missing in queue " +
+                BdbWorkQueue.getPrefixClassKey(headKey.getData()),
+                rw);
+            return null; 
+        }
         retVal.setHolderKey(headKey);
         return retVal;
     }
