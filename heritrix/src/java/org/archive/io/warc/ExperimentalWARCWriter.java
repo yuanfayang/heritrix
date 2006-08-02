@@ -332,7 +332,18 @@ extends WriterPoolMember implements WARCConstants {
             requestLength);
     }
     
-    public void writeResponseRecord(final String url,
+    public void writeResourceRecord(final String url,
+            final String create14DigitDate, final String mimetype,
+            final URI recordId,
+            final ANVLRecord namedFields, final InputStream response,
+            final long responseLength)
+    throws IOException {
+        writeRecord(RESOURCE, url, create14DigitDate,
+            mimetype, recordId, namedFields, response,
+            responseLength);
+    }
+
+    protected void writeResponseRecord(final String url,
             final String create14DigitDate, final String mimetype,
             final URI recordId,
             final ANVLRecord namedFields, final InputStream response,
