@@ -37,9 +37,34 @@ import org.archive.util.BloomFilter32bp2Split;
  * A MG4J BloomFilter-based implementation of an AlreadySeen list.
  *
  * This implementation performs adequately without blowing out
- * the heap. See
+ * the heap through to very large numbers of URIs. See
  * <a href="http://crawler.archive.org/cgi-bin/wiki.pl?AlreadySeen">AlreadySeen</a>.
- *
+ * 
+ * It is inherent to Bloom filters that as they get 'saturated', their
+ * false-positive rate rises. The default parameters used by this class
+ * attempt to maintain a 1-in-4 million (1 in 2^22) false-positive chance
+ * through 125 million unique inserts, which creates a filter structure 
+ * about 495MB in size. 
+ * 
+ * You may use the following system properties to tune the size and 
+ * false-positive rate of the bloom filter structure used by this class:
+ * 
+ *  org.archive.crawler.util.BloomUriUniqFilter.expected-size (default 125000000)
+ *  org.archive.crawler.util.BloomUriUniqFilter.hash-count (default 22)
+ * 
+ * The resulting filter will take up approximately...
+ * 
+ *    1.44 * expected-size * hash-count / 8 
+ *    
+ * ...bytes. 
+ * 
+ * The default size is very close to the maximum practical size of the 
+ * Bloom filter implementation, BloomFilter32bitSplit, created in the
+ * initialize() method, due to integer arithmetic limits. 
+ * 
+ * If you need a larger filter, you should edit the initialize 
+ * method to intantiate a BloomFilter64bit instead.  
+ * 
  * @author gojomo
  * @version $Date$, $Revision$
  */
