@@ -114,4 +114,17 @@ public interface WARCConstants {
     public static final String NAMED_FIELD_IP_LABEL = "IP-Address";
     public static final String NAMED_FIELD_CHECKSUM_LABEL = "Checksum";
     public static final String NAMED_FIELD_RELATED_LABEL = "Related-Record-ID";
+    
+    /**
+     * To be safe, lets use application type rather than message. Regards 
+     * 'message/http', RFC says "...provided that it obeys the MIME restrictions
+     * for all 'message' types regarding line length and encodings."  This
+     * usually means lines of 1000 octets max (unless a 
+     * 'Content-Transfer-Encoding: binary' mime header is present).
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec19.html#sec19.1.
+     */
+    public static final String HTTP_REQUEST_MIMETYPE =
+    	"application/http;msgtype=request";
+    public static final String HTTP_RESPONSE_MIMETYPE =
+    	"application/http;msgtype=response";
 }

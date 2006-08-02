@@ -25,8 +25,9 @@
 package org.archive.util.anvl;
 
 /**
- * TODO: Implement 'folding'.
- * <p>TODO: Study <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Properties.html#load(java.io.InputStream)">Properties#load</a>
+ * TODO: Now values 'fold' but should but perhaps they shouldn't be stored
+ * folded.  Only when we serialize should we fold (But how to know where
+ * to fold?).
  * @author stack
  * @version $Date$ $Version$
  */

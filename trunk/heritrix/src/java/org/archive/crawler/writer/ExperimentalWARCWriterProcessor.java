@@ -171,30 +171,31 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             final String timestamp =
                 ArchiveUtils.get14DigitDate(curi.getLong(A_FETCH_BEGAN_TIME));
             if (lowerCaseScheme.startsWith("http")) {
-                URI rid = writeRequest(w, timestamp,
-                    "message/http;msgtype=request", baseid, curi, null);
                 // Add named fields for ip, checksum, and relate the metadata
-                // and response to the request field.
+                // and request to the resource field.
                 ANVLRecord r = new ANVLRecord();
-                r.addLabelValue(NAMED_FIELD_RELATED_LABEL, rid.toString());
-                ANVLRecord clone = r.clone();
                 if (curi.getContentDigest() != null) {
                     // TODO: This is digest for content -- doesn't include
                     // response headers.
-                    clone.addLabelValue(NAMED_FIELD_CHECKSUM_LABEL,
+                    r.addLabelValue(NAMED_FIELD_CHECKSUM_LABEL,
                         curi.getContentDigestSchemeString());
                 }
-                clone.addLabelValue(NAMED_FIELD_IP_LABEL, getHostAddress(curi));
-                writeResponse(w, timestamp, "message/http;msgtype=response",
-                    baseid, curi, clone);
+                r.addLabelValue(NAMED_FIELD_IP_LABEL, getHostAddress(curi));
+                URI rid = writeResource(w, timestamp, HTTP_RESPONSE_MIMETYPE,
+                	baseid, curi, r);
+                r = new ANVLRecord(1);
+                r.addLabelValue(NAMED_FIELD_RELATED_LABEL, rid.toString());
+                writeRequest(w, timestamp, HTTP_REQUEST_MIMETYPE,
+                	baseid, curi, r);
                 writeMetadata(w, timestamp, baseid, curi, r);
             } else if (lowerCaseScheme.equals("dns")) {
                 String ip = curi.getString(A_DNS_SERVER_IP_LABEL);
-                ANVLRecord r = new ANVLRecord();
+                ANVLRecord r = null;
                 if (ip != null && ip.length() > 0) {
+                	r = new ANVLRecord();
                     r.addLabelValue(NAMED_FIELD_IP_LABEL, ip);
                 }
-                writeResponse(w, timestamp, curi.getContentType(), baseid,
+                writeResource(w, timestamp, curi.getContentType(), baseid,
                     curi, r);
             } else {
                 logger.warning("No handler for scheme " + lowerCaseScheme);
@@ -230,13 +231,13 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         return uid;
     }
     
-    protected URI writeResponse(final ExperimentalWARCWriter w,
+    protected URI writeResource(final ExperimentalWARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
         final URI uid = qualifyRecordID(baseid, TYPE, RESPONSE);
-        w.writeResponseRecord(curi.toString(), timestamp, mimetype, uid,
+        w.writeResourceRecord(curi.toString(), timestamp, mimetype, uid,
             namedFields,
             curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
             curi.getHttpRecorder().getRecordedInput().getSize());
@@ -250,6 +251,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     throws IOException {
         final URI uid = qualifyRecordID(baseid, TYPE, METADATA);
         // Get some metadata from the curi.
+        // TODO: Get all curi metadata.
         ANVLRecord r = new ANVLRecord();
         if (curi.isSeed()) {
             r.addLabel("seed");

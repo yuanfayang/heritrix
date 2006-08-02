@@ -8,5 +8,12 @@ A unique ID generator.
 Default is {@link UUIDGenerator}.  To use another ID Generator, set the System Property
 <code>org.archive.uid.GeneratorFactory.generator</code> to point
 at an alternate implementation of {@link Generator}.
+
+<h2>TODO</h2>
+<ul>
+    <li>MIME boundaries have upper-bound of 70 characters total including
+    'blank line' (CRLFCRLF) and two leading hyphens. Add to {@link Generator}
+    interface an upper-bound on generated ID size.</li>
+</ul>
 </body>
 </html>
