@@ -5,5 +5,54 @@
 </head>
 <body>
 Experimental WARC Writer and Readers.  Code and specification subject to change.
+Code implemented against <a href=""></a>.
+<h2>Implementation Notes</h2>
+<h3>Suggested Spec. Amendments</h3>
+<h4>Drop response record type</h4>
+<p>resource is sufficent.</p>
+<h4>mimetype in header line</h4>
+<p>Lets change spec so proper mimetypes are allowed rather than our current
+shriveled definition.  Let mimetypes have parameters as per MIME spec -- even
+allowing a space between subtype and first parameter -- and that parameter
+values themselves might include spaces (inside quotes). Parse is easy especially
+considering position in header line, second to last, just before 
+record-id URI (Would be easier if mimetype were last -- easier to implement
+and easier to document in spec)</p>  
+<p>If we allow original mimetype, then using mimetype 'naturally', we leave
+ourselves open to recording of the following scenarios without amendment to
+the spec:
+</p>
+<ul>
+<li>Consider the case where an archiving organization would store all
+related to a capture as one record with a mimetype of 
+<code>multipart/mixed; boundary=RECORD-ID</code> and into this record they'd
+write parts <code>Content-Type: application/http; msgtype=request</code>,
+<code>Content-Type: application/http; msgtype=response</code>, and
+<code>Content-Type: text/xml+rdf</code> (For metadata).
+</li>
+<li>Or, an archiving institution would store a capture with 'alternatives'
+(perhaps ranging from <code>basic/plain</code> (or 'desiccated' in Kunze-speak) -- perhaps a <code>text/plain</code> rendition of a PDF capture -- through to
+<code>best</code>, the actual PDF binary itself.
+</li>
+</ul>
+</p>
+<p>Otherwise, to support the above scenarios requires custom
+named fields or reading related metadata.
+</p>
+<h4>Allow multiple instances of a single Named Parameter</h4>
+<p>ALlow that there may be multiple instances of same Named Parameter. Spec.
+is currently silent on this. E.g. Might have multiple
+<code>Related-Record-ID</code>.
+
+<h2>TODOs</h2>
+<ul>
+<li>unit tests using <code>multipart/*</code> (JavaMail) reading and writing
+records? Try <code>record-id</code> as part boundary.
+</li>
+<li>Fix ambiguity in spec. pertaining to 'smallest possible anvl-fields' notcited by Mads Alhof Kristiansen in <a 
+href="ftp://ftp.diku.dk/diku/semantics/papers/D-548.pdf">Digital Preservation
+using the WARC File Format</a>.
+</li>
+</ul>
 </body>
 </html>

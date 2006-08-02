@@ -179,6 +179,16 @@ extends WriterPoolMember implements WARCConstants {
     	sb.append(HEADER_FIELD_SEPARATOR);
     	sb.append(checkHeaderLineValue(create14DigitDate));
     	sb.append(HEADER_FIELD_SEPARATOR);
+    	// TODO: Lets change spec. so its allowed that mimetype have
+    	// parameters -- even allowing a space between subtype and first
+    	// parameter -- and allow that parameter values might include spaces
+    	// inside quotes as per RFC822.  Mimetypes can be info rich.  No
+    	// need to curtail.  Parse is easy to do -- especially considering
+    	// mimetype position in header.  E.g. An archiving organization might
+    	// write a capture as one record with a mimetype of
+    	// 'multipart/mixed; boundary=RECORD-ID' and into this record they'd
+    	// write parts of 'application/http; msgtype=request', 
+    	// 'application/http; msgtype=response', and 'text/xml+rdf'.
     	sb.append(checkHeaderLineValue(mimetype));
     	sb.append(HEADER_FIELD_SEPARATOR);
     	sb.append(checkHeaderLineValue(recordId.toString()));
