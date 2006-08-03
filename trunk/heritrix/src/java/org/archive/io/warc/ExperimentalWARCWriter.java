@@ -147,19 +147,51 @@ extends WriterPoolMember implements WARCConstants {
         return super.createFile();
     }
     
-    protected String checkHeaderLineValue(final String value)
+    protected void baseCharacterCheck(final char c, final String parameter)
     throws IOException {
-        // TODO: A version that will collapse space and tab for mimetypes.
-        // TODO: Below check may be too strict?
-        for (int i = 0; i < value.length(); i++) {
-        	char c = value.charAt(i);
-            if (Character.isISOControl(c) || Character.isWhitespace(c) ||
-            		!Character.isValidCodePoint(c)) {
-                throw new IOException("Contains illegal character 0x" +
-                    Integer.toHexString(c) + ": " + value);
-            }
+        // TODO: Too strict?  UNICODE control characters?
+        if (Character.isISOControl(c) || !Character.isValidCodePoint(c)) {
+            throw new IOException("Contains illegal character 0x" +
+                Integer.toHexString(c) + ": " + parameter);
         }
-        return value;
+    }
+    
+    protected String checkHeaderLineParameters(final String parameter)
+    throws IOException {
+        for (int i = 0; i < parameter.length(); i++) {
+        	final char c = parameter.charAt(i);
+        	baseCharacterCheck(c, parameter);
+        	if (Character.isWhitespace(c)) {
+                throw new IOException("Contains disallowed white space 0x" +
+                    Integer.toHexString(c) + ": " + parameter);
+        	}
+        }
+        return parameter;
+    }
+    
+    protected String checkHeaderLineMimetypeParameter(final String parameter)
+    throws IOException {
+    	StringBuilder sb = new StringBuilder(parameter.length());
+    	boolean wasWhitespace = false;
+        for (int i = 0; i < parameter.length(); i++) {
+        	char c = parameter.charAt(i);
+        	if (Character.isWhitespace(c)) {
+        		// Map all to ' ' and collapse multiples into one.
+        		// TODO: Make sure white space occurs in legal location --
+        		// before parameter or inside quoted-string.
+        		if (wasWhitespace) {
+        			continue;
+        		}
+        		wasWhitespace = true;
+        		c = ' ';
+        	} else {
+        		wasWhitespace = false;
+        		baseCharacterCheck(c, parameter);
+        	}
+        	sb.append(c);
+        }
+        
+        return sb.toString();
     }
     
     protected byte [] createRecordHeaderline(final String type,
@@ -175,9 +207,9 @@ extends WriterPoolMember implements WARCConstants {
     	sb.append(HEADER_FIELD_SEPARATOR);
     	sb.append(type);
     	sb.append(HEADER_FIELD_SEPARATOR);
-    	sb.append(checkHeaderLineValue(url));
+    	sb.append(checkHeaderLineParameters(url));
     	sb.append(HEADER_FIELD_SEPARATOR);
-    	sb.append(checkHeaderLineValue(create14DigitDate));
+    	sb.append(checkHeaderLineParameters(create14DigitDate));
     	sb.append(HEADER_FIELD_SEPARATOR);
     	// TODO: Lets change spec. so its allowed that mimetype have
     	// parameters -- even allowing a space between subtype and first
@@ -189,9 +221,9 @@ extends WriterPoolMember implements WARCConstants {
     	// 'multipart/mixed; boundary=RECORD-ID' and into this record they'd
     	// write parts of 'application/http; msgtype=request', 
     	// 'application/http; msgtype=response', and 'text/xml+rdf'.
-    	sb.append(checkHeaderLineValue(mimetype));
+    	sb.append(checkHeaderLineMimetypeParameter(mimetype));
     	sb.append(HEADER_FIELD_SEPARATOR);
-    	sb.append(checkHeaderLineValue(recordId.toString()));
+    	sb.append(checkHeaderLineParameters(recordId.toString()));
     	
     	long length = sb.length() + namedFieldsLength + contentLength;
     	

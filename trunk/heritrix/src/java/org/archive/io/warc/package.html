@@ -14,7 +14,11 @@ TODO
 TODO
 <h3>Miscellaneous</h3>
 <p>Use resource as record all others <code>Related-Record-ID</code> too.
+Makes sense putting request or metadata in center of link web since not
+always going to instances of either, etc.
+<p>Length has leading zeros to empahsize fixed-length-ness.
 </p>
+<p>IP-Address for dns resource is DNS Server.  Add note to 8.2 DNS.
 <h3>Suggested Spec. Amendments</h3>
 <h4>Drop response record type</h4>
 <p><code>resource</code> is sufficent. Let mimetype distingush if capture with
@@ -34,7 +38,7 @@ especially considering position in header line, second to last, just before
 record-id URI (Would be easier if mimetype were last -- easier to implement
 and easier to document in spec).  Would allow full exploitation of mime type.
 Otherwise, parsers need to read mime + custom named field or metadata.</p>  
-<p>If we allow original mimetype, then using mimetype 'naturally', we leave
+<p>If we allow full mimetype spec., using mimetype 'naturally', we leave
 ourselves open to recording of the following scenarios without amendment to
 the spec:
 </p>
@@ -48,7 +52,8 @@ write parts <code>Content-Type: application/http; msgtype=request</code>,
 <code>Content-Type: text/xml+rdf</code> (For metadata).
 </li>
 <li>Or, an archiving institution would store a capture with 'alternatives'
-(perhaps ranging from <code>basic/plain</code> (or 'desiccated' in Kunze-speak) -- perhaps a <code>text/plain</code> rendition of a PDF capture -- through to
+(perhaps ranging from <code>basic/plain</code> (or 'desiccated' in Kunze-speak)
+-- perhaps a <code>text/plain</code> rendition of a PDF capture -- through to
 <code>best</code>, the actual PDF binary itself.
 </li>
 </ul>
