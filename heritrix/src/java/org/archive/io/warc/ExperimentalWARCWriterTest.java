@@ -44,21 +44,31 @@ public class ExperimentalWARCWriterTest
 extends TmpDirTestCase implements WARCConstants {
     public void testCheckHeaderLineValue() throws Exception {
         ExperimentalWARCWriter writer = new ExperimentalWARCWriter();
-        writer.checkHeaderLineValue("one");
+        writer.checkHeaderLineParameters("one");
         IOException exception = null;
         try {
-            writer.checkHeaderLineValue("with space");
+            writer.checkHeaderLineParameters("with space");
         } catch(IOException e) {
             exception = e;
         }
        assertNotNull(exception);
        exception = null;
        try {
-           writer.checkHeaderLineValue("with\0x0000controlcharacter");
+           writer.checkHeaderLineParameters("with\0x0000controlcharacter");
        } catch(IOException e) {
            exception = e;
        }
       assertNotNull(exception);
+    }
+    
+    public void testMimetypes() throws IOException {
+        ExperimentalWARCWriter writer = new ExperimentalWARCWriter();
+        writer.checkHeaderLineMimetypeParameter("text/xml");
+        writer.checkHeaderLineMimetypeParameter("text/xml+rdf");
+        writer.checkHeaderLineMimetypeParameter(
+        	"text/plain; charset=SHIFT-JIS");
+        System.out.println(writer.checkHeaderLineMimetypeParameter(
+    		"multipart/mixed; \r\n        boundary=\"simple boundary\""));
     }
     
     public void testWriteRecord() throws IOException {

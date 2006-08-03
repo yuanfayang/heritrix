@@ -236,7 +236,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
-        final URI uid = qualifyRecordID(baseid, TYPE, RESPONSE);
+        final URI uid = qualifyRecordID(baseid, TYPE, RESOURCE);
         w.writeResourceRecord(curi.toString(), timestamp, mimetype, uid,
             namedFields,
             curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
@@ -256,6 +256,9 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         if (curi.isSeed()) {
             r.addLabel("seed");
         } else {
+        	if (curi.forceFetch()) {
+        		r.addLabel("force-fetch");
+        	}
             r.addLabelValue("via", curi.flattenVia());
             r.addLabelValue("pathFromSeed", curi.getPathFromSeed());
         }
@@ -265,6 +268,14 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 r.addLabelValue("outlink", ((Link)i.next()).toString());
             }
         }
+        
+        // Other curi fields of interest: 
+        // 
+        // Credentials
+        // 
+        // fetch-began-time: 1154569278774
+        // fetch-completed-time: 1154569281816
+        
         byte [] b = r.getUTF8Bytes();
         w.writeMetadataRecord(curi.toString(), timestamp, ANVLRecord.MIMETYPE,
             uid, namedFields, new ByteArrayInputStream(b), b.length);
