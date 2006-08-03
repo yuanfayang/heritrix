@@ -45,13 +45,11 @@ import org.archive.crawler.settings.Type;
 import org.archive.net.UURI;
 
 /**
- * Ensures the preconditions for a fetch -- such as
- * DNS lookup or acquiring a robots.txt policy -- are
- * satisfied before a URI is passed to subsequent
- * stages.
+ * Ensures the preconditions for a fetch -- such as DNS lookup 
+ * or acquiring and respecting a robots.txt policy -- are
+ * satisfied before a URI is passed to subsequent stages.
  *
  * @author gojomo
- *
  */
 public class PreconditionEnforcer
         extends Processor
@@ -192,8 +190,10 @@ public class PreconditionEnforcer
                     curi.addAnnotation("robotExcluded");
                     return false; 
                 }
-                // Don't fetch and turn off later stages of processing.
-                curi.skipToProcessorChain(getController().getPostprocessorChain());
+                // mark as precluded; in FetchHTTP, this will
+                // prevent fetching and cause a skip to the end
+                // of processing (unless an intervening processor
+                // overrules)
                 curi.setFetchStatus(S_ROBOTS_PRECLUDED);
                 curi.putString("error","robots.txt exclusion");
                 logger.fine("robots.txt precluded " + curi);

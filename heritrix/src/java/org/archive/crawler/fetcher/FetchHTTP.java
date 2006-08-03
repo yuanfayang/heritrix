@@ -633,6 +633,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * @return True if processor can fetch.
      */
     private boolean canFetch(CrawlURI curi) {
+        if(curi.getFetchStatus()<0) {
+            // already marked as errored, this pass through
+            // skip to end
+            curi.skipToProcessorChain(getController().getPostprocessorChain());
+            return false;             
+        }
         String scheme = curi.getUURI().getScheme();
          if (!(scheme.equals("http") || scheme.equals("https"))) {
              // handles only plain http and https
