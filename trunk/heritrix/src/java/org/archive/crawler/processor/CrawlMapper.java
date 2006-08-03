@@ -126,7 +126,7 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
     public static final String ATTR_DIVERSION_DIR = "diversion-dir";
     public static final String DEFAULT_DIVERSION_DIR = "diversions";
 
-    /** where to log diversions  */
+    /** rotate logs when change occurs within this # of digits of timestamp  */
     public static final String ATTR_ROTATION_DIGITS = "rotation-digits";
     public static final Integer DEFAULT_ROTATION_DIGITS = new Integer(10); // hourly
 
