@@ -8,10 +8,23 @@ Experimental WARC Writer and Readers.  Code and specification subject to change.
 Code implemented against (unreleased?)
 <a href="http://archive-access.sourceforge.net/warc/warc_file_format.html">The WARC File Format (Version 0.9)</a>.
 <h2>Implementation Notes</h2>
+<h3>Note on UUIDGenerator</h3>
+TODO
+<h3>Note on {@link org.archive.util.anvl ANVL} Implementation</h3>
+TODO
+<h3>Miscellaneous</h3>
+<p>Use resource as record all others <code>Related-Record-ID</code> too.
+</p>
 <h3>Suggested Spec. Amendments</h3>
 <h4>Drop response record type</h4>
-<p><code>resource</code> is sufficent. Let mimetype distingush if capture with response
-headers or not.</p>
+<p><code>resource</code> is sufficent. Let mimetype distingush if capture with
+response headers or not (As per comment at end of <i>8.1 HTTP and HTTPS</i>
+where it allows that if no response headers, use resource record and
+page mimetype rather than request + a mimetype of message/http.)</p>
+<p>(Are there other collection types that would require a response record,
+that don't have a mimetype that includes response headers and content?
+Ponder.  SMTP has rich MIME set to describe responses so it wouldn't need
+explicit 'response' type)</p>
 <h4>mimetype in header line</h4>
 <p>Lets change spec so proper mimetypes are allowed as per RFC2045 rather than
 our current shriveled definition. Let mimetypes have parameters allowing 
@@ -41,12 +54,34 @@ write parts <code>Content-Type: application/http; msgtype=request</code>,
 </ul>
 </p>
 <h4>Allow multiple instances of a single Named Parameter</h4>
-<p>Allow that there may be multiple instances of same Named Parameter. Spec.
-is currently silent on this. E.g. Multiple <code>Related-Record-ID</code>s
-could prove of use.
+<p>Allow that there may be multiple instances of same Named Parameter.
+E.g. Multiple <code>Related-Record-ID</code>s could prove of use.
+Spec. mentions this in <i>8.1 HTTP and HTTPS</i> section but better
+belongs in the <i>5.2 Named Parameters</i> preamble.
+</p>
+<h4>Use application/http instead of message/http</h4>
+<p>message type has line length maximum of 1000 characters absent a
+<code>Content-Type-Encoding</code> header set to <code>BINARY</code>
+in MIME-speak.
+</p>
+<h4>Suggestions</h4>
+<p>Leave of 9.2 GZIP extra fields. Big section on implementing an option
+that has little to do with WARCing.</p>
+<p>Length may be followed optionally by length to end-of-header and to
+end-of-named-fields colon delimited.  Makes parse easier.</p>
 
 <h2>TODOs</h2>
 <ul>
+<li>Revisit (Don't forget required RRID)</li>
+<li>Truncation</li>
+<li>WARCReader</li>
+<li>An actionable uid generatory:
+e.g. <code>http://archive.org/UID-SCHEME/ID</code>
+where scheme might be <code>UUID</code> and an ID might be
+<code>f9472055-fbb6-4810-90e8-68fd39e145a6;type=metadata</code> or,
+using <a href="http://ark.cdlib.org/arkcdl.pdf">ARK</a>: 
+<code>http://archive.org/ark:/13030/f9472055-fbb6-4810-90e8-68fd39e145a6;type=metadata</code>.
+</li>
 <li>Should we allow freeform creation of custom named fields if
 have a 'X-' or somesuch prefix?
 </li>
@@ -55,15 +90,21 @@ have a 'X-' or somesuch prefix?
 Leave off 'superior method of indicating truncation' paragraph.  This qualifier
 could be added to all sections of doc. -- that a subsequent revision will have
 a superior means. Rather than <code>End-Length</code>, like MIME, last record could have
-<code>Segment-Number-Total</code>, a count of all segments that make up complete 
-record.
+<code>Segment-Number-Total</code>, a count of all segments that make up
+complete record.
 </li>
-<li>Nothing on header-line encoding. For completeness should be US-ASCII
-(UTF-8?), no control-chars or CR or LF, etc.</li>
+<li>Section 11, why was it we said we don't need a parameter for special gzip
+WARC format?  I don't remember?   Reader needs to know when its reading a
+stream.  A client would like to know so it wrote stream to disk with right
+suffix?  Recap.</li>
+<li>Nothing on header-line encoding (Section 11 says UTF-8). 
+For completeness should be US-ASCII
+or UTF-8, no control-chars or CR or LF, etc.</li>
 <li>In-line ANVL definition (From Kunze).  Related, can labels have
 CTLs such as CRLF (Shouldn't)?  When says 'control-chars', does this include
 UNICODE control characters (Should)? CHAR is described as ASCII/UTF-8 but they
 are not same (Should be UTF-8)</li>
+<li>Fix examples. Use output of experimental ARC Writer.</li>
 <li>unit tests using <code>multipart/*</code> (JavaMail) reading and writing
 records? Try <code>record-id</code> as part boundary.
 </li>
@@ -83,6 +124,15 @@ differences?  How to express?  Or better as metadata about a warcinfo?
 </li>
 </ul>
 </li>
+</ul>
+<h2>Unimplemented</h2>
+<ul>
+<li>4.2 <code>response</code></li> 
+<li>Record Segmentation (4.8 <code>continuation</code> record type
+and the 5.2 <code>Segment-*</code> Named Parameters</li>
+<li>4.7 <code>conversion</code> type.</li>
+<li>5.2 <code>Warcinfo*</code> Named Parameters</li>
+<li>9.2 GZIP extra field</li> 
 </ul>
 </body>
 </html>
