@@ -12,8 +12,15 @@ at an alternate implementation of {@link Generator}.
 <h2>TODO</h2>
 <ul>
     <li>MIME boundaries have upper-bound of 70 characters total including
-    'blank line' (CRLFCRLF) and two leading hyphens. Add to {@link Generator}
-    interface an upper-bound on generated ID size.</li>
+    'blank line' (<code>CRLFCRLF</code>) and two leading hyphens. Add to
+    {@link Generator} interface an upper-bound on generated ID size.</li>
+<li>An actionable uid generatory:
+e.g. <code>http://archive.org/UID-SCHEME/ID</code>
+where scheme might be <code>UUID</code> and an ID might be
+<code>f9472055-fbb6-4810-90e8-68fd39e145a6;type=metadata</code> or,
+using <a href="http://ark.cdlib.org/arkcdl.pdf">ARK</a>: 
+<code>http://archive.org/ark:/13030/f9472055-fbb6-4810-90e8-68fd39e145a6;type=metadata</code>.
+</li>
 </ul>
 </body>
 </html>

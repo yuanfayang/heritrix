@@ -31,7 +31,7 @@ import java.util.UUID;
 
 /**
  * Generates <a href="http://en.wikipedia.org/wiki/UUID">UUID</a>s, using
- * {@link java.util.UUID}, formatted as URIs.
+ * {@link java.util.UUID java.util.UUID}, formatted as URIs.
  * @author stack
  * @version $Revision$ $Date$
  * @see <a href="http://ietf.org/rfc/rfc4122.txt">RFC4122</a>

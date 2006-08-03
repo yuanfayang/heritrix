@@ -5,31 +5,37 @@
 </head>
 <body>
 Experimental WARC Writer and Readers.  Code and specification subject to change.
-Code implemented against (unreleased?)
-<a href="http://archive-access.sourceforge.net/warc/warc_file_format.html">The WARC File Format (Version 0.9)</a>.
+Code implemented against (unreleased)
+<a href="http://archive-access.sourceforge.net/warc/warc_file_format.html">WARC
+File Format (Version 0.9)</a>.
 <h2>Implementation Notes</h2>
 <h3>Note on UUIDGenerator</h3>
-TODO
+<p>WARC requires a GUID for each record written. A configurable 
+unique ID {@link org.archive.uid.GeneratorFactory}  -- it can be configured
+to use alternate unique ID generators -- was added with a default of
+{@link org.archive.uid.UUIDGenerator}.  Generates
+<a url="http://en.wikipedia.org/wiki/UUID">UUIDs</a> (using java5
+java.util.UUID) and formats them in accordance with
+<a href="http://ietf.org/rfc/rfc4122.txt">RFC4122</a>.
+See {@link org.archive.uid}.</p>
+
 <h3>Note on {@link org.archive.util.anvl ANVL} Implementation</h3>
-TODO
+<p>The ANVL RFC822-like format is used writing Named Fields in WARCs and
+occasionally for metadata. An implementation was added at
+{@link org.archive.util.anzl}.
+</p>
+
 <h3>Miscellaneous</h3>
-<p>Use resource as record all others <code>Related-Record-ID</code> too.
+<p>Writing WARCs, made <code>resource</code> as record all others
+<code>Related-Record-ID</code> too.
 Makes sense putting request or metadata in center of link web since not
 always going to instances of either, etc.
-<p>Length has leading zeros to empahsize fixed-length-ness.
 </p>
-<p>IP-Address for dns resource is DNS Server.  Add note to 8.2 DNS.
-<h3>Suggested Spec. Amendments</h3>
-<h4>Drop response record type</h4>
-<p><code>resource</code> is sufficent. Let mimetype distingush if capture with
-response headers or not (As per comment at end of <i>8.1 HTTP and HTTPS</i>
-where it allows that if no response headers, use resource record and
-page mimetype rather than request + a mimetype of message/http.)</p>
-<p>(Are there other collection types that would require a response record,
-that don't have a mimetype that includes response headers and content?
-Ponder.  SMTP has rich MIME set to describe responses so it wouldn't need
-explicit 'response' type)</p>
-<h4>mimetype in header line</h4>
+<p>Length has leading zeros to emphasize fixed-lengthed-ness.
+</p>
+<h2>Suggested Spec. Amendments</h2>
+<p>We start with the substantial.</p>
+<h3>mimetype in header line</h3>
 <p>Lets change spec so proper mimetypes are allowed as per RFC2045 rather than
 our current shriveled definition. Let mimetypes have parameters allowing 
 space between subtype and first parameter and that parameter
@@ -58,38 +64,35 @@ write parts <code>Content-Type: application/http; msgtype=request</code>,
 </li>
 </ul>
 </p>
+<h3>Use application/http instead of message/http</h3>
+<p>message type has line length maximum of 1000 characters absent a
+<code>Content-Type-Encoding</code> header set to <code>BINARY</code>.
+(See definition of message/http for talk of adherence to MIME
+<code>message</code> line limits).
+</p>
+<h3>Drop response record type</h3>
+<p><code>resource</code> is sufficent. Let mimetype distingush if capture with
+response headers or not (As per comment at end of <i>8.1 HTTP and HTTPS</i>
+where it allows that if no response headers, use resource record and
+page mimetype rather than request + a mimetype of message/http.)</p>
+<p>Are there other collection types that would require a response record,
+that don't have a mimetype that includes response headers and content?
+SMTP has rich MIME set to describe responses so it wouldn't need
+explicit 'response' type.  NNTP similar.</p>
+<p>Do we need the request record?  Only makes sense for HTTP?</p>
+
+<h3>Suggested Spec edits</h3>
 <h4>Allow multiple instances of a single Named Parameter</h4>
 <p>Allow that there may be multiple instances of same Named Parameter.
 E.g. Multiple <code>Related-Record-ID</code>s could prove of use.
 Spec. mentions this in <i>8.1 HTTP and HTTPS</i> section but better
 belongs in the <i>5.2 Named Parameters</i> preamble.
 </p>
-<h4>Use application/http instead of message/http</h4>
-<p>message type has line length maximum of 1000 characters absent a
-<code>Content-Type-Encoding</code> header set to <code>BINARY</code>
-in MIME-speak.
-</p>
-<h4>Suggestions</h4>
-<p>Leave of 9.2 GZIP extra fields. Big section on implementing an option
-that has little to do with WARCing.</p>
-<p>Length may be followed optionally by length to end-of-header and to
-end-of-named-fields colon delimited.  Makes parse easier.</p>
-
-<h2>TODOs</h2>
+<h4>Miscellaneous</h4>
 <ul>
-<li>warcinfo</li>
-<li>Revisit (Don't forget required RRID)</li>
-<li>Truncation</li>
-<li>WARCReader</li>
-<li>An actionable uid generatory:
-e.g. <code>http://archive.org/UID-SCHEME/ID</code>
-where scheme might be <code>UUID</code> and an ID might be
-<code>f9472055-fbb6-4810-90e8-68fd39e145a6;type=metadata</code> or,
-using <a href="http://ark.cdlib.org/arkcdl.pdf">ARK</a>: 
-<code>http://archive.org/ark:/13030/f9472055-fbb6-4810-90e8-68fd39e145a6;type=metadata</code>.
-</li>
-<li>Should we allow freeform creation of custom named fields if
-have a 'X-' or somesuch prefix?
+<li>Leave off 9.2 GZIP extra fields. Big section on implementing an option
+that has little to do with WARCing.</li>
+<li>IP-Address for dns resource is DNS Server.  Add note to 8.2 DNS.
 </li>
 <li>Section 6. truncated?</li>
 <li>Section 7, on truncation, on 7.1, suggest values but allow free form description?
@@ -111,12 +114,26 @@ CTLs such as CRLF (Shouldn't)?  When says 'control-chars', does this include
 UNICODE control characters (Should)? CHAR is described as ASCII/UTF-8 but they
 are not same (Should be UTF-8)</li>
 <li>Fix examples. Use output of experimental ARC Writer.</li>
-<li>unit tests using <code>multipart/*</code> (JavaMail) reading and writing
-records? Try <code>record-id</code> as part boundary.
+<li>Should we allow freeform creation of custom named fields if
+have a 'X-' or somesuch prefix?
 </li>
 <li>Fix ambiguity in spec. pertaining to 'smallest possible anvl-fields' notcited by Mads Alhof Kristiansen in <a 
 href="ftp://ftp.diku.dk/diku/semantics/papers/D-548.pdf">Digital Preservation
 using the WARC File Format</a>.
+</li>
+<li>Minor: Length may be followed optionally by length to end-of-header and to
+end-of-named-fields colon delimited.  Makes parse easier.</li>
+</ul>
+
+<h2>TODOs</h2>
+<ul>
+<li>warcinfo</li>
+<li>Revisit (Don't forget required RRID)</li>
+<li>Truncation</li>
+<li>WARCReader</li>
+<li>WARC2ARC</li>
+<li>unit tests using <code>multipart/*</code> (JavaMail) reading and writing
+records? Try <code>record-id</code> as part boundary.
 </li>
 <li><b>warcinfo</b>
 <ul><li>What for a scheme?  Spec. is lacking.  DK used 'file' for

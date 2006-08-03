@@ -35,9 +35,11 @@ import org.archive.io.UTF8Bytes;
 
 /**
  * An ordered {@link List} with 'data' {@link Element} values.
+ * ANVLRecords end with a blank line.
+ * 
  * @see <a
  * href="http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf">A Name-Value
- * Language (ANVL)</a>.  Always adds a {@link CRLF} at EOR (End-Of-ANVLRecord).
+ * Language (ANVL)</a>.
  * @author stack
  */
 public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
@@ -88,7 +90,7 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
             sb.append(i.next());
             sb.append(CRLF);
         }
-        // ANVL Records end in a blank line.
+        // 'ANVL Records end in a blank line'.
         sb.append(CRLF);
         return sb.toString();
     }
@@ -98,10 +100,6 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
         return new ANVLRecord(this);
     }
     
-    /**
-     * @return ANVLRecord encoded as UTF-8 bytes.
-     * @throws UnsupportedEncodingException 
-     */
     public byte [] getUTF8Bytes()
     throws UnsupportedEncodingException {
         return toString().getBytes(UTF8);
