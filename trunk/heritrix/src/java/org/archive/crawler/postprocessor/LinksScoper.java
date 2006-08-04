@@ -70,6 +70,12 @@ implements FetchStatusCodes {
     public static final String ATTR_LOG_REJECT_FILTERS =
         "scope-rejected-url-filters";
     
+    public static final String ATTR_PREFERENCE_DEPTH_HOPS =
+        "preference-depth-hops";
+
+    private final static Integer DEFAULT_PREFERENCE_DEPTH_HOPS =
+        new Integer(-1);
+    
     /**
      * Instance of rejected uris log filters.
      */
@@ -88,6 +94,18 @@ implements FetchStatusCodes {
             "If enabled, any URL found because a seed redirected to it " +
             "(original seed returned 301 or 302), will also be treated " +
             "as a seed.", DEFAULT_SEED_REDIRECTS_NEW_SEEDS));
+        t.setExpertSetting(true);
+
+        t = addElementToDefinition(new SimpleType(ATTR_PREFERENCE_DEPTH_HOPS,
+            "Number of hops (of any sort) from a seed up to which a URI has higher " +
+        "priority scheduling than any remaining seed. For example, if set to 1 items one " + 
+        "hop (link, embed, redirect, etc.) away from a seed will be scheduled " + 
+        "with HIGH priority. If set to -1, no " + 
+        "preferencing will occur, and a breadth-first search with seeds " + 
+        "processed before discovered links will proceed. If set to zero, a " + 
+        "purely depth-first search will proceed, with all discovered links processed " + 
+        "before remaining seeds.  Seed redirects are treated as one hop from a seed.",
+        DEFAULT_PREFERENCE_DEPTH_HOPS));
         t.setExpertSetting(true);
         
         this.rejectLogFilters = (MapType)addElementToDefinition(
@@ -123,15 +141,19 @@ implements FetchStatusCodes {
 
         final boolean redirectsNewSeeds = ((Boolean)getUncheckedAttribute(curi,
             ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue();
+        int preferenceDepthHops = ((Integer)getUncheckedAttribute(curi,
+            ATTR_PREFERENCE_DEPTH_HOPS)).intValue();
         Collection inScopeLinks = new HashSet();
         for (final Iterator i = curi.getOutLinks().iterator(); i.hasNext();) {
             Object o = i.next();
             if(o instanceof Link){
                 final Link wref = (Link)o;
                 try {
-                    final int directive = getSchedulingFor(wref);
+                    final int directive = getSchedulingFor(curi, wref, 
+                        preferenceDepthHops);
                     final CandidateURI caURI =
-                        curi.createCandidateURI(curi.getBaseURI(), wref, directive,
+                        curi.createCandidateURI(curi.getBaseURI(), wref, 
+                            directive, 
                             considerAsSeed(curi, wref, redirectsNewSeeds));
                     if (isInScope(caURI)) {
                         inScopeLinks.add(caURI);
@@ -220,14 +242,40 @@ implements FetchStatusCodes {
         return false;
     }
     
-    protected int getSchedulingFor(final Link wref) {
+    /**
+     * Determine scheduling for the  <code>curi</code>.
+     * As with the LinksScoper in general, this only handles extracted links,
+     * seeds do not pass through here, but are given MEDIUM priority.  
+     * Imports into the frontier similarly do not pass through here, 
+     * but are given NORMAL priority.
+     */
+    protected int getSchedulingFor(final CrawlURI curi, final Link wref,
+            final int preferenceDepthHops) {
         final char c = wref.getHopType();
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest(curi + " with path=" + curi.getPathFromSeed() +
+                " isSeed=" + curi.isSeed() + " with fetchStatus=" +
+                curi.getFetchStatus() + " -> " + wref.getDestination() +
+                " type " + c + " with context=" + wref.getContext());
+        }
+
         switch (c) {
             case Link.REFER_HOP:
-                // treat redirects somewhat urgently
-                return CandidateURI.MEDIUM;
+                // Treat redirects somewhat urgently
+                // This also ensures seed redirects remain seed priority
+                return (preferenceDepthHops >= 0 ? CandidateURI.HIGH :
+                    CandidateURI.MEDIUM);
             default:
-                // everything else normal (at least for now)
+                if (preferenceDepthHops == 0)
+                    return CandidateURI.HIGH;
+                    // this implies seed redirects are treated as path
+                    // length 1, which I belive is standard.
+                    // curi.getPathFromSeed() can never be null here, because
+                    // we're processing a link extracted from curi
+                if (preferenceDepthHops > 0 && 
+                    curi.getPathFromSeed().length() + 1 <= preferenceDepthHops)
+                    return CandidateURI.HIGH;
+                // Everything else normal (at least for now)
                 return CandidateURI.NORMAL;
         }
     }

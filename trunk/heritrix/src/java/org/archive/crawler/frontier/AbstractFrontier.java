@@ -653,7 +653,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             // treating the immediate redirect target as a seed.
             this.controller.getScope().addSeed(curi);
             // And it needs rapid scheduling.
-            curi.setSchedulingDirective(CandidateURI.MEDIUM);
+	    if (curi.getSchedulingDirective() == CandidateURI.NORMAL)
+                curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }
 
         // optionally preferencing embeds up to MEDIUM
