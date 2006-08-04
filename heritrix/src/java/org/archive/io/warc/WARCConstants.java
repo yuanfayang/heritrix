@@ -119,6 +119,13 @@ public interface WARCConstants {
     public static final String NAMED_FIELD_IP_LABEL = "IP-Address";
     public static final String NAMED_FIELD_CHECKSUM_LABEL = "Checksum";
     public static final String NAMED_FIELD_RELATED_LABEL = "Related-Record-ID";
+    public static final String NAMED_FIELD_WARCFILENAME = "Filename";
+    public static final String NAMED_FIELD_TRUNCATED = "Truncated";
+    public static final String NAMED_FIELD_TRUNCATED_VALUE_TIME = "time";
+    public static final String NAMED_FIELD_TRUNCATED_VALUE_LEN = "length";
+    public static final String NAMED_FIELD_TRUNCATED_VALUE_HEAD =
+        "long-headers";
+    public static final String NAMED_FIELD_TRUNCATED_VALUE_UNSPECIFIED = null;
     
     /**
      * To be safe, lets use application type rather than message. Regards 

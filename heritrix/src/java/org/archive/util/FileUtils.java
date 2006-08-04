@@ -24,6 +24,8 @@
  */
 package org.archive.util;
 
+import it.unimi.dsi.fastutil.io.RepositionableStream;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -32,7 +34,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -43,6 +48,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import org.archive.io.GzipHeader;
+import org.archive.io.NoGzipMagicException;
+import org.archive.net.UURI;
+
 
 /** Utility methods for manipulating files and directories.
  *
@@ -51,6 +60,9 @@ import java.util.regex.Pattern;
 public class FileUtils {
     private static final Logger LOGGER =
         Logger.getLogger(FileUtils.class.getName());
+    
+    public static final File TMPDIR =
+        new File(System.getProperty("java.io.tmpdir", "/tmp"));
     
     private static final boolean DEFAULT_OVERWRITE = true;
     
@@ -444,5 +456,59 @@ public class FileUtils {
                 }
             }
         } while (srcFilenames != null && srcFilenames.size() > 0);
+    }
+    
+    /**
+     * Test file exists and is readable.
+     * @param f File to test.
+     * @exception IOException If file does not exist or is not unreadable.
+     */
+    public static void isReadable(final File f) throws IOException {
+        if (!f.exists()) {
+            throw new FileNotFoundException(f.getAbsolutePath() +
+                " does not exist.");
+        }
+
+        if (!f.canRead()) {
+            throw new FileNotFoundException(f.getAbsolutePath() +
+                " is not readable.");
+        }
+    }
+    
+    /**
+     * @param f File to test.
+     * @return True if file is readable, has uncompressed extension,
+     * and magic string at file start.
+     * @exception IOException If file does not exist or is not readable.
+     */
+    public static boolean isReadableWithExtensionAndMagic(final File f, 
+            final String uncompressedExtension, final String magic)
+    throws IOException {
+        boolean result = false;
+        FileUtils.isReadable(f);
+        if(f.getName().toLowerCase().endsWith(uncompressedExtension)) {
+            FileInputStream fis = new FileInputStream(f);
+            try {
+                byte [] b = new byte[magic.length()];
+                int read = fis.read(b, 0, magic.length());
+                fis.close();
+                if (read == magic.length()) {
+                    StringBuffer beginStr
+                        = new StringBuffer(magic.length());
+                    for (int i = 0; i < magic.length(); i++) {
+                        beginStr.append((char)b[i]);
+                    }
+                    
+                    if (beginStr.toString().
+                            equalsIgnoreCase(magic)) {
+                        result = true;
+                    }
+                }
+            } finally {
+                fis.close();
+            }
+        }
+
+        return result;
     }
 }

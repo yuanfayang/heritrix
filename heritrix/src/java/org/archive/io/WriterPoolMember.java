@@ -356,8 +356,9 @@ public abstract class WriterPoolMember {
      * Post write tasks.
      * 
      * Has side effects.  Will open new file if we're at the upperbound.
-     * If we're writing compressed files, it will write the GZIP header
-     * out on the stream.
+     * If we're writing compressed files, it will wrap output stream with a
+     * GZIP writer with side effect that GZIP header is written out on the
+     * stream.
      *
      * @exception IOException
      */
@@ -365,6 +366,7 @@ public abstract class WriterPoolMember {
     throws IOException {
         checkSize();
         if (this.compressed) {
+            // Wrap stream in GZIP Writer.
             // The below construction immediately writes the GZIP 'default'
             // header out on the underlying stream.
             this.out = new CompressedStream(this.out);
@@ -373,6 +375,8 @@ public abstract class WriterPoolMember {
 
     /**
      * Post file write tasks.
+     * If compressed, finishes up compression and flushes stream so any
+     * subsequent checks get good reading.
      *
      * @exception IOException
      */
@@ -473,24 +477,6 @@ public abstract class WriterPoolMember {
 	}
     
     /**
-     * An override so we get access to underlying output stream.
-     * @author stack
-     */
-    private class CompressedStream extends GZIPOutputStream {
-        public CompressedStream(OutputStream out)
-        throws IOException {
-            super(out);
-        }
-        
-        /**
-         * @return Reference to stream being compressed.
-         */
-        OutputStream getWrappedStream() {
-            return this.out;
-        }
-    }
-    
-    /**
      * Reset serial number.
      */
     public static synchronized void resetSerialNo() {
@@ -510,5 +496,23 @@ public abstract class WriterPoolMember {
      */
     public static void setSerialNo(int no) {
         WriterPoolMember.serialNo = no;
+    }
+    
+    /**
+     * An override so we get access to underlying output stream.
+     * @author stack
+     */
+    private class CompressedStream extends GZIPOutputStream {
+        public CompressedStream(OutputStream out)
+        throws IOException {
+            super(out);
+        }
+        
+        /**
+         * @return Reference to stream being compressed.
+         */
+        OutputStream getWrappedStream() {
+            return this.out;
+        }
     }
 }

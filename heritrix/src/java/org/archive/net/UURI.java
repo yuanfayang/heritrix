@@ -24,7 +24,10 @@
  */
 package org.archive.net;
 
+import java.io.File;
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
@@ -428,5 +431,20 @@ implements CharSequence, Serializable {
             }
         }
         return result;
+    }
+    
+    /**
+     * @param pathOrUri A file path or a URI.
+     * @return Path parsed from passed <code>pathOrUri</code>.
+     * @throws URISyntaxException
+     */
+    public static String parseFilename(final String pathOrUri)
+    throws URISyntaxException {
+        String path = pathOrUri;
+        if (UURI.hasScheme(pathOrUri)) {
+            URI url = new URI(pathOrUri);
+            path = url.getPath();
+        }
+        return (new File(path)).getName();
     }
 }

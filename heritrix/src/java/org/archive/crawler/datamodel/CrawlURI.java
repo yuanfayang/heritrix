@@ -615,6 +615,39 @@ implements FetchStatusCodes {
 
         putString(A_ANNOTATIONS,annotations);
     }
+    
+    /**
+     * TODO: Implement truncation using booleans rather than as this
+     * ugly String parse.
+     * @return True if fetch was truncated.
+     */
+    public boolean isTruncatedFetch() {
+        return annotationContains(TRUNC_SUFFIX);
+    }
+    
+    public boolean isLengthTruncatedFetch() {
+        return annotationContains(LENGTH_TRUNC);
+    }
+    
+    public boolean isTimeTruncatedFetch() {
+        return annotationContains(TIMER_TRUNC);
+    }
+    
+    public boolean isHeaderTruncatedFetch() {
+        return annotationContains(HEADER_TRUNC);
+    }
+    
+    protected boolean annotationContains(final String str2Find) {
+        boolean result = false;
+        if (!containsKey(A_ANNOTATIONS)) {
+            return result;
+        }
+        String annotations = getString(A_ANNOTATIONS);
+        if (annotations != null && annotations.length() > 0) {
+            result = annotations.indexOf(str2Find) >= 0;
+        }
+        return result;
+    }
 
     /**
      * Get the annotations set for this uri.

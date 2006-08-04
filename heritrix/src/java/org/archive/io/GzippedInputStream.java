@@ -43,8 +43,8 @@ import java.util.zip.Inflater;
  * This class is needed because GZIPInputStream only finds the first GZIP
  * member in the file even if the file is made up of multiple GZIP members.
  * 
- * <p>Takes an InputStream streams that implements
- * {@link RepositionableStream} interface so it can backup overreads done
+ * <p>Takes an InputStream stream that implements
+ * {@link RepositionableStream} interface so it can backup over-reads done
  * by the zlib Inflater class.
  * 
  * <p>Use the {@link #iterator()} method to get a gzip member iterator.
@@ -348,5 +348,44 @@ implements RepositionableStream {
         gzipOS.write(bytes, 0, bytes.length);
         gzipOS.close();
         return baos.toByteArray();
+    }
+    
+    /**
+     * Tests passed stream is GZIP stream by reading in the HEAD.
+     * Does reposition of stream when done.
+     * @param rs An InputStream that is Repositionable.
+     * @return True if compressed stream.
+     * @throws IOException
+     */
+    public static boolean isCompressedRepositionableStream(
+            final RepositionableStream rs)
+    throws IOException {
+        boolean result = false;
+        long p = rs.position();
+        try {
+            result = isCompressedStream((InputStream)rs);
+        } finally {
+            rs.position(p);
+        }
+        return result; 
+    }
+    
+    /**
+     * Tests passed stream is gzip stream by reading in the HEAD.
+     * Does not reposition stream when done.
+     * @param is An InputStream.
+     * @return True if compressed stream.
+     * @throws IOException
+     */
+    public static boolean isCompressedStream(final InputStream is)
+    throws IOException {
+        boolean result = false;
+        try {
+            new GzipHeader(is);
+            result = true;
+        } catch (NoGzipMagicException e) {
+            return result;
+        }
+        return result;
     }
 }

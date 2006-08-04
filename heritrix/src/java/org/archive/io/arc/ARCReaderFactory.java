@@ -25,6 +25,7 @@
 package org.archive.io.arc;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -35,10 +36,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.archive.io.GzipHeader;
 import org.archive.io.GzippedInputStream;
+import org.archive.io.NoGzipMagicException;
 import org.archive.io.RepositionableInputStream;
 import org.archive.net.UURI;
 import org.archive.net.rsync.RsyncURLConnection;
+import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 
 
@@ -50,9 +54,6 @@ import org.archive.util.IoUtils;
  * @author stack
  */
 public class ARCReaderFactory implements ARCConstants {
-    private static final File TMPDIR =
-        new File(System.getProperty("java.io.tmpdir", "/tmp"));
-    
     /**
      * This factory instance.
      */
@@ -114,10 +115,10 @@ public class ARCReaderFactory implements ARCConstants {
     public static ARCReader get(final File arcFile,
             final boolean skipSuffixTest, final long offset)
     throws IOException {
-        boolean compressed =
-            ARCUtils.testCompressedARCFile(arcFile, skipSuffixTest);
+        boolean compressed = testCompressedARCFile(arcFile, skipSuffixTest);
         if (!compressed) {
-            if (!ARCUtils.testUncompressedARCFile(arcFile)) {
+            if (!FileUtils.isReadableWithExtensionAndMagic(arcFile,
+                    ARC_FILE_EXTENSION, ARC_MAGIC_NUMBER)) {
                 throw new IOException(arcFile.getAbsolutePath() +
                     " is not an Internet Archive ARC file.");
             }
@@ -201,7 +202,7 @@ public class ARCReaderFactory implements ARCConstants {
         if (connection instanceof HttpURLConnection) {
             // If http url connection, bring down the resouce local.
             localFile = File.createTempFile(ARCReader.class.getName(), ".arc",
-                    TMPDIR);
+                FileUtils.TMPDIR);
             connection.connect();
             try {
                 IoUtils.readFullyToFile(connection.getInputStream(), localFile,
@@ -283,6 +284,99 @@ public class ARCReaderFactory implements ARCConstants {
                 return this.delegate.validate();
             }
         };
+    }
+    
+    /**
+     * @param arcFile File to test.
+     * @return True if <code>arcFile</code> is compressed ARC.
+     * @throws IOException
+     */
+    public static boolean isCompressed(File arcFile) throws IOException {
+        return testCompressedARCFile(arcFile);
+    }
+    
+    /**
+     * Check file is compressed and in ARC GZIP format.
+     *
+     * @param arcFile File to test if its Internet Archive ARC file
+     * GZIP compressed.
+     *
+     * @return True if this is an Internet Archive GZIP'd ARC file (It begins
+     * w/ the Internet Archive GZIP header and has the
+     * COMPRESSED_ARC_FILE_EXTENSION suffix).
+     *
+     * @exception IOException If file does not exist or is not unreadable.
+     */
+    public static boolean testCompressedARCFile(File arcFile)
+    throws IOException {
+        return testCompressedARCFile(arcFile, false);
+    }
+
+    /**
+     * Check file is compressed and in ARC GZIP format.
+     *
+     * @param arcFile File to test if its Internet Archive ARC file
+     * GZIP compressed.
+     * @param skipSuffixCheck Set to true if we're not to test on the
+     * '.arc.gz' suffix.
+     *
+     * @return True if this is an Internet Archive GZIP'd ARC file (It begins
+     * w/ the Internet Archive GZIP header).
+     *
+     * @exception IOException If file does not exist or is not unreadable.
+     */
+    public static boolean testCompressedARCFile(File arcFile,
+            boolean skipSuffixCheck)
+    throws IOException {
+        boolean compressedARCFile = false;
+        FileUtils.isReadable(arcFile);
+        if(!skipSuffixCheck && !arcFile.getName().toLowerCase()
+                .endsWith(COMPRESSED_ARC_FILE_EXTENSION)) {
+            return compressedARCFile;
+        }
+        
+        final InputStream is = new FileInputStream(arcFile);
+        try {
+            compressedARCFile = testCompressedARCStream(is);
+        } finally {
+            is.close();
+        }
+        return compressedARCFile;
+    }
+    
+    /**
+     * Tests passed stream is gzip stream by reading in the HEAD.
+     * Does not reposition the stream.  That is left up to the caller.
+     * @param is An InputStream.
+     * @return True if compressed stream.
+     * @throws IOException
+     */
+    public static boolean testCompressedARCStream(final InputStream is)
+            throws IOException {
+        boolean compressedARCFile = false;
+        GzipHeader gh = null;
+        try {
+            gh = new GzipHeader(is);
+        } catch (NoGzipMagicException e ) {
+            return compressedARCFile;
+        }
+        
+        byte[] fextra = gh.getFextra();
+        // Now make sure following bytes are IA GZIP comment.
+        // First check length. ARC_GZIP_EXTRA_FIELD includes length
+        // so subtract two and start compare to ARC_GZIP_EXTRA_FIELD
+        // at +2.
+        if (fextra != null &&
+                ARC_GZIP_EXTRA_FIELD.length - 2 == fextra.length) {
+            compressedARCFile = true;
+            for (int i = 0; i < fextra.length; i++) {
+                if (fextra[i] != ARC_GZIP_EXTRA_FIELD[i + 2]) {
+                    compressedARCFile = false;
+                    break;
+                }
+            }
+        }
+        return compressedARCFile;
     }
 
     /**
