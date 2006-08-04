@@ -51,6 +51,9 @@ import org.archive.net.UURIFactory;
  */
 public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats {
     public static final long ROBOTS_NOT_FETCHED = -1;
+    /** only check if robots-fetch is perhaps superfluous 
+     * after this many tries */
+    public static final long MIN_ROBOTS_RETRIES = 2;
 
     private final String server; // actually, host+port in the https case
     private int port;
@@ -116,63 +119,76 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
      * @param curi the crawl URI containing the fetched robots.txt
      * @throws IOException
      */
-    public void updateRobots(CrawlURI curi)
-            throws IOException {
+    public void updateRobots(CrawlURI curi) {
         RobotsHonoringPolicy honoringPolicy =
             settingsHandler.getOrder().getRobotsHonoringPolicy();
 
         robotsFetched = System.currentTimeMillis();
 
-        if (curi.getFetchStatus() < 0 || curi.isHttpTransaction() == false) {
-            // robots.txt lookup failed.
+        boolean gotSomething = curi.getFetchStatus() > 0
+                && curi.isHttpTransaction();
+        if (!gotSomething && curi.getFetchAttempts() < MIN_ROBOTS_RETRIES) {
+            // robots.txt lookup failed, no reason to consider IGNORE yet
             validRobots = false;
             return;
         }
-        validRobots = true;
         
-        if (!curi.is2XXSuccess() ||
-                honoringPolicy.getType(getSettings(curi)) ==
-                    RobotsHonoringPolicy.IGNORE) {
-            // Not found or anything but a status code in the 2xx range is
-        	// treated as giving access to all of a sites' content.
-            // TODO: consider handling server errors, redirects differently
+        CrawlerSettings settings = getSettings(curi);
+        int type = honoringPolicy.getType(settings);
+        if (type == RobotsHonoringPolicy.IGNORE) {
+            // IGNORE = ALLOWALL
             robots = RobotsExclusionPolicy.ALLOWALL;
+            validRobots = true;
             return;
         }
         
-//      PREVAILING PRACTICE PER GOOGLE: treat these errors as all-allowed,
-//      since they're usually indicative of a mistake
-//      Thus these lines are commented out:
-//      if ((get.getStatusCode() >= 401) && (get.getStatusCode() <= 403)) {
-//      // authorization/allowed errors = all deny
-//      robots = RobotsExclusionPolicy.DENYALL;
-//      return;
-//      }
+        if(!gotSomething) {
+            // robots.txt lookup failed and policy not IGNORE
+            validRobots = false;
+            return;
+        }
+        
+        if (!curi.is2XXSuccess()) {
+            // Not found or anything but a status code in the 2xx range is
+            // treated as giving access to all of a sites' content.
+            // This is the prevailing practice of Google, since 4xx
+            // responses on robots.txt are usually indicative of a 
+            // misconfiguration or blanket-block, not an intentional
+            // indicator of partial blocking. 
+            // TODO: consider handling server errors, redirects differently
+            robots = RobotsExclusionPolicy.ALLOWALL;
+            validRobots = true;
+            return;
+        }
+
         ReplayInputStream contentBodyStream = null;
         try {
-            BufferedReader reader;
-            if (honoringPolicy.getType(getSettings(curi))
-                == RobotsHonoringPolicy.CUSTOM) {
-                reader = new BufferedReader(new StringReader(honoringPolicy
-                    .getCustomRobots(getSettings(curi))));
-            } else {
-                contentBodyStream = curi.getHttpRecorder().getRecordedInput()
-                    .getContentReplayInputStream();
+            try {
+                BufferedReader reader;
+                if (type == RobotsHonoringPolicy.CUSTOM) {
+                    reader = new BufferedReader(new StringReader(honoringPolicy
+                            .getCustomRobots(settings)));
+                } else {
+                    contentBodyStream = curi.getHttpRecorder()
+                            .getRecordedInput().getContentReplayInputStream();
 
-                contentBodyStream.setToResponseBodyStart();
-                reader = new BufferedReader(
-                    new InputStreamReader(contentBodyStream));
+                    contentBodyStream.setToResponseBodyStart();
+                    reader = new BufferedReader(new InputStreamReader(
+                            contentBodyStream));
+                }
+                robots = RobotsExclusionPolicy.policyFor(settings,
+                        reader, honoringPolicy);
+                validRobots = true;
+            } finally {
+                if (contentBodyStream != null) {
+                    contentBodyStream.close();
+                }
             }
-            robots = RobotsExclusionPolicy.policyFor(getSettings(curi),
-                reader, honoringPolicy);
-
         } catch (IOException e) {
             robots = RobotsExclusionPolicy.ALLOWALL;
-            throw e; // rethrow
-        } finally {
-            if (contentBodyStream != null) {
-                contentBodyStream.close();
-            }
+            validRobots = true;
+            curi.addLocalizedError(getName(), e,
+                    "robots.txt parsing IOException");
         }
     }
 
@@ -234,11 +250,14 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
      * @return the settings object in effect for this server.
      * @throws URIException
      */
-    private CrawlerSettings getSettings(CandidateURI curi)
-    throws URIException {
-        return this.settingsHandler.
-            getSettings(curi.getUURI().getReferencedHost(),
-                curi.getUURI());
+    private CrawlerSettings getSettings(CandidateURI curi) {
+        try {
+            return this.settingsHandler.
+                getSettings(curi.getUURI().getReferencedHost(),
+                    curi.getUURI());
+        } catch (URIException e) {
+            return null;
+        }
     }
 
     /** Set the settings handler to be used by this server.
