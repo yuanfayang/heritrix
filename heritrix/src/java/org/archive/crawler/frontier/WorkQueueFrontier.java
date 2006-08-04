@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedSet;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -72,6 +74,15 @@ import java.util.concurrent.TimeUnit;
 public abstract class WorkQueueFrontier extends AbstractFrontier
 implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         Serializable {
+    public class WakeTask extends TimerTask {
+
+        @Override
+        public void run() {
+            wakeQueues();
+        }
+
+    }
+
     /** truncate reporting of queues at some large but not unbounded number */
     private static final int REPORT_MAX_QUEUES = 2000;
     
@@ -93,7 +104,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     public final static String ATTR_SNOOZE_DEACTIVATE_MS =
         "snooze-deactivate-ms";
     public static Long DEFAULT_SNOOZE_DEACTIVATE_MS = new Long(5*60*1000); // 5 minutes
-    // TODO: make configurable
     
     private static final Logger logger =
         Logger.getLogger(WorkQueueFrontier.class.getName());
@@ -124,6 +134,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     protected final static String DEFAULT_COST_POLICY =
         UnitCostAssignmentPolicy.class.getName();
 
+    /** target size of ready queues backlog */
+    public final static String ATTR_TARGET_READY_QUEUES_BACKLOG =
+        "target-ready-backlog";
+    protected final static Integer DEFAULT_TARGET_READY_QUEUES_BACKLOG =
+        new Integer(50);
+    
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
     protected transient UriUniqFilter alreadyIncluded;
@@ -136,19 +152,21 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * All per-class queues whose first item may be handed out.
      * Linked-list of keys for the queues.
      */
-    protected BlockingQueue readyClassQueues = new LinkedBlockingQueue();
-
+    protected BlockingQueue<String> readyClassQueues = new LinkedBlockingQueue<String>();
+    /** Target (minimum) size to keep readyClassQueues */
+    protected int targetSizeForReadyQueues;
+    
     /** 
      * All 'inactive' queues, not yet in active rotation.
      * Linked-list of keys for the queues.
      */
-    protected BlockingQueue inactiveQueues = new LinkedBlockingQueue();
+    protected BlockingQueue<String> inactiveQueues = new LinkedBlockingQueue<String>();
 
     /**
      * 'retired' queues, no longer considered for activation.
      * Linked-list of keys for queues.
      */
-    protected BlockingQueue retiredQueues = new LinkedBlockingQueue();
+    protected BlockingQueue<String> retiredQueues = new LinkedBlockingQueue<String>();
     
     /** all per-class queues from whom a URI is outstanding */
     protected Bag inProcessQueues = 
@@ -158,8 +176,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * All per-class queues held in snoozed state, sorted by wake time.
      */
     protected SortedSet snoozedClassQueues =
-        Collections.synchronizedSortedSet(new TreeSet());
-
+        Collections.synchronizedSortedSet(new TreeSet<WorkQueue>());
+    /** Timer for tasks which wake head item of snoozedClassQueues */
+    protected Timer wakeTimer;
+    
     protected WorkQueue longestActiveQueue = null;
     
     /** how long to wait for a ready queue when there's nothing snoozed */
@@ -167,13 +187,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
 
     /** a policy for assigning 'cost' values to CrawlURIs */
     private transient CostAssignmentPolicy costAssignmentPolicy;
-    
-    /**
-     * A snoozed queue will be available at this time.
-     * Gets updated when queues are snoozed.
-     */
-    private volatile long nextWakeupTime = -1;
-    
     
     /** all policies available to be chosen */
     String[] AVAILABLE_COST_POLICIES = new String[] {
@@ -240,6 +253,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                 DEFAULT_SNOOZE_DEACTIVATE_MS));
         t.setExpertSetting(true);
         t.setOverrideable(false);
+        t = addElementToDefinition(new SimpleType(ATTR_TARGET_READY_QUEUES_BACKLOG,
+                "Target size for backlog of ready queues. This many queues " +
+                "will be brought into 'ready' state even if a thread is " +
+                "not waiting. Only has effect if 'hold-queues' is true. " +
+                "Default is 50.", DEFAULT_TARGET_READY_QUEUES_BACKLOG));
+        t.setExpertSetting(true);
+        t.setOverrideable(false);
     }
 
     /**
@@ -253,6 +273,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         super.initialize(c);
         this.controller = c;
         
+        this.targetSizeForReadyQueues = (Integer) getUncheckedAttribute(null,ATTR_TARGET_READY_QUEUES_BACKLOG);
+        if (this.targetSizeForReadyQueues<1) {
+            this.targetSizeForReadyQueues=1;
+        }
+        wakeTimer = new Timer("waker for "+this.toString());
+        
         try {
             if (workQueueDataOnDisk()
                     && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
@@ -260,9 +286,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                         MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
                 this.allQueues = Collections.synchronizedMap(new HashMap());
             } else {
-                this.allQueues =
-                    Collections.synchronizedMap(c.getBigMap("allqueues",
-                        String.class, WorkQueue.class));
+                this.allQueues = c.getBigMap("allqueues",
+                        String.class, WorkQueue.class);
                 if (logger.isLoggable(Level.FINE)) {
                     Iterator i = this.allQueues.keySet().iterator();
                     try {
@@ -326,6 +351,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             // FIXME exception handling
             e.printStackTrace();
         }
+        wakeTimer.cancel();
         
         this.allQueues.clear();
         this.allQueues = null;
@@ -409,7 +435,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             }
             if(!wq.isHeld()) {
                 wq.setHeld();
-                if(holdQueues()) {
+                if(holdQueues() && readyClassQueues.size()>=targetSizeForReadyQueues()) {
                     deactivateQueue(wq);
                 } else {
                     replenishSessionBalance(wq);
@@ -560,19 +586,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             // Do common checks for pause, terminate, bandwidth-hold
             preNext(now);
             
-            // If time, wake any snoozed queues.
-            long timeTilWake = this.nextWakeupTime - now;
-            if (timeTilWake <= 0) {
-                this.wakeQueues();
-                timeTilWake = this.nextWakeupTime - now;
+            synchronized(readyClassQueues) {
+                int activationsNeeded = targetSizeForReadyQueues() - readyClassQueues.size();
+                while(activationsNeeded>0 && !inactiveQueues.isEmpty()) {
+                    activateInactiveQueue();
+                    activationsNeeded--;
+                }
             }
-            // Don't wait if there are items buffered in inactive queues, 
-            // or wait any longer than interval to next wake / default wait
-            long wait = (!inactiveQueues.isEmpty())?
-                    0 :Math.min(DEFAULT_WAIT, timeTilWake);
-            
+                   
             WorkQueue readyQ = null;
-            Object key = readyClassQueues.poll(wait,TimeUnit.MILLISECONDS);
+            Object key = readyClassQueues.poll(DEFAULT_WAIT,TimeUnit.MILLISECONDS);
             if (key != null) {
                 readyQ = (WorkQueue)this.allQueues.get(key);
             }
@@ -625,17 +648,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                 throw new EndedException("shouldTerminate is true");
             }
                 
-            if(inProcessQueues.size()==0 && timeTilWake>DEFAULT_WAIT) {
+            if(inProcessQueues.size()==0) {
                 // Nothing was ready or in progress or imminent to wake; ensure 
                 // any piled-up pending-scheduled URIs are considered
                 this.alreadyIncluded.requestFlush();
-            }
-            
-            // if still nothing ready, activate an inactive queue, if available
-            if (readyClassQueues.isEmpty()) {
-                activateInactiveQueue();
-            }
+            }    
         }
+    }
+
+    private int targetSizeForReadyQueues() {
+        return targetSizeForReadyQueues;
     }
 
     /**
@@ -735,14 +757,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // Set default next wake time to be in one millisecond in case nothing
         // to wake.
         long nextWakeTime = now + DEFAULT_WAIT;
+        long nextWakeDelay = 0;
         int wokenQueuesCount = 0;
         synchronized (snoozedClassQueues) {
             while (true) {
                 if (snoozedClassQueues.isEmpty()) {
-                    break;
+                    return;
                 }
                 WorkQueue peek = (WorkQueue) snoozedClassQueues.first();
                 nextWakeTime = peek.getWakeTime();
+                nextWakeDelay = nextWakeTime - now;
                 if ((nextWakeTime - now) <= 0) {
                     snoozedClassQueues.remove(peek);
                     peek.setWakeTime(0);
@@ -753,8 +777,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                 }
             }
         }
-
-        this.nextWakeupTime = Math.max(now, nextWakeTime);
+        wakeTimer.schedule(new WakeTask(),nextWakeDelay);
     }
 
     /**
@@ -784,7 +807,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             wq.update(this, curi); // rewrite any changes
             retireQueue(wq);
             return;
-        } 
+        }
         
         if (needsRetrying(curi)) {
             // Consider errors which can be retried, leaving uri atop queue
@@ -826,7 +849,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             // Check for codes that mean that while we the crawler did
             // manage to schedule it, it must be disregarded for some reason.
             incrementDisregardedUriCount();
-            //Let interested listeners know of disregard disposition.
+            // Let interested listeners know of disregard disposition.
             controller.fireCrawledURIDisregardEvent(curi);
             // if exception, also send to crawlErrors
             if (curi.getFetchStatus() == S_RUNTIME_EXCEPTION) {
@@ -884,13 +907,14 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         wq.setWakeTime(nextTime);
         long snoozeToInactiveDelayMs = ((Long)getUncheckedAttribute(null,
                 ATTR_SNOOZE_DEACTIVATE_MS)).longValue();
-        if (delay_ms > snoozeToInactiveDelayMs && !readyClassQueues.isEmpty()) {
+        if (delay_ms > snoozeToInactiveDelayMs && !inactiveQueues.isEmpty()) {
             deactivateQueue(wq);
         } else {
-            snoozedClassQueues.add(wq);
-            // Update nextWakeupTime if we're supposed to wake up even sooner.
-            if (nextTime < this.nextWakeupTime) {
-                this.nextWakeupTime = nextTime;
+            synchronized(snoozedClassQueues) {
+                snoozedClassQueues.add(wq);
+                if(wq == snoozedClassQueues.first()) {
+                    wakeTimer.schedule(new WakeTask(), delay_ms);
+                }
             }
         }
     }
