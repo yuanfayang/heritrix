@@ -96,4 +96,15 @@ public interface CoreAttributeConstants {
     
     /** flag indicating the containing queue should be retired */ 
     public static final String A_FORCE_RETIRE = "force-retire";
+    
+    /**
+     * Fetch truncation codes present in {@link CrawlURI} annotations.
+     * All truncation annotations have a {@link TRUNC_SUFFIX} suffix (TODO:
+     * Make for-sure unique or redo truncation so definitive flag marked
+     * against {@link CrawlURI}).
+     */
+    public static final String TRUNC_SUFFIX = "Trunc";
+    public static final String HEADER_TRUNC = "header" + TRUNC_SUFFIX;
+    public static final String TIMER_TRUNC = "time" + TRUNC_SUFFIX;
+    public static final String LENGTH_TRUNC = "len" + TRUNC_SUFFIX;
 }

@@ -22,6 +22,7 @@
  */
 package org.archive.io.warc;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,8 +58,8 @@ import org.archive.util.anvl.ANVLRecord;
  * @author stack
  * @version $Revision$ $Date$
  */
-public class ExperimentalWARCWriter
-extends WriterPoolMember implements WARCConstants {
+public class ExperimentalWARCWriter extends WriterPoolMember
+implements WARCConstants {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     
     /**
@@ -85,10 +86,11 @@ extends WriterPoolMember implements WARCConstants {
         new DecimalFormat(PLACEHOLDER_RECORD_LENGTH_STRING);
     
     /**
-     * Default URL scheme prefix for WARC file warcinfo records.
+     * Metadata.
+     * TODO: Exploit writing warcinfo record.  Currently unused.
      */
-    private static final String RFC2397_PREFIX =
-    	"data:text/plain;charset=utf-8,";
+    private final List fileMetadata;
+    
     
     /**
      * Shutdown Constructor
@@ -115,8 +117,8 @@ extends WriterPoolMember implements WARCConstants {
             final List warcinfoData)
     throws IOException {
         super(out, f, cmprs, a14DigitDate);
-        // TODO: What to do w/ metadata?  If present write a warcinfo record
-        // immediately?
+        // TODO: Currently unused.
+        this.fileMetadata = warcinfoData;
     }
             
     /**
@@ -133,18 +135,22 @@ extends WriterPoolMember implements WARCConstants {
             final String suffix, final boolean cmprs,
             final int maxSize, final List warcinfoData) {
         super(dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);
-        // TODO: Should there be a constructor that takes file metadata and
-        // writes a warcinfo record automatically on construction?
+        // TODO: Currently unused.
+        this.fileMetadata = warcinfoData;
     }
 
     protected String createFile()
     throws IOException {
-    	// TODO: Do I need to automatically write a warcinfo record here, just
-    	// after call to super.createFile()?  Yes.  But what to write in the
-    	// second warcinfos?  Pointer at first?
-    	// TODO: If at start of file, and we're writing compressed,
-    	// write out our distinctive GZIP extensions.
-        return super.createFile();
+        String filename = super.createFile();
+        ANVLRecord record = new ANVLRecord(1);
+        record.addLabelValue(NAMED_FIELD_WARCFILENAME, filename);
+        // TODO: What to write into a warcinfo?  What to associate?
+        final byte [] TODO = "TODO: Unimplemented".getBytes();
+        writeWarcinfoRecord("text/plain", record,
+            new ByteArrayInputStream(TODO), TODO.length);
+        // TODO: If at start of file, and we're writing compressed,
+        // write out our distinctive GZIP extensions.
+        return filename;
     }
     
     protected void baseCharacterCheck(final char c, final String parameter)
@@ -281,21 +287,6 @@ extends WriterPoolMember implements WARCConstants {
         }
     }
     
-    /**
-     * @return A RFC2397 URL made of the current filename.
-     * @throws IOException 
-     */
-    protected String generateWarcinfoRecordURL()
-    throws IOException {
-    	if (getFile() == null) {
-    		// Then, a current file hasn't been created yet.  Call createFile.
-    		// TODO: If createFile automatically makes a warcinfo record,
-    		// remove this call to createFile.
-    		createFile();
-    	}
-    	return RFC2397_PREFIX + getBaseFilename();
-    }
-    
     protected URI generateRecordId(final Map<String, String> qualifiers)
     throws IOException {
     	URI rid = null;
@@ -324,6 +315,7 @@ extends WriterPoolMember implements WARCConstants {
     
     /**
      * Write a warcinfo to current file.
+     * TODO: Write crawl metadata or pointers to crawl description.
      * @param mimetype Mimetype of the <code>fileMetadata</code> block.
      * @param namedFields Named fields. Pass <code>null</code> if none.
      * @param fileMetadata Metadata about this WARC as RDF, ANVL, etc.
@@ -338,14 +330,14 @@ extends WriterPoolMember implements WARCConstants {
     	final long fileMetadataLength)
     throws IOException {
     	final URI recordid = generateRecordId(TYPE, WARCINFO);
-    	writeWarcinfoRecord(generateWarcinfoRecordURL(),
-    		ArchiveUtils.get14DigitDate(), mimetype, recordid, namedFields,
-    		fileMetadata, fileMetadataLength);
+    	writeWarcinfoRecord(ArchiveUtils.get14DigitDate(), mimetype, recordid,
+            namedFields, fileMetadata, fileMetadataLength);
     	return recordid;
     }
     
     /**
-     * Write a warcinfo to current file.
+     * Write a <code>warcinfo</code> to current file.
+     * The <code>warcinfo</code> type uses its <code>recordId</code> as its URL.
      * @param url URL to use for this warcinfo.
      * @param create14DigitDate Record creation date as 14 digit date.
      * @param mimetype Mimetype of the <code>fileMetadata</code>.
@@ -354,13 +346,12 @@ extends WriterPoolMember implements WARCConstants {
      * @param fileMetadataLength Length of <code>fileMetadata</code>.
      * @throws IOException
      */
-    public void writeWarcinfoRecord(final String url,
-    	final String create14DigitDate, final String mimetype,
-    	final URI recordId, final ANVLRecord namedFields,
+    public void writeWarcinfoRecord(final String create14DigitDate,
+        final String mimetype, final URI recordId, final ANVLRecord namedFields,
     	final InputStream fileMetadata, final long fileMetadataLength)
     throws IOException {
-    	writeRecord(WARCINFO, url, create14DigitDate, mimetype,
-        		recordId, namedFields, fileMetadata, fileMetadataLength);
+    	writeRecord(WARCINFO, recordId.toString(), create14DigitDate, mimetype,
+        	recordId, namedFields, fileMetadata, fileMetadataLength);
     }
     
     public void writeRequestRecord(final String url,

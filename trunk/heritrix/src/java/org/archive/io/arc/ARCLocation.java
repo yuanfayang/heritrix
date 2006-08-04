@@ -26,6 +26,7 @@ package org.archive.io.arc;
 
 /**
  * Datastructure to hold ARC record location.
+ * Used by wayback machine.
  * @author stack
  */
 public interface ARCLocation {

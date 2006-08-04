@@ -268,13 +268,26 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 r.addLabelValue("outlink", ((Link)i.next()).toString());
             }
         }
+        if (curi.isTruncatedFetch()) {
+            String value = curi.isTimeTruncatedFetch()?
+                    NAMED_FIELD_TRUNCATED_VALUE_TIME:
+                curi.isLengthTruncatedFetch()?
+                        NAMED_FIELD_TRUNCATED_VALUE_LEN:
+                curi.isHeaderTruncatedFetch()?
+                        NAMED_FIELD_TRUNCATED_VALUE_HEAD:
+                NAMED_FIELD_TRUNCATED_VALUE_UNSPECIFIED;
+                      
+            r.addLabelValue(NAMED_FIELD_TRUNCATED, value);
+        }
         
-        // Other curi fields of interest: 
+        // TODO: Other curi fields to write to metadata.
         // 
         // Credentials
         // 
         // fetch-began-time: 1154569278774
         // fetch-completed-time: 1154569281816
+        //
+        // Annotations.
         
         byte [] b = r.getUTF8Bytes();
         w.writeMetadataRecord(curi.toString(), timestamp, ANVLRecord.MIMETYPE,

@@ -448,7 +448,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             this.http.executeMethod(method);
         } catch (RecorderTooMuchHeaderException ex) {
             // when too much header material, abort like other truncations
-            doAbort(curi, method, "headerTrunc");
+            doAbort(curi, method, HEADER_TRUNC);
         } catch (IOException e) {
         	failedExecuteCleanup(method, curi, e);
         	return;
@@ -479,9 +479,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                         hardMax, 1000 * getTimeout(curi), maxFetchRate);
             }
         } catch (RecorderTimeoutException ex) {
-            doAbort(curi, method, "timeTrunc");
+            doAbort(curi, method, TIMER_TRUNC);
         } catch (RecorderLengthExceededException ex) {
-            doAbort(curi, method, "lenTrunc");
+            doAbort(curi, method, LENGTH_TRUNC);
         } catch (IOException e) {
             cleanup(curi, e, "readFully", S_CONNECT_LOST);
             return;

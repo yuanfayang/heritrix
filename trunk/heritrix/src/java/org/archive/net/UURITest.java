@@ -24,6 +24,10 @@
  */
 package org.archive.net;
 
+import java.net.URISyntaxException;
+
+import org.archive.io.arc.ARCUtils;
+
 import junit.framework.TestCase;
 
 public class UURITest extends TestCase {
@@ -32,5 +36,17 @@ public class UURITest extends TestCase {
         assertTrue(UURI.hasScheme("http:"));
         assertFalse(UURI.hasScheme("ht/tp://www.archive.org"));
         assertFalse(UURI.hasScheme("/tmp"));
+    }
+    
+    public void testGetFileName() throws URISyntaxException {
+        final String filename = "x.arc.gz";
+        assertEquals(filename,
+            UURI.parseFilename("/tmp/one.two/" + filename));
+        assertEquals(filename,
+            UURI.parseFilename("http://archive.org/tmp/one.two/" +
+                    filename));
+        assertEquals(filename,
+            UURI.parseFilename("rsync://archive.org/tmp/one.two/" +
+                    filename)); 
     }
 }

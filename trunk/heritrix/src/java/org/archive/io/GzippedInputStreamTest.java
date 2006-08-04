@@ -25,6 +25,7 @@ package org.archive.io;
 import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -132,5 +133,38 @@ public class GzippedInputStreamTest extends TmpDirTestCase {
         assertEquals(records,
             GZIPMEMBER_COUNT - 1 /*We started at 2nd record*/);
         gis.close();
+    }
+    
+    public void testCompressedStream() throws IOException {
+        byte [] bytes = "test".getBytes();
+        ByteArrayInputStream baos = new ByteArrayInputStream(bytes);
+        assertFalse(GzippedInputStream.isCompressedStream(baos));
+        
+        byte [] gzippedMetaData = GzippedInputStream.gzip(bytes);
+        baos = new ByteArrayInputStream(gzippedMetaData);
+        assertTrue(GzippedInputStream.isCompressedStream(baos));
+        
+        gzippedMetaData = GzippedInputStream.gzip(bytes);
+        final RepositionableByteArrayInputStream rbaos =
+            new RepositionableByteArrayInputStream(gzippedMetaData);
+        final int totalBytes = gzippedMetaData.length;
+        assertTrue(GzippedInputStream.isCompressedRepositionableStream(rbaos));
+        long available = rbaos.available();
+        assertEquals(available, totalBytes);
+        assertEquals(rbaos.position(), 0);
+    }
+    
+    private class RepositionableByteArrayInputStream
+    extends ByteArrayInputStream implements RepositionableStream {
+        public RepositionableByteArrayInputStream(final byte [] bytes) {
+            super(bytes);
+        }
+        
+        public void position(long p) {
+            this.pos = (int)p;
+        }
+        public long position() {
+            return this.pos;
+        }
     }
 }
