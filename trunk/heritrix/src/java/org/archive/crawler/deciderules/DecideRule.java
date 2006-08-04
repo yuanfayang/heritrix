@@ -24,6 +24,7 @@
 */
 package org.archive.crawler.deciderules;
 
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.ModuleType;
 
 
@@ -91,5 +92,14 @@ public class DecideRule extends ModuleType {
      */
     public void kickUpdate() {
         // by default do nothing
+    }
+    
+    /** 
+     * Get the controller object.
+     *
+     * @return the controller object.
+     */
+    public CrawlController getController() {
+        return getSettingsHandler().getOrder().getController();
     }
 }
