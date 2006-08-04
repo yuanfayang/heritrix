@@ -126,4 +126,12 @@ public class ProcessorChain {
     public Iterator iterator() {
         return processorMap.iterator(null);
     }
+
+    public void kickUpdate() {
+        Iterator iter = iterator();
+        while(iter.hasNext()) {
+            Processor p = (Processor) iter.next(); 
+            p.kickUpdate(); 
+        }
+    }
 }
