@@ -44,7 +44,7 @@ import org.archive.crawler.settings.MapType;
  * @author John Erik Halse
  */
 public class ProcessorChainList {
-    private List chainList = new ArrayList();
+    private List<ProcessorChain> chainList = new ArrayList<ProcessorChain>();
     private Map chainMap = new HashMap();
 
     /** Constructs a new ProcessorChainList.
@@ -167,6 +167,12 @@ public class ProcessorChainList {
      */
     public ProcessorChain getProcessorChain(String name) {
         return (ProcessorChain) chainMap.get(name);
+    }
+
+    public void kickUpdate() {
+        for (ProcessorChain chain : chainList) {
+            chain.kickUpdate();
+        }
     }
 
 }

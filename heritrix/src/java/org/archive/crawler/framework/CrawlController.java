@@ -1629,6 +1629,7 @@ public class CrawlController implements Serializable, Reporter {
         
         this.scope.kickUpdate();
         this.frontier.kickUpdate();
+        this.processorChains.kickUpdate();
         
         // TODO: continue to generalize this, so that any major 
         // component can get a kick when it may need to refresh its data

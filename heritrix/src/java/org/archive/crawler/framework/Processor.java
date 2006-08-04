@@ -280,4 +280,8 @@ public class Processor extends ModuleType {
         return contentType != null &&
             contentType.toLowerCase().startsWith(expectedPrefix);
     }
+
+    public void kickUpdate() {
+        // by default do nothing
+    }
 }
