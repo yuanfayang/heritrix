@@ -40,7 +40,18 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.settings.CrawlerSettings;
 
 /**
- * expiry handled outside, in CrawlServer
+ * RobotsExclusionPolicy represents the actual policy adopted with 
+ * respect to a specific remove server, usually constructed from 
+ * consulting the robots.txt, if any, the server provided. 
+ * 
+ * (The similarly named RobotsHonoringPolicy, on the other hand, 
+ * describes the strategy used by the crawler to determine to what
+ * extent it respects exclusion rules.)
+ * 
+ * The expiration of policies after a suitable amount of time has
+ * elapsed since last fetch is handled outside this class, in 
+ * CrawlServer itself. 
+ * 
  * @author gojomo
  *
  */
