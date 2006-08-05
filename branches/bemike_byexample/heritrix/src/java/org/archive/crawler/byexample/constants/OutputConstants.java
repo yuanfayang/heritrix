@@ -74,6 +74,7 @@ public class OutputConstants {
     public static final String DOCUMENTS_CLUSTERING_LISTING_FILENAME="clusteringDocs.txt";
     public static final String TERMS_SUPPORT_LISTING_FILENAME="clusteringTermSupport.txt";  
     public static final String CLASSIFICATION_DOCUMENT_LISTING="classifiedDocs.txt";  
+    public static final String UNCLASSIFIED_DOCUMENT_LISTING="unclassifiedDocs.txt";
     public static final String MOST_RELEVANT_LISTING="mostRelevantList.txt";
     public static final String LEAST_RELEVANT_LISTING="leastRelevantList.txt";    
     public static final String PREPROCESS_XML_FILENAME="preprocess-results.xml";
