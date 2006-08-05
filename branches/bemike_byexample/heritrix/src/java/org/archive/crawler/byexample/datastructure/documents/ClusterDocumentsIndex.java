@@ -94,6 +94,14 @@ public class ClusterDocumentsIndex {
     }
     
     /**
+     * 
+     * @return index size
+     */
+    public int getSize(){
+        return myClusteringHash.size();
+    }
+    
+    /**
      * Write index to designated output file
      * @param bw BufferedWriter for the output file
      * @throws Exception
