@@ -70,22 +70,10 @@ abstract class SubElement {
     
     protected void checkCRLF(final char c, final String srcStr,
             final int index) {
-        if (isCROrLF(c)) {
+        if (ANVLRecord.isCROrLF(c)) {
             throw new IllegalArgumentException(srcStr + " CR or LF (TODO: " +
                 "Allow for folding and then only check for CRLF)");
         }
-    }
-    
-    protected boolean isCROrLF(final char c) {
-        return isCR(c) || isLF(c);
-    }
-    
-    protected boolean isCR(final char c) {
-        return c == ANVLRecord.CRLF.charAt(0);
-    }
-    
-    protected boolean isLF(final char c) {
-        return c == ANVLRecord.CRLF.charAt(1);
     }
     
     @Override

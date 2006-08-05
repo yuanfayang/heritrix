@@ -55,10 +55,10 @@ class Value extends SubElement {
         checkControlCharacter(c, srcStr, index);
         // Now, rewrite the value String with folding (If CR or LF or CRLF
         // present.
-        if (isCR(c)) {
+        if (ANVLRecord.isCR(c)) {
             this.folding = true;
             this.sb.append(ANVLRecord.FOLD_PREFIX);
-        } else if (isLF(c)) {
+        } else if (ANVLRecord.isLF(c)) {
             if (!this.folding) {
                 this.folding = true;
                 this.sb.append(ANVLRecord.FOLD_PREFIX);

@@ -24,8 +24,6 @@
  */
 package org.archive.util;
 
-import it.unimi.dsi.fastutil.io.RepositionableStream;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -34,10 +32,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -47,10 +42,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
-import org.archive.io.GzipHeader;
-import org.archive.io.NoGzipMagicException;
-import org.archive.net.UURI;
 
 
 /** Utility methods for manipulating files and directories.

@@ -24,6 +24,10 @@
 */
 package org.archive.util.anvl;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 import junit.framework.TestCase;
 
 public class ANVLRecordTest extends TestCase {
@@ -63,5 +67,12 @@ public class ANVLRecordTest extends TestCase {
         }
         assertTrue(e != null && e instanceof IllegalArgumentException);
         am.addLabelValue("label", "value with \n in it");
+    }
+    
+    public void testParse() throws UnsupportedEncodingException, IOException {
+        final String record = "   a: b\r\n\r\nsdfsdsdfds";
+        ANVLRecord r = ANVLRecord.load(new ByteArrayInputStream(
+            record.getBytes("ISO-8859-1")));
+        System.out.println(r);
     }
 }
