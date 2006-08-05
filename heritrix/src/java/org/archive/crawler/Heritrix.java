@@ -89,6 +89,7 @@ import javax.naming.CompoundName;
 import javax.naming.Context;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
+import javax.naming.NoInitialContextException;
 
 import org.apache.commons.cli.Option;
 import org.archive.crawler.admin.CrawlJob;
@@ -2343,30 +2344,44 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
 
     protected static void registerJndi(final ObjectName name)
     throws NullPointerException, NamingException {
-        CompoundName key = JndiUtils.bindObjectName(getJndiContext(), name);
+    	Context c = getJndiContext();
+    	if (c == null) {
+    		return;
+    	}
+        CompoundName key = JndiUtils.bindObjectName(c, name);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("Bound '"  + key + "' to '" + JndiUtils.
-               getCompoundName(getJndiContext().getNameInNamespace()).toString()
+               getCompoundName(c.getNameInNamespace()).toString()
                + "' jndi context");
         }
     }
     
     protected static void deregisterJndi(final ObjectName name)
     throws NullPointerException, NamingException {
-        CompoundName key = JndiUtils.unbindObjectName(getJndiContext(), name);
+    	Context c = getJndiContext();
+    	if (c == null) {
+    		return;
+    	}
+        CompoundName key = JndiUtils.unbindObjectName(c, name);
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("Unbound '" + key + "' from '" +
-                JndiUtils.getCompoundName(getJndiContext().
-                        getNameInNamespace()).toString() + "' jndi context");
+                JndiUtils.getCompoundName(c.getNameInNamespace()).toString() +
+                	"' jndi context");
         }
     }
     
     /**
-     * @return Jndi context for the crawler.
+     * @return Jndi context for the crawler or null if none found.
      * @throws NamingException 
      */
     protected static Context getJndiContext() throws NamingException {
-        return JndiUtils.getSubContext(CRAWLER_PACKAGE);
+    	Context c = null;
+    	try {
+    		JndiUtils.getSubContext(CRAWLER_PACKAGE);
+    	} catch (NoInitialContextException e) {
+    		logger.info("No JNDI Context.");
+    	}
+    	return c;
     }
     
     /**

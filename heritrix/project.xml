@@ -629,20 +629,6 @@
             </properties>
         </dependency>
         <dependency>
-            <id>MirrorJNDI</id>
-            <version>1.0</version>
-            <url>http://www.smardec.com/products/jndi.html</url>
-            <properties>
-                <war.bundle>true</war.bundle>
-                <ear.bundle>true</ear.bundle>
-                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>Simple, memory-based JNDI service provider.
-                From http://java.sun.com/products/jndi/serviceproviders.html.
-                </description>
-                <license>LGPL</license>
-            </properties>
-        </dependency>
-        <dependency>
             <id>libidn</id>
             <version>0.5.9</version>
             <url>http://www.gnu.org/software/libidn/</url>
