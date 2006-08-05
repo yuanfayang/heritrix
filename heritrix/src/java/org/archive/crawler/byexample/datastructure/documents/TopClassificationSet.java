@@ -38,7 +38,10 @@ public class TopClassificationSet {
      * Add set entry
      */
     public void addEntry(DocumentClassificationEntry dce){
-        topClassificationSet.add(dce);
+        // Add only documents with relevance score above 0
+        if (dce.getClassificationRelevanceScore()>0){
+            topClassificationSet.add(dce);
+        }
         //Makes sure set size never exceeds maxSize
         if (topClassificationSet.size()>maxSize)
             topClassificationSet.remove(topClassificationSet.last());                
