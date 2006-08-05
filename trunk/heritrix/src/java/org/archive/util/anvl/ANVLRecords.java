@@ -38,7 +38,7 @@ public class ANVLRecords extends ArrayList<ANVLRecord> implements UTF8Bytes {
 	private static final long serialVersionUID = 5361551920550106113L;
 
 	public ANVLRecords() {
-		// TODO Auto-generated constructor stub
+	    super();
 	}
 
 	public ANVLRecords(int initialCapacity) {

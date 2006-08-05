@@ -45,7 +45,6 @@ import org.archive.io.WriterPoolMember;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
 import org.archive.util.MimetypeUtils;
-import org.archive.util.TimestampSerialno;
 
 
 /**

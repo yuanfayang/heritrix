@@ -26,8 +26,6 @@ package org.archive.net;
 
 import java.net.URISyntaxException;
 
-import org.archive.io.arc.ARCUtils;
-
 import junit.framework.TestCase;
 
 public class UURITest extends TestCase {
