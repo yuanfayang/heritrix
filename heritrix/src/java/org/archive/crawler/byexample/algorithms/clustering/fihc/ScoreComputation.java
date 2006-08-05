@@ -20,7 +20,7 @@ import org.archive.crawler.byexample.datastructure.support.TermSupportListing;
 public class ScoreComputation {
 
     /**
-     * Calculate score of item for given ItemSet.
+     * Calculate score of document for given ItemSet.
      * The higher the score, the higher the probability that document belongs to cluster, labeled by this set
      */
     public static double calculateClusterDocumentScore(ItemSet is, String docID,
