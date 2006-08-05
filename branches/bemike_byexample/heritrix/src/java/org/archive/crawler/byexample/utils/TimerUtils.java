@@ -17,7 +17,11 @@ public class TimerUtils {
         return System.currentTimeMillis()-timeCounter;
     }
     
-    public void  reportActionTimer(String action){
+    public static void reportPartialAction(String action, int percentage){
+        logger.info("Completed so far "+ percentage+ "% of the action: "+action);
+    }
+    
+    public void reportActionTimer(String action){
         long currTimer=getTimer();
         timeCounter=0;        
         long mins=currTimer/(1000*60);
