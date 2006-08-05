@@ -34,24 +34,29 @@ import org.archive.crawler.settings.StringList;
 import org.archive.crawler.settings.TextField;
 
 /**
- * This class represent the policy to which Robots.txt files is
- * to honored.
+ * RobotsHonoringPolicy represent the strategy used by the crawler 
+ * for determining how robots.txt files will be honored. 
  *
  * Five kinds of policies exist:
  * <dl>
  * <dt>classic:</dt>
- *   <dd>obey the first set of robots.txt directives that apply to your current user-agent</dd>
+ *   <dd>obey the first set of robots.txt directives that apply to your 
+ *   current user-agent</dd>
  * <dt>ignore:</dt>
  *   <dd>ignore robots.txt directives entirely</dd>
  * <dt>custom:</dt>
- *   <dd>obey a specific operator-entered set of robots.txt directives for a given host</dd>
+ *   <dd>obey a specific operator-entered set of robots.txt directives 
+ *   for a given host</dd>
  * <dt>most-favored:</dt>
- *   <dd>obey the most liberal restrictions offered (if *any* crawler is allowed to get a page, get it)</dd>
+ *   <dd>obey the most liberal restrictions offered (if *any* crawler is 
+ *   allowed to get a page, get it)</dd>
  * <dt>most-favored-set:</dt>
- *   <dd>given some set of user-agent patterns, obey the most liberal restriction offered to any</dd>
+ *   <dd>given some set of user-agent patterns, obey the most liberal 
+ *   restriction offered to any</dd>
  * </dl>
  *
- * The two last ones has the opportunity of adopting a different user-agent to reflect the restrictions we've opted to use.
+ * The two last ones has the opportunity of adopting a different user-agent 
+ * to reflect the restrictions we've opted to use.
  *
  * @author John Erik Halse
  *
@@ -84,12 +89,28 @@ public class RobotsHonoringPolicy  extends ModuleType {
         String[] allowedTypes = new String[] {"classic", "ignore", "custom", "most-favored", "most-favored-set"};
 
         addElementToDefinition(new SimpleType(ATTR_TYPE,
-                "Policy type", "classic", allowedTypes));
+                "Policy type. The 'classic' policy simply obeys all " +
+                "robots.txt rules for the configured user-agent. The " +
+                "'ignore' policy ignores all robots rules. The 'custom' " +
+                "policy allows you to specify a policy, in robots.txt " +
+                "format, as a setting. The 'most-favored' policy will " +
+                "crawl an URL if the robots.txt allows any user-agent to " +
+                "crawl it. The 'most-favored-set' policy requires you " +
+                "to supply an list of alternate user-agents, and for" +
+                "every page, if any agent of the set is allowed, the" +
+                "page will be crawled.", "classic", allowedTypes));
         addElementToDefinition(new SimpleType(ATTR_MASQUERADE,
-                "Should we masquerade as another user agent", new Boolean(false)));
+                "Should we masquerade as another user agent when obeying " +
+                "the rules declared for it. Only relevant if the " +
+                "policy type is 'most-favored' or 'most-favored-set'.", 
+                new Boolean(false)));
         addElementToDefinition(new SimpleType(ATTR_CUSTOM_ROBOTS,
-                "Custom robots to use if type is custom", new TextField("")));
-        addElementToDefinition(new StringList(ATTR_USER_AGENTS, "User agents"));
+                "Custom robots to use if policy type is 'custom'. " +
+                "Compose as if an actual robots.txt file.", 
+                new TextField("")));
+        addElementToDefinition(new StringList(ATTR_USER_AGENTS, 
+                "Alternate user-agent values to consider using for " +
+                "the 'most-favored-set' policy."));
     }
 
     public RobotsHonoringPolicy() {
