@@ -113,6 +113,14 @@ public class SettingsCache {
             hostToSettings.put(entry);
         }
     }
+    
+    /**
+     * Clear all cached settings.
+     */
+    public void clear() {
+        hostToSettings.clear();
+        settingsCache.clear();
+    }
 
     public CrawlerSettings getGlobalSettings() {
         return globalSettings;

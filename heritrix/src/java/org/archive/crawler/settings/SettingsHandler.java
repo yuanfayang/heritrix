@@ -539,4 +539,13 @@ public abstract class SettingsHandler {
      * @return <code>List</code> of framework files.
      */
     public abstract List getListOfAllFiles();
+    
+    /**
+     * Clear any per-host settings cached in memory; allows editting of 
+     * per-host settings files on disk, perhaps in bulk/automated fashion,
+     * to take effect in running crawl. 
+     */
+    public void clearPerHostSettingsCache() {
+        settingsCache.clear();
+    }
 }
