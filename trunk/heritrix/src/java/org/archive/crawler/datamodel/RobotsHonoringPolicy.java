@@ -86,7 +86,9 @@ public class RobotsHonoringPolicy  extends ModuleType {
     public RobotsHonoringPolicy(String name) {
         super(name, "Robots honoring policy");
 
-        String[] allowedTypes = new String[] {"classic", "ignore", "custom", "most-favored", "most-favored-set"};
+        String[] allowedTypes = new String[] {
+                "classic", "ignore", "custom", 
+                "most-favored", "most-favored-set"};
 
         addElementToDefinition(new SimpleType(ATTR_TYPE,
                 "Policy type. The 'classic' policy simply obeys all " +
