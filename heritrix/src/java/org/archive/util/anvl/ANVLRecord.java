@@ -117,23 +117,28 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
     
     /**
      * Parses a single ANVLRecord from passed InputStream.
+     * Read as a single-byte stream until we get to a CRLFCRLF which
+     * signifies End-of-ANVLRecord. Then parse all read as a UTF-8 Stream.
+     * Doing it this way, while requiring a double-scan, it  makes it so do not
+     * need to be passed a RepositionableStream or a Stream that supports
+     * marking.  Also no danger of over-reading which can happen when we
+     * wrap passed Stream with an InputStreamReader for doing UTF-8
+     * character conversion (See the ISR class comment). Could also be leaking
+     * issues when don't close ISR because we dont' want to close underlying
+     * Stream. I looked at writing javacc grammer but seems like even here,
+     * preprocessing is required to handle folding: See
+     * https://javacc.dev.java.net/servlets/BrowseList?list=users&by=thread&from=56173).
      * @param is InputStream
      * @return An ANVLRecord instance.
      * @throws IOException
      */
     public static ANVLRecord load(final InputStream is)
     throws IOException {
-        // Read as a single-byte stream until we get to a CRLFCRLF
-        // End-of-ANVLRecord then parse all read as a UTF-8 Stream.  Doing it
-        // this way makes it so I don't need to be passed a RepositionableStream
-        // or a Stream that supports marking.  Also no danger of over-reading
-        // which can happen when we wrap passed Stream with a InputStreamReader
-        // for doing character conversion (See the class comment). Also, no
-        // danger of possible leaking because we don't want to close
-        // InputStreamReader.
-        // TODO: See if there is a UTF-8 character or sequence of
-        // characters that could result inadvertently in a CRLFCRLF
-        // byte sequence appearing in their midst
+        // It doesn't look like a CRLF sequence is possible in UTF-8 without
+    	// it signifying CRLF: The top bits are set in multibyte characters.
+    	// Was thinking of recording CRLF as I was running through this first
+    	// parse but the offsets would then be incorrect if any multibyte
+    	// characters in the intervening gaps between CRLF.
         char previousCharacter;
         char c = (char)-1;
         boolean wasCRLF = false;
