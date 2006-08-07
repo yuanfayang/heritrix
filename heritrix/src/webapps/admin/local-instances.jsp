@@ -6,9 +6,6 @@
 <%
     String title = "Instances";
     int tab = 5;
-%>
-<%@include file="/include/head.jsp"%>
-<%
 
     String error = null;
     String baseurl = request.getContextPath() + request.getServletPath();
@@ -24,23 +21,24 @@
         if (m.size() <= 1) {
             // Don't remove all Heritrix instances.  The UI goes loopy if
             // no Heritrix instance to go against.
-            error = "ERROR: You cannot delete all instances of Heritrix. " +
-                "There must be at least one instance remaining or UI gets " +
-                "confused).";
+            error = "ERROR: You cannot delete ALL instances of Heritrix. " +
+                "There must be at least one instance remaining or the UI " +
+                "gets confused (To be Fixed).";
         } else {
             Heritrix h = (Heritrix)m.get(name);
             if (h != null) {
                 h.destroy();
                 m = Heritrix.getInstances();
-                // If the current heritrix instance was the one deleted, select
-                // another to be the UI instance.
+                // If the heritrix instance deleted was the one seleted, select
+                // another to be hook the UI on.
                 if (heritrix == h) {
                     if (m != null && m.size() > 0) {
-                        // Just get first found.
-                        heritrix = (Heritrix)m.get(0);
+                        // Just get first Heritrix found.
+                        Object k = m.keySet().iterator().next();
+                        heritrix = (Heritrix)m.get(k);
+                        handler = heritrix.getJobHandler();
                         application.setAttribute("heritrix", heritrix);
-                        application.setAttribute("handler",
-                            heritrix.getJobHandler());
+                        application.setAttribute("handler", handler);
                     }
                 }
             }
@@ -56,6 +54,7 @@
         }
     }
 %>
+<%@include file="/include/head.jsp"%>
 <html>
     <head>
         <title>Local Heritrix Instances' List</title>
@@ -78,7 +77,7 @@
         any running jobs.  Note, you cannot delete all Heritrix instances.
         The UI gets confused if doesn't have an instance to juggle.
         </p>
-        <form action="<%=baseurl%>" method="GET">
+        <form action="<%=baseurl%>" method="POST">
         <table border="0" cellspacing="0" cellpadding="2" 
             description="List of all local Heritrix instances">
         <thead>
