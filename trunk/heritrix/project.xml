@@ -659,6 +659,21 @@
                 <license>Groovy license "BSD / Apache style"</license>
             </properties>
         </dependency>
+        <dependency>
+            <id>beanshell</id>
+            <version>2.0b4</version>
+            <url>http://beanshell.org/</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <ear.bundle>true</ear.bundle>
+                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
+                <description>eanShell is a small, free, embeddable Java 
+                source interpreter with object scripting language features, 
+                written in Java. 
+                </description>
+                <license>LGPL or Sun Public License (SPL)</license>
+            </properties>
+        </dependency>
   </dependencies>
 
   
