@@ -5,7 +5,16 @@
 <%@ page import="org.archive.util.ArchiveUtils" %>
 <%@ page import="org.archive.util.TextUtils" %>
 <%@ page import="org.archive.crawler.admin.StatisticsTracker" %>
+<%@ page import="org.archive.crawler.Heritrix" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.Iterator" %>
 <%
+    String currentHeritrixName = (heritrix == null)?
+        "No current Heritrix instance":
+        (heritrix.getMBeanName() == null)?
+            heritrix.getInstances().keySet().iterator().next().toString():
+            heritrix.getMBeanName().toString();
+
     /**
      * An include file that handles the "look" and navigation of a web page. 
      * Include at top (where you would normally begin the HTML code).
@@ -22,8 +31,9 @@
      *           2 - Profiles
      *           3 - Logs
      *           4 - Reports
-     *           5 - About
-     *           6 - Help
+     *           5 - Instances
+     *           6 - About
+     *           7 - Help
      *
      * SimpleHandler handler - In general this is provided by the include
      *                         page 'handler.jsp' which should be included
@@ -188,12 +198,16 @@
                             </td>
                             <td class="tab_seperator">&nbsp;</td>
                             <td class="tab<%=tab==5?"_selected":""%>">
-                                <a href="<%=request.getContextPath()%>/about.jsp" class="tab_text<%=tab==5?"_selected":""%>">About</a>
+                                <a href="<%=request.getContextPath()%>/local-instances.jsp" class="tab_text<%=tab==5?"_selected":""%>">Instances</a>
                             </td>
                             <td class="tab_seperator">&nbsp;</td>
-                            <td class="tab<%=tab==6?"_selected":""%>">
-                                <a href="<%=request.getContextPath()%>/help.jsp" class="tab_text<%=tab==6?"_selected":""%>">Help</a>
+                             <td class="tab<%=tab==6?"_selected":""%>">
+                                <a href="<%=request.getContextPath()%>/about.jsp" class="tab_text<%=tab==6?"_selected":""%>">About</a>
                             </td>
+                            <td class="tab_seperator">&nbsp;</td>
+                            <td class="tab<%=tab==7?"_selected":""%>">
+                                <a href="<%=request.getContextPath()%>/help.jsp" class="tab_text<%=tab==7?"_selected":""%>">Help</a>
+                             </td>
                             <td width="100%">
                             </td>
                         </tr>
@@ -201,8 +215,13 @@
                 </td>
             </tr>
             <tr>
-                <td bgcolor="#0000FF" height="1" colspan="4">
-                </td>
+                <td bgcolor="#0000FF" height="1" colspan="4"></td>
+            </tr>
+            <tr>
+            <td class="instance_name">Instance: <%=currentHeritrixName%></td>
+            </tr>
+            <tr>
+                <td bgcolor="#0000FF" height="1" colspan="4"></td>
             </tr>
          </table>
                     <!-- MAIN BODY -->

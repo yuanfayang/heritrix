@@ -1,25 +1,60 @@
+<%@ include file="/include/handler.jsp" %>
+<%@ page import="org.archive.crawler.admin.CrawlJob,java.util.List" %>
 <%@ page import="org.archive.crawler.Heritrix" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.Iterator" %>
 <%
-    Heritrix currentHeritrix = (Heritrix)application.getAttribute("heritrix");
+    String title = "Instances";
+    int tab = 5;
+%>
+<%@include file="/include/head.jsp"%>
+<%
+
+    String error = null;
+    String baseurl = request.getContextPath() + request.getServletPath();
     Map m = Heritrix.getInstances();
     String newName = request.getParameter("createName");
+    String d = request.getParameter("delete");
     if (newName != null && newName.length() > 0) {
-        Heritrix h = new Heritrix(newName, true);
+        // Create a new instance.
+        new Heritrix(newName, true);
+    } else if (d != null && d.length() > 0) {
+        // Delete an instance.
+        String name = request.getParameter("heritrixName");
+        if (m.size() <= 1) {
+            // Don't remove all Heritrix instances.  The UI goes loopy if
+            // no Heritrix instance to go against.
+            error = "ERROR: You cannot delete all instances of Heritrix. " +
+                "There must be at least one instance remaining or UI gets " +
+                "confused).";
+        } else {
+            Heritrix h = (Heritrix)m.get(name);
+            if (h != null) {
+                h.destroy();
+                m = Heritrix.getInstances();
+                // If the current heritrix instance was the one deleted, select
+                // another to be the UI instance.
+                if (heritrix == h) {
+                    if (m != null && m.size() > 0) {
+                        // Just get first found.
+                        heritrix = (Heritrix)m.get(0);
+                        application.setAttribute("heritrix", heritrix);
+                        application.setAttribute("handler",
+                            heritrix.getJobHandler());
+                    }
+                }
+            }
+        }
     } else {
         String q = request.getQueryString();
         if (q != null && q.length() > 0) {
-            // Then we've been passed a Heritrix key on the cmdline.
-            Heritrix h = (Heritrix)m.get(q);
-            if (h != currentHeritrix) {
-                application.setAttribute("heritrix", h);
-                application.setAttribute("handler", h.getJobHandler());
-                currentHeritrix = h;
-            }
+            // Then we've been passed a Heritrix key on the query line.
+            // Select that instance.
+            heritrix = (Heritrix)m.get(q);
+            application.setAttribute("heritrix", heritrix);
+            application.setAttribute("handler", heritrix.getJobHandler());
         }
     }
-    String baseurl = request.getContextPath() + request.getServletPath();
 %>
 <html>
     <head>
@@ -28,26 +63,27 @@
             href="<%=request.getContextPath()%>/css/heritrix.css">
     </head>
     <body>
-        <p><a border="0" href="<%=request.getContextPath()%>/index.jsp">
-        <img border="0" src="<%=request.getContextPath()%>/images/logo.gif">
-        </a></p>
         <h1>Local Heritrix Instances</h1>
-        <p>Below is a listing of the Heritrix instances running in this
-        Heritrix <i>container</i> (where container may be a J2EE container like
-        tomcat or jboss or the code run when Heritrix is launched from the
-        command-line).  To create a new Heritrix instance, fill in the
-        textbox and hit <i>Create</i>.  To delete an instance of Heritrix
-        -- any running jobs will be properly terminated -- hit <i>delete</i>.
-        To peruse your newly created instance,
-        select your instance from the below list; it will become bold.  Doing
-        this sets the UI to run against the selected instance. Click on the
-        Heritrix logo to get to the UI now set to run against the selected
-        instance.</p>
+        <% if (error != null && error.length() > 0) {%>
+            <p class="flashMessage"><%=error%></p> 
+        <%}%>
+        <p>Use this page to instantiate new instances of Heritrix.
+        </p>
+        <p>Below is a listing of the Heritrix instances currently running
+        locally.  To create a new instance, fill in the
+        textbox below and hit <i>Create</i>.  To peruse your newly created
+        instance, select the instance name in the below list.  This sets the UI
+        running against the selected instance. To delete an instance,
+        hit <i>Delete</i>.  This will destroy the instance cleanly terminating
+        any running jobs.  Note, you cannot delete all Heritrix instances.
+        The UI gets confused if doesn't have an instance to juggle.
+        </p>
+        <form action="<%=baseurl%>" method="GET">
         <table border="0" cellspacing="0" cellpadding="2" 
             description="List of all local Heritrix instances">
         <thead>
         <tr>
-        <th>Instance</th>
+        <th>Instance Name</th>
         <th>Status</th>
         </tr>
         </thead>
@@ -57,11 +93,11 @@
                 String key = (String)i.next();
                 String url = baseurl + "?" + response.encodeURL(key);
                 Heritrix h = (Heritrix)m.get(key);
-                boolean currentSelection = (currentHeritrix == h);
+                boolean currentSelection = (heritrix == h);
                 String state = h.getStatus();
         %>
             <tr>
-            <td><p><a href="<%=url%>">
+            <td class="instance_name"><p><a href="<%=url%>">
                 <%
                     if (currentSelection) {
                 %>
@@ -69,7 +105,8 @@
                 <%
                     }
                 %>
-                    <%=key%>
+                   <input type="hidden" name="heritrixName" value="<%=key%>" />
+                   <%=key%>
                 <%
                     if (currentSelection) {
                 %>
@@ -79,18 +116,34 @@
                 %>
                     </a></p></td>
             <td><p><small><%=state%></small></p></td>
+            <td><p><input type="submit" name="delete" value="Delete" /></p>
+            </td>
             </tr>
         <%
             }
         %>
         </tbody>
         </table>
+        </form>
         <p>
+        <%
+        if (heritrix.getMBeanName() == null) {
+        %>
+            To create new instances, Heritrix needs to be able to register
+            with a JMX Agent. JMX is not enabled/available.  See
+            <a href="http://crawler.archive.org/articles/user_manual.html#mon_com">9.5 Remote Monitoring and Control</a> in the User Manual for more on
+            JMX.
+        <%
+        } else {
+        %>
         <form action="<%=baseurl%>" method="POST">
-            Name for new Heritrix instance: <input type="text"
+            Name of new Heritrix instance: <input type="text"
                 name="createName" size="32" />
             <input type="submit" name="submit" value="Create"/>
         </form>
+        <%
+        }
+        %>
         </p>
     </body>
 </html>

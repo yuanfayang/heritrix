@@ -2,7 +2,7 @@
 
 <%
     String title = "Help";
-    int tab = 6;
+    int tab = 7;
 %>
 
 <%@include file="/include/head.jsp"%>
