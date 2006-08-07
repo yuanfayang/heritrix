@@ -1,26 +1,32 @@
-/* BeanShellProcessor
- *
- * Created on Aug 4, 2006
- *
- * Copyright (C) 2006 Internet Archive.
- *
- * This file is part of the Heritrix web crawler (crawler.archive.org).
- *
- * Heritrix is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Heritrix is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Heritrix; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
- */
-package org.archive.crawler.processor;
+/* BeanShellDecideRule
+*
+* $Id$
+*
+* Created on Aug 7, 2006
+*
+* Copyright (C) 2006 Internet Archive.
+*
+* This file is part of the Heritrix web crawler (crawler.archive.org).
+*
+* Heritrix is free software; you can redistribute it and/or modify
+* it under the terms of the GNU Lesser Public License as published by
+* the Free Software Foundation; either version 2.1 of the License, or
+* any later version.
+*
+* Heritrix is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser Public License for more details.
+*
+* You should have received a copy of the GNU Lesser Public License
+* along with Heritrix; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+package org.archive.crawler.deciderules;
+
+import groovy.lang.Binding;
+import groovy.lang.GroovyShell;
+import groovy.lang.Script;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,35 +36,36 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.Processor;
+import org.archive.crawler.processor.GroovyProcessor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.TextField;
 import org.archive.crawler.settings.Type;
+import org.archive.crawler.util.GroovyRunner;
+import org.archive.util.FileUtils;
 
 import bsh.EvalError;
 import bsh.Interpreter;
 
+
 /**
- * A processor which runs a BeanShell script on the CrawlURI.
- *
+ * Rule which runs a groovy script to make its decision. 
+ * 
  * Script source may be provided directly as a setting, or via a file
  * local to the crawler, or both. (If both, the setting source will be
- * executed first, then the file script.) Script source should define
- * a method with one argument, 'run(curi)'. Each processed CrawlURI is
- * passed to this script method. 
+ * executed first, then the file script.)
  * 
- * Other variables available to the script include 'self' (this 
- * BeanShellProcessor instance) and 'controller' (the crawl's 
+ * Variables available to the script include 'object' (the object to be
+ * evaluated, typically a CandidateURI or CrawlURI), 'self' 
+ * (this GroovyDecideRule instance), and 'controller' (the crawl's 
  * CrawlController instance). 
+ *
+ * TODO: reduce copy & paste with GroovyProcessor
  * 
  * @author gojomo
- * @version $Date$, $Revision$
  */
-public class BeanShellProcessor extends Processor implements FetchStatusCodes {
+public class BeanShellDecideRule extends DecideRule {
     private static final Logger logger =
-        Logger.getLogger(BeanShellProcessor.class.getName());
+        Logger.getLogger(BeanShellDecideRule.class.getName());
     
     /** setting for script source code */
     public final static String ATTR_SCRIPT_SOURCE = "script-source";
@@ -70,22 +77,25 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
      * they should share a single script runner with synchronized access */
     public final static String ATTR_ISOLATE_THREADS = "isolate-threads";
 
-    protected ThreadLocal<Interpreter> threadInterpreter;
+    protected ThreadLocal<Interpreter> threadInterpreter = 
+        new ThreadLocal<Interpreter>();;
     protected Interpreter sharedInterpreter;
     public Map sharedMap = Collections.synchronizedMap(new HashMap());
+    protected boolean initialized = false; 
     
-    /**
-     * Constructor.
-     * @param name Name of this processor.
-     */
-    public BeanShellProcessor(String name) {
-        super(name, "BeanShellProcessor. Runs the BeanShell script source " +
-                "(supplied directly or via a file path) against the " +
-                "current URI. Source should define a script method " +
-                "'process(curi)' which will be passed the current CrawlURI. " +
-                "The script may also access this BeanShellProcessor via" +
+    public BeanShellDecideRule(String name) {
+        super(name);
+        setDescription("BeanShellDecideRule. Runs the BeanShell script " +
+                "source (supplied directly or via a file path) against " +
+                "the current URI. Source should define a script method " +
+                "'decisionFor(object)' which will be passed the object" +
+                "to be evaluated and returns one of self.ACCEPT, " +
+                "self.REJECT, or self.PASS. " +
+                "The script may access this BeanShellDecideRule via" +
                 "the 'self' variable and the CrawlController via the " +
-                "'controller' variable.");
+                "'controller' variable. Runs the groovy script source " +
+                "(supplied directly or via a file path) against the " +
+                "current URI.");
         Type t = addElementToDefinition(new SimpleType(ATTR_SCRIPT_SOURCE,
                 "BeanShell script source", new TextField("")));
         t.setOverrideable(false);
@@ -98,10 +108,9 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
                 "to one context. Default is true, meaning each threads " +
                 "gets its own isolated context.", true));
         t.setOverrideable(false);
-
     }
 
-    protected synchronized void innerProcess(CrawlURI curi) {
+    public synchronized Object decisionFor(Object object) {
         // depending on previous configuration, interpreter may 
         // be local to this thread or shared
         Interpreter interpreter = getInterpreter(); 
@@ -109,11 +118,12 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
             // synchronization is harmless for local thread interpreter,
             // necessary for shared interpreter
             try {
-                interpreter.set("curi",curi);
-                interpreter.eval("process(curi)");
+                interpreter.set("object",object);
+                return interpreter.eval("decisionFor(object)");
             } catch (EvalError e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
+                return PASS;
             } 
         }
     }
@@ -124,6 +134,11 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
      * @return Interpreter to use
      */
     protected Interpreter getInterpreter() {
+        if(sharedInterpreter==null 
+           && !(Boolean)getUncheckedAttribute(null,ATTR_ISOLATE_THREADS)) {
+            // initialize
+            sharedInterpreter = newInterpreter();
+        }
         if(sharedInterpreter!=null) {
             return sharedInterpreter;
         }
@@ -168,12 +183,8 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
         
         return interpreter; 
     }
-
-    protected void initialTasks() {
-        super.initialTasks();
-        kickUpdate();
-    }
-
+    
+    
     /**
      * Setup (or reset) Intepreter variables, as appropraite based on 
      * thread-isolation setting. 
