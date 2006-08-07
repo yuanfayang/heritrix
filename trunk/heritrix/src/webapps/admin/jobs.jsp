@@ -29,6 +29,10 @@
     <ul>
         <li><a href="<%=request.getContextPath()%>/jobs/configure.jsp?job=<%=handler.getCurrentJob().getUID()%>">
         Edit configuration</a>
+
+
+        <li><a href="<%=request.getContextPath()%>/jobs/clearperhost.jsp">
+        Clear cached per-host settings</a>
         
         <li><a href="<%=request.getContextPath()%>/jobs/journal.jsp?job=<%=handler.getCurrentJob().getUID()%>">
         Journal</a>
