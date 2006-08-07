@@ -495,7 +495,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         }
         this.jobHandler = null;
         this.openMBeanInfo = null;
-        this.alertManager = null;
     }
     
     /**

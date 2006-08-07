@@ -12,7 +12,6 @@
 	}
 %>
 <%
-
     String sAction = request.getParameter("action");
     if(sAction != null) {
         if(sAction.equalsIgnoreCase("logout")) {
@@ -75,7 +74,6 @@
         </div>
 
         <b>Alerts:</b>
-
 	        <a style="color: #000000" 
 	            href="<%=request.getContextPath()%>/console/alerts.jsp">
 	            <%=heritrix.getAlertsCount()%> (<%=heritrix.getNewAlertsCount()%> new)

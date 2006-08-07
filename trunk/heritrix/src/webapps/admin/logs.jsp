@@ -157,7 +157,7 @@
     
     <% 
         if(theJob == null){
-            out.println("<b>No job selected/availible</b>");
+            out.println("<br /><b>No job selected/available</b>");
             return;
         } 
     %>

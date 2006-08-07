@@ -3,7 +3,7 @@
 
 <%
     String title = "About Heritrix";
-    int tab = 5;
+    int tab = 6;
 %>
 
 <%@include file="/include/head.jsp"%>
