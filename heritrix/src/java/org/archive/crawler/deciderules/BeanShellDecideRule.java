@@ -24,10 +24,6 @@
 */
 package org.archive.crawler.deciderules;
 
-import groovy.lang.Binding;
-import groovy.lang.GroovyShell;
-import groovy.lang.Script;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -36,12 +32,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.processor.GroovyProcessor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.TextField;
 import org.archive.crawler.settings.Type;
-import org.archive.crawler.util.GroovyRunner;
-import org.archive.util.FileUtils;
 
 import bsh.EvalError;
 import bsh.Interpreter;
