@@ -24,11 +24,9 @@
 */
 package org.archive.util.anvl;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -139,121 +137,156 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
     	// Was thinking of recording CRLF as I was running through this first
     	// parse but the offsets would then be incorrect if any multibyte
     	// characters in the intervening gaps between CRLF.
-        char previousCharacter;
-        char c = (char)-1;
-        boolean wasCRLF = false;
+        boolean isCRLF = false;
         boolean recordStart = false;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
         boolean done = false;
         int read = 0;
-        while (!done) {
+        for (int c  = -1, previousCharacter; !done;) {
             if (read++ >= MAXIMUM_SIZE) {
                 throw new IOException("Read " + MAXIMUM_SIZE +
-                    " bytes without finding End-Of-ANVLRecord");
+                    " bytes without finding  \\r\\n\\r\\n " +
+                    "End-Of-ANVLRecord");
             }
             previousCharacter = c;
-            c = (char)is.read();
+            c = is.read();
             if (c == -1) {
-                throw new IOException("End-Of-Stream before End-Of-ANVLRecord");
+                throw new IOException("End-Of-Stream before \\r\\n\\r\\n " +
+                    "End-Of-ANVLRecord");
             }
-            if (isLF(c) && isCR(previousCharacter)) {
-                if (wasCRLF) {
+            if (isLF((char)c) && isCR((char)previousCharacter)) {
+                if (isCRLF) {
+                    // If we just had a CRLF, then its two CRLFs and its end of
+                    // record.  We're done.
                     done = true;
+                } else {
+                    isCRLF = true;
                 }
-                wasCRLF = true;
             } else if (!recordStart && Character.isWhitespace(c)) {
                 // Skip any whitespace at start of ANVLRecord.
                 continue;
             } else {
-                if (wasCRLF && !isCR(c)) {
-                    wasCRLF = false;
+                // Clear isCRLF flag if this character is NOT a '\r'.
+                if (isCRLF && !isCR((char)c)) {
+                    isCRLF = false;
                 }
+                // Not whitespace so start record if we haven't already.
                 if (!recordStart) {
                     recordStart = true;
                 }
             }
             baos.write(c);
         }
-        
-        InputStreamReader utf8Stream = new InputStreamReader(
-            new ByteArrayInputStream(baos.toByteArray()), UTF8);
-        ANVLRecord result = null;
-        try {
-            result = load(utf8Stream);
-        } finally {
-            utf8Stream.close();
-        }
-        return result;
+        return load(new String(baos.toByteArray(), UTF8));
     }
     
     /**
-     * @param utf8Stream Stream cued-up on an ANVLRecord.  We do not close
-     * passed Stream when done.  Be careful, InputStreamReader may over-read
-     * the ANVLRecord (according to its class comment). 
-     * @return ANVLRecord read from parsed Stream.
+     * @param s String with an ANVLRecord.
+     * @return ANVLRecord parsed from passed String.
      * @throws IOException 
      */
-    public static ANVLRecord load(final InputStreamReader utf8Stream)
+    public static ANVLRecord load(final String s)
     throws IOException {
         ANVLRecord record = new ANVLRecord();
-        StringBuilder sb = new StringBuilder();
-        boolean inComment = false;
-        boolean inValue = false;
-        boolean wasCRLF = false;
-        char previousCharacter;
-        char c = (char)-1;
+        boolean inValue = false, inLabel = false, inComment = false, 
+            inNewLine = false;
         String label = null;
-        while (true) {
-            previousCharacter = c;
-            c = (char)utf8Stream.read();
-            if (c == -1) {
-                throw new IOException("Premature EOF");
+        int len = s.length();
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0;  i < len; i++) {
+            char c = s.charAt(i);
+           
+            // Assert I can do look-ahead.
+            if ((i + 1) > len) {
+                throw new IOException("Premature End-of-ANVLRecord at " +
+                    s.substring(i));
             }
-            if (isLF((char)c) && isCR((char)previousCharacter)) {
-                if (wasCRLF) {
-                    // Double CRLF means End-Of-ANVLRecord.
-                    break;
-                }
-                wasCRLF = true;
-            } else if (wasCRLF && !isCR(c) && Character.isWhitespace(c)) {
-                // Skip all whitespace after CRLF.
+            
+            // If at LF of a CRLF, just go around again.
+            if (inNewLine && isLF(c)) {
+                // Eat up the LF at end of CRLF.
                 continue;
-            } else if (wasCRLF) {
-                if (!isCR(c)) {
-                    wasCRLF = false;
+            }
+            
+            // If we're at a CRLF and we were just on one, then exit.
+            if (inNewLine && isCR(c) && isLF(s.charAt(i + 1))) {
+                break;
+            }
+            
+            // Check if we're on a fold inside a value. Skip multiple white
+            // space after CRLF replacing with a single ' '. 
+            if (inNewLine && inValue) {
+                if (Character.isWhitespace(c)) {
+                    continue;
                 }
-                if (!isCR((char)c) &&
-                        Character.isWhitespace(previousCharacter)) {
-                    if (!inValue) {
-                        throw new IOException("Ambigious record format");
-                    }
-                    sb.append(' ');
-                } else if (inValue) {
-                    if (label == null) {
-                        throw new IOException("Empty label when there " +
-                            "should be one");
-                    }
-                    record.addLabelValue(label.toString(), sb.toString());
+                sb.append(' ');
+            }
+            
+            // Else set flag if we're at start of a CRLF.
+            inNewLine = isCR(c) && isLF(s.charAt(i + 1));
+            
+            // Eat up comments.
+            if (inComment) {
+                if (inNewLine) {
+                    inComment = false;
+                }
+                continue;
+            }
+            
+            if (inNewLine) {
+                if (label != null && !inValue) {
+                    // Label only 'data element'.
+                    record.addLabel(label);
+                    label = null;
                     sb.setLength(0);
-                    inValue = false;
-                    label =  null;
+                } else if (inValue) {
+                    // Assert I can do look-ahead.
+                    if ((i + 3) > len) {
+                        throw new IOException("Premature End-of-ANVLRecord " +
+                            "(2) at " + s.substring(i));
+                    }
+                    if (!isCR(s.charAt(i + 2)) && !isLF(s.charAt(i + 3)) &&
+                            Character.isWhitespace(s.charAt(i + 2))) {
+                        // Its a fold.  Let it go around. But add in a CRLF and
+                        // do it here.  We don't let CRLF fall through to
+                        // the sb.append on the end of this loop.
+                        sb.append(CRLF);
+                    } else {
+                        // Next line is a new SubElement, a new Comment or
+                        // Label.
+                        record.addLabelValue(label, sb.toString());
+                        sb.setLength(0);
+                        label = null;
+                        inValue = false;
+                    }
                 }
-            }
-
-            if (!inComment && c == '#') {
-                inComment = true;
+                // Don't let the '\r' through.
                 continue;
-            } else if (!inValue && c == ':') {
-                if (sb.length() <= 0) {
-                    throw new IOException("Empty label?");
+            } else {
+                if (!inLabel && !inValue && !inComment) {
+                    // Start recording a comment, label or value.
+                    if (Character.isWhitespace(c)) {
+                        continue;
+                    } else if (label == null && c == '#') {
+                        inComment = true;
+                        // Don't record comments.
+                        continue;
+                    } else if (label == null) {
+                        inLabel = true;
+                    } else {
+                        inValue = true;
+                    }
+                } else {
+                    // Label is odd.  It doesn't end on a CRLF, but on a ':'.
+                    if (inLabel) {
+                        if (c == ':') {
+                            label = sb.toString();
+                            sb.setLength(0);
+                            inLabel = false;
+                            continue;
+                        }
+                    }
                 }
-                label = sb.toString();
-                sb.setLength(0);
-                continue;
-            } else if (!inValue && label != null && Character.isWhitespace(c)) {
-                continue;
-            } else if (label != null && !inValue) {
-                inValue = true;
             }
             sb.append(c);
         }

@@ -70,8 +70,17 @@ public class ANVLRecordTest extends TestCase {
     }
     
     public void testParse() throws UnsupportedEncodingException, IOException {
-        final String record = "   a: b\r\n\r\nsdfsdsdfds";
+        String record = "   a: b\r\n#c#\r\nc:d\r\n \t\t\r\t\n\te" +
+                "\r\nx:\r\n  # z\r\n\r\n";
         ANVLRecord r = ANVLRecord.load(new ByteArrayInputStream(
+                record.getBytes("ISO-8859-1")));
+        System.out.println(r);
+        record = "   a: b\r\n\r\nsdfsdsdfds";
+        r = ANVLRecord.load(new ByteArrayInputStream(
+            record.getBytes("ISO-8859-1")));
+        System.out.println(r);
+        record = "x:\r\n  # z\r\ny:\r\n\r\n";
+        r = ANVLRecord.load(new ByteArrayInputStream(
             record.getBytes("ISO-8859-1")));
         System.out.println(r);
     }
