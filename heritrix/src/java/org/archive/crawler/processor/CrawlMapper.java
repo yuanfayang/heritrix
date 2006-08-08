@@ -23,21 +23,12 @@
 package org.archive.crawler.processor;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Reader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
@@ -47,8 +38,6 @@ import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.ArrayLongFPCache;
-import org.archive.util.iterator.LineReadingIterator;
-import org.archive.util.iterator.RegexpLineIterator;
 
 import st.ata.util.FPGenerator;
 
@@ -61,37 +50,19 @@ import st.ata.util.FPGenerator;
  * its CandidateURI outlinks (late in the processing chain, after 
  * LinksScoper), or both (if inserted and configured in both places). 
  * 
- * <p>Uses lexical comparisons of classKeys to map URIs to crawlers. The
- * 'map' is specified via either a local or HTTP-fetchable file. Each
- * line of this file should contain two space-separated tokens, the
- * first a key and the second a crawler node name (which should be
- * legal as part of a filename). All URIs will be mapped to the crawler
- * node name associated with the nearest mapping key equal or subsequent 
- * to the URI's own classKey. If there are no mapping keys equal or 
- * after the classKey, the mapping 'wraps around' to the first mapping key.
- * 
+ * <p>Applies a map() method, supplied by a concrete subclass, to
+ * classKeys to map URIs to crawlers by name. 
+ *
  * <p>One crawler name is distinguished as the 'local name'; URIs mapped to
  * this name are not diverted, but continue to be processed normally.
- * 
- * <p>For example, assume a SurtAuthorityQueueAssignmentPolicy and
- * a simple mapping file:
- * 
- * <pre>
- *  d crawlerA
- *  ~ crawlerB
- * </pre>
- * <p>All URIs with "com," classKeys will find the 'd' key as the nearest
- * subsequent mapping key, and thus be mapped to 'crawlerA'. If that's
- * the 'local name', the URIs will be processed normally; otherwise, the
- * URI will be written to a diversion log aimed for 'crawlerA'. 
- * 
+ *
  * <p>If using the JMX importUris operation importing URLs dropped by
  * a {@link CrawlMapper} instance, use <code>recoveryLog</code> style.
  * 
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class CrawlMapper extends Processor implements FetchStatusCodes {
+public abstract class CrawlMapper extends Processor implements FetchStatusCodes {
     /**
      * PrintWriter which remembers the File to which it writes. 
      */
@@ -117,10 +88,6 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
     /** name of local crawler (URIs mapped to here are not diverted) */
     public static final String ATTR_LOCAL_NAME = "local-name";
     public static final String DEFAULT_LOCAL_NAME = ".";
-
-    /** where to load map from */
-    public static final String ATTR_MAP_SOURCE = "map-source";
-    public static final String DEFAULT_MAP_SOURCE = "";
     
     /** where to log diversions  */
     public static final String ATTR_DIVERSION_DIR = "diversion-dir";
@@ -129,13 +96,6 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
     /** rotate logs when change occurs within this # of digits of timestamp  */
     public static final String ATTR_ROTATION_DIGITS = "rotation-digits";
     public static final Integer DEFAULT_ROTATION_DIGITS = new Integer(10); // hourly
-
-    
-    /**
-     * Mapping of classKey ranges (as represented by their start) to 
-     * crawlers (by abstract name/filename)
-     */
-    TreeMap map = new TreeMap(); // String -> String
     
     /**
      * Mapping of target crawlers to logs (PrintWriters)
@@ -158,14 +118,8 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
      * Constructor.
      * @param name Name of this processor.
      */
-    public CrawlMapper(String name) {
-        super(name, "CrawlMapper.");
-        addElementToDefinition(new SimpleType(ATTR_MAP_SOURCE,
-            "Path (or HTTP URL) to map specification file. Each line " +
-            "should include 2 whitespace-separated tokens: the first a " +
-            "key indicating the end of a range, the second the crawler " +
-            "node to which URIs in the key range should be mapped.",
-            DEFAULT_MAP_SOURCE));
+    public CrawlMapper(String name, String description) {
+        super(name, description);
         addElementToDefinition(new SimpleType(ATTR_LOCAL_NAME,
             "Name of local crawler node; mappings to this name " +
             "result in normal processing (no diversion).",
@@ -188,7 +142,8 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
                 "a single log). Default is 10 (hourly log rotation).",
                 DEFAULT_ROTATION_DIGITS));
     }
-    
+
+
     protected void innerProcess(CrawlURI curi) {
         String nowGeneration = 
             ArchiveUtils.get14DigitDate().substring(
@@ -276,17 +231,7 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
      * @param cauri CandidateURI to consider
      * @return String node name which should handle URI
      */
-    private String map(CandidateURI cauri) {
-        // get classKey, via frontier to generate if necessary
-        String classKey = getController().getFrontier().getClassKey(cauri);
-        SortedMap tail = map.tailMap(classKey);
-        if(tail.isEmpty()) {
-            // wraparound
-            tail = map;
-        }
-        // target node is value of nearest subsequent key
-        return (String) tail.get(tail.firstKey());
-    }
+    protected abstract String map(CandidateURI cauri);
 
     
     /**
@@ -352,47 +297,5 @@ public class CrawlMapper extends Processor implements FetchStatusCodes {
         super.initialTasks();
         localName = (String) getUncheckedAttribute(null, ATTR_LOCAL_NAME);
         cache = new ArrayLongFPCache();
-        try {
-            loadMap();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Retrieve and parse the mapping specification from a local path or
-     * HTTP URL. 
-     * 
-     * @throws IOException
-     */
-    protected void loadMap() throws IOException {
-        map.clear();
-        String mapSource = (String) getUncheckedAttribute(null,ATTR_MAP_SOURCE);
-        Reader reader = null;
-        if(!mapSource.startsWith("http://")) {
-            // file-based source
-            File source = new File(mapSource);
-            if (!source.isAbsolute()) {
-                source = new File(getSettingsHandler().getOrder()
-                        .getController().getDisk(), mapSource);
-            }
-            reader = new FileReader(source);
-        } else {
-            URLConnection conn = (new URL(mapSource)).openConnection();
-            reader = new InputStreamReader(conn.getInputStream());
-        }
-        reader = new BufferedReader(reader);
-        Iterator iter = 
-            new RegexpLineIterator(
-                    new LineReadingIterator((BufferedReader) reader),
-                    RegexpLineIterator.COMMENT_LINE,
-                    RegexpLineIterator.TRIMMED_ENTRY_TRAILING_COMMENT,
-                    RegexpLineIterator.ENTRY);
-        while (iter.hasNext()) {
-            String[] entry = ((String) iter.next()).split("\\s+");
-            map.put(entry[0],entry[1]);
-        }
-        reader.close();
     }
 }

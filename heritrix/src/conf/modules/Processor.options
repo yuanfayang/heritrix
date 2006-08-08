@@ -30,7 +30,8 @@ org.archive.crawler.postprocessor.WaitEvaluator|WaitEvaluator
 org.archive.crawler.postprocessor.ContentBasedWaitEvaluator|ContentBasedWaitEvaluator
 org.archive.crawler.postprocessor.TextWaitEvaluator|TextWaitEvaluator
 org.archive.crawler.postprocessor.ImageWaitEvaluator|ImageWaitEvaluator
-org.archive.crawler.processor.CrawlMapper|CrawlMapper
+org.archive.crawler.processor.LexicalCrawlMapper|LexicalCrawlMapper
+org.archive.crawler.processor.HashCrawlMapper|HashCrawlMapper
 org.archive.crawler.processor.GroovyProcessor|GroovyProcessor
 org.archive.crawler.processor.BeanShellProcessor|BeanShellProcessor
 org.archive.crawler.prefetch.QuotaEnforcer|QuotaEnforcer
