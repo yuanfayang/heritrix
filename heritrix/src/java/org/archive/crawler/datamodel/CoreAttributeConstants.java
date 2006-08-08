@@ -97,6 +97,11 @@ public interface CoreAttributeConstants {
     /** flag indicating the containing queue should be retired */ 
     public static final String A_FORCE_RETIRE = "force-retire";
     
+    /** local override of proxy host */ 
+    public static final String A_HTTP_PROXY_HOST = "http-proxy-host";
+    /** local override of proxy port */ 
+    public static final String A_HTTP_PROXY_PORT = "http-proxy-port";
+
     /**
      * Fetch truncation codes present in {@link CrawlURI} annotations.
      * All truncation annotations have a {@link TRUNC_SUFFIX} suffix (TODO:
