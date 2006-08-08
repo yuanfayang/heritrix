@@ -54,6 +54,7 @@ import javax.net.ssl.TrustManager;
 
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpConnectionManager;
@@ -133,8 +134,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     
     private static Logger logger = Logger.getLogger(FetchHTTP.class.getName());
 
-    public static final String ATTR_HTTP_PROXY_HOST = "http-proxy-host";
-    public static final String ATTR_HTTP_PROXY_PORT = "http-proxy-port";
+    public static final String ATTR_HTTP_PROXY_HOST = A_HTTP_PROXY_HOST;
+    public static final String ATTR_HTTP_PROXY_PORT = A_HTTP_PROXY_PORT;
     public static final String ATTR_TIMEOUT_SECONDS = "timeout-seconds";
     public static final String ATTR_SOTIMEOUT_MS = "sotimeout-ms";
     public static final String ATTR_MAX_LENGTH_BYTES = "max-length-bytes";
@@ -434,7 +435,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             };
         }
 
-        configureMethod(curi, method);
+        HostConfiguration customConfigOrNull = configureMethod(curi, method);
         
         // Set httpRecorder into curi. Subsequent code both here and later
         // in extractors expects to find the HttpRecorder in the CrawlURI.
@@ -445,7 +446,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         method.setDoAuthentication(addedCredentials);
         
         try {
-            this.http.executeMethod(method);
+            this.http.executeMethod(customConfigOrNull, method);
         } catch (RecorderTooMuchHeaderException ex) {
             // when too much header material, abort like other truncations
             doAbort(curi, method, HEADER_TRUNC);
@@ -659,7 +660,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * @param curi CrawlURI from which we pull configuration.
      * @param method The Method to configure.
      */
-    private void configureMethod(CrawlURI curi, HttpMethod method) {
+    protected HostConfiguration configureMethod(CrawlURI curi, HttpMethod method) {
         // Don't auto-follow redirects
         method.setFollowRedirects(false);
         
@@ -674,34 +675,6 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 booleanValue())?
                     CookiePolicy.IGNORE_COOKIES:
                 CookiePolicy.BROWSER_COMPATIBILITY);
-
-        // Configure how we want the method to act.
-        this.http.getParams().setParameter(
-            HttpMethodParams.SINGLE_COOKIE_HEADER, new Boolean(true));
-        this.http.getParams().setParameter(
-            HttpMethodParams.UNAMBIGUOUS_STATUS_LINE , new Boolean(false));
-        this.http.getParams().setParameter(
-            HttpMethodParams.STRICT_TRANSFER_ENCODING, new Boolean(false));
-        this.http.getParams().setIntParameter(
-            HttpMethodParams.STATUS_LINE_GARBAGE_LIMIT, 10);
-        
-        try {
-            String proxy = (String) getAttribute(ATTR_HTTP_PROXY_HOST);
-            if (proxy != null && proxy.length() > 0) {
-                String port = (String)getAttribute(ATTR_HTTP_PROXY_PORT);
-                this.http.getHostConfiguration().setProxy(proxy,
-                   Integer.parseInt(port));
-            }
-        } catch (AttributeNotFoundException e) {
-            logger.warning("Failed get of proxy settings: " +
-                e.getLocalizedMessage());
-        } catch (MBeanException e) {
-            logger.warning("Failed get of proxy settings: " +
-                e.getLocalizedMessage());
-        } catch (ReflectionException e) {
-            logger.warning("Failed get of proxy settings: " +
-                e.getLocalizedMessage());
-        }
 
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
         method.getParams().setVersion(HttpVersion.HTTP_1_0);
@@ -746,6 +719,54 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // TODO: What happens if below method adds a header already
         // added above: e.g. Connection, Range, or Referer?
         setAcceptHeaders(curi, method);
+        
+        return configureProxy(curi);
+    }
+
+    /**
+     * Setup proxy, based on attributes in CrawlURI and settings, 
+     * for this CrawlURI only. 
+     * @return HostConfiguration customized as necessary, or null if no
+     * customization required
+     */
+    private HostConfiguration configureProxy(CrawlURI curi) {
+        String proxy = (String) getAttributeEither(curi, ATTR_HTTP_PROXY_HOST);
+        int port = -1; 
+        if(proxy.length()==0) {
+            proxy = null; 
+        } else {
+            String portString = (String)getAttributeEither(curi, ATTR_HTTP_PROXY_PORT);
+            port = portString.length()>0 ? Integer.parseInt(portString) : -1; 
+        }
+        HostConfiguration config = this.http.getHostConfiguration();
+        if(config.getProxyHost() == proxy && config.getProxyPort() == port) {
+            // no change
+            return null; 
+        }
+        if (proxy != null && proxy.equals(config.getProxyHost()) 
+                && config.getProxyPort() == port) {
+            // no change
+            return null; 
+        }
+        config = new HostConfiguration(config); // copy of config
+        config.setProxy(proxy,port);
+        return config; 
+    }
+
+    /**
+     * Get a value either from inside the CrawlURI instance, or from 
+     * settings (module attributes). 
+     * 
+     * @param curi CrawlURI to consult
+     * @param key key to lookup
+     * @return value from either CrawlURI (preferred) or settings
+     */
+    protected Object getAttributeEither(CrawlURI curi, String key) {
+        Object obj = curi!=null ? curi.getObject(key) : null;
+        if(obj==null) {
+            obj = getUncheckedAttribute(curi, key);
+        }
+        return obj;
     }
 
     /**
@@ -1071,6 +1092,22 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         hcp.setVersion(HttpVersion.HTTP_1_0);
         
         configureHttpCookies();
+        
+        // Configure how we want the method to act.
+        this.http.getParams().setParameter(
+            HttpMethodParams.SINGLE_COOKIE_HEADER, new Boolean(true));
+        this.http.getParams().setParameter(
+            HttpMethodParams.UNAMBIGUOUS_STATUS_LINE , new Boolean(false));
+        this.http.getParams().setParameter(
+            HttpMethodParams.STRICT_TRANSFER_ENCODING, new Boolean(false));
+        this.http.getParams().setIntParameter(
+            HttpMethodParams.STATUS_LINE_GARBAGE_LIMIT, 10);
+        
+        HostConfiguration configOrNull = configureProxy(null);
+        if(configOrNull!=null) {
+            // global proxy settings are in effect
+            this.http.setHostConfiguration(configOrNull);
+        }
         
         // Use our own protocol factory, one that gets IP to use from
         // heritrix cache (They're cached in CrawlHost instances).
