@@ -14,22 +14,28 @@ of ANVL Records and for parsing.
 definition of 'blank line' and 'newline'.  This parser implementation
 assumes <code>CRNL</code>.
 </p>
+<p>Says "An element consists of a label, a colon, and an optional value".
+Should that be: "An element consists of a label and an optional value, or a
+comment."</p>
 
-<p>Specification allows for CR, NL, or CRNL in a 'data element' <i>label</i>.
-This implementation currently fails on such labels. Here is RFC822:
+<p>Specification is unclear regards CR or NL in <i>label</i> or 
+<i>comment</i> (This implementation disallows CR or NL in labels but lets
+them pass in comments).</p>
+
+<p>A grammar would help.  Here is RFC822:
 <pre>
      field       =  field-name ":" [ field-body ] CRLF
      
-     field-name  =  1*<any CHAR, excluding CTLs, SPACE, and ":">
+     field-name  =  1*&lt;any CHAR, excluding CTLs, SPACE, and ":"&gt;
      
      field-body  =  field-body-contents
                     [CRLF LWSP-char field-body]
      
      field-body-contents =
-                   <the ASCII characters making up the field-body, as
+                   &lt;the ASCII characters making up the field-body, as
                     defined in the following sections, and consisting
                     of combinations of atom, quoted-string, and
-                    specials tokens, or else consisting of texts>
+                    specials tokens, or else consisting of texts&gt;
 </pre>
 </p>
 </body>
