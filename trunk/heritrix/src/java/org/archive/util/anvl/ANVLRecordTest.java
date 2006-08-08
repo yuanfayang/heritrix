@@ -34,7 +34,6 @@ public class ANVLRecordTest extends TestCase {
     public void testAdd() throws Exception {
         ANVLRecord am = new ANVLRecord();
         am.add(new Element(new Label("entry")));
-        am.add(new Element(new Comment("First draft")));
         am.add(new Element(new Label("who"),
             new Value("Gilbert, W.S. | Sullivan, Arthur")));
         am.add(new Element(new Label("what"),
@@ -83,5 +82,44 @@ public class ANVLRecordTest extends TestCase {
         r = ANVLRecord.load(new ByteArrayInputStream(
             record.getBytes("ISO-8859-1")));
         System.out.println(r);
+    }
+    
+    public void testExampleParse()
+    throws UnsupportedEncodingException, IOException {
+    	final String sample = "entry:\t\t\r\n# first ###draft\r\n" +
+    		"who:\tGilbert, W.S. | Sullivan, Arthur\r\n" +
+    		"what:\tThe Yeoman of\r\n" +
+    		"\t\tthe Guard\r\n" +
+    		"when/created:\t 1888\r\n\r\n";
+        ANVLRecord r = ANVLRecord.load(new ByteArrayInputStream(
+        		sample.getBytes("ISO-8859-1")));
+        System.out.println(r);
+    }
+    
+    public void testPoundLabel()
+    throws UnsupportedEncodingException, IOException {
+    	final String sample = "ent#ry:\t\t\r\n# first ###draft\r\n" +
+    		"who:\tGilbert, W.S. | Sullivan, Arthur\r\n" +
+    		"what:\tThe Yeoman of\r\n" +
+    		"\t\tthe Guard\r\n" +
+    		"when/created:\t 1888\r\n\r\n";
+        ANVLRecord r = ANVLRecord.load(sample);
+        System.out.println(r);
+    }
+    
+    public void testNewlineLabel()
+    throws UnsupportedEncodingException, IOException {
+    	final String sample = "ent\nry:\t\t\r\n# first ###draft\r\n" +
+    		"who:\tGilbert, W.S. | Sullivan, Arthur\r\n" +
+    		"what:\tThe Yeoman of\r\n" +
+    		"\t\tthe Guard\r\n" +
+    		"when/created:\t 1888\r\n\r\n";
+    	IllegalArgumentException iae = null;
+    	try {
+    		ANVLRecord.load(sample);
+    	} catch(IllegalArgumentException e) {
+    		iae = e;
+    	}
+    	assertTrue(iae != null);
     }
 }

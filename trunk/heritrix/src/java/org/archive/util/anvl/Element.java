@@ -24,12 +24,10 @@
 */
 package org.archive.util.anvl;
 
-import java.io.UnsupportedEncodingException;
 
 /**
  * ANVL 'data element'.
- * Made of a {@link Comment}, a lone {@link Label}, or a {@link Label} plus
- * {@link Value}.
+ * Made of a lone {@link Label}, or a {@link Label} plus {@link Value}.
  * 
  * @author stack
  * @see <a
@@ -38,10 +36,6 @@ import java.io.UnsupportedEncodingException;
  */
 class Element {
     private final SubElement [] subElements;
-    
-    public Element(final Comment c) {
-        this.subElements = new SubElement [] {c};
-    }
     
     public Element(final Label l) {
         this.subElements = new SubElement [] {l};

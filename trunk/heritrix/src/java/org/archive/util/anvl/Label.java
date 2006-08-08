@@ -25,7 +25,7 @@
 package org.archive.util.anvl;
 
 class Label extends SubElement {
-	private static final char COLON = ':';
+	public static final char COLON = ':';
 	
     private Label() {
         this(null);
