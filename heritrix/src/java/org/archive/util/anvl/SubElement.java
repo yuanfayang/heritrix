@@ -64,15 +64,16 @@ abstract class SubElement {
                 !Character.isValidCodePoint(c)) {
             throw new IllegalArgumentException(srcStr +
                 " contains a control character(s) or invalid code point: 0x" +
-                Integer.toHexString(index));
+                Integer.toHexString(c));
         }
     }
     
     protected void checkCRLF(final char c, final String srcStr,
             final int index) {
         if (ANVLRecord.isCROrLF(c)) {
-            throw new IllegalArgumentException(srcStr + " CR or LF (TODO: " +
-                "Allow for folding and then only check for CRLF)");
+            throw new IllegalArgumentException(srcStr +
+                " contains disallowed CRLF control character(s): 0x" +
+                Integer.toHexString(c));
         }
     }
     
