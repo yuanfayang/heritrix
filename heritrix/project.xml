@@ -646,20 +646,6 @@
             </properties>
         </dependency>
         <dependency>
-            <id>groovy</id>
-            <version>1.0-JSR-06</version>
-            <url>http://groovy.codehaus.org/</url>
-            <properties>
-                <war.bundle>true</war.bundle>
-                <ear.bundle>true</ear.bundle>
-                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
-                <description>Groovy is a powerful scripting language for 
-                the Java platform.
-                </description>
-                <license>Groovy license "BSD / Apache style"</license>
-            </properties>
-        </dependency>
-        <dependency>
             <id>beanshell</id>
             <version>2.0b4</version>
             <url>http://beanshell.org/</url>
