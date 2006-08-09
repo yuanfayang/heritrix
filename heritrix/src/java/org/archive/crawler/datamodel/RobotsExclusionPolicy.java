@@ -41,7 +41,7 @@ import org.archive.crawler.settings.CrawlerSettings;
 
 /**
  * RobotsExclusionPolicy represents the actual policy adopted with 
- * respect to a specific remove server, usually constructed from 
+ * respect to a specific remote server, usually constructed from 
  * consulting the robots.txt, if any, the server provided. 
  * 
  * (The similarly named RobotsHonoringPolicy, on the other hand, 

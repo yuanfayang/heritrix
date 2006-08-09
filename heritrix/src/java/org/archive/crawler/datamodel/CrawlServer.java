@@ -35,6 +35,7 @@ import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
+import org.archive.crawler.framework.Checkpointer;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsHandler;
@@ -214,10 +215,11 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
         return port;
     }
 
-    /** Called when object is beeing deserialized.
-     *
-     * In addition to the default java deserialation, this method re-establishes
-     * the references to settings handler and robots honoring policy.
+    /** 
+     * Called when object is being deserialized.
+     * In addition to the default java deserialization, this method
+     * re-establishes the references to settings handler and robots honoring
+     * policy.
      *
      * @param stream the stream to deserialize from.
      * @throws IOException if I/O errors occur
@@ -227,13 +229,20 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
     private void readObject(ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        settingsHandler = ((ToeThread) Thread.currentThread())
-                            .getController().getSettingsHandler();
-        if (robots != null) {
-            RobotsHonoringPolicy honoringPolicy =
-                settingsHandler.getOrder().getRobotsHonoringPolicy();
-            robots.honoringPolicy = honoringPolicy;
+        Thread t = Thread.currentThread();
+        if (t instanceof Checkpointer.CheckpointingThread) {
+        	deserialize((SettingsHandler)((Checkpointer.CheckpointingThread)t).
+        		getController().getSettingsHandler());
         }
+    }
+    
+    private void deserialize(final SettingsHandler sh) {
+    	this.settingsHandler = sh;
+    	if (this.robots != null) {
+    		RobotsHonoringPolicy honoringPolicy =
+    			sh.getOrder().getRobotsHonoringPolicy();
+    		this.robots.honoringPolicy = honoringPolicy;
+    	}
     }
 
     /** Get the settings handler.

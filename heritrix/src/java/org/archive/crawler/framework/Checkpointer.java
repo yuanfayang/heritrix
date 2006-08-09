@@ -174,9 +174,13 @@ public class Checkpointer implements Serializable {
      * Thread to run the checkpointing.
      * @author stack
      */
-    private class CheckpointingThread extends Thread {
+    public class CheckpointingThread extends Thread {
         public CheckpointingThread(final String name) {
             super(name);
+        }
+
+        public CrawlController getController() {
+        	return Checkpointer.this.controller;
         }
         
         public void run() {
@@ -192,7 +196,7 @@ public class Checkpointer implements Serializable {
                     checkpointFailed("Failed wait for complete pause.");
                 } else {
                     createCheckpointInProgressDirectory();
-                    getController().checkpoint();
+                    this.getController().checkpoint();
                 }
             } catch (Exception e) {
                 checkpointFailed(e);
