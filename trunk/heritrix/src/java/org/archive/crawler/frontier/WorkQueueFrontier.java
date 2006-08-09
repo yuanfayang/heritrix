@@ -75,12 +75,10 @@ public abstract class WorkQueueFrontier extends AbstractFrontier
 implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         Serializable {
     public class WakeTask extends TimerTask {
-
         @Override
         public void run() {
             wakeQueues();
         }
-
     }
 
     /** truncate reporting of queues at some large but not unbounded number */
@@ -177,8 +175,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      */
     protected SortedSet snoozedClassQueues =
         Collections.synchronizedSortedSet(new TreeSet<WorkQueue>());
+    
     /** Timer for tasks which wake head item of snoozedClassQueues */
-    protected Timer wakeTimer;
+    protected transient Timer wakeTimer;
     
     protected WorkQueue longestActiveQueue = null;
     
@@ -273,11 +272,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         super.initialize(c);
         this.controller = c;
         
-        this.targetSizeForReadyQueues = (Integer) getUncheckedAttribute(null,ATTR_TARGET_READY_QUEUES_BACKLOG);
+        this.targetSizeForReadyQueues = (Integer)getUncheckedAttribute(null,
+        		ATTR_TARGET_READY_QUEUES_BACKLOG);
         if (this.targetSizeForReadyQueues<1) {
             this.targetSizeForReadyQueues=1;
         }
-        wakeTimer = new Timer("waker for "+this.toString());
+        this.wakeTimer = new Timer("waker for "+this.toString());
         
         try {
             if (workQueueDataOnDisk()
@@ -351,7 +351,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             // FIXME exception handling
             e.printStackTrace();
         }
-        wakeTimer.cancel();
+        this.wakeTimer.cancel();
         
         this.allQueues.clear();
         this.allQueues = null;
@@ -777,7 +777,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                 }
             }
         }
-        wakeTimer.schedule(new WakeTask(),nextWakeDelay);
+        this.wakeTimer.schedule(new WakeTask(),nextWakeDelay);
     }
 
     /**
@@ -913,7 +913,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             synchronized(snoozedClassQueues) {
                 snoozedClassQueues.add(wq);
                 if(wq == snoozedClassQueues.first()) {
-                    wakeTimer.schedule(new WakeTask(), delay_ms);
+                    this.wakeTimer.schedule(new WakeTask(), delay_ms);
                 }
             }
         }
