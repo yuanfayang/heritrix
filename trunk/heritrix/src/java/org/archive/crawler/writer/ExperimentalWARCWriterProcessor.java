@@ -236,12 +236,15 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
-        final URI uid = qualifyRecordID(baseid, TYPE, RESOURCE);
-        w.writeResourceRecord(curi.toString(), timestamp, mimetype, uid,
+    	// I used to 'qualify' resource record ids with 'type=resource' but
+    	// remove it.  Since resource is the record that all others relate to
+    	// -- e.g. metadata, request -- no need of the qualification. Also
+    	// underlines notion that this is the cornerstone record.
+        w.writeResourceRecord(curi.toString(), timestamp, mimetype, baseid,
             namedFields,
             curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
             curi.getHttpRecorder().getRecordedInput().getSize());
-        return uid;
+        return baseid;
     }
     
     protected URI writeMetadata(final ExperimentalWARCWriter w,
