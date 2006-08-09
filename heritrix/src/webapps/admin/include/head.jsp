@@ -218,7 +218,7 @@
                 <td bgcolor="#0000FF" height="1" colspan="4"></td>
             </tr>
             <tr>
-            <td class="instance_name">Instance: <%=currentHeritrixName%></td>
+            <td class="instance_name">Identifier: <%=currentHeritrixName%></td>
             </tr>
             <tr>
                 <td bgcolor="#0000FF" height="1" colspan="4"></td>
