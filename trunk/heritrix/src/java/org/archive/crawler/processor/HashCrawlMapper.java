@@ -22,8 +22,12 @@
  */
 package org.archive.crawler.processor;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.util.TextUtils;
 
 import st.ata.util.FPGenerator;
 
@@ -37,24 +41,39 @@ import st.ata.util.FPGenerator;
 public class HashCrawlMapper extends CrawlMapper {
     private static final long serialVersionUID = 1L;
     
-    /** where to load map from */
+    /** count of crawlers */
     public static final String ATTR_CRAWLER_COUNT = "crawler-count";
     public static final Long DEFAULT_CRAWLER_COUNT = new Long(1);
 
-    long bucketCount = 1;
+    /** regex pattern for reducing classKey */
+    public static final String ATTR_REDUCE_PATTERN = "reduce-prefix-pattern";
+    public static final String DEFAULT_REDUCE_PATTERN = "";
     
+//    /** replace pattern for reducing classKey */
+//    public static final String ATTR_REPLACE_PATTERN = "replace-pattern";
+//    public static final String DEFAULT_REPLACE_PATTERN = "";
+ 
+    long bucketCount = 1;
+    String reducePattern = null;
+//    String replacePattern = null;
+ 
     /**
      * Constructor.
      * @param name Name of this processor.
      */
     public HashCrawlMapper(String name) {
-        super(name, "LexicalCrawlMapper. Maps URIs to a named " +
-                "crawler by a lexical comparison of the URI's " +
-                "classKey to a supplied ranges map.");
+        super(name, "HashCrawlMapper. Maps URIs to a numerically named " +
+                "crawler by hashing the URI's (possibly transfored) " +
+                "classKey to one of the specified number of buckets.");
         addElementToDefinition(new SimpleType(ATTR_CRAWLER_COUNT,
             "Number of crawlers among which to split up the URIs. " +
             "Their names are assumed to be 0..N-1.",
             DEFAULT_CRAWLER_COUNT));
+        addElementToDefinition(new SimpleType(ATTR_REDUCE_PATTERN,
+                "A regex pattern to apply to the classKey, using " +
+                "the first match as the mapping key. If empty (the" +
+                "default), use the full classKey.",
+                DEFAULT_REDUCE_PATTERN));
     }
 
     /**
@@ -66,15 +85,32 @@ public class HashCrawlMapper extends CrawlMapper {
      */
     protected String map(CandidateURI cauri) {
         // get classKey, via frontier to generate if necessary
-        String classKey = getController().getFrontier().getClassKey(cauri);
-        // TODO: transform by regex-replace?
-        
-        long fp = FPGenerator.std32.fp(classKey);
-        return Long.toString(fp % bucketCount);
+        String key = getController().getFrontier().getClassKey(cauri);
+        return mapString(key, reducePattern, bucketCount); 
     }
 
     protected void initialTasks() {
         super.initialTasks();
         bucketCount = (Long) getUncheckedAttribute(null,ATTR_CRAWLER_COUNT);
+        kickUpdate();
+    }
+
+    @Override
+    public void kickUpdate() {
+        super.kickUpdate();
+        reducePattern = (String)getUncheckedAttribute(null, ATTR_REDUCE_PATTERN);
+    }
+    
+    public static String mapString(String key, String reducePattern, long bucketCount) {
+        if(reducePattern!=null && reducePattern.length()>0) {
+           Matcher matcher = TextUtils.getMatcher(reducePattern,key);
+           if(matcher.find()) {
+               key = matcher.group();
+           }
+           TextUtils.recycleMatcher(matcher);
+        }
+        long fp = FPGenerator.std64.fp(key);
+        long bucket = fp % bucketCount;
+        return Long.toString(bucket >= 0 ? bucket : -bucket);
     }
 }
