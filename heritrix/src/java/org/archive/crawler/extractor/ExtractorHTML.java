@@ -465,7 +465,8 @@ implements CoreAttributeConstants {
 
     public void extract(CrawlURI curi) {
         if (!isHttpTransactionContentToProcess(curi) ||
-                !isExpectedMimeType(curi.getContentType(), "text/html")) {
+                ! (isExpectedMimeType(curi.getContentType(), "text/html")
+                   || isExpectedMimeType(curi.getContentType(), "application/xhtml"))) {
             return;
         }
 
