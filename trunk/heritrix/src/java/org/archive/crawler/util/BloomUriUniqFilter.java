@@ -131,12 +131,10 @@ public class BloomUriUniqFilter extends SetBasedUriUniqFilter implements Seriali
     
     protected boolean setAdd(CharSequence uri) {
         boolean added = bloom.add(uri);
-        // check if bloom is operating past expected range (and thus
-        // giving more false indications a string was already contained
-        // than was intended); if so, offer a warning on every 10000th
-        // increment
-        if( added && (count() > expected_n) && (count() % 10000 == 0)) {
-            LOGGER.warning(count()+" beyond expected limit "+expected_n);
+        // warn if bloom has reached its expected size (and its false-pos
+        // rate will now exceed the theoretical/designed level)
+        if( added && (count() == expected_n)) {
+            LOGGER.warning("Bloom has reached expected limit "+expected_n);
         }
         return added;
     }
