@@ -72,7 +72,7 @@ extends SWFActionsImpl {
         if (url.startsWith(JSSTRING)) {
             linkCount =+ ExtractorJS.considerStrings(curi, url, controller, false);
         } else {
-            curi.createAndAddLink(url,Link.EMBED_MISC,Link.EMBED_HOP);
+            curi.createAndAddLinkRelativeToVia(url,Link.EMBED_MISC,Link.EMBED_HOP);
             linkCount++;
         }
     }
