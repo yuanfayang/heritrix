@@ -346,15 +346,7 @@ public class CrawlOrder extends ModuleType implements Serializable {
      * @return user-agent header value to use
      */
     public String getUserAgent(CrawlURI curi) {
-        if (caseFlattenedUserAgent == null) {
-            try {
-                caseFlattenedUserAgent = ((String) httpHeaders.
-                    getAttribute(ATTR_USER_AGENT, curi));
-            } catch (AttributeNotFoundException e) {
-                logger.severe(e.getMessage());
-            }
-        }
-        return caseFlattenedUserAgent;
+        return ((String) httpHeaders.getUncheckedAttribute(curi, ATTR_USER_AGENT));
     }
 
     /**
@@ -392,17 +384,11 @@ public class CrawlOrder extends ModuleType implements Serializable {
      */
     public RobotsHonoringPolicy getRobotsHonoringPolicy() {
         try {
-            return (RobotsHonoringPolicy) getAttribute(RobotsHonoringPolicy.ATTR_NAME);
+            return (RobotsHonoringPolicy) getAttribute(null, RobotsHonoringPolicy.ATTR_NAME);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
             return null;
-        } catch (MBeanException e) {
-            logger.severe(e.getMessage());
-            return null;
-        } catch (ReflectionException e) {
-            logger.severe(e.getMessage());
-            return null;
-        }
+        } 
     }
 
     /** Get the name of the order file.
