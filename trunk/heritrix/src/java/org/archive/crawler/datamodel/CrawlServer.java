@@ -231,16 +231,24 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
         stream.defaultReadObject();
         Thread t = Thread.currentThread();
         if (t instanceof Checkpointer.CheckpointingThread) {
-        	deserialize((SettingsHandler)((Checkpointer.CheckpointingThread)t).
-        		getController().getSettingsHandler());
+            settingsHandler = ((Checkpointer.CheckpointingThread)t)
+        		.getController().getSettingsHandler();
+        } else if (t instanceof ToeThread) {
+            settingsHandler = ((ToeThread) Thread.currentThread())
+                .getController().getSettingsHandler();
+        } else {
+            // TODO: log differently? (if no throw here
+            // NPE is inevitable)
+            throw new RuntimeException("CrawlServer must deserialize " +
+                    "in a ToeThread or CheckpointingThread");
         }
+        postDeserialize();
     }
     
-    private void deserialize(final SettingsHandler sh) {
-    	this.settingsHandler = sh;
+    private void postDeserialize() {
     	if (this.robots != null) {
     		RobotsHonoringPolicy honoringPolicy =
-    			sh.getOrder().getRobotsHonoringPolicy();
+                settingsHandler.getOrder().getRobotsHonoringPolicy();
     		this.robots.honoringPolicy = honoringPolicy;
     	}
     }
