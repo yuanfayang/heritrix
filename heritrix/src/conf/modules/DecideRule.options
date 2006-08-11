@@ -26,5 +26,6 @@ org.archive.crawler.deciderules.ScopePlusOneDecideRule
 org.archive.crawler.deciderules.SeedAcceptDecideRule
 org.archive.crawler.deciderules.ExternalGeoLocationDecideRule
 org.archive.crawler.deciderules.AddRedirectFromRootServerToScope
-org.archive.crawler.deciderules.GroovyDecideRule
 org.archive.crawler.deciderules.BeanShellDecideRule
+org.archive.crawler.deciderules.HasViaDecideRule
+org.archive.crawler.deciderules.FetchStatusDecideRule
