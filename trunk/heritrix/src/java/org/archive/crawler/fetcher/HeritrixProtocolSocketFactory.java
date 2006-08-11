@@ -100,7 +100,7 @@ implements ProtocolSocketFactory {
      *
      * @since 3.0
      */
-    public synchronized Socket createSocket(
+    public Socket createSocket(
         final String host,
         final int port,
         final InetAddress localAddress,
