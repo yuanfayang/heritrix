@@ -30,10 +30,14 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import javax.management.AttributeNotFoundException;
+
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.util.ArchiveUtils;
@@ -84,6 +88,9 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
     /** whether to map CrawlURI's outlinks (if CandidateURIs) */
     public static final String ATTR_CHECK_OUTLINKS = "check-outlinks";
     public static final Boolean DEFAULT_CHECK_OUTLINKS = Boolean.TRUE;
+
+    /** decide rules to determine if an outlink is subject to mapping */ 
+    public static final String ATTR_MAP_OUTLINK_DECIDE_RULES = "decide-rules";
 
     /** name of local crawler (URIs mapped to here are not diverted) */
     public static final String ATTR_LOCAL_NAME = "local-name";
@@ -136,6 +143,8 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
             "Whether to apply the mapping to discovered outlinks, " +
             "for example after extraction has occurred. ",
             DEFAULT_CHECK_OUTLINKS));
+        addElementToDefinition(new DecideRuleSequence(
+                ATTR_MAP_OUTLINK_DECIDE_RULES));
         addElementToDefinition(new SimpleType(ATTR_ROTATION_DIGITS,
                 "Number of timestamp digits to use as prefix of log " +
                 "names (grouping all diversions from that period in " +
@@ -182,27 +191,36 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
                     continue;
                 }
                 CandidateURI cauri = (CandidateURI)next; 
-                // TODO: The 'getHost' call below goes unused.  We used assign
-                // to a local 'host' variable.  Remove (or add explaination of
-                // why here.
-                try {
-                    cauri.getUURI().getHost();
-                } catch (URIException e) {
-                    e.printStackTrace();
-                }
 
-                // apply mapping to the CandidateURI
-                String target = map(cauri);
-                if(!localName.equals(target)) {
-                    // CandidateURI is mapped to somewhere other than here
-                    iter.remove();
-                    divertLog(cauri,target);
-                } else {
-                    // localName means keep locally; do nothing
+                if (decideToMapOutlink(cauri)) {
+                    // apply mapping to the CandidateURI
+                    String target = map(cauri);
+                    if(!localName.equals(target)) {
+                        // CandidateURI is mapped to somewhere other than here
+                        iter.remove();
+                        divertLog(cauri,target);
+                    } else {
+                        // localName means keep locally; do nothing
+                    }
                 }
             }
         }
     }
+    
+    protected boolean decideToMapOutlink(CandidateURI cauri) {
+        boolean rejected = getMapOutlinkDecideRule(cauri).decisionFor(cauri)
+                .equals(DecideRule.REJECT);
+        return !rejected;
+    }
+
+    protected DecideRule getMapOutlinkDecideRule(Object o) {
+        try {
+            return (DecideRule)getAttribute(o, ATTR_MAP_OUTLINK_DECIDE_RULES);
+        } catch (AttributeNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     
     /**
      * Close and mark as finished all existing diversion logs, and
