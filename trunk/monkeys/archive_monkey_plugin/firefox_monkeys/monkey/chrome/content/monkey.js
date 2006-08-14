@@ -31,7 +31,7 @@ function processControllerResponse() {
             } else {
                 taskData = http_request.responseText.parseJSON();
                 // add auth data
-//                setAuthData(taskData);
+                setAuthData(taskData);
                 // add a listener that will execute the operation when the page is loaded
                 window.addEventListener("load", eval(taskData.operation), true);
                 getBrowser().contentDocument.location = taskData.URL;
@@ -125,6 +125,7 @@ function processControllerUrl() {
     if (http_request.readyState == 4) {
         var tempData = http_request.responseText.parseJSON();
         CONTROLLER_URL = tempData.controller_url;
+        LINKS_SUBMIT_URL = tempData.linksSubmit_url;
         startCycle();
     }
 }
