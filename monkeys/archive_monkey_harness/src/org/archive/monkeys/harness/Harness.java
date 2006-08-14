@@ -107,6 +107,7 @@ public class Harness {
 			p.setProperty("browser.command", "firefox -P dev");
 			p.setProperty("browser.timeout", "20000");
 			p.setProperty("controller.url", "http://localhost:8081/monkey");
+			p.setProperty("linksSubmit.url", "http://localhost:8081/monkey?method=urls");
 			p.store(new FileOutputStream(conf),
 					"Archive Monkey Harness Config File");
 		}
