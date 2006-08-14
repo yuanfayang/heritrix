@@ -380,11 +380,14 @@ Also see <a href="http://groups.yahoo.com/group/archive-crawler/message/3019">Cr
         <p>Sure.  Make sure all that is in the Heritrix lib directory is on
         your CLASSPATH (ensuring the heritrix.jar is found first).
         Thereafter, using HEAD (post-1.2.0), doing the following should
-        get you a long ways: <source>Heritrix h = new Heritrix();
-h.launch();</source>
-        You'll then need to have your program
-        hangaround while the crawl runs.  See
-        <a href="http://groups.yahoo.com/group/archive-crawler/message/1276">message1276</a>  for an example. See also the answer to the next question.
+        get you a long ways: 
+        <source>Heritrix h = new Heritrix();
+        h.launch();</source>
+        You'll then need to have your program hangaround while the crawl runs.
+        See
+        <a href="http://groups.yahoo.com/group/archive-crawler/message/1276">message1276</a>  for an example. See also the answer to the next question
+        and this page up on our wiki, <a
+        href="http://crawler.archive.org/cgi-bin/wiki.pl?EmbeddingHeritrix">Embedding Heritrix</a>.
         </p>
         </answer>
       </faq>
