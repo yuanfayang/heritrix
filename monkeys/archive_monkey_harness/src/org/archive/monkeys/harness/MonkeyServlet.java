@@ -2,12 +2,15 @@ package org.archive.monkeys.harness;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Properties;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.json.simple.JSONObject;
 
 /**
  * The Monkey Servlet is responsible for accepting pings from the browser monkey
@@ -112,6 +115,15 @@ public class MonkeyServlet extends HttpServlet {
 		response.getWriter().println("oops");
 	}
 
+	public void doGetControllerUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		response.setContentType("text/html");
+		response.setStatus(HttpServletResponse.SC_OK);
+		Properties conf = Harness.loadOrCreateProperties();
+		JSONObject res = new JSONObject();
+		res.put("controller_url", conf.getProperty("controller.url"));
+		response.getWriter().println(res.toString());
+	}
+	
 	@Override
 	/**
 	 * Destroys the servlet. The heart beat tracker is shut down.
