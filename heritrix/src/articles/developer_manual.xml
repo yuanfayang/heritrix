@@ -33,6 +33,11 @@
 
         <surname>Stack</surname>
       </author>
+      
+      <author>
+        <firstname>Paul</firstname>
+        <surname>Jack</surname>
+      </author>
     </authorgroup>
   </articleinfo>
 
@@ -122,6 +127,21 @@
 		jimi class zip (jars are effectively zips).
                </para>
 
+       <note>
+      <para>It may be necessary to alter the <literal>sdocbook-plugin</literal>
+       default configuration.  By default, sdocbook will download the latest 
+       version of <literal>docbook-xsl</literal>.  However, sdocbook hardcodes 
+       a specific version number for <literal>docbook-xsl</literal> in its
+       <literal>plugin.properties</literal> file.  If you get an error like
+       "Error while expanding ~/.maven/repository/docbook/zips/docbook-xsl-1.66.1.zip",
+       then you will have to manually edit sdocbook's properties.  First determine
+       the version of <literal>docbook-xsl</literal> that you have -- it's in 
+       <literal>~/.maven/repository/docbook/zips</literal>.  Once you have the
+       version number, edit <literal>~/.maven/cache/maven-sdocbook-plugin-1.4/plugin-properties</literal>
+       and change the <literal>maven.sdocbook.stylesheets.version</literal> property
+       to the version that was actually downloaded.
+       </para>
+       </note>
 
       <para>To build a CVS source checkout
       with Maven:<programlisting>% cd CVS_CHECKOUT_DIR 
