@@ -69,7 +69,7 @@ module Monkeys::Controllers
 
     def post
       begin
-        taskDataJson = JSON.unparse({'URL' => @input.task_url, "operation" => 'linksGetter'})
+        taskDataJson = JSON.unparse({'URL' => @input.task_url, "operation" => 'linksGetter', "auth" => {}})
         Monkeys::Tools::send_request(:post, "submitTask", {}, taskDataJson) do |res|
           resBody = res.body.strip()
           @state.msg = "Status Code: [#{res.code}], Message: [#{res.message}], Body: [#{resBody}]"
