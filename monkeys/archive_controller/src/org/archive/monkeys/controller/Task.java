@@ -1,5 +1,7 @@
 package org.archive.monkeys.controller;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 
 import org.json.simple.JSONObject;
@@ -11,7 +13,7 @@ import org.json.simple.JSONObject;
  * @author Eugene Vahlis
  */
 public class Task {
-	
+	 
 	/**
 	 * Represents the current status of the task.
 	 * @author Eugene Vahlis
@@ -29,7 +31,7 @@ public class Task {
 
 	private JSONObject taskData;
 
-	private Controller controller;
+	private DefaultController controller;
 
 	private String monkeyId;
 
@@ -40,7 +42,7 @@ public class Task {
 	 * @param controller The controller which will be managing this task
 	 * @param id The controller assigned id for this task
 	 */
-	public Task(JSONObject taskData, Controller controller, long id) throws IllegalArgumentException {
+	public Task(JSONObject taskData, DefaultController controller, long id) throws IllegalArgumentException {
 		if (taskData == null) {
 			throw new IllegalArgumentException("Task data cannot be null");
 		}
@@ -119,7 +121,6 @@ public class Task {
 	public void assign(String monkeyId) {
 		setMonkeyId(monkeyId);
 		setStatus(Status.ASSIGNED);
-//		controller.taskAssigned(this);
 	}
 	
 	/**
@@ -127,7 +128,6 @@ public class Task {
 	 * controller methods.
 	 */
 	public void success() {
-//		controller.taskCompleted(this);
 		this.setStatus(Status.COMPLETE);
 	}
 	
@@ -151,6 +151,19 @@ public class Task {
 			Task o = (Task) arg0;
 			return this.id == o.getId();
 		}
+	}
+	
+	private void processAuthInfo() throws MalformedURLException {
+		if (!(taskData.get("auth") == null)) {
+			return;
+		}
+		
+		URL url = new URL((String) taskData.get("URL"));
+		JSONObject auth = ((JSONObject) taskData.get("auth"));
+		auth.put("scheme", url.getProtocol());
+		auth.put("host", url.getHost());
+		auth.put("port", url.getPort());
+		auth.put("path", url.getPath());
 	}
 
 }

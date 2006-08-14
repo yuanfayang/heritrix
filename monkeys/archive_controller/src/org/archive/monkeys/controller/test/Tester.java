@@ -9,6 +9,7 @@ import java.net.ProtocolException;
 import java.net.URL;
 
 import org.archive.monkeys.controller.Controller;
+import org.archive.monkeys.controller.DefaultController;
 import org.json.simple.JSONObject;
 import org.mortbay.http.HttpContext;
 import org.mortbay.http.HttpServer;
@@ -17,7 +18,7 @@ import org.mortbay.jetty.servlet.ServletHandler;
 public class Tester {
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
-		Controller controller = new Controller();
+		Controller controller = new DefaultController();
 
 		HttpServer server = new HttpServer();
 		try {

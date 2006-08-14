@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import org.archive.monkeys.controller.Controller;
+import org.archive.monkeys.controller.DefaultController;
 import org.archive.monkeys.controller.Task;
 import org.json.simple.JSONObject;
 
@@ -11,12 +12,12 @@ import junit.framework.TestCase;
 
 public class ControllerTester extends TestCase {
 	public void testConstructor() {
-		@SuppressWarnings("unused") Controller c = new Controller();
+		@SuppressWarnings("unused") Controller c = new DefaultController();
 	}
 	
 	@SuppressWarnings("unchecked")
 	public void testTaskCreation() {
-		Controller c = new Controller();
+		Controller c = new DefaultController();
 		JSONObject jo = new JSONObject();
 		jo.put("testField", "testValue");
 		try {
@@ -39,7 +40,7 @@ public class ControllerTester extends TestCase {
 	}
 	
 	public void testFreeTaskIterator() {
-		Controller c = new Controller();
+		Controller c = new DefaultController();
 		JSONObject jo = new JSONObject();
 		jo.put("testField", "testValue");
 		Vector<Long> taskIds = new Vector<Long>(100);
@@ -57,7 +58,7 @@ public class ControllerTester extends TestCase {
 	}
 	
 	public void testAssignTask() {
-		Controller c = new Controller();
+		Controller c = new DefaultController();
 		JSONObject jo = new JSONObject();
 		jo.put("testField", "testValue");
 		

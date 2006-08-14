@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.Properties;
 
 import org.archive.monkeys.controller.Controller;
+import org.archive.monkeys.controller.DefaultController;
 import org.mortbay.http.HttpContext;
 import org.mortbay.http.HttpServer;
 import org.mortbay.jetty.servlet.ServletHandler;
@@ -95,7 +96,7 @@ public class ControllerDriver {
 			Properties conf = loadOrCreateProperties();
 
 			// create the server
-			Controller controller = new Controller();
+			Controller controller = new DefaultController();
 			HttpServer server = new HttpServer();
 			server.addListener(":" + conf.getProperty("port"));
 
@@ -112,23 +113,23 @@ public class ControllerDriver {
 			context.addHandler(handler);
 			server.start();
 			
-			// send initialization requests to the servlets to let them know
-			// which instance of Controller we're using 
-			HttpURLConnection c = (HttpURLConnection) (new URL(
-					assembleUrlStart(conf, "monkey")
-							+ "?method=initController&cid="
-							+ controller.getNanoId())).openConnection();
-			c.connect();
-			while (c.getResponseCode() != 200) {
-				c.connect();
-			}
-			c = (HttpURLConnection) (new URL(assembleUrlStart(conf, "admin")
-					+ "?method=initController&cid=" + controller.getNanoId()))
-					.openConnection();
-			c.connect();
-			while (c.getResponseCode() != 200) {
-				c.connect();
-			}
+//			// send initialization requests to the servlets to let them know
+//			// which instance of Controller we're using 
+//			HttpURLConnection c = (HttpURLConnection) (new URL(
+//					assembleUrlStart(conf, "monkey")
+//							+ "?method=initController&cid="
+//							+ controller.getNanoId())).openConnection();
+//			c.connect();
+//			while (c.getResponseCode() != 200) {
+//				c.connect();
+//			}
+//			c = (HttpURLConnection) (new URL(assembleUrlStart(conf, "admin")
+//					+ "?method=initController&cid=" + controller.getNanoId()))
+//					.openConnection();
+//			c.connect();
+//			while (c.getResponseCode() != 200) {
+//				c.connect();
+//			}
 			server.join();
 		} catch (Exception e) {
 			// TODO: handle exception

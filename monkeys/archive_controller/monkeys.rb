@@ -22,12 +22,26 @@ require 'json'
 
 Camping.goes :Monkeys
 
-module Monkeys::Helpers
+module Monkeys::Tools
   def self.create_query(method, data)
     query = "\r\n" + data
     headers = {'Content-Type' => 'text/plain', 
       'Accept' => '*/*'}
     return query, headers
+  end
+  
+  def self.send_request(http_method, method, params = {}, post_data = nil)
+    url = URI.parse("http://localhost:#{Monkeys::CONTROLLER_PORT}")
+    Net::HTTP.start(url.host, url.port) do |http|
+      if post_data
+        q, h = Monkeys::Tools::create_query(method, post_data)
+      else
+        q, h = nil, nil
+      end
+      query_string = "/admin?method=#{method}"
+      params.each {|k, v| query_string += "&#{k}=#{v}"}
+      yield http.send(http_method, query_string, q, h)
+    end
   end
 end
 
@@ -36,6 +50,7 @@ module Monkeys
   CONTROLLER_PORT = 8081
 end
 
+# web app
 module Monkeys
   include Camping::Session
 end
@@ -54,16 +69,28 @@ module Monkeys::Controllers
 
     def post
       begin
-        url = URI.parse("http://localhost:#{Monkeys::CONTROLLER_PORT}")
-        taskDataJson = JSON.unparse({'URL' => @input.task_url})
-        Net::HTTP.start(url.host, url.port) do |http|
-          q, h = Monkeys::Helpers::create_query('submitTask', taskDataJson)
-          res = http.post('/admin?method=submitTask', q, h)
+        taskDataJson = JSON.unparse({'URL' => @input.task_url, "operation" => 'linksGetter'})
+        Monkeys::Tools::send_request(:post, "submitTask", {}, taskDataJson) do |res|
           resBody = res.body.strip()
           @state.msg = "Status Code: [#{res.code}], Message: [#{res.message}], Body: [#{resBody}]"
         end
       rescue Exception => e
         @state.msg = "An error has occured: [#{e}]"
+      end
+      redirect Index
+    end
+  end
+
+  class CancelTask
+    def get
+      render :cancel_task
+    end
+    
+    def post
+      id = @input.tid
+      Monkeys::Tools::send_request(:get, "cancelTask", {"tid" => id}) do |res|
+        resBody = res.body.strip()
+        @state.msg = "Status Code: [#{res.code}], Message: [#{res.message}], Body: [#{resBody}]"
       end
       redirect Index
     end
@@ -76,9 +103,7 @@ module Monkeys::Controllers
     
     def post
       id = @input.tid
-      url = URI.parse("http://localhost:#{Monkeys::CONTROLLER_PORT}")
-      Net::HTTP.start(url.host, url.port) do |http|
-        res = http.get("/admin?method=getTaskStatus&tid=#{id}")
+      Monkeys::Tools::send_request(:get, "getTaskStatus", {"tid" => id}) do |res|
         resBody = res.body.strip()
         @state.msg = "Status Code: [#{res.code}], Message: [#{res.message}], Body: [#{resBody}]"
       end
@@ -89,14 +114,22 @@ module Monkeys::Controllers
   class FreeTasks
     def get
       url = URI.parse("http://localhost:#{Monkeys::CONTROLLER_PORT}")
-      Net::HTTP.start(url.host, url.port) do |http|
-        res = http.get("/admin?method=showQueue")
-        #puts res.body
+      Monkeys::Tools::send_request(:get, "showQueue") do |res|
         @task_url_list = JSON.parse(res.body).collect do |x|
           x['URL']
         end
       end
       render :task_list
+    end
+  end
+  
+  class TaskReport
+    def get
+      url = URI.parse("http://localhost:#{Monkeys::CONTROLLER_PORT}")
+      Monkeys::Tools::send_request(:get, "taskReport") do |res|
+        @report = res.body
+      end
+      render :report
     end
   end
   
@@ -145,9 +178,10 @@ module Monkeys::Views
     p {
       ul {
         li { a 'Create new task', :href => R(AddTask) }
-        #li { a 'Cancel task', :href => R(CancelTask) }
+        li { a 'Cancel task', :href => R(CancelTask) }
         li { a 'Get task status', :href => R(TaskStatus) }
         li { a 'Get free tasks', :href => R(FreeTasks) }
+        li { a 'Task report', :href => R(TaskReport) }
         #li { a 'Get assigned tasks', :href => R(AssignedTasks) }
         #li { a 'Get completed tasks', :href => R(CompletedTasks) }
         #li { a 'Get failed tasks', :href => R(FailedTasks) }
@@ -157,6 +191,17 @@ module Monkeys::Views
 
   def add_task
     _form(:action => R(AddTask))
+  end
+  
+  def cancel_task
+    h2 { 'Cancel Task' }
+    
+    form({:method => 'post', :action => R(CancelTask)}) do 
+      label 'Task ID', :for => 'tid'
+      input :name => 'tid', :type => 'text',
+      :value => '', :size => '60'
+      p { input :type => 'submit' }
+    end
   end
   
   def task_status
@@ -177,6 +222,11 @@ module Monkeys::Views
         li { url }
       end
     end
+  end
+
+  def report
+    h2 {'Task report'}
+    text @report
   end
 
   # partials
