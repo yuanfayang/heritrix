@@ -118,11 +118,18 @@ public class ControllerMonkeyServlet extends ControllerInterfaceServlet {
 		} else {
 			BufferedReader br = new BufferedReader(request.getReader());
 			String line;
-			System.err.println("HERE!!!!!");
 			while ((line = br.readLine()) != null) {
-				System.err.println(line);
+				JSONObject task = new JSONObject();
+				task.put("URL", line);
+				task.put("auth", new JSONObject());
+				task.put("operation", "linksGetter");
+//				System.err.println(line);
+				try {
+					controller.submitTask(task);
+				} catch (Exception e) {
+					throw new ServletException(e);
+				}
 			}
-			System.err.println("here2!!!!!!!!!!!!!!");
 			response.setStatus(200);
 			response.getWriter().println("OK");
 		}
