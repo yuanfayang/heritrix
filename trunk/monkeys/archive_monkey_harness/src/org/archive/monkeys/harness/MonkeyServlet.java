@@ -121,6 +121,7 @@ public class MonkeyServlet extends HttpServlet {
 		Properties conf = Harness.loadOrCreateProperties();
 		JSONObject res = new JSONObject();
 		res.put("controller_url", conf.getProperty("controller.url"));
+		res.put("linksSubmit_url", conf.getProperty("linksSubmit.url"));
 		response.getWriter().println(res.toString());
 	}
 	
