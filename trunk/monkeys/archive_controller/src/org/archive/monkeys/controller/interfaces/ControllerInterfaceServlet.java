@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.archive.monkeys.controller.Controller;
-import org.archive.monkeys.controller.NanoContainer;
+import org.archive.monkeys.controller.ControllerFactory;
 
 public abstract class ControllerInterfaceServlet extends HttpServlet{
 	protected Controller controller;
@@ -23,6 +23,7 @@ public abstract class ControllerInterfaceServlet extends HttpServlet{
 		super.init(conf);
 		log = Logger.getLogger(this.getClass());
 		BasicConfigurator.configure();
+		controller = ControllerFactory.getController();
 	}
 
 	protected void service(HttpServletRequest request,
@@ -58,11 +59,11 @@ public abstract class ControllerInterfaceServlet extends HttpServlet{
 		}
 	}
 
-	public void doInitController(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		long id = Long.parseLong(request.getParameter("cid"));
-		controller = (Controller) NanoContainer.getInstance().get(id);
-		response.setContentType("text/html");
-		response.setStatus(200);
-	}
+//	public void doInitController(HttpServletRequest request,
+//			HttpServletResponse response) throws ServletException, IOException {
+//		long id = Long.parseLong(request.getParameter("cid"));
+//		controller = (Controller) NanoContainer.getInstance().get(id);
+//		response.setContentType("text/html");
+//		response.setStatus(200);
+//	}
 }
