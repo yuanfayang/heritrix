@@ -142,6 +142,11 @@ implements WARCConstants {
     protected String createFile()
     throws IOException {
         String filename = super.createFile();
+        // Strip .open suffix if present.
+        if (filename.endsWith(WriterPoolMember.OCCUPIED_SUFFIX)) {
+        	filename = filename.substring(0,
+        		filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
+        }
         ANVLRecord record = new ANVLRecord(1);
         record.addLabelValue(NAMED_FIELD_WARCFILENAME, filename);
         // TODO: What to write into a warcinfo?  What to associate?
