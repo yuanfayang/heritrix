@@ -41,6 +41,7 @@ import org.archive.io.GzippedInputStream;
 import org.archive.io.NoGzipMagicException;
 import org.archive.io.RepositionableInputStream;
 import org.archive.net.UURI;
+import org.archive.net.md5.Md5URLConnection;
 import org.archive.net.rsync.RsyncURLConnection;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
@@ -216,6 +217,11 @@ public class ARCReaderFactory implements ARCConstants {
             // See implementation of the rsync handler.
             connection.connect();
             localFile = ((RsyncURLConnection)connection).getFile();
+        } else if (connection instanceof Md5URLConnection) {
+            // Then, connect and this will create a local file.
+            // See implementation of the md5 handler.
+            connection.connect();
+            localFile = ((Md5URLConnection)connection).getFile();
         } else {
             throw new UnsupportedOperationException("No support for " +
                 connection);
