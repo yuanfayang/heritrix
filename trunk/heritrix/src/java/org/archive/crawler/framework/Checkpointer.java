@@ -41,8 +41,8 @@ import org.archive.util.ArchiveUtils;
 
 /**
  * Runs checkpointing.
- * Also keeps history of crawl checkpoints  Generally used by CrawlController only 
- * but also has static utility methods classes that need to participate in
+ * Also keeps history of crawl checkpoints  Generally used by CrawlController
+ * only but also has static utility methods classes that need to participate in
  * a checkpoint can use.
  *
  * @author gojomo

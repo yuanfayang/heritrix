@@ -150,7 +150,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * All per-class queues whose first item may be handed out.
      * Linked-list of keys for the queues.
      */
-    protected BlockingQueue<String> readyClassQueues = new LinkedBlockingQueue<String>();
+    protected BlockingQueue<String> readyClassQueues =
+    	new LinkedBlockingQueue<String>();
+    
     /** Target (minimum) size to keep readyClassQueues */
     protected int targetSizeForReadyQueues;
     
@@ -158,13 +160,15 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * All 'inactive' queues, not yet in active rotation.
      * Linked-list of keys for the queues.
      */
-    protected BlockingQueue<String> inactiveQueues = new LinkedBlockingQueue<String>();
+    protected BlockingQueue<String> inactiveQueues =
+    	new LinkedBlockingQueue<String>();
 
     /**
      * 'retired' queues, no longer considered for activation.
      * Linked-list of keys for queues.
      */
-    protected BlockingQueue<String> retiredQueues = new LinkedBlockingQueue<String>();
+    protected BlockingQueue<String> retiredQueues =
+    	new LinkedBlockingQueue<String>();
     
     /** all per-class queues from whom a URI is outstanding */
     protected Bag inProcessQueues = 
@@ -273,9 +277,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         this.controller = c;
         
         this.targetSizeForReadyQueues = (Integer)getUncheckedAttribute(null,
-        		ATTR_TARGET_READY_QUEUES_BACKLOG);
-        if (this.targetSizeForReadyQueues<1) {
-            this.targetSizeForReadyQueues=1;
+            ATTR_TARGET_READY_QUEUES_BACKLOG);
+        if (this.targetSizeForReadyQueues < 1) {
+            this.targetSizeForReadyQueues = 1;
         }
         this.wakeTimer = new Timer("waker for " + c.toString());
         
@@ -588,7 +592,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             
             synchronized(readyClassQueues) {
                 int activationsNeeded = targetSizeForReadyQueues() - readyClassQueues.size();
-                while(activationsNeeded>0 && !inactiveQueues.isEmpty()) {
+                while(activationsNeeded > 0 && !inactiveQueues.isEmpty()) {
                     activateInactiveQueue();
                     activationsNeeded--;
                 }

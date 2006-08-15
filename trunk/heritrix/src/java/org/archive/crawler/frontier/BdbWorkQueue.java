@@ -62,7 +62,7 @@ implements Comparable, Serializable {
      */
     public BdbWorkQueue(String classKey, BdbFrontier frontier) {
         super(classKey);
-        origin = BdbMultipleWorkQueues.calculateOriginKey(classKey);
+        this.origin = BdbMultipleWorkQueues.calculateOriginKey(classKey);
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.fine(getPrefixClassKey(this.origin) + " " + classKey);
         }

@@ -1265,6 +1265,7 @@ public class CrawlController implements Serializable, Reporter {
             // Do a force checkpoint.  Thats what a sync does (i.e. doSync).
             CheckpointConfig chkptConfig = new CheckpointConfig();
             chkptConfig.setForce(true);
+            
             // Mark Hayes of sleepycat says:
             // "The default for this property is false, which gives the current
             // behavior (allow deltas).  If this property is true, deltas are
