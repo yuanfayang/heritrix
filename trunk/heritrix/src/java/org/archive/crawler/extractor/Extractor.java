@@ -67,16 +67,24 @@ public abstract class Extractor extends Processor {
             extract(curi);
         } catch (NullPointerException npe) {
             // both annotate (to highlight in crawl log) & add as local-error
-            curi.addAnnotation("err="+npe.getClass().getName());
-            curi.addLocalizedError(getName(),npe,"");
+            curi.addAnnotation("err=" + npe.getClass().getName());
+            curi.addLocalizedError(getName(), npe, "");
             // also log as warning
-            logger.log(Level.WARNING,getName()+": NullPointerException",npe);
+            logger.log(Level.WARNING, getName() + ": NullPointerException",
+                npe);
         } catch (StackOverflowError soe) {
             // both annotate (to highlight in crawl log) & add as local-error
-            curi.addAnnotation("err="+soe.getClass().getName());
-            curi.addLocalizedError(getName(),soe,"");
+            curi.addAnnotation("err=" + soe.getClass().getName());
+            curi.addLocalizedError(getName(), soe, "");
             // also log as warning
-            logger.log(Level.WARNING,getName()+": StackOverflowError",soe);
+            logger.log(Level.WARNING, getName() + ": StackOverflowError", soe);
+        } catch (java.nio.charset.CoderMalfunctionError cme) {
+            // See http://sourceforge.net/tracker/index.php?func=detail&aid=1540222&group_id=73833&atid=539099
+            // Both annotate (to highlight in crawl log) & add as local-error
+            curi.addAnnotation("err=" + cme.getClass().getName());
+            curi.addLocalizedError(getName(), cme, ""); // <-- Message field ignored when logging.
+            logger.log(Level.WARNING, getName() + ": CoderMalfunctionError",
+                cme);
         }
     }
 

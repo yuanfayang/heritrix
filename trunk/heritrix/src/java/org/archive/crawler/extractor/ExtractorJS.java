@@ -115,20 +115,23 @@ public class ExtractorJS extends Extractor implements CoreAttributeConstants {
         }
 
         try {
-            numberOfLinksExtracted += considerStrings(curi, cs,
-                    getController(), true);
-        } catch (StackOverflowError e) {
-            DevUtils.warnHandle(e,"ExtractorJS StackOverflowError");
-        }
-        // Set flag to indicate that link extraction is completed.
-        curi.linkExtractorFinished();
-        // Done w/ the ReplayCharSequence.  Close it.
-        if (cs != null) {
             try {
-                cs.close();
-            } catch (IOException ioe) {
-                LOGGER.warning(TextUtils.exceptionToString(
-                    "Failed close of ReplayCharSequence.", ioe));
+                numberOfLinksExtracted += considerStrings(curi, cs,
+                        getController(), true);
+            } catch (StackOverflowError e) {
+                DevUtils.warnHandle(e, "ExtractorJS StackOverflowError");
+            }
+            // Set flag to indicate that link extraction is completed.
+            curi.linkExtractorFinished();
+        } finally {
+            // Done w/ the ReplayCharSequence. Close it.
+            if (cs != null) {
+                try {
+                    cs.close();
+                } catch (IOException ioe) {
+                    LOGGER.warning(TextUtils.exceptionToString(
+                        "Failed close of ReplayCharSequence.", ioe));
+                }
             }
         }
     }
