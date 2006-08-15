@@ -200,7 +200,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         synchronized (allQueues) {
             wq = (WorkQueue)allQueues.get(classKey);
             if (wq == null) {
-                wq = new BdbWorkQueue(classKey,this);
+                wq = new BdbWorkQueue(classKey, this);
                 wq.setTotalBudget(((Long)getUncheckedAttribute(
                     curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue());
                 allQueues.put(classKey, wq);
@@ -318,6 +318,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             this.retiredQueues = f.retiredQueues;
             this.snoozedClassQueues = f.snoozedClassQueues;
             this.inProcessQueues = f.inProcessQueues;
+            wakeQueues();
         }
     }
 
@@ -325,6 +326,11 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         super.crawlCheckpoint(checkpointDir);
         logger.fine("Started serializing already seen as part "
             + "of checkpoint. Can take some time.");
+        // An explicit sync on the any deferred write dbs is needed to make the
+        // db recoverable. Sync'ing the environment doesn't work.
+        if (this.pendingUris != null) {
+        	this.pendingUris.sync();
+        }
         CheckpointUtils .writeObjectToFile(this.alreadyIncluded, checkpointDir);
         logger.fine("Finished serializing already seen as part "
             + "of checkpoint.");
