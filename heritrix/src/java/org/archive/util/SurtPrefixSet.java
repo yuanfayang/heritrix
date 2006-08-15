@@ -142,11 +142,12 @@ public class SurtPrefixSet extends TreeSet {
     }
 
     /**
-     * Import SURT prefixes from a file with mixed URI and SURT prefix
+     * Import SURT prefixes from a reader with mixed URI and SURT prefix
      * format. 
      * 
-     * @param fr
-     * @param deduceFromSeeds
+     * @param r  the reader to import the prefixes from
+     * @param deduceFromSeeds   true to also import SURT prefixes implied
+     *                          from normal URIs/hostname seeds
      */
     public void importFromMixed(Reader r, boolean deduceFromSeeds) {
         BufferedReader reader = new BufferedReader(r);

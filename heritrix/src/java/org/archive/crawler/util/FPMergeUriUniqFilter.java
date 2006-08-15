@@ -338,7 +338,7 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
      * list. Should only be called after beginFpMerge() and before
      * finishFpMerge(). 
      * 
-     * @param currFp
+     * @param fp  the FP to add
      */
     abstract protected void addNewFp(long fp);
 

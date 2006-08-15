@@ -247,7 +247,7 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
      * group). 
      * 
      * @param curi CrawlURI to mark up with results
-     * @param substats CrawlSubstats with actual values to test
+     * @param hasStats  holds CrawlSubstats with actual values to test
      * @param CAT category index (SERVER, HOST, GROUP) to quota settings keys
      * @return true if quota precludes fetching of CrawlURI
      */

@@ -14,7 +14,9 @@ public class EndedException extends Exception {
     // TODO: subclass for various kinds of ends?
     
     /**
-     * @param string
+     * Constructs a new <code>EndedException</code>.
+     * 
+     * @param message  describes why the crawl ended
      */
     public EndedException(String message) {
         super(message);

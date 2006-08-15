@@ -103,9 +103,7 @@ implements WARCConstants {
     /**
      * Constructor.
      * Takes a stream. Use with caution. There is no upperbound check on size.
-     * Will just keep writing.  Only pass Streams that are bounded. Has
-     * default access only because usually only used by {@link WARCReader}
-     * dumping output.
+     * Will just keep writing.  Only pass Streams that are bounded. 
      * @param out Where to write.
      * @param f File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
@@ -343,7 +341,7 @@ implements WARCConstants {
     /**
      * Write a <code>warcinfo</code> to current file.
      * The <code>warcinfo</code> type uses its <code>recordId</code> as its URL.
-     * @param url URL to use for this warcinfo.
+     * @param recordId URI to use for this warcinfo.
      * @param create14DigitDate Record creation date as 14 digit date.
      * @param mimetype Mimetype of the <code>fileMetadata</code>.
      * @param namedFields Named fields.

@@ -137,7 +137,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * Takes a stream. Use with caution. There is no upperbound check on size.
      * Will just keep writing.
      * @param out Where to write.
-     * @param f File the <code>out</code> is connected to.
+     * @param arc File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
      * @param metadata File meta data.  Can be null.  Is list of File and/or
      * String objects.

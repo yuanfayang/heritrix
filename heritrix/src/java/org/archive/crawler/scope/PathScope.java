@@ -152,10 +152,8 @@ public class PathScope extends SeedCachingScope {
         return false;
     }
 
-    /**
-     *
-     * @see org.archive.crawler.framework.CrawlScope#additionalFocusAccepts(java.lang.Object)
-     */
+    // Javadoc inherited
+    @Override
     protected boolean additionalFocusAccepts(Object o) {
         return this.additionalFocusFilter.accepts(o);
     }

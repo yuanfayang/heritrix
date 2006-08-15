@@ -114,7 +114,7 @@ public class SurtPrefixScope extends RefinedScope {
     /**
      * Check if a URI is part of this scope.
      * 
-     * @param o
+     * @param object
      *            An instance of UURI or of CandidateURI.
      * @return True if focus filter accepts passed object.
      */
