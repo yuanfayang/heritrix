@@ -64,7 +64,7 @@ import org.archive.util.LongWrapper;
  *
  * @author Frank McCown
  *
- * @see org.archive.crawler.framework.StatisticsTracker
+ * @see org.archive.crawler.admin.StatisticsTracker
  */
 public class StatisticsSummary {
     /**

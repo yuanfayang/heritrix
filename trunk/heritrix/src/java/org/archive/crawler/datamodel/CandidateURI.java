@@ -49,7 +49,7 @@ import st.ata.util.HashtableAList;
  * contains just the fields necessary to perform quick in-scope analysis.
  * 
  * <p>Has a flexible attribute list that will be promoted into
- * any {@list CrawlURI} created from this CandidateURI.  Use it
+ * any {@link CrawlURI} created from this CandidateURI.  Use it
  * to add custom data or state needed later doing custom processing.
  * See accessors/setters {@link #putString(String, String)},
  * {@link #getString(String)}, etc. 

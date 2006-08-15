@@ -148,8 +148,8 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
 
     /**
      * Remove the peekItem from the queue and adjusts the count.
-     * @param queues Work queues manager.
      * 
+     * @param frontier  Work queues manager.
      */
     public synchronized void dequeue(final WorkQueueFrontier frontier) {
         try {
@@ -382,8 +382,8 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
 
     /**
      * Delete URIs matching the given pattern from this queue. 
-     * @param queues WorkQueues manager.
-     * @param match
+     * @param frontier WorkQueues manager.
+     * @param match  the pattern to match
      * @return count of deleted URIs
      * @throws IOException  if there was a problem while deleting
      */
@@ -397,7 +397,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
      * This is only used to remove the first item in the queue,
      * so it is not necessary to implement a random-access queue.
      * 
-     * @param queues Work queues manager.
+     * @param frontier  Work queues manager.
      * @throws IOException  if there was a problem while deleting the item
      */
     protected abstract void deleteItem(final WorkQueueFrontier frontier,

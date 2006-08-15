@@ -104,7 +104,7 @@ public interface CoreAttributeConstants {
 
     /**
      * Fetch truncation codes present in {@link CrawlURI} annotations.
-     * All truncation annotations have a {@link TRUNC_SUFFIX} suffix (TODO:
+     * All truncation annotations have a <code>TRUNC_SUFFIX</code> suffix (TODO:
      * Make for-sure unique or redo truncation so definitive flag marked
      * against {@link CrawlURI}).
      */

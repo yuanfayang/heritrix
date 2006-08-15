@@ -148,7 +148,7 @@ public class BeanShellDecideRule extends DecideRule {
      * source code or source file and the variables 'self' (this 
      * BeanShellProcessor) and 'controller' (the CrawlController). 
      * 
-     * @return
+     * @return  the new Interpreter instance
      */
     protected Interpreter newInterpreter() {
         Interpreter interpreter = new Interpreter(); 

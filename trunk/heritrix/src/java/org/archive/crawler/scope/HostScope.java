@@ -120,10 +120,9 @@ public class HostScope extends SeedCachingScope {
         return false;
     }
 
-    /**
-     *
-     * @see org.archive.crawler.framework.CrawlScope#additionalFocusAccepts(java.lang.Object)
-     */
+   
+    // Javadoc inherited.
+    @Override
     protected boolean additionalFocusAccepts(Object o) {
         return additionalFocusFilter.accepts(o);
     }

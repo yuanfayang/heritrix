@@ -620,8 +620,8 @@ public class ArchiveUtils {
 
     /**
      * Utility method to get a String singleLineReport from Reporter
-     * @param Reporter to get singleLineReport from
-     * @returns String of report
+     * @param rep  Reporter to get singleLineReport from
+     * @return String of report
      */
     public static String singleLineReport(Reporter rep) {
         StringWriter sw = new StringWriter();

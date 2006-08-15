@@ -49,7 +49,9 @@ public abstract class LookaheadIterator implements Iterator {
     }
     
     /**
-     * @return
+     * Caches the next item if available.
+     * 
+     * @return  true if there was a next item to cache, false otherwise
      */
     protected abstract boolean lookahead();
 

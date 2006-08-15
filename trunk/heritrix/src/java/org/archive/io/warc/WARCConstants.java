@@ -133,8 +133,7 @@ public interface WARCConstants {
      * for all 'message' types regarding line length and encodings."  This
      * usually means lines of 1000 octets max (unless a 
      * 'Content-Transfer-Encoding: binary' mime header is present).
-     * @see <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec19.html#sec19.1">rfc2616
-     * section 19.1</a>.
+     * @see <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec19.html#sec19.1">rfc2616 section 19.1</a>
      */
     public static final String HTTP_REQUEST_MIMETYPE =
     	"application/http;msgtype=request";

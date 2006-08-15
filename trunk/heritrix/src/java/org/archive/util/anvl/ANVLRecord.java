@@ -41,7 +41,7 @@ import org.archive.io.UTF8Bytes;
  * 
  * @see <a
  * href="http://www.cdlib.org/inside/diglib/ark/anvlspec.pdf">A Name-Value
- * Language (ANVL)</a>.
+ * Language (ANVL)</a>
  * @author stack
  */
 public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
@@ -59,7 +59,7 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
 	
 	/**
 	 * An ANVL 'newline'.
-	 * @see http://en.wikipedia.org/wiki/CRLF
+	 * @see <a href="http://en.wikipedia.org/wiki/CRLF">http://en.wikipedia.org/wiki/CRLF</a>
 	 */
     static final String CRLF = "\r\n";
     

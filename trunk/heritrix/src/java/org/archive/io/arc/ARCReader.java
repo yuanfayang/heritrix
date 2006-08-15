@@ -874,7 +874,7 @@ implements ARCConstants {
     /**
      * @return The current ARC record or null if none.
      * After construction has the arcfile header record.
-     * @see {@link #get()}
+     * @see #get()
      */
     protected ARCRecord getCurrentRecord() {
         return this.currentRecord;

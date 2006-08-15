@@ -140,7 +140,7 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
      * source code or source file and the variables 'self' (this 
      * BeanShellProcessor) and 'controller' (the CrawlController). 
      * 
-     * @return
+     * @return  the new Interpreter instance
      */
     protected Interpreter newInterpreter() {
         Interpreter interpreter = new Interpreter(); 

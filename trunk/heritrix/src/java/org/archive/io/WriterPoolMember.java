@@ -146,7 +146,7 @@ public abstract class WriterPoolMember {
      * Takes a stream. Use with caution. There is no upperbound check on size.
      * Will just keep writing.
      * @param out Where to write.
-     * @param f File the <code>out</code> is connected to.
+     * @param file File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
@@ -181,8 +181,7 @@ public abstract class WriterPoolMember {
      * @param cmprs Compress the records written. 
      * @param maxSize Maximum size for ARC files written.
      * @param suffix File tail to use.  If null, unused.
-     * @param meta File meta data.  Can be null.  Is list of File and/or
-     * String objects.
+     * @param extension Extension to give file.
      */
     public WriterPoolMember(final List dirs, final String prefix, 
             final String suffix, final boolean cmprs,

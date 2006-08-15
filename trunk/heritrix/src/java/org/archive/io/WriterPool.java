@@ -113,7 +113,7 @@ public abstract class WriterPool {
 	 * Check out a {@link WriterPoolMember}.
 	 * 
 	 * This method must be answered by a call to
-	 * {@link #returnWriter(WriterPoolMember)} else pool starts leaking.
+	 * {@link #returnFile(WriterPoolMember)} else pool starts leaking.
 	 * 
 	 * @return Writer checked out of a pool of files.
 	 * @throws IOException Problem getting Writer from pool (Converted
@@ -155,7 +155,7 @@ public abstract class WriterPool {
     }
 
 	/**
-	 * @param f File to return to the pool.
+	 * @param writer Writer to return to the pool.
 	 * @throws IOException Problem returning File to pool.
 	 */
     public void returnFile(WriterPoolMember writer)
@@ -198,7 +198,7 @@ public abstract class WriterPool {
     }
 
 	/**
-	 * @return Number of {@link FilePoolMembers} still in pool.
+	 * @return Number of {@link WriterPoolMember} instances still in the pool.
 	 * @throws java.lang.UnsupportedOperationException
 	 */
     public int getNumIdle()

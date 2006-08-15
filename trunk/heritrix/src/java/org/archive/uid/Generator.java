@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * A <code>record-id</code> generator.
  * {@link GeneratorFactory} assumes implementations have a no-arg Constructor.
- * @see {@link GeneratorFactory}.
+ * @see GeneratorFactory
  * @author stack
  * @version $Revision$ $Date$
  */

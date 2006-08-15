@@ -104,7 +104,7 @@ WriterPoolSettings, FetchStatusCodes {
 	}
     
     /**
-     * @see #crawlCheckpoint(File);
+     * @see #crawlCheckpoint(File)
      */
     @Override
     protected void checkpointRecover() {
