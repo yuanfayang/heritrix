@@ -161,7 +161,12 @@ public class RecordingOutputStream extends OutputStream {
      * @throws IOException If failed creation of backing file.
      */
     public void open(OutputStream wrappedStream) throws IOException {
-        assert this.out == null: "RecordingOutputStream still has old 'out'.";
+        if(isOpen()) {
+            // error; should not be opening/wrapping in an unclosed 
+            // stream remains open
+            throw new IOException("ROS already open for "
+                    +Thread.currentThread().getName());
+        }
         this.out = wrappedStream;
         this.position = 0;
         this.size = 0;

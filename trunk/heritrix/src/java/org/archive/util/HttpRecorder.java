@@ -133,7 +133,7 @@ public class HttpRecorder {
     /**
      * Wrap the provided stream with the internal RecordingInputStream
      *
-     * Its safe to call multiple times.  We only wrap on first call.
+     * open() throws an exception if RecordingInputStream is already open.
      *
      * @param is InputStream to wrap.
      *
@@ -142,21 +142,18 @@ public class HttpRecorder {
      *
      * @throws IOException
      */
-    public InputStream inputWrap(InputStream is) throws IOException {
-        if (!this.ris.isOpen()) {
-            logger.fine(Thread.currentThread().getName() + " wrapping input");
-            this.ris.open(is);
-        } else {
-            logger.fine(Thread.currentThread().getName() + " already open");
-        }
+    public InputStream inputWrap(InputStream is) 
+    throws IOException {
+        logger.fine(Thread.currentThread().getName() + " wrapping input");
+        this.ris.open(is);
         return this.ris;
     }
 
     /**
      * Wrap the provided stream with the internal RecordingOutputStream
      *
-     * Its safe to call multiple times.  We only wrap on first call.
-     *
+     * open() throws an exception if RecordingOutputStream is already open.
+     * 
      * @param os The output stream to wrap.
      *
      * @return The output stream wrapper which is itself an output stream.
@@ -164,10 +161,9 @@ public class HttpRecorder {
      *
      * @throws IOException
      */
-    public OutputStream outputWrap(OutputStream os) throws IOException {
-        if (!this.ros.isOpen()) {
-            this.ros.open(os);
-        }
+    public OutputStream outputWrap(OutputStream os) 
+    throws IOException {
+        this.ros.open(os);
         return this.ros;
     }
 

@@ -534,6 +534,11 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             logger.severe(curi.toString() + " RIS still open. Should have" +
                 " been closed by method release: " +
                 Thread.currentThread().getName());
+            try {
+                rec.getRecordedInput().close();
+            } catch (IOException e) {
+                logger.log(Level.SEVERE,"second-chance RIS close failed",e);
+            }
         }
     }
     
