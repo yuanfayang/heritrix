@@ -89,7 +89,18 @@
             <ant:arg value="org.archive.net.md5.Handler.class" />
             <ant:arg value="org.apache.commons.pool.impl.FairGenericObjectPool"
                 />
-            <ant:arg value="org.apache.commons.pool.impl.GenericObjectPool"/>
+            <ant:arg value="org.apache.commons.pool.impl.GenericObjectPool" />
+            <ant:arg value="org.archive.util.iterator.CompositeIterator.class"
+            	/>
+            <ant:arg value="org.archive.util.iterator.LineReadingIterator.class"
+            	/>
+            <ant:arg value="org.archive.util.iterator.LookaheadIterator.class"
+            	/>
+            <ant:arg value="org.archive.util.iterator.RegexpLineIterator.class"
+            	/>
+            <ant:arg
+             value="org.archive.util.iterator.TransformingIteratorWrapper.class"
+             	/>
         </ant:exec>
     </goal>
 
