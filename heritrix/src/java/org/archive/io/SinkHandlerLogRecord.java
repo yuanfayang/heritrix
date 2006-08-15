@@ -55,11 +55,15 @@ public class SinkHandlerLogRecord extends LogRecord {
         // [ 1108006 ] alerts should show current processor
         // http://sourceforge.net/tracker/index.php?func=detail&aid=1108006&group_id=73833&atid=539102
         if(Thread.currentThread() instanceof ToeThread) {
+            String newMessage = this.getMessage();
             ToeThread tt = (ToeThread) Thread.currentThread();
+            newMessage = newMessage + " (in thread '"+tt.getName()+"'";
             if(tt.getCurrentProcessorName().length()>0) {
-                this.setMessage(this.getMessage() + "(in processor "
-                        + tt.getCurrentProcessorName() + ")");
+                newMessage = newMessage + "; in processor '"
+                    +tt.getCurrentProcessorName() + "'";
             }
+            newMessage = newMessage + ")";
+            this.setMessage(newMessage);
         }
         this.delegatee = record;
     }

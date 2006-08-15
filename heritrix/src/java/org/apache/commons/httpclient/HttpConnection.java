@@ -745,7 +745,8 @@ public class HttpConnection {
             
             // START HERITRIX Change
             HttpRecorder httpRecorder = HttpRecorder.getHttpRecorder();
-            if (httpRecorder == null) {
+            if (httpRecorder == null || (isSecure() && isProxied())) {
+                // no recorder, OR defer recording for pre-tunnel leg
                 inputStream = new BufferedInputStream(
                     socket.getInputStream(), inbuffersize);
                 outputStream = new BufferedOutputStream(
@@ -816,8 +817,22 @@ public class HttpConnection {
         if (inbuffersize > 2048) {
             inbuffersize = 2048;
         }
-        inputStream = new BufferedInputStream(socket.getInputStream(), inbuffersize);
-        outputStream = new BufferedOutputStream(socket.getOutputStream(), outbuffersize);
+
+        // START HERITRIX Change
+        HttpRecorder httpRecorder = HttpRecorder.getHttpRecorder();
+        if (httpRecorder == null) {
+            inputStream = new BufferedInputStream(socket.getInputStream(), inbuffersize);
+            outputStream = new BufferedOutputStream(socket.getOutputStream(), outbuffersize);
+        } else {
+            inputStream = httpRecorder.inputWrap((InputStream)
+                    (new BufferedInputStream(socket.getInputStream(),
+                    inbuffersize)));
+            outputStream = httpRecorder.outputWrap((OutputStream)
+                (new BufferedOutputStream(socket.getOutputStream(), 
+                outbuffersize)));
+        }
+        // END HERITRIX change.
+
         usingSecureSocket = true;
         tunnelEstablished = true;
     }

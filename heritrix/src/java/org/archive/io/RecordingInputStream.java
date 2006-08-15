@@ -82,8 +82,12 @@ public class RecordingInputStream
     public void open(InputStream wrappedStream) throws IOException {
         logger.fine(Thread.currentThread().getName() + " opening " +
             wrappedStream + ", " + Thread.currentThread().getName());
-        assert this.in == null: "Inputstream is not null: " +
-            Thread.currentThread().getName();
+        if(isOpen()) {
+            // error; should not be opening/wrapping in an unclosed 
+            // stream remains open
+            throw new IOException("RIS already open for "
+                    +Thread.currentThread().getName());
+        }
         this.in = wrappedStream;
         this.recordingOutputStream.open();
     }
