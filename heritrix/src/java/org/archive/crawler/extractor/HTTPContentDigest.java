@@ -24,6 +24,7 @@
  */
 package org.archive.crawler.extractor;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
@@ -173,38 +174,52 @@ public class HTTPContentDigest extends Processor {
         
         // Create a MessageDigest 
         MessageDigest digest = null;
+        
+        // We have a ReplayCharSequence open.  Wrap all in finally so we
+        // for sure close it before we leave.
         try {
-            digest = MessageDigest.getInstance(SHA1);
-        } catch (NoSuchAlgorithmException e1) {
-            e1.printStackTrace();
-            return;
-        }
+            try {
+                digest = MessageDigest.getInstance(SHA1);
+            } catch (NoSuchAlgorithmException e1) {
+                e1.printStackTrace();
+                return;
+            }
 
-        digest.reset();
+            digest.reset();
 
-        String s = null;
-        
-        if(regexpr.length() == 0){
-            s = cs.toString();
-        } else {
-            // Process the document
-            Matcher m = TextUtils.getMatcher(regexpr, cs);
-            s = m.replaceAll(" ");
-            TextUtils.recycleMatcher(m);
-        }
-        digest.update(s.getBytes());
+            String s = null;
 
-        // Get the new digest value
-        byte[] newDigestValue = digest.digest();
-        
-        // Log if needed.
-        if(logger.isLoggable(Level.FINEST)){
-            logger.finest("Recalculated content digest for " + 
-                    curi.toString() + " old: " +
-                    Base32.encode((byte[])curi.getContentDigest()) +
-                    ", new: " + Base32.encode(newDigestValue));
+            if (regexpr.length() == 0) {
+                s = cs.toString();
+            } else {
+                // Process the document
+                Matcher m = TextUtils.getMatcher(regexpr, cs);
+                s = m.replaceAll(" ");
+                TextUtils.recycleMatcher(m);
+            }
+            digest.update(s.getBytes());
+
+            // Get the new digest value
+            byte[] newDigestValue = digest.digest();
+
+            // Log if needed.
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.finest("Recalculated content digest for "
+                        + curi.toString() + " old: "
+                        + Base32.encode((byte[]) curi.getContentDigest())
+                        + ", new: " + Base32.encode(newDigestValue));
+            }
+            // Save new digest value
+            curi.setContentDigest(SHA1, newDigestValue);
+        } finally {
+            if (cs != null) {
+                try {
+                    cs.close();
+                } catch (IOException ioe) {
+                    logger.warning(TextUtils.exceptionToString(
+                            "Failed close of ReplayCharSequence.", ioe));
+                }
+            }
         }
-        // Save new digest value
-        curi.setContentDigest(SHA1, newDigestValue);
     }
 }

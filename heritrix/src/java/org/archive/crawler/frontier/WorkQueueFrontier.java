@@ -277,7 +277,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         if (this.targetSizeForReadyQueues<1) {
             this.targetSizeForReadyQueues=1;
         }
-        this.wakeTimer = new Timer("waker for "+this.toString());
+        this.wakeTimer = new Timer("waker for " + c.toString());
         
         try {
             if (workQueueDataOnDisk()

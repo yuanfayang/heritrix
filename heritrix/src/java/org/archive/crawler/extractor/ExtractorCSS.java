@@ -118,17 +118,22 @@ public class ExtractorCSS extends Extractor implements CoreAttributeConstants {
                 curi.toString());
             return;
         }
-        this.numberOfLinksExtracted +=
-            processStyleCode(curi, cs, getController());
-        // Set flag to indicate that link extraction is completed.
-        curi.linkExtractorFinished();
-        // Done w/ the ReplayCharSequence.  Close it.
-        if (cs != null) {
-            try {
-                cs.close();
-            } catch (IOException ioe) {
-                logger.warning(TextUtils.exceptionToString(
-                    "Failed close of ReplayCharSequence.", ioe));
+        
+        // We have a ReplayCharSequence open.  Wrap all in finally so we
+        // for sure close it before we leave.
+        try {
+            this.numberOfLinksExtracted +=
+                processStyleCode(curi, cs, getController());
+            // Set flag to indicate that link extraction is completed.
+            curi.linkExtractorFinished();
+        } finally {
+            if (cs != null) {
+                try {
+                    cs.close();
+                } catch (IOException ioe) {
+                    logger.warning(TextUtils.exceptionToString(
+                        "Failed close of ReplayCharSequence.", ioe));
+                }
             }
         }
     }
