@@ -60,6 +60,7 @@ public class AllSelfTestCases
                 BadURIsStopPageParsingSelfTest.class,
                 // Works locally but not on crawltools.
                 // FlashParseSelfTest.class
+                CheckpointSelfTest.class,
             };
         AllSelfTestCases.allKnownSelftests =
             Collections.unmodifiableList(Arrays.asList(tmp));
@@ -101,8 +102,7 @@ public class AllSelfTestCases
      * @return Suite of all selftests.
      */
     public static Test suite(final String selftestURL, final CrawlJob job,
-            final File jobDir, final File htdocs, final List selftests)
-    {
+            final File jobDir, final File htdocs, final List selftests) {
         TestSuite suite =
             new TestSuite("Test(s) for org.archive.crawler.selftest");
         for (Iterator i = selftests.iterator(); i.hasNext();) {
@@ -110,11 +110,9 @@ public class AllSelfTestCases
         }
 
         return new TestSetup(suite) {
-
-                protected void setUp() throws Exception
-                {
+                protected void setUp() throws Exception {
                     SelfTestCase.initialize(selftestURL, job, jobDir, htdocs);
                 }
-            };
+        };
     }
 }

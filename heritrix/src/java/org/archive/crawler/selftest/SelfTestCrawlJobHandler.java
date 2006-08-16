@@ -34,6 +34,9 @@ import junit.framework.TestResult;
 import org.archive.crawler.Heritrix;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.event.CrawlURIDispositionListener;
+import org.archive.crawler.framework.StatisticsTracking;
 
 
 /**
@@ -44,7 +47,8 @@ import org.archive.crawler.admin.CrawlJobHandler;
  * @version $Id$
  */
 
-public class SelfTestCrawlJobHandler extends CrawlJobHandler {
+public class SelfTestCrawlJobHandler extends CrawlJobHandler
+implements CrawlURIDispositionListener {
     /**
      * Name of the selftest webapp.
      */
@@ -74,6 +78,13 @@ public class SelfTestCrawlJobHandler extends CrawlJobHandler {
         this.selfTestName = selfTestName;
         this.selfTestUrl = url;
     }
+    
+    @Override
+    public void crawlStarted(String message) {
+    	super.crawlStarted(message);
+    	this.getCurrentJob().getController().
+    		addCrawlURIDispositionListener(this);
+    }
 
     public void crawlEnded(String sExitMessage)  {
         TestResult result = null;
@@ -83,12 +94,9 @@ public class SelfTestCrawlJobHandler extends CrawlJobHandler {
             // At crawlEnded time, there is no current job.  Get the selftest
             // job by pulling from the completedCrawlJobs queue.
             List completedCrawlJobs = getCompletedJobs();
-            if (completedCrawlJobs == null || completedCrawlJobs.size() <= 0)
-            {
+            if (completedCrawlJobs == null || completedCrawlJobs.size() <= 0) {
                 logger.severe("Selftest job did not complete.");
-            }
-            else
-            {
+            } else {
                 CrawlJob job = (CrawlJob)completedCrawlJobs.
                     get(completedCrawlJobs.size()-1);
                 Test test = null;
@@ -132,5 +140,23 @@ public class SelfTestCrawlJobHandler extends CrawlJobHandler {
                 0: 1);
         }
     }
-}
 
+	public void crawledURIDisregard(CrawlURI curi) {
+		// TODO Auto-generated method stub
+	}
+
+	public void crawledURIFailure(CrawlURI curi) {
+		// TODO Auto-generated method stub
+	}
+
+	public void crawledURINeedRetry(CrawlURI curi) {
+		// TODO Auto-generated method stub
+	}
+
+	public void crawledURISuccessful(CrawlURI curi) {
+		// If curi ends in 'Checkpoint/index.html', then run a Checkpoint.
+		if (curi.toString().endsWith("/Checkpoint/")) {
+			this.getCurrentJob().getController().requestCrawlCheckpoint();
+		}
+	}
+}

@@ -59,26 +59,22 @@ public class BackgroundImageExtractionSelfTestCase
         String url = getSelftestURLWithTrailingSlash() + relativePath;
         File image = new File(getHtdocs(), relativePath);
         assertTrue("Image exists", image.exists());
-        List metaDatas = getMetaDatas();
+        List [] metaDatas = getMetaDatas();
         boolean found = false;
         ARCRecordMetaData metaData = null;
-        for (Iterator i = metaDatas.iterator(); i.hasNext();)
-        {
-            metaData = (ARCRecordMetaData)i.next();
-            if (metaData.getUrl().equals(url) &&
-                metaData.getMimetype().equalsIgnoreCase(JPEG))
-            {
-                if (!found)
-                {
-                    found = true;
-                }
-                else
-                {
-                    fail("Found a 2nd instance of " + url);
-                }
-            }
-        }
-        assertTrue("No " + url + " in " + getArcFile().getAbsolutePath(),
-            found);
+        for (int mi = 0; mi < metaDatas.length; mi++) {
+			List list = metaDatas[mi];
+			for (final Iterator i = list.iterator(); i.hasNext();) {
+				metaData = (ARCRecordMetaData) i.next();
+				if (metaData.getUrl().equals(url)
+						&& metaData.getMimetype().equalsIgnoreCase(JPEG)) {
+					if (!found) {
+						found = true;
+					} else {
+						fail("Found a 2nd instance of " + url);
+					}
+				}
+			}
+		}
     }
 }
