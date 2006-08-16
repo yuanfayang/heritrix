@@ -11,6 +11,9 @@ Provides application configuration.
 
 <h3>Axioms and Assumptions</h3>
 <ul>
+<li>Configurable objects will depend on <code>org.archive.configuration</code>.
+It will have at least the base Configurable and Registry interfaces.</li>
+</li>
 <li>Every setting/configuration is a <a 
 href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/openmbean/package-summary.html">javax.management.openmbean</a> JMX Attribute.  OpenMBeans are the basis of the *new* Settings system
 (This package replaces the *old* <code>org.archive.crawler.settings</code>
@@ -84,14 +87,30 @@ TODO Static dynamic class.
 	the values that are overrideable and the differences?</li>
 	<li>Set the not-writeable in Overriddes if Attribute is not
 	overrideable?  How?</li>
+    <li>Paul Jack suggests using annotations to mark Configurable classes
+    and for marking whats configurable rather than an Interface and
+    leveraging OpenMBean self-description with description, defaults and
+    ranges. Investigate.
+    </li>
 </ul>
 
 <h3>Comparison to old Settings system</h3>
 <ul>
 	<li>No boostrapping of core components is done by this system.
 	Should make it so don't have to instantiate all that comes
-	before in the hierarchy testing or reusing in another context.
+	before in the configuration hierarchy -- e.g. A SettingsHandler and then
+    a CrawlOrder and then a FetchHTTP -- testing or reusing in another context.
 	</li>
+    <li>Because we are implementing interfaces only to make a Configurable
+    object, the core implementation can be done off in a base POJO and
+    Configuration added later in a subclass.  This base POJO could then be used
+    freely in other contexts without dependencies on Configurable (Settings).
+    We couldn't do this with old setting system.  In the old system you couldn't
+    use FetchHTTP without bringing over the settings system super
+    classes (Brad suggests we take on the practise when refactoring of
+    implementing base class first then subclassing to implement Configurable.
+    He wants FetchHTTP and ARCWriter, etc).
+    </li>
 </ul>
 
 
