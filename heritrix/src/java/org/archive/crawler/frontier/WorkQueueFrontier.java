@@ -77,7 +77,13 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     public class WakeTask extends TimerTask {
         @Override
         public void run() {
-            wakeQueues();
+            synchronized(snoozedClassQueues) {
+                if(this!=nextWake) {
+                    // an intervening waketask was made
+                    return;
+                }
+                wakeQueues();
+            }
         }
     }
 
@@ -182,6 +188,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     
     /** Timer for tasks which wake head item of snoozedClassQueues */
     protected transient Timer wakeTimer;
+    
+    /** Task for next wake */ 
+    protected transient WakeTask nextWake; 
     
     protected WorkQueue longestActiveQueue = null;
     
@@ -757,21 +766,17 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * Wake any queues sitting in the snoozed queue whose time has come.
      */
     void wakeQueues() {
-        long now = System.currentTimeMillis();
-        // Set default next wake time to be in one millisecond in case nothing
-        // to wake.
-        long nextWakeTime = now + DEFAULT_WAIT;
-        long nextWakeDelay = 0;
-        int wokenQueuesCount = 0;
         synchronized (snoozedClassQueues) {
+            long now = System.currentTimeMillis();
+            long nextWakeDelay = 0;
+            int wokenQueuesCount = 0;
             while (true) {
                 if (snoozedClassQueues.isEmpty()) {
                     return;
                 }
                 WorkQueue peek = (WorkQueue) snoozedClassQueues.first();
-                nextWakeTime = peek.getWakeTime();
-                nextWakeDelay = nextWakeTime - now;
-                if ((nextWakeTime - now) <= 0) {
+                nextWakeDelay = peek.getWakeTime() - now;
+                if (nextWakeDelay <= 0) {
                     snoozedClassQueues.remove(peek);
                     peek.setWakeTime(0);
                     reenqueueQueue(peek);
@@ -780,8 +785,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     break;
                 }
             }
+            this.nextWake = new WakeTask();
+            this.wakeTimer.schedule(nextWake,nextWakeDelay);
         }
-        this.wakeTimer.schedule(new WakeTask(),nextWakeDelay);
     }
 
     /**
@@ -917,7 +923,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             synchronized(snoozedClassQueues) {
                 snoozedClassQueues.add(wq);
                 if(wq == snoozedClassQueues.first()) {
-                    this.wakeTimer.schedule(new WakeTask(), delay_ms);
+                    this.nextWake = new WakeTask();
+                    this.wakeTimer.schedule(nextWake, delay_ms);
                 }
             }
         }
