@@ -65,7 +65,7 @@ public class SelfTestCase extends TestCase
 
     private static CrawlJob crawlJob = null;
     private static File crawlJobDir = null;
-    private static File arcFile = null;
+    private static File [] arcFile = null;
     private static String selftestURL = null;
 
     /**
@@ -90,14 +90,14 @@ public class SelfTestCase extends TestCase
      *
      * @see org.archive.io.arc.ARCReader#validate()
      */
-    private static ARCReader readReader = null;
+    private static ARCReader [] readReader = null;
 
     /**
      * Metadata list from the arc reader.
      *
      * Gotten as byproduct of calling validate on the arcreader.
      */
-	private static List metaDatas;
+	private static List [] metaDatas;
 
 
     public SelfTestCase()
@@ -232,22 +232,28 @@ public class SelfTestCase extends TestCase
         String prefix = testNonNullNonEmpty((String)arcWriterProcessor.
             getAttribute(ARCWriterProcessor.ATTR_PREFIX));
         File [] arcs = FileUtils.getFilesWithPrefix(arcDir, prefix);
+        /*
         if (arcs.length != 1) {
             throw new IOException("Expected one only arc file.  Found" +
                 " instead " + Integer.toString(arcs.length) + " files.");
         }
-        SelfTestCase.arcFile = arcs[0];
-        SelfTestCase.readReader = ARCReaderFactory.
-            get(SelfTestCase.arcFile);
-        SelfTestCase.metaDatas = SelfTestCase.readReader.validate();
+        */
+        SelfTestCase.readReader = new ARCReader[arcs.length];
+        SelfTestCase.arcFile = new File[arcs.length];
+        SelfTestCase.metaDatas = new List[arcs.length];
+        for (int i = 0; i < arcs.length; i++) {
+        	File f = arcs[i];
+            SelfTestCase.arcFile[i] = f;
+            SelfTestCase.readReader[i] = ARCReaderFactory.get(f);
+            SelfTestCase.metaDatas[i] = SelfTestCase.readReader[i].validate();
+        }
         SelfTestCase.initialized = true;
     }
 
     /**
      * @return Returns the arcDir.
      */
-    protected static File getArcFile()
-    {
+    protected static File [] getArcFiles() {
         return arcFile;
     }
 
@@ -274,8 +280,7 @@ public class SelfTestCase extends TestCase
      *
      * @return Returns the readReader, an ARCReader that has been validated.
      */
-    protected static ARCReader getReadReader()
-    {
+    protected static ARCReader [] getReadReaders() {
         return SelfTestCase.readReader;
     }
 
@@ -283,8 +288,7 @@ public class SelfTestCase extends TestCase
      * @return Returns list of ARCReader metadatas, the byproduct of calling
      * validate.
      */
-    protected static List getMetaDatas()
-    {
+    protected static List [] getMetaDatas() {
         return SelfTestCase.metaDatas;
     }
 
@@ -417,27 +421,30 @@ public class SelfTestCase extends TestCase
         } else {
             baseURL += getTestName();
         }
-        List metaDatas = getMetaDatas();
+        List [] metaDatas = getMetaDatas();
         ARCRecordMetaData metaData = null;
-        List filesFound = new ArrayList();
-        for (Iterator i = metaDatas.iterator(); i.hasNext();) {
-            metaData = (ARCRecordMetaData)i.next();
-            String url = metaData.getUrl();
-            if (url.startsWith(baseURL) &&
-                metaData.getMimetype().equalsIgnoreCase("text/html")) {
-                String fileName = url.substring(baseURL.length());
-                if (fileName.startsWith("/")) {
-                    fileName = fileName.substring(1);
-                }
-                if (fileName != null && fileName.length() > 0) {
-                    File f = new File(fileName);
-                    if (!filesFound.contains(f)) {
-                        // Don't add duplicates.
-                        filesFound.add(new File(fileName));
-                    }
-                }
-            }
-        }
+        List<File> filesFound = new ArrayList<File>();
+        for (int mdi = 0; mdi < metaDatas.length; mdi++) {
+        	List list = metaDatas[mdi];
+			for (final Iterator i = list.iterator(); i.hasNext();) {
+				metaData = (ARCRecordMetaData) i.next();
+				String url = metaData.getUrl();
+				if (url.startsWith(baseURL)
+						&& metaData.getMimetype().equalsIgnoreCase("text/html")) {
+					String fileName = url.substring(baseURL.length());
+					if (fileName.startsWith("/")) {
+						fileName = fileName.substring(1);
+					}
+					if (fileName != null && fileName.length() > 0) {
+						File f = new File(fileName);
+						if (!filesFound.contains(f)) {
+							// Don't add duplicates.
+							filesFound.add(new File(fileName));
+						}
+					}
+				}
+			}
+		}
         return filesFound;
     }
 }

@@ -739,10 +739,15 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     
     /**
      * Subclass of crawlcontroller that unregisters beans when stopped.
-     * Done as subclass so CrawlController doesn't get any JMX pollution,
-     * so for sure CrawlJob is unregistered with JMX and so any listeners on
-     * the CrawlJob get a chance to get crawl ended message
+     * Done as subclass so CrawlController doesn't get any JMX (or 'CrawlJob')
+     * pollution, so for sure CrawlJob is unregistered with JMX and so any
+     * listeners on the CrawlJob get a chance to get crawl ended message
      * (These latter notifications may not actually be getting through -- TBD).
+     * <p>TODO: This override dirtys the data model since CC knows about CJs.
+     * The facility provided by this class emitting events and statistics so
+     * they can be read by JMX needs to go back into CC.  Probably best to
+     * registering in JMX the CC, rather than CJ.  Lets do this in Heritrix 2.0
+     * since means changing the JMX API some.
      */
     public class MBeanCrawlController extends CrawlController
     implements Serializable {
@@ -800,29 +805,41 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         }
     }
     
+    protected CrawlController setupCrawlController()
+    throws InitializationException {
+        CrawlController controller = null;
+        
+        // Check if we're to do a checkpoint recover.  If so, deserialize
+        // the checkpoint's CrawlController and use that in place of a new
+        // CrawlController instance.
+        Checkpoint cp = CrawlController.
+            getCheckpointRecover(getSettingsHandler().getOrder());
+        if (cp != null) {
+            try {
+            	controller = (MBeanCrawlController)CheckpointUtils.
+                    readObjectFromFile(MBeanCrawlController.class,
+                        cp.getDirectory());
+            } catch (FileNotFoundException e) {
+                throw new InitializationException(e);
+            } catch (IOException e) {
+                throw new InitializationException(e);
+            } catch (ClassNotFoundException e) {
+                throw new InitializationException(e);
+            }
+        } else {
+        	controller = new MBeanCrawlController();
+        }
+        return controller;
+    }
+    
+    protected CrawlController createCrawlController() {
+    	return new MBeanCrawlController();
+    }
+    
     public void setupForCrawlStart()
     throws InitializationException {
         try {
-            // Check if we're to do a checkpoint recover.  If so, deserialize
-            // the checkpoint's CrawlController and use that in place of a new
-            // CrawlController instance.
-            Checkpoint cp = CrawlController.
-                getCheckpointRecover(getSettingsHandler().getOrder());
-            if (cp != null) {
-                try {
-                    this.controller = (MBeanCrawlController)CheckpointUtils.
-                        readObjectFromFile(MBeanCrawlController.class,
-                            cp.getDirectory());
-                } catch (FileNotFoundException e) {
-                    throw new InitializationException(e);
-                } catch (IOException e) {
-                    throw new InitializationException(e);
-                } catch (ClassNotFoundException e) {
-                    throw new InitializationException(e);
-                }
-            } else {
-                this.controller = new MBeanCrawlController();
-            }
+        	this.controller = setupCrawlController();
             // Register as listener to get job finished notice.
             this.controller.addCrawlStatusListener(this);
             this.controller.initialize(getSettingsHandler());

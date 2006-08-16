@@ -94,6 +94,8 @@ public class Checkpointer implements Serializable {
      * Setup in constructor or on a call to revovery.
      */
     private transient Timer timerThread = null;
+    
+    public static final DecimalFormat INDEX_FORMAT = new DecimalFormat("00000");
 
     /**
      * Create a new CheckpointContext with the given store directory
@@ -248,8 +250,12 @@ public class Checkpointer implements Serializable {
      * @return next checkpoint name (zero-padding string).
      */
     public String getNextCheckpointName() {
-        return this.checkpointPrefix +
-            (new DecimalFormat("00000")).format(nextCheckpoint);
+        return formatCheckpointName(this.checkpointPrefix, this.nextCheckpoint);
+    }
+    
+    public static String formatCheckpointName(final String prefix,
+    		final int index) {
+    	return prefix + INDEX_FORMAT.format(index);
     }
 
     protected void writeValidity() {

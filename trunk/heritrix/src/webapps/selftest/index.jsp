@@ -12,10 +12,8 @@
 	    getRealPath(File.separator));
 	ArrayList dirs = new ArrayList();
 	File [] files = cwd.listFiles();
-	if (files != null)
-	{
-		for (int i = 0; i < files.length; i++)
-		{
+	if (files != null) {
+		for (int i = 0; i < files.length; i++) {
 	    	if (files[i].isDirectory() &&
 	    		!files[i].getName().equals("TrickyRelativeURIs") &&
 	    		!files[i].getName().equals("SpacesInHrefPath") &&
@@ -25,8 +23,7 @@
 	    		!files[i].getName().equals("FormTagExtraction") &&
 	    		!files[i].getName().equals("SimpleDocumentTypes") &&
 	    		!files[i].getName().equals("WEB-INF") &&
-	    		!files[i].getName().equals("CVS"))
-	    	{
+	    		!files[i].getName().equals("CVS")) {
 	    		dirs.add(files[i].getName());
 	    	}
 		}
@@ -68,8 +65,7 @@
           	<ul>
      		<%
      			String dir = null;
-     			while (dirsIterator.hasNext())
-     			{
+     			while (dirsIterator.hasNext()) {
      				dir = (String)dirsIterator.next();
      		%>
      			<li><a href="<%=dir%>/"><%=dir%></a></li>
