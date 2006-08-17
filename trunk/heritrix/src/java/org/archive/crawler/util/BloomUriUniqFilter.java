@@ -68,8 +68,11 @@ import org.archive.util.BloomFilter32bp2Split;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class BloomUriUniqFilter extends SetBasedUriUniqFilter implements Serializable {
-    private static Logger LOGGER =
+public class BloomUriUniqFilter extends SetBasedUriUniqFilter
+implements Serializable {
+	private static final long serialVersionUID = 1061526253773091309L;
+
+	private static Logger LOGGER =
         Logger.getLogger(BloomUriUniqFilter.class.getName());
 
     BloomFilter bloom; // package access for testing convenience
