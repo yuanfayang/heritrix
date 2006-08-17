@@ -531,6 +531,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      */
     public void kickUpdate() {
         super.kickUpdate();
+        int target = (Integer)getUncheckedAttribute(null,
+                ATTR_TARGET_READY_QUEUES_BACKLOG);
+        if (target < 1) {
+            target = 1;
+        }
+        this.targetSizeForReadyQueues = target; 
         try {
             initCostPolicy();
         } catch (FatalConfigurationException fce) {
