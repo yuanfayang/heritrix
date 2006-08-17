@@ -74,6 +74,8 @@ import java.util.concurrent.TimeUnit;
 public abstract class WorkQueueFrontier extends AbstractFrontier
 implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         Serializable {
+	private static final long serialVersionUID = 570384305871965843L;
+	
     public class WakeTask extends TimerTask {
         @Override
         public void run() {
