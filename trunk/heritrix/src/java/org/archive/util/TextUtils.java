@@ -175,7 +175,8 @@ public class TextUtils {
      * @return The same string escaped.
      */
     public static String escapeForJavascript(String s) {
-        return StringEscapeUtils.escapeJavaScript(s);
+        s = s.replaceAll(">", "&gt;");
+        return escapeForHTML(StringEscapeUtils.escapeJavaScript(s));
     }
     
     /**
