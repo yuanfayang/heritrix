@@ -35,7 +35,7 @@ import java.net.URLStreamHandler;
  * the configured script as an argument.  The configured script then does the
  * work to bring the item pointed to by the md5 local so we can open a Stream
  * on the local copy.  Local file is deleted when we finish. Do
- * {@link Md5URLConnection#getFile()} to get name of temporary file.
+ * {@link DownloadURLConnection#getFile()} to get name of temporary file.
  * 
  * <p>You need to define the system property
  * <code>-Djava.protocol.handler.pkgs=org.archive.net</code> to add this handler
@@ -68,6 +68,9 @@ public class Handler extends URLStreamHandler {
                 "md5:deadbeefdeadbeefdeadbeefdeadbeef");
             System.exit(1);
         }
+        System.setProperty("org.archive.net.md5.Md5URLConnection.path",
+            "/tmp/manifest");
+        System.setProperty("java.protocol.handler.pkgs", "org.archive.net");
         URL u = new URL(args[0]);
         URLConnection connect = u.openConnection();
         // Write download to stdout.
