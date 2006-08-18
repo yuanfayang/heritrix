@@ -5,16 +5,17 @@
 </head>
 <body>
 Experimental WARC Writer and Readers.  Code and specification subject to change.
-Code implemented against (unreleased)
+This code, with noted exceptions, implements the (unreleased)
 <a href="http://archive-access.sourceforge.net/warc/warc_file_format.html">WARC
 File Format (Version 0.9)</a>.
+
 <h2>Implementation Notes</h2>
 
 <h3>Unique ID Generator</h3>
 <p>WARC requires a GUID for each record written. A configurable 
 unique ID {@link org.archive.uid.GeneratorFactory}, it can be configured
 to use alternate unique ID generators, was added with a default of
-{@link org.archive.uid.UUIDGenerator}.  Generates
+{@link org.archive.uid.UUIDGenerator}.  The default generates
 <a url="http://en.wikipedia.org/wiki/UUID">UUIDs</a> (using java5
 <code>java.util.UUID</code>) and formats them in accordance with
 <a href="http://ietf.org/rfc/rfc4122.txt">RFC4122</a>.
@@ -26,25 +27,17 @@ WARCs and occasionally for metadata. An implementation was added at
 {@link org.archive.util.anvl}.
 </p>
 
-<h3>Miscellaneous</h3>
-<p>Writing WARCs, the <code>resource</code> record type is chosen as the core
-record that all others associate to: i.e. all others 
-have a <code>Related-Record-ID</code> that points back to the
-<code>resource</code>.
-</p>
-<p>Currently length has leading zeros to emphasize the length fields
-fixed-lengthed-ness.
-</p>
-
-
-<h2>Suggested Spec. Amendments</h2>
+<h3><a name="deviations">Deviations from Spec.</a></h3>
+<p>Below deviations from spec. 0.9 to be proposed as Spec. amendments
+(Vocal agreement obtained from John and Gordon at the <i>La Honda</i> Meeting,
+August 8th, 2006).</p>
 <h3>mimetype in header line</h3>
-<p>Lets change spec. so full mimetypes are allowed as per RFC2045 rather than
-our current, shriveled header line mimetype that allows only type and subtype.
-This will mean allowing mimetypes to have <i>parameters</i>: e.g.
+<p>Allow full mimetypes in the header line as per RFC2045 rather than
+current, shriveled mimetype that allows only type and subtype.  This will mean
+mimetypes are allowed <i>parameters</i>: e.g.
 <code>text/plain; charset=UTF-8</code> or
 <code>application/http; msgtype=request</code>.  
-If we allowed full mimetypes, we could support the following scenarios without
+Allowing full mimetypes, we can support the following scenarios without
 further amendment to specification and without parsers having to resort to
 <code>metadata</code> records or to custom
 <code>Named Fields</code> to figure how to interpret payload:
@@ -65,12 +58,15 @@ most basic (or 'desiccated' in Kunze-speak)
 </li>
 </ul>
 </p>
-<p>To support full mimetypes, we must allow spaces between
-parameters and allow that parameter values themselves might include spaces
-('quoted-string').  Parse would be easy especially considering position in
-header line, second to last, just before record-id URI, but 
-parse would be easier still if mimetype were last (easier to implement and
-easier to document in spec).</p>
+<p>To support full mimetypes, we must allow for whitespace between parameters
+and allow that parameter values themselves might include whitespace
+('quoted-string'). The WARC Writer converts any embedded carriage-return and
+newlines to single space.</p>
+
+<h3>Swap position of recordid and mimetype in the header line</h3>
+<p>Because of the above amendment where we allow full mimetypes on header line,
+to ease the parse, since miemtype now may include whitespace, we move the
+mimetype to last position on header line and recordid to second-from-last.</p>
 
 <h3>Use application/http instead of message/http</h3>
 <p>message type has line length maximum of 1000 characters absent a
@@ -80,6 +76,21 @@ easier to document in spec).</p>
 19.1 Internet Media Type message/http and application/http in 
 <a href="http://www.faqs.org/rfcs/rfc2616.html">RFC2616</a>).
 </p>
+
+<h3>Miscellaneous</h3>
+<p>Writing WARCs, the <code>resource</code> record type is chosen as the core
+record that all others associate to: i.e. all others 
+have a <code>Related-Record-ID</code> that points back to the
+<code>resource</code>.
+</p>
+<p>Currently length has leading zeros to emphasize the length fields
+fixed-lengthed-ness.
+</p>
+
+
+<h2>Suggested Spec. Amendments</h2>
+<p>Apart from the above listed <a href="#deviations">deviations</a>, the below
+changes are also suggested:</p>
 <h3>Drop response record type</h3>
 <p><code>resource</code> is sufficent. Let mimetype distingush if capture with
 response headers or not (As per comment at end of <i>8.1 HTTP and HTTPS</i>
@@ -94,6 +105,16 @@ pretty much unrecordable. NNTP and FTP similar.  Because of rich MIME, no
 need of a special response type here.</p>
 <p>Related, do we need the <code>request</code> record?
 Only makes sense for HTTP?</p>
+
+<p>This proposal is contentious.  Gordon drew scenario where response
+would be needed distingushing local from remote capture if an archiving
+institution purposefully archived without recording headers or
+if the payload itself was an archived record. In opposition, was suggested that
+should an institution choose to cature in this 'unusual' mode, crawl metadata
+could be used consulted to disambiguate confusion on how capture was done (To
+be further investigated.  In general, definition of record types is still in 
+need of work).
+</p>
 
 <h3>Edits</h3>
 <p>Below are suggested edits.  Changes are not substantative.
@@ -111,25 +132,29 @@ belongs in the <i>5.2 Named Parameters</i> preamble.
 
 
 <h4>Miscellaneous</h4>
+<p>LaHonda in below is reference to meeting of John, Gordon and Stack at
+LaHonda Cafe on 16th St., on August 8th, 2006.
+</p>
 <ul>
 <li>Leave off 9.2 GZIP extra fields. Big section on implementing an option
-that has little to do with WARCing.</li>
+that has little to do with WARCing. AGREED at LaHonda.</li>
 
 <li>But, we need to mark gzipped files as being WARC: i.e. that the 
 GZIP is a member per resource. Its useful so readers know how to invoke
 GZIP (That it has to be done once to get at any record or just need to
 do per record). Suggest adding GZIP extra field in HEAD of
-GZIP member that says 'WARC' (ARC has such a thing currently).</li>
+GZIP member that says 'WARC' (ARC has such a thing currently). NOT NECESSARY per LaHonda meeting.</li>
 
 <li>IP-Address for dns resource is DNS Server.  Add note to this effect in
 8.2 DNS.</li>
 
-<li>Section 6. is truncated -- missing text.  What was intended here?</li>
+<li>Section 6. is truncated -- missing text.  What was intended here? SEE
+ISO DOC.</li>
 
 <li>In-line ANVL definition (From Kunze).  Related, can labels have
 CTLs such as CRLF (Shouldn't)?  When says 'control-chars', does this include
 UNICODE control characters (Should)? CHAR is described as ASCII/UTF-8 but they
-are not same (Should be UTF-8)</li>
+are not same (Should be UTF-8).  ANVL OR NOT STILL UP IN AIR AFTER LaHonda.</li>
 
 <li>Fix examples. Use output of experimental ARC Writer.</li>
 
@@ -219,9 +244,19 @@ Rather than <code>End-Length</code>, like MIME, last record could have
 <code>Segment-Number-Total</code>, a count of all segments that make up
 complete record.
 </li>
-
 </ul>
 
+<p>From LaHonda, discussion of <code>revisit</code> type. Definition was
+tighted some by saying revisit is used when you chose not to store the capture.
+Was thought possible that it
+NOT require pointer back to an original.  Suggested it might have a
+similarity judgment header -- <code>similiarity-value</code> -- with values
+between 0 and 1.  Might also have <code>analysis-method</code> and
+<code>description</code>.  Possible methods discussed included: URI same,
+length same, hash of content same, judgement based off content of HTTP HEAD
+request, etc.  Possible payloads might be: Nothing, a diff, the hash obtained,
+etc.
+</p>
 
 <h2>TODOs</h2>
 <ul>
