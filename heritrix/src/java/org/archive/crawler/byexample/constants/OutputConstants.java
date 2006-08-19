@@ -34,7 +34,7 @@ public class OutputConstants {
     
     // Print-out Constants    
 
-    public static final String KEY_SEPARATOR="~~";
+    public static final String KEY_SEPARATOR="~";
     public static final String ENTRY_SEPARATOR="::";
     public static final String LIST_SEPARATOR=";";
     public static final String PATH_SEPARATOR=File.separator;
@@ -66,6 +66,7 @@ public class OutputConstants {
     public static final String CLASSIFICATION_FILES_HOME="classification"+PATH_SEPARATOR;
     
     // Output file-names constants
+    
     public static final String JOB_NAME_PREFIX="byexamplejob-";
     public static final String STOP_WORDS_FILENAME="stopwords.txt";
     public static final String PROPERTIES_FILENAME="byexample.properties";
@@ -80,7 +81,7 @@ public class OutputConstants {
     public static final String PREPROCESS_XML_FILENAME="preprocess-results.xml";
     public static final String CLUSTERING_XML_FILENAME="clustering-results.xml";
     public static final String CLASSIFICATION_XML_FILENAME="classification-results.xml";
-    
+        
     /**
      * Returns path under JOBS_HOME for a job of given id
      * @param id
@@ -116,4 +117,108 @@ public class OutputConstants {
     public static String getClassificationPath(String id){
         return getJobPath(id)+CLASSIFICATION_FILES_HOME;
     }
-}
+    
+    /**
+     * 
+     * @return stop-words file path
+     */
+    public static String getStopWordsFilePath(){
+        return CONFIG_HOME+STOP_WORDS_FILENAME;
+    }
+    
+    /**
+     * @return properties file path
+     */
+    public static String getPropertiesFilePath(){
+        return CONFIG_HOME+PROPERTIES_FILENAME;
+    }
+    
+    /**
+     * @param id job id
+     * @return terms index file path
+     */
+    public static String getTermsIndexFilePath(String id){
+        return getPreprocessPath(id)+TERMS_INDEX_FILENAME;
+    }
+    
+    /**
+     * @param id job id
+     * @return documents listing file path
+     */
+    public static String getDocumentListingFilePath(String id){
+        return getPreprocessPath(id)+DOCUMENT_LISTING_FILENAME;
+    }
+    
+    /**
+     * @param id job id
+     * @return clustering listing file path
+     */
+    public static String getDocumentsClusteringtListingFilePath(String id){
+        return getClusteringPath(id)+DOCUMENTS_CLUSTERING_LISTING_FILENAME;
+    }
+    
+    /**
+     * @param id job id
+     * @return terms support listing file path
+     */
+    public static String getTermsSupportListingFilePath(String id){
+        return getClusteringPath(id)+TERMS_SUPPORT_LISTING_FILENAME;
+    }
+        
+    /**
+     * @param id job id
+     * @return classification document listing file path
+     */
+    public static String getClassificationDocumentListingFilePath(String id){
+        return getClassificationPath(id)+CLASSIFICATION_DOCUMENT_LISTING;
+    }
+    
+    /**
+     * @param id job id
+     * @return unclassified document listing file path
+     */
+    public static String getUnclassifiedDocumentListingFilePath(String id){
+        return getClassificationPath(id)+UNCLASSIFIED_DOCUMENT_LISTING;
+    }
+    
+    /**
+     * @param id job id
+     * @return most relevant document listing file path
+     */
+    public static String getMostRelevantListingFilePath(String id){
+        return getClassificationPath(id)+MOST_RELEVANT_LISTING;
+    }
+    
+    /**
+     * @param id job id
+     * @return least relevant document listing file path
+     */
+    public static String getLeastRelevantListingFilePath(String id){
+        return getClassificationPath(id)+LEAST_RELEVANT_LISTING;
+    }
+    
+    /**
+     * @param id job id
+     * @return preprocess XMLInfo file path
+     */
+    public static String getPreprocessXMLFilePath(String id){
+        return getPreprocessPath(id)+PREPROCESS_XML_FILENAME;
+    }
+    
+    /**
+     * @param id job id
+     * @return clustering XMLInfo file path
+     */
+    public static String getClusteringXMLFilePath(String id){
+        return getClusteringPath(id)+CLUSTERING_XML_FILENAME;
+    }
+    
+    /**
+     * @param id job id
+     * @return classification XMLInfo file path
+     */
+    public static String getClassificationXMLFilePath(String id){
+        return getClassificationPath(id)+CLASSIFICATION_XML_FILENAME;
+    }
+         
+} // END OF CLASS
