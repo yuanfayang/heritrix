@@ -5,21 +5,27 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Logger;
 
-import org.apache.tools.ant.types.selectors.modifiedselector.Algorithm;
+import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
+
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.constants.ByExampleProperties;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.datastructure.documents.DocumentListing;
 import org.archive.crawler.byexample.datastructure.info.PreprocessInfo;
+import org.archive.crawler.byexample.relevancerules.RelevanceDecidingFilter;
 import org.archive.crawler.byexample.utils.FileUtils;
 import org.archive.crawler.byexample.utils.ParseUtils;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.framework.Processor;
+import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.Type;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
-
-import org.htmlparser.util.ParserException;
 
 /**
  * @author Michael
@@ -32,9 +38,19 @@ public class TermsIndexingProcessor extends Processor {
     
     public static final String PROCESSOR_NAME="Terms Indexing Processor";
     
-    public static final String PROCESSOR_FULL_NAME=TermsIndexingProcessor.class.getName();
+    public static final String PROCESSOR_FULL_NAME = TermsIndexingProcessor.class.getName();
     
-    public static final String PROCESSOR_DESCRIPTION=" Creates an inverted index of terms in the crawled pages";
+    public static final String PROCESSOR_DESCRIPTION = "Creates an inverted index of terms in the crawled pages";
+    
+    public static final String RELEVANCE_DECIDE_RULES_ATTR = "Relevance Rules";
+    
+    public static final String RELEVANCE_DECIDE_FILTER_ATTR = "Relevance Filter";
+   
+    public static final String JOB_ID_ATTR = "crawl-by-example job ID"; 
+    
+    private RelevanceDecidingFilter myRelevanceDecider;
+    
+    private String defaultJobID; 
     
     private String jobID;
     
@@ -67,6 +83,17 @@ public class TermsIndexingProcessor extends Processor {
     
     public TermsIndexingProcessor(String name){
         super (name,PROCESSOR_NAME);
+        //Create default job id
+        defaultJobID=OutputConstants.JOB_NAME_PREFIX+ArchiveUtils.TIMESTAMP17.format(new Date());
+        //Add Job ID attribute
+        addElementToDefinition(new SimpleType(JOB_ID_ATTR,
+                "Defines the crawl-by-example job ID", defaultJobID));
+        // Add relevance filter
+        addElementToDefinition(
+                new RelevanceDecidingFilter(RELEVANCE_DECIDE_FILTER_ATTR));
+        //Add relevance decide rules sequence
+        addElementToDefinition(
+                new DecideRuleSequence(RELEVANCE_DECIDE_RULES_ATTR));
     }
     
     /**
@@ -79,40 +106,39 @@ public class TermsIndexingProcessor extends Processor {
         numOfAcceptedDocs=0;
         numOfRejectedDocs=0;
         
-        jobID=OutputConstants.JOB_NAME_PREFIX+ArchiveUtils.TIMESTAMP17.format(new Date());
+        try {
+            jobID=(String)getAttribute(JOB_ID_ATTR);
+        }  catch (Exception e) {
+            throw new RuntimeException("Failed to load job-id attribute",e);
+        }
+        // If job id is different from default, 
+        //create new job with the supplied id + unique job identifier
+        if (jobID.equals(defaultJobID))
+            jobID=defaultJobID;
+        else
+            jobID=jobID.concat("-").concat(ArchiveUtils.TIMESTAMP17.format(new Date()));
+        
         filesPath=OutputConstants.getPreprocessPath(jobID);
         
         //Load algorithm parameters
-        try {
-            ByExampleProperties.readPropeties(OutputConstants.CONFIG_HOME+OutputConstants.PROPERTIES_FILENAME);
-        } catch (Exception e) {
-            logger.severe("Failed to load properties file: "+e.getMessage());
-            return;
-        }
+        ByExampleProperties.readPropeties(OutputConstants.getPropertiesFilePath());
         
+        try {
+            myRelevanceDecider=(RelevanceDecidingFilter)getAttribute(RELEVANCE_DECIDE_FILTER_ATTR);
+            myRelevanceDecider.setDecideRules((DecideRule)getAttribute(RELEVANCE_DECIDE_RULES_ATTR));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load relevance filter attributes",e);
+        }
+            
         //Create documents dump file
-        try {
-            documentDumpFile= FileUtils.createFileForJob(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.DOCUMENT_LISTING_FILENAME,true);
-            docList=new DocumentListing(documentDumpFile);
-        } catch (Exception e1) {
-            logger.severe("Failed to create file at path: "+filesPath);
-            return;
-        }
-        
+        documentDumpFile= FileUtils.createFileForJob(jobID,OutputConstants.PREPROCESS_FILES_HOME,OutputConstants.DOCUMENT_LISTING_FILENAME,true);
+        docList=new DocumentListing(documentDumpFile);
+    
         //Create Inverted Index        
-        try {
-            termsIndexHandler=new TermIndexManipulator(ByExampleProperties.INVERTED_INDEX_TYPE,filesPath);
-        } catch (Exception e) {
-            logger.severe("Failed to create inverted index manipulator: "+e.getMessage());
-        }
+        termsIndexHandler=new TermIndexManipulator(ByExampleProperties.INVERTED_INDEX_TYPE,filesPath);
                 
         //Load Stop Words list
-        try {
-           stopWordsHandler=new StopWordsHandler();
-        } catch (Exception e1) {
-            logger.severe("Failed to create stop words set: "+e1.getStackTrace());
-            return;
-        }
+        stopWordsHandler=new StopWordsHandler();
         
     }
     
@@ -156,11 +182,8 @@ public class TermsIndexingProcessor extends Processor {
         }
         
         //Parse it to terms and add to the terms inverted index
-        try {
-            termsIndexHandler.addDocumentToIndex(ParseUtils.tokenizer(cs),numOfProcessedDocs,stopWordsHandler);
-        } catch (ParserException e) {
-            logger.severe("Failed to parse document: "+currURL);
-        }         
+        termsIndexHandler.addDocumentToIndex(ParseUtils.tokenizer(cs),numOfProcessedDocs,stopWordsHandler);
+
        
         docList.addToListing(numOfProcessedDocs,uriToProcess.toString(),isAccepted);
         
@@ -170,26 +193,29 @@ public class TermsIndexingProcessor extends Processor {
         return true;
     }
     
-    protected void innerProcess(CrawlURI uriToProcess){
+    private void acceptedProcess(CrawlURI uriToProcess){
         if (processURI(uriToProcess,true))
             numOfAcceptedDocs++;
     }
     
-    protected void innerRejectProcess(CrawlURI uriToProcess){
+    private void rejectedProcess(CrawlURI uriToProcess){
         if (processURI(uriToProcess,false))
             numOfRejectedDocs++;
     }
     
+    protected void innerProcess(CrawlURI uriToProcess){        
+        if (myRelevanceDecider.accepts(uriToProcess))
+            acceptedProcess(uriToProcess);
+        else
+            rejectedProcess(uriToProcess);
+ }
+
     public void createPreprocessXmlFile(){
-        try {
-            PreprocessInfo info=new PreprocessInfo
-                                (filesPath+OutputConstants.TERMS_INDEX_FILENAME,
-                                 filesPath+OutputConstants.DOCUMENT_LISTING_FILENAME,
-                                 numOfProcessedDocs,termsIndexHandler.getIndex().getSize());
-            info.toXML(OutputConstants.getJobPath(jobID),OutputConstants.PREPROCESS_XML_FILENAME);
-        } catch (Exception e) {
-            logger.severe("Unable to create preprocess xml file: "+e.getMessage());
-        }
+        PreprocessInfo info=new PreprocessInfo
+                            (OutputConstants.getTermsIndexFilePath(jobID),
+                            OutputConstants.getDocumentListingFilePath(jobID),
+                             numOfProcessedDocs,termsIndexHandler.getIndex().getSize());
+        info.toXML(OutputConstants.getJobPath(jobID),OutputConstants.PREPROCESS_XML_FILENAME);
     }
 
     
@@ -206,13 +232,9 @@ public class TermsIndexingProcessor extends Processor {
    
 
     protected void finalTasks(){
-        try {
-            termsIndexHandler.getIndex().closeIndex(jobID,OutputConstants.PREPROCESS_FILES_HOME);                 
-            docList.dumpListingToFile();
-            FileUtils.closeFile(documentDumpFile);            
-        } catch (Exception e) {
-            logger.severe("Problems with file dump: "+e.getMessage());
-        }        
+        termsIndexHandler.getIndex().closeIndex(jobID,OutputConstants.PREPROCESS_FILES_HOME);                 
+        docList.dumpListingToFile();
+        FileUtils.closeFile(documentDumpFile);                  
         
         createPreprocessXmlFile();
     }

@@ -22,10 +22,8 @@ import org.archive.crawler.byexample.utils.FileUtils;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
-import org.htmlparser.util.ParserException;
 
 public class ClassifierProcessor extends Processor {
 
@@ -37,8 +35,10 @@ public class ClassifierProcessor extends Processor {
             .getName();
 
     public static final String PROCESSOR_DESCRIPTION = "Classifies the crawled pages according to supplied clustering hierarchy";
+    
+    public static final String JOB_ID_ATTR = "crawl-by-example Job ID"; 
 
-    public static final String BASE_ON_KEY = "based-on";
+    public static final String BASE_ON_ATTR = "based-on";
 
     public static final String EMPTY_BASE_ON = "none";
 
@@ -63,6 +63,7 @@ public class ClassifierProcessor extends Processor {
     private String basedOnJob = null;
 
     // Classification job ID
+    private String defaultJobID=null;
     private String jobID = null;
 
     // Classifier instance
@@ -90,21 +91,26 @@ public class ClassifierProcessor extends Processor {
 
     public ClassifierProcessor(String name) {
         super(name, PROCESSOR_NAME);
-        Type e = addElementToDefinition(new SimpleType(BASE_ON_KEY,
-                "Defines the by-example-id of the clustering hierarchy "
+        // Add based-on job attribute
+        addElementToDefinition(new SimpleType(BASE_ON_ATTR,
+                "Defines the crawl-by-example id of the clustering hierarchy "
                         + "on which the classification will be based",
                 EMPTY_BASE_ON));
-        e.setExpertSetting(false);
-        e.setOverrideable(false);
+        //Create default job id
+        defaultJobID=OutputConstants.JOB_NAME_PREFIX+ArchiveUtils.TIMESTAMP17.format(new Date());
+        //Add Job ID attribute
+        addElementToDefinition(new SimpleType(JOB_ID_ATTR,
+                "Defines the crawl-by-example job ID", defaultJobID));
+        
     }
 
     protected void initialTasks() {
-
+        
+        // Load "Based-on" attribute
         try {
-            basedOnJob = (String) getAttribute(BASE_ON_KEY);
+            basedOnJob = (String) getAttribute(BASE_ON_ATTR);
         } catch (Exception e) {
-            logger.severe("Failed to find attribute: " + BASE_ON_KEY);
-            return;
+            throw new RuntimeException("Failed to load attribute "+BASE_ON_ATTR,e);
         }
 
         if (basedOnJob.equals(EMPTY_BASE_ON)) {
@@ -112,87 +118,64 @@ public class ClassifierProcessor extends Processor {
                     .severe("Clustering job to base on the classification is not defined");
             return;
         }
+        
+        // Load "Job-Id" attribute
+        try {
+            jobID=(String)getAttribute(JOB_ID_ATTR);
+        }  catch (Exception e) {
+            throw new RuntimeException("Failed to load job-id attribute",e);
+        }
+        // If job id is different from default, 
+        //create new job with the supplied id + unique job identifier
+        if (jobID.equals(defaultJobID))
+            jobID=defaultJobID;
+        else
+            jobID=jobID.concat("-").concat(ArchiveUtils.TIMESTAMP17.format(new Date()));
 
         // Load clustering info XML
-        try {
-            clusteringInfo = new ClusteringInfo();
-            clusteringInfo.fromXML(OutputConstants.getJobPath(basedOnJob),
+        clusteringInfo = new ClusteringInfo();
+        clusteringInfo.fromXML(OutputConstants.getJobPath(basedOnJob),
                     OutputConstants.CLUSTERING_XML_FILENAME);
-        } catch (Exception e) {
-            logger.severe("Failed to build clustering info based on job "
-                    + basedOnJob + ": " + e.getMessage());
-            return;
-        }
 
         // Load cluster support index
-        try {
-            csi = new ClusterSupportIndex();
-            csi.readIndexFromFile(clusteringInfo.getClusterTermSupportFN());
-        } catch (Exception e1) {
-            logger.severe("Failed to load clustering support index");
-            return;
-        }
+        csi = new ClusterSupportIndex();
+        csi.readIndexFromFile(clusteringInfo.getClusterTermSupportFN());
 
         // Create classifier instance
         myClassifier = new Classifier(csi, clusteringInfo);
 
         // Load algorithm parameters
-        try {
-            ByExampleProperties.readPropeties(OutputConstants.CONFIG_HOME
-                    + OutputConstants.PROPERTIES_FILENAME);
-        } catch (Exception e) {
-            logger.severe("Failed to load properties file: " + e.getMessage());
-            return;
-        }
+        ByExampleProperties.readPropeties(OutputConstants.getPropertiesFilePath());
 
-        // Create Job ID
-        jobID = OutputConstants.JOB_NAME_PREFIX
-                + ArchiveUtils.TIMESTAMP17.format(new Date());
+        // Create output files         
+        listDumpFile = FileUtils.createFileForJob(jobID,
+                OutputConstants.CLASSIFICATION_FILES_HOME,
+                OutputConstants.CLASSIFICATION_DOCUMENT_LISTING, true);
+        unclassifiedDumpFile=FileUtils.createFileForJob(jobID,
+                OutputConstants.CLASSIFICATION_FILES_HOME,
+                OutputConstants.UNCLASSIFIED_DOCUMENT_LISTING, true);
+        mostRelevantDumpFile = FileUtils.createFileForJob(jobID,
+                OutputConstants.CLASSIFICATION_FILES_HOME,
+                OutputConstants.MOST_RELEVANT_LISTING, true);
+        leastRelevantDumpFile = FileUtils.createFileForJob(jobID,
+                OutputConstants.CLASSIFICATION_FILES_HOME,
+                OutputConstants.LEAST_RELEVANT_LISTING, true);
 
-        // Create output files
-        try {            
-            listDumpFile = FileUtils.createFileForJob(jobID,
-                    OutputConstants.CLASSIFICATION_FILES_HOME,
-                    OutputConstants.CLASSIFICATION_DOCUMENT_LISTING, true);
-            unclassifiedDumpFile=FileUtils.createFileForJob(jobID,
-                    OutputConstants.CLASSIFICATION_FILES_HOME,
-                    OutputConstants.UNCLASSIFIED_DOCUMENT_LISTING, true);
-            mostRelevantDumpFile = FileUtils.createFileForJob(jobID,
-                    OutputConstants.CLASSIFICATION_FILES_HOME,
-                    OutputConstants.MOST_RELEVANT_LISTING, true);
-            leastRelevantDumpFile = FileUtils.createFileForJob(jobID,
-                    OutputConstants.CLASSIFICATION_FILES_HOME,
-                    OutputConstants.LEAST_RELEVANT_LISTING, true);
-        } catch (Exception e1) {
-            logger.severe("Failed to create classified docs file: "
-                    + e1.getMessage());
-        }
 
         // Create documents listings
-        try {
-            myClassificationDocListing = new DocumentClassificationListing(
-                    listDumpFile);
-            myUnclassifiedDocListing = new DocumentClassificationListing(
-                    unclassifiedDumpFile);
-            myMostRelevantSet = new TopClassificationSet(
-                    new TopDownComparator(), ByExampleProperties.TOP_RELEVANT,
-                    mostRelevantDumpFile);
-            myLeastRelevantSet = new TopClassificationSet(
-                    new BottomUpComparator(), ByExampleProperties.TOP_RELEVANT,
-                    leastRelevantDumpFile);
-        } catch (Exception e1) {
-            logger.severe("Couldn't create classification listing file: "
-                    + e1.getMessage());
-        }
+        myClassificationDocListing = new DocumentClassificationListing(
+                listDumpFile);
+        myUnclassifiedDocListing = new DocumentClassificationListing(
+                unclassifiedDumpFile);
+        myMostRelevantSet = new TopClassificationSet(
+                new TopDownComparator(), ByExampleProperties.TOP_RELEVANT,
+                mostRelevantDumpFile);
+        myLeastRelevantSet = new TopClassificationSet(
+                new BottomUpComparator(), ByExampleProperties.TOP_RELEVANT,
+                leastRelevantDumpFile);
 
         // Create stop words removal and stemming handlers
-        try {
-            stopWordsHandler = new StopWordsHandler();
-        } catch (Exception e) {
-            logger.severe("Failed to create stop words set: "
-                    + e.getStackTrace());
-            return;
-        }
+        stopWordsHandler = new StopWordsHandler();
         stemmer = new PorterStemmer();
 
     }
@@ -231,13 +214,8 @@ public class ClassifierProcessor extends Processor {
         }
 
         // Get document classification and scoping
-        try {
-            currUrlClassifications = myClassifier.classify(currURL, cs,
+        currUrlClassifications = myClassifier.classify(currURL, cs,
                     stopWordsHandler, stemmer);
-        } catch (ParserException e) {
-            logger.severe("Failed to parse page" + e.getMessage());
-            return;
-        }
 
         // Add document classifications to listing
         if (currUrlClassifications.getClassificationRelevanceScore()==0){
@@ -252,22 +230,16 @@ public class ClassifierProcessor extends Processor {
         numOfProcessedDocs++;
     }
 
-    public void createClassificaionXmlFile() {
-        String filesPath = OutputConstants.getClassificationPath(jobID);
-        try {
-            ClassificationInfo info = new ClassificationInfo(OutputConstants
-                    .getJobPath(basedOnJob), 
-                    filesPath + OutputConstants.CLASSIFICATION_DOCUMENT_LISTING,
-                    filesPath + OutputConstants.UNCLASSIFIED_DOCUMENT_LISTING,
-                    filesPath + OutputConstants.MOST_RELEVANT_LISTING,
-                    filesPath + OutputConstants.LEAST_RELEVANT_LISTING,
-                    numOfProcessedDocs);
-            info.toXML(OutputConstants.getJobPath(jobID),
-                    OutputConstants.CLASSIFICATION_XML_FILENAME);
-        } catch (Exception e) {
-            logger.severe("Unable to create preprocess xml file: "
-                    + e.getMessage());
-        }
+    public void createClassificaionXmlFile() {        
+        ClassificationInfo info = new ClassificationInfo(
+                OutputConstants.getJobPath(basedOnJob),
+                OutputConstants.getClassificationDocumentListingFilePath(jobID),
+                OutputConstants.getUnclassifiedDocumentListingFilePath(jobID),
+                OutputConstants.getMostRelevantListingFilePath(jobID),
+                OutputConstants.getLeastRelevantListingFilePath(jobID),
+                numOfProcessedDocs);
+        info.toXML(OutputConstants.getJobPath(jobID),
+                OutputConstants.CLASSIFICATION_XML_FILENAME);
     }
 
     public String report() {
@@ -279,19 +251,16 @@ public class ClassifierProcessor extends Processor {
     }
 
     protected void finalTasks() {
-        try {
-            myClassificationDocListing.dumpListingToFile();
-            FileUtils.closeFile(listDumpFile);
-            myUnclassifiedDocListing.dumpListingToFile();
-            FileUtils.closeFile(unclassifiedDumpFile);
-            myMostRelevantSet.dumpListingToFile();
-            FileUtils.closeFile(mostRelevantDumpFile);
-            myLeastRelevantSet.dumpListingToFile();
-            FileUtils.closeFile(leastRelevantDumpFile);
-        } catch (Exception e) {
-            logger.severe("Couldn't close dump files: " + e.getMessage());
-        }
-
+        //Close used files
+        myClassificationDocListing.dumpListingToFile();
+        FileUtils.closeFile(listDumpFile);
+        myUnclassifiedDocListing.dumpListingToFile();
+        FileUtils.closeFile(unclassifiedDumpFile);
+        myMostRelevantSet.dumpListingToFile();
+        FileUtils.closeFile(mostRelevantDumpFile);
+        myLeastRelevantSet.dumpListingToFile();
+        FileUtils.closeFile(leastRelevantDumpFile);
+        //Create info file
         createClassificaionXmlFile();
     }
 
