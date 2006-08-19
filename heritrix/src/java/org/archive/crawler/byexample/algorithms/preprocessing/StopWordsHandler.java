@@ -1,6 +1,7 @@
 package org.archive.crawler.byexample.algorithms.preprocessing;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
@@ -32,38 +33,42 @@ public class StopWordsHandler {
     private SortedSet<String> stopWordSet; 
     
     /**
-     * Default constructor
-     * @throws Exception if stop words file cannot be loaded
+     * Default constructor    
      */
-    public StopWordsHandler() throws Exception{
+    public StopWordsHandler(){
         stopWordSet=createStopWordSet();
     }
     
     /**
      * Load the specified words list from a file into memory
      */
-    public SortedSet<String> createStopWordSet() throws Exception{
+    public SortedSet<String> createStopWordSet(){
         SortedSet<String> stopWordsHash=Collections.synchronizedSortedSet(new TreeSet<String>());
       
         BufferedReader in=FileUtils.readBufferFromFile(stopWordsFilePath);
-        String iter = in.readLine();
         
-        //Stopwords file is empty
-        if (in==null) 
-            return null;
-        
-        while (!(iter==null)){         
-            //Check for comments and blank lines
-            if (!iter.equals("")){
-                if (iter.charAt(0)!='#')
-                    stopWordsHash.add(iter);
+        try {
+            String iter = in.readLine();
+            
+            //Stopwords file is empty
+            if (in==null) 
+                return null;
+            
+            while (!(iter==null)){         
+                //Check for comments and blank lines
+                if (!iter.equals("")){
+                    if (iter.charAt(0)!='#')
+                        stopWordsHash.add(iter);
+                }
+               iter=in.readLine();
             }
-           iter=in.readLine();
+            
+            in.close();
+            
+            return stopWordsHash;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create stop word set",e);
         }
-        
-        in.close();
-        
-        return stopWordsHash;
             
     }
     

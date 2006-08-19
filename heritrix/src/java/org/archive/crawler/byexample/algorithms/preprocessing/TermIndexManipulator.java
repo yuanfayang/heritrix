@@ -27,16 +27,14 @@ public class TermIndexManipulator {
     /**
      * Constructor that creates new Inverted index
      * and builds manipulator for it
-     *
      */
-    public TermIndexManipulator(String indexType, String indexFilePath) throws Exception{
+    public TermIndexManipulator(String indexType, String indexFilePath){
         
         if (indexType.equals(OutputConstants.IN_MEMORY_INDEX))
                 myIndex=new InMemoryIndex();
         else if (indexType.equals(OutputConstants.BDB_INDEX))
-                myIndex=new BdbIndex(indexFilePath);
-        
-        else throw new Exception("Invalid inverted index type");
+                myIndex=new BdbIndex(indexFilePath);        
+        else throw new RuntimeException("Invalid inverted index type");
     }
     
     /**

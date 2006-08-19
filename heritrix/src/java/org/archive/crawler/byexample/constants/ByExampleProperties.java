@@ -88,12 +88,15 @@ public class ByExampleProperties {
      * 
      * @param path
      *            properties file path
-     * @throws Exception
      */
-    public static void readPropeties(String path) throws Exception {
+    public static void readPropeties(String path){
         // Read properties file.
         Properties properties = new Properties();
-        properties.load(new FileInputStream(path));
+        try {
+            properties.load(new FileInputStream(path));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load properties file");
+        }
 
         INVERTED_INDEX_TYPE = properties.getProperty("inverted_index_type");
 

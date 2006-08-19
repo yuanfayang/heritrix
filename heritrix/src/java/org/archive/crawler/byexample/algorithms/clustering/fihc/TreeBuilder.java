@@ -38,8 +38,6 @@ public class TreeBuilder {
 
     private long myDocCount;
 
-    private double avgRelevanceRatio;
-
     /**
      * Default constructor
      */
@@ -52,7 +50,6 @@ public class TreeBuilder {
         myClusterSupportIndex = csi;
         myDocCount = docCount;
         allDocs = dl;
-        avgRelevanceRatio = dl.getAutoInRatio();
     }
 
     /**
@@ -101,22 +98,17 @@ public class TreeBuilder {
                         }
                     }
                 }
-                try {
-                    myDocumentClusteringIndex.getRow(tempParent).addList(
-                            myDocumentClusteringIndex.getRow(currChild));
-                    myDocumentClusteringIndex.getRow(currChild).removeAll();
-                    myClusterSupportIndex.getRow(tempParent).truncateAndMerge(
-                            ByExampleProperties.MIN_CLUSTER_SUPPORT,
-                            myClusterSupportIndex.getRow(currChild),
-                            myDocumentClusteringIndex.getRow(tempParent)
-                                    .getListSize(),
-                            myDocumentClusteringIndex.getRow(currChild)
-                                    .getListSize());
-                    myClusterSupportIndex.removeRow(currChild);
-                } catch (RuntimeException e) {
-                    e.printStackTrace();
-                }
-
+                myDocumentClusteringIndex.getRow(tempParent).addList(
+                        myDocumentClusteringIndex.getRow(currChild));
+                myDocumentClusteringIndex.getRow(currChild).removeAll();
+                myClusterSupportIndex.getRow(tempParent).truncateAndMerge(
+                        ByExampleProperties.MIN_CLUSTER_SUPPORT,
+                        myClusterSupportIndex.getRow(currChild),
+                        myDocumentClusteringIndex.getRow(tempParent)
+                                .getListSize(),
+                        myDocumentClusteringIndex.getRow(currChild)
+                                .getListSize());
+                myClusterSupportIndex.removeRow(currChild);
             }
         }
 
@@ -141,15 +133,13 @@ public class TreeBuilder {
     }
 
     /**
-     * Determines if cluster should be counted as relevant or not. Cluster is
-     * deemed relevant if its relevance ratio is above average relevance ratio
-     * in all crawled documents
-     * 
+     * Determines the "relevance score" for a cluster.
+     * Cluter relevance score is determined by a ration of relevant documents inside the cluster.
      * @param clusterDocs
      *            IdListing of all cluster documents
-     * @return true if cluster is relevant, false - otherwise.
+     * @return double cluster relevance score.
      */
-    public boolean determineClusterRelevance(IdListing clusterDocs) {
+    public double determineClusterRelevance(IdListing clusterDocs) {
         double relevanceRatio = 0;
 
         for (int i = 0; i < clusterDocs.getListSize(); i++) {
@@ -160,14 +150,7 @@ public class TreeBuilder {
                 relevanceRatio++;
         }
 
-        relevanceRatio /= clusterDocs.getListSize();
-        // Cluster is deemed relevant if it's relevance ratio is above average
-        // relevance ratio in
-        // all crawled documents
-        if (relevanceRatio >= avgRelevanceRatio)
-            return true;
-
-        return false;
+       return (relevanceRatio /= clusterDocs.getListSize());
     }
 
     /**
@@ -177,10 +160,9 @@ public class TreeBuilder {
      *            file path
      * @param filename
      *            file name
-     * @throws Exception
      */
     public void createClusteringInfoOutput(String path, String filename,
-            ClusteringInfo info) throws Exception {
+            ClusteringInfo info){
         ItemSet currIS = null;
         String assocTerms = null;
 
@@ -188,13 +170,12 @@ public class TreeBuilder {
                 .getIndexKeysIterator(); iter.hasNext();) {
             currIS = iter.next();
             assocTerms = myClusterSupportIndex.getRow(currIS).termsToString();
-            // TO DO: Determine relevance
             info.addCluster(currIS, myDocumentClusteringIndex.getRow(currIS)
                     .getListSize(),
                     determineClusterRelevance(myDocumentClusteringIndex
                             .getRow(currIS)), assocTerms);
         }
-
+        
         info.toXML(path, filename);
     }
 
@@ -209,10 +190,9 @@ public class TreeBuilder {
      *            file name
      * @param fis
      *            FrequenItemSet based on which the tree will be built
-     * @throws Exception
      */
     public void buildTree(String path, String filename, FrequentItemSets fis,
-            ClusteringInfo info) throws Exception {
+            ClusteringInfo info){
         TimerUtils myTH = new TimerUtils();
 
         myTH.startTimer();

@@ -51,7 +51,7 @@ public class StructureBuilder {
      */
     public StructureBuilder(long docCount, InvertedIndex termsIndex,
             List<TermSupport> termSupport, DocumentListing allDocs,
-            DocumentIndexManipulator dim) throws Exception {
+            DocumentIndexManipulator dim){
         myTermsIndex = new TermIndexManipulator(termsIndex);
         myTFIDFIndex = dim;
         myTFIDFIndex.createSortedByIdTFIDFIndex();
@@ -73,7 +73,8 @@ public class StructureBuilder {
         String[] currRow;
         double currScore;
         String currDocID;
-
+        int numOfClusters=myDocumentClusteringIndex.getSize();
+        int clustersProcessed=0;
         for (Iterator<ItemSet> iter = myDocumentClusteringIndex
                 .getIndexKeysIterator(); iter.hasNext();) {
             currIS = iter.next();
@@ -104,23 +105,26 @@ public class StructureBuilder {
                     myDocumentClusteringIndex.getRow(currIS).removeValue(
                             currDocID);
             }
+            clustersProcessed++;
+            if (clustersProcessed%(numOfClusters/10)==0)
+                TimerUtils.reportPartialAction("DISJOINING CLUSTERS",clustersProcessed*100/numOfClusters);
         }
     }
 
     /**
-     * Builds cluster support index and reports intermediate results
+     * Builds cluster support index
      * 
      */
     public void calculateClustersSupport() {
         myClusterSupportIndex.clearIndex();
         int numOfClusters=myDocumentClusteringIndex.getSize();
-        int i=0;
+        int clustersProcessed=0;
         for (Iterator<ItemSet> iter = myDocumentClusteringIndex
                 .getIndexKeysIterator(); iter.hasNext();) {            
             calculateClusterSupport(iter.next());
-            i++;
-            if (i%(numOfClusters/10)==0)
-                TimerUtils.reportPartialAction("SUPPORT CALCULATION",i*100/numOfClusters);
+            clustersProcessed++;
+            if (clustersProcessed%(numOfClusters/10)==0)
+                TimerUtils.reportPartialAction("SUPPORT CALCULATION",clustersProcessed*100/numOfClusters);
         }
     }
 

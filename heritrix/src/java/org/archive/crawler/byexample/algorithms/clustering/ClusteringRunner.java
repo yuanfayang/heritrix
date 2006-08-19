@@ -1,7 +1,6 @@
 package org.archive.crawler.byexample.algorithms.clustering;
 
 import java.io.BufferedWriter;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.byexample.algorithms.clustering.apriori.AprioriItemSetComputation;
@@ -50,7 +49,7 @@ public class ClusteringRunner {
      * 
      * @param args
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args){
 
         long docCount;
         BufferedWriter docsDumpFile = null;
@@ -66,38 +65,25 @@ public class ClusteringRunner {
 
         String jobID = args[0];
 
-        try {
-            ByExampleProperties.readPropeties(OutputConstants.CONFIG_HOME
-                    + OutputConstants.PROPERTIES_FILENAME);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"Failed to load properties file",e);
-            return;
-        }
+        ByExampleProperties.readPropeties(OutputConstants.getPropertiesFilePath());
 
-        try {
-            // Create docs dump file
-            docsDumpFile = FileUtils.createFileForJob(jobID,
-                    OutputConstants.CLUSTERING_FILES_HOME,
-                    OutputConstants.DOCUMENTS_CLUSTERING_LISTING_FILENAME,
-                    false);
-            // Create term supports dump file
-            supportDumpFile = FileUtils.createFileForJob(jobID,
-                    OutputConstants.CLUSTERING_FILES_HOME,
-                    OutputConstants.TERMS_SUPPORT_LISTING_FILENAME, false);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"Could not create clustering output file",e);
-            return;
-        }
-
-        try {
-            preProcessInfo = new PreprocessInfo();
-            preProcessInfo.fromXML(OutputConstants.getJobPath(jobID),
-                    OutputConstants.PREPROCESS_XML_FILENAME);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"Could not load preprocess.xml file",e);
-            return;
-        }
-
+        // Create docs dump file
+        docsDumpFile = FileUtils.createFileForJob(jobID,
+                OutputConstants.CLUSTERING_FILES_HOME,
+                OutputConstants.DOCUMENTS_CLUSTERING_LISTING_FILENAME,
+                false);
+        
+        // Create term supports dump file
+        supportDumpFile = FileUtils.createFileForJob(jobID,
+                OutputConstants.CLUSTERING_FILES_HOME,
+                OutputConstants.TERMS_SUPPORT_LISTING_FILENAME, false);
+        
+        // Open preprocess info file
+        preProcessInfo = new PreprocessInfo();
+        preProcessInfo.fromXML(OutputConstants.getJobPath(jobID),
+                OutputConstants.PREPROCESS_XML_FILENAME);
+        
+        // Read inverted index
         InvertedIndex index;
         if (ByExampleProperties.INVERTED_INDEX_TYPE
                 .equals(OutputConstants.IN_MEMORY_INDEX)) {
@@ -108,16 +94,10 @@ public class ClusteringRunner {
             index = new BdbIndex(OutputConstants.getPreprocessPath(jobID));
         else
             throw new RuntimeException("Invalid index type");
-
+        
+        // Read documents listing
         DocumentListing docListing = new DocumentListing();
-
-        try {
-            docListing.readListingFromFile(preProcessInfo.getDocsFN());
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"Failed to load input pre-process files",e);
-            return;
-        }
-
+        docListing.readListingFromFile(preProcessInfo.getDocsFN());
         docCount = preProcessInfo.getDocsNo();
 
         // Create freq. ItemSets
@@ -132,28 +112,21 @@ public class ClusteringRunner {
                 + " FREQUENT ITEM SETS");
 
         // Create clustering info xml
-        clusteringInfo = new ClusteringInfo(OutputConstants
-                .getClusteringPath(jobID)
-                + OutputConstants.DOCUMENTS_CLUSTERING_LISTING_FILENAME,
-                OutputConstants.getClusteringPath(jobID)
-                        + OutputConstants.TERMS_SUPPORT_LISTING_FILENAME);
+        clusteringInfo = new ClusteringInfo(
+                OutputConstants.getDocumentsClusteringtListingFilePath(jobID),
+                OutputConstants.getTermsSupportListingFilePath(jobID));
         // Create Clustering Generator
-        ClusterGenerator clusterGen = new ClusterGenerator(docCount, apriori
-                .getFrequentItemSetsIndex(), apriori.getFrequentItemSupport(),
+        ClusterGenerator clusterGen = new ClusterGenerator(docCount, 
+                apriori.getFrequentItemSetsIndex(), apriori.getFrequentItemSupport(),                
                 docListing, OutputConstants.getClusteringPath(jobID));
 
-        
-            try {
-                clusterGen.doClustering(fis, OutputConstants.JOBS_HOME + jobID,
-                        OutputConstants.CLUSTERING_XML_FILENAME, clusteringInfo);
-                clusterGen.getClusterDocuments().dumpIndexToFile(docsDumpFile);
-                clusterGen.getClusterSupport().dumpIndexToFile(supportDumpFile);
-                FileUtils.closeFile(docsDumpFile);
-                FileUtils.closeFile(supportDumpFile);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE,"Failed to write output clustering file",e);
-            }
-            
+        // Do clustering
+        clusterGen.doClustering(fis, OutputConstants.JOBS_HOME + jobID,
+                OutputConstants.CLUSTERING_XML_FILENAME, clusteringInfo);
+        clusterGen.getClusterDocuments().dumpIndexToFile(docsDumpFile);
+        clusterGen.getClusterSupport().dumpIndexToFile(supportDumpFile);
+        FileUtils.closeFile(docsDumpFile);
+        FileUtils.closeFile(supportDumpFile);
     }
 
 } // END OF CLASS

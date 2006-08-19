@@ -3,7 +3,6 @@ package org.archive.crawler.byexample.algorithms.classification;
 import org.archive.crawler.byexample.algorithms.preprocessing.PorterStemmer;
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
 import org.archive.crawler.byexample.constants.ByExampleProperties;
-import org.archive.crawler.byexample.constants.ScopeDecisionConstants;
 import org.archive.crawler.byexample.datastructure.documents.DocumentClassificationEntry;
 import org.archive.crawler.byexample.datastructure.info.ClusteringInfo;
 import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
@@ -12,7 +11,6 @@ import org.archive.crawler.byexample.datastructure.support.ClusterScoreListing;
 import org.archive.crawler.byexample.datastructure.support.ClusterSupportIndex;
 import org.archive.crawler.byexample.datastructure.support.TermSupportIndex;
 import org.archive.crawler.byexample.utils.ParseUtils;
-import org.htmlparser.util.ParserException;
 
 /**
  * This class implements classification algorirhm used by ClassifierProcessor
@@ -53,10 +51,8 @@ public class Classifier {
      * @param cs
      *            CharSequence to parse
      * @return Strings array
-     * @throws ParserException
      */
-    public synchronized String[] parsePage(CharSequence cs)
-            throws ParserException {
+    public synchronized String[] parsePage(CharSequence cs){
         return ParseUtils.tokenizer(cs);
     }
 
@@ -116,11 +112,9 @@ public class Classifier {
      * @param stemmer -
      *            PorterStemmer instance
      * @return ClusterScore[] Array containing assignment probabilities
-     * @throws ParserException
      */
     public synchronized DocumentClassificationEntry classify(String url,
-            CharSequence cs, StopWordsHandler swh, PorterStemmer stemmer)
-            throws ParserException {
+            CharSequence cs, StopWordsHandler swh, PorterStemmer stemmer){
         String[] allTerms = parsePage(cs);
         String iter;
         ClusterScoreListing pageScores = new ClusterScoreListing();
@@ -154,42 +148,22 @@ public class Classifier {
 
     /**
      * Return relevance score for a document based on its top cluster scores.
-     * Relevance score is simply a sum of all relevant cluster scores
+     * Relevance score for a document is a weighted sum of it's cluster scores.
+     * Cluster weight is determined by its relevance score 
      * 
      * @param cs
      *            ClusterScore[] - top cluster scores
      * @return relevance score for a document
      */
     public synchronized double getRelevanceScore(ClusterScore[] cs) {
-        double relevanceScore = 0;
-        for (int i = 0; i < cs.length; i++) {
-            if (myRelevanceInfo.getClusterRelevance(cs[i].getClusterLabel()))
-                // Increase relevance score for each relevant cluster
-                relevanceScore += cs[i].getClusterScore();
+        double relevanceScore = 0;        
+        for (int i = 0; i < cs.length; i++) {       
+            // Increase document relevance score for each cluster, 
+            // according to cluster relevance
+            relevanceScore += cs[i].getClusterScore()*
+            myRelevanceInfo.getClusterRelevance(cs[i].getClusterLabel());
         }
         return relevanceScore;
-    }
-
-    /**
-     * Given page classification scores, defines the page scoping
-     * 
-     * @return ScopeConstants
-     */
-    public synchronized ScopeDecisionConstants scopeIdentifier(ClusterScore[] cs) {
-        int relevanceCnt = 0;
-        for (int i = 0; i < cs.length; i++) {
-            if (myRelevanceInfo.getClusterRelevance(cs[i].getClusterLabel()))
-                // Increase relevance counter for each relevant counter
-                relevanceCnt++;
-        }
-        // All clusters are relevant
-        if (relevanceCnt == cs.length)
-            return ScopeDecisionConstants.AUTO_IN;
-        // None of the clusters are relevant
-        if (relevanceCnt == 0)
-            return ScopeDecisionConstants.AUTO_OUT;
-        // Some of the clusters are relevant
-        return ScopeDecisionConstants.TO_REVISE;
     }
 
 } // END OF CLASS
