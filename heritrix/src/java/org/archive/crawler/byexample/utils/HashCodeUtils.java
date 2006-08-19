@@ -4,7 +4,7 @@ import java.lang.reflect.Array;
 
 /**
 * Collected methods which allow easy implementation of <code>hashCode</code>.
-* Taken from <a href="http://www.javapractices.com/Topic28.cjp">here</a>
+* This source code appears <a href="http://www.javapractices.com/Topic28.cjp">here</a>
 *<p>
 * Example use case:
 * <pre>

@@ -3,8 +3,10 @@ package org.archive.crawler.byexample.utils;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
 
@@ -14,9 +16,8 @@ public class FileUtils {
    /**
     * Create file at path:  filePath/fileName
     * @return BufferedWriter to created file
-    * @throws Exception
     */ 
-   public static BufferedWriter createFileAtPath (String filePath,String fileName) throws Exception{
+   public static BufferedWriter createFileAtPath (String filePath,String fileName){
        
        //Check if BYEXAMPLE_HOME directory exists
        File path=new File(OutputConstants.BYEXAMPLE_HOME);
@@ -39,7 +40,11 @@ public class FileUtils {
            path.mkdir();
       
        //Create new file under specified path
-      return new BufferedWriter(new FileWriter(new File(filePath,fileName)));                           
+      try {
+          return new BufferedWriter(new FileWriter(new File(filePath,fileName)));
+      } catch (IOException e) {
+          throw new RuntimeException("Couldn't create file "+fileName+"at path "+filePath, e );
+      }                           
     }
    
 
@@ -50,10 +55,9 @@ public class FileUtils {
     * @param filePath File path for created file under JOBS_HOME 
     * @param fileName File name for created file
     * @param append if true, then data will be written to the end of the file rather than the beginning
-    * @return
-    * @throws Exception
+    * @return BufferedWriter to created file
     */
-   public static BufferedWriter createFileForJob (String jobNo,String filePath, String fileName, boolean append) throws Exception{
+   public static BufferedWriter createFileForJob (String jobNo,String filePath, String fileName, boolean append){
        
        //Check if BYEXAMPLE_HOME directory exists
        File path=new File(OutputConstants.BYEXAMPLE_HOME);
@@ -80,41 +84,53 @@ public class FileUtils {
        
        path=new File(filePath);
        if (!path.exists())
-           path.mkdir();
-      
+           path.mkdir();      
        
        //Create new file under specified path
-      return new BufferedWriter(new FileWriter(new File(filePath,fileName),append));                           
+       try {
+           return new BufferedWriter(new FileWriter(new File(filePath,fileName),append));
+       } catch (IOException e) {
+           throw new RuntimeException("Couldn't create file "+fileName+"at path "+filePath, e );
+       }                           
     }
    
    /**
     * Dump StringBuffer to file
     * @param dumpFile BufferedWriter for a file
     * @param sb StringBuffer to dump
-    * @throws Exception
     */
-   public static void dumpBufferToFile(BufferedWriter dumpFile,StringBuffer sb) throws Exception{   
-           dumpFile.write(sb.toString());  
-           dumpFile.flush();
+   public static void dumpBufferToFile(BufferedWriter dumpFile,StringBuffer sb){   
+           try {
+               dumpFile.write(sb.toString());  
+               dumpFile.flush();
+           } catch (IOException e) {
+               throw new RuntimeException("Could not dump to file "+dumpFile,e);
+           }
    }
    
    /**
     * Read file from filePath to BufferedReader
     * @param filePath path to read file
     * @return BufferedReader with file contents 
-    * @throws Exception
     */
-   public static BufferedReader readBufferFromFile(String filePath) throws Exception{
-       return new BufferedReader(new FileReader(filePath));           
+   public static BufferedReader readBufferFromFile(String filePath){
+       try {
+        return new BufferedReader(new FileReader(filePath));
+    } catch (FileNotFoundException e) {
+        throw new RuntimeException("Could not read from file at path "+filePath,e);
+    }           
    }
    
    /**
     * Close dumpFile
     * @param dumpFile BufferedWriter for a file
-    * @throws Exception
     */
-   public static void closeFile(BufferedWriter dumpFile) throws Exception{
-       dumpFile.close();
+   public static void closeFile(BufferedWriter dumpFile){
+       try {
+        dumpFile.close();
+    } catch (IOException e) {
+        throw new RuntimeException("Could not close file "+dumpFile,e); 
+    }
    }
    
 } //END OF CLASS
