@@ -35,12 +35,11 @@ import org.archive.util.TmpDirTestCase;
 public class ARCReaderFactoryTest extends TmpDirTestCase {
 //    public void testGetHttpURL() throws MalformedURLException, IOException {
 //        ARCReader reader = null;
-//        File tmpFile = null;
 //        try {
 //            // TODO: I can get a single ARCRecord but trying to iterate from
 //            // a certain point is getting an EOR when I go to read GZIP header.
 //            reader = ARCReaderFactory.
-//                get(new URL("http://localhost:8080/test.arc.gz"), 0);
+//                get(new URL("http://localhost/test.arc.gz"), 0);
 //            for (final Iterator i = reader.iterator(); i.hasNext();) {
 //                ARCRecord ar = (ARCRecord)i.next();
 //                System.out.println(ar.getMetaData().getUrl());
@@ -50,8 +49,6 @@ public class ARCReaderFactoryTest extends TmpDirTestCase {
 //                reader.close();
 //            }
 //        }
-//        // Temporary file should be cleaned up when done.
-//        assertFalse(tmpFile.exists());
 //    }
     
     /**

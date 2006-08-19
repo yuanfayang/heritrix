@@ -140,6 +140,10 @@ public class ARCReaderFactory implements ARCConstants {
             is, atFirstRecord);
     }
     
+    private static void addUserAgent(final HttpURLConnection connection) {
+        connection.addRequestProperty("User-Agent", ARCReader.class.getName());
+    }
+    
     /**
      * Get an ARCReader aligned at <code>offset</code>.
      * This version of get will not bring the ARC local but will try to
@@ -157,6 +161,7 @@ public class ARCReaderFactory implements ARCConstants {
         if (!(connection instanceof HttpURLConnection)) {
             throw new IOException("This method only handles HTTP connections.");
         }
+        addUserAgent((HttpURLConnection)connection);
         // Use a Range request (Assumes HTTP 1.1 on other end). If length <= 0,
         // add open-ended range header to the request.  Else, because end-byte
         // is inclusive, subtract 1.
@@ -205,6 +210,7 @@ public class ARCReaderFactory implements ARCConstants {
             localFile = File.createTempFile(ARCReader.class.getName(), ".arc",
                 FileUtils.TMPDIR);
             connection.connect();
+            addUserAgent((HttpURLConnection)connection);
             try {
                 IoUtils.readFullyToFile(connection.getInputStream(), localFile,
                         new byte[16 * 1024]);
