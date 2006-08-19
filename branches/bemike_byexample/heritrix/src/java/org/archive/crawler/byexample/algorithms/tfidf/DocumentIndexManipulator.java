@@ -34,14 +34,19 @@ public class DocumentIndexManipulator {
      * and builds manipulator for it
      *
      */
-    public DocumentIndexManipulator(String indexType, String indexFilePath, InvertedIndex ti, long docCount)
-    throws Exception{
+    public DocumentIndexManipulator(String indexType, 
+            String indexFilePath, InvertedIndex ti, long docCount){
                 
         if (indexType.equals(OutputConstants.IN_MEMORY_INDEX))
                 myIndex=new InMemoryIndex();
         else if (indexType.equals(OutputConstants.BDB_INDEX))
-                myIndex=new BdbIndex(indexFilePath);        
-        else throw new Exception("Invalid inverted index type");
+            try {
+                myIndex=new BdbIndex(indexFilePath);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to create "+OutputConstants.BDB_INDEX,e);
+            }
+        else 
+            throw new RuntimeException("Invalid index type");
         
         termsIndex=ti;
         myDocCount=docCount;

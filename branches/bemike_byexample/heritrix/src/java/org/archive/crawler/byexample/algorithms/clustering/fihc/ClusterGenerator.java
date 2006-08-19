@@ -40,8 +40,8 @@ public class ClusterGenerator {
      * @param allDocs list of documents in collection
      */
     public ClusterGenerator(long docCount, InvertedIndex termsIndex, 
-                            List<TermSupport> termSupport, DocumentListing allDocs, String indexFilePath)
-    throws Exception{
+                            List<TermSupport> termSupport, 
+                            DocumentListing allDocs, String indexFilePath){
         myTermsIndex=new TermIndexManipulator(termsIndex);
         
         // TFIDF index is always created as IN_MEMORY_INDEX to improve clustering performance.
@@ -93,9 +93,8 @@ public class ClusterGenerator {
      * @param fis k-frequent Item Sets
      * @param path path where clustering XML file will be created
      * @param filename name of clustering XML file
-     * @throws Exception
      */
-    public void doClustering(FrequentItemSets fis, String path, String filename, ClusteringInfo info) throws Exception{        
+    public void doClustering(FrequentItemSets fis, String path, String filename, ClusteringInfo info){        
 
         structureBuilder.buildStructure(fis);
         
