@@ -14,7 +14,6 @@ import org.archive.crawler.byexample.datastructure.support.ClusterScore;
  * - Relevance score of the url
  * 
  * @see org.archive.crawler.byexample.datastructure.support.ClusterScore
- * @see org.archive.crawler.byexample.constants.ScopeDecisionConstants
  * 
  * @author Michael Bendersky
  *

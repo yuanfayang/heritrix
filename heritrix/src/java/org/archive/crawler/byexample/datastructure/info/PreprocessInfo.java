@@ -29,11 +29,11 @@ public class PreprocessInfo extends XMLInfo{
     private int termsNo;
     
     
-    public PreprocessInfo() throws Exception{
+    public PreprocessInfo(){
         super(ROOT_TAG_LABEL);
     }
     
-    public PreprocessInfo(String termsFN, String docsFN, long docsNo, int termsNo) throws Exception{
+    public PreprocessInfo(String termsFN, String docsFN, long docsNo, int termsNo){
         super(ROOT_TAG_LABEL);
         this.termsFN=termsFN;
         this.docsFN=docsFN;
@@ -70,9 +70,8 @@ public class PreprocessInfo extends XMLInfo{
      * Convert data to XML and dump xml contents to file
      * @param path
      * @param filename
-     * @throws Exception
      */
-    public void toXML(String path, String filename) throws Exception{
+    public void toXML(String path, String filename){
         
         createNewXmlDoc();
         
@@ -88,9 +87,8 @@ public class PreprocessInfo extends XMLInfo{
      * Read data from a file and create XML document if possible
      * @param path
      * @param filename
-     * @throws Exception
      */    
-    public void fromXML(String path, String filename) throws Exception{
+    public void fromXML(String path, String filename){
        readFromFile(path,filename);        
        NodeList children=rootElement.getChildNodes();
        Node child=null;
@@ -114,6 +112,5 @@ public class PreprocessInfo extends XMLInfo{
            }               
        }        
     }
-    
-    
+        
 } //END OF CLASS

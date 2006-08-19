@@ -24,7 +24,7 @@ public class ClassificationInfo extends XMLInfo {
     
     public ClassificationInfo(String basedOn,String classifiedList,
             String unclassifiedList, String mostRelevantList, 
-            String leastRelevantList, long docsNo) throws Exception{
+            String leastRelevantList, long docsNo){
         super(ROOT_TAG_LABEL);
         this.basedOnFN=basedOn;
         this.classifiedFN=classifiedList;
@@ -38,9 +38,8 @@ public class ClassificationInfo extends XMLInfo {
      * Convert data to XML and dump xml contents to file
      * @param path
      * @param filename
-     * @throws Exception
      */
-    public void toXML(String path, String filename) throws Exception{                
+    public void toXML(String path, String filename){                
         createNewXmlDoc();        
         //Add info
         addElement(rootElement, BASED_ON_TAG_LABEL,basedOnFN);
@@ -52,4 +51,4 @@ public class ClassificationInfo extends XMLInfo {
         dumpToFile(path,filename);
     }
     
-}
+} //END OF CLASS

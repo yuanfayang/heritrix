@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -77,10 +78,13 @@ public class XMLInfo {
     
     /**
      * Creates new XML document
-     * @throws Exception
      */
-    protected void createNewXmlDoc() throws Exception{
-        xmlDoc=DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    protected void createNewXmlDoc(){
+        try {
+            xmlDoc=DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e.getMessage(),e);
+        }
         rootElement=xmlDoc.createElement(ROOT_TAG_LABEL);
         xmlDoc.appendChild(rootElement);   
     }
@@ -89,35 +93,40 @@ public class XMLInfo {
      * Writes the XML document to a file
      * @param path file path 
      * @param filename file name
-     * @throws Exception
      */
-    protected void dumpToFile(String path, String filename) throws Exception{
-        BufferedWriter bw=FileUtils.createFileAtPath(path,filename);
-        Transformer t=TransformerFactory.newInstance().newTransformer();
-        t.transform(new DOMSource(xmlDoc),new StreamResult(bw));
-        FileUtils.closeFile(bw);
+    protected void dumpToFile(String path, String filename){
+        try {
+            BufferedWriter bw=FileUtils.createFileAtPath(path,filename);
+            Transformer t=TransformerFactory.newInstance().newTransformer();
+            t.transform(new DOMSource(xmlDoc),new StreamResult(bw));
+            FileUtils.closeFile(bw);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to dump to file",e);
+        }
     }
     
     /**
      * Reads the XML document from a file
      * @param path file path 
      * @param filename file name
-     * @throws Exception
      */
-    protected void readFromFile(String path, String filename)throws Exception{
-        DocumentBuilder builder=DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        xmlDoc=builder.parse(new InputSource(FileUtils.readBufferFromFile(path+filename)));
-        rootElement=xmlDoc.getDocumentElement();
-        checkRootLabel();
+    protected void readFromFile(String path, String filename){
+        try {
+            DocumentBuilder builder=DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            xmlDoc=builder.parse(new InputSource(FileUtils.readBufferFromFile(path+filename)));
+            rootElement=xmlDoc.getDocumentElement();
+            checkRootLabel();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read from file",e);
+        }
     }
     
     /**
      * Check whether the root label is correct (ie, file was not corrupted during read/write procedure) 
-     * @throws Exception
      */
-    protected void checkRootLabel() throws Exception{
+    protected void checkRootLabel(){
         if (!rootElement.getTagName().equalsIgnoreCase(ROOT_TAG_LABEL))
-            throw new Exception("Wrong file type");
+            throw new RuntimeException("Wrong file type");
     }
     
 } //END OF CLASS

@@ -104,9 +104,8 @@ public class ClusterDocumentsIndex {
     /**
      * Write index to designated output file
      * @param bw BufferedWriter for the output file
-     * @throws Exception
      */
-    public void dumpIndexToFile(BufferedWriter bw)throws Exception{
+    public void dumpIndexToFile(BufferedWriter bw){
         StringBuffer dump=new StringBuffer();
         ItemSet currKey;
         for (Iterator<ItemSet> iter = getIndexKeysIterator(); iter.hasNext();) {

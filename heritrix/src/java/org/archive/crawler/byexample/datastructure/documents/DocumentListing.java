@@ -2,10 +2,10 @@ package org.archive.crawler.byexample.datastructure.documents;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileUtils;
@@ -22,8 +22,6 @@ public class DocumentListing {
     
     List<DocumentEntry> docList;
     BufferedWriter dumpFile=null;
-    private static Logger logger =
-        Logger.getLogger(DocumentListing.class.getName());
     
     /**
      * Default constructor
@@ -57,17 +55,11 @@ public class DocumentListing {
      * @param url
      * @param isAutoIn
      */
-    public void addToListing(long id, String url, boolean isAutoIn){
-        
+    public void addToListing(long id, String url, boolean isAutoIn){        
         if (docList.size()>OutputConstants.MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
-            try {
-                dumpListingToFile();
-                docList.clear();
-            } catch (Exception e) {
-                logger.info("Could not dump documents list from memory to file...");
-            }
-        }
-          
+            dumpListingToFile();
+            docList.clear();
+        }          
         docList.add(new DocumentEntry(id,url,isAutoIn));
     }
     
@@ -80,9 +72,8 @@ public class DocumentListing {
     
     /**
      * Write listing to designated output file
-     * @throws Exception
      */
-    public void dumpListingToFile() throws Exception{
+    public void dumpListingToFile(){
         //No dump file defined - do nothing
         if (dumpFile==null)
             return;
@@ -97,24 +88,29 @@ public class DocumentListing {
     /**
      * Read listing from file at specified file path
      * @param filePath String representing the input file path
-     * @throws Exception
      */
-    public void readListingFromFile(String filePath) throws Exception{
+    public void readListingFromFile(String filePath){
         BufferedReader in=FileUtils.readBufferFromFile(filePath);
-        String iter = in.readLine();
-        String[] parts;
-        
-        //File is empty
-        if (in==null) 
-            return;
-        
-        while (!(iter==null)){         
-            parts=iter.split(OutputConstants.ENTRY_SEPARATOR);
-            //Add row for the keyword
-            addToListing(Long.parseLong(parts[0]),parts[1], Boolean.parseBoolean(parts[2]));
-            iter=in.readLine();
-        }        
-        in.close(); 
+        try {
+            String iter = in.readLine();
+            String[] parts;
+            
+            //File is empty
+            if (in==null) 
+                return;
+            
+            while (!(iter==null)){         
+                parts=iter.split(OutputConstants.ENTRY_SEPARATOR);
+                //Add row for the keyword
+                addToListing(Long.parseLong(parts[0]),parts[1], Boolean.parseBoolean(parts[2]));
+                iter=in.readLine();
+            }        
+            in.close();
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Could not read file at path "+filePath,e);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not read file at path "+filePath,e);
+        } 
     }
     
     /**

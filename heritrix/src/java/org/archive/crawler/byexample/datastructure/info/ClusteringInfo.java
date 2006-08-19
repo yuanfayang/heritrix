@@ -20,14 +20,14 @@ public class ClusteringInfo extends XMLInfo{
     private class ClusterStruct{      
         private ItemSet clusterLabel;                   
         private int clusterDocNo;                        
-        private boolean isRelevant;
+        private double relevanceScore;
         private String associatedTerms;
         
-        public ClusterStruct(ItemSet is, int docNo, boolean relevance, String at){
-            clusterLabel=is;
-            clusterDocNo=docNo;
-            isRelevant=relevance;
-            associatedTerms=at;
+        public ClusterStruct(ItemSet is, int docNo, double score, String at){
+            this.clusterLabel=is;
+            this.clusterDocNo=docNo;
+            this.relevanceScore=score;
+            this.associatedTerms=at;
         }
         
         public long getClusterDocNo() {
@@ -42,11 +42,11 @@ public class ClusteringInfo extends XMLInfo{
         public void setClusterLabel(ItemSet clusterLabel) {
             this.clusterLabel = clusterLabel;
         }
-        public boolean isClusterRelevance() {
-            return isRelevant;
+        public double getClusterRelevance() {
+            return relevanceScore;
         }
-        public void setClusterRelevance(boolean clusterRelevance) {
-            this.isRelevant = clusterRelevance;
+        public void setClusterRelevance(double clusterRelevance) {
+            this.relevanceScore = clusterRelevance;
         }          
         public String getAssociatedTerms(){
             return associatedTerms;
@@ -55,7 +55,7 @@ public class ClusteringInfo extends XMLInfo{
         public String toString(){
             return  clusterLabel+OutputConstants.ENTRY_SEPARATOR+
                     clusterDocNo+OutputConstants.ENTRY_SEPARATOR+
-                    isRelevant+OutputConstants.ENTRY_SEPARATOR;
+                    relevanceScore+OutputConstants.ENTRY_SEPARATOR;
         }
         
         public boolean equals(Object other){
@@ -84,25 +84,25 @@ public class ClusteringInfo extends XMLInfo{
     private Map<ItemSet, ClusterStruct> clusters;
     
 
-    public ClusteringInfo(String docList,String termSupportIndex) throws Exception{
+    public ClusteringInfo(String docList,String termSupportIndex){
         super(ROOT_LABEL);
         this.clusterDocsFN=docList;
         this.clusterTermSupportFN=termSupportIndex;
         clusters=new ConcurrentHashMap<ItemSet, ClusterStruct>();
     }
 
-    public ClusteringInfo() throws Exception{
+    public ClusteringInfo(){
         super(ROOT_LABEL);
         clusters=new ConcurrentHashMap<ItemSet, ClusterStruct>();
     }
     
-    public void addCluster(ItemSet label, int docNo, boolean rel, String associatedTermsList){
-        clusters.put(label, new ClusterStruct(label, docNo, rel, associatedTermsList));
+    public void addCluster(ItemSet label, int docNo, double score, String associatedTermsList){
+        clusters.put(label, new ClusterStruct(label, docNo, score, associatedTermsList));
     }
     
             
-    public boolean getClusterRelevance(ItemSet is){       
-        return clusters.get(is).isRelevant;
+    public double getClusterRelevance(ItemSet is){       
+        return clusters.get(is).relevanceScore;
     }
     
     public String getClusterDocsFN() {
@@ -125,9 +125,8 @@ public class ClusteringInfo extends XMLInfo{
      * Convert data to XML and dump xml contents to file
      * @param path
      * @param filename
-     * @throws Exception
      */
-    public void toXML(String path, String filename) throws Exception{
+    public void toXML(String path, String filename){
         
         ClusterStruct currStruct=null;
         Element clusterElement=null;
@@ -143,7 +142,7 @@ public class ClusteringInfo extends XMLInfo{
             clusterElement=addElement(rootElement,CLUSTERING_GROUP_TAG_LABEL);
             addElement(clusterElement,CLUSTER_NAME_TAG_LABEL,currStruct.clusterLabel.toString());
             addElement(clusterElement,CLUSTER_DOCS_NO_TAG_LABEL,String.valueOf(currStruct.clusterDocNo));
-            addElement(clusterElement,CLUSTER_RELEVANCE_TAG_LABEL,String.valueOf(currStruct.isRelevant));
+            addElement(clusterElement,CLUSTER_RELEVANCE_TAG_LABEL,String.valueOf(currStruct.relevanceScore));
             addElement(clusterElement,CLUSTER_ASSOCIATED_TERMS_TAG_LABEL,currStruct.associatedTerms);
         }
         
@@ -154,9 +153,8 @@ public class ClusteringInfo extends XMLInfo{
      * Read data from a file and create XML document if possible
      * @param path
      * @param filename
-     * @throws Exception
      */
-    public void fromXML(String path, String filename) throws Exception{
+    public void fromXML(String path, String filename){
         readFromFile(path,filename);        
         NodeList rootChildren=rootElement.getChildNodes();
         Node rootChild=null;
@@ -168,7 +166,7 @@ public class ClusteringInfo extends XMLInfo{
         String value=null;
         String labelIter=null;
         int docNoIter=0;
-        boolean relevanceIter=false;
+        double relevanceIter=0;
         String assocTermsIter=null;
         
         //Find all children for each cluster group
@@ -196,7 +194,7 @@ public class ClusteringInfo extends XMLInfo{
                             else if (key.equals(CLUSTER_DOCS_NO_TAG_LABEL))
                                 docNoIter=Integer.parseInt(value);
                             else if (key.equals(CLUSTER_RELEVANCE_TAG_LABEL))
-                                relevanceIter=Boolean.parseBoolean(value);    
+                                relevanceIter=Double.parseDouble(value);    
                             else if (key.equals(CLUSTER_ASSOCIATED_TERMS_TAG_LABEL))
                                 assocTermsIter=value;   
                         }                    
