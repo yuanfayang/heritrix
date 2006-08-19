@@ -29,7 +29,6 @@ public class AprioriItemSetComputation {
     private InvertedIndex myTermsIndex;
     private long myDocCount;
     private List<TermSupport> frequentItemSupport;
-    
 
     /**
      * Default constructor.
@@ -148,7 +147,7 @@ public class AprioriItemSetComputation {
      * @param counter recursion depth
      */
     public void generateAll(FrequentItemSets prevSets, int counter){
-        
+
         if (prevSets.getSize()==0 || counter==ByExampleProperties.MAX_DEPTH) 
             return;
         
