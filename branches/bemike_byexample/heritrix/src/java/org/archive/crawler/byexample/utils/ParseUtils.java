@@ -10,9 +10,8 @@ public class ParseUtils {
      * Receives a web page and converts it to array of terms
      * @param cs
      * @return
-     * @throws ParserException
      */
-    public static String[] tokenizer(CharSequence cs) throws ParserException{
+    public static String[] tokenizer(CharSequence cs){
         
         //Extract the text contents out of the html code  
         StringBuffer textContents = new StringBuffer();
@@ -28,7 +27,11 @@ public class ParseUtils {
         htmlParser = Parser.createParser((cs.subSequence(0, end - 1)).toString(),null); 
         sb.setCollapse(true);
         sb.setLinks(false);
-        htmlParser.visitAllNodesWith(sb);
+        try {
+            htmlParser.visitAllNodesWith(sb);
+        } catch (ParserException e) {
+            throw new RuntimeException("Failed to parse",e);
+        }
         textContents.append(sb.getStrings());
         
         // Ignore pages with empty text contents     
