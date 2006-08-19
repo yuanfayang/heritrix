@@ -1,6 +1,4 @@
-/* ARCReader
- *
- * $Id$
+/* $Id$
  *
  * Created on May 1, 2004
  *
@@ -60,7 +58,7 @@ import org.archive.util.TextUtils;
 
 
 /**
- * Get an iterator on an arc file or get a record by absolute position.
+ * Get an iterator on an ARC file or get a record by absolute position.
  *
  * ARC files are described here:
  * <a href="http://www.archive.org/web/researcher/ArcFileFormat.php">Arc

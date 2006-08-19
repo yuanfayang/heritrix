@@ -1,6 +1,4 @@
-/* WriterPoolMemberImpl
- *
- * $Id$
+/* $Id$
  *
  * Created on July 21st, 2006
  *
@@ -45,12 +43,12 @@ import org.archive.util.TimestampSerialno;
 
 
 /**
- * Abstract implementation of {@link WriterPoolMember} functionality.
+ * Member of {@link WriterPool}.
  * Implements rotating off files, file naming with some guarantee of
  * uniqueness, and position in file. Subclass to pick up functionality for a
  * particular Writer type.
- * 
  * @author stack
+ * @version $Date$ $Revision$
  */
 public abstract class WriterPoolMember {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
