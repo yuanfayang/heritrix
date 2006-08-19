@@ -12,9 +12,9 @@ import java.util.Iterator;
  */
 public interface InvertedIndex {
     
-    public abstract void openIndex(String filePath) throws Exception;
+    public abstract void openIndex(String filePath);
     
-    public abstract void closeIndex(String jobId, String filePath) throws Exception;
+    public abstract void closeIndex(String jobId, String filePath);
         
     public abstract void addNewRow(String rowKey);
     

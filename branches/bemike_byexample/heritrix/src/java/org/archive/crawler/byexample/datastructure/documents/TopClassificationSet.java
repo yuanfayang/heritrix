@@ -49,9 +49,8 @@ public class TopClassificationSet {
     
     /**
      * Write set to designated output file
-     * @throws Exception
      */
-    public void dumpListingToFile() throws Exception{
+    public void dumpListingToFile(){
         //No dump file defined - do nothing
         if (dumpFile==null)
             return;

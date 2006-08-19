@@ -2,7 +2,6 @@ package org.archive.crawler.byexample.datastructure.documents;
 
 import java.io.BufferedWriter;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileUtils;
@@ -17,8 +16,6 @@ public class IdListing{
     
         private ArrayList<String> idList;
         BufferedWriter dumpFile=null;
-        private static Logger logger =
-            Logger.getLogger(IdListing.class.getName());
         
         /**
          * Default constructor
@@ -43,12 +40,8 @@ public class IdListing{
          */
         public void checkMaxSize(){
             if (idList.size()>OutputConstants.MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
-                try {
-                    dumpListingToFile();
-                    idList.clear();
-                } catch (Exception e) {
-                    logger.info("Could not dump documents list from memory to file...");
-                }
+                dumpListingToFile();
+                idList.clear();
             }
         }
         
@@ -115,9 +108,8 @@ public class IdListing{
         
         /**
          * Write listing to designated output file
-         * @throws Exception
          */
-        public void dumpListingToFile() throws Exception{
+        public void dumpListingToFile(){
             //No dump file defined - do nothing
             if (dumpFile==null)
                 return;

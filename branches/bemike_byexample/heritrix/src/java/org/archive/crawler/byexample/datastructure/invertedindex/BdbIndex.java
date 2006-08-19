@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileUtils;
 import com.sleepycat.je.Cursor;
@@ -32,17 +31,16 @@ public class BdbIndex implements InvertedIndex {
     private Database indexDb;
     private int numOfRecords;
     private Map<String, CachedIndexEntry> indexCache; 
-    private static Logger logger =
-        Logger.getLogger(BdbIndex.class.getName());
+
     
-    public BdbIndex(String envHome) throws Exception{
+    public BdbIndex(String envHome){
         openIndex(envHome);
         indexCache=new ConcurrentHashMap<String,CachedIndexEntry>();
         loadIndexCache();
         numOfRecords=indexCache.size();        
     }
     
-    public void openIndex(String envHome)throws Exception {
+    public void openIndex(String envHome){
         boolean readOnly=false;
         //     Instantiate an environment and database configuration object
         EnvironmentConfig myEnvConfig = new EnvironmentConfig();
@@ -57,11 +55,15 @@ public class BdbIndex implements InvertedIndex {
         //     they do not exist.
         myEnvConfig.setAllowCreate(!readOnly);
         myDbConfig.setAllowCreate(!readOnly);
-        //     Instantiate the Environment. This opens it and also possibly
-        //     creates it.
-        myEnv = new Environment(new File(envHome), myEnvConfig);
-        //      Create and open index DB 
-        indexDb = myEnv.openDatabase(null,OutputConstants.TERMS_INDEX_FILENAME,myDbConfig);
+        try {
+            //     Instantiate the Environment. This opens it and also possibly
+            //     creates it.
+            myEnv = new Environment(new File(envHome), myEnvConfig);
+            //      Create and open index DB 
+            indexDb = myEnv.openDatabase(null,OutputConstants.TERMS_INDEX_FILENAME,myDbConfig);
+        } catch (DatabaseException e) {
+            throw new RuntimeException("Failed to open Index",e);
+        }
     }
     
     public void moveCacheToDb(String rowKey){
@@ -70,7 +72,7 @@ public class BdbIndex implements InvertedIndex {
         try {
             dbKey = new DatabaseEntry(rowKey.getBytes(OutputConstants.DEFAULT_ENCODING));
         } catch (UnsupportedEncodingException e) {
-            logger.severe("Invalid encoding: "+e.getMessage());
+            throw new RuntimeException("Invalid encoding",e);
         }
         DatabaseEntry dbEntry = new DatabaseEntry();        
         //byte[] byteArray=null; 
@@ -94,7 +96,7 @@ public class BdbIndex implements InvertedIndex {
                 //indexDb.put(null,dbKey,dbEntry);
             }
         } catch (DatabaseException e) {
-            logger.severe("Problems accessing db: "+e.getMessage());
+            throw new RuntimeException("Could not access db",e);
         }                     
     }
     
@@ -135,7 +137,7 @@ public class BdbIndex implements InvertedIndex {
         try {
             dbKey = new DatabaseEntry(rowKey.getBytes(OutputConstants.DEFAULT_ENCODING));
         } catch (UnsupportedEncodingException e) {
-            logger.severe("Invalid encoding: "+e.getMessage());
+            throw new RuntimeException("Invalid encoding",e);
         }
         DatabaseEntry de=new DatabaseEntry();
         
@@ -145,7 +147,7 @@ public class BdbIndex implements InvertedIndex {
         try {
             indexDb.put(null,dbKey,de);
         } catch (DatabaseException e) {
-            logger.severe("Problems accessing db: "+e.getMessage());
+            throw new RuntimeException("Could not access db",e);
         }
     }
     
@@ -157,21 +159,27 @@ public class BdbIndex implements InvertedIndex {
         }
     }
     
-    public void loadIndexCache() throws Exception{
-        Cursor cursor=indexDb.openCursor(null,null);
-        DatabaseEntry foundKey = new DatabaseEntry();
-        DatabaseEntry foundData = new DatabaseEntry();
-        IndexRow ir=new IndexRow();
-        String keyString;
-        while (cursor.getNext(foundKey, foundData, LockMode.DEFAULT) == OperationStatus.SUCCESS){
-            keyString = new String(foundKey.getData(), OutputConstants.DEFAULT_ENCODING);
-            ir=(IndexRow)ir.entryToObject(foundData);
-            indexCache.put(keyString,new CachedIndexEntry(null,ir.getTotalValue()));                        
-        }     
-         cursor.close();
+    public void loadIndexCache(){
+        try {
+            Cursor cursor=indexDb.openCursor(null,null);
+            DatabaseEntry foundKey = new DatabaseEntry();
+            DatabaseEntry foundData = new DatabaseEntry();
+            IndexRow ir=new IndexRow();
+            String keyString;
+            while (cursor.getNext(foundKey, foundData, LockMode.DEFAULT) == OperationStatus.SUCCESS){
+                keyString = new String(foundKey.getData(), OutputConstants.DEFAULT_ENCODING);
+                ir=(IndexRow)ir.entryToObject(foundData);
+                indexCache.put(keyString,new CachedIndexEntry(null,ir.getTotalValue()));                        
+            }     
+             cursor.close();
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e);
+        }
     }
     
-    public void closeIndex(String jobId, String envHome) throws Exception{        
+    public void closeIndex(String jobId, String envHome){        
         BufferedWriter out=FileUtils.createFileForJob(jobId,envHome,OutputConstants.TERMS_INDEX_FILENAME,true);        
         StringBuffer dump=new StringBuffer();
 
@@ -186,9 +194,13 @@ public class BdbIndex implements InvertedIndex {
             dump.append(getRow(currKey).toString());
             dump.append("\n");            
         }
-        if (myEnv != null) {
-            indexDb.close();        
-            myEnv.close();        
+        try {
+            if (myEnv != null) {
+                indexDb.close();        
+                myEnv.close();        
+            }
+        } catch (DatabaseException e) {
+            throw new RuntimeException("Failed to close index", e);
         }
         FileUtils.dumpBufferToFile(out,dump);    
         FileUtils.closeFile(out);
@@ -217,7 +229,7 @@ public class BdbIndex implements InvertedIndex {
             //Update key set
             indexCache.put(rowKey,new CachedIndexEntry());
         } catch (Exception e) {
-            logger.severe("Problems in adding index row: "+e.getMessage());
+            throw new RuntimeException("Couldn't add new row",e);
         }
     }
     
@@ -235,7 +247,7 @@ public class BdbIndex implements InvertedIndex {
             //Update key set
             indexCache.put(rowKey,new CachedIndexEntry(row.getIndex(row.getRowSize()),row.getTotalValue()));
         } catch (Exception e) {
-            logger.severe("Problems in adding index row: "+e.getMessage());
+            throw new RuntimeException("Couldn't add index row",e);
         }
     }
     
@@ -250,7 +262,7 @@ public class BdbIndex implements InvertedIndex {
                 return (IndexRow)rowToReturn.entryToObject(dbEntry);
             }
         } catch (Exception e) {
-            logger.severe("Problems in getting index row: "+e.getMessage());
+            throw new RuntimeException("Couldn't get index row",e);
         }
         // No row found
         return null;
@@ -263,7 +275,7 @@ public class BdbIndex implements InvertedIndex {
             //Update key set
             indexCache.remove(rowKey);
         } catch (Exception e){
-            logger.severe("Problems in deleting index row: "+e.getMessage());
+            throw new RuntimeException("Couldn't delete index row",e);
         }        
     }
 

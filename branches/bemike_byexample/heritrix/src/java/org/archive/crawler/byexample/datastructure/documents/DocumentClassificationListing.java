@@ -19,15 +19,12 @@ public class DocumentClassificationListing{
         
     private ArrayList<DocumentClassificationEntry> docClasses;
     private BufferedWriter dumpFile=null;
-    private static Logger logger =
-        Logger.getLogger(DocumentClassificationListing.class.getName());
     
     /**
      * Default constructor
      * @param bw Listing output file
-     * @throws Exception
      */
-    public DocumentClassificationListing(BufferedWriter bw) throws Exception{
+    public DocumentClassificationListing(BufferedWriter bw){
         docClasses=new ArrayList<DocumentClassificationEntry>();
         dumpFile=bw;
     }
@@ -40,21 +37,16 @@ public class DocumentClassificationListing{
      */
     public void addClassification(DocumentClassificationEntry dce){        
         if (docClasses.size()>OutputConstants.MAX_ENTRIES_IN_MEMORY && dumpFile!=null){
-            try {
-                dumpListingToFile();
-                docClasses.clear();
-            } catch (Exception e) {
-                logger.info("Could not dump documents list from memory to file...");
-            }
+            dumpListingToFile();
+            docClasses.clear();
         }          
         docClasses.add(dce);
     }
     
     /**
      * Write listing to designated output file
-     * @throws Exception
      */
-    public void dumpListingToFile() throws Exception{
+    public void dumpListingToFile(){
         //No dump file defined - do nothing
         if (dumpFile==null)
             return;

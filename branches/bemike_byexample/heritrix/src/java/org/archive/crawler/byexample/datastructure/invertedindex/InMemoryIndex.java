@@ -2,6 +2,7 @@ package org.archive.crawler.byexample.datastructure.invertedindex;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
@@ -67,7 +68,7 @@ public class InMemoryIndex implements InvertedIndex {
        return indexRowsHash.keySet().iterator();
     }
 
-    public void closeIndex(String jobId, String filePath)throws Exception{        
+    public void closeIndex(String jobId, String filePath){        
         BufferedWriter out=FileUtils.createFileForJob(jobId,filePath,OutputConstants.TERMS_INDEX_FILENAME,true);        
         StringBuffer dump=new StringBuffer();
         String currKey;
@@ -83,23 +84,27 @@ public class InMemoryIndex implements InvertedIndex {
         FileUtils.closeFile(out);
     }
 
-    public void openIndex(String filePath) throws Exception{                
-        BufferedReader in=FileUtils.readBufferFromFile(filePath);
-        String iter = in.readLine();
-        String[] parts;
-        
-        //File is empty
-        if (in==null) 
-            return;
-        
-        while (!(iter==null)){         
-            parts=iter.split(OutputConstants.KEY_SEPARATOR);
-            //Add row for the keyword
-            addNewRow(parts[0]);
-            getRow(parts[0]).addEntriesFromString(parts[1],parts[2]);
-            iter=in.readLine();
-        }        
-        in.close();
+    public void openIndex(String filePath){     
+        try {
+            BufferedReader in=FileUtils.readBufferFromFile(filePath);
+            String iter = in.readLine();
+            String[] parts;
+            
+            //File is empty
+            if (in==null) 
+                return;
+                
+                while (!(iter==null)){         
+                    parts=iter.split(OutputConstants.KEY_SEPARATOR);
+                    //Add row for the keyword
+                    addNewRow(parts[0]);
+                    getRow(parts[0]).addEntriesFromString(parts[1],parts[2]);
+                    iter=in.readLine();
+                }        
+                in.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to open index",e);
+        }
     }
     
     public String toString(){

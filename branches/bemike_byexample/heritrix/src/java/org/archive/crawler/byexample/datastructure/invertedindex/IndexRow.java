@@ -70,14 +70,18 @@ public class IndexRow extends TupleBinding{
     }
             
     public String toString(){
-        return rowList.toString()+OutputConstants.KEY_SEPARATOR+String.valueOf(totalRowValue);
+        StringBuffer sb=new StringBuffer();
+        for (IndexEntry ie : rowList) {
+            sb.append(ie.toString()).append(",");
+        }
+        return sb+OutputConstants.KEY_SEPARATOR+String.valueOf(totalRowValue);
     }
     
     public void addEntriesFromString(String valuesString, String totalCountString){
         String[] arrayValues;
         String[] entryValues;
         //Remove "[]" and split to entries            
-        arrayValues=valuesString.substring(1,valuesString.length()-1).split(", ");
+        arrayValues=valuesString.split(",");
         for (int i = 0; i < arrayValues.length; i++) {
             entryValues=arrayValues[i].split(OutputConstants.ENTRY_SEPARATOR);
             this.addRowEntry(new IndexEntry(entryValues[0],Double.parseDouble(entryValues[1])));                

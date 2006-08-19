@@ -2,6 +2,7 @@ package org.archive.crawler.byexample.datastructure.support;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,7 @@ public class ClusterSupportIndex{
     }
     
     
-    public void dumpIndexToFile(BufferedWriter bw)throws Exception{
+    public void dumpIndexToFile(BufferedWriter bw){
         StringBuffer dump=new StringBuffer();
         ItemSet currKey;
         for (Iterator<ItemSet> iter = getIndexKeysIterator(); iter.hasNext();) {
@@ -77,25 +78,29 @@ public class ClusterSupportIndex{
         FileUtils.dumpBufferToFile(bw,dump);        
     }    
     
-    public void readIndexFromFile(String filePath) throws Exception{
+    public void readIndexFromFile(String filePath){
         BufferedReader in=FileUtils.readBufferFromFile(filePath);
-        String iter = in.readLine();
-        String[] parts;
-        ItemSet currSet=null;
-        
-        //File is empty
-        if (in==null) 
-            return;
-        
-        while (!(iter==null)){         
-            parts=iter.split(OutputConstants.KEY_SEPARATOR);
-            currSet=ItemSet.createfromString(parts[0]);
-            //Add row for the keyword
-            addIndexKey(currSet);
-            addEntriesFromString(currSet,parts[1]);
-            iter=in.readLine();
-        }        
-        in.close();
+        try {
+            String iter = in.readLine();
+            String[] parts;
+            ItemSet currSet=null;
+            
+            //File is empty
+            if (in==null) 
+                return;
+            
+            while (!(iter==null)){         
+                parts=iter.split(OutputConstants.KEY_SEPARATOR);
+                currSet=ItemSet.createfromString(parts[0]);
+                //Add row for the keyword
+                addIndexKey(currSet);
+                addEntriesFromString(currSet,parts[1]);
+                iter=in.readLine();
+            }        
+            in.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read file at path "+filePath,e);
+        }
     }
     
     public void addEntriesFromString(ItemSet key, String valuesString){
