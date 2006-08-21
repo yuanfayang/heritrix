@@ -52,8 +52,7 @@ import org.archive.util.TextUtils;
  */
 public class ExtractorHTML extends Extractor
 implements CoreAttributeConstants {
-    
-
+    private static final long serialVersionUID = -8020837453442275653L;
 
     private static Logger logger =
         Logger.getLogger(ExtractorHTML.class.getName());
@@ -171,9 +170,6 @@ implements CoreAttributeConstants {
     
     public static final String ATTR_OVERLY_EAGER_LINK_DETECTION =
         "overly-eager-link-detection";
-    
-    public static final String ATTR_IGNORE_UNEXPECTED_HTML = 
-        "ignore-unexpected-html";
 
     
     protected long numberOfCURIsHandled = 0;
@@ -194,20 +190,14 @@ implements CoreAttributeConstants {
         t = addElementToDefinition(
             new SimpleType(ATTR_IGNORE_FORM_ACTION_URLS,
             "If enabled, links appearing as the ACTION attribute in " +
-            "FORMs are not extracted.",
-            Boolean.FALSE));
+            "HTML FORMs are not extracted.", Boolean.FALSE));
         t.setExpertSetting(true);
-        t = addElementToDefinition(
-                new SimpleType(ATTR_OVERLY_EAGER_LINK_DETECTION,
-                "If disabled (default is enabled), possible links will not be "+
-                "queued if they are placed in (somewhat) unlikely places " + 
-                "such as the value of <option> in <select> drop downs.",
-                Boolean.TRUE));
-        t.setExpertSetting(true);
-        t = addElementToDefinition(
-                new SimpleType(ATTR_IGNORE_UNEXPECTED_HTML,
-                "If enabled, html that is detected in unusual or unexpected " +
-                "places is not considerd for processing.", Boolean.TRUE));
+        t = addElementToDefinition(new SimpleType(
+            ATTR_OVERLY_EAGER_LINK_DETECTION,
+            "If disabled (default is enabled), possible links will not be "
+            + "queued if they are placed in (somewhat) unlikely places "
+            + "(Currently, just ignores URLs found in HTML value attributes).",
+            Boolean.TRUE));
         t.setExpertSetting(true);
     }
 
@@ -468,23 +458,7 @@ implements CoreAttributeConstants {
                 ! (isExpectedMimeType(curi.getContentType(), "text/html")
                    || isExpectedMimeType(curi.getContentType(), "application/xhtml"))) {
             return;
-        }
-
-        final boolean ignoreUnexpectedHTML =
-             ((Boolean)getUncheckedAttribute(curi, 
-                 ATTR_IGNORE_UNEXPECTED_HTML)).booleanValue();        
-
-        if (ignoreUnexpectedHTML) {
-            try {
-                if(!isHtmlExpectedHere(curi)) {
-                    // HTML was not expected (eg a GIF was expected) so ignore
-                    // (as if a soft 404)
-                    return;
-                }
-            } catch (URIException e) {
-                logger.severe("Failed expectedHTML test: " + e.getMessage());
-            }
-        }
+        }   
 
         this.numberOfCURIsHandled++;
 
@@ -594,38 +568,6 @@ implements CoreAttributeConstants {
             }
         }
         TextUtils.recycleMatcher(tags);
-    }
-
-
-    static final String NON_HTML_PATH_EXTENSION =
-        "(?i)(gif)|(jp(e)?g)|(png)|(tif(f)?)|(bmp)|(avi)|(mov)|(mp(e)?g)"+
-        "|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)";
-
-    /**
-     * Test whether this HTML is so unexpected (eg in place of a GIF URI)
-     * that it shouldn't be scanned for links.
-     *
-     * @param curi CrawlURI to examine.
-     * @return True if HTML is acceptable/expected here
-     * @throws URIException
-     */
-    protected boolean isHtmlExpectedHere(CrawlURI curi) throws URIException {
-        String path = curi.getUURI().getPath();
-        if(path==null) {
-            // no path extension, HTML is fine
-            return true;
-        }
-        int dot = path.lastIndexOf('.');
-        if (dot < 0) {
-            // no path extension, HTML is fine
-            return true;
-        }
-        if(dot<(path.length()-5)) {
-            // extension too long to recognize, HTML is fine
-            return true;
-        }
-        String ext = path.substring(dot+1);
-        return ! TextUtils.matches(NON_HTML_PATH_EXTENSION, ext);
     }
 
     protected void processScript(CrawlURI curi, CharSequence sequence,
