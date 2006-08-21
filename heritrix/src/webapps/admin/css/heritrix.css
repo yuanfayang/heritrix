@@ -35,7 +35,7 @@ h3 {
     background-color: #0000FF; padding-left: 5; padding-right: 5; 
 }
 .instance_name {
-    white-space: nowrap; font-size: small;
+    font-size: small;
 }
 .tab_text_selected {
     color: #FFFFFF; font-weight: bold; text-decoration: none;
