@@ -3,7 +3,7 @@
 
 <%
     String title = "Web UI Prefs";
-    int tab = 6;
+    int tab = 5;
     String setFavicon = request.getParameter("favicon");
     if(setFavicon!=null) {
         System.getProperties().setProperty("heritrix.favicon",setFavicon);

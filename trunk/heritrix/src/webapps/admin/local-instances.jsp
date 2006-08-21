@@ -105,7 +105,7 @@
                     }
                 %>
                    <input type="hidden" name="heritrixName" value="<%=key%>" />
-                   <%=key%>
+                   <%=key.replace(",", ", ")%>
                 <%
                     if (currentSelection) {
                 %>

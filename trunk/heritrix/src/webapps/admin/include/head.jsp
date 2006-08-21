@@ -31,9 +31,8 @@
      *           2 - Profiles
      *           3 - Logs
      *           4 - Reports
-     *           5 - Instances
-     *           6 - About
-     *           7 - Help
+     *           5 - Settings
+     *           6 - Help
      *
      * SimpleHandler handler - In general this is provided by the include
      *                         page 'handler.jsp' which should be included
@@ -198,27 +197,17 @@
                             </td>
                             <td class="tab_seperator">&nbsp;</td>
                             <td class="tab<%=tab==5?"_selected":""%>">
-                                <a href="<%=request.getContextPath()%>/local-instances.jsp" class="tab_text<%=tab==5?"_selected":""%>">Instances</a>
+                                <a href="<%=request.getContextPath()%>/setup.jsp" class="tab_text<%=tab==5?"_selected":""%>">Setup</a>
                             </td>
                             <td class="tab_seperator">&nbsp;</td>
-                             <td class="tab<%=tab==6?"_selected":""%>">
-                                <a href="<%=request.getContextPath()%>/about.jsp" class="tab_text<%=tab==6?"_selected":""%>">About</a>
-                            </td>
-                            <td class="tab_seperator">&nbsp;</td>
-                            <td class="tab<%=tab==7?"_selected":""%>">
-                                <a href="<%=request.getContextPath()%>/help.jsp" class="tab_text<%=tab==7?"_selected":""%>">Help</a>
+                            <td class="tab<%=tab==6?"_selected":""%>">
+                                <a href="<%=request.getContextPath()%>/help.jsp" class="tab_text<%=tab==6?"_selected":""%>">Help</a>
                              </td>
                             <td width="100%">
                             </td>
                         </tr>
                     </table>
                 </td>
-            </tr>
-            <tr>
-                <td bgcolor="#0000FF" height="1" colspan="4"></td>
-            </tr>
-            <tr>
-            <td class="instance_name">Identifier: <%=currentHeritrixName%></td>
             </tr>
             <tr>
                 <td bgcolor="#0000FF" height="1" colspan="4"></td>

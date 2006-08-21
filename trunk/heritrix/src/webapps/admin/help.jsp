@@ -2,13 +2,17 @@
 
 <%
     String title = "Help";
-    int tab = 7;
+    int tab = 6;
 %>
 
 <%@include file="/include/head.jsp"%>
 
 <div class="margined">
     <h1>Heritrix online help</h1>
+<p>
+    <b><a href="<%=request.getContextPath()%>/about.jsp">About Heritrix</a></b></br>
+    Includes license and current environment information.
+</p>
 <p>
     <b><a target="_blank" 
     href="<%=request.getContextPath()%>/docs/articles/user_manual.html">User
