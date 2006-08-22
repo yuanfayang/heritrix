@@ -7,6 +7,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 
+/**
+ * Class that implements Document Support Index
+ * 
+ * @author Michael Bendersky 
+ *
+ */
 public class DocumentSupportIndex {
    private Map<String,TermSupportListing> myClusteringHash;
     
@@ -44,4 +50,4 @@ public class DocumentSupportIndex {
     public void removeRow(ItemSet key){
         myClusteringHash.remove(key);
     }
-}
+} //END OF CLASS

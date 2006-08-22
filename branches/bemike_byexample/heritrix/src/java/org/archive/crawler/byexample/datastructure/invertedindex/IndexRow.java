@@ -11,6 +11,14 @@ import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
 import com.sleepycat.bind.tuple.TupleOutput;
 
+/**
+ * Class representing an single row in an InvertedIndex
+ * Each row is a combination of IndexEntries list and total row value.
+ * Total row value is a sum of all IndexEntries values listed in the row
+ * 
+ * @author Michael Bendersky 
+ *
+ */
 public class IndexRow extends TupleBinding{
     
     //Contains all the index entries mapped to a key 

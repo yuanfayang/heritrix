@@ -5,6 +5,13 @@ import java.util.Collections;
 
 import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 
+/**
+ * Listing of entries of type ClusterScore
+ * 
+ * @see org.archive.crawler.byexample.datastructure.support.ClusterScoreListing
+ * @author Michael Bendersky
+ *
+ */
 public class ClusterScoreListing {
         
     private ArrayList<ClusterScore> scoreList;

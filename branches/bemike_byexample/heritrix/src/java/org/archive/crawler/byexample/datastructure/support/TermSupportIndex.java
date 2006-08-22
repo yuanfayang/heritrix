@@ -6,6 +6,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 
+/**
+ * Class implementing Term Support Index
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class TermSupportIndex {
                
         private Map<String,ClusterScoreListing> myTermScoresHash;

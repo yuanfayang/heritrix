@@ -6,6 +6,13 @@ import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
 import com.sleepycat.bind.tuple.TupleOutput;
 
+/**
+ * Class, which represents an IndexEntry in an Inverted Index Row
+ * IndexEntry structure is: [Id]::[Value]
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class IndexEntry extends TupleBinding{     
 
     private String myEntryId;
