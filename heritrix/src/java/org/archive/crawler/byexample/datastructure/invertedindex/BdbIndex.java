@@ -20,7 +20,8 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 
 /**
- * InvertedIndex interface implementation using Berkeley DB
+ * InvertedIndex interface implementation using Berkeley DB.
+ * Index data is written to DB during the crawl
  * 
  * @author Michael Bendersky
  *

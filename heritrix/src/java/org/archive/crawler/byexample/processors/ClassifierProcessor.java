@@ -25,6 +25,12 @@ import org.archive.crawler.settings.SimpleType;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
 
+/**
+ * Processor in charge of making classifications based on previous clustering  
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class ClassifierProcessor extends Processor {
 
     // Specific processor attributes
@@ -230,6 +236,12 @@ public class ClassifierProcessor extends Processor {
         numOfProcessedDocs++;
     }
 
+    /**
+     * Creates Classification InfoXML file
+     * 
+     * @see org.archive.crawler.byexample.datastructure.info.ClassificationInfo
+     *
+     */
     public void createClassificaionXmlFile() {        
         ClassificationInfo info = new ClassificationInfo(
                 OutputConstants.getJobPath(basedOnJob),

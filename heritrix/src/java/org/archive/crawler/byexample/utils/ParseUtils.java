@@ -4,6 +4,12 @@ import org.htmlparser.Parser;
 import org.htmlparser.beans.StringBean;
 import org.htmlparser.util.ParserException;
 
+/**
+ * Provides web pages parsing utils
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class ParseUtils {
     
     /**

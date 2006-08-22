@@ -6,7 +6,12 @@ import java.util.List;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
 
-
+/**
+ * Class that implements list of TermSupport entries
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class TermSupportListing{
     private ArrayList<TermSupport> termList;
     

@@ -7,7 +7,7 @@ import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.CrawlerSettings;
 
 /**
- * Filter extending class similar to DecidingFilter, 
+ * Filter class similar to DecidingFilter, 
  * only that it's decide rules are defined internally via <i>setDecideRules</i> method
  * and not via UI settings. It is used in TermsIndexingProcessor to determine crawl sites relevance
  * 

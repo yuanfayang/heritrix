@@ -4,37 +4,74 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * Class implementing the collection of all k-frequent item sets.
+ * k-frequent item set is a set of k terms, that 
+ * has at least MIN_GLOBAL_SUPPORT in the collection
+ * 
+ * @see org.archive.crawler.byexample.constants.ByExampleProperties
+ * @author Michael Bendersky
+ *
+ */
 public class FrequentItemSets{
 
     private Set<ItemSet> myFrequentItemSets;
     
+    /**
+     * Default constructor
+     *
+     */
     public FrequentItemSets(){
         myFrequentItemSets=new HashSet<ItemSet>();
     }
     
+    /**
+     * 
+     * @return number of k-frequent item sets
+     */
     public int getSize(){
         return myFrequentItemSets.size();
     }
     
+    /**
+     * Insert given ItemSet into k-frequent item sets collection
+     * @param is ItemSet to insert
+     */
     public void insertToSet(ItemSet is){
         //Don't add ItemSet more than once
         if (!contains(is))
             myFrequentItemSets.add(is);
     }
    
-    
+    /**
+     * Merges two FrequentItemSets
+     * @param is FrequentItemSets to merge with
+     */
     public void insertToSet(FrequentItemSets is){
         myFrequentItemSets.addAll(is.myFrequentItemSets);
     }
     
+    /**
+     * Removes given ItemSet from k-frequent item sets collection
+     * @param is ItemSet to remove
+     */
     public void removeFromSet(ItemSet is){
         myFrequentItemSets.remove(is);
     }
     
+    /**
+     * Removes given FrequentItemSets collection from k-frequent item sets collection
+     * @param is FrequentItemSets to remove
+     */
     public void removeFromSet(FrequentItemSets is){
         myFrequentItemSets.removeAll(is.myFrequentItemSets);
     }
     
+    /**
+     * 
+     * @param is ItemSet
+     * @return TRUE if k-frequent item sets collection contains given ItemSet, FALSE otherwise
+     */
     public boolean contains(ItemSet is){
        for (ItemSet myIS : myFrequentItemSets)
            if(myIS.equals(is))
@@ -42,6 +79,10 @@ public class FrequentItemSets{
        return false;
     }
     
+    /**
+     * 
+     * @return Iterator over all ItemSets in the k-frequent item sets collection
+     */
     public Iterator<ItemSet> getSetsIterator(){
         return myFrequentItemSets.iterator();
     }
@@ -79,7 +120,9 @@ public class FrequentItemSets{
         return fis[k-1];
     }
     
-    
+    /**
+     * FrequentItemSets String representation 
+     */
     public String toString(){
         if (myFrequentItemSets.size()==0)
             return "[]";

@@ -11,7 +11,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.utils.FileUtils;
 
-
+/**
+ * InvertedIndex interface In-Memory implementation.
+ * All index data is stored in main memory 
+ * as a Map during the crawl
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class InMemoryIndex implements InvertedIndex {
         
     private Map<String,IndexRow> indexRowsHash; 

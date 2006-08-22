@@ -5,10 +5,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
-
 import org.archive.crawler.byexample.algorithms.preprocessing.StopWordsHandler;
 import org.archive.crawler.byexample.algorithms.preprocessing.TermIndexManipulator;
 import org.archive.crawler.byexample.constants.ByExampleProperties;
@@ -23,12 +19,14 @@ import org.archive.crawler.deciderules.DecideRule;
 import org.archive.crawler.deciderules.DecideRuleSequence;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.HttpRecorder;
 
 /**
- * @author Michael
+ * Processor in charge of making all preprocessing actions and 
+ * creating preprocess InfoXML based on which the clustering will be made  
+ * 
+ * @author Michael Bendersky
  *
  */
 public class TermsIndexingProcessor extends Processor {
@@ -96,9 +94,6 @@ public class TermsIndexingProcessor extends Processor {
                 new DecideRuleSequence(RELEVANCE_DECIDE_RULES_ATTR));
     }
     
-    /**
-     * Processor initial tasks
-     */
     protected void initialTasks(){        
         
         //Reset the counters
@@ -147,7 +142,7 @@ public class TermsIndexingProcessor extends Processor {
      * URI will be processed only if it meets the process conditions such as mime-type, html response type etc.
      * 
      * @param uriToProcess URI to process
-     * @param isAccepted indicator whether the URI passed the Processor filters 
+     * @param isAccepted indicator whether the URI passed the Processor Relevance Filter 
      * @return TRUE - URI was processed, FALSE - else
      */
     protected boolean processURI(CrawlURI uriToProcess, boolean isAccepted){
@@ -208,8 +203,15 @@ public class TermsIndexingProcessor extends Processor {
             acceptedProcess(uriToProcess);
         else
             rejectedProcess(uriToProcess);
- }
-
+    }
+    
+    
+    /**
+     * Creates Preprocess InfoXML file
+     * 
+     * @see org.archive.crawler.byexample.datastructure.info.PreprocessInfo
+     *
+     */
     public void createPreprocessXmlFile(){
         PreprocessInfo info=new PreprocessInfo
                             (OutputConstants.getTermsIndexFilePath(jobID),

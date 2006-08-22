@@ -10,7 +10,12 @@ import java.io.IOException;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
 
-
+/**
+ * Utilities for reading/writing files 
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class FileUtils {
 
    /**

@@ -2,6 +2,13 @@ package org.archive.crawler.byexample.datastructure.support;
 
 import org.archive.crawler.byexample.constants.OutputConstants;
 
+/**
+ * Class that assigns support to term.
+ * This support is used in order to determine cluster-frequent terms
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class TermSupport implements Comparable{
     
     private String myTerm;
@@ -39,4 +46,5 @@ public class TermSupport implements Comparable{
             return -1;
         return 0;
     }
-}
+    
+} //END OF CLASS

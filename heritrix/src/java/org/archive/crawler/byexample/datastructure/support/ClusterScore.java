@@ -3,6 +3,13 @@ package org.archive.crawler.byexample.datastructure.support;
 import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 
+/**
+ * Class that assigns score to each cluster.
+ * Cluster is represented by an ItemSet
+ * 
+ * @author Michael Bendersky
+ *
+ */
 public class ClusterScore implements Comparable{
     private ItemSet clusterLabel;
     private double clusterScore;

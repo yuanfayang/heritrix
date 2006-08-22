@@ -12,6 +12,12 @@ import org.archive.crawler.byexample.constants.OutputConstants;
 import org.archive.crawler.byexample.datastructure.itemset.ItemSet;
 import org.archive.crawler.byexample.utils.FileUtils;
 
+/**
+ * Class that implements Cluste Support Index
+ * 
+ * @author Michael Bendersky 
+ *
+ */
 public class ClusterSupportIndex{
 
     private Map<ItemSet,TermSupportListing> myClusteringHash;
@@ -117,4 +123,5 @@ public class ClusterSupportIndex{
             }
         }
     }
-}
+    
+} //END OF CLASS
