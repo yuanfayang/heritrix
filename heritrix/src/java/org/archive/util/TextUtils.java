@@ -169,13 +169,13 @@ public class TextUtils {
      * Escapes a string so that it can be passed as an argument to a javscript
      * in a JSP page. This method takes a string and returns the same string
      * with any single quote escaped by prepending the character with a
-     * backslash. Linebreaks are also replaced with '\n'.
+     * backslash. Linebreaks are also replaced with '\n'.  Also,
+     * less-than signs and ampersands are replaced with HTML entities.
      * 
      * @param s The string to escape
      * @return The same string escaped.
      */
-    public static String escapeForJavascript(String s) {
-        s = s.replaceAll(">", "&gt;");
+    public static String escapeForHTMLJavascript(String s) {
         return escapeForHTML(StringEscapeUtils.escapeJavaScript(s));
     }
     
