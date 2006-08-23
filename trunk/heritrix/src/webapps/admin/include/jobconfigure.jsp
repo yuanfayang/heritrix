@@ -77,7 +77,7 @@
         String descriptionForAttribute = 
         	TextUtils.escapeForMarkupAttribute(mbean.getDescription());
         String descriptionForJs = 
-        	TextUtils.escapeForJavascript(mbean.getDescription());
+        	TextUtils.escapeForHTMLJavascript(mbean.getDescription());
         p.append(mbean.isExpertSetting()?"<tr class='"+expertClass+"'>":"<tr>");
         p.append("<td title=\"" + descriptionForAttribute +"\">");
         p.append("<b>" + indent + mbean.getName() + "</b></td>\n");
@@ -138,7 +138,7 @@
                         descriptionForAttribute = 
         					TextUtils.escapeForMarkupAttribute(att.getDescription());
         				descriptionForJs = 
-        					TextUtils.escapeForJavascript(att.getDescription());
+        					TextUtils.escapeForHTMLJavascript(att.getDescription());
         				p.append((att.isExpertSetting()||mbean.isExpertSetting())
         				           ?"<tr class='"+expertClass+"'>":"<tr>");
                         p.append("<td title=\"" + descriptionForAttribute +"\" valign='top'>");
@@ -313,7 +313,7 @@
             
             if(sameSetting){
                 return "<a class='help' style='color: red' href=\"javascript:doPop('" + 
-                    TextUtils.escapeForJavascript(failedCheck.getMessage()) + "')\">*</a>";
+                    TextUtils.escapeForHTMLJavascript(failedCheck.getMessage()) + "')\">*</a>";
             }
         }
         return "";
