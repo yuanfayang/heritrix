@@ -28,15 +28,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpParser;
 import org.apache.commons.httpclient.StatusLine;
 import org.apache.commons.httpclient.util.EncodingUtil;
-import org.archive.util.Base32;
+import org.archive.io.ArchiveRecord;
+import org.archive.io.ArchiveRecordHeader;
 
 
 /**
@@ -44,54 +43,7 @@ import org.archive.util.Base32;
  *
  * @author stack
  */
-public class ARCRecord extends InputStream implements ARCConstants {
-    /**
-     * Map of record header fields.
-     *
-     * We store all in a hashmap.  This way it doesn't matter whether we're
-     * parsing version 1 or version 2 records.
-     *
-     * <p>Keys are lowercased.
-     */
-    private ARCRecordMetaData metaData = null;
-
-    /**
-     * Stream to read this record from.
-     *
-     * Stream can only be read sequentially.  Will only return this records
-     * content returning a -1 if you try to read beyond the end of the current
-     * record.
-     *
-     * <p>Streams can be markable or not.  If they are, we'll be able to roll
-     * back when we've read too far.  If not markable, assumption is that
-     * the underlying stream is managing our not reading too much (This pertains
-     * to the skipping over the end of the ARCRecord.  See {@link #skip()}.
-     */
-    private InputStream in = null;
-
-    /**
-     * Position w/i the ARCRecord content, within <code>in</code>.
-     *
-     * This position is relative within this ARCRecord.  Its not
-     * same as the arcfile position.
-     */
-    private long position = 0;
-
-    /**
-     * Set flag when we've reached the end-of-record.
-     */
-    private boolean eor = false;
-    
-    /**
-     * Compute digest on what we read and add to metadata when done.
-     * 
-     * Currently hardcoded as sha-1. TODO: Remove when arcs record
-     * digest or else, add a facility that allows the arc reader to
-     * compare the calculated digest to that which is recorded in
-     * the arc.
-     */
-    private MessageDigest digest = null;
-
+public class ARCRecord extends ArchiveRecord implements ARCConstants {
     /**
      * Http status line object.
      * 
@@ -125,14 +77,6 @@ public class ARCRecord extends InputStream implements ARCConstants {
         "HTTP/1.1 200 OK\r\n".length();
     
     /**
-     * Offset at which the body begins.
-     */
-    private int bodyOffset = -1;
-
-    private boolean strict = false;
-    
-
-    /**
      * Constructor.
      *
      * @param in Stream cue'd up to be at the start of the record this instance
@@ -140,7 +84,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * @param metaData Meta data.
      * @throws IOException
      */
-    public ARCRecord(InputStream in, ARCRecordMetaData metaData)
+    public ARCRecord(InputStream in, ArchiveRecordHeader metaData)
     		throws IOException {
         this(in, metaData, 0, true, false, true);
     }
@@ -160,24 +104,11 @@ public class ARCRecord extends InputStream implements ARCConstants {
      * about ~20% of CPU during an ARC parse.
      * @throws IOException
      */
-    public ARCRecord(InputStream in, ARCRecordMetaData metaData,
+    public ARCRecord(InputStream in, ArchiveRecordHeader metaData,
         int bodyOffset, boolean digest, boolean strict,
         final boolean parseHttpHeaders) 
     throws IOException {
-        this.in = in;
-        this.metaData = metaData;
-        this.position = bodyOffset;
-        if (digest) {
-            try {
-                this.digest = MessageDigest.getInstance("SHA1");
-            } catch (NoSuchAlgorithmException e) {
-                // Convert to IOE because thats more amenable to callers
-                // -- they are dealing with it anyways.
-                throw new IOException(e.getMessage());
-            }
-        }
-        this.strict = strict;
-        
+    	super(in, metaData, bodyOffset, digest, strict);
         if (parseHttpHeaders) {
             this.httpHeaderStream = readHttpHeader();
         }
@@ -224,11 +155,11 @@ public class ARCRecord extends InputStream implements ARCConstants {
     private InputStream readHttpHeader() throws IOException {
         // If judged a record that doesn't have an http header, return
         // immediately.
-        if(!this.metaData.getUrl().startsWith("http") ||
-            this.metaData.getLength() <= MIN_HTTP_HEADER_LENGTH) {
+        if(!getHeader().getUrl().startsWith("http") ||
+            getHeader().getLength() <= MIN_HTTP_HEADER_LENGTH) {
             return null;
         }
-        byte [] statusBytes = HttpParser.readRawLine(this.in);
+        byte [] statusBytes = HttpParser.readRawLine(getIn());
         int eolCharCount = getEolCharsCount(statusBytes);
         if (eolCharCount <= 0) {
             throw new IOException("Failed to read http status where one " +
@@ -253,7 +184,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
         // Now read rest of the header lines looking for the separation
         // between header and body.
         for (byte [] lineBytes = null; true;) {
-            lineBytes = HttpParser.readRawLine(this.in);
+            lineBytes = HttpParser.readRawLine(getIn());
             eolCharCount = getEolCharsCount(lineBytes);
             if (eolCharCount <= 0) {
                 throw new IOException("Failed reading http headers: " +
@@ -269,7 +200,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
         
         byte [] headerBytes = baos.toByteArray();
         // Save off where body starts.
-        this.bodyOffset = headerBytes.length;
+        setBodyOffset(headerBytes.length);
         ByteArrayInputStream bais =
             new ByteArrayInputStream(headerBytes);
         if (!bais.markSupported()) {
@@ -283,15 +214,6 @@ public class ARCRecord extends InputStream implements ARCConstants {
             ARCConstants.DEFAULT_ENCODING);
         bais.reset();
         return bais;
-    }
-    
-    /**
-     * @return Offset at which the body begins (Only known after
-     * header has been read) or -1 if none or we haven't read
-     * headers yet.
-     */
-    public int getBodyOffset() {
-        return this.bodyOffset;
     }
     
     /**
@@ -319,16 +241,12 @@ public class ARCRecord extends InputStream implements ARCConstants {
         }
         return count;
     }
-    
-    public boolean markSupported() {
-        return false;
-    }
 
     /**
      * @return Meta data for this record.
      */
     public ARCRecordMetaData getMetaData() {
-        return this.metaData;
+        return (ARCRecordMetaData)getHeader();
     }
     
     /**
@@ -336,22 +254,6 @@ public class ARCRecord extends InputStream implements ARCConstants {
      */
     public Header [] getHttpHeaders() {
         return this.httpHeaders;
-    }
-
-    /**
-     * Calling close on a record skips us past this record to the next record
-     * in the stream.
-     *
-     * It does not actually close the stream.  The underlying steam is probably
-     * being used by the next arc record.
-     *
-     * @throws IOException
-     */
-    public void close() throws IOException {
-        if (this.in != null) {
-            skip();
-            this.in = null;
-        }
     }
 
     /**
@@ -372,7 +274,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
             }
         } else {
             if (available() > 0) {
-                c = this.in.read();
+                c = getIn().read();
                 if (c == -1) {
                     throw new IOException("Premature EOF before " +
                         "end-of-record.");
@@ -382,7 +284,7 @@ public class ARCRecord extends InputStream implements ARCConstants {
                 }
             }
         }
-        this.position++;
+        incrementPosition();
         return c;
     }
 
@@ -407,93 +309,22 @@ public class ARCRecord extends InputStream implements ARCConstants {
             if (read == -1 || read == 0) {
                 read = -1;
             } else {
-                read = this.in.read(b, offset, read);
+                read = getIn().read(b, offset, read);
                 if (read == -1) {
                     String msg = "Premature EOF before end-of-record: " +
                         getMetaData().getHeaderFields();
                     if (isStrict()) {
                         throw new IOException(msg);
                     }
-                    this.eor = true;
-                    ARCReader.logStdErr(Level.WARNING, msg);
+                    setEor(true);
+                    System.err.println(Level.WARNING.toString() + " " + msg);
                 }
                 if (this.digest != null && read >= 0) {
                     this.digest.update(b, offset, read);
                 }
             }
         }
-        this.position += read;
+        incrementPosition(read);
         return read;
-    }
-
-    /**
-     * This available is not the stream's available.  Its an available
-     * based on what the stated ARC record length is minus what we've
-     * read to date.
-     * 
-     * @return True if bytes remaining in record content.
-     */
-    public int available() {
-        return (int)(this.metaData.getLength() - this.position);
-    }
-
-    public long skip(long n) throws IOException {
-        final int SKIP_BUFFERSIZE = 1024 * 4;
-        byte [] b = new byte[SKIP_BUFFERSIZE];
-        long total = 0;
-        for (int read = 0; (total < n) && (read != -1);) {
-            read = Math.min(SKIP_BUFFERSIZE, (int)(n - total));
-            // TODO: Interesting is that reading from compressed stream, we only
-            // read about 500 characters at a time though we ask for 4k.
-            // Look at this sometime.
-            read = read(b, 0, read);
-            if (read <= 0) {
-                read = -1;
-            } else {
-                total += read;
-            }
-        }
-        return total;
-    }
-
-    /**
-     * Skip over this records content.
-     *
-     * @throws IOException
-     */
-    private void skip() throws IOException {
-        if (this.eor) {
-            return;
-        }
-        
-        // Read to the end of the body of the record.  Exhaust the stream.
-        // Can't skip direct to end because underlying stream may be compressed
-        // and we're calculating the digest for the record.
-        if (available() > 0) {
-            skip(available());
-        }
-        
-        this.eor = true;
-        // Set the metadata digest as base32 string.
-        if (this.digest != null) {
-            this.metaData.setDigest(Base32.encode(this.digest.digest()));
-        }
-        if (this.httpStatus != null) {
-            int statusCode = this.httpStatus.getStatusCode();
-            this.metaData.setStatusCode(Integer.toString(statusCode));
-        }
-    }
-    
-    /**
-     * @return Returns the strict.
-     */
-    public boolean isStrict() {
-        return this.strict;
-    }
-    /**
-     * @param strict The strict to set.
-     */
-    public void setStrict(boolean strict) {
-        this.strict = strict;
     }
 }

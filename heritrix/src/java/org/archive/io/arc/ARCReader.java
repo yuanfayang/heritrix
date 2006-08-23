@@ -22,17 +22,12 @@
  */
 package org.archive.io.arc;
 
-import it.unimi.dsi.fastutil.io.RepositionableStream;
-
-import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,11 +44,13 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.archive.io.RandomAccessInputStream;
+import org.archive.io.ArchiveReader;
+import org.archive.io.ArchiveRecord;
+import org.archive.io.ArchiveRecordHeader;
+import org.archive.io.RecoverableIOException;
 import org.archive.io.WriterPoolMember;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.InetAddressUtil;
-import org.archive.util.MimetypeUtils;
 import org.archive.util.TextUtils;
 
 
@@ -78,27 +75,18 @@ import org.archive.util.TextUtils;
  * @author stack
  * @version $Date$ $Revision$
  */
-public abstract class ARCReader
+public abstract class ARCReader extends ArchiveReader
 implements ARCConstants {
     Logger logger = Logger.getLogger(ARCReader.class.getName());
     
     /**
-     * Set to true if we are aligned on first record on creation
-     * of ARCReader.
-     * We used depend on offset.  If offset was zero, then we were
-     * aligned on first record.  This is no longer necessarily the
-     * case when ARCReader is created at an offset into an ARC:
-     * The offset is zero but its relative to where we started
-     * reading the ARC.
+     * Set to true if we are aligned on first record of Archive file.
+     * We used depend on offset. If offset was zero, then we were
+     * aligned on first record.  This is no longer necessarily the case when
+     * Reader is created at an offset into an Archive file: The offset is zero
+     * but its relative to where we started reading.
      */
-    protected boolean alignedOnFirstRecord = true;
-    
-    /**
-     * Maximum amount of recoverable exceptions in a row.
-     * If more than this amount in a row, we'll let out the exception rather
-     * than go back in for a retry.
-     */
-    private static final int MAX_ALLOWED_RECOVERABLES = 10;
+    private boolean alignedOnFirstRecord = true;
     
     /**
      * Assumed maximum size of a record meta header line.
@@ -112,46 +100,16 @@ implements ARCConstants {
     private static final int MAX_HEADER_LINE_LENGTH = 1024 * 100;
 
     /**
-     * The ARCRecord currently being read.
-     *
-     * Keep this ongoing reference so we'll close the record
-     * even if the caller doesn't.  On construction, has the
-     * arcfile header metadata.
-     */
-    protected ARCRecord currentRecord = null;
-    
-    /**
-     * ARC file input stream.
-     *
-     * Keep it around so we can close it when done.
-     *
-     * <p>Set in constructor.  Must support the 
-     * PositionableStream interface.  Constructor should check.
-     */
-    protected InputStream in = null;
-    
-    /**
-     * ARC file version.
-     */
-    private String version = null;
-    
-    /**
-     * Is this arc compressed?
-     */
-    protected boolean compressed = false;
-    
-
-    /**
      * Array of field names.
      * 
      * Used to initialize <code>headerFieldNameKeys</code>.
      */
     private final String [] headerFieldNameKeysArray = {
-        ARCConstants.URL_HEADER_FIELD_KEY,
-        ARCConstants.IP_HEADER_FIELD_KEY,
-        ARCConstants.DATE_HEADER_FIELD_KEY,
-        ARCConstants.MIMETYPE_HEADER_FIELD_KEY,
-        ARCConstants.LENGTH_HEADER_FIELD_KEY
+        URL_HEADER_FIELD_KEY,
+        IP_HEADER_FIELD_KEY,
+        DATE_HEADER_FIELD_KEY,
+        MIMETYPE_HEADER_FIELD_KEY,
+        LENGTH_HEADER_FIELD_KEY
     };
     
     /**
@@ -163,16 +121,6 @@ implements ARCConstants {
      */
     private final List<String> headerFieldNameKeys =
         Arrays.asList(this.headerFieldNameKeysArray);
-    
-    /**
-     * Descriptive string for the ARC we're going against
-     * (full path, url, etc.).
-     */
-    protected String arc = null;
-
-    private boolean digest = true;
-    
-    private boolean strict = false;
     
     private boolean parseHttpHeaders = true;
     
@@ -203,127 +151,9 @@ implements ARCConstants {
     private static String cachedShortArcFileName = null;
 
     static final String DEFAULT_DIGEST_METHOD = "SHA-1";
-
-    /**
-     * Convenience method used by subclass constructors.
-     * @param f ARC that this reader goes against.
-     */
-    protected void initialize(final String f) {
-        this.arc = f;
-    }
     
-    public boolean isCompressed() {
-        return this.compressed;
-    }
-    
-    /**
-     * Rewinds stream to start of the arc file.
-     * @throws IOException if stream is not resettable.
-     */
-    protected void rewind() throws IOException {
-        cleanupCurrentRecord();
-        if (this.in instanceof RepositionableStream) {
-            try {
-                ((RepositionableStream)this.in).position(0);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-       } else {
-           throw new IOException("Stream is not resettable.");
-       }
-    }
-    
-    /**
-     * Get record at passed <code>offset</code>.
-     * 
-     * @param offset Byte index into arcfile at which a record starts.
-     * @return An ARCRecord reference.
-     * @throws IOException
-     */
-    public ARCRecord get(long offset) throws IOException {
-        cleanupCurrentRecord();
-        RepositionableStream ps = (RepositionableStream)this.in;
-        long currentOffset = ps.position();
-        if (currentOffset != offset) {
-            currentOffset = offset;
-            ps.position(offset);
-        }
-        return createARCRecord(this.in, currentOffset);
-    }
-    
-    /**
-     * @return Return ARCRecord created against current offset.
-     * @throws IOException
-     */
-    public ARCRecord get() throws IOException {
-        return createARCRecord(this.in,
-            ((RepositionableStream)this.in).position());
-    }
-    
-    /**
-     * Convenience method for constructors.
-     * 
-     * @param arcfile File to read.
-     * @return InputStream to read from.
-     * @throws IOException If failed open or fail to get a memory
-     * mapped byte buffer on file.
-     */
-    protected InputStream getInputStream(final File arcfile, final long offset)
-    throws IOException {
-        return new RepositionableBufferedInputStream(
-            new RandomAccessInputStream(arcfile, offset));
-    }
-
-    /**
-     * Class that adds PositionableStream methods to a BufferedInputStream.
-     */
-    private class RepositionableBufferedInputStream extends BufferedInputStream
-    		implements RepositionableStream {
-
-        public RepositionableBufferedInputStream(InputStream is)
-        		throws IOException {
-            super(is);
-            doStreamCheck();
-        }
-
-        public RepositionableBufferedInputStream(InputStream is, int size)
-        		throws IOException {
-            super(is, size);
-            doStreamCheck();
-        }
-        
-        private void doStreamCheck() throws IOException {
-            if (!(this.in instanceof RepositionableStream)) {
-                throw new IOException(
-                    "Passed stream must implement PositionableStream");
-            }
-        }
-
-        public long position() throws IOException {
-            // Current position is the underlying files position
-            // minus the amount thats in the buffer yet to be read.
-            return ((RepositionableStream)this.in).position() -
-            	(this.count - this.pos);
-        }
-
-        public void position(long position) throws IOException {
-            // Force refill of buffer whenever there's been a seek.
-            this.pos = 0;
-            this.count = 0;
-            ((RepositionableStream)this.in).position(position);
-        }
-    }
-    
-    /**
-     * Cleanout the current record if there is one.
-     * @throws IOException
-     */
-    protected void cleanupCurrentRecord() throws IOException {
-        if (this.currentRecord != null) {
-            this.currentRecord.close();
-            gotoEOR(this.currentRecord);
-            this.currentRecord = null;
-        }
+    ARCReader() {
+    	super();
     }
     
     /**
@@ -332,199 +162,37 @@ implements ARCConstants {
      * @param record
      * @throws IOException
      */
-    protected void gotoEOR(ARCRecord record) throws IOException {
-        if (this.in.available() <= 0) {
+    protected void gotoEOR(ArchiveRecord record) throws IOException {
+        if (getIn().available() <= 0) {
             return;
         }
         
         // Remove any trailing LINE_SEPARATOR
         int c = -1;
-        while (this.in.available() > 0) {
-            if (this.in.markSupported()) {
-                this.in.mark(1);
+        while (getIn().available() > 0) {
+            if (getIn().markSupported()) {
+                getIn().mark(1);
             }
-            c = this.in.read();
+            c = getIn().read();
             if (c != -1) {
                 if (c == LINE_SEPARATOR) {
                     continue;
                 }
-                if (this.in.markSupported()) {
+                if (getIn().markSupported()) {
                     // We've overread.  We're probably in next record.  There is
                     // no way of telling for sure. It may be dross at end of
                     // current record. Backup.
-                    this.in.reset();
+                	getIn().reset();
                     break;
                 }
-                ARCRecordMetaData meta = (this.currentRecord != null)?
-                    record.getMetaData(): null;
+                ArchiveRecordHeader h = (getCurrentRecord() != null)?
+                    record.getHeader(): null;
                 throw new IOException("Read " + (char)c +
                     " when only " + LINE_SEPARATOR + " expected. " + 
-                    this.arc + ((meta != null)?
-                        meta.getHeaderFields().toString(): ""));
+                    getReaderIdentifier() + ((h != null)?
+                        h.getHeaderFields().toString(): ""));
             }
         }
-    }
-    
-    public void close() throws IOException {
-        if (this.in != null) {
-            this.in.close();
-            this.in = null;
-        }
-    }
-
-    protected void finalize() throws Throwable {
-        super.finalize();
-        close();
-    }
-    
-    protected InputStream getInputStream() {
-        return this.in;
-    }
-    
-    protected Logger getLogger() {
-        return this.logger;
-    }
-    
-    /**
-     * Inner ARCRecord Iterator class.
-     * Throws RuntimeExceptions in {@link #hasNext()} and {@link #next()} if
-     * trouble pulling record from underlying stream.
-     * @author stack
-     */
-    protected class ARCRecordIterator implements Iterator {
-        /**
-         * @return True if we have more ARC records to read.
-         * @exception RuntimeException Can throw an IOException wrapped in a
-         * RuntimeException if a problem reading underlying stream (Corrupted
-         * gzip, etc.).
-         */
-        public boolean hasNext() {
-            // Call close on any extant record.  This will scoot us past
-            // any content not yet read.
-            try {
-                cleanupCurrentRecord();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return innerHasNext();
-        }
-        
-        protected boolean innerHasNext() {
-            long offset = -1;
-            try {
-                offset = ((RepositionableStream)getInputStream()).position();
-                return getInputStream().available() > 0;
-            } catch (IOException e) {
-                throw new RuntimeException("Offset " + offset, e);
-            }
-        }
-
-        /**
-         * Tries to move to next record if we get
-         * {@link RecoverableIOException}. If not <code>strict</code>
-         * tries to move to next record if we get an
-         * {@link IOException}.
-         * @return Next object.
-         * @exception RuntimeException Throws a runtime exception,
-         * usually a wrapping of an IOException, if trouble getting
-         * a record (Throws exception rather than return null).
-         */
-        public Object next() {
-            long offset = -1;
-            try {
-                offset = ((RepositionableStream)getInputStream()).position();
-                return exceptionNext();
-            } catch (IOException e) {
-                if (!isStrict()) {
-                    // Retry once.
-                    try {
-                        if (hasNext()) {
-                            logger.warning("Retrying (Current offset " +
-                                    offset + "): " +  e.getMessage());
-                            return exceptionNext();
-                        }
-                        // There is no next and we don't have a record
-                        // to return.  Throw the recoverable.
-                        return new RuntimeException("Retried but " +
-                            "no next record (Offset " + offset + ")",
-                            e);
-                    } catch (IOException e1) {
-                        throw new RuntimeException("After retry (Offset " +
-                                offset + ")", e1);
-                    }
-                }
-                throw new RuntimeException("(Offset " + offset + ")", e);
-            }
-        }
-        
-        /**
-         * A next that throws exceptions and has handling of
-         * recoverable exceptions moving us to next record. Can call
-         * hasNext which itself may throw exceptions.
-         * @return Next record.
-         * @throws IOException
-         * @throws RuntimeException Thrown when we've reached maximum
-         * retries.
-         */
-        protected Object exceptionNext()
-        throws IOException, RuntimeException {
-            Object result = null;
-            IOException ioe = null;
-            for (int i = MAX_ALLOWED_RECOVERABLES; i > 0 &&
-                    result == null; i--) {
-                ioe = null;
-                try {
-                    result = innerNext();
-                } catch (RecoverableIOException e) {
-                    ioe = e;
-                    getLogger().warning(e.getMessage());
-                    if (hasNext()) {
-                        continue;
-                    }
-                    // No records left.  Throw exception rather than
-                    // return null.  The caller is expecting to get
-                    // back a record since they've just called
-                    // hasNext.
-                    break;
-                }
-            }
-            if (ioe != null) {
-                // Then we did MAX_ALLOWED_RECOVERABLES retries.  Throw
-                // the recoverable ioe wrapped in a RuntimeException so
-                // it goes out pass checks for IOE.
-                throw new RuntimeException("Retried " +
-                    MAX_ALLOWED_RECOVERABLES + " times in a row", ioe);
-            }
-            return result;
-        }
-        
-        protected Object innerNext() throws IOException {
-            return get(((RepositionableStream)getInputStream()).position());
-        }
-        
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
-    
-    /**
-     * @return An iterator over ARC records.
-     */
-    public Iterator iterator() {
-        // Eat up any record outstanding.
-        try {
-            cleanupCurrentRecord();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        
-        // Now reset stream to the start of the arc file.
-        try {
-            rewind();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return new ARCRecordIterator();
     }
     
     /**
@@ -546,12 +214,12 @@ implements ARCConstants {
      * @return An arc record.
      * @throws IOException
      */
-    protected ARCRecord createARCRecord(InputStream is, long offset)
+    protected ARCRecord createArchiveRecord(InputStream is, long offset)
     throws IOException {
         ArrayList<String> firstLineValues = new ArrayList<String>(20);
         getTokenizedHeaderLine(is, firstLineValues);
         int bodyOffset = 0;
-        if (offset == 0 && this.alignedOnFirstRecord) {
+        if (offset == 0 && isAlignedOnFirstRecord()) {
             // If offset is zero and we were aligned at first record on
             // creation (See #alignedOnFirstRecord for more on this), then no
             // records have been read yet and we're reading our first one, the
@@ -569,8 +237,8 @@ implements ARCConstants {
             //
             ArrayList<String> secondLineValues = new ArrayList<String>(20);
             bodyOffset += getTokenizedHeaderLine(is, secondLineValues);
-            this.version = (String)secondLineValues.get(0) +
-                "." + (String)secondLineValues.get(1) ;
+            setVersion((String)secondLineValues.get(0) +
+                "." + (String)secondLineValues.get(1));
             // Just read over the 3rd line.  We used to parse it and use
             // values found here but now we just hardcode them to avoid
             // having to read this 3rd line even for random arc file accesses.
@@ -578,17 +246,19 @@ implements ARCConstants {
         }
 
         try {
-            this.currentRecord = new ARCRecord(is,
-                computeMetaData(this.headerFieldNameKeys, firstLineValues,
-                    getVersion(), offset), bodyOffset, this.digest,
-                    isStrict(), isParseHttpHeaders());
+        	// TODO: FIX ARCHIVERECORDHEADER IN BELOW.
+            setCurrentRecord(new ARCRecord(is,
+                (ArchiveRecordHeader)computeMetaData(this.headerFieldNameKeys,
+                	firstLineValues,
+                    getVersion(), offset), bodyOffset, isDigest(),
+                    isStrict(), isParseHttpHeaders()));
         } catch (IOException e) {
             IOException newE = new IOException(e.getMessage() + " (Offset " +
                     offset + ").");
             newE.setStackTrace(e.getStackTrace());
             throw newE;
         }
-        return this.currentRecord;
+        return (ARCRecord)getCurrentRecord();
     }
     
     /**
@@ -601,7 +271,7 @@ implements ARCConstants {
      * @return Version of this ARC file.
      */
     public String getVersion() {
-        return (this.version == null)? "1.1": this.version;
+        return (super.getVersion() == null)? "1.1": super.getVersion();
     }
 
     /**
@@ -718,22 +388,7 @@ implements ARCConstants {
         headerFields.put(VERSION_HEADER_FIELD_KEY, v);
         headerFields.put(ABSOLUTE_OFFSET_KEY, new  Long(offset));
 
-        return new ARCRecordMetaData(this.arc, headerFields);
-    }
-    
-    /**
-     * Log on stderr.
-     * Logging should go via the logging system.  This method
-     * bypasses the logging system going direct to stderr.
-     * Should not generally be used.  Its used for rare messages
-     * that come of cmdline usage of ARCReader ERRORs and WARNINGs.
-     * Override if using ARCReader in a context where no stderr or
-     * where you'd like to redirect stderr to other than System.err.
-     * @param level Level to log message at.
-     * @param message Message to log.
-     */
-    public static void logStdErr(Level level, String message) {
-        System.err.println(level.toString() + " " + message);
+        return new ARCRecordMetaData(getReaderIdentifier(), headerFields);
     }
     
     /**
@@ -789,107 +444,13 @@ implements ARCConstants {
         return values;
     }
     
-    /**
-     * Validate the arcFile.
-     *
-     * This method iterates over the file throwing exception if it fails
-     * to successfully parse.
-     *
-     * @return List of all read metadatas. As we validate records, we add
-     * a reference to the read metadata.
-     *
-     * <p>Assumes the stream is at the start of the file.
-     *
-     * @throws IOException
-     */
-    public List validate() throws IOException {
-        return validate(-1);
-    }
+	protected boolean isAlignedOnFirstRecord() {
+		return alignedOnFirstRecord;
+	}
 
-    /**
-     * Validate the arcFile.
-     *
-     * This method iterates over the file throwing exception if it fails
-     * to successfully parse.
-     *
-     * <p>We start validation from whereever we are in the stream.
-     *
-     * @param noRecords Number of records expected.  Pass -1 if number is
-     * unknown.
-     *
-     * @return List of all read metadatas. As we validate records, we add
-     * a reference to the read metadata.
-     *
-     * @throws IOException
-     */
-    protected List validate(int noRecords) throws IOException {
-        List<ARCRecordMetaData> metaDatas = new ArrayList<ARCRecordMetaData>();
-        int count = 0;
-        setStrict(true);
-        for (Iterator i = iterator(); i.hasNext();) {
-            count++;
-            ARCRecord r = (ARCRecord)i.next();
-            if (r.getMetaData().getLength() <= 0
-                && r.getMetaData().getMimetype().
-                    equals(MimetypeUtils.NO_TYPE_MIMETYPE)) {
-                throw new IOException("ARCRecord content is empty.");
-            }
-            r.close();
-            // Add reference to metadata into a list of metadatas.
-            metaDatas.add(r.getMetaData());
-        }
-
-        if (noRecords != -1) {
-            if (count != noRecords) {
-                throw new IOException("Count of records, " +
-                    Integer.toString(count) + " is less than expected " +
-                    Integer.toString(noRecords));
-            }
-        }
-
-        return metaDatas;
-    }
-
-    /**
-     * Test ARC is valid.
-     * Assumes the stream is at the start of the file.  Be aware that this
-     * method makes a pass over the whole ARC. 
-     * @return True if file can be successfully parsed.
-     */
-    public boolean isValid() {
-        boolean valid = false;
-        try {
-            validate();
-            valid = true;
-        } catch(Exception e) {
-            // File is not valid if exception thrown parsing.
-            valid = false;
-        }
-
-        return valid;
-    }
-
-    /**
-     * @return The current ARC record or null if none.
-     * After construction has the arcfile header record.
-     * @see #get()
-     */
-    protected ARCRecord getCurrentRecord() {
-        return this.currentRecord;
-    }
-    
-    /**
-     * @return Returns the strict.
-     */
-    public boolean isStrict() {
-        return this.strict;
-    }
-    /**
-     * @param s The strict to set.
-     */
-    public void setStrict(boolean s) {
-        this.strict = s;
-    }
+	protected void setAlignedOnFirstRecord(boolean alignedOnFirstRecord) {
+		this.alignedOnFirstRecord = alignedOnFirstRecord;
+	}
     
     // Static methods follow.
 
@@ -995,7 +556,7 @@ implements ARCConstants {
     throws IOException {
         BufferedWriter cdxWriter = null;
         if (toFile) {
-            String cdxFilename = stripExtension(arc.arc,
+            String cdxFilename = stripExtension(arc.getReaderIdentifier(),
                 DOT_COMPRESSED_FILE_EXTENSION);
             cdxFilename = stripExtension(cdxFilename, '.' + ARC_FILE_EXTENSION);
             cdxFilename += ".cdx";
@@ -1120,20 +681,6 @@ implements ARCConstants {
         buffer.append(getShortArcFileName(meta));
 
         return buffer.toString();
-    }
-    
-    /**
-     * @param d True if we're to digest.
-     */
-    public void setDigest(boolean d) {
-        this.digest = d;
-    }
-    
-    /**
-     * @return True if we're digesting as we read.
-     */
-    public boolean isDigest() {
-        return this.digest;
     }
 
     /**
@@ -1269,7 +816,7 @@ implements ARCConstants {
             ARCReader arc =
                 ARCReaderFactory.get(new File((String)cmdlineArgs.get(0)), offset);
             arc.setStrict(strict);
-            outputARCRecord(arc, arc.get(), format);
+            outputARCRecord(arc, (ARCRecord)arc.get(), format);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 String urlOrPath = (String)i.next();
@@ -1287,68 +834,6 @@ implements ARCConstants {
                     System.exit(1);
                 }
             }
-        }
-    }
-    
-    /**
-     * A decorator on IOException that indicates IOEs that are not fatal.
-     * If iterating over records, should be able to move to the next record and 
-     * continue processing.
-     * @author stack
-     * @version $Date$, $Revision$
-     */
-    public static class RecoverableIOException
-    extends IOException {
-        private static final long serialVersionUID = -4464928470623109445L;
-        private final IOException decoratedIOException;
-        
-        protected RecoverableIOException(final String message) {
-            this(new IOException(message));
-        }
-        
-        protected RecoverableIOException(final IOException ioe) {
-            super();
-            this.decoratedIOException = ioe;
-        }
-
-        public Throwable getCause() {
-            return this.decoratedIOException.getCause();
-        }
-
-        public String getLocalizedMessage() {
-            return this.decoratedIOException.getLocalizedMessage();
-        }
-
-        public String getMessage() {
-            return this.decoratedIOException.getMessage();
-        }
-
-        public StackTraceElement[] getStackTrace() {
-            return this.decoratedIOException.getStackTrace();
-        }
-
-        public synchronized Throwable initCause(Throwable cause) {
-            return this.decoratedIOException.initCause(cause);
-        }
-
-        public void printStackTrace() {
-            this.decoratedIOException.printStackTrace();
-        }
-
-        public void printStackTrace(PrintStream s) {
-            this.decoratedIOException.printStackTrace(s);
-        }
-
-        public void printStackTrace(PrintWriter s) {
-            this.decoratedIOException.printStackTrace(s);
-        }
-
-        public void setStackTrace(StackTraceElement[] stackTrace) {
-            this.decoratedIOException.setStackTrace(stackTrace);
-        }
-
-        public String toString() {
-            return this.decoratedIOException.toString();
         }
     }
 }

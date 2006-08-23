@@ -30,15 +30,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.archive.io.ArchiveRecordHeader;
+
 
 /**
  * An immutable class to hold an ARC record meta data.
  *
  * @author stack
  */
-public class ARCRecordMetaData
-    implements ARCConstants
-{
+public class ARCRecordMetaData implements ArchiveRecordHeader, ARCConstants {
     /**
      * Map of record header fields.
      *
@@ -175,8 +175,7 @@ public class ARCRecordMetaData
      * @param key Key to use looking up field value.
      * @return value for passed key of null if no such entry.
      */
-    public Object getHeaderValue(String key)
-    {
+    public Object getHeaderValue(String key) {
         return this.headerFields.get(key);
     }
 
@@ -245,4 +244,14 @@ public class ARCRecordMetaData
            ": " +
            ((this.headerFields != null)? this.headerFields.toString():  "");
     }
+
+
+	public String getFileIdentifier() {
+		return this.getArc();
+	}
+
+
+	public String getRecordIdentifier() {
+	    return getDate() + "/" + getUrl();
+	}
 }

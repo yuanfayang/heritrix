@@ -28,16 +28,45 @@ package org.archive.io.warc;
 import java.util.Arrays;
 import java.util.List;
 
+import org.archive.io.ArchiveFileConstants;
+
 /**
  * WARC Constants used by readers and writers.
  * @author stack
  * @version $Revision$ $Date$
  */
-public interface WARCConstants {
+public interface WARCConstants extends ArchiveFileConstants {
+	/**
+	 * WARC MAGIC
+	 * WARC files and records begin with this sequence.
+	 */
+	public static final String WARC_MAGIC = "WARC/";
+	
     /**
      * WARC file extention.
      */
     public static final String WARC_FILE_EXTENSION = "warc";
+    
+    /**
+     * Dot WARC file extension.
+     */
+    public static final String DOT_WARC_FILE_EXTENSION =
+        "." + WARC_FILE_EXTENSION;
+    
+    public static final String DOT_COMPRESSED_FILE_EXTENSION =
+        ArchiveFileConstants.DOT_COMPRESSED_FILE_EXTENSION;
+
+    /**
+     * Compressed WARC file extension.
+     */
+    public static final String COMPRESSED_WARC_FILE_EXTENSION =
+        WARC_FILE_EXTENSION + DOT_COMPRESSED_FILE_EXTENSION;
+    
+    /**
+     * Compressed dot WARC file extension.
+     */
+    public static final String DOT_COMPRESSED_WARC_FILE_EXTENSION =
+        DOT_WARC_FILE_EXTENSION + DOT_COMPRESSED_FILE_EXTENSION;
     
     /**
      * Encoding to use getting bytes from strings.
