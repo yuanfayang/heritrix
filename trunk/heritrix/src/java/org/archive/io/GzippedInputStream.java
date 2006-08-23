@@ -379,13 +379,11 @@ implements RepositionableStream {
      */
     public static boolean isCompressedStream(final InputStream is)
     throws IOException {
-        boolean result = false;
         try {
             new GzipHeader(is);
-            result = true;
         } catch (NoGzipMagicException e) {
-            return result;
+            return false;
         }
-        return result;
+        return true;
     }
 }

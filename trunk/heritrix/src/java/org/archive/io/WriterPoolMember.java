@@ -50,29 +50,8 @@ import org.archive.util.TimestampSerialno;
  * @author stack
  * @version $Date$ $Revision$
  */
-public abstract class WriterPoolMember {
+public abstract class WriterPoolMember implements ArchiveFileConstants {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
-    
-	/**
-	 * Suffix given to files currently in use by the pool.
-	 */
-	public static final String OCCUPIED_SUFFIX = ".open";
-    
-    /**
-     * Suffix appended to 'broken' files.
-     */
-    public static final String INVALID_SUFFIX = ".invalid";
-    
-    /**
-     * Compressed file extention.
-     */
-    public static final String COMPRESSED_FILE_EXTENSION = "gz";
-   
-    /**
-     * Dot plus compressed file extention.
-     */
-    public static final String DOT_COMPRESSED_FILE_EXTENSION = "." +
-        COMPRESSED_FILE_EXTENSION;
     
     public static final String UTF8 = "UTF-8";
     

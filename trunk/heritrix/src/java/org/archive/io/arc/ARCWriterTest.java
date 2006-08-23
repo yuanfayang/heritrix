@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.archive.io.ArchiveRecord;
 import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.util.ArchiveUtils;
@@ -141,8 +142,8 @@ extends TmpDirTestCase implements ARCConstants {
         reader = ARCReaderFactory.get(arcFile);
         for (int i = metaDatas.size() - 1; i >= 0; i--) {
             ARCRecordMetaData meta = (ARCRecordMetaData)metaDatas.get(i);
-            ARCRecord r = reader.get(meta.getOffset());
-            String mimeType = r.getMetaData().getMimetype();
+            ArchiveRecord r = reader.get(meta.getOffset());
+            String mimeType = r.getHeader().getMimetype();
             assertTrue("Record is bogus",
                 mimeType != null && mimeType.length() > 0);
         }
@@ -197,8 +198,8 @@ extends TmpDirTestCase implements ARCConstants {
         }
         
         reader = ARCReaderFactory.get(arcFile, offset);
-        ARCRecord ar = reader.get();
-        assertEquals(ar.getMetaData().getUrl(), url);
+        ArchiveRecord ar = reader.get();
+        assertEquals(ar.getHeader().getUrl(), url);
         ar.close();
         
         // Get reader again.  See how iterator works with offset
@@ -346,7 +347,7 @@ extends TmpDirTestCase implements ARCConstants {
         // Catch System.err into a byte stream.
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         System.setErr(new PrintStream(os));
-     
+        
         ARCReader r = ARCReaderFactory.get(writer.getFile());
         r.setStrict(strict);
         int count = iterateRecords(r);

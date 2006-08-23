@@ -30,14 +30,15 @@ import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 
-import org.archive.io.WriterPoolMember;
+import org.archive.io.ArchiveFileConstants;
+import org.archive.io.GzipHeader;
 
 /**
  * Constants used by ARC files and in ARC file processing.
  * 
  * @author stack
  */
-public interface ARCConstants {
+public interface ARCConstants extends ArchiveFileConstants {
     /**
      * Default maximum ARC file size.
      */
@@ -60,7 +61,7 @@ public interface ARCConstants {
         "." + ARC_FILE_EXTENSION;
     
     public static final String DOT_COMPRESSED_FILE_EXTENSION =
-        WriterPoolMember.DOT_COMPRESSED_FILE_EXTENSION;
+        ArchiveFileConstants.DOT_COMPRESSED_FILE_EXTENSION;
 
     /**
      * Compressed arc file extension.
@@ -109,32 +110,11 @@ public interface ARCConstants {
             0, 0, 0, 0 };
 
     /**
-     * Key for the ARC Header URL field.
-     * 
-     * Lowercased.
-     */
-    public static final String URL_HEADER_FIELD_KEY = "url";
-
-    /**
      * Key for the ARC Header IP field.
      * 
      * Lowercased.
      */
     public static final String IP_HEADER_FIELD_KEY = "ip-address";
-
-    /**
-     * Key for the ARC Header Date field.
-     * 
-     * Lowercased.
-     */
-    public static final String DATE_HEADER_FIELD_KEY = "archive-date";
-
-    /**
-     * Key for the ARC Header mimetype field.
-     * 
-     * Lowercased.
-     */
-    public static final String MIMETYPE_HEADER_FIELD_KEY = "content-type";
 
     /**
      * Key for the ARC Header Result Code field.
@@ -170,27 +150,6 @@ public interface ARCConstants {
      * Lowercased.
      */
     public static final String FILENAME_HEADER_FIELD_KEY = "filename";
-
-    /**
-     * Key for the ARC Header length field.
-     * 
-     * Lowercased.
-     */
-    public static final String LENGTH_HEADER_FIELD_KEY = "archive-length";
-
-    /**
-     * Key for the ARC Header version field.
-     * 
-     * Lowercased.
-     */
-    public static final String VERSION_HEADER_FIELD_KEY = "archive-version";
-
-    /**
-     * Key for the ARC Record absolute offset into arc file.
-     * 
-     * Lowercased.
-     */
-    public static final String ABSOLUTE_OFFSET_KEY = "archive-offset";
     
     /**
      * Key for length field.
@@ -273,5 +232,6 @@ public interface ARCConstants {
      * 
      * See RFC1952 for explaination of value of 10.
      */
-    public static final int DEFAULT_GZIP_HEADER_LENGTH = 10;
+    public static final int DEFAULT_GZIP_HEADER_LENGTH =
+    	GzipHeader.MINIMAL_GZIP_HEADER_LENGTH;
 }
