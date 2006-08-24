@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -520,7 +521,7 @@ implements ARCConstants {
                 listOfMetadata.add(baos.toString(WriterPoolMember.UTF8));
                 // Assume getArc returns full path to file.  ARCWriter
                 // or new File will complain if it is otherwise.
-                writer = new ARCWriter(System.out,
+                writer = new ARCWriter(new AtomicInteger(), System.out,
                     new File(meta.getArc()),
                     compressed, meta.getDate(), listOfMetadata);
                 continue;

@@ -34,6 +34,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
@@ -104,7 +105,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     /**
      * A running sequence used making unique file names.
      */
-    private static int serialNo = 0;
+    final private AtomicInteger serialNo;
     
     /**
      * Directories round-robin index.
@@ -122,16 +123,19 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      * Constructor.
      * Takes a stream. Use with caution. There is no upperbound check on size.
      * Will just keep writing.
+     * 
+     * @param serialNo  used to create unique filename sequences
      * @param out Where to write.
      * @param file File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    protected WriterPoolMember(final PrintStream out, final File file,
+    protected WriterPoolMember(AtomicInteger serialNo, 
+            final PrintStream out, final File file,
             final boolean cmprs, String a14DigitDate)
     throws IOException {
-        this(null, null, cmprs, -1, null);
+        this(serialNo, null, null, cmprs, -1, null);
         this.out = out;
         this.f = file;
     }
@@ -139,20 +143,23 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     /**
      * Constructor.
      *
+     * @param serialNo  used to create unique filename sequences
      * @param dirs Where to drop files.
      * @param prefix File prefix to use.
      * @param cmprs Compress the records written. 
      * @param maxSize Maximum size for ARC files written.
      * @param extension Extension to give file.
      */
-    public WriterPoolMember(final List<File> dirs, final String prefix, 
+    public WriterPoolMember(AtomicInteger serialNo, 
+            final List<File> dirs, final String prefix, 
             final boolean cmprs, final int maxSize, final String extension) {
-        this(dirs, prefix, "", cmprs, maxSize, extension);
+        this(serialNo, dirs, prefix, "", cmprs, maxSize, extension);
     }
             
     /**
      * Constructor.
      *
+     * @param serialNo  used to create unique filename sequences
      * @param dirs Where to drop files.
      * @param prefix File prefix to use.
      * @param cmprs Compress the records written. 
@@ -160,7 +167,8 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      * @param suffix File tail to use.  If null, unused.
      * @param extension Extension to give file.
      */
-    public WriterPoolMember(final List<File> dirs, final String prefix, 
+    public WriterPoolMember(AtomicInteger serialNo,
+            final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final String extension) {
         this.suffix = suffix;
@@ -169,6 +177,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
         this.writeDirs = dirs;
         this.compressed = cmprs;
         this.extension = extension;
+        this.serialNo = serialNo;
     }
 
 	/**
@@ -279,7 +288,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
             getTimestampSerialNo(final String timestamp) {
         return new TimestampSerialno((timestamp != null)?
                 timestamp: ArchiveUtils.get14DigitDate(),
-            WriterPoolMember.serialNo++);
+                serialNo.incrementAndGet());
     }
 
     /**
@@ -452,27 +461,6 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
 		return createTimestamp;
 	}
     
-    /**
-     * Reset serial number.
-     */
-    public static synchronized void resetSerialNo() {
-        setSerialNo(0);
-    }
-    
-    /**
-     * @return Serial number.
-     */
-    public static int getSerialNo() {
-        return WriterPoolMember.serialNo;
-    }
-    
-    /**
-     * Call when recovering from checkpointing.
-     * @param no Number to set serial number too.
-     */
-    public static void setSerialNo(int no) {
-        WriterPoolMember.serialNo = no;
-    }
     
     /**
      * An override so we get access to underlying output stream.

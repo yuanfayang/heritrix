@@ -114,7 +114,7 @@ implements WARCConstants {
     		final boolean cmprs, final String a14DigitDate,
             final List warcinfoData)
     throws IOException {
-        super(out, f, cmprs, a14DigitDate);
+        super(null /* FIXME */, out, f, cmprs, a14DigitDate);
         // TODO: Currently unused.
         this.fileMetadata = warcinfoData;
     }
@@ -132,7 +132,7 @@ implements WARCConstants {
     public ExperimentalWARCWriter(final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final List warcinfoData) {
-        super(dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);
+        super(null /* FIXME */, dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);
         // TODO: Currently unused.
         this.fileMetadata = warcinfoData;
     }
