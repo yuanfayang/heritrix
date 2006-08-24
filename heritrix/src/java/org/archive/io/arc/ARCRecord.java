@@ -77,6 +77,12 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         "HTTP/1.1 200 OK\r\n".length();
     
     /**
+     * Offset at which the body begins.
+     * For ARCs, its used to delimit where http headers end and content begins.
+     */
+    private int bodyOffset = -1;
+    
+    /**
      * Constructor.
      *
      * @param in Stream cue'd up to be at the start of the record this instance
@@ -200,7 +206,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         
         byte [] headerBytes = baos.toByteArray();
         // Save off where body starts.
-        setBodyOffset(headerBytes.length);
+        this.bodyOffset = headerBytes.length;
         ByteArrayInputStream bais =
             new ByteArrayInputStream(headerBytes);
         if (!bais.markSupported()) {
@@ -326,5 +332,15 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         }
         incrementPosition(read);
         return read;
+    }
+    
+
+    /**
+     * @return Offset at which the body begins (Only known after
+     * header has been read) or -1 if none or we haven't read
+     * headers yet.
+     */
+    public int getBodyOffset() {
+        return this.bodyOffset;
     }
 }

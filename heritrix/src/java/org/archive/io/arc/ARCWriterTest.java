@@ -56,7 +56,8 @@ extends TmpDirTestCase implements ARCConstants {
     /**
      * Prefix to use for ARC files made by JUNIT.
      */
-    private static final String PREFIX = /* TODO DEFAULT_ARC_FILE_PREFIX*/ "IAH";
+    private static final String PREFIX =
+        /* TODO DEFAULT_ARC_FILE_PREFIX*/ "IAH";
     
     private static final String SOME_URL = "http://www.archive.org/test/";
 

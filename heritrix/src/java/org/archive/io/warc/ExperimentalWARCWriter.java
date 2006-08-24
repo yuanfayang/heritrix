@@ -129,7 +129,7 @@ implements WARCConstants {
      * @param suffix File tail to use.  If null, unused.
      * @param warcinfoData File metadata for warcinfo record.
      */
-    public ExperimentalWARCWriter(final List dirs, final String prefix, 
+    public ExperimentalWARCWriter(final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final List warcinfoData) {
         super(dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);

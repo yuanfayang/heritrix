@@ -334,7 +334,7 @@ public abstract class ArchiveReader {
     /**
      * @return An iterator over ARC records.
      */
-    public Iterator iterator() {
+    public Iterator<ArchiveRecord> iterator() {
         // Eat up any record outstanding.
         try {
             cleanupCurrentRecord();
@@ -364,8 +364,9 @@ public abstract class ArchiveReader {
 		return this.currentRecord;
 	}
 
-	protected void setCurrentRecord(ArchiveRecord currentRecord) {
+	protected ArchiveRecord currentRecord(final ArchiveRecord currentRecord) {
 		this.currentRecord = currentRecord;
+        return currentRecord;
 	}
 
 	protected InputStream getIn() {
@@ -451,7 +452,7 @@ public abstract class ArchiveReader {
      * trouble pulling record from underlying stream.
      * @author stack
      */
-    protected class ArchiveRecordIterator implements Iterator {
+    protected class ArchiveRecordIterator implements Iterator<ArchiveRecord> {
         /**
          * @return True if we have more records to read.
          * @exception RuntimeException Can throw an IOException wrapped in a
@@ -489,7 +490,7 @@ public abstract class ArchiveReader {
          * usually a wrapping of an IOException, if trouble getting
          * a record (Throws exception rather than return null).
          */
-        public Object next() {
+        public ArchiveRecord next() {
             long offset = -1;
             try {
                 offset = ((RepositionableStream)getInputStream()).position();
@@ -505,7 +506,7 @@ public abstract class ArchiveReader {
                         }
                         // There is no next and we don't have a record
                         // to return.  Throw the recoverable.
-                        return new RuntimeException("Retried but " +
+                        throw new RuntimeException("Retried but " +
                             "no next record (Offset " + offset + ")",
                             e);
                     } catch (IOException e1) {
@@ -526,9 +527,9 @@ public abstract class ArchiveReader {
          * @throws RuntimeException Thrown when we've reached maximum
          * retries.
          */
-        protected Object exceptionNext()
+        protected ArchiveRecord exceptionNext()
         throws IOException, RuntimeException {
-            Object result = null;
+            ArchiveRecord result = null;
             IOException ioe = null;
             for (int i = MAX_ALLOWED_RECOVERABLES; i > 0 &&
                     result == null; i--) {
@@ -558,7 +559,7 @@ public abstract class ArchiveReader {
             return result;
         }
         
-        protected Object innerNext() throws IOException {
+        protected ArchiveRecord innerNext() throws IOException {
             return get(((RepositionableStream)getInputStream()).position());
         }
         

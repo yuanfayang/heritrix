@@ -163,7 +163,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * ARC file is a bunch of gzipped records concatenated together.
      * @param maxSize Maximum size for ARC files written.
      */
-    public ARCWriter(final List dirs, final String prefix, 
+    public ARCWriter(final List<File> dirs, final String prefix, 
             final boolean cmprs, final int maxSize) {
         this(dirs, prefix, "", cmprs, maxSize, null);
     }
@@ -179,7 +179,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * @param meta File meta data.  Can be null.  Is list of File and/or
      * String objects.
      */
-    public ARCWriter(final List dirs, final String prefix, 
+    public ARCWriter(final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final List meta) {
         super(dirs, prefix, suffix, cmprs, maxSize, ARC_FILE_EXTENSION);

@@ -377,7 +377,7 @@ implements ARCConstants {
             return createArchiveRecord(getIn(), offset);
         }
         
-        public Iterator iterator() {
+        public Iterator<ArchiveRecord> iterator() {
             /**
              * Override ARCRecordIterator so can base returned iterator on
              * GzippedInputStream iterator.
@@ -392,7 +392,7 @@ implements ARCConstants {
                     return this.gzipIterator.hasNext();
                 }
 
-                protected Object innerNext() throws IOException {
+                protected ArchiveRecord innerNext() throws IOException {
                     // Get the positoin before gzipIterator.next moves
                     // it on past the gzip header.
                     long p = this.gis.position();

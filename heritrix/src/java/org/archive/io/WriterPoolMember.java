@@ -89,7 +89,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
     private FileOutputStream fos;
     
     private final boolean compressed;
-    private List writeDirs = null;
+    private List<File> writeDirs = null;
     private String prefix = DEFAULT_PREFIX;
     private String suffix = DEFAULT_SUFFIX;
     private final int maxSize;
@@ -145,7 +145,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      * @param maxSize Maximum size for ARC files written.
      * @param extension Extension to give file.
      */
-    public WriterPoolMember(final List dirs, final String prefix, 
+    public WriterPoolMember(final List<File> dirs, final String prefix, 
             final boolean cmprs, final int maxSize, final String extension) {
         this(dirs, prefix, "", cmprs, maxSize, extension);
     }
@@ -160,7 +160,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      * @param suffix File tail to use.  If null, unused.
      * @param extension Extension to give file.
      */
-    public WriterPoolMember(final List dirs, final String prefix, 
+    public WriterPoolMember(final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final String extension) {
         this.suffix = suffix;
@@ -221,7 +221,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      * than one, it tries to round-robin through each in turn.
      * @throws IOException
      */
-    protected File getNextDirectory(List dirs)
+    protected File getNextDirectory(List<File> dirs)
     throws IOException {
         if (WriterPoolMember.roundRobinIndex >= dirs.size()) {
             WriterPoolMember.roundRobinIndex = 0;
