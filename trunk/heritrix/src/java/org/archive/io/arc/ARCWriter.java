@@ -35,6 +35,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -136,6 +137,8 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * Constructor.
      * Takes a stream. Use with caution. There is no upperbound check on size.
      * Will just keep writing.
+     * 
+     * @param serialNo  used to generate unique file name sequences
      * @param out Where to write.
      * @param arc File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
@@ -144,10 +147,10 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    ARCWriter(final PrintStream out, final File arc,
+    ARCWriter(AtomicInteger serialNo, final PrintStream out, final File arc,
             final boolean cmprs, String a14DigitDate, final List metadata)
     throws IOException {
-        super(out, arc, cmprs, a14DigitDate);
+        super(serialNo, out, arc, cmprs, a14DigitDate);
         this.metadata = metadata;
         writeFirstRecord(a14DigitDate);
     }
@@ -155,6 +158,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
     /**
      * Constructor.
      *
+     * @param serialNo  used to generate unique file name sequences
      * @param dirs Where to drop the ARC files.
      * @param prefix ARC file prefix to use.  If null, we use
      * DEFAULT_ARC_FILE_PREFIX.
@@ -163,14 +167,15 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * ARC file is a bunch of gzipped records concatenated together.
      * @param maxSize Maximum size for ARC files written.
      */
-    public ARCWriter(final List<File> dirs, final String prefix, 
+    public ARCWriter(AtomicInteger serialNo, final List<File> dirs, final String prefix, 
             final boolean cmprs, final int maxSize) {
-        this(dirs, prefix, "", cmprs, maxSize, null);
+        this(serialNo, dirs, prefix, "", cmprs, maxSize, null);
     }
             
     /**
      * Constructor.
      *
+     * @param serialNo  used to generate unique file name sequences
      * @param dirs Where to drop files.
      * @param prefix File prefix to use.
      * @param cmprs Compress the records written. 
@@ -179,10 +184,10 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * @param meta File meta data.  Can be null.  Is list of File and/or
      * String objects.
      */
-    public ARCWriter(final List<File> dirs, final String prefix, 
+    public ARCWriter(AtomicInteger serialNo, final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final List meta) {
-        super(dirs, prefix, suffix, cmprs, maxSize, ARC_FILE_EXTENSION);
+        super(serialNo, dirs, prefix, suffix, cmprs, maxSize, ARC_FILE_EXTENSION);
         this.metadata = meta;
     }
 

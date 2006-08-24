@@ -60,7 +60,7 @@ extends TmpDirTestCase implements WARCConstants {
        }
       assertNotNull(exception);
     }
-    
+/*    
     public void testMimetypes() throws IOException {
         ExperimentalWARCWriter writer = new ExperimentalWARCWriter();
         writer.checkHeaderLineMimetypeParameter("text/xml");
@@ -131,5 +131,5 @@ extends TmpDirTestCase implements WARCConstants {
     			(InputStream)new ByteArrayInputStream(bodyBytes),
     			(long)bodyBytes.length);
     	}
-    }
+    }*/
 }

@@ -38,6 +38,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -102,6 +103,12 @@ WriterPoolSettings, FetchStatusCodes {
     protected String [] getDefaultPath() {
     	return DEFAULT_PATH;
 	}
+
+    
+    private AtomicInteger getSerialNo() {
+        return ((ARCWriterPool)getPool()).getSerialNo();
+    }
+    
     
     /**
      * @see #crawlCheckpoint(File)
@@ -110,20 +117,16 @@ WriterPoolSettings, FetchStatusCodes {
     protected void checkpointRecover() {
         int serialNo = loadCheckpointSerialNumber();
         if (serialNo != -1) {
-            ARCWriter.setSerialNo(serialNo);
+            getSerialNo().set(serialNo);
         }
     }
     
     public void crawlCheckpoint(File checkpointDir)
     throws IOException {
-        saveCheckpointSerialNumber(checkpointDir, ARCWriter.getSerialNo());
+        saveCheckpointSerialNumber(checkpointDir, getSerialNo().get());
         super.crawlCheckpoint(checkpointDir);
     }
 
-    public void crawlEnding(String sExitMessage) {
-        ARCWriter.resetSerialNo();
-        super.crawlEnding(sExitMessage);
-    }
 
     protected void setupPool() {
 		setPool(new ARCWriterPool(this, getPoolMaximumActive(),

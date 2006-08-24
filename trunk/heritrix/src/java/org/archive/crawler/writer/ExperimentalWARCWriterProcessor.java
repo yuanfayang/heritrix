@@ -86,21 +86,17 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     protected void checkpointRecover() {
         int serialNumber = loadCheckpointSerialNumber();
         if (serialNumber != -1) {
-            ExperimentalWARCWriter.setSerialNo(serialNumber);
+            // ExperimentalWARCWriter.setSerialNo(serialNumber); // FIXME!
         }
     }
     
     public void crawlCheckpoint(File checkpointDir)
     throws IOException {
-        saveCheckpointSerialNumber(checkpointDir,
-            ExperimentalWARCWriter.getSerialNo());
+        //saveCheckpointSerialNumber(checkpointDir,
+        //    ExperimentalWARCWriter.getSerialNo()); // FIXME!
         super.crawlCheckpoint(checkpointDir);
     }
     
-    public void crawlEnding(String sExitMessage) {
-        ARCWriter.resetSerialNo();
-        super.crawlEnding(sExitMessage);
-    }
 
     protected void setupPool() {
 		setPool(new WARCWriterPool(this, getPoolMaximumActive(),

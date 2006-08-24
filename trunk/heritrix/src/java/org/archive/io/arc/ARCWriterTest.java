@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ReplayInputStream;
@@ -61,6 +62,8 @@ extends TmpDirTestCase implements ARCConstants {
     
     private static final String SOME_URL = "http://www.archive.org/test/";
 
+    
+    private static final AtomicInteger SERIAL_NO = new AtomicInteger();
 
     /*
      * @see TestCase#setUp()
@@ -113,7 +116,7 @@ extends TmpDirTestCase implements ARCConstants {
     throws IOException {
         cleanUpOldFiles(baseName);
         File [] files = {getTmpDir()};
-        ARCWriter arcWriter = new ARCWriter(Arrays.asList(files),
+        ARCWriter arcWriter = new ARCWriter(SERIAL_NO, Arrays.asList(files),
             baseName + '-' + PREFIX, compress, maxSize);
         assertNotNull(arcWriter);
         for (int i = 0; i < recordCount; i++) {
@@ -233,7 +236,7 @@ extends TmpDirTestCase implements ARCConstants {
     
     protected ARCWriter createARCWriter(String NAME, boolean compress) {
         File [] files = {getTmpDir()};
-        return new ARCWriter(Arrays.asList(files), NAME,
+        return new ARCWriter(SERIAL_NO, Arrays.asList(files), NAME,
             compress, DEFAULT_MAX_ARC_FILE_SIZE);
     }
     
@@ -456,7 +459,7 @@ extends TmpDirTestCase implements ARCConstants {
     public static File createARCFile(File arcdir, boolean compress)
     throws IOException {
         File [] files = {arcdir};
-        ARCWriter writer = new ARCWriter(Arrays.asList(files),
+        ARCWriter writer = new ARCWriter(SERIAL_NO, Arrays.asList(files),
             "test", compress, DEFAULT_MAX_ARC_FILE_SIZE);
         String content = getContent();
         writeRecord(writer, SOME_URL, "text/html", content.length(),

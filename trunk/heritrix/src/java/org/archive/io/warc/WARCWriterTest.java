@@ -196,14 +196,14 @@ extends TmpDirTestCase implements WARCConstants {
         // TODO runCheckWARCFileSizeTest("checkWARCFileSize", true);
     }
 
-
+/*
     public void testWriteRecord() throws IOException {
         final int recordCount = 2;
         File f = writeRecords("writeRecord", false, DEFAULT_MAX_WARC_FILE_SIZE,
             recordCount);
         // TODO validate(f, recordCount  + 1); // Header record.
     }
-    
+*/  
     public void testRandomAccess() throws IOException {
         /* TODO
         final int recordCount = 3;
@@ -245,14 +245,14 @@ extends TmpDirTestCase implements WARCConstants {
         assertEquals(totalRecords - 1, count);
         */
     }
-
+/*
     public void testWriteRecordCompressed() throws IOException {
         final int recordCount = 2;
         File arcFile = writeRecords("writeRecordCompressed", true,
-            DEFAULT_MAX_WARC_FILE_SIZE, recordCount);
+            DEFAULT_MAX_WARC_FILE_SIZE, recordCount); */
         // TODO: validate(arcFile, recordCount + 1 /*Header record*/);
-    }
-    
+    //}
+
     private void runCheckWARCFileSizeTest(String baseName, boolean compress)
     throws FileNotFoundException, IOException {
         writeRecords(baseName, compress, 1024, 15);
