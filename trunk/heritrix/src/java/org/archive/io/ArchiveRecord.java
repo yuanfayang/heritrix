@@ -81,16 +81,24 @@ public abstract class ArchiveRecord extends InputStream {
      * the digest.
      */
     protected MessageDigest digest = null;
-    
-    /**
-     * Offset at which the body begins.
-     */
-    int bodyOffset = -1;
 
     boolean strict = false;
     
     private ArchiveRecord() {
         super();
+    }
+    
+    /**
+     * Constructor.
+     *
+     * @param in Stream cue'd up to be at the start of the record this instance
+     * is to represent.
+     * @param header Header data.
+     * @throws IOException
+     */
+    public ArchiveRecord(InputStream in)
+            throws IOException {
+        this(in, null, 0, true, false);
     }
     
     /**
@@ -117,8 +125,6 @@ public abstract class ArchiveRecord extends InputStream {
      * digesting saves about ~15% of cpu during an ARC parse.
      * @param strict Be strict parsing (Parsing stops if ARC inproperly
      * formatted).
-     * @param parseHttpHeaders True if we are to parse HTTP headers.  Costs
-     * about ~20% of CPU during an ARC parse.
      * @throws IOException
      */
     public ArchiveRecord(InputStream in, ArchiveRecordHeader header,
@@ -138,19 +144,6 @@ public abstract class ArchiveRecord extends InputStream {
         }
         this.strict = strict;
     }
-
-    /**
-     * @return Offset at which the body begins (Only known after
-     * header has been read) or -1 if none or we haven't read
-     * headers yet.
-     */
-    public int getBodyOffset() {
-        return this.bodyOffset;
-    }
-    
-	protected void setBodyOffset(int bodyOffset) {
-		this.bodyOffset = bodyOffset;
-	}
 
     public boolean markSupported() {
         return false;

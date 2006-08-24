@@ -125,32 +125,13 @@ implements ARCConstants {
     private boolean parseHttpHeaders = true;
     
     private static final byte [] outputBuffer = new byte[8 * 1024];
-    
-    private static final String CDX_OUTPUT = "cdx";
-    private static final String DUMP_OUTPUT = "dump";
-    private static final String GZIP_DUMP_OUTPUT = "gzipdump";
-    private static final String NOHEAD_OUTPUT = "nohead";
-    private static final String CDX_FILE_OUTPUT = "cdxfile";
 
     private static final String [] SUPPORTED_OUTPUT_FORMATS =
-        {CDX_OUTPUT, DUMP_OUTPUT, GZIP_DUMP_OUTPUT, NOHEAD_OUTPUT,
-            CDX_FILE_OUTPUT};
+        {CDX, DUMP, GZIP_DUMP, NOHEAD, CDX_FILE};
     
     private static final char SPACE = ' ';
-
-    /**
-     * Size used to preallocate stringbuffer used outputting a cdx line.
-     * The numbers below are guesses at sizes of each of the cdx field.
-     * The ones in the below are spaces. Here is the legend used outputting
-     * the cdx line: CDX b e a m s c V n g.  Consult cdx documentation on
-     * meaning of each of these fields.
-     */
-    private static final int CDX_LINE_BUFFER_SIZE = 14 + 1 + 15 + 1 + 1024 +
-        1 + 24 + 1 + + 3 + 1 + 32 + 1 + 20 + 1 + 20 + 1 + 64;
     
     private static String cachedShortArcFileName = null;
-
-    static final String DEFAULT_DIGEST_METHOD = "SHA-1";
     
     ARCReader() {
     	super();
@@ -247,7 +228,7 @@ implements ARCConstants {
 
         try {
         	// TODO: FIX ARCHIVERECORDHEADER IN BELOW.
-            setCurrentRecord(new ARCRecord(is,
+            currentRecord(new ARCRecord(is,
                 (ArchiveRecordHeader)computeMetaData(this.headerFieldNameKeys,
                 	firstLineValues,
                     getVersion(), offset), bodyOffset, isDigest(),
@@ -500,14 +481,14 @@ implements ARCConstants {
         // http://www.archive.org/web/researcher/cdx_legend.php
         // and http://www.archive.org/web/researcher/example_cdx.php.
         // Hash is hard-coded straight SHA-1 hash of content.
-        if (format.equals(CDX_OUTPUT)) {
+        if (format.equals(CDX)) {
             arc.setDigest(digest);
             cdxOutput(arc, false);
-        } else if (format.equals(DUMP_OUTPUT)) {
+        } else if (format.equals(DUMP)) {
             dumpOutput(arc, false);
-        } else if (format.equals(GZIP_DUMP_OUTPUT)) {
+        } else if (format.equals(GZIP_DUMP)) {
             dumpOutput(arc, true);
-        } else if (format.equals(CDX_FILE_OUTPUT)) {
+        } else if (format.equals(CDX_FILE)) {
             arc.setDigest(digest);
             cdxOutput(arc, true);
         } else {
@@ -615,13 +596,13 @@ implements ARCConstants {
     protected static void outputARCRecord(final ARCReader arc, final ARCRecord r,
         final String format)
     throws IOException {
-        if (format.equals(CDX_OUTPUT)) {
+        if (format.equals(CDX)) {
             System.out.println(outputARCRecordCdx(r));
-        } else if(format.equals(DUMP_OUTPUT)) {
+        } else if(format.equals(DUMP)) {
             // No point digesting if dumping content.
             arc.setDigest(false);
             outputARCRecordDump(r);
-        } else if(format.equals(NOHEAD_OUTPUT)) {
+        } else if(format.equals(NOHEAD)) {
             // No point digesting if dumping content.
             arc.setDigest(false);
             outputARCRecordNohead(r);
@@ -706,7 +687,7 @@ implements ARCConstants {
      */
     public static void createCDXIndexFile(String urlOrPath)
     throws IOException, java.text.ParseException {
-        output(urlOrPath, true, CDX_FILE_OUTPUT, false);
+        output(urlOrPath, true, CDX_FILE, false);
     }
 
     /**

@@ -200,7 +200,6 @@ implements WARCConstants {
      * @author stack
      */
     private class CompressedWARCReader extends WARCReader {
-
         /**
          * Constructor.
          * 
@@ -242,8 +241,7 @@ implements WARCConstants {
             setIn(new GzippedInputStream(is));
             setCompressed(true);
             initialize(f);
-            // TODO: Ignore atFirstRecord for now. Probably doesn't apply in
-            // WARC world.
+            // TODO: Ignore atFirstRecord. Probably doesn't apply in WARC world.
         }
         
         /**
@@ -259,7 +257,7 @@ implements WARCConstants {
             return (WARCRecord) createArchiveRecord(getIn(), offset);
         }
         
-        public Iterator iterator() {
+        public Iterator<ArchiveRecord> iterator() {
             /**
              * Override ArchiveRecordIterator so can base returned iterator on
              * GzippedInputStream iterator.
@@ -274,7 +272,7 @@ implements WARCConstants {
                     return this.gzipIterator.hasNext();
                 }
 
-                protected Object innerNext() throws IOException {
+                protected ArchiveRecord innerNext() throws IOException {
                     // Get the positoin before gzipIterator.next moves
                     // it on past the gzip header.
                     long p = this.gis.position();
@@ -288,7 +286,6 @@ implements WARCConstants {
         	// TODO
         }
     }
-    
     
     public static boolean isWARCSuffix(final String f) {
     	return (f == null)?

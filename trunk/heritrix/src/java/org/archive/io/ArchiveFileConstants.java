@@ -83,4 +83,22 @@ public interface ArchiveFileConstants {
      * Key for the Archive Record absolute offset into Archive file.
      */
     public static final String ABSOLUTE_OFFSET_KEY = "archive-offset";
+    
+    /**
+     * Size used to preallocate stringbuffer used outputting a cdx line.
+     * The numbers below are guesses at sizes of each of the cdx fields.
+     * The ones in the below are spaces. Here is the legend used outputting
+     * the cdx line: CDX b e a m s c V n g.  Consult cdx documentation on
+     * meaning of each of these fields.
+     */
+    public static final int CDX_LINE_BUFFER_SIZE = 14 + 1 + 15 + 1 + 1024 +
+        1 + 24 + 1 + + 3 + 1 + 32 + 1 + 20 + 1 + 20 + 1 + 64;
+    
+    public static final String DEFAULT_DIGEST_METHOD = "SHA-1";
+    
+    public static final String CDX = "cdx";
+    public static final String DUMP = "dump";
+    public static final String GZIP_DUMP = "gzipdump";
+    public static final String NOHEAD = "nohead";
+    public static final String CDX_FILE = "cdxfile";
 }

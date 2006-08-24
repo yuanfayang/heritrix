@@ -36,12 +36,36 @@ import org.archive.io.ArchiveFileConstants;
  * @version $Revision$ $Date$
  */
 public interface WARCConstants extends ArchiveFileConstants {
+    /**
+     * Default maximum WARC file size.
+     * 1Gig.
+     */
+    public static final int DEFAULT_MAX_WARC_FILE_SIZE = 1024 * 1024 * 1024;
+    
 	/**
 	 * WARC MAGIC
 	 * WARC files and records begin with this sequence.
 	 */
 	public static final String WARC_MAGIC = "WARC/";
-	
+    
+    /**
+     * Hard-coded version for WARC files made with this code.
+     * Setting to 0.9.1 because differs from spec.  See accompanying
+     * package.html.
+     */
+	public static final String WARC_VERSION = "0.9.1";
+    
+    /**
+     * Assumed maximum size of a Header Line.
+     *
+     * This 100k which seems massive but its the same as the LINE_LENGTH from
+     * <code>alexa/include/a_arcio.h</code>:
+     * <pre>
+     * #define LINE_LENGTH     (100*1024)
+     * </pre>
+     */
+    public static final int MAX_WARC_HEADER_LINE_LENGTH = 1024 * 100;
+    
     /**
      * WARC file extention.
      */

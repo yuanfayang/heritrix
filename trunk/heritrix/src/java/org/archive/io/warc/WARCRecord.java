@@ -24,16 +24,9 @@
  */
 package org.archive.io.warc;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpParser;
-import org.apache.commons.httpclient.StatusLine;
-import org.apache.commons.httpclient.util.EncodingUtil;
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
 
@@ -43,51 +36,60 @@ import org.archive.io.ArchiveRecordHeader;
  *
  * @author stack
  */
-public class WARCRecord extends ArchiveRecord implements WARCConstants {
+public class WARCRecord extends ArchiveRecord implements WARCConstants {    
     /**
      * Constructor.
      *
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent.
+     * @throws IOException
+     */
+    public WARCRecord(InputStream in, final long offset)
+            throws IOException {
+        this(in, offset, true, false);
+    }
+    
+    /**
+     * Constructor.
+     * @param in Stream cue'd up just past Header Line and Named Fields.
      * @param headers Header Line and ANVL Named fields.
      * @throws IOException
      */
     public WARCRecord(InputStream in, ArchiveRecordHeader headers)
     		throws IOException {
-        this(in, headers, 0, true, false);
+        super(in, headers, 0, true, false);
     }
 
     /**
      * Constructor.
      *
      * @param in Stream cue'd up to be at the start of the record this instance
-     * is to represent.
-     * @param headers Header Line and ANVL Named fields.
-     * @param bodyOffset Offset into the body.  Usually 0.
+     * is to represent or, if <code>headers</code> is not null, just past the
+     * Header Line and Named Fields.
+     * @param headers Header Line and ANVL Named fields.  If null, assumes we're
+     * aligned at start of Record and will try parse.
      * @param digest True if we're to calculate digest for this record.  Not
-     * digesting saves about ~15% of cpu during an ARC parse.
-     * @param strict Be strict parsing (Parsing stops if ARC inproperly
+     * digesting saves about ~15% of cpu during parse.
+     * @param strict Be strict parsing (Parsing stops if file inproperly
      * formatted).
-     * @param parseHttpHeaders True if we are to parse HTTP headers.  Costs
-     * about ~20% of CPU during an ARC parse.
      * @throws IOException
      */
-    public WARCRecord(InputStream in, ArchiveRecordHeader headers,
-        int bodyOffset, boolean digest, boolean strict) 
+    public WARCRecord(InputStream in, final long offset, boolean digest,
+        boolean strict) 
     throws IOException {
-    	super(in, headers, bodyOffset, digest, strict);
-    }
-    
-    /**
-     * @return Next character in this ARCRecord's content else -1 if at end of
-     * this record.
-     * @throws IOException
-     */
-    public int read() throws IOException {
-    	return -1; // Unimplemented.
+        super(in, null, 0, digest, strict);
+        // Parse Header Line and Named Fields.  Add offset.
     }
 
-    public int read(byte [] b, int offset, int length) throws IOException {
-    	return -1; // Unimplemented.
+    @Override
+    public int read() throws IOException {
+        // TODO Auto-generated method stub
+        return -1;
+    }
+
+    @Override
+    public int read(byte[] b, int offset, int length) throws IOException {
+        // TODO Auto-generated method stub
+        return -1;
     }
 }
