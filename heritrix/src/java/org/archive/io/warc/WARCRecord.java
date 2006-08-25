@@ -26,6 +26,9 @@ package org.archive.io.warc;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
@@ -44,9 +47,10 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
      * is to represent.
      * @throws IOException
      */
-    public WARCRecord(InputStream in, final long offset)
-            throws IOException {
-        this(in, offset, true, false);
+    public WARCRecord(InputStream in, final String identifier,
+    	final long offset)
+    throws IOException {
+        this(in, identifier, offset, true, false);
     }
     
     /**
@@ -66,6 +70,7 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent or, if <code>headers</code> is not null, just past the
      * Header Line and Named Fields.
+     * @param identfier Identifier for this the hosting Reader.
      * @param headers Header Line and ANVL Named fields.  If null, assumes we're
      * aligned at start of Record and will try parse.
      * @param digest True if we're to calculate digest for this record.  Not
@@ -74,22 +79,81 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
      * formatted).
      * @throws IOException
      */
-    public WARCRecord(InputStream in, final long offset, boolean digest,
-        boolean strict) 
+    public WARCRecord(final InputStream in, final String identifier,
+    	final long offset, boolean digest, boolean strict) 
     throws IOException {
         super(in, null, 0, digest, strict);
-        // Parse Header Line and Named Fields.  Add offset.
+        setHeader(parseHeaders(in, identifier, offset, strict));
     }
+    
+    protected ArchiveRecordHeader parseHeaders(final InputStream in,
+    		final String identifier, final long offset, final boolean strict) {
+    	final Map<Object, Object> m = new HashMap<Object, Object>();
+    	m.put(ABSOLUTE_OFFSET_KEY, new Long(offset));
+    	m.put(READER_IDENTIFIER_FIELD_KEY, identifier);
+    	// TODO: Parse of Header Line.
+    	return new ArchiveRecordHeader() {
+    		private Map<Object, Object> fields = m;
 
-    @Override
-    public int read() throws IOException {
-        // TODO Auto-generated method stub
-        return -1;
-    }
+			public String getDate() {
+				return (String)this.fields.get(DATE_FIELD_KEY);
+			}
 
-    @Override
-    public int read(byte[] b, int offset, int length) throws IOException {
-        // TODO Auto-generated method stub
-        return -1;
+			public String getDigest() {
+				return (String)this.fields.get(NAMED_FIELD_CHECKSUM_LABEL);
+			}
+
+			public String getReaderIdentifier() {
+				return (String)this.fields.get(READER_IDENTIFIER_FIELD_KEY);
+			}
+
+			public Set getHeaderFieldKeys() {
+				return this.fields.keySet();
+			}
+
+			public Map getHeaderFields() {
+				return this.fields;
+			}
+
+			public Object getHeaderValue(String key) {
+				return this.fields.get(key);
+			}
+
+			public long getLength() {
+				Object o = this.fields.get(LENGTH_FIELD_KEY);
+				if (o == null) {
+					return -1;
+				}
+				return ((Long)o).longValue();
+			}
+
+			public String getMimetype() {
+				return (String)this.fields.get(MIMETYPE_FIELD_KEY);
+			}
+
+			public long getOffset() {
+				Object o = this.fields.get(ABSOLUTE_OFFSET_KEY);
+				if (o == null) {
+					return -1;
+				}
+				return ((Long)o).longValue();
+			}
+
+			public String getRecordIdentifier() {
+				return (String)this.fields.get(RECORD_IDENTIFIER_FIELD_KEY);
+			}
+
+			public String getUrl() {
+				return (String)this.fields.get(URL_FIELD_KEY);
+			}
+
+			public String getVersion() {
+				return (String)this.fields.get(VERSION_FIELD_KEY);
+			}
+
+			public void setDigest(String digest) {
+				this.fields.put(NAMED_FIELD_CHECKSUM_LABEL, digest);
+			}
+    	};
     }
 }

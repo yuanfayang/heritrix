@@ -50,39 +50,48 @@ public interface ArchiveFileConstants {
         COMPRESSED_FILE_EXTENSION;
     
     /**
-     * Key for the Archive File Header version field.
+     * Key for the Archive File version field.
      */
-    public static final String VERSION_HEADER_FIELD_KEY = "hdr-version";
+    public static final String VERSION_FIELD_KEY = "version";
     
     /**
-     * Key for the Archive File Header Line length field.
+     * Key for the Archive File length field.
      */
-    public static final String LENGTH_HEADER_FIELD_KEY = "hdr-length";
+    public static final String LENGTH_FIELD_KEY = "length";
     
     /**
-     * Key for the Archive File Header type field.
+     * Key for the Archive File type field.
      */
-    public static final String TYPE_HEADER_FIELD_KEY = "hdr-type";
+    public static final String TYPE_FIELD_KEY = "type";
     
     /**
-     * Key for the Archive File Header Line URL field.
+     * Key for the Archive File URL field.
      */
-    public static final String URL_HEADER_FIELD_KEY = "hdr-subject-uri";
+    public static final String URL_FIELD_KEY = "subject-uri";
     
     /**
-     * Key for the Archive File Header Line Creation Date field.
+     * Key for the Archive File Creation Date field.
      */
-    public static final String DATE_HEADER_FIELD_KEY = "hdr-creation-date";
+    public static final String DATE_FIELD_KEY = "creation-date";
 
     /**
-     * Key for the Archive File Header Line mimetype field.
+     * Key for the Archive File mimetype field.
      */
-    public static final String MIMETYPE_HEADER_FIELD_KEY = "hdr-content-type";
+    public static final String MIMETYPE_FIELD_KEY = "content-type";
+    
+    /**
+     * Key for the Archive File record field.
+     */
+    public static final String RECORD_IDENTIFIER_FIELD_KEY =
+    	"record-identifier";
     
     /**
      * Key for the Archive Record absolute offset into Archive file.
      */
-    public static final String ABSOLUTE_OFFSET_KEY = "archive-offset";
+    public static final String ABSOLUTE_OFFSET_KEY = "absolute-offset";
+    
+    public static final String READER_IDENTIFIER_FIELD_KEY =
+    	"reader-identifier";
     
     /**
      * Size used to preallocate stringbuffer used outputting a cdx line.

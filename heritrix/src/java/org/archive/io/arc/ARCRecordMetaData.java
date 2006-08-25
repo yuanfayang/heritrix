@@ -123,7 +123,7 @@ public class ARCRecordMetaData implements ArchiveRecordHeader, ARCConstants {
      * @see org.archive.util.ArchiveUtils#parse14DigitDate(String)
      */
     public String getDate() {
-        return (String) this.headerFields.get(DATE_HEADER_FIELD_KEY);
+        return (String) this.headerFields.get(DATE_FIELD_KEY);
     }
 
     /**
@@ -131,14 +131,14 @@ public class ARCRecordMetaData implements ArchiveRecordHeader, ARCConstants {
      */
     public long getLength() {
         return Long.parseLong((String)this.headerFields.
-            get(LENGTH_HEADER_FIELD_KEY));
+            get(LENGTH_FIELD_KEY));
     }
 
     /**
      * @return Header url.
      */
     public String getUrl() {
-        return (String)this.headerFields.get(URL_HEADER_FIELD_KEY);
+        return (String)this.headerFields.get(URL_FIELD_KEY);
     }
 
     /**
@@ -154,14 +154,14 @@ public class ARCRecordMetaData implements ArchiveRecordHeader, ARCConstants {
      * content-type content.
      */
     public String getMimetype() {
-        return (String)this.headerFields.get(MIMETYPE_HEADER_FIELD_KEY);
+        return (String)this.headerFields.get(MIMETYPE_FIELD_KEY);
     }
 
     /**
      * @return Arcfile version.
      */
     public String getVersion() {
-        return (String)this.headerFields.get(VERSION_HEADER_FIELD_KEY);
+        return (String)this.headerFields.get(VERSION_FIELD_KEY);
     }
 
     /**
@@ -246,7 +246,7 @@ public class ARCRecordMetaData implements ArchiveRecordHeader, ARCConstants {
     }
 
 
-	public String getFileIdentifier() {
+	public String getReaderIdentifier() {
 		return this.getArc();
 	}
 

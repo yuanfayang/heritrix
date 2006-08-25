@@ -77,8 +77,8 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
      */
     protected WARCRecord createArchiveRecord(InputStream is, long offset)
     throws IOException {
-        return (WARCRecord)currentRecord(new WARCRecord(is, offset, isDigest(),
-            isStrict()));
+        return (WARCRecord)currentRecord(new WARCRecord(is,
+        	getReaderIdentifier(), offset, isDigest(), isStrict()));
     }
     
 	@Override
