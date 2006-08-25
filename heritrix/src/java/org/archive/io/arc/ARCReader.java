@@ -22,10 +22,8 @@
  */
 package org.archive.io.arc;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -125,15 +123,6 @@ implements ARCConstants {
     
     private boolean parseHttpHeaders = true;
     
-    private static final byte [] outputBuffer = new byte[8 * 1024];
-
-    private static final String [] SUPPORTED_OUTPUT_FORMATS =
-        {CDX, DUMP, GZIP_DUMP, NOHEAD, CDX_FILE};
-    
-    private static final char SPACE = ' ';
-    
-    private static String cachedShortArcFileName = null;
-    
     ARCReader() {
     	super();
     }
@@ -228,7 +217,6 @@ implements ARCConstants {
         }
 
         try {
-        	// TODO: FIX ARCHIVERECORDHEADER IN BELOW.
             currentRecord(new ARCRecord(is,
                 (ArchiveRecordHeader)computeMetaData(this.headerFieldNameKeys,
                 	firstLineValues,
@@ -433,77 +421,60 @@ implements ARCConstants {
 	protected void setAlignedOnFirstRecord(boolean alignedOnFirstRecord) {
 		this.alignedOnFirstRecord = alignedOnFirstRecord;
 	}
-    
-    // Static methods follow.
-
+	
     /**
-     *
-     * @param formatter Help formatter instance.
-     * @param options Usage options.
-     * @param exitCode Exit code.
+     * @return Returns the parseHttpHeaders.
      */
-    private static void usage(HelpFormatter formatter, Options options,
-            int exitCode) {
-        formatter.printHelp("java org.archive.io.arc.ARCReader" +
-            " [--digest=true|false] \\\n" +
-            " [--format=cdx|cdxfile|dump|gzipdump|nohead]" +
-            " [--offset=#] \\\n[--strict] ARC_FILE|ARC_URL",
-                options);
-        System.exit(exitCode);
+    public boolean isParseHttpHeaders() {
+        return this.parseHttpHeaders;
     }
     
-    protected static String stripExtension(String name, String ext) {
-        if (name.endsWith(ext)) {
-            name = name.substring(0, name.length() - ext.length());
+    /**
+     * @param parse The parseHttpHeaders to set.
+     */
+    public void setParseHttpHeaders(boolean parse) {
+        this.parseHttpHeaders = parse;
+    }
+    
+	public String getFileExtension() {
+		return ARC_FILE_EXTENSION;
+	}
+	
+	public String getDotFileExtension() {
+		return DOT_ARC_FILE_EXTENSION;
+	}
+	
+	protected boolean output(final String format) 
+	throws IOException, java.text.ParseException {
+		boolean result = super.output(format);
+		if(!result && format.equals(NOHEAD)) {
+			throw new IOException(format +
+				" only supported for single Records");
+		}
+		return result;
+	}
+    
+    protected boolean outputRecord(final String format)
+    throws IOException {
+    	boolean result = super.outputRecord(format);
+    	if(!result && format.equals(NOHEAD)) {
+            // No point digesting if dumping content.
+            setDigest(false);
+            ARCRecord r = (ARCRecord)get();
+            r.skipHttpHeader();
+            r.dump();
+            result = true;
         }
-        return name;
+        return result;
     }
 
-    /**
-     * Write out the arcfile.
-     * 
-     * @param urlOrPath Arc file to read.
-     * @param digest Digest yes or no.
-     * @param strict True if we are to run in strict mode.
-     * @param format Format to use outputting.
-     * @throws IOException
-     * @throws java.text.ParseException
-     */
-    protected static void output(String urlOrPath, boolean digest,
-            String format, boolean strict)
-    throws IOException, java.text.ParseException {
-        // long start = System.currentTimeMillis();
-        ARCReader arc = ARCReaderFactory.get(urlOrPath);
-        arc.setStrict(strict);
-        // Clear cache of calculated arc file name.
-        cachedShortArcFileName = null;
-        
-        // Write output as pseudo-CDX file.  See
-        // http://www.archive.org/web/researcher/cdx_legend.php
-        // and http://www.archive.org/web/researcher/example_cdx.php.
-        // Hash is hard-coded straight SHA-1 hash of content.
-        if (format.equals(CDX)) {
-            arc.setDigest(digest);
-            cdxOutput(arc, false);
-        } else if (format.equals(DUMP)) {
-            dumpOutput(arc, false);
-        } else if (format.equals(GZIP_DUMP)) {
-            dumpOutput(arc, true);
-        } else if (format.equals(CDX_FILE)) {
-            arc.setDigest(digest);
-            cdxOutput(arc, true);
-        } else {
-            throw new IOException("Unsupported format: " + format);
-        }
-    }
-    
-    protected static void dumpOutput(ARCReader arc, boolean compressed)
+    public void dump(final boolean compress)
     throws IOException, java.text.ParseException {
         // No point digesting if we're doing a dump.
-        arc.setDigest(false);
+        setDigest(false);
         boolean firstRecord = true;
         ARCWriter writer = null;
-        for (Iterator ii = arc.iterator(); ii.hasNext();) {
+        for (Iterator<ArchiveRecord> ii = iterator(); ii.hasNext();) {
             ARCRecord r = (ARCRecord)ii.next();
             // We're to dump the arc on stdout.
             // Get the first record's data if any.
@@ -523,7 +494,7 @@ implements ARCConstants {
                 // or new File will complain if it is otherwise.
                 writer = new ARCWriter(new AtomicInteger(), System.out,
                     new File(meta.getArc()),
-                    compressed, meta.getDate(), listOfMetadata);
+                    compress, meta.getDate(), listOfMetadata);
                 continue;
             }
             
@@ -534,149 +505,52 @@ implements ARCConstants {
         // System.out.println(System.currentTimeMillis() - start);
     }
     
-    protected static void cdxOutput(ARCReader arc, boolean toFile)
-    throws IOException {
-        BufferedWriter cdxWriter = null;
-        if (toFile) {
-            String cdxFilename = stripExtension(arc.getReaderIdentifier(),
-                DOT_COMPRESSED_FILE_EXTENSION);
-            cdxFilename = stripExtension(cdxFilename, '.' + ARC_FILE_EXTENSION);
-            cdxFilename += ".cdx";
-            cdxWriter = new BufferedWriter(new FileWriter(cdxFilename));
-        }
-        
-        String header = "CDX b e a m s c " + ((arc.isCompressed()) ? "V" : "v")
-            + " n g";
-        if (toFile) {
-            cdxWriter.write(header);
-            cdxWriter.newLine();
-        } else {
-            System.out.println(header);
-        }
-        
-        try {
-            // Parsing http headers is costly and not needed dumping cdx.
-            arc.setParseHttpHeaders(false);
-            for (Iterator ii = arc.iterator(); ii.hasNext();) {
-                ARCRecord r = (ARCRecord) ii.next();
-                if (toFile) {
-                    cdxWriter.write(outputARCRecordCdx(r));
-                    cdxWriter.newLine();
-                } else {
-                    System.out.println(outputARCRecordCdx(r));
-                }
-            }
-        } finally {
-            if (toFile) {
-                cdxWriter.close();
-            }
-        }
+    // Static methods follow.
+
+    /**
+     *
+     * @param formatter Help formatter instance.
+     * @param options Usage options.
+     * @param exitCode Exit code.
+     */
+    private static void usage(HelpFormatter formatter, Options options,
+            int exitCode) {
+        formatter.printHelp("java org.archive.io.arc.ARCReader" +
+            " [--digest=true|false] \\\n" +
+            " [--format=cdx|cdxfile|dump|gzipdump|nohead]" +
+            " [--offset=#] \\\n[--strict] [--parse] ARC_FILE|ARC_URL",
+                options);
+        System.exit(exitCode);
     }
 
     /**
-     * @param meta ARCRecordMetaData instance.
-     * @return short name of arc.
+     * Write out the arcfile.
+     * 
+     * @param reader
+     * @param format Format to use outputting.
+     * @throws IOException
+     * @throws java.text.ParseException
      */
-    protected static String getShortArcFileName(ARCRecordMetaData meta) {
-        if (cachedShortArcFileName == null) {
-            String arcFileName = (new File(meta.getArc()).getName());
-            arcFileName = stripExtension(arcFileName,
-                DOT_COMPRESSED_FILE_EXTENSION);
-            cachedShortArcFileName = stripExtension(arcFileName,
-                '.' + ARC_FILE_EXTENSION);
-        }
-        return cachedShortArcFileName;
+    protected static void output(ARCReader reader, String format)
+    throws IOException, java.text.ParseException {
+    	if (!reader.output(format)) {
+            throw new IOException("Unsupported format: " + format);
+    	}
     }
+    
     
     /**
      * Output passed record using passed format specifier.
-     * @param r ARCRecord instance to output.
+     * @param r ARCReader instance to output.
      * @param format What format to use outputting.
      * @throws IOException
      */
-    protected static void outputARCRecord(final ARCReader arc, final ARCRecord r,
-        final String format)
+    protected static void outputRecord(final ARCReader r, final String format)
     throws IOException {
-        if (format.equals(CDX)) {
-            System.out.println(outputARCRecordCdx(r));
-        } else if(format.equals(DUMP)) {
-            // No point digesting if dumping content.
-            arc.setDigest(false);
-            outputARCRecordDump(r);
-        } else if(format.equals(NOHEAD)) {
-            // No point digesting if dumping content.
-            arc.setDigest(false);
-            outputARCRecordNohead(r);
-        } else {
+    	if (!r.outputRecord(format)) {
             throw new IOException("Unsupported format" +
                 " (or unsupported on a single record): " + format);
-        }
-    }
-    
-    /**
-     * @param r ARCRecord instance to output.
-     * @throws IOException
-     */
-    private static void outputARCRecordNohead(ARCRecord r)
-    throws IOException {
-        r.skipHttpHeader();
-        outputARCRecordDump(r);
-    }
-
-    /**
-     * @param r ARCRecord instance to output.
-     * @throws IOException
-     */
-    private static void outputARCRecordDump(ARCRecord r)
-    throws IOException {
-        int read = outputBuffer.length;
-        while ((read = r.read(outputBuffer, 0, outputBuffer.length)) != -1) {
-            System.out.write(outputBuffer, 0, read);
-        }
-        System.out.flush();
-    }
-
-    protected static String outputARCRecordCdx(ARCRecord r)
-    throws IOException {
-        // Read the whole record so we get out a hash.
-        r.close();
-        ARCRecordMetaData meta = r.getMetaData();
-        String statusCode = (meta.getStatusCode() == null)?
-            "-": meta.getStatusCode();
-        StringBuffer buffer = new StringBuffer(CDX_LINE_BUFFER_SIZE);
-        buffer.append(meta.getDate());
-        buffer.append(SPACE);
-        buffer.append(meta.getIp());
-        buffer.append(SPACE);
-        buffer.append(meta.getUrl());
-        buffer.append(SPACE);
-        buffer.append(meta.getMimetype());
-        buffer.append(SPACE);
-        buffer.append(statusCode);
-        buffer.append(SPACE);
-        buffer.append((meta.getDigest() == null)? "-": meta.getDigest());
-        buffer.append(SPACE);
-        buffer.append(meta.getOffset());
-        buffer.append(SPACE);
-        buffer.append(meta.getLength());
-        buffer.append(SPACE);
-        buffer.append(getShortArcFileName(meta));
-
-        return buffer.toString();
-    }
-
-    /**
-     * @return Returns the parseHttpHeaders.
-     */
-    public boolean isParseHttpHeaders() {
-        return this.parseHttpHeaders;
-    }
-    
-    /**
-     * @param parse The parseHttpHeaders to set.
-     */
-    public void setParseHttpHeaders(boolean parse) {
-        this.parseHttpHeaders = parse;
+    	}
     }
 
     /**
@@ -688,7 +562,11 @@ implements ARCConstants {
      */
     public static void createCDXIndexFile(String urlOrPath)
     throws IOException, java.text.ParseException {
-        output(urlOrPath, true, CDX_FILE, false);
+    	ARCReader r = ARCReaderFactory.get(urlOrPath);
+    	r.setStrict(false);
+    	r.setParseHttpHeaders(true);
+    	r.setDigest(true);
+    	output(r, CDX_FILE);
     }
 
     /**
@@ -726,6 +604,8 @@ implements ARCConstants {
             "Pass true|false. Expensive. Default: true (SHA-1)."));
         options.addOption(new Option("s","strict", false,
             "Strict mode. Fails parse if incorrectly formatted ARC."));
+        options.addOption(new Option("p","parse", true,
+        	"Pass true|false to parse HTTP Headers. Default: false."));
         options.addOption(new Option("f","format", true,
             "Output options: 'cdx', cdxfile', 'dump', 'gzipdump'," +
             "'or 'nohead'. Default: 'cdx'."));
@@ -742,9 +622,10 @@ implements ARCConstants {
 
         // Now look at options passed.
         long offset = -1;
-        boolean digest = true;
+        boolean digest = false;
         boolean strict = false;
-        String format = "cdx";
+        boolean parse = false;
+        String format = CDX;
         for (int i = 0; i < cmdlineOptions.length; i++) {
             switch(cmdlineOptions[i].getId()) {
                 case 'h':
@@ -760,21 +641,22 @@ implements ARCConstants {
                     strict = true;
                     break;
                     
+                case 'p':
+                	parse = getTrueOrFalse(cmdlineOptions[i].getValue());
+                    break;
+                    
                 case 'd':
-                    if (cmdlineOptions[i].getValue() != null) {
-                        String tmp =
-                            cmdlineOptions[i].getValue().toLowerCase();
-                        if (Boolean.FALSE.toString().equals(tmp)) {
-                            digest = false;
-                        }
-                    }
+                	digest = getTrueOrFalse(cmdlineOptions[i].getValue());
                     break;
                     
                 case 'f':
                     format = cmdlineOptions[i].getValue().toLowerCase();
                     boolean match = false;
-                    for (int ii = 0; ii < SUPPORTED_OUTPUT_FORMATS.length; ii++) {
-                        if (SUPPORTED_OUTPUT_FORMATS[ii].equals(format)) {
+                    // List of supported formats.
+                    final String [] supportedFormats =
+                		{CDX, DUMP, GZIP_DUMP, NOHEAD, CDX_FILE};
+                    for (int ii = 0; ii < supportedFormats.length; ii++) {
+                        if (supportedFormats[ii].equals(format)) {
                             match = true;
                             break;
                         }
@@ -795,15 +677,20 @@ implements ARCConstants {
                 System.out.println("Error: Pass one arcfile only.");
                 usage(formatter, options, 1);
             }
-            ARCReader arc =
-                ARCReaderFactory.get(new File((String)cmdlineArgs.get(0)), offset);
+            ARCReader arc = ARCReaderFactory.get(
+            	new File((String)cmdlineArgs.get(0)), offset);
             arc.setStrict(strict);
-            outputARCRecord(arc, (ARCRecord)arc.get(), format);
+            arc.setParseHttpHeaders(parse);
+            outputRecord(arc, format);
         } else {
             for (Iterator i = cmdlineArgs.iterator(); i.hasNext();) {
                 String urlOrPath = (String)i.next();
                 try {
-                    output(urlOrPath, digest, format, strict);
+                	ARCReader r = ARCReaderFactory.get(urlOrPath);
+                	r.setStrict(strict);
+                	r.setParseHttpHeaders(parse);
+                	r.setDigest(digest);
+                    output(r, format);
                 } catch (RuntimeException e) {
                     // Write out name of file we failed on to help with
                     // debugging.  Then print stack trace and try to keep

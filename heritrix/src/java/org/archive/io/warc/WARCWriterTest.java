@@ -32,10 +32,10 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
-import org.archive.io.WriterPoolMember;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.FileUtils;
@@ -59,6 +59,8 @@ extends TmpDirTestCase implements WARCConstants {
     private static final String PREFIX = "IAH";
     
     private static final String SOME_URL = "http://www.archive.org/test/";
+    
+    private static final AtomicInteger SERIAL_NO = new AtomicInteger();
     
     /**
      * @return Generic HTML Content.
@@ -134,7 +136,7 @@ extends TmpDirTestCase implements WARCConstants {
     throws IOException {
         cleanUpOldFiles(baseName);
         File [] files = {getTmpDir()};
-        ExperimentalWARCWriter w = new ExperimentalWARCWriter(
+        ExperimentalWARCWriter w = new ExperimentalWARCWriter(SERIAL_NO,
             Arrays.asList(files), baseName + '-' + PREFIX, "", compress,
             maxSize, null);
         assertNotNull(w);
@@ -266,7 +268,8 @@ extends TmpDirTestCase implements WARCConstants {
     protected ExperimentalWARCWriter createWARCWriter(String NAME,
             boolean compress) {
         File [] files = {getTmpDir()};
-        return new ExperimentalWARCWriter(Arrays.asList(files), NAME, "",
+        return new ExperimentalWARCWriter(SERIAL_NO,
+        	Arrays.asList(files), NAME, "",
             compress, DEFAULT_MAX_WARC_FILE_SIZE, null);
     }
     
@@ -362,7 +365,7 @@ extends TmpDirTestCase implements WARCConstants {
     throws IOException {
         File [] files = {arcdir};
         ExperimentalWARCWriter writer =
-            new ExperimentalWARCWriter(Arrays.asList(files),
+            new ExperimentalWARCWriter(SERIAL_NO, Arrays.asList(files),
             "test", "", compress, DEFAULT_MAX_WARC_FILE_SIZE, null);
         String content = getContent();
         writeRecord(writer, SOME_URL, "text/html", content.length(),

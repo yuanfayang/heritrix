@@ -96,6 +96,8 @@ public interface ArchiveFileConstants {
     
     public static final String DEFAULT_DIGEST_METHOD = "SHA-1";
     
+    public static final char SINGLE_SPACE = ' ';
+    
     public static final String CDX = "cdx";
     public static final String DUMP = "dump";
     public static final String GZIP_DUMP = "gzipdump";

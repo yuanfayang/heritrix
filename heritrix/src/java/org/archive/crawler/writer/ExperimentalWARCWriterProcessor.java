@@ -23,7 +23,6 @@
 package org.archive.crawler.writer;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,7 +42,6 @@ import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.io.arc.ARCWriter;
 import org.archive.io.warc.ExperimentalWARCWriter;
 import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCWriterPool;
@@ -72,31 +70,11 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     }
     
     /**
-     * @param name
-     *            Name of this writer.
+     * @param name Name of this writer.
      */
     public ExperimentalWARCWriterProcessor(String name) {
         super(name, "Experimental WARCWriter processor");
     }
-    
-    /**
-     * @see #crawlCheckpoint(File)
-     */
-    @Override
-    protected void checkpointRecover() {
-        int serialNumber = loadCheckpointSerialNumber();
-        if (serialNumber != -1) {
-            // ExperimentalWARCWriter.setSerialNo(serialNumber); // FIXME!
-        }
-    }
-    
-    public void crawlCheckpoint(File checkpointDir)
-    throws IOException {
-        //saveCheckpointSerialNumber(checkpointDir,
-        //    ExperimentalWARCWriter.getSerialNo()); // FIXME!
-        super.crawlCheckpoint(checkpointDir);
-    }
-    
 
     protected void setupPool() {
 		setPool(new WARCWriterPool(this, getPoolMaximumActive(),

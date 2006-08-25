@@ -38,7 +38,7 @@ import org.archive.crawler.settings.SimpleType;
 /**
  * Base class for URI processing classes.
  *
- * <p> Each URI is processed be a user defined series of processors. This class
+ * <p> Each URI is processed by a user defined series of processors. This class
  * provides the basic infrastructure for these but does not actually do
  * anything. New processors can be easily created by subclassing this class.
  *

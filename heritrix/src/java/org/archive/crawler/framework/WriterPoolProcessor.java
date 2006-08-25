@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
@@ -224,11 +225,9 @@ implements CoreAttributeConstants, CrawlStatusListener {
         }
     }
     
-    /**
-     * Called out of {@link #initialTasks()} when recovering a checkpoint.
-     * Restore state.
-     */
-    protected abstract void checkpointRecover();
+    protected AtomicInteger getSerialNo() {
+        return ((WriterPool)getPool()).getSerialNo();
+    }
 
     /**
      * Set up pool of files.
@@ -400,8 +399,8 @@ implements CoreAttributeConstants, CrawlStatusListener {
     	return this.getClass().getName() + ".state";
     }
     
-    public void crawlCheckpoint(File checkpointDir)
-    throws IOException {
+    public void crawlCheckpoint(File checkpointDir) throws IOException {
+        saveCheckpointSerialNumber(checkpointDir, getSerialNo().get());
         // Close all ARCs on checkpoint.
         try {
             this.pool.close();
@@ -449,6 +448,17 @@ implements CoreAttributeConstants, CrawlStatusListener {
 
 	protected void setTotalBytesWritten(long totalBytesWritten) {
         this.totalBytesWritten = totalBytesWritten;
+    }
+	
+    /**
+     * Called out of {@link #initialTasks()} when recovering a checkpoint.
+     * Restore state.
+     */
+    protected void checkpointRecover() {
+        int serialNo = loadCheckpointSerialNumber();
+        if (serialNo != -1) {
+            getSerialNo().set(serialNo);
+        }
     }
 
     /**

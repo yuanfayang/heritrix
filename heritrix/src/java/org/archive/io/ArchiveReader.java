@@ -25,7 +25,9 @@ package org.archive.io;
 import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -42,7 +44,7 @@ import org.archive.util.MimetypeUtils;
  * @author stack
  * @version $Date$ $Version$
  */
-public abstract class ArchiveReader {    
+public abstract class ArchiveReader implements ArchiveFileConstants {    
     /**
      * Is this Archive file compressed?
      */
@@ -209,6 +211,9 @@ public abstract class ArchiveReader {
      * @throws IOException
      */
     protected abstract void gotoEOR(ArchiveRecord record) throws IOException;
+    
+    public abstract String getFileExtension();
+    public abstract String getDotFileExtension();
 
     /**
      * @return Version of this Archive file.
@@ -312,7 +317,7 @@ public abstract class ArchiveReader {
     /**
      * @param d True if we're to digest.
      */
-    protected void setDigest(boolean d) {
+    public void setDigest(boolean d) {
         this.digest = d;
     }
 
@@ -403,7 +408,6 @@ public abstract class ArchiveReader {
     public void logStdErr(Level level, String message) {
         System.err.println(level.toString() + " " + message);
     }
-    
     
     /**
      * Class that adds PositionableStream methods to a BufferedInputStream.
@@ -567,4 +571,143 @@ public abstract class ArchiveReader {
             throw new UnsupportedOperationException();
         }
     }
+    
+    protected static String stripExtension(final String name,
+    		final String ext) {
+        return (!name.endsWith(ext))? name:
+            name.substring(0, name.length() - ext.length());
+    }
+    
+    /**
+     * @return short name of Archive file.
+     */
+    public String getStrippedFileName() {
+    	return getStrippedFileName((new File(getReaderIdentifier())).getName(),
+    		getDotFileExtension());
+    }
+    
+    /**
+     * @param name Name of ARCFile.
+     * @param '.arc' or '.warc', etc.
+     * @return short name of Archive file.
+     */
+    public static String getStrippedFileName(String name,
+    		final String dotFileExtension) {
+    	name = stripExtension(name,
+    		ArchiveFileConstants.DOT_COMPRESSED_FILE_EXTENSION);
+    	return stripExtension(name, dotFileExtension);
+    }
+    
+    /**
+     * @param value Value to test.
+     * @return True if value is 'true', else false.
+     */
+    protected static boolean getTrueOrFalse(final String value) {
+    	if (value == null || value.length() <= 0) {
+    		return false;
+    	}
+        return Boolean.TRUE.toString().equals(value.toLowerCase());
+    }
+    
+    /**
+     * @param format Format to use outputting.
+     * @throws IOException
+     * @throws java.text.ParseException
+     * @return True if handled.
+     */
+    protected boolean output(final String format)
+    throws IOException, java.text.ParseException {
+    	boolean result = true;
+        // long start = System.currentTimeMillis();
+    	
+        // Write output as pseudo-CDX file.  See
+        // http://www.archive.org/web/researcher/cdx_legend.php
+        // and http://www.archive.org/web/researcher/example_cdx.php.
+        // Hash is hard-coded straight SHA-1 hash of content.
+        if (format.equals(DUMP)) {
+        	// No point digesting dumping.
+        	setDigest(false);
+            dump(false);
+        } else if (format.equals(GZIP_DUMP)) {
+        	// No point digesting dumping.
+        	setDigest(false);
+            dump(true);
+        } else if (format.equals(CDX)) {
+        	cdxOutput(false);   
+        } else if (format.equals(CDX_FILE)) {
+            cdxOutput(true);
+        } else {
+        	result = false;
+        }	
+        return result;
+    }
+    
+    protected void cdxOutput(boolean toFile)
+    throws IOException {
+        BufferedWriter cdxWriter = null;
+        if (toFile) {
+            String cdxFilename = stripExtension(getReaderIdentifier(),
+                DOT_COMPRESSED_FILE_EXTENSION);
+            cdxFilename = stripExtension(cdxFilename, getDotFileExtension());
+            cdxFilename += ('.' + CDX);
+            cdxWriter = new BufferedWriter(new FileWriter(cdxFilename));
+        }
+        
+        String header = "CDX b e a m s c " + ((isCompressed()) ? "V" : "v")
+            + " n g";
+        if (toFile) {
+            cdxWriter.write(header);
+            cdxWriter.newLine();
+        } else {
+            System.out.println(header);
+        }
+        
+        String strippedFileName = getStrippedFileName();
+        try {
+            for (Iterator<ArchiveRecord> ii = iterator(); ii.hasNext();) {
+            	ArchiveRecord r = ii.next();
+                if (toFile) {
+                    cdxWriter.write(r.outputCdx(strippedFileName));
+                    cdxWriter.newLine();
+                } else {
+                    System.out.println(r.outputCdx(strippedFileName));
+                }
+            }
+        } finally {
+            if (toFile) {
+                cdxWriter.close();
+            }
+        }
+    }
+    
+    /**
+     * Output passed record using passed format specifier.
+     * @param r ARCReader instance to output.
+     * @param format What format to use outputting.
+     * @throws IOException
+     * @return True if handled.
+     */
+    protected boolean outputRecord(final String format)
+    throws IOException {
+    	boolean result = true;
+        if (format.equals(CDX)) {
+            System.out.println(get().outputCdx(getStrippedFileName()));
+        } else if(format.equals(ArchiveFileConstants.DUMP)) {
+            // No point digesting if dumping content.
+            setDigest(false);
+            get().dump();
+        } else {
+        	result = false;
+        }
+        return result;
+    }
+
+    /**
+     * Dump this file on STDOUT
+     * @throws compress True if dumped output is compressed.
+     * @throws IOException
+     * @throws java.text.ParseException
+     */
+    public abstract void dump(final boolean compress)
+    throws IOException, java.text.ParseException;
 }

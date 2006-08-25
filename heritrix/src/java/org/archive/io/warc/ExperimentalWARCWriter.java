@@ -33,7 +33,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.archive.io.WriterPoolMember;
 import org.archive.uid.GeneratorFactory;
@@ -60,8 +60,6 @@ import org.archive.util.anvl.ANVLRecord;
  */
 public class ExperimentalWARCWriter extends WriterPoolMember
 implements WARCConstants {
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
-    
     /**
      * Buffer to reuse writing streams.
      */
@@ -97,24 +95,26 @@ implements WARCConstants {
      * Has default access so can make instance to test utility methods.
      */
     ExperimentalWARCWriter() {
-        this(null, "", "", true, -1, null);
+        this(null, null, "", "", true, -1, null);
     }
     
     /**
      * Constructor.
      * Takes a stream. Use with caution. There is no upperbound check on size.
      * Will just keep writing.  Only pass Streams that are bounded. 
+     * @param serialNo  used to generate unique file name sequences
      * @param out Where to write.
      * @param f File the <code>out</code> is connected to.
      * @param cmprs Compress the content written.
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    ExperimentalWARCWriter(final PrintStream out, final File f,
+    ExperimentalWARCWriter(final AtomicInteger serialNo,
+    		final PrintStream out, final File f,
     		final boolean cmprs, final String a14DigitDate,
             final List warcinfoData)
     throws IOException {
-        super(null /* FIXME */, out, f, cmprs, a14DigitDate);
+        super(serialNo, out, f, cmprs, a14DigitDate);
         // TODO: Currently unused.
         this.fileMetadata = warcinfoData;
     }
@@ -129,10 +129,12 @@ implements WARCConstants {
      * @param suffix File tail to use.  If null, unused.
      * @param warcinfoData File metadata for warcinfo record.
      */
-    public ExperimentalWARCWriter(final List<File> dirs, final String prefix, 
+    public ExperimentalWARCWriter(final AtomicInteger serialNo,
+    		final List<File> dirs, final String prefix, 
             final String suffix, final boolean cmprs,
             final int maxSize, final List warcinfoData) {
-        super(null /* FIXME */, dirs, prefix, suffix, cmprs, maxSize, WARC_FILE_EXTENSION);
+        super(serialNo, dirs, prefix, suffix, cmprs, maxSize,
+        	WARC_FILE_EXTENSION);
         // TODO: Currently unused.
         this.fileMetadata = warcinfoData;
     }

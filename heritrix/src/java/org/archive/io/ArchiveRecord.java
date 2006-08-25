@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.archive.util.Base32;
+
 /**
  * Archive file Record.
  * @author stack
@@ -81,6 +83,7 @@ public abstract class ArchiveRecord extends InputStream {
      * the digest.
      */
     protected MessageDigest digest = null;
+    private String digestStr = null;
 
     boolean strict = false;
     
@@ -169,6 +172,9 @@ public abstract class ArchiveRecord extends InputStream {
         if (this.in != null) {
             skip();
             this.in = null;
+            if (this.digest != null) {
+            	this.digestStr = Base32.encode(this.digest.digest());
+            }
         }
     }
 
@@ -248,8 +254,8 @@ public abstract class ArchiveRecord extends InputStream {
 		return this.in;
 	}
 
-	protected MessageDigest getDigest() {
-		return this.digest;
+	public String getDigestStr() {
+		return this.digestStr;
 	}
 	
 	protected void incrementPosition() {
@@ -271,4 +277,58 @@ public abstract class ArchiveRecord extends InputStream {
 	protected void setEor(boolean eor) {
 		this.eor = eor;
 	}
+	
+	protected String getStatusCode4Cdx(final ArchiveRecordHeader h) {
+		return "-";
+	}
+	
+	protected String getIp4Cdx(final ArchiveRecordHeader h) {
+		return "-";
+	}
+	
+	protected String getDigest4Cdx(final ArchiveRecordHeader h) {
+		return getDigestStr() == null? "-": getDigestStr();
+	}
+
+    protected String outputCdx(final String strippedFileName)
+    throws IOException {
+        // Read the whole record so we get out a hash. Should be safe calling
+    	// close on already closed Record.
+        close();
+        ArchiveRecordHeader h = getHeader();
+        StringBuilder buffer =
+        	new StringBuilder(ArchiveFileConstants.CDX_LINE_BUFFER_SIZE);
+        buffer.append(h.getDate());
+        buffer.append(ArchiveFileConstants.SINGLE_SPACE);
+        buffer.append(getIp4Cdx(h));
+        buffer.append(ArchiveFileConstants.SINGLE_SPACE);
+        buffer.append(h.getUrl());
+        buffer.append(ArchiveFileConstants.SINGLE_SPACE);
+        buffer.append(h.getMimetype());
+        buffer.append(ArchiveFileConstants.SINGLE_SPACE);
+        buffer.append(getStatusCode4Cdx(h));
+        buffer.append(ArchiveFileConstants.SINGLE_SPACE);
+        buffer.append(getDigest4Cdx(h));
+        buffer.append(ArchiveFileConstants.SINGLE_SPACE);
+        buffer.append(h.getOffset());
+        buffer.append(ArchiveFileConstants.SINGLE_SPACE);
+        buffer.append(h.getLength());
+        buffer.append(ArchiveFileConstants.SINGLE_SPACE);
+        buffer.append(strippedFileName != null? strippedFileName: '-');
+        return buffer.toString();
+    }
+    
+    /**
+     * Writes output on STDOUT.
+     * @throws IOException
+     */
+    public void dump()
+    throws IOException {
+    	final byte [] outputBuffer = new byte [16*1024];
+        int read = outputBuffer.length;
+        while ((read = read(outputBuffer, 0, outputBuffer.length)) != -1) {
+            System.out.write(outputBuffer, 0, read);
+        }
+        System.out.flush();
+    }
 }
