@@ -647,13 +647,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             }
         }
 
-        String status = null;
-        if (!isValidLoginPasswordString(adminLoginPassword)) {
-            clp.usage("Invalid admin login:password value, or none " +
-                    "specified. ", 1);
-            return status; // code not reached; JVM exitted above at usage()
-        }
         // Ok, we should now have everything to launch the program.
+        String status = null;
         if (selfTest) {
             // If more than just '--selftest' and '--port' passed, then
             // there is confusion on what is being asked of us.  Print usage
@@ -669,31 +664,38 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                 clp.usage(1);
             }
             status = selftest(selfTestName, Heritrix.guiPort);
-        } else if (!Heritrix.gui) {
-            if (options.length > 1) {
-                // If more than just '--nowui' passed, then there is
-                // confusion on what is being asked of us.  Print usage
-                // rather than proceed.
-                clp.usage(1);
-            }
-            Heritrix h = new Heritrix(true);
-            status = h.doOneCrawl(crawlOrderFile);
         } else {
-            status = startEmbeddedWebserver(Heritrix.guiPort,
-                Heritrix.localhostOnly, adminLoginPassword);
-            Heritrix h = new Heritrix(true);
-            
-            String tmp = h.launch(crawlOrderFile, runMode);
-            if (tmp != null) {
-                status += ('\n' + tmp);
-            }
-        }
+			if (!isValidLoginPasswordString(adminLoginPassword)) {
+				clp.usage("Invalid admin login:password value, or none "
+						+ "specified. ", 1);
+			}
+			
+			if (!Heritrix.gui) {
+				if (options.length > 1) {
+					// If more than just '--nowui' passed, then there is
+					// confusion on what is being asked of us. Print usage
+					// rather than proceed.
+					clp.usage(1);
+				}
+				Heritrix h = new Heritrix(true);
+				status = h.doOneCrawl(crawlOrderFile);
+			} else {
+				status = startEmbeddedWebserver(Heritrix.guiPort,
+						Heritrix.localhostOnly, adminLoginPassword);
+				Heritrix h = new Heritrix(true);
+
+				String tmp = h.launch(crawlOrderFile, runMode);
+				if (tmp != null) {
+					status += ('\n' + tmp);
+				}
+			}
+		}
         return status;
     }
     
     /**
-     * @return The file we dump stdout and stderr into.
-     */
+	 * @return The file we dump stdout and stderr into.
+	 */
     public static String getHeritrixOut() {
         String tmp = System.getProperty("heritrix.out");
         if (tmp == null || tmp.length() == 0) {
