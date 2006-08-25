@@ -915,10 +915,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         String value = System.getProperty(TRUSTSTORE_KEY);
         File confdir = null;
         try {
-			confdir = getConfdir(false);
-		} catch (IOException e) {
-			logger.log(Level.WARNING, "Failed to get confdir.", e);
-		}
+            confdir = getConfdir(false);
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Failed to get confdir.", e);
+        }
         if ((value == null || value.length() <= 0) && confdir != null) {
             // Use the heritrix store if it exists on disk.
             File heritrixStore = new File(confdir, "heritrix.cacerts");
@@ -1409,7 +1409,24 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     public static File getConfdir(final boolean fail)
     throws IOException {
-        return getSubDir("conf", fail);
+        final String key = "heritrix.conf";
+        // Look to see if heritrix.conf property passed on the cmd-line.
+        String tmp = System.getProperty(key);
+        // if not fall back to default $HERITIX_HOME/conf
+        if (tmp == null || tmp.length() == 0) {
+            return getSubDir("conf", fail);
+        }
+        File dir = new File(tmp);
+        if (!dir.exists()) {
+            if (fail) {
+                throw new IOException("Cannot find conf dir: " + tmp);
+            } else {
+                logger.log(Level.WARNING, "Specified " + key +
+                    " dir does not exist.  Falling back on default");
+            }
+            dir = getSubDir("conf", fail);
+        }
+        return dir;
     }
 
     /**
