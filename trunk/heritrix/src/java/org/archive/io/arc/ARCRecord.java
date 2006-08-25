@@ -28,7 +28,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpParser;
@@ -279,19 +278,10 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
             if (this.httpHeaderStream.available() <= 0) {
                 this.httpHeaderStream = null;
             }
+            incrementPosition();
         } else {
-            if (available() > 0) {
-                c = getIn().read();
-                if (c == -1) {
-                    throw new IOException("Premature EOF before " +
-                        "end-of-record.");
-                }
-                if (this.digest != null) {
-                    this.digest.update((byte)c);
-                }
-            }
+            c = super.read();
         }
-        incrementPosition();
         return c;
     }
 
@@ -311,30 +301,12 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
             if (this.httpHeaderStream.available() <= 0) {
                 this.httpHeaderStream = null;
             }
+            incrementPosition(read);
         } else {
-            read = Math.min(length, available());
-            if (read == -1 || read == 0) {
-                read = -1;
-            } else {
-                read = getIn().read(b, offset, read);
-                if (read == -1) {
-                    String msg = "Premature EOF before end-of-record: " +
-                        getMetaData().getHeaderFields();
-                    if (isStrict()) {
-                        throw new IOException(msg);
-                    }
-                    setEor(true);
-                    System.err.println(Level.WARNING.toString() + " " + msg);
-                }
-                if (this.digest != null && read >= 0) {
-                    this.digest.update(b, offset, read);
-                }
-            }
+            read = super.read(b, offset, length);
         }
-        incrementPosition(read);
         return read;
     }
-    
 
     /**
      * @return Offset at which the body begins (Only known after

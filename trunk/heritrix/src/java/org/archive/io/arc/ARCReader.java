@@ -104,11 +104,11 @@ implements ARCConstants {
      * Used to initialize <code>headerFieldNameKeys</code>.
      */
     private final String [] headerFieldNameKeysArray = {
-        URL_HEADER_FIELD_KEY,
+        URL_FIELD_KEY,
         IP_HEADER_FIELD_KEY,
-        DATE_HEADER_FIELD_KEY,
-        MIMETYPE_HEADER_FIELD_KEY,
-        LENGTH_HEADER_FIELD_KEY
+        DATE_FIELD_KEY,
+        MIMETYPE_FIELD_KEY,
+        LENGTH_FIELD_KEY
     };
     
     /**
@@ -349,13 +349,13 @@ implements ARCConstants {
         // Add a check for tabs in URLs.  If any, replace with '%09'.
         // See https://sourceforge.net/tracker/?group_id=73833&atid=539099&func=detail&aid=1010966,
         // [ 1010966 ] crawl.log has URIs with spaces in them.
-        String url = (String)headerFields.get(URL_HEADER_FIELD_KEY);
+        String url = (String)headerFields.get(URL_FIELD_KEY);
         if (url != null && url.indexOf('\t') >= 0) {
-            headerFields.put(URL_HEADER_FIELD_KEY,
+            headerFields.put(URL_FIELD_KEY,
                 TextUtils.replaceAll("\t", url, "%09"));
         }
 
-        headerFields.put(VERSION_HEADER_FIELD_KEY, v);
+        headerFields.put(VERSION_FIELD_KEY, v);
         headerFields.put(ABSOLUTE_OFFSET_KEY, new  Long(offset));
 
         return new ARCRecordMetaData(getReaderIdentifier(), headerFields);

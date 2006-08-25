@@ -84,13 +84,17 @@ public interface ArchiveRecordHeader {
      * may not be a file name or file path.  It may just be an URL.  Depends
      * on how Archive file was made.
      */
-    public abstract String getFileIdentifier();
+    public abstract String getReaderIdentifier();
     
+    /**
+     * @return Identifier for the record.  If ARC, the URL + date.  If WARC, 
+     * the GUID assigned.
+     */
     public abstract String getRecordIdentifier();
     
     /**
-     * @return Returns digest for this record. Only available after the record
-     * has been read in totality.
+     * @return Returns digest as String for this record. Only available after
+     * the record has been read in totality.
      */
     public abstract String getDigest();
     public abstract void setDigest(final String digest);

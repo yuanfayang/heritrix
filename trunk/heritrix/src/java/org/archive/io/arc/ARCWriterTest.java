@@ -169,7 +169,6 @@ extends TmpDirTestCase implements ARCConstants {
         runCheckARCFileSizeTest("checkARCFileSize", true);
     }
 
-
     public void testWriteRecord() throws IOException {
         final int recordCount = 2;
         File arcFile = writeRecords("writeRecord", false,
@@ -224,8 +223,7 @@ extends TmpDirTestCase implements ARCConstants {
     }
     
     private void runCheckARCFileSizeTest(String baseName, boolean compress)
-        throws FileNotFoundException, IOException
-    {
+    throws FileNotFoundException, IOException  {
         writeRecords(baseName, compress, 1024, 15);
         // Now validate all files just created.
         File [] files = FileUtils.getFilesWithPrefix(getTmpDir(), PREFIX);

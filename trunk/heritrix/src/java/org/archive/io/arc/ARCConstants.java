@@ -152,29 +152,9 @@ public interface ARCConstants extends ArchiveFileConstants {
     public static final String FILENAME_HEADER_FIELD_KEY = "filename";
     
     /**
-     * Key for length field.
-     */
-    public static final String LENGTH_FIELD_KEY = "length";
-    
-    /**
-     * Key for mimetype field.
-     */
-    public static final String MIMETYPE_FIELD_KEY = "mimetype";
-    
-    /**
      * Key for statuscode field.
      */
     public static final String STATUSCODE_FIELD_KEY = "statuscode";
-    
-    /**
-     * Key for date field.
-     */
-    public static final String DATE_FIELD_KEY = "date";
-    
-    /**
-     * Key for url field.
-     */
-    public static final String URL_FIELD_KEY = URL_HEADER_FIELD_KEY;
     
     /**
      * Key for offset field.
@@ -204,9 +184,9 @@ public interface ARCConstants extends ArchiveFileConstants {
      * Version 1 required metadata fields.
      */
     public static List REQUIRED_VERSION_1_HEADER_FIELDS = Arrays
-            .asList(new String[] { URL_HEADER_FIELD_KEY, IP_HEADER_FIELD_KEY,
-                    DATE_HEADER_FIELD_KEY, MIMETYPE_HEADER_FIELD_KEY,
-                    LENGTH_HEADER_FIELD_KEY, VERSION_HEADER_FIELD_KEY,
+            .asList(new String[] { URL_FIELD_KEY, IP_HEADER_FIELD_KEY,
+                    DATE_FIELD_KEY, MIMETYPE_FIELD_KEY,
+                    LENGTH_FIELD_KEY, VERSION_FIELD_KEY,
                     ABSOLUTE_OFFSET_KEY });
 
     /**
