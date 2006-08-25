@@ -354,11 +354,13 @@
 	</sect5>
 	<sect5>
           <title>heritrix.cmdline.nowui</title>
-		<para>If set to true, will start up embedded web server.</para>
+		<para>If set to true, will prevent embedded web server crawler 
+		control interface from starting up.</para>
 	</sect5>
 	<sect5>
           <title>heritrix.cmdline.order</title>
-		<para>If set to true, will start up embedded web server.</para>
+		<para>If set to to a string file path, will use the specified 
+		crawl order XML file.</para>
 	</sect5>
 	<sect5>
           <title>heritrix.cmdline.port</title>
@@ -429,6 +431,73 @@
          
       </sect3>
     </sect2>
+    <sect2 id="security">
+     <title>Security Considerations</title>
+     
+     <para>The crawler is a large and active network application which 
+     presents security implications, both local to the machine where
+     it operates, and remotely for machines it contacts.</para>
+     
+     <sect3>
+     <title>Local to the Crawling Machine</title>
+     
+     <para>It is important to recognize that the web UI (discussed in 
+     <xref linkend="wui"/>) and JMX agent (discussed in 
+     <xref linkend="mon_com"/>) allow remote control of the crawler process 
+     in ways that might potentially disrupt a crawl, change the crawler's 
+     behavior, read or write locally-accessible files, and perform or 
+     trigger other actions in the Java VM or local machine. </para>
+     
+     <para>The administrative login and password are currently only a 
+     very mild protection against unauthorized access, unless you take
+     additional steps to prevent access to the crawler machine. We 
+     strongly recommend some combination of the following practices:</para>
+     
+     <para><emphasis role="bold">First,</emphasis> use network 
+     configuration tools, like a firewall, to only allow trusted remote 
+     hosts to contact the web UI and, if applicable, JMX agent ports. 
+     (The default web UI port is 8080; JMX is 8849.)</para>
+     
+     <para><emphasis role="bold">Second,</emphasis> use a strong and 
+     unique username/password combination to secure the web UI and JMX
+     agent. However, keep in mind that the default administrative web 
+     server uses plain HTTP for access, so these values are susceptible
+     to eavesdropping in transit if network links between your browser and
+     the crawler are compromised. (An upcoming update will change the 
+     default to HTTPS.) Also, setting the username/password on
+     the command-line may result in their values being visible to other
+     users of the crawling machine, and they are additionally printed 
+     to the console and heritrix_out.log for operator reference.</para>
+     
+     <para><emphasis role="bold">Third,</emphasis> run the crawler as a 
+     user with the minimum privileges necessary for its operation, so that
+     in the event of unauthorized access to the web UI or JMX agent,
+     the potential damage is limited.</para>
+     
+     <para>Successful unauthorized access to the web UI or JMX agent could 
+     trivially end or corrupt a crawl, or change the crawler's behavior to 
+     be a nuisance to other network hosts. By adjusting configuration 
+     paths, unauthorized access could potentially delete, corrupt, or 
+     replace files accessible to the crawler process, and thus cause more 
+     extensive problems on the crawler machine.</para>
+     
+     <para>Another potential risk is that some 
+     worst-case or maliciously-crafted crawled content might, in 
+     combination with crawler bugs, disrupt the crawl or other files or
+     operations of the local system. For example, in the past, even
+     without malicious intent, some rich-media content has caused 
+     runaway memory use in 3rd-party libraries used by the crawler, 
+     resulting in a memory-exhaustion condition that can stop or 
+     corrupt a crawl in progress. Similarly, atypical input patterns have
+     at times caused runaway CPU use by crawler link-extraction regular
+     expressions, severely slowing crawls. Crawl operators should 
+     monitor their crawls closely and stay informed via the project 
+     discussion list and bug database for any newly discovered similar
+     bugs. </para>
+     
+     </sect3>
+     
+    </sect2>
   </sect1>
 
   <sect1 id="wui">
@@ -441,24 +510,29 @@
     the program was launched (typically
     <literal>http://&lt;host&gt;:8080/admin/</literal>).</para>
 
-    <para>The WUI is password protected. By default, the username is 'admin'
-    with the password of 'letmein'. The username and password can be specified
-    at startup and users are encouraged to change them. The currently valid
-    username and password combination will be printed out to the console along
-    with the path.</para>
+    <para>The WUI is password protected. There is no default login for 
+    access; one must be specified by either the '-a'/'--admin' command-line
+    options at startup or the 'heritrix.cmdline.admin' system property. 
+    The currently valid
+    username and password combination will be printed out to the console,
+    along with the access URL for the WUI, at startup.</para>
 
-    <para>The WUI can then be accessed via any browser. While we've
+    <para>The WUI can be accessed via any web browser. While we've
     endeavoured to make certain that it functions in all recent browsers,
     Mozilla 5 or newer is recommended. IE 6 or newer should also work without
     problems.</para>
 
-    <para>The initial login page takes the standard username/password
-    combination discussed above.  Logins are valid for 24 hours.
-    Once it times you out, the user will need to login again.</para>
+    <para>The initial login page takes the username/password
+    combination discussed above.  Logins will time out after a period
+    of non-use.</para>
 
     <caution>
-      <para>The access control to the WUI is not encrypted! Passwords will be
-      submitted over the network in plain text.</para>
+      <para>By default, communication with the WUI is not done over an 
+      encrypted HTTPS connection! Passwords will be submitted over the 
+      network in plain text, so you should take additional steps to 
+      protect your crawler administrative interface from unauthorized
+      access, as described in the <xref linkend="security"/> section.
+      </para>
     </caution>
   </sect1>
 
