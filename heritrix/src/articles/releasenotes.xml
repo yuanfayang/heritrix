@@ -31,6 +31,15 @@
     </sect2>
     <sect2 id="1_10_0_changes">
         <title>Changes</title>
+        <sect3 id="admindefaults">
+         <title>No default login/password for web UI and JMX</title>
+         <para>The old default login of 'admin' and password of 'letmein' 
+         for access to the crawler web UI (and JMX agent control) have been 
+         eliminated. It is now necessary to specify an access username and
+         password to start Heritrix. This may be done with the -a or 
+         --admin command-line argument, or via the system property 
+         'heritrix.cmdline.admin'.</para>
+        </sect3>
         <sect3 id="quotaretire">
          <title>QuotaEnforcer 'force-retire' option</title>
          <para>The optional QuotaEnforcer processor has a new setting, 
