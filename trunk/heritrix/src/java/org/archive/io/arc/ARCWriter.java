@@ -147,8 +147,9 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    ARCWriter(AtomicInteger serialNo, final PrintStream out, final File arc,
-            final boolean cmprs, String a14DigitDate, final List metadata)
+    ARCWriter(final AtomicInteger serialNo, final PrintStream out,
+    	final File arc, final boolean cmprs, String a14DigitDate,
+    	final List metadata)
     throws IOException {
         super(serialNo, out, arc, cmprs, a14DigitDate);
         this.metadata = metadata;
@@ -167,8 +168,8 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * ARC file is a bunch of gzipped records concatenated together.
      * @param maxSize Maximum size for ARC files written.
      */
-    public ARCWriter(AtomicInteger serialNo, final List<File> dirs, final String prefix, 
-            final boolean cmprs, final int maxSize) {
+    public ARCWriter(final AtomicInteger serialNo, final List<File> dirs,
+    		final String prefix, final boolean cmprs, final int maxSize) {
         this(serialNo, dirs, prefix, "", cmprs, maxSize, null);
     }
             
@@ -184,10 +185,11 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * @param meta File meta data.  Can be null.  Is list of File and/or
      * String objects.
      */
-    public ARCWriter(AtomicInteger serialNo, final List<File> dirs, final String prefix, 
-            final String suffix, final boolean cmprs,
+    public ARCWriter(final AtomicInteger serialNo, final List<File> dirs,
+    		final String prefix, final String suffix, final boolean cmprs,
             final int maxSize, final List meta) {
-        super(serialNo, dirs, prefix, suffix, cmprs, maxSize, ARC_FILE_EXTENSION);
+        super(serialNo, dirs, prefix, suffix, cmprs, maxSize,
+        	ARC_FILE_EXTENSION);
         this.metadata = meta;
     }
 

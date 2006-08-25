@@ -38,14 +38,6 @@ import org.archive.io.WriterPoolSettings;
  * @author stack
  */
 public class ARCWriterPool extends WriterPool {
-
-    
-    /**
-     * Used to generate unique filename sequences.
-     */
-    final private AtomicInteger serialNo;
-
-    
     /**
      * Constructor
      *
@@ -58,7 +50,6 @@ public class ARCWriterPool extends WriterPool {
         this(new AtomicInteger(), settings, poolMaximumActive, poolMaximumWait);
     }
 
-    
     /**
      * Constructor
      *
@@ -67,9 +58,10 @@ public class ARCWriterPool extends WriterPool {
      * @param poolMaximumActive
      * @param poolMaximumWait
      */
-    public ARCWriterPool(final AtomicInteger serial, final WriterPoolSettings settings,
+    public ARCWriterPool(final AtomicInteger serial,
+    		final WriterPoolSettings settings,
             final int poolMaximumActive, final int poolMaximumWait) {
-    	super(new BasePoolableObjectFactory() {
+    	super(serial, new BasePoolableObjectFactory() {
             public Object makeObject() throws Exception {
                 return new ARCWriter(serial, settings.getOutputDirs(),
                         settings.getPrefix(), settings.getSuffix(),
@@ -83,17 +75,5 @@ public class ARCWriterPool extends WriterPool {
                 super.destroyObject(arcWriter);
             }
     	}, settings, poolMaximumActive, poolMaximumWait);
-        this.serialNo = serial;
-    }
-    
-
-    /**
-     * Returns the atomic integer used to generate serial numbers
-     * for files.
-     * 
-     * @return  the serial number generator
-     */
-    public AtomicInteger getSerialNo() {
-        return serialNo;
     }
 }

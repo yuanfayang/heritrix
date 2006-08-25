@@ -27,6 +27,7 @@ package org.archive.io;
 import java.io.File;
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,6 +45,11 @@ import org.apache.commons.pool.impl.GenericObjectPool;
  */
 public abstract class WriterPool {
     final Logger logger =  Logger.getLogger(this.getClass().getName());
+   
+    /**
+     * Used to generate unique filename sequences.
+     */
+    final private AtomicInteger serialNo;
     
     /**
      * Don't enforce a maximum number of idle instances in pool.
@@ -83,17 +89,19 @@ public abstract class WriterPool {
      * Shutdown default constructor.
      */
     private WriterPool() {
-    	this(null, null, -1, -1);
+    	this(null, null, null, -1, -1);
     }
     
     /**
      * Constructor
+     * @param serial  Used to generate unique filename sequences
      * @param factory Factory that knows how to make a {@link WriterPoolMember}.
      * @param settings Settings for this pool.
      * @param poolMaximumActive
      * @param poolMaximumWait
      */
-    public WriterPool(final BasePoolableObjectFactory factory,
+    public WriterPool(final AtomicInteger serial,
+    		final BasePoolableObjectFactory factory,
     		final WriterPoolSettings settings,
             final int poolMaximumActive, final int poolMaximumWait) {
         logger.info("Initial configuration:" +
@@ -107,6 +115,7 @@ public abstract class WriterPool {
         this.pool = new FairGenericObjectPool(factory, poolMaximumActive,
             GenericObjectPool.WHEN_EXHAUSTED_BLOCK, poolMaximumWait,
             NO_MAX_IDLE);
+        this.serialNo = serial;
     }
 
 	/**
@@ -248,5 +257,15 @@ public abstract class WriterPool {
             buffer.append("ms");
         }
         return buffer.toString();
+    }
+    
+    /**
+     * Returns the atomic integer used to generate serial numbers
+     * for files.
+     * 
+     * @return  the serial number generator
+     */
+    public AtomicInteger getSerialNo() {
+        return serialNo;
     }
 }

@@ -25,12 +25,9 @@
  */
 package org.archive.crawler.writer;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -38,7 +35,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -58,9 +54,9 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.crawler.settings.XMLSettingsHandler;
+import org.archive.io.ReplayInputStream;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.io.ReplayInputStream;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
@@ -103,30 +99,6 @@ WriterPoolSettings, FetchStatusCodes {
     protected String [] getDefaultPath() {
     	return DEFAULT_PATH;
 	}
-
-    
-    private AtomicInteger getSerialNo() {
-        return ((ARCWriterPool)getPool()).getSerialNo();
-    }
-    
-    
-    /**
-     * @see #crawlCheckpoint(File)
-     */
-    @Override
-    protected void checkpointRecover() {
-        int serialNo = loadCheckpointSerialNumber();
-        if (serialNo != -1) {
-            getSerialNo().set(serialNo);
-        }
-    }
-    
-    public void crawlCheckpoint(File checkpointDir)
-    throws IOException {
-        saveCheckpointSerialNumber(checkpointDir, getSerialNo().get());
-        super.crawlCheckpoint(checkpointDir);
-    }
-
 
     protected void setupPool() {
 		setPool(new ARCWriterPool(this, getPoolMaximumActive(),

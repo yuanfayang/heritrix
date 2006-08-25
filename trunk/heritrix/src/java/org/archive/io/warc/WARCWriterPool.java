@@ -22,6 +22,8 @@
  */
 package org.archive.io.warc;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
@@ -36,16 +38,30 @@ import org.archive.io.WriterPoolSettings;
 public class WARCWriterPool extends WriterPool {
     /**
      * Constructor
-     *
+     * @param serial  Used to generate unique filename sequences
      * @param settings Settings for this pool.
      * @param poolMaximumActive
      * @param poolMaximumWait
      */
     public WARCWriterPool(final WriterPoolSettings settings,
             final int poolMaximumActive, final int poolMaximumWait) {
-    	super(new BasePoolableObjectFactory() {
+    	this(new AtomicInteger(), settings, poolMaximumActive, poolMaximumWait);
+    }
+    
+    /**
+     * Constructor
+     * @param serial  Used to generate unique filename sequences
+     * @param settings Settings for this pool.
+     * @param poolMaximumActive
+     * @param poolMaximumWait
+     */
+    public WARCWriterPool(final AtomicInteger serial,
+    		final WriterPoolSettings settings,
+            final int poolMaximumActive, final int poolMaximumWait) {
+    	super(serial, new BasePoolableObjectFactory() {
             public Object makeObject() throws Exception {
-                return new ExperimentalWARCWriter(settings.getOutputDirs(),
+                return new ExperimentalWARCWriter(serial,
+                		settings.getOutputDirs(),
                         settings.getPrefix(), settings.getSuffix(),
                         settings.isCompressed(), settings.getMaxSize(),
                         settings.getMetadata());

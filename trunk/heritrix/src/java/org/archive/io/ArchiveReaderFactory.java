@@ -29,6 +29,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.ParseException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -316,6 +317,22 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
 			@Override
 			protected void gotoEOR(ArchiveRecord record) throws IOException {
 				this.delegate.gotoEOR(record);
+			}
+
+			@Override
+			public void dump(boolean compress)
+			throws IOException, ParseException {
+				this.delegate.dump(compress);
+			}
+
+			@Override
+			public String getDotFileExtension() {
+				return this.delegate.getDotFileExtension();
+			}
+
+			@Override
+			public String getFileExtension() {
+				return this.delegate.getFileExtension();
 			}
         };
     }

@@ -218,6 +218,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         bais.read(statusBytes, 0, statusBytes.length);
         this.httpHeaders = HttpParser.parseHeaders(bais,
             ARCConstants.DEFAULT_ENCODING);
+        this.getMetaData().setStatusCode(Integer.toString(getStatusCode()));
         bais.reset();
         return bais;
     }
@@ -343,4 +344,31 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
     public int getBodyOffset() {
         return this.bodyOffset;
     }
+    
+    @Override
+    protected String getIp4Cdx(ArchiveRecordHeader h) {
+    	String result = null;
+    	if (h instanceof ARCRecordMetaData) {
+    		result = ((ARCRecordMetaData)h).getIp();
+    	}
+    	return (result != null)? result: super.getIp4Cdx(h);
+    }
+    
+    @Override
+	protected String getStatusCode4Cdx(ArchiveRecordHeader h) {
+		String result = null;
+		if (h instanceof ARCRecordMetaData) {
+			result = ((ARCRecordMetaData) h).getStatusCode();
+		}
+		return (result != null) ? result: super.getStatusCode4Cdx(h);
+	}
+    
+    @Override
+	protected String getDigest4Cdx(ArchiveRecordHeader h) {
+		String result = null;
+		if (h instanceof ARCRecordMetaData) {
+			result = ((ARCRecordMetaData) h).getDigest();
+		}
+		return (result != null) ? result: super.getDigest4Cdx(h);
+	}
 }
