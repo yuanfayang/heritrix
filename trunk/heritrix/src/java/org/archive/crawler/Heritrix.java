@@ -568,7 +568,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
             Heritrix.guiPort = Integer.parseInt(tmpStr);
         }
         tmpStr = PropertyUtils.getPropertyOrNull("heritrix.cmdline.admin");
-        String adminLoginPassword = (tmpStr == null)? "admin:letmein": tmpStr;
+        String adminLoginPassword = (tmpStr == null)? "": tmpStr;
         String crawlOrderFile =
             PropertyUtils.getPropertyOrNull("heritrix.cmdline.order");
         tmpStr = PropertyUtils.getPropertyOrNull("heritrix.cmdline.run");
@@ -609,9 +609,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
 
                 case 'a':
                     adminLoginPassword = options[i].getValue();
-                    if (!isValidLoginPasswordString(adminLoginPassword)) {
-                        clp.usage("Invalid admin login/password value.", 1);
-                    }
                     break;
 
                 case 'n':
@@ -651,6 +648,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         }
 
         String status = null;
+        if (!isValidLoginPasswordString(adminLoginPassword)) {
+            clp.usage("Invalid admin login:password value, or none " +
+                    "specified. ", 1);
+            return status; // code not reached; JVM exitted above at usage()
+        }
         // Ok, we should now have everything to launch the program.
         if (selfTest) {
             // If more than just '--selftest' and '--port' passed, then

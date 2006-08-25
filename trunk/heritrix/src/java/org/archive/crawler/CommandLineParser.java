@@ -78,8 +78,10 @@ public class CommandLineParser {
         this.options.addOption(new Option("p","port", true,
             "Port to run web user interface on.  Default: 8080."));
         this.options.addOption(new Option("a", "admin", true,
-            "Login and password for web user interface administration." +
-            " Default: 'admin:letmein'."));
+            "Login and password for web user interface administration. " +
+            "If a default is not set in the 'heritrix.cmdline.admin' " +
+            "system property, a value of the form 'LOGIN:PASSWORD' " +
+            "must be provided."));
         this.options.addOption(new Option("r", "run", false,
             "Put heritrix into run mode. If ORDER.XML begin crawl."));
         this.options.addOption(new Option("n", "nowui", false,
