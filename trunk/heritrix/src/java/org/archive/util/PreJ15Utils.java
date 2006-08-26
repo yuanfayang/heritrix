@@ -25,11 +25,10 @@
 package org.archive.util;
 
 /**
- * A collection of utility methods doing things that are easier in 
- * Java 1.5. 
+ * A collection of utility methods doing things that are easier in Java 1.5. 
  * 
  * @author gojomo
- *
+ * @deprecated Will be removed post 1.10.0 Heritrix.
  */
 public class PreJ15Utils {
 

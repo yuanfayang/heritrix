@@ -72,9 +72,4 @@ class Value extends SubElement {
             this.sb.append(c);
         }
     }
-    
-    @Override
-    public String toString() {
-        return PREFIX + super.toString();
-    }
 }

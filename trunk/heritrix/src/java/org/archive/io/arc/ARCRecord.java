@@ -39,7 +39,7 @@ import org.archive.io.ArchiveRecordHeader;
 
 /**
  * An ARC file record.
- *
+ * Does not compass the ARCRecord metadata line, just the record content.
  * @author stack
  */
 public class ARCRecord extends ArchiveRecord implements ARCConstants {
@@ -74,12 +74,6 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
      */
     private static final long MIN_HTTP_HEADER_LENGTH =
         "HTTP/1.1 200 OK\r\n".length();
-    
-    /**
-     * Offset at which the body begins.
-     * For ARCs, its used to delimit where http headers end and content begins.
-     */
-    private int bodyOffset = -1;
     
     /**
      * Constructor.
@@ -205,7 +199,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         
         byte [] headerBytes = baos.toByteArray();
         // Save off where body starts.
-        this.bodyOffset = headerBytes.length;
+        setContentBegin(headerBytes.length);
         ByteArrayInputStream bais =
             new ByteArrayInputStream(headerBytes);
         if (!bais.markSupported()) {
@@ -310,11 +304,12 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
 
     /**
      * @return Offset at which the body begins (Only known after
-     * header has been read) or -1 if none or we haven't read
-     * headers yet.
+     * header has been read) or -1 if none or if we haven't read
+     * headers yet.  Usually length of HTTP headers (does not include ARC
+     * metadata line length).
      */
     public int getBodyOffset() {
-        return this.bodyOffset;
+        return getContentBegin();
     }
     
     @Override

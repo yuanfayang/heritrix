@@ -107,6 +107,8 @@ public interface ArchiveFileConstants {
     
     public static final char SINGLE_SPACE = ' ';
     
+    public static final String CRLF = "\r\n";
+    
     public static final String CDX = "cdx";
     public static final String DUMP = "dump";
     public static final String GZIP_DUMP = "gzipdump";

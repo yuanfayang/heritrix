@@ -42,9 +42,4 @@ class Label extends SubElement {
     		throw new IllegalArgumentException("Label cannot contain " + COLON);
     	}
     }
-    
-    @Override
-    public String toString() {
-        return super.toString() + ":";
-    }
 }

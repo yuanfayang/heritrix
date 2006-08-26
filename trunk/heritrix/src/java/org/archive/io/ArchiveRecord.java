@@ -80,6 +80,8 @@ public abstract class ArchiveRecord extends InputStream {
 
     boolean strict = false;
     
+    private int contentBegin = -1;
+    
     private ArchiveRecord() {
         super();
     }
@@ -358,5 +360,18 @@ public abstract class ArchiveRecord extends InputStream {
             System.out.write(outputBuffer, 0, read);
         }
         System.out.flush();
+    }
+
+    /**
+     * Offset at which the content begins.
+     * For ARCs, its used to delimit where http headers end and content begins.
+     * For WARCs, its end of Named Fields before payload starts.
+     */
+    public int getContentBegin() {
+        return contentBegin;
+    }
+
+    protected void setContentBegin(int contentBegin) {
+        this.contentBegin = contentBegin;
     }
 }
