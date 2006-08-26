@@ -27,6 +27,7 @@ package org.archive.util.anvl;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -47,6 +48,8 @@ public class ANVLRecordTest extends TestCase {
         am.add(new Element(new Label("when/created"),
             new Value("1888")));
         System.out.println(am.toString());
+        Map m = am.asMap();
+        System.out.println(m.toString());
     }
     
     public void testEmptyRecord() throws Exception {
@@ -74,6 +77,7 @@ public class ANVLRecordTest extends TestCase {
         ANVLRecord r = ANVLRecord.load(new ByteArrayInputStream(
                 record.getBytes("ISO-8859-1")));
         System.out.println(r);
+        assertEquals(r.get(0).toString(), "a: b");
         record = "   a: b\r\n\r\nsdfsdsdfds";
         r = ANVLRecord.load(new ByteArrayInputStream(
             record.getBytes("ISO-8859-1")));
@@ -82,6 +86,7 @@ public class ANVLRecordTest extends TestCase {
         r = ANVLRecord.load(new ByteArrayInputStream(
             record.getBytes("ISO-8859-1")));
         System.out.println(r);
+        assertEquals(r.get(0).toString(), "x:");
     }
     
     public void testExampleParse()

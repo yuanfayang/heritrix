@@ -65,6 +65,7 @@ public interface WARCConstants extends ArchiveFileConstants {
      * </pre>
      */
     public static final int MAX_WARC_HEADER_LINE_LENGTH = 1024 * 100;
+    public static final int MAX_LINE_LENGTH = MAX_WARC_HEADER_LINE_LENGTH;
     
     /**
      * WARC file extention.
@@ -107,6 +108,16 @@ public interface WARCConstants extends ArchiveFileConstants {
      */
     public static final String DEFAULT_ENCODING = "ISO-8859-1";
     public static final String HEADER_LINE_ENCODING = DEFAULT_ENCODING;
+    
+    public static final String [] HEADER_FIELD_KEYS = {
+        VERSION_FIELD_KEY,
+        LENGTH_FIELD_KEY,
+        TYPE_FIELD_KEY,
+        URL_FIELD_KEY,
+        DATE_FIELD_KEY,
+        RECORD_IDENTIFIER_FIELD_KEY,
+        MIMETYPE_FIELD_KEY
+    };
     
     /**
      * WARC Record Types.

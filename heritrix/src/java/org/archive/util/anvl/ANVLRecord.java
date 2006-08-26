@@ -30,8 +30,10 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.archive.io.UTF8Bytes;
 
@@ -89,7 +91,7 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
     public String toString() {
         // TODO: What to emit for empty ANVLRecord?
         StringBuilder sb = new StringBuilder();
-        for (final Iterator i = iterator(); i.hasNext();) {
+        for (final Iterator<Element> i = iterator(); i.hasNext();) {
             sb.append(i.next());
             sb.append(CRLF);
         }
@@ -98,11 +100,24 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
         return sb.toString();
     }
     
+    public Map<String, String> asMap() {
+        Map<String, String> m = new HashMap<String, String>(size());
+        for (final Iterator<Element> i = iterator(); i.hasNext();) {
+            Element e = i.next();
+            m.put(e.getLabel().toString(),
+                e.isValue()? e.getValue().toString(): (String)null);
+        }
+        return m;
+    }
+    
     @Override
     public ANVLRecord clone() {
         return new ANVLRecord(this);
     }
     
+    /**
+     * @return This ANVLRecord as UTF8 bytes.
+     */
     public byte [] getUTF8Bytes()
     throws UnsupportedEncodingException {
         return toString().getBytes(UTF8);
@@ -287,6 +302,21 @@ public class ANVLRecord extends ArrayList<Element> implements UTF8Bytes {
 			sb.append(c);
         }
         return record;
+    }
+    
+    /**
+     * @return Count of ANVLRecord bytes. Be careful, an empty ANVLRecord is
+     * CRLFCRLF so is of size 4.  Also, expensive, since it makes String of
+     * the record so it can count bytes.
+     */
+    public synchronized int getLength() {
+        int length = -1;
+        try {
+            length = getUTF8Bytes().length;
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        return length;
     }
     
     public static boolean isCROrLF(final char c) {

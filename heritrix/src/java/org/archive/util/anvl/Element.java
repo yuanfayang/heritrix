@@ -45,11 +45,34 @@ class Element {
         this.subElements = new SubElement [] {l, v};
     }
     
+    public boolean isValue() {
+        return this.subElements.length > 1;
+    }
+    
+    public Label getLabel() {
+        return (Label)this.subElements[0];
+    }
+    
+    public Value getValue() {
+        if (!isValue()) {
+            return null;
+        }
+        return (Value)this.subElements[1];
+    }
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < subElements.length; i++) {
             sb.append(subElements[i].toString());
+            if (i == 0) {
+                // Add colon after Label.
+                sb.append(':');
+                if (isValue()) {
+                    // Add space to intro the value.
+                    sb.append(' ');
+                }
+            }
         }
         return sb.toString();
     }

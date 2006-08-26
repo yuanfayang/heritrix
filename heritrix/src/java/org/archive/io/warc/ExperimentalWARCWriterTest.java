@@ -40,10 +40,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.UTF8Bytes;
-import org.archive.io.WriterPoolMember;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.FileUtils;
 import org.archive.util.TmpDirTestCase;
 import org.archive.util.anvl.ANVLRecord;
 

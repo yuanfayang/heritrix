@@ -1,10 +1,8 @@
-/* ARCRecord
+/* $Id$
  *
- * $Id$
+ * Created on August 25th, 2006
  *
- * Created on Jan 7, 2004
- *
- * Copyright (C) 2004 Internet Archive.
+ * Copyright (C) 2006 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -24,14 +22,18 @@
  */
 package org.archive.io.warc;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
+import org.archive.util.anvl.ANVLRecord;
 
 
 /**
@@ -39,7 +41,27 @@ import org.archive.io.ArchiveRecordHeader;
  *
  * @author stack
  */
-public class WARCRecord extends ArchiveRecord implements WARCConstants {    
+public class WARCRecord extends ArchiveRecord implements WARCConstants {
+    /**
+     * Header-Line pattern;
+     * I heart http://www.fileformat.info/tool/regex.htm
+     */
+    private final static Pattern HEADER_LINE = Pattern.compile(
+        "^WARC/([0-9]+\\.[0-9]+(?:\\.[0-9]+)?)" +// Regex group 1: WARC lead-in.
+        "[\\t ]+" +                 // Multiple tabs or spaces.
+        "([0-9]+)" +                // Regex group 2: Length.
+        "[\\t ]+" +                 // Multiple tabs or spaces.
+        "(request|response|warcinfo|resource|metadata|" +
+            "revisit|conversion)" + // Regex group 3: Type of WARC Record.
+        "[\\t ]+" +                 // Multiple tabs or spaces.
+        "([^\\t ]+)" +              // Regex group 4: Subject-uri.
+        "[\\t ]+" +                 // Multiple tabs or spaces.
+        "([0-9]{14})" +             // Regex group 5: Date
+        "[\\t ]+" +                 // Multiple tabs or spaces.
+        "([^\\t ]+)" +              // Regex group 6: Record-Id
+        "[\\t ]+" +                 // Multiple tabs or spaces.
+        "(.+)$");                   // Regex group 7: Mimetype.
+    
     /**
      * Constructor.
      *
@@ -86,12 +108,42 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
         setHeader(parseHeaders(in, identifier, offset, strict));
     }
     
+    /**
+     * Parse WARC Header Line and Named Fields.
+     * @param in Stream to read.
+     * @param identifier Identifier for the hosting Reader.
+     * @param offset Absolute offset into Reader.
+     * @param strict Whether to be loose parsing or not.
+     * @return An ArchiveRecordHeader.
+     * @throws IOException 
+     */
     protected ArchiveRecordHeader parseHeaders(final InputStream in,
-    		final String identifier, final long offset, final boolean strict) {
+        final String identifier, final long offset, final boolean strict)
+    throws IOException {
     	final Map<Object, Object> m = new HashMap<Object, Object>();
     	m.put(ABSOLUTE_OFFSET_KEY, new Long(offset));
     	m.put(READER_IDENTIFIER_FIELD_KEY, identifier);
-    	// TODO: Parse of Header Line.
+        // Here we start reading off the inputstream but we're reading the
+        // stream direct rather than going via WARCRecord#read.  The latter will
+        // keep count of bytes read, digest and fail properly if EOR too soon...
+        // We don't want digesting while reading Header Line and Named Fields...
+        // but plain InputStream doesn't count bytes.... perhaps wrap it in
+        // a byte counter.  TODO.
+        int read = parseHeaderLine(in, m, strict);
+        // TODO: Review.  This means of obtaining length could be problematic
+        // if the ANVL field written has dross or undergoes conversions (e.g.
+        // if white space padding at start of a folded Value or if a Value has
+        // a newline in it and it gets converted to a CRNL in the ANVL
+        // representation.  For now, let it be since we're writing using our
+        // ANVL parse.  See note above about perhaps wrapping the passed
+        // InputStream so we can count how many bytes were read parsing the
+        // Named Fields (would be cheaper than what we're doing now).
+        read += parseNamedFields(in, m);
+        // Move our position to end of Named Fields.
+        incrementPosition(read);
+        // Set offset at which content begins.
+        setContentBegin(read);
+   
     	return new ArchiveRecordHeader() {
     		private Map<Object, Object> fields = m;
 
@@ -155,5 +207,103 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
 				this.fields.put(NAMED_FIELD_CHECKSUM_LABEL, digest);
 			}
     	};
+    }
+    
+    protected int parseHeaderLine(final InputStream in,
+            final Map<Object, Object> fields, final boolean strict) 
+    throws IOException {
+        byte [] line = readLine(in, strict);
+        if (line.length <= 2) {
+            throw new IOException("No Header Line found");
+        }
+        // Strip the CRLF.
+        String headerLine = new String(line, 0, line.length - 2,
+            HEADER_LINE_ENCODING);
+        Matcher m = HEADER_LINE.matcher(headerLine);
+        if (!m.matches()) {
+            throw new IOException("Failed parse of Header Line: " +
+                headerLine);
+        }
+        for (int i = 0; i < HEADER_FIELD_KEYS.length; i++) {
+            if (i == 1) {
+                // Do length of Record as a Long.
+                fields.put(HEADER_FIELD_KEYS[i],
+                    Long.parseLong(m.group(i + 1)));
+                continue;
+            }
+            fields.put(HEADER_FIELD_KEYS[i], m.group(i + 1));
+        }
+        
+        return line.length;
+    }
+
+    /**
+     * Read a line.
+     * A 'line' in this context ends in CRLF and contains ascii-only and no
+     * control-characters.
+     * @param in InputStream to read.
+     * @param strict Strict parsing (If false, we'll eat whitespace before the
+     * record.
+     * @return
+     * @throws IOException
+     */
+    protected byte [] readLine(final InputStream in, final boolean strict) 
+    throws IOException {
+        boolean done = false;
+        boolean recordStart = strict;
+        int read = 0;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(1024 /*SWAG*/);
+        for (int c  = -1, previousCharacter; !done;) {
+            if (read++ >= MAX_LINE_LENGTH) {
+                throw new IOException("Read " + MAX_LINE_LENGTH +
+                    " bytes without finding CRLF");
+            }
+            previousCharacter = c;
+            c = in.read();
+            if (c == -1) {
+                throw new IOException("End-Of-Stream before CRLF:\n" +
+                    new String(baos.toByteArray()));
+            }
+            if (isLF((char)c) && isCR((char)previousCharacter)) {
+                done = true;
+            } else if (!recordStart && Character.isWhitespace(c)) {
+                // Skip any whitespace at start.
+                continue;
+            } else {
+                if (isCR((char)previousCharacter)) {
+                    // If previous character was a CR and this character is not
+                    // a LF, we tested above, thats illegal.
+                    throw new IOException("CR in middle of Header:\n" +
+                        new String(baos.toByteArray()));
+                }
+                
+                // Not whitespace so start record if we haven't already.
+                if (!recordStart) {
+                    recordStart = true;
+                }
+            }
+            baos.write(c);
+        }
+        return baos.toByteArray();
+    }
+ 
+    protected int parseNamedFields(final InputStream in,
+        final Map<Object, Object> fields) 
+    throws IOException {
+        ANVLRecord r = ANVLRecord.load(in);
+        fields.putAll(r.asMap());
+        return r.getLength();
+    }
+    
+    public static boolean isCROrLF(final char c) {
+        return isCR(c) || isLF(c);
+    }
+    
+    public static boolean isCR(final char c) {
+        return c == CRLF.charAt(0);
+    }
+    
+    public static boolean isLF(final char c) {
+        return c == CRLF.charAt(1);
     }
 }
