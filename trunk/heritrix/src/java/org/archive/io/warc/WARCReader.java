@@ -61,10 +61,26 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
      * @throws IOException
      */
     protected void gotoEOR(ArchiveRecord record) throws IOException {
-        if (getIn().available() <= 0) {
-            return;
+        if (record.available() != 0) {
+            throw new IOException("Record should be exhausted before coming " +
+                "in here");
         }
-        throw new IOException("Shouldn't be any trailing bytes in a Record");
+
+        // Records end in 2*CRLF.  Such it up.
+        readExpectedChar(getIn(), CRLF.charAt(0));
+        readExpectedChar(getIn(), CRLF.charAt(1));
+        readExpectedChar(getIn(), CRLF.charAt(0));
+        readExpectedChar(getIn(), CRLF.charAt(1));
+    }
+    
+    protected void readExpectedChar(final InputStream is, final int expected)
+    throws IOException {
+        int c = is.read();
+        if (c != expected) {
+            throw new IOException("Unexpected character " +
+                Integer.toHexString(c) + "(Expecting " +
+                Integer.toHexString(expected) + ")");
+        }
     }
     
     /**
@@ -84,7 +100,12 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
 	@Override
 	public void dump(boolean compress)
 	throws IOException, java.text.ParseException {
-		throw new IOException("Unimplemented");
+	    for (final Iterator<ArchiveRecord> i = iterator(); i.hasNext();) {
+            ArchiveRecord r = i.next();
+            System.out.println(r.getHeader().toString());
+            r.dump();
+            System.out.println();
+        }
 	}
 
 	@Override

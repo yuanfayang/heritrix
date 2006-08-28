@@ -4,17 +4,16 @@
 <title>org.archive.io.warc package</title>
 </head>
 <body>
-Experimental WARC Writer and Readers.  Code and specification subject to change.
-This code, with noted exceptions, implements the (unreleased)
+Experimental WARC Writer and Readers.  Code and specification subject to change.This code, with noted exceptions, implements the (unreleased)
 <a href="http://archive-access.sourceforge.net/warc/warc_file_format.html">WARC
 File Format (Version 0.9)</a>.
 
 <h2>Implementation Notes</h2>
 
 <h3>Unique ID Generator</h3>
-<p>WARC requires a GUID for each record written. A configurable 
-unique ID {@link org.archive.uid.GeneratorFactory}, it can be configured
-to use alternate unique ID generators, was added with a default of
+<p>WARC requires a GUID for each record written. A configurable unique ID
+{@link org.archive.uid.GeneratorFactory}, it can be configured to use alternate
+unique ID generators, was added with a default of
 {@link org.archive.uid.UUIDGenerator}.  The default generates
 <a url="http://en.wikipedia.org/wiki/UUID">UUIDs</a> (using java5
 <code>java.util.UUID</code>) and formats them in accordance with
@@ -260,12 +259,14 @@ etc.
 
 <h2>TODOs</h2>
 <ul>
-<li>WARCReader</li>
 <li>WARC2ARC</li>
 <li>ARC2WARC</li>
-<li>unit tests using <code>multipart/*</code> (JavaMail) reading and writing
-records? Try <code>record-id</code> as part boundary.
+<li>unit tests using <code>multipart/*</code> (JavaMail) reading and
+writing records? Try <code>record-id</code> as part boundary.
 </li>
+<li>Performance: Need to add Record-based buffering.  GZIP'd streams
+have some buffering because of the deflater but could probably do
+w/ more.</li>
 </ul>
 
 <h2>Unimplemented</h2>

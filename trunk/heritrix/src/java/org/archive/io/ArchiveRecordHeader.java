@@ -97,7 +97,13 @@ public interface ArchiveRecordHeader {
      * the record has been read in totality.
      */
     public abstract String getDigest();
-    public abstract void setDigest(final String digest);
+
+    /**
+     * Offset at which the content begins.
+     * For ARCs, its used to delimit where http headers end and content begins.
+     * For WARCs, its end of Named Fields before payload starts.
+     */
+    public int getContentBegin();
 
     public abstract String toString();
 }

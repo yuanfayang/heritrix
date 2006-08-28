@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
+import org.archive.util.LongWrapper;
 import org.archive.util.anvl.ANVLRecord;
 
 
@@ -61,6 +62,9 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
         "([^\\t ]+)" +              // Regex group 6: Record-Id
         "[\\t ]+" +                 // Multiple tabs or spaces.
         "(.+)$");                   // Regex group 7: Mimetype.
+    
+
+    private Pattern WHITESPACE = Pattern.compile("\\s");
     
     /**
      * Constructor.
@@ -126,26 +130,41 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
         // Here we start reading off the inputstream but we're reading the
         // stream direct rather than going via WARCRecord#read.  The latter will
         // keep count of bytes read, digest and fail properly if EOR too soon...
-        // We don't want digesting while reading Header Line and Named Fields...
-        // but plain InputStream doesn't count bytes.... perhaps wrap it in
-        // a byte counter.  TODO.
-        int read = parseHeaderLine(in, m, strict);
-        // TODO: Review.  This means of obtaining length could be problematic
-        // if the ANVL field written has dross or undergoes conversions (e.g.
-        // if white space padding at start of a folded Value or if a Value has
-        // a newline in it and it gets converted to a CRNL in the ANVL
-        // representation.  For now, let it be since we're writing using our
-        // ANVL parse.  See note above about perhaps wrapping the passed
-        // InputStream so we can count how many bytes were read parsing the
-        // Named Fields (would be cheaper than what we're doing now).
-        read += parseNamedFields(in, m);
-        // Move our position to end of Named Fields.
-        incrementPosition(read);
-        // Set offset at which content begins.
-        setContentBegin(read);
+        // We don't want digesting while reading Header Line and Named Fields.
+        // 
+        // The returned length includes terminating CRLF.
+        int headLineLength = parseHeaderLine(in, m, strict);
+        
+        // Now, doing the ANVL parse, hard to know how many bytes have been
+        // read since passed Stream doesn't keep count and the ANVL parse can
+        // throw away bytes (e.g. if white space padding at start of a folded
+        // Value or if a Value has a newline in it and it gets converted to a
+        // CRNL in the ANVL representation).  Wrap the stream in a
+        // byte-counting stream.
+        //
+        // TODO: Buffering.  Currently, we rely on the deflate buffer when
+        // file is gzipped.  Otherwise, if uncompressed, no buffering.
+        final LongWrapper anvlParseLength = new LongWrapper(0);
+        InputStream countingStream = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                int c = in.read();
+                if (c != -1) {
+                    anvlParseLength.longValue++;
+                }
+                return c;
+            }
+        };
+        parseNamedFields(countingStream, m);
+        // Set offset at which content begins. Its the Header Line length plus
+        // whatever we read parsing ANVL.
+        final int contentOffset =
+            (int)(headLineLength + anvlParseLength.longValue);
+        incrementPosition(contentOffset);
    
     	return new ArchiveRecordHeader() {
     		private Map<Object, Object> fields = m;
+            private int contentBegin = contentOffset;
 
 			public String getDate() {
 				return (String)this.fields.get(DATE_FIELD_KEY);
@@ -202,10 +221,15 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
 			public String getVersion() {
 				return (String)this.fields.get(VERSION_FIELD_KEY);
 			}
-
-			public void setDigest(String digest) {
-				this.fields.put(NAMED_FIELD_CHECKSUM_LABEL, digest);
-			}
+            
+            public int getContentBegin() {
+                return this.contentBegin;
+            }
+            
+            @Override
+            public String toString() {
+                return this.fields.toString();
+            }
     	};
     }
     
@@ -287,12 +311,11 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
         return baos.toByteArray();
     }
  
-    protected int parseNamedFields(final InputStream in,
+    protected void parseNamedFields(final InputStream in,
         final Map<Object, Object> fields) 
     throws IOException {
         ANVLRecord r = ANVLRecord.load(in);
         fields.putAll(r.asMap());
-        return r.getLength();
     }
     
     public static boolean isCROrLF(final char c) {
@@ -305,5 +328,16 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
     
     public static boolean isLF(final char c) {
         return c == CRLF.charAt(1);
+    }
+    
+    
+    @Override
+    protected String getMimetype4Cdx(ArchiveRecordHeader h) {
+        final String m = super.getMimetype4Cdx(h);
+        // Mimetypes can have spaces in WARCs.  Emitting for CDX, just
+        // squash them for now.  Later, quote them since squashing spaces won't
+        // work for params that have quoted-string values.
+        Matcher matcher = WHITESPACE.matcher(m);
+        return matcher.replaceAll("");
     }
 }

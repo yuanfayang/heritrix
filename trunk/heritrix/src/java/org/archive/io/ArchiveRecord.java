@@ -221,7 +221,7 @@ public abstract class ArchiveRecord extends InputStream {
 
     /**
 	 * This available is not the stream's available. Its an available based on
-	 * what the stated ARC record length is minus what we've read to date.
+	 * what the stated Archive record length is minus what we've read to date.
 	 * 
 	 * @return True if bytes remaining in record content.
 	 */
@@ -319,6 +319,10 @@ public abstract class ArchiveRecord extends InputStream {
 	protected String getDigest4Cdx(final ArchiveRecordHeader h) {
 		return getDigestStr() == null? "-": getDigestStr();
 	}
+    
+    protected String getMimetype4Cdx(final ArchiveRecordHeader h) {
+        return h.getMimetype();
+    }
 
     protected String outputCdx(final String strippedFileName)
     throws IOException {
@@ -334,7 +338,7 @@ public abstract class ArchiveRecord extends InputStream {
         buffer.append(ArchiveFileConstants.SINGLE_SPACE);
         buffer.append(h.getUrl());
         buffer.append(ArchiveFileConstants.SINGLE_SPACE);
-        buffer.append(h.getMimetype());
+        buffer.append(getMimetype4Cdx(h));
         buffer.append(ArchiveFileConstants.SINGLE_SPACE);
         buffer.append(getStatusCode4Cdx(h));
         buffer.append(ArchiveFileConstants.SINGLE_SPACE);
@@ -360,18 +364,5 @@ public abstract class ArchiveRecord extends InputStream {
             System.out.write(outputBuffer, 0, read);
         }
         System.out.flush();
-    }
-
-    /**
-     * Offset at which the content begins.
-     * For ARCs, its used to delimit where http headers end and content begins.
-     * For WARCs, its end of Named Fields before payload starts.
-     */
-    public int getContentBegin() {
-        return contentBegin;
-    }
-
-    protected void setContentBegin(int contentBegin) {
-        this.contentBegin = contentBegin;
     }
 }

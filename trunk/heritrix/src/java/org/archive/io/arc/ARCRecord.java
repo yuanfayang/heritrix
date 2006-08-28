@@ -199,7 +199,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         
         byte [] headerBytes = baos.toByteArray();
         // Save off where body starts.
-        setContentBegin(headerBytes.length);
+        this.getMetaData().setContentBegin(headerBytes.length);
         ByteArrayInputStream bais =
             new ByteArrayInputStream(headerBytes);
         if (!bais.markSupported()) {
@@ -309,7 +309,7 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
      * metadata line length).
      */
     public int getBodyOffset() {
-        return getContentBegin();
+        return this.getMetaData().getContentBegin();
     }
     
     @Override
