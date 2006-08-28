@@ -69,13 +69,14 @@ public class ARCRecordMetaData implements ArchiveRecordHeader, ARCConstants {
      */
     private String arc = null;
     
+    private int contentBegin = 0;
+    
     /**
      * Shut down the default constructor.
      */
     protected ARCRecordMetaData() {
         super();
     }
-    
 
     /**
      * Constructor.
@@ -245,13 +246,19 @@ public class ARCRecordMetaData implements ArchiveRecordHeader, ARCConstants {
            ((this.headerFields != null)? this.headerFields.toString():  "");
     }
 
-
 	public String getReaderIdentifier() {
 		return this.getArc();
 	}
 
-
 	public String getRecordIdentifier() {
 	    return getDate() + "/" + getUrl();
 	}
+
+    public int getContentBegin() {
+        return this.contentBegin;
+    }
+    
+    void setContentBegin(final int offset) {
+        this.contentBegin = offset;
+    }
 }

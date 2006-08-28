@@ -257,9 +257,9 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
         List<ArchiveRecordHeader> hs = new ArrayList<ArchiveRecordHeader>();
         int count = 0;
         setStrict(true);
-        for (Iterator i = iterator(); i.hasNext();) {
+        for (Iterator<ArchiveRecord> i = iterator(); i.hasNext();) {
             count++;
-            ArchiveRecord r = (ArchiveRecord)i.next();
+            ArchiveRecord r = i.next();
             if (r.getHeader().getLength() <= 0
                 && r.getHeader().getMimetype().
                     equals(MimetypeUtils.NO_TYPE_MIMETYPE)) {

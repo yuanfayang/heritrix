@@ -68,10 +68,10 @@ implements WARCConstants {
     /**
      * NEWLINE as bytes.
      */
-    public static byte [] NEWLINE_BYTES;
+    public static byte [] CRLF_BYTES;
     static {
         try {
-        	NEWLINE_BYTES = NEWLINE.getBytes(DEFAULT_ENCODING);
+            CRLF_BYTES = CRLF.getBytes(DEFAULT_ENCODING);
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -204,7 +204,7 @@ implements WARCConstants {
         
         return sb.toString();
     }
-    
+
     protected byte [] createRecordHeaderline(final String type,
     		final String url, final String create14DigitDate,
     		final String mimetype, final URI recordId,
@@ -229,6 +229,8 @@ implements WARCConstants {
     	sb.append(checkHeaderLineParameters(recordId.toString()));
     	sb.append(HEADER_FIELD_SEPARATOR);
     	sb.append(checkHeaderLineMimetypeParameter(mimetype));
+        // Add terminating CRLF.
+        sb.append(CRLF);
     	
     	long length = sb.length() + namedFieldsLength + contentLength;
     	
@@ -271,7 +273,6 @@ implements WARCConstants {
             	create14DigitDate, mimetype, recordId, namedFieldsBlock.length,
             	contentLength);
             write(header);
-            write(NEWLINE_BYTES);
             write(namedFieldsBlock);
             if (contentStream != null && contentLength > 0) {
             	readFullyFrom(contentStream, contentLength, this.readbuffer);
@@ -279,8 +280,8 @@ implements WARCConstants {
             
             // Write out the two blank lines at end of all records.
             // TODO: Why? Messes up skipping through file. Also not in grammar.
-            write(NEWLINE_BYTES);
-            write(NEWLINE_BYTES);
+            write(CRLF_BYTES);
+            write(CRLF_BYTES);
         } finally {
             postWriteRecordTasks();
         }

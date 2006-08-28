@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.archive.io.ArchiveRecord;
 import org.archive.io.ArchiveRecordHeader;
 import org.archive.io.UTF8Bytes;
+import org.archive.io.WriterPoolMember;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.TmpDirTestCase;
@@ -277,25 +278,14 @@ extends TmpDirTestCase implements WARCConstants {
         }
     }
 
-    public void testCheckWARCFileSize()
-    throws IOException {
-        // TODO runCheckWARCFileSizeTest("checkWARCFileSize", false);
-    }
-
-    public void testCheckWARCFileSizeCompressed()
-    throws IOException {
-        // TODO runCheckWARCFileSizeTest("checkWARCFileSize", true);
-    }
-
     public void testWriteRecords() throws IOException {
         final int recordCount = 2;
         File f = writeRecords("writeRecord", false, DEFAULT_MAX_WARC_FILE_SIZE,
             recordCount);
-     	// TODO validate(f, recordCount  + 1); // Header record.
+     	validate(f, recordCount  + 1); // Header record.
     }
 
     public void testRandomAccess() throws IOException {
-    	/*
         final int recordCount = 3;
         File f = writeRecords("writeRecord", true, DEFAULT_MAX_WARC_FILE_SIZE,
             recordCount);
@@ -333,14 +323,13 @@ extends TmpDirTestCase implements WARCConstants {
         }
         reader.close();
         assertEquals(totalRecords - 1, count);
-        */
     }
     
     public void testWriteRecordCompressed() throws IOException {
         final int recordCount = 2;
         File arcFile = writeRecords("writeRecordCompressed", true,
             DEFAULT_MAX_WARC_FILE_SIZE, recordCount);
-        // TODO validate(arcFile, recordCount + 1 /*Header record*/);
+        validate(arcFile, recordCount + 1 /*Header record*/);
     }
     
     protected ExperimentalWARCWriter createWARCWriter(String NAME,
@@ -396,7 +385,6 @@ extends TmpDirTestCase implements WARCConstants {
     }
     
     public void testSpaceInURL() {
-        /* TODO
         String eMessage = null;
         try {
             holeyUrl("testSpaceInURL-" + PREFIX, false, " ");
@@ -404,12 +392,10 @@ extends TmpDirTestCase implements WARCConstants {
             eMessage = e.getMessage();
         }
         assertTrue("Didn't get expected exception: " + eMessage,
-            eMessage.startsWith("Metadata line doesn't match"));
-            */
+            eMessage.startsWith("Contains disallowed"));
     }
 
     public void testTabInURL() {
-    	/*
         String eMessage = null;
         try {
             holeyUrl("testTabInURL-" + PREFIX, false, "\t");
@@ -417,8 +403,7 @@ extends TmpDirTestCase implements WARCConstants {
             eMessage = e.getMessage();
         }
         assertTrue("Didn't get expected exception: " + eMessage,
-            eMessage.startsWith("Metadata line doesn't match"));
-            */
+            eMessage.startsWith("Contains illegal"));
     }
     
     protected void holeyUrl(String name, boolean compress, String urlInsert)
@@ -466,19 +451,7 @@ extends TmpDirTestCase implements WARCConstants {
 //        logger.info("Finished speed write test.");
 //    }
     
-    
-    public void testValidateMetaLine() throws Exception {
-        ExperimentalWARCWriter w =
-            createWARCWriter("testValidateMetaLine", true);
-        try {
-            // TODO.
-        } finally {
-            w.close();
-        }
-    }
-    
     public void testArcRecordOffsetReads() throws Exception {
-    	/*
     	// Get an ARC with one record.
 		WriterPoolMember w =
 			createWithOneRecord("testArcRecordInBufferStream", true);
@@ -501,6 +474,6 @@ extends TmpDirTestCase implements WARCConstants {
 			totalRead = totalRead
 			    + ar.read(buffer, 13 + totalRead, maxRead - totalRead);
 			assertTrue(totalRead > 0);
-		}*/
+		}
 	}
 }
