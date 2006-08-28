@@ -75,6 +75,10 @@ public class CommandLineParser {
         this.options = new Options();
         this.options.addOption(new Option("h","help", false,
             "Prints this message and exits."));
+        this.options.addOption(new Option("b", "bind", true,
+            "Comma-separated list of IP addresses or hostnames for web server "
+            + "to listen on.  Set to / to listen on all available network "
+            + "interfaces.  Default is 127.0.0.1."));
         this.options.addOption(new Option("p","port", true,
             "Port to run web user interface on.  Default: 8080."));
         this.options.addOption(new Option("a", "admin", true,

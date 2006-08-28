@@ -28,19 +28,23 @@ package org.archive.crawler;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.mortbay.http.HashUserRealm;
+import org.mortbay.http.HttpListener;
 import org.mortbay.http.HttpServer;
 import org.mortbay.http.NCSARequestLog;
 import org.mortbay.http.RequestLog;
 import org.mortbay.http.SocketListener;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.WebApplicationContext;
+import org.mortbay.util.InetAddrPort;
 
 
 /**
@@ -98,14 +102,35 @@ public class SimpleHttpServer
      * @param port Port to run on.
      * @param expandWebapps True if we're to expand the webapp passed.
      * @throws Exception
+     * @deprecated  Use SimpleHttpServer(name,context,hosts,port,expandWebapps)
      */
     public SimpleHttpServer(boolean localhostOnly, String name, String context,
         int port, boolean expandWebapps)
     throws Exception {
-        initialize(port,localhostOnly);
+        this(name, context, determineHosts(localhostOnly), port, expandWebapps);
+    }
+    
+    
+    /**
+     * Constructor.
+     * 
+     * @param name     Name of webapp to load
+     * @param context  Where to mount the webap.  If null or empty string,
+     *                  we'll use '/' + <code>name</code>; if passed '/'
+     *                  then we'll add the webapp as the root webapp
+     * @param hosts    list of hosts to bind to
+     * @param port     port to listen on
+     * @param expandWebapps   true to expand webapp passed
+     * @throws Exception
+     */
+    public SimpleHttpServer(String name, String context,
+        Collection<String> hosts, int port, boolean expandWebapps)
+    throws Exception {
+        initialize(hosts, port);
         addWebapp(name, context, expandWebapps);
         this.server.setRequestLog(getServerLogging());
     }
+
 
     /**
      * @param webapps List of webapps to load.
@@ -115,7 +140,7 @@ public class SimpleHttpServer
      */
     public SimpleHttpServer(List webapps, int port, boolean expandWebapps)
     throws Exception {
-        initialize(port,false);
+        initialize(null, port);
         
         // Add each of the webapps in turn. If we're passed the root webapp,
         // give it special handling -- assume its meant to be server root and
@@ -164,29 +189,50 @@ public class SimpleHttpServer
      * Initialize the server.
      * Called from constructors.
      * @param port Port to start the server on.
+     * @deprecated  Use initialize(Collection<String>, port) instead
      */
     protected void initialize(int port, boolean localhostOnly) {
-        this.server = new Server();
-        this.port = port;
-        SocketListener listener = null;
-        if (localhostOnly) {
-            try {
-                org.mortbay.util.InetAddrPort localInetAddr = 
-                    new org.mortbay.util.InetAddrPort(
-                        java.net.InetAddress.getLocalHost(),port);
-                listener = new SocketListener(localInetAddr);
-            } catch (java.net.UnknownHostException e) {
-                // Output localhost ain't working.
-                e.printStackTrace();
-            }
-        }
-        if (listener == null) {
-            listener = new SocketListener();
-            listener.setPort(port);
-        }
-        this.server.addListener(listener);
+        Collection<String> hosts = determineHosts(localhostOnly);        
+        initialize(hosts, port);
     }
     
+    
+    /**
+     * Initialize the server.  Called from constructors.
+     * 
+     * @param hosts   the hostnames to bind to; if empty or null, will bind
+     *                  to all interfaces
+     * @param port    the port to listen on
+     */
+    protected void initialize(Collection<String> hosts, int port) {
+        this.server = new Server();
+        this.port = port;
+        if (hosts.isEmpty()) {
+            SocketListener listener = new SocketListener();
+            listener.setPort(port);
+            this.server.addListener(listener);
+            return;
+        }
+        
+        for (String host: hosts) try {
+            InetAddrPort addr = new InetAddrPort(host, port);
+            SocketListener listener = new SocketListener(addr);
+            this.server.addListener(listener);
+        } catch (UnknownHostException e) { 
+            e.printStackTrace();
+        }
+    }
+    
+    
+    private static Collection<String> determineHosts(boolean lho) {
+        Collection<String> hosts = new ArrayList<String>();
+        if (lho) {
+            hosts.add("127.0.0.1");
+        }
+        return hosts;
+    }
+
+
     /**
      * Setup log files.
      * @return RequestLog instance to add to a server. 
@@ -392,5 +438,19 @@ public class SimpleHttpServer
     public static String getRootWebappName()
     {
         return ROOT_WEBAPP;
+    }
+    
+    
+    /**
+     * Returns the hosts that the server is listening on.
+     * 
+     * @return  the hosts that the server is listening on.
+     */
+    public Collection<String> getHosts() {
+        ArrayList<String> result = new ArrayList<String>();
+        for (HttpListener listener: server.getListeners()) {
+            result.add(listener.getHost());
+        }
+        return result;
     }
 }
