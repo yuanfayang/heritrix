@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -1187,21 +1188,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         w.print("\n");
         
         w.print("\n -----===== IN-PROCESS QUEUES =====-----\n");
-        ArrayList inProcessQueuesCopy;
-        synchronized(this.inProcessQueues) {
-            // grab a copy that will be stable against mods for report duration 
-            inProcessQueuesCopy = new ArrayList(this.inProcessQueues);
-        }
-        appendQueueReports(w, inProcessQueuesCopy.iterator(),
-            this.inProcessQueues.size(), REPORT_MAX_QUEUES);
+        ArrayList copy = extractSome(inProcessQueues, REPORT_MAX_QUEUES);
+        appendQueueReports(w, copy.iterator(), copy.size(), REPORT_MAX_QUEUES);
         
         w.print("\n -----===== READY QUEUES =====-----\n");
         appendQueueReports(w, this.readyClassQueues.iterator(),
             this.readyClassQueues.size(), REPORT_MAX_QUEUES);
 
         w.print("\n -----===== SNOOZED QUEUES =====-----\n");
-        appendQueueReports(w, this.snoozedClassQueues.iterator(),
-            this.snoozedClassQueues.size(), REPORT_MAX_QUEUES);
+        copy = extractSome(snoozedClassQueues, REPORT_MAX_QUEUES);
+        appendQueueReports(w, copy.iterator(), copy.size(), REPORT_MAX_QUEUES);
         
         WorkQueue longest = longestActiveQueue;
         if (longest != null) {
@@ -1218,6 +1214,34 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             this.retiredQueues.size(), REPORT_MAX_QUEUES);
 
         w.flush();
+    }
+    
+    
+    /**
+     * Extract some of the elements in the given collection to an
+     * ArrayList.  This method synchronizes on the given collection's
+     * monitor.  The returned list will never contain more than the
+     * specified maximum number of elements.
+     * 
+     * @param c    the collection whose elements to extract
+     * @param max  the maximum number of elements to extract
+     * @return  the extraction
+     */
+    private static ArrayList extractSome(Collection c, int max) {
+        // Try to guess a sane initial capacity for ArrayList
+        // Hopefully given collection won't grow more than 10 items
+        // between now and the synchronized block...
+        int initial = Math.min(c.size() + 10, max);
+        int count = 0;
+        ArrayList list = new ArrayList(initial);
+        synchronized (c) {
+            Iterator iter = c.iterator();
+            while (iter.hasNext() && (count < max)) {
+                list.add(iter.next());
+                count++;
+            }
+        }
+        return list;
     }
 
     /**
