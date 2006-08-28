@@ -37,7 +37,10 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -262,11 +265,23 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     private static int guiPort = SimpleHttpServer.DEFAULT_PORT;
 
+    
     /**
-     * True if the gui should listen only to connections from localhost
-     * (which will be the case if proxying through Apache)
+     * A collection containing only localhost.  Used as default value
+     * for guiHosts, and passed to SimpleHttpServer when doing selftest.
      */
-    private static boolean localhostOnly = false;
+    final private static Collection<String> LOCALHOST_ONLY =
+     Collections.unmodifiableList(Arrays.asList(new String[] { "127.0.0.1" }));
+
+    
+    /**
+     * Hosts to bind the GUI webserver to.
+     * By default, only contans localhost.
+     * Set to an empty collection to indicate that all available network
+     * interfaces should be used for the webserver.
+     */
+    private static Collection<String> guiHosts = LOCALHOST_ONLY;
+    
     
     /**
      * Web UI server, realm, context name.
@@ -558,11 +573,6 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         if (tmpStr != null)  {
             Heritrix.adminContext = tmpStr;
         }
-        tmpStr = PropertyUtils.
-            getPropertyOrNull("heritrix.localhostonly");
-        if (tmpStr != null) {
-            Heritrix.localhostOnly = Boolean.parseBoolean(tmpStr);
-        }
         tmpStr = PropertyUtils.getPropertyOrNull("heritrix.cmdline.port");
         if (tmpStr != null) {
             Heritrix.guiPort = Integer.parseInt(tmpStr);
@@ -617,6 +627,10 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
                             " '--nowui' option.", 1);
                     }
                     Heritrix.gui = false;
+                    break;
+                
+                case 'b':
+                    Heritrix.guiHosts = parseHosts(options[i].getValue());
                     break;
 
                 case 'p':
@@ -680,8 +694,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
 				Heritrix h = new Heritrix(true);
 				status = h.doOneCrawl(crawlOrderFile);
 			} else {
-				status = startEmbeddedWebserver(Heritrix.guiPort,
-						Heritrix.localhostOnly, adminLoginPassword);
+				status = startEmbeddedWebserver(
+                        Heritrix.guiHosts, Heritrix.guiPort,
+						adminLoginPassword);
 				Heritrix h = new Heritrix(true);
 
 				String tmp = h.launch(crawlOrderFile, runMode);
@@ -951,8 +966,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         throws Exception {
         // Put up the webserver w/ the root and selftest webapps only.
         final String SELFTEST = "selftest";
-        Heritrix.httpServer = new SimpleHttpServer(false, SELFTEST,
-            Heritrix.adminContext, port, true);
+        Heritrix.httpServer = new SimpleHttpServer(SELFTEST,
+            Heritrix.adminContext, LOCALHOST_ONLY, port, true);
         // Set up digest auth for a section of the server so selftest can run
         // auth tests.  Looks like can only set one login realm going by the
         // web.xml dtd.  Otherwise, would be nice to selftest basic and digest.
@@ -1096,16 +1111,65 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * @param adminLoginPassword Compound of login and password.
      * @throws Exception
      * @return Status on webserver startup.
+     * @deprecated  Use startEmbeddedWebserver(hosts, port, adminLoginPassword)
      */
     protected static String startEmbeddedWebserver(final int port,
         final boolean lho, final String adminLoginPassword)
+    throws Exception {
+        ArrayList<String> hosts = new ArrayList<String>();
+        if (lho) {
+            hosts.add("127.0.0.1");
+        }
+        return startEmbeddedWebserver(hosts, port, adminLoginPassword);
+    }
+
+    
+    /**
+     * Parses a list of host names.
+     * 
+     * <p>If the given string is <code>/</code>, then an empty
+     * collection is returned.  This indicates that all available network
+     * interfaces should be used.
+     * 
+     * <p>Otherwise, the string must contain a comma-separated list of 
+     * IP addresses or host names.  The parsed list is then returned.
+     * 
+     * @param hosts  the string to parse
+     * @return  the parsed collection of hosts 
+     */
+    private static Collection<String> parseHosts(String hosts) {
+        hosts = hosts.trim();
+        if (hosts.equals("/")) {
+            return new ArrayList<String>(1);
+        }
+        String[] hostArray = hosts.split(",");
+        for (int i = 0; i < hostArray.length; i++) {
+            hostArray[i] = hostArray[i].trim();
+        }
+        return Arrays.asList(hostArray);
+    }
+    
+    /**
+     * Start up the embedded Jetty webserver instance.
+     * This is done when we're run from the command-line.
+     * 
+     * @param hosts  a list of IP addresses or hostnames to bind to, or an
+     *               empty collection to bind to all available network 
+     *               interfaces
+     * @param port Port number to use for web UI.
+     * @param adminLoginPassword Compound of login and password.
+     * @throws Exception
+     * @return Status on webserver startup.
+     */
+    protected static String startEmbeddedWebserver(Collection<String> hosts, 
+        int port, String adminLoginPassword) 
     throws Exception {
         adminUsername = adminLoginPassword.
             substring(0, adminLoginPassword.indexOf(":"));
         adminPassword = adminLoginPassword.
             substring(adminLoginPassword.indexOf(":") + 1);
-        Heritrix.httpServer = new SimpleHttpServer(lho, "admin",
-            Heritrix.adminContext, port, false);
+        Heritrix.httpServer = new SimpleHttpServer("admin",
+            Heritrix.adminContext, hosts, port, false);
         
         final String DOTWAR = ".war";
         final String SELFTEST = "selftest";
@@ -1132,11 +1196,12 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         Heritrix.httpServer.setAuthentication(ROLE, Heritrix.adminContext,
             adminUsername, adminPassword, ROLE);
         Heritrix.httpServer.startServer();
-        InetAddress addr = InetAddress.getLocalHost();
-        String uiLocation = "http://" + addr.getHostName() + ":" + port;
         StringBuffer buffer = new StringBuffer();
         buffer.append("Heritrix " + Heritrix.getVersion() + " is running.");
-        buffer.append("\nWeb console is at: " + uiLocation);
+        for (String host: httpServer.getHosts()) {
+            buffer.append("\nWeb console is at: http://");
+            buffer.append(host).append(':').append(port);
+        }
         buffer.append("\nWeb console login and password: " +
             adminUsername + "/" + adminPassword);
         return buffer.toString();
