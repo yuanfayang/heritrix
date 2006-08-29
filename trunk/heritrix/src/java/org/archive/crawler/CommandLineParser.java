@@ -77,13 +77,13 @@ public class CommandLineParser {
             "Prints this message and exits."));
         this.options.addOption(new Option("b", "bind", true,
             "Comma-separated list of IP addresses or hostnames for web server "
-            + "to listen on.  Set to / to listen on all available network "
+            + "to listen on.  Set to / to listen on all available\nnetwork "
             + "interfaces.  Default is 127.0.0.1."));
         this.options.addOption(new Option("p","port", true,
             "Port to run web user interface on.  Default: 8080."));
         this.options.addOption(new Option("a", "admin", true,
             "Login and password for web user interface administration. " +
-            "If a default is not set in the 'heritrix.cmdline.admin' " +
+            "If a\ndefault is not set in the 'heritrix.cmdline.admin' " +
             "system property, a value of the form 'LOGIN:PASSWORD' " +
             "must be provided."));
         this.options.addOption(new Option("r", "run", false,
@@ -217,7 +217,8 @@ public class CommandLineParser {
             out.println(USAGE + NAME + " --help");
             out.println(USAGE + NAME + " --nowui ORDER.XML");
             out.println(USAGE + NAME + " [--port=#]" +
-                " [--admin=LOGIN:PASSWORD] [--run] [ORDER.XML]");
+                " [--run] [--bind=IP,IP...] " +
+                "--admin=LOGIN:PASSWORD \\\n\t[ORDER.XML]");
             out.println(USAGE + NAME + " [--port=#] --selftest[=TESTNAME]");
             out.println("Version: " + getVersion());
         }
