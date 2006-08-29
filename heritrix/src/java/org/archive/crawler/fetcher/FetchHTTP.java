@@ -44,6 +44,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.MBeanException;
@@ -222,6 +224,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     public static final String ATTR_BDB_COOKIES = "use-bdb-for-cookies";
     private static Boolean DEFAULT_BDB_COOKIES = new Boolean(true);
     
+    public static final String ATTR_LOCAL_ADDRESS = "bind-address";
+    
     /**
      * Database backing cookie map, if using BDB
      */
@@ -374,6 +378,11 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
               "generate '416 Request Range Not Satisfiable' response.",
               new Boolean(false)));
            e.setOverrideable(true);
+           e.setExpertSetting(true);
+           e = addElementToDefinition(new SimpleType(ATTR_LOCAL_ADDRESS,
+               "Local IP address or hostname to use when making connections " +
+               "(binding sockets). When not specified, uses default local" +
+               "address(es).", ""));
            e.setExpertSetting(true);
     }
 
@@ -1095,8 +1104,26 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         hcp.setSoTimeout(timeout);
         // Set client to be version 1.0.
         hcp.setVersion(HttpVersion.HTTP_1_0);
-        
-        configureHttpCookies();
+
+		String addressStr = null;
+		try {
+			addressStr = (String) getAttribute(ATTR_LOCAL_ADDRESS);
+		} catch (Exception e1) {
+			// If exception, just use default.
+		}
+		if (addressStr != null && addressStr.length() > 0) {
+			try {
+				InetAddress localAddress = InetAddress.getByName(addressStr);
+				this.http.getHostConfiguration().setLocalAddress(localAddress);
+			} catch (UnknownHostException e) {
+				// Convert all to RuntimeException so get an exception out
+				// if initialization fails.
+				throw new RuntimeException("Unknown host " + addressStr
+				    + " in " + ATTR_LOCAL_ADDRESS);
+			}
+		}
+
+		configureHttpCookies();
         
         // Configure how we want the method to act.
         this.http.getParams().setParameter(
