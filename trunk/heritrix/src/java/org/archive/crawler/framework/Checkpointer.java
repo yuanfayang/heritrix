@@ -189,7 +189,8 @@ public class Checkpointer implements Serializable {
             LOGGER.info("Started");
             // If crawler already paused, don't resume crawling after
             // finishing checkpointing.
-            boolean alreadyPaused = getController().isPaused();
+            final boolean alreadyPaused = getController().isPaused() ||
+                getController().isPausing();
             try {
                 getController().requestCrawlPause();
                 // Clear any checkpoint errors.

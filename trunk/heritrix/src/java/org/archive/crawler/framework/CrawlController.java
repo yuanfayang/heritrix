@@ -1479,6 +1479,10 @@ public class CrawlController implements Serializable, Reporter {
         return state == PAUSED;
     }
     
+    public boolean isPausing() {
+        return state == PAUSING;
+    }
+    
     public boolean isRunning() {
         return state == RUNNING;
     }
