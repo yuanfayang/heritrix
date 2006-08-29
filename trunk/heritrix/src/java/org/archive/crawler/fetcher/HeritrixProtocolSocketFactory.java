@@ -126,6 +126,7 @@ implements ProtocolSocketFactory {
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
+            socket.bind(new InetSocketAddress(localAddress, localPort));
             try {
                 socket.connect(address, timeout);
             } catch (SocketTimeoutException e) {
