@@ -454,7 +454,7 @@ public class FileUtils {
      * @param f File to test.
      * @exception IOException If file does not exist or is not unreadable.
      */
-    public static void isReadable(final File f) throws IOException {
+    public static File isReadable(final File f) throws IOException {
         if (!f.exists()) {
             throw new FileNotFoundException(f.getAbsolutePath() +
                 " does not exist.");
@@ -464,6 +464,8 @@ public class FileUtils {
             throw new FileNotFoundException(f.getAbsolutePath() +
                 " is not readable.");
         }
+        
+        return f;
     }
     
     /**

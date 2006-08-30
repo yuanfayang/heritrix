@@ -24,6 +24,7 @@ package org.archive.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
@@ -358,11 +359,20 @@ public abstract class ArchiveRecord extends InputStream {
      */
     public void dump()
     throws IOException {
+    	dump(System.out);
+    }
+    
+    /**
+     * Writes output on passed <code>os</code>.
+     * @throws IOException
+     */
+    public void dump(final OutputStream os)
+    throws IOException {
     	final byte [] outputBuffer = new byte [16*1024];
         int read = outputBuffer.length;
         while ((read = read(outputBuffer, 0, outputBuffer.length)) != -1) {
-            System.out.write(outputBuffer, 0, read);
+            os.write(outputBuffer, 0, read);
         }
-        System.out.flush();
+        os.flush();
     }
 }

@@ -23,18 +23,21 @@
 package org.archive.io.warc;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.archive.io.UTF8Bytes;
 import org.archive.io.WriterPoolMember;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
@@ -109,8 +112,8 @@ implements WARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    ExperimentalWARCWriter(final AtomicInteger serialNo,
-    		final PrintStream out, final File f,
+    public ExperimentalWARCWriter(final AtomicInteger serialNo,
+    		final OutputStream out, final File f,
     		final boolean cmprs, final String a14DigitDate,
             final List warcinfoData)
     throws IOException {
@@ -138,23 +141,11 @@ implements WARCConstants {
         // TODO: Currently unused.
         this.fileMetadata = warcinfoData;
     }
-
-    protected String createFile()
-    throws IOException {
-        String filename = super.createFile();
-        // Strip .open suffix if present.
-        if (filename.endsWith(WriterPoolMember.OCCUPIED_SUFFIX)) {
-        	filename = filename.substring(0,
-        		filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
-        }
-        ANVLRecord record = new ANVLRecord(1);
-        record.addLabelValue(NAMED_FIELD_WARCFILENAME, filename);
-        // TODO: What to write into a warcinfo?  What to associate?
-        final byte [] TODO = "TODO: Unimplemented".getBytes();
-        writeWarcinfoRecord("text/plain", record,
-            new ByteArrayInputStream(TODO), TODO.length);
-        // TODO: If at start of file, and we're writing compressed,
-        // write out our distinctive GZIP extensions.
+    
+    @Override
+    protected String createFile(File file) throws IOException {
+    	String filename = super.createFile(file);
+    	writeWarcinfoRecord(filename);
         return filename;
     }
     
@@ -313,6 +304,43 @@ implements WARCConstants {
     	return rid;
     }
     
+    public URI writeWarcinfoRecord(String filename)
+	throws IOException {
+    	return writeWarcinfoRecord(filename, null);
+    }
+    
+    public URI writeWarcinfoRecord(String filename, final String description)
+        	throws IOException {
+        // Strip .open suffix if present.
+        if (filename.endsWith(WriterPoolMember.OCCUPIED_SUFFIX)) {
+        	filename = filename.substring(0,
+        		filename.length() - WriterPoolMember.OCCUPIED_SUFFIX.length());
+        }
+        ANVLRecord record = new ANVLRecord(2);
+        record.addLabelValue(NAMED_FIELD_WARCFILENAME, filename);
+        if (description != null && description.length() > 0) {
+        	record.addLabelValue(NAMED_FIELD_DESCRIPTION, description);
+        }
+        // Add warcinfo body.
+        byte [] warcinfoBody = null;
+        if (this.fileMetadata == null) {
+        	// TODO: What to write into a warcinfo?  What to associate?
+        	warcinfoBody = "TODO: Unimplemented".getBytes();
+        } else {
+        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        	for (final Iterator i = this.fileMetadata.iterator();
+        			i.hasNext();) {
+        		baos.write(i.next().toString().getBytes(UTF8Bytes.UTF8));
+        	}
+        	warcinfoBody = baos.toByteArray();
+        }
+        URI uri = writeWarcinfoRecord("text/plain", record,
+            new ByteArrayInputStream(warcinfoBody), warcinfoBody.length);
+        // TODO: If at start of file, and we're writing compressed,
+        // write out our distinctive GZIP extensions.
+        return uri;
+    }
+    
     /**
      * Write a warcinfo to current file.
      * TODO: Write crawl metadata or pointers to crawl description.
@@ -367,6 +395,15 @@ implements WARCConstants {
     
     public void writeResourceRecord(final String url,
             final String create14DigitDate, final String mimetype,
+            final ANVLRecord namedFields, final InputStream response,
+            final long responseLength)
+    throws IOException {
+    	writeResourceRecord(url, create14DigitDate, mimetype, getRecordID(),
+    			namedFields, response, responseLength);
+    }
+    
+    public void writeResourceRecord(final String url,
+            final String create14DigitDate, final String mimetype,
             final URI recordId,
             final ANVLRecord namedFields, final InputStream response,
             final long responseLength)
@@ -396,5 +433,20 @@ implements WARCConstants {
         writeRecord(METADATA, url, create14DigitDate,
             mimetype, recordId, namedFields, metadata,
             metadataLength);
+    }
+    
+    /**
+     * Convenience method for getting Record-Ids.
+     * @return A record ID.
+     * @throws IOException
+     */
+    public static URI getRecordID() throws IOException {
+        URI result;
+        try {
+            result = GeneratorFactory.getFactory().getRecordID();
+        } catch (URISyntaxException e) {
+            throw new IOException(e.toString());
+        }
+        return result;
     }
 }
