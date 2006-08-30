@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -76,8 +77,8 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         super(name, "Experimental WARCWriter processor");
     }
 
-    protected void setupPool() {
-		setPool(new WARCWriterPool(this, getPoolMaximumActive(),
+    protected void setupPool(final AtomicInteger serialNo) {
+		setPool(new WARCWriterPool(serialNo, this, getPoolMaximumActive(),
             getPoolMaximumWait()));
     }
     
