@@ -41,10 +41,12 @@
 
     <!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]-->
 
+    <!--
     <servlet-mapping>
         <servlet-name>bshservlet</servlet-name>
         <url-pattern>/bsh</url-pattern>
     </servlet-mapping>
+    -->
     <session-config>
         <!--Make timeout be a day-long-->
         <session-timeout>1440</session-timeout>
