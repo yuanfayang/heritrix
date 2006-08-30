@@ -128,6 +128,13 @@ WriterPoolSettings, FetchStatusCodes {
         
         String scheme = curi.getUURI().getScheme().toLowerCase();
         try {
+            // TODO: Since we made FetchDNS work like FetchHTTP, IF we
+            // move test for success of different schemes -- DNS, HTTP(S) and 
+            // soon FTP -- up into CrawlURI#isSuccess (Have it read list of
+            // supported schemes from heritrix.properties and cater to each's
+            // notions of 'success' appropriately), then we can collapse this
+            // if/else into a lone if (curi.isSuccess).  See WARCWriter for
+            // an example.
             if ((scheme.equals("dns") &&
             		curi.getFetchStatus() == S_DNS_SUCCESS)) {
             	InputStream is = curi.getHttpRecorder().getRecordedInput().
@@ -139,6 +146,9 @@ WriterPoolSettings, FetchStatusCodes {
                 InputStream is = curi.getHttpRecorder().getRecordedInput().
             		getReplayInputStream();
                 write(curi, recordLength, is, getHostAddress(curi));
+            } else {
+                logger.info("This writer does not write out scheme " + scheme +
+                    " content");
             }
         } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e, "WriteRecord: " +
