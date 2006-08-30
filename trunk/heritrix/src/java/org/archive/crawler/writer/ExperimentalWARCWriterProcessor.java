@@ -111,6 +111,9 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 ((scheme.equals("http") || scheme.equals("https")) &&
             		curi.getFetchStatus() > 0 && curi.isHttpTransaction())) {
                 write(scheme, curi);
+            } else {
+                logger.info("This writer does not write out scheme " +
+                        scheme + " content");
             }
         } catch (IOException e) {
             curi.addLocalizedError(this.getName(), e, "WriteRecord: " +
