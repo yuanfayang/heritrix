@@ -172,16 +172,6 @@ extends TmpDirTestCase implements WARCConstants {
         "<body>" + page +
         "</body></html>";
     }
-    
-    private static URI getRecordID() throws IOException {
-        URI result;
-        try {
-            result = GeneratorFactory.getFactory().getRecordID();
-        } catch (URISyntaxException e) {
-            throw new IOException(e.toString());
-        }
-        return result;
-    }
 
     /**
      * Write random HTML Record.
@@ -205,7 +195,6 @@ extends TmpDirTestCase implements WARCConstants {
             "http://www.one.net/id=" + indexStr,
             ArchiveUtils.get14DigitDate(),
             "text/html; charset=UTF-8",
-            getRecordID(),
             r,
             new ByteArrayInputStream(baos.toByteArray()),
             recordLength);
@@ -353,7 +342,6 @@ extends TmpDirTestCase implements WARCConstants {
         w.writeResourceRecord(url,
             ArchiveUtils.get14DigitDate(),
             mimetype,
-            getRecordID(),
             null,
             new ByteArrayInputStream(baos.toByteArray()),
             len);

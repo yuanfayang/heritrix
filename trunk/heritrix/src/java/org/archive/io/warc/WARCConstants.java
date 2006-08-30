@@ -179,6 +179,8 @@ public interface WARCConstants extends ArchiveFileConstants {
     public static final String NAMED_FIELD_CHECKSUM_LABEL = "Checksum";
     public static final String NAMED_FIELD_RELATED_LABEL = "Related-Record-ID";
     public static final String NAMED_FIELD_WARCFILENAME = "Filename";
+    public static final String NAMED_FIELD_DESCRIPTION = "Description";
+    public static final String NAMED_FIELD_FILEDESC = "ARC-FileDesc";
     public static final String NAMED_FIELD_TRUNCATED = "Truncated";
     public static final String NAMED_FIELD_TRUNCATED_VALUE_TIME = "time";
     public static final String NAMED_FIELD_TRUNCATED_VALUE_LEN = "length";

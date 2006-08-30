@@ -132,7 +132,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      * @throws IOException
      */
     protected WriterPoolMember(AtomicInteger serialNo, 
-            final PrintStream out, final File file,
+            final OutputStream out, final File file,
             final boolean cmprs, String a14DigitDate)
     throws IOException {
         this(serialNo, null, null, cmprs, -1, null);
@@ -208,20 +208,24 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
      * @throws IOException
      */
     protected String createFile() throws IOException {
-        close();
         TimestampSerialno tsn = getTimestampSerialNo();
         String name = this.prefix + '-' + getUniqueBasename(tsn) +
             ((this.suffix == null || this.suffix.length() <= 0)?
                 "": "-" + this.suffix) + '.' + this.extension  +
             ((this.compressed)? '.' + COMPRESSED_FILE_EXTENSION: "") +
             OCCUPIED_SUFFIX;
-        File dir = getNextDirectory(this.writeDirs);
-        this.f = new File(dir, name);
         this.createTimestamp = tsn.getTimestamp();
+        File dir = getNextDirectory(this.writeDirs);
+        return createFile(new File(dir, name));
+    }
+    
+    protected String createFile(final File file) throws IOException {
+    	close();
+        this.f = file;
         this.fos = new FileOutputStream(this.f);
         this.out = new FastBufferedOutputStream(this.fos);
         logger.info("Opened " + this.f.getAbsolutePath());
-        return name;
+        return this.f.getName();
     }
     
     /**
@@ -448,6 +452,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
                 }
                 this.f = f;
             }
+            
             logger.info("Closed " + this.f.getAbsolutePath() +
                     ", size " + this.f.length());
         }
