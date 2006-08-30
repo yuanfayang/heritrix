@@ -77,6 +77,9 @@ public class Arc2Warc {
    protected void transform(final ARCReader reader, final File warc)
    throws IOException {
 	   ExperimentalWARCWriter writer = null;
+	   // No point digesting. Digest is available after reading of ARC which
+	   // is too late for inclusion in WARC.
+	   reader.setStrict(false);
 	   try {
 		   BufferedOutputStream bos =
 			   new BufferedOutputStream(new FileOutputStream(warc));

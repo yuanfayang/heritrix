@@ -153,7 +153,7 @@ public interface WARCConstants extends ArchiveFileConstants {
     /**
      * WARC-ID
      */
-    public static final String WARC_ID = "WARC/0.9";
+    public static final String WARC_ID = WARC_MAGIC + WARC_VERSION;
         
     /**
      * Header field seperator character.
