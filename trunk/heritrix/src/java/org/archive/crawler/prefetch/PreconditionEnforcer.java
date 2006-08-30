@@ -450,8 +450,10 @@ public class PreconditionEnforcer
                         return false; 
                     }
                     result = true;
-                    logger.fine("Queueing prereq " + prereq + " of type " + c +
-                        " for " + curi);
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.fine("Queueing prereq " + prereq + " of type " +
+                            c + " for " + curi);
+                    }
                     break;
                 }
             }
