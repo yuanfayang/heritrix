@@ -25,10 +25,19 @@
         <listener-class>org.archive.crawler.WebappLifecycle
         </listener-class>
     </listener>
+    <!--
+        This is configuration for the beanshell servlet. Uncomment this
+        servlet-name and the below 'bshservlet' servlet-mapping to enable.
+        Allows scripting Heritrix real-time, which is sweet, but also means
+        anyone who has access to the Heritrix UI also has script access to the
+        local filesystem.  Enable with caution.  For example, enable only in a
+        UI that is accessible from localhost only.
+
     <servlet>
         <servlet-name>bshservlet</servlet-name>
         <servlet-class>bsh.servlet.BshServlet</servlet-class>
     </servlet>
+    -->
 
     <!--[INSERT JSP COMPILE SERVLET WEB FRAGMENT HERE]-->
 
