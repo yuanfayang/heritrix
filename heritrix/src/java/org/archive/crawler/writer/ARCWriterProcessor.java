@@ -35,6 +35,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -100,8 +101,8 @@ WriterPoolSettings, FetchStatusCodes {
     	return DEFAULT_PATH;
 	}
 
-    protected void setupPool() {
-		setPool(new ARCWriterPool(this, getPoolMaximumActive(),
+    protected void setupPool(final AtomicInteger serialNo) {
+		setPool(new ARCWriterPool(serialNo, this, getPoolMaximumActive(),
             getPoolMaximumWait()));
     }
     

@@ -217,7 +217,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
         // Add this class to crawl state listeners and setup pool.
         getSettingsHandler().getOrder().getController().
             addCrawlStatusListener(this);
-        setupPool();
+        setupPool(new AtomicInteger());
         // Run checkpoint recovery code.
         if (getSettingsHandler().getOrder().getController().
         		isCheckpointRecover()) {
@@ -232,7 +232,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
     /**
      * Set up pool of files.
      */
-    protected abstract void setupPool();
+    protected abstract void setupPool(final AtomicInteger serialNo);
 
     /**
      * Writes a CrawlURI and its associated data to store file.
@@ -400,13 +400,22 @@ implements CoreAttributeConstants, CrawlStatusListener {
     }
     
     public void crawlCheckpoint(File checkpointDir) throws IOException {
-        saveCheckpointSerialNumber(checkpointDir, getSerialNo().get());
+        int serial = getSerialNo().get();
+        if (this.pool.getNumActive() > 0) {
+            // If we have open active Archive files, up the serial number
+            // so after checkpoint, we start at one past current number and
+            // so the number we serialize, is one past current serialNo.
+            // All this serial number manipulation should be fine in here since
+            // we're paused checkpointing (Revisit if this assumption changes).
+            serial = getSerialNo().incrementAndGet();
+        }
+        saveCheckpointSerialNumber(checkpointDir, serial);
         // Close all ARCs on checkpoint.
         try {
             this.pool.close();
         } finally {
             // Reopen on checkpoint.
-            setupPool();
+            setupPool(new AtomicInteger(serial));
         }
     }
     
@@ -429,7 +438,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
             (ObjectPlusFilesInputStream)stream;
         coistream.registerFinishTask( new Runnable() {
             public void run() {
-            	setupPool();
+            	setupPool(new AtomicInteger());
             }
         });
     }
