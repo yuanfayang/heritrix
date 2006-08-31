@@ -52,7 +52,7 @@ import org.archive.util.anvl.ANVLRecord;
 /**
  * Convert ARCs to (sortof) WARCs.
  * @author stack
- * @version $Date$ $Version$
+ * @version $Date$ $Revision$
  */
 public class Arc2Warc {
    private static void usage(HelpFormatter formatter, Options options,

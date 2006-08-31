@@ -56,7 +56,7 @@ import org.archive.util.FileUtils;
  * <code>application/http; msgtype=response</code>.  All others -- metadata,
  * request -- are skipped.
  * @author stack
- * @version $Date$ $Version$
+ * @version $Date$ $Revision$
  */
 public class Warc2Arc {
    private static void usage(HelpFormatter formatter, Options options,
@@ -123,10 +123,15 @@ public class Warc2Arc {
                    getHeaderValue((WARCConstants.NAMED_FIELD_IP_LABEL));
                long length = r.getHeader().getLength();
                int offset = r.getHeader().getContentBegin();
+               // This mimetype is not exactly what you'd expect to find in
+               // an ARC though technically its 'correct'.  To get right one,
+               // need to parse the HTTP Headers.  Thats messy.  Not doing for
+               // now.
+               String mimetype = r.getHeader().getMimetype();
                long time = ArchiveUtils.getSecondsSinceEpoch(r.getHeader().
                    getDate()).getTime();
-               writer.write(r.getHeader().getUrl(), r.getHeader().getMimetype(),
-                   ip, time, (int)(length - offset), r);
+               writer.write(r.getHeader().getUrl(), mimetype, ip, time,
+                   (int)(length - offset), r);
 		   }
 	   } finally {
 		   if (reader != null) {
