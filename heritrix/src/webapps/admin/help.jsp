@@ -15,19 +15,19 @@
 </p>
 <p>
     <b><a target="_blank" 
-    href="<%=request.getContextPath()%>/docs/articles/user_manual.html">User
+    href="<%=request.getContextPath()%>/docs/articles/user_manual/index.html">User
         Manual</a></b><br> Covers creating, configuring, launching,
         monitoring and analysing crawl jobs. For all users.
 </p>
 <p>
     <b><a target="_blank" 
-        href="<%=request.getContextPath()%>/docs/articles/developer_manual.html">Developer Manual</a></b><br> Covers how to write add on modules for Heritrix
+        href="<%=request.getContextPath()%>/docs/articles/developer_manual/index.html">Developer Manual</a></b><br> Covers how to write add on modules for Heritrix
         and provides in depth coverage of Heritrix's architecture. For
         advanced users.
 </p>
 <p>
     <b><a target="_blank" 
-        href="<%=request.getContextPath()%>/docs/articles/releasenotes.html">Release Notes</a></b><br>
+        href="<%=request.getContextPath()%>/docs/articles/releasenotes/index.html">Release Notes</a></b><br>
 </p>
 <p>
     <b><a href="<%=request.getContextPath()%>/help/webui-prefs.jsp">Web UI Preferences</a></b><br />
