@@ -315,7 +315,7 @@ public class ArchiveUtils {
      * @param timestamp A 14-digit timestamp or the suffix for a 14-digit
      * timestamp: E.g. '20010909014640' or '20010101' or '1970'.
      * @return A date.
-     * @see {@link #secondsSinceEpoch(String)}
+     * @see #secondsSinceEpoch(String)
      * @throws ParseException 
      */
     public static Date getSecondsSinceEpoch(String timestamp)
