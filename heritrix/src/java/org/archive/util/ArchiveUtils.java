@@ -307,6 +307,19 @@ public class ArchiveUtils {
      */
     public static String secondsSinceEpoch(String timestamp)
     throws ParseException {
+        return zeroPadInteger((int)
+            (getSecondsSinceEpoch(timestamp).getTime()/1000));
+    }
+    
+    /**
+     * @param timestamp A 14-digit timestamp or the suffix for a 14-digit
+     * timestamp: E.g. '20010909014640' or '20010101' or '1970'.
+     * @return A date.
+     * @see {@link #secondsSinceEpoch(String)}
+     * @throws ParseException 
+     */
+    public static Date getSecondsSinceEpoch(String timestamp)
+    throws ParseException {
         if (timestamp.length() < 14) {
             if (timestamp.length() < 10 && (timestamp.length() % 2) == 1) {
                 throw new IllegalArgumentException("Must have year, " +
@@ -325,8 +338,7 @@ public class ArchiveUtils {
                     ArchiveUtils.padTo("", 14 - timestamp.length(), '0');
             }
         }
-        Date d = ArchiveUtils.parse14DigitDate(timestamp);
-        return zeroPadInteger((int)(d.getTime()/1000));
+        return ArchiveUtils.parse14DigitDate(timestamp);
     }
     
     /**
