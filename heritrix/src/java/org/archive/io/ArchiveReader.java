@@ -588,7 +588,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
     
     /**
      * @param name Name of ARCFile.
-     * @param '.arc' or '.warc', etc.
+     * @param dotFileExtension '.arc' or '.warc', etc.
      * @return short name of Archive file.
      */
     public static String getStrippedFileName(String name,
@@ -682,7 +682,6 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
     
     /**
      * Output passed record using passed format specifier.
-     * @param r ARCReader instance to output.
      * @param format What format to use outputting.
      * @throws IOException
      * @return True if handled.
