@@ -14,6 +14,24 @@
         <attainGoal name="docbook"/>
     </preGoal> 
 
+    <postGoal name="sdocbook:transform">
+        <maven:get var="docfile"
+            plugin="maven-sdocbook-plugin"
+            property="file"/>
+        <j:set var="index" value="${docfile.name.indexOf('.')}"/>
+        <j:set var="basename" value="${docfile.name.substring(0,index)}"/>
+        <echo message="Basename ${basename}" />
+        <j:set var="target.dir"
+            value="${maven.sdocbook.generated.html}/${basename}"/>
+        <echo message="Target dir ${target.dir}" />
+        <echo message="Generated dir ${maven.sdocbook.generated.html}" />
+        <move todir="${target.dir}" includeEmptyDirs="no">
+            <fileset dir="${maven.sdocbook.generated.html}" >
+                <include name="*" />
+            </fileset>
+        </move>
+    </postGoal>
+
     <goal name="docbook">
     <!--Check that the jimi jars are present.  If not, skip docbook.
      -->
@@ -32,6 +50,7 @@
          message="sdocbook SUN jimi jar not present. Skipping docbook build." />
        </j:if>
     </goal>
+
     <goal name="copy_docbook">
     <!--Copies docbooks under dist docs and under webapps. This goal runs
         after these dirs have been setup.

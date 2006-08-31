@@ -46,19 +46,19 @@ some informal use on Macintosh, Windows 2000 and Windows XP, but is not tested,
 packaged, nor supported on platforms other than Linux at this time. 
 
 4.0 Getting Started
-See the User Manual at ./docs/articles/user_manual.html or at
-<http://crawler.archive.org/articles/user_manual.html>.
+See the User Manual at ./docs/articles/user_manual/index.html or at
+<http://crawler.archive.org/articles/user_manual/index.html>.
 
 5.0 Developer Documentation
-See ./docs/articles/developer_manual.html or
-<http://crawler.archive.org/articles/developer_manual.html>.
+See ./docs/articles/developer_manual/index.html or
+<http://crawler.archive.org/articles/developer_manual/index.html>.
 
 
 6.0 Release History
 
 See the Heritrix Release Notes in the local directory
-docs/articles/releasenotes.html if this is a binary release or
-at http://crawler.archive.org/articles/releasenotes.html.
+docs/articles/releasenotes/index.html if this is a binary release or
+at http://crawler.archive.org/articles/releasenotes/index.html.
 
 
 7.0 License
