@@ -130,8 +130,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
     
     /** The description for the <code>max-length-bytes</code> attribute. */
     final private static String DESC_MAX_LENGTH = 
-     "If the fetch is not completed in this number of seconds,"
-      + " give up (and retry later).";
+        "Maximum length in bytes to fetch.\n" +
+        "Fetch is truncated at this length. A value of 0 means no limit.";
     
     /** The default value for the <code>max-length-bytes</code> attribute. */
     final private static long DEFAULT_MAX_LENGTH = 0;
@@ -151,7 +151,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
     final public static String ATTR_TIMEOUT = "timeout-seconds";
     
     /** The description for the <code>timeout-seconds</code> attribute. */
-    final private static String DESC_TIMEOUT = "";
+    final private static String DESC_TIMEOUT = "If the fetch is not "
+     + "completed in this number of seconds, give up (and retry later).";
     
     /** The default value for the <code>timeout-seconds</code> attribute. */
     final private static int DEFAULT_TIMEOUT = 1200;
