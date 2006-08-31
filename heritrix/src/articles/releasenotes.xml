@@ -19,6 +19,20 @@
       <para>Release 1.10.0 requires JDK 1.5.x ("Java 5") Java 
       facilities.</para>
     </abstract>
+    <sect2 id="1_10_0_contributors">
+        <para>Aside from the
+        <ulink url="http://crawler.archive.org/team-list.html">usual
+        suspects</ulink>, the following contributed to this release:
+    <itemizedlist>
+      <listitem><para>Eric C Jensen (ecjensen at users dot sourceforge dot net)</para></listitem>
+      <listitem><para>Olaf Freyer (pandae at users dot sourceforge dot net)</para></listitem>
+      <listitem><para>Karl Wright (kwright at metacarta dot com)</para></listitem>
+      <listitem><para>Frank McCown (fmccown at cs dot odu dot edu)</para></listitem>
+      <listitem><para>Max Schöfmann (schoefmax at users dot sourceforge dot net)</para></listitem>
+      <listitem><para>Søren Vejrup Carlsen (svc@kb.dk)</para></listitem>
+    </itemizedlist>
+        </para>
+    </sect2> 
 
     <sect2 id="1_10_0_limitations">
       <title>Known Limitations/Issues</title>
