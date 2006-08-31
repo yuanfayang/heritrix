@@ -14,9 +14,9 @@
       <item name="System Requirements" href="/requirements.html"/>
       <item name="Downloads" 
         href="downloads.html"/>
-      <item name="User Manual" href="articles/user_manual.html"/>
+      <item name="User Manual" href="articles/user_manual/index.html"/>
       <item name="Developer Manual" 
-        href="articles/developer_manual.html"/>
+        href="articles/developer_manual/index.html"/>
       <item name="Javadocs" href="/apidocs/index.html"/>
       <item name="FAQ" href="/faq.html"/>
       <item name="Wiki" 

@@ -40,16 +40,16 @@
         </p>
     </section>
     <section name="Getting Started">
-        <p>See the <a href="articles/user_manual.html">User Manual</a>.</p>
+        <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
     
     <subsection name="Release 1.8.0 05/05/2006">
       <p>Release 1.8.0 offers a number of improvements, including 13 requested 
       enhancements and fixes for 18 reported bugs. See
-      <a href="articles/releasenotes.html#1_8_0">Heritrix Release Notes</a> 
+      <a href="articles/releasenotes/1_8_0.html">Heritrix Release Notes</a> 
       for detail and
-      <a href="articles/releasenotes.html#1_8_0_limitations">Known
+      <a href="articles/releasenotes.html/1_8_0.html#1_8_0_limitations">Known
       Limitations</a>.</p>
     </subsection>
     
@@ -61,20 +61,20 @@
       quotas. Performance and stability in large crawls is also improved.
       Among tracked issues, it includes 39 requested enhancements and fixes 96 
       reported bugs. See
-      <a href="articles/releasenotes.html#1_6_0">Heritrix Release Notes</a> 
+      <a href="articles/releasenotes/1_6_0.html">Heritrix Release Notes</a> 
       for detail and
-      <a href="articles/releasenotes.html#1_6_0_limitations">Known
+      <a href="articles/releasenotes/1_6_0.html#1_6_0_limitations">Known
       Limitations</a>: e.g. Again you will need to 
-      <a href="articles/releasenotes.html#postselector">tweak your old order
+      <a href="articles/releasenotes/1_6_0.html#postselector">tweak your old order
       files</a> to make them work with the new release.</p>
     </subsection>
 
     <subsection name="Release 1.4.0 04/28/2005">
       <p>Much improved memory usage, new experimental scoping/filter model,
       and a new revisiting frontier.  Over 90 bugs fixed. See
-      <a href="articles/releasenotes.html#1_4_0">Heritrix Release Notes</a> 
+      <a href="articles/releasenotes/1_4_0.html">Heritrix Release Notes</a> 
       for detail and
-      <a href="articles/releasenotes.html#1-4_0_limitations">Known
+      <a href="articles/releasenotes/1_4_0.html#1-4_0_limitations">Known
       Limitations</a>: e.g. You cannot use your old order files with the new
       release.</p>
     </subsection>
@@ -82,7 +82,7 @@
     <subsection name="Release 1.2.0 11/16/2004">
         <p>Added IP-based politeness, configurable URI-canonicalization,
         and mid-fetch abort.  Lots of Bug fixes.  See
-        <a href="articles/releasenotes.html#1_2_0">Heritrix Release Notes</a> 
+        <a href="articles/releasenotes/1_2_0.html">Heritrix Release Notes</a> 
         for detail and Known Limitations (In particular, https fetching
         requires SUN JDK and UI throws OOME if jobs run in series).
         </p>
@@ -91,14 +91,14 @@
     <subsection name="Release 1.0.4 09/22/2004">
         <p>Bug fix. Crawl.log and ARC metadata lines could have whitespace
         in URIs and mimetype fields.  See
-        <a href="articles/releasenotes.html#1_0_4">Heritrix Release Notes</a> 
+        <a href="articles/releasenotes/1_0_4.html">Heritrix Release Notes</a> 
         for detail and Known Limitations.
         </p>
     </subsection>
 
     <subsection name="Release 1.0.2 09/14/2004">
         <p>Bug fixes. 
-        See <a href="articles/releasenotes.html#1_0_2">Heritrix Release
+        See <a href="articles/releasenotes/1_0_2.html">Heritrix Release
         Notes</a> for detail and known limitations.
         </p>
     </subsection>
@@ -112,7 +112,7 @@
         improved out-of-the-box defaults,
         hash of content to crawl log and to arcreader output,
         and many bug fixes.
-        See <a href="articles/releasenotes.html#1_0_0">Heritrix Release
+        See <a href="articles/releasenotes/1_0_0.html">Heritrix Release
         Notes</a> for detail and known limitations.
         </p>
     </subsection>
@@ -124,7 +124,7 @@
         changed arc naming template, new user and developer manuals,
         added basic/digest auth and http post/get login facility, and added
         help to UI. Bug fixes. 
-        See <a href="articles/releasenotes.html#0_10_0">Heritrix Release
+        See <a href="articles/releasenotes/0_10_0.html">Heritrix Release
         Notes</a> for detail and known limitations.
         </p>
     </subsection>
@@ -145,7 +145,7 @@
         character streams, and heritrix now crawls ssl sites. UI improvements
         include red start by bad configuration, precompilation, and
         delineation of advanced settings. 
-        See <a href="articles/releasenotes.html#0_8_0">Heritrix Release
+        See <a href="articles/releasenotes/0_8_0.html">Heritrix Release
         Notes</a> for detail.
         </p>
     </subsection>
@@ -158,7 +158,7 @@
         exceptions, UI desccription of job-order options, and improved
         reporting.  Optimizations.  Updated httpclient lib to 2.0 release and
         jmx libs to 1.2.1.
-        See <a href="articles/releasenotes.html#0_6_0">Heritrix Release
+        See <a href="articles/releasenotes/0_6_0.html">Heritrix Release
         Notes</a> for detail.
         </p>
     </subsection>
@@ -174,7 +174,7 @@
         tests and integration selftest framework added, pooling of
         ARCWriters, new cmd-line start scripts, httpclient lib update (2.0RC3)
         and bugfixes.
-        See <a href="articles/releasenotes.html#0_4_0">Heritrix Release
+        See <a href="articles/releasenotes/0_4_0.html">Heritrix Release
         Notes</a> for detail.
         </p>
     </subsection>

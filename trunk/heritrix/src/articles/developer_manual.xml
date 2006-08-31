@@ -348,7 +348,7 @@ ${package_declaration}</programlisting></para>
 
       <mediaobject>
         <imageobject>
-          <imagedata contentwidth="622" fileref="crawler_overview1.png"
+          <imagedata contentwidth="622" fileref="../crawler_overview1.png"
                      scalefit="0" />
         </imageobject>
       </mediaobject>
@@ -431,7 +431,7 @@ ${package_declaration}</programlisting></para>
 
         <mediaobject>
           <imageobject>
-            <imagedata fileref="processing_steps.png" />
+            <imagedata fileref="../processing_steps.png" />
           </imageobject>
         </mediaobject>
       </figure>
@@ -565,7 +565,7 @@ ${package_declaration}</programlisting></para>
 
       <mediaobject>
         <imageobject>
-          <imagedata fileref="settings1.png" />
+          <imagedata fileref="../settings1.png" />
         </imageobject>
       </mediaobject>
     </figure>
@@ -649,7 +649,7 @@ ${package_declaration}</programlisting></para>
 
         <mediaobject>
           <imageobject>
-            <imagedata fileref="settings2.png" />
+            <imagedata fileref="../settings2.png" />
           </imageobject>
         </mediaobject>
       </figure>
@@ -1396,7 +1396,7 @@ public class MyFrontier extends ModuleType implements Frontier,
 
         <mediaobject>
           <imageobject>
-            <imagedata fileref="frontier1.png" />
+            <imagedata fileref="../frontier1.png" />
           </imageobject>
         </mediaobject>
       </figure>As the diagram shows, the next() method of the Frontier will

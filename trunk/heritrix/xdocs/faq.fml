@@ -31,7 +31,7 @@
       </question>
       <answer>
         <p>Yes.  Start by checking out the 
-        <a href="articles/user_manual.html">Heritrix User Manual</a>.
+        <a href="articles/user_manual/index.html">Heritrix User Manual</a>.
         </p>
       </answer>
     </faq>
@@ -44,7 +44,7 @@
         <p>Yes -- especially if you have experience with Java,
         open-source projects, and web protocols! Drop us a message or join
         our <a href="mail-lists.html">mailing lists</a> for more details.
-        See also the <a href="articles/developer_manual.html">Heritrix
+        See also the <a href="articles/developer_manual/index.html">Heritrix
         Developer Manual</a>.
         </p>
       </answer>
@@ -78,7 +78,7 @@
     <faq id="limitations">
       <question>Are there known limitations?</question>
       <answer>See the 
-      <a href="articles/releasenotes.html">Release Notes</a>
+      <a href="articles/releasenotes/index.html">Release Notes</a>
       page.</answer>
     </faq>
     <faq id="testsfail">
@@ -87,7 +87,7 @@
       a 2.6.x kernel and a JVM that is other than the release version of 
       the SUN 1.5 jdk).
       See sections 4.1.3/4.1.4 in 
-      <a href="articles/releasenotes.html#984390">Release Notes</a>
+      <a href="articles/releasenotes/1_0_0.html#984390">Release Notes</a>
       page.</answer>
     </faq>
 
@@ -158,7 +158,7 @@ Also see <a href="http://groups.yahoo.com/group/archive-crawler/message/3019">Cr
       Content-Type desired.  Apply the same filter at the
       writer stage of processing to eliminate recording of
       response headers in ARCs.  See the
-      <a href="articles/user_manual.html#midfetch">User Manual</a>
+      <a href="articles/user_manual/config.html#midfetch">User Manual</a>
       (Prerequisite URLs by-pass the midfetch filters so it is not possible
       to filter out robots.txt using this mechanism).
       </answer>

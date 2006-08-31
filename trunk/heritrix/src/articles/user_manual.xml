@@ -30,7 +30,7 @@
     </authorgroup>
   </articleinfo>
 
-  <sect1>
+  <sect1 id="intro">
     <title>Introduction</title>
 
     <para>Heritrix is the Internet Archive's open-source, extensible,
@@ -52,7 +52,7 @@
     Manual</ulink>.</para>
   </sect1>
 
-  <sect1>
+  <sect1 id="install">
     <title>Installing and running Heritrix</title>
 
     <para>This chapter will explain how to set up Heritrix.
@@ -3532,7 +3532,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
     </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="outside">
     <title>Outside the user interface</title>
 
     <para>While it is possible to do a great many things via Heritrix's WUI it
