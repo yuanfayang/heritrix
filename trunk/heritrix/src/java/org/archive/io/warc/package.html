@@ -9,6 +9,12 @@ Experimental WARC Writer and Readers.  Code and specification subject to change.
 File Format (Version 0.9)</a>.  Also includes (imperfect) <code>Arc2Warc</code>
 and <code>Warc2Arc</code> example tools.
 
+<h2>Tools</h2>
+<p>Initial implementations of <code>Arc2Warc</code> and <code>Warc2Arc</code>
+tools can be found in the package above this one, at
+{@link org.archive.io.Arc2Warc} and {@link org.archive.io.Warc2Arc}
+respectively.  Pass <code>--help</code> to learn how to use each tool.
+
 <h2>Implementation Notes</h2>
 
 <h3>Unique ID Generator</h3>
@@ -258,6 +264,16 @@ request, etc.  Possible payloads might be: Nothing, a diff, the hash obtained,
 etc.
 </p>
 
+<h2>Unimplemented</h2>
+<ul>
+<li>4.2 <code>response</code>. May not be needed.</li> 
+<li>Record Segmentation (4.8 <code>continuation</code> record type
+and the 5.2 <code>Segment-*</code> Named Parameters.  Future TODO.</li>
+<li>4.7 <code>conversion</code> type. Future TODO.</li>
+<li>9.2 GZIP extra field to mark this gzip as list of GZIP members rather than
+a big gzip bundle. Future TODO.</li> 
+</ul>
+
 <h2>TODOs</h2>
 <ul>
 <li>unit tests using <code>multipart/*</code> (JavaMail) reading and
@@ -268,14 +284,5 @@ have some buffering because of the deflater but could probably do
 w/ more.</li>
 </ul>
 
-<h2>Unimplemented</h2>
-<ul>
-<li>4.2 <code>response</code>. May not be needed.</li> 
-<li>Record Segmentation (4.8 <code>continuation</code> record type
-and the 5.2 <code>Segment-*</code> Named Parameters.  Future TODO.</li>
-<li>4.7 <code>conversion</code> type. Future TODO.</li>
-<li>9.2 GZIP extra field to mark this gzip as list of GZIP members rather than
-a big gzip bundle. Future TODO.</li> 
-</ul>
 </body>
 </html>
