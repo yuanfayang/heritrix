@@ -62,8 +62,8 @@ public class Arc2Warc {
        System.exit(exitCode);
    }
    
-   private static String getVersion() {
-       return Warc2Arc.parseVersion("$Id$");
+   private static String getRevision() {
+       return Warc2Arc.parseRevision("$Revision$");
    }
    
    public void transform(final File arc, final File warc, final boolean force)
@@ -108,7 +108,7 @@ public class Arc2Warc {
 		   // was made.
 		   writer.writeWarcinfoRecord(warc.getName(),
 		       "Made from " + reader.getReaderIdentifier() + " by " +
-	               this.getClass().getName() + "/" + getVersion());
+	               this.getClass().getName() + "/" + getRevision());
 		   for (; i.hasNext();) {
 			   write(writer, (ARCRecord)i.next());
 		   }
