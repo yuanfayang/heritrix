@@ -62,6 +62,10 @@ public class Arc2Warc {
        System.exit(exitCode);
    }
    
+   private static String getVersion() {
+       return Warc2Arc.parseVersion("$Id$");
+   }
+   
    public void transform(final File arc, final File warc, final boolean force)
    throws IOException {
        FileUtils.isReadable(arc);
@@ -79,7 +83,7 @@ public class Arc2Warc {
 	   ExperimentalWARCWriter writer = null;
 	   // No point digesting. Digest is available after reading of ARC which
 	   // is too late for inclusion in WARC.
-	   reader.setStrict(false);
+	   reader.setDigest(false);
 	   try {
 		   BufferedOutputStream bos =
 			   new BufferedOutputStream(new FileOutputStream(warc));
@@ -104,7 +108,7 @@ public class Arc2Warc {
 		   // was made.
 		   writer.writeWarcinfoRecord(warc.getName(),
 		       "Made from " + reader.getReaderIdentifier() + " by " +
-	               this.getClass().getName());
+	               this.getClass().getName() + "/" + getVersion());
 		   for (; i.hasNext();) {
 			   write(writer, (ARCRecord)i.next());
 		   }
