@@ -1662,7 +1662,7 @@ public class MyFrontier extends ModuleType implements Frontier,
     <footnote id="footnote_scope_problems">
         <para>It has been identified problems with how the Scopes are defined.
         Please see the user manual for a discussion of the <ulink
-        url="http://crawler.archive.org/articles/user_manual.html#scopeproblems">problems
+        url="http://crawler.archive.org/articles/user_manual/config.html#scopeproblems">problems
         with the current Scopes</ulink>. The proposed changes to the Scope
         will affect the Filters as well.</para>
       </footnote> instance defines which URIs are "in" a particular crawl. It
