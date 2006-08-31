@@ -383,6 +383,21 @@
             </properties>
         </dependency>
         <dependency>
+            <id>commons-net</id>
+            <version>1.4.1</version>
+            <url>http://jakarta.apache.org/commons/net/</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <ear.bundle>true</ear.bundle>
+                <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
+                <description>Used to provide FTP fetching.  May one day be
+                used for TFTP, SFTP, gopher and so on.
+                </description>
+                <license>Apache 2.0
+                http://www.apache.org/licenses/LICENSE-2.0</license>
+            </properties>
+        </dependency>
+        <dependency>
             <id>commons-codec</id>
             <version>1.3</version>
             <url>http://jakarta.apache.org/commons/codec/</url>
