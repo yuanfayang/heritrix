@@ -39,10 +39,7 @@
     <sect2 id="1_10_0_limitations">
       <title>Known Limitations/Issues</title>
        <sect3 id="bdb_nfs"><title>java.io.IOException: No locks available</title>
-        <para>BDB-JE will complain 'No locks available' when crawler is being
-        built/run on an NFS mount. Workaround is to locate the 'state'
-        directory on a non-NFS-mounted volume.
-        </para>
+       <para>See <ulink url="#bdb_nfs" />.</para>
       </sect3>
     </sect2>
     <sect2 id="1_10_0_changes">
@@ -77,6 +74,15 @@
          crawl.log.</para>
          <para>If the old behavior is preferred,  set 'force-retire' to 
          'false'.</para>
+        </sect3>
+        <sect3><title>WARC</title>
+            <para>This release includes experimental WARC 0.9 readers and
+            writers. Be warned that both code and specification are not yet
+            final and so are both subject to change.  See the <ulink 
+            url="/apidocs/org/archive/io/warc/package-summary.html">org.archive.io.warc</ulink> package documentation for more on the current state of code
+            including documentation of initial version of 
+            <code>Arc2Warc</code> and <code>Warc2Arc</code> tools. 
+            </para>
         </sect3>
         
         <para><table>
