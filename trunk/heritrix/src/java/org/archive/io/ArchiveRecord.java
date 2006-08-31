@@ -92,7 +92,6 @@ public abstract class ArchiveRecord extends InputStream {
      *
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent.
-     * @param header Header data.
      * @throws IOException
      */
     public ArchiveRecord(InputStream in)

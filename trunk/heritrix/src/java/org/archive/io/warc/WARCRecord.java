@@ -96,9 +96,9 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
      * @param in Stream cue'd up to be at the start of the record this instance
      * is to represent or, if <code>headers</code> is not null, just past the
      * Header Line and Named Fields.
-     * @param identfier Identifier for this the hosting Reader.
-     * @param headers Header Line and ANVL Named fields.  If null, assumes we're
-     * aligned at start of Record and will try parse.
+     * @param identifier Identifier for this the hosting Reader.
+     * @param offset Current offset into <code>in</code> (Used to keep
+     * <code>position</code> properly aligned).  Usually 0.
      * @param digest True if we're to calculate digest for this record.  Not
      * digesting saves about ~15% of cpu during parse.
      * @param strict Be strict parsing (Parsing stops if file inproperly
@@ -268,7 +268,7 @@ public class WARCRecord extends ArchiveRecord implements WARCConstants {
      * @param in InputStream to read.
      * @param strict Strict parsing (If false, we'll eat whitespace before the
      * record.
-     * @return
+     * @return All bytes in line including terminating CRLF.
      * @throws IOException
      */
     protected byte [] readLine(final InputStream in, final boolean strict) 

@@ -38,7 +38,6 @@ import org.archive.io.WriterPoolSettings;
 public class WARCWriterPool extends WriterPool {
     /**
      * Constructor
-     * @param serial  Used to generate unique filename sequences
      * @param settings Settings for this pool.
      * @param poolMaximumActive
      * @param poolMaximumWait
