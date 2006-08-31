@@ -48,7 +48,7 @@
     <para>If you want to build Heritrix from source or if you'd like to make
     contributions and would like to know about contribution conventions, etc.,
     see instead the <ulink
-    url="http://crawler.archive.org/articles/developer_manual.html">Developer's
+    url="http://crawler.archive.org/articles/developer_manual/index.html">Developer's
     Manual</ulink>.</para>
   </sect1>
 
@@ -68,7 +68,7 @@
     <para>This chapter also only covers installing and running the prepackaged
     binary distributions of Heritrix. For information about downloading and
     compiling the source see the <ulink
-    url="http://crawler.archive.org/articles/developer_manual.html">Developer's
+    url="http://crawler.archive.org/articles/developer_manual/index.html">Developer's
     Manual</ulink>.</para>
 
     <sect2>
@@ -101,8 +101,9 @@
           that the only true requirement for running it is that you have a JRE
           installed (Building will require a JDK).</para>
 
-          <para>The Heritrix crawler makes use of Java 5.0 features so your
-          JRE must be at least of a 5.0 (1.5.0+) pedigree.</para>
+          <para>The Heritrix crawler, since release 1.10.0, makes use of Java
+          5.0 features so your JRE must be at least of a 5.0 (1.5.0+)
+          pedigree.</para>
 
           <para>We currently include all of the free/open source third-party
           libraries necessary to run Heritrix in the distribution package. See
@@ -861,7 +862,7 @@
           (org.archive.crawler.frontier.BdbFrontier). This is done because
           these are the only names we can be assured of being unique.</para>
         </note>See <ulink
-      url="http://crawler.archive.org/articles/developer_manual.html">Developer's
+      url="http://crawler.archive.org/articles/developer_manual/index.html">Developer's
       Manual</ulink> for information about creating and adding custom modules
       to Heritrix.</para>
 
@@ -3708,7 +3709,7 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
         <para>For more on ARC files refer to the <ulink
         url="http://crawler.archive.org/apidocs/org/archive/io/arc/ARCWriter.html">ARCwriter
         Javadoc</ulink> and to the <ulink
-        url="http://crawler.archive.org/articles/developer_manual.html#arcs">ARC
+        url="http://crawler.archive.org/articles/developer_manual/arcs.html">ARC
         Writer developer documentation</ulink>.</para>
       </sect3>
     </sect2>
