@@ -249,7 +249,8 @@
         <copy todir="${maven.dist.bin.assembly.dir}/bin">
           <fileset dir="${maven.src.dir}/scripts">
             <include name="*heritrix"/>
-            <include name="*heritrix.cmd"/>
+            <include name="*heritrix"/>
+            <include name="*.cmd"/>
             <include name="arcreader"/>
             <include name="shutdown.sh"/>
             <include name="*extractor"/>
