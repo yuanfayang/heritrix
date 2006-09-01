@@ -383,7 +383,7 @@
             </properties>
         </dependency>
         <dependency>
-            <id>commons-net</id>
+            <id>commons-net-local</id>
             <version>1.4.1</version>
             <url>http://jakarta.apache.org/commons/net/</url>
             <properties>
