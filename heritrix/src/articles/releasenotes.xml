@@ -53,6 +53,15 @@
          --admin command-line argument, or via the system property 
          'heritrix.cmdline.admin'.</para>
         </sect3>
+        <sect3 id="localhostonly">
+         <title>Web UI binds to localhost only by default</title>
+         <para>Previously, the Jetty web server that runs the Heritrix
+         web UI listened on all available network interfaces.  In 1.10.0,
+         Jetty will only bind to localhost by default.  The -b or --bind
+         command-line argument can be used to specify a different interface
+         or list of interfaces to bind to instead.
+         </para>
+        </sect3>
         <sect3 id="quotaretire">
          <title>QuotaEnforcer 'force-retire' option</title>
          <para>The optional QuotaEnforcer processor has a new setting, 
@@ -84,7 +93,13 @@
             <code>Arc2Warc</code> and <code>Warc2Arc</code> tools. 
             </para>
         </sect3>
-        
+        <sect3>
+        <title>FTP</title>
+        <para>This release also include experimental support for FTP.  This
+        support is disabled by the default heritrix configuration.  See the
+        User Guide for information on how to enable FTP.
+        </para>
+        </sect3>
         <para><table>
           <title>All Tracked Changes</title>
 
