@@ -4049,6 +4049,59 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
       url="http://www.onjava.com/pub/a/onjava/2004/09/29/tigerjmx.html">Monitoring
       Local and Remote Applications Using JMX 1.2 and JConsole</ulink>.</para>
     </sect2>
+    <sect2 id="ftp_support">
+      <title>Experimental FTP Support</title>
+      
+      <para>As of release 1.10.0, Heritrix has experimental support for 
+      crawling FTP servers.  To enable FTP support for your crawls, there is
+      a configuration file change you will have to manually make.</para>
+
+      <para>Specifically, you will have to edit the 
+      <filename>$HERITRIX_HOME/conf/heritrix.properties</filename> file.
+      Remove <literal>ftp</literal> from the 
+      <literal>org.archive.net.UURIFactory.ignored-schemes</literal> property
+      list. Also, you must add <literal>ftp</literal> to the 
+      <literal>org.archive.net.UURIFactory.schemes</literal> property list.
+      </para>
+
+      <para>After that change, you should be able to add the FetchFTP 
+      processor to your crawl using the Web UI.  Just create a new job,
+      click "Modules", and add FetchFTP under "Fetchers."</para>
+
+      <para>Note that FetchFTP is a little unusual in that it works both
+      as a fetcher and as an extractor.  If an FTP URI refers to a 
+      directory, and if FetchFTP's <literal>extract-from-dirs</literal> 
+      property is set to true, then FetchFTP will extract one link for
+      every line of the directory listing.  Similarly, if the 
+      <literal>extract-parent</literal> property is true, then FetchFTP will 
+      extract the parent directory from every FTP URI it encounters.</para>
+
+      <para>Also, remember that FetchFTP is experimental.  As of 1.10,
+      FetchFTP has the following known limitations:</para>
+
+      <orderedlist>
+      <listitem>FetchFTP can only store directories if the FTP server 
+      supports the <literal>NLIST</literal> command.  Some older systems
+      may not support <literal>NLIST</literal>.</listitem>
+      <listitem>Similarly, FetchFTP uses passive mode transfer,
+      to work behind firewalls.  Not all FTP servers support passive
+      mode, however.</listitem>
+      <listitem>Heritrix currently has no means of determining the 
+      mime-type of a document unless an HTTP server explicitly mentions
+      one.  Since FTP has no concept of metadata, all documents retrieved
+      using FetchFTP have a mime-type of <literal>no-type</literal>.
+      </listitem>
+      <listitem>In the absence of a mime-type, many of the postprocessors
+      will not work.  For instance, HTMLExtractor will
+      not extract links from an HTML file fetched with FetchFTP.
+      </listitem>
+      </orderedlist>
+
+      <para>Still, FetchFTP can be used to archive an FTP directory of 
+      tarballs, for instance.  If you discover any additional problems using
+      FetchFTP, please inform the <email>archive-crawler@yahoogroups.com</email>
+      mailing list.</para>
+    </sect2>
   </sect1>
 
   <glossary id="glossary">
