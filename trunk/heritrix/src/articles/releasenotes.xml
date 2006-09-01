@@ -85,9 +85,11 @@
          'false'.</para>
         </sect3>
         <sect3><title>WARC</title>
-            <para>This release includes experimental WARC 0.9 readers and
+            <para>This release includes experimental WARC readers and
             writers. Be warned that both code and specification are not yet
-            final and so are both subject to change.  See the <ulink 
+            final and so are both subject to change with no guarantees
+			of backward compatibility: i.e. newer readers may not be able to 
+			read WARCs written with older writers.  See the <ulink 
             url="/apidocs/org/archive/io/warc/package-summary.html">org.archive.io.warc</ulink> package documentation for more on the current state of code
             including documentation of initial version of 
             <code>Arc2Warc</code> and <code>Warc2Arc</code> tools. 
