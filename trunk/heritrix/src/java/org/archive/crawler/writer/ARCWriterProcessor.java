@@ -147,6 +147,10 @@ WriterPoolSettings, FetchStatusCodes {
                 InputStream is = curi.getHttpRecorder().getRecordedInput().
             		getReplayInputStream();
                 write(curi, recordLength, is, getHostAddress(curi));
+            } else if (scheme.equals("ftp") && (curi.getFetchStatus() == 200)) {
+                InputStream is = curi.getHttpRecorder().getRecordedInput().
+                 getReplayInputStream();
+                write(curi, recordLength, is, getHostAddress(curi));
             } else {
                 logger.info("This writer does not write out scheme " + scheme +
                     " content");
