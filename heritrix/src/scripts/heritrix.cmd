@@ -1,14 +1,11 @@
 :: This script launches the heritrix crawler on windows.  While Heritrix
 :: is unsupported on windows, see 2.1.1.3 in the User Manual
 :: [http://crawler.archive.org/articles/user_manual.html], this script was
-:: provided by Eric Jensen, with additions by Max Schöfmann, as a convenience
-:: to the windows-afflicted.
+:: provided by Eric Jensen as a convenience to the windows-afflicted.
 ::
 :: It is a direct translation of the heritrix linux wrapper script -- and
 :: because windows is not supported on Heritrix, it will likely lag the unix
-:: start script.  It is also incomplete; the JMX setup needs finishing.
-:: That said, it should be sufficent to get a windows user up and running
-:: using Heritrix.
+:: start script.
 ::
 :: See also:
 :: https://sourceforge.net/tracker/index.php?func=detail&aid=1514538&group_id=73833&atid=539102
@@ -24,8 +21,9 @@
 ::               enabled
 ::             - JMX configuration fixed (not the fancy "sed" stuff however)
 ::             - Try to set permissions of JMX password file if Heritrix
-::               failes to start and JMX is enabled
-::             - a few more small improvements
+::               fails to start and JMX is enabled
+::             - a few more small improvements (java detection, fake background
+::               execution...)
 ::             - comments changed from rem to :: and file renamed to .cmd 
 ::               (to make clear it won't work on Win 9x...)
 ::
@@ -63,46 +61,74 @@
 :: 
 @echo off
 
-:: Enabling command extensions and delayed variable expansion
+set PRG=%0
+set PRGDIR=%~p0
+:: windows doesn't have a sleep command build-in
+set SLEEP=ping 127.0.0.1 -n 2 -w 1000
+
 if "%1"=="RUN" goto run
-cmd /E:ON /V:ON /c %0 RUN %1 %2 %3 %4 %5 %6 %7 %8 %9
-goto:eof
+if "%1"=="BGR" goto run_in_background
+:: preserve original command line arguments
+if "%*"=="*" (
+	:: windows separates things like --digest=false into "--digest" and "false" if using %1 %2 %3...
+	:: But as command extensions are enabled by default, this should be no problem for most users
+    echo NOTICE:  Try starting your console with "cmd /E:ON" if you are experiencing
+    echo          problems passing command line arguments to Heritrix
+	echo.
+	set HERITRIX_CMDLINE=%1 %2 %3 %4 %5 %6 %7 %8 %9
+) else (
+	set HERITRIX_CMDLINE=%*
+)
+:: Enabling command extensions and delayed variable expansion
+cmd /E:ON /F:ON /V:ON /c %PRG% RUN
+goto :end
 
 :run
-
-:: Resolve links - %0 may be a softlink
-set PRG=%0
-
-set PRGDIR=%~p0
-
 :: Read local heritrix properties if any.
-if exist %HOMEPATH%\.heritrixrc call %HOMEPATH%\.heritrixrc
+:: To do this on Windows, tempor. rename .heritrixrc to heritrixrc.cmd
+:: This is of course only useful if .heritrixrc contains Windows style "set VAR=value" statements
+set RC_PATH=%HOMEPATH%
+if "%RC_PATH%"=="\" set RC_PATH=\.
+if defined HOMEDRIVE set RC_PATH=%HOMEDRIVE%!RC_PATH!
+if exist "!RC_PATH!\.heritrixrc" (
+    ren "!RC_PATH!\.heritrixrc" heritrixrc.cmd
+    call "!RC_PATH!\heritrixrc.cmd"
+    ren "!RC_PATH!\heritrixrc.cmd" .heritrixrc
+)
+set RC_PATH=
 
 :: Set HERITRIX_HOME.
-if not defined HERITRIX_HOME set HERITRIX_HOME=%PRGDIR%\..
+if defined HERITRIX_HOME goto find_java
+set HERITRIX_HOME=%PRGDIR:~0,-4%
+if "%PRGDIR:~-1%"=="\" set HERITRIX_HOME=%PRGDIR:~0,-5%
 
-:: Find JAVA_HOME.
-if not defined JAVA_HOME goto no_java_home
-:: then
-::   JAVA=`which java`
-::  if [ -z "%JAVA" ] 
-::  then
-::    echo "Cannot find JAVA. Please set JAVA_HOME or your PATH."
-::    exit 1
-::  fi
-::  JAVA_BINDIR=`dirname %JAVA`
-::  JAVA_HOME=%JAVA_BINDIR\..
-:: fi
+:: Find JAVA_HOME or java if JAVACMD is not defined.
+:find_java
+if defined JAVACMD goto java_found
+if defined JAVA_HOME goto set_javacmd
 
+:: Try to find java if neither JAVACMD nor JAVA_HOME is set:
+java -version >nul 2>&1
+:: 9009 means "command not found"
+if errorlevel 9009 goto no_java_home
+:: something else is wrong with executing java
+if errorlevel 1 goto no_java_home
+
+:: java seems to be in PATH
+set JAVACMD=java -Dje.disable.java.adler32=true
+:set_javacmd
 if not defined JAVACMD set JAVACMD="%JAVA_HOME%\bin\java" -Dje.disable.java.adler32=true
 :: It may be defined in env - including flags!!
 :: See '[ 1482761 ] BDB Adler32 gc-lock OOME risk' for why we include the
 :: 'je.disable.java.adler32'.
-
+:java_found
 
 :: Ignore previous classpath.  Build one that contains heritrix jar and content
 :: of the lib directory into the variable CP.
+set CP=
+set OLD_CLASSPATH=%CLASSPATH%
 for %%j in ("%HERITRIX_HOME%\lib\*.jar" "%HERITRIX_HOME%\*.jar") do set CP=!CP!;%%j
+set CLASSPATH=!CP!
 
 :: DONT cygwin path translation
 :: if expr `uname` : 'CYGWIN*' > /dev/null; then
@@ -153,44 +179,118 @@ if not defined CLASS_MAIN set CLASS_MAIN=org.archive.crawler.Heritrix
 set startMessage=%HERITRIX_HOME%\heritrix_dmesg.log
 
 :: Remove any file that may have been left over from previous starts.
-if exist %startMessage% del %startmessage%
+if exist "%startMessage%" del "%startmessage%"
+if exist "%HERITRIX_HOME%\jmx_permissions_broken" del "%HERITRIX_HOME%\jmx_permissions_broken"
 
 :: Run heritrix as daemon.  Redirect stdout and stderr to a file.
 :: Print start message with date, java version, java opts, ulimit, and uname.
 if not defined HERITRIX_OUT set HERITRIX_OUT=%HERITRIX_HOME%\heritrix_out.log
 
 set stdouterrlog=%HERITRIX_OUT%
-echo %DATE% %TIME% Starting heritrix >>%stdouterrlog%
+echo %DATE% %TIME% Starting heritrix >>"%stdouterrlog%"
 :: uname -a >> %stdouterrlog%
-%JAVACMD% %JAVA_OPTS% -version >>%stdouterrlog%  2>&1
-echo JAVA_OPTS=%JAVA_OPTS% >>%stdouterrlog%
+%JAVACMD% %JAVA_OPTS% -version >>"%stdouterrlog%"  2>&1
+echo JAVA_OPTS=%JAVA_OPTS% >>"%stdouterrlog%"
 :: ulimit -a >> %stdouterrlog 2>&1
 
 :: DONT If FOREGROUND is set, run heritrix in foreground.
 :: if defined FOREGROUND
-set CLASSPATH=%CP% 
-
 :start_heritrix
-%JAVACMD% "-Dheritrix.home=%HERITRIX_HOME%" -Djava.protocol.handler.pkgs=org.archive.net "-Dheritrix.out=%HERITRIX_OUT%" %JAVA_OPTS% %JMX_OPTS% %CLASS_MAIN% %2 %3 %4 %5 %6 %7 %8 %9
-if not defined JMX_OFF. (if errorlevel 1 goto fix_jmx_permissions)
-goto:eof
+if not defined FOREGROUND goto run_in_background
+%JAVACMD% "-Dheritrix.home=%HERITRIX_HOME%" -Djava.protocol.handler.pkgs=org.archive.net "-Dheritrix.out=%HERITRIX_OUT%" %JAVA_OPTS% %JMX_OPTS% %CLASS_MAIN% %HERITRIX_CMDLINE%
+:: errorlevel 130 if aborted with Ctrl+c (at least my sun jvm 1.5_07...)
+if errorlevel 130 goto :end
+if errorlevel 1 goto fix_jmx_permissions
+goto :end
+
+:run_in_background
+if not "%1"=="BGR" (
+    start /MIN cmd /E:ON /F:ON /V:ON /c %PRG% BGR
+    goto wait_for_log_file
+) else (
+    title Heritrix
+    :: adding  ">>%stdouterrlog% 2>&1" causes an access denied error as heritrix writes also to this file	
+    %JAVACMD% "-Dheritrix.home=%HERITRIX_HOME%" -Djava.protocol.handler.pkgs=org.archive.net "-Dheritrix.out=%HERITRIX_OUT%" %JAVA_OPTS% %JMX_OPTS% %CLASS_MAIN% %HERITRIX_CMDLINE%	
+    if errorlevel 130 goto :end
+    if errorlevel 1 echo.!ERRORLEVEL! >"%HERITRIX_HOME%\jmx_permissions_broken"
+	pause
+	)
+goto :end
+
+:wait_for_log_file
+SET HERITRIX_COUNTER=
+echo WARNING: It's currently not possible to run Heritrix in background
+echo          on Windows. It was just started minimized in a new Window
+echo          and will be shut down as soon as you log off.
+echo.
+echo %DATE% %TIME% Starting heritrix
+:print_logfile
+%SLEEP%>nul
+if exist "%HERITRIX_HOME%\jmx_permissions_broken" (
+    del "%HERITRIX_HOME%\jmx_permissions_broken"
+    goto fix_jmx_permissions
+)
+if exist "%startMessage%" (
+    %SLEEP%>nul
+    type "%startMessage%"
+    :: can happen when heritrix writes to the file at the same time
+    if errorlevel 1 goto print_logfile
+    goto delete_logfile
+)
+:: keep trying for 30 more seconds
+if "!HERITRIX_COUNTER!"==".............................." goto start_may_failed
+set HERITRIX_COUNTER=.!HERITRIX_COUNTER!
+echo .
+goto print_logfile
+
+:delete_logfile
+set HERITRIX_COUNTER=
+%SLEEP%>nul
+%SLEEP%>nul
+del "%startMessage%" >nul 2>&1
+:: del doesn't set the ERRORLEVEL var if unsuccessful, so we can't try again
+goto :end
 
 :fix_jmx_permissions
+if not "%CLASS_MAIN%"=="org.archive.crawler.Heritrix" goto :start_may_failed
+if defined PERMISSIONS_FIXED goto fix_jmx_permission_failed
 echo.
-echo Heritrix failed to start properly.
-echo This may be caused by a permissions problem with the JMX password file. 
-set /P FIXIT=Do you want to try to fix it (Y/N)?
-if /I "%FIXIT:~0,1%"=="n" goto:eof
-cacls %HERITRIX_HOME%\jmxremote.password /P %USERNAME%:R
+echo Heritrix failed to start properly. Possible causes:
+echo.
+echo - another programm uses the port for the web inferface (8080 default)
+echo   (e.g. another Heritrix instance)
+if defined JMX_OFF goto :end
+echo - permissions problem with the JMX password file. 
+echo.
+set /P FIXIT=Do you want to try to fix the permissions (Y/N)?
+if /I "%FIXIT:~0,1%"=="n" goto :end
+cacls "%HERITRIX_HOME%\jmxremote.password" /P %USERNAME%:R
 if errorlevel 1 goto fix_jmx_permission_failed
+set PERMISSIONS_FIXED=true
 set /P RESTART=Restart Heritrix (Y/N)?
 if /I "%RESTART:~0,1%"=="y" goto start_heritrix
-goto:eof
+goto :end
 
 :fix_jmx_permission_failed
-echo Fixing permissions failed
-goto:eof
+set PERMISSIONS_FIXED=
+echo Either fixing the permissions failed or there was another problem
+goto :end
+
+:start_may_failed
+set HERITRIX_COUNTER=
+echo Starting Heritrix seems to have failed
+goto :end
 
 :no_java_home
-echo JAVA_HOME not defined
-goto:eof
+echo Please define either JAVA_HOME or JAVACMD or make sure java.exe is in PATH
+goto :end
+
+:: needed if initially called without command extensions
+:end
+:: do some cleanup
+set HERITRIX_CMDLINE=
+if defined OLD_CLASSPATH set CLASSPATH=%OLD_CLASSPATH%
+set CP=
+set SLEEP=
+set PRGDIR=
+set PRG=
