@@ -19,10 +19,11 @@
             plugin="maven-sdocbook-plugin"
             property="file"/>
         <j:set var="index" value="${docfile.name.indexOf('.')}"/>
-        <j:set var="basename" value="${docfile.name.substring(0,index)}"/>
-        <echo message="Basename ${basename}" />
+        <j:set var="docbook.basename" 
+            value="${docfile.name.substring(0,index)}"/>
+        <echo message="Basename ${docbook.basename}" />
         <j:set var="target.dir"
-            value="${maven.sdocbook.generated.html}/${basename}"/>
+            value="${maven.sdocbook.generated.html}/${docbook.basename}"/>
         <echo message="Target dir ${target.dir}" />
         <echo message="Generated dir ${maven.sdocbook.generated.html}" />
         <move todir="${target.dir}" includeEmptyDirs="no">
@@ -321,6 +322,7 @@
            file="${maven.dist.dir}/${maven.final.name}.tar.gz" />  
         <property name="basename"
            value="${maven.selftest.dir}/${maven.final.name}" />  
+        <echo message="${basename}.tar.gz" />
         <gunzip src="${basename}.tar.gz" dest="${basename}.tar" />
         <untar src="${basename}.tar" dest="${maven.selftest.dir}" />
         <chmod file="${basename}/bin/*" perm="a+rx" />
