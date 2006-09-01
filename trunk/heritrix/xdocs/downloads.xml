@@ -10,18 +10,30 @@
   <section name="Downloads">
 
     <subsection name="Releases">
-        <p>All releases are available off the 
-        <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">Sourceforge Downloads</a> page.  Release notes can be
-        found here,
+        <p>All official releases are available off the 
+        <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&amp;package_id=73980">
+        Sourceforge Downloads</a> page. </p>
+        
+        <p>The latest official release is 
+        <a href="http://sourceforge.net/project/showfiles.php?group_id=73833&package_id=73980&release_id=415468">
+        1.8.0</a>/</p>
+        
+        <p>Release notes can be found here,
         <a href="articles/releasenotes/index.html">Heritrix Release Notes</a>.</p>
 	</subsection>
    
-    <subsection name="Continuous build">
-		<p>Here is a
-        <a href="http://crawltools.archive.org:8080/cruisecontrol/">pointer</a> to our continuous build box.
+    <subsection name="Continuous build (testing/unstable)">
+    
+		<p>For prerelease code, you can access our
+        <a href="http://crawltools.archive.org:8080/cruisecontrol/">continuous build box</a>.
         The latest build can be found by clicking on the 'Build Artifacts' 
-        link.  Be aware that this distribution has been made from 
-        CVS HEAD and CVS HEAD builds are not guaranteed stable.
+        link.</p>
+        
+        <p>Please be aware that such distributions have been made from 
+        code work in progress (CVS HEAD), and is most appropriate
+        for developers and advanced operators. It has not received the 
+        same testing, review, and documentation as official releases, and 
+        at times may not be stable enough to work at all.
         </p>
 	</subsection>
     
