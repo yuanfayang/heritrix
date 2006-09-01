@@ -31,12 +31,13 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.SimpleType;
 
 public class NotExceedsDocumentLengthTresholdDecideRule
-extends PredicatedDecideRule implements CoreAttributeConstants{
+extends PredicatedDecideRule implements CoreAttributeConstants {
 	
     private static final Logger logger = Logger.
     	getLogger(NotExceedsDocumentLengthTresholdDecideRule.class.getName());
-    public static final String ATTR_MAX_CONTENT_LENGTH = "max-content-length";
-    static final Integer DEFAULT_MAX_CONTENT_LENGTH = -1;
+    public static final String ATTR_CONTENT_LENGTH_TRESHOLD =
+    	"content-length-treshold";
+    static final Integer DEFAULT_CONTENT_LENGTH_TRESHOLD = -1;
     public static final String ATTR_USE_AS_MIDFETCH = "use-as-midfetch-filter";
     static final Boolean DEFAULT_USE_AS_MIDFETCH = new Boolean(true);
     
@@ -60,10 +61,11 @@ extends PredicatedDecideRule implements CoreAttributeConstants{
                 "downloaded content will be used.",
                 DEFAULT_USE_AS_MIDFETCH));
 
-        addElementToDefinition(new SimpleType(ATTR_MAX_CONTENT_LENGTH, "Max " +
-	        "content-length this filter will allow to pass through. If -1," +
+        addElementToDefinition(new SimpleType(ATTR_CONTENT_LENGTH_TRESHOLD,
+        	"Max " +
+	        "content-length this filter will allow to pass through. If -1, " +
 	        "then no limit.",
-	        DEFAULT_MAX_CONTENT_LENGTH));
+	        DEFAULT_CONTENT_LENGTH_TRESHOLD));
     }
     
     protected boolean evaluate(Object object) {
@@ -113,7 +115,7 @@ extends PredicatedDecideRule implements CoreAttributeConstants{
         	    contentlength = (int)curi.getContentSize();
         	}
 
-            return contentlength < getMaxContentLength(object);
+            return makeDecision(contentlength, object);
                 
         } catch (ClassCastException e) {
             // if not CrawlURI, always disregard
@@ -122,17 +124,26 @@ extends PredicatedDecideRule implements CoreAttributeConstants{
     }
     
     /**
-     * @param obj Conext object.
+     * @param contentLength content length to check against treshold
+     * @param obj Context object.
+     * @return contentLength not exceeding treshold?
+     */
+    protected Boolean makeDecision(int contentLength, Object obj) {
+    	return contentLength < getContentLengthTreshold(obj);
+    }
+    
+    /**
+     * @param obj Context object.
      * @return content length threshold
      */
-    private int getMaxContentLength(Object obj) {
-        int len = ((Integer)getUncheckedAttribute(obj,ATTR_MAX_CONTENT_LENGTH)).
-        	intValue();
+    protected int getContentLengthTreshold(Object obj) {
+        int len = ((Integer)getUncheckedAttribute(obj,
+        	ATTR_CONTENT_LENGTH_TRESHOLD)).intValue();
         return len == -1? Integer.MAX_VALUE: len;
     }
 
     /**
-     * @param obj Conext object.
+     * @param obj Context object.
      * @return to be used as midfetch rule?
      */
     private Boolean getIsMidfetchRule(Object obj) {
