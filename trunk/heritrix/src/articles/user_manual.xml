@@ -486,9 +486,9 @@
     <literal>http://&lt;host&gt;:8080/admin/</literal>).</para>
 
     <para>The WUI is password protected. There is no default login for 
-    access; one must be specified by either the '-a'/'--admin' command-line
-    options at startup or the 'heritrix.cmdline.admin' system property. 
-    The currently valid
+    access; one must be specified using either the '-a'/'--admin' command-line
+    option at startup or by setting the 'heritrix.cmdline.admin' system
+    property.  The currently valid
     username and password combination will be printed out to the console,
     along with the access URL for the WUI, at startup.</para>
 
@@ -584,7 +584,7 @@
     <para><emphasis role="bold">Step 3.</emphasis> <emphasis>Running the
     job</emphasis></para>
 
-    <para>New jobs that have been submitted are placed in a queue of pending
+    <para>Submitted new jobs are placed in a queue of pending
     jobs. The crawler does not start processing jobs from this queue until the
     crawler is started. While the crawler is stopped, jobs are simply
     held.</para>
@@ -1151,7 +1151,7 @@
         </sect4>
 
         <sect4 id="decidingscope">
-          <title>Experimental: DecidingScope</title>
+          <title>DecidingScope</title>
 
           <para>To address the shortcomings above, and generally make
           alternate scope choices more understandable and flexible, a new
@@ -1612,9 +1612,8 @@
         linkend="scopeproblems" />.  
         </para>
 
-        <note><para>An experimental
-        DecidingFilter was added in 1.4.0 to address problems with current 
-        filter model.  DecideRules can be added into
+        <note><para>A DecidingFilter was added in 1.4.0 to address problems
+        with current filter model.  DecideRules can be added into
         a DecidingFilter with the filter decision the result of all
         included DecideRule set processing. There are DecideRule equivalents
         for all Filter-types mentioned below.
