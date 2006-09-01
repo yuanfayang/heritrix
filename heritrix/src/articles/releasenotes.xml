@@ -31,7 +31,7 @@
       <listitem><para>Karl Wright (of MetaCarta)</para></listitem>
       <listitem><para>Frank McCown (of Old Dominion University)</para></listitem>
       <listitem><para>Max Schöfmann</para></listitem>
-      <listitem><para>Søren Vejrup Carlsen (of Royal Library, Denmark)</para></listitem>
+    <listitem><para>Søren Vejrup Carlsen (of Royal Library, Denmark)</para></listitem>
     </itemizedlist>
         </para>
     </sect2> 
@@ -84,7 +84,28 @@
          <para>If the old behavior is preferred,  set 'force-retire' to 
          'false'.</para>
         </sect3>
-        <sect3><title>WARC</title>
+        <sect3 id="1_10_0canonicalization">
+            <title>URL canonicalization changes</title>
+            <para>In 1.10.0, URL canonicalization has changed in two ways. First,
+            the stripping of sessionids has improved.  Previous, if the sessionid
+            was in the middle of a query string bookended by other query parameters,
+            canonicalization would leave behind the encasing ampersands: E.g.
+            If the URL <literal>http://a.com/?a=1&amp;sid=00000000000000000000000000000000&amp;b=1</literal>
+            was passed through canonicalization, the result would be:
+            <literal>http://a.com/?a=1&amp;&amp;b1<literal>.  This has been fixed so that
+            the result will now be: <literal>http://a.com/?a=1&amp;b1</literal>.
+            </para>
+            <para>The second change adds the new coldfusion sessionid stripper
+            to the list of default canonicalization rules.
+            </para>
+            <para>We bring your attention to these seemingly minor changes
+            because for those of you running regular crawls, with both of the
+            above changes in place, depending on the type of crawl,
+            there should be a reduction in overall the number of (duplicate) pages
+            crawled.
+            </para>
+        </sect3>
+        <sect3 id="warc"><title>WARC</title>
             <para>This release includes experimental WARC readers and
             writers. Be warned that both code and specification are not yet
             final and so are both subject to change with no guarantees

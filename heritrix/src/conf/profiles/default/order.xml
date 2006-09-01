@@ -92,6 +92,10 @@
       <newObject name="SessionIDs" class="org.archive.crawler.url.canonicalize.StripSessionIDs">
         <boolean name="enabled">true</boolean>
       </newObject>
+      <newObject name="SessionCFIDs" 
+        class="org.archive.crawler.url.canonicalize.StripSessionCFIDs">
+        <boolean name="enabled">true</boolean>
+      </newObject>
       <newObject name="QueryStrPrefix" class="org.archive.crawler.url.canonicalize.FixupQueryStr">
         <boolean name="enabled">true</boolean>
       </newObject>
