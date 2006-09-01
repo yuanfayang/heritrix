@@ -36,7 +36,7 @@ public class FixupQueryStrTest extends TestCase {
 
     public void testCanonicalize() throws URIException {
         final String url = "http://WWW.aRchive.Org/index.html";
-        assertTrue("Managled " + url,
+        assertTrue("Mangled " + url,
             url.equals((new FixupQueryStr("test")).
                 canonicalize(url, UURIFactory.getInstance(url))));
         assertTrue("Failed to strip '?' " + url,
@@ -52,5 +52,9 @@ public class FixupQueryStrTest extends TestCase {
         assertTrue("Mangled x=y " + tmp,
             tmp.equals((new FixupQueryStr("test")).
                 canonicalize(tmp, UURIFactory.getInstance(url))));
+        String tmp2 = tmp + "&";
+        String fixed = new FixupQueryStr("test").
+            canonicalize(tmp2, UURIFactory.getInstance(url));
+        assertTrue("Mangled " + tmp2, tmp.equals(fixed));
     }
 }
