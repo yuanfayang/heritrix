@@ -92,7 +92,7 @@
             canonicalization would leave behind the encasing ampersands: E.g.
             If the URL <literal>http://a.com/?a=1&amp;sid=00000000000000000000000000000000&amp;b=1</literal>
             was passed through canonicalization, the result would be:
-            <literal>http://a.com/?a=1&amp;&amp;b1<literal>.  This has been fixed so that
+            <literal>http://a.com/?a=1&amp;&amp;b1</literal>.  This has been fixed so that
             the result will now be: <literal>http://a.com/?a=1&amp;b1</literal>.
             </para>
             <para>The second change adds the new coldfusion sessionid stripper
