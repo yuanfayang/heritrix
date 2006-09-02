@@ -52,7 +52,9 @@ public class DecidingFilter extends Filter {
             "DecidingFilter. A filter that applies one or " +
             "more DecideRules " +
             "to determine whether a URI is accepted (returns true) or " +
-            "rejected (returns false).");
+            "rejected (returns false). Only a final decision of " +
+            "ACCEPT returns true from the filter; either REJECT or " +
+            "PASS returns false.");
         addElementToDefinition(
             new DecideRuleSequence(ATTR_DECIDE_RULES));
     }
