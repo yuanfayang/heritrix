@@ -28,9 +28,12 @@ import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.extractor.ExtractorURI;
 import org.archive.util.SURT;
 import org.archive.util.TextUtils;
 
@@ -59,6 +62,9 @@ import org.archive.util.TextUtils;
  */
 public class UURI extends LaxURI
 implements CharSequence, Serializable {
+    private static Logger LOGGER =
+        Logger.getLogger(UURI.class.getName());
+    
     /**
      * Consider URIs too long for IE as illegal.
      */
@@ -390,10 +396,10 @@ implements CharSequence, Serializable {
     
     /**
      * Convenience method for finding the UURI inside an
-     * Object likely to have one.
+     * Object likely to have (or be/imply) one.
      * 
-     * @param o Object that has a UURI
-     * @return the UURI found
+     * @param o Object that is, has, or implies a UURI
+     * @return the UURI found, or null if none
      */
     public static UURI from(Object o) {
         UURI u = null;
@@ -401,13 +407,14 @@ implements CharSequence, Serializable {
             u = (UURI)o;
         } else if (o instanceof CandidateURI) {
             u = ((CandidateURI) o).getUURI();
-        } else {
-            // TODO: build UURI from a String?
-            // possibly fail with null rather than exception?
-            if (o != null) {
-                throw new IllegalArgumentException("Passed wrong type: " + o);
+        } else if (o instanceof CharSequence) {
+            String s = o.toString();
+            try {
+                u = UURIFactory.getInstance(s);
+            } catch (URIException e) {
+                LOGGER.log(Level.FINE,"bad URI",e);
             }
-        }
+        } 
         return u;
     }
     
