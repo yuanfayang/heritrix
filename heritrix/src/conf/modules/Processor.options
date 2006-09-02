@@ -17,6 +17,8 @@ org.archive.crawler.extractor.ExtractorPDF|ExtractorPDF
 org.archive.crawler.extractor.ExtractorDOC|ExtractorDOC
 org.archive.crawler.extractor.ExtractorXML|ExtractorXML
 org.archive.crawler.extractor.ExtractorUniversal|ExtractorUniversal
+org.archive.crawler.extractor.ExtractorURI|ExtractorURI
+org.archive.crawler.extractor.ExtractorImpliedURI|ExtractorImpliedURI
 org.archive.crawler.extractor.ChangeEvaluator|ChangeEvaluator
 org.archive.crawler.extractor.HTTPContentDigest|HTTPContentDigest
 org.archive.crawler.writer.ARCWriterProcessor|Archiver
