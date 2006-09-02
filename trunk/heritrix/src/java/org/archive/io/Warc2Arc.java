@@ -40,6 +40,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.archive.io.arc.ARCWriter;
+import org.archive.io.arc.ARCConstants;
 import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCReader;
 import org.archive.io.warc.WARCReaderFactory;
@@ -187,13 +188,13 @@ public class Warc2Arc {
        HelpFormatter formatter = new HelpFormatter();
        
        // If no args, print help.
-       if (cmdlineOptions.length <= 0) {
+       if (cmdlineOptions.length < 0) {
            usage(formatter, options, 0);
        }
 
        // Now look at options passed.
        boolean force = false;
-       String prefix = null;
+       String prefix = "WARC2ARC";
        String suffix = null;
        for (int i = 0; i < cmdlineOptions.length; i++) {
            switch(cmdlineOptions[i].getId()) {
