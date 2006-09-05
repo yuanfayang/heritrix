@@ -100,7 +100,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
     "in this field.";
     
     /** The default value for the <code>password</code> attribute. */
-    final private static String DEFAULT_PASSWORD = "pjack@archive.org"; // FIXME
+    final private static String DEFAULT_PASSWORD = "";
 
     
     /** The name for the <code>extract-from-dirs</code> attribute. */
