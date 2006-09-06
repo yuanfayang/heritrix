@@ -6,11 +6,15 @@
 <body>
 Experimental WARC Writer and Readers.  Code and specification subject to change
 with no guarantees of backward compatibility: i.e. newer readers
-may not be able to parse WARCs written with older writers. This code, with
-noted exceptions, implements the (unreleased)
+may not be able to parse WARCs written with older writers. 
+
+This code, with noted exceptions, is a loose implementation of parts of the
+(unreleased and unfinished)
 <a href="http://archive-access.sourceforge.net/warc/warc_file_format.html">WARC
-File Format (Version 0.9)</a>.  Also includes (imperfect) <code>Arc2Warc</code>
-and <code>Warc2Arc</code> example tools.
+File Format (Version 0.9)</a>. Deviations from 0.9, outlined below in the
+section <i>Deviations from Spec.</i>, are to be proposed as amendments to the
+specification.  Since the new spec. revision will likely be named version 0.10,
+code in this package writes WARCs of version 0.10 -- not 0.9.
 
 <h2>Tools</h2>
 <p>Initial implementations of <code>Arc2Warc</code> and <code>Warc2Arc</code>
@@ -38,9 +42,9 @@ WARCs and occasionally for metadata. An implementation was added at
 </p>
 
 <h3><a name="deviations">Deviations from Spec.</a></h3>
-<p>Below deviations from spec. 0.9 to be proposed as Spec. amendments
-(Vocal agreement obtained from John and Gordon at the <i>La Honda</i> Meeting,
-August 8th, 2006).</p>
+<p>Below deviations from spec. 0.9 to be proposed as spec. amendments with new
+revision likely to be 0.10 (Vocal agreement between John, Gordon, and Stack at
+<i>La Honda</i> Meeting, August 8th, 2006).</p>
 <h3>mimetype in header line</h3>
 <p>Allow full mimetypes in the header line as per RFC2045 rather than
 current, shriveled mimetype that allows only type and subtype.  This will mean
@@ -93,14 +97,10 @@ record that all others associate to: i.e. all others
 have a <code>Related-Record-ID</code> that points back to the
 <code>resource</code>.
 </p>
-<p>Currently length has leading zeros to emphasize the length fields
-fixed-lengthed-ness.
-</p>
-
 
 <h2>Suggested Spec. Amendments</h2>
 <p>Apart from the above listed <a href="#deviations">deviations</a>, the below
-changes are also suggested:</p>
+changes are also suggested by Stack:</p>
 <h3>Drop response record type</h3>
 <p><code>resource</code> is sufficent. Let mimetype distingush if capture with
 response headers or not (As per comment at end of <i>8.1 HTTP and HTTPS</i>

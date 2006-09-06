@@ -413,7 +413,7 @@ implements WARCConstants {
             responseLength);
     }
 
-    protected void writeResponseRecord(final String url,
+    public void writeResponseRecord(final String url,
             final String create14DigitDate, final String mimetype,
             final URI recordId,
             final ANVLRecord namedFields, final InputStream response,
