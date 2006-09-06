@@ -4104,6 +4104,20 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
     </sect2>
   </sect1>
 
+  <appendix id="usecases">
+  <title>Common Heritrix Use Cases</title>
+    <appendixinfo>
+        <author>
+  <firstname>Frank</firstname>
+  <surname>McCown</surname>
+  <affiliation>
+    <orgname>Old Dominion University</orgname>
+  </affiliation>
+        </author>
+    </appendixinfo>
+
+  </appendix>
+
   <glossary id="glossary">
     <glossdiv>
       <title>Some definitions</title>
