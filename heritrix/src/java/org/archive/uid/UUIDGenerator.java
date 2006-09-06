@@ -31,13 +31,23 @@ import java.util.UUID;
 
 /**
  * Generates <a href="http://en.wikipedia.org/wiki/UUID">UUID</a>s, using
- * {@link java.util.UUID java.util.UUID}, formatted as URIs.
+ * {@link java.util.UUID java.util.UUID}, formatted as URIs and formats as 
+ * a URI by prepending the scheme <code>uuid</code>.
+ * Here are some examples of the IDs it makes: 
+ * <code>uuid:0161811f-5da6-4c6e-9808-a2fab97114cf</code> and
+ * <code>uuid:6f2721ea-d732-43d7-bf49-6b16ecb88557;type=metadata</code>.
+ * The way we allow adding parameters as URI suffix comes from the (expired)
+ * internet draft
+ * <a * href="http://quimby.gnus.org/internet-drafts/draft-kindel-uuid-uri-00.txt">The uuid: URI scheme</a>.
+ * <p>TODO: Since <a href="http://www.pacificspirit.com/blog/2004/10/25/uuid_does_not_exist">UUID: Does not exist</a>, review.  Perhaps do as an URN (See 
+ * <a href="http://www.ietf.org/rfc/rfc4122.txt">RFC4122</a>).
+ *
  * @author stack
  * @version $Revision$ $Date$
  * @see <a href="http://ietf.org/rfc/rfc4122.txt">RFC4122</a>
  */
 class UUIDGenerator implements Generator {
-	private static final String SCHEME = "uuri";
+	private static final String SCHEME = "uuid";
 	private static final String SCHEME_COLON = SCHEME + ":";
 	private static final int UUID_WIDTH = 36;
 	
