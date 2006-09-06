@@ -160,7 +160,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                         curi.getContentDigestSchemeString());
                 }
                 r.addLabelValue(NAMED_FIELD_IP_LABEL, getHostAddress(curi));
-                URI rid = writeResource(w, timestamp, HTTP_RESPONSE_MIMETYPE,
+                URI rid = writeResponse(w, timestamp, HTTP_RESPONSE_MIMETYPE,
                 	baseid, curi, r);
                 r = new ANVLRecord(1);
                 r.addLabelValue(NAMED_FIELD_RELATED_LABEL, rid.toString());
@@ -174,7 +174,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 	r = new ANVLRecord();
                     r.addLabelValue(NAMED_FIELD_IP_LABEL, ip);
                 }
-                writeResource(w, timestamp, curi.getContentType(), baseid,
+                writeResponse(w, timestamp, curi.getContentType(), baseid,
                     curi, r);
             } else {
                 logger.warning("No handler for scheme " + lowerCaseScheme);
@@ -210,16 +210,12 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
         return uid;
     }
     
-    protected URI writeResource(final ExperimentalWARCWriter w,
+    protected URI writeResponse(final ExperimentalWARCWriter w,
             final String timestamp, final String mimetype,
             final URI baseid, final CrawlURI curi,
             final ANVLRecord namedFields) 
     throws IOException {
-    	// I used to 'qualify' resource record ids with 'type=resource' but
-    	// remove it.  Since resource is the record that all others relate to
-    	// -- e.g. metadata, request -- no need of the qualification. Also
-    	// underlines notion that this is the cornerstone record.
-        w.writeResourceRecord(curi.toString(), timestamp, mimetype, baseid,
+        w.writeResponseRecord(curi.toString(), timestamp, mimetype, baseid,
             namedFields,
             curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
             curi.getHttpRecorder().getRecordedInput().getSize());
