@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.deciderules.DecidingScope;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.Filter;
@@ -63,7 +64,7 @@ import org.archive.net.UURI;
  * no URIs will pass the filter and thus be excluded.
  *
  * @author gojomo
- *
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingScope}.
  */
 public class PathScope extends SeedCachingScope {
 
@@ -80,7 +81,8 @@ public class PathScope extends SeedCachingScope {
     public PathScope(String name) {
         super(name);
         setDescription(
-            "PathScope: A scope for path crawls. Crawls made with this scope" +
+            "PathScope: A scope for path crawls *Deprecated* Use " +
+            "DecidingScope instead. Crawls made with this scope" +
             " will be limited to a specific portion of the hosts its seeds" +
             " provide. More specifically the paths those seeds provide." +
             " For example if one of the seeds is 'archive.org/example/'" + 

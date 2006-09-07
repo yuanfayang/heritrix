@@ -30,6 +30,8 @@ import javax.management.AttributeNotFoundException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecidingFilter;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.net.UURI;
@@ -40,7 +42,8 @@ import org.archive.net.UURI;
  * value.
  *
  * @author Igor Ranitovic
- *
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingFilter} and
+ * equivalent {@link DecideRule}.
  */
 public class PathDepthFilter extends Filter {
     private static final Logger logger =
@@ -55,7 +58,8 @@ public class PathDepthFilter extends Filter {
      * @param name
      */
     public PathDepthFilter(String name) {
-        super(name, "Path depth less or equal filter");
+        super(name, "Path depth less or equal filter  *Deprecated* Use" +
+        		"DecidingFilter and equivalent DecideRule instead.");
         addElementToDefinition(new SimpleType(ATTR_MAX_PATH_DEPTH, "Max path" +
                 " depth for which this filter will match", maxPathDepth));
         addElementToDefinition(new SimpleType(ATTR_MATCH_RETURN_VALUE,

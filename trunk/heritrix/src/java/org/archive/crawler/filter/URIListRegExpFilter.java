@@ -31,6 +31,8 @@ import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecidingFilter;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.StringList;
@@ -46,6 +48,8 @@ import org.archive.util.TextUtils;
 * @author Kristinn Sigurdsson
 * 
 * @see org.archive.crawler.filter.URIRegExpFilter
+* @deprecated As of release 1.10.0.  Replaced by {@link DecidingFilter} and
+* equivalent {@link DecideRule}.
 */
 public class URIListRegExpFilter
 extends Filter {
@@ -63,8 +67,10 @@ extends Filter {
     * @param name Filter name.
     */
    public URIListRegExpFilter(String name) {
-       super(name, "A filter that uses a list of regular expressions. Can be " +
-               "optionally either OR or AND based in its evaluation.");
+       super(name, "A filter that uses a list of regular expressions " +
+       		"*Deprecated* Use DecidingFilter and equivalent DecideRule " +
+       		"instead. Can be " +
+             "optionally either OR or AND based in its evaluation.");
        addElementToDefinition(
                new SimpleType(ATTR_MATCH_RETURN_VALUE, "What to return when" +
                    " regular expression matches. \n", 

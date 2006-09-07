@@ -38,6 +38,7 @@ import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.filter.URIRegExpFilter;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.prefetch.QuotaEnforcer;
 import org.archive.crawler.scope.ClassicScope;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SimpleType;
@@ -61,6 +62,8 @@ import org.archive.crawler.settings.Type;
  * download <code>max-docs</code> total in the overridden domain. 
  *
  * @author Oskar Grenholm <oskar dot grenholm at kb dot se>
+ * @deprecated As of release 1.10.0.  Replaced by {@link BdbFrontier} and
+ * {@link QuotaEnforcer}.
  */
 public class DomainSensitiveFrontier extends BdbFrontier
 implements CrawlURIDispositionListener {
@@ -82,7 +85,8 @@ implements CrawlURIDispositionListener {
     private String counterMode;
 
     public DomainSensitiveFrontier(String name) {
-        super(ATTR_NAME, "DomainSensitiveFrontier. " +
+        super(ATTR_NAME, "DomainSensitiveFrontier. *Deprecated* Use " +
+        	"BdbFrontier+QuotaEnforcer instead. " +
             "Overrides BdbFrontier to add specification of number of " +
             "documents to download (Expects 'exclude-filter' " +
             "to be part of CrawlScope).");

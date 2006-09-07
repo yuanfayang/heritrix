@@ -30,7 +30,7 @@ package org.archive.queue;
  * remove from only the 'head' end.
  *
  * @author gojomo
- *
+ * @deprecated As of 1.10.0. Unused.
  */
 public interface Deque extends Queue, Stack {
     /** combines queue and stack */

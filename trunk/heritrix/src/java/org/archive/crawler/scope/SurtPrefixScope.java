@@ -29,6 +29,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.deciderules.DecidingScope;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
@@ -46,7 +47,7 @@ import org.archive.util.SurtPrefixSet;
  * Specifically, SurtPrefixScope uses a SurtFilter to test for focus-inclusion.
  * 
  * @author gojomo
- *  
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingScope}.
  */
 public class SurtPrefixScope extends RefinedScope {
     public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
@@ -69,9 +70,10 @@ public class SurtPrefixScope extends RefinedScope {
     public SurtPrefixScope(String name) {
         super(name);
         setDescription(
-                  "SurtPrefixScope: A scope for crawls limited to regions of "
-                + "the web defined by a set of SURT prefixes. (The SURT form of "
-                + "a URI has its hostname reordered to ease sorting and "
+                "SurtPrefixScope: A scope for crawls limited to regions of " +
+                "the web defined by a set of SURT prefixes *Deprecated* " +
+                "Use DecidingScope instead. (The SURT form of " +
+                "a URI has its hostname reordered to ease sorting and "
                 + "grouping by domain hierarchies.)");
         addElementToDefinition(
                 new SimpleType(ATTR_SURTS_SOURCE_FILE, 

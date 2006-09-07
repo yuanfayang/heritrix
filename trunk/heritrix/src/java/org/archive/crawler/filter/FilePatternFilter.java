@@ -41,6 +41,8 @@ import org.archive.crawler.settings.SimpleType;
  * expression pattern accepting matches.
  *
  * @author Igor Ranitovic
+ * @deprecated As of release 1.10.0.  Replaced by
+ * {@link MatchesFilePatternDecideRule}.
  */
 public class FilePatternFilter extends URIRegExpFilter {
     private static final Logger logger =
@@ -69,7 +71,8 @@ public class FilePatternFilter extends URIRegExpFilter {
      */
     public FilePatternFilter(String name) {
         super(name);
-        setDescription("A URI path suffix filter.\n " +
+        setDescription("A URI path suffix filter *Deprecated* Use" +
+        		"DecidingFilter and MatchesFilePatternDecideRule instead. " +
             "All URLs that end with the specified pattern(s) will be added " +
             "to the scope's focus. Default file patterns are:\n.avi, .bmp, " +
             ".doc, .gif, .jp(e)g, .mid, .mov, .mp2, .mp3, .mp4, .mpeg, " +

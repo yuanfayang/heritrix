@@ -29,6 +29,8 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecidingFilter;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.util.TextUtils;
@@ -39,6 +41,8 @@ import org.archive.util.TextUtils;
  * against a regular expression, accepting matches.
  *
  * @author Gordon Mohr
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingFilter} and
+ * equivalent {@link DecideRule}.
  */
 public class URIRegExpFilter
 extends Filter {
@@ -51,7 +55,8 @@ extends Filter {
      * @param name Filter name.
      */
     public URIRegExpFilter(String name) {
-        this(name, "URI regexp filter.", "");
+        this(name, "URI regexp filter *Deprecated* Use DecidingFilter and " +
+        	"equivalent DecideRule instead. ", "");
         addElementToDefinition(
             new SimpleType(ATTR_MATCH_RETURN_VALUE, "What to return when" +
                 " regular expression matches. \n", new Boolean(true)));

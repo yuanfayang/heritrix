@@ -30,7 +30,11 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecidingFilter;
 import org.archive.crawler.framework.Filter;
+import org.archive.crawler.frontier.BdbFrontier;
+import org.archive.crawler.prefetch.QuotaEnforcer;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SimpleType;
@@ -42,7 +46,8 @@ import org.archive.crawler.settings.SimpleType;
  * also accept it.
  *
  * @author gojomo
- *
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingFilter} and
+ * {@link DecideRule}.
  */
 public class OrFilter extends Filter {
     private static final Logger logger =
@@ -61,7 +66,8 @@ public class OrFilter extends Filter {
     public OrFilter(String name) {
         super(
             name,
-            "OR Filter. \nA filter that serves as a placeholder for other" +
+            "OR Filter *Deprecated* Use DecidingFilter instead. " +
+            "A filter that serves as a placeholder for other" +
             " filters whose functionality should be logically OR'ed together.");
 
         addElementToDefinition(
