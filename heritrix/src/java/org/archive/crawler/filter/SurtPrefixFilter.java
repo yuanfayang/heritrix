@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecidingFilter;
 import org.archive.crawler.framework.Filter;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.util.SURT;
@@ -38,6 +40,8 @@ import org.archive.util.SurtPrefixSet;
  * returns the chosen true/false accepts value. 
  * 
  * @author gojomo
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingFilter} and
+ * equivalent {@link DecideRule}.
  */
 public class SurtPrefixFilter extends Filter {
     public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
@@ -49,7 +53,8 @@ public class SurtPrefixFilter extends Filter {
      * @param name
      */
     public SurtPrefixFilter(String name) {
-        super(name, "SURT prefix filter");
+        super(name, "SURT prefix filter *Deprecated* Use" +
+        		"DecidingFilter and equivalent DecideRule instead.");
         addElementToDefinition(
             new SimpleType(ATTR_MATCH_RETURN_VALUE, "What to return when " +
                     "a prefix matches.\n", new Boolean(true)));

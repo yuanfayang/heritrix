@@ -25,6 +25,7 @@ package org.archive.crawler.scope;
 
 import java.util.Iterator;
 
+import org.archive.crawler.deciderules.DecidingScope;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.Filter;
@@ -61,7 +62,7 @@ import org.archive.net.UURI;
  * no URIs will pass the filter and thus be excluded.
  *
  * @author gojomo
- *
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingScope}.
  */
 public class HostScope extends SeedCachingScope {
 
@@ -76,7 +77,8 @@ public class HostScope extends SeedCachingScope {
     public HostScope(String name) {
         super(name);
         setDescription(
-            "HostScope: A scope for host crawls. Crawls made with this scope" +
+            "HostScope: A scope for host crawls *Deprecated* Use " +
+            "DecidingScope instead. Crawls made with this scope" +
             " will be limited to the hosts its seeds. Thus if one of" +
             " the seeds is 'archive.org' the subdomain" +
             " 'crawler.archive.org' will not be crawled." +

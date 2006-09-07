@@ -29,6 +29,7 @@ package org.archive.queue;
  * Simple Stack: supports add and remove at top.
  *
  * @author gojomo
+ * @deprecated As of 1.10.0. Unused.
  */
 public interface Stack {
     /**

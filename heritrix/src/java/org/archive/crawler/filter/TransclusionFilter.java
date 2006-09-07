@@ -26,6 +26,8 @@ package org.archive.crawler.filter;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecidingFilter;
 import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Filter;
@@ -38,6 +40,8 @@ import org.archive.crawler.settings.SimpleType;
  * discovery path.
  *
  * @author Gordon Mohr
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingFilter} and
+ * equivalent {@link DecideRule}.
  */
 public class TransclusionFilter extends Filter {
     private static final String ATTR_MAX_SPECULATIVE_HOPS =
@@ -79,7 +83,8 @@ public class TransclusionFilter extends Filter {
      * @param name
      */
     public TransclusionFilter(String name) {
-        super(name, "Transclusion filter");
+        super(name, "Transclusion filter *Deprecated* Use" +
+        		"DecidingFilter and equivalent DecideRule instead.");
 
         addElementToDefinition(
             new SimpleType(

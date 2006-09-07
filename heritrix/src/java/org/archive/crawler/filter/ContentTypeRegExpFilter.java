@@ -23,6 +23,7 @@
 package org.archive.crawler.filter;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecidingScope;
 import org.archive.util.TextUtils;
 
 /**
@@ -30,9 +31,12 @@ import org.archive.util.TextUtils;
  *
  * @author Tom Emerson
  * @version $Date$, $Revision$
+ * @deprecated As of release 1.10.0.  To be replaced by an equivalent
+ * {@link DecideRule}.
  */
 public class ContentTypeRegExpFilter extends URIRegExpFilter {
-    private static final String DESCRIPTION = "ContentType regexp filter.\n" +
+    private static final String DESCRIPTION = "ContentType regexp filter" +
+    		"*Deprecated* To be replaced by an equivalent DecideRule. " +
         "Cannot be used until after fetcher processors. Only then is the" +
         " Content-Type known. A good place for this filter is at" +
         " the writer step processing.  If the content-type is null," +

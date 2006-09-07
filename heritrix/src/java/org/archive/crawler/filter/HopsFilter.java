@@ -40,7 +40,8 @@ import org.archive.crawler.scope.ClassicScope;
  * value.
  *
  * @author gojomo
- *
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingFilter} and
+ * equivalent {@link DecideRule}.
  */
 public class HopsFilter extends Filter {
     private static final Logger logger =
@@ -50,7 +51,8 @@ public class HopsFilter extends Filter {
      * @param name
      */
     public HopsFilter(String name) {
-        super(name, "Hops filter");
+        super(name, "Hops filter *Deprecated* Use" +
+            "DecidingFilter and equivalent DecideRule instead");
     }
 
     int maxLinkHops = Integer.MAX_VALUE;

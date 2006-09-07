@@ -29,6 +29,8 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecideRule;
+import org.archive.crawler.deciderules.DecidingFilter;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 
@@ -41,6 +43,8 @@ import org.archive.crawler.settings.Type;
  * filter returns TRUE if the path is pathological.  FALSE otherwise.
  *
  * @author John Erik Halse
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingFilter} and
+ * equivalent {@link DecideRule}.
  */
 public class PathologicalPathFilter extends URIRegExpFilter {
     private static final Logger logger =
@@ -59,7 +63,9 @@ public class PathologicalPathFilter extends URIRegExpFilter {
      */
     public PathologicalPathFilter(String name) {
         super(name);
-        setDescription("Pathological path filter. \nThe Pathologicalpath filter" +
+        setDescription("Pathological path filter *Deprecated* Use" +
+        		"DecidingFilter and equivalent DecideRule instead. " +
+        		"The Pathologicalpath filter" +
                 " is used to avoid crawler traps by adding a constraint on" +
                 " how many times a pattern in the URI could be repeated." +
                 " Returns false if the path is NOT pathological (There" +

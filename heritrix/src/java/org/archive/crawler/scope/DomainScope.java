@@ -27,9 +27,12 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.deciderules.DecidingScope;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.Filter;
+import org.archive.crawler.frontier.BdbFrontier;
+import org.archive.crawler.prefetch.QuotaEnforcer;
 import org.archive.net.UURI;
 
 /**
@@ -63,7 +66,7 @@ import org.archive.net.UURI;
  * no URIs will pass the filter and thus be excluded.
  *
  * @author gojomo
- *
+ * @deprecated As of release 1.10.0.  Replaced by {@link DecidingScope}.
  */
 public class DomainScope extends SeedCachingScope {
     private static final Logger logger =
@@ -80,7 +83,8 @@ public class DomainScope extends SeedCachingScope {
     public DomainScope(String name) {
         super(name);
         setDescription(
-            "DomainScope: A scope for domain crawls. Crawls made with this" +
+            "DomainScope: A scope for domain crawls *Deprecated* Use " +
+            "DecidingScope instead. Crawls made with this" +
             " scope will be limited to the domain of its seeds. It will" +
             " however reach subdomains of the seeds' original domains." +
             " www[#].host is considered to be the same as host.");
