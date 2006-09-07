@@ -34,25 +34,15 @@ import junit.framework.TestCase;
  * @version $Revision$ $Date$
  */
 public class UUIDGeneratorTest extends TestCase {
-
 	public void testQualifyRecordID() throws URISyntaxException {
 		Generator g = new UUIDGenerator();
 		URI uri = g.getRecordID();
 		Map<String, String> qualifiers = new HashMap<String, String>();
 		qualifiers.put("a", "b");
 		URI nuURI = g.qualifyRecordID(uri, qualifiers);
-		boolean exception = false;
-		try {
-			// Should be exception because new UUID URI will not be different
-			// from the one passed.
-			g.qualifyRecordID(nuURI, qualifiers);
-		} catch (URISyntaxException u) {
-			exception = true;
-		}
-		assertTrue(exception);
+		assertNotSame(uri, nuURI);
 		qualifiers.put("c", "d");
 		nuURI = g.qualifyRecordID(nuURI, qualifiers);
-		qualifiers.put("e", "f");
-		g.qualifyRecordID(nuURI, qualifiers);
+		assertNotSame(uri, nuURI);
 	}
 }
