@@ -4115,7 +4115,179 @@ Mozilla/5.0 (compatible; os-heritrix/0.11.0 +http://loc.gov on behalf to the Lib
   </affiliation>
         </author>
     </appendixinfo>
+<para> There are many different ways you may perform a web crawl. Here
+we have listed several use cases which will allow you to become familiar
+with some of Heritrix's more frequently used crawling parameters.</para>
 
+<sect2>
+
+<title>Avoiding Too Much Dynamic Content</title>
+
+<para> Suppose you want to crawl only pages from a particular host
+(<literal>http://www.foo.org/</literal>), and you want to avoid crawling
+too many pages of the dynamically generated calendar.  Let's say the
+calendar is accessed by passing a year, month and day to the
+<literal>calendar</literal> directory, as in
+<literal>http://www.foo.org/calendar?year=2006&amp;month=3&amp;day=12</literal>.
+</para>
+
+<para>When you first create the job for this crawl, you will specify a
+single seed URI: <literal>http://www.foo.org/</literal>. By default,
+your new crawl job will use the DecidingScope, which will contain a
+default set of DecideRules. One of the default rules is the
+SurtPrefixedDecideRule, which tells Heritrix to accept any URIs that
+match our seed URI's SURT prefix,
+<literal>http://(org,foo,www,)/</literal>. Subsequently, if the URI
+<literal>http://foo.org/</literal> is encountered, it will be rejected
+since its SURT prefix <literal>http://(org,foo,)</literal> does not
+match the seed's SURT prefix. To allow both <literal>foo.org</literal>
+and <literal>www.foo.org</literal>, you could use the two seeds
+<literal>http://foo.org/</literal> and
+<literal>http://www.foo.org/</literal>.  To allow every subdomain of
+<literal>foo.org</literal>, you could use the seed
+<literal>http://foo.org</literal> (note the absence of a trailing
+slash).</para>
+
+<para>You will need to delete the TransclusionDecideRule since this rule
+has the potential to lead Heritrix onto another host. For example, if a
+URI returned a 301 (moved permanently) or 302 (found) response code and
+a URI with a different host name, Heritrix would accept this URI using
+the TransclusionDecideRule. Removing this rule will keep Heritrix from
+straying off of our <literal>www.foo.org</literal> host.</para>
+
+<para>A few of the rules like PathologicalPathDecideRule and
+TooManyPathSegmentsDecideRule will allow Heritrix to avoid some types of
+crawler traps. The TooManyHopsDecideRule will keep Heritrix from
+following too many links away from the seed so the calendar
+doesn't trap Heritrix in an infinite loop. By default, the hop
+path is set to 15, but you can change that on the Settings screen. </para>
+
+<para>Alternatively, you may add the MatchesFilePatternDecideRule.
+Set <literal>use-preset-pattern</literal> to <literal>CUSTOM</literal> and set
+<literal>regexp</literal> to something like:</para>
+
+<computeroutput>
+.*foo\.org(?!/calendar).*|.*foo\.org/calendar\?year=200[56].*
+</computeroutput>
+
+<para>Finally, you'll need to set the <literal>user-agent</literal> and <literal>from</literal>
+fields on the Settings screen, and then you may submit the job and
+monitor the crawl.</para>
+
+</sect2>
+
+<sect2>
+
+<title>Only Store Successful HTML Pages</title>
+
+<para>Suppose you wanted to only grab the first 50 pages encountered
+from a set of seeds and archive only those pages that return a 200
+response code and have the <literal>text/html</literal> MIME type.
+Additionally, you only want to look for links in HTML resources.</para>
+
+<para> When you create your job, use the DecidingScope with the default
+set of DecideRules.</para>
+
+<para> In order to examine HTML documents only for links, you will need
+to remove the following extractors that tell Heritrix to look for links
+in style sheets, JavaScript, and Flash files:</para>
+
+<orderedlist>
+<listitem>ExtractorCSS</listitem>
+<listitem>ExtractorJS</listitem>
+<listitem>ExtractorSWF</listitem>
+</orderedlist>
+
+<para>You should leave in the ExtractorHTTP since it is useful in locating
+resources that can only be found using a redirect (301 or 302).</para>
+
+<para>You can limit the number of files to download by setting
+max-document-download on the Settings screen. Setting this value to 50
+will probably not have the results you intend. Since each DNS response
+and robots.txt file is counted in this number, you'll likely want
+to use the value of 50 * number of seeds * 2. </para>
+
+<para>Next, you will need to add filters to the ARCWriterProcessor so
+that it only records documents with a 200 status code and a mime-type of
+text/html.  The first filter to add is the ContentTypeRegExpFilter; set
+its <literal>regexp</literal> setting to <literal>text/html.*</literal>. 
+Next, add a DecidingFilter to the ARCWriterProcessor, then add
+FetchStatusDecideRule to the DecidingFilter. </para>
+
+<para>You'll probably want to apply the above filters to the
+<literal>mid-fetch-filters</literal> setting of FetchHTTP as well.  That
+will prevent FetchHTTP from downloading the content of any non-html or
+non-successful documents.</para>
+
+<para> Once you have entered the desired settings, start the job and
+monitor the crawl.</para>
+
+</sect2>
+
+<sect2>
+<title>Mirroring .html Files Only</title>
+
+<para>Suppose you only want to crawl URLs that match
+<literal>http://foo.org/bar/*.html</literal>, and you'd like to save the
+crawled files in a file/directory format instead of saving them in ARC
+files.  Suppose you also know that you are crawling a web server that is
+case sensitive (<literal>http://foo.org/bar/abc.html</literal> and
+<literal>http://foo.org/bar/ABC.HTML</literal> are pointing to two
+different resources).</para>
+
+<para>You would first need to create a job with the single seed
+http://foo.org/bar/.  You'll need to add the MirrorWriterProcessor on
+the Modules screen and delete the ARCWriterProcessor. This will store
+your files in a directory structure that matches the crawled URIs, and
+the files will be stored in the crawl job's <filename>mirror</filename>
+directory.</para>
+
+<para>Your job should use the DecidingScope with the following set of
+DecideRules:</para>
+
+<orderedlist>
+<listitem>RejectDecideRule</listitem>
+<listitem>SurtPrefixedDecideRule</listitem>
+<listitem>TooManyHopsDecideRule</listitem>
+<listitem>PathologicalPathDecideRule</listitem>
+<listitem>TooManyPathSegmentsDecideRule</listitem>
+<listitem>NotMatchesFilePatternDecideRule</listitem>
+<listitem>PrerequisiteAcceptDecideRule</listitem>
+</orderedlist>
+
+<para> We are using the NotMatchesFilePatternDecideRule so we can
+eliminate crawling any URIs that don't end with
+<literal>.html</literal>. It's important that this DecideRule be placed
+immediately before PrerequisiteAcceptDecideRule; otherwise the DNS and
+robots.txt prerequisites will be rejected since they won't match the
+regexp.</para>
+
+<para> On the Setting screen, you'll want to set the following for the
+NotMatchesFilePatternDecideRule:</para>
+
+<orderedlist>
+<listitem>decision: REJECT</listitem>
+<listitem>use-preset-pattern: CUSTOM</listitem>
+<listitem>regexp: .*(/|\.html)$</listitem>
+</orderedlist>
+
+<para> Note that the regexp will accept URIs that end with / as well as
+.html. If we don't accept the /, the seed URI will be rejected. This
+also allows us to accept URIs like http://foo.org/bar/dir/ which are
+likely pointing to index.html. A stricter regexp would be .*\.html$, but
+you'll need to change your seed URI if you use it. One thing to be aware
+of: if Heritrix encounters the URI http://foo.org/bar/dir where dir is a
+directory, the URI will be rejected since it is missing the terminating
+slash.</para>
+
+<para>Finally you'll need to allow Heritrix to differentiate between
+abc.html and ABC.HTML. Do this by removing the LowercaseRule under
+uri-canonicalization-rules on the Submodules screen. </para>
+
+<para> Once you have entered the desired settings, start the job and
+monitor the crawl. </para>
+	
+</sect2>
   </appendix>
 
   <glossary id="glossary">
