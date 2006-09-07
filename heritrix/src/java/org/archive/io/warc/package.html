@@ -28,12 +28,11 @@ respectively.  Pass <code>--help</code> to learn how to use each tool.
 <p>WARC requires a GUID for each record written. A configurable unique ID
 {@link org.archive.uid.GeneratorFactory}, it can be configured to use alternate
 unique ID generators, was added with a default of
-{@link org.archive.uid.UUIDGenerator}.  The default generates
+{@link org.archive.uid.UUIDGenerator}.  The default implementation generates
 <a url="http://en.wikipedia.org/wiki/UUID">UUIDs</a> (using java5
-<code>java.util.UUID</code>) using an 'invented' <code>uuid</code> scheme.
-See {@link org.archive.uid} for how to add in alternate GUID generators and
-for read {@link org.archive.uid.UUIDGenerator} class notes for issues with
-UUID as currently implemented.</p>
+<code>java.util.UUID</code>) with the <code>urn</code> scheme [See
+<a href="http://www.ietf.org/rfc/rfc4122.txt">RFC4122</a>].
+</p>
 
 <h3>{@link org.archive.util.anvl ANVL}</h3>
 <p>The ANVL RFC822-like format is used writing <code>Named Fields</code> in
