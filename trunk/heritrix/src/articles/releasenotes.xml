@@ -45,6 +45,11 @@
        <para>See <ulink url="1_8_0.html#bdb_nfs" />.</para>
       </sect3>
     </sect2>
+    <sect2 id="old_checkpoints_and_old_order_files">
+        <title>Pre-1.10.0 checkpoints</title>
+        <para>For sure 1.8.0 checkpoints will not be recoverable with 1.10.0.
+        </para>
+    </sect2>
     <sect2 id="1_10_0_changes">
         <title>Changes</title>
         <sect3 id="admindefaults">
