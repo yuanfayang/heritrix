@@ -91,7 +91,9 @@
         <sect3 id="1_10_0canonicalization">
             <title>URL canonicalization changes</title>
             <para>In 1.10.0, URL canonicalization has changed in two ways. First,
-            the stripping of sessionids has improved.  Previous, if the sessionid
+            the stripping of sessionids has improved [See <ulink 
+            url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1550797&amp;group_id=73833&amp;atid=539099">Stripping
+            sessionid can leave behind doubled ampersands</ulink>]. Previous, if the sessionid
             was in the middle of a query string bookended by other query parameters,
             canonicalization would leave behind the encasing ampersands: E.g.
             If the URL <literal>http://a.com/?a=1&amp;sid=00000000000000000000000000000000&amp;b=1</literal>
@@ -99,7 +101,9 @@
             <literal>http://a.com/?a=1&amp;&amp;b1</literal>.  This has been fixed so that
             the result will now be: <literal>http://a.com/?a=1&amp;b1</literal>.
             </para>
-            <para>The second change adds the new coldfusion sessionid stripper
+            <para>The second change, <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1550805&amp;group_id=73833&amp;atid=539102">[ 1550805 ]
+            Add stripping of coldfusion sessionids</ulink>,
+            adds the new coldfusion sessionid stripper
             to the list of default canonicalization rules.
             </para>
             <para>We bring your attention to these seemingly minor changes
@@ -115,9 +119,9 @@
             final and so are both subject to change with no guarantees
 			of backward compatibility: i.e. newer readers may not be able to 
 			read WARCs written with older writers.  See the <ulink 
-            url="/apidocs/org/archive/io/warc/package-summary.html">org.archive.io.warc</ulink> package documentation for more on the current state of code
-            including documentation of initial version of 
-            <code>Arc2Warc</code> and <code>Warc2Arc</code> tools. 
+            url="/apidocs/org/archive/io/warc/package-summary.html">org.archive.io.warc</ulink>
+            package documentation for more on the current state of code including documentation
+            of initial version of <code>Arc2Warc</code> and <code>Warc2Arc</code> tools. 
             </para>
         </sect3>
         <sect3>
