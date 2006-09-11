@@ -2537,7 +2537,7 @@ public class SimpleExtractor extends Processor
     that all unit tests pass, that the embryonic 
     <ulink url="http://crawler.archive.org/cgi-bin/wiki.pl?CrawlTestPlan">test
     plan</ulink> has been exercised,
-    and that general usage shows HEAD -- or BRANCH --to be release
+    and that general usage shows HEAD -- or BRANCH -- to be release
     worthy.</para>
 
     <orderedlist>
@@ -2553,8 +2553,7 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Update releasenotes.xml
-       bugs and RFEs closed since last
+        <para>Update releasenotes.xml bugs and RFEs closed since last
         release (Looking at CVS history to figure what's changed is too
         hard; All major changes should have associated BUG and RFE).</para>
       </listitem>
@@ -2570,30 +2569,16 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Update the README.txt.</para>
-
-        <para>To get a manageable list of changes for the README, do html2txt
-        on maven generated changes-report.html xdocs (I did 'cat PAGE.html|
-        w3m -dump -T text/html &gt; PAGE.txt', catted the product together and
-        then did vi regex'ing to clean out website navigations and extra
-        whitespace).</para>
-
-        <para>To get the list of dependencies for the README, use the
-        stylesheet in src/scripts named <literal>dependencies.xsl</literal>
-        and run it against <literal>project.xml</literal> (I used
-        <literal>xslproc</literal>).</para>
-
-        <para>Otherwise, for the rest of the README, I used the stylesheet in
-        src/scripts named <literal>xdocToTxt.xsl</literal> and ran it against
-        <literal>./xdoc/*</literal> pages manually concatenating the output
-        into a README.</para>
+        <para>Update the README.txt (We used to include in README text-only version
+        of dependencies list, release notes including items fixed but now we just
+        point to the pertintent html).</para>
       </listitem>
 
       <listitem>
         <para>Commit all changes made above all in the one commit with a log
         message about new release. Commit files with the new version, the
-        the README.txt, home page, and
-        all changes in documentation including the changelog additions.</para>
+        README.txt, home page, and all changes in documentation including the changelog
+        additions.</para>
       </listitem>
 
       <listitem>
@@ -2605,8 +2590,7 @@ public class SimpleExtractor extends Processor
       <listitem>
         <para>Build the cruisecontrol produced src distribution
         version.  Be sure to build with appropriate JVM: e.g. I have to build
-        with
-        1.5.0 on my desktop because its 260 kernel (Heritrix won't build if
+        with 1.5.0 on my desktop because its 260 kernel (Heritrix won't build if
         use 1.4.x jvm on 260 kernel).  Building w/ 150 produces a package
         that can only run on 150 jvms (This is in spite of flags to maven
         telling maven the target is 14x jvm).</para>
