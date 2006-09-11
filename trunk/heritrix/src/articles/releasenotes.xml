@@ -12,9 +12,11 @@
     </authorgroup>
   </articleinfo>
    <sect1 id="1_10_0">
-    <title>Release 1.10.0 - TBD</title>
+    <title>Release 1.10.0 - 09/11/2006</title>
     <abstract>
-      <para>Release 1.10.0 adds...</para>
+      <para>Release 1.10.0 adds new configuration options, experimental 
+      new protocol and format support, and lots of fixes. 43 tracked bugs 
+      have been fixed and 35 feature requests added."</para>
       
       <para>Release 1.10.0 requires JDK 1.5.x ("Java 5") Java 
       facilities.</para>
@@ -60,7 +62,7 @@
          web UI listened on all available network interfaces.  In 1.10.0,
          Jetty will only bind to localhost by default.  The -b or --bind
          command-line argument can be used to specify a different interface
-         or list of interfaces to bind to instead. You may specify '/' to
+         or list of interfaces to bind to instead. You may specify "-b /" to
          get the old behavior -- binding on all interfaces -- but only take
          this step after reading section 2.3 of the User Manual, "Security
          Considerations". 
