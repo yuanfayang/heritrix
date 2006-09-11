@@ -2589,11 +2589,7 @@ public class SimpleExtractor extends Processor
 
       <listitem>
         <para>Build the cruisecontrol produced src distribution
-        version.  Be sure to build with appropriate JVM: e.g. I have to build
-        with 1.5.0 on my desktop because its 260 kernel (Heritrix won't build if
-        use 1.4.x jvm on 260 kernel).  Building w/ 150 produces a package
-        that can only run on 150 jvms (This is in spite of flags to maven
-        telling maven the target is 14x jvm).</para>
+        version.</para>
       </listitem>
 
       <listitem>

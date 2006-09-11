@@ -16,7 +16,7 @@
     <abstract>
       <para>Release 1.10.0 adds new configuration options, experimental 
       new protocol and format support, and lots of fixes. 43 tracked bugs 
-      have been fixed and 35 feature requests added."</para>
+      have been fixed and 35 feature requests added.</para>
       
       <para>Release 1.10.0 requires JDK 1.5.x ("Java 5") Java 
       facilities.</para>
@@ -40,8 +40,9 @@
 
     <sect2 id="1_10_0_limitations">
       <title>Known Limitations/Issues</title>
-       <sect3 id="bdb_nfs"><title>java.io.IOException: No locks available</title>
-       <para>See <ulink url="#bdb_nfs" />.</para>
+       <sect3 id="1_10_0_limitations_bdb_nfs">
+        <title>java.io.IOException: No locks available</title>
+       <para>See <ulink url="1_8_0.html#bdb_nfs" />.</para>
       </sect3>
     </sect2>
     <sect2 id="1_10_0_changes">
@@ -103,7 +104,7 @@
             <literal>http://a.com/?a=1&amp;&amp;b1</literal>.  This has been fixed so that
             the result will now be: <literal>http://a.com/?a=1&amp;b1</literal>.
             </para>
-            <para>The second change, <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1550805&amp;group_id=73833&amp;atid=539102">[ 1550805 ]
+            <para>The second change, <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1550805&amp;group_id=73833&amp;atid=539102">[1550805]
             Add stripping of coldfusion sessionids</ulink>,
             adds the new coldfusion sessionid stripper
             to the list of default canonicalization rules.
@@ -157,7 +158,6 @@
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1549665&amp;group_id=73833&amp;atid=539102">1549665</ulink></entry><entry>Add</entry><entry>Add experimental Warc2Arc and Arc2Warc scripts</entry><entry>2006-08-30</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1546829&amp;group_id=73833&amp;atid=539102">1546829</ulink></entry><entry>Add</entry><entry>Secure admin UI: Bind cmd-line argument</entry><entry>2006-08-25</entry><entry>karl-ia</entry><entry>stack-sf</entry></row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1545600&amp;group_id=73833&amp;atid=539102">1545600</ulink></entry><entry>Add</entry><entry>remove default admin username/password</entry><entry>2006-08-23</entry><entry>karl-ia</entry><entry>gojomo</entry></row>
-<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1545471&amp;group_id=73833&amp;atid=539102">1545471</ulink></entry><entry>Add</entry><entry>Secure admin UI: SSL (Redux).</entry><entry>2006-08-23</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1536441&amp;group_id=73833&amp;atid=539102">1536441</ulink></entry><entry>Add</entry><entry>hash-based CrawlMapper</entry><entry>2006-08-08</entry><entry>karl-ia</entry><entry>gojomo</entry></row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1535744&amp;group_id=73833&amp;atid=539102">1535744</ulink></entry><entry>Add</entry><entry>force reread of disk settings (for out-of-JVM/bulk changes)</entry><entry>2006-08-06</entry><entry>karl-ia</entry><entry>gojomo</entry></row>
 <row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1534280&amp;group_id=73833&amp;atid=539102">1534280</ulink></entry><entry>Add</entry><entry>scriptable (beanshell) Processor, DecideRule options</entry><entry>2006-08-03</entry><entry>gojomo</entry><entry>gojomo</entry></row>
