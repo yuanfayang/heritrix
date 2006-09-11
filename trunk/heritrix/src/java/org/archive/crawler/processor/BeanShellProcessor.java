@@ -43,9 +43,9 @@ import bsh.Interpreter;
 /**
  * A processor which runs a BeanShell script on the CrawlURI.
  *
- * Script source may be provided directly as a setting, or via a file
- * local to the crawler, or both. (If both, the setting source will be
- * executed first, then the file script.) Script source should define
+ * Script source may be provided via a file
+ * local to the crawler. 
+ * Script source should define
  * a method with one argument, 'run(curi)'. Each processed CrawlURI is
  * passed to this script method. 
  * 
@@ -59,9 +59,6 @@ import bsh.Interpreter;
 public class BeanShellProcessor extends Processor implements FetchStatusCodes {
     private static final Logger logger =
         Logger.getLogger(BeanShellProcessor.class.getName());
-    
-    /** setting for script source code */
-    public final static String ATTR_SCRIPT_SOURCE = "script-source";
 
     /** setting for script file */
     public final static String ATTR_SCRIPT_FILE = "script-file"; 
@@ -86,10 +83,7 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
                 "The script may also access this BeanShellProcessor via" +
                 "the 'self' variable and the CrawlController via the " +
                 "'controller' variable.");
-        Type t = addElementToDefinition(new SimpleType(ATTR_SCRIPT_SOURCE,
-                "BeanShell script source", new TextField("")));
-        t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(ATTR_SCRIPT_FILE,
+        Type t = addElementToDefinition(new SimpleType(ATTR_SCRIPT_FILE,
                 "BeanShell script file", ""));
         t.setOverrideable(false);
         t = addElementToDefinition(new SimpleType(ATTR_ISOLATE_THREADS,
@@ -147,10 +141,6 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
         try {
             interpreter.set("self", this);
             interpreter.set("controller", getController());
-            
-            String source = 
-                ((TextField) getUncheckedAttribute(null, ATTR_SCRIPT_SOURCE)).toString();
-            interpreter.eval(source); 
             
             String filePath = (String) getUncheckedAttribute(null, ATTR_SCRIPT_FILE);
             if(filePath.length()>0) {
