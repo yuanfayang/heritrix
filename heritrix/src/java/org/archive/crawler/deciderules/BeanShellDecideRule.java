@@ -43,9 +43,7 @@ import bsh.Interpreter;
 /**
  * Rule which runs a groovy script to make its decision. 
  * 
- * Script source may be provided directly as a setting, or via a file
- * local to the crawler, or both. (If both, the setting source will be
- * executed first, then the file script.)
+ * Script source may be provided via a file local to the crawler.
  * 
  * Variables available to the script include 'object' (the object to be
  * evaluated, typically a CandidateURI or CrawlURI), 'self' 
@@ -60,9 +58,6 @@ public class BeanShellDecideRule extends DecideRule {
     private static final Logger logger =
         Logger.getLogger(BeanShellDecideRule.class.getName());
     
-    /** setting for script source code */
-    public final static String ATTR_SCRIPT_SOURCE = "script-source";
-
     /** setting for script file */
     public final static String ATTR_SCRIPT_FILE = "script-file"; 
 
@@ -79,7 +74,7 @@ public class BeanShellDecideRule extends DecideRule {
     public BeanShellDecideRule(String name) {
         super(name);
         setDescription("BeanShellDecideRule. Runs the BeanShell script " +
-                "source (supplied directly or via a file path) against " +
+                "source (supplied via a file path) against " +
                 "the current URI. Source should define a script method " +
                 "'decisionFor(object)' which will be passed the object" +
                 "to be evaluated and returns one of self.ACCEPT, " +
@@ -87,12 +82,9 @@ public class BeanShellDecideRule extends DecideRule {
                 "The script may access this BeanShellDecideRule via" +
                 "the 'self' variable and the CrawlController via the " +
                 "'controller' variable. Runs the groovy script source " +
-                "(supplied directly or via a file path) against the " +
+                "(supplied via a file path) against the " +
                 "current URI.");
-        Type t = addElementToDefinition(new SimpleType(ATTR_SCRIPT_SOURCE,
-                "BeanShell script source", new TextField("")));
-        t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(ATTR_SCRIPT_FILE,
+        Type t = addElementToDefinition(new SimpleType(ATTR_SCRIPT_FILE,
                 "BeanShell script file", ""));
         t.setOverrideable(false);
         t = addElementToDefinition(new SimpleType(ATTR_ISOLATE_THREADS,
@@ -145,7 +137,7 @@ public class BeanShellDecideRule extends DecideRule {
 
     /**
      * Create a new Interpreter instance, preloaded with any supplied
-     * source code or source file and the variables 'self' (this 
+     * source file and the variables 'self' (this 
      * BeanShellProcessor) and 'controller' (the CrawlController). 
      * 
      * @return  the new Interpreter instance
@@ -155,10 +147,6 @@ public class BeanShellDecideRule extends DecideRule {
         try {
             interpreter.set("self", this);
             interpreter.set("controller", getController());
-            
-            String source = 
-                ((TextField) getUncheckedAttribute(null, ATTR_SCRIPT_SOURCE)).toString();
-            interpreter.eval(source); 
             
             String filePath = (String) getUncheckedAttribute(null, ATTR_SCRIPT_FILE);
             if(filePath.length()>0) {
