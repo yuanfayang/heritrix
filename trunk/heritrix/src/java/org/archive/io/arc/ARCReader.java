@@ -680,6 +680,10 @@ implements ARCConstants {
             ARCReader arc = ARCReaderFactory.get(
             	new File((String)cmdlineArgs.get(0)), offset);
             arc.setStrict(strict);
+            // We must parse headers if we need to skip them.
+            if (format.equals(NOHEAD)) {
+                parse = true;
+            }
             arc.setParseHttpHeaders(parse);
             outputRecord(arc, format);
         } else {
@@ -688,6 +692,10 @@ implements ARCConstants {
                 try {
                 	ARCReader r = ARCReaderFactory.get(urlOrPath);
                 	r.setStrict(strict);
+                    // We must parse headers if we need to skip them.
+                    if (format.equals(NOHEAD)) {
+                        parse = true;
+                    }
                 	r.setParseHttpHeaders(parse);
                 	r.setDigest(digest);
                     output(r, format);
