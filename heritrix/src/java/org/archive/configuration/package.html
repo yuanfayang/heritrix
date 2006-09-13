@@ -68,9 +68,13 @@ TODO Static dynamic class.
     Implication is that Configuration has reference to Configurable Class.
     </li>
     <li>Configuration Design: How does it know list of implementations. Once
-    it has a Configurable Class, it can query for allowed values but bootstrapping    and then adding in new implementations and having them noticed?
+    it has a Configurable Class, it can query for allowed values but bootstrapping and
+    then adding in new implementations and having them noticed?
     Can't this just be a list in Configuration?  And then add to the list via
     the UI?  Add new implementations?
+    </li>
+    <li>Should Configurable#initialze go into a subclass of this interface?
+    Otherwise any COnfigurable has to implement Registry interface.
     </li>
     <li>Serializing: Write out all values or just whats other than default?
     Option?</li>
@@ -90,7 +94,28 @@ TODO Static dynamic class.
     <li>Paul Jack suggests using annotations to mark Configurable classes
     and for marking whats configurable rather than an Interface and
     leveraging OpenMBean self-description with description, defaults and
-    ranges. Investigate.
+    ranges. Investigate.  Would be sweet if could externalize all OpenMBean
+    info.
+    </li>
+    <li>Geronimo GBeans are very like but not MBeans (See <a
+    href="http://www-128.ibm.com/developerworks/library/os-ag-soapojo/index.html">Build
+    an SOA framework with Apache Geronimo and POJOs"</a> and particularly the table
+    1 here, <a 
+    href="http://www-128.ibm.com/developerworks/library/os-ag-jmx/index.html">Manage
+    Apache Geronimo with JMX</a>).
+    Attributes and operations descriptions are built up in a static block
+    at head of classes implementing GBeanLifeCycle to produce a static GBeanInfo
+    object (similar to how we build MBeanInfo in prototype code here) only even uglier.
+    See <a href="http://www.theserverside.com/news/thread.tss?thread_id=34309">Geronimo
+    GBean Architecture</a>. You manage Geronimo via JMX so for some reason
+    they judged it wise to adapt GBeans to produce MBean interfaces rather than just
+    make all MBeans (as in JBOSS).  I'm unable to find justification why apache Geronimo
+    crew would make something like MBeans but different and proprietary to Geronimo but
+    it must exist somewhere.  Here is all I've found to date from above cited 
+    Manage Apache ... with JMX: "Geronimo was created with JMX as the underlying kernel
+    infrastructure...This structure has changed slightly over time, because using JMX as
+    the framework for locating objects, interobject communication, method interception,
+    and so on was seen as a stretch for JMX."
     </li>
 </ul>
 

@@ -19,6 +19,8 @@ public interface Configurable {
 	 * components.  Its ok to keep a reference to the registry for
 	 * life of the configured code or to just use here in the configure
 	 * method and then let it go.
+	 * <p>TODO: Should this go into a subclass of this interface?  Otherwise
+	 * any COnfigurable has to implement Registry interface.
 	 * @return This configurable.
 	 * @throws ConfigurationException
 	 */
