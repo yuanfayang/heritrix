@@ -41,7 +41,7 @@
     </authorgroup>
   </articleinfo>
 
-  <sect1>
+  <sect1 id="introduction">
     <title>Introduction</title>
 
     <para>This manual is intended to be a starting point for users and
@@ -54,7 +54,7 @@
     interesting parts of the Javadoc documentation.</para>
   </sect1>
 
-  <sect1>
+  <sect1 id="building">
     <title>Obtaining and building Heritrix</title>
 
     <para></para>
@@ -322,7 +322,7 @@ ${package_declaration}</programlisting></para>
     </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="overview">
     <title>Overview of the crawler</title>
 
     <para>The Heritrix Web Crawler is designed to be modular. Which modules to
@@ -534,7 +534,7 @@ ${package_declaration}</programlisting></para>
     </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="settings">
     <title>Settings</title>
 
     <para>The settings framework is designed to be a flexible way to configure
@@ -1028,6 +1028,19 @@ public class Foo extends ModuleType {
           <filename>Processor.options</filename> file.
           The options files get built into the Heritrix jar.
       </para>
+      <para><quote>A little known fact about Heritrix: When trying to read
+modules/Processor.options Heritrix will concatenate any such files it finds
+on the classpath.
+This means that if you write your own processor and wrap it in a jar you can
+simply include in that jar a modules/Processor.options file with just the
+one line needed to add your processor. Then simply add the new jar to the
+$HERITRIX_HOME/lib directory and you are done. No need to mess with the
+Heritrix binaries.  For an example of how this is done, look at the code for
+this project: <ulink 
+url="http://vefsofnun.bok.hi.is/deduplicator/index.html">deduplicator</ulink>
+</quote> [Kristinn Sigurðsson on the mailing list,
+<ulink url="http://tech.groups.yahoo.com/group/archive-crawler/message/3281">3281</ulink>].
+      </para>
       </note>
 
       <para>If everything seems ok so far, then we are almost ready to write
@@ -1035,7 +1048,7 @@ public class Foo extends ModuleType {
     </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="uri">
     <title>Some notes on the URI classes</title>
 
     <para>URIs<footnote>
@@ -1140,7 +1153,7 @@ public class Foo extends ModuleType {
     </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="frontier">
     <title>Writing a Frontier</title>
 
     <para>As mentioned before, the Frontier is a pluggable module
@@ -1654,7 +1667,7 @@ public class MyFrontier extends ModuleType implements Frontier,
 
   </sect1>
 
-  <sect1>
+  <sect1 id="scope">
     <title>Writing a Scope</title>
 
     <para>A <ulink
@@ -1751,7 +1764,7 @@ public class MyFrontier extends ModuleType implements Frontier,
     <para></para>
   </sect1>
 
-  <sect1>
+  <sect1 id="processor">
     <title id="writing_a_processor">Writing a Processor</title>
 
     <para>All processors extend <ulink
@@ -2220,7 +2233,7 @@ public class SimpleExtractor extends Processor
     </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="statistics">
     <title>Writing a Statistics Tracker</title>
 
     <para>A Statistics Tracker is a module that monitors the crawl and records
@@ -2442,7 +2455,7 @@ public class SimpleExtractor extends Processor
     </sect2>
   </sect1>
 
-  <appendix>
+  <appendix id="futures">
     <title>Future changes in the API</title>
 
     <para>This appendix lists issues in the API that needs investigation and
@@ -2529,7 +2542,7 @@ public class SimpleExtractor extends Processor
     version would be 2.101.0.)</para>
   </appendix>
 
-  <appendix>
+  <appendix id="release">
     <title>Making a Heritrix Release</title>
 
     <para>Before initiating a release, its assumed that the current HEAD
@@ -2625,7 +2638,7 @@ public class SimpleExtractor extends Processor
     </orderedlist>
   </appendix>
 
-  <appendix>
+  <appendix id="schema">
     <title>Settings XML Schema</title>
     <para>The XML Schema that describes the crawler job order file can be
     viewed as xhtml here, <ulink
@@ -2642,7 +2655,7 @@ public class SimpleExtractor extends Processor
     </para>
   </appendix>
 
-  <bibliography>
+  <bibliography id="biblio">
     <biblioentry id="heritrix_user_manual">
       <abbrev>Heritrix User Guide</abbrev>
 
