@@ -2462,9 +2462,9 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     protected static Context getJndiContext() throws NamingException {
     	Context c = null;
     	try {
-    		JndiUtils.getSubContext(CRAWLER_PACKAGE);
+    		c = JndiUtils.getSubContext(CRAWLER_PACKAGE);
     	} catch (NoInitialContextException e) {
-    		logger.info("No JNDI Context.");
+    		logger.fine("No JNDI Context: " + e.toString());
     	}
     	return c;
     }
