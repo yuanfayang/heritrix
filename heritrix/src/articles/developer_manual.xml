@@ -2047,6 +2047,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
+import org.archive.crawler.extractor.Link;
 import org.archive.util.TextUtils;
 
 /**
@@ -2102,14 +2103,14 @@ public class SimpleExtractor extends Processor
         while (match.find()){ 
             String link = cs.subSequence(match.start(),match.end()).toString(); <co
           id="simple_7" linkends="co_simple_7" />
-            curi.addLinkToCollection(link,A_HTML_LINKS);<co id="simple_8"
+            curi.createAndAddLink(link, Link.SPECULATIVE_MISC, Link.NAVLINK_HOP);<co id="simple_8"
           linkends="co_simple_8" />
             numberOfLinksExtracted++; <co id="simple_9" linkends="co_simple_9" />
             System.out.println("SimpleExtractor: " + link); <co id="simple_10"
           linkends="co_simple_10" />
         }
         
-        TextUtils.freeMatcher(match); <co id="simple_11"
+        TextUtils.recycleMatcher(match); <co id="simple_11"
           linkends="co_simple_11" />
     }
 
