@@ -24,7 +24,10 @@ package org.archive.util.ms;
 
 import java.io.IOException;
 
+import org.archive.io.BufferedSeekInputStream;
 import org.archive.io.Endian;
+import org.archive.io.OriginSeekInputStream;
+import org.archive.io.SafeSeekInputStream;
 import org.archive.io.SeekInputStream;
 
 
@@ -35,27 +38,42 @@ import org.archive.io.SeekInputStream;
  */
 class PieceTable {
 
-    
+
     final private static int ANSI_INDICATOR = 1 << 30;
     final private static int ANSI_MASK = ~(3 << 30);
-    
-    private SeekInputStream tableStream;
+
     private int count;
-    private long charPosStart;
-    private long filePosStart;
     private int maxSize;
 
+    private int current;
 
-    public PieceTable(SeekInputStream tableStream, int offset, int maxSize) 
-    throws IOException {
-        this.tableStream = tableStream;
+
+    private SeekInputStream charPos;
+    private SeekInputStream filePos;
+    
+
+    public PieceTable(SeekInputStream tableStream, int offset, 
+            int maxSize, int cachedRecords) throws IOException {
         tableStream.position(offset);
         skipProperties(tableStream);
         int sizeInBytes = Endian.littleInt(tableStream);
         this.count = (sizeInBytes - 4) / 12 + 1;
-        this.charPosStart = tableStream.position();
-        this.filePosStart = charPosStart + count * 4;
+        long tp = tableStream.position();
+        long charPosStart = tp + 4;
+        long filePosStart = tp + count * 4;
+        
+        this.charPos = wrap(tableStream, charPosStart, cachedRecords * 4);
+        this.filePos = wrap(tableStream, filePosStart, cachedRecords * 8);
         this.maxSize = maxSize;
+    }
+    
+    
+    private SeekInputStream wrap(SeekInputStream input, long pos, int cache) 
+    throws IOException {
+        SeekInputStream r = new SafeSeekInputStream(input);
+        r = new OriginSeekInputStream(r, pos);
+        r = new BufferedSeekInputStream(r, 1024);
+        return r;
     }
     
     
@@ -73,7 +91,7 @@ class PieceTable {
         }
     }
 
-
+/*
     public Piece getPiece(int charPos) throws IOException {
         int index = getIndex(charPos);
         int boundary;
@@ -118,22 +136,34 @@ class PieceTable {
         }
         return count - 1;
     }
-
+*/
 
     public int getMaxSize() {
         return maxSize;
     }
-    
-    
-    public void dump() throws IOException {
-        int charPos = 0;
-        int count = 0;
-        while (count < this.count) {
-            Piece piece = getPiece(charPos);
-            System.out.println(charPos + " -> " + piece);
-            charPos += piece.getSize();
-            count++;
+
+
+    public Piece next() throws IOException {
+        if (current >= count) {
+            System.out.println("Cur: " + current);
+            return null;
+        }
+        
+        charPos.position(current * 4);
+        int cp = Endian.littleInt(charPos);
+        
+        filePos.position(current * 8 + 2);
+        int encoded = Endian.littleInt(filePos);
+
+        if ((encoded & ANSI_INDICATOR) == 0) {
+            Piece piece = new Piece(encoded, cp, true);
+            return piece;
+        } else {
+            int filePos = (encoded & ANSI_MASK) / 2;
+            Piece piece = new Piece(filePos, cp, false);
+            return piece;
         }
     }
+
 
 }
