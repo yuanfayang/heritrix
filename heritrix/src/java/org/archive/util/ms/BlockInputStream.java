@@ -25,6 +25,7 @@ package org.archive.util.ms;
 import java.io.IOException;
 
 import org.archive.io.SeekInputStream;
+import static org.archive.util.ms.BlockFileSystem.BLOCK_SIZE;
 
 
 /**
@@ -93,8 +94,8 @@ public class BlockInputStream extends SeekInputStream {
     
     
     private void seek(long block, long rem) throws IOException {
-        assert rem < 512;
-        long pos = (block + 1) * 512 + rem;
+        assert rem < BLOCK_SIZE;
+        long pos = (block + 1) * BLOCK_SIZE + rem;
         blockBytesRead = (int)rem;
         expectedRawPosition = pos;
         raw.position(pos);
@@ -112,7 +113,7 @@ public class BlockInputStream extends SeekInputStream {
             return false;
         }
         ensureRawPosition();
-        if (blockBytesRead < 512) {
+        if (blockBytesRead < BLOCK_SIZE) {
             return true;
         }
         block = bfs.getNextBlock(block);
@@ -146,7 +147,7 @@ public class BlockInputStream extends SeekInputStream {
         if (!ensureBuffer()) {
             return 0;
         }
-        int rem = 512 - (int)(position % 512);
+        int rem = BLOCK_SIZE - (int)(position % BLOCK_SIZE);
         len = Math.min(len, rem);
         int c = raw.read(b, ofs, len);
         position += c;
@@ -173,8 +174,8 @@ public class BlockInputStream extends SeekInputStream {
         }
         
         // If new position is in same block, just seek.
-        if (v / 512 == position / 512) {
-            long rem = v % 512;
+        if (v / BLOCK_SIZE == position / BLOCK_SIZE) {
+            long rem = v % BLOCK_SIZE;
             seek(block, rem);
             position = v;
             return;
@@ -189,23 +190,23 @@ public class BlockInputStream extends SeekInputStream {
 
     
     private void seekAfter(long v) throws IOException {
-        long currentBlock = position / 512;
-        long destBlock = v / 512;
+        long currentBlock = position / BLOCK_SIZE;
+        long destBlock = v / BLOCK_SIZE;
         long blockAdvance = destBlock - currentBlock;
         for (int i = 0; i < blockAdvance; i++) {
             block = bfs.getNextBlock(block);
         }
-        seek(block, v % 512);
+        seek(block, v % BLOCK_SIZE);
         position = v;
     }
 
     
     private void seekBefore(long v) throws IOException {
-        long blockAdvance = (v - 1) / 512;
+        long blockAdvance = (v - 1) / BLOCK_SIZE;
         block = start;
         for (int i = 0; i < blockAdvance; i++) {
             block = bfs.getNextBlock(block);
         }
-        seek(block, v % 512);
+        seek(block, v % BLOCK_SIZE);
     }
 }
