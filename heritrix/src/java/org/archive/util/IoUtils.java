@@ -25,6 +25,7 @@ package org.archive.util;
 import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -195,5 +196,19 @@ public class IoUtils {
         IOException ioe = new IOException(e.toString());
         ioe.initCause(e);
         return ioe;
+    }
+    
+    
+    public static void readFully(InputStream input, byte[] buf) 
+    throws IOException {
+        int max = buf.length;
+        int ofs = 0;
+        while (ofs < max) {
+            int l = input.read(buf, ofs, max - ofs);
+            if (l == 0) {
+                throw new EOFException();
+            }
+            ofs += l;
+        }
     }
 }
