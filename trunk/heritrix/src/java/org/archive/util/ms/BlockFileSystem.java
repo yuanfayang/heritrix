@@ -32,6 +32,12 @@ import org.archive.io.SeekInputStream;
  */
 public interface BlockFileSystem {
 
+    
+    /**
+     * The size of a block in bytes.
+     */
+    int BLOCK_SIZE = 512;
+    
 
     /**
      * Returns the header block of the file system.  This is the first

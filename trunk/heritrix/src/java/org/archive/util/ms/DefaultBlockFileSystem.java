@@ -40,7 +40,7 @@ public class DefaultBlockFileSystem implements BlockFileSystem {
     
     public DefaultBlockFileSystem(SeekInputStream input) throws IOException {
         this.input = input;
-        byte[] temp = new byte[512];
+        byte[] temp = new byte[BLOCK_SIZE];
         IoUtils.readFully(input, temp);
         this.header = new HeaderBlock(ByteBuffer.wrap(temp));
     }
@@ -53,7 +53,7 @@ public class DefaultBlockFileSystem implements BlockFileSystem {
 
     public Entry getRoot() throws IOException {
         int block = header.getPropertiesStart();
-        input.position((block + 1) * 512);
+        input.position((block + 1) * BLOCK_SIZE);
         return new DefaultEntry(this, input, 0);
     }
 
@@ -71,7 +71,7 @@ public class DefaultBlockFileSystem implements BlockFileSystem {
             block = getNextBlock(block);
         }
 
-        int filePos = (block + 1) * 512 + remainder * 128;
+        int filePos = (block + 1) * BLOCK_SIZE + remainder * 128;
         input.position(filePos);
         
         return new DefaultEntry(this, input, propertyNumber);
@@ -83,7 +83,7 @@ public class DefaultBlockFileSystem implements BlockFileSystem {
         int headerBATIndex = block / 128;
         int batBlockIndex = block % 128;
         int batBlock = header.getBlockOffset(headerBATIndex);
-        input.position((batBlock + 1) * 512 + batBlockIndex * 4);
+        input.position((batBlock + 1) * BLOCK_SIZE + batBlockIndex * 4);
         return LittleEndian.readInt(input);
     }
 
