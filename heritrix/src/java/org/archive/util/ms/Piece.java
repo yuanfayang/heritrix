@@ -25,13 +25,13 @@ package org.archive.util.ms;
 public class Piece {
 
     private boolean unicode;
-    private int size;
+    private int charPosLimit;
     private int filePos;
 
     
-    public Piece(int filePos, int size, boolean unicode) {
+    public Piece(int filePos, int charPosLimit, boolean unicode) {
         this.filePos = filePos;
-        this.size = size;
+        this.charPosLimit = charPosLimit;
         this.unicode = unicode;
     }
 
@@ -49,8 +49,8 @@ public class Piece {
      * 
      * @return
      */
-    public int getSize() {
-        return size;
+    public int getCharPosLimit() {
+        return charPosLimit;
     }
 
 
@@ -66,7 +66,7 @@ public class Piece {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Piece{filePos=").append(filePos);
-        sb.append(" size=").append(size);
+        sb.append(" charPosLimit=").append(charPosLimit);
         sb.append(" unicode=").append(unicode);
         sb.append("}");
         return sb.toString();

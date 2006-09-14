@@ -120,7 +120,7 @@ public class Doc {
             LOGGER.fine("complex: " + complex);
             LOGGER.fine("cppText: " + cppText);
         }
-        PieceTable pt = new PieceTable(tableStream, fcClx, fcMax - fcMin);
+        PieceTable pt = new PieceTable(tableStream, fcClx, fcMax - fcMin, 10);
         return new PieceReader(pt, mainStream);
     }
 

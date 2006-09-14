@@ -60,9 +60,9 @@ class PieceReader extends Reader {
         if (charPos < limit) {
             return;
         }
-        Piece piece = table.getPiece(charPos);
+        Piece piece = table.next();
         unicode = piece.isUnicode();
-        limit = piece.getSize() + charPos;
+        limit = piece.getCharPosLimit();
         doc.position(piece.getFilePos());
     }
 
