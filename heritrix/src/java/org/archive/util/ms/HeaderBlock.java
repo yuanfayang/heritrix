@@ -27,13 +27,14 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 
-public class HeaderBlock {
+class HeaderBlock {
 
     
     private ByteBuffer buffer;
     
     
     public HeaderBlock(ByteBuffer buffer) {
+        // FIXME: Read the fields we're interested in directly from stream
         this.buffer = buffer;
         buffer.order(ByteOrder.LITTLE_ENDIAN);
     }
@@ -49,7 +50,7 @@ public class HeaderBlock {
     }
     
     
-    public int getPropertiesStart() {
+    public int getEntriesStart() {
         return buffer.getInt(0x30);
     }
     
@@ -74,11 +75,23 @@ public class HeaderBlock {
     }
     
     
-    public int getBlockOffset(int block) {
-        // FIXME: SBAT and XBAT...
-        // FIXME: Check block number within bounds
+    public int getBATBlockNumber(int block) {
+        assert block < 110;
         return buffer.getInt(0x4C + block * 4);
     }
 
+    
+    public String toString() {
+        StringBuilder sb = new StringBuilder("HeaderBlock{");
+        sb.append("fileType=" + getFileType());
+        sb.append(" propertiesStart=" + getEntriesStart());
+        sb.append(" batCount=" + getBATCount());
+        sb.append(" extendedBATStart=" + getExtendedBATStart());
+        sb.append(" extendedBATCount=" + getExtendedBATCount());
+        sb.append(" smallBATStart=" + getSmallBATStart());
+        sb.append(" smallBATCount=" + getSmallBATCount());
+        sb.append("}");
+        return sb.toString();
+    }
 
 }
