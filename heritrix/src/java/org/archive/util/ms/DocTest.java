@@ -43,6 +43,10 @@ public class DocTest extends TestCase {
     final private static File TEST_DIR = new File("testdata/ms");
 
     
+    public void testNothing() {
+        // Here to make the build work again.
+    }
+    
     // Rename to testAgainstPOI to actually run the test.
     public void noTestAgainstPOI() throws IOException {
         int errors = 0;
