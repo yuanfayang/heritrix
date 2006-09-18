@@ -2613,8 +2613,21 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Tag the CVS repository (Add the '-b' flag if 
-        not a bugfix release): % cvs -q tag heritrix-?_?_?</para>
+        <para>Tag the CVS repository.  If a bugfix release -- an
+        increase in the least significant digits -- then tag the 
+        release. Otherwise, if a major or minor release make a branch
+        (See <xref linkend="release_numbering" /> for more on release
+        versioning).
+        Tags should be named for the release name as in if the release
+        is 1.10.2, then the tag should be heritrix-1_10_2 (You can't use
+        dots in tag names).  If a branch, then name the branch for the
+        minor (or major) version name as in, 
+        if making a release 1.10.0, then name the branch heritrix-1_10
+            and if making 2.0.0, name the branch heritrix-2. 
+        </para>
+        <para>
+        Here is how to tag
+        (Add the '-b' flag to make branch): % cvs -q tag heritrix-?_?_?</para>
       </listitem>
 
       <listitem>
