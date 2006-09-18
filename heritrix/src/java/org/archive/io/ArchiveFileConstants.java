@@ -112,7 +112,6 @@ public interface ArchiveFileConstants {
     public static final String CDX = "cdx";
     public static final String DUMP = "dump";
     public static final String GZIP_DUMP = "gzipdump";
-    public static final String HEADER = "header";
     public static final String NOHEAD = "nohead";
     public static final String CDX_FILE = "cdxfile";
 }
