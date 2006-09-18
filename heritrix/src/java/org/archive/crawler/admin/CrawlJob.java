@@ -2091,7 +2091,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         }
         Map hht = h.getMBeanName().getKeyPropertyList();
         ht.put(JmxUtils.MOTHER, hht.get(JmxUtils.NAME));
-        ht.put(JmxUtils.JMX_PORT, hht.get(JmxUtils.JMX_PORT));
+        Object port = hht.get(JmxUtils.JMX_PORT);
+        if (port != null) {
+        	ht.put(JmxUtils.JMX_PORT, port);
+        }
         ht.put(JmxUtils.HOST, hht.get(JmxUtils.HOST));
         if (!ht.containsKey(JmxUtils.TYPE)) {
             ht.put(JmxUtils.TYPE, CRAWLJOB_JMXMBEAN_TYPE);
