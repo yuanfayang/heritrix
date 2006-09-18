@@ -80,15 +80,35 @@ public class Doc {
     }
 
     
-    
-    public static Reader getText(SeekInputStream input) throws IOException {
-        BlockFileSystem bfs = new DefaultBlockFileSystem(input);
-        return getText(bfs);
+    /**
+     * Returns the text of the given .doc file.
+     * 
+     * @param doc   the .doc file whose text to return
+     * @return   the text of that file
+     * @throws IOException   if an IO error occurs
+     */
+    public static Reader getText(SeekInputStream doc) throws IOException {
+        BlockFileSystem bfs = new DefaultBlockFileSystem(doc, 16);
+        return getText(bfs, 20);
     }
 
     
-    
-    public static Reader getText(BlockFileSystem wordDoc) throws IOException {
+    /**
+     * Returns the text for the given .doc file.  The given cacheSize refers
+     * to the number of the .doc file's piece table entries to cache.  Most
+     * .doc files only have 1 piece table entry; however, a "fast-saved"
+     * .doc file might have several.  A cacheSize of 20 should be ample for
+     * most .doc files in the world.  Since piece table entries are small --
+     * only 12 bytes each -- caching them prevents many otherwise necessary
+     * file pointer repositionings.
+     * 
+     * @param wordDoc   the .doc file as a BlockFileSystem
+     * @param cacheSize  the number of piece table entries to cache
+     * @return   a reader that will return the text in the file
+     * @throws IOException   if an IO error occurs
+     */
+    public static Reader getText(BlockFileSystem wordDoc, int cacheSize) 
+    throws IOException {
         List<Entry> entries = wordDoc.getRoot().list();
         Entry main = find(entries, "WordDocument");
         SeekInputStream mainStream = main.open();
