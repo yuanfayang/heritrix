@@ -26,7 +26,6 @@ package org.archive.util.ms;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.io.Reader;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,6 +33,7 @@ import java.util.logging.Logger;
 import org.archive.io.Endian;
 import org.archive.io.RandomAccessInputStream;
 import org.archive.io.SeekInputStream;
+import org.archive.io.SeekReader;
 
 
 /**
@@ -61,7 +61,7 @@ public class Doc {
      * @return  the text of that file
      * @throws IOException  if an IO error occurs
      */
-    public static Reader getText(String docFilename) throws IOException {
+    public static SeekReader getText(String docFilename) throws IOException {
         return getText(new File(docFilename));
     }
 
@@ -73,7 +73,7 @@ public class Doc {
      * @return   the text of that file
      * @throws IOException   if an IO error occurs
      */
-    public static Reader getText(File doc) throws IOException {
+    public static SeekReader getText(File doc) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(doc, "r");
         RandomAccessInputStream rais = new RandomAccessInputStream(raf);
         return getText(rais);
@@ -87,7 +87,7 @@ public class Doc {
      * @return   the text of that file
      * @throws IOException   if an IO error occurs
      */
-    public static Reader getText(SeekInputStream doc) throws IOException {
+    public static SeekReader getText(SeekInputStream doc) throws IOException {
         BlockFileSystem bfs = new DefaultBlockFileSystem(doc, 16);
         return getText(bfs, 20);
     }
@@ -107,7 +107,7 @@ public class Doc {
      * @return   a reader that will return the text in the file
      * @throws IOException   if an IO error occurs
      */
-    public static Reader getText(BlockFileSystem wordDoc, int cacheSize) 
+    public static SeekReader getText(BlockFileSystem wordDoc, int cacheSize) 
     throws IOException {
         List<Entry> entries = wordDoc.getRoot().list();
         Entry main = find(entries, "WordDocument");

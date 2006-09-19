@@ -32,20 +32,21 @@ import org.archive.io.SeekInputStream;
 
 
 /**
- * 
+ * The piece table of a .doc file.  
  * 
  * @author pjack
  */
 class PieceTable {
 
 
-    final private static int ANSI_INDICATOR = 1 << 30;
-    final private static int ANSI_MASK = ~(3 << 30);
+    final static int ANSI_INDICATOR = 1 << 30;
+    final static int ANSI_MASK = ~(3 << 30);
 
     private int count;
     private int maxSize;
 
     private int current;
+    private Piece currentPiece;
 
 
     private SeekInputStream charPos;
@@ -72,7 +73,7 @@ class PieceTable {
     throws IOException {
         SeekInputStream r = new SafeSeekInputStream(input);
         r = new OriginSeekInputStream(r, pos);
-        r = new BufferedSeekInputStream(r, 1024);
+        r = new BufferedSeekInputStream(r, cache);
         return r;
     }
     
@@ -91,53 +92,6 @@ class PieceTable {
         }
     }
 
-/*
-    public Piece getPiece(int charPos) throws IOException {
-        int index = getIndex(charPos);
-        int boundary;
-        if (index == count - 1) {
-            boundary = maxSize;
-        } else {
-            tableStream.position(charPosStart + index * 4 + 4);
-            boundary = decode(Endian.littleInt(tableStream));
-        }
-        int size = boundary - charPos;
-        tableStream.position(filePosStart + index * 8 + 2);
-        int encoded = Endian.littleInt(tableStream);
-        if ((encoded & ANSI_INDICATOR) == 0) {
-            return new Piece(encoded, size, true);
-        } else {
-            int filePos = (encoded & ANSI_MASK) / 2;
-            return new Piece(filePos, size, false);
-        }
-    }
-
-
-    private static int decode(int encoded) {
-        if ((encoded & ANSI_INDICATOR) == 0) {
-            return encoded;
-        } else {
-            return (encoded & ANSI_MASK) / 2;
-        }
-    }
-
-
-    private int getIndex(int targetCharPos) throws IOException {
-        // FIXME: Binary search instead of linear search.
-        tableStream.position(charPosStart);
-        int index = 0;
-        int cp = Endian.littleInt(tableStream);
-        while (index < count) {
-            if (targetCharPos <= cp) {
-                return index;
-            }
-            cp = Endian.littleInt(tableStream);
-            index++;
-        }
-        return count - 1;
-    }
-*/
-
     public int getMaxSize() {
         return maxSize;
     }
@@ -145,7 +99,7 @@ class PieceTable {
 
     public Piece next() throws IOException {
         if (current >= count) {
-            System.out.println("Cur: " + current);
+            currentPiece = null;
             return null;
         }
         
@@ -154,16 +108,47 @@ class PieceTable {
         
         filePos.position(current * 8 + 2);
         int encoded = Endian.littleInt(filePos);
+        
+        current++;
 
+        int start;
+        if (currentPiece == null) {
+            start = 0;
+        } else {
+            start = currentPiece.getCharPosLimit();
+        }
         if ((encoded & ANSI_INDICATOR) == 0) {
-            Piece piece = new Piece(encoded, cp, true);
+            Piece piece = new Piece(encoded, start, cp, true);
+            currentPiece = piece;
             return piece;
         } else {
             int filePos = (encoded & ANSI_MASK) / 2;
-            Piece piece = new Piece(filePos, cp, false);
+            Piece piece = new Piece(filePos, start, cp, false);
+            currentPiece = piece;
             return piece;
         }
     }
 
+    
+    public Piece pieceFor(int charPos) throws IOException {
+        if (currentPiece.contains(charPos)) {
+            return currentPiece;
+        }
+     
+        // FIXME: Use binary search to find piece index
+        
+        current = 0;
+        currentPiece = null;
+        next();
+        
+        while (currentPiece != null) {
+            if (currentPiece.contains(charPos)) {
+                return currentPiece;
+            }
+            next();
+        }
+        
+        return null;
+    }
 
 }
