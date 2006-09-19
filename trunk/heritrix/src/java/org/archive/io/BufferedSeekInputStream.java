@@ -156,13 +156,11 @@ public class BufferedSeekInputStream extends SeekInputStream {
      */
     public void position(long p) throws IOException {
         ensureBuffer();
-        long blockStart = input.position() - buffer.length;
-        if (p >= blockStart) {
+        long blockStart = input.position() / buffer.length * buffer.length;
+        long blockEnd = blockStart + buffer.length;
+        if ((p >= blockStart) && (p < blockEnd)) {
             long adj = p - blockStart;
-            if (adj < remaining()) {
-                offset += (int)adj;
-                return;
-            }
+            offset += (int)adj;
         }
         positionDirect(p);
     }
