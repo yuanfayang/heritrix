@@ -10,19 +10,21 @@ may not be able to parse WARCs written with older writers.
 
 This code, with noted exceptions, is a loose implementation of parts of the
 (unreleased and unfinished)
-<a href="http://archive-access.sourceforge.net/warc/warc_file_format.html">WARC
+<a href="http://archive-access.sourceforge.net/warc/warc_file_format-0.9.html">WARC
 File Format (Version 0.9)</a>. Deviations from 0.9, outlined below in the
 section <i>Deviations from Spec.</i>, are to be proposed as amendments to the
-specification.  Since the new spec. revision will likely be named version 0.10,
-code in this package writes WARCs of version 0.10 -- not 0.9.
+specification to make a new revision.  Since the new spec. revision will likely
+be named version 0.10, code in this package writes WARCs of version 0.10 -- not
+0.9.
 
-<h2>Tools</h2>
+
+<h2>Implementation Notes</h2>
+<h3>Tools</h3>
 <p>Initial implementations of <code>Arc2Warc</code> and <code>Warc2Arc</code>
 tools can be found in the package above this one, at
 {@link org.archive.io.Arc2Warc} and {@link org.archive.io.Warc2Arc}
 respectively.  Pass <code>--help</code> to learn how to use each tool.
-
-<h2>Implementation Notes</h2>
+</p>
 
 <h3>Unique ID Generator</h3>
 <p>WARC requires a GUID for each record written. A configurable unique ID
@@ -30,8 +32,8 @@ respectively.  Pass <code>--help</code> to learn how to use each tool.
 unique ID generators, was added with a default of
 {@link org.archive.uid.UUIDGenerator}.  The default implementation generates
 <a url="http://en.wikipedia.org/wiki/UUID">UUIDs</a> (using java5
-<code>java.util.UUID</code>) with the <code>urn</code> scheme [See
-<a href="http://www.ietf.org/rfc/rfc4122.txt">RFC4122</a>].
+<code>java.util.UUID</code>) with an <code>urn</code> scheme using the uuid
+namespace [See <a href="http://www.ietf.org/rfc/rfc4122.txt">RFC4122</a>].
 </p>
 
 <h3>{@link org.archive.util.anvl ANVL}</h3>
@@ -40,10 +42,19 @@ WARCs and occasionally for metadata. An implementation was added at
 {@link org.archive.util.anvl}.
 </p>
 
-<h3><a name="deviations">Deviations from Spec.</a></h3>
-<p>Below deviations from spec. 0.9 to be proposed as spec. amendments with new
-revision likely to be 0.10 (Vocal agreement between John, Gordon, and Stack at
-<i>La Honda</i> Meeting, August 8th, 2006).</p>
+<h3>Miscellaneous</h3>
+<p>Writing WARCs, the <code>response</code> record type is chosen as the core
+record that all others associate to: i.e. all others 
+have a <code>Related-Record-ID</code> that points back to the
+<code>response</code>.
+</p>
+
+<h2><a name="deviations">Deviations from Spec.</a></h2>
+<p>The below deviations from spec. 0.9 have been realized in code and are to
+be proposed as spec. amendments with new
+revision likely to be 0.10 (Vocal assent was given by John, Gordon, and Stack
+to the below at <i>La Honda</i> Meeting, August 8th, 2006).</p>
+
 <h3>mimetype in header line</h3>
 <p>Allow full mimetypes in the header line as per RFC2045 rather than
 current, shriveled mimetype that allows only type and subtype.  This will mean
@@ -90,45 +101,14 @@ mimetype to last position on header line and recordid to second-from-last.</p>
 <a href="http://www.faqs.org/rfcs/rfc2616.html">RFC2616</a>).
 </p>
 
-<h3>Miscellaneous</h3>
-<p>Writing WARCs, the <code>resource</code> record type is chosen as the core
-record that all others associate to: i.e. all others 
-have a <code>Related-Record-ID</code> that points back to the
-<code>resource</code>.
-</p>
 
 <h2>Suggested Spec. Amendments</h2>
 <p>Apart from the above listed <a href="#deviations">deviations</a>, the below
-changes are also suggested by Stack:</p>
-<h3>Drop response record type</h3>
-<p><code>resource</code> is sufficent. Let mimetype distingush if capture with
-response headers or not (As per comment at end of <i>8.1 HTTP and HTTPS</i>
-where it allows that if no response headers, use resource record type and
-page mimetype rather than response type plus a mimetype of message/http: The
-difference in record types is not needed distingushing between the two
-types of capture)</p>
-<p>Are there other capture methods that would require a response record,
-that don't have a mimetype that includes response headers and content?
-SMTP has rich MIME set to describe responses. Its request is
-pretty much unrecordable. NNTP and FTP similar.  Because of rich MIME, no
-need of a special response type here.</p>
-<p>Related, do we need the <code>request</code> record?
-Only makes sense for HTTP?</p>
+changes are also suggested for inclusion in 0.10 spec. revision</p>
 
-<p>This proposal is contentious.  Gordon drew scenario where response
-would be needed distingushing local from remote capture if an archiving
-institution purposefully archived without recording headers or
-if the payload itself was an archived record. In opposition, was suggested that
-should an institution choose to cature in this 'unusual' mode, crawl metadata
-could be used consulted to disambiguate confusion on how capture was done (To
-be further investigated.  In general, definition of record types is still in 
-need of work).
+<p>Below are mostly suggested edits.  Changes are not substantative.
 </p>
-
-<h3>Edits</h3>
-<p>Below are suggested edits.  Changes are not substantative.
-</p>
-<h4>Allow multiple instances of a single Named Parameter</h4>
+<h3>Allow multiple instances of a single Named Parameter</h3>
 <p>Allow that there may be multiple instances of same Named Parameter
 in any one Named Parameter block.
 E.g. Multiple <code>Related-Record-ID</code>s could prove of use.
@@ -163,7 +143,8 @@ ISO DOC.</li>
 <li>In-line ANVL definition (From Kunze).  Related, can labels have
 CTLs such as CRLF (Shouldn't)?  When says 'control-chars', does this include
 UNICODE control characters (Should)? CHAR is described as ASCII/UTF-8 but they
-are not same (Should be UTF-8).  ANVL OR NOT STILL UP IN AIR AFTER LaHonda.</li>
+are not same (Should be UTF-8).  ANVL OR NOT STILL UP IN AIR AFTER LaHonda.
+Postpone to 0.11 revision.</li>
 
 <li>Fix examples. Use output of experimental ARC Writer.</li>
 
@@ -171,9 +152,40 @@ are not same (Should be UTF-8).  ANVL OR NOT STILL UP IN AIR AFTER LaHonda.</li>
 href="ftp://ftp.diku.dk/diku/semantics/papers/D-548.pdf">Digital Preservation
 using the WARC File Format</a>.
 </li>
+
+
 </ul>
 
 <h2>Open Issues</h2>
+<h3>Drop response record type</h3>
+<p><code>resource</code> is sufficent. Let mimetype distingush if capture with
+response headers or not (As per comment at end of <i>8.1 HTTP and HTTPS</i>
+where it allows that if no response headers, use resource record type and
+page mimetype rather than response type plus a mimetype of message/http: The
+difference in record types is not needed distingushing between the two
+types of capture)</p>
+<p>Are there other capture methods that would require a response record,
+that don't have a mimetype that includes response headers and content?
+SMTP has rich MIME set to describe responses. Its request is
+pretty much unrecordable. NNTP and FTP similar.  Because of rich MIME, no
+need of a special response type here.</p>
+<p>Related, do we need the <code>request</code> record?
+Only makes sense for HTTP?</p>
+
+<p>This proposal is contentious.  Gordon drew scenario where response
+would be needed distingushing local from remote capture if an archiving
+institution purposefully archived without recording headers or
+if the payload itself was an archived record. In opposition, was suggested that
+should an institution choose to cature in this 'unusual' mode, crawl metadata
+could be used consulted to disambiguate confusion on how capture was done (To
+be further investigated.  In general, definition of record types is still in 
+need of work).
+</p>
+<h3>subject-url</h3>
+<p>The ISO revision suggests that the positional parameter 
+<code>subject-uri</code> be renamed.  Suggest <code>record-url<code>.</p>
+
+<h3>Other issues</h3>
 <ul>
 <li>Should we allow freeform creation of custom Named Fields if
 have a MIME-like 'X-' or somesuch prefix?
@@ -186,12 +198,6 @@ CR or LF), etc.</li>
 <li><code>warcinfo</code>
 <ul><li>What for a scheme?  Using UUID as per G suggestion.</li>
 
-<li>In the past
-we used to get the filename from this URL header field when we unsure of the
-filename or it was unavailable (We're reading a Stream).  Won't be able to do
-that with UUID for URL.  So, introducing new warcinfo Named Field (optional)
-'Filename' that will be used when warcinfo is put at start of a file.
-</li>
 
 <li>Also, how to populate description of crawl into warcinfo?
 'Documentation' <code>Named Field</code> with list of URLs that can be assumed
@@ -206,6 +212,13 @@ insufficent.
 
 <li>If the crawler config. changes, can I just write a warcinfo with
 differences?  How to express?  Or better as metadata about a warcinfo?
+</li>
+<li>In the past
+we used to get the filename from this URL header field when we unsure of the
+filename or it was unavailable (We're reading a Stream).  Won't be able to do
+that with UUID for URL.  So, introducing new warcinfo Named Field (optional)
+'Filename' that will be used when warcinfo is put at start of a file.
+Allow warcinfo to have a named parameter 'Filename'?
 </li>
 
 </ul>
@@ -269,12 +282,9 @@ etc.
 
 <h2>Unimplemented</h2>
 <ul>
-<li>4.2 <code>response</code>. May not be needed.</li> 
 <li>Record Segmentation (4.8 <code>continuation</code> record type
 and the 5.2 <code>Segment-*</code> Named Parameters.  Future TODO.</li>
 <li>4.7 <code>conversion</code> type. Future TODO.</li>
-<li>9.2 GZIP extra field to mark this gzip as list of GZIP members rather than
-a big gzip bundle. Future TODO.</li> 
 </ul>
 
 <h2>TODOs</h2>
