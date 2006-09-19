@@ -25,13 +25,15 @@ package org.archive.util.ms;
 public class Piece {
 
     private boolean unicode;
+    private int charPosStart;
     private int charPosLimit;
     private int filePos;
 
     
-    public Piece(int filePos, int charPosLimit, boolean unicode) {
+    public Piece(int filePos, int start, int end, boolean unicode) {
         this.filePos = filePos;
-        this.charPosLimit = charPosLimit;
+        this.charPosStart = start;
+        this.charPosLimit = end;
         this.unicode = unicode;
     }
 
@@ -53,6 +55,10 @@ public class Piece {
         return charPosLimit;
     }
 
+    
+    public int getCharPosStart() {
+        return charPosStart;
+    }
 
     /**
      * 
@@ -66,9 +72,15 @@ public class Piece {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Piece{filePos=").append(filePos);
-        sb.append(" charPosLimit=").append(charPosLimit);
+        sb.append(" start=").append(charPosStart);
+        sb.append(" end=").append(charPosLimit);
         sb.append(" unicode=").append(unicode);
         sb.append("}");
         return sb.toString();
+    }
+    
+    
+    public boolean contains(int charPos) {
+        return (charPos >= charPosStart) && (charPos < charPosLimit);
     }
 }

@@ -23,13 +23,13 @@
 package org.archive.util.ms;
 
 import java.io.IOException;
-import java.io.Reader;
 
 import org.archive.io.Endian;
 import org.archive.io.SeekInputStream;
+import org.archive.io.SeekReader;
 
 
-class PieceReader extends Reader {
+class PieceReader extends SeekReader {
 
 
     private PieceTable table;
@@ -50,11 +50,10 @@ class PieceReader extends Reader {
 
 
     private void seekIfNecessary() throws IOException {
-        if (table == null) {
-            return;
+        if (doc == null) {
+            throw new IOException("Stream closed.");
         }
         if (charPos >= table.getMaxSize()) {
-            table = null;
             return;
         }
         if (charPos < limit) {
@@ -69,7 +68,10 @@ class PieceReader extends Reader {
 
     public int read() throws IOException {
         seekIfNecessary();
-        if (table == null) {
+        if (doc == null) {
+            throw new IOException("Stream closed.");
+        }
+        if (charPos >= table.getMaxSize()) {
             return -1;
         }
 
@@ -88,7 +90,10 @@ class PieceReader extends Reader {
         // FIXME: Think of a faster implementation that will work with
         // both unicode and non-unicode.
         seekIfNecessary();
-        if (table == null) {
+        if (doc == null) {
+            throw new IOException("Stream closed.");
+        }
+        if (charPos >= table.getMaxSize()) {
             return 0;
         }
         for (int i = 0; i < len; i++) {
@@ -104,7 +109,29 @@ class PieceReader extends Reader {
     
     public void close() throws IOException {
         doc.close();
+        table = null;
     }
     
     
+    public long position() throws IOException {
+        return charPos;
+    }
+    
+    
+    public void position(long p) throws IOException {
+        if (p > Integer.MAX_VALUE) {
+            throw new IOException("File too large.");
+        }
+        int charPos = (int)p;
+        Piece piece = table.pieceFor(charPos);
+        if (piece == null) {
+            throw new IOException("Illegal position: " + p);
+        }
+        unicode = piece.isUnicode();
+        limit = piece.getCharPosLimit();
+        
+        int ofs = charPos - piece.getCharPosStart();
+        this.charPos = charPos;
+        doc.position(piece.getFilePos() + ofs);
+    }
 }
