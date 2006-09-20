@@ -230,8 +230,8 @@ public class JEApplicationMBean implements DynamicMBean {
          */
         
         /* Attributes. */
-        List attributeList =  jeHelper.getAttributeList(targetEnv);
-        MBeanAttributeInfo [] attributeInfo =
+        List<MBeanAttributeInfo> attributeList =  jeHelper.getAttributeList(targetEnv);
+        MBeanAttributeInfo [] attributeInfo = 
             new MBeanAttributeInfo[attributeList.size()];
         attributeList.toArray(attributeInfo);
 
@@ -251,7 +251,7 @@ public class JEApplicationMBean implements DynamicMBean {
          * Get the list of operations available from the jeHelper. Then add
          * an open and close operation.
          */
-        List operationList = jeHelper.getOperationList(targetEnv);
+        List<MBeanOperationInfo> operationList = jeHelper.getOperationList(targetEnv);
         /* Don't allow opening or closing remotely.
         if (targetEnv == null) {
             operationList.add(
@@ -291,40 +291,40 @@ public class JEApplicationMBean implements DynamicMBean {
      * Open a JE environment using the configuration specified through
      * MBean attributes and recorded within the JEMBeanHelper. 
      */
-    private  void openEnvironment() 
-        throws MBeanException {
-
-        try {
-            if (targetEnv == null) {
-                /* 
-                 * The environment configuration has been set through
-                 * mbean attributes managed by the JEMBeanHelper.
-                 */
-                targetEnv =
-                    new Environment(jeHelper.getEnvironmentHome(),
-                                    jeHelper.getEnvironmentOpenConfig());
-                resetMBeanInfo();
-            }
-        } catch (DatabaseException e) {
-            throw new MBeanException(e);
-        }
-    }
+//    private  void openEnvironment() 
+//        throws MBeanException {
+//
+//        try {
+//            if (targetEnv == null) {
+//                /* 
+//                 * The environment configuration has been set through
+//                 * mbean attributes managed by the JEMBeanHelper.
+//                 */
+//                targetEnv =
+//                    new Environment(jeHelper.getEnvironmentHome(),
+//                                    jeHelper.getEnvironmentOpenConfig());
+//                resetMBeanInfo();
+//            }
+//        } catch (DatabaseException e) {
+//            throw new MBeanException(e);
+//        }
+//    }
 
     /**
      * Release the environment handle contained within the MBean to properly
      * release resources.
      */
-    private void closeEnvironment()
-        throws MBeanException {
-
-        try {
-            if (targetEnv != null) {
-                targetEnv.close();
-                targetEnv = null;
-                resetMBeanInfo();
-            }
-        } catch (DatabaseException e) {
-            throw new MBeanException(e);
-        }
-    }
+//    private void closeEnvironment()
+//        throws MBeanException {
+//
+//        try {
+//            if (targetEnv != null) {
+//                targetEnv.close();
+//                targetEnv = null;
+//                resetMBeanInfo();
+//            }
+//        } catch (DatabaseException e) {
+//            throw new MBeanException(e);
+//        }
+//    }
 }

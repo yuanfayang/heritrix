@@ -42,15 +42,16 @@ import java.util.TreeSet;
  * @author gojomo
  */
 public class Histotable {
-	HashMap totals = new HashMap(); // object -> LongWrapper(count)
+	HashMap<Object,LongWrapper> totals = new HashMap<Object,LongWrapper>();
 
     // sorted by count
-	TreeSet sorted = new TreeSet(new Comparator() {
-        public int compare(Object e1, Object e2) {
-            long firstVal = ((LongWrapper) ((Map.Entry)e1).getValue()).
-                longValue;
-            long secondVal = ((LongWrapper) ((Map.Entry)e2).getValue()).
-                longValue;
+	TreeSet<Map.Entry<Object,LongWrapper>> sorted = 
+      new TreeSet<Map.Entry<Object,LongWrapper>>(
+       new Comparator<Map.Entry<Object,LongWrapper>>() {
+        public int compare(Map.Entry<Object,LongWrapper> e1, 
+                Map.Entry<Object,LongWrapper> e2) {
+            long firstVal = e1.getValue().longValue;
+            long secondVal = e2.getValue().longValue;
             if (firstVal < secondVal) { return 1; }
             if (secondVal < firstVal) { return -1; }
             // If the values are the same, sort by keys.
@@ -67,7 +68,7 @@ public class Histotable {
 	 */
 	public void tally(Object key) {
         if (totals.containsKey(key)) {
-            ((LongWrapper) totals.get(key)).longValue += 1;
+            totals.get(key).longValue += 1;
         } else {
             // if we didn't find this key add it
             totals.put(key, new LongWrapper(1));

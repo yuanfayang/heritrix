@@ -304,7 +304,7 @@ public class JEMBeanHelper {
                                statParams,
                                "com.sleepycat.je.TransactionStats",
                                MBeanOperationInfo.INFO);
-
+/*
     private static final MBeanParameterInfo [] dbStatParams = {
         new MBeanParameterInfo ("clear", "java.lang.Boolean",
                                 "If true, reset statistics after reading."),
@@ -315,7 +315,7 @@ public class JEMBeanHelper {
                                 "database name")
 
     };
-
+*/
     /* target JE environment home directory. */
     private File environmentHome;  
 
@@ -411,12 +411,13 @@ public class JEMBeanHelper {
      * @return list of MBeanAttributeInfo objects describing the available
      * attributes.
      */
-    public List getAttributeList(Environment targetEnv) {
+    public List<MBeanAttributeInfo> getAttributeList(Environment targetEnv) {
 
         /* Turn off reset because the mbean metadata is being refreshed. */
         setNeedReset(false);
 
-        ArrayList attrList = new ArrayList();
+        ArrayList<MBeanAttributeInfo> attrList 
+         = new ArrayList<MBeanAttributeInfo>();
         
         /* Add attributes for all JE environments. */
         for (int i = 0; i < COMMON_ATTR.length; i++) {
@@ -609,10 +610,10 @@ public class JEMBeanHelper {
      * environment is not open.
      * @return List of MBeanOperationInfo describing available operations.
      */
-    public List getOperationList(Environment targetEnv) {
+    public List<MBeanOperationInfo> getOperationList(Environment targetEnv) {
         setNeedReset(false);
 
-        List operationList = new ArrayList();
+        List<MBeanOperationInfo> operationList = new ArrayList<MBeanOperationInfo>();
 
         if (targetEnv != null) {
             /* 
@@ -635,7 +636,7 @@ public class JEMBeanHelper {
                 isTransactional = config.getTransactional();
             } catch (DatabaseException e) {
                 /* Don't make any operations available. */
-                return new ArrayList();
+                return new ArrayList<MBeanOperationInfo>();
             }
             
             if (isTransactional) {

@@ -58,7 +58,6 @@ public class RegexpLineIterator extends TransformingIteratorWrapper {
     protected Matcher extractLine = null;
     protected String outputTemplate = null;
 
-    private String next;
 
     public RegexpLineIterator(Iterator inner, String ignore, String extract, String replace) {
         this.inner = inner;

@@ -72,6 +72,9 @@ import java.security.SecureRandom;
  * @author Sebastiano Vigna
  */
 public class BloomFilter32bp2Split implements Serializable, BloomFilter {
+
+    private static final long serialVersionUID = -1504889954381695129L;
+    
     /** The number of weights used to create hash functions. */
     final public static int NUMBER_OF_WEIGHTS = 2083; // CHANGED FROM 16
     /** The number of bits in this filter. */

@@ -32,7 +32,7 @@ package org.archive.util.anvl;
  * @version $Date$ $Version$
  */
 class Value extends SubElement {
-	private static final String PREFIX = " ";
+
     private StringBuilder sb;
     private boolean folding = false;
 	

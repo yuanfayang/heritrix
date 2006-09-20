@@ -33,7 +33,7 @@ import java.util.NoSuchElementException;
  * @author gojomo
  */
 public class CompositeIterator implements Iterator {
-    ArrayList iterators = new ArrayList();
+    ArrayList<Iterator> iterators = new ArrayList<Iterator>();
     Iterator currentIterator;
     int indexOfCurrentIterator = -1;
 

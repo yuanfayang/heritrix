@@ -89,10 +89,10 @@ public class IoUtils {
      * @exception IOException If passed directory does not exist and is not
      * createable, or directory is not writeable or is not a directory.
      */
-    public static List ensureWriteableDirectory(List dirs)
+    public static List ensureWriteableDirectory(List<File> dirs)
     throws IOException {
-        for (Iterator i = dirs.iterator(); i.hasNext();) {
-             ensureWriteableDirectory((File)i.next());
+        for (Iterator<File> i = dirs.iterator(); i.hasNext();) {
+             ensureWriteableDirectory(i.next());
         }
         return dirs;
     }
