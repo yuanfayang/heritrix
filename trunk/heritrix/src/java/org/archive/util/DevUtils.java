@@ -83,12 +83,11 @@ public class DevUtils {
     }
 
     /**
-     * @param re
+     * Nothing to see here, move along.
+     * @deprecated  This method was never used.
      */
+    @Deprecated
     public static void betterPrintStack(RuntimeException re) {
-        // TODO: print software version
-        // TODO: print thread name
-        // TODO: if ToeThread, print currentCuri and timing info
         re.printStackTrace(System.err);
     }
     

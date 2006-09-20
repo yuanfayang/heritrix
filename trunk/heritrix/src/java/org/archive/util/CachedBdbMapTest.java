@@ -32,8 +32,9 @@ import java.util.logging.Logger;
  * @version $Date$, $Revision$
  */
 public class CachedBdbMapTest extends TmpDirTestCase {
-    private CachedBdbMap cache;
+    private CachedBdbMap<String,HashMap<String,String>> cache;
     
+    @SuppressWarnings("unchecked")
     protected void setUp() throws Exception {
         super.setUp();
         this.cache = new CachedBdbMap(getTmpDir(),
@@ -60,17 +61,17 @@ public class CachedBdbMapTest extends TmpDirTestCase {
         final int upperbound = 3;
         // First put in empty hashmap.
         for (int i = 0; i < upperbound; i++) {
-            this.cache.put(key + Integer.toString(i), new HashMap());
+            this.cache.put(key + Integer.toString(i), new HashMap<String,String>());
         }
         // Now add value to hash map.
         for (int i = 0; i < upperbound; i++) {
-            HashMap m = (HashMap)this.cache.get(key + Integer.toString(i));
+            HashMap<String,String> m = this.cache.get(key + Integer.toString(i));
             m.put(key, value);
         }
         this.cache.sync();
         for (int i = 0; i < upperbound; i++) {
-            HashMap m = (HashMap)this.cache.get(key + Integer.toString(i));
-            String v = (String)m.get(key);
+            HashMap<String,String> m = this.cache.get(key + Integer.toString(i));
+            String v = m.get(key);
             if (v == null || !v.equals(value)) {
                 Logger.getLogger(CachedBdbMap.class.getName()).
                     warning("Wrong value " + i);

@@ -84,8 +84,8 @@ public class InetAddressUtil {
     /**
      * @return All known local names for this host or null if none found.
      */
-    public static List getAllLocalHostNames() {
-        List localNames = new ArrayList();
+    public static List<String> getAllLocalHostNames() {
+        List<String> localNames = new ArrayList<String>();
         Enumeration e = null;
         try {
             e = NetworkInterface.getNetworkInterfaces();
