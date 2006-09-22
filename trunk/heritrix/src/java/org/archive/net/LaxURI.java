@@ -39,6 +39,9 @@ import org.apache.commons.httpclient.util.EncodingUtil;
  * @author gojomo
  */
 public class LaxURI extends URI {
+
+    private static final long serialVersionUID = 5273922211722239537L;
+    
     final protected static char[] HTTP_SCHEME = {'h','t','t','p'};
     final protected static char[] HTTPS_SCHEME = {'h','t','t','p','s'};
     

@@ -30,6 +30,9 @@ import java.io.IOException;
  * @author Gordon Mohr
  */
 public class RecorderIOException extends IOException {
+
+    private static final long serialVersionUID = 5907470275350314277L;
+
     public RecorderIOException() {
     	super();
     }

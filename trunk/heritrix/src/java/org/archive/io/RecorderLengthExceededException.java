@@ -31,6 +31,9 @@ package org.archive.io;
  */
 public class RecorderLengthExceededException
 extends RecorderIOException {
+
+    private static final long serialVersionUID = 6655419033414648444L;
+
     public RecorderLengthExceededException() {
         super();
     }

@@ -648,7 +648,7 @@ public class UURIFactoryTest extends TestCase {
 	public final void testRFC2396Relative() throws URIException {
 		UURI base = UURIFactory.
 		getInstance("http://a/b/c/d;p?q");
-		TreeMap m = new TreeMap();
+		TreeMap<String,String> m = new TreeMap<String,String>();
 		m.put("..", "http://a/b/");
 		m.put("../", "http://a/b/");
 		m.put("../g", "http://a/b/g");

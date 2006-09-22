@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.archive.io.arc.ARCReaderFactory;
-import org.archive.io.warc.WARCReader;
 import org.archive.io.warc.WARCReaderFactory;
 import org.archive.net.UURI;
 import org.archive.net.md5.Md5URLConnection;
@@ -276,7 +275,7 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
                 return this.delegate.isStrict();
             }
             
-            public Iterator iterator() {
+            public Iterator<ArchiveRecord> iterator() {
                 return this.delegate.iterator();
             }
             
