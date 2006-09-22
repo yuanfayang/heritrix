@@ -34,7 +34,7 @@ import java.util.HashSet;
  */
 public class MemUriUniqFilter
 extends SetBasedUriUniqFilter {
-    HashSet hashSet; 
+    HashSet<CharSequence> hashSet; 
     
     protected synchronized boolean setAdd(CharSequence uri) {
         return hashSet.add(uri);
@@ -50,7 +50,7 @@ extends SetBasedUriUniqFilter {
      * @see org.archive.crawler.util.UriUniqFilterImpl#createUriSet()
      */
     protected void createUriSet() {
-        hashSet = new HashSet();
+        hashSet = new HashSet<CharSequence>();
     }
 
 }

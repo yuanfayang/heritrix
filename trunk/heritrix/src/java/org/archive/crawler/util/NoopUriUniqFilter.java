@@ -23,7 +23,6 @@
  */
 package org.archive.crawler.util;
 
-import java.util.HashSet;
 
 /**
  * A UriUniqFilter that doesn't actually provide any uniqueness

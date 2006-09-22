@@ -28,6 +28,9 @@ package org.archive.crawler.util;
  * @author Mike Schwartz, schwartz at CodeOnTheRoad dot com
  */
 public class SeedUrlNotFoundException extends Exception {
+
+    private static final long serialVersionUID = 2515927240634523493L;
+
     public SeedUrlNotFoundException(String message) {
         super(message);
     }
