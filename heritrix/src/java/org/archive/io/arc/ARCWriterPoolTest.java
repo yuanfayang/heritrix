@@ -145,7 +145,7 @@ public class ARCWriterPoolTest extends TmpDirTestCase {
                 return "";
             }
             
-            public List getOutputDirs() {
+            public List<File> getOutputDirs() {
                 File [] files = {getTmpDir()};
                 return Arrays.asList(files);
             }

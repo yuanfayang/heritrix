@@ -26,7 +26,6 @@
 
 package org.archive.extractor;
 
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
@@ -54,8 +53,9 @@ import org.archive.util.TextUtils;
  **/
 
 public class RegexpCSSLinkExtractor extends CharSequenceLinkExtractor {
-    private static Logger logger =
-        Logger.getLogger(RegexpCSSLinkExtractor.class.getName());
+
+    // private static Logger logger =
+    //    Logger.getLogger(RegexpCSSLinkExtractor.class.getName());
 
     private static String ESCAPED_AMP = "&amp";
     // CSS escapes: "Parentheses, commas, whitespace characters, single

@@ -24,7 +24,6 @@
 package org.archive.extractor;
 
 import java.util.LinkedList;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,8 +41,8 @@ import org.archive.util.TextUtils;
  * @author gojomo
  */
 public class RegexpJSLinkExtractor extends CharSequenceLinkExtractor {
-    private static Logger logger =
-        Logger.getLogger(RegexpJSLinkExtractor.class.getName());
+//    private static Logger logger =
+//        Logger.getLogger(RegexpJSLinkExtractor.class.getName());
 
     static final String AMP = "&";
     static final String ESCAPED_AMP = "&amp;";
@@ -62,7 +61,7 @@ public class RegexpJSLinkExtractor extends CharSequenceLinkExtractor {
         "(?:\\w|[\\.]{0,2}/)[\\S&&[^<>]]*(?:\\.|/)[\\S&&[^<>]]*(?:\\w|/)");
 
     Matcher strings;
-    LinkedList matcherStack = new LinkedList();
+    LinkedList<Matcher> matcherStack = new LinkedList<Matcher>();
 
     protected boolean findNextLink() {
         if(strings==null) {

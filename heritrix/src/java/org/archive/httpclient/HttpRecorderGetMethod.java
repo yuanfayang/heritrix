@@ -25,7 +25,6 @@ package org.archive.httpclient;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpState;

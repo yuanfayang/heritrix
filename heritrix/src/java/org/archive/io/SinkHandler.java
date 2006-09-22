@@ -47,7 +47,8 @@ public class SinkHandler extends Handler {
     /**
      * Alerts that have occured.
      */
-    private Vector sink = new Vector();
+    private Vector<SinkHandlerLogRecord> sink
+     = new Vector<SinkHandlerLogRecord>();
     
     public SinkHandler() {
         LogManager manager = LogManager.getLogManager();
@@ -106,11 +107,12 @@ public class SinkHandler extends Handler {
     /**
      * @return Return all unread SinkHandlerLogRecords or null if none unread
      */
-    public Vector getAllUnread() {
+    public Vector<SinkHandlerLogRecord> getAllUnread() {
         if (this.sink == null) {
             return null;
         }
-        Vector newLogRecords = new Vector();
+        Vector<SinkHandlerLogRecord> newLogRecords;
+        newLogRecords = new Vector<SinkHandlerLogRecord>();
         for (final Iterator i = this.sink.iterator(); i.hasNext();) {
             SinkHandlerLogRecord lr = (SinkHandlerLogRecord) i.next();
             if (!lr.isRead()) {
