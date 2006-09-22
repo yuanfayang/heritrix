@@ -30,7 +30,6 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.util.BloomFilter;
 import org.archive.util.BloomFilter32bitSplit;
-import org.archive.util.BloomFilter32bp2Split;
 
 
 /**

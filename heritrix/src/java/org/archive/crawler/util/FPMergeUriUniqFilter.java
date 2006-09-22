@@ -89,7 +89,7 @@ public abstract class FPMergeUriUniqFilter implements UriUniqFilter {
      * TODO: consider actually writing items to disk file,
      * as in Najork/Heydon
      */
-    protected TreeSet pendingSet = new TreeSet();
+    protected TreeSet<PendingItem> pendingSet = new TreeSet<PendingItem>();
     
     /** size at which to force flush of pending items */
     protected int maxPending = DEFAULT_MAX_PENDING;

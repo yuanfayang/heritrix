@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
@@ -42,8 +41,8 @@ import org.archive.util.fingerprint.MemLongFPSet;
  * @author gojomo
  */
 public class BenchmarkUriUniqFilters implements UriUniqFilter.HasUriReceiver {
-    private Logger LOGGER =
-        Logger.getLogger(BenchmarkUriUniqFilters.class.getName());
+//    private Logger LOGGER =
+//        Logger.getLogger(BenchmarkUriUniqFilters.class.getName());
     
     private BufferedWriter out; // optional to dump uniq items
     String current; // current line/URI being checked
