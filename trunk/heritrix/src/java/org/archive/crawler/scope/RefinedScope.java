@@ -24,9 +24,7 @@
 */ 
 package org.archive.crawler.scope;
 
-import org.archive.crawler.filter.FilePatternFilter;
-import org.archive.crawler.filter.TransclusionFilter;
-import org.archive.crawler.framework.CrawlScope;
+
 import org.archive.crawler.framework.Filter;
 
 /**
@@ -44,13 +42,16 @@ public abstract class RefinedScope extends ClassicScope {
     Filter additionalFocusFilter;
     Filter transitiveFilter;
 
+    @SuppressWarnings("deprecation")
     public RefinedScope(String name) {
         super(name);
 
         this.additionalFocusFilter = (Filter) addElementToDefinition(
-                new FilePatternFilter(ATTR_ADDITIONAL_FOCUS_FILTER));
+                new org.archive.crawler.filter.FilePatternFilter(
+                        ATTR_ADDITIONAL_FOCUS_FILTER));
         this.transitiveFilter = (Filter) addElementToDefinition(
-                new TransclusionFilter(ATTR_TRANSITIVE_FILTER));
+                new org.archive.crawler.filter.TransclusionFilter(
+                        ATTR_TRANSITIVE_FILTER));
     }
 
     /**

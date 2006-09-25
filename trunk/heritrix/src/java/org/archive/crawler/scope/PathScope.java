@@ -68,6 +68,8 @@ import org.archive.net.UURI;
  */
 public class PathScope extends SeedCachingScope {
 
+    private static final long serialVersionUID = -2217024073240277527L;
+
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.basic.PathScope");
 
