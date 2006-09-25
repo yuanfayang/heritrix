@@ -213,7 +213,7 @@ public class CrawlScope extends Filter {
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */
-    public void listUsedFiles(List list){
+    public void listUsedFiles(List<String> list){
         // Add seed file
         try {
             File file = getSettingsHandler().getPathRelativeToWorkingDirectory(

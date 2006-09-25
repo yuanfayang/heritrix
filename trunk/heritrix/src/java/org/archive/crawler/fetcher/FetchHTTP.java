@@ -1429,7 +1429,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */
-    protected void listUsedFiles(List list) {
+    protected void listUsedFiles(List<String> list) {
         // List the cookies files
         // Add seed file
         try {
