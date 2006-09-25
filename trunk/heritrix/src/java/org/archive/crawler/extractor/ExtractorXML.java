@@ -35,8 +35,6 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.io.ReplayCharSequence;
-import org.archive.net.UURI;
-import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
 /**
@@ -49,6 +47,9 @@ import org.archive.util.TextUtils;
  **/
 
 public class ExtractorXML extends Extractor implements CoreAttributeConstants {
+
+    private static final long serialVersionUID = 3101230586822401584L;
+
     private static Logger logger =
         Logger.getLogger(ExtractorXML.class.getName());
 
