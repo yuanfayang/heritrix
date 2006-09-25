@@ -40,8 +40,11 @@ import org.archive.crawler.settings.SimpleType;
  * @version $Date$, $Revision$
  */
 public class QuotaEnforcer extends Processor implements FetchStatusCodes {
-    private static final Logger LOGGER =
-        Logger.getLogger(QuotaEnforcer.class.getName());
+
+    private static final long serialVersionUID = 6091720623469404595L;
+
+    //private static final Logger LOGGER =
+    //    Logger.getLogger(QuotaEnforcer.class.getName());
     
     // indexed table of reused string categorical names/keys
     protected static final int SERVER = 0;

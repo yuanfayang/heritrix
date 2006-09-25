@@ -44,6 +44,9 @@ import org.archive.crawler.framework.Processor;
  */
 public class FrontierScheduler extends Processor
 implements FetchStatusCodes {
+
+    private static final long serialVersionUID = -5178775477602250542L;
+
     private static Logger LOGGER =
         Logger.getLogger(FrontierScheduler.class.getName());
     
