@@ -35,6 +35,9 @@ import org.archive.util.TextUtils;
  */
 public class RegexRule
 extends BaseRule {
+
+    private static final long serialVersionUID = -2658094415450237847L;
+
     protected static Logger logger =
         Logger.getLogger(BaseRule.class.getName());
     private static final String DESCRIPTION = "General regex rule. " +
