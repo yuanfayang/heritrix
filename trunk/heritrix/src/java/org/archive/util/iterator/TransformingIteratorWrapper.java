@@ -34,8 +34,9 @@ import java.util.Iterator;
  * 
  * @author gojomo
  */
-public abstract class TransformingIteratorWrapper extends LookaheadIterator {
-    protected Iterator inner;
+public abstract class TransformingIteratorWrapper<Original,Transformed> 
+extends LookaheadIterator<Transformed> {
+    protected Iterator<Original> inner;
     
     
     /* (non-Javadoc)
@@ -65,6 +66,6 @@ public abstract class TransformingIteratorWrapper extends LookaheadIterator {
      * @param object Object to transform.
      * @return Transfomed object.
      */
-    protected abstract Object transform(Object object);
+    protected abstract Transformed transform(Original object);
 
 }
