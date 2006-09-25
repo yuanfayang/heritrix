@@ -30,6 +30,9 @@ package org.archive.crawler.framework.exceptions;
  * @author Kristinn Sigurdsson
  */
 public class InvalidFrontierMarkerException extends Exception {
+
+    private static final long serialVersionUID = -26552188686310984L;
+
     public InvalidFrontierMarkerException(){
         super("URIFrontierMarker does not match URIFrontier internal state.");
     }
