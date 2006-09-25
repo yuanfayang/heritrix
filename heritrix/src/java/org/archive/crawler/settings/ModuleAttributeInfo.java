@@ -31,6 +31,9 @@ import javax.management.MBeanAttributeInfo;
  * @author John Erik Halse
  */
 public class ModuleAttributeInfo extends MBeanAttributeInfo {
+
+    private static final long serialVersionUID = -4447321338690051514L;
+
     private String type;
     private boolean isOverrideable;
     private boolean isTransient;

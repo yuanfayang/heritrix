@@ -63,7 +63,7 @@ public class SoftSettingsHash {
     /**
      * Reference queue for cleared entries
      */
-    private final ReferenceQueue queue = new ReferenceQueue();
+    private final ReferenceQueue<String> queue = new ReferenceQueue<String>();
 
     /**
      * The number of times this HashMap has been structurally modified
@@ -345,7 +345,7 @@ public class SoftSettingsHash {
      * The entries in this hash extend SoftReference, using the host string
      * as the key.
      */
-    static class SettingsEntry extends SoftReference {
+    static class SettingsEntry extends SoftReference<String> {
         private CrawlerSettings settings;
         private final int hash;
         private SettingsEntry next;
@@ -353,7 +353,8 @@ public class SoftSettingsHash {
         /**
          * Create new entry.
          */
-        SettingsEntry(String key, CrawlerSettings settings, ReferenceQueue queue,
+        SettingsEntry(String key, CrawlerSettings settings, 
+              ReferenceQueue<? super String> queue,
               int hash, SettingsEntry next) {
             super(key, queue);
             this.settings = settings;

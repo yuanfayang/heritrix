@@ -63,7 +63,8 @@ public abstract class SettingsHandler {
     /** Reference to the order module */
     private CrawlOrder order;
 
-    private Set valueErrorHandlers = Collections.synchronizedSet(new HashSet());
+    private Set<ValueErrorHandler> valueErrorHandlers 
+     = Collections.synchronizedSet(new HashSet<ValueErrorHandler>());
     private int errorReportingLevel = Level.ALL.intValue();
 
     /** Datatypes supported by the settings framwork */
@@ -99,8 +100,10 @@ public abstract class SettingsHandler {
             { FLOAT_LIST, "org.archive.crawler.settings.FloatList"},
             { DOUBLE_LIST, "org.archive.crawler.settings.DoubleList"},
             { STRING_LIST, "org.archive.crawler.settings.StringList"}};
-    private final static Map name2class = new HashMap();
-    private final static Map class2name = new HashMap();
+    private final static Map<String,String> name2class
+     = new HashMap<String,String>();
+    private final static Map<String,String> class2name
+     = new HashMap<String,String>();
     static {
         for (int i = 0; i < names.length; i++) {
             name2class.put(names[i][0], names[i][1]);
