@@ -26,9 +26,9 @@ package org.archive.crawler.scope;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.net.UURI;
 
 /**
  * A CrawlScope that caches its seed list for the
@@ -39,9 +39,12 @@ import org.archive.crawler.datamodel.CrawlURI;
  *
  */
 public class SeedCachingScope extends ClassicScope {
-    private static final Logger logger =
-        Logger.getLogger(SeedCachingScope.class.getName());
-    List seeds;
+
+    private static final long serialVersionUID = 300230673616424926L;
+
+    //private static final Logger logger =
+    //    Logger.getLogger(SeedCachingScope.class.getName());
+    List<UURI> seeds;
 
     public SeedCachingScope(String name) {
         super(name);
@@ -55,7 +58,8 @@ public class SeedCachingScope extends ClassicScope {
             // failed
             return false;
         }
-        List newSeeds = new ArrayList(seeds);
+        // FIXME: This is not thread-safe.
+        List<UURI> newSeeds = new ArrayList<UURI>(seeds);
         newSeeds.add(curi.getUURI());
         seeds = newSeeds;
         return true;
@@ -73,7 +77,7 @@ public class SeedCachingScope extends ClassicScope {
     /* (non-Javadoc)
      * @see org.archive.crawler.framework.CrawlScope#seedsIterator()
      */
-    public Iterator seedsIterator() {
+    public Iterator<UURI> seedsIterator() {
         fillSeedsCache();
         return seeds.iterator();
     }
@@ -83,8 +87,8 @@ public class SeedCachingScope extends ClassicScope {
      */
     protected synchronized void fillSeedsCache() {
         if (seeds==null) {
-            seeds = new ArrayList();
-            Iterator iter = super.seedsIterator();
+            seeds = new ArrayList<UURI>();
+            Iterator<UURI> iter = super.seedsIterator();
             while(iter.hasNext()) {
                 seeds.add(iter.next());
             }
