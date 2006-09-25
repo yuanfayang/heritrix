@@ -82,7 +82,7 @@ public class ModuleType extends ComplexType {
      *
      * @param list The list to add files to.
      */
-    protected void listUsedFiles(List list){
+    protected void listUsedFiles(List<String> list){
         // By default do nothing
     }
 }
