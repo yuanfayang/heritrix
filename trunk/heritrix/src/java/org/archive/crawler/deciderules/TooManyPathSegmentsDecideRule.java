@@ -38,6 +38,9 @@ import org.archive.crawler.settings.Type;
  * @author gojomo
  */
 public class TooManyPathSegmentsDecideRule extends PredicatedDecideRule {
+
+    private static final long serialVersionUID = 147079100367815075L;
+
     public static final String ATTR_MAX_PATH_DEPTH = "max-path-depth";
     
     /**

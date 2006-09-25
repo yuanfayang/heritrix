@@ -51,6 +51,9 @@ import org.xbill.DNS.Address;
  */
 public class ExternalGeoLocationDecideRule
 extends PredicatedDecideRule {
+
+    private static final long serialVersionUID = -32974116429860725L;
+
     private static final Logger LOGGER =
         Logger.getLogger(ExternalGeoLocationDecideRule.class.getName());
     static final String ATTR_IMPLEMENTATION = "implementation-class";

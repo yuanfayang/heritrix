@@ -42,6 +42,9 @@ import org.archive.crawler.settings.SimpleType;
  * @author Igor Ranitovic
  */
 public class MatchesFilePatternDecideRule extends MatchesRegExpDecideRule {
+
+    private static final long serialVersionUID = -4182743018517062411L;
+
     private static final Logger logger =
         Logger.getLogger(MatchesFilePatternDecideRule.class.getName());
     public static final String ATTR_USE_PRESET = "use-preset-pattern";

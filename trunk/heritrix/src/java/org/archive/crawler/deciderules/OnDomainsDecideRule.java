@@ -24,9 +24,9 @@
 */
 package org.archive.crawler.deciderules;
 
-import java.util.logging.Logger;
 
 import org.archive.util.SurtPrefixSet;
+
 
 /**
  * Rule applies configured decision to any URIs that
@@ -36,8 +36,10 @@ import org.archive.util.SurtPrefixSet;
  * @author gojomo
  */
 public class OnDomainsDecideRule extends SurtPrefixedDecideRule {
-    private static final Logger logger =
-        Logger.getLogger(OnDomainsDecideRule.class.getName());
+
+    private static final long serialVersionUID = -3872369060554558805L;
+    //private static final Logger logger =
+    //    Logger.getLogger(OnDomainsDecideRule.class.getName());
     /**
      * Usual constructor. 
      * @param name
