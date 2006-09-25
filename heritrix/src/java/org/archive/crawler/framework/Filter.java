@@ -49,6 +49,9 @@ import org.archive.crawler.settings.SimpleType;
  * @see org.archive.crawler.framework.Processor
  */
 public class Filter extends ModuleType {
+
+    private static final long serialVersionUID = -356718306794776802L;
+
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.framework.Filter");
 

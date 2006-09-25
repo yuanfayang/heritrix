@@ -51,6 +51,9 @@ import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
  */
 public class HTTPMidFetchUnchangedFilter extends Filter 
 implements AdaptiveRevisitAttributeConstants {
+
+    private static final long serialVersionUID = -7416477243375196980L;
+
     private static final Logger logger =
         Logger.getLogger(HTTPMidFetchUnchangedFilter.class.getName());
 

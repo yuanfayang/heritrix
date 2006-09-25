@@ -46,6 +46,9 @@ import org.archive.net.UURI;
  * equivalent {@link DecideRule}.
  */
 public class PathDepthFilter extends Filter {
+
+    private static final long serialVersionUID = 1626115117327154205L;
+
     private static final Logger logger =
         Logger.getLogger(PathDepthFilter.class.getName());
     public static final String ATTR_MATCH_RETURN_VALUE =
