@@ -27,7 +27,9 @@ package org.archive.crawler.settings;
  *
  * @author John Erik Halse
  */
-public class StringList extends ListType {
+public class StringList extends ListType<String> {
+
+    private static final long serialVersionUID = 3181868189684416390L;
 
     /** Creates a new StringList.
      *
@@ -124,13 +126,7 @@ public class StringList extends ListType {
      * @throws ClassCastException is thrown if the element was of wrong type
      *         and could not be converted.
      */
-    public Object checkType(Object element) throws ClassCastException {
-        if (!(element instanceof String)) {
-            element =
-                SettingsHandler.StringToType(
-                    (String) element,
-                    SettingsHandler.STRING);
-        }
-        return element;
+    public String checkType(Object element) throws ClassCastException {
+        return (String)element;
     }
 }
