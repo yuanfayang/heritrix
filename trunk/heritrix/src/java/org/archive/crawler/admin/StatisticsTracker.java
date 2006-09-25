@@ -167,7 +167,7 @@ implements CrawlURIDispositionListener, Serializable {
 
     /** Keep track of URL counts per host per seed */
     protected transient 
-    Map<String,Map<String,LongWrapper>> sourceHostDistribution = null;
+    Map<String,HashMap<String,LongWrapper>> sourceHostDistribution = null;
 
     /**
      * Record of seeds' latest actions.
@@ -747,8 +747,8 @@ implements CrawlURIDispositionListener, Serializable {
          
     protected void saveSourceStats(String source, String hostname) {
         synchronized(sourceHostDistribution) {
-            Map<String,LongWrapper> hostUriCount = 
-                (Map<String,LongWrapper>)sourceHostDistribution.get(source);
+            HashMap<String,LongWrapper> hostUriCount = 
+                sourceHostDistribution.get(source);
             if (hostUriCount == null) {
                 hostUriCount = new HashMap<String,LongWrapper>();
             }
