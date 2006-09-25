@@ -27,7 +27,9 @@ package org.archive.crawler.settings;
  *
  * @author John Erik Halse
  */
-public class DoubleList extends ListType {
+public class DoubleList extends ListType<Double> {
+
+    private static final long serialVersionUID = -5793937164778552546L;
 
     /** Creates a new DoubleList.
      *
@@ -168,13 +170,14 @@ public class DoubleList extends ListType {
      * @throws ClassCastException is thrown if the element was of wrong type
      *         and could not be converted.
      */
-    public Object checkType(Object element) throws ClassCastException {
-        if (!(element instanceof Double)) {
-            element =
+    public Double checkType(Object element) throws ClassCastException {
+        if (element instanceof Double) {
+            return (Double)element;
+        } else {
+            return (Double)
                 SettingsHandler.StringToType(
                     (String) element,
                     SettingsHandler.DOUBLE);
         }
-        return element;
     }
 }
