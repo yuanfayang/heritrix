@@ -60,6 +60,8 @@ import org.archive.crawler.settings.Type;
  */
 public class CredentialStore extends ModuleType {
 
+    private static final long serialVersionUID = -7916979754932063634L;
+
     private static Logger logger = Logger.getLogger(
         "org.archive.crawler.datamodel.CredentialStore");
 
@@ -259,9 +261,9 @@ public class CredentialStore extends ModuleType {
      * but different ports (e.g. http and https).
      * @return Unmodifable sublist of all elements of passed type.
      */
-    public Set subset(CrawlURI context, Class type, String rootUri) {
+    public Set<Credential> subset(CrawlURI context, Class type, String rootUri) {
 
-        Set result = null;
+        Set<Credential> result = null;
         Iterator i = iterator(context);
         if (i != null) {
             while(i.hasNext()) {
@@ -286,7 +288,7 @@ public class CredentialStore extends ModuleType {
                     }
                 }
                 if (result == null) {
-                    result = new HashSet();
+                    result = new HashSet<Credential>();
                 }
                 result.add(c);
             }

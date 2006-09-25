@@ -26,7 +26,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EventObject;
@@ -36,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.SortedMap;
-import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -145,11 +143,14 @@ implements CrawlURIDispositionListener, Serializable {
      * Cumulative data
      */
     /** Keep track of the file types we see (mime type -> count) */
-    protected Hashtable mimeTypeDistribution = new Hashtable();
-    protected Hashtable mimeTypeBytes = new Hashtable();
+    protected Hashtable<String,LongWrapper> mimeTypeDistribution
+     = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,LongWrapper> mimeTypeBytes
+     = new Hashtable<String,LongWrapper>();
     
     /** Keep track of fetch status codes */
-    protected Hashtable statusCodeDistribution = new Hashtable();
+    protected Hashtable<String,LongWrapper> statusCodeDistribution
+     = new Hashtable<String,LongWrapper>();
     
     /** Keep track of hosts. 
      * 
@@ -160,17 +161,18 @@ implements CrawlURIDispositionListener, Serializable {
      * <p>They're transient because usually bigmaps that get reconstituted
      * on recover from checkpoint.
      */
-    protected transient Map hostsDistribution = null;
-    protected transient Map hostsBytes = null;
-    protected transient Map hostsLastFinished = null;
+    protected transient Map<String,LongWrapper> hostsDistribution = null;
+    protected transient Map<String,LongWrapper> hostsBytes = null;
+    protected transient Map<String,Long> hostsLastFinished = null;
 
     /** Keep track of URL counts per host per seed */
-    protected transient Map sourceHostDistribution = null;
+    protected transient 
+    Map<String,Map<String,LongWrapper>> sourceHostDistribution = null;
 
     /**
      * Record of seeds' latest actions.
      */
-    protected transient Map processedSeedsRecords;
+    protected transient Map<String,SeedRecord> processedSeedsRecords;
 
     // seeds tallies: ONLY UPDATED WHEN SEED REPORT WRITTEN
     private int seedsCrawled;
@@ -329,8 +331,8 @@ implements CrawlURIDispositionListener, Serializable {
             .toString();
     }
     
-    public Map getProgressStatistics() {
-        Map stats = new HashMap();
+    public Map<String,Number> getProgressStatistics() {
+        Map<String,Number> stats = new HashMap<String,Number>();
         stats.put("discoveredUriCount", new Long(discoveredUriCount));
         stats.put("queuedUriCount", new Long(queuedUriCount));
         stats.put("downloadedUriCount", new Long(downloadedUriCount));
@@ -381,7 +383,7 @@ implements CrawlURIDispositionListener, Serializable {
      * <b>Note:</b> All the values are wrapped with a {@link LongWrapper LongWrapper}
      * @return mimeTypeDistribution
      */
-    public Hashtable getFileDistribution() {
+    public Hashtable<String,LongWrapper> getFileDistribution() {
         return mimeTypeDistribution;
     }
 
@@ -399,7 +401,8 @@ implements CrawlURIDispositionListener, Serializable {
      *               exist it will be added (set to 1).  If null it will
      *            increment the counter "unknown".
      */
-    protected static void incrementMapCount(Map map, String key) {
+    protected static void incrementMapCount(Map<String,LongWrapper> map, 
+            String key) {
     	incrementMapCount(map,key,1);
     }
 
@@ -420,8 +423,8 @@ implements CrawlURIDispositionListener, Serializable {
      * @param increment
      *            The amount to increment counter related to the <code>key</code>.
      */
-    protected static void incrementMapCount(Map map, String key,
-            long increment) {
+    protected static void incrementMapCount(Map<String,LongWrapper> map, 
+            String key, long increment) {
         if (key == null) {
             key = "unknown";
         }
@@ -448,12 +451,14 @@ implements CrawlURIDispositionListener, Serializable {
      *            Assumes values are wrapped with LongWrapper.
      * @return a sorted set containing the same elements as the map.
      */
-    public TreeMap getReverseSortedCopy(final Map mapOfLongWrapperValues) {
-        TreeMap sortedMap = new TreeMap(new Comparator() {
-            public int compare(Object e1, Object e2) {
-                long firstVal = ((LongWrapper)mapOfLongWrapperValues.get(e1)).
+    public TreeMap<String,LongWrapper> getReverseSortedCopy(
+            final Map<String,LongWrapper> mapOfLongWrapperValues) {
+        TreeMap<String,LongWrapper> sortedMap = 
+          new TreeMap<String,LongWrapper>(new Comparator<String>() {
+            public int compare(String e1, String e2) {
+                long firstVal = mapOfLongWrapperValues.get(e1).
                     longValue;
-                long secondVal = ((LongWrapper)mapOfLongWrapperValues.get(e2)).
+                long secondVal = mapOfLongWrapperValues.get(e2).
                     longValue;
                 if (firstVal < secondVal) {
                     return 1;
@@ -462,16 +467,16 @@ implements CrawlURIDispositionListener, Serializable {
                     return -1;
                 }
                 // If the values are the same, sort by keys.
-                return ((String)e1).compareTo((String)e2);
+                return e1.compareTo(e2);
             }
         });
         try {
             sortedMap.putAll(mapOfLongWrapperValues);
         } catch (UnsupportedOperationException e) {
-            Iterator i = mapOfLongWrapperValues.keySet().iterator();
+            Iterator<String> i = mapOfLongWrapperValues.keySet().iterator();
             for (;i.hasNext();) {
                 // Ok. Try doing it the slow way then.
-                Object key = i.next();
+                String key = i.next();
                 sortedMap.put(key, mapOfLongWrapperValues.get(key));
             }
         }
@@ -488,7 +493,7 @@ implements CrawlURIDispositionListener, Serializable {
      * 
      * @return statusCodeDistribution
      */
-    public Hashtable getStatusCodeDistribution() {
+    public Hashtable<String,LongWrapper> getStatusCodeDistribution() {
         return statusCodeDistribution;
     }
     
@@ -742,9 +747,10 @@ implements CrawlURIDispositionListener, Serializable {
          
     protected void saveSourceStats(String source, String hostname) {
         synchronized(sourceHostDistribution) {
-            Map hostUriCount = (Map)sourceHostDistribution.get(source);
+            Map<String,LongWrapper> hostUriCount = 
+                (Map<String,LongWrapper>)sourceHostDistribution.get(source);
             if (hostUriCount == null) {
-                hostUriCount = new HashMap();
+                hostUriCount = new HashMap<String,LongWrapper>();
             }
             // TODO: Dan suggests we don't need a hashtable value.  Might
             // be faster if we went without. Could just have keys of:
@@ -788,11 +794,13 @@ implements CrawlURIDispositionListener, Serializable {
      * UURIs like the Scope seed iterator. The strings are equal to the URIs'
      * getURIString() values.
      * @return the seed iterator
+     * FIXME: Consider using TransformingIterator here
      */
-    public Iterator getSeeds() {
-        List seedsCopy = new Vector();
-        for(Iterator i = controller.getScope().seedsIterator(); i.hasNext();) {
-            seedsCopy.add(((UURI)i.next()).toString());
+    public Iterator<String> getSeeds() {
+        List<String> seedsCopy = new Vector<String>();
+        Iterator<UURI> i = controller.getScope().seedsIterator();
+        while (i.hasNext()) {
+            seedsCopy.add(i.next().toString());
         }
         return seedsCopy.iterator();
     }
@@ -801,11 +809,11 @@ implements CrawlURIDispositionListener, Serializable {
         return getSeedRecordsSortedByStatusCode(getSeeds());
     }
     
-    protected Iterator getSeedRecordsSortedByStatusCode(Iterator i) {
-        TreeSet sortedSet = new TreeSet(new Comparator() {
-            public int compare(Object e1, Object e2) {
-                SeedRecord sr1 = (SeedRecord)e1;
-                SeedRecord sr2 = (SeedRecord)e2;
+    protected Iterator<SeedRecord> getSeedRecordsSortedByStatusCode(
+            Iterator<String> i) {
+        TreeSet<SeedRecord> sortedSet = 
+          new TreeSet<SeedRecord>(new Comparator<SeedRecord>() {
+            public int compare(SeedRecord sr1, SeedRecord sr2) {
                 int code1 = sr1.getStatusCode();
                 int code2 = sr2.getStatusCode();
                 if (code1 == code2) {
@@ -823,7 +831,7 @@ implements CrawlURIDispositionListener, Serializable {
             }
         });
         while (i.hasNext()) {
-            String seed = (String)i.next();
+            String seed = i.next();
             SeedRecord sr = (SeedRecord) processedSeedsRecords.get(seed);
             if(sr==null) {
                 sr = new SeedRecord(seed,SEED_DISPOSITION_NOT_PROCESSED);
@@ -878,7 +886,8 @@ implements CrawlURIDispositionListener, Serializable {
         // for each source
         for (Iterator i = sourceHostDistribution.keySet().iterator(); i.hasNext();) {
             Object sourceKey = i.next();
-            Map hostCounts = (Map)sourceHostDistribution.get(sourceKey);
+            Map<String,LongWrapper> hostCounts 
+             = (Map<String,LongWrapper>)sourceHostDistribution.get(sourceKey);
             // sort hosts by #urls
             SortedMap sortedHostCounts = getReverseSortedHostCounts(hostCounts);
             // for each host
@@ -901,7 +910,8 @@ implements CrawlURIDispositionListener, Serializable {
      * 
      * @return SortedMap of hosts distribution
      */
-    public SortedMap getReverseSortedHostCounts(Map hostCounts) {
+    public SortedMap getReverseSortedHostCounts(
+            Map<String,LongWrapper> hostCounts) {
         synchronized(hostCounts){
             return getReverseSortedCopy(hostCounts);
         }

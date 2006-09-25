@@ -34,6 +34,9 @@ import javax.management.InvalidAttributeValueException;
  * @author John Erik Halse
  */
 public class ModuleType extends ComplexType {
+
+    private static final long serialVersionUID = 3686678928531236811L;
+
     /** Creates a new ModuleType.
      *
      * This constructor is made to help implementors of subclasses. It is an
