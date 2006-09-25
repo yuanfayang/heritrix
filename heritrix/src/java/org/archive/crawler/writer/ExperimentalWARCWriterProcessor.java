@@ -59,7 +59,10 @@ import org.archive.util.anvl.ANVLRecord;
 public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor
 implements CoreAttributeConstants, CrawlStatusListener,
 WriterPoolSettings, FetchStatusCodes, WARCConstants {
-	private final Logger logger = Logger.getLogger(this.getClass().getName());
+
+    private static final long serialVersionUID = 188656957531675821L;
+
+    private final Logger logger = Logger.getLogger(this.getClass().getName());
     
     /**
      * Default path list.

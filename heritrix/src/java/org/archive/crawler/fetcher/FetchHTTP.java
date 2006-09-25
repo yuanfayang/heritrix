@@ -1018,9 +1018,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * @param type Class of credential to get from curi.
      * @return Set of credentials attached to this curi.
      */
-    private Set getCredentials(SettingsHandler handler, CrawlURI curi,
-            Class type) {
-        Set result = null;
+    private Set<Credential> getCredentials(SettingsHandler handler, 
+            CrawlURI curi, Class type) {
+        Set<Credential> result = null;
 
         if (curi.hasCredentialAvatars()) {
             for (Iterator i = curi.getCredentialAvatars().iterator();
@@ -1028,7 +1028,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 CredentialAvatar ca = (CredentialAvatar)i.next();
                 if (ca.match(type)) {
                     if (result == null) {
-                        result = new HashSet();
+                        result = new HashSet<Credential>();
                     }
                     result.add(ca.getCredential(handler, curi));
                 }
