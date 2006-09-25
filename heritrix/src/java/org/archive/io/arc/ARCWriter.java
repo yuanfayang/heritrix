@@ -147,7 +147,7 @@ public class ARCWriter extends WriterPoolMember implements ARCConstants {
      * @param a14DigitDate If null, we'll write current time.
      * @throws IOException
      */
-    ARCWriter(final AtomicInteger serialNo, final PrintStream out,
+    public ARCWriter(final AtomicInteger serialNo, final PrintStream out,
     	final File arc, final boolean cmprs, String a14DigitDate,
     	final List metadata)
     throws IOException {
