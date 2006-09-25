@@ -32,6 +32,9 @@ import org.archive.util.TextUtils;
 
 
 public class FetchStatusMatchesRegExpDecideRule extends PredicatedDecideRule {
+
+    private static final long serialVersionUID = -3088156729860241312L;
+
     private  final Logger logger = Logger.getLogger(this.getClass().getName());
     
     public static final String ATTR_REGEXP = "regexp";

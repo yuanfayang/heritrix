@@ -22,12 +22,12 @@
 */
 package org.archive.crawler.deciderules;
 
-import java.util.logging.Logger;
-
 
 public class FetchStatusNotMatchesRegExpDecideRule
 extends FetchStatusMatchesRegExpDecideRule {
-    private  final Logger logger = Logger.getLogger(this.getClass().getName());
+
+    private static final long serialVersionUID = -2220182698344063577L;
+//    private  final Logger logger = Logger.getLogger(this.getClass().getName());
     
     /**
      * Usual constructor. 

@@ -33,6 +33,9 @@ import org.archive.crawler.settings.SimpleType;
 public class NotExceedsDocumentLengthTresholdDecideRule
 extends PredicatedDecideRule implements CoreAttributeConstants {
 	
+
+    private static final long serialVersionUID = -8774160016195991876L;
+
     private static final Logger logger = Logger.
     	getLogger(NotExceedsDocumentLengthTresholdDecideRule.class.getName());
     public static final String ATTR_CONTENT_LENGTH_TRESHOLD =

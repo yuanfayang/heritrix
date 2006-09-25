@@ -43,6 +43,9 @@ import org.archive.crawler.settings.MapType;
  * @author gojomo
  */
 public class DecideRuleSequence extends DecideRule {
+
+    private static final long serialVersionUID = 8918111430698683110L;
+
     private static final Logger logger =
         Logger.getLogger(DecideRuleSequence.class.getName());
 
