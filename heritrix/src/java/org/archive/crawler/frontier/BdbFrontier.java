@@ -236,8 +236,8 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
      * @param verbose 
      * @return List of URIs (strings).
      */
-    public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
-            final boolean verbose) {
+    public ArrayList<String> getURIsList(FrontierMarker marker, 
+            int numberOfMatches, final boolean verbose) {
         List curis;
         try {
             curis = pendingUris.getFrom(marker, numberOfMatches);
@@ -245,7 +245,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        ArrayList results = new ArrayList(curis.size());
+        ArrayList<String> results = new ArrayList<String>(curis.size());
         Iterator iter = curis.iterator();
         while(iter.hasNext()) {
             CrawlURI curi = (CrawlURI) iter.next();

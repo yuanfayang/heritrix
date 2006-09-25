@@ -153,7 +153,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
 
     /** All known queues.
      */
-    protected transient Map allQueues = null; // of classKey -> ClassKeyQueue
+    protected transient Map<String,WorkQueue> allQueues = null; 
+    // of classKey -> ClassKeyQueue
 
     /**
      * All per-class queues whose first item may be handed out.
@@ -186,7 +187,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     /**
      * All per-class queues held in snoozed state, sorted by wake time.
      */
-    protected SortedSet snoozedClassQueues =
+    protected SortedSet<WorkQueue> snoozedClassQueues =
         Collections.synchronizedSortedSet(new TreeSet<WorkQueue>());
     
     /** Timer for tasks which wake head item of snoozedClassQueues */
@@ -300,7 +301,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
                     && queueAssignmentPolicy.maximumNumberOfKeys() <= 
                         MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
-                this.allQueues = Collections.synchronizedMap(new HashMap());
+                this.allQueues = Collections.synchronizedMap(
+                        new HashMap<String,WorkQueue>());
             } else {
                 this.allQueues = c.getBigMap("allqueues",
                         String.class, WorkQueue.class);
@@ -1227,15 +1229,15 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param max  the maximum number of elements to extract
      * @return  the extraction
      */
-    private static ArrayList extractSome(Collection c, int max) {
+    private static <T> ArrayList<T> extractSome(Collection<T> c, int max) {
         // Try to guess a sane initial capacity for ArrayList
         // Hopefully given collection won't grow more than 10 items
         // between now and the synchronized block...
         int initial = Math.min(c.size() + 10, max);
         int count = 0;
-        ArrayList list = new ArrayList(initial);
+        ArrayList<T> list = new ArrayList<T>(initial);
         synchronized (c) {
-            Iterator iter = c.iterator();
+            Iterator<T> iter = c.iterator();
             while (iter.hasNext() && (count < max)) {
                 list.add(iter.next());
                 count++;
