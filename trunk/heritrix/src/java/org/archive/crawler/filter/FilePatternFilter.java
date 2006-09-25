@@ -45,6 +45,9 @@ import org.archive.crawler.settings.SimpleType;
  * {@link MatchesFilePatternDecideRule}.
  */
 public class FilePatternFilter extends URIRegExpFilter {
+
+    private static final long serialVersionUID = -4019256104085004651L;
+
     private static final Logger logger =
         Logger.getLogger(FilePatternFilter.class.getName());
     public static final String ATTR_USE_DEFAULT = "use-default-patterns";
