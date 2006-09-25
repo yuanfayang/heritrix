@@ -44,6 +44,9 @@ import org.archive.util.TextUtils;
  *
  */
 public class ExtractorJS extends Extractor implements CoreAttributeConstants {
+
+    private static final long serialVersionUID = -2231962381454717720L;
+
     private static Logger LOGGER =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorJS");
 

@@ -56,6 +56,9 @@ import org.archive.util.TextUtils;
  **/
 
 public class ExtractorCSS extends Extractor implements CoreAttributeConstants {
+
+    private static final long serialVersionUID = -1540252885329424902L;
+
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorCSS");
 

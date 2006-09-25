@@ -40,6 +40,9 @@ import org.archive.crawler.datamodel.CrawlURI;
  */
 public class AggressiveExtractorHTML
 extends ExtractorHTML {
+
+    private static final long serialVersionUID = 3586060081186247087L;
+
     static Logger logger =
         Logger.getLogger(AggressiveExtractorHTML.class.getName());
     
