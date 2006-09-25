@@ -33,6 +33,8 @@ import java.util.logging.Level;
  */
 public class LegalValueListConstraint extends Constraint {
 
+    private static final long serialVersionUID = -4293290799574408033L;
+
     /**
      * Constructs a new LegalValueListConstraint.
      *

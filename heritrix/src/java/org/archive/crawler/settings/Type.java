@@ -43,7 +43,7 @@ public abstract class Type extends Attribute {
     /** True if this Type should only show up in expert mode in UI */
     private boolean isExpertSetting = false;
     /** List of constraint that apply for the values of this type */
-    private List constraints = new ArrayList();
+    private List<Constraint> constraints = new ArrayList<Constraint>();
     /** The class the value of this type must be an instance of (or instance of
      * a subclass.
      */
