@@ -64,6 +64,9 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI extends CandidateURI
 implements FetchStatusCodes {
+
+    private static final long serialVersionUID = 7874096757350100472L;
+
     public static final int UNCALCULATED = -1;
     
     // INHERITED FROM CANDIDATEURI
@@ -159,7 +162,8 @@ implements FetchStatusCodes {
      * Any key mentioned in this list will not be cleared out at the end
      * of a pass down the processing chain.
      */
-    private static final List alistPersistentMember = new CopyOnWriteArrayList(
+    private static final List<Object> alistPersistentMember
+     = new CopyOnWriteArrayList<Object>(
             new String [] {A_CREDENTIAL_AVATARS_KEY});
 
     /**
@@ -185,6 +189,7 @@ implements FetchStatusCodes {
      * @param caUri the CandidateURI to base this CrawlURI on.
      * @param o Monotonically increasing number within a crawl.
      */
+    @SuppressWarnings("deprecation")
     public CrawlURI(CandidateURI caUri, long o) {
         super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(),
             caUri.getViaContext());
@@ -575,11 +580,14 @@ implements FetchStatusCodes {
      */
     public void addLocalizedError(final String processorName,
             final Throwable ex, final String message) {
-        List localizedErrors;
+        List<LocalizedError> localizedErrors;
         if (containsKey(A_LOCALIZED_ERRORS)) {
-            localizedErrors = (List) getObject(A_LOCALIZED_ERRORS);
+            @SuppressWarnings("unchecked")
+            List<LocalizedError> temp // to prevent warning on cast
+             = (List<LocalizedError>) getObject(A_LOCALIZED_ERRORS);
+            localizedErrors = temp;
         } else {
-            localizedErrors = new ArrayList();
+            localizedErrors = new ArrayList<LocalizedError>();
             putObject(A_LOCALIZED_ERRORS, localizedErrors);
         }
 
@@ -850,6 +858,7 @@ implements FetchStatusCodes {
         setAList(getPersistentAList());
     }
     
+    @SuppressWarnings("deprecation")
     protected AList getPersistentAList() {
         AList newAList = new HashtableAList();
         // copy declared persistent keys
@@ -889,7 +898,8 @@ implements FetchStatusCodes {
     /**
      * @return Credential avatars.  Null if none set.
      */
-    public Set getCredentialAvatars() {
+    @SuppressWarnings("unchecked")
+    public Set<CredentialAvatar> getCredentialAvatars() {
         return (Set)getObject(A_CREDENTIAL_AVATARS_KEY);
     }
 
@@ -909,9 +919,9 @@ implements FetchStatusCodes {
      * @param ca Credential avatar to add to set of avatars.
      */
     public void addCredentialAvatar(CredentialAvatar ca) {
-        Set avatars = getCredentialAvatars();
+        Set<CredentialAvatar> avatars = getCredentialAvatars();
         if (avatars == null) {
-            avatars = new HashSet();
+            avatars = new HashSet<CredentialAvatar>();
             setCredentialAvatars(avatars);
         }
         avatars.add(ca);

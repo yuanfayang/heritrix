@@ -54,6 +54,8 @@ import org.archive.net.UURIFactory;
  */
 public class HtmlFormCredential extends Credential {
 
+    private static final long serialVersionUID = -4732570804435453949L;
+
     private static final Logger logger =
         Logger.getLogger(HtmlFormCredential.class.getName());
 
@@ -118,15 +120,15 @@ public class HtmlFormCredential extends Credential {
      * @return Form inputs as convenient map.  Returns null if no form items.
      * @throws AttributeNotFoundException
      */
-    public Map getFormItems(final CrawlURI context)
+    public Map<String,Object> getFormItems(final CrawlURI context)
             throws AttributeNotFoundException {
-        Map result = null;
+        Map<String,Object> result = null;
         MapType items = (MapType)getAttribute(ATTR_FORM_ITEMS, context);
         if (items != null) {
             for (Iterator i = items.iterator(context); i.hasNext();) {
                 Attribute a = (Attribute)i.next();
                 if (result == null) {
-                    result = new HashMap();
+                    result = new HashMap<String,Object>();
                 }
                 result.put(a.getName(), a.getValue());
             }

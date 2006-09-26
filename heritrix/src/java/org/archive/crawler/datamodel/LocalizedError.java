@@ -29,9 +29,9 @@ package org.archive.crawler.datamodel;
  */
 public class LocalizedError {
 
-    private String message;
+//    private String message;
     public Throwable exception;
-    private String processorName;
+//    private String processorName;
 
     /**
      * @param processorName
@@ -39,9 +39,9 @@ public class LocalizedError {
      * @param message
      */
     public LocalizedError(String processorName, Throwable ex, String message) {
-        this.processorName = processorName;
+//        this.processorName = processorName;
         this.exception = ex;
-        this.message = message;
+//        this.message = message;
     }
 
 }

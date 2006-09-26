@@ -58,6 +58,9 @@ import org.archive.crawler.settings.SettingsHandler;
  */
 public class CredentialAvatar
 implements Serializable {
+
+    private static final long serialVersionUID = 4489542750898404807L;
+
     private static final Logger logger =
         Logger.getLogger(CredentialAvatar.class.getName());
 

@@ -39,6 +39,9 @@ import org.archive.util.InetAddressUtil;
  * @author gojomo
  */
 public class CrawlHost implements Serializable, CrawlSubstats.HasCrawlSubstats {
+
+    private static final long serialVersionUID = -5494573967890942895L;
+
     private static final Logger logger = Logger.getLogger(CrawlHost.class.getName());
     /** Flag value indicating always-valid IP */
     public static final long IP_NEVER_EXPIRES = -1;

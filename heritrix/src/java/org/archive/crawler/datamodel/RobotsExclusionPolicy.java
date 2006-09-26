@@ -57,6 +57,8 @@ import org.archive.crawler.settings.CrawlerSettings;
  */
 public class RobotsExclusionPolicy implements Serializable {
 
+    private static final long serialVersionUID = 6323907991237383113L;
+
     private static final Logger logger =
         Logger.getLogger(RobotsExclusionPolicy.class.getName());
 
@@ -70,12 +72,12 @@ public class RobotsExclusionPolicy implements Serializable {
     public static RobotsExclusionPolicy DENYALL =
         new RobotsExclusionPolicy(DENYALL_TYPE);
 
-    private LinkedList userAgents = null;
-    private HashMap disallows = null; // of (String -> List)
+    private LinkedList<String> userAgents = null;
+    private HashMap<String,List<String>> disallows = null;
     transient RobotsHonoringPolicy honoringPolicy = null;
 
     private String lastUsedUserAgent = null;
-    private List userAgentsToTest = null;
+    private List<String> userAgentsToTest = null;
 
     /**
      * @param settings 
@@ -87,8 +89,9 @@ public class RobotsExclusionPolicy implements Serializable {
     public static RobotsExclusionPolicy policyFor(CrawlerSettings settings,
             BufferedReader reader, RobotsHonoringPolicy honoringPolicy)
     throws IOException {
-        LinkedList userAgents = new LinkedList();
-        HashMap disallows = new HashMap();
+        LinkedList<String> userAgents = new LinkedList<String>();
+        HashMap<String,List<String>> disallows
+         = new HashMap<String,List<String>>();
         Robotstxt.parse(reader, userAgents, disallows);
         return (disallows.isEmpty())?
             ALLOWALL:
@@ -104,8 +107,9 @@ public class RobotsExclusionPolicy implements Serializable {
      * @param d
      * @param honoringPolicy
      */
-    public RobotsExclusionPolicy(CrawlerSettings settings, LinkedList u,
-            HashMap d, RobotsHonoringPolicy honoringPolicy) {
+    public RobotsExclusionPolicy(CrawlerSettings settings, LinkedList<String> u,
+            HashMap<String,List<String>> d, 
+            RobotsHonoringPolicy honoringPolicy) {
         userAgents = u;
         disallows = d;
         this.honoringPolicy = honoringPolicy;
@@ -118,7 +122,7 @@ public class RobotsExclusionPolicy implements Serializable {
 
         // IF honoring policy is most favored of set, then make a list with only the set as members
         } else if(honoringPolicy.isType(settings, RobotsHonoringPolicy.MOST_FAVORED_SET)) {
-            userAgentsToTest = new ArrayList();
+            userAgentsToTest = new ArrayList<String>();
             Iterator userAgentSet = honoringPolicy.getUserAgents(settings).iterator();
             while(userAgentSet.hasNext()) {
                 String userAgent = (String) userAgentSet.next();
@@ -154,7 +158,7 @@ public class RobotsExclusionPolicy implements Serializable {
             || !lastUsedUserAgent.equals(userAgent))) {
 
             lastUsedUserAgent = userAgent;
-            userAgentsToTest = new ArrayList();
+            userAgentsToTest = new ArrayList<String>();
             Iterator iter = userAgents.iterator();
             while ( iter.hasNext() ) {
                 String ua = (String)iter.next();
