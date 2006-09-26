@@ -292,7 +292,7 @@ public abstract class WriterPoolMember implements ArchiveFileConstants {
             getTimestampSerialNo(final String timestamp) {
         return new TimestampSerialno((timestamp != null)?
                 timestamp: ArchiveUtils.get14DigitDate(),
-                serialNo.incrementAndGet());
+                serialNo.getAndIncrement());
     }
 
     /**
