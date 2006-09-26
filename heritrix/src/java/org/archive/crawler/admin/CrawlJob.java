@@ -67,6 +67,7 @@ import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.OpenMBeanAttributeInfo;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 import javax.management.openmbean.OpenMBeanConstructorInfoSupport;
 import javax.management.openmbean.OpenMBeanInfoSupport;
@@ -231,8 +232,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     private static final String CRAWLJOB_JMXMBEAN_TYPE =
         JmxUtils.SERVICE + ".Job";
     private transient JEMBeanHelper bdbjeMBeanHelper = null;
-    private transient List bdbjeAttributeNameList = null;
-    private transient List bdbjeOperationsNameList = null;
+    private transient List<String> bdbjeAttributeNameList = null;
+    private transient List<String> bdbjeOperationsNameList = null;
     
     
     /**
@@ -1044,7 +1045,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
         File checkpointsDirectory =
             settingsHandler.getOrder().getCheckpointsDirectory();
         File[] perCheckpointDirs = checkpointsDirectory.listFiles();
-        Collection checkpoints = new ArrayList();
+        Collection<Checkpoint> checkpoints = new ArrayList<Checkpoint>();
         if (perCheckpointDirs != null) {
             for (int i = 0; i < perCheckpointDirs.length; i++) {
                 Checkpoint cp = new Checkpoint(perCheckpointDirs[i]);
@@ -1286,7 +1287,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     protected OpenMBeanInfoSupport buildMBeanInfo()
     throws InitializationException {
         // Start adding my attributes.
-        List attributes = new ArrayList();
+        List<OpenMBeanAttributeInfo> attributes
+         = new ArrayList<OpenMBeanAttributeInfo>();
 
         // Attributes.
         attributes.add(new OpenMBeanAttributeInfoSupport(NAME_ATTR,
@@ -1363,7 +1365,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 this.bdbjeAttributeNameList);
 
         // Operations.
-        List operations = new ArrayList();
+        List<OpenMBeanOperationInfo> operations
+         = new ArrayList<OpenMBeanOperationInfo>();
         OpenMBeanParameterInfo[] args = new OpenMBeanParameterInfoSupport[3];
         args[0] = new OpenMBeanParameterInfoSupport("url",
             "URL to add to the frontier", SimpleType.STRING);
@@ -1438,7 +1441,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
                 this.bdbjeOperationsNameList);
         
         // Register notifications
-        List notifications = new ArrayList();
+        List<MBeanNotificationInfo> notifications
+         = new ArrayList<MBeanNotificationInfo>();
         notifications.add(
             new MBeanNotificationInfo(new String [] {"crawlStarted",
                     "crawlEnding", "crawlPaused", "crawlResuming", PROG_STATS},
@@ -1464,20 +1468,22 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             notificationsArray);
     }
     
-    protected void addBdbjeAttributes(final List attributes,
-            final List bdbjeAttributes, final List bdbjeNamesToAdd) {
-        for (Iterator i = bdbjeAttributes.iterator(); i.hasNext();) {
-            MBeanAttributeInfo info = (MBeanAttributeInfo)i.next();
+    protected void addBdbjeAttributes(
+            final List<OpenMBeanAttributeInfo> attributes,
+            final List<MBeanAttributeInfo> bdbjeAttributes, 
+            final List<String> bdbjeNamesToAdd) {
+        for (MBeanAttributeInfo info: bdbjeAttributes) {
             if (bdbjeNamesToAdd.contains(info.getName())) {
                 attributes.add(JmxUtils.convertToOpenMBeanAttribute(info));
             }
         }   
     }
     
-    protected void addBdbjeOperations(final List operations,
-            final List bdbjeOperations, final List bdbjeNamesToAdd) {
-        for (Iterator i = bdbjeOperations.iterator(); i.hasNext();) {
-            MBeanOperationInfo info = (MBeanOperationInfo) i.next();
+    protected void addBdbjeOperations(
+            final List<OpenMBeanOperationInfo> operations,
+            final List<MBeanOperationInfo> bdbjeOperations, 
+            final List<String> bdbjeNamesToAdd) {
+        for (MBeanOperationInfo info: bdbjeOperations) {
             if (bdbjeNamesToAdd.contains(info.getName())) {
                 OpenMBeanOperationInfo omboi = null;
                 if (info.getName().equals(OP_DB_STAT)) {
@@ -1506,7 +1512,7 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     }
     
     protected void addCrawlOrderAttributes(final ComplexType type,
-            final List attributes) {
+            final List<OpenMBeanAttributeInfo> attributes) {
         for (final Iterator i = type.getAttributeInfoIterator(null);
                 i.hasNext();) {
             ModuleAttributeInfo info = (ModuleAttributeInfo)i.next();
@@ -2076,7 +2082,8 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
     public ObjectName preRegister(final MBeanServer server, ObjectName on)
     throws Exception {
         this.mbeanServer = server;
-        Hashtable ht = on.getKeyPropertyList();
+        @SuppressWarnings("unchecked")
+        Hashtable<String,String> ht = on.getKeyPropertyList();
         if (!ht.containsKey(JmxUtils.NAME)) {
             throw new IllegalArgumentException("Name property required" +
                 on.getCanonicalName());
@@ -2089,9 +2096,10 @@ implements DynamicMBean, MBeanRegistration, CrawlStatusListener, Serializable {
             throw new IllegalArgumentException("Hosting heritrix not found " +
                 "or not registered with JMX: " + on.getCanonicalName());
         }
-        Map hht = h.getMBeanName().getKeyPropertyList();
+        @SuppressWarnings("unchecked")
+        Map<String,String> hht = h.getMBeanName().getKeyPropertyList();
         ht.put(JmxUtils.MOTHER, hht.get(JmxUtils.NAME));
-        Object port = hht.get(JmxUtils.JMX_PORT);
+        String port = hht.get(JmxUtils.JMX_PORT);
         if (port != null) {
         	ht.put(JmxUtils.JMX_PORT, port);
         }
