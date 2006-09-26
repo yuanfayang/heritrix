@@ -26,9 +26,7 @@ package org.archive.crawler.admin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 import org.archive.crawler.settings.ValueErrorHandler;
@@ -47,12 +45,12 @@ import org.archive.crawler.settings.Constraint.FailedCheck;
  */
 public class CrawlJobErrorHandler implements ValueErrorHandler {
     /** All encountered errors */
-    HashMap errors = null;
+    HashMap<String,FailedCheck> errors = null;
     Level level = Level.INFO;
     Level highestEncounteredLevel = Level.OFF;
 
     public CrawlJobErrorHandler(){
-        errors = new HashMap();
+        errors = new HashMap<String,FailedCheck>();
     }
 
     public CrawlJobErrorHandler(Level level){
@@ -139,7 +137,7 @@ public class CrawlJobErrorHandler implements ValueErrorHandler {
      * <p>Delets all encountered errors of any level.
      */
     public void clearErrors(){
-        errors = new HashMap();
+        errors = new HashMap<String,FailedCheck>();
     }
 
     /**
@@ -173,11 +171,8 @@ public class CrawlJobErrorHandler implements ValueErrorHandler {
      * @see org.archive.crawler.settings.Constraint.FailedCheck
      */
     public List getErrors(Level level){
-        Iterator it = errors.entrySet().iterator();
-        ArrayList list = new ArrayList(errors.size());
-        while(it.hasNext()){
-            Map.Entry entry = (Map.Entry)it.next();
-            FailedCheck fc = (FailedCheck)entry.getValue();
+        ArrayList<FailedCheck> list = new ArrayList<FailedCheck>(errors.size());
+        for (FailedCheck fc: errors.values()) {
             if(fc.getLevel().intValue() >= level.intValue()){
                 list.add(fc);
             }

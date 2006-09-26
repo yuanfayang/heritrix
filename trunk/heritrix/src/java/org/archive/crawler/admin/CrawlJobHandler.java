@@ -144,18 +144,18 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * A list of pending CrawlJobs.
      */
-    private TreeSet pendingCrawlJobs;
+    private TreeSet<CrawlJob> pendingCrawlJobs;
 
     /**
      * A list of completed CrawlJobs.
      */
     //private Vector completedCrawlJobs = new Vector();
-    private TreeSet completedCrawlJobs;
+    private TreeSet<CrawlJob> completedCrawlJobs;
 
     /**
      * A list of profile CrawlJobs.
      */
-    private TreeSet profileJobs;
+    private TreeSet<CrawlJob> profileJobs;
     
     // The UIDs of profiles should be NOT be timestamps. A descriptive name is
     // ideal.
@@ -196,10 +196,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
             final boolean loadJobs, final boolean loadProfiles) {
         this.jobsDir = jobsDir;
         // Make a comparator for CrawlJobs.
-        Comparator comp = new Comparator(){
-            public int compare(Object o1, Object o2) {
-                CrawlJob job1 = (CrawlJob)o1;
-                CrawlJob job2 = (CrawlJob)o2;
+        Comparator<CrawlJob> comp = new Comparator<CrawlJob>(){
+            public int compare(CrawlJob job1, CrawlJob job2) {
                 if( job1.getJobPriority() < job2.getJobPriority() ){
                     return -1;
                 } else if( job1.getJobPriority() > job2.getJobPriority() ){
@@ -211,10 +209,10 @@ public class CrawlJobHandler implements CrawlStatusListener {
                 }
             }
         };
-        this.pendingCrawlJobs = new TreeSet(comp);
-        this.completedCrawlJobs = new TreeSet(comp);
+        this.pendingCrawlJobs = new TreeSet<CrawlJob>(comp);
+        this.completedCrawlJobs = new TreeSet<CrawlJob>(comp);
         // Profiles always have the same priority so it will be sorted by name
-        this.profileJobs = new TreeSet(comp);
+        this.profileJobs = new TreeSet<CrawlJob>(comp);
         if (loadProfiles){
             loadProfiles();
         }
@@ -408,8 +406,8 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * Returns a List of all known profiles.
      * @return a List of all known profiles.
      */
-    public synchronized List getProfiles(){
-        ArrayList tmp = new ArrayList(profileJobs.size());
+    public synchronized List<CrawlJob> getProfiles(){
+        ArrayList<CrawlJob> tmp = new ArrayList<CrawlJob>(profileJobs.size());
         tmp.addAll(profileJobs);
         return tmp;
     }
@@ -478,8 +476,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @return A List of all pending jobs.
      * No promises are made about the order of the list
      */
-    public List getPendingJobs() {
-        ArrayList tmp = new ArrayList(pendingCrawlJobs.size());
+    public List<CrawlJob> getPendingJobs() {
+        ArrayList<CrawlJob> tmp
+         = new ArrayList<CrawlJob>(pendingCrawlJobs.size());
         tmp.addAll(pendingCrawlJobs);
         return tmp;
     }
@@ -494,8 +493,9 @@ public class CrawlJobHandler implements CrawlStatusListener {
     /**
      * @return A List of all finished jobs.
      */
-    public List getCompletedJobs() {
-        ArrayList tmp = new ArrayList(completedCrawlJobs.size());
+    public List<CrawlJob> getCompletedJobs() {
+        ArrayList<CrawlJob> tmp
+         = new ArrayList<CrawlJob>(completedCrawlJobs.size());
         tmp.addAll(completedCrawlJobs);
         return tmp;
     }
@@ -1162,10 +1162,11 @@ public class CrawlJobHandler implements CrawlStatusListener {
      *         ArrayList.
      * @throws IOException when there is trouble reading the file.
      */
-    public static ArrayList loadOptions(String file)
+    public static ArrayList<String> loadOptions(String file)
     throws IOException {
-        ArrayList ret = new ArrayList();
-        Enumeration resources = CrawlJob.class.getClassLoader().getResources("modules/" + file);
+        ArrayList<String> ret = new ArrayList<String>();
+        Enumeration resources = 
+            CrawlJob.class.getClassLoader().getResources("modules/" + file);
 
         boolean noFileFound = true;
         while (resources.hasMoreElements()) {
