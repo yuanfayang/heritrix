@@ -80,13 +80,13 @@ public class Canonicalizer {
      */
     public static String canonicalize(UURI uuri, Iterator rules) {
         String before = uuri.toString();
-        String beforeRule = null;
+        //String beforeRule = null;
         String canonical = before;
         for (; rules.hasNext();) {
             CanonicalizationRule r = (CanonicalizationRule)rules.next();
-            if (logger.isLoggable(Level.FINER)) {
-                beforeRule = canonical;
-            }
+            //if (logger.isLoggable(Level.FINER)) {
+            //    beforeRule = canonical;
+            //}
             if (!r.isEnabled(uuri)) {
                 if (logger.isLoggable(Level.FINER)) {
                     logger.finer("Rule " + r.getName() + " is disabled.");

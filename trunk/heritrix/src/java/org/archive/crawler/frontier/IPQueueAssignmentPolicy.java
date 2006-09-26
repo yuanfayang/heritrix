@@ -26,7 +26,6 @@ package org.archive.crawler.frontier;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlHost;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
 
 /**

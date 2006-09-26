@@ -71,8 +71,8 @@ import org.archive.util.OneLineSimpleLogger;
  * @version $Date$, $Revision$
  */
 public class ExtractorTool {
-    private static final Logger logger =
-        Logger.getLogger(ExtractorTool.class.getName());
+//    private static final Logger logger =
+//        Logger.getLogger(ExtractorTool.class.getName());
     static {
         // Setup the oneline logger.
         Handler [] hs = Logger.getLogger("").getHandlers();
@@ -87,7 +87,7 @@ public class ExtractorTool {
     private static final String [] DEFAULT_EXTRACTORS =
         {"org.archive.crawler.extractor.ExtractorHTTP",
             "org.archive.crawler.extractor.ExtractorHTML"};
-    private final List extractors;
+    private final List<Processor> extractors;
     private final File scratchDir;
     private static final String DEFAULT_SCRATCH = "/tmp";
     
@@ -117,7 +117,7 @@ public class ExtractorTool {
             settingsHandler.getSettingsObject(null);
         MapType extractorsSettings = (MapType)settingsHandler.getOrder().
             getAttribute(CrawlOrder.ATTR_EXTRACT_PROCESSORS);
-        this.extractors = new ArrayList();
+        this.extractors = new ArrayList<Processor>();
         for (int i = 0; i < e.length; i++) {
             Constructor c = Class.forName(e[i]).
                 getConstructor(new Class [] {String.class});

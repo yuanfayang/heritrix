@@ -79,9 +79,9 @@ public class AdaptiveRevisitQueueList implements Reporter {
     private EntryBinding valueBinding;
     
     /** A hash table of all the HQs (wrapped), keyed by hostName */
-    private HashMap hostQueues; 
+    private HashMap<String,AdaptiveRevisitHostQueueWrapper> hostQueues; 
     /** Contains the hostQueues (wrapped) sorted by their time of next fetch */
-    private TreeSet sortedHostQueues;
+    private TreeSet<AdaptiveRevisitHostQueueWrapper> sortedHostQueues;
     /** Logger */
     private static final Logger logger =
         Logger.getLogger(AdaptiveRevisitQueueList.class.getName());
@@ -98,8 +98,8 @@ public class AdaptiveRevisitQueueList implements Reporter {
             valueBinding = new IntegerBinding();
 
             // Then initialize other data
-            hostQueues = new HashMap();
-            sortedHostQueues = new TreeSet();
+            hostQueues = new HashMap<String,AdaptiveRevisitHostQueueWrapper>();
+            sortedHostQueues = new TreeSet<AdaptiveRevisitHostQueueWrapper>();
 
             // Open the hostNamesDB
             DatabaseConfig dbConfig = new DatabaseConfig();
@@ -174,29 +174,30 @@ public class AdaptiveRevisitQueueList implements Reporter {
      */
     public AdaptiveRevisitHostQueue createHQ(String hostName, int valence)
             throws IOException{
-        AdaptiveRevisitHostQueue hq =
-            (AdaptiveRevisitHostQueue)hostQueues.get(hostName);
-        if(hq == null) {
-            // Ok, the HQ does not already exist. (Had to make sure) 
-            // Create it, save it and return it.
-            hq = new AdaptiveRevisitHostQueue(hostName, env, catalog, valence);
-            hq.setOwner(this);
-            
-            try{
-                DatabaseEntry keyEntry = new DatabaseEntry();
-                DatabaseEntry dataEntry = new DatabaseEntry();
-                keyBinding.objectToEntry(hostName,keyEntry);
-                valueBinding.objectToEntry(new Integer(valence),dataEntry);
-                hostNamesDB.put(null,keyEntry,dataEntry);
-                AdaptiveRevisitHostQueueWrapper tmp =
-                    new AdaptiveRevisitHostQueueWrapper(hq);
-                hostQueues.put(hostName,tmp);
-                sortedHostQueues.add(tmp);
-            } catch (DatabaseException e) {
-                throw convertDbException(e);
-            }
+        AdaptiveRevisitHostQueueWrapper hqw = hostQueues.get(hostName);
+        if (hqw != null) {
+            return hqw.hq;
         }
-        return hq;
+        AdaptiveRevisitHostQueue hq;
+        // Ok, the HQ does not already exist. (Had to make sure) 
+        // Create it, save it and return it.
+        hq = new AdaptiveRevisitHostQueue(hostName, env, catalog, valence);
+        hq.setOwner(this);
+        
+        try{
+            DatabaseEntry keyEntry = new DatabaseEntry();
+            DatabaseEntry dataEntry = new DatabaseEntry();
+            keyBinding.objectToEntry(hostName,keyEntry);
+            valueBinding.objectToEntry(new Integer(valence),dataEntry);
+            hostNamesDB.put(null,keyEntry,dataEntry);
+            AdaptiveRevisitHostQueueWrapper tmp =
+                new AdaptiveRevisitHostQueueWrapper(hq);
+            hostQueues.put(hostName,tmp);
+            sortedHostQueues.add(tmp);
+            return hq;
+        } catch (DatabaseException e) {
+            throw convertDbException(e);
+        }
     }
     
     public AdaptiveRevisitHostQueue getTopHQ(){
