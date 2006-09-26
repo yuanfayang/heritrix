@@ -1059,10 +1059,12 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param writer
      */
     private void allNonemptyReportTo(PrintWriter writer) {
-        ArrayList inProcessQueuesCopy;
+        ArrayList<WorkQueue> inProcessQueuesCopy;
         synchronized(this.inProcessQueues) {
             // grab a copy that will be stable against mods for report duration 
-            inProcessQueuesCopy = new ArrayList(this.inProcessQueues);
+            @SuppressWarnings("unchecked")
+            Collection<WorkQueue> inProcess = this.inProcessQueues;
+            inProcessQueuesCopy = new ArrayList<WorkQueue>(inProcess);
         }
         writer.print("\n -----===== IN-PROCESS QUEUES =====-----\n");
         queueSingleLinesTo(writer, inProcessQueuesCopy.iterator());
@@ -1190,7 +1192,9 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         w.print("\n");
         
         w.print("\n -----===== IN-PROCESS QUEUES =====-----\n");
-        ArrayList copy = extractSome(inProcessQueues, REPORT_MAX_QUEUES);
+        @SuppressWarnings("unchecked")
+        Collection<WorkQueue> inProcess = inProcessQueues;
+        ArrayList<WorkQueue> copy = extractSome(inProcess, REPORT_MAX_QUEUES);
         appendQueueReports(w, copy.iterator(), copy.size(), REPORT_MAX_QUEUES);
         
         w.print("\n -----===== READY QUEUES =====-----\n");

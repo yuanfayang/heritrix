@@ -156,7 +156,7 @@ public class BdbMultipleWorkQueues {
     public List getFrom(FrontierMarker m, int maxMatches) throws DatabaseException {
         int matches = 0;
         int tries = 0;
-        ArrayList results = new ArrayList(maxMatches);
+        ArrayList<CrawlURI> results = new ArrayList<CrawlURI>(maxMatches);
         BdbFrontierMarker marker = (BdbFrontierMarker) m;
         
         DatabaseEntry key = marker.getStartKey();

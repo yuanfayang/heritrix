@@ -22,8 +22,6 @@
  */
 package org.archive.crawler.prefetch;
 
-import java.util.logging.Logger;
-
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
