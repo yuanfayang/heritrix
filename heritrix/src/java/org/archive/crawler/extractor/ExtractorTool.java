@@ -148,8 +148,7 @@ public class ExtractorTool {
     
     protected void outlinks(CrawlURI curi) {
         System.out.println(curi.getUURI().toString());
-        for(Iterator i = curi.getOutLinks().iterator(); i.hasNext();) {
-            Link l = (Link)i.next();
+        for(Link l: curi.getOutLinks()) {
             System.out.println(" " + l.getDestination() + " " +
                 l.getHopType() + " " + l.getContext());
         }

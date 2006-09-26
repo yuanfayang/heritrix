@@ -26,6 +26,7 @@
 
 package org.archive.crawler.extractor;
 
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -102,27 +103,23 @@ public class ExtractorImpliedURI extends Extractor implements CoreAttributeConst
 
         this.numberOfCURIsHandled++;
         // use array copy because discoveriess will add to outlinks
-        Object[] sourceLinks = curi.getOutLinks().toArray();
-        for (Object o : sourceLinks) {
-            if(o instanceof Link) {
-                final Link wref = (Link)o;
-                String implied = extractImplied(
-                        wref.getDestination(),
-                        (String)getUncheckedAttribute(curi,ATTR_TRIGGER_REGEXP),
-                        (String)getUncheckedAttribute(curi,ATTR_BUILD_PATTERN));
-                if (implied!=null) {
-                    try {
-                        curi.createAndAddLink(
-                                implied, 
-                                Link.SPECULATIVE_MISC,
-                                Link.SPECULATIVE_HOP);
-                        numberOfLinksExtracted++;
-                    } catch (URIException e) {
-                        LOGGER.log(Level.FINE, "bad URI", e);
-                    }
+        Collection<Link> links = curi.getOutLinks();
+        Link[] sourceLinks = links.toArray(new Link[links.size()]);
+        for (Link wref: sourceLinks) {
+            String implied = extractImplied(
+                    wref.getDestination(),
+                    (String)getUncheckedAttribute(curi,ATTR_TRIGGER_REGEXP),
+                    (String)getUncheckedAttribute(curi,ATTR_BUILD_PATTERN));
+            if (implied!=null) {
+                try {
+                    curi.createAndAddLink(
+                            implied, 
+                            Link.SPECULATIVE_MISC,
+                            Link.SPECULATIVE_HOP);
+                    numberOfLinksExtracted++;
+                } catch (URIException e) {
+                    LOGGER.log(Level.FINE, "bad URI", e);
                 }
-            } else {
-                LOGGER.severe("Unexpected type: " + o);
             }
         }
     }

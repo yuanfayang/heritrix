@@ -147,7 +147,7 @@ implements FetchStatusCodes {
         int preferenceDepthHops = ((Integer)getUncheckedAttribute(curi,
             ATTR_PREFERENCE_DEPTH_HOPS)).intValue();
         Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
-        for (final Iterator i = curi.getOutLinks().iterator(); i.hasNext();) {
+        for (final Iterator i = curi.getOutObjects().iterator(); i.hasNext();) {
             Object o = i.next();
             if(o instanceof Link){
                 final Link wref = (Link)o;

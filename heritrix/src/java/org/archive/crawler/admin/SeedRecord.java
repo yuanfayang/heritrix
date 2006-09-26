@@ -26,7 +26,6 @@
 package org.archive.crawler.admin;
 
 import java.io.Serializable;
-import java.util.Iterator;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
@@ -58,15 +57,10 @@ public class SeedRecord implements CoreAttributeConstants, Serializable {
         this.statusCode = curi.getFetchStatus();
         this.disposition = disposition;
         if (statusCode==301 || statusCode == 302) {
-            Iterator iter = curi.getOutLinks().iterator();
-            while (iter.hasNext()) {
-                Object o = iter.next();
-                if (o instanceof CandidateURI) {
-                    CandidateURI cauri = (CandidateURI)o;
-                    if("location:".equalsIgnoreCase(cauri.getViaContext().
-                    		toString())) {
-                        redirectUri = cauri.toString();
-                    }
+            for (CandidateURI cauri: curi.getOutCandidates()) {
+                if("location:".equalsIgnoreCase(cauri.getViaContext().
+                		toString())) {
+                    redirectUri = cauri.toString();
                 }
             }
         }

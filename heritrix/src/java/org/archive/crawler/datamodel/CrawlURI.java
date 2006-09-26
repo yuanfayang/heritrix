@@ -41,6 +41,7 @@ import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
+import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.Base32;
@@ -1133,13 +1134,52 @@ implements FetchStatusCodes {
         holderCost = cost;
     }
 
-    /** all discovered outbound Links (navlinks, embeds, etc.) */
-    transient Collection outLinks = new HashSet();
+    /** 
+     * All discovered outbound Links (navlinks, embeds, etc.) 
+     * Can either contain Link instances or CandidateURI instances, or both.
+     * The LinksScoper processor converts Link instances in this collection
+     * to CandidateURI instances. 
+     */
+    transient Collection<Object> outLinks = new HashSet<Object>();
     
     /**
+     * Returns discovered links.  The returned collection might be empty if
+     * no links were discovered, or if something like LinksScoper promoted
+     * the links to CandidateURIs.
+     * 
+     * Elements can be removed from the returned collection, but not added.
+     * To add a discovered link, use one of the createAndAdd methods or
+     * {@link #getOutObjects()}.
+     * 
      * @return Collection of all discovered outbound Links
      */
-    public Collection getOutLinks() {
+    public Collection<Link> getOutLinks() {
+        return Transform.subclasses(outLinks, Link.class);
+    }
+    
+    /**
+     * Returns discovered candidate URIs.  The returned collection will be
+     * emtpy until something like LinksScoper promotes discovered Links
+     * into CandidateURIs.
+     * 
+     * Elements can be removed from the returned collection, but not added.
+     * To add a candidate URI, use {@link #replaceOutlinks(Collection)} or
+     * {@link #getOutObjects}.
+     * 
+     * @return  Collection of candidate URIs
+     */
+    public Collection<CandidateURI> getOutCandidates() {
+        return Transform.subclasses(outLinks, CandidateURI.class);
+    }
+    
+    
+    /**
+     * Returns all of the outbound objects.  The returned Collection will
+     * contain Link instances, or CandidateURI instances, or both.  
+     * 
+     * @return  the collection of Links and/or CandidateURIs
+     */
+    public Collection<Object> getOutObjects() {
         return outLinks;
     }
     
@@ -1166,13 +1206,15 @@ implements FetchStatusCodes {
      * Replace current collection of links w/ passed list.
      * Used by Scopers adjusting the list of links (removing those
      * not in scope and promoting Links to CandidateURIs).
-     * @param links Collection of links (Usually a collection
-     * of CandidateURIs replacing a collection of Links).
+     * 
+     * @param a collection of CandidateURIs replacing any previously
+     *   existing outLinks or outCandidates
      */
-    public void replaceOutlinks(Collection links) {
+    public void replaceOutlinks(Collection<CandidateURI> links) {
         clearOutlinks();
         this.outLinks.addAll(links);
     }
+    
     
     /**
      * @return Count of outlinks.
@@ -1317,8 +1359,9 @@ implements FetchStatusCodes {
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
         stream.defaultReadObject();
-        HashSet ol = (HashSet) stream.readObject();
-        outLinks = (ol == null) ? new HashSet() : ol;
+        @SuppressWarnings("unchecked")
+        HashSet<Object> ol = (HashSet<Object>) stream.readObject();
+        outLinks = (ol == null) ? new HashSet<Object>() : ol;
     }
 
 
