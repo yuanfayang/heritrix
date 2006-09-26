@@ -27,7 +27,6 @@ package org.archive.crawler.postprocessor;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -88,14 +87,7 @@ public class SupplementaryLinksScoper extends Scoper {
         }
         
         Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
-        for (final Iterator i = curi.getOutLinks().iterator(); i.hasNext();) {
-            Object obj = i.next();
-            if (!(obj instanceof CandidateURI)) {
-                LOGGER.severe("Unexpected type (Has LinksScoper run?): " +
-                    obj);
-                continue;
-            }
-            final CandidateURI cauri = (CandidateURI)obj;
+        for (CandidateURI cauri: curi.getOutCandidates()) {
             if (isInScope(cauri)) {
                 inScopeLinks.add(cauri);
             }

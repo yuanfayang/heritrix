@@ -27,6 +27,7 @@
 package org.archive.crawler.extractor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -87,14 +88,10 @@ public class ExtractorURI extends Extractor implements CoreAttributeConstants {
 
         this.numberOfCURIsHandled++;
         // use array copy because discoveriess will add to outlinks
-        Object[] sourceLinks = curi.getOutLinks().toArray();
-        for (Object o : sourceLinks) {
-            if(o instanceof Link) {
-                final Link wref = (Link)o;
-                extractLink(curi,wref);
-            } else {
-                LOGGER.severe("Unexpected type: " + o);
-            }
+        Collection<Link> links = curi.getOutLinks();
+        Link[] sourceLinks = links.toArray(new Link[links.size()]);
+        for (Link wref: sourceLinks) {
+            extractLink(curi,wref);
         }
     }
 

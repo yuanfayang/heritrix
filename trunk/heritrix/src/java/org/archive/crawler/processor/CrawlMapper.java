@@ -184,14 +184,9 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
                 ((Boolean) getUncheckedAttribute(null, ATTR_CHECK_OUTLINKS))
                         .booleanValue()) {
             // consider outlinks for mapping
-            Iterator iter = curi.getOutLinks().iterator(); 
+            Iterator<CandidateURI> iter = curi.getOutCandidates().iterator(); 
             while(iter.hasNext()) {
-                Object next = iter.next();
-                if(! (next instanceof CandidateURI)) {
-                    continue;
-                }
-                CandidateURI cauri = (CandidateURI)next; 
-
+                CandidateURI cauri = iter.next();
                 if (decideToMapOutlink(cauri)) {
                     // apply mapping to the CandidateURI
                     String target = map(cauri);
