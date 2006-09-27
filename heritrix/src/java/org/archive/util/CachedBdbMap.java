@@ -629,6 +629,6 @@ implements Map<K,V>, Serializable {
     
     @SuppressWarnings("unchecked")
     private SoftEntry<V> refQueuePoll() {
-        return (SoftEntry<V>)refQueue.poll();
+        return (SoftEntry)refQueue.poll();
     }
 }
