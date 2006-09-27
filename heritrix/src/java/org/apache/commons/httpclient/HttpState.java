@@ -30,14 +30,10 @@
 package org.apache.commons.httpclient;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.List;
 import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -69,6 +65,7 @@ import com.sleepycat.collections.StoredIterator;
  * @version $Revision$ $Date$
  * 
  */
+@SuppressWarnings("unchecked")
 public class HttpState {
 
     // ----------------------------------------------------- Instance Variables
@@ -141,7 +138,7 @@ public class HttpState {
 // BEGIN IA CHANGES
 // PRIOR IMPL & COMPARISON HARNESS LEFT COMMENTED OUT FOR TEMPORARY REFERENCE
 //        Cookie removed1 = null;
-        Cookie removed2 = null;
+//        Cookie removed2 = null;
         if (cookie != null) {
             // first remove any old cookie that is equivalent
 //            for (Iterator it = cookiesArrayList.iterator(); it.hasNext();) {
@@ -154,9 +151,9 @@ public class HttpState {
 //            }
             if (!cookie.isExpired()) {
 //                cookiesArrayList.add(cookie);
-                removed2 = (Cookie) cookiesMap.put(cookie.getSortKey(),cookie);
+                cookiesMap.put(cookie.getSortKey(),cookie);
             } else {
-                removed2 = (Cookie) cookiesMap.remove(cookie.getSortKey());
+                cookiesMap.remove(cookie.getSortKey());
             }
         }
 //        if(removed1!=null && !removed1.equals(removed2)) {
