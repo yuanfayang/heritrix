@@ -47,6 +47,7 @@ import org.apache.commons.logging.LogFactory;
  * 
  * @since 2.0beta1
  */
+@SuppressWarnings("unchecked")
 public class HttpParser {
 
     /** Log object for this class. */
