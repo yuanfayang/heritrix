@@ -31,9 +31,6 @@ package org.archive.crawler.deciderules;
  * @author gojomo
  */
 public class AcceptDecideRule extends DecideRule {
-
-    private static final long serialVersionUID = 1670683201497583206L;
-
     public AcceptDecideRule(String name) {
         super(name);
         setDescription("AcceptRule: always gives ACCEPT decision. " +

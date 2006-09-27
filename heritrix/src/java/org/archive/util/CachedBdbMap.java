@@ -63,9 +63,7 @@ import com.sleepycat.je.EnvironmentConfig;
  * @author gojomo
  *  
  */
-public class CachedBdbMap<K,V> extends AbstractMap<K,V> 
-implements Map<K,V>, Serializable {
-    
+public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     private static final long serialVersionUID = -8655539411367047332L;
 
     private static final Logger logger =
@@ -78,8 +76,7 @@ implements Map<K,V>, Serializable {
      * A map of BDB JE Environments so that we reuse the Environment for
      * databases in the same directory.
      */
-    private static final Map<String,DbEnvironmentEntry> dbEnvironmentMap = 
-        new HashMap<String,DbEnvironmentEntry>();
+    private static final Map dbEnvironmentMap = new HashMap();
 
     /** The BDB JE environment used for this instance.
      */
@@ -92,9 +89,9 @@ implements Map<K,V>, Serializable {
     protected transient StoredSortedMap diskMap;
 
     /** The softreferenced cache */
-    private transient Map<K,SoftEntry<V>> memMap;
+    private transient Map memMap;
 
-    protected transient ReferenceQueue<V> refQueue;
+    protected transient ReferenceQueue refQueue;
 
     /** The number of objects in the diskMap StoredMap. 
      *  (Package access for unit testing.) */
@@ -144,7 +141,7 @@ implements Map<K,V>, Serializable {
     /**
      * Simple structure to keep needed information about a DB Environment.
      */
-    protected static class DbEnvironmentEntry {
+    protected class DbEnvironmentEntry {
         Environment environment;
         StoredClassCatalog classCatalog;
         int openDbCount = 0;
@@ -195,7 +192,7 @@ implements Map<K,V>, Serializable {
      *             throws an exception.
      */
     public CachedBdbMap(final File dbDir, final String dbName,
-            final Class<K> keyClass, final Class<V> valueClass)
+            final Class keyClass, final Class valueClass)
     throws DatabaseException {
         this(dbName);
         this.dbEnvironment = getDbEnvironment(dbDir);
@@ -237,8 +234,8 @@ implements Map<K,V>, Serializable {
      * This method is used by constructors and when deserializing an instance.
      */
     protected void initializeInstance() {
-        this.memMap = new HashMap<K,SoftEntry<V>>();
-        this.refQueue = new ReferenceQueue<V>();
+        this.memMap = new HashMap();
+        this.refQueue = new ReferenceQueue();
     }
     
     protected StoredSortedMap createDiskMap(Database database,
@@ -338,27 +335,25 @@ implements Map<K,V>, Serializable {
      * 
      * @see java.util.Map#keySet()
      */
-    @SuppressWarnings("unchecked")
-    public Set<K> keySet() {
+    public Set keySet() {
         return diskMap.keySet();
     }
     
-    public Set<Map.Entry<K,V>> entrySet() {
+    public Set entrySet() {
         // Would require complicated implementation to 
         // maintain identity guarantees, so skipping
         throw new UnsupportedOperationException();
     }
 
-    public synchronized V get(final Object object) {
-        K key = toKey(object);
+    public synchronized Object get(final Object key) {
         countOfGets++;
         expungeStaleEntries();
         if (countOfGets % 10000 == 0) {
             logCacheSummary();
         }
-        SoftEntry<V> entry = memMap.get(key);
+        SoftEntry entry = (SoftEntry)memMap.get(key);
         if (entry != null) {
-            V val = entry.get(); // get & hold, so not cleared pre-return
+            Object val = entry.get(); // get & hold, so not cleared pre-return
             if (val != null) {
                 cacheHit++;
                 return val;
@@ -369,12 +364,12 @@ implements Map<K,V>, Serializable {
         }
 
         // check backing diskMap
-        V v = diskMapGet(key);
-        if (v != null) {
+        Object o = this.diskMap.get(key);
+        if (o != null) {
             diskHit++;
-            memMap.put(key, new SoftEntry<V>(key, v, refQueue));
+            memMap.put(key, new SoftEntry(key, o, refQueue));
         }
-        return v;
+        return o;
     }
 
     /**
@@ -395,9 +390,9 @@ implements Map<K,V>, Serializable {
         }
     }
     
-    public synchronized V put(K key, V value) {
-        V prevVal = get(key);
-        memMap.put(key, new SoftEntry<V>(key, value, refQueue));
+    public synchronized Object put(Object key, Object value) {
+        Object prevVal = get(key);
+        memMap.put(key, new SoftEntry(key, value, refQueue));
         diskMap.put(key,value); // dummy
         if(prevVal==null) {
             diskMapSize++;
@@ -422,8 +417,8 @@ implements Map<K,V>, Serializable {
         }
     }
 
-    public synchronized V remove(final Object key) {
-        V prevValue = get(key);
+    public synchronized Object remove(final Object key) {
+        Object prevValue = get(key);
         memMap.remove(key);
         expungeStaleEntries();
         diskMap.remove(key);
@@ -517,7 +512,7 @@ implements Map<K,V>, Serializable {
 
     private void expungeStaleEntries() {
         int c = 0;
-        for(SoftEntry entry; (entry = refQueuePoll()) != null;) {
+        for(SoftEntry entry; (entry = (SoftEntry)refQueue.poll()) != null;) {
             expungeStaleEntry(entry);
             c++;
         }
@@ -551,10 +546,10 @@ implements Map<K,V>, Serializable {
         entry.clearPhantom();
     }
     
-    private class PhantomEntry<T> extends PhantomReference<T> {
+    private class PhantomEntry extends PhantomReference {
         private final Object key;
 
-        public PhantomEntry(Object key, T referent) {
+        public PhantomEntry(Object key, Object referent) {
             super(referent, null);
             this.key = key;
         }
@@ -584,12 +579,12 @@ implements Map<K,V>, Serializable {
         }
     }
 
-    private class SoftEntry<T> extends SoftReference<T> {
-        private PhantomEntry<T> phantom;
+    private class SoftEntry extends SoftReference {
+        private PhantomEntry phantom;
 
-        public SoftEntry(Object key, T referent, ReferenceQueue<T> q) {
+        public SoftEntry(Object key, Object referent, ReferenceQueue q) {
             super(referent, q);
-            this.phantom = new PhantomEntry<T>(key, referent);
+            this.phantom = new PhantomEntry(key, referent);
         }
 
         /**
@@ -613,22 +608,5 @@ implements Map<K,V>, Serializable {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(getDatabaseName() + " diskMapSize: " + diskMapSize);
         }
-    }
-    
- 
-    
-    @SuppressWarnings("unchecked")
-    private K toKey(Object o) {
-        return (K)o;
-    }
-    
-    @SuppressWarnings("unchecked")
-    private V diskMapGet(K k) {
-        return (V)diskMap.get(k);
-    }
-    
-    @SuppressWarnings("unchecked")
-    private SoftEntry<V> refQueuePoll() {
-        return (SoftEntry)refQueue.poll();
     }
 }

@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -156,7 +155,7 @@ public class CrawlController implements Serializable, Reporter {
     private transient ReentrantLock singleThreadLock = null;
 
     // emergency reserve of memory to allow some progress/reporting after OOM
-    private transient LinkedList<char[]> reserveMemory;
+    private transient LinkedList reserveMemory;
     private static final int RESERVE_BLOCKS = 1;
     private static final int RESERVE_BLOCK_SIZE = 6*2^20; // 6MB
 
@@ -226,7 +225,7 @@ public class CrawlController implements Serializable, Reporter {
      * Record of fileHandlers established for loggers,
      * assisting file rotation.
      */
-    transient private Map<Logger,FileHandler> fileHandlers;
+    transient private Map fileHandlers;
 
     /** suffix to use on active logs */
     public static final String CURRENT_LOG_SUFFIX = ".log";
@@ -281,8 +280,8 @@ public class CrawlController implements Serializable, Reporter {
      * concurrent modification exceptions.
      * See {@link java.util.Collections#synchronizedList(List)}.
      */
-    private transient List<CrawlStatusListener> registeredCrawlStatusListeners =
-        Collections.synchronizedList(new ArrayList<CrawlStatusListener>());
+    private transient List registeredCrawlStatusListeners =
+        Collections.synchronizedList(new ArrayList());
     
     // Since there is a high probability that there will only ever by one
     // CrawlURIDispositionListner we will use this while there is only one:
@@ -290,8 +289,7 @@ public class CrawlController implements Serializable, Reporter {
         registeredCrawlURIDispositionListener;
 
     // And then switch to the array once there is more then one.
-     protected transient ArrayList<CrawlURIDispositionListener> 
-     registeredCrawlURIDispositionListeners;
+     protected transient ArrayList registeredCrawlURIDispositionListeners;
     
     /** Shared bdb Environment for Frontier subcomponents */
     // TODO: investigate using multiple environments to split disk accesses
@@ -314,7 +312,7 @@ public class CrawlController implements Serializable, Reporter {
      * Keep a list of all BigMap instance made -- shouldn't be many -- so that
      * we can checkpoint.
      */
-    private transient Map<String,CachedBdbMap<?,?>> bigmaps = null;
+    private transient Map bigmaps = null;
     
     /**
      * Default constructor
@@ -339,7 +337,7 @@ public class CrawlController implements Serializable, Reporter {
         this.settingsHandler = sH;
         this.order = settingsHandler.getOrder();
         this.order.setController(this);
-        this.bigmaps = new Hashtable<String,CachedBdbMap<?,?>>();
+        this.bigmaps = new Hashtable();
         sExit = "";
         this.manifest = new StringBuffer();
         String onFailMessage = "";
@@ -405,7 +403,7 @@ public class CrawlController implements Serializable, Reporter {
         setupToePool();
         setThresholds();
         
-        reserveMemory = new LinkedList<char[]>();
+        reserveMemory = new LinkedList();
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
@@ -535,8 +533,7 @@ public class CrawlController implements Serializable, Reporter {
             // First listener;
             registeredCrawlURIDispositionListener = cl;
             //Only used for the first one while it is the only one.
-            registeredCrawlURIDispositionListeners 
-             = new ArrayList<CrawlURIDispositionListener>(1);
+            registeredCrawlURIDispositionListeners = new ArrayList(1);
             //We expect it to be very small.
         }
         registeredCrawlURIDispositionListeners.add(cl);
@@ -826,7 +823,7 @@ public class CrawlController implements Serializable, Reporter {
         progressStats = Logger.getLogger(LOGNAME_PROGRESS_STATISTICS + "." +
             logsPath);
 
-        this.fileHandlers = new HashMap<Logger,FileHandler>();
+        this.fileHandlers = new HashMap();
 
         setupLogFile(uriProcessing,
             logsPath + LOGNAME_CRAWL + CURRENT_LOG_SUFFIX,
@@ -1315,20 +1312,19 @@ public class CrawlController implements Serializable, Reporter {
             // Don't copy any beyond the last bdb log file (bdbje can keep
             // writing logs after checkpoint).
             boolean pastLastLogFile = false;
-            Set<String> srcFilenames = null;
+            Set srcFilenames = null;
             final boolean copyFiles = getCheckpointCopyBdbjeLogs();
             do {
                 FilenameFilter filter = CheckpointUtils.getJeLogsFilter();
                 srcFilenames =
-                    new HashSet<String>(Arrays.asList(
-                            getStateDisk().list(filter)));
+                    new HashSet(Arrays.asList(getStateDisk().list(filter)));
                 List tgtFilenames = Arrays.asList(bdbDir.list(filter));
                 if (tgtFilenames != null && tgtFilenames.size() > 0) {
                     srcFilenames.removeAll(tgtFilenames);
                 }
                 if (srcFilenames.size() > 0) {
                     // Sort files.
-                    srcFilenames = new TreeSet<String>(srcFilenames);
+                    srcFilenames = new TreeSet(srcFilenames);
                     int count = 0;
                     for (final Iterator i = srcFilenames.iterator();
                             i.hasNext() && !pastLastLogFile;) {
@@ -1737,7 +1733,7 @@ public class CrawlController implements Serializable, Reporter {
         stream.defaultReadObject();
         // Setup status listeners
         this.registeredCrawlStatusListeners =
-            Collections.synchronizedList(new ArrayList<CrawlStatusListener>());
+            Collections.synchronizedList(new ArrayList());
         // Ensure no holdover singleThreadMode
         singleThreadMode = false; 
     }
@@ -1947,17 +1943,14 @@ public class CrawlController implements Serializable, Reporter {
      * if none available, returns instance of HashMap.
      * @throws Exception
      */
-    public <K,V> Map<K,V> getBigMap(final String dbName, 
-            final Class<? super K> keyClass,
-            final Class<? super V> valueClass)
+    public Map getBigMap(final String dbName, final Class keyClass,
+            final Class valueClass)
     throws Exception {
-        CachedBdbMap<K,V> result = new CachedBdbMap<K,V>(dbName);
+        CachedBdbMap result = new CachedBdbMap(dbName);
         if (isCheckpointRecover()) {
             File baseDir = getCheckpointRecover().getDirectory();
-            @SuppressWarnings("unchecked")
-            CachedBdbMap<K,V> temp = CheckpointUtils.
+            result = (CachedBdbMap)CheckpointUtils.
                 readObjectFromFile(result.getClass(), dbName, baseDir);
-            result = temp;
         }
         result.initialize(getBdbEnvironment(), keyClass, valueClass,
                 getClassCatalog());

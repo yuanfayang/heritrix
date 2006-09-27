@@ -40,8 +40,6 @@ import org.archive.crawler.settings.ModuleType;
  * @see org.archive.crawler.deciderules.DecideRuleSequence
  */
 public class DecideRule extends ModuleType {
-
-    private static final long serialVersionUID = 3437522810581532520L;
     // enumeration of 'actions'
     public static final String ACCEPT = "ACCEPT";
     public static final String REJECT = "REJECT";

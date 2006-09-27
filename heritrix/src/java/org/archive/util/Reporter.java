@@ -24,6 +24,7 @@ package org.archive.util;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Writer;
 
 /**
  * @author stack

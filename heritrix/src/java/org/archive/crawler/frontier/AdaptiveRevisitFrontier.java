@@ -79,9 +79,6 @@ import org.archive.util.ArchiveUtils;
 public class AdaptiveRevisitFrontier extends ModuleType 
 implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         AdaptiveRevisitAttributeConstants, CrawlStatusListener, HasUriReceiver {
-
-    private static final long serialVersionUID = -8666872690438543671L;
-
     private static final Logger logger =
         Logger.getLogger(AdaptiveRevisitFrontier.class.getName());
 
@@ -1119,19 +1116,16 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     }
 
     private static class ThreadLocalQueue
-    extends ThreadLocal<Queue<CandidateURI>> implements Serializable {
-
-        private static final long serialVersionUID = 8268977225156462059L;
-
-        protected Queue<CandidateURI> initialValue() {
-            return new MemQueue<CandidateURI>();
+    extends ThreadLocal implements Serializable {
+        protected Object initialValue() {
+            return new MemQueue();
         }
 
         /**
          * @return Queue of 'batched' items
          */
-        public Queue<CandidateURI> getQueue() {
-            return get();
+        public Queue getQueue() {
+            return (Queue)super.get();
         }
     }
     

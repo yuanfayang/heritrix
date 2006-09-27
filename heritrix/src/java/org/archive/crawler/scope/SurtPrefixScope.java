@@ -50,9 +50,6 @@ import org.archive.util.SurtPrefixSet;
  * @deprecated As of release 1.10.0.  Replaced by {@link DecidingScope}.
  */
 public class SurtPrefixScope extends RefinedScope {
-
-    private static final long serialVersionUID = 2652008287322770123L;
-
     public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
     public static final String ATTR_SEEDS_AS_SURT_PREFIXES = "seeds-as-surt-prefixes";
     public static final String ATTR_SURTS_DUMP_FILE = "surts-dump-file";

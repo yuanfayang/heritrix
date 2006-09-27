@@ -30,13 +30,15 @@ import java.util.Comparator;
  *
  *
  * */
-public class StringIntPairComparator implements Comparator<StringIntPair> {
+public class StringIntPairComparator implements Comparator {
 
     public StringIntPairComparator (){
         super();
     }
 
-    public int compare(StringIntPair p1, StringIntPair p2) {
+    public int compare(Object o1, Object o2) {
+        StringIntPair p1 = (StringIntPair) o1;
+        StringIntPair p2 = (StringIntPair) o2;
         if (p1.getIntValue() < p2.getIntValue())
             return -1;
         if (p1.getIntValue() > p2.getIntValue())

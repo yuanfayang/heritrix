@@ -53,21 +53,18 @@ import org.archive.net.UURI;
 public class CrawlerSettings {
     /** Registry of DataContainers for ComplexTypes in this settings object
      *  indexed on absolute name */
-    private final Map<String,DataContainer> localComplexTypes
-     = new HashMap<String,DataContainer>();
+    private final Map localComplexTypes = new HashMap();
 
     /** Registry of top level ModuleTypes in this settings object indexed on
      * module name. These are modules that doesn't have parents in this
      * settings object
      */
-    private final Map<String,ModuleType> topLevelModules
-     = new HashMap<String,ModuleType>();
+    private final Map topLevelModules = new HashMap();
 
     /** Registry of all ModuleTypes in this settings object indexed on
      * module name.
      */
-    private final Map<String,ComplexType> localModules 
-     = new HashMap<String,ComplexType>();
+    private final Map localModules = new HashMap();
 
     /** Reference to the settings handler this settings object belongs to */
     private final SettingsHandler settingsHandler;
@@ -76,7 +73,7 @@ public class CrawlerSettings {
     private final String scope;
 
     /** List of refinements applied to this settings object */
-    private List<Refinement> refinements;
+    private List refinements;
 
     /** True if this settings object is a refinement */
     private boolean isRefinement = false;
@@ -339,7 +336,7 @@ public class CrawlerSettings {
      */
     public ListIterator refinementsIterator() {
         if (refinements == null) {
-            refinements = new ArrayList<Refinement>();
+            refinements = new ArrayList();
         }
         return refinements.listIterator();
     }
@@ -351,7 +348,7 @@ public class CrawlerSettings {
      */
     public void addRefinement(Refinement refinement) {
         if (refinements == null) {
-            refinements = new ArrayList<Refinement>();
+            refinements = new ArrayList();
         }
         this.refinements.remove(refinement);
         this.refinements.add(refinement);

@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
 // Tested by TestHashtableAList
 
 /** Implementation of {@link AList} using simple hashtable. */
-@SuppressWarnings({"serial", "unchecked"})
+
 public class HashtableAList implements MutableAList, Serializable {
     private final Hashtable mTable = new Hashtable();
 

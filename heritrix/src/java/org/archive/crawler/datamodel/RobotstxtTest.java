@@ -29,15 +29,13 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 import junit.framework.TestCase;
 
 public class RobotstxtTest extends TestCase {
     public void testParseRobots() throws IOException {
-        LinkedList<String> userAgents = new LinkedList<String>();
-        HashMap<String,List<String>> disallows
-         = new HashMap<String,List<String>>();
+        LinkedList userAgents = new LinkedList();
+        HashMap disallows = new HashMap();
         BufferedReader reader = new BufferedReader(new StringReader("BLAH"));
         assertFalse(Robotstxt.parse(reader, userAgents, disallows));
         assertTrue(disallows.size() == 0);
@@ -57,8 +55,8 @@ public class RobotstxtTest extends TestCase {
             new StringReader("User-agent: " + agent + "\n" +
             "Disallow: /cgi-bin/\n" +
             "Disallow: /details/software\n"));
-        disallows = new HashMap<String,List<String>>();
-        userAgents = new LinkedList<String>();
+        disallows = new HashMap();
+        userAgents = new LinkedList();
         assertFalse(Robotstxt.parse(reader, userAgents, disallows));
         assertTrue(disallows.size() == 1);
         assertTrue(userAgents.size() == 1);

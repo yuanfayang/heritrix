@@ -27,9 +27,7 @@ package org.archive.crawler.settings;
  *
  * @author John Erik Halse
  */
-public class FloatList extends ListType<Float> {
-
-    private static final long serialVersionUID = -8836233200837205447L;
+public class FloatList extends ListType {
 
     /** Creates a new FloatList.
      *
@@ -170,14 +168,13 @@ public class FloatList extends ListType<Float> {
      * @throws ClassCastException is thrown if the element was of wrong type
      *         and could not be converted.
      */
-    public Float checkType(Object element) throws ClassCastException {
-        if (element instanceof Float) {
-            return (Float)element;
-        } else {
-            return (Float)
+    public Object checkType(Object element) throws ClassCastException {
+        if (!(element instanceof Float)) {
+            element =
                 SettingsHandler.StringToType(
                     (String) element,
                     SettingsHandler.FLOAT);
         }
+        return element;
     }
 }

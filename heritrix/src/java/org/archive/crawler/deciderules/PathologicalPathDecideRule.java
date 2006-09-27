@@ -41,9 +41,6 @@ import org.archive.crawler.settings.Type;
  * @author gojomo
  */
 public class PathologicalPathDecideRule extends MatchesRegExpDecideRule {
-
-    private static final long serialVersionUID = -1803997581321178499L;
-
     private static final Logger logger =
         Logger.getLogger(PathologicalPathDecideRule.class.getName());
 

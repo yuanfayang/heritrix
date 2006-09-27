@@ -144,32 +144,13 @@ public class ARCRecord extends ArchiveRecord implements ARCConstants {
         }
     }
     
-    public void dumpHttpHeader() throws IOException {
-		if (this.httpHeaderStream == null) {
-			return;
-		}
-		// Dump the httpHeaderStream to STDOUT
-		for (int available = this.httpHeaderStream.available();
-			this.httpHeaderStream != null
-				&& (available = this.httpHeaderStream.available()) > 0;) {
-			// We should be in this loop only once and should do this
-			// buffer allocation once.
-			byte[] buffer = new byte[available];
-			// The read nulls out httpHeaderStream when done with it so
-			// need check for null in the loop control line.
-			int read = read(buffer, 0, available);
-			System.out.write(buffer, 0, read);
-		}
-	}
-    
     /**
-	 * Read http header if present. Technique borrowed from HttpClient HttpParse
-	 * class.
-	 * 
-	 * @return ByteArrayInputStream with the http header in it or null if no
-	 *         http header.
-	 * @throws IOException
-	 */
+     * Read http header if present.
+     * Technique borrowed from HttpClient HttpParse class.
+     * @return ByteArrayInputStream with the http header in it or null if no
+     * http header.
+     * @throws IOException
+     */
     private InputStream readHttpHeader() throws IOException {
         // If judged a record that doesn't have an http header, return
         // immediately.

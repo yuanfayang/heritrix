@@ -43,8 +43,8 @@ import org.archive.util.FileUtils;
  *
  */
 public class ObjectPlusFilesInputStream extends ObjectInputStream {
-    LinkedList<File> auxiliaryDirectoryStack = new LinkedList<File>();
-    LinkedList<Runnable> postRestoreTasks = new LinkedList<Runnable>();
+    LinkedList auxiliaryDirectoryStack = new LinkedList();
+    LinkedList postRestoreTasks = new LinkedList();
 
     /**
      * Instantiate over the given stream and using the supplied

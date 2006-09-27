@@ -33,9 +33,6 @@ package org.archive.crawler.postprocessor;
  * @see org.archive.crawler.postprocessor.ContentBasedWaitEvaluator
  */
 public class ImageWaitEvaluator extends ContentBasedWaitEvaluator {
-
-    private static final long serialVersionUID = -2762377129860398333L;
-
     protected final static Long DEFAULT_INITIAL_WAIT_INTERVAL =
         new Long(172800); // 2 days
 

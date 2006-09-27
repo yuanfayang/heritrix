@@ -65,8 +65,8 @@ public class MemQueueTest extends QueueTestBase {
     /*
      * test methods
      */
-    protected Queue<Object> makeQueue() {
-        return new MemQueue<Object>();
+    protected Queue makeQueue() {
+        return new MemQueue();
     }
 
     // TODO - implement test methods in MemQueueTest

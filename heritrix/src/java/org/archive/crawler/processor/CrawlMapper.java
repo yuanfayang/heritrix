@@ -32,6 +32,7 @@ import java.util.Iterator;
 
 import javax.management.AttributeNotFoundException;
 
+import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -106,8 +107,7 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
     /**
      * Mapping of target crawlers to logs (PrintWriters)
      */
-    HashMap<String,PrintWriter> diversionLogs
-     = new HashMap<String,PrintWriter>();
+    HashMap diversionLogs = new HashMap();
 
     /**
      * Truncated timestamp prefix for diversion logs; when
@@ -184,9 +184,14 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
                 ((Boolean) getUncheckedAttribute(null, ATTR_CHECK_OUTLINKS))
                         .booleanValue()) {
             // consider outlinks for mapping
-            Iterator<CandidateURI> iter = curi.getOutCandidates().iterator(); 
+            Iterator iter = curi.getOutLinks().iterator(); 
             while(iter.hasNext()) {
-                CandidateURI cauri = iter.next();
+                Object next = iter.next();
+                if(! (next instanceof CandidateURI)) {
+                    continue;
+                }
+                CandidateURI cauri = (CandidateURI)next; 
+
                 if (decideToMapOutlink(cauri)) {
                     // apply mapping to the CandidateURI
                     String target = map(cauri);
@@ -270,7 +275,7 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
      * @return true if URI was already in the cache; false otherwise 
      */
     private boolean recentlySeen(CandidateURI cauri) {
-        long fp = FPGenerator.std64.fp(cauri.toString());
+        long fp = FPGenerator.std64.fp(cauri.getURIString());
         return ! cache.add(fp);
     }
 

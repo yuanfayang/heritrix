@@ -74,8 +74,6 @@ import org.archive.util.DevUtils;
  */
 public class CrawlScope extends Filter {
 
-    private static final long serialVersionUID = -3321533224526211277L;
-
     private static final Logger logger =
         Logger.getLogger(CrawlScope.class.getName());
     public static final String ATTR_NAME = "scope";
@@ -90,7 +88,7 @@ public class CrawlScope extends Filter {
     public static final Boolean
         DEFAULT_REREAD_SEEDS_ON_CONFIG = Boolean.TRUE;
     
-    protected Set<SeedListener> seedListeners = new HashSet<SeedListener>();
+    protected Set seedListeners = new HashSet();
 
     /** Constructs a new CrawlScope.
      *
@@ -213,7 +211,7 @@ public class CrawlScope extends Filter {
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */
-    public void listUsedFiles(List<String> list){
+    public void listUsedFiles(List list){
         // Add seed file
         try {
             File file = getSettingsHandler().getPathRelativeToWorkingDirectory(
@@ -254,7 +252,7 @@ public class CrawlScope extends Filter {
      *
      * @return Iterator, perhaps over a disk file, of seeds
      */
-    public Iterator<UURI> seedsIterator() {
+    public Iterator seedsIterator() {
         return seedsIterator(null);
     }
     
@@ -266,7 +264,7 @@ public class CrawlScope extends Filter {
      * @param ignoredItemWriter optional writer to get ignored seed items report
      * @return Iterator, perhaps over a disk file, of seeds
      */
-    public Iterator<UURI> seedsIterator(Writer ignoredItemWriter) {
+    public Iterator seedsIterator(Writer ignoredItemWriter) {
         BufferedReader br;
         try {
             br = new BufferedReader(new FileReader(getSeedfile()));

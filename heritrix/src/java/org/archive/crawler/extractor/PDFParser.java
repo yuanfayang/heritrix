@@ -44,8 +44,8 @@ import java.util.*;
 // to parse small, but admittedly complex, documents.
 public class PDFParser {
 
-    ArrayList<String> foundURIs;
-    ArrayList<ArrayList<Integer>> encounteredReferences;
+    ArrayList foundURIs;
+    ArrayList encounteredReferences;
     PdfReader documentReader;
     byte[] document;
     PdfDictionary catalog;
@@ -64,14 +64,14 @@ public class PDFParser {
     /** Reinitialize the object as though a new one were created.
      */
     protected void resetState(){
-        foundURIs = new ArrayList<String>();
-        encounteredReferences = new ArrayList<ArrayList<Integer>>();
+        foundURIs = new ArrayList();
+        encounteredReferences = new ArrayList();
         documentReader = null;
         document = null;
         catalog = null;
 
         for(int i=0; i < encounteredReferences.size(); i++){
-            encounteredReferences.add(new ArrayList<Integer>());
+            encounteredReferences.add(new ArrayList());
         }
     }
 
@@ -126,18 +126,18 @@ public class PDFParser {
         // if we can't store this generation grow our list until we can
         if(generation >= encounteredReferences.size()){
             for(int i=encounteredReferences.size(); i <= generation; i++){
-                encounteredReferences.add(new ArrayList<Integer>());
+                encounteredReferences.add(new ArrayList());
             }
 
             // clearly we haven't seen it
             return false;
         }
 
-        ArrayList<Integer> generationList
-         = encounteredReferences.get(generation);
-        
-        for (int i: generationList) {
-            if(i == id){
+        ArrayList generationList = (ArrayList)encounteredReferences.get(generation);
+
+        Iterator scanList = generationList.iterator();
+        while(scanList.hasNext()){
+            if( ((Integer)scanList.next()).intValue() == id){
                 return true;
             }
         }
@@ -151,8 +151,8 @@ public class PDFParser {
      * @param id
      */
     protected void markAsSeen(int generation, int id){
-        ArrayList<Integer> objectIds = encounteredReferences.get(generation);
-        objectIds.add(id);
+        ArrayList objectIds = (ArrayList)encounteredReferences.get(generation);
+        objectIds.add( new Integer(id));
     }
 
     /**
@@ -201,18 +201,20 @@ public class PDFParser {
 
                 PdfDictionary dictionary= (PdfDictionary)entity;
 
-                @SuppressWarnings("unchecked")
-                Set<PdfName> allkeys = dictionary.getKeys();
-                for (PdfName key: allkeys) {
+                Set allkeys = dictionary.getKeys();
+                Iterator iterator = allkeys.iterator();
+
+                while(iterator.hasNext()){
+                    PdfName key = (PdfName)iterator.next();
                     PdfObject value = dictionary.get(key);
 
                     // see if it's the key is a UR[I,L]
                     if( key.toString().equals("/URI") ||
 		            key.toString().equals("/URL") ) {
-                        foundURIs.add(value.toString());
+                        foundURIs.add(dictionary.get(key).toString());
 
                     }else{
-                        this.extractURIs(value);
+                        this.extractURIs( dictionary.get( key ) );
                     }
 
                 }
@@ -243,7 +245,7 @@ public class PDFParser {
                     }
 
                     // dereference the "pointer" and process the object
-                    indirect.getReader(); // FIXME: examine side-effects
+                    PdfReader reader = indirect.getReader();
                     PdfObject direct = PdfReader.getPdfObject(indirect);
 
                     this.extractURIs(direct);

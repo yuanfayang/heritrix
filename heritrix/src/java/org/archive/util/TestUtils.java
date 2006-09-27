@@ -40,11 +40,11 @@ public class TestUtils {
      */
     public static void forceScarceMemory() {
         // force soft references to be broken
-        LinkedList<SoftReference> hog = new LinkedList<SoftReference>();
+        LinkedList hog = new LinkedList();
         long blocks = Runtime.getRuntime().maxMemory() / 1000000;
         for(long l = 0; l <= blocks; l++) {
             try {
-                hog.add(new SoftReference<byte[]>(new byte[1000000]));
+                hog.add(new SoftReference(new byte[1000000]));
             } catch (OutOfMemoryError e) {
                 hog = null;
                 break;

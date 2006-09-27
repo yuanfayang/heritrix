@@ -24,6 +24,9 @@
 */
 package org.archive.crawler.deciderules;
 
+import java.util.logging.Logger;
+
+
 
 /**
  * Rule applies configured decision to any URIs that, when 
@@ -36,11 +39,8 @@ package org.archive.crawler.deciderules;
  * @author gojomo
  */
 public class NotSurtPrefixedDecideRule extends SurtPrefixedDecideRule {
-
-    private static final long serialVersionUID = -7491388438128566377L;
-
-    //private static final Logger logger =
-    //    Logger.getLogger(NotSurtPrefixedDecideRule.class.getName());
+    private static final Logger logger =
+        Logger.getLogger(NotSurtPrefixedDecideRule.class.getName());
     /**
      * Usual constructor. 
      * @param name

@@ -52,8 +52,7 @@ import java.util.logging.Level;
  *
  * @author John Erik Halse
  */
-public abstract class Constraint 
-implements Comparable<Constraint>, Serializable {
+public abstract class Constraint implements Comparable, Serializable {
     private final Level severity;
     private final String msg;
 
@@ -115,8 +114,7 @@ implements Comparable<Constraint>, Serializable {
         private final ComplexType owner;
         private final Type definition;
         private final Object value;
-        protected final ArrayList<Object> messageArguments
-         = new ArrayList<Object>();
+        protected final ArrayList messageArguments = new ArrayList();
 
         /**
          * Construct a new FailedCheck object.
@@ -220,7 +218,7 @@ implements Comparable<Constraint>, Serializable {
      *
      * @param o a Constraint to compare to.
      */
-    public int compareTo(Constraint o) {
+    public int compareTo(Object o) {
         Constraint c = (Constraint) o;
         return c.severity.intValue() - severity.intValue();
     }

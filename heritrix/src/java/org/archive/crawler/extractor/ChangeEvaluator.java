@@ -43,8 +43,6 @@ import org.archive.util.Base32;
  */
 public class ChangeEvaluator extends Processor
 implements AdaptiveRevisitAttributeConstants {
-
-    private static final long serialVersionUID = 5547590621493534632L;
     private static final Logger logger =
         Logger.getLogger(ChangeEvaluator.class.getName());
 

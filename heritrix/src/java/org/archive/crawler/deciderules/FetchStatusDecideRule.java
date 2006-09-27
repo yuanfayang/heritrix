@@ -36,9 +36,6 @@ import org.archive.crawler.settings.SimpleType;
  * @author gojomo
  */
 public class FetchStatusDecideRule extends PredicatedDecideRule {
-
-    private static final long serialVersionUID = 5820599300395594619L;
-
     private static final String ATTR_TARGET_STATUS = "target-status";
     
     /**

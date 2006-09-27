@@ -53,10 +53,7 @@ import org.archive.util.TextUtils;
 */
 public class URIListRegExpFilter
 extends Filter {
-
-    private static final long serialVersionUID = -2587977969340783677L;
-    
-    private static final Logger logger =
+   private static final Logger logger =
        Logger.getLogger(URIListRegExpFilter.class.getName());
    public static final String ATTR_REGEXP_LIST = "regexp-list";
    public static final String ATTR_LIST_LOGIC= "list-logic";

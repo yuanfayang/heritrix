@@ -683,10 +683,9 @@ implements Serializable, Reporter, CoreAttributeConstants {
      * @param key to make heritable
      */
     public void makeHeritable(String key) {
-        @SuppressWarnings("unchecked")
-        List<String> heritableKeys = (List<String>) getObject(A_HERITABLE_KEYS);
+        List heritableKeys = (List) getObject(A_HERITABLE_KEYS);
         if(heritableKeys==null) {
-            heritableKeys = new ArrayList<String>();
+            heritableKeys = new ArrayList();
             heritableKeys.add(A_HERITABLE_KEYS);
             putObject(A_HERITABLE_KEYS,heritableKeys);
         }

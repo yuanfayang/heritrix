@@ -30,6 +30,9 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.datamodel.UriUniqFilter;
+
 import st.ata.util.FPGenerator;
 
 import com.sleepycat.bind.tuple.LongBinding;

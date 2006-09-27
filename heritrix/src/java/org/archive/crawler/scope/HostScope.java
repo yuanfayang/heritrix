@@ -66,7 +66,6 @@ import org.archive.net.UURI;
  */
 public class HostScope extends SeedCachingScope {
 
-    private static final long serialVersionUID = -6257664892667267266L;
 
     public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
     public static final String ATTR_ADDITIONAL_FOCUS_FILTER =

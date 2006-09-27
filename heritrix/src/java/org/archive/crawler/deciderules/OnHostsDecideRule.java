@@ -24,8 +24,10 @@
 */
 package org.archive.crawler.deciderules;
 
+import java.util.logging.Logger;
 
 import org.archive.util.SurtPrefixSet;
+
 
 
 /**
@@ -36,11 +38,8 @@ import org.archive.util.SurtPrefixSet;
  * @author gojomo
  */
 public class OnHostsDecideRule extends SurtPrefixedDecideRule {
-
-    private static final long serialVersionUID = -7566348189389792625L;
-
-    //private static final Logger logger =
-    //    Logger.getLogger(OnHostsDecideRule.class.getName());
+    private static final Logger logger =
+        Logger.getLogger(OnHostsDecideRule.class.getName());
     /**
      * Usual constructor. 
      * @param name

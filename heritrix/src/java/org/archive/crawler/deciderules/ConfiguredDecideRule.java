@@ -34,9 +34,6 @@ import org.archive.crawler.settings.SimpleType;
  * @author gojomo
  */
 public class ConfiguredDecideRule extends DecideRule {
-
-    private static final long serialVersionUID = -7084695808452312555L;
-
     public final static String ATTR_DECISION = "decision";
     public final static String[] ALLOWED_TYPES = new String[] {ACCEPT, REJECT};
     

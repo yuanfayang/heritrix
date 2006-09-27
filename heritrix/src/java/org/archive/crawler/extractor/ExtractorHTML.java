@@ -52,8 +52,8 @@ import org.archive.util.TextUtils;
  */
 public class ExtractorHTML extends Extractor
 implements CoreAttributeConstants {
+    
 
-    private static final long serialVersionUID = 5855731422080471017L;
 
     private static Logger logger =
         Logger.getLogger(ExtractorHTML.class.getName());
@@ -217,7 +217,7 @@ implements CoreAttributeConstants {
 
         // Just in case it's an OBJECT or APPLET tag
         String codebase = null;
-        ArrayList<String> resources = null;
+        ArrayList resources = null;
         
         final boolean framesAsEmbeds = ((Boolean)getUncheckedAttribute(curi,
             ATTR_TREAT_FRAMES_AS_EMBED_LINKS)).booleanValue();
@@ -302,13 +302,13 @@ implements CoreAttributeConstants {
             } else if (attr.start(7) > -1) {
                 // CLASSID, DATA
                 if (resources == null) {
-                    resources = new ArrayList<String>();
+                    resources = new ArrayList();
                 }
                 resources.add(value.toString());
             } else if (attr.start(8) > -1) {
                 // ARCHIVE
                 if (resources==null) {
-                    resources = new ArrayList<String>();
+                    resources = new ArrayList();
                 }
                 String[] multi = TextUtils.split(WHITESPACE, value);
                 for(int i = 0; i < multi.length; i++ ) {
@@ -317,7 +317,7 @@ implements CoreAttributeConstants {
             } else if (attr.start(9) > -1) {
                 // CODE
                 if (resources==null) {
-                    resources = new ArrayList<String>();
+                    resources = new ArrayList();
                 }
                 // If element is applet and code value does not end with
                 // '.class' then append '.class' to the code value.

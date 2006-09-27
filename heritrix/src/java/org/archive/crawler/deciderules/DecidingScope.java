@@ -23,6 +23,7 @@
  */
 package org.archive.crawler.deciderules;
 
+import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
 
@@ -34,11 +35,8 @@ import org.archive.crawler.framework.CrawlScope;
  * @author gojomo
  */
 public class DecidingScope extends CrawlScope {
-
-    private static final long serialVersionUID = -2942787757512964906L;
-
-    //private static Logger logger =
-    //    Logger.getLogger(DecidingScope.class.getName());
+    private static Logger logger =
+        Logger.getLogger(DecidingScope.class.getName());
     public static final String ATTR_DECIDE_RULES = "decide-rules";
 
     public DecidingScope(String name) {

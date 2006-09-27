@@ -41,9 +41,6 @@ import org.archive.util.SurtPrefixSet;
  * @version $Date$ $Revision$
  */
 public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
-
-    private static final long serialVersionUID = -6344162369024146340L;
-
     public static final String ATTR_SCOPE = "host-or-domain-scope";
     public static final String HOST = "Host";
     public static final String DOMAIN = "Domain";

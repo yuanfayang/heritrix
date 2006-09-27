@@ -22,7 +22,6 @@
  */
 package org.archive.io;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -35,7 +34,7 @@ public interface WriterPoolSettings {
     public int getMaxSize();
     public String getPrefix();
     public String getSuffix(); 
-    public List<File> getOutputDirs();
+    public List getOutputDirs();
     public boolean isCompressed();
     public List getMetadata();
 }

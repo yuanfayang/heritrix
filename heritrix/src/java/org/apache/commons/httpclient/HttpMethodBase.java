@@ -34,7 +34,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.apache.commons.httpclient.auth.AuthState;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
@@ -94,7 +96,6 @@ import org.apache.commons.logging.LogFactory;
  *
  * @version $Revision$ $Date$
  */
-@SuppressWarnings("deprecation")
 public abstract class HttpMethodBase implements HttpMethod {
 
     // -------------------------------------------------------------- Constants

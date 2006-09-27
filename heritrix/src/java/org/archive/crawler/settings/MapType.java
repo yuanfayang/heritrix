@@ -53,9 +53,6 @@ import org.archive.crawler.settings.Constraint.FailedCheck;
  * @author John Erik Halse
  */
 public class MapType extends ComplexType {
-
-    private static final long serialVersionUID = -3694800285930202700L;
-
     /** The content type allowed for this map. */
     private final Type definition;
 

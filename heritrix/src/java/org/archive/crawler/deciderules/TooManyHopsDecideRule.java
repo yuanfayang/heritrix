@@ -38,9 +38,6 @@ import org.archive.crawler.settings.Type;
  * @author gojomo
  */
 public class TooManyHopsDecideRule extends PredicatedDecideRule {
-
-    private static final long serialVersionUID = -5429536193865916670L;
-
     private static final String ATTR_MAX_HOPS = "max-hops";
     
     /**

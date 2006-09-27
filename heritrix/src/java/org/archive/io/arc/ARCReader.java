@@ -447,35 +447,26 @@ implements ARCConstants {
 	protected boolean output(final String format) 
 	throws IOException, java.text.ParseException {
 		boolean result = super.output(format);
-		if(!result && (format.equals(NOHEAD) || format.equals(HEADER))) {
+		if(!result && format.equals(NOHEAD)) {
 			throw new IOException(format +
-				" format only supported for single Records");
+				" only supported for single Records");
 		}
 		return result;
 	}
     
-    protected boolean outputRecord(final String format) throws IOException {
-		boolean result = super.outputRecord(format);
-		if (result) {
-			return result;
-		}
-		if (format.equals(NOHEAD)) {
-			// No point digesting if dumping content.
-			setDigest(false);
-			ARCRecord r = (ARCRecord) get();
-			r.skipHttpHeader();
-			r.dump();
-			result = true;
-		} else if (format.equals(HEADER)) {
-			// No point digesting if dumping content.
-			setDigest(false);
-			ARCRecord r = (ARCRecord) get();
-			r.dumpHttpHeader();
-			result = true;
-		}
-
-		return result;
-	}
+    protected boolean outputRecord(final String format)
+    throws IOException {
+    	boolean result = super.outputRecord(format);
+    	if(!result && format.equals(NOHEAD)) {
+            // No point digesting if dumping content.
+            setDigest(false);
+            ARCRecord r = (ARCRecord)get();
+            r.skipHttpHeader();
+            r.dump();
+            result = true;
+        }
+        return result;
+    }
 
     public void dump(final boolean compress)
     throws IOException, java.text.ParseException {
@@ -526,7 +517,7 @@ implements ARCConstants {
             int exitCode) {
         formatter.printHelp("java org.archive.io.arc.ARCReader" +
             " [--digest=true|false] \\\n" +
-            " [--format=cdx|cdxfile|dump|gzipdump|header|nohead]" +
+            " [--format=cdx|cdxfile|dump|gzipdump|nohead]" +
             " [--offset=#] \\\n[--strict] [--parse] ARC_FILE|ARC_URL",
                 options);
         System.exit(exitCode);
@@ -616,8 +607,8 @@ implements ARCConstants {
         options.addOption(new Option("p","parse", true,
         	"Pass true|false to parse HTTP Headers. Default: false."));
         options.addOption(new Option("f","format", true,
-            "Output options: 'cdx', 'cdxfile', 'dump', 'gzipdump', " +
-            "'header', or 'nohead'. Default: 'cdx'."));
+            "Output options: 'cdx', cdxfile', 'dump', 'gzipdump'," +
+            "'or 'nohead'. Default: 'cdx'."));
         PosixParser parser = new PosixParser();
         CommandLine cmdline = parser.parse(options, args, false);
         List cmdlineArgs = cmdline.getArgList();
@@ -663,7 +654,7 @@ implements ARCConstants {
                     boolean match = false;
                     // List of supported formats.
                     final String [] supportedFormats =
-                		{CDX, DUMP, GZIP_DUMP, HEADER, NOHEAD, CDX_FILE};
+                		{CDX, DUMP, GZIP_DUMP, NOHEAD, CDX_FILE};
                     for (int ii = 0; ii < supportedFormats.length; ii++) {
                         if (supportedFormats[ii].equals(format)) {
                             match = true;
@@ -689,10 +680,6 @@ implements ARCConstants {
             ARCReader arc = ARCReaderFactory.get(
             	new File((String)cmdlineArgs.get(0)), offset);
             arc.setStrict(strict);
-            // We must parse headers if we need to skip them.
-            if (format.equals(NOHEAD) || format.equals(HEADER)) {
-                parse = true;
-            }
             arc.setParseHttpHeaders(parse);
             outputRecord(arc, format);
         } else {

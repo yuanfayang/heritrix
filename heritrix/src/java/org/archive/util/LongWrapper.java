@@ -32,9 +32,6 @@ import java.io.Serializable;
  * @author Kristinn Sigurdsson
  */
 public class LongWrapper implements Serializable {
-
-    private static final long serialVersionUID = -6537350490019555280L;
-
     public long longValue;
     public LongWrapper(long initial){
         this.longValue = initial;

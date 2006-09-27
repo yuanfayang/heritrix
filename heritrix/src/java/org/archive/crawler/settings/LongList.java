@@ -27,9 +27,7 @@ package org.archive.crawler.settings;
  *
  * @author John Erik Halse
  */
-public class LongList extends ListType<Long> {
-
-    private static final long serialVersionUID = -7542494945185808903L;
+public class LongList extends ListType {
 
     /** Creates a new LongList.
      *
@@ -170,14 +168,13 @@ public class LongList extends ListType<Long> {
      * @throws ClassCastException is thrown if the element was of wrong type
      *         and could not be converted.
      */
-    public Long checkType(Object element) throws ClassCastException {
-        if (element instanceof Long) {
-            return (Long)element;
-        } else {
-            return (Long)
+    public Object checkType(Object element) throws ClassCastException {
+        if (!(element instanceof Long)) {
+            element =
                 SettingsHandler.StringToType(
                     (String) element,
                     SettingsHandler.LONG);
         }
+        return element;
     }
 }

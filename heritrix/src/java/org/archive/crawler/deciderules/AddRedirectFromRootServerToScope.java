@@ -30,10 +30,7 @@ import org.archive.net.UURI;
 
 
 public class AddRedirectFromRootServerToScope extends PredicatedDecideRule {
-
-    private static final long serialVersionUID = 2644131585813079064L;
-
-    private static final Logger LOGGER =
+	private static final Logger LOGGER =
 	        Logger.getLogger(AddRedirectFromRootServerToScope.class.getName());
 	private static final String SLASH = "/";
 	public AddRedirectFromRootServerToScope(String name) {

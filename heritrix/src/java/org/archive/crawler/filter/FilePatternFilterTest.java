@@ -34,8 +34,6 @@ import junit.framework.TestCase;
  * miscellaneous groups.
  *
  * @author Igor Ranitovic
- * @deprecated  The tested class is deprecated, so this test 
- * will eventually go away
  */
 public class FilePatternFilterTest extends TestCase {
         FilePatternFilter filter = new FilePatternFilter("File Pattern Filter");

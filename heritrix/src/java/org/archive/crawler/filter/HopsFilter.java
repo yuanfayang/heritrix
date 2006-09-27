@@ -44,9 +44,6 @@ import org.archive.crawler.scope.ClassicScope;
  * equivalent {@link DecideRule}.
  */
 public class HopsFilter extends Filter {
-
-    private static final long serialVersionUID = -5943030310651023640L;
-
     private static final Logger logger =
         Logger.getLogger(HopsFilter.class.getName());
 

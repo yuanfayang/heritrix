@@ -32,9 +32,6 @@ package org.archive.crawler.url.canonicalize;
  */
 public class LowercaseRule
 extends BaseRule {
-
-    private static final long serialVersionUID = -4732482198714929052L;
-    
     private static final String DESCRIPTION = "Lowercase the URL. " +
         "Use this rule to lowercase the url.  Operates on all schemes.";
 

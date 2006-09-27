@@ -26,6 +26,7 @@ import java.io.File;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.url.canonicalize.FixupQueryStr;
@@ -43,6 +44,7 @@ import org.archive.util.TmpDirTestCase;
  */
 public class CanonicalizerTest extends TmpDirTestCase {
     private File orderFile;
+    private CrawlerSettings globalSettings;
     protected XMLSettingsHandler settingsHandler;
 
     private MapType rules = null;

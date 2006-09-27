@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.CrawlScope;
@@ -54,11 +55,8 @@ import org.archive.util.SurtPrefixSet;
  */
 public class SurtPrefixedDecideRule extends PredicatedDecideRule 
         implements SeedListener {
-
-    private static final long serialVersionUID = 2075790126085405015L;
-
-    //private static final Logger logger =
-    //    Logger.getLogger(SurtPrefixedDecideRule.class.getName());
+    private static final Logger logger =
+        Logger.getLogger(SurtPrefixedDecideRule.class.getName());
     
     public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
     public static final String ATTR_SEEDS_AS_SURT_PREFIXES =

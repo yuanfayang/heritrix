@@ -34,6 +34,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.settings.TextField;
 import org.archive.crawler.settings.Type;
 
 import bsh.EvalError;
@@ -56,9 +57,6 @@ import bsh.Interpreter;
  * @version $Date$, $Revision$
  */
 public class BeanShellProcessor extends Processor implements FetchStatusCodes {
-
-    private static final long serialVersionUID = 6926589944337050754L;
-
     private static final Logger logger =
         Logger.getLogger(BeanShellProcessor.class.getName());
 
@@ -71,8 +69,7 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
 
     protected ThreadLocal<Interpreter> threadInterpreter;
     protected Interpreter sharedInterpreter;
-    public Map<Object,Object> sharedMap = Collections.synchronizedMap(
-            new HashMap<Object,Object>());
+    public Map sharedMap = Collections.synchronizedMap(new HashMap());
     
     /**
      * Constructor.

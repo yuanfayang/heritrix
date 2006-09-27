@@ -36,11 +36,6 @@ import org.archive.util.AbstractLongFPSet;
  */
 public class MemLongFPSet extends AbstractLongFPSet
 implements LongFPSet, Serializable {
-    
-    
-    private static final long serialVersionUID = -4301879539092625698L;
-
-
     private static Logger logger =
         Logger.getLogger(MemLongFPSet.class.getName());
     private static final int DEFAULT_CAPACITY_POWER_OF_TWO = 10;

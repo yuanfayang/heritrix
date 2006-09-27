@@ -23,6 +23,7 @@
 package org.archive.crawler.filter;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.deciderules.DecidingScope;
 import org.archive.util.TextUtils;
 
 /**
@@ -34,9 +35,6 @@ import org.archive.util.TextUtils;
  * {@link DecideRule}.
  */
 public class ContentTypeRegExpFilter extends URIRegExpFilter {
-
-    private static final long serialVersionUID = 206378978342655106L;
-
     private static final String DESCRIPTION = "ContentType regexp filter" +
     		"*Deprecated* To be replaced by an equivalent DecideRule. " +
         "Cannot be used until after fetcher processors. Only then is the" +

@@ -33,9 +33,6 @@ package org.archive.crawler.postprocessor;
  * @see org.archive.crawler.postprocessor.ContentBasedWaitEvaluator
  */
 public class TextWaitEvaluator extends ContentBasedWaitEvaluator {
-
-    private static final long serialVersionUID = -328402266684681632L;
-
     protected final static Long DEFAULT_INITIAL_WAIT_INTERVAL =
         new Long(43200); // 12 hours
 

@@ -26,9 +26,6 @@ import org.archive.crawler.settings.SimpleType;
 
 public class ExceedsDocumentLengthTresholdDecideRule extends
 NotExceedsDocumentLengthTresholdDecideRule {
-
-    private static final long serialVersionUID = -3008503096295212224L;
-
     /**
      * Usual constructor. 
      * @param name Name of this rule.

@@ -26,6 +26,7 @@
 package org.archive.util;
 
 import java.text.ParseException;
+import java.util.logging.Logger;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -38,7 +39,8 @@ import junit.framework.TestSuite;
  * @version $Id$
  */
 public class ArchiveUtilsTest extends TestCase {
-    
+    private static final Logger LOGGER =
+        Logger.getLogger(ArchiveUtilsTest.class.getName());
     /**
      * Create a new ArchiveUtilsTest object
      *

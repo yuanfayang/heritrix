@@ -32,9 +32,6 @@ import java.util.regex.Pattern;
  * @version $Date$, $Revision$
  */
 public class StripUserinfoRule extends BaseRule {
-
-    private static final long serialVersionUID = -4271062607638914996L;
-
     private static final String DESCRIPTION = "Strip any 'userinfo' found. " +
         "Use this rule to equate 'http://stack:psswrd@archive.org/index.htm'" + 
         " and 'http://archive.org/index.htm'. The resulting canonicalization" +

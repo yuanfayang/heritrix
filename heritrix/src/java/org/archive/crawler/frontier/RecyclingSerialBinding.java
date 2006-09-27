@@ -46,8 +46,7 @@ public class RecyclingSerialBinding extends SerialBinding {
     /**
      * Thread-local cache of reusable FastOutputStream
      */
-    ThreadLocal<FastOutputStream> fastOutputStreamHolder
-     = new ThreadLocal<FastOutputStream>();
+    ThreadLocal fastOutputStreamHolder = new ThreadLocal();
     
     private ClassCatalog classCatalog;
     private Class baseClass;

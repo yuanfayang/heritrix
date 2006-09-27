@@ -41,8 +41,6 @@ import org.archive.util.TextUtils;
  */
 public class ContentBasedWaitEvaluator extends WaitEvaluator {
     
-    private static final long serialVersionUID = 1623347208782997347L;
-
     /** The regular expression that we limit this evaluator to. */
     public final static String ATTR_CONTENT_REGEXPR =
         "content-regular-expression";

@@ -32,9 +32,6 @@ package org.archive.crawler.url.canonicalize;
  */
 public class FixupQueryStr
 extends BaseRule {
-
-    private static final long serialVersionUID = 3169526832544474794L;
-
     private static final String DESCRIPTION =
         "Fixup the question mark that leads off the query string. " +
         "This rule returns 'http://www.archive.org/index.html' if passed" +

@@ -42,8 +42,7 @@ import java.util.regex.Pattern;
  * 
  * @author gojomo
  */
-public class RegexpLineIterator 
-extends TransformingIteratorWrapper<String,String> {
+public class RegexpLineIterator extends TransformingIteratorWrapper {
     private static final Logger logger =
         Logger.getLogger(RegexpLineIterator.class.getName());
 
@@ -59,9 +58,9 @@ extends TransformingIteratorWrapper<String,String> {
     protected Matcher extractLine = null;
     protected String outputTemplate = null;
 
+    private String next;
 
-    public RegexpLineIterator(Iterator<String> inner, String ignore, 
-            String extract, String replace) {
+    public RegexpLineIterator(Iterator inner, String ignore, String extract, String replace) {
         this.inner = inner;
         ignoreLine = Pattern.compile(ignore).matcher("");
         extractLine = Pattern.compile(extract).matcher("");
@@ -76,7 +75,8 @@ extends TransformingIteratorWrapper<String,String> {
      * 
      * @return whether any item was loaded into next field
      */
-    protected String transform(String line) {
+    protected Object transform(Object obj) {
+        String line = (String)obj;
         ignoreLine.reset(line);
         if(ignoreLine.matches()) {
             return null; 

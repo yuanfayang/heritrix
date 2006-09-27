@@ -31,9 +31,6 @@ package org.archive.crawler.admin;
  * @author Kristinn Sigurdsson
  */
 public class InvalidJobFileException extends Exception {
-
-    private static final long serialVersionUID = -5162130672800789699L;
-
     public InvalidJobFileException(String message){
         super(message);
     }

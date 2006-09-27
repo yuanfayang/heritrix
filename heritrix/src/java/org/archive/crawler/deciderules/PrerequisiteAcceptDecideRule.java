@@ -36,9 +36,6 @@ import org.archive.crawler.extractor.Link;
  * @author gojomo
  */
 public class PrerequisiteAcceptDecideRule extends AcceptDecideRule {
-
-    private static final long serialVersionUID = 2762042167111186142L;
-
     public PrerequisiteAcceptDecideRule(String name) {
         super(name);
         setDescription("PrerequisiteAcceptDecideRule. ACCEPTs " +

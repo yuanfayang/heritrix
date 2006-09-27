@@ -24,6 +24,9 @@
 */
 package org.archive.crawler.deciderules;
 
+import java.util.logging.Logger;
+
+
 
 /**
  * Rule applies configured decision to any URIs that are
@@ -33,11 +36,8 @@ package org.archive.crawler.deciderules;
  * @author gojomo
  */
 public class NotOnDomainsDecideRule extends OnDomainsDecideRule {
-
-    private static final long serialVersionUID = -1634035244888724934L;
-    
-    //private static final Logger logger =
-    //    Logger.getLogger(NotOnDomainsDecideRule.class.getName());
+    private static final Logger logger =
+        Logger.getLogger(NotOnDomainsDecideRule.class.getName());
     /**
      * Usual constructor. 
      * @param name

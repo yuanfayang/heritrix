@@ -289,7 +289,7 @@ public class MapTypeTest extends SettingsFrameworkTestCase {
         MapType map = (MapType) getSettingsHandler().getOrder().getAttribute(
                 CrawlOrder.ATTR_HTTP_HEADERS);
 
-        List<Attribute> atts = new ArrayList<Attribute>();
+        List atts = new ArrayList();
         for (Iterator it = map.iterator(null); it.hasNext();) {
             atts.add(new SimpleType("", "", ((Attribute) it.next()).getValue()));
         }

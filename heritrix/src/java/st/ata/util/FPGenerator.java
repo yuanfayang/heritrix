@@ -44,7 +44,7 @@ and use <code>reduce</code> to reduce to a fingerprint after the loop.
 */
 
 // Tested by: TestFPGenerator
-@SuppressWarnings("unchecked")
+
 public final class FPGenerator {
 
     /** Return a fingerprint generator.  The fingerprints generated

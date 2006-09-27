@@ -63,7 +63,7 @@ public abstract class QueueTestBase extends TmpDirTestCase {
      *
      * @return the Queue object to be tested
      */
-    protected abstract Queue<Object> makeQueue();
+    protected abstract Queue makeQueue();
 
     /*
      * test methods
@@ -111,5 +111,5 @@ public abstract class QueueTestBase extends TmpDirTestCase {
      */
 
     /** the queue object to be tested */
-    protected Queue<Object> queue;
+    protected Queue queue;
 }

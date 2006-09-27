@@ -48,7 +48,7 @@ public abstract class CharSequenceLinkExtractor implements LinkExtractor {
     protected ExtractErrorListener extractErrorListener;
 
     protected CharSequence sourceContent;
-    protected LinkedList<Link> next;
+    protected LinkedList next;
 
     public void setup(UURI source, UURI base, InputStream content,
             Charset charset, ExtractErrorListener listener) {
@@ -67,7 +67,7 @@ public abstract class CharSequenceLinkExtractor implements LinkExtractor {
         this.base = base;
         this.extractErrorListener = listener;
         this.sourceContent = content;
-        this.next = new LinkedList<Link>();
+        this.next = new LinkedList();
     }
 
 
@@ -177,7 +177,7 @@ public abstract class CharSequenceLinkExtractor implements LinkExtractor {
      * @param extractErrorListener
      */
     public static void extract(CharSequence content, UURI source, UURI base,
-            List<Link> collector, ExtractErrorListener extractErrorListener) {
+            List collector, ExtractErrorListener extractErrorListener) {
         // TODO: arrange for inheritance of prefs... eg when HTML includes JS
         // includes HTML, have inner HTML follow robots, etc from outer
         CharSequenceLinkExtractor extractor = newDefaultInstance();

@@ -44,9 +44,6 @@ import org.archive.util.SurtPrefixSet;
  * equivalent {@link DecideRule}.
  */
 public class SurtPrefixFilter extends Filter {
-
-    private static final long serialVersionUID = -6933592892325852022L;
-
     public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
     public static final String ATTR_MATCH_RETURN_VALUE = "if-match-return";
 

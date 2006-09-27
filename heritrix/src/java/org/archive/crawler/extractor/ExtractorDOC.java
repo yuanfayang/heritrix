@@ -41,8 +41,6 @@ import org.archive.crawler.datamodel.CrawlURI;
  */
 public class ExtractorDOC extends Extractor implements CoreAttributeConstants {
 
-    private static final long serialVersionUID = 1896822554981116303L;
-
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorDOC");
     private long numberOfCURIsHandled = 0;

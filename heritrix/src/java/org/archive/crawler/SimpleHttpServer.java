@@ -66,8 +66,7 @@ public class SimpleHttpServer
     /**
      * Webapp contexts returned out of a server start.
      */
-    private List<WebApplicationContext> contexts
-     = new ArrayList<WebApplicationContext>();
+    private List contexts = new ArrayList();
 
     /**
      * Name of the root webapp.

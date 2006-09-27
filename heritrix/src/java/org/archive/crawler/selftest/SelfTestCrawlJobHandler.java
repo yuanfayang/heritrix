@@ -36,6 +36,7 @@ import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobHandler;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlURIDispositionListener;
+import org.archive.crawler.framework.StatisticsTracking;
 
 
 /**
@@ -111,7 +112,7 @@ implements CrawlURIDispositionListener {
                     String selftestClass = pkg + '.' + this.selfTestName +
                         "SelfTest";
                     // Need to make a list.  Make an array first.
-                    List<Class<?>> classList = new ArrayList<Class<?>>();
+                    List classList = new ArrayList();
                     classList.add(Class.forName(selftestClass));
                     test = AllSelfTestCases.suite(this.selfTestUrl,
                         job, job.getDirectory(), Heritrix.getHttpServer().

@@ -36,8 +36,6 @@ import org.archive.crawler.datamodel.CandidateURI;
  */
 public class HasViaDecideRule extends PredicatedDecideRule {
 
-    private static final long serialVersionUID = 1670292311303097735L;
-
     /**
      * Usual constructor. 
      * @param name Name of this DecideRule.

@@ -38,9 +38,6 @@ import org.archive.crawler.framework.Processor;
  */
 public class ExtractorHTTP extends Processor
 implements CoreAttributeConstants {
-
-    private static final long serialVersionUID = 8499072198570554647L;
-
     private static final Logger LOGGER =
         Logger.getLogger(ExtractorHTTP.class.getName());
     protected long numberOfCURIsHandled = 0;

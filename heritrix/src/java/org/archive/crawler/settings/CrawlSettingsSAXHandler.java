@@ -66,15 +66,14 @@ public class CrawlSettingsSAXHandler extends DefaultHandler implements
 
     private SettingsHandler settingsHandler;
 
-    private Map<String,ElementHandler> handlers
-     = new HashMap<String,ElementHandler>();
+    private Map handlers = new HashMap();
 
-    private Stack<ElementHandler> handlerStack = new Stack<ElementHandler>();
+    private Stack handlerStack = new Stack();
 
-    private Stack<Object> stack = new Stack<Object>();
+    private Stack stack = new Stack();
 
     /** Keeps track of elements which subelements should be skipped. */
-    private Stack<Boolean> skip = new Stack<Boolean>();
+    private Stack skip = new Stack();
 
     private StringBuffer buffer = new StringBuffer();
 

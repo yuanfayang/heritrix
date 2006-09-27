@@ -23,7 +23,6 @@ import org.apache.commons.pool.BasePoolableObjectFactory;
  * 
  * @author gojomo
  */
-@SuppressWarnings("unchecked")
 public class FairGenericObjectPoolTest extends TestCase {
 //    public void testUnfair() throws InterruptedException {
 ////        System.out.println("unfair");

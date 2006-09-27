@@ -81,7 +81,7 @@ implements UriUniqFilter.HasUriReceiver {
      */
     public void testWriting() throws FileNotFoundException, IOException {
         long start = System.currentTimeMillis();
-        ArrayList<UURI> list = new ArrayList<UURI>(1000);
+        ArrayList list = new ArrayList(1000);
         int count = 0;
         final int MAX_COUNT = 1000;
         for (; count < MAX_COUNT; count++) {

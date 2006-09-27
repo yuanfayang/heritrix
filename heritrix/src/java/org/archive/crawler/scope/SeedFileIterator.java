@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
@@ -43,7 +42,7 @@ import org.archive.util.iterator.TransformingIteratorWrapper;
  * 
  * @author gojomo
  */
-public class SeedFileIterator extends TransformingIteratorWrapper<String,UURI> {
+public class SeedFileIterator extends TransformingIteratorWrapper {
     private static Logger logger =
         Logger.getLogger(SeedFileIterator.class.getName());
     
@@ -79,7 +78,8 @@ public class SeedFileIterator extends TransformingIteratorWrapper<String,UURI> {
         ignored = ignoredWriter;
     }
     
-    protected UURI transform(String uri) {
+    protected Object transform(Object object) {
+        String uri = (String)object;
         if(! uri.matches("[a-zA-Z][\\w+\\-]+:.*")) { // Rfc2396 s3.1 scheme, 
                                                      // minus '.'
             // Does not begin with scheme, so try http://
@@ -93,7 +93,7 @@ public class SeedFileIterator extends TransformingIteratorWrapper<String,UURI> {
                     + e.getMessage(), e);
             if(ignored!=null) {
                 try {
-                    ignored.write(uri+"\n");
+                    ignored.write(object+"\n");
                 } catch (IOException e1) {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();

@@ -53,10 +53,7 @@ import org.archive.util.iterator.RegexpLineIterator;
  * 
  * @author gojomo
  */
-public class SurtPrefixSet extends TreeSet<String> {
-
-    private static final long serialVersionUID = 2598365040524933110L;
-
+public class SurtPrefixSet extends TreeSet {
     private static final String SURT_PREFIX_DIRECTIVE = "+";
 
     /**
@@ -82,7 +79,8 @@ public class SurtPrefixSet extends TreeSet<String> {
      * 
      * @see java.util.Collection#add(java.lang.Object)
      */
-    public boolean add(String s) {
+    public boolean add(Object o) {
+        String s = (String) o;
         SortedSet sub = headSet(s);
         if (!sub.isEmpty() && s.startsWith((String)sub.last())) {
             // no need to add; prefix is already present

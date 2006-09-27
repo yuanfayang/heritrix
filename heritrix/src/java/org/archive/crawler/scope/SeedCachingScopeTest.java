@@ -53,9 +53,6 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
      * @author gojomo
      */
     private class UnitTestSeedCachingScope extends SeedCachingScope {
-
-        private static final long serialVersionUID = -1651873833038665447L;
-
         private File seedsfile;
 
         public UnitTestSeedCachingScope(File seedsfile) {
@@ -68,13 +65,13 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
         } 
     }
     
-   private static Set<UURI> seeds = null;
+   private static Set seeds = null;
 
    /**
     * Comparator for treeset of uuris.
     */
-   private static final Comparator<UURI> CMP = new Comparator<UURI> () {
-       public int compare(UURI o1, UURI o2) {
+   private static final Comparator CMP = new Comparator () {
+       public int compare(Object o1, Object o2) {
            int result = -1;
            if (o1 == null && o1 == null){
                result = 0;
@@ -83,8 +80,8 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
            } else if (o2 == null) {
                result = 1;
            } else {
-               String s1 = o1.toString();
-               String s2 = o2.toString();
+               String s1 = ((UURI)o1).toString();
+               String s2 = ((UURI)o2).toString();
                result = s1.compareTo(s2);
                result = (result < 0)? result = -1:
                    (result > 0)? result = 1: 0;
@@ -107,7 +104,7 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        super.setUp();
 
        // First create array of seeds and add to treeset.
-       SeedCachingScopeTest.seeds = new TreeSet<UURI>(SeedCachingScopeTest.CMP);
+       SeedCachingScopeTest.seeds = new TreeSet(SeedCachingScopeTest.CMP);
        String [] uris = {"mailto:www.google.com",
            "http://www.port.com:80/etc/motd2",
            "http://a:b@userinfo.com/etc/motd2",
@@ -152,7 +149,7 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        // Now do add and see if get set matches seed file content.
        final CrawlURI curi = new CrawlURI(UURIFactory.getInstance("http://one.two.three"));
        sl.addSeed(curi);
-       Set<UURI> set = new TreeSet<UURI>(SeedCachingScopeTest.CMP);
+       Set set = new TreeSet(SeedCachingScopeTest.CMP);
        set.addAll(SeedCachingScopeTest.seeds);
        set.add(curi.getUURI());
        checkContent(sl, set);

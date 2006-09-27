@@ -33,10 +33,7 @@ import org.apache.commons.collections.Predicate;
  * @author Gordon Mohr
  *
  */
-public class MemQueue<T> extends LinkedList<T> implements Queue<T> {
-
-    private static final long serialVersionUID = -9077824759011044247L;
-
+public class MemQueue extends LinkedList implements Queue {
     /** Create a new, empty MemQueue
      */
     public MemQueue() {
@@ -46,14 +43,14 @@ public class MemQueue<T> extends LinkedList<T> implements Queue<T> {
     /**
      * @see org.archive.queue.Queue#enqueue(Object)
      */
-    public void enqueue(T o) {
+    public void enqueue(Object o) {
         add(o);
     }
 
     /**
      * @see org.archive.queue.Queue#dequeue()
      */
-    public T dequeue() {
+    public Object dequeue() {
         return removeFirst();
     }
 
@@ -74,7 +71,7 @@ public class MemQueue<T> extends LinkedList<T> implements Queue<T> {
     /**
      * @see org.archive.queue.Queue#peek()
      */
-    public T peek() {
+    public Object peek() {
         return getFirst();
     }
 
@@ -82,7 +79,7 @@ public class MemQueue<T> extends LinkedList<T> implements Queue<T> {
     /**
      * @see org.archive.queue.Queue#getIterator(boolean)
      */
-    public Iterator<T> getIterator(boolean inCacheOnly) {
+    public Iterator getIterator(boolean inCacheOnly) {
         return listIterator();
     }
 
@@ -90,7 +87,7 @@ public class MemQueue<T> extends LinkedList<T> implements Queue<T> {
      * @see org.archive.queue.Queue#deleteMatchedItems(org.apache.commons.collections.Predicate)
      */
     public long deleteMatchedItems(Predicate matcher) {
-        Iterator<T> it = listIterator();
+        Iterator it = listIterator();
         long numberOfDeletes = 0;
         while(it.hasNext()){
             if(matcher.evaluate(it.next())){

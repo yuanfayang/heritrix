@@ -47,7 +47,7 @@ public class Refinement {
     private String organization = "";
     private String audience = "";
     private String reference;
-    private List<Criteria> criteria = new ArrayList<Criteria>();
+    private List criteria = new ArrayList();
 
 
     /**

@@ -23,6 +23,8 @@
  */
 package org.archive.crawler.deciderules;
 
+import java.util.logging.Logger;
+
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.framework.Filter;
@@ -36,10 +38,8 @@ import org.archive.crawler.framework.Filter;
  *
  */
 public class DecidingFilter extends Filter {
-
-    private static final long serialVersionUID = -7275555425381445477L;
-    //private static final Logger logger =
-    //    Logger.getLogger(DecidingFilter.class.getName());
+    private static final Logger logger =
+        Logger.getLogger(DecidingFilter.class.getName());
     public static final String ATTR_DECIDE_RULES = "decide-rules";
     
     public DecidingFilter(String name, String description) {

@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.framework;
 
+import java.util.Date;
 import java.util.Vector;
 
 import org.archive.io.SinkHandlerLogRecord;

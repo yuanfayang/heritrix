@@ -24,6 +24,7 @@
  */
 package org.archive.crawler.deciderules;
 
+import java.util.logging.Logger;
 
 /**
  * Rule applies configured decision to any URIs which do *not*
@@ -32,11 +33,8 @@ package org.archive.crawler.deciderules;
  * @author Kristinn Sigurdsson
  */
 public class NotMatchesListRegExpDecideRule extends MatchesRegExpDecideRule {
-
-    private static final long serialVersionUID = 8691360087063555583L;
-
-    //private static final Logger logger =
-    //    Logger.getLogger(NotMatchesListRegExpDecideRule.class.getName());
+    private static final Logger logger =
+        Logger.getLogger(NotMatchesListRegExpDecideRule.class.getName());
 
 
     /**

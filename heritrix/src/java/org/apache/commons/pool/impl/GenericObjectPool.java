@@ -125,7 +125,6 @@ import org.apache.commons.pool.impl.GenericKeyedObjectPool.ObjectTimestampPair;
  * @author Dirk Verbeeck
  * @version $Revision$ $Date$
  */
-@SuppressWarnings("unchecked")
 public class GenericObjectPool extends BaseObjectPool implements ObjectPool {
 
     //--- public constants -------------------------------------------

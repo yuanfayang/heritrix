@@ -44,8 +44,6 @@ import org.archive.crawler.settings.SimpleType;
 public class WaitEvaluator extends Processor
 implements AdaptiveRevisitAttributeConstants {
     
-    private static final long serialVersionUID = 7452762726125458413L;
-
     Logger logger = Logger.getLogger(WaitEvaluator.class.getName());
     
     /** Default wait time after initial visit. */

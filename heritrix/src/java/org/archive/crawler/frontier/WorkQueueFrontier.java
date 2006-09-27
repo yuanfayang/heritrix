@@ -153,8 +153,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
 
     /** All known queues.
      */
-    protected transient Map<String,WorkQueue> allQueues = null; 
-    // of classKey -> ClassKeyQueue
+    protected transient Map allQueues = null; // of classKey -> ClassKeyQueue
 
     /**
      * All per-class queues whose first item may be handed out.
@@ -187,7 +186,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     /**
      * All per-class queues held in snoozed state, sorted by wake time.
      */
-    protected SortedSet<WorkQueue> snoozedClassQueues =
+    protected SortedSet snoozedClassQueues =
         Collections.synchronizedSortedSet(new TreeSet<WorkQueue>());
     
     /** Timer for tasks which wake head item of snoozedClassQueues */
@@ -301,8 +300,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     && queueAssignmentPolicy.maximumNumberOfKeys() >= 0
                     && queueAssignmentPolicy.maximumNumberOfKeys() <= 
                         MAX_QUEUES_TO_HOLD_ALLQUEUES_IN_MEMORY) {
-                this.allQueues = Collections.synchronizedMap(
-                        new HashMap<String,WorkQueue>());
+                this.allQueues = Collections.synchronizedMap(new HashMap());
             } else {
                 this.allQueues = c.getBigMap("allqueues",
                         String.class, WorkQueue.class);
@@ -1059,12 +1057,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param writer
      */
     private void allNonemptyReportTo(PrintWriter writer) {
-        ArrayList<WorkQueue> inProcessQueuesCopy;
+        ArrayList inProcessQueuesCopy;
         synchronized(this.inProcessQueues) {
             // grab a copy that will be stable against mods for report duration 
-            @SuppressWarnings("unchecked")
-            Collection<WorkQueue> inProcess = this.inProcessQueues;
-            inProcessQueuesCopy = new ArrayList<WorkQueue>(inProcess);
+            inProcessQueuesCopy = new ArrayList(this.inProcessQueues);
         }
         writer.print("\n -----===== IN-PROCESS QUEUES =====-----\n");
         queueSingleLinesTo(writer, inProcessQueuesCopy.iterator());
@@ -1192,9 +1188,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         w.print("\n");
         
         w.print("\n -----===== IN-PROCESS QUEUES =====-----\n");
-        @SuppressWarnings("unchecked")
-        Collection<WorkQueue> inProcess = inProcessQueues;
-        ArrayList<WorkQueue> copy = extractSome(inProcess, REPORT_MAX_QUEUES);
+        ArrayList copy = extractSome(inProcessQueues, REPORT_MAX_QUEUES);
         appendQueueReports(w, copy.iterator(), copy.size(), REPORT_MAX_QUEUES);
         
         w.print("\n -----===== READY QUEUES =====-----\n");
@@ -1233,15 +1227,15 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param max  the maximum number of elements to extract
      * @return  the extraction
      */
-    private static <T> ArrayList<T> extractSome(Collection<T> c, int max) {
+    private static ArrayList extractSome(Collection c, int max) {
         // Try to guess a sane initial capacity for ArrayList
         // Hopefully given collection won't grow more than 10 items
         // between now and the synchronized block...
         int initial = Math.min(c.size() + 10, max);
         int count = 0;
-        ArrayList<T> list = new ArrayList<T>(initial);
+        ArrayList list = new ArrayList(initial);
         synchronized (c) {
-            Iterator<T> iter = c.iterator();
+            Iterator iter = c.iterator();
             while (iter.hasNext() && (count < max)) {
                 list.add(iter.next());
                 count++;

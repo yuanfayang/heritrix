@@ -49,8 +49,6 @@ package org.archive.crawler.scope;
  */
 public class BroadScope extends ClassicScope {
 
-    private static final long serialVersionUID = -2354234238454865888L;
-
     /**
      * Constructor.
      *

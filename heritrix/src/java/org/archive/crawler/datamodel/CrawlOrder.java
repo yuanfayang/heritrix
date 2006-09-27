@@ -32,6 +32,8 @@ import java.io.Serializable;
 import java.util.logging.Logger;
 
 import javax.management.AttributeNotFoundException;
+import javax.management.MBeanException;
+import javax.management.ReflectionException;
 
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
@@ -52,9 +54,6 @@ import org.archive.crawler.url.canonicalize.BaseRule;
  * @see org.archive.crawler.settings.ModuleType
  */
 public class CrawlOrder extends ModuleType implements Serializable {
-
-    private static final long serialVersionUID = -6715840285961511669L;
-
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.datamodel.CrawlOrder");
 
@@ -111,6 +110,8 @@ public class CrawlOrder extends ModuleType implements Serializable {
      * Default size of bdb cache.
      */
     private final static Integer DEFAULT_BDB_CACHE_PERCENT = new Integer(0);
+
+    private transient String caseFlattenedUserAgent;
 
     private transient MapType httpHeaders;
     private transient MapType loggers;

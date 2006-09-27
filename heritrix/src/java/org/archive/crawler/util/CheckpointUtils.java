@@ -93,19 +93,19 @@ public class CheckpointUtils {
         }
     }
     
-    public static <T> T readObjectFromFile(final Class<T> c, final File dir)
+    public static Object readObjectFromFile(final Class c, final File dir)
     throws FileNotFoundException, IOException, ClassNotFoundException {
         return readObjectFromFile(c, null, dir);
     }
     
-    public static <T> T readObjectFromFile(final Class<T> c, final String suffix,
+    public static Object readObjectFromFile(final Class c, final String suffix,
             final File dir)
     throws FileNotFoundException, IOException, ClassNotFoundException {
         ObjectInputStream in = new ObjectInputStream(
             new FileInputStream(getClassCheckpointFile(dir, suffix, c)));
-        T o = null;
+        Object o = null;
         try {
-            o = c.cast(in.readObject());
+            o = in.readObject();
         } finally {
             in.close();
         }

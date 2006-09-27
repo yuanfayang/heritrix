@@ -25,6 +25,9 @@
  */
 package org.archive.crawler.extractor;
 
+import java.util.List;
+
+import org.archive.net.UURI;
 
 import junit.framework.TestCase;
 

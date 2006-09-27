@@ -35,12 +35,12 @@ import org.apache.commons.collections.Predicate;
  * @author gojomo
  *
  */
-public interface Queue<T> {
+public interface Queue {
 
     /** Add an entry to the end of queue
      * @param obj the entry to queue
      */
-    void enqueue(T obj);
+    void enqueue(Object obj);
 
     /** is the queue empty?
      *
@@ -53,7 +53,7 @@ public interface Queue<T> {
      * @return the object
      * @throws java.util.NoSuchElementException
      */
-    T dequeue() throws NoSuchElementException;
+    Object dequeue() throws NoSuchElementException;
 
     /** get the number of elements in the queue
      *
@@ -72,7 +72,7 @@ public interface Queue<T> {
      * 
      * @return top object, without removing it
      */
-    T peek();
+    Object peek();
 
     /**
      * Releases queue from the obligation to return in the
@@ -91,7 +91,7 @@ public interface Queue<T> {
      * @param inCacheOnly
      * @return an iterator for the queue
      */
-    Iterator<T> getIterator(boolean inCacheOnly);
+    Iterator getIterator(boolean inCacheOnly);
 
     /**
      * All objects in the queue where <code>matcher.match(object)</code>

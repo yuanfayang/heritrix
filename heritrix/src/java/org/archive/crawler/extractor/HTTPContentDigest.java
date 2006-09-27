@@ -68,8 +68,6 @@ import org.archive.util.TextUtils;
  */
 public class HTTPContentDigest extends Processor {
 
-    private static final long serialVersionUID = 8055532198737384358L;
-
     private static Logger logger =
         Logger.getLogger(HTTPContentDigest.class.getName());
 

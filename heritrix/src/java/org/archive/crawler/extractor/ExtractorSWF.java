@@ -28,14 +28,18 @@ package org.archive.crawler.extractor;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.Vector;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 
 import com.anotherbigidea.flash.interfaces.SWFTagTypes;
+import com.anotherbigidea.flash.interfaces.SWFVectors;
 import com.anotherbigidea.flash.readers.SWFReader;
 import com.anotherbigidea.flash.readers.TagParser;
+import com.anotherbigidea.flash.structs.Rect;
 import com.anotherbigidea.io.InStream;
 
 /**
@@ -49,9 +53,6 @@ import com.anotherbigidea.io.InStream;
 public class ExtractorSWF
 extends Extractor
 implements CoreAttributeConstants {
-
-    private static final long serialVersionUID = 3627359592408010589L;
-
     private static Logger logger =
         Logger.getLogger(ExtractorSWF.class.getName());
     protected long numberOfCURIsHandled = 0;

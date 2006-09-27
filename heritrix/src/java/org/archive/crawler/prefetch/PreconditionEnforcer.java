@@ -55,8 +55,6 @@ public class PreconditionEnforcer
         extends Processor
         implements CoreAttributeConstants, FetchStatusCodes {
 
-    private static final long serialVersionUID = 4636474153589079615L;
-
     private static final Logger logger =
         Logger.getLogger(PreconditionEnforcer.class.getName());
 

@@ -57,8 +57,6 @@ import org.archive.util.TextUtils;
  */
 public class UURIFactory extends URI {
     
-    private static final long serialVersionUID = -6146295130382209042L;
-
     /**
      * Logging instance.
      */

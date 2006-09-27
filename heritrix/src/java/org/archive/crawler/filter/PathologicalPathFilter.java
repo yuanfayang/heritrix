@@ -47,9 +47,6 @@ import org.archive.crawler.settings.Type;
  * equivalent {@link DecideRule}.
  */
 public class PathologicalPathFilter extends URIRegExpFilter {
-
-    private static final long serialVersionUID = 2797805167250054353L;
-
     private static final Logger logger =
         Logger.getLogger(PathologicalPathFilter.class.getName());
 

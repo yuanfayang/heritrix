@@ -25,7 +25,6 @@ package org.archive.util;
 import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.BufferedInputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -89,10 +88,10 @@ public class IoUtils {
      * @exception IOException If passed directory does not exist and is not
      * createable, or directory is not writeable or is not a directory.
      */
-    public static List ensureWriteableDirectory(List<File> dirs)
+    public static List ensureWriteableDirectory(List dirs)
     throws IOException {
-        for (Iterator<File> i = dirs.iterator(); i.hasNext();) {
-             ensureWriteableDirectory(i.next());
+        for (Iterator i = dirs.iterator(); i.hasNext();) {
+             ensureWriteableDirectory((File)i.next());
         }
         return dirs;
     }
@@ -196,19 +195,5 @@ public class IoUtils {
         IOException ioe = new IOException(e.toString());
         ioe.initCause(e);
         return ioe;
-    }
-    
-    
-    public static void readFully(InputStream input, byte[] buf) 
-    throws IOException {
-        int max = buf.length;
-        int ofs = 0;
-        while (ofs < max) {
-            int l = input.read(buf, ofs, max - ofs);
-            if (l == 0) {
-                throw new EOFException();
-            }
-            ofs += l;
-        }
     }
 }

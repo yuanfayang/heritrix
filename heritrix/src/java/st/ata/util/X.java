@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 // Tested by TestX.java
 
 /** A collection of useful static methods. */
-@SuppressWarnings("unchecked")
+
 public final class X {
     public static final int DEBUG = 2;
 

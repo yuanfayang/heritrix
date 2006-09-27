@@ -36,9 +36,6 @@ import java.util.regex.Pattern;
  * @version $Date$, $Revision$
  */
 public class StripWWWRule extends BaseRule {
-
-    private static final long serialVersionUID = -5416391108485746976L;
-
     private static final String DESCRIPTION = "Strip any 'www' found. " +
         "Use this rule to equate 'http://www.archive.org/index.html' and" +
         " 'http://archive.org/index.html'. The resulting canonicalization" +

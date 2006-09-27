@@ -46,9 +46,6 @@ import org.archive.util.TextUtils;
  */
 public class URIRegExpFilter
 extends Filter {
-
-    private static final long serialVersionUID = 1878356276332865537L;
-
     private static final Logger logger =
         Logger.getLogger(URIRegExpFilter.class.getName());
     public static final String ATTR_REGEXP = "regexp";

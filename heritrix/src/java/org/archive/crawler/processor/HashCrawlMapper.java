@@ -23,6 +23,7 @@
 package org.archive.crawler.processor;
 
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.settings.SimpleType;

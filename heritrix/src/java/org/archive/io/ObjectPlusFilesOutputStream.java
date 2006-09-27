@@ -41,7 +41,7 @@ import org.archive.util.FileUtils;
  * @author gojomo
  */
 public class ObjectPlusFilesOutputStream extends ObjectOutputStream {
-    LinkedList<File> auxiliaryDirectoryStack = new LinkedList<File>();
+    LinkedList auxiliaryDirectoryStack = new LinkedList();
 
     /**
      * Constructor

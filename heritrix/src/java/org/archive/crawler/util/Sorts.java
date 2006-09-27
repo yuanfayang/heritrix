@@ -30,17 +30,20 @@ import java.util.HashMap;
 public class Sorts {
 
     // Sorts by value not key
-    public static StringIntPair[] sortStringIntHashMap (HashMap<String,Integer> hm){
-        String[] keys = hm.keySet().toArray(new String[hm.size()]);
-        Integer[] values = hm.values().toArray(new Integer[hm.size()]);
+    public static Object[] sortStringIntHashMap (HashMap hm){
+        Object[] keys = hm.keySet().toArray();
+        Object[] values = hm.values().toArray();
 
-        ArrayList<StringIntPair> unsortedList = new ArrayList<StringIntPair>();
+        ArrayList unsortedList = new ArrayList();
 
         for (int i = 0; i < keys.length; i++)
-            unsortedList.add(i, new StringIntPair(keys[i], values[i]));
+            unsortedList.add(
+                i,
+                new StringIntPair(
+                    (String) keys[i],
+                    ((Integer) values[i]).intValue()));
 
-        StringIntPair[] sortedArray 
-         = unsortedList.toArray(new StringIntPair[unsortedList.size()]);
+        Object[] sortedArray = unsortedList.toArray();
         Arrays.sort(sortedArray, new StringIntPairComparator());
 
         return sortedArray;

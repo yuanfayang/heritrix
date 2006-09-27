@@ -13,8 +13,6 @@ package org.archive.crawler.framework.exceptions;
 public class EndedException extends Exception {
     // TODO: subclass for various kinds of ends?
     
-    private static final long serialVersionUID = -4638427249822262643L;
-
     /**
      * Constructs a new <code>EndedException</code>.
      * 

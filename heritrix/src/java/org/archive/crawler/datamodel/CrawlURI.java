@@ -41,7 +41,6 @@ import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
-import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.Base32;
@@ -65,9 +64,6 @@ import st.ata.util.HashtableAList;
  */
 public class CrawlURI extends CandidateURI
 implements FetchStatusCodes {
-
-    private static final long serialVersionUID = 7874096757350100472L;
-
     public static final int UNCALCULATED = -1;
     
     // INHERITED FROM CANDIDATEURI
@@ -163,8 +159,7 @@ implements FetchStatusCodes {
      * Any key mentioned in this list will not be cleared out at the end
      * of a pass down the processing chain.
      */
-    private static final List<Object> alistPersistentMember
-     = new CopyOnWriteArrayList<Object>(
+    private static final List alistPersistentMember = new CopyOnWriteArrayList(
             new String [] {A_CREDENTIAL_AVATARS_KEY});
 
     /**
@@ -190,7 +185,6 @@ implements FetchStatusCodes {
      * @param caUri the CandidateURI to base this CrawlURI on.
      * @param o Monotonically increasing number within a crawl.
      */
-    @SuppressWarnings("deprecation")
     public CrawlURI(CandidateURI caUri, long o) {
         super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(),
             caUri.getViaContext());
@@ -581,14 +575,11 @@ implements FetchStatusCodes {
      */
     public void addLocalizedError(final String processorName,
             final Throwable ex, final String message) {
-        List<LocalizedError> localizedErrors;
+        List localizedErrors;
         if (containsKey(A_LOCALIZED_ERRORS)) {
-            @SuppressWarnings("unchecked")
-            List<LocalizedError> temp // to prevent warning on cast
-             = (List<LocalizedError>) getObject(A_LOCALIZED_ERRORS);
-            localizedErrors = temp;
+            localizedErrors = (List) getObject(A_LOCALIZED_ERRORS);
         } else {
-            localizedErrors = new ArrayList<LocalizedError>();
+            localizedErrors = new ArrayList();
             putObject(A_LOCALIZED_ERRORS, localizedErrors);
         }
 
@@ -859,7 +850,6 @@ implements FetchStatusCodes {
         setAList(getPersistentAList());
     }
     
-    @SuppressWarnings("deprecation")
     protected AList getPersistentAList() {
         AList newAList = new HashtableAList();
         // copy declared persistent keys
@@ -899,8 +889,7 @@ implements FetchStatusCodes {
     /**
      * @return Credential avatars.  Null if none set.
      */
-    @SuppressWarnings("unchecked")
-    public Set<CredentialAvatar> getCredentialAvatars() {
+    public Set getCredentialAvatars() {
         return (Set)getObject(A_CREDENTIAL_AVATARS_KEY);
     }
 
@@ -920,9 +909,9 @@ implements FetchStatusCodes {
      * @param ca Credential avatar to add to set of avatars.
      */
     public void addCredentialAvatar(CredentialAvatar ca) {
-        Set<CredentialAvatar> avatars = getCredentialAvatars();
+        Set avatars = getCredentialAvatars();
         if (avatars == null) {
-            avatars = new HashSet<CredentialAvatar>();
+            avatars = new HashSet();
             setCredentialAvatars(avatars);
         }
         avatars.add(ca);
@@ -1134,52 +1123,13 @@ implements FetchStatusCodes {
         holderCost = cost;
     }
 
-    /** 
-     * All discovered outbound Links (navlinks, embeds, etc.) 
-     * Can either contain Link instances or CandidateURI instances, or both.
-     * The LinksScoper processor converts Link instances in this collection
-     * to CandidateURI instances. 
-     */
-    transient Collection<Object> outLinks = new HashSet<Object>();
+    /** all discovered outbound Links (navlinks, embeds, etc.) */
+    transient Collection outLinks = new HashSet();
     
     /**
-     * Returns discovered links.  The returned collection might be empty if
-     * no links were discovered, or if something like LinksScoper promoted
-     * the links to CandidateURIs.
-     * 
-     * Elements can be removed from the returned collection, but not added.
-     * To add a discovered link, use one of the createAndAdd methods or
-     * {@link #getOutObjects()}.
-     * 
      * @return Collection of all discovered outbound Links
      */
-    public Collection<Link> getOutLinks() {
-        return Transform.subclasses(outLinks, Link.class);
-    }
-    
-    /**
-     * Returns discovered candidate URIs.  The returned collection will be
-     * emtpy until something like LinksScoper promotes discovered Links
-     * into CandidateURIs.
-     * 
-     * Elements can be removed from the returned collection, but not added.
-     * To add a candidate URI, use {@link #replaceOutlinks(Collection)} or
-     * {@link #getOutObjects}.
-     * 
-     * @return  Collection of candidate URIs
-     */
-    public Collection<CandidateURI> getOutCandidates() {
-        return Transform.subclasses(outLinks, CandidateURI.class);
-    }
-    
-    
-    /**
-     * Returns all of the outbound objects.  The returned Collection will
-     * contain Link instances, or CandidateURI instances, or both.  
-     * 
-     * @return  the collection of Links and/or CandidateURIs
-     */
-    public Collection<Object> getOutObjects() {
+    public Collection getOutLinks() {
         return outLinks;
     }
     
@@ -1206,15 +1156,13 @@ implements FetchStatusCodes {
      * Replace current collection of links w/ passed list.
      * Used by Scopers adjusting the list of links (removing those
      * not in scope and promoting Links to CandidateURIs).
-     * 
-     * @param a collection of CandidateURIs replacing any previously
-     *   existing outLinks or outCandidates
+     * @param links Collection of links (Usually a collection
+     * of CandidateURIs replacing a collection of Links).
      */
-    public void replaceOutlinks(Collection<CandidateURI> links) {
+    public void replaceOutlinks(Collection links) {
         clearOutlinks();
         this.outLinks.addAll(links);
     }
-    
     
     /**
      * @return Count of outlinks.
@@ -1359,9 +1307,8 @@ implements FetchStatusCodes {
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
         stream.defaultReadObject();
-        @SuppressWarnings("unchecked")
-        HashSet<Object> ol = (HashSet<Object>) stream.readObject();
-        outLinks = (ol == null) ? new HashSet<Object>() : ol;
+        HashSet ol = (HashSet) stream.readObject();
+        outLinks = (ol == null) ? new HashSet() : ol;
     }
 
 

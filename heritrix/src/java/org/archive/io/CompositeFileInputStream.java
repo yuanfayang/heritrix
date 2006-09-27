@@ -36,7 +36,7 @@ import java.util.List;
  * @author gojomo
  */
 public class CompositeFileInputStream extends FilterInputStream{
-    Iterator<File> filenames;
+    Iterator filenames;
 
     /* (non-Javadoc)
      * @see java.io.InputStream#read()
@@ -88,7 +88,7 @@ public class CompositeFileInputStream extends FilterInputStream{
      * @param files
      * @throws IOException
      */
-    public CompositeFileInputStream(List<File> files) throws IOException {
+    public CompositeFileInputStream(List files) throws IOException {
         super(null);
         filenames = files.iterator();
         cueStream();
@@ -96,7 +96,7 @@ public class CompositeFileInputStream extends FilterInputStream{
 
     private void cueStream() throws IOException {
         if(filenames.hasNext()) {
-            this.in = new FileInputStream(filenames.next());
+            this.in = new FileInputStream((File) filenames.next());
         }
     }
 

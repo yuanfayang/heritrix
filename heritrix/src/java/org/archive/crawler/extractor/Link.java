@@ -38,9 +38,6 @@ import java.io.Serializable;
  * @author gojomo
  */
 public class Link implements Serializable {
-
-    private static final long serialVersionUID = 7660959085498739376L;
-
     /* contexts for when another syntax (XPath-like or header-based)
      *  in unavailable */
     /** stand-in value for embeds without other context */

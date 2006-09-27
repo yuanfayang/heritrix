@@ -311,7 +311,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
         return (obj == null)? WriterPoolMember.DEFAULT_PREFIX: (String)obj;
     }
 
-    public List<File> getOutputDirs() {
+    public List getOutputDirs() {
         Object obj = getAttributeUnchecked(ATTR_PATH);
         List list = (obj == null)? Arrays.asList(DEFAULT_PATH): (StringList)obj;
         ArrayList<File> results = new ArrayList<File>();

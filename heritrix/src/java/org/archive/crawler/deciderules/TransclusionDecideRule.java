@@ -51,9 +51,6 @@ import org.archive.crawler.settings.Type;
  * @author gojomo
  */
 public class TransclusionDecideRule extends PredicatedDecideRule {
-
-    private static final long serialVersionUID = -3975688876990558918L;
-
     private static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
     
     /**

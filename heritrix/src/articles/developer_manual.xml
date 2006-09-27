@@ -41,7 +41,7 @@
     </authorgroup>
   </articleinfo>
 
-  <sect1 id="introduction">
+  <sect1>
     <title>Introduction</title>
 
     <para>This manual is intended to be a starting point for users and
@@ -54,7 +54,7 @@
     interesting parts of the Javadoc documentation.</para>
   </sect1>
 
-  <sect1 id="building">
+  <sect1>
     <title>Obtaining and building Heritrix</title>
 
     <para></para>
@@ -322,7 +322,7 @@ ${package_declaration}</programlisting></para>
     </sect2>
   </sect1>
 
-  <sect1 id="overview">
+  <sect1>
     <title>Overview of the crawler</title>
 
     <para>The Heritrix Web Crawler is designed to be modular. Which modules to
@@ -534,7 +534,7 @@ ${package_declaration}</programlisting></para>
     </sect2>
   </sect1>
 
-  <sect1 id="settings">
+  <sect1>
     <title>Settings</title>
 
     <para>The settings framework is designed to be a flexible way to configure
@@ -1028,19 +1028,6 @@ public class Foo extends ModuleType {
           <filename>Processor.options</filename> file.
           The options files get built into the Heritrix jar.
       </para>
-      <para><quote>A little known fact about Heritrix: When trying to read
-modules/Processor.options Heritrix will concatenate any such files it finds
-on the classpath.
-This means that if you write your own processor and wrap it in a jar you can
-simply include in that jar a modules/Processor.options file with just the
-one line needed to add your processor. Then simply add the new jar to the
-$HERITRIX_HOME/lib directory and you are done. No need to mess with the
-Heritrix binaries.  For an example of how this is done, look at the code for
-this project: <ulink 
-url="http://vefsofnun.bok.hi.is/deduplicator/index.html">deduplicator</ulink>
-</quote> [Kristinn Sigurðsson on the mailing list,
-<ulink url="http://tech.groups.yahoo.com/group/archive-crawler/message/3281">3281</ulink>].
-      </para>
       </note>
 
       <para>If everything seems ok so far, then we are almost ready to write
@@ -1048,7 +1035,7 @@ url="http://vefsofnun.bok.hi.is/deduplicator/index.html">deduplicator</ulink>
     </sect2>
   </sect1>
 
-  <sect1 id="uri">
+  <sect1>
     <title>Some notes on the URI classes</title>
 
     <para>URIs<footnote>
@@ -1153,7 +1140,7 @@ url="http://vefsofnun.bok.hi.is/deduplicator/index.html">deduplicator</ulink>
     </sect2>
   </sect1>
 
-  <sect1 id="frontier">
+  <sect1>
     <title>Writing a Frontier</title>
 
     <para>As mentioned before, the Frontier is a pluggable module
@@ -1667,7 +1654,7 @@ public class MyFrontier extends ModuleType implements Frontier,
 
   </sect1>
 
-  <sect1 id="scope">
+  <sect1>
     <title>Writing a Scope</title>
 
     <para>A <ulink
@@ -1764,7 +1751,7 @@ public class MyFrontier extends ModuleType implements Frontier,
     <para></para>
   </sect1>
 
-  <sect1 id="processor">
+  <sect1>
     <title id="writing_a_processor">Writing a Processor</title>
 
     <para>All processors extend <ulink
@@ -2047,7 +2034,6 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
-import org.archive.crawler.extractor.Link;
 import org.archive.util.TextUtils;
 
 /**
@@ -2103,14 +2089,14 @@ public class SimpleExtractor extends Processor
         while (match.find()){ 
             String link = cs.subSequence(match.start(),match.end()).toString(); <co
           id="simple_7" linkends="co_simple_7" />
-            curi.createAndAddLink(link, Link.SPECULATIVE_MISC, Link.NAVLINK_HOP);<co id="simple_8"
+            curi.addLinkToCollection(link,A_HTML_LINKS);<co id="simple_8"
           linkends="co_simple_8" />
             numberOfLinksExtracted++; <co id="simple_9" linkends="co_simple_9" />
             System.out.println("SimpleExtractor: " + link); <co id="simple_10"
           linkends="co_simple_10" />
         }
         
-        TextUtils.recycleMatcher(match); <co id="simple_11"
+        TextUtils.freeMatcher(match); <co id="simple_11"
           linkends="co_simple_11" />
     }
 
@@ -2234,7 +2220,7 @@ public class SimpleExtractor extends Processor
     </sect2>
   </sect1>
 
-  <sect1 id="statistics">
+  <sect1>
     <title>Writing a Statistics Tracker</title>
 
     <para>A Statistics Tracker is a module that monitors the crawl and records
@@ -2456,7 +2442,7 @@ public class SimpleExtractor extends Processor
     </sect2>
   </sect1>
 
-  <appendix id="futures">
+  <appendix>
     <title>Future changes in the API</title>
 
     <para>This appendix lists issues in the API that needs investigation and
@@ -2543,7 +2529,7 @@ public class SimpleExtractor extends Processor
     version would be 2.101.0.)</para>
   </appendix>
 
-  <appendix id="release">
+  <appendix>
     <title>Making a Heritrix Release</title>
 
     <para>Before initiating a release, its assumed that the current HEAD
@@ -2613,21 +2599,8 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Tag the CVS repository.  If a bugfix release -- an
-        increase in the least significant digits -- then tag the 
-        release. Otherwise, if a major or minor release make a branch
-        (See <xref linkend="release_numbering" /> for more on release
-        versioning).
-        Tags should be named for the release name as in if the release
-        is 1.10.2, then the tag should be heritrix-1_10_2 (You can't use
-        dots in tag names).  If a branch, then name the branch for the
-        minor (or major) version name as in, 
-        if making a release 1.10.0, then name the branch heritrix-1_10
-            and if making 2.0.0, name the branch heritrix-2. 
-        </para>
-        <para>
-        Here is how to tag
-        (Add the '-b' flag to make branch): % cvs -q tag heritrix-?_?_?</para>
+        <para>Tag the CVS repository (Add the '-b' flag if 
+        not a bugfix release): % cvs -q tag heritrix-?_?_?</para>
       </listitem>
 
       <listitem>
@@ -2652,7 +2625,7 @@ public class SimpleExtractor extends Processor
     </orderedlist>
   </appendix>
 
-  <appendix id="schema">
+  <appendix>
     <title>Settings XML Schema</title>
     <para>The XML Schema that describes the crawler job order file can be
     viewed as xhtml here, <ulink
@@ -2669,7 +2642,7 @@ public class SimpleExtractor extends Processor
     </para>
   </appendix>
 
-  <bibliography id="biblio">
+  <bibliography>
     <biblioentry id="heritrix_user_manual">
       <abbrev>Heritrix User Guide</abbrev>
 

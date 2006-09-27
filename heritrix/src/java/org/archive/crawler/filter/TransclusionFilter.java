@@ -44,9 +44,6 @@ import org.archive.crawler.settings.SimpleType;
  * equivalent {@link DecideRule}.
  */
 public class TransclusionFilter extends Filter {
-
-    private static final long serialVersionUID = 4251767672778714051L;
-
     private static final String ATTR_MAX_SPECULATIVE_HOPS =
         "max-speculative-hops";
     private static final String ATTR_MAX_REFERRAL_HOPS = "max-referral-hops";

@@ -244,9 +244,7 @@ public final class ThreadLocalHttpConnectionManager implements
     }
 
     private static final class CloserThread extends Thread {
-        private List<HttpConnection> connections
-         = new ArrayList<HttpConnection>();
-        
+        private List connections = new ArrayList();
         private static final int SLEEP_INTERVAL = 5000;
 
         public CloserThread() {
@@ -268,16 +266,15 @@ public final class ThreadLocalHttpConnectionManager implements
                 while (!Thread.interrupted()) {
                     Thread.sleep(SLEEP_INTERVAL);
 
-                    List<HttpConnection> s;
+                    List s;
                     synchronized (connections) {
                         s = connections;
-                        connections = new ArrayList<HttpConnection>();
+                        connections = new ArrayList();
                     }
                     logger.log(Level.INFO, "Closing " + s.size()
                         + " HttpConnections");
-                    for(final Iterator<HttpConnection> it = s.iterator(); 
-                      it.hasNext();) {
-                        HttpConnection conn = it.next();
+                    for(final Iterator it = s.iterator(); it.hasNext();) {
+                        HttpConnection conn = (HttpConnection) it.next();
                         conn.close();
                         conn.setHttpConnectionManager(null);
                         it.remove();

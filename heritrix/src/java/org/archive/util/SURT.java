@@ -117,7 +117,7 @@ public class SURT {
         // 3 extra characters ('(', ')', and one more ',' than '.'s
         // in original)
         StringBuffer builder = new StringBuffer(s.length()+3);
-        append(builder,s,m.start(1),m.end(1)); // scheme://
+        PreJ15Utils.append(builder,s,m.start(1),m.end(1)); // scheme://
         builder.append(BEGIN_TRANSFORMED_AUTHORITY); // '('
         
         int hostSegEnd = m.end(4);
@@ -126,16 +126,16 @@ public class SURT {
             if(s.charAt(i-1)!=DOT && i > hostStart) {
                 continue;
             }
-            append(builder,s,i,hostSegEnd); // rev host segment
+            PreJ15Utils.append(builder,s,i,hostSegEnd); // rev host segment
             builder.append(TRANSFORMED_HOST_DELIM);     // ','
             hostSegEnd = i-1;
         }
 
-        append(builder,s,m.start(5),m.end(5)); // :port
-        append(builder,s,m.start(3),m.end(3)); // at
-        append(builder,s,m.start(2),m.end(2)); // userinfo
+        PreJ15Utils.append(builder,s,m.start(5),m.end(5)); // :port
+        PreJ15Utils.append(builder,s,m.start(3),m.end(3)); // at
+        PreJ15Utils.append(builder,s,m.start(2),m.end(2)); // userinfo
         builder.append(END_TRANSFORMED_AUTHORITY); // ')'
-        append(builder,s,m.start(6),m.end(6)); // path
+        PreJ15Utils.append(builder,s,m.start(6),m.end(6)); // path
         for(int i = 0; i < builder.length(); i++) {
             builder.setCharAt(i,Character.toLowerCase(builder.charAt((i))));
         }
@@ -143,14 +143,10 @@ public class SURT {
         return builder.toString();
     }
     
-    private static void append(StringBuffer b, CharSequence cs, int start, 
-            int end) {
-        if (start < 0) {
-            return;
-        }
-        b.append(cs, start, end);
+    private static String emptyIfNull(String string) {
+        return string == null ? "" : string;
     }
-        
+    
     /**
      * Allow class to be used as a command-line tool for converting 
      * URL lists (or naked host or host/path fragments implied

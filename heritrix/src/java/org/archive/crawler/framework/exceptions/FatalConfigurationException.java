@@ -30,8 +30,6 @@ import org.archive.crawler.framework.exceptions.ConfigurationException;
  */
 public class FatalConfigurationException extends ConfigurationException {
 
-    private static final long serialVersionUID = -7653248745873511949L;
-
     public FatalConfigurationException(String explanation) {
         super(explanation);
     }

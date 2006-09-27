@@ -37,14 +37,14 @@ import junit.framework.TestCase;
 
 public class JmxUtilsTest extends TestCase {
     public void testCreateCompositeType() throws OpenDataException {
-        Map<String,Object> m =  new HashMap<String,Object>();
+        Map m =  new HashMap();
         m.put("0", new Long(0));
         m.put("1", new Double(1));
         m.put("2", "2");
         CompositeType ct = JmxUtils.createCompositeType(m, "ct", "description");
         testCompositeDataHasMapContent(ct, m);
         // Now mess with the order.
-        Map<String,Object> n = new HashMap<String,Object>();
+        Map n = new HashMap();
         n.put("0", new Long(17));
         n.put("2", "Some old string");
         n.put("1", new Double(17.45));

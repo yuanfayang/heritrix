@@ -385,7 +385,7 @@ public class SelfTestCase extends TestCase
      * @param files List of files to find in the arc.  No other files but these
      * should be found in the arc.
      */
-    public void testFilesInArc(List<File> files)
+    public void testFilesInArc(List files)
     {
         testFilesInArc(files, filesFoundInArc());
     }
@@ -399,7 +399,7 @@ public class SelfTestCase extends TestCase
      * should be found in the arc.
      * @param foundFiles Files found in the arc.
      */
-    public void testFilesInArc(List<File> files, List<File> foundFiles)
+    public void testFilesInArc(List files, List foundFiles)
     {
         assertTrue("All files are on disk: " + files, filesExist(files));
         assertTrue("All found: " + files + ", " + foundFiles,
@@ -412,7 +412,7 @@ public class SelfTestCase extends TestCase
      * Find all files that belong to this test that are mentioned in the arc.
      * @return List of unique found file File objects.
      */
-    protected List<File> filesFoundInArc() {
+    protected List filesFoundInArc() {
         String baseURL = getSelftestURLWithTrailingSlash();
         if (baseURL.endsWith(getTestName() + '/')) {
             // URL may already end in the test name for case where we're

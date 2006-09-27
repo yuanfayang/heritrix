@@ -65,19 +65,17 @@ public class RecoveryLogMapper {
     /**
      * Tracks seed for each crawled URL
      */
-    private Map<String,String> crawledUrlToSeedMap
-     = new HashMap<String,String>();
+    private Map crawledUrlToSeedMap = new HashMap();
 
     /**
      * Maps seed URLs to Set of discovered URLs
      */
-    private Map<String,Set<String>> seedUrlToDiscoveredUrlsMap
-     = new HashMap<String,Set<String>>();
+    private Map seedUrlToDiscoveredUrlsMap = new HashMap();
 
     /**
      * Tracks which URLs were successfully crawled
      */
-    private Set<String> successfullyCrawledUrls = new HashSet<String>();
+    private Set successfullyCrawledUrls = new HashSet();
 
      /**
      * Normal constructor - if encounter not-found seeds while loading
@@ -141,7 +139,7 @@ public class RecoveryLogMapper {
                     // Add seed the first time we find it
                     if (seedUrlToDiscoveredUrlsMap.get(firstUrl) == null) {
                         seedUrlToDiscoveredUrlsMap.put(firstUrl,
-                            new HashSet<String>());
+                            new HashSet());
                     }
                 } else {
                     // URL found via an earlier seeded / discovered URL
@@ -169,8 +167,8 @@ public class RecoveryLogMapper {
                         // Collapse
                         crawledUrlToSeedMap.put(firstUrl, seedForFirstUrl);
                     }
-                    Set<String> theSeedUrlList =
-                        seedUrlToDiscoveredUrlsMap.get(seedForFirstUrl);
+                    Set theSeedUrlList =
+                        (Set) seedUrlToDiscoveredUrlsMap.get(seedForFirstUrl);
                         if (theSeedUrlList == null) {
                         String message = "recover log " +
                                          recoverLogFileName + " at line " +
@@ -206,7 +204,7 @@ public class RecoveryLogMapper {
      */
     public String getSeedForUrl(String urlString) {
         return (seedUrlToDiscoveredUrlsMap.get(urlString) != null)?
-                urlString: crawledUrlToSeedMap.get(urlString);
+                urlString: (String) crawledUrlToSeedMap.get(urlString);
     }
 
     /**
@@ -231,7 +229,7 @@ public class RecoveryLogMapper {
     }
 
     private class SuccessfullyCrawledURLsIterator
-    implements Iterator<String> {
+    implements Iterator {
         private String nextValue = null;
         private Iterator discoveredUrlsIterator;
 
@@ -270,7 +268,7 @@ public class RecoveryLogMapper {
             return (nextValue != null);
         }
 
-        public String next() {
+        public Object next() {
             populateNextValue();
             String returnValue = nextValue;
             nextValue = null;
@@ -287,12 +285,12 @@ public class RecoveryLogMapper {
         }
     }
 
-    public Iterator<String> getIteratorOfURLsSuccessfullyCrawledFromSeedUrl(
+    public Iterator getIteratorOfURLsSuccessfullyCrawledFromSeedUrl(
             String seedUrlString) throws SeedUrlNotFoundException {
         return new SuccessfullyCrawledURLsIterator(seedUrlString);
     }
 
-    public Collection<String> getSeedCollection() {
+    public Collection getSeedCollection() {
         return seedUrlToDiscoveredUrlsMap.keySet();
     }
 
@@ -305,7 +303,10 @@ public class RecoveryLogMapper {
         try {
             RecoveryLogMapper myRecoveryLogMapper =
                 new RecoveryLogMapper(recoverLogFileName);
-            for (String curSeedUrl: myRecoveryLogMapper.getSeedCollection()) {
+            Iterator seedURLIterator =
+                myRecoveryLogMapper.getSeedCollection().iterator();
+            while (seedURLIterator.hasNext()) {
+                String curSeedUrl = (String) seedURLIterator.next();
                 System.out.println("URLs successfully crawled from seed URL "
                     + curSeedUrl);
                 Iterator iteratorOfUrlsCrawledFromSeedUrl =

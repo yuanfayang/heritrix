@@ -31,8 +31,6 @@ package org.archive.crawler.framework.exceptions;
  */
 public class InitializationException extends Exception {
 
-    private static final long serialVersionUID = -3482635476140606185L;
-
     public InitializationException() {
         super();
     }
