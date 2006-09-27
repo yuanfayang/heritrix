@@ -68,7 +68,6 @@ public class BufferedSeekInputStream extends SeekInputStream {
         buffer();
     }
 
-
     /**
      * Fills the buffer.
      * 
@@ -155,12 +154,13 @@ public class BufferedSeekInputStream extends SeekInputStream {
      * @throws IOException if an IO error occurs
      */
     public void position(long p) throws IOException {
-        ensureBuffer();
-        long blockStart = input.position() / buffer.length * buffer.length;
+        long blockStart = (input.position() - buffer.length)  / buffer.length * buffer.length;
         long blockEnd = blockStart + buffer.length;
         if ((p >= blockStart) && (p < blockEnd)) {
+            // Desired position is somewhere inside current buffer
             long adj = p - blockStart;
-            offset += (int)adj;
+            offset = (int)adj;
+            return;
         }
         positionDirect(p);
     }

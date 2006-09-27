@@ -119,6 +119,10 @@ public class Doc {
         boolean tableOne = (flags & 0x0200) == 0x0200;
         String tableName = tableOne ? "1Table" : "0Table";
         Entry table = find(entries, tableName);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("Main entry:  " + main);
+            LOGGER.finest("Table entry: " + table);
+        }
         SeekInputStream tableStream = table.open();
         
         mainStream.position(24);
@@ -140,7 +144,7 @@ public class Doc {
             LOGGER.fine("complex: " + complex);
             LOGGER.fine("cppText: " + cppText);
         }
-        PieceTable pt = new PieceTable(tableStream, fcClx, fcMax - fcMin, 10);
+        PieceTable pt = new PieceTable(tableStream, fcClx, fcMax - fcMin, cacheSize);
         return new PieceReader(pt, mainStream);
     }
 

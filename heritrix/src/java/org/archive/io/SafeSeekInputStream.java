@@ -55,7 +55,7 @@ public class SafeSeekInputStream extends SeekInputStream {
      */
     public SafeSeekInputStream(SeekInputStream input) throws IOException {
         this.input = input;
-        input.position(0);
+        this.expected = input.position();
     }
 
 
