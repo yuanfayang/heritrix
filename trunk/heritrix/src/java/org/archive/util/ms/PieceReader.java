@@ -53,7 +53,7 @@ class PieceReader extends SeekReader {
         if (doc == null) {
             throw new IOException("Stream closed.");
         }
-        if (charPos >= table.getMaxSize()) {
+        if (charPos >= table.getMaxCharPos()) {
             return;
         }
         if (charPos < limit) {
@@ -71,7 +71,7 @@ class PieceReader extends SeekReader {
         if (doc == null) {
             throw new IOException("Stream closed.");
         }
-        if (charPos >= table.getMaxSize()) {
+        if (charPos >= table.getMaxCharPos()) {
             return -1;
         }
 
@@ -93,7 +93,7 @@ class PieceReader extends SeekReader {
         if (doc == null) {
             throw new IOException("Stream closed.");
         }
-        if (charPos >= table.getMaxSize()) {
+        if (charPos >= table.getMaxCharPos()) {
             return 0;
         }
         for (int i = 0; i < len; i++) {

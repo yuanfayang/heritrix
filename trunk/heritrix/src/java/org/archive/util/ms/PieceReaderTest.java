@@ -100,7 +100,7 @@ public class PieceReaderTest extends TestCase {
     
     static {
         QUATRAIN_BYTES = new byte[QUATRAIN_STRING.length()];
-        PIECE_TABLE = new byte[4 * 12 + 5];
+        PIECE_TABLE = new byte[4 * 12 + 5 + 4];
         int ofs = 0;
         int line3 = 0;
         ofs += addLine(ofs, QUATRAIN[2]);
@@ -130,7 +130,7 @@ public class PieceReaderTest extends TestCase {
         ByteBuffer buf = ByteBuffer.wrap(PIECE_TABLE);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         buf.put(0, (byte)2);
-        buf.putInt(1, 48);
+        buf.putInt(1, 52);
     }
     
     
@@ -146,11 +146,11 @@ public class PieceReaderTest extends TestCase {
         ByteBuffer buf = ByteBuffer.wrap(PIECE_TABLE);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         int orig = fp;
-        fp = (fp * 2) | PieceTable.ANSI_INDICATOR;
-        if ((fp & PieceTable.ANSI_MASK) / 2 != orig) {
+        fp = (fp * 2) | PieceTable.CP1252_INDICATOR;
+        if ((fp & PieceTable.CP1252_MASK) / 2 != orig) {
             throw new RuntimeException("No.");
         }
         buf.putInt(index * 4 + 5, start);
-        buf.putInt(5 + 16 + index * 8 + 2, fp);
+        buf.putInt(5 + 20 + index * 8 + 2, fp);
     }
 }

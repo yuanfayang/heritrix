@@ -43,12 +43,8 @@ public class DocTest extends TestCase {
     final private static File TEST_DIR = new File("testdata/ms");
 
     
-    public void testNothing() {
-        // Here to make the build work again.
-    }
-    
     // Rename to testAgainstPOI to actually run the test.
-    public void noTestAgainstPOI() throws IOException {
+    public void testAgainstPOI() throws IOException {
         int errors = 0;
         long start = System.currentTimeMillis();
         for (File f: TEST_DIR.listFiles()) try {
@@ -195,15 +191,4 @@ public class DocTest extends TestCase {
     }
 
     
-    public static void main(String args[]) throws Exception {
-        FileOutputStream fout = new FileOutputStream("/Users/pjack/Desktop/15336-doc-preface.txt");
-        OutputStreamWriter out = new OutputStreamWriter(fout, "UTF-16BE");
-        File f = new File("/Users/pjack/Desktop/15336-doc-preface.doc");
-        Reader reader = Doc.getText(f);
-        for (int ch = reader.read(); ch >= 0; ch = reader.read()) {
-            out.write(ch);
-        }
-        close(out);
-        close(reader);
-    }
 }
