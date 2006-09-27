@@ -43,6 +43,13 @@
         <p>See the <a href="articles/user_manual/index.html">User Manual</a>.</p>
     </section>
     <section name="News and Status">
+
+    <subsection name="Release 1.10.1 09/27/2006">
+    <p>Bug fix release. See 
+    <a href="articles/releasenotes/1_10_1.html">Release Notes</a> for
+    detail.
+    </subsection>
+
     <subsection name="Deduplicator (add-on for Heritrix) 0.2.0 release
         09/14/2006">
       <p>

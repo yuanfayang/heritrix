@@ -11,6 +11,49 @@
       <corpauthor>Internet Archive</corpauthor>
     </authorgroup>
   </articleinfo>
+
+
+   <sect1 id="1_10_1">
+    <title>Release 1.10.1 - 09/27/2006</title>
+    <abstract>
+      <para>Bug fixes.</para>
+    </abstract>
+
+    <sect2 id="1_10_1_changes">
+        <title>Changes</title>
+        <para><table>
+          <title>All Tracked Changes</title>
+
+          <tgroup cols="5">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+                <entry>Open Date</entry>
+                <entry>By</entry>
+                <entry>Filer</entry>
+              </row>
+            </thead>
+
+            <tbody>
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1566041&amp;group_id=73833&amp;atid=539099">1566041</ulink></entry><entry>Fix</entry><entry>In 1.10.0, ARC serialno starts at 1 rather than 0</entry><entry>2006-09-26</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1558157&amp;group_id=73833&amp;atid=539099">1558157</ulink></entry><entry>Fix</entry><entry>JNDI registration fails in 1.10.0</entry><entry>2006-09-13</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1560782&amp;group_id=73833&amp;atid=539099">1560782</ulink></entry><entry>Fix</entry><entry>StripWWWNRule does not work as advertised</entry><entry>2006-09-18</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+
+<row><entry><ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1563592&amp;group_id=73833&amp;atid=539099">1563592</ulink></entry><entry>Fix</entry><entry>ARCWriter constructor had its public access removed</entry><entry>2006-09-25</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+
+            </tbody>
+          </tgroup>
+        </table>
+        </para>
+        
+    </sect2>
+  </sect1>
+
    <sect1 id="1_10_0">
     <title>Release 1.10.0 - 09/11/2006</title>
     <abstract>
@@ -21,7 +64,6 @@
       <para>Release 1.10.0 requires JDK 1.5.x ("Java 5") Java 
       facilities.</para>
     </abstract>
-
     <sect2 id="1_10_0_contributors">
     <title>Contributors</title>
         <para>Aside from the
