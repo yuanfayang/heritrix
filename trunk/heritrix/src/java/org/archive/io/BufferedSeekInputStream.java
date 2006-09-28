@@ -25,8 +25,6 @@ package org.archive.io;
 
 import java.io.IOException;
 
-import org.archive.util.IoUtils;
-
 
 /**
  * Buffers data from some other SeekInputStream.
@@ -46,6 +44,14 @@ public class BufferedSeekInputStream extends SeekInputStream {
      * The buffered data.
      */
     final private byte[] buffer;
+    
+    
+    /**
+     * The maximum offset of valid data in the buffer.  Usually the same
+     * as buffer.length, but may be shorter if we're in the last region
+     * of the stream.
+     */
+    private int maxOffset;
 
 
     /**
@@ -74,7 +80,18 @@ public class BufferedSeekInputStream extends SeekInputStream {
      * @throws IOException  if an IO error occurs
      */
     private void buffer() throws IOException {
-        IoUtils.readFully(input, buffer);
+        int remaining = buffer.length;
+        while (remaining > 0) {
+            int r = input.read(buffer, buffer.length - remaining, remaining);
+            if (r <= 0) {
+                // Not enough information to fill the buffer
+                offset = 0;
+                maxOffset = buffer.length - remaining;
+                return;
+            }
+            remaining -= r;
+        }
+        maxOffset = buffer.length;
         offset = 0;
     }
 
@@ -85,7 +102,7 @@ public class BufferedSeekInputStream extends SeekInputStream {
      * @throws IOException  if an IO error occurs
      */
     private void ensureBuffer() throws IOException {
-        if (offset >= buffer.length) {
+        if (offset >= maxOffset) {
             buffer();
         }
     }
@@ -97,13 +114,16 @@ public class BufferedSeekInputStream extends SeekInputStream {
      * @return  the remaining bytes
      */
     private int remaining() {
-        return buffer.length - offset;
+        return maxOffset - offset;
     }
 
 
     @Override
     public int read() throws IOException {
         ensureBuffer();
+        if (maxOffset == 0) {
+            return -1;
+        }
         int ch = buffer[offset] & 0xFF;
         offset++;
         return ch;
@@ -113,6 +133,9 @@ public class BufferedSeekInputStream extends SeekInputStream {
     @Override
     public int read(byte[] buf, int ofs, int len) throws IOException {
         ensureBuffer();
+        if (maxOffset == 0) {
+            return 0;
+        }
         len = Math.min(len, remaining());
         System.arraycopy(buffer, offset, buf, ofs, len);
         offset += len;
@@ -129,6 +152,9 @@ public class BufferedSeekInputStream extends SeekInputStream {
     @Override
     public long skip(long c) throws IOException {
         ensureBuffer();
+        if (maxOffset == 0) {
+            return 0;
+        }
         int count = (c > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int)c;
         int skip = Math.min(count, remaining());
         offset += skip;
@@ -154,8 +180,9 @@ public class BufferedSeekInputStream extends SeekInputStream {
      * @throws IOException if an IO error occurs
      */
     public void position(long p) throws IOException {
-        long blockStart = (input.position() - buffer.length)  / buffer.length * buffer.length;
-        long blockEnd = blockStart + buffer.length;
+        long blockStart = (input.position() - maxOffset) 
+         / buffer.length * buffer.length;
+        long blockEnd = blockStart + maxOffset;
         if ((p >= blockStart) && (p < blockEnd)) {
             // Desired position is somewhere inside current buffer
             long adj = p - blockStart;
@@ -176,7 +203,7 @@ public class BufferedSeekInputStream extends SeekInputStream {
     private void positionDirect(long p) throws IOException {
         long newBlockStart = p / buffer.length * buffer.length;
         input.position(newBlockStart);
-        IoUtils.readFully(input, buffer);
+        buffer();
         offset = (int)(p % buffer.length);        
     }
 

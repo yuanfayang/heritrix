@@ -41,7 +41,7 @@ public class BufferedSeekInputStreamTest extends TestCase {
     public void testPosition() throws Exception {
         Random random = new Random(); 
         ArraySeekInputStream asis = new ArraySeekInputStream(TEST_DATA);
-        BufferedSeekInputStream bsis = new BufferedSeekInputStream(asis, 10);
+        BufferedSeekInputStream bsis = new BufferedSeekInputStream(asis, 11);
         for (int i = 0; i < TEST_DATA.length; i++) {
             byte b = (byte)bsis.read();
             assertEquals(TEST_DATA[i], b);
@@ -49,12 +49,11 @@ public class BufferedSeekInputStreamTest extends TestCase {
         for (int i = 0; i < 1000; i++) {
             int index = random.nextInt(TEST_DATA.length);
             bsis.position(index);
-            byte b = (byte)bsis.read();
-            assertEquals(TEST_DATA[index], b);
+            char expected = (char)((int)TEST_DATA[index] & 0xFF);
+            char read = (char)(bsis.read() & 0xFF);
+            assertEquals(expected, read);
         }
-    }
-    
-    
+    }    
     
     
     private static byte[] makeTestData() {
@@ -64,7 +63,7 @@ public class BufferedSeekInputStreamTest extends TestCase {
          + "From limits far remote where thou dost stay.\n";
         byte[] r = new byte[s.length()];
         for (int i = 0; i < r.length; i++) {
-            r[i] = (byte)i;
+            r[i] = (byte)s.charAt(i);
 //            r[i] = (byte)s.charAt(i);
         }
         return r;
