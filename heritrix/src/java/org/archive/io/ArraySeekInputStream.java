@@ -71,7 +71,7 @@ public class ArraySeekInputStream extends SeekInputStream {
     @Override
     public int read(byte[] buf, int ofs, int len) {
         if (offset >= array.length) {
-            return offset;
+            return 0;
         }
         len = Math.min(len, array.length - offset);
         System.arraycopy(array, offset, buf, ofs, len);
