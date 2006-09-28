@@ -22,16 +22,17 @@
 package org.archive.crawler.extractor;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.ArrayList;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
-import org.apache.poi.hdf.extractor.WordDocument;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.io.ReplayInputStream;
+import org.archive.io.SeekReader;
+import org.archive.io.SeekReaderCharSequence;
+import org.archive.util.ms.Doc;
 
 /**
  *  This class allows the caller to extract href style links from word97-format word documents.
@@ -42,6 +43,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 public class ExtractorDOC extends Extractor implements CoreAttributeConstants {
 
     private static final long serialVersionUID = 1896822554981116303L;
+    
+    private static Pattern PATTERN = Pattern.compile("HYPERLINK.*?\"(.*?)\"");
 
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.extractor.ExtractorDOC");
@@ -71,14 +74,14 @@ public class ExtractorDOC extends Extractor implements CoreAttributeConstants {
                     "application/msword")) {
             return;
         }
-        
-        ArrayList links  = new ArrayList();
-        InputStream documentStream = null;
-        Writer out = null;
+
+        int links = 0;
+        ReplayInputStream documentStream = null;
+        SeekReader docReader = null;
         
         numberOfCURIsHandled++;
 
-        // Get the doc as a File
+        // Get the doc as a repositionable reader
         try
         {
             documentStream = curi.getHttpRecorder().getRecordedInput().
@@ -88,13 +91,8 @@ public class ExtractorDOC extends Extractor implements CoreAttributeConstants {
                 // TODO: note problem
                 return;
             }
-            // extract the text from the doc and write it to a stream we
-            // can then process
-            out = new StringWriter();
-            WordDocument w = null;
-
-            w = new WordDocument( documentStream );
-            w.writeAllText(out);
+            
+            docReader = Doc.getText(documentStream);
         }catch(Exception e){
             curi.addLocalizedError(getName(),e,"ExtractorDOC Exception");
             return;
@@ -106,42 +104,33 @@ public class ExtractorDOC extends Extractor implements CoreAttributeConstants {
             }
         }
 
-        // get doc text out of stream
-        String page = out.toString();
-
-        // find HYPERLINKs
-        int currentPos = -1;
-        int linkStart = -1;
-        int linkEnd = -1;
-        char quote = '\"';
-
-        currentPos = page.indexOf("HYPERLINK");
-        while(currentPos >= 0){
-
-            linkStart = page.indexOf(quote, currentPos) + 1;
-            linkEnd = page.indexOf(quote, linkStart);
-
-            String hyperlink = page.substring(linkStart, linkEnd);
-
-            try {
-                curi.createAndAddLink(hyperlink,Link.NAVLINK_MISC,Link.NAVLINK_HOP);
-            } catch (URIException e1) {
-                getController().logUriError(e1, curi.getUURI(), hyperlink);
-                if (getController() != null) {
-                    // Controller can be null: e.g. when running
-                    // ExtractorTool.
-                    getController().logUriError(e1, curi.getUURI(), hyperlink);
-                } else {
-                    logger.info(curi + ", " + hyperlink + ": "
-                            + e1.getMessage());
-                }
-            }
-            numberOfLinksExtracted++;
-            currentPos = page.indexOf("HYPERLINK", linkEnd + 1);
+        CharSequence cs = new SeekReaderCharSequence(docReader, 0);
+        Matcher m = PATTERN.matcher(cs);
+        while (m.find()) {
+            links++;
+            addLink(curi, m.group(1));
         }
-
+        
         curi.linkExtractorFinished(); // Set flag to indicate that link extraction is completed.
-        logger.fine(curi + " has " + links.size() + " links.");
+        logger.fine(curi + " has " + links + " links.");
+    }
+    
+    
+    private void addLink(CrawlURI curi, String hyperlink) {
+        try {
+            curi.createAndAddLink(hyperlink,Link.NAVLINK_MISC,Link.NAVLINK_HOP);
+        } catch (URIException e1) {
+            getController().logUriError(e1, curi.getUURI(), hyperlink);
+            if (getController() != null) {
+                // Controller can be null: e.g. when running
+                // ExtractorTool.
+                getController().logUriError(e1, curi.getUURI(), hyperlink);
+            } else {
+                logger.info(curi + ", " + hyperlink + ": "
+                        + e1.getMessage());
+            }
+        }
+        numberOfLinksExtracted++;        
     }
 
     /* (non-Javadoc)
