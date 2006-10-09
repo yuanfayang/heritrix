@@ -21,7 +21,7 @@
     <subsection name="Continuous build (testing/unstable)">
     
 		<p>For prerelease code, you can access our
-        <a href="http://crawltools.archive.org:8080/cruisecontrol/">continuous build box</a>.
+        <a href="http://builds.archive.org:8080/cruisecontrol/">continuous build box</a>.
         The latest build can be found by clicking on the 'Build Artifacts' 
         link.</p>
         
