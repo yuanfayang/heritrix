@@ -188,22 +188,6 @@
       package for more on how the selftest works.</para>
     </sect2>
 
-    <sect2>
-      <title>cruisecontrol</title>
-
-      <para>See <ulink
-      url="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/cc">src/cc</ulink>
-      for a <filename>config.xml</filename> that will run the heritrix maven
-      build under <ulink
-      url="http://cruisecontrol.sourceforge.net/">cruisecontrol</ulink>. See
-      the <filename> <ulink
-      url="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/cc/README.txt?content-type=text%2Fplain&amp;rev=1">README.txt</ulink>
-      </filename> in the same directory for how to set up continuous building
-      using cc. Browse here to <ulink
-      url="http://crawltools.archive.org:8080/cruisecontrol/">crawltools</ulink>
-      to see what the continuous build website looks like (It may not always
-      be available).</para>
-    </sect2>
   </sect1>
 
   <sect1 id="conventions">
