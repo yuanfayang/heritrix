@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<document>
+  <properties>
+    <title>Home Page</title>
+    <author email="stack at archive dot org">St.Ack</author>
+    <revision>$Id$</revision>
+  </properties>
+
+  <body>
+    <section name="hcc">
+    <p>The Heritrix Cluster Controller (hcc) is a set of packages that enable control
+    of a cluster of <a href="http://crawler.archive.org/">heritrix</a> instances
+    running across multiple machines. There are two main components - the controller
+    itself and a client API for accessing the component. The controller itself is
+    essentially a facade with a DynamicMBean interface.  Internally it effectively
+    finds all heritrix resources in a JNDI scope and then proxies all communication
+    to them.  It provides a set of attributes and methods which perform the general
+    functions of finding, listing, and invoking operations on single remote instances
+    or groups of them.  The client serves to translate the generic MBean interface
+    into an easy to use domain specific interface thus simplying the work of
+    programmers interested in building application specific extensions without
+    having to deal with a generic JMX OpenDynamicMBean interface.  To download
+    latest binary, see under the <i>Build Artifacts</i> link of this page up on
+    our <a href="http://builds.archive.org:8080/cruisecontrol/buildresults/HEAD-hcc">continuous build server</a>.  For how to get started using hcc, see
+    <i>Getting Started</i> in
+    <a hef="http://crawler.archive.org/hcc/apidocs/index.html">description</a>
+    section of the javadoc overview (Includes some UML diagrams to clarify where
+    and how hcc works with heritrix)</p>
+    </section>
+  </body>
+</document>
