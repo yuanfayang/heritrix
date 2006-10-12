@@ -1,3 +1,25 @@
+/* $Id$
+ *
+ * Created Oct 12, 2006
+ *
+ * Copyright (C) 2006 Internet Archive.
+ *
+ * This file is part of the Heritrix web crawler (crawler.archive.org).
+ *
+ * Heritrix is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * any later version.
+ *
+ * Heritrix is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser Public License
+ * along with Heritrix; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 package org.archive.configuration.registry;
 
 import java.util.List;
@@ -6,51 +28,36 @@ import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
-import javax.management.MBeanInfo;
 import javax.management.ReflectionException;
 import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenMBeanAttributeInfo;
 import javax.management.openmbean.OpenMBeanAttributeInfoSupport;
 import javax.management.openmbean.SimpleType;
 
-import org.archive.configuration.Configurable;
 import org.archive.configuration.Configuration;
 import org.archive.configuration.ConfigurationException;
-import org.archive.configuration.Registry;
 
-public class CrawlOrder implements Configurable {
-    private final String name;
-    
-    public static final String ATTR_SETTINGS_DIRECTORY =
-        "settings-directory";
-    
-    private CrawlOrder() {
-        this(null);
-    }
-    
-    public CrawlOrder(final String n) {
-        super();
-        this.name = n;
-    }
+/**
+ * @author stack
+ * @version $Date$ $Version$
+ */
+public class CrawlOrderSubClass extends CrawlOrder {
 
-    public Configurable initialize(final Registry r)
-    throws ConfigurationException {
-        return null;
-    }
+	public CrawlOrderSubClass(String n) {
+		super(n);
+		// TODO Auto-generated constructor stub
+	}
 
     public synchronized Configuration getConfiguration()
     throws ConfigurationException {
-        return new CrawlOrderConfiguration("Heritrix crawl order. " +
+        return new CrawlOrderSubClassConfiguration("Heritrix crawl order. " +
             "This forms the root of the settings framework.");
     }
     
-    public String getName() {
-        return this.name;
-    }
-    
     @SuppressWarnings("serial")
-    protected static class CrawlOrderConfiguration extends Configuration {
-        public CrawlOrderConfiguration(String description)
+    protected static class CrawlOrderSubClassConfiguration
+    extends CrawlOrderConfiguration {
+        public CrawlOrderSubClassConfiguration(String description)
         throws ConfigurationException {
             super(description);
         }
@@ -59,9 +66,7 @@ public class CrawlOrder implements Configurable {
         throws AttributeNotFoundException, InvalidAttributeValueException,
                 MBeanException, ReflectionException {
             
-            setAttribute(new Attribute(ATTR_EXPERT,
-                new String[] {ATTR_SETTINGS_DIRECTORY}));
-            setAttribute(new Attribute(ATTR_NO_OVERRIDE,
+            setAttribute(new Attribute("XXX",
                 new String[] {ATTR_SETTINGS_DIRECTORY}));
         }
         
@@ -71,7 +76,7 @@ public class CrawlOrder implements Configurable {
         throws OpenDataException {
             infos = super.addAttributeInfos(infos);
             infos.add(new OpenMBeanAttributeInfoSupport(
-                ATTR_SETTINGS_DIRECTORY,
+                "XXX",
                 "Directory where override settings are kept. The settings " +
                 "for many modules can be overridden based on the domain or " +
                 "subdomain of the URI being processed. This setting specifies" +

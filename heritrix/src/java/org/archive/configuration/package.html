@@ -60,9 +60,15 @@ TODO Static dynamic class.
 
 <h3>TODOs</h3>
 <ul>
-    <li>Notifications: Missing from the Model below are setters.
-    If we add setters, then Notifications are done by the Registry
-    implementation (E.g. JMX or JNDI Notification implementations).
+    <li>Notifications: Can Notifications be done by the Registry
+    implementation (E.g. JMX or JNDI Notification implementations)?
+    Also, notifications are nought but java Events. In Heritrix currently, 
+    there are two different (awkward) custom eventing mechanisms.
+    We could move the these two systems to use a single system
+    based on java Event or just use otifications.
+    </li>
+    <li>Fix Registry so doesn't have Store in its interface (Makes it
+    harder doing simple Registry).
     </li>
     <li>Invocations: JMX advertises operations. JNDI has similar.
     Implication is that Configuration has reference to Configurable Class.
@@ -73,7 +79,7 @@ TODO Static dynamic class.
     Can't this just be a list in Configuration?  And then add to the list via
     the UI?  Add new implementations?
     </li>
-    <li>Should Configurable#initialze go into a subclass of this interface?
+    <li>Should Configurable#initialize go into a subclass of this interface?
     Otherwise any COnfigurable has to implement Registry interface.
     </li>
     <li>Serializing: Write out all values or just whats other than default?
