@@ -16,7 +16,7 @@
 ::
 :: 2006-08-04  Disclaimer added by Michael Stack
 ::
-:: 2006-08-28  A few fixes by Max Schöfmann:
+:: 2006-08-28  A few fixes by Max Schfmann:
 ::             - command extensions and veriable expansion are automatically
 ::               enabled
 ::             - JMX configuration fixed (not the fancy "sed" stuff however)
@@ -27,6 +27,13 @@
 ::             - comments changed from rem to :: and file renamed to .cmd 
 ::               (to make clear it won't work on Win 9x...)
 ::
+:: 2006-09-03  Updated error handling (Max):
+::             - Do justice to compulsory --admin switch
+::             - Handle missing JMX permissions file (it's not created
+::               automatically on Windows as we have nothing like sed)
+::             - No double confirmation for fixing permissions
+::             - More verbose on errors
+:: 2006-09-07  - REALLY fixed the classpath this time
 ::
 ::  Optional environment variables
 :: 
@@ -127,7 +134,7 @@ if not defined JAVACMD set JAVACMD="%JAVA_HOME%\bin\java" -Dje.disable.java.adle
 :: of the lib directory into the variable CP.
 set CP=
 set OLD_CLASSPATH=%CLASSPATH%
-for %%j in ("%HERITRIX_HOME%\lib\*.jar" "%HERITRIX_HOME%\*.jar") do set CP=!CP!;%%j
+for %%j in ("%HERITRIX_HOME%\*.jar" "%HERITRIX_HOME%\lib\*.jar") do set CP=!CP!;%%j
 set CLASSPATH=!CP!
 
 :: DONT cygwin path translation
@@ -194,13 +201,12 @@ echo JAVA_OPTS=%JAVA_OPTS% >>"%stdouterrlog%"
 :: ulimit -a >> %stdouterrlog 2>&1
 
 :: DONT If FOREGROUND is set, run heritrix in foreground.
-:: if defined FOREGROUND
 :start_heritrix
 if not defined FOREGROUND goto run_in_background
 %JAVACMD% "-Dheritrix.home=%HERITRIX_HOME%" -Djava.protocol.handler.pkgs=org.archive.net "-Dheritrix.out=%HERITRIX_OUT%" %JAVA_OPTS% %JMX_OPTS% %CLASS_MAIN% %HERITRIX_CMDLINE%
 :: errorlevel 130 if aborted with Ctrl+c (at least my sun jvm 1.5_07...)
 if errorlevel 130 goto :end
-if errorlevel 1 goto fix_jmx_permissions
+if errorlevel 1 goto handle_errors
 goto :end
 
 :run_in_background
@@ -251,41 +257,60 @@ del "%startMessage%" >nul 2>&1
 :: del doesn't set the ERRORLEVEL var if unsuccessful, so we can't try again
 goto :end
 
+:handle_errors
+
 :fix_jmx_permissions
-if not "%CLASS_MAIN%"=="org.archive.crawler.Heritrix" goto :start_may_failed
+if exist "%startMessage%" type "%startMessage%"
+if not "%CLASS_MAIN%"=="org.archive.crawler.Heritrix" goto start_may_failed
 if defined PERMISSIONS_FIXED goto fix_jmx_permission_failed
 echo.
 echo Heritrix failed to start properly. Possible causes:
 echo.
-echo - another programm uses the port for the web inferface (8080 default)
+echo - Login and password have not been specified (see --admin switch)
+echo - another program uses the port for the web UI (8080 by default)
 echo   (e.g. another Heritrix instance)
 if defined JMX_OFF goto :end
-echo - permissions problem with the JMX password file. 
+echo - JMX password file is missing or permissions not set correctly
 echo.
+if not exist "%HERITRIX_HOME%\jmxremote.password" goto permissions_file_missing
 set /P FIXIT=Do you want to try to fix the permissions (Y/N)?
 if /I "%FIXIT:~0,1%"=="n" goto :end
-cacls "%HERITRIX_HOME%\jmxremote.password" /P %USERNAME%:R
+echo y|cacls "%HERITRIX_HOME%\jmxremote.password" /P %USERNAME%:R >nul
 if errorlevel 1 goto fix_jmx_permission_failed
 set PERMISSIONS_FIXED=true
 set /P RESTART=Restart Heritrix (Y/N)?
 if /I "%RESTART:~0,1%"=="y" goto start_heritrix
 goto :end
 
+:permissions_file_missing
+echo.
+echo JMX permissions file missing. A template can be found in
+echo   %HERITRIX_HOME%\jmxremote.password.template.
+echo Copy it to 
+echo   %HERITRIX_HOME%\jmxremote.password 
+echo and edit the passwords at the end of the file.
+goto :end
+
 :fix_jmx_permission_failed
 set PERMISSIONS_FIXED=
-echo Either fixing the permissions failed or there was another problem
+echo.
+echo Either fixing the permissions failed or there was another problem.
+echo You may have to set the ownership of the file 
+echo   %HERITRIX_HOME%\jmxremote.password
+echo manually to yourself (%USERNAME%).
 goto :end
 
 :start_may_failed
 set HERITRIX_COUNTER=
+echo.
 echo Starting Heritrix seems to have failed
 goto :end
 
 :no_java_home
+echo.
 echo Please define either JAVA_HOME or JAVACMD or make sure java.exe is in PATH
 goto :end
 
-:: needed if initially called without command extensions
 :end
 :: do some cleanup
 set HERITRIX_CMDLINE=
@@ -294,3 +319,4 @@ set CP=
 set SLEEP=
 set PRGDIR=
 set PRG=
+set startMessage=
