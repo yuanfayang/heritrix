@@ -112,15 +112,13 @@
         <answer>Before you begin, Heritrix is not supported on windows -- See
         <a href="requirements.html">requirements</a> -- mostly because we don't
         have the resources to support any more than the linux platform we use
-        internally at the Internet Archive.  That said, <code>BAT</code>
-        scripts that load jars in the right order have been pasted to the
-        mailing list (Here is one <a 
-        href="http://groups.yahoo.com/group/archive-crawler/message/2072">2072</a> and  here is another, 
-        <a href="http://groups.yahoo.com/group/archive-crawler/message/2576">2576</a>). Eric Jensen has started work formally converting the Heritrix start
-        script to BAT format here, 
-        <a href="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1514538&amp;group_id=73833&amp;atid=539102">[1514538] should provide Windows batch file version of scripts"</a> (Needs a volunteer to finish the job).
-        A working Heritrix windows bundle has been posted to the list, here:
-        <a href="http://groups.yahoo.com/group/archive-crawler/message/2817">2817</a>.
+        internally at the Internet Archive.  That said, a <code>CMD</code>
+        script has been added to $HERITRIX_HOME/bin lately that does most of
+        what the $HERITRIX_HOME/bin/heritrix does loading jars in the right
+        order, etc. (Originally contributed by Eric Jensen 
+        and finished by Max Schöfmann). Max has also written up this page:
+        <a href="http://www.cip.ifi.lmu.de/~schoefma/howto/run_heritrix_on_windows/">Web
+        crawling: Using Heritrix on Windows</a>.
 Also see <a href="http://groups.yahoo.com/group/archive-crawler/message/3019">Crawler Stalling on Windows</a>, <a 
     href="http://groups.yahoo.com/group/archive-crawler/message/2085">2085</a>
         and the items below that pertain to windows:
