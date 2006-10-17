@@ -38,3 +38,4 @@ org.archive.crawler.processor.HashCrawlMapper|HashCrawlMapper
 org.archive.crawler.processor.BeanShellProcessor|BeanShellProcessor
 org.archive.crawler.prefetch.QuotaEnforcer|QuotaEnforcer
 org.archive.crawler.prefetch.RuntimeLimitEnforcer|RuntimeLimitEnforcer
+org.archive.crawler.extractor.JerichoExtractorHTML|JerichoExtractorHTML

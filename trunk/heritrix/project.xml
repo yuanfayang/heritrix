@@ -312,6 +312,23 @@
         TODO: Change the licenses into links to actual licenses.
     -->
     <dependencies>
+         <dependency>
+             <id>jericho-html</id>
+             <version>2.3</version>
+             <url>http://jerichohtml.sourceforge.net/</url>
+             <properties>
+                 <war.bundle>true</war.bundle>
+                 <ear.bundle>true</ear.bundle>
+                 <ear.bundle.dir>APP-INF/lib</ear.bundle.dir>
+                 <description>Jericho HTML Parser is a simple but powerful 
+ 		java library allowing analysis and manipulation of parts 
+ 		of an HTML document, including some common server-side tags,
+ 		while reproducing verbatim any unrecognised or invalid HTML.
+                 </description>
+                 <license>GNU Lesser General Public License
+                 http://www.gnu.org/licenses/lgpl.txt</license>
+             </properties>
+         </dependency>
         <dependency>
             <id>je</id>
             <version>3.0.12</version>
