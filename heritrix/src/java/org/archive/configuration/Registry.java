@@ -34,15 +34,7 @@ import javax.management.AttributeNotFoundException;
  * Come here to get {@link Configurable} component configuration.
  * @author stack
   */
-public interface Registry {    
-    /**
-     * Initialize the registry.
-     * @param baseDomain Domain to home the registry on.
-     * @param store Store to persist registry to.
-     */
-    public void initialize(final String baseDomain, final Store store);
-    
-    
+public interface Registry {
     /**
      * Get <code>attributeName</code> on {@link Configurable}
      * <code>component</code>.
@@ -92,7 +84,8 @@ public interface Registry {
     
     /**
      * Register a configuration object.
-     * Used by configuration applications such as UI adding in new configurations.
+     * Used by configuration applications such as UI adding in new
+     * configurations.
      * @param componentName Component name to register the object against.
      * @param componentType Type of component.
      * @param instance Object to register.
@@ -105,7 +98,8 @@ public interface Registry {
     
     /**
      * Register a configuration object.
-     * Used by configuration applications such as UI adding in new configurations.
+     * Used by configuration applications such as UI adding in new
+     * configurations.
      * @param componentName Component name to register the object against.
      * @param componentType Type of component.
      * @param domain Domain to register against. Domain should be
@@ -141,12 +135,22 @@ public interface Registry {
     
     /**
      * Unregister named object.
+     * 
+     * Dependent on implementation, need to deRegister: e.g. if registry is
+     * JMX or JNDI, unless we deregister, settings will be permanently etched
+     * into place.
+     * 
      * @param obj Identifier for registered Settings.
      */
     public void deRegister(final Object obj);
     
     /**
      * Unregister named object.
+      * 
+     * Dependent on implementation, need to deRegister: e.g. if registry is
+     * JMX or JNDI, unless we deregister, settings will be permanently etched
+     * into place.
+     * 
      * @param componentName Component name to look for.
      * @param componentType Type of component.
      */
@@ -155,6 +159,11 @@ public interface Registry {
     
     /**
      * Unregister named object.
+     *  
+     * Dependent on implementation, need to deRegister: e.g. if registry is
+     * JMX or JNDI, unless we deregister, settings will be permanently etched
+     * into place.
+     * 
      * @param componentName Component name to look for.
      * @param componentType Type of component.
      * @param domain Domain to search against. Domain should be
@@ -170,7 +179,7 @@ public interface Registry {
      * be subdomain or base domain.
      * @throws IOException
      */
-    public void load(final Store store, final String domain)
+    public void load(final String domain)
     throws IOException;
     
     /**
@@ -180,6 +189,6 @@ public interface Registry {
      * @param domain Do loading of items from this <code>domain</code> only.
      * @throws IOException
      */
-    public void save(final Store store, final String domain)
+    public void save(final String domain)
     throws IOException;
 }
