@@ -22,7 +22,19 @@
  */
 package org.archive.openmbeans.annotations;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
 
 import junit.framework.TestCase;
 
@@ -131,4 +143,31 @@ public class BeanTest extends TestCase {
         assertEquals(expected, result);
     }
 
+    public void testAgentRegister()
+    throws MalformedObjectNameException, NullPointerException,
+    		InstanceAlreadyExistsException, MBeanRegistrationException,
+    		NotCompliantMBeanException, InstanceNotFoundException {
+    	// Won't run unless 1.5 SUN JVM and following system properties are set:
+    	// -Dcom.sun.management.jmxremote.authenticate=false \
+    	// -Dcom.sun.management.jmxremote.port=8849
+    	String jmxport =
+    		System.getProperty("com.sun.management.jmxremote.port");
+    	if (jmxport == null || jmxport.length() <= 0) {
+    		return;
+    	}
+        List servers = MBeanServerFactory.findMBeanServer(null);
+        assertNotNull(servers);
+        MBeanServer server = null;
+        for (Iterator i = servers.iterator(); i.hasNext();) {
+            server = (MBeanServer)i.next();
+            if (server == null) {
+                continue;
+            }
+            break;
+        }
+        ObjectName on = new ObjectName("org.archive", "a", "b");
+        server.registerMBean(this.bean, on);
+        // Could pause here in debugger to inspect the bean with jconsole, etc.
+        server.unregisterMBean(on);
+    }
 }
