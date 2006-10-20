@@ -26,10 +26,13 @@ package org.archive.openmbeans.annotations;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import javax.management.Notification;
+
 
 @Header(desc="The example bean for unit testing purposes.")
 public class ExampleBean extends Bean {
-
+    
+    
     @Operation(desc="Performs a logical AND on two booleans.", impact=ACTION)
     public boolean and(
             
@@ -173,4 +176,9 @@ public class ExampleBean extends Bean {
         return a + b;
     }
 
+
+    @Emitter(desc="Example notification.", types={"foo", "bar"})
+    protected void emit(Notification n) {
+        
+    }
 }

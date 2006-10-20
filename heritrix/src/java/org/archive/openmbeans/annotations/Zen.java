@@ -24,6 +24,9 @@ package org.archive.openmbeans.annotations;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -104,5 +107,81 @@ public class Zen {
             }
         }
         return null;
+    }
+    
+    
+    /**
+     * Returns all methods declared by the given class and its superclasses,
+     * including non-pubilc methods.
+     * 
+     * <p>Methods that are overridden only occur once in the returned array; 
+     * the "most specific" version of the method is the one included.  For
+     * instance, if class Foo defines two methods, fubar() and baz() method, 
+     * and Bar extends Foo and overrides baz() but not fubar(), then the
+     * returned list would be: { Bar.baz(), Foo.fubar() }.
+     * 
+     * <p>Note that it's impossible to override a private method, so the 
+     * returned list may include private methods with duplicate signatures.
+     * 
+     * @param x   the class whose methods to return
+     * @return   the methods in that class
+     */
+    public static List<Method> getAllMethods(Class x) {
+        List<Method> result = new ArrayList<Method>();
+        while (true) {
+            for (Method m: x.getDeclaredMethods()) {
+                int mods = m.getModifiers();
+                if (Modifier.isPrivate(mods)) {
+                    result.add(m);
+                } else if (!contains(result, m)) {
+                    result.add(m);
+                }
+            }
+            if (x == Object.class) {
+                return result;
+            } else {
+                x = x.getSuperclass();
+            }
+        }
+    }
+
+
+    /**
+     * Returns true if the given list already contains a method with the same
+     * signature as the given method.
+     * 
+     * @param list   the list of methods to check
+     * @param m      the method to check
+     * @return   true if the list already contains a method with same 
+     *             signature as m
+     */
+    private static boolean contains(List<Method> list, Method m) {
+        for (Method test: list) {
+            if (!test.getName().equals(m.getName())) {
+                if (same(test, m)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    
+    /**
+     * Returns true if two methods have the same signature.  This is not
+     * the same thing as the Method.equals(Object) method -- the equality 
+     * test for methods includes the declaring class in the criteria.
+     * This method, in contrast, only considers the method's name and its
+     * parameter types.
+     * 
+     * @param m1   the first method to test
+     * @param m2   the second method to test
+     * @return   true if those two methods have the same signature
+     */
+    private static boolean same(Method m1, Method m2) {
+        if (!m1.getName().equals(m2.getName())) {
+            return false;
+        }
+        return Arrays.equals(m1.getParameterTypes(), m2.getParameterTypes());
     }
 }
