@@ -25,11 +25,11 @@ package org.archive.openmbeans.annotations;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import javax.management.MBeanOperationInfo;
 import javax.management.openmbean.OpenMBeanInfoSupport;
 import javax.management.openmbean.SimpleType;
 
 import org.archive.openmbeans.factory.Info;
+import org.archive.openmbeans.factory.Notif;
 import org.archive.openmbeans.factory.Op;
 import org.archive.openmbeans.factory.Param;
 
@@ -56,18 +56,14 @@ public class MetadataTest extends TestCase {
         info.ops.add(makeSum(SimpleType.BIGDECIMAL, "BigDecimal", new BigDecimal("0")));
         info.ops.add(makeSum(SimpleType.BIGINTEGER, "BigInteger", new BigInteger("0")));
         
+        Notif notif = new Notif();
+        notif.name = "javax.management.Notification";
+        notif.desc = "Example notification.";
+        notif.notif.add("foo");
+        notif.notif.add("bar");
+        info.notifs.add(notif);
+        
         OpenMBeanInfoSupport expected = info.make();
-        
-        for (MBeanOperationInfo m: expected.getOperations()) {
-            System.out.println(m);
-        }
-
-        System.out.println("-----");
-        
-        for (MBeanOperationInfo m: example.getMBeanInfo().getOperations()) {
-            System.out.println(m);
-        }
-        
         assertEquals(expected, example.getMBeanInfo());
     }
 

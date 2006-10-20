@@ -24,15 +24,21 @@ package org.archive.openmbeans.annotations;
 
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import javax.management.Notification;
 import javax.management.openmbean.OpenMBeanInfoSupport;
+import javax.management.openmbean.OpenType;
 
 import org.archive.openmbeans.factory.Attr;
 import org.archive.openmbeans.factory.Info;
+import org.archive.openmbeans.factory.Notif;
 import org.archive.openmbeans.factory.Op;
 import org.archive.openmbeans.factory.Param;
 
@@ -64,50 +70,17 @@ class Metadata {
         operations = new HashMap<String,Method>();
         accessors = new HashMap<String,Method>();
         mutators = new HashMap<String,Method>();
-        Method[] methods = c.getMethods();
-        Method hook = null;
+        List<Method> methods = Zen.getAllMethods(c);
         for (Method m: methods) {
             addOperation(m);
             addAttribute(m);
-            if (isInstrospectionHook(m)) {
-                hook = m;
-            }
-        }
-        if (hook != null) {
-            try {
-                hook.invoke(null, info);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
+            addNotification(m);
         }
         openInfo = info.make();
         info = null;
     }
 
     
-    private static boolean isInstrospectionHook(Method m) {
-        if (!m.getName().equals("introspectionHook")) {
-            return false;
-        }
-        int mods = m.getModifiers();
-        if (!Modifier.isStatic(mods)) {
-            return false;
-        }
-        if (!Modifier.isPublic(mods)) {
-            return false;
-        }
-        Class[] ptypes = m.getParameterTypes();
-        if (ptypes.length != 1) {
-            return false;
-        }
-        if (ptypes[0] != Info.class) {
-            return false;
-        }
-        if (m.getReturnType() != Void.TYPE) {
-            return false;
-        }
-        return true;
-    }
     
     public OpenMBeanInfoSupport getOpenMBeanInfo() {
         return openInfo;
@@ -173,7 +146,11 @@ class Metadata {
         Op op = new Op();
         op.name = m.getName();
         op.desc = anno.desc();
-        op.ret = OpenTypes.toOpenType(m.getReturnType());
+        if (anno.type().equals("")) {
+            op.ret = OpenTypes.toOpenType(m.getReturnType());
+        } else {
+            op.ret = findOpenTypeField(m.getDeclaringClass(), anno.type());
+        }
         op.impact = anno.impact();
         Annotation[][] pannos = m.getParameterAnnotations();
         Class[] ptypes = m.getParameterTypes();
@@ -193,12 +170,42 @@ class Metadata {
                     param.legal.add(OpenTypes.parse(ptypes[i], s));
                 }
             }
-            param.type = OpenTypes.toOpenType(ptypes[i]);
+            if (panno.type().equals("")) {
+                param.type = OpenTypes.toOpenType(ptypes[i]);
+            } else {
+                param.type = findOpenTypeField(m.getDeclaringClass(), panno.type());
+            }
             op.sig.add(param);
         }
         
         operations.put(m.getName(), m);
         info.ops.add(op);
+    }
+    
+    
+    private void addNotification(Method m) {
+        if (!m.getName().equals("emit")) {
+            return;
+        }
+        if (m.getReturnType() != Void.TYPE) {
+            return;
+        }
+        if (m.getParameterTypes().length != 1) {
+            return;
+        }
+        Class p = m.getParameterTypes()[0];
+        if (!Notification.class.isAssignableFrom(p)) {
+            return;
+        }
+        Emitter anno = m.getAnnotation(Emitter.class);
+        if (anno == null) {
+            return;
+        }
+        Notif notif = new Notif();
+        notif.name = p.getName();
+        notif.desc = anno.desc();
+        notif.notif.addAll(Arrays.asList(anno.types()));
+        info.notifs.add(notif);
     }
 
 
@@ -211,5 +218,43 @@ class Metadata {
         return null;
     }
 
-
+    
+    private static OpenType findOpenTypeField(Class c, String name) {
+        int p = name.lastIndexOf('.');
+        if (p >= 0) {
+            String className = name.substring(0, p);
+            try {
+                c = Class.forName(className);
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException(e);
+            }
+            name = name.substring(p + 1);
+        }
+        Field[] fields = c.getFields();
+        for (Field f: fields) {
+            if (isOpenTypeField(f, name)) {
+                try {
+                    return (OpenType)f.get(null);
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+        }
+        return null;
+    }
+    
+    
+    private static boolean isOpenTypeField(Field f, String name) {
+        int mods = f.getModifiers();
+        if (!Modifier.isStatic(mods)) {
+            return false;
+        }
+        if (!Modifier.isPublic(mods)) {
+            return false;
+        }
+        if (!f.getName().equals(name)) {
+            return false;
+        }
+        return OpenType.class.isAssignableFrom(f.getType());
+    }
 }

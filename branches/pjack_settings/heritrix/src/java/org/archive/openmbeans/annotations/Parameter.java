@@ -58,4 +58,19 @@ public @interface Parameter {
     /** The list of legal values for the parameter. */
     String[] legal() default {};
 
+    /**
+     * The open type of the parameter.  
+     * 
+     * <p>The value of this field should not be a Java class name.  Instead, 
+     * the value should reference a public static field defined by the same 
+     * class that defined the parameter being annotated.  That static field 
+     * should contain an {@link javax.management.openmbeans.OpenType} instance; 
+     * that OpenType will be used as the parameter type.
+     * 
+     * <p>A blank string indicates that the Java class of the parameter
+     * should be automagically converted into an Open Type.  Eg, a method
+     * parameter of java.lang.String would have an open type of 
+     * SimpleType.STRING.
+     */
+    String type() default "";
 }

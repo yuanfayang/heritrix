@@ -52,5 +52,21 @@ public @interface Operation {
      * The impact of the operation.
      */
     int impact();
+    
+    
+    /**
+     * The open type of the operation.  This is the return type, but the value
+     * of this field should not be a Java class name.  Instead, the value 
+     * should reference a public static field defined by the same class that
+     * defined the operation being annotated.  That static field should 
+     * contain an {@link javax.management.openmbeans.OpenType} instance; 
+     * that OpenType will be used as the return type for the operation.
+     * 
+     * <p>A blank string indicates that the Java class of the return type
+     * should be automagically converted into an Open Type.  Eg, a method
+     * that returns java.lang.String would have an open type of 
+     * SimpleType.STRING.
+     */
+    String type() default "";
 
 }
