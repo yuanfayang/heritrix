@@ -51,7 +51,7 @@ public @interface Operation {
     /**
      * The impact of the operation.
      */
-    int impact();
+    int impact() default Bean.ACTION;
     
     
     /**
