@@ -109,7 +109,7 @@ public abstract class ContentExtractorTestBase extends StateProcessorTestBase {
         assertEquals(0, uri.getOutLinks().size());
         assertNoSideEffects(uri);        
     }
-    
+
     
     /**
      * Asserts that the given URI has no URI errors, no localized errors, and

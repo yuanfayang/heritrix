@@ -31,19 +31,24 @@ public abstract class SheetManager {
     
     
     /**
-     * Returns the root processors configured by this manager.
-     * 
-     * The returned list is modifiable, and supports all optional operations.
-     * However, the list will ensure that each of its elements has a unique
-     * name.  Any attempt to add a NamedObject with the same name as some
-     * other element in the list will raise an IllegalArgumentException.
-     * 
-     * The returned list is safe for use by concurrent threads.
+     * Returns the root processors configured by this manager.  The returned
+     * list is unmodifiable.
      * 
      * @return  the list of root processors
      */
     public abstract List<NamedObject> getRoots();
 
+    
+    public abstract void addRoot(String name, Object root);
+    
+    
+    public abstract void removeRoot(String name);
+    
+    
+    public abstract void moveRootUp(String rootName);
+    
+    
+    public abstract void moveRootDown(String rootName);
 
     /**
      * Returns the names of the sheets being managed.  The returned set 

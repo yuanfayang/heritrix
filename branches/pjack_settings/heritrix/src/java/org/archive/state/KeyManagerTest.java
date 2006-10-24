@@ -48,7 +48,7 @@ public class KeyManagerTest extends TestCase {
      */
     public void testGetKeys() {
         // Test uninitialize classes
-        Map<String,Key> m = KeyManager.getKeys(ExampleConcreteProcessor.class);
+        Map<String,Key<Object>> m = KeyManager.getKeys(ExampleConcreteProcessor.class);
         
         Set<String> expected = new HashSet<String>();
         expected.add("LEFT");

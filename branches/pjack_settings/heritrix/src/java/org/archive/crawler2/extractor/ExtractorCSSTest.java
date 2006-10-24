@@ -23,11 +23,14 @@
  */
 package org.archive.crawler2.extractor;
 
+import java.util.Collection;
+import java.util.Collections;
 
-import java.util.HashSet;
-
+import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import static org.archive.crawler2.extractor.LinkContext.NAVLINK_MISC;
+import static org.archive.crawler2.extractor.LinkContext.EMBED_MISC;
 
 
 /**
@@ -35,7 +38,7 @@ import org.archive.net.UURIFactory;
  * 
  * @author pjack
  */
-public class ExtractorCSSTest extends ContentExtractorTestBase {
+public class ExtractorCSSTest extends StringExtractorTestBase {
 
     
     /**
@@ -65,42 +68,25 @@ public class ExtractorCSSTest extends ContentExtractorTestBase {
     protected Extractor makeExtractor() {
         return new ExtractorCSS();
     }
-    
-    
-    /**
-     * Tests each CSS/URI pair in the test data array.
-     * 
-     * @throws Exception   just in case
-     */
-    public void testExtraction() throws Exception {
-        for (int i = 0; i < VALID_TEST_DATA.length; i += 2) {
-            testOne(VALID_TEST_DATA[i], VALID_TEST_DATA[i + 1]);
-        }
-    }
-    
-    
-    /**
-     * Runs the given CSS text through ExtractorCSS, expecting the given
-     * URL to be extracted.
-     * 
-     * @param css    the CSS text to process
-     * @param expectedURL   the URL that should be extracted from the CSS
-     * @throws Exception  just in case
-     */
-    private void testOne(String css, String expectedURL) throws Exception {
-        UURI uuri = UURIFactory.getInstance("http://www.archive.org/start/");
-        DefaultExtractorURI euri = new DefaultExtractorURI(uuri, null);
-        euri.setContent(css, "text/css");
-        ExtractorCSS extractor = new ExtractorCSS();
-        extractor.process(euri);
+ 
+
+    @Override
+    protected Collection<TestData> makeData(String content, String uri) 
+    throws URIException {
+        UURI src = UURIFactory.getInstance("http://www.archive.org/start/");
+        DefaultExtractorURI euri = new DefaultExtractorURI(src, NAVLINK_MISC); 
+        euri.setContent(content, "text/css");
         
-        Link link = new Link(euri.getUURI(), 
-                UURIFactory.getInstance(expectedURL),
-                LinkContext.EMBED_MISC, Hop.EMBED);
-        HashSet<Link> expected = new HashSet<Link>();
-        expected.add(link);
-        assertEquals(expected, euri.getOutLinks());
-        assertNoSideEffects(euri);
+        UURI dest = UURIFactory.getInstance(uri);
+        Link link = new Link(src, dest, EMBED_MISC, Hop.EMBED);
+        TestData td = new TestData(euri, link);
+        return Collections.singleton(td);
+    }
+
+
+    @Override
+    public String[] getValidTestData() {
+        return VALID_TEST_DATA;
     }
 
 }

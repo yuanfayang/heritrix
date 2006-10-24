@@ -54,7 +54,7 @@ public abstract class StateProcessorTestBase extends TestCase {
      * {@link KeyManager#addKeys(Class)}.
      */
     public void testKeyManagerRegistration() {
-        Map<String,Key> keys = KeyManager.getKeys(processorClass);
+        Map<String,Key<Object>> keys = KeyManager.getKeys(processorClass);
         Field[] fields = processorClass.getFields();
         int expectedKeyCount = 0;
         for (Field f: fields) {
@@ -75,7 +75,7 @@ public abstract class StateProcessorTestBase extends TestCase {
      * descriptions in English.
      */
     public void testDefaultLocale() {
-        Map<String,Key> keys = KeyManager.getKeys(processorClass);
+        Map<String,Key<Object>> keys = KeyManager.getKeys(processorClass);
         for (Key k: keys.values()) {
             String n = k.getFieldName();
             TestCase.assertNotNull(n, k.getName(Locale.ENGLISH));

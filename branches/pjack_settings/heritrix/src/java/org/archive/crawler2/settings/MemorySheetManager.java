@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,9 +62,66 @@ public class MemorySheetManager extends SheetManager {
 
     @Override
     public List<NamedObject> getRoots() {
-        return roots;
+        return Collections.unmodifiableList(roots);
     }
 
+    
+    @Override
+    public void addRoot(String name, Object root) {
+        if (root == null) {
+            throw new IllegalArgumentException();
+        }
+        // FIXME: Ensure name isn't duplicated
+        roots.add(new NamedObject(name, root));
+    }
+    
+    
+    @Override
+    public void removeRoot(String rootName) {
+        Iterator<NamedObject> iter = roots.iterator();
+        while (iter.hasNext()) {
+            NamedObject no = iter.next();
+            if (no.getName().equals(rootName)) {
+                Object processor = no.getObject();
+                iter.remove();
+                removeProcessor(processor);
+            }
+        }
+    }
+    
+    
+    @Override
+    public void moveRootUp(String rootName) {
+        for (int i = 0; i < roots.size(); i++) {
+            if (roots.get(i).getName().equals(rootName)) {
+                Collections.swap(roots, i, i - 1);
+                return;
+            }
+        }
+        throw new IllegalArgumentException("No such root: " + rootName);
+    }
+    
+    
+    @Override
+    public void moveRootDown(String rootName) {
+        for (int i = 0; i < roots.size(); i++) {
+            if (roots.get(i).getName().equals(rootName)) {
+                Collections.swap(roots, i, i + 1);
+                return;
+            }
+        }
+        throw new IllegalArgumentException("No such root: " + rootName);        
+    }
+    
+    
+    private void removeProcessor(Object processor) {
+        for (Sheet s: sheets.values()) {
+            if (s instanceof SingleSheet) {
+                SingleSheet ss = (SingleSheet)s;
+                ss.removeAll(processor);
+            }
+        }
+    }
 
 
     @Override

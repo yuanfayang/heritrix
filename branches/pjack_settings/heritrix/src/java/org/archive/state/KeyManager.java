@@ -67,8 +67,8 @@ final public class KeyManager {
      * application start-up time, and that loading new processors will be
      * a rare event.)
      */
-    private static Map<Class,Map<String,Key>> keys
-     = new ConcurrentHashMap<Class,Map<String,Key>>(256, (float)0.75, 1);
+    private static Map<Class,Map<String,Key<Object>>> keys
+     = new ConcurrentHashMap<Class,Map<String,Key<Object>>>(256, (float)0.75, 1);
 
 
     /**
@@ -89,11 +89,7 @@ final public class KeyManager {
      *  the same name as one of its superclass keys
      */
     public static void addKeys(Class c) {
-        if (c == null) {
-            new Exception().printStackTrace();
-        }
-
-        Map<String,Key> discovered = keys.get(c);
+        Map<String,Key<Object>> discovered = keys.get(c);
         if (discovered != null) {
             // Class already processed, perhaps by a subclass
             return;
@@ -108,13 +104,13 @@ final public class KeyManager {
         }
         
         // Construct new map of superclass keys.
-        discovered = new HashMap<String,Key>();
+        discovered = new HashMap<String,Key<Object>>();
         discovered.putAll(getKeys(c.getSuperclass()));
         
         // Add keys declared by given class
         for (Field field: c.getDeclaredFields()) {
             if (isKeyField(field)) {
-                Key k = getKey(field);
+                Key<Object> k = getKey(field);
                 String name = field.getName();
                 k.setMetadata(c, name);
                 Key old = discovered.put(name, k);
@@ -136,9 +132,11 @@ final public class KeyManager {
      * @param keyField  the key field to fetch
      * @return  the Key stored in that field
      */
-    private static Key getKey(Field keyField) {
+    private static Key<Object> getKey(Field keyField) {
         try {
-            return (Key)keyField.get(null);
+            @SuppressWarnings("unchecked")
+            Key<Object> r = (Key<Object>)keyField.get(null);
+            return r;
         } catch (IllegalAccessException e) {
             throw new AssertionError();
         }
@@ -179,11 +177,11 @@ final public class KeyManager {
      * @param c   the class whose keys to return
      * @return   the set of keys defined by that class
      */
-    public static Map<String,Key> getKeys(Class c) {
+    public static Map<String,Key<Object>> getKeys(Class c) {
         if (c == null) {
             return empty();
         }
-        Map<String,Key> result = keys.get(c);
+        Map<String,Key<Object>> result = keys.get(c);
         if (result == null) {
             addKeys(c);
             result = keys.get(c);
@@ -195,7 +193,7 @@ final public class KeyManager {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String,Key> empty() {
+    private static Map<String,Key<Object>> empty() {
         return Collections.EMPTY_MAP;
     }
 

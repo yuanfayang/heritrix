@@ -3,6 +3,7 @@ package org.archive.crawler2.settings;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.archive.state.Key;
@@ -51,7 +52,36 @@ public class SheetBundle extends Sheet {
         return null;
     }
 
-
+    
+    public <T> Resolved<T> resolve(Object processor, Key<T> key) {
+        Resolved<T> r = resolve(this, processor, key);
+        if (r == null) {
+            return resolveDefault(processor, key);
+        } else {
+            return r;
+        }
+    }
+    
+    
+    private <T> Resolved<T> resolve(SheetBundle bundle, Object processor, Key<T> key) {
+        for (Sheet sheet: bundle.getSheets()) {
+            if (sheet instanceof SheetBundle) {
+                SheetBundle sb = (SheetBundle)sheet;
+                Resolved<T> r = resolve(sb, processor, key);
+                if (r != null) {
+                    return r;
+                }
+            } else {
+                SingleSheet ss = (SingleSheet)sheet;
+                T value = ss.get(processor, key);
+                if (value != null) {
+                    return new Resolved<T>(ss, processor, key, value);
+                }
+            }
+        }
+        return null;
+    }
+    
     /**
      * Returns the list of sheets contained in this bundle.
      * 

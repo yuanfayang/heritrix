@@ -46,7 +46,7 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.state.Key;
 
-public class DefaultExtractorURI implements ExtractorURI {
+public class DefaultExtractorURI implements ExtractorURI, Cloneable {
 
     
     /**
@@ -101,6 +101,19 @@ public class DefaultExtractorURI implements ExtractorURI {
         this.via = via;
     }
 
+    
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+    
+    
+    public DefaultExtractorURI duplicate() {
+        return (DefaultExtractorURI)clone();
+    }
 
     // Documented in ExtractorURI
     public void addAnnotation(CharSequence msg) {

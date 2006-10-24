@@ -17,7 +17,10 @@ public abstract class Sheet {
      * The manager that created this sheet.
      */
     final private SheetManager manager;
-        
+
+
+    private String name;
+
     
     /**
      * Constructor.  Package-protected to ensure that only two subclasses
@@ -42,6 +45,21 @@ public abstract class Sheet {
         return manager;
     }
 
+    
+    /**
+     * Returns the unique name of this sheet.  The name may be changed via
+     * the SheetManager.
+     * 
+     * @return  the unique name of this sheet
+     */
+    public String getName() {
+        return name;
+    }
+    
+    
+    void setName(String name) {
+        this.name = name;
+    }
 
     /**
      * Looks up a value for a property.  
@@ -55,4 +73,16 @@ public abstract class Sheet {
      */
     public abstract <T> T get(Object processor, Key<T> key);
 
+    
+    public abstract <T> Resolved<T> resolve(Object processor, Key<T> key);
+
+
+    public <T> Resolved<T> resolveDefault(Object processor, Key<T> key) {
+        SingleSheet defaults = getSheetManager().getDefault();
+        T result = defaults.get(processor, key);
+        if (result == null) {
+            result = key.getDefaultValue();
+        }
+        return new Resolved<T>(defaults, processor, key, key.getDefaultValue());
+    }
 }

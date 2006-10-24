@@ -1,19 +1,21 @@
 package org.archive.crawler2.settings;
 
+import java.util.List;
+
 
 /**
  * An object with a name.  
  * 
  * @author pjack
  */
-public class NamedObject {
+public class NamedObject<T> {
 
 
     /** The name. */
     private String name;
     
     /** The object. */
-    private Object object;
+    private T object;
 
 
     /**
@@ -22,7 +24,7 @@ public class NamedObject {
      * @param name    the name for the object
      * @param object  the object being named
      */
-    public NamedObject(String name, Object object) {
+    public NamedObject(String name, T object) {
         if (name == null) {
             throw new IllegalArgumentException();
         }
@@ -49,9 +51,17 @@ public class NamedObject {
      * 
      * @return  the object
      */
-    public Object getObject() {
+    public T getObject() {
         return object;
     }
 
 
+    public static Object getByName(List<NamedObject> list, String name) {
+        for (NamedObject no: list) {
+            if (no.getName().equals(name)) {
+                return no.getObject();
+            }
+        }
+        return null;
+    }
 }
