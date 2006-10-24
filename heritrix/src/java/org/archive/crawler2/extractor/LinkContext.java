@@ -74,4 +74,18 @@ public abstract class LinkContext implements Serializable {
     final public static LinkContext PREREQ_MISC
      = new SimpleLinkContext("=PREREQ_MISC");
 
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof LinkContext)) {
+            return false;
+        }
+        return o.toString().equals(toString());
+    }
+    
+    
+    public int hashCode() {
+        return toString().hashCode();
+    }
 }

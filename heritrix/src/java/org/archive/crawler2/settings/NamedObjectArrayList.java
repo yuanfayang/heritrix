@@ -3,6 +3,7 @@ package org.archive.crawler2.settings;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -28,6 +29,7 @@ public class NamedObjectArrayList extends AbstractList<NamedObject> {
      */
     public NamedObjectArrayList() {
         this.delegate = new ArrayList<NamedObject>();
+        this.names = new HashSet<String>();
     }
     
     

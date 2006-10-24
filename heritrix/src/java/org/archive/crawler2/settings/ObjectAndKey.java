@@ -52,4 +52,9 @@ class ObjectAndKey<T> {
         ObjectAndKey nk = (ObjectAndKey)o;
         return (nk.identity == identity) && nk.key.equals(key);
     }
+    
+    
+    public int getIdentity() {
+        return identity;
+    }
 }

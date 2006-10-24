@@ -24,19 +24,29 @@
 package org.archive.crawler2.deciderules;
 
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.archive.crawler2.framework.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyMaker;
+import org.archive.state.KeyManager;
 
 
 public class DecideRuleSequence extends DecideRule {
 
     
-    final public static Key<List<DecideRule>> RULES
-    = Key.make(defaultRules());
+    final public static Key<List<DecideRule>> RULES;
 
+    
+    static {
+        KeyMaker<List<DecideRule>> km = new KeyMaker<List<DecideRule>>();
+        km.def = defaultRules();
+        km.type = listClass();
+        RULES = new Key<List<DecideRule>>(km);
+        
+        KeyManager.addKeys(DecideRuleSequence.class);
+    }
 
     public DecideResult process(ProcessorURI uri) {
         DecideResult result = DecideResult.PASS;
@@ -53,7 +63,16 @@ public class DecideRuleSequence extends DecideRule {
     }
 
 
+    @SuppressWarnings("unchecked")
     private static List<DecideRule> defaultRules() {
-        return new ArrayList<DecideRule>();
+        return Collections.EMPTY_LIST;
     }
+
+
+    @SuppressWarnings("unchecked")
+    private static Class<List<DecideRule>> listClass() {
+        Object o = List.class;
+        return (Class<List<DecideRule>>)o;
+    }
+
 }
