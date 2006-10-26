@@ -27,8 +27,21 @@ package org.archive.crawler2.settings.path;
 import org.archive.crawler2.settings.Sheet;
 
 
+/**
+ * Consumes settings as they are listed.
+ * 
+ * @author pjack
+ * @see PathLister
+ */
 public interface PathListConsumer {
 
+    /**
+     * Consumes a setting.
+     * 
+     * @param path    the path to the setting
+     * @param sheet   the sheet that defined the setting
+     * @param value   the value of the setting
+     */
     void consume(String path, Sheet sheet, Object value);
 
 }

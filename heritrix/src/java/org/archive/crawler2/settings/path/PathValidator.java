@@ -23,40 +23,81 @@
  */
 package org.archive.crawler2.settings.path;
 
+
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.archive.crawler2.settings.NamedObject;
+import org.archive.crawler2.settings.Resolved;
 import org.archive.crawler2.settings.Sheet;
-import org.archive.crawler2.settings.SheetManager;
-import org.archive.crawler2.settings.SingleSheet;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 
+
+/**
+ * Checks that a given path is valid.  For a sheet and a path, this class 
+ * will start at the root object indicated by the path and "walk" the rest
+ * of the path, returning the object the path represents.
+ * 
+ * @author pjack
+ */
 public class PathValidator {
-    
-    private SheetManager manager;
-    private SingleSheet defaults;
-    private Sheet sheet;
-    private String path;
-    
-    private StringBuilder subPath;
-    private List<String> tokens;
 
     
-    public PathValidator(Sheet sheet, String path) {
-        this.manager = sheet.getSheetManager();
-        this.defaults = manager.getDefault();
+    /**
+     * The sheet being used to resolve the path.
+     */
+    final private Sheet sheet;
+    
+    
+    /**
+     * The path to resolve.
+     */
+    final private String path;
+    
+    
+    /**
+     * The portion of the path that has already been resolved.  Used for
+     * error reporting.
+     */
+    private StringBuilder subPath;
+    
+    
+    /**
+     * The tokens in the path.  Shrinks as tokens are resolved.
+     */
+    private List<String> tokens;
+
+
+    /**
+     * Private constructor.  The public API for this class is a single
+     * static utility method.  As the state recorded during validation
+     * mostly revolves around error reporting, a future version of this class
+     * could trade memory usage for terser error messages.
+     * 
+     * @param sheet   the sheet to use to resolve the path
+     * @param path    the path to resolve
+     */
+    private PathValidator(Sheet sheet, String path) {
         this.sheet = sheet;
         this.path = path;
         this.subPath = new StringBuilder();
+        this.tokens = new LinkedList<String>(Arrays.asList(path.split("\\.")));
     }
     
 
-    public Object validatePath() {
-        List<NamedObject> roots = manager.getRoots();
-        tokens = Arrays.asList(path.split("\\."));
+    /**
+     * Validates the path.
+     * 
+     * @return   the object the path represents
+     */
+    private Object validatePath() {
+        // Get the root object.
+        List<NamedObject> roots = sheet.getSheetManager().getRoots();
         Object current = NamedObject.getByName(roots, tokens.get(0));
+        
+        // While there are more tokens, process the next token.
         advance();
         while (!tokens.isEmpty()) {
             String n = tokens.get(0);
@@ -71,24 +112,37 @@ public class PathValidator {
     }
 
     
+    /**
+     * Advances to the next token.  Appends the the next token to the 
+     * subPath for error reporting, and shrinks the 
+     *
+     */
     private void advance() {
         subPath.append(tokens.get(0));
-        tokens = tokens.subList(1, tokens.size());
+        tokens.remove(0);
     }
+
     
+    /**
+     * Returns a new InvalidPathException including the original path, the
+     * current subpath and the given error text.
+     * 
+     * @param msg   the error message to report
+     * @return   a new InvalidPathException
+     */
     private RuntimeException ex(String msg) {
-        StringBuilder sb = new StringBuilder();
-        for (String s: tokens) {
-            if (sb.length() > 0) {
-                sb.append('.');
-            }
-            sb.append(s);
-        }
         String e = path + msg + subPath;
-        return new IllegalArgumentException(e);
+        return new InvalidPathException(e);
     }
     
-    
+
+    /**
+     * Validates an index token.
+     * 
+     * @param current       the currently resolved object (which must be a List)
+     * @param indexString   the index as a string
+     * @return   the element at that index in the list
+     */
     private Object validateList(Object current, String indexString) {
         if (!(current instanceof List)) {
             throw ex(" indexes a non-list at ");
@@ -111,6 +165,13 @@ public class PathValidator {
     }
 
     
+    /**
+     * Validates a key field token.
+     * 
+     * @param current   the currently resolved object
+     * @param keyName   the name of the key field
+     * @return   the value of that Key for that processor
+     */
     private Object validateKey(Object current, String keyName) {
         if (current == null) {
             throw ex(" has null pointer at ");
@@ -122,15 +183,20 @@ public class PathValidator {
             throw ex(" has invalid key field name at ");
         }
         
-        Object result = sheet.get(current, key);
-        if (result == null) {
-            result = defaults.get(current, key);
-        }
-        if (result == null) {
-            result = key.getDefaultValue();
-        }
-        return result;
+        Resolved r = sheet.resolve(current, key);
+        return r.getValue();
     }
 
+
+    /**
+     * Validates a path.
+     * 
+     * @param sheet   the sheet to use to resolve key fields
+     * @param path    the path to validate
+     * @return   the object represented by that path
+     */
+    public static Object validate(Sheet sheet, String path) {
+        return new PathValidator(sheet, path).validatePath();
+    }
 
 }
