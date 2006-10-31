@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -307,9 +308,21 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @throws IOException
      */
     private File getProfilesDirectory() throws IOException {
+        URL webappProfilePath = Heritrix.class.getResource("/" + 
+            PROFILES_DIR_NAME);
+        if (webappProfilePath != null) {
+            try {
+                return new File(new URI(webappProfilePath.toString()));
+            } catch (java.lang.IllegalArgumentException e) {
+                // e.g. "profiles" within a jar file
+                // try Heritrix.getConfdir() in this case
+            } catch (java.net.URISyntaxException e) {
+                e.printStackTrace();
+            }
+        }
         return (Heritrix.getConfdir(false) == null)? null:
-            new File(Heritrix.getConfdir().getAbsolutePath(),
-                PROFILES_DIR_NAME);
+            new File(Heritrix.getConfdir().getAbsolutePath(), 
+                PROFILES_DIR_NAME);        
     }
 
     /**
