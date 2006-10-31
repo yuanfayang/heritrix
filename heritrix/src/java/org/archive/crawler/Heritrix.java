@@ -243,6 +243,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     private static boolean containerInitialized = false;
     
+    /**
+     * True if properties have been loaded.
+     */
+    private static boolean propertiesLoaded = false;
+    
     private static final String JAR_SUFFIX = ".jar";
     
     private AlertManager alertManager;
@@ -749,9 +754,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * @throws IOException
      */
     public static File getJobsdir() throws IOException {
+        Heritrix.loadProperties(); // if called in constructor
         String jobsdirStr = System.getProperty("heritrix.jobsdir", "jobs");
-        return jobsdirStr.startsWith(File.separator)?
-            new File(jobsdirStr):
+        File jobsdir = new File(jobsdirStr);
+        return (jobsdir.isAbsolute())?
+            jobsdir:
             new File(getHeritrixHome(), jobsdirStr);
     }
     
@@ -835,6 +842,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     protected static Properties loadProperties()
     throws IOException {
+        if (Heritrix.propertiesLoaded) {
+            return System.getProperties();
+        }
+        Heritrix.propertiesLoaded = true;
+            
         Properties properties = new Properties();
         properties.load(getPropertiesInputStream());
         
