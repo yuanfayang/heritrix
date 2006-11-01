@@ -69,7 +69,7 @@ public class SingleSheetProxy extends Bean {
 
    
     private <T> T getSimple(String path, String key, Class<T> type) {
-        Object processor = new PathValidator(sheet, path).validatePath();
+        Object processor = PathValidator.validate(sheet, path);
         Map<String,Key<Object>> keys = KeyManager.getKeys(processor.getClass());
         @SuppressWarnings("unchecked")
         Key<Object> k = keys.get(key);
@@ -85,7 +85,7 @@ public class SingleSheetProxy extends Bean {
 
     
     private void setSimple(String path, String key, String value) {
-        Object processor = new PathValidator(sheet, path).validatePath();
+        Object processor = PathValidator.validate(sheet, path);
         Map<String,Key<Object>> keys = KeyManager.getKeys(processor.getClass());
         @SuppressWarnings("unchecked")
         Key<Object> k = keys.get(key);

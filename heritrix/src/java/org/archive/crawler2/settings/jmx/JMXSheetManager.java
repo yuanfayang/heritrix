@@ -302,4 +302,8 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
         manager.removeRoot(rootName);
     }
 
+    
+    public void swapRoot(String name, Object newValue) {
+        // TODO
+    }
 }

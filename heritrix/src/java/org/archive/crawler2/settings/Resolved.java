@@ -23,6 +23,10 @@
  */
 package org.archive.crawler2.settings;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.archive.state.Key;
 
 public class Resolved<T> {
@@ -30,16 +34,26 @@ public class Resolved<T> {
     private Key<T> key;
     private Object processor;
     private T value;
-    private SingleSheet sheet;
+    private List<Sheet> sheets;
     
     
-    public Resolved(SingleSheet sheet, Object processor, Key<T> key, T value) {
+    public Resolved(SingleSheet sheet, Object processor, Key<T> key, T value) {        
         this.key = key;
         this.processor = processor;
         this.value = value;
-        this.sheet = sheet;
+        Sheet s = sheet;
+        this.sheets = Collections.singletonList(s);
     }
 
+    
+    
+    public Resolved(List<Sheet> sheets, Object processor, Key<T> key, T value) {
+        this.key = key;
+        this.processor = processor;
+        this.value = value;
+        this.sheets = new ArrayList<Sheet>(sheets);
+    }
+    
 
     public Key<T> getKey() {
         return key;
@@ -51,10 +65,14 @@ public class Resolved<T> {
     }
 
 
-    public SingleSheet getSheet() {
-        return sheet;
+    public List<Sheet> getSheets() {
+        return sheets;
     }
 
+    
+    public SingleSheet getSingleSheet() {
+        return (SingleSheet)sheets.get(sheets.size() - 1);
+    }
 
     public T getValue() {
         return value;

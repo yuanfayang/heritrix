@@ -116,7 +116,7 @@ public abstract class SheetManager {
      */
     public SingleSheet createSingleSheet(String name) 
     throws IllegalArgumentException {
-        SingleSheet result = new SingleSheet(this);
+        SingleSheet result = new SingleSheet(this, name);
         addSheet(result, name);
         return result;
     }
@@ -132,7 +132,7 @@ public abstract class SheetManager {
      */
     public SheetBundle createSheetBundle(String name, Collection<Sheet> c) 
     throws IllegalArgumentException {
-        SheetBundle result = new SheetBundle(this, c);
+        SheetBundle result = new SheetBundle(this, name, c);
         addSheet(result, name);
         return result;
     }
@@ -193,4 +193,12 @@ public abstract class SheetManager {
      */
     public abstract Sheet getAssociation(String context);
 
+    
+    public Object getRoot(String name) {
+        List<NamedObject> roots = getRoots();
+        return NamedObject.getByName(roots, name);
+    }
+    
+    
+    public abstract void swapRoot(String name, Object newRoot);
 }

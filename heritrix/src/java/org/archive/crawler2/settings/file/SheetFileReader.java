@@ -25,11 +25,9 @@ package org.archive.crawler2.settings.file;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.archive.crawler2.settings.SheetManager;
 import org.archive.crawler2.settings.SingleSheet;
 import org.archive.crawler2.settings.path.PathValidator;
 import org.archive.openmbeans.annotations.OpenTypes;
@@ -76,7 +74,7 @@ public class SheetFileReader {
         }
         String previous = path.substring(0, p);
         String lastToken = path.substring(p + 1);
-        Object processor = new PathValidator(sheet, previous).validatePath();
+        Object processor = PathValidator.validate(sheet, previous);
         Map<String,Key<Object>> keys = KeyManager.getKeys(processor.getClass());
         Key<Object> key = keys.get(lastToken);
         if (key == null) {
@@ -126,7 +124,7 @@ public class SheetFileReader {
         }
         
         String previous = path.substring(0, p);
-        Object processor = new PathValidator(sheet, previous).validatePath();
+        Object processor = PathValidator.validate(sheet, previous);
         String lastToken = path.substring(p + 1);
         
         // Check to see if we're appending to a list.

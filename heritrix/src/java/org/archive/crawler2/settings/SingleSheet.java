@@ -54,8 +54,8 @@ public class SingleSheet extends Sheet {
      * 
      * @param manager   the manager who created this sheet
      */
-    SingleSheet(SheetManager manager) {
-        super(manager);
+    SingleSheet(SheetManager manager, String name) {
+        super(manager, name);
         this.settings = new HashMap<Identity,Map<Key,Object>>();
     }
         
@@ -123,4 +123,10 @@ public class SingleSheet extends Sheet {
         Set<Identity> s = settings.keySet();
         return new Transform<Identity,Object>(s, Identity.TO_OBJECT);
     }
+    
+    
+    void swapRoot(Object oldRoot, Object newRoot, Set<Key<Object>> dead) {
+        
+    }
+
 }

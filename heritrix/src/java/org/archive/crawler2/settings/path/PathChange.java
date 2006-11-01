@@ -16,34 +16,30 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * PathListConsumer.java
+ * PathChange.java
  * Created on October 24, 2006
  *
  * $Header$
  */
 package org.archive.crawler2.settings.path;
 
+public class PathChange {
 
-import java.util.List;
-
-import org.archive.crawler2.settings.Sheet;
-
-
-/**
- * Consumes settings as they are listed.
- * 
- * @author pjack
- * @see PathLister
- */
-public interface PathListConsumer {
-
-    /**
-     * Consumes a setting.
-     * 
-     * @param path    the path to the setting
-     * @param sheet   the sheet that defined the setting
-     * @param value   the value of the setting
-     */
-    void consume(String path, List<Sheet> sheet, Object value);
-
+    private String path;
+    private String value;
+    
+    public PathChange(String path, String value) {
+        this.path = path;
+        this.value = value;
+    }
+    
+    
+    public String getPath() {
+        return path;
+    }
+    
+    
+    public String getValue() {
+        return value;
+    }
 }
