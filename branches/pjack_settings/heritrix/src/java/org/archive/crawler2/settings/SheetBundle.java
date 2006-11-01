@@ -24,6 +24,7 @@
 package org.archive.crawler2.settings;
 
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +53,8 @@ public class SheetBundle extends Sheet {
      * @param manager
      * @param sheets
      */
-    SheetBundle(SheetManager manager, Collection<Sheet> sheets) {
-        super(manager);
+    SheetBundle(SheetManager manager, String name, Collection<Sheet> sheets) {
+        super(manager, name);
         this.sheets = new CopyOnWriteArrayList<Sheet>(sheets);
     }
 
@@ -77,7 +78,9 @@ public class SheetBundle extends Sheet {
 
     
     public <T> Resolved<T> resolve(Object processor, Key<T> key) {
-        Resolved<T> r = resolve(this, processor, key);
+        List<Sheet> sheets = new ArrayList<Sheet>();
+        sheets.add(this);
+        Resolved<T> r = resolve(sheets, processor, key);
         if (r == null) {
             return resolveDefault(processor, key);
         } else {
@@ -86,19 +89,23 @@ public class SheetBundle extends Sheet {
     }
     
     
-    private <T> Resolved<T> resolve(SheetBundle bundle, Object processor, Key<T> key) {
+    private <T> Resolved<T> resolve(List<Sheet> sheets, Object processor, Key<T> key) {
+        SheetBundle bundle = (SheetBundle)sheets.get(sheets.size() - 1);
         for (Sheet sheet: bundle.getSheets()) {
             if (sheet instanceof SheetBundle) {
                 SheetBundle sb = (SheetBundle)sheet;
-                Resolved<T> r = resolve(sb, processor, key);
+                sheets.add(sb);
+                Resolved<T> r = resolve(sheets, processor, key);
                 if (r != null) {
                     return r;
                 }
+                sheets.remove(sheets.size() - 1);
             } else {
                 SingleSheet ss = (SingleSheet)sheet;
                 T value = ss.get(processor, key);
                 if (value != null) {
-                    return new Resolved<T>(ss, processor, key, value);
+                    sheets.add(ss);
+                    return new Resolved<T>(sheets, processor, key, value);
                 }
             }
         }

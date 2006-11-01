@@ -75,7 +75,7 @@ public class ExtractorJS extends ContentExtractor {
     /**
      * @param name
      */
-    public ExtractorJS(String name) {
+    public ExtractorJS() {
     }
 
     

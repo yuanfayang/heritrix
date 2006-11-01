@@ -30,10 +30,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import org.archive.state.Key;
+import org.archive.state.KeyManager;
 
 
 /**
@@ -76,7 +80,7 @@ public class MemorySheetManager extends SheetManager {
     public MemorySheetManager() {
         sheets = new HashMap<String,Sheet>();
         associations = new ConcurrentHashMap<String,Sheet>();
-        defaults = new SingleSheet(this);
+        defaults = new SingleSheet(this, "default");
 
         roots = Collections.synchronizedList(new NamedObjectArrayList());
         addSheet(defaults, "default");
@@ -234,4 +238,40 @@ public class MemorySheetManager extends SheetManager {
     }
 
 
+    public void swapRoot(String name, Object newValue) {
+        Object oldValue = NamedObject.getByName(getRoots(), name);
+        Set<Key<Object>> oldKeys = new HashSet<Key<Object>>( 
+         KeyManager.getKeys(oldValue.getClass()).values());
+        Collection<Key<Object>> newKeys 
+         = KeyManager.getKeys(oldValue.getClass()).values();
+        oldKeys.removeAll(newKeys);
+        setRoot(name, newValue);
+        // oldKeys now contains dead keys, eg keys that were in the old
+        // processor but not in the new processor
+        for (Sheet s: sheets.values()) {
+            if (s instanceof SingleSheet) {
+                Map<Key,Object> m = ((SingleSheet)s).getAll(oldValue);
+                if (m != null) {
+                    Iterator<Key> iter = m.keySet().iterator();
+                    while (iter.hasNext()) {
+                        Key k = iter.next();
+                        if (oldKeys.contains(k)) {
+                        }
+                        iter.remove();
+                    }
+                }
+            }
+        }
+    }
+    
+    
+    private void setRoot(String name, Object newValue) {
+        ListIterator<NamedObject> iter = roots.listIterator();
+        while (iter.hasNext()) {
+            NamedObject no = iter.next();
+            if (no.getName().equals(name)) {
+                iter.set(new NamedObject(name, newValue));
+            }
+        }        
+    }
 }

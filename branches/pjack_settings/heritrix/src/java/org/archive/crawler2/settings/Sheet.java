@@ -51,10 +51,11 @@ public abstract class Sheet {
      * 
      * @param manager   the manager who created this sheet
      */
-    Sheet(SheetManager manager) {
+    Sheet(SheetManager manager, String name) {
         if (manager == null) {
             throw new IllegalArgumentException();
         }
+        this.name = name;
         this.manager = manager;
     }
     
@@ -106,6 +107,9 @@ public abstract class Sheet {
         if (result == null) {
             result = key.getDefaultValue();
         }
-        return new Resolved<T>(defaults, processor, key, key.getDefaultValue());
+        if (result == null) {
+            result = key.getDefaultValue();
+        }
+        return new Resolved<T>(defaults, processor, key, result);
     }
 }

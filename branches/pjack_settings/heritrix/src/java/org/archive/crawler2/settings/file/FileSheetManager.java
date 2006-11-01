@@ -137,4 +137,8 @@ public class FileSheetManager extends SheetManager {
         
     }
 
+    @Override
+    public void swapRoot(String name, Object newValue) {
+        // TODO
+    }
 }
