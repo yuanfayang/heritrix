@@ -169,6 +169,10 @@ implements CoreAttributeConstants {
     public static final String ATTR_IGNORE_FORM_ACTION_URLS =
         "ignore-form-action-urls";
     
+    /** whether to try finding links in Javscript; default true */
+    public static final String ATTR_EXTRACT_JAVASCRIPT =
+        "extract-javascript";
+
     public static final String ATTR_OVERLY_EAGER_LINK_DETECTION =
         "overly-eager-link-detection";
     
@@ -186,27 +190,40 @@ implements CoreAttributeConstants {
     public ExtractorHTML(String name, String description) {
         super(name, description);
         Type t = addElementToDefinition(
+            new SimpleType(ATTR_EXTRACT_JAVASCRIPT,
+            "If true, in-page Javascript is scanned for strings that " +
+            "appear likely to be URIs. This typically finds both valid " +
+            "and invalid URIs, and attempts to fetch the invalid URIs " +
+            "sometimes generates webmaster concerns over odd crawler " +
+            "behavior. Default is true.",
+            Boolean.TRUE));
+        t.setExpertSetting(true);
+        t = addElementToDefinition(
             new SimpleType(ATTR_TREAT_FRAMES_AS_EMBED_LINKS,
-            "If enabled, FRAME/IFRAME SRC-links are treated as embedded " +
-            "resources (IMG etc.), otherwise they are treated as " +
-            "navigational links", Boolean.TRUE));
+            "If true, FRAME/IFRAME SRC-links are treated as embedded " +
+            "resources (like IMG, 'E' hop-type), otherwise they are " +
+            "treated as navigational links. Default is true.", Boolean.TRUE));
         t.setExpertSetting(true);
         t = addElementToDefinition(
             new SimpleType(ATTR_IGNORE_FORM_ACTION_URLS,
-            "If enabled, links appearing as the ACTION attribute in " +
-            "HTML FORMs are not extracted.", Boolean.FALSE));
+            "If true, URIs appearing as the ACTION attribute in " +
+            "HTML FORMs are ignored. Default is false.", Boolean.FALSE));
         t.setExpertSetting(true);
         t = addElementToDefinition(
-                new SimpleType(ATTR_OVERLY_EAGER_LINK_DETECTION,
-                "If disabled (default is enabled), possible links will not be "+
-                "queued if they are placed in (somewhat) unlikely places " + 
-                "(Currently, just ignores URLs in HTML value attributes).",
-                Boolean.TRUE));
+            new SimpleType(ATTR_OVERLY_EAGER_LINK_DETECTION,
+            "If true, strings that look like URIs found in unusual " +
+            "places (such as form VALUE attributes) will be extracted. " +
+            "This typically finds both valid and invalid URIs, and " +
+            "attempts to fetch the invalid URIs sometimes generate " +
+            "webmaster concerns over odd crawler behavior. Default " +
+            "is true.",
+            Boolean.TRUE));
         t.setExpertSetting(true);
         t = addElementToDefinition(
-                new SimpleType(ATTR_IGNORE_UNEXPECTED_HTML,
-                "If enabled, html that is detected in unusual or unexpected " +
-                "places is not considerd for processing.", Boolean.TRUE));
+            new SimpleType(ATTR_IGNORE_UNEXPECTED_HTML,
+            "If true, URIs which end in typical non-HTML extensions " +
+            "(such as .gif) will not be scanned as if it were HTML. " +
+            "Default is true.", Boolean.TRUE));
         t.setExpertSetting(true);
     }
 
@@ -329,8 +346,8 @@ implements CoreAttributeConstants {
                 }
             } else if (attr.start(10) > -1) {
                 // VALUE, with possibility of URI
-                if (TextUtils.matches(LIKELY_URI_PATH, value)
-                        && overlyEagerLinkDetection) {
+                if (overlyEagerLinkDetection 
+                        && TextUtils.matches(LIKELY_URI_PATH, value)) {
                     CharSequence context = Link.elementContext(element,
                         attr.group(10));
                     processLink(curi,value, context);
@@ -382,21 +399,17 @@ implements CoreAttributeConstants {
         }
     }
 
-    // finds strings in javascript likely to be URIs/paths
-    // guessing based on '.' in string, so if highly likely to
-    // get gifs/etc, unable to get many other paths
-    // will find false positives
-    // TODO: add '/' check, suppress strings being concatenated via '+'?
-    static final String JAVASCRIPT_LIKELY_URI_EXTRACTOR =
-     "(\\\\{0,8}+\"|\\\\{0,8}+\')(\\.{0,2}[^+\\.\\n\\r\\s\"\']+[^\\.\\n\\r\\s\"\']*(\\.[^\\.\\n\\r\\s\"\']+)+)(\\1)";
-
     /**
-     * @param curi
-     * @param cs
+     * Extract the (java)script source in the given CharSequence. 
+     * 
+     * @param curi source CrawlURI
+     * @param cs CharSequence of javascript code
      */
     protected void processScriptCode(CrawlURI curi, CharSequence cs) {
-        this.numberOfLinksExtracted +=
-            ExtractorJS.considerStrings(curi, cs, getController(), false);
+        if((Boolean)getUncheckedAttribute(curi, ATTR_EXTRACT_JAVASCRIPT)) {
+            this.numberOfLinksExtracted +=
+                ExtractorJS.considerStrings(curi, cs, getController(), false);
+        } // else do nothing
     }
 
     static final String JAVASCRIPT = "(?i)^javascript:.*";
@@ -629,9 +642,6 @@ implements CoreAttributeConstants {
 
     protected void processScript(CrawlURI curi, CharSequence sequence,
             int endOfOpenTag) {
-        // for now, do nothing
-        // TODO: best effort extraction of strings
-
         // first, get attributes of script-open tag
         // as per any other tag
         processGeneralTag(curi,sequence.subSequence(0,6),
