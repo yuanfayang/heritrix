@@ -111,6 +111,7 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
     protected void processGeneralTag(CrawlURI curi, Element element,
             Attributes attributes) {
         Attribute attr;
+        String attrValue;
         List attrList;
         String elementName = element.getName();
 
@@ -129,8 +130,8 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
                 curi, ATTR_OVERLY_EAGER_LINK_DETECTION)).booleanValue();
 
         // HREF
-        if ((attr = attributes.get("href")) != null) {
-            String attrValue = attr.getValue();
+        if (((attr = attributes.get("href")) != null) &&
+            ((attrValue = attr.getValue()) != null)) {
             CharSequence context = Link.elementContext(elementName, attr
                     .getKey());
             if ("link".equals(elementName)) {
@@ -157,11 +158,12 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
             }
         }
         // ACTION
-        else if ((attr = attributes.get("action")) != null) {
+        else if (((attr = attributes.get("action")) != null) &&
+                 ((attrValue = attr.getValue()) != null)) {
             if (!ignoreFormActions) {
                 CharSequence context = Link.elementContext(elementName, attr
                         .getKey());
-                processLink(curi, attr.getValue(), context);
+                processLink(curi, attrValue, context);
             }
         }
         // ON_
@@ -172,19 +174,19 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
             }
         }
         // SRC atc.
-        else if (((attr = attributes.get("src")) != null)
+        else if ((((attr = attributes.get("src")) != null)
                 || ((attr = attributes.get("lowsrc")) != null)
                 || ((attr = attributes.get("background")) != null)
                 || ((attr = attributes.get("cite")) != null)
                 || ((attr = attributes.get("longdesc")) != null)
                 || ((attr = attributes.get("usemap")) != null)
                 || ((attr = attributes.get("profile")) != null)
-                || ((attr = attributes.get("datasrc")) != null)) {
+                || ((attr = attributes.get("datasrc")) != null)) &&
+                   ((attrValue = attr.getValue()) != null)) {
 
             final char hopType;
             CharSequence context = Link.elementContext(elementName, attr
                     .getKey());
-            String attrValue = attr.getValue();
 
             if (!framesAsEmbeds
                     && ("frame".equals(elementName) || "iframe"
@@ -196,32 +198,36 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
             processEmbed(curi, attrValue, context, hopType);
         }
         // CODEBASE
-        else if ((attr = attributes.get("codebase")) != null) {
-            codebase = StringEscapeUtils.unescapeHtml(attr.getValue());
+        else if (((attr = attributes.get("codebase")) != null) &&
+                 ((attrValue = attr.getValue()) != null)) {
+            codebase = StringEscapeUtils.unescapeHtml(attrValue);
             CharSequence context = Link.elementContext(elementName, attr
                     .getKey());
             processEmbed(curi, codebase, context);
         }
         // CLASSID DATA
-        else if (((attr = attributes.get("classid")) != null)
-                || ((attr = attributes.get("data")) != null)) {
+        else if ((((attr = attributes.get("classid")) != null)
+                || ((attr = attributes.get("data")) != null)) &&
+                   ((attrValue = attr.getValue()) != null)) {
             if (resources == null)
                 resources = new ArrayList<String>();
-            resources.add(attr.getValue());
+            resources.add(attrValue);
         }
         // ARCHIVE
-        else if ((attr = attributes.get("archive")) != null) {
+        else if (((attr = attributes.get("archive")) != null) &&
+                 ((attrValue = attr.getValue()) != null)) {
             if (resources == null)
                 resources = new ArrayList<String>();
-            String[] multi = TextUtils.split(WHITESPACE, attr.getValue());
+            String[] multi = TextUtils.split(WHITESPACE, attrValue);
             for (int i = 0; i < multi.length; i++) {
                 resources.add(multi[i]);
             }
         }
         // CODE
-        else if ((attr = attributes.get("code")) != null) {
-            String attrValue = attr.getValue();
-
+        else if (((attr = attributes.get("code")) != null) &&
+                 ((attrValue = attr.getValue()) != null)) {
+            if (resources == null)
+                resources = new ArrayList<String>();
             // If element is applet and code value does not end with
             // '.class' then append '.class' to the code value.
             if (APPLET.equals(elementName) && !attrValue.endsWith(CLASSEXT)) {
@@ -231,8 +237,8 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
             }
         }
         // VALUE
-        else if ((attr = attributes.get("value")) != null) {
-            String attrValue = attr.getValue();
+        else if (((attr = attributes.get("value")) != null) &&
+                 ((attrValue = attr.getValue()) != null)) {
             if (TextUtils.matches(LIKELY_URI_PATH, attrValue)
                     && overlyEagerLinkDetection) {
                 CharSequence context = Link.elementContext(elementName, attr
@@ -242,11 +248,12 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
 
         }
         // STYLE
-        else if ((attr = attributes.get("style")) != null) {
+        else if (((attr = attributes.get("style")) != null) &&
+                 ((attrValue = attr.getValue()) != null)) {
             // STYLE inline attribute
             // then, parse for URIs
             this.numberOfLinksExtracted += ExtractorCSS.processStyleCode(curi,
-                    attr.getValue(), getController());
+                    attrValue, getController());
         }
 
         // handle codebase/resources
