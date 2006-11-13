@@ -259,9 +259,7 @@ implements ARCConstants {
     private int getTokenizedHeaderLine(final InputStream stream,
             List<String> list) throws IOException {
         // Preallocate usual line size.
-        // TODO: Replace StringBuffer with more lightweight.  We burn
-        // alot of our parse CPU in this method.
-        StringBuffer buffer = new StringBuffer(2048 + 20);
+        StringBuilder buffer = new StringBuilder(2048 + 20);
         int read = 0;
         for (int c = -1; true;) {
             c = stream.read();
@@ -294,7 +292,8 @@ implements ARCConstants {
                 if (list != null) {
                     list.add(buffer.toString());
                 }
-                buffer = new StringBuffer();
+                // reset to empty
+                buffer.setLength(0);
             } else {
                 buffer.append((char)c);
             }
