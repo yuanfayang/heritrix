@@ -80,10 +80,9 @@ public class MemorySheetManager extends SheetManager {
     public MemorySheetManager() {
         sheets = new HashMap<String,Sheet>();
         associations = new ConcurrentHashMap<String,Sheet>();
-        defaults = new SingleSheet(this, "default");
 
         roots = Collections.synchronizedList(new NamedObjectArrayList());
-        addSheet(defaults, "default");
+        defaults = addSingleSheet("default");
     }
 
 
@@ -166,13 +165,29 @@ public class MemorySheetManager extends SheetManager {
 
 
     @Override
-    protected void addSheet(Sheet sheet, String name) {
+    public SingleSheet addSingleSheet(String name) {
         synchronized (sheets) {
             Sheet old = sheets.get(name);
             if (old != null) {
                 throw new IllegalArgumentException("Sheet already exists: " + name);
             }
-            sheets.put(name, sheet);
+            SingleSheet r = createSingleSheet(name);
+            sheets.put(name, r);
+            return r;
+        }
+    }
+
+    
+    @Override
+    public SheetBundle addSheetBundle(String name, Collection<Sheet> c) {
+        synchronized (sheets) {
+            Sheet old = sheets.get(name);
+            if (old != null) {
+                throw new IllegalArgumentException("Sheet already exists: " + name);
+            }
+            SheetBundle r = createSheetBundle(name, c);
+            sheets.put(name, r);
+            return r;
         }
     }
 
@@ -274,4 +289,9 @@ public class MemorySheetManager extends SheetManager {
             }
         }        
     }
+    
+    
+    public void reload() {}
+    
+    public void save() {}
 }

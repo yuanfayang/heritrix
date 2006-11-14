@@ -23,12 +23,12 @@
  */
 package org.archive.crawler2.settings.file;
 
-import java.io.BufferedReader;
 import java.io.StringReader;
 
 import org.archive.crawler2.settings.MemorySheetManager;
 import org.archive.crawler2.settings.SheetManager;
 import org.archive.crawler2.settings.SingleSheet;
+import org.archive.crawler2.settings.path.PathChanger;
 
 import junit.framework.TestCase;
 
@@ -50,9 +50,8 @@ public class SheetFileReaderTest extends TestCase {
     
     public void testSheetFileReader() throws Exception {
         StringReader sr = new StringReader(TEST_DATA);
-        BufferedReader br = new BufferedReader(sr);
         SheetManager mgr = new MemorySheetManager();
         SingleSheet sheet = mgr.getDefault();
-        new SheetFileReader(sheet, br).read();
+        new PathChanger().change(sheet, new SheetFileReader(sr));
     }
 }

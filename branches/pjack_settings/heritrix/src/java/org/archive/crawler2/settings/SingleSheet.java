@@ -25,11 +25,8 @@ package org.archive.crawler2.settings;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.archive.crawler.util.Transform;
 import org.archive.state.Key;

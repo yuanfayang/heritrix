@@ -23,23 +23,9 @@
  */
 package org.archive.crawler2.settings.path;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
-import org.archive.crawler2.deciderules.AcceptDecideRule;
-import org.archive.crawler2.deciderules.DecideRule;
-import org.archive.crawler2.deciderules.DecideRuleSequence;
-import org.archive.crawler2.deciderules.RejectDecideRule;
-import org.archive.crawler2.extractor.ExtractorCSS;
-import org.archive.crawler2.extractor.ExtractorHTML;
-import org.archive.crawler2.extractor.ExtractorJS;
-import org.archive.crawler2.settings.MemorySheetManager;
 import org.archive.crawler2.settings.Sheet;
-import org.archive.crawler2.settings.SheetManager;
 import org.archive.crawler2.settings.SingleSheet;
-
-import junit.framework.TestCase;
 
 
 /**
