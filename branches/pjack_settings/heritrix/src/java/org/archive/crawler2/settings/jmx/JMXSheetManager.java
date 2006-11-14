@@ -546,7 +546,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             String sheetName) {
         Sheet ss = getSheet(sheetName);
         StringWriter sw = new StringWriter();
-        FilePathListConsumer c = new FilePathListConsumer(ss, sw);
+        FilePathListConsumer c = new FilePathListConsumer(sw);
         PathLister.resolveAll(ss, c);
         return sw.toString();
     }
@@ -559,7 +559,7 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
             String sheetName) {
         SingleSheet ss = getSingleSheet(sheetName);
         StringWriter sw = new StringWriter();
-        FilePathListConsumer c = new FilePathListConsumer(ss, sw);
+        FilePathListConsumer c = new FilePathListConsumer(sw);
         PathLister.getAll(ss, c);
         return sw.toString();
     }

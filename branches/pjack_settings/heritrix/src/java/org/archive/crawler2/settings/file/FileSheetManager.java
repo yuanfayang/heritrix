@@ -550,7 +550,7 @@ public class FileSheetManager extends SheetManager {
         FileWriter fw = null;
         try {
             fw = new FileWriter(temp);
-            FilePathListConsumer c = new FilePathListConsumer(ss, fw);
+            FilePathListConsumer c = new FilePathListConsumer(fw);
             PathLister.getAll(ss, c);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Can't save " + ss.getName(), e);
