@@ -11,13 +11,11 @@ import org.archive.crawler2.settings.path.Paths;
 public class FilePathListConsumer implements PathListConsumer {
 
 
-    final private Sheet sheet;
     final Writer writer;
     
     
-    public FilePathListConsumer(Sheet sheet, Writer writer) {
+    public FilePathListConsumer(Writer writer) {
         this.writer = writer;
-        this.sheet = sheet;
     }
     
     
@@ -31,7 +29,6 @@ public class FilePathListConsumer implements PathListConsumer {
     
     public void consume2(String path, List<Sheet> sheets, Object value) 
     throws IOException {
-        Sheet last = sheets.get(sheets.size() - 1);
         if (Paths.isSimple(value.getClass())) {
             writer.write(path + "=" + value + '\n'); // FIXME: Escape special characters
         } else {
