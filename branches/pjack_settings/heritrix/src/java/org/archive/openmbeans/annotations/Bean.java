@@ -23,6 +23,7 @@
 package org.archive.openmbeans.annotations;
 
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -214,7 +215,16 @@ public class Bean implements DynamicMBean, NotificationEmitter {
         }
         try {
             return m.invoke(target, params);
-        } catch (Exception e) {
+        } catch (InvocationTargetException e) {
+            Throwable t = e.getTargetException();
+            t.printStackTrace();
+            if (t instanceof Exception) {
+                Exception te = (Exception)t;
+                throw new ReflectionException(te);
+            } else {
+                throw new ReflectionException(e);
+            }
+        } catch (IllegalAccessException e) {
             throw new ReflectionException(e);
         }
     }
