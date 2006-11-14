@@ -84,18 +84,32 @@ public abstract class SheetManager {
 
     
     /**
-     * Adds a sheet with the given name.  This method is invoked 
-     * by {@link #createSingleSheet(String, int)} and
-     * {@link #createSheetBundle(String, int)} after a new sheet instance
-     * is allocated.  Subclasses should store update the database of sheets
-     * in persistent storage, etc.
+     * Adds a single sheet with the given name.  Subclasses should use
+     * {@link #createSingleSheet(String)} to allocate a new sheet, then 
+     * store that sheet in persistent storage, etc.
      * 
-     * @param sheet   the newly allocated sheet
-     * @param name    the name of the new sheet
+     * @param name    the name for the new sheet
+     * @return   the newly allocated sheet
+     * @throws  IllegalArgumentException  
+     *  if a sheet with that name already exists
      */
-    protected abstract void addSheet(Sheet sheet, String name);
+    public abstract SingleSheet addSingleSheet(String name);
 
     
+    /**
+     * Adds a sheet bundle with the given name.  Subclasses should use
+     * {@link #createSheetBundle(String)} to allocate a new sheet, then 
+     * store that sheet in persistent storage, etc.
+     * 
+     * @param name    the name for the new sheet
+     * @return   the newly allocated sheet
+     * @throws  IllegalArgumentException  
+     *  if a sheet with that name already exists
+     */
+    public abstract SheetBundle addSheetBundle(String name, 
+            Collection<Sheet> sheets);
+
+
     /**
      * Returns the sheet with the give name.
      * 
@@ -114,10 +128,9 @@ public abstract class SheetManager {
      * @return   the newly created and registered sheet
      * @throws IllegalArgumentException   if that name already exists
      */
-    public SingleSheet createSingleSheet(String name) 
+    final protected SingleSheet createSingleSheet(String name) 
     throws IllegalArgumentException {
         SingleSheet result = new SingleSheet(this, name);
-        addSheet(result, name);
         return result;
     }
 
@@ -130,10 +143,9 @@ public abstract class SheetManager {
      * @return      the newly registered sheet
      * @throws IllegalArgumentException   if that name already exists
      */
-    public SheetBundle createSheetBundle(String name, Collection<Sheet> c) 
+    final protected SheetBundle createSheetBundle(String name, Collection<Sheet> c) 
     throws IllegalArgumentException {
         SheetBundle result = new SheetBundle(this, name, c);
-        addSheet(result, name);
         return result;
     }
     
@@ -201,4 +213,11 @@ public abstract class SheetManager {
     
     
     public abstract void swapRoot(String name, Object newRoot);
+    
+    
+    public abstract void reload();
+    
+    
+    public abstract void save();
+
 }

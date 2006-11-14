@@ -107,7 +107,7 @@ public class PathTestBase extends TestCase {
         defaults.set(js, ExtractorJS.DECIDE_RULES, jsSeq);
         defaults.set(jsSeq, DecideRuleSequence.RULES, jsRules);
         
-        SingleSheet override1 = manager.createSingleSheet("override1");
+        SingleSheet override1 = manager.addSingleSheet("override1");
         o1cssRules = new ArrayList<DecideRule>();
         o1cssRule0 = new AcceptDecideRule();
         o1cssRule1 = new AcceptDecideRule();
@@ -117,10 +117,10 @@ public class PathTestBase extends TestCase {
         o1cssRules.add(o1cssRule2);
         override1.set(cssSeq, DecideRuleSequence.RULES, o1cssRules);
         
-        SingleSheet override2 = manager.createSingleSheet("override2");
+        SingleSheet override2 = manager.addSingleSheet("override2");
         override2.set(html, ExtractorHTML.IGNORE_UNEXPECTED_HTML, true);
         
-        manager.createSheetBundle("bundle", Arrays.asList(new Sheet[] { override2, override1 }));
+        manager.addSheetBundle("bundle", Arrays.asList(new Sheet[] { override2, override1 }));
     }
 
 }

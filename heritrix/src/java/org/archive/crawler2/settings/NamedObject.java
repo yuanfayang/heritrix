@@ -31,14 +31,14 @@ import java.util.List;
  * 
  * @author pjack
  */
-public class NamedObject<T> {
+public class NamedObject {
 
 
     /** The name. */
     private String name;
     
     /** The object. */
-    private T object;
+    private Object object;
 
 
     /**
@@ -47,7 +47,7 @@ public class NamedObject<T> {
      * @param name    the name for the object
      * @param object  the object being named
      */
-    public NamedObject(String name, T object) {
+    public NamedObject(String name, Object object) {
         if (name == null) {
             throw new IllegalArgumentException();
         }
@@ -74,7 +74,7 @@ public class NamedObject<T> {
      * 
      * @return  the object
      */
-    public T getObject() {
+    public Object getObject() {
         return object;
     }
 
@@ -86,5 +86,16 @@ public class NamedObject<T> {
             }
         }
         return null;
+    }
+    
+    
+    public static int getIndex(List<NamedObject> list, String name) {
+        for (int i = 0; i < list.size(); i++) {
+            NamedObject no = list.get(i);
+            if (no.getName().equals(name)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

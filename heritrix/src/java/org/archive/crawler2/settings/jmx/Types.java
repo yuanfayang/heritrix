@@ -24,11 +24,12 @@
 package org.archive.crawler2.settings.jmx;
 
 import javax.management.openmbean.ArrayType;
+import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
-import javax.management.openmbean.TabularType;
+
 
 public class Types {
 
@@ -38,6 +39,9 @@ public class Types {
     
     final public static ArrayType SET_DATA_ARRAY;
     
+    final public static CompositeType GET_DATA;
+    
+    final public static ArrayType GET_DATA_ARRAY;
 
     static {
         try {
@@ -57,9 +61,38 @@ public class Types {
                             SimpleType.STRING });
             
             SET_DATA_ARRAY = new ArrayType(1, SET_DATA);
+            
+            GET_DATA = new CompositeType(
+                    "get_data",
+                    "A path/value pair.",
+                    new String[] { "path", "sheets", "value" },
+                    new String[] {
+                            "The path to the value.",
+                            "The sheets that led to the value.",
+                            "The value for the path."
+                    },
+                    new OpenType[] { 
+                            SimpleType.STRING, 
+                            STRING_ARRAY, 
+                            SimpleType.STRING }
+                    );
+            
+            GET_DATA_ARRAY = new ArrayType(1, GET_DATA);
 
         } catch (OpenDataException e) {
             throw new IllegalStateException(e);
+        }
+    }
+    
+    
+    public static CompositeDataSupport composite(
+            CompositeType type,
+            String[] names,
+            Object[] values) {
+        try {
+            return new CompositeDataSupport(type, names, values);
+        } catch (OpenDataException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 }
