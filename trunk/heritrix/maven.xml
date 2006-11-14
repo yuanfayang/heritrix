@@ -103,11 +103,12 @@
             <ant:arg value="org.archive.io.arc.ARCWriterPool.class" />
             <ant:arg value="org.archive.io.arc.ARCWriter.class" />
             <ant:arg value="org.archive.io.arc.ARCLocation.class" />
-            <ant:arg value="org.archive.io.arc.WARCReader.class" />
+            <ant:arg value="org.archive.io.warc.WARCReader.class" />
+            <ant:arg value="org.archive.io.warc.WARCReaderFactory.class" />
             <ant:arg 
-                value="org.archive.io.arc.WARCWriterPool.class" />
+                value="org.archive.io.warc.WARCWriterPool.class" />
             <ant:arg 
-            value="org.archive.io.arc.ExperimentalWARCWriter.class" />
+            value="org.archive.io.warc.ExperimentalWARCWriter.class" />
             <ant:arg value="org.archive.util.JmxUtils.class" />
             <ant:arg value="org.archive.util.JndiUtils.class" />
             <ant:arg value="org.archive.net.rsync.Handler.class" />
