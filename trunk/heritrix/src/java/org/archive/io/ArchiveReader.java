@@ -581,8 +581,15 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
     /**
      * @return short name of Archive file.
      */
+    public String getFileName() {
+        return (new File(getReaderIdentifier())).getName();
+    }
+
+    /**
+     * @return short name of Archive file.
+     */
     public String getStrippedFileName() {
-    	return getStrippedFileName((new File(getReaderIdentifier())).getName(),
+        return getStrippedFileName(getFileName(),
     		getDotFileExtension());
     }
     
