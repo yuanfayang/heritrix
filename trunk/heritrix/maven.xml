@@ -103,6 +103,7 @@
             <ant:arg value="org.archive.io.arc.ARCWriterPool.class" />
             <ant:arg value="org.archive.io.arc.ARCWriter.class" />
             <ant:arg value="org.archive.io.arc.ARCLocation.class" />
+            <ant:arg value="org.archive.io.arc.ARC2WCDX.class" />
             <ant:arg value="org.archive.io.warc.WARCReader.class" />
             <ant:arg value="org.archive.io.warc.WARCReaderFactory.class" />
             <ant:arg 
