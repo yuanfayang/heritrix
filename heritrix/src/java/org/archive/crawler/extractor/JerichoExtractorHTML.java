@@ -170,7 +170,10 @@ public class JerichoExtractorHTML extends ExtractorHTML implements
         else if ((attrList = findOnAttributes(attributes)).size() != 0) {
             for (Iterator attrIter = attrList.iterator(); attrIter.hasNext();) {
                 attr = (Attribute) attrIter.next();
-                processScriptCode(curi, attr.getValueSegment());
+                CharSequence valueSegment = attr.getValueSegment();
+                if (valueSegment != null)
+                    processScriptCode(curi, valueSegment);
+
             }
         }
         // SRC atc.
