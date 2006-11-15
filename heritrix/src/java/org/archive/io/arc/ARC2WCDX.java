@@ -26,6 +26,7 @@
 package org.archive.io.arc;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -54,8 +55,14 @@ public class ARC2WCDX {
         createWcdx(arcFilename);
     }
 
-    public static String createWcdx(String arcFilename) throws IOException {
+    public static Object[] createWcdx(String arcFilename) throws IOException {
         ARCReader reader = ARCReaderFactory.get(arcFilename);
+        Object[] retVal = createWcdx(reader);
+        reader.close();
+        return retVal; 
+    }
+
+    public static Object[] createWcdx(ARCReader reader) throws IOException, FileNotFoundException {
         reader.setDigest(true);
 
         String wcdxPath = reader.getReaderIdentifier().replaceAll("\\.arc(\\.gz)?$",".wcdx.gz");
@@ -88,6 +95,7 @@ public class ARC2WCDX {
         writer.println(legend.toString());
 
         Iterator iter = reader.iterator();
+        long count = 0; 
         while(iter.hasNext()) {
             ARCRecord record = (ARCRecord) iter.next();
             record.close();
@@ -144,11 +152,12 @@ public class ARC2WCDX {
             appendField(builder,h.getUrl());
 
             writer.println(builder.toString());
+            count++;
         }
         reader.close();
         writer.close();
         wcdxFile.renameTo(new File(wcdxPath));
-        return wcdxPath;
+        return new Object[] {wcdxPath, count};
     }
 
     protected static void appendField(StringBuilder builder, Object obj) {
