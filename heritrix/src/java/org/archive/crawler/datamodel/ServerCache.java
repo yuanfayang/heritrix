@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.settings.SettingsHandler;
+import org.archive.settings.SheetManager;
 
 /**
  * Server and Host cache.
@@ -40,7 +40,7 @@ public class ServerCache {
     private static Logger logger =
         Logger.getLogger(ServerCache.class.getName());
     
-    protected SettingsHandler settingsHandler = null;
+    private SheetManager sheetManager = null;
     
     /**
      * hostname[:port] -> CrawlServer.
@@ -69,16 +69,16 @@ public class ServerCache {
      * @param sh
      * @throws Exception
      */
-    public ServerCache(final SettingsHandler sh)
+    public ServerCache(final SheetManager sh)
     throws Exception {
-        this.settingsHandler = sh;
+        this.sheetManager = sh;
         this.servers = new Hashtable<String,CrawlServer>();
         this.hosts = new Hashtable<String,CrawlHost>();
     }
     
     public ServerCache(final CrawlController c)
     throws Exception {
-        this.settingsHandler = c.getSettingsHandler();
+        this.sheetManager = c.getSheetManager();
         this.servers = c.getBigMap("servers", String.class, CrawlServer.class);
         this.hosts = c.getBigMap("hosts", String.class, CrawlHost.class);
     }
@@ -101,7 +101,7 @@ public class ServerCache {
         // Ensure key is private object
         String skey = new String(s);
         cserver = new CrawlServer(skey);
-        cserver.setSettingsHandler(settingsHandler);
+        cserver.setSheetManager(sheetManager);
         servers.put(skey,cserver);
         if (logger.isLoggable(Level.FINER)) {
             logger.finer("Created server " + s);

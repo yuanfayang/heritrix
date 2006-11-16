@@ -76,6 +76,9 @@ import org.archive.crawler.util.CheckpointUtils;
 import org.archive.io.GenerationFileHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.settings.Sheet;
+import org.archive.settings.SheetManager;
+import org.archive.state.Key;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
@@ -147,9 +150,12 @@ public class CrawlController implements Serializable, Reporter {
     
     private transient ServerCache serverCache;
     
-    // This gets passed into the initialize method.
-    private transient SettingsHandler settingsHandler;
 
+    /**
+     * Sheet manager for context (SURT) based settings.  Passed to the
+     * initialization method.
+     */
+    private transient SheetManager sheetManager;
 
     // Used to enable/disable single-threaded operation after OOM
     private volatile transient boolean singleThreadMode = false; 
@@ -328,16 +334,16 @@ public class CrawlController implements Serializable, Reporter {
      * Starting from nothing, set up CrawlController and associated
      * classes to be ready for a first crawl.
      *
-     * @param sH Settings handler.
+     * @param sm   SheetManager used for context-based settings
      * @throws InitializationException
      */
-    public void initialize(SettingsHandler sH)
+    public void initialize(SheetManager sm)
     throws InitializationException {
         sendCrawlStateChangeEvent(PREPARING, CrawlJob.STATUS_PREPARING);
 
         this.singleThreadLock = new ReentrantLock();
-        this.settingsHandler = sH;
-        this.order = settingsHandler.getOrder();
+        this.sheetManager = sm;
+        this.order = new CrawlOrder();
         this.order.setController(this);
         this.bigmaps = new Hashtable<String,CachedBdbMap<?,?>>();
         sExit = "";
@@ -392,8 +398,7 @@ public class CrawlController implements Serializable, Reporter {
             onFailMessage = "Unable to setup crawl modules";
             setupCrawlModules();
         } catch (Exception e) {
-            String tmp = "On crawl: "
-                + settingsHandler.getSettingsObject(null).getName() + " " +
+            String tmp = "On crawl: " + sheetManager.getCrawlName() + " " +
                 onFailMessage;
             LOGGER.log(Level.SEVERE, tmp, e);
             throw new InitializationException(tmp, e);
@@ -410,6 +415,13 @@ public class CrawlController implements Serializable, Reporter {
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
     }
+
+    
+    public <T> T getOrderSetting(Key<T> key) {
+        Sheet def = sheetManager.getDefault();
+        return def.get(order, key);
+    }
+    
     
     /**
      * Does setup of checkpoint recover.
@@ -447,16 +459,14 @@ public class CrawlController implements Serializable, Reporter {
     }
     
     protected boolean getCheckpointCopyBdbjeLogs() {
-        return ((Boolean)this.order.getUncheckedAttribute(null,
-            CrawlOrder.ATTR_CHECKPOINT_COPY_BDBJE_LOGS)).booleanValue();
+        return getOrderSetting(CrawlOrder.CHECKPOINT_COPY_BDBJE_LOGS);
     }
     
     private void setupBdb()
     throws FatalConfigurationException, AttributeNotFoundException {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
-        int bdbCachePercent = ((Integer)this.order.
-            getAttribute(null, CrawlOrder.ATTR_BDB_CACHE_PERCENT)).intValue();
+        int bdbCachePercent = getOrderSetting(CrawlOrder.BDB_CACHE_PERCENT);
         if(bdbCachePercent > 0) {
             // Operator has expressed a preference; override BDB default or 
             // je.properties value
@@ -655,8 +665,8 @@ public class CrawlController implements Serializable, Reporter {
     private void setupCrawlModules() throws FatalConfigurationException,
              AttributeNotFoundException, MBeanException, ReflectionException {
         if (scope == null) {
-            scope = (CrawlScope) order.getAttribute(CrawlScope.ATTR_NAME);
-        	scope.initialize(this);
+            scope = getOrderSetting(CrawlOrder.SCOPE);
+            scope.initialize(this);
         }
         try {
             this.serverCache = new ServerCache(this);
@@ -666,7 +676,7 @@ public class CrawlController implements Serializable, Reporter {
         }
         
         if (this.frontier == null) {
-            this.frontier = (Frontier)order.getAttribute(Frontier.ATTR_NAME);
+            this.frontier = getOrderSetting(CrawlOrder.FRONTIER);
             try {
                 frontier.initialize(this);
                 frontier.pause(); // Pause until begun
@@ -674,8 +684,7 @@ public class CrawlController implements Serializable, Reporter {
                 // to a directory, its a checkpoint recovery).
                 // TODO: make recover path relative to job root dir.
                 if (!isCheckpointRecover()) {
-                    runFrontierRecover((String)order.
-                        getAttribute(CrawlOrder.ATTR_RECOVER_PATH));
+                    runFrontierRecover(getOrderSetting(CrawlOrder.RECOVER_PATH));
                 }
             } catch (IOException e) {
                 throw new FatalConfigurationException(
@@ -704,8 +713,8 @@ public class CrawlController implements Serializable, Reporter {
             // Its a directory if supposed to be doing a checkpoint recover.
             return;
         }
-        boolean retainFailures = ((Boolean)order.
-          getAttribute(CrawlOrder.ATTR_RECOVER_RETAIN_FAILURES)).booleanValue();
+        boolean retainFailures = getOrderSetting(
+                CrawlOrder.RECOVER_RETAIN_FAILURES);
         try {
             frontier.importRecoverLog(recoverPath, retainFailures);
         } catch (IOException e) {
@@ -715,29 +724,21 @@ public class CrawlController implements Serializable, Reporter {
         }
     }
 
-    private void setupDisk() throws AttributeNotFoundException {
-        String diskPath
-            = (String) order.getAttribute(null, CrawlOrder.ATTR_DISK_PATH);
-        this.disk = getSettingsHandler().
-            getPathRelativeToWorkingDirectory(diskPath);
+    private void setupDisk() {
+        String diskPath = getOrderSetting(CrawlOrder.DISK_PATH);
+        this.disk = getRelative(diskPath);
         this.disk.mkdirs();
-        this.logsDisk = getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
-        this.checkpointsDisk = getSettingsDir(CrawlOrder.ATTR_CHECKPOINTS_PATH);
-        this.stateDisk = getSettingsDir(CrawlOrder.ATTR_STATE_PATH);
-        this.scratchDisk = getSettingsDir(CrawlOrder.ATTR_SCRATCH_PATH);
+        this.logsDisk = getSettingsDir(CrawlOrder.LOGS_PATH);
+        this.checkpointsDisk = getSettingsDir(CrawlOrder.CHECKPOINTS_PATH);
+        this.stateDisk = getSettingsDir(CrawlOrder.STATE_PATH);
+        this.scratchDisk = getSettingsDir(CrawlOrder.SCRATCH_PATH);
     }
     
     /**
      * @return The logging directory or null if problem reading the settings.
      */
     public File getLogsDir() {
-        File f = null;
-        try {
-            f = getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
-        } catch (AttributeNotFoundException e) {
-            LOGGER.severe("Failed get of logs directory: " + e.getMessage());
-        }
-        return f;
+        return getSettingsDir(CrawlOrder.LOGS_PATH);
     }
     
     /**
@@ -749,9 +750,8 @@ public class CrawlController implements Serializable, Reporter {
      * @return Full path to directory named by <code>key</code>.
      * @throws AttributeNotFoundException
      */
-    public File getSettingsDir(String key)
-    throws AttributeNotFoundException {
-        String path = (String)order.getAttribute(null, key);
+    public File getSettingsDir(Key<String> key) {
+        String path = getOrderSetting(key);
         File f = new File(path);
         if (!f.isAbsolute()) {
             f = new File(disk.getPath(), path);
@@ -772,21 +772,20 @@ public class CrawlController implements Serializable, Reporter {
      */
     private void setupStatTracking()
     throws InvalidAttributeValueException, FatalConfigurationException {
-        MapType loggers = order.getLoggers();
+        List<StatisticsTracking> loggers = getOrderSetting(CrawlOrder.LOGGERS);
         final String cstName = "crawl-statistics";
-        if (loggers.isEmpty(null)) {
+        if (loggers.isEmpty()) {
             if (!isCheckpointRecover() && this.statistics == null) {
                 this.statistics = new StatisticsTracker(cstName);
             }
-            loggers.addElement(null, (StatisticsTracker)this.statistics);
+            loggers.add((StatisticsTracker)this.statistics);
         }
         
         if (isCheckpointRecover()) {
             restoreStatisticsTracker(loggers, cstName);
         }
 
-        for (Iterator it = loggers.iterator(null); it.hasNext();) {
-            StatisticsTracking tracker = (StatisticsTracking)it.next();
+        for (StatisticsTracking tracker: loggers) {
             tracker.initialize(this);
             if (this.statistics == null) {
                 this.statistics = tracker;
@@ -794,14 +793,14 @@ public class CrawlController implements Serializable, Reporter {
         }
     }
     
-    protected void restoreStatisticsTracker(MapType loggers,
+    protected void restoreStatisticsTracker(List<StatisticsTracking> loggers,
         String replaceName)
     throws FatalConfigurationException {
         try {
             // Add the deserialized statstracker to the settings system.
-            loggers.removeElement(loggers.globalSettings(), replaceName);
-            loggers.addElement(loggers.globalSettings(),
-                (StatisticsTracker)this.statistics);
+            // FIXME: Remove old stattracker
+            //loggers.removeElement(loggers.globalSettings(), replaceName);
+            loggers.add(this.statistics);
          } catch (Exception e) {
              throw convertToFatalConfigurationException(e);
          }
@@ -900,28 +899,9 @@ public class CrawlController implements Serializable, Reporter {
      * Sets the values for max bytes, docs and time based on crawl order. 
      */
     private void setThresholds() {
-        try {
-            maxBytes =
-                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_BYTES_DOWNLOAD))
-                    .longValue();
-        } catch (Exception e) {
-            maxBytes = 0;
-        }
-        try {
-            maxDocument =
-                ((Long) order
-                    .getAttribute(CrawlOrder.ATTR_MAX_DOCUMENT_DOWNLOAD))
-                    .longValue();
-        } catch (Exception e) {
-            maxDocument = 0;
-        }
-        try {
-            maxTime =
-                ((Long) order.getAttribute(CrawlOrder.ATTR_MAX_TIME_SEC))
-                    .longValue();
-        } catch (Exception e) {
-            maxTime = 0;
-        }
+        maxBytes = getOrderSetting(CrawlOrder.MAX_BYTES_DOWNLOAD);
+        maxDocument = getOrderSetting(CrawlOrder.MAX_DOCUMENT_DOWNLOAD);
+        maxTime = getOrderSetting(CrawlOrder.MAX_TIME_SEC);
     }
 
     /**
@@ -1055,10 +1035,10 @@ public class CrawlController implements Serializable, Reporter {
         this.scratchDisk = null;
         this.order = null;
         this.scope = null;
-        if (this.settingsHandler !=  null) {
-            this.settingsHandler.cleanup();
+        if (this.sheetManager !=  null) {
+            this.sheetManager.cleanup();
         }
-        this.settingsHandler = null;
+        this.sheetManager = null;
         this.reserveMemory = null;
         this.processorChains = null;
         if (this.serverCache != null) {
@@ -1391,8 +1371,9 @@ public class CrawlController implements Serializable, Reporter {
     }
     
     public static Checkpoint getCheckpointRecover(final CrawlOrder order) {
-        String path = (String)order.getUncheckedAttribute(null,
-            CrawlOrder.ATTR_RECOVER_PATH);
+        CrawlController controller = order.getController();
+        Sheet def = controller.getSheetManager().getDefault();
+        String path = def.get(order, CrawlOrder.RECOVER_PATH);
         if (path == null || path.length() <= 0) {
             return null;
         }
@@ -1646,11 +1627,11 @@ public class CrawlController implements Serializable, Reporter {
         setThresholds();
     }
 
-	/**
+    /**
      * @return The settings handler.
      */
-    public SettingsHandler getSettingsHandler() {
-        return settingsHandler;
+    public SheetManager getSheetManager() {
+        return sheetManager;
     }
 
     /**
@@ -2007,6 +1988,12 @@ public class CrawlController implements Serializable, Reporter {
         return this.state;
     }
 
+    
+    public File getRelative(String path) {
+        return new File(path); // FIXME
+    }
+    
+    
     public File getCheckpointsDisk() {
         return this.checkpointsDisk;
     }

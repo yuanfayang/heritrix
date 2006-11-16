@@ -23,6 +23,7 @@
 package org.archive.crawler.datamodel.credential;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -31,7 +32,7 @@ import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.CredentialStore;
-import org.archive.crawler.settings.SettingsHandler;
+import org.archive.settings.SheetManager;
 
 
 /**
@@ -190,24 +191,23 @@ implements Serializable {
      * @param curi CrawlURI to use for context.
      * @return The credential this avatar represents.
      */
-    public Credential getCredential(SettingsHandler handler, CrawlURI curi) {
+    public Credential getCredential(SheetManager sm, CrawlURI curi) {
         Credential result = null;
 
-        CredentialStore cs = CredentialStore.getCredentialStore(handler);
+        CredentialStore cs = CredentialStore.getCredentialStore(sm);
         if (cs == null) {
             logger.severe("No credential store for " + curi);
             return result;
         }
 
-        Iterator i = cs.iterator(curi);
-        if (i == null) {
+        Collection<Credential> all = cs.getAll(curi);
+        if (all == null) {
             logger.severe("Have CredentialAvatar " + toString() +
-                " but no iterator: " + curi);
+                " but no collection: " + curi);
             return result;
         }
 
-        while (i.hasNext()) {
-            Credential c = (Credential)i.next();
+        for (Credential c: all) {
             if (!this.type.isInstance(c)) {
                 continue;
             }

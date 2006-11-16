@@ -24,10 +24,11 @@ package org.archive.crawler.datamodel;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -39,11 +40,11 @@ import javax.management.ReflectionException;
 import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.datamodel.credential.HtmlFormCredential;
 import org.archive.crawler.datamodel.credential.Rfc2617Credential;
-import org.archive.crawler.settings.CrawlerSettings;
-import org.archive.crawler.settings.MapType;
-import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.SettingsHandler;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.settings.Sheet;
+import org.archive.settings.SheetManager;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 
 /**
@@ -58,19 +59,23 @@ import org.archive.crawler.settings.Type;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CredentialStore extends ModuleType {
+public class CredentialStore {
 
     private static final long serialVersionUID = -7916979754932063634L;
 
     private static Logger logger = Logger.getLogger(
         "org.archive.crawler.datamodel.CredentialStore");
 
-    public static final String ATTR_NAME = "credential-store";
 
     /**
-     * Name of the contained credentials map type.
+     * Credentials used by heritrix authenticating. See
+     * http://crawler.archive.org/proposals/auth/ for background.
+     * 
+     * @see http://crawler.archive.org/proposals/auth/
      */
-    public static final String ATTR_CREDENTIALS = "credentials";
+    public static final Key<Map<String,Credential>> CREDENTIALS
+     = Key.makeMap(Credential.class);
+    
 
     /**
      * List of possible credential types as a List.
@@ -78,7 +83,7 @@ public class CredentialStore extends ModuleType {
      * This types are inner classes of this credential type so they cannot
      * be created without their being associated with a credential list.
      */
-    private static final List credentialTypes;
+    private static final List<Class> credentialTypes;
     // Initialize the credentialType data member.
     static {
         // Array of all known credential types.
@@ -93,20 +98,12 @@ public class CredentialStore extends ModuleType {
      */
     public CredentialStore(String name)
     {
-        super(name, "Credentials used by heritrix" +
-            " authenticating. See http://crawler.archive.org/proposals/auth/" +
-            " for background.");
-
-        Type t = addElementToDefinition(new MapType(ATTR_CREDENTIALS,
-            "Map of credentials.", Credential.class));
-        t.setOverrideable(true);
-        t.setExpertSetting(true);
     }
 
     /**
      * @return Unmodifable list of credential types.
      */
-    public static List getCredentialTypes() {
+    public static List<Class> getCredentialTypes() {
         return CredentialStore.credentialTypes;
     }
 
@@ -115,22 +112,11 @@ public class CredentialStore extends ModuleType {
      * @param context A settingshandler object.
      * @return A credential store or null if we failed getting one.
      */
-    public static CredentialStore getCredentialStore(SettingsHandler context) {
-
-        CredentialStore cs = null;
-
-        try {
-            cs = (CredentialStore)context.getOrder().
-                getAttribute(CredentialStore.ATTR_NAME);
-        } catch (AttributeNotFoundException e) {
-            logger.severe("Failed to get credential store: " + e.getMessage());
-        } catch (MBeanException e) {
-            logger.severe("Failed to get credential store: " + e.getMessage());
-        } catch (ReflectionException e) {
-            logger.severe("Failed to get credential store: " + e.getMessage());
-        }
-
-        return cs;
+    public static CredentialStore getCredentialStore(SheetManager sm) {
+        CrawlOrder context = (CrawlOrder)sm.getRoot(CrawlOrder.ROOT_NAME);
+        CrawlController controller = context.getController();
+        Sheet def = controller.getSheetManager().getDefault();
+        return def.get(context, CrawlOrder.CREDENTIAL_STORE);        
     }
 
     /**
@@ -139,26 +125,20 @@ public class CredentialStore extends ModuleType {
      * @return A map of all credentials from passed context.
      * @throws AttributeNotFoundException
      */
-    protected MapType get(Object context)
-        throws AttributeNotFoundException {
-
-        return (MapType)getAttribute(context, ATTR_CREDENTIALS);
-    }
+//    protected MapType get(Object context)
+//        throws AttributeNotFoundException {
+//
+//       return (MapType)getAttribute(context, ATTR_CREDENTIALS);
+//    }
 
     /**
      * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
      * context.  If null, we use global context.
      * @return An iterator or null.
      */
-    public Iterator iterator(Object context) {
-
-        MapType m = null;
-        try {
-            m = (MapType)getAttribute(context, ATTR_CREDENTIALS);
-        } catch (AttributeNotFoundException e) {
-            logger.severe("Failed get credentials: " + e.getMessage());
-        }
-        return (m == null)? null: m.iterator(context);
+    public Collection<Credential> getAll(StateProvider context) {
+        Map<String,Credential> map = context.get(this, CREDENTIALS);
+        return map.values();
     }
 
     /**
@@ -171,10 +151,9 @@ public class CredentialStore extends ModuleType {
      * @throws MBeanException
      * @throws ReflectionException
      */
-    public Credential get(Object context, String name)
+    public Credential get(StateProvider context, String name)
         throws AttributeNotFoundException, MBeanException, ReflectionException {
-
-        return (Credential)get(context).getAttribute(name);
+        return context.get(this, CREDENTIALS).get(name);
     }
 
     /**
@@ -192,15 +171,20 @@ public class CredentialStore extends ModuleType {
      * @throws InvocationTargetException
      * @throws InvalidAttributeValueException
      */
-    public Credential create(CrawlerSettings context, String name, Class type)
+    public Credential create(StateProvider context, String name, Class type)
         throws IllegalArgumentException, InvocationTargetException,
         InvalidAttributeValueException, AttributeNotFoundException {
-
-        Credential result = (Credential)SettingsHandler.
-            instantiateModuleTypeFromClassName(name, type.getName());
-        // Now add the just-created credential to the list.
-        get(context).addElement(context, result);
-        return result;
+        Credential c;
+        try {
+            c = (Credential)type.newInstance();
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(e);
+        } catch (InstantiationException e) {            
+            throw new IllegalArgumentException(e);
+        }
+        Map<String,Credential> map = context.get(this, CREDENTIALS);
+        map.put(name, c);
+        return c;
     }
 
     /**
@@ -212,11 +196,11 @@ public class CredentialStore extends ModuleType {
      * @throws IllegalArgumentException
      * @throws AttributeNotFoundException
      */
-    public void remove(CrawlerSettings context, Credential credential)
-        throws AttributeNotFoundException, IllegalArgumentException {
-
-        remove(context, credential.getName());
-    }
+//    public void remove(CrawlerSettings context, Credential credential)
+//        throws AttributeNotFoundException, IllegalArgumentException {
+//
+//        remove(context, credential.getName());
+//    }
 
     /**
      * Delete the credential <code>name</code>.
@@ -227,10 +211,10 @@ public class CredentialStore extends ModuleType {
      * @throws IllegalArgumentException
      * @throws AttributeNotFoundException
      */
-    public void remove(CrawlerSettings context, String name)
+    public void remove(StateProvider context, String name)
         throws IllegalArgumentException, AttributeNotFoundException {
-
-        get(context).removeElement(context, name);
+        Map<String,Credential> map = context.get(this, CREDENTIALS);
+        map.remove(name);
     }
 
     /**
@@ -262,36 +246,31 @@ public class CredentialStore extends ModuleType {
      * @return Unmodifable sublist of all elements of passed type.
      */
     public Set<Credential> subset(CrawlURI context, Class type, String rootUri) {
-
         Set<Credential> result = null;
-        Iterator i = iterator(context);
-        if (i != null) {
-            while(i.hasNext()) {
-                Credential c = (Credential)i.next();
-                if (!type.isInstance(c)) {
+        for (Credential c: getAll(context)) {
+            if (!type.isInstance(c)) {
+                continue;
+            }
+            if (rootUri != null) {
+                String cd = null;
+                try {
+                    cd = c.getCredentialDomain(context);
+                }
+                catch (AttributeNotFoundException e) {
+                   logger.severe("Failed to get cred domain: " +
+                       context + ": " + e.getMessage());
+                }
+                if (cd == null) {
                     continue;
                 }
-                if (rootUri != null) {
-                    String cd = null;
-                    try {
-                        cd = c.getCredentialDomain(context);
-                    }
-                    catch (AttributeNotFoundException e) {
-                       logger.severe("Failed to get cred domain: " +
-                           context + ": " + e.getMessage());
-                    }
-                    if (cd == null) {
-                        continue;
-                    }
-                    if (!rootUri.equalsIgnoreCase(cd)) {
-                        continue;
-                    }
+                if (!rootUri.equalsIgnoreCase(cd)) {
+                    continue;
                 }
-                if (result == null) {
-                    result = new HashSet<Credential>();
-                }
-                result.add(c);
             }
+            if (result == null) {
+                result = new HashSet<Credential>();
+            }
+            result.add(c);
         }
         return result;
     }
