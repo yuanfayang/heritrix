@@ -24,13 +24,13 @@
 package org.archive.crawler2.deciderules;
 
 
-import java.util.Collections;
 import java.util.List;
 
 import org.archive.crawler2.framework.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
+import org.archive.util.EmptyList;
 
 
 public class DecideRuleSequence extends DecideRule {
@@ -49,8 +49,9 @@ public class DecideRuleSequence extends DecideRule {
     }
 
     public DecideResult process(ProcessorURI uri) {
+        
         DecideResult result = DecideResult.PASS;
-        List<DecideRule> rules = uri.get(RULES);
+        List<DecideRule> rules = uri.get(this, RULES);
         for (DecideRule rule: rules) {
             if (rule.onlyDecision(uri) != result) {
                 DecideResult r = rule.process(uri);
@@ -63,9 +64,8 @@ public class DecideRuleSequence extends DecideRule {
     }
 
 
-    @SuppressWarnings("unchecked")
     private static List<DecideRule> defaultRules() {
-        return Collections.EMPTY_LIST;
+        return new EmptyList<DecideRule>();
     }
 
 

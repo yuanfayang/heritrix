@@ -30,23 +30,22 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.RobotsHonoringPolicy;
-import org.archive.state.Constraint;
+import org.archive.state.ExampleStateProvider;
 import org.archive.io.CharSubSequence;
 import org.archive.io.ReplayCharSequence;
 import org.archive.io.SeekInputStream;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.state.Key;
 
-public class DefaultExtractorURI implements ExtractorURI, Cloneable {
+
+public class DefaultExtractorURI extends ExampleStateProvider  
+implements ExtractorURI, Cloneable {
 
     
     /**
@@ -81,7 +80,6 @@ public class DefaultExtractorURI implements ExtractorURI, Cloneable {
     private List<ExceptionHolder> local = new ArrayList<ExceptionHolder>();
     private List<ExceptionHolder> uriErrors = new ArrayList<ExceptionHolder>();
     private Set<Link> outlinks = new HashSet<Link>(); 
-    private Map<Key,Object> properties = new HashMap<Key,Object>();
 
     private boolean finished;
 
@@ -304,30 +302,5 @@ public class DefaultExtractorURI implements ExtractorURI, Cloneable {
         this.base = UURIFactory.getInstance(s);        
     }
 
-    
-    // Documented in ExtractorURI
-    public <T> T get(Key<T> key) {
-        Object o = properties.get(key);
-        if (o == null) {
-            return key.getDefaultValue();
-        }
-        return key.getType().cast(o);
-    }    
 
-
-    /**
-     * Sets a value for the given key.
-     * 
-     * @param <T> the type of key
-     * @param key   the key whose value to set
-     * @param value   the value for that key
-     */
-    public <T> void set(Key<T> key, T value) {
-        for (Constraint<T> c: key.getConstraints()) {
-            if (!c.allowed(value)) {
-                throw new IllegalArgumentException();
-            }
-        }
-        properties.put(key, value);
-    }
 }

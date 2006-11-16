@@ -123,8 +123,8 @@ public class KeyManagerTest extends TestCase {
                 right = random.nextInt();
             }
             int expected = left / right;
-            state.set(ExampleAbstractProcessor.LEFT, left);
-            state.set(ExampleAbstractProcessor.RIGHT, right);
+            state.set(proc, ExampleAbstractProcessor.LEFT, left);
+            state.set(proc, ExampleAbstractProcessor.RIGHT, right);
             assertEquals(expected, proc.process(state).intValue());
         }
     }

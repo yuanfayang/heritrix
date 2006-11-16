@@ -68,10 +68,10 @@ public class ExampleConcreteProcessor extends ExampleAbstractProcessor {
      */
     public Integer process(ExampleStateProvider state) {
         try {
-            return state.get(LEFT) / state.get(RIGHT);
+            return state.get(this, LEFT) / state.get(this, RIGHT);
         } catch (ArithmeticException e) {
-            if (state.get(CATCH_DIVISION_BY_ZERO)) {
-                return state.get(DIVISION_BY_ZERO_RESULT);
+            if (state.get(this, CATCH_DIVISION_BY_ZERO)) {
+                return state.get(this, DIVISION_BY_ZERO_RESULT);
             } else {
                 throw e;
             }

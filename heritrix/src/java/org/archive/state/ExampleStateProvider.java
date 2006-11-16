@@ -24,6 +24,7 @@
 package org.archive.state;
 
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 
@@ -38,19 +39,31 @@ import java.util.Map;
  */
 public class ExampleStateProvider implements StateProvider {
 
+
     /**
      * The keys and their values.
      */
-    private Map<Key,Object> values = new HashMap<Key,Object>();
-    
-    
+    private Map<Object,Map<Key,Object>> values 
+    = new IdentityHashMap<Object,Map<Key,Object>>();
+
+
     /**
      * Returns the value for the given key.
      * 
      * @return  the value for the given key
      */
-    public <T> T get(Key<T> key) {
-        Object o = values.get(key);
+    public <T> T get(Object module, Key<T> key) {
+        if (module == null) {
+            throw new IllegalArgumentException("Null module.");
+        }
+        if (module.getClass().isAssignableFrom(key.getOwner())) {
+            throw new IllegalArgumentException("Module and key incompatible.");
+        }
+        Map<Key,Object> map = values.get(module);
+        Object o = null;
+        if (map != null) {
+            o = map.get(key);
+        }
         if (o == null) {
             return key.getDefaultValue();
         } else {
@@ -66,13 +79,25 @@ public class ExampleStateProvider implements StateProvider {
      * @param key   the key whose value to set
      * @param value  the value to set
      */
-    public <T> void set(Key<T> key, T value) {
+    public <T> void set(Object module, Key<T> key, T value) {
+        if (module == null) {
+            throw new IllegalArgumentException("Null module.");
+        }
+        if (module.getClass().isAssignableFrom(key.getOwner())) {
+            throw new IllegalArgumentException("Module and key incompatible.");
+        }
         for (Constraint<T> c: key.getConstraints()) {
             if (!c.allowed(value)) {
                 throw new IllegalArgumentException();
             }
         }
-        values.put(key, value);
+        Map<Key,Object> map = values.get(module);
+        if (map == null) {
+            map = new HashMap<Key,Object>();
+            values.put(module, map);
+        }
+        map.put(key, value);
     }
+
 
 }

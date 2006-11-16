@@ -57,7 +57,7 @@ public class MatchesRegExpDecideRule extends DecideRule {
      * @return true if regexp is matched
      */
     public DecideResult process(ProcessorURI uri) {
-        Pattern p = uri.get(REGEXP);
+        Pattern p = uri.get(this, REGEXP);
         if (p.matcher(uri.toString()).matches()) {
             return DecideResult.ACCEPT;
         } else {
