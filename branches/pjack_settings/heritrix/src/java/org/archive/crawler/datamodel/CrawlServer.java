@@ -37,10 +37,9 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.framework.Checkpointer;
 import org.archive.crawler.framework.ToeThread;
-import org.archive.crawler.settings.CrawlerSettings;
-import org.archive.crawler.settings.SettingsHandler;
 import org.archive.io.ReplayInputStream;
 import org.archive.net.UURIFactory;
+import org.archive.settings.SheetManager;
 
 /**
  * Represents a single remote "server".
@@ -61,7 +60,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
 
     private final String server; // actually, host+port in the https case
     private int port;
-    private transient SettingsHandler settingsHandler;
+    private transient SheetManager sheetManager;
     private RobotsExclusionPolicy robots;
     long robotsFetched = ROBOTS_NOT_FETCHED;
     boolean validRobots = false;
@@ -124,8 +123,9 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
      * @throws IOException
      */
     public void updateRobots(CrawlURI curi) {
-        RobotsHonoringPolicy honoringPolicy =
-            settingsHandler.getOrder().getRobotsHonoringPolicy();
+        CrawlOrder order = (CrawlOrder)sheetManager.getRoot("order");
+        
+        RobotsHonoringPolicy honoringPolicy = order.getRobotsHonoringPolicy();
 
         robotsFetched = System.currentTimeMillis();
 
@@ -137,9 +137,8 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
             return;
         }
         
-        CrawlerSettings settings = getSettings(curi);
-        int type = honoringPolicy.getType(settings);
-        if (type == RobotsHonoringPolicy.IGNORE) {
+        RobotsHonoringPolicy.Type type = honoringPolicy.getType(curi);
+        if (type == RobotsHonoringPolicy.Type.IGNORE) {
             // IGNORE = ALLOWALL
             robots = RobotsExclusionPolicy.ALLOWALL;
             validRobots = true;
@@ -169,9 +168,9 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
         try {
             try {
                 BufferedReader reader;
-                if (type == RobotsHonoringPolicy.CUSTOM) {
+                if (type == RobotsHonoringPolicy.Type.CUSTOM) {
                     reader = new BufferedReader(new StringReader(honoringPolicy
-                            .getCustomRobots(settings)));
+                            .getCustomRobots(curi)));
                 } else {
                     contentBodyStream = curi.getHttpRecorder()
                             .getRecordedInput().getContentReplayInputStream();
@@ -180,7 +179,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
                     reader = new BufferedReader(new InputStreamReader(
                             contentBodyStream));
                 }
-                robots = RobotsExclusionPolicy.policyFor(settings,
+                robots = RobotsExclusionPolicy.policyFor(curi,
                         reader, honoringPolicy);
                 validRobots = true;
             } finally {
@@ -234,11 +233,11 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
         stream.defaultReadObject();
         Thread t = Thread.currentThread();
         if (t instanceof Checkpointer.CheckpointingThread) {
-            settingsHandler = ((Checkpointer.CheckpointingThread)t)
-        		.getController().getSettingsHandler();
+            sheetManager = ((Checkpointer.CheckpointingThread)t)
+        		.getController().getSheetManager();
         } else if (t instanceof ToeThread) {
-            settingsHandler = ((ToeThread) Thread.currentThread())
-                .getController().getSettingsHandler();
+            sheetManager = ((ToeThread) Thread.currentThread())
+                .getController().getSheetManager();
         } else {
             // TODO: log differently? (if no throw here
             // NPE is inevitable)
@@ -250,18 +249,19 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
     
     private void postDeserialize() {
     	if (this.robots != null) {
-    		RobotsHonoringPolicy honoringPolicy =
-                settingsHandler.getOrder().getRobotsHonoringPolicy();
-    		this.robots.honoringPolicy = honoringPolicy;
+            CrawlOrder order = (CrawlOrder)sheetManager.getRoot("order");
+            RobotsHonoringPolicy honoringPolicy =
+                order.getRobotsHonoringPolicy();
+            this.robots.honoringPolicy = honoringPolicy;
     	}
     }
 
-    /** Get the settings handler.
+    /** Get the sheet manager.
      *
      * @return the settings handler.
      */
-    public SettingsHandler getSettingsHandler() {
-        return this.settingsHandler;
+    public SheetManager getSheetManager() {
+        return this.sheetManager;
     }
 
     /** Get the settings object in effect for this server.
@@ -270,7 +270,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
      * @return the settings object in effect for this server.
      * @throws URIException
      */
-    private CrawlerSettings getSettings(CandidateURI curi) {
+/*    private CrawlerSettings getSettings(CandidateURI curi) {
         try {
             return this.settingsHandler.
                 getSettings(curi.getUURI().getReferencedHost(),
@@ -278,14 +278,14 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
         } catch (URIException e) {
             return null;
         }
-    }
+    } */
 
     /** Set the settings handler to be used by this server.
      *
      * @param settingsHandler the settings handler to be used by this server.
      */
-    public void setSettingsHandler(SettingsHandler settingsHandler) {
-        this.settingsHandler = settingsHandler;
+    public void setSheetManager(SheetManager manager) {
+        this.sheetManager = manager;
     }
 
     public void incrementConsecutiveConnectionErrors() {

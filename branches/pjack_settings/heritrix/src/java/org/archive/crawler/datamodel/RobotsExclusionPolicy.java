@@ -37,7 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.settings.CrawlerSettings;
+import org.archive.state.StateProvider;
 
 /**
  * RobotsExclusionPolicy represents the actual policy adopted with 
@@ -57,20 +57,24 @@ import org.archive.crawler.settings.CrawlerSettings;
  */
 public class RobotsExclusionPolicy implements Serializable {
 
-    private static final long serialVersionUID = 6323907991237383113L;
+    private static final long serialVersionUID = 3L;
 
     private static final Logger logger =
         Logger.getLogger(RobotsExclusionPolicy.class.getName());
 
-    private final static int NORMAL_TYPE = 0;
-    private final static int ALLOWALL_TYPE = 1;
-    private final static int DENYALL_TYPE = 2;
-    private transient int type = NORMAL_TYPE;
+    
+    public static enum Type {
+        NORMAL, 
+        ALLOWALL, 
+        DENYALL
+    }
+
+    private transient Type type = Type.NORMAL;
 
     public static RobotsExclusionPolicy ALLOWALL =
-        new RobotsExclusionPolicy(ALLOWALL_TYPE);
+        new RobotsExclusionPolicy(Type.ALLOWALL);
     public static RobotsExclusionPolicy DENYALL =
-        new RobotsExclusionPolicy(DENYALL_TYPE);
+        new RobotsExclusionPolicy(Type.DENYALL);
 
     private LinkedList<String> userAgents = null;
     private HashMap<String,List<String>> disallows = null;
@@ -86,7 +90,7 @@ public class RobotsExclusionPolicy implements Serializable {
      * @return Robot exclusion policy.
      * @throws IOException
      */
-    public static RobotsExclusionPolicy policyFor(CrawlerSettings settings,
+    public static RobotsExclusionPolicy policyFor(StateProvider settings,
             BufferedReader reader, RobotsHonoringPolicy honoringPolicy)
     throws IOException {
         LinkedList<String> userAgents = new LinkedList<String>();
@@ -107,7 +111,7 @@ public class RobotsExclusionPolicy implements Serializable {
      * @param d
      * @param honoringPolicy
      */
-    public RobotsExclusionPolicy(CrawlerSettings settings, LinkedList<String> u,
+    public RobotsExclusionPolicy(StateProvider context, LinkedList<String> u,
             HashMap<String,List<String>> d, 
             RobotsHonoringPolicy honoringPolicy) {
         userAgents = u;
@@ -117,19 +121,15 @@ public class RobotsExclusionPolicy implements Serializable {
         if(honoringPolicy == null) return;
 
         // If honoring policy is most favored user agent, all rules should be checked
-        if(honoringPolicy.isType(settings, RobotsHonoringPolicy.MOST_FAVORED)) {
+        if(honoringPolicy.isType(context, RobotsHonoringPolicy.Type.MOST_FAVORED)) {
             userAgentsToTest = userAgents;
 
         // IF honoring policy is most favored of set, then make a list with only the set as members
-        } else if(honoringPolicy.isType(settings, RobotsHonoringPolicy.MOST_FAVORED_SET)) {
+        } else if(honoringPolicy.isType(context, RobotsHonoringPolicy.Type.MOST_FAVORED_SET)) {
             userAgentsToTest = new ArrayList<String>();
-            Iterator userAgentSet = honoringPolicy.getUserAgents(settings).iterator();
-            while(userAgentSet.hasNext()) {
-                String userAgent = (String) userAgentSet.next();
-
-                Iterator iter = userAgents.iterator();
-                while ( iter.hasNext() ) {
-                    String ua = (String)iter.next();
+            List<String> userAgentSet = honoringPolicy.getUserAgents(context);
+            for (String userAgent: userAgentSet) {
+                for (String ua: userAgents) {
                     if (userAgent.indexOf(ua)>-1) {
                         userAgentsToTest.add(ua);
                         break;
@@ -139,7 +139,7 @@ public class RobotsExclusionPolicy implements Serializable {
         }
     }
 
-    public RobotsExclusionPolicy(int type) {
+    public RobotsExclusionPolicy(Type type) {
         this(null, null, null, null);
         this.type = type;
     }
@@ -152,8 +152,8 @@ public class RobotsExclusionPolicy implements Serializable {
 
         // In the common case with policy=Classic, the useragent is remembered from uri to uri on
         // the same server
-        if((honoringPolicy.isType(curi, RobotsHonoringPolicy.CLASSIC) 
-                || honoringPolicy.isType(curi, RobotsHonoringPolicy.CUSTOM))
+        if((honoringPolicy.isType(curi, RobotsHonoringPolicy.Type.CLASSIC) 
+                || honoringPolicy.isType(curi, RobotsHonoringPolicy.Type.CUSTOM))
             && (lastUsedUserAgent == null
             || !lastUsedUserAgent.equals(userAgent))) {
 
@@ -223,8 +223,8 @@ public class RobotsExclusionPolicy implements Serializable {
      * @throws IOException 
      */
     private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.writeInt(type);
-        if (type == NORMAL_TYPE) {
+        stream.writeInt(type.ordinal());
+        if (type == Type.NORMAL) {
             stream.defaultWriteObject();
         }
     }
@@ -238,8 +238,9 @@ public class RobotsExclusionPolicy implements Serializable {
      */
     private void readObject(ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
-        type = stream.readInt();
-        if (type == NORMAL_TYPE) {
+        int ordinal = stream.readInt();
+        type = Type.values()[ordinal];
+        if (type == Type.NORMAL) {
             stream.defaultReadObject();
         }
     }
@@ -249,11 +250,11 @@ public class RobotsExclusionPolicy implements Serializable {
      * @return Object.
      */
     private Object readResolve() {
-        if (type == NORMAL_TYPE) {
+        if (type == Type.NORMAL) {
             return this;
-        } else if (type == ALLOWALL_TYPE) {
+        } else if (type == Type.ALLOWALL) {
             return ALLOWALL;
-        } else if (type == DENYALL_TYPE) {
+        } else if (type == Type.DENYALL) {
             return DENYALL;
         }
         return null;
