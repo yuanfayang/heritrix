@@ -62,6 +62,7 @@ public abstract class SheetManager {
     public abstract List<NamedObject> getRoots();
 
     
+    
     public abstract void addRoot(String name, Object root);
     
     
@@ -220,4 +221,12 @@ public abstract class SheetManager {
     
     public abstract void save();
 
+    
+    public void cleanup() {}
+    
+    
+    public String getCrawlName() {
+        return "unknown"; // FIXME: Make this abstract 
+    }
+    
 }
