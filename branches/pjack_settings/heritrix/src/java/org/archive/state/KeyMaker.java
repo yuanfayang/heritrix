@@ -24,8 +24,13 @@
 package org.archive.state;
 
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import org.archive.util.EmptyList;
 
 
 /**
@@ -37,21 +42,25 @@ import java.util.Set;
  * km.constraints.add(new OneStringConstraint());
  * km.constraints.add(new TwoStringConstraint());
  * km.expert = true;
+ * km.overrideable = false;
  * MY_KEY = km.toKey();
  * </pre>
  * 
  * In the absence of KeyMaker, the above code would look something like this:
  * 
  * <pre>
- * MY_KEY = new Key<String>(String.class, "default value", true, 
+ * MY_KEY = new Key<String>(String.class, "default value", true, false,
  *   new HashSet<Constraint<String>>(Arrays.asList(new Constraint<String>[] {
  *     new OneStringConstraint(), new TwoStringConstraint() 
  *   })));
  * </pre>
  * 
- * It would get even worse as new Key attributes were defined, like the 
- * currently missing "overrideable" flag; or if we decided that descriptions
- * and names belonged in code after all.
+ * It would get even worse as new Key attributes were defined (metadata
+ * fields, perhaps).  So this class keeps things clean.
+ * 
+ * <p>You probably don't have to use this class.  See the 
+ * {@link Key#make(Object)} family of methods for shortcuts for common kinds
+ * of Keys.
  * 
  * @author pjack
  *
@@ -59,19 +68,28 @@ import java.util.Set;
  */
 public class KeyMaker<T> {
 
-    
+    /** Type of the property. */
     public Class<T> type;
+
+    /** Constraints for the property.  Defaults to new HashSet. */
     public Set<Constraint<T>> constraints;
+
+    /** Default value for the property.  Defaults to null. */
     public T def;
+    
+    /** Expert flag, defaults false. */
     public boolean expert = false;
+    
+    /** Overrideable flag, defaults true. */
+    public boolean overrideable = true;
 
 
     /** Constructor. */
     public KeyMaker() {
         constraints = new HashSet<Constraint<T>>();
     }
-    
-    
+
+
     /**
      * Resets this KeyMaker.  All fields are set to null, and the constraint
      * set is cleared.  There's usually no reason to explicitly invoke this
@@ -99,12 +117,28 @@ public class KeyMaker<T> {
         // allow empty constraints        
     }
     
-    
+
+    /**
+     * Makes a key, then resets this KeyMaker.
+     * 
+     * @return  the made Key
+     */
     public Key<T> toKey() {
         return new Key<T>(this);
     }
 
-    
+
+    /**
+     * Returns a KeyMaker with the given default value.  Type type will be
+     * automatically set based on the type of the default.  
+     * 
+     * <p>The point of this method is that it does most of the work.  You can
+     * subsequent add constraints and so on before making the key.
+     * 
+     * @param <T>   the type of the Key to make
+     * @param def   the default value for the Key
+     * @return   the KeyMaker that will make that key
+     */
     public static <T> KeyMaker<T> make(T def) {
         @SuppressWarnings("unchecked")
         Class<T> c = (Class<T>)def.getClass();
@@ -113,6 +147,49 @@ public class KeyMaker<T> {
         result.type = c;
         result.def = def;
         return result;
+    }
+
+
+    /**
+     * Returns a KeyMaker for a List with the given element type.  The default
+     * value will be set to an empty, unmodifiable list of that type.
+     * 
+     * @param <T>       the element type
+     * @param element   the element type
+     * @return
+     */
+    public static <T> KeyMaker<List<T>> makeList(Class<T> element) {
+        Class c = List.class;
+        @SuppressWarnings("unchecked")
+        Class<List<T>> c2 = (Class<List<T>>)c;
+
+        KeyMaker<List<T>> r = new KeyMaker<List<T>>();
+        r.type = c2;
+        r.def = new EmptyList<T>();
+        return r;
+    }
+
+
+    /**
+     * Returns a KeyMaker for a Map with the given value type.  The default
+     * value will be set to an empty, unmodifiable map of that type.
+     * 
+     * @param <T>     the value type
+     * @param value   the value type
+     * @return   a KeyMaker for a Map with that value type
+     */
+    public static <T> KeyMaker<Map<String,T>> makeMap(Class<T> value) {
+        Class c = Map.class;
+        @SuppressWarnings("unchecked")
+        Class<Map<String,T>> c2 = (Class<Map<String,T>>)c;
+
+        @SuppressWarnings("unchecked")
+        Map<String,T> empty = Collections.EMPTY_MAP;
+        
+        KeyMaker<Map<String,T>> r = new KeyMaker<Map<String,T>>();
+        r.type = c2;
+        r.def = empty;
+        return r;
     }
 
 }

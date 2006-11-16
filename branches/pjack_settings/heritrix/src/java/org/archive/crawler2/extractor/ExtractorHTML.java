@@ -192,12 +192,14 @@ public class ExtractorHTML extends ContentExtractor {
         String codebase = null;
         ArrayList<String> resources = null;
         
-        final boolean framesAsEmbeds = curi.get(TREAT_FRAMES_AS_EMBED_LINKS);
+        final boolean framesAsEmbeds = 
+            curi.get(this, TREAT_FRAMES_AS_EMBED_LINKS);
 
-        final boolean ignoreFormActions = curi.get(IGNORE_FORM_ACTION_URLS);
+        final boolean ignoreFormActions = 
+            curi.get(this, IGNORE_FORM_ACTION_URLS);
         
         final boolean overlyEagerLinkDetection = 
-            curi.get(OVERLY_EAGER_LINK_DETECTION);
+            curi.get(this, OVERLY_EAGER_LINK_DETECTION);
         
         final String elementStr = element.toString();
 
@@ -418,7 +420,7 @@ public class ExtractorHTML extends ContentExtractor {
 
     
     protected boolean shouldExtract(ExtractorURI uri) {
-        if (uri.get(IGNORE_UNEXPECTED_HTML)) {
+        if (uri.get(this, IGNORE_UNEXPECTED_HTML)) {
             try {
                 // HTML was not expected (eg a GIF was expected) so ignore
                 // (as if a soft 404)
@@ -634,8 +636,8 @@ public class ExtractorHTML extends ContentExtractor {
             RobotsHonoringPolicy policy = curi.getRobotsHonoringPolicy();
             String contentLower = content.toLowerCase();
             if ((policy == null
-                || (!policy.isType(curi, RobotsHonoringPolicy.IGNORE)
-                    && !policy.isType(curi, RobotsHonoringPolicy.CUSTOM)))
+                || (!policy.isType(curi, RobotsHonoringPolicy.Type.IGNORE)
+                    && !policy.isType(curi, RobotsHonoringPolicy.Type.CUSTOM)))
                 && (contentLower.indexOf("nofollow") >= 0
                     || contentLower.indexOf("none") >= 0)) {
                 // if 'nofollow' or 'none' is specified and the

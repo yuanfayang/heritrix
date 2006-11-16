@@ -26,7 +26,9 @@ package org.archive.state;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.archive.i18n.LocaleCache;
@@ -56,9 +58,12 @@ final public class Key<Value> {
     /** The constraints that determine valid values for the field. */
     final private Set<Constraint<Value>> constraints;
 
-    /** True if the property is consider "expert". */
+    /** True if the property is considered "expert". */
     final private boolean expert;
 
+    /** True if the property can be overridden. */
+    final private boolean overrideable;
+    
     /**
      * Constructs a new key.
      * 
@@ -72,6 +77,7 @@ final public class Key<Value> {
         this.type = maker.type;
         this.def = maker.def;
         this.expert = maker.expert;
+        this.overrideable = maker.overrideable;
         Set<Constraint<Value>> s = new HashSet<Constraint<Value>>(maker.constraints);
         this.constraints = Collections.unmodifiableSet(s);
         maker.reset();
@@ -100,6 +106,18 @@ final public class Key<Value> {
         return expert;
     }
 
+    
+    /**
+     * Returns true if the property can be overridden.  Overrideable properties
+     * may have different values depending on context.  Non-overrideable 
+     * properties have the same value for all contexts.
+     * 
+     * @return  true if thispropery can be overridden
+     */
+    public boolean isOverrideable() {
+        return overrideable;
+    }
+    
     /**
      * Returns the name of the Java field that declared this key.
      * 
@@ -131,7 +149,8 @@ final public class Key<Value> {
     public String getDescription(Locale locale) {
         return LocaleCache.load(owner, locale).get(fieldName + "-description");
     }
-    
+
+
     /**
      * Returns the class who declared this key.
      * 
@@ -198,8 +217,8 @@ final public class Key<Value> {
     
 
     /**
-     * Creates a new non-expert Key with the given default value and no
-     * constraints.
+     * Creates a basic Key.  The returned Key has the given default value,
+     * is non-expert, can be overridden, and has no constraints.
      * 
      * @param <X>   the type of values for the key
      * @param def   the default value for the key
@@ -212,5 +231,52 @@ final public class Key<Value> {
         result.type = c;
         result.def = def;
         return new Key<X>(result);        
+    }
+
+
+    /**
+     * Creates a new non-overrideable Key with the given default value and no 
+     * constraints.
+     * 
+     * @param <X>   the type of values for the key
+     * @param def   the default value for the key
+     * @return  the new Key
+     */    
+    public static <X> Key<X> makeFinal(X def) {
+        KeyMaker<X> result = new KeyMaker<X>();
+        @SuppressWarnings("unchecked")
+        Class<X> c = (Class<X>)def.getClass();
+        result.type = c;
+        result.def = def;
+        result.overrideable = false;
+        return new Key<X>(result);
+    }
+    
+    
+    /**
+     * Returns a Key for a List with the given element type.  The default
+     * value will be an empty, unmodifiable List of that type.  
+     * 
+     * @param <X>        the element type of the list
+     * @param element    the element type of the list
+     * @return   a Key for a List with that element type
+     */
+    public static <X> Key<List<X>> makeList(Class<X> element) {
+        KeyMaker<List<X>> km = KeyMaker.makeList(element);
+        return new Key<List<X>>(km);
+    }
+    
+    
+    /**
+     * Returns a Key for a Map with the given value type.  The default value
+     * will be an empty, unmodifiable Map with that value type.
+     * 
+     * @param <X>     the value type of the Map
+     * @param value   the value type of the Map
+     * @return   a Key for a Map with that value type
+     */
+    public static <X> Key<Map<String,X>> makeMap(Class<X> value) {
+        KeyMaker<Map<String,X>> km = KeyMaker.makeMap(value);
+        return new Key<Map<String,X>>(km);
     }
 }

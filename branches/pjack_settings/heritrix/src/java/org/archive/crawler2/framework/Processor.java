@@ -99,11 +99,11 @@ implements StateProcessor<T,Void,InterruptedException> {
      * @throws  InterruptedException   if the thread is interrupted
      */
     final public Void process(T uri) throws InterruptedException {
-        if (!uri.get(ENABLED)) {
+        if (!uri.get(this, ENABLED)) {
             return null;
         }
         
-        if (uri.get(DECIDE_RULES).process(uri) == DecideResult.REJECT) {
+        if (uri.get(this, DECIDE_RULES).process(uri) == DecideResult.REJECT) {
             innerRejectProcess(uri);
             return null;
         }

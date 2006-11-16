@@ -32,12 +32,13 @@ package org.archive.state;
 public interface StateProvider {
 
     /**
-     * Returns the value of a property.
+     * Returns the value of a property for the current module.
      * 
      * @param <T>  the type of the property to return
      * @param key  the key of the property to return
      * @return  the value of that property
      */
-    <T> T get(Key<T> key);
+    <T> T get(Object module, Key<T> key);
+
 
 }
