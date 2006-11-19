@@ -26,7 +26,7 @@ package org.archive.processors.deciderules;
 
 import java.util.List;
 
-import org.archive.processors.CrawlURI;
+import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
 
@@ -37,7 +37,7 @@ public class DecideRuleSequence extends DecideRule {
         Key.makeList(DecideRule.class);
 
 
-    public DecideResult innerDecide(CrawlURI uri) {
+    public DecideResult innerDecide(ProcessorURI uri) {
         DecideResult result = DecideResult.PASS;
         List<DecideRule> rules = uri.get(this, RULES);
         for (DecideRule rule: rules) {

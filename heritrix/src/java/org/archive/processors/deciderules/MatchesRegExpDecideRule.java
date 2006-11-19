@@ -26,12 +26,12 @@ package org.archive.processors.deciderules;
 
 import java.util.regex.Pattern;
 
-import org.archive.processors.CrawlURI;
+import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
 
 /**
- * Rule applies configured decision to any CrawlURIs whose String URI
+ * Rule applies configured decision to any ProcessorURIs whose String URI
  * matches the supplied regexp.
  *
  * @author gojomo
@@ -57,7 +57,7 @@ public class MatchesRegExpDecideRule extends DecideRule {
      * @return true if regexp is matched
      */
     @Override
-    protected DecideResult innerDecide(CrawlURI uri) {
+    protected DecideResult innerDecide(ProcessorURI uri) {
         Pattern p = uri.get(this, REGEXP);
         if (p.matcher(uri.toString()).matches()) {
             return DecideResult.ACCEPT;

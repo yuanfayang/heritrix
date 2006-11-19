@@ -24,7 +24,7 @@
 package org.archive.processors.deciderules;
 
 
-import org.archive.processors.CrawlURI;
+import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
 
@@ -35,7 +35,7 @@ public abstract class DecideRule {
     
     final public static Key<Boolean> INVERT = Key.make(false);
     
-    public DecideResult decisionFor(CrawlURI uri) {
+    public DecideResult decisionFor(ProcessorURI uri) {
         if (!uri.get(this, ENABLED)) {
             return DecideResult.PASS;
         }
@@ -51,10 +51,10 @@ public abstract class DecideRule {
     }
     
     
-    protected abstract DecideResult innerDecide(CrawlURI uri);
+    protected abstract DecideResult innerDecide(ProcessorURI uri);
     
     
-    public DecideResult onlyDecision(CrawlURI uri) {
+    public DecideResult onlyDecision(ProcessorURI uri) {
         return null;
     }
 

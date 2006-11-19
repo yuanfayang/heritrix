@@ -23,20 +23,20 @@
  */
 package org.archive.processors.deciderules;
 
-import org.archive.processors.CrawlURI;
+import org.archive.processors.ProcessorURI;
 
 
 public class AcceptDecideRule extends DecideRule {
 
 
     @Override
-    protected DecideResult innerDecide(CrawlURI uri) {
+    protected DecideResult innerDecide(ProcessorURI uri) {
         return DecideResult.ACCEPT;
     }
     
     
     @Override
-    public DecideResult onlyDecision(CrawlURI uri) {
+    public DecideResult onlyDecision(ProcessorURI uri) {
         return DecideResult.ACCEPT;
     }
 
