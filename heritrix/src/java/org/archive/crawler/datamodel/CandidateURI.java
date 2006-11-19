@@ -36,6 +36,8 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.extractor.Link;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 
@@ -57,30 +59,13 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CandidateURI
-implements Serializable, Reporter, CoreAttributeConstants {
+implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     private static final long serialVersionUID = -7152937921526560388L;
 
-    /** Highest scheduling priority.
-     * Before any others of its class.
-     */
-    public static final int HIGHEST = 0;
+    public static enum Priority { HIGHEST, HIGH, MEDIUM, NORMAL }
     
-    /** High scheduling priority.
-     * After any {@link #HIGHEST}.
-     */
-    public static final int HIGH = 1;
     
-    /** Medium priority.
-     * After any {@link #HIGH}.
-     */
-    public static final int MEDIUM = 2;
-    
-    /** Normal/low priority.
-     * Whenever/end of queue.
-     */
-    public static final int NORMAL = 3;
-    
-    private int schedulingDirective = NORMAL;
+    private Priority priority = Priority.NORMAL;
     
     /** 
      * Usuable URI under consideration. Transient to allow
@@ -339,14 +324,14 @@ implements Serializable, Reporter, CoreAttributeConstants {
     /**
      * @return Returns the schedulingDirective.
      */
-    public int getSchedulingDirective() {
-        return schedulingDirective;
+    public Priority getSchedulingDirective() {
+        return priority;
     }
     /** 
-     * @param schedulingDirective The schedulingDirective to set.
+     * @param priority The schedulingDirective to set.
      */
-    public void setSchedulingDirective(int schedulingDirective) {
-        this.schedulingDirective = schedulingDirective;
+    public void setSchedulingDirective(Priority priority) {
+        this.priority = priority;
     }
 
 
@@ -354,14 +339,14 @@ implements Serializable, Reporter, CoreAttributeConstants {
      * @return True if needs immediate scheduling.
      */
     public boolean needsImmediateScheduling() {
-        return schedulingDirective == HIGH;
+        return priority == Priority.HIGH;
     }
 
     /**
      * @return True if needs soon but not top scheduling.
      */
     public boolean needsSoonScheduling() {
-        return schedulingDirective == MEDIUM;
+        return priority == Priority.MEDIUM;
     }
 
     /**
@@ -447,7 +432,7 @@ implements Serializable, Reporter, CoreAttributeConstants {
      * @throws URIException
      */
     public CandidateURI createCandidateURI(UURI baseUURI, Link link,
-        int scheduling, boolean seed)
+        Priority scheduling, boolean seed)
     throws URIException {
         final CandidateURI caURI = createCandidateURI(baseUURI, link);
         caURI.setSchedulingDirective(scheduling);
@@ -710,4 +695,10 @@ implements Serializable, Reporter, CoreAttributeConstants {
             remove(A_HERITABLE_KEYS);
         }
     }
+
+
+    public <T> T get(Object module, Key<T> key) {
+        return null; // FIXME
+    }
+
 }
