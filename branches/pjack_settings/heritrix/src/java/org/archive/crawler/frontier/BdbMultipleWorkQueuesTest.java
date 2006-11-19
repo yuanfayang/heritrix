@@ -65,7 +65,7 @@ public class BdbMultipleWorkQueuesTest extends TestCase {
                 new CandidateURI(UURIFactory.getInstance("http://archive.org/baz"));
             CrawlURI curi3 = new CrawlURI(cauri3, ordinalOrigin + 2);
             curi3.setClassKey("foo");
-            curi3.setSchedulingDirective(CandidateURI.HIGH);
+            curi3.setSchedulingDirective(CandidateURI.Priority.HIGH);
             byte[] key3 = 
                 BdbMultipleWorkQueues.calculateInsertKey(curi3).getData();
             CandidateURI cauri4 = 

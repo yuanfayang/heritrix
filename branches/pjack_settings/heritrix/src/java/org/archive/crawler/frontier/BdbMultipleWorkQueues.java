@@ -406,7 +406,7 @@ public class BdbMultipleWorkQueues {
         keyData[len]=0;
         long ordinalPlus = curi.getOrdinal() & 0x0000FFFFFFFFFFFFL;
         ordinalPlus = 
-        	((long)curi.getSchedulingDirective() << 56) | ordinalPlus;
+        	((long)curi.getSchedulingDirective().ordinal() << 56) | ordinalPlus;
         ordinalPlus = 
         	((((long)curi.getHolderCost()) & 0xFFL) << 48) | ordinalPlus;
         ArchiveUtils.longIntoByteArray(ordinalPlus, keyData, len+1);

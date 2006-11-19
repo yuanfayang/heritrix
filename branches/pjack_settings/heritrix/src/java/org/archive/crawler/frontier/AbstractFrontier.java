@@ -36,9 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
-
-import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
@@ -54,12 +51,11 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.RegularExpressionConstraint;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.net.UURI;
+import org.archive.settings.Sheet;
+import org.archive.state.Key;
+import org.archive.state.KeyMaker;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -67,7 +63,7 @@ import org.archive.util.ArchiveUtils;
  * 
  * @author gojomo
  */
-public abstract class AbstractFrontier extends ModuleType
+public abstract class AbstractFrontier 
 implements CrawlStatusListener, Frontier, FetchStatusCodes,
         CoreAttributeConstants, Serializable {
     private static final Logger logger = Logger
@@ -88,91 +84,84 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected transient boolean shouldTerminate = false;
 
     /**
-     * how many multiples of last fetch elapsed time to wait before recontacting
-     * same server
-     */
-    public final static String ATTR_DELAY_FACTOR = "delay-factor";
+     * How many multiples of last fetch elapsed time to wait before recontacting
+     * same server.
+     */    
+    final public static Key<Float> DELAY_FACTOR = Key.make((float)5);
 
-    protected final static Float DEFAULT_DELAY_FACTOR = new Float(5);
 
     /**
      * always wait this long after one completion before recontacting same
      * server, regardless of multiple
      */
-    public final static String ATTR_MIN_DELAY = "min-delay-ms";
-
-    // 3 secs.
-    protected final static Integer DEFAULT_MIN_DELAY = new Integer(3000);
+    final public static Key<Integer> MIN_DELAY = Key.make(3000);
+    
 
     /** never wait more than this long, regardless of multiple */
-    public final static String ATTR_MAX_DELAY = "max-delay-ms";
-
-    // 30 secs
-    protected final static Integer DEFAULT_MAX_DELAY = new Integer(30000);
+    final public static Key<Integer> MAX_DELAY = Key.make(30000);
+    
 
     /** number of hops of embeds (ERX) to bump to front of host queue */
-    public final static String ATTR_PREFERENCE_EMBED_HOPS =
-        "preference-embed-hops";
+    final public static Key<Integer> PREFERENCE_EMBED_HOPS = Key.make(1);
 
-    protected final static Integer DEFAULT_PREFERENCE_EMBED_HOPS =
-        new Integer(1);
 
     /** maximum per-host bandwidth usage */
-    public final static String ATTR_MAX_HOST_BANDWIDTH_USAGE =
-        "max-per-host-bandwidth-usage-KB-sec";
+    final public static Key<Integer> MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC =
+        Key.makeExpert(0);
 
-    protected final static Integer DEFAULT_MAX_HOST_BANDWIDTH_USAGE =
-        new Integer(0);
 
     /** maximum overall bandwidth usage */
-    public final static String ATTR_MAX_OVERALL_BANDWIDTH_USAGE =
-        "total-bandwidth-usage-KB-sec";
+    final public static Key<Integer> TOTAL_BANDWIDTH_USAGE_KB_SEC =
+        Key.makeFinal(0);
 
-    protected final static Integer DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE =
-        new Integer(0);
 
     /** for retryable problems, seconds to wait before a retry */
-    public final static String ATTR_RETRY_DELAY = "retry-delay-seconds";
+    final public static Key<Long> RETRY_DELAY_SECONDS = Key.make(900L);
 
-    // 15 mins
-    protected final static Long DEFAULT_RETRY_DELAY = new Long(900);
-
+    
     /** maximum times to emit a CrawlURI without final disposition */
-    public final static String ATTR_MAX_RETRIES = "max-retries";
+    final public static Key<Integer> MAX_RETRIES = Key.make(30);
 
-    protected final static Integer DEFAULT_MAX_RETRIES = new Integer(30);
 
-    public final static String ATTR_QUEUE_ASSIGNMENT_POLICY =
-        "queue-assignment-policy";
-
+    /**
+     * Defines how to assign URIs to queues. Can assign by host, by ip, and into
+     * one of a fixed set of buckets (1k).
+     */
+    final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
+        makeQAP();
+    
+    
     /** queue assignment to force onto CrawlURIs; intended to be overridden */
-    public final static String ATTR_FORCE_QUEUE = "force-queue-assignment";
-
-    protected final static String DEFAULT_FORCE_QUEUE = "";
+    final public static Key<String> FORCE_QUEUE_ASSIGNMENT = 
+        Key.makeExpertFinal("");
 
     // word chars, dash, period, comma, colon
     protected final static String ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.,:]*";
-        
+
+    
     /** whether pause, rather than finish, when crawl appears done */
-    public final static String ATTR_PAUSE_AT_FINISH = "pause-at-finish";
-    // TODO: change default to true once well-tested
-    protected final static Boolean DEFAULT_PAUSE_AT_FINISH = Boolean.FALSE;
+    final public static Key<Boolean> PAUSE_AT_FINISH = Key.makeFinal(false);
+    
     
     /** whether to pause at crawl start */
-    public final static String ATTR_PAUSE_AT_START = "pause-at-start";
-    protected final static Boolean DEFAULT_PAUSE_AT_START = Boolean.FALSE;
-    
-    /** whether to pause at crawl start */
-    public final static String ATTR_SOURCE_TAG_SEEDS = "source-tag-seeds";
-    protected final static Boolean DEFAULT_SOURCE_TAG_SEEDS = Boolean.FALSE;
+    final public static Key<Boolean> PAUSE_AT_START = Key.make(false);
+
+
+    /**
+     * Whether to tag seeds with their own URI as a heritable 'source' String,
+     * which will be carried-forward to all URIs discovered on paths originating
+     * from that seed. When present, such source tags appear in the
+     * second-to-last crawl.log field.
+     */
+    final public static Key<Boolean> SOURCE_TAG_SEEDS = Key.makeFinal(false);
+
 
     /**
      * Recover log on or off attribute.
      */
-    protected final static String ATTR_RECOVERY_ENABLED =
-        "recovery-log-enabled";
-    protected final static Boolean DEFAULT_ATTR_RECOVERY_ENABLED =
-        Boolean.TRUE;
+    final public static Key<Boolean> RECOVERY_LOG_ENABLED = 
+        Key.makeExpertFinal(true);
+
 
     // top-level stats
     protected long queuedUriCount = 0; // total URIs queued to be visited
@@ -213,127 +202,17 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @param name Name of this frontier.
      * @param description Description for this frontier.
      */
-    public AbstractFrontier(String name, String description) {
-        super(name, description);
-        addElementToDefinition(new SimpleType(ATTR_DELAY_FACTOR,
-                "How many multiples of last fetch elapsed time to wait before "
-                        + "recontacting same server", DEFAULT_DELAY_FACTOR));
-        addElementToDefinition(new SimpleType(ATTR_MAX_DELAY,
-                "Never wait more than this long.", DEFAULT_MAX_DELAY));
-        addElementToDefinition(new SimpleType(ATTR_MIN_DELAY,
-                "Always wait this long after one completion before recontacting "
-                        + "same server.", DEFAULT_MIN_DELAY));
-        addElementToDefinition(new SimpleType(ATTR_MAX_RETRIES,
-                "How often to retry fetching a URI that failed to be retrieved. "
-                        + "If zero, the crawler will get the robots.txt only.",
-                DEFAULT_MAX_RETRIES));
-        addElementToDefinition(new SimpleType(ATTR_RETRY_DELAY,
-                "How long to wait by default until we retry fetching a"
-                        + " URI that failed to be retrieved (seconds). ",
-                DEFAULT_RETRY_DELAY));
-        addElementToDefinition(new SimpleType(
-                ATTR_PREFERENCE_EMBED_HOPS,
-                "Number of embedded (or redirected) hops up to which "
-                + "a URI has higher priority scheduling. For example, if set "
-                + "to 1 (the default), items such as inline images (1-hop "
-                + "embedded resources) will be scheduled ahead of all regular "
-                + "links (or many-hop resources, like nested frames). If set to "
-                + "zero, no preferencing will occur, and embeds/redirects are "
-                + "scheduled the same as regular links.",
-                DEFAULT_PREFERENCE_EMBED_HOPS));
-        Type t;
-        t = addElementToDefinition(new SimpleType(
-                ATTR_MAX_OVERALL_BANDWIDTH_USAGE,
-                "The maximum average bandwidth the crawler is allowed to use. "
-                + "The actual read speed is not affected by this setting, it only "
-                + "holds back new URIs from being processed when the bandwidth "
-                + "usage has been to high. 0 means no bandwidth limitation.",
-                DEFAULT_MAX_OVERALL_BANDWIDTH_USAGE));
-        t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(
-                ATTR_MAX_HOST_BANDWIDTH_USAGE,
-                "The maximum average bandwidth the crawler is allowed to use per "
-                + "host. The actual read speed is not affected by this setting, "
-                + "it only holds back new URIs from being processed when the "
-                + "bandwidth usage has been to high. 0 means no bandwidth "
-                + "limitation.", DEFAULT_MAX_HOST_BANDWIDTH_USAGE));
-        t.setExpertSetting(true);
-
-        // Read the list of permissible choices from heritrix.properties.
-        // Its a list of space- or comma-separated values.
-        String queueStr = System.getProperty(AbstractFrontier.class.getName() +
-                "." + ATTR_QUEUE_ASSIGNMENT_POLICY,
-                HostnameQueueAssignmentPolicy.class.getName() + " " +
-                IPQueueAssignmentPolicy.class.getName() + " " +
-                BucketQueueAssignmentPolicy.class.getName() + " " +
-                SurtAuthorityQueueAssignmentPolicy.class.getName());
-        Pattern p = Pattern.compile("\\s*,\\s*|\\s+");
-        String [] queues = p.split(queueStr);
-        if (queues.length <= 0) {
-            throw new RuntimeException("Failed parse of " +
-                    " assignment queue policy string: " + queueStr);
-        }
-        t = addElementToDefinition(new SimpleType(ATTR_QUEUE_ASSIGNMENT_POLICY,
-                "Defines how to assign URIs to queues. Can assign by host, " +
-                "by ip, and into one of a fixed set of buckets (1k).",
-                queues[0], queues));
-        t.setExpertSetting(true);
-        t.setOverrideable(false);
-
-        t = addElementToDefinition(new SimpleType(
-                ATTR_FORCE_QUEUE,
-                "The queue name into which to force URIs. Should "
-                + "be left blank at global level.  Specify a "
-                + "per-domain/per-host override to force URIs into "
-                + "a particular named queue, regardless of the assignment "
-                + "policy in effect (domain or ip-based politeness). "
-                + "This could be used on domains known to all be from "
-                + "the same small set of IPs (eg blogspot, dailykos, etc.) "
-                + "to simulate IP-based politeness, or it could be used if "
-                + "you wanted to enforce politeness over a whole domain, even "
-                + "though the subdomains are split across many IPs.",
-                DEFAULT_FORCE_QUEUE));
-        t.setOverrideable(true);
-        t.setExpertSetting(true);
-        t.addConstraint(new RegularExpressionConstraint(ACCEPTABLE_FORCE_QUEUE,
-                Level.WARNING, "This field must contain only alphanumeric "
-                + "characters plus period, dash, comma, colon, or underscore."));
-        t = addElementToDefinition(new SimpleType(
-                ATTR_PAUSE_AT_START,
-                "Whether to pause when the crawl begins, before any URIs " +
-                "are tried. This gives the operator a chance to verify or " +
-                "adjust the crawl before actual work begins. " +
-                "Default is false.", DEFAULT_PAUSE_AT_START));
-        t = addElementToDefinition(new SimpleType(
-                ATTR_PAUSE_AT_FINISH,
-                "Whether to pause when the crawl appears finished, rather "
-                + "than immediately end the crawl. This gives the operator an "
-                + "opportunity to view crawl results, and possibly add URIs or "
-                + "adjust settings, while the crawl state is still available. "
-                + "Default is false.", DEFAULT_PAUSE_AT_FINISH));
-        t.setOverrideable(false);
-        
-        t = addElementToDefinition(new SimpleType(
-                ATTR_SOURCE_TAG_SEEDS,
-                "Whether to tag seeds with their own URI as a heritable " +
-                "'source' String, which will be carried-forward to all URIs " +
-                "discovered on paths originating from that seed. When " +
-                "present, such source tags appear in the second-to-last " +
-                "crawl.log field.", DEFAULT_SOURCE_TAG_SEEDS));
-        t.setOverrideable(false);
-        
-        t = addElementToDefinition(new SimpleType(ATTR_RECOVERY_ENABLED,
-                "Set to false to disable recovery log writing.  Do this if " +
-                "you you are using the checkpoint feature for recovering " +
-                "crashed crawls.", DEFAULT_ATTR_RECOVERY_ENABLED));
-        t.setExpertSetting(true);
-        // No sense in it being overrideable.
-        t.setOverrideable(false);
+    public AbstractFrontier() {
+    }
+    
+    
+    public <T> T get(Key<T> key) {
+        Sheet sheet = controller.getSheetManager().getDefault();
+        return sheet.get(this, key);
     }
 
     public void start() {
-        if (((Boolean)getUncheckedAttribute(null, ATTR_PAUSE_AT_START))
-                .booleanValue()) {
+        if (get(PAUSE_AT_START)) {
             // trigger crawl-wide pause
             controller.requestCrawlPause();
         } else {
@@ -355,29 +234,15 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             throws FatalConfigurationException, IOException {
         c.addCrawlStatusListener(this);
         File logsDisk = null;
-        try {
-            logsDisk = c.getSettingsDir(CrawlOrder.ATTR_LOGS_PATH);
-        } catch (AttributeNotFoundException e) {
-            logger.log(Level.SEVERE, "Failed to get logs directory", e);
-        }
+        logsDisk = c.getSettingsDir(CrawlOrder.LOGS_PATH);
         if (logsDisk != null) {
             String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
-            if (((Boolean)getUncheckedAttribute(null, ATTR_RECOVERY_ENABLED))
-                    .booleanValue()) {
+            if (get(RECOVERY_LOG_ENABLED)) {
                 this.recover = new RecoveryJournal(logsPath,
                     FrontierJournal.LOGNAME_RECOVER);
             }
         }
-        try {
-            final Class qapClass = Class.forName((String)getUncheckedAttribute(
-                    null, ATTR_QUEUE_ASSIGNMENT_POLICY));
-
-            queueAssignmentPolicy =
-                (QueueAssignmentPolicy)qapClass.newInstance();
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Bad queue assignment policy class", e);
-            throw new FatalConfigurationException(e.getMessage());
-        }
+        queueAssignmentPolicy = get(QUEUE_ASSIGNMENT_POLICY);
     }
 
     synchronized public void terminate() {
@@ -541,9 +406,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
             CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
-            caUri.setSchedulingDirective(CandidateURI.MEDIUM);
-            if (((Boolean)getUncheckedAttribute(null, ATTR_SOURCE_TAG_SEEDS))
-                    .booleanValue()) {
+            caUri.setSchedulingDirective(CandidateURI.Priority.MEDIUM);
+            if (get(SOURCE_TAG_SEEDS)) {
                 caUri.putString(CoreAttributeConstants.A_SOURCE_TAG,caUri.toString());
                 caUri.makeHeritable(CoreAttributeConstants.A_SOURCE_TAG);
             }
@@ -607,8 +471,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         
         // Check completion conditions
         if (this.controller.atFinish()) {
-            if (((Boolean)getUncheckedAttribute(null, ATTR_PAUSE_AT_FINISH))
-                    .booleanValue()) {
+            if (get(PAUSE_AT_FINISH)) {
                 this.controller.requestCrawlPause();
             } else {
                 this.controller.beginCrawlStop();
@@ -653,20 +516,19 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             // treating the immediate redirect target as a seed.
             this.controller.getScope().addSeed(curi);
             // And it needs rapid scheduling.
-	    if (curi.getSchedulingDirective() == CandidateURI.NORMAL)
-                curi.setSchedulingDirective(CandidateURI.MEDIUM);
+	    if (curi.getSchedulingDirective() == CandidateURI.Priority.NORMAL)
+                curi.setSchedulingDirective(CandidateURI.Priority.MEDIUM);
         }
 
         // optionally preferencing embeds up to MEDIUM
-        int prefHops = ((Integer)getUncheckedAttribute(curi,
-                ATTR_PREFERENCE_EMBED_HOPS)).intValue();
+        int prefHops = get(PREFERENCE_EMBED_HOPS); 
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
             if (embedHops > 0 && embedHops <= prefHops
-                    && curi.getSchedulingDirective() == CandidateURI.NORMAL) {
+                    && curi.getSchedulingDirective() == CandidateURI.Priority.NORMAL) {
                 // number of embed hops falls within the preferenced range, and
                 // uri is not already MEDIUM -- so promote it
-                curi.setSchedulingDirective(CandidateURI.MEDIUM);
+                curi.setSchedulingDirective(CandidateURI.Priority.MEDIUM);
             }
         }
     }
@@ -706,9 +568,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected long retryDelayFor(CrawlURI curi) {
         int status = curi.getFetchStatus();
         return (status == S_CONNECT_FAILED || status == S_CONNECT_LOST ||
-                status == S_DOMAIN_UNRESOLVABLE)?
-            ((Long)getUncheckedAttribute(curi, ATTR_RETRY_DELAY)).longValue():
-            0; // no delay for most
+                status == S_DOMAIN_UNRESOLVABLE)? get(RETRY_DELAY_SECONDS) : 0;
+                // no delay for most
     }
 
     /**
@@ -728,26 +589,22 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             long completeTime = curi.getLong(A_FETCH_COMPLETED_TIME);
             long durationTaken = (completeTime - curi
                     .getLong(A_FETCH_BEGAN_TIME));
-            durationToWait = (long)(((Float)getUncheckedAttribute(curi,
-                    ATTR_DELAY_FACTOR)).floatValue() * durationTaken);
+            durationToWait = (long)(get(DELAY_FACTOR) * durationTaken);
 
-            long minDelay = ((Integer)getUncheckedAttribute(curi,
-                    ATTR_MIN_DELAY)).longValue();
+            long minDelay = get(MIN_DELAY);
             if (minDelay > durationToWait) {
                 // wait at least the minimum
                 durationToWait = minDelay;
             }
 
-            long maxDelay = ((Integer)getUncheckedAttribute(curi,
-                    ATTR_MAX_DELAY)).longValue();
+            long maxDelay = get(MAX_DELAY);
             if (durationToWait > maxDelay) {
                 // wait no more than the maximum
                 durationToWait = maxDelay;
             }
 
             long now = System.currentTimeMillis();
-            int maxBandwidthKB = ((Integer)getUncheckedAttribute(curi,
-                    ATTR_MAX_HOST_BANDWIDTH_USAGE)).intValue();
+            int maxBandwidthKB = get(MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC);
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
                 CrawlHost host = controller.getServerCache().getHostFor(curi);
@@ -775,8 +632,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @throws InterruptedException
      */
     private void enforceBandwidthThrottle(long now) throws InterruptedException {
-        int maxBandwidthKB = ((Integer)getUncheckedAttribute(null,
-                ATTR_MAX_OVERALL_BANDWIDTH_USAGE)).intValue();
+        int maxBandwidthKB = get(TOTAL_BANDWIDTH_USAGE_KB_SEC);
         if (maxBandwidthKB > 0) {
             // Make sure that new bandwidth setting doesn't affect total crawl
             if (maxBandwidthKB != lastMaxBandwidthKB) {
@@ -862,8 +718,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
 
     protected boolean overMaxRetries(CrawlURI curi) {
         // never retry more than the max number of times
-        if (curi.getFetchAttempts() >= ((Integer)getUncheckedAttribute(curi,
-                ATTR_MAX_RETRIES)).intValue()) {
+        if (curi.getFetchAttempts() >= get(MAX_RETRIES)) {
             return true;
         }
         return false;
@@ -873,8 +728,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             throws IOException {
         File source = new File(pathToLog);
         if (!source.isAbsolute()) {
-            source = new File(getSettingsHandler().getOrder().getController()
-                    .getDisk(), pathToLog);
+            source = new File(controller.getDisk(), pathToLog);
         }
         RecoveryJournal.importRecoverLog(source, this, retainFailures);
     }
@@ -1010,8 +864,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @return a String token representing a queue
      */
     public String getClassKey(CandidateURI cauri) {
-        String queueKey = (String)getUncheckedAttribute(cauri,
-            ATTR_FORCE_QUEUE);
+        String queueKey = get(FORCE_QUEUE_ASSIGNMENT);
         if ("".equals(queueKey)) {
             // Typical case, barring overrides
             queueKey =
@@ -1072,4 +925,15 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     public void reportTo(PrintWriter writer) {
         reportTo(null, writer);
     }
+    
+    
+    private static Key<QueueAssignmentPolicy> makeQAP() {
+        KeyMaker<QueueAssignmentPolicy> km = new KeyMaker<QueueAssignmentPolicy>();
+        km.type = QueueAssignmentPolicy.class;
+        km.def = new HostnameQueueAssignmentPolicy();
+        km.overrideable = false;
+        km.expert = true;
+        return km.toKey();
+    }
+
 }

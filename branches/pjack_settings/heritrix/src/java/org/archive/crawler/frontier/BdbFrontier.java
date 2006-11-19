@@ -48,6 +48,8 @@ import org.archive.crawler.util.BloomUriUniqFilter;
 import org.archive.crawler.util.CheckpointUtils;
 import org.archive.crawler.util.DiskFPMergeUriUniqFilter;
 import org.archive.crawler.util.MemFPMergeUriUniqFilter;
+import org.archive.state.Key;
+import org.archive.state.KeyMaker;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.je.DatabaseException;
@@ -77,6 +79,9 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             DiskFPMergeUriUniqFilter.class.getName()};
     
     /** URI-already-included to use (by class name) */
+    final public static Key<UriUniqFilter> URI_INCLUDED_STRUCTURE =
+        makeUUF();
+    
     public final static String ATTR_INCLUDED = "uri-included-structure";
     
     private final static String DEFAULT_INCLUDED =
@@ -84,28 +89,10 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     
     /**
      * Constructor.
-     * @param name Name for of this Frontier.
      */
-    public BdbFrontier(String name) {
-        this(name, "BdbFrontier. "
-            + "A Frontier using BerkeleyDB Java Edition databases for "
-            + "persistence to disk.");
-        Type t = addElementToDefinition(new SimpleType(ATTR_INCLUDED,
-                "Structure to use for tracking already-seen URIs. Non-default " +
-                "options may require additional configuration via system " +
-                "properties.", DEFAULT_INCLUDED, AVAILABLE_INCLUDED_OPTIONS));
-        t.setExpertSetting(true);
+    public BdbFrontier() {
     }
 
-    /**
-     * Create the BdbFrontier
-     * 
-     * @param name
-     * @param description
-     */
-    public BdbFrontier(String name, String description) {
-        super(name, description);
-    }
     
     /**
      * Create the single object (within which is one BDB database)
@@ -121,6 +108,9 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             this.controller.isCheckpointRecover());
     }
 
+    
+    
+    
     /**
      * Create a UriUniqFilter that will serve as record 
      * of already seen URIs.
@@ -129,15 +119,14 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
      * @throws IOException
      */
     protected UriUniqFilter createAlreadyIncluded() throws IOException {
-        UriUniqFilter uuf;
-        String c = null;
-        try {
-            c = (String)getAttribute(null, ATTR_INCLUDED);
-        } catch (AttributeNotFoundException e) {
-            // Do default action if attribute not in order.
-        }
+        UriUniqFilter uuf = get(URI_INCLUDED_STRUCTURE);
+        
+        // TODO: See below todo, then erase all this 
+        
         // TODO: avoid all this special-casing; enable some common
         // constructor interface usable for all alt implemenations
+/*
+        
         if (c != null && c.equals(BloomUriUniqFilter.class.getName())) {
             uuf = this.controller.isCheckpointRecover()?
                     deserializeAlreadySeen(BloomUriUniqFilter.class,
@@ -164,7 +153,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
                     throw new IOException(e.getMessage());
                 }
             }   
-        }
+        } */
         uuf.setDestination(this);
         return uuf;
     }
@@ -201,8 +190,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             wq = (WorkQueue)allQueues.get(classKey);
             if (wq == null) {
                 wq = new BdbWorkQueue(classKey, this);
-                wq.setTotalBudget(((Long)getUncheckedAttribute(
-                    curi,ATTR_QUEUE_TOTAL_BUDGET)).longValue());
+                wq.setTotalBudget(curi.get(this, QUEUE_TOTAL_BUDGET));
                 allQueues.put(classKey, wq);
             }
         }
@@ -336,5 +324,15 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             + "of checkpoint.");
         // Serialize ourselves.
         CheckpointUtils.writeObjectToFile(this, checkpointDir);
+    }
+    
+    
+    private static Key<UriUniqFilter> makeUUF() {
+        KeyMaker<UriUniqFilter> km = new KeyMaker<UriUniqFilter>();
+        km.type = UriUniqFilter.class;
+        // FIXME!
+//        km.def = new BdbUriUniqFilter();
+        km.expert = true;
+        return km.toKey();
     }
 }
