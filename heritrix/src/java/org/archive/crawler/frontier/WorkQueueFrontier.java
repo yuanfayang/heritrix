@@ -49,12 +49,12 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.datamodel.UriUniqFilter.HasUriReceiver;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.net.UURI;
+import org.archive.settings.Sheet;
+import org.archive.state.Key;
+import org.archive.state.KeyMaker;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.collections.StoredIterator;
@@ -108,44 +108,33 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * in active rotation. (As a result, queue's next try may be much
      * further in the future than the snooze target delay.)
      */
-    public final static String ATTR_SNOOZE_DEACTIVATE_MS =
-        "snooze-deactivate-ms";
-    public static Long DEFAULT_SNOOZE_DEACTIVATE_MS = new Long(5*60*1000); // 5 minutes
+    final public static Key<Long> SNOOZE_DEACTIVATE_MS = 
+        Key.makeExpertFinal(5L*60L*1000L);
+    
     
     private static final Logger logger =
         Logger.getLogger(WorkQueueFrontier.class.getName());
     
     /** whether to hold queues INACTIVE until needed for throughput */
-    public final static String ATTR_HOLD_QUEUES = "hold-queues";
-    protected final static Boolean DEFAULT_HOLD_QUEUES = new Boolean(true); 
+    final public static Key<Boolean> HOLD_QUEUES = Key.makeExpertFinal(true);
 
     /** amount to replenish budget on each activation (duty cycle) */
-    public final static String ATTR_BALANCE_REPLENISH_AMOUNT =
-        "balance-replenish-amount";
-    protected final static Integer DEFAULT_BALANCE_REPLENISH_AMOUNT =
-        new Integer(3000);
+    final public static Key<Integer> BALANCE_REPLENISH_AMOUNT = 
+        Key.makeExpertFinal(3000);
     
     /** whether to hold queues INACTIVE until needed for throughput */
-    public final static String ATTR_ERROR_PENALTY_AMOUNT =
-        "error-penalty-amount";
-    protected final static Integer DEFAULT_ERROR_PENALTY_AMOUNT =
-        new Integer(100);
-
+    final public static Key<Integer> ERROR_PENALTY_AMOUNT = 
+        Key.makeExpertFinal(100);
 
     /** total expenditure to allow a queue before 'retiring' it  */
-    public final static String ATTR_QUEUE_TOTAL_BUDGET = "queue-total-budget";
-    protected final static Long DEFAULT_QUEUE_TOTAL_BUDGET = new Long(-1);
+    final public static Key<Long> QUEUE_TOTAL_BUDGET = Key.makeExpertFinal(-1L);
 
-    /** cost assignment policy to use (by class name) */
-    public final static String ATTR_COST_POLICY = "cost-policy";
-    protected final static String DEFAULT_COST_POLICY =
-        UnitCostAssignmentPolicy.class.getName();
+    /** cost assignment policy to use. */
+    final public static Key<CostAssignmentPolicy> COST_POLICY = makeCP();
 
     /** target size of ready queues backlog */
-    public final static String ATTR_TARGET_READY_QUEUES_BACKLOG =
-        "target-ready-backlog";
-    protected final static Integer DEFAULT_TARGET_READY_QUEUES_BACKLOG =
-        new Integer(50);
+    final public static Key<Integer> TARGET_READY_BACKLOG = 
+        Key.makeExpertFinal(50);
     
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
@@ -217,67 +206,15 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @param name
      * @param description
      */
-    public WorkQueueFrontier(String name, String description) {
-        // The 'name' of all frontiers should be the same (URIFrontier.ATTR_NAME)
-        // therefore we'll ignore the supplied parameter.
-        super(Frontier.ATTR_NAME, description);
-        Type t = addElementToDefinition(new SimpleType(ATTR_HOLD_QUEUES,
-            "Whether to hold newly-created per-host URI work" +
-            " queues until needed to stay busy. If false (default)," +
-            " all queues may contribute URIs for crawling at all" +
-            " times. If true, queues begin (and collect URIs) in" +
-            " an 'inactive' state, and only when the Frontier needs" +
-            " another queue to keep all ToeThreads busy will new" +
-            " queues be activated.", DEFAULT_HOLD_QUEUES));
-        t.setExpertSetting(true);
-        t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(ATTR_BALANCE_REPLENISH_AMOUNT,
-            "Amount to replenish a queue's activity balance when it becomes " +
-            "active. Larger amounts mean more URIs will be tried from the " +
-            "queue before it is deactivated in favor of waiting queues. " +
-            "Default is 3000", DEFAULT_BALANCE_REPLENISH_AMOUNT));
-        t.setExpertSetting(true);
-        t.setOverrideable(true);
-        t = addElementToDefinition(new SimpleType(ATTR_ERROR_PENALTY_AMOUNT,
-                "Amount to additionally penalize a queue when one of" +
-                "its URIs fails completely. Accelerates deactivation or " +
-                "full retirement of problem queues and unresponsive sites. " +
-                "Default is 100", DEFAULT_ERROR_PENALTY_AMOUNT));
-        t.setExpertSetting(true);
-        t.setOverrideable(true);
-        t = addElementToDefinition(new SimpleType(ATTR_QUEUE_TOTAL_BUDGET,
-            "Total activity expenditure allowable to a single queue; queues " +
-            "over this expenditure will be 'retired' and crawled no more. " +
-            "Default of -1 means no ceiling on activity expenditures is " +
-            "enforced.", DEFAULT_QUEUE_TOTAL_BUDGET));
-        t.setExpertSetting(true);
-        t.setOverrideable(true);
-
-        t = addElementToDefinition(new SimpleType(ATTR_COST_POLICY,
-                "Policy for calculating the cost of each URI attempted. " +
-                "The default UnitCostAssignmentPolicy considers the cost of " +
-                "each URI to be '1'.", DEFAULT_COST_POLICY, AVAILABLE_COST_POLICIES));
-        t.setExpertSetting(true);
-        
-        t = addElementToDefinition(new SimpleType(ATTR_SNOOZE_DEACTIVATE_MS,
-                "Threshold above which any 'snooze' delay will cause the " +
-                "affected queue to go inactive, allowing other queues a " +
-                "chance to rotate into active state. Typically set to be " +
-                "longer than the politeness pauses between successful " +
-                "fetches, but shorter than the connection-failed " +
-                "'retry-delay-seconds'. (Default is 5 minutes.)", 
-                DEFAULT_SNOOZE_DEACTIVATE_MS));
-        t.setExpertSetting(true);
-        t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(ATTR_TARGET_READY_QUEUES_BACKLOG,
-                "Target size for backlog of ready queues. This many queues " +
-                "will be brought into 'ready' state even if a thread is " +
-                "not waiting. Only has effect if 'hold-queues' is true. " +
-                "Default is 50.", DEFAULT_TARGET_READY_QUEUES_BACKLOG));
-        t.setExpertSetting(true);
-        t.setOverrideable(false);
+    public WorkQueueFrontier() {
     }
 
+    
+    public <T> T get(Key<T> key) {
+        Sheet def = controller.getSheetManager().getDefault();
+        return def.get(this, key);
+    }
+    
     /**
      * Initializes the Frontier, given the supplied CrawlController.
      *
@@ -289,8 +226,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         super.initialize(c);
         this.controller = c;
         
-        this.targetSizeForReadyQueues = (Integer)getUncheckedAttribute(null,
-            ATTR_TARGET_READY_QUEUES_BACKLOG);
+        this.targetSizeForReadyQueues = get(TARGET_READY_BACKLOG);
         if (this.targetSizeForReadyQueues < 1) {
             this.targetSizeForReadyQueues = 1;
         }
@@ -340,14 +276,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @throws FatalConfigurationException
      */
     private void initCostPolicy() throws FatalConfigurationException {
-        try {
-            costAssignmentPolicy = (CostAssignmentPolicy) Class.forName(
-                    (String) getUncheckedAttribute(null, ATTR_COST_POLICY))
-                    .newInstance();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new FatalConfigurationException(e.getMessage());
-        }
+        costAssignmentPolicy = get(COST_POLICY);
     }
 
     /* (non-Javadoc)
@@ -474,8 +403,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * @return true if new queues should held inactive
      */
     private boolean holdQueues() {
-        return ((Boolean) getUncheckedAttribute(null, ATTR_HOLD_QUEUES))
-                .booleanValue();
+        return get(HOLD_QUEUES);
     }
 
     /**
@@ -536,8 +464,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      */
     public void kickUpdate() {
         super.kickUpdate();
-        int target = (Integer)getUncheckedAttribute(null,
-                ATTR_TARGET_READY_QUEUES_BACKLOG);
+        int target = get(TARGET_READY_BACKLOG);
         if (target < 1) {
             target = 1;
         }
@@ -745,11 +672,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // get a CrawlURI for override context purposes
         CrawlURI contextUri = queue.peek(this); 
         // TODO: consider confusing cross-effects of this and IP-based politeness
-        queue.setSessionBalance(((Integer) getUncheckedAttribute(contextUri,
-                ATTR_BALANCE_REPLENISH_AMOUNT)).intValue());
+        queue.setSessionBalance(contextUri.get(this, BALANCE_REPLENISH_AMOUNT));
         // reset total budget (it may have changed)
         // TODO: is this the best way to be sensitive to potential mid-crawl changes
-        long totalBudget = ((Long)getUncheckedAttribute(contextUri,ATTR_QUEUE_TOTAL_BUDGET)).longValue();
+        long totalBudget = contextUri.get(this, QUEUE_TOTAL_BUDGET);
         queue.setTotalBudget(totalBudget);
         queue.unpeek(); // don't insist on that URI being next released
     }
@@ -891,8 +817,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             }
             incrementFailedFetchCount();
             // let queue note error
-            wq.noteError(((Integer) getUncheckedAttribute(curi,
-                    ATTR_ERROR_PENALTY_AMOUNT)).intValue()); 
+            wq.noteError(curi.get(this, ERROR_PENALTY_AMOUNT));
             doJournalFinishedFailure(curi);
             wq.expend(getCost(curi)); // failures cost
         }
@@ -926,8 +851,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     private void snoozeQueue(WorkQueue wq, long now, long delay_ms) {
         long nextTime = now + delay_ms;
         wq.setWakeTime(nextTime);
-        long snoozeToInactiveDelayMs = ((Long)getUncheckedAttribute(null,
-                ATTR_SNOOZE_DEACTIVATE_MS)).longValue();
+        long snoozeToInactiveDelayMs = get(SNOOZE_DEACTIVATE_MS);
         if (delay_ms > snoozeToInactiveDelayMs && !inactiveQueues.isEmpty()) {
             deactivateQueue(wq);
         } else {
@@ -1345,6 +1269,16 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      */
     public synchronized boolean isEmpty() {
         return queuedUriCount == 0 && alreadyIncluded.pending() == 0;
+    }
+
+
+    private static Key<CostAssignmentPolicy> makeCP() {
+        KeyMaker<CostAssignmentPolicy> km 
+         = new KeyMaker<CostAssignmentPolicy>();
+        km.type = CostAssignmentPolicy.class;
+        km.def = new UnitCostAssignmentPolicy();
+        km.expert = true;
+        return km.toKey();
     }
 }
 

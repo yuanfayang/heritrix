@@ -301,8 +301,8 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                 CrawlURI curiExisting = getCrawlURI(curi.toString());
                 long oldCuriProcessingTime = curiExisting.getLong(
                         A_TIME_OF_NEXT_PROCESSING);
-                if(curi.getSchedulingDirective() < 
-                        curiExisting.getSchedulingDirective()){
+                if(curi.getSchedulingDirective().ordinal() < 
+                        curiExisting.getSchedulingDirective().ordinal()){
                     // New scheduling directive is of higher importance,
                     // update to promote URI.
                     curiExisting.setSchedulingDirective(
@@ -1071,13 +1071,13 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             CrawlURI tmp = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
             ret.append(" URI:                " + tmp.toString() + "\n");
             switch(tmp.getSchedulingDirective()){
-                case CandidateURI.HIGHEST : 
+                case HIGHEST : 
                     ret.append("  Sched. directive:  HIGHEST\n"); break;
-                case CandidateURI.HIGH : 
+                case HIGH : 
                     ret.append("  Sched. directive:  HIGH\n"); break;
-                case CandidateURI.MEDIUM : 
+                case MEDIUM : 
                     ret.append("  Sched. directive:  MEDIUM\n"); break;
-                case CandidateURI.NORMAL : 
+                case NORMAL : 
                     ret.append("  Sched. directive:  NORMAL\n"); break;
             }
             ret.append("  Next processing:   ");
@@ -1144,27 +1144,28 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                                           Object dataInput, 
                                           TupleOutput indexKeyOutput) {
             CrawlURI curi = (CrawlURI)dataInput;
-            int directive = curi.getSchedulingDirective();
+            CandidateURI.Priority directive = curi.getSchedulingDirective();
             // Can not rely on the default directive constants having a good
             // sort order
+            int directiveToWrite;
             switch (directive) {
-            case CandidateURI.HIGHEST:
-                directive = 0;
+            case HIGHEST:
+                directiveToWrite = 0;
                 break;
-            case CandidateURI.HIGH:
-                directive = 1;
+            case HIGH:
+                directiveToWrite = 1;
                 break;
-            case CandidateURI.MEDIUM:
-                directive = 2;
+            case MEDIUM:
+                directiveToWrite = 2;
                 break;
-            case CandidateURI.NORMAL:
-                directive = 3;
+            case NORMAL:
+                directiveToWrite = 3;
                 break;
             default:
-                directive = 3; // If directive missing or unknown
+                directiveToWrite = 3; // If directive missing or unknown
             }
             
-            indexKeyOutput.writeInt(directive);
+            indexKeyOutput.writeInt(directiveToWrite);
             long timeOfNextProcessing =
                 curi.getLong(A_TIME_OF_NEXT_PROCESSING);
             
