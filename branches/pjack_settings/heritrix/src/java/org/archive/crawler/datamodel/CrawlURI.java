@@ -44,8 +44,8 @@ import org.archive.crawler.framework.ProcessorChain;
 import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
-import org.archive.state.StateProvider;
 import org.archive.util.Base32;
 import org.archive.util.HttpRecorder;
 
@@ -66,10 +66,14 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CrawlURI extends CandidateURI
-implements FetchStatusCodes, StateProvider {
+implements FetchStatusCodes, ProcessorURI {
 
     private static final long serialVersionUID = 7874096757350100472L;
 
+    
+    public static enum Priority { HIGHEST, HIGH, MEDIUM, NORMAL }
+    
+    
     public static final int UNCALCULATED = -1;
     
     // INHERITED FROM CANDIDATEURI
@@ -1366,27 +1370,11 @@ implements FetchStatusCodes, StateProvider {
         outLinks = (ol == null) ? new HashSet<Object>() : ol;
     }
 
-
-    public <T> T get(Key<T> key) {
-        // FIXME
-        return null;
-    }
-    
     
     public <T> T get(Object module, Key<T> key) {
         // FIXME
         return null;
     }
-    
-    
-    public void setCurrentModule(Object module) {
-        // FIXME
-        return;
-    }
-    
-    
-    public Object getCurrentModule() {
-        // FIXME
-        return null; 
-    }
+
+
 }
