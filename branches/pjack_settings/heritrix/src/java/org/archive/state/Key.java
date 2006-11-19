@@ -243,14 +243,27 @@ final public class Key<Value> {
      * @return  the new Key
      */    
     public static <X> Key<X> makeFinal(X def) {
-        KeyMaker<X> result = new KeyMaker<X>();
-        @SuppressWarnings("unchecked")
-        Class<X> c = (Class<X>)def.getClass();
-        result.type = c;
-        result.def = def;
+        KeyMaker<X> result = KeyMaker.make(def);
         result.overrideable = false;
         return new Key<X>(result);
     }
+    
+
+    /**
+     * Creates a new non-overrideable Key with the given default value and no 
+     * constraints.
+     * 
+     * @param <X>   the type of values for the key
+     * @param def   the default value for the key
+     * @return  the new Key
+     */    
+    public static <X> Key<X> makeExpertFinal(X def) {
+        KeyMaker<X> result = KeyMaker.make(def);
+        result.overrideable = false;
+        result.expert = true;
+        return new Key<X>(result);
+    }
+
     
     
     /**

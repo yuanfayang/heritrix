@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.archive.util.EmptyList;
-
 
 /**
  * Aids construction of Key instances.  This class is fully mutable and
@@ -165,7 +163,10 @@ public class KeyMaker<T> {
 
         KeyMaker<List<T>> r = new KeyMaker<List<T>>();
         r.type = c2;
-        r.def = new EmptyList<T>();
+        @SuppressWarnings("unchecked")
+        List<T> empty = Collections.EMPTY_LIST;
+        
+        r.def = empty;
         return r;
     }
 
