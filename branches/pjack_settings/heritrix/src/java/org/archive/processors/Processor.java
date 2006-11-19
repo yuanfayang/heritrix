@@ -94,7 +94,7 @@ public abstract class Processor {
      * @param uri  The URI to process
      * @throws  InterruptedException   if the thread is interrupted
      */
-    final public void process(CrawlURI uri) throws InterruptedException {
+    final public void process(ProcessorURI uri) throws InterruptedException {
         if (!uri.get(this, ENABLED)) {
             return;
         }
@@ -134,7 +134,7 @@ public abstract class Processor {
      * @param uri   the URI to test
      * @return  true if this processor should process that uri; false if not
      */
-    protected abstract boolean shouldProcess(CrawlURI uri);
+    protected abstract boolean shouldProcess(ProcessorURI uri);
 
 
     /**
@@ -146,7 +146,7 @@ public abstract class Processor {
      * @param uri    the URI to process
      * @throws InterruptedException   if the thread is interrupted
      */
-    protected abstract void innerProcess(CrawlURI uri) 
+    protected abstract void innerProcess(ProcessorURI uri) 
     throws InterruptedException;
 
 
@@ -157,7 +157,7 @@ public abstract class Processor {
      * @param uri   the URI that was rejected
      * @throws InterruptedException   if the thread is interrupted
      */
-    protected void innerRejectProcess(CrawlURI uri) 
+    protected void innerRejectProcess(ProcessorURI uri) 
     throws InterruptedException {        
     }
 
