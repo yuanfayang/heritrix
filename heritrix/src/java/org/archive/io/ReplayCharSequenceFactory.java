@@ -862,10 +862,13 @@ public class ReplayCharSequenceFactory {
             Writer writer = null;
 
             IOException exceptionThrown = null;
+            int step = -1; 
             try {
+                step = 0;
                 // Get a writer.  Output in our WRITE_ENCODING.
                 writer = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(unicode), WRITE_ENCODING));
+                step = 1; 
                 CoderResult result = null;
                 ByteBuffer bb = null;
                 for (int i = 0; i < buffers.length; i++) {
@@ -873,33 +876,41 @@ public class ReplayCharSequenceFactory {
                     // If we fill the decoder buffer or if decoder reports
                     // underfilled and the buffer has content in it, then go
                     // and drain the buffer and recall the decoder.
+                    step = 2; 
                     while((result = decoder.decode(bb, cb, false))
                                 == CoderResult.OVERFLOW) {
                         drainCharBuffer(cb, writer);
                     }
-
+                    step = 3; 
                     if (result != CoderResult.UNDERFLOW) {
                         throw new IOException("Unexpected result: " + result);
                     }
+                    step = 4; 
                 }
-
+                step = 5; 
                 if ((result = decoder.decode(bb, cb, true)) ==
                         CoderResult.OVERFLOW) {
+                    step = 6; 
                     drainCharBuffer(cb, writer);
+                    step = 7; 
                 }
-
+                step = 8; 
                 // Flush any remaining state from the decoder, being careful
                 // to detect output buffer overflow(s)
                 while (decoder.flush(cb) == CoderResult.OVERFLOW) {
+                    step = 9; 
                     drainCharBuffer(cb, writer);
+                    step = 10; 
                 }
-
+                step = 11; 
                 // Drain any chars remaining in the output buffer
                 drainCharBuffer(cb, writer);
+                step = 12; 
             }
 
             catch (IOException e) {
                 exceptionThrown = e;
+                logger.log(Level.WARNING, "IOE, highest step="+step, e);
                 throw e;
             }
 
@@ -916,8 +927,9 @@ public class ReplayCharSequenceFactory {
                     }
                 }
                 if (!unicode.exists()) {
-                    logger.warning(unicode.toString() + " does not exist, " +
-                        buffers.length);
+                    logger.warning(unicode.toString() + 
+                    " does not exist, buffers.length=" +
+                    buffers.length + " step=" + step);
                 }
                 if (exceptionThrown != null) {
                     deleteFile(unicode, exceptionThrown);
