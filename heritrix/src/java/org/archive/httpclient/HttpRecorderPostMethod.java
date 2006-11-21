@@ -28,7 +28,7 @@ import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 
 
 /**
@@ -48,7 +48,7 @@ public class HttpRecorderPostMethod extends PostMethod {
     protected HttpRecorderMethod httpRecorderMethod = null;
     
 
-    public HttpRecorderPostMethod(String uri, HttpRecorder recorder) {
+    public HttpRecorderPostMethod(String uri, Recorder recorder) {
         super(uri);
         this.httpRecorderMethod = new HttpRecorderMethod(recorder);
     }

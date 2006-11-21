@@ -29,7 +29,7 @@ import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 
 
 /**
@@ -86,7 +86,7 @@ public class HttpRecorderGetMethod extends GetMethod {
     protected HttpRecorderMethod httpRecorderMethod = null;
     
 
-	public HttpRecorderGetMethod(String uri, HttpRecorder recorder) {
+	public HttpRecorderGetMethod(String uri, Recorder recorder) {
 		super(uri);
         this.httpRecorderMethod = new HttpRecorderMethod(recorder);
 	}

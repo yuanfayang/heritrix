@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpMethod;
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 
 
 /**
@@ -46,7 +46,7 @@ public class HttpRecorderMethod {
     /**
      * Instance of http recorder we're using recording this http get.
      */
-    private HttpRecorder httpRecorder = null;
+    private Recorder httpRecorder = null;
 
     /**
      * Save around so can force close.
@@ -57,7 +57,7 @@ public class HttpRecorderMethod {
     private HttpConnection connection = null;
     
 
-	public HttpRecorderMethod(HttpRecorder recorder) {
+	public HttpRecorderMethod(Recorder recorder) {
         this.httpRecorder = recorder;
 	}
 
@@ -89,7 +89,7 @@ public class HttpRecorderMethod {
     /**
      * @return Returns the httpRecorder.
      */
-    public HttpRecorder getHttpRecorder() {
+    public Recorder getHttpRecorder() {
         return httpRecorder;
     }
 
