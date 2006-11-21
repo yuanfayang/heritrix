@@ -32,8 +32,6 @@ import java.net.UnknownHostException;
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
-import org.archive.crawler.datamodel.CrawlHost;
-import org.archive.crawler.datamodel.ServerCache;
 
 
 /**
@@ -119,10 +117,15 @@ implements ProtocolSocketFactory {
             socket = createSocket(host, port, localAddress, localPort);
         } else {
             socket = new Socket();
-            ServerCache cache = (ServerCache)params.
-                getParameter(FetchHTTP.SERVER_CACHE_KEY);
-            InetAddress hostAddress =
-            	(cache != null)? getHostAddress(cache, host): null;
+            
+            InetAddress hostAddress;
+            Thread current = Thread.currentThread();
+            if (current instanceof HostResolver) {
+                HostResolver resolver = (HostResolver)current;
+                hostAddress = resolver.resolve(host);
+            } else {
+                hostAddress = null;
+            }
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
@@ -151,6 +154,7 @@ implements ProtocolSocketFactory {
      * in caches.
      * @exception IOException If we fail to get host IP from ServerCache.
      */
+    /*
     static InetAddress getHostAddress(final ServerCache cache,
             final String host) throws IOException {
         InetAddress result = null;
@@ -166,6 +170,7 @@ implements ProtocolSocketFactory {
         }
         return result;
     }
+    */
 
     /**
      * @see ProtocolSocketFactory#createSocket(java.lang.String,int)

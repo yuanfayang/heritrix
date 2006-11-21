@@ -52,7 +52,7 @@ import org.archive.net.ClientFTP;
 import org.archive.net.FTPException;
 import org.archive.net.UURI;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 
 
 /**
@@ -244,7 +244,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
         }
         
         curi.putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
-        HttpRecorder recorder = HttpRecorder.getHttpRecorder();
+        Recorder recorder = Recorder.getHttpRecorder();
         ClientFTP client = new ClientFTP();
         
         try {
@@ -272,7 +272,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @throws IOException  if a network or protocol error occurs
      * @throws InterruptedException  if the thread is interrupted
      */
-    private void fetch(CrawlURI curi, ClientFTP client, HttpRecorder recorder) 
+    private void fetch(CrawlURI curi, ClientFTP client, Recorder recorder) 
     throws IOException, InterruptedException {
         // Connect to the FTP server.
         UURI uuri = curi.getUURI();
@@ -338,7 +338,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @throws InterruptedException  if the thread is interrupted
      */
     private void saveToRecorder(CrawlURI curi,
-            Socket socket, HttpRecorder recorder) 
+            Socket socket, Recorder recorder) 
     throws IOException, InterruptedException {
         curi.setHttpRecorder(recorder);
         recorder.markContentBegin();
@@ -362,7 +362,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param curi      The curi to save extracted links to
      * @param recorder  The recorder containing the directory listing
      */
-    private void extract(CrawlURI curi, HttpRecorder recorder) {
+    private void extract(CrawlURI curi, Recorder recorder) {
         if (!getExtractFromDirs(curi)) {
             return;
         }
