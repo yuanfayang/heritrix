@@ -22,15 +22,18 @@
  */
 package org.archive.crawler.prefetch;
 
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
+import org.archive.state.Key;
+
 
 /**
  * A processor to enforce runtime limits on crawls.
@@ -62,80 +65,98 @@ import org.archive.crawler.settings.Type;
 public class RuntimeLimitEnforcer 
                 extends Processor implements FetchStatusCodes {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 3L;
     
     protected Logger logger = Logger.getLogger(
             RuntimeLimitEnforcer.class.getName());
-    
-    public static final String ATTR_RUNTIME_SECONDS = "runtime-sec".intern();
-    protected static final long DEFAULT_RUNTIME_SECONDS = 86400; // 1 day
 
-    public static final String ATTR_END_OPERATION = "end-operation".intern();
-    protected static final String OP_PAUSE = "Pause job".intern();
-    protected static final String OP_TERMINATE = "Terminate job".intern();
-    protected static final String OP_BLOCK_URIS = "Block URIs".intern();
-    protected static final String DEFAULT_END_OPERATION = OP_PAUSE;
-    protected static final String[] AVAILABLE_END_OPERATIONS = {
-        OP_PAUSE, OP_TERMINATE, OP_BLOCK_URIS};
+
+    /**
+     * The action that the processor takes once the runtime has elapsed.
+     */
+    public static enum Operation { 
+
+        /**
+         * Pauses the crawl. A change (increase) to the runtime duration will
+         * make it pausible to resume the crawl. Attempts to resume the crawl
+         * without modifying the run time will cause it to be immediately paused
+         * again.
+         */
+        PAUSE, 
+        
+        /**
+         * Terminates the job. Equivalent to using the max-time setting on the
+         * CrawlController.
+         */
+        TERMINATE, 
+        
+        /**
+         * Blocks each URI with an -5002 (blocked by custom processor) fetch
+         * status code. This will cause all the URIs queued to wind up in the
+         * crawl.log.
+         */
+        BLOCK_URIS 
+    };
     
-    public RuntimeLimitEnforcer(String name) {
-        super(name, "A processor that halts further progress once a fixed " +
-                "amount of time has elapsed since the start of a crawl. " +
-                "It is possible to configure this processor per host, but " +
-                "it should be noted that Heritrix does not track runtime " +
-                "per host seperately. Especially when using facilities " +
-                "like the BdbFrontier's hold-queues, the actual amount of " +
-                "time spent crawling a host may have little relevance to " +
-                "total elapsed time. Note however that using overrides " +
-                "and/or refinements only makes sense when using the " +
-                "'Block URIs' end operation. The pause and terminate " +
-                "operations have global impact once encountered.");
-        Type t =  new SimpleType(
-                ATTR_RUNTIME_SECONDS,
-                "The amount of time, in seconds, that the crawl will be " +
-                "allowed to run before this processor performs it's 'end " +
-                "operation.'",
-                DEFAULT_RUNTIME_SECONDS);
-        addElementToDefinition(t);
-        t = new SimpleType(
-                ATTR_END_OPERATION,
-                "The action that the processor takes once the runtime has " +
-                "elapsed.\n " +
-                "Operation: Pause job - Pauses the crawl. A change " +
-                "(increase) to the runtime duration will " +
-                "make it pausible to resume the crawl. Attempts to resume " +
-                "the crawl without modifying the run time will cause it to " +
-                "be immediately paused again.\n " +
-                "Operation: Terminate job - Terminates the job. Equivalent " +
-                "to using the max-time setting on the CrawlController.\n " +
-                "Operation: Block URIs - Blocks each URI with an -5002 " +
-                "(blocked by custom processor) fetch status code. This will " +
-                "cause all the URIs queued to wind up in the crawl.log.",
-                DEFAULT_END_OPERATION, 
-                AVAILABLE_END_OPERATIONS);
-        addElementToDefinition(t);
+    /**
+     * The amount of time, in seconds, that the crawl will be allowed to run
+     * before this processor performs it's 'end operation.'
+     */
+    final public static Key<Long> RUNTIME_SECONDS = Key.make(86400L);
+
+
+    /**
+     * The action that the processor takes once the runtime has elapsed.
+     * <p>
+     * Operation: Pause job - Pauses the crawl. A change (increase) to the
+     * runtime duration will make it pausible to resume the crawl. Attempts to
+     * resume the crawl without modifying the run time will cause it to be
+     * immediately paused again.
+     * <p>
+     * Operation: Terminate job - Terminates the job. Equivalent to using the
+     * max-time setting on the CrawlController.
+     * <p>
+     * Operation: Block URIs - Blocks each URI with an -5002 (blocked by custom
+     * processor) fetch status code. This will cause all the URIs queued to wind
+     * up in the crawl.log.
+     */
+    final public static Key<Operation> END_OPERATION = Key.make(Operation.PAUSE);
+
+    
+    final CrawlController controller;
+    
+    
+    public RuntimeLimitEnforcer(CrawlController controller) {
+        this.controller = controller;
     }
 
-    protected void innerProcess(CrawlURI curi) throws InterruptedException {
+    
+    @Override
+    protected boolean shouldProcess(ProcessorURI puri) {
+        return puri instanceof CrawlURI;
+    }
+
+    
+    @Override
+    protected void innerProcess(ProcessorURI curi) throws InterruptedException {
         long allowedRuntime = getRuntime(curi);
-        long currentRuntime = getController().getStatistics().crawlDuration();
+        long currentRuntime = controller.getStatistics().crawlDuration();
         if(currentRuntime > allowedRuntime){
-            String op = (String)getUncheckedAttribute(curi,ATTR_END_OPERATION);
+            Operation op = curi.get(this, END_OPERATION);
             if(op != null){
-                if(op.equals(OP_PAUSE)){
-                    getController().requestCrawlPause();
-                } else if(op.equals(OP_TERMINATE)){
-                    getController().requestCrawlStop(
+                if (op.equals(Operation.PAUSE)) {
+                    controller.requestCrawlPause();
+                } else if (op.equals(Operation.TERMINATE)){
+                    controller.requestCrawlStop(
                             CrawlJob.STATUS_FINISHED_TIME_LIMIT);
-                } else if(op.equals(OP_BLOCK_URIS)){
+                } else if (op.equals(Operation.BLOCK_URIS)) {
                     curi.setFetchStatus(S_BLOCKED_BY_RUNTIME_LIMIT);
-                    curi.addAnnotation("Runtime exceeded " + allowedRuntime + 
+                    curi.getAnnotations().add("Runtime exceeded " + allowedRuntime + 
                             "ms");
-                    curi.skipToProcessorChain(
-                            getController().getPostprocessorChain());
+                    curi.skipToPostProcessing();
                 }
             } else {
-                logger.log(Level.SEVERE,"Null value for " + ATTR_END_OPERATION + 
+                logger.log(Level.SEVERE,"Null value for end-operation " + 
                         " when processing " + curi.toString());
             }
         }
@@ -146,14 +167,8 @@ public class RuntimeLimitEnforcer
      * processor interrupts.
      * @return the amount of time in milliseconds.
      */
-    protected long getRuntime(CrawlURI curi){
-        Object o = getUncheckedAttribute(curi,ATTR_RUNTIME_SECONDS);
-        if(o == null){
-            logger.log(Level.SEVERE,"Null value for " + ATTR_RUNTIME_SECONDS + 
-                    " when processing " + curi.toString());
-            return Long.MAX_VALUE;
-        }
-        return ((Long)o).longValue()*1000; //extract value and convert to ms.
+    protected long getRuntime(ProcessorURI curi){
+        return curi.get(this, RUNTIME_SECONDS) * 1000L;
     }
     
 }
