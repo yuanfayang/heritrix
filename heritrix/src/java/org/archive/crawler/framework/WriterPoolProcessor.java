@@ -46,7 +46,6 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -56,6 +55,7 @@ import org.archive.crawler.settings.Type;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
+import org.archive.processors.fetcher.CrawlHost;
 
 /**
  * Abstract implementation of a file pool processor.

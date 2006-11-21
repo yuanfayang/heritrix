@@ -29,6 +29,8 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.processors.fetcher.CrawlHost;
+import org.archive.processors.fetcher.CrawlHostCache;
 import org.archive.settings.SheetManager;
 
 /**
@@ -36,7 +38,7 @@ import org.archive.settings.SheetManager;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class ServerCache {
+public class ServerCache implements CrawlHostCache {
     private static Logger logger =
         Logger.getLogger(ServerCache.class.getName());
     

@@ -27,9 +27,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
+import org.archive.processors.fetcher.FetchStats;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.bind.EntryBinding;
@@ -137,7 +137,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
     private static final Logger logger = 
         Logger.getLogger(AdaptiveRevisitHostQueue.class.getName());
     
-    protected CrawlSubstats substats = new CrawlSubstats(); 
+    protected FetchStats substats = new FetchStats(); 
     
     // Berkeley DB - All class member variables related to BDB JE
     // Databases
@@ -1177,7 +1177,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.CrawlSubstats.HasCrawlSubstats#getSubstats()
      */
-    public CrawlSubstats getSubstats() {
+    public FetchStats getSubstats() {
         return substats;
     }
 

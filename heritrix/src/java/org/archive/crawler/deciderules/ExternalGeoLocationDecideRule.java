@@ -30,8 +30,8 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.processors.fetcher.CrawlHost;
 import org.xbill.DNS.Address;
 
 /**
