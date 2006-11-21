@@ -28,13 +28,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
 import org.archive.net.UURI;
+import org.archive.processors.fetcher.FetchStats;
 import org.archive.util.Reporter;
 
 
@@ -458,7 +458,7 @@ public interface Frontier extends Reporter {
      * of a Frontier's URIs -- usually queues. Currently only 
      * offers the HasCrawlSubstats interface. 
      */
-    public interface FrontierGroup extends CrawlSubstats.HasCrawlSubstats {
+    public interface FrontierGroup extends FetchStats.HasFetchStats {
 
     }
 }

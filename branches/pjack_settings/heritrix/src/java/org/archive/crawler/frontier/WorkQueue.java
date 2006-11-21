@@ -6,9 +6,9 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
+import org.archive.processors.fetcher.FetchStats;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 
@@ -73,7 +73,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
     private long errorCount = 0;
     
     /** Substats for all CrawlURIs in this group */
-    protected CrawlSubstats substats = new CrawlSubstats();
+    protected FetchStats substats = new FetchStats();
 
     private boolean retired;
     
@@ -563,7 +563,7 @@ public abstract class WorkQueue implements Frontier.FrontierGroup, Comparable,
         writer.print(")\n\n");
     }
     
-    public CrawlSubstats getSubstats() {
+    public FetchStats getSubstats() {
         return substats;
     }
 

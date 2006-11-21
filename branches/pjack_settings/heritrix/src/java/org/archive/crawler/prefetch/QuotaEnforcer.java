@@ -23,11 +23,11 @@
 package org.archive.crawler.prefetch;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
+import org.archive.processors.fetcher.FetchStats;
 
 /**
  * A simple quota enforcer. If the host, server, or frontier group
@@ -229,8 +229,8 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
     }
     
     protected void innerProcess(CrawlURI curi) {
-        CrawlSubstats.HasCrawlSubstats[] haveStats = 
-            new CrawlSubstats.HasCrawlSubstats[] {
+        FetchStats.HasFetchStats[] haveStats = 
+            new FetchStats.HasFetchStats[] {
                 getController().getServerCache().getServerFor(curi), // server
                 getController().getServerCache().getHostFor(curi), // host
                 getController().getFrontier().getGroup(curi) // group
@@ -253,9 +253,9 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
      * @return true if quota precludes fetching of CrawlURI
      */
     protected boolean checkQuotas(final CrawlURI curi,
-            final CrawlSubstats.HasCrawlSubstats hasStats,
+            final FetchStats.HasFetchStats hasStats,
             final int CAT) {
-        CrawlSubstats substats = hasStats.getSubstats();
+        FetchStats substats = hasStats.getSubstats();
         long[] actuals = new long[] {
                 -1, // dummy
                 substats.getFetchSuccesses(),

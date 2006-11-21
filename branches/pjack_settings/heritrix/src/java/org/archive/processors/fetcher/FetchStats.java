@@ -22,11 +22,13 @@
 * along with Heritrix; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */ 
-package org.archive.crawler.datamodel;
+package org.archive.processors.fetcher;
 
 import java.io.Serializable;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.FetchStatusCodes;
 
 /**
  * Collector of statististics for a 'subset' of a crawl,
@@ -35,12 +37,12 @@ import org.apache.commons.httpclient.HttpStatus;
  * 
  * @author gojomo
  */
-public class CrawlSubstats implements Serializable, FetchStatusCodes {
+public class FetchStats implements Serializable, FetchStatusCodes {
 
-    private static final long serialVersionUID = 8624425657056569036L;
+    private static final long serialVersionUID = 3L;
 
-    public interface HasCrawlSubstats {
-        public CrawlSubstats getSubstats();
+    public interface HasFetchStats {
+        public FetchStats getSubstats();
     }
     
     long fetchSuccesses;   // 2XX response codes

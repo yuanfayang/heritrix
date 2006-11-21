@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.datamodel;
+package org.archive.processors.fetcher;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -38,7 +38,7 @@ import org.archive.util.InetAddressUtil;
  *
  * @author gojomo
  */
-public class CrawlHost implements Serializable, CrawlSubstats.HasCrawlSubstats {
+public class CrawlHost implements Serializable, FetchStats.HasFetchStats {
 
     private static final long serialVersionUID = -5494573967890942895L;
 
@@ -51,7 +51,7 @@ public class CrawlHost implements Serializable, CrawlSubstats.HasCrawlSubstats {
     private String countryCode;
     private InetAddress ip;
     private long ipFetched = IP_NEVER_LOOKED_UP;
-    protected CrawlSubstats substats = new CrawlSubstats(); 
+    protected FetchStats substats = new FetchStats(); 
     /**
      * TTL gotten from dns record.
      *
@@ -201,7 +201,7 @@ public class CrawlHost implements Serializable, CrawlSubstats.HasCrawlSubstats {
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.CrawlSubstats.HasCrawlSubstats#getSubstats()
      */
-    public CrawlSubstats getSubstats() {
+    public FetchStats getSubstats() {
         return substats;
     }
 }

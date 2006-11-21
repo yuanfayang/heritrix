@@ -59,9 +59,15 @@ public interface ProcessorURI extends StateProvider {
     void setPrerequisite(boolean prereq);
     
     // Used to be a map attribute.
+    long getFetchBeginTime();
     void setFetchBeginTime(long time);
+    
+    // Used to be a map attribute
+    long getFetchCompletedTime();
     void setFetchCompletedTime(long time);
     
+    String getDNSServerIPLabel();
+    void setDNSServerIPLabel(String label);
     
     FetchType getFetchType();
     

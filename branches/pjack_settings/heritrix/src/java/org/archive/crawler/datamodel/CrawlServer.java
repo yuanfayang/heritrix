@@ -39,6 +39,7 @@ import org.archive.crawler.framework.ToeThread;
 import org.archive.io.ReplayInputStream;
 import org.archive.net.UURIFactory;
 import org.archive.processors.credential.CredentialAvatar;
+import org.archive.processors.fetcher.FetchStats;
 import org.archive.settings.SheetManager;
 
 /**
@@ -49,7 +50,7 @@ import org.archive.settings.SheetManager;
  *
  * @author gojomo
  */
-public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats {
+public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
 
     private static final long serialVersionUID = -989714570750970369L;
 
@@ -65,7 +66,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
     long robotsFetched = ROBOTS_NOT_FETCHED;
     boolean validRobots = false;
     Checksum robotstxtChecksum;
-    CrawlSubstats substats = new CrawlSubstats();
+    FetchStats substats = new FetchStats();
     
     // how many consecutive connection errors have been encountered;
     // used to drive exponentially increasing retry timeout or decision
@@ -370,7 +371,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.CrawlSubstats.HasCrawlSubstats#getSubstats()
      */
-    public CrawlSubstats getSubstats() {
+    public FetchStats getSubstats() {
         return substats;
     }
 }

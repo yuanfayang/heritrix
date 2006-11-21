@@ -32,7 +32,6 @@ import javax.management.AttributeNotFoundException;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlHost;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -43,6 +42,7 @@ import org.archive.net.UURI;
 import org.archive.processors.credential.Credential;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.credential.CredentialStore;
+import org.archive.processors.fetcher.CrawlHost;
 
 /**
  * Ensures the preconditions for a fetch -- such as DNS lookup 
