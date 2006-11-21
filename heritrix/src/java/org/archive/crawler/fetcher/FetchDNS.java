@@ -41,7 +41,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.util.ArchiveUtils;
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 import org.archive.util.InetAddressUtil;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
@@ -91,10 +91,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
                 "InetAddress resolution, which may use local 'hosts' files " +
                 "or other mechanisms.", DEFAULT_ACCEPT_NON_DNS_RESOLVES));
         e.setExpertSetting(true);
-        e = addElementToDefinition(new SimpleType(FetchHTTP.ATTR_SHA1_CONTENT,
+        e = addElementToDefinition(new SimpleType("", //FetchHTTP.ATTR_SHA1_CONTENT,
         	"Whether or not to perform an on-the-fly SHA1 hash of" +
-            "retrieved content-bodies.",
-            FetchHTTP.DEFAULT_SHA1_CONTENT));
+            "retrieved content-bodies.", ""));
+//            FetchHTTP.DEFAULT_SHA1_CONTENT));
         e.setExpertSetting(true);
     }
 
@@ -232,10 +232,10 @@ implements CoreAttributeConstants, FetchStatusCodes {
 	throws IOException {
 		final byte[] dnsRecord =
 			getDNSRecord(curi.getLong(A_FETCH_BEGAN_TIME), rrecordSet);
-		HttpRecorder rec = HttpRecorder.getHttpRecorder();
+		Recorder rec = Recorder.getHttpRecorder();
         // Shall we get a digest on the content downloaded?
-        boolean sha1Content = ((Boolean)getUncheckedAttribute(curi,
-            FetchHTTP.ATTR_SHA1_CONTENT)).booleanValue();
+        boolean sha1Content = ((Boolean)getUncheckedAttribute(curi, ""));
+//            FetchHTTP.ATTR_SHA1_CONTENT)).booleanValue();
         if(sha1Content) {
             rec.getRecordedInput().setSha1Digest();
         } else {

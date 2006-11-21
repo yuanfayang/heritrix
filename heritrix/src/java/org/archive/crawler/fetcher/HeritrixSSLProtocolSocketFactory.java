@@ -38,7 +38,6 @@ import javax.net.ssl.TrustManager;
 
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
-import org.archive.crawler.datamodel.ServerCache;
 import org.archive.httpclient.ConfigurableX509TrustManager;
 
 
@@ -113,10 +112,15 @@ implements SecureProtocolSocketFactory {
                 getParameter(FetchHTTP.SSL_FACTORY_KEY);
         	SSLSocketFactory f = (factory != null)? factory: this.sslDefaultFactory;
             socket = f.createSocket();
-            ServerCache cache = (ServerCache)params.
-                getParameter(FetchHTTP.SERVER_CACHE_KEY);
-            InetAddress hostAddress = (cache !=  null)?
-                HeritrixProtocolSocketFactory.getHostAddress(cache, host): null;
+            
+            Thread current = Thread.currentThread();
+            InetAddress hostAddress;
+            if (current instanceof HostResolver) {
+                HostResolver resolver = (HostResolver)current;
+                hostAddress = resolver.resolve(host);
+            } else {
+                hostAddress = null;
+            }
             InetSocketAddress address = (hostAddress != null)?
                     new InetSocketAddress(hostAddress, port):
                     new InetSocketAddress(host, port);
