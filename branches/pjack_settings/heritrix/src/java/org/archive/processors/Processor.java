@@ -24,12 +24,18 @@
 package org.archive.processors;
 
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.httpclient.HttpStatus;
+import org.archive.processors.credential.CredentialAvatar;
+import org.archive.processors.credential.Rfc2617Credential;
+import org.archive.net.UURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 
 
 /**
@@ -159,6 +165,47 @@ public abstract class Processor {
      */
     protected void innerRejectProcess(ProcessorURI uri) 
     throws InterruptedException {        
+    }
+
+    
+    public void initialTasks(StateProvider defaults) {
+    }
+
+
+    public void finalTasks(StateProvider defaults) {
+    }
+
+
+    public static String flattenVia(ProcessorURI puri) {
+        UURI uuri = puri.getVia();
+        return (uuri == null) ? "" : uuri.toString();
+    }
+
+    
+    public static boolean isSuccess(ProcessorURI puri) {
+        boolean result = false;
+        int statusCode = puri.getFetchStatus();
+        if (statusCode == HttpStatus.SC_UNAUTHORIZED &&
+            hasRfc2617CredentialAvatar(puri)) {
+            result = false;
+        } else {
+            result = (statusCode > 0);
+        }
+        return result;        
+    }
+    
+    
+    /**
+     * @return True if we have an rfc2617 payload.
+     */
+    public static boolean hasRfc2617CredentialAvatar(ProcessorURI puri) {
+        Set<CredentialAvatar> avatars = puri.getCredentialAvatars();
+        for (CredentialAvatar ca: avatars) {
+            if (ca.match(Rfc2617Credential.class)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
