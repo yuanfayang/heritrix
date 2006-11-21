@@ -23,14 +23,15 @@
  */
 package org.archive.crawler.prefetch;
 
-import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Scoper;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.processors.ProcessorURI;
+import org.archive.state.Key;
 import org.archive.util.TextUtils;
+
 
 /**
  * If set to recheck the crawl's scope, gives a yes/no on whether
@@ -45,106 +46,90 @@ import org.archive.util.TextUtils;
 public class Preselector extends Scoper
 implements FetchStatusCodes {
 
-    private static final long serialVersionUID = 3738560264369561017L;
+    private static final long serialVersionUID = 3L;
 
-    /** whether to reapply crawl scope at this step */
-    public static final String ATTR_RECHECK_SCOPE = "recheck-scope";
-    /** indicator allowing all URIs (of a given host, typically) to
-     * be blocked at this step*/
-    public static final String ATTR_BLOCK_ALL = "block-all";
-    /** indicator allowing all matching URIs to be blocked at this step */
-    public static final String ATTR_BLOCK_BY_REGEXP = "block-by-regexp";
-    /** indicator allowing all matching URIs */
-    public static final String ATTR_ALLOW_BY_REGEXP = "allow-by-regexp";
+
+    /**
+     * Recheck if uri is in scope. This is meaningful if the scope is altered
+     * during a crawl. URIs are checked against the scope when they are added to
+     * queues. Setting this value to true forces the URI to be checked against
+     * the scope when it is comming out of the queue, possibly after the scope
+     * is altered.
+     */    
+    final public static Key<Boolean> RECHECK_SCOPE = Key.makeExpert(false);
+
+
+    /**
+     * Block all URIs from being processed. This is most likely to be used in
+     * overrides to easily reject certain hosts from being processed.
+     */
+    final public static Key<Boolean> BLOCK_ALL = Key.makeExpert(false);
+
+    
+    /**
+     * Block all URIs matching the regular expression from being processed.
+     */
+    final public static Key<String> BLOCK_BY_REGEXP = Key.makeExpert("");
+
+
+    /**
+     * Allow only URIs matching the regular expression to be processed.
+     */
+    final public static Key<String> ALLOW_BY_REGEXP = Key.makeExpert("");
+
 
     /**
      * Constructor.
-     * @param name Name of this processor.
      */
-    public Preselector(String name) {
-        super(name, "Preselector. Does one last bit of checking to make " +
-            "sure that the current URI should be fetched.");
-        Type e;
-        e = addElementToDefinition(new SimpleType(ATTR_RECHECK_SCOPE,
-                "Recheck if uri is in scope. This is meaningful if the scope" +
-                " is altered during a crawl. URIs are checked against the" +
-                " scope when they are added to queues. Setting this value to" +
-                " true forces the URI to be checked against the scope when it" +
-                " is comming out of the queue, possibly after the scope is" +
-                " altered.", new Boolean(false)));
-        e.setExpertSetting(true);
-
-        e = addElementToDefinition(new SimpleType(ATTR_BLOCK_ALL,
-                "Block all URIs from being processed. This is most likely to" +
-                " be used in overrides to easily reject certain hosts from" +
-                " being processed.", new Boolean(false)));
-        e.setExpertSetting(true);
-
-        e = addElementToDefinition(new SimpleType(ATTR_BLOCK_BY_REGEXP,
-                "Block all URIs matching the regular expression from being" +
-                " processed.", ""));
-        e.setExpertSetting(true);
-
-        e = addElementToDefinition(new SimpleType(ATTR_ALLOW_BY_REGEXP,
-                "Allow only URIs matching the regular expression to be" +
-                " processed.", ""));
-        e.setExpertSetting(true);
+    public Preselector(CrawlController controller) {
+        super(controller);
     }
 
-    protected void innerProcess(CrawlURI curi) {
+    
+    protected boolean shouldProcess(ProcessorURI puri) {
+        return puri instanceof CrawlURI;
+    }
+
+
+    @Override
+    protected void innerProcess(ProcessorURI puri) {
+        CrawlURI curi = (CrawlURI)puri;
+        
         // Check if uris should be blocked
-        try {
-            if (((Boolean) getAttribute(ATTR_BLOCK_ALL, curi)).booleanValue()) {
+        if (curi.get(this, BLOCK_ALL)) {
+            curi.setFetchStatus(S_BLOCKED_BY_USER);
+            curi.skipToProcessorChain(getController().
+                getPostprocessorChain());
+        }
+
+        // Check if allowed by regular expression
+        String regexp = curi.get(this, ALLOW_BY_REGEXP);
+        if (regexp != null && !regexp.equals("")) {
+            if (!TextUtils.matches(regexp, curi.toString())) {
                 curi.setFetchStatus(S_BLOCKED_BY_USER);
                 curi.skipToProcessorChain(getController().
                     getPostprocessorChain());
             }
-        } catch (AttributeNotFoundException e) {
-            // Act as attribute was false, that is: do nothing.
         }
-
-        // Check if allowed by regular expression
-        try {
-            String regexp = (String) getAttribute(ATTR_ALLOW_BY_REGEXP, curi);
-            if (regexp != null && !regexp.equals("")) {
-                if (!TextUtils.matches(regexp, curi.toString())) {
-                    curi.setFetchStatus(S_BLOCKED_BY_USER);
-                    curi.skipToProcessorChain(getController().
-                        getPostprocessorChain());
-                }
-            }
-        } catch (AttributeNotFoundException e) {
-            // Act as regexp was null, that is: do nothing.
-        }
-
 
         // Check if blocked by regular expression
-        try {
-            String regexp = (String) getAttribute(ATTR_BLOCK_BY_REGEXP, curi);
-            if (regexp != null && !regexp.equals("")) {
-                if (TextUtils.matches(regexp, curi.toString())) {
-                    curi.setFetchStatus(S_BLOCKED_BY_USER);
-                    curi.skipToProcessorChain(getController().
-                        getPostprocessorChain());
-                }
+        regexp = curi.get(this, BLOCK_BY_REGEXP);
+        if (regexp != null && !regexp.equals("")) {
+            if (TextUtils.matches(regexp, curi.toString())) {
+                curi.setFetchStatus(S_BLOCKED_BY_USER);
+                curi.skipToProcessorChain(getController().
+                    getPostprocessorChain());
             }
-        } catch (AttributeNotFoundException e) {
-            // Act as regexp was null, that is: do nothing.
         }
 
         // Possibly recheck scope
-        try {
-            if (((Boolean) getAttribute(ATTR_RECHECK_SCOPE, curi)).
-                    booleanValue()) {
-                if (!isInScope(curi)) {
-                    // Scope rejected
-                    curi.setFetchStatus(S_OUT_OF_SCOPE);
-                    curi.skipToProcessorChain(getController().
-                        getPostprocessorChain());
-                }
+        if (curi.get(this, RECHECK_SCOPE)) {
+            if (!isInScope(curi)) {
+                // Scope rejected
+                curi.setFetchStatus(S_OUT_OF_SCOPE);
+                curi.skipToProcessorChain(getController().
+                    getPostprocessorChain());
             }
-        } catch (AttributeNotFoundException e) {
-            // Act as attribute was false, that is: do nothing.
         }
     }
 }

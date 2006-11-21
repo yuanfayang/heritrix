@@ -28,21 +28,20 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.processors.credential.Credential;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.credential.CredentialStore;
 import org.archive.processors.fetcher.CrawlHost;
+import org.archive.state.Key;
 
 /**
  * Ensures the preconditions for a fetch -- such as DNS lookup 
@@ -55,59 +54,52 @@ public class PreconditionEnforcer
         extends Processor
         implements CoreAttributeConstants, FetchStatusCodes {
 
-    private static final long serialVersionUID = 4636474153589079615L;
+    private static final long serialVersionUID = 3L;
 
     private static final Logger logger =
         Logger.getLogger(PreconditionEnforcer.class.getName());
 
-    private final static Integer DEFAULT_IP_VALIDITY_DURATION = 
-        new Integer(60*60*6); // six hours 
-    private final static Integer DEFAULT_ROBOTS_VALIDITY_DURATION =
-        new Integer(60*60*24); // one day
 
-    /** seconds to keep IP information for */
-    public final static String ATTR_IP_VALIDITY_DURATION
-        = "ip-validity-duration-seconds";
-    /** seconds to cache robots info */
-    public final static String ATTR_ROBOTS_VALIDITY_DURATION
-        = "robot-validity-duration-seconds";
+    /**
+     * The minimum interval for which a dns-record will be considered valid (in
+     * seconds). If the record's DNS TTL is larger, that will be used instead.
+     */
+    final public static Key<Integer> IP_VALIDITY_DURATION_SECONDS =
+        Key.makeExpert(60*60*6);
 
-    /** whether to calculate robots exclusion without applying */
-    public final static Boolean DEFAULT_CALCULATE_ROBOTS_ONLY = Boolean.FALSE;
-    public final static String ATTR_CALCULATE_ROBOTS_ONLY 
-        = "calculate-robots-only";
+
+    /**
+     * The time in seconds that fetched robots.txt information is considered to
+     * be valid. If the value is set to '0', then the robots.txt information
+     * will never expire.
+     */
+    final public static Key<Integer> ROBOTS_VALIDITY_DURATION_SECONDS =
+        Key.makeExpert(60*60*24);
+
+
+    /**
+     * Whether to only calculate the robots status of an URI, without actually
+     * applying any exclusions found. If true, exlcuded URIs will only be
+     * annotated in the crawl.log, but still fetched. Default is false.
+     */
+    final public static Key<Boolean> CALCULATE_ROBOTS_ONLY = Key.makeExpert(true);
+
+
+    final CrawlController controller;
     
-    public PreconditionEnforcer(String name) {
-        super(name, "Precondition enforcer");
-
-        Type e;
-
-        e = addElementToDefinition(new SimpleType(ATTR_IP_VALIDITY_DURATION,
-                "The minimum interval for which a dns-record will be considered " +
-                "valid (in seconds). " +
-                "If the record's DNS TTL is larger, that will be used instead.",
-                DEFAULT_IP_VALIDITY_DURATION));
-        e.setExpertSetting(true);
-
-        e = addElementToDefinition(new SimpleType(ATTR_ROBOTS_VALIDITY_DURATION,
-                "The time in seconds that fetched robots.txt information is " +
-                "considered to be valid. " +
-                "If the value is set to '0', then the robots.txt information" +
-                " will never expire.",
-                DEFAULT_ROBOTS_VALIDITY_DURATION));
-        e.setExpertSetting(true);
-        
-        e = addElementToDefinition(new SimpleType(ATTR_CALCULATE_ROBOTS_ONLY,
-                "Whether to only calculate the robots status of an URI, " +
-                "without actually applying any exclusions found. If true, " +
-                "exlcuded URIs will only be annotated in the crawl.log, but " +
-                "still fetched. Default is false. ",
-                DEFAULT_CALCULATE_ROBOTS_ONLY));
-        e.setExpertSetting(true);
+    
+    public PreconditionEnforcer(CrawlController controller) {
+        this.controller = controller;
     }
 
-    protected void innerProcess(CrawlURI curi) {
+    
+    protected boolean shouldProcess(ProcessorURI puri) {
+        return (puri instanceof CrawlURI);
+    }
+    
 
+    protected void innerProcess(ProcessorURI puri) {
+        CrawlURI curi = (CrawlURI)puri;
         if (considerDnsPreconditions(curi)) {
             return;
         }
@@ -141,7 +133,7 @@ public class PreconditionEnforcer
     /**
      * Consider the robots precondition.
      *
-     * @param curi CrawlURI we're checking for any required preconditions.
+     * @param curi ProcessorURI we're checking for any required preconditions.
      * @return True, if this <code>curi</code> has a precondition or processing
      *         should be terminated for some other reason.  False if
      *         we can precede to process this url.
@@ -165,7 +157,7 @@ public class PreconditionEnforcer
         	// Need to get robots
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine( "No valid robots for " +
-                    getController().getServerCache().getServerFor(curi) +
+                    controller.getServerCache().getServerFor(curi.getUURI()) +
                     "; deferring " + curi);
             }
 
@@ -173,8 +165,7 @@ public class PreconditionEnforcer
             // crawled.
             try {
                 String prereq = curi.getUURI().resolve("/robots.txt").toString();
-                curi.markPrerequisite(prereq,
-                    getController().getPostprocessorChain());
+                curi.markPrerequisite(prereq);
             }
             catch (URIException e1) {
                 logger.severe("Failed resolve using " + curi);
@@ -183,13 +174,13 @@ public class PreconditionEnforcer
             return true;
         }
         // test against robots.txt if available
-        CrawlServer cs = getController().getServerCache().getServerFor(curi);
+        CrawlServer cs = controller.getServerCache().getServerFor(curi.getUURI());
         if(cs.isValidRobots()){
-            String ua = getController().getOrder().getUserAgent(curi);
+            String ua = controller.getOrder().getUserAgent(curi);
             if(cs.getRobots().disallows(curi, ua)) {
-                if(((Boolean)getUncheckedAttribute(curi,ATTR_CALCULATE_ROBOTS_ONLY)).booleanValue() == true) {
+                if(curi.get(this, CALCULATE_ROBOTS_ONLY)) {
                     // annotate URI as excluded, but continue to process normally
-                    curi.addAnnotation("robotExcluded");
+                    curi.getAnnotations().add("robotExcluded");
                     return false; 
                 }
                 // mark as precluded; in FetchHTTP, this will
@@ -197,16 +188,16 @@ public class PreconditionEnforcer
                 // of processing (unless an intervening processor
                 // overrules)
                 curi.setFetchStatus(S_ROBOTS_PRECLUDED);
-                curi.putString("error","robots.txt exclusion");
+                curi.setError("robots.txt exclusion");
                 logger.fine("robots.txt precluded " + curi);
                 return true;
             }
             return false;
         }
         // No valid robots found => Attempt to get robots.txt failed
-        curi.skipToProcessorChain(getController().getPostprocessorChain());
+        curi.skipToPostProcessing();
         curi.setFetchStatus(S_ROBOTS_PREREQUISITE_FAILURE);
-        curi.putString("error","robots.txt prerequisite failed");
+        curi.setError("robots.txt prerequisite failed");
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("robots.txt prerequisite failed " + curi);
         }
@@ -214,7 +205,7 @@ public class PreconditionEnforcer
     }
 
     /**
-     * @param curi CrawlURI whose dns prerequisite we're to check.
+     * @param curi ProcessorURI whose dns prerequisite we're to check.
      * @return true if no further processing in this module should occur
      */
     private boolean considerDnsPreconditions(CrawlURI curi) {
@@ -224,36 +215,35 @@ public class PreconditionEnforcer
             return false; 
         }
         
-        CrawlServer cs = getController().getServerCache().getServerFor(curi);
+        CrawlServer cs = controller.getServerCache().getServerFor(curi.getUURI());
         if(cs == null) {
             curi.setFetchStatus(S_UNFETCHABLE_URI);
-            curi.skipToProcessorChain(getController().getPostprocessorChain());
+            curi.skipToPostProcessing();
             return true;
         }
 
         // If we've done a dns lookup and it didn't resolve a host
         // cancel further fetch-processing of this URI, because
         // the domain is unresolvable
-        CrawlHost ch = getController().getServerCache().getHostFor(curi);
+        CrawlHost ch = controller.getServerCache().getHostFor(curi.getUURI());
         if (ch == null || ch.hasBeenLookedUp() && ch.getIP() == null) {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine( "no dns for " + ch +
-                    " cancelling processing for CrawlURI " + curi.toString());
+                    " cancelling processing for ProcessorURI " + curi.toString());
             }
             curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
-            curi.skipToProcessorChain(getController().getPostprocessorChain());
+            curi.skipToPostProcessing();
             return true;
         }
 
         // If we haven't done a dns lookup  and this isn't a dns uri
         // shoot that off and defer further processing
         if (isIpExpired(curi) && !curi.getUURI().getScheme().equals("dns")) {
-            logger.fine("Deferring processing of CrawlURI " + curi.toString()
+            logger.fine("Deferring processing of ProcessorURI " + curi.toString()
                 + " for dns lookup.");
             String preq = "dns:" + ch.getHostName();
             try {
-                curi.markPrerequisite(preq,
-                    getController().getPostprocessorChain());
+                curi.markPrerequisite(preq);
             } catch (URIException e) {
                 throw new RuntimeException(e); // shouldn't ever happen
             }
@@ -271,15 +261,8 @@ public class PreconditionEnforcer
      * @return the maximum time a dns-record is valid -- in seconds -- or
      * negative if record's ttl should be used.
      */
-    public long getIPValidityDuration(CrawlURI curi) {
-        Integer d;
-        try {
-            d = (Integer)getAttribute(ATTR_IP_VALIDITY_DURATION, curi);
-        } catch (AttributeNotFoundException e) {
-            d = DEFAULT_IP_VALIDITY_DURATION;
-        }
-
-        return d.longValue();
+    public long getIPValidityDuration(ProcessorURI curi) {
+        return curi.get(this, IP_VALIDITY_DURATION_SECONDS);
     }
 
     /** Return true if ip should be looked up.
@@ -287,8 +270,8 @@ public class PreconditionEnforcer
      * @param curi the URI to check.
      * @return true if ip should be looked up.
      */
-    public boolean isIpExpired(CrawlURI curi) {
-        CrawlHost host = getController().getServerCache().getHostFor(curi);
+    public boolean isIpExpired(ProcessorURI curi) {
+        CrawlHost host = controller.getServerCache().getHostFor(curi.getUURI());
         if (!host.hasBeenLookedUp()) {
             // IP has not been looked up yet.
             return true;
@@ -309,7 +292,7 @@ public class PreconditionEnforcer
         // catch old "default" -1 settings that are now problematic,
         // convert to new minimum
         if (duration <= 0) {
-            duration = DEFAULT_IP_VALIDITY_DURATION.intValue();
+            duration = IP_VALIDITY_DURATION_SECONDS.getDefaultValue();
         }
         
         long ttl = host.getIpTTL();
@@ -332,17 +315,8 @@ public class PreconditionEnforcer
      * @param curi
      * @return the time a robots.txt is valid in milliseconds.
      */
-    public long getRobotsValidityDuration(CrawlURI curi) {
-        Integer d;
-        try {
-            d = (Integer) getAttribute(ATTR_ROBOTS_VALIDITY_DURATION, curi);
-        } catch (AttributeNotFoundException e) {
-            // This should never happen, but if it does, return default
-            logger.severe(e.getLocalizedMessage());
-            d = DEFAULT_ROBOTS_VALIDITY_DURATION;
-        }
-        // convert from seconds to milliseconds
-        return d.longValue() * 1000;
+    public long getRobotsValidityDuration(ProcessorURI curi) {
+        return curi.get(this, ROBOTS_VALIDITY_DURATION_SECONDS) * 1000L;
     }
 
     /**
@@ -354,9 +328,9 @@ public class PreconditionEnforcer
      * @param curi
      * @return true if the robots policy is expired.
      */
-    public boolean isRobotsExpired(CrawlURI curi) {
+    public boolean isRobotsExpired(ProcessorURI curi) {
         CrawlServer server =
-            getController().getServerCache().getServerFor(curi);
+            controller.getServerCache().getServerFor(curi.getUURI());
         long robotsFetched = server.getRobotsFetchedTime();
         if (robotsFetched == CrawlServer.ROBOTS_NOT_FETCHED) {
             // Have not attempted to fetch robots
@@ -387,7 +361,7 @@ public class PreconditionEnforcer
     * Argument for running the code everytime is that overrides and refinements
     * may change what comes back from credential store.
     *
-    * @param curi CrawlURI we're checking for any required preconditions.
+    * @param curi ProcessorURI we're checking for any required preconditions.
     * @return True, if this <code>curi</code> has a precondition that needs to
     *         be met before we can proceed. False if we can precede to process
     *         this url.
@@ -396,21 +370,13 @@ public class PreconditionEnforcer
 
         boolean result = false;
 
-        CredentialStore cs =
-            CredentialStore.getCredentialStore(getSettingsHandler());
+        CredentialStore cs = controller.getCredentialStore();
         if (cs == null) {
             logger.severe("No credential store for " + curi);
             return result;
         }
 
-        Iterator i = cs.iterator(curi);
-        if (i == null) {
-            return result;
-        }
-
-        while (i.hasNext()) {
-            Credential c = (Credential)i.next();
-
+        for (Credential c: cs.getAll(curi)) {
             if (c.isPrerequisite(curi)) {
                 // This credential has a prereq. and this curi is it.  Let it
                 // through.  Add its avatar to the curi as a mark.  Also, does
@@ -419,11 +385,11 @@ public class PreconditionEnforcer
                 // credential domain because such as yahoo have you go to
                 // another domain altogether to login.
                 c.attach(curi);
-                curi.setPost(c.isPost(curi));
+                curi.setFetchType(ProcessorURI.FetchType.HTTP_POST);
                 break;
             }
 
-            if (!c.rootUriMatch(getController(), curi)) {
+            if (!c.rootUriMatch(controller, curi)) {
                 continue;
             }
 
@@ -438,17 +404,16 @@ public class PreconditionEnforcer
                 String prereq = c.getPrerequisite(curi);
                 if (prereq == null || prereq.length() <= 0) {
                     CrawlServer server =
-                        getController().getServerCache().getServerFor(curi);
+                        controller.getServerCache().getServerFor(curi.getUURI());
                     logger.severe(server.getName() + " has "
                         + " credential(s) of type " + c + " but prereq"
                         + " is null.");
                 } else {
                     try {
-                        curi.markPrerequisite(prereq,
-                            getController().getPostprocessorChain());
+                        curi.markPrerequisite(prereq);
                     } catch (URIException e) {
                         logger.severe("unable to set credentials prerequisite "+prereq);
-                        getController().logUriError(e,curi.getUURI(),prereq);
+                        controller.logUriError(e,curi.getUURI(),prereq);
                         return false; 
                     }
                     result = true;
@@ -467,14 +432,14 @@ public class PreconditionEnforcer
      * Has passed credential already been authenticated.
      *
      * @param credential Credential to test.
-     * @param curi CrawlURI.
+     * @param curi ProcessorURI.
      * @return True if already run.
      */
     private boolean authenticated(final Credential credential,
-            final CrawlURI curi) {
+            final ProcessorURI curi) {
         boolean result = false;
         CrawlServer server =
-            getController().getServerCache().getServerFor(curi);
+            controller.getServerCache().getServerFor(curi.getUURI());
         if (!server.hasCredentialAvatars()) {
             return result;
         }
@@ -482,13 +447,7 @@ public class PreconditionEnforcer
         for (Iterator i = avatars.iterator(); i.hasNext();) {
             CredentialAvatar ca = (CredentialAvatar)i.next();
             String key = null;
-            try {
-                key = credential.getKey(curi);
-            } catch (AttributeNotFoundException e) {
-                logger.severe("Failed getting key for " + credential +
-                    " for " + curi);
-                continue;
-            }
+            key = credential.getKey(curi);
             if (ca.match(credential.getClass(), key)) {
                 result = true;
             }
