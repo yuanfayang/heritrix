@@ -49,7 +49,7 @@ import org.archive.io.ReplayInputStream;
  *
  * @author gojomo
  */
-public class HttpRecorder {
+public class Recorder {
     protected static Logger logger =
         Logger.getLogger("org.archive.util.HttpRecorder");
 
@@ -86,7 +86,7 @@ public class HttpRecorder {
      * Used internally for case where we're wrapping an already
      * downloaded stream with a HttpRecorder.
      */
-    protected HttpRecorder() {
+    protected Recorder() {
         super();
     }
     
@@ -101,7 +101,7 @@ public class HttpRecorder {
      * @param outBufferSize Size of output buffer to use.
      * @param inBufferSize Size of input buffer to use.
      */
-    public HttpRecorder(File tempDir, String backingFilenameBase, 
+    public Recorder(File tempDir, String backingFilenameBase, 
             int outBufferSize, int inBufferSize) {
         super();
         tempDir.mkdirs();
@@ -125,7 +125,7 @@ public class HttpRecorder {
      *            <code>ris</code> for recorded input stream and
      *            <code>ros</code> for recorded output stream.
      */
-    public HttpRecorder(File tempDir, String backingFilenameBase) {
+    public Recorder(File tempDir, String backingFilenameBase) {
         this(tempDir, backingFilenameBase, DEFAULT_INPUT_BUFFER_SIZE,
                 DEFAULT_OUTPUT_BUFFER_SIZE);
     }
@@ -261,11 +261,11 @@ public class HttpRecorder {
      * @return This threads' HttpRecorder.  Returns null if can't find a
      * HttpRecorder in current instance.
      */
-    public static HttpRecorder getHttpRecorder() {
-        HttpRecorder recorder = null;
+    public static Recorder getHttpRecorder() {
+        Recorder recorder = null;
         Thread thread = Thread.currentThread();
-        if (thread instanceof HttpRecorderMarker) {
-            recorder = ((HttpRecorderMarker)thread).getHttpRecorder();
+        if (thread instanceof RecorderMarker) {
+            recorder = ((RecorderMarker)thread).getHttpRecorder();
         }
         return recorder;
     }
@@ -313,12 +313,12 @@ public class HttpRecorder {
      * @param in Stream to read.
      * @param encoding Stream encoding.
      * @throws IOException
-     * @return An {@link org.archive.util.HttpRecorder}.
+     * @return An {@link org.archive.util.Recorder}.
      */
-    public static HttpRecorder wrapInputStreamWithHttpRecord(File dir,
+    public static Recorder wrapInputStreamWithHttpRecord(File dir,
         String basename, InputStream in, String encoding)
     throws IOException {
-        HttpRecorder rec = new HttpRecorder(dir, basename);
+        Recorder rec = new Recorder(dir, basename);
         if (encoding != null && encoding.length() > 0) {
             rec.setCharacterEncoding(encoding);
         }

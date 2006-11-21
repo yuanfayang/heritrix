@@ -29,10 +29,10 @@ package org.archive.util;
  * @author stack
  * @version $Id$
  */
-public interface HttpRecorderMarker
+public interface RecorderMarker
 {
 	/**
      * @return An instance of HttpRecorder.
 	 */
-    public HttpRecorder getHttpRecorder();
+    public Recorder getHttpRecorder();
 }
