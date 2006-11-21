@@ -43,6 +43,7 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.url.canonicalize.BaseRule;
+import org.archive.processors.credential.CredentialStore;
 import org.archive.settings.Sheet;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;

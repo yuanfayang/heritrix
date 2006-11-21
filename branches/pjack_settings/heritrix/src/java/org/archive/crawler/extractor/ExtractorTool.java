@@ -54,7 +54,7 @@ import org.archive.io.arc.ARCReader;
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.arc.ARCRecord;
 import org.archive.net.UURIFactory;
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 import org.archive.util.OneLineSimpleLogger;
 
 /**
@@ -135,7 +135,7 @@ public class ExtractorTool {
         ARCReader reader = ARCReaderFactory.get(new File(resource));
         for (Iterator i = reader.iterator(); i.hasNext();) {
             ARCRecord ar = (ARCRecord)i.next();
-            HttpRecorder hr = HttpRecorder.
+            Recorder hr = Recorder.
                 wrapInputStreamWithHttpRecord(this.scratchDir,
                     this.getClass().getName(), ar, null);
             CrawlURI curi = getCrawlURI(ar, hr);
@@ -155,7 +155,7 @@ public class ExtractorTool {
     }
     
     protected CrawlURI getCrawlURI(final ARCRecord record,
-            final HttpRecorder hr)
+            final Recorder hr)
     throws URIException {
         CrawlURI curi = new CrawlURI(UURIFactory.
             getInstance(record.getMetaData().getUrl()));

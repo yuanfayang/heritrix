@@ -51,7 +51,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 // HERITRIX import.
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 
 /**
  * An abstraction of an HTTP {@link InputStream} and {@link OutputStream}
@@ -744,7 +744,7 @@ public class HttpConnection {
             }
             
             // START HERITRIX Change
-            HttpRecorder httpRecorder = HttpRecorder.getHttpRecorder();
+            Recorder httpRecorder = Recorder.getHttpRecorder();
             if (httpRecorder == null || (isSecure() && isProxied())) {
                 // no recorder, OR defer recording for pre-tunnel leg
                 inputStream = new BufferedInputStream(
@@ -819,7 +819,7 @@ public class HttpConnection {
         }
 
         // START HERITRIX Change
-        HttpRecorder httpRecorder = HttpRecorder.getHttpRecorder();
+        Recorder httpRecorder = Recorder.getHttpRecorder();
         if (httpRecorder == null) {
             inputStream = new BufferedInputStream(socket.getInputStream(), inbuffersize);
             outputStream = new BufferedOutputStream(socket.getOutputStream(), outbuffersize);

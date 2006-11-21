@@ -34,10 +34,11 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.processors.fetcher.HostResolver;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
-import org.archive.util.HttpRecorder;
-import org.archive.util.HttpRecorderMarker;
+import org.archive.util.Recorder;
+import org.archive.util.RecorderMarker;
 import org.archive.util.ProgressStatisticsReporter;
 import org.archive.util.Reporter;
 
@@ -50,8 +51,8 @@ import com.sleepycat.util.RuntimeExceptionWrapper;
  * @author Gordon Mohr
  */
 public class ToeThread extends Thread
-implements CoreAttributeConstants, FetchStatusCodes, HttpRecorderMarker,
-Reporter, ProgressStatisticsReporter {
+implements CoreAttributeConstants, FetchStatusCodes, RecorderMarker,
+Reporter, ProgressStatisticsReporter, HostResolver {
     private static final String STEP_NASCENT = "NASCENT";
     private static final String STEP_ABOUT_TO_GET_URI = "ABOUT_TO_GET_URI";
     private static final String STEP_FINISHED = "FINISHED";
@@ -77,9 +78,9 @@ Reporter, ProgressStatisticsReporter {
      * Each ToeThead has an instance of HttpRecord that gets used
      * over and over by each request.
      * 
-     * @see org.archive.util.HttpRecorderMarker
+     * @see org.archive.util.RecorderMarker
      */
-    private HttpRecorder httpRecorder = null;
+    private Recorder httpRecorder = null;
     
     private HashMap<String,Processor> localProcessors
      = new HashMap<String,Processor>();
@@ -122,7 +123,7 @@ Reporter, ProgressStatisticsReporter {
                 .getOrder()
                 .getUncheckedAttribute(null, CrawlOrder.ATTR_RECORDER_IN_BUFFER))
                 .intValue();  
-        httpRecorder = new HttpRecorder(controller.getScratchDisk(),
+        httpRecorder = new Recorder(controller.getScratchDisk(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
     }
@@ -374,9 +375,9 @@ Reporter, ProgressStatisticsReporter {
      * Used to get current threads HttpRecorder instance.
      * Implementation of the HttpRecorderMarker interface.
      * @return Returns instance of HttpRecorder carried by this thread.
-     * @see org.archive.util.HttpRecorderMarker#getHttpRecorder()
+     * @see org.archive.util.RecorderMarker#getHttpRecorder()
      */
-    public HttpRecorder getHttpRecorder() {
+    public Recorder getHttpRecorder() {
         return this.httpRecorder;
     }
     

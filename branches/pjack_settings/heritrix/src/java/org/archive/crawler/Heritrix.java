@@ -98,8 +98,6 @@ import org.apache.commons.cli.Option;
 import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.admin.CrawlJobErrorHandler;
 import org.archive.crawler.admin.CrawlJobHandler;
-import org.archive.crawler.datamodel.CredentialStore;
-import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.framework.AlertManager;
 import org.archive.crawler.framework.CrawlController;
@@ -110,6 +108,8 @@ import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.io.SinkHandler;
 import org.archive.io.SinkHandlerLogRecord;
 import org.archive.net.UURI;
+import org.archive.processors.credential.Credential;
+import org.archive.processors.credential.CredentialStore;
 import org.archive.util.FileUtils;
 import org.archive.util.IoUtils;
 import org.archive.util.JmxUtils;
@@ -1001,7 +1001,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         h.getJobHandler().addJob(job);
         // Before we start, need to change some items in the settings file.
         CredentialStore cs = (CredentialStore)job.getSettingsHandler().
-            getOrder().getAttribute(CredentialStore.ATTR_NAME);
+            getOrder().getAttribute(org.archive.processors.credential.ATTR_NAME);
         for (Iterator i = cs.iterator(null); i.hasNext();) {
             ((Credential)i.next()).setCredentialDomain(null, ROOTURI);
         }

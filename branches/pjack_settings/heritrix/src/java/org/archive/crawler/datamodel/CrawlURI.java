@@ -36,8 +36,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.credential.CredentialAvatar;
-import org.archive.crawler.datamodel.credential.Rfc2617Credential;
 import org.archive.crawler.extractor.Link;
 import org.archive.crawler.framework.Processor;
 import org.archive.crawler.framework.ProcessorChain;
@@ -45,9 +43,11 @@ import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
+import org.archive.processors.credential.CredentialAvatar;
+import org.archive.processors.credential.Rfc2617Credential;
 import org.archive.state.Key;
 import org.archive.util.Base32;
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 
 import st.ata.util.AList;
 import st.ata.util.HashtableAList;
@@ -121,7 +121,7 @@ implements FetchStatusCodes, ProcessorURI {
      *
      * Gets set upon successful request.  Reset at start of processing chain.
      */
-    private transient HttpRecorder httpRecorder = null;
+    private transient Recorder httpRecorder = null;
 
     /**
      * Content type of a successfully fetched URI.
@@ -822,7 +822,7 @@ implements FetchStatusCodes, ProcessorURI {
      * @return Returns the httpRecorder.  May be null but its set early in
      * FetchHttp so there is an issue if its null.
      */
-    public HttpRecorder getHttpRecorder() {
+    public Recorder getHttpRecorder() {
         return httpRecorder;
     }
 
@@ -831,7 +831,7 @@ implements FetchStatusCodes, ProcessorURI {
      *
      * @param httpRecorder The httpRecorder to set.
      */
-    public void setHttpRecorder(HttpRecorder httpRecorder) {
+    public void setHttpRecorder(Recorder httpRecorder) {
         this.httpRecorder = httpRecorder;
     }
 
