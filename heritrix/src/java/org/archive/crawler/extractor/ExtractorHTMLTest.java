@@ -45,7 +45,7 @@ import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -60,7 +60,7 @@ extends TmpDirTestCase
 implements CoreAttributeConstants {
     private final String ARCHIVE_DOT_ORG = "archive.org";
     private final String LINK_TO_FIND = "http://www.hewlett.org/";
-    private HttpRecorder recorder = null;
+    private Recorder recorder = null;
     private ExtractorHTML extractor = null;
     
     protected ExtractorHTML createExtractor()
@@ -98,7 +98,7 @@ implements CoreAttributeConstants {
             fos.flush();
             fos.close();
         }
-        this.recorder = HttpRecorder.wrapInputStreamWithHttpRecord(getTmpDir(),
+        this.recorder = Recorder.wrapInputStreamWithHttpRecord(getTmpDir(),
             this.getClass().getName(), url.openStream(), null);
     }
 
@@ -125,7 +125,7 @@ implements CoreAttributeConstants {
         assertTrue("Did not find gif url", foundLinkToHewlettFoundation);
     }
     
-    private CrawlURI setupCrawlURI(HttpRecorder rec, String url)
+    private CrawlURI setupCrawlURI(Recorder rec, String url)
     		throws URIException {
         CrawlURI curi = new CrawlURI(UURIFactory.getInstance(url));
         curi.setContentSize(this.recorder.getRecordedInput().getSize());
@@ -192,7 +192,7 @@ implements CoreAttributeConstants {
         }
         this.extractor = createExtractor();
         URL url = new URL(baseUURI.toString());
-        this.recorder = HttpRecorder.
+        this.recorder = Recorder.
             wrapInputStreamWithHttpRecord(getTmpDir(),
             this.getClass().getName(), url.openStream(), encoding);
         CrawlURI curi = setupCrawlURI(this.recorder, url.toString());

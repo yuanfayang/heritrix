@@ -27,7 +27,7 @@ package org.archive.net;
 
 import java.io.IOException;
 
-import org.archive.crawler.fetcher.FetchFTP;
+import org.archive.processors.fetcher.FetchFTP;
 import org.archive.util.ArchiveUtils;
 
 

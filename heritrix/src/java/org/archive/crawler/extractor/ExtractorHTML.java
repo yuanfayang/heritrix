@@ -40,7 +40,7 @@ import org.archive.io.ReplayCharSequence;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.DevUtils;
-import org.archive.util.HttpRecorder;
+import org.archive.util.Recorder;
 import org.archive.util.TextUtils;
 
 /**
@@ -490,7 +490,7 @@ implements CoreAttributeConstants {
         ReplayCharSequence cs = null;
         
         try {
-           HttpRecorder hr = curi.getHttpRecorder();
+           Recorder hr = curi.getHttpRecorder();
            if (hr == null) {
                throw new IOException("Why is recorder null here?");
            }

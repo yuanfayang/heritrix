@@ -33,9 +33,10 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
-import org.archive.crawler.datamodel.credential.Credential;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.SettingsFrameworkTestCase;
+import org.archive.processors.credential.Credential;
+import org.archive.processors.credential.CredentialStore;
 
 
 /**
@@ -55,7 +56,7 @@ public class CredentialStoreTest extends SettingsFrameworkTestCase {
         ReflectionException {
 
         CredentialStore store = (CredentialStore)this.settingsHandler.
-            getOrder().getAttribute(CredentialStore.ATTR_NAME);
+            getOrder().getAttribute(org.archive.processors.credential.ATTR_NAME);
         writeCrendentials(store, this.getGlobalSettings(), "global");
         writeCrendentials(store, this.getPerDomainSettings(), "domain");
         writeCrendentials(store, this.getPerHostSettings(), "host");

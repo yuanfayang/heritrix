@@ -34,11 +34,11 @@ import java.util.Set;
 import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.credential.CredentialAvatar;
 import org.archive.crawler.framework.Checkpointer;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.io.ReplayInputStream;
 import org.archive.net.UURIFactory;
+import org.archive.processors.credential.CredentialAvatar;
 import org.archive.settings.SheetManager;
 
 /**
