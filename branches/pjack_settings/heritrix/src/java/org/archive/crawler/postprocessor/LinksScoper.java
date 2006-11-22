@@ -36,11 +36,12 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.extractor.Link;
-import org.archive.crawler.framework.Filter;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Scoper;
-import org.archive.crawler.settings.MapType;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.processors.ProcessorURI;
+import org.archive.processors.deciderules.DecideResult;
+import org.archive.processors.deciderules.DecideRuleSequence;
+import org.archive.state.Key;
 
 /**
  * Determine which extracted links are within scope.
@@ -59,93 +60,83 @@ import org.archive.crawler.settings.Type;
 public class LinksScoper extends Scoper
 implements FetchStatusCodes {
 
-    private static final long serialVersionUID = -4074442117992496793L;
+    private static final long serialVersionUID = -3L;
 
     private static Logger LOGGER =
         Logger.getLogger(LinksScoper.class.getName());
 
-    private final static String ATTR_SEED_REDIRECTS_NEW_SEEDS =
-        "seed-redirects-new-seed";
-    
-    private final static Boolean DEFAULT_SEED_REDIRECTS_NEW_SEEDS =
-        new Boolean(true);
-    
-    public static final String ATTR_LOG_REJECT_FILTERS =
-        "scope-rejected-url-filters";
-    
-    public static final String ATTR_PREFERENCE_DEPTH_HOPS =
-        "preference-depth-hops";
+    /**
+     * If enabled, any URL found because a seed redirected to it (original seed
+     * returned 301 or 302), will also be treated as a seed.
+     */
+    final public static Key<Boolean> SEED_REDIRECTS_NEW_SEEDS = 
+        Key.makeExpert(true);
 
-    private final static Integer DEFAULT_PREFERENCE_DEPTH_HOPS =
-        new Integer(-1);
     
     /**
-     * Instance of rejected uris log filters.
+     * DecideRules applied after an URI has been rejected. If the rules return
+     * {@link DecideResult#ACCEPT}, the URI is logged (if the logging level is
+     * INFO). Depends on {@link Scoper#OVERRIDE_LOGGER} being enabled.
      */
-    private MapType rejectLogFilters = null;
+    final public static Key<DecideRuleSequence> REJECT_RULES = 
+        Key.makeExpert(new DecideRuleSequence());
+
+    
+    /**
+     * Number of hops (of any sort) from a seed up to which a URI has higher
+     * priority scheduling than any remaining seed. For example, if set to 1
+     * items one hop (link, embed, redirect, etc.) away from a seed will be
+     * scheduled with HIGH priority. If set to -1, no preferencing will occur,
+     * and a breadth-first search with seeds processed before discovered links
+     * will proceed. If set to zero, a purely depth-first search will proceed,
+     * with all discovered links processed before remaining seeds. Seed
+     * redirects are treated as one hop from a seed.
+     */
+    final public static Key<Integer> PREFERENCE_DEPTH_HOPS = Key.makeExpert(-1);
+    
     
     /**
      * @param name Name of this filter.
      */
-    public LinksScoper(String name) {
-        super(name, "LinksScoper. Rules on which extracted links " +
-            "are within configured scope.");
-        
-        Type t;
-        t = addElementToDefinition(
-            new SimpleType(ATTR_SEED_REDIRECTS_NEW_SEEDS,
-            "If enabled, any URL found because a seed redirected to it " +
-            "(original seed returned 301 or 302), will also be treated " +
-            "as a seed.", DEFAULT_SEED_REDIRECTS_NEW_SEEDS));
-        t.setExpertSetting(true);
-
-        t = addElementToDefinition(new SimpleType(ATTR_PREFERENCE_DEPTH_HOPS,
-            "Number of hops (of any sort) from a seed up to which a URI has higher " +
-        "priority scheduling than any remaining seed. For example, if set to 1 items one " + 
-        "hop (link, embed, redirect, etc.) away from a seed will be scheduled " + 
-        "with HIGH priority. If set to -1, no " + 
-        "preferencing will occur, and a breadth-first search with seeds " + 
-        "processed before discovered links will proceed. If set to zero, a " + 
-        "purely depth-first search will proceed, with all discovered links processed " + 
-        "before remaining seeds.  Seed redirects are treated as one hop from a seed.",
-        DEFAULT_PREFERENCE_DEPTH_HOPS));
-        t.setExpertSetting(true);
-        
-        this.rejectLogFilters = (MapType)addElementToDefinition(
-            new MapType(ATTR_LOG_REJECT_FILTERS, "Filters applied after " +
-               "an URI has been rejected. If filter return " +
-               "TRUE, the URI is logged (if the logging level is INFO). " +
-               "Depends on " + ATTR_OVERRIDE_LOGGER_ENABLED +
-               " being enabled.", Filter.class));
-        this.rejectLogFilters.setExpertSetting(true);
+    public LinksScoper(CrawlController controller) {
+        super(controller);
     }
-
-    protected void innerProcess(final CrawlURI curi) {
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.finest(getName() + " processing " + curi);
+    
+    
+    @Override
+    protected boolean shouldProcess(ProcessorURI puri) {
+        if (!(puri instanceof CrawlURI)) {
+            return false;
         }
+        CrawlURI curi = (CrawlURI)puri;
         
         // If prerequisites, nothing to be done in here.
         if (curi.hasPrerequisiteUri()) {
             handlePrerequisite(curi);
-            return;
+            return false;
         }
         
         // Don't extract links of error pages.
         if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
             curi.clearOutlinks();
-            return;
+            return false;
         }
         
         if (curi.outlinksSize() <= 0) {
             // No outlinks to process.
-            return;
+            return false;
         }
+        
+        return true;
+    }
 
-        final boolean redirectsNewSeeds = ((Boolean)getUncheckedAttribute(curi,
-            ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue();
-        int preferenceDepthHops = ((Integer)getUncheckedAttribute(curi,
-            ATTR_PREFERENCE_DEPTH_HOPS)).intValue();
+    
+    @Override
+    protected void innerProcess(final ProcessorURI puri) {
+        CrawlURI curi = (CrawlURI)puri;
+        final boolean redirectsNewSeeds = curi.get(this, 
+                SEED_REDIRECTS_NEW_SEEDS); 
+        int preferenceDepthHops = curi.get(this, PREFERENCE_DEPTH_HOPS); 
         Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
         for (final Iterator i = curi.getOutObjects().iterator(); i.hasNext();) {
             Object o = i.next();
@@ -225,7 +216,8 @@ implements FetchStatusCodes {
         CrawlURI curi = (caUri instanceof CrawlURI)?
             (CrawlURI)caUri:
             new CrawlURI(caUri.getUURI());
-        if (filtersAccept(this.rejectLogFilters, curi)) {
+        DecideRuleSequence seq = caUri.get(this, REJECT_RULES);
+        if (seq.decisionFor(curi) == DecideResult.ACCEPT) {
             LOGGER.info(curi.getUURI().toString());
         }
     }

@@ -26,13 +26,13 @@
 package org.archive.crawler.postprocessor;
 
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.Processor;
+import org.archive.crawler.framework.Frontier;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
+
 
 /**
  * 'Schedule' with the Frontier CandidateURIs being carried by the passed
@@ -45,28 +45,26 @@ import org.archive.crawler.framework.Processor;
 public class FrontierScheduler extends Processor
 implements FetchStatusCodes {
 
-    private static final long serialVersionUID = -5178775477602250542L;
+    private static final long serialVersionUID = -3L;
 
-    private static Logger LOGGER =
-        Logger.getLogger(FrontierScheduler.class.getName());
     
+    final Frontier frontier;
+
+
     /**
-     * @param name Name of this filter.
      */
-    public FrontierScheduler(String name) {
-        super(name, "FrontierScheduler. 'Schedule' with the Frontier " +
-            "any CandidateURIs carried by the passed CrawlURI. " +
-            "Run a Scoper before this " +
-            "processor so links that are not in-scope get bumped from the " +
-            "list of links (And so those in scope get promoted from Link " +
-            "to CandidateURI).");
+    public FrontierScheduler(Frontier frontier) {
+        this.frontier = frontier;
     }
 
-    protected void innerProcess(final CrawlURI curi) {
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.finest(getName() + " processing " + curi);
-        }
-        
+    
+    protected boolean shouldProcess(ProcessorURI puri) {
+        return puri instanceof CrawlURI;
+    }
+
+    @Override
+    protected void innerProcess(final ProcessorURI puri) {
+        CrawlURI curi = (CrawlURI)puri;
         // Handle any prerequisites when S_DEFERRED for prereqs
         if (curi.hasPrerequisiteUri() && curi.getFetchStatus() == S_DEFERRED) {
             handlePrerequisites(curi);
@@ -89,6 +87,6 @@ implements FetchStatusCodes {
      * @param caUri The CandidateURI to be scheduled.
      */
     protected void schedule(CandidateURI caUri) {
-        getController().getFrontier().schedule(caUri);
+        frontier.schedule(caUri);
     }
 }
