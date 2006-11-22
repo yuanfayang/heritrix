@@ -27,8 +27,8 @@ package org.archive.processors.fetcher;
 import java.io.Serializable;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.processors.ProcessorURI;
 
 /**
  * Collector of statististics for a 'subset' of a crawl,
@@ -52,7 +52,7 @@ public class FetchStats implements Serializable, FetchStatusCodes {
     long fetchNonResponses; // processing attempts resulting in no response
                            // (both failures and temp deferrals)
     
-    public synchronized void tally(CrawlURI curi) {
+    public synchronized void tally(ProcessorURI curi) {
         if(curi.getFetchStatus()<=0) {
             fetchNonResponses++;
             return;
