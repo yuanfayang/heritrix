@@ -30,9 +30,11 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.Processor;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
 import org.archive.processors.fetcher.CrawlHost;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
 
 
 /**
@@ -52,24 +54,37 @@ public class CrawlStateUpdater extends Processor implements
     private static final Logger logger =
         Logger.getLogger(CrawlStateUpdater.class.getName());
 
-    public CrawlStateUpdater(String name) {
-        super(name, "Crawl state updater");
+    
+    final private CrawlController controller;
+    
+    
+    public CrawlStateUpdater(CrawlController controller) {
+        this.controller = controller;
     }
 
-    protected void innerProcess(CrawlURI curi) {
+
+    @Override
+    protected boolean shouldProcess(ProcessorURI puri) {
+        return puri instanceof CrawlURI;
+    }
+    
+    @Override
+    protected void innerProcess(ProcessorURI puri) {
+        CrawlURI curi = (CrawlURI)puri;
+        
         // Tally per-server, per-host, per-frontier-class running totals
         CrawlServer server =
-            getController().getServerCache().getServerFor(curi);
+            controller.getServerCache().getServerFor(curi.getUURI());
         if (server != null) {
             server.getSubstats().tally(curi);
         }
         CrawlHost host = 
-            getController().getServerCache().getHostFor(curi);
+            controller.getServerCache().getHostFor(curi.getUURI());
         if (host != null) {
             host.getSubstats().tally(curi);
         } 
         FrontierGroup group = 
-            getController().getFrontier().getGroup(curi);
+            controller.getFrontier().getGroup(curi);
         group.getSubstats().tally(curi);
         
         String scheme = curi.getUURI().getScheme().toLowerCase();

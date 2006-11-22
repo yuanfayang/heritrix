@@ -32,9 +32,12 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Filter;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Scoper;
-import org.archive.crawler.settings.MapType;
+import org.archive.processors.ProcessorURI;
+import org.archive.processors.deciderules.DecideResult;
+import org.archive.processors.deciderules.DecideRuleSequence;
+import org.archive.state.Key;
 
 /**
  * Run CandidateURI links carried in the passed CrawlURI through a filter
@@ -49,38 +52,35 @@ import org.archive.crawler.settings.MapType;
  */
 public class SupplementaryLinksScoper extends Scoper {
 
-    private static final long serialVersionUID = -775819977752790418L;
+    private static final long serialVersionUID = -3L;
 
     private static Logger LOGGER =
         Logger.getLogger(SupplementaryLinksScoper.class.getName());
     
-    public static final String ATTR_LINK_FILTERS = "link-filters";
-    
+
     /**
-     * Instance of filters to run.
+     * Rules to apply to each link carried by the URI.
      */
-    private MapType filters = null;
+    final public static Key<DecideRuleSequence> LINK_RULES = 
+        Key.makeExpert(new DecideRuleSequence());
     
     
     /**
      * @param name Name of this filter.
      */
-    public SupplementaryLinksScoper(String name) {
-        super(name, "SupplementaryLinksScoper. Use to do supplementary " +
-            "processing of in-scope links.  Will run each link through " +
-            "configured filters.  Must be run after LinkScoper and " +
-            "before FrontierScheduler. " +
-            "Optionally logs rejected links (Enable " +
-            ATTR_OVERRIDE_LOGGER_ENABLED + " and set logger level " +
-            "at INFO or above).");
-        
-        this.filters = (MapType)addElementToDefinition(
-            new MapType(ATTR_LINK_FILTERS, "Filters to apply to each " +
-            "link carried by the passed CrawlURI.", Filter.class));
-        this.filters.setExpertSetting(true);
+    public SupplementaryLinksScoper(CrawlController controller) {
+        super(controller);
     }
 
-    protected void innerProcess(final CrawlURI curi) {
+    
+    protected boolean shouldProcess(ProcessorURI puri) {
+        return puri instanceof CrawlURI;
+    }
+    
+    
+    protected void innerProcess(final ProcessorURI puri) {
+        CrawlURI curi = (CrawlURI)puri;
+        
         // If prerequisites or no links, nothing to be done in here.
         if (curi.hasPrerequisiteUri() || curi.outlinksSize() <= 0) {
             return;
@@ -103,7 +103,8 @@ public class SupplementaryLinksScoper extends Scoper {
             (CrawlURI)caUri:
             new CrawlURI(caUri.getUURI());
         boolean result = false;
-        if (filtersAccept(this.filters, curi)) {
+        DecideRuleSequence seq = curi.get(this, LINK_RULES);
+        if (seq.decisionFor(curi) == DecideResult.ACCEPT) {
             result = true;
             if (LOGGER.isLoggable(Level.FINER)) {
                 LOGGER.finer("Accepted: " + caUri);
