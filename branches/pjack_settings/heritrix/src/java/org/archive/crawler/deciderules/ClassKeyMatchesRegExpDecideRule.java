@@ -24,12 +24,11 @@
 */
 package org.archive.crawler.deciderules;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.util.TextUtils;
-
+import org.archive.crawler.framework.CrawlController;
+import org.archive.processors.ProcessorURI;
+import org.archive.processors.deciderules.MatchesRegExpDecideRule;
 
 
 /**
@@ -40,56 +39,23 @@ import org.archive.util.TextUtils;
  */
 public class ClassKeyMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
 
-    private static final long serialVersionUID = 1178873944436973294L;
+    private static final long serialVersionUID = 3L;
 
-    private static final Logger logger =
-        Logger.getLogger(ClassKeyMatchesRegExpDecideRule.class.getName());
 
+    final private CrawlController controller;
+    
     /**
      * Usual constructor. 
-     * @param name
      */
-    public ClassKeyMatchesRegExpDecideRule(String name) {
-        super(name);
-        setDescription("ClassKeyMatchesRegExpDecideRule. " +
-            "Applies the configured " +
-            "decision to class keys matching the supplied " +
-            "regular expression. Class keys are values set into " +
-            "an URL by the Frontier. They are usually the names " +
-            "of queues used by the Frontier. Class keys can " +
-            "look like hostname + port or be plain IPs (It will " +
-            "depend on the Frontier implementation/configuration).");
+    public ClassKeyMatchesRegExpDecideRule(CrawlController controller) {
+        this.controller = controller;
     }
 
-    /**
-     * Evaluate passed object.
-     * Test first that its CandidateURI.  If so, does it have a class key.
-     * If not, ask frontier for its classkey.  Then test against regex.
-     * 
-     * @param object
-     * @return true if regexp is matched
-     */
-    protected boolean evaluate(Object object) {
-        try {
-            CandidateURI cauri = (CandidateURI)object;
-            String classKey = cauri.getClassKey();
-            if (classKey == null || classKey.length() <= 0) {
-                classKey = getSettingsHandler().getOrder().getController().
-                    getFrontier().getClassKey(cauri);
-                cauri.setClassKey(classKey);
-            }
-            String regexp = getRegexp(cauri);
-            boolean result = (regexp == null)?
-                false: TextUtils.matches(regexp, cauri.getClassKey());
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Tested '" + cauri.getClassKey() +
-                    "' match with regex '" + regexp + " and result was " +
-                    result);
-            }
-            return result;
-        } catch (ClassCastException e) {
-            // if not CrawlURI, always disregard
-            return false; 
-        }
+    
+    @Override
+    protected String getString(ProcessorURI uri) {
+        CandidateURI curi = (CandidateURI)uri;
+        return controller.getFrontier().getClassKey(curi);
     }
+
 }

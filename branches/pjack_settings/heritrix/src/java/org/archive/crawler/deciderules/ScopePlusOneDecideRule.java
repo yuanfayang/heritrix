@@ -25,11 +25,12 @@ package org.archive.crawler.deciderules;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
-import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.net.UURI;
+import org.archive.processors.ProcessorURI;
+import org.archive.processors.deciderules.DecideResult;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
 /**
@@ -42,8 +43,10 @@ import org.archive.util.SurtPrefixSet;
  */
 public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
 
-    private static final long serialVersionUID = -6344162369024146340L;
+    private static final long serialVersionUID = 3L;
 
+    
+    final public static Key<Boolean> USE_DOMAIN = Key.make(true);
     public static final String ATTR_SCOPE = "host-or-domain-scope";
     public static final String HOST = "Host";
     public static final String DOMAIN = "Domain";
@@ -55,19 +58,8 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      * Constructor.
      * @param name
      */
-    public ScopePlusOneDecideRule(String name) {
-        super(name);
-        setDescription(
-            "ScopePlusOneDecideRule. Rule allows one level of discovery " +
-            "beyond configured scope (e.g. Domain, plus the first " +
-            "otherwise out-of-scope link from an in-scope page, but " +
-            "no further hops from that first otherwise-out-of-scope page). " +
-            "surts-source-file is optional. Use surts-dump-file option " +
-            "when testing.");
-        addElementToDefinition(new SimpleType(ATTR_SCOPE,
-            "Restrict to host, e.g. archive.org excludes audio.archive.org, " +
-            "or expand to domain as well, e.g. archive.org includes all " +
-            "*.archive.org", DOMAIN, new String[] {HOST, DOMAIN}));
+    public ScopePlusOneDecideRule(CrawlController c) {
+        super(c);
     }
 
     /**
@@ -76,14 +68,10 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      * @param object to evaluate
      * @return true if URI is either in scope or its via is
      */
-    protected boolean evaluate(Object object) {
-        boolean result = false;
-        if (!(object instanceof CandidateURI)) {
-            // Can't evaluate if not a candidate URI
-            return false; 
-        }
-        SurtPrefixSet set = getPrefixes(object);
-        UURI u = UURI.from(object);
+    @Override
+    protected DecideResult innerDecide(ProcessorURI uri) {
+        SurtPrefixSet set = getPrefixes(uri);
+        UURI u = uri.getUURI();
         // First, is the URI itself in scope?
         boolean firstResult = isInScope(u, set);
         if (logger.isLoggable(Level.FINE)) {
@@ -91,23 +79,26 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
                         " and result was " + firstResult);
         }                        
         if (firstResult == true) {
-            result = true;
+            return DecideResult.ACCEPT;
         } else {
             // This object is not itself within scope, but
             // see whether its via might be
-            UURI via = getVia(object);
+            UURI via = uri.getVia();
             if (via == null) {
                 // If there is no via and the URL doesn't match scope,reject it
-                return false;
+                return DecideResult.PASS;
             }
             // If the via is within scope, accept it
-            result = isInScope (via, set);
+            boolean result = isInScope (via, set);
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("Tested via UURI '" + via +
                         " and result was " + result);
-            }            
+            }
+            if (result) {
+                return DecideResult.ACCEPT;
+            }
         }
-        return result;
+        return DecideResult.PASS;
     }
     
     /**
@@ -127,7 +118,7 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      * @return SurtPrefixSet to use for check
      * @see org.archive.crawler.deciderules.SurtPrefixedDecideRule#getPrefixes()
      */
-    protected synchronized SurtPrefixSet getPrefixes(Object o) {
+    protected synchronized SurtPrefixSet getPrefixes(StateProvider o) {
         if (surtPrefixes == null) {
             readPrefixes(o);
         }
@@ -140,45 +131,19 @@ public class ScopePlusOneDecideRule extends SurtPrefixedDecideRule {
      * @param o Context object.
      * @see org.archive.crawler.deciderules.SurtPrefixedDecideRule#readPrefixes()
      */
-    protected void readPrefixes(Object o) {
-        buildSurtPrefixSet();
+    @Override
+    protected void readPrefixes(StateProvider context) {
+        buildSurtPrefixSet(context);
         // See whether Host or Domain was chosen
-        String scope = this.getScope(o);
-        if (scope.equals(HOST)){
+        if (context.get(this, USE_DOMAIN)) {
+            surtPrefixes.convertAllPrefixesToDomains();
+        } else {
             surtPrefixes.convertAllPrefixesToHosts();            
-        } else if (scope.equals(DOMAIN)) {
-            surtPrefixes.convertAllPrefixesToDomains();            
         }
-        dumpSurtPrefixSet();
+        dumpSurtPrefixSet(context);
     }        
-    
-    private UURI getVia(Object o){
-        return (o instanceof CandidateURI)? ((CandidateURI)o).getVia(): null;
-    }    
 
-    /**
-     * Decide whether using host or domain scope
-     * @param o Context
-     * @return String Host or domain
-     * 
-     */
-    protected String getScope(Object o) {
-        try {
-            String scope = (String)getAttribute(o, ATTR_SCOPE);
-            if (scope.equals(HOST)) {
-                return HOST;
-            } else if (scope.equals(DOMAIN)) {
-                return DOMAIN;
-            } else {
-                assert false : "Unrecognized scope " + scope
-                        + ". Should never happen!";
-            }
-        } catch (AttributeNotFoundException e) {
-            logger.severe(e.getMessage());
-        }
-        return null; // Basically the rule is inactive if this occurs.
-    }
-    
+
     //check that the URI is in scope
     private boolean isInScope (Object o, SurtPrefixSet set) {
         boolean iResult = false;

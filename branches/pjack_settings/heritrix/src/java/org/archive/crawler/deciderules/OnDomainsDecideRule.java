@@ -25,6 +25,8 @@
 package org.archive.crawler.deciderules;
 
 
+import org.archive.crawler.framework.CrawlController;
+import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
 
@@ -37,25 +39,14 @@ import org.archive.util.SurtPrefixSet;
  */
 public class OnDomainsDecideRule extends SurtPrefixedDecideRule {
 
-    private static final long serialVersionUID = -3872369060554558805L;
+    private static final long serialVersionUID = 3L;
     //private static final Logger logger =
     //    Logger.getLogger(OnDomainsDecideRule.class.getName());
     /**
      * Usual constructor. 
-     * @param name
      */
-    public OnDomainsDecideRule(String name) {
-        super(name);
-        setDescription(
-                 "OnDomainsDecideRule. Makes the configured decision " +
-                 "for any URI which is inside one of the domains in the " +
-                 "configured set of domains (derived from the seed" +
-                 "list, with 'www' removed when present).");
-        // disable direct setting of SURTs-related options
-       //getElementFromDefinition(ATTR_SEEDS_AS_SURT_PREFIXES).setTransient(true);
-       //getElementFromDefinition(ATTR_SURTS_SOURCE_FILE).setTransient(true);
-       // leaving surts-dump as option helpful for debugging/learning, for now
-       //getElementFromDefinition(ATTR_SURTS_DUMP_FILE).setTransient(true);
+    public OnDomainsDecideRule(CrawlController c) {
+        super(c);
     }
 
     /**
@@ -63,10 +54,10 @@ public class OnDomainsDecideRule extends SurtPrefixedDecideRule {
      * 
      * @see org.archive.crawler.deciderules.SurtPrefixedDecideRule#readPrefixes()
      */
-    protected void readPrefixes() {
-        buildSurtPrefixSet();
+    protected void readPrefixes(StateProvider context) {
+        buildSurtPrefixSet(context);
         surtPrefixes.convertAllPrefixesToDomains();
-        dumpSurtPrefixSet();
+        dumpSurtPrefixSet(context);
     }
     
 	protected String prefixFrom(String uri) {

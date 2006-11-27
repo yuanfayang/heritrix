@@ -30,10 +30,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import org.archive.crawler.datamodel.CandidateURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.scope.SeedListener;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.net.UURI;
+import org.archive.processors.ProcessorURI;
+import org.archive.processors.deciderules.DecideResult;
+import org.archive.processors.deciderules.DecideRule;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
 
@@ -52,85 +57,69 @@ import org.archive.util.SurtPrefixSet;
  * 
  * @author gojomo
  */
-public class SurtPrefixedDecideRule extends PredicatedDecideRule 
+public class SurtPrefixedDecideRule extends DecideRule 
         implements SeedListener {
 
-    private static final long serialVersionUID = 2075790126085405015L;
+    private static final long serialVersionUID = 3L;
 
     //private static final Logger logger =
     //    Logger.getLogger(SurtPrefixedDecideRule.class.getName());
-    
-    public static final String ATTR_SURTS_SOURCE_FILE = "surts-source-file";
-    public static final String ATTR_SEEDS_AS_SURT_PREFIXES =
-        "seeds-as-surt-prefixes";
-    public static final String ATTR_SURTS_DUMP_FILE = "surts-dump-file";
-    
-    private static final Boolean DEFAULT_SEEDS_AS_SURT_PREFIXES =
-        new Boolean(true);
+
 
     /**
-     * Whether every config change should trigger a 
-     * rebuilding of the prefix set.
+     * Source file from which to infer SURT prefixes. Any URLs in file will be
+     * converted to the implied SURT prefix, and literal SURT prefixes may be
+     * listed on lines beginning with a '+' character.
      */
-    public static final String 
-        ATTR_REBUILD_ON_RECONFIG = "rebuild-on-reconfig";
-    public static final Boolean
-        DEFAULT_REBUILD_ON_RECONFIG = Boolean.TRUE;
+    final public static Key<String> SURTS_SOURCE_FILE = Key.make("");
     
+
     /**
-     * Whether the 'via' of CrawlURIs should also be checked
-     * to see if it is prefixed by the set of SURT prefixes
+     * Should seeds also be interpreted as SURT prefixes.
      */
-    public static final String 
-        ATTR_ALSO_CHECK_VIA = "also-check-via";
-    public static final Boolean
-        DEFAULT_ALSO_CHECK_VIA = Boolean.FALSE;
+    final public static Key<Boolean> SEEDS_AS_SURT_PREFIXES = Key.make(true);
+
+
+    /**
+     * Dump file to save SURT prefixes actually used: Useful debugging SURTs.
+     */
+    final public static Key<String> SURTS_DUMP_FILE = Key.makeExpert("");
+
+
+    /**
+     * Whether to rebuild the internal structures from source files (including
+     * seeds if appropriate) every time any configuration change occurs. If
+     * true, rule is rebuilt from sources even when (for example) unrelated new
+     * domain overrides are set. Rereading large source files can take a long
+     * time.
+     */
+    final public static Key<Boolean> REBUILD_ON_RECONFIG = 
+        Key.makeExpertFinal(true);
+
+
+    /**
+     * Whether to also make the configured decision if a URI's 'via' URI (the
+     * URI from which it was discovered) in SURT form begins with any of the
+     * established prefixes. For example, can be used to ACCEPT URIs that are
+     * 'one hop off' URIs fitting the SURT prefixes. Default is false.
+     */
+    final public static Key<Boolean> ALSO_CHECK_VIA = 
+        Key.makeExpertFinal(false);
+
     
     protected SurtPrefixSet surtPrefixes = null;
 
+    
+    final private CrawlController controller;
+
+
     /**
      * Usual constructor. 
-     * @param name
      */
-    public SurtPrefixedDecideRule(String name) {
-        super(name);
-        setDescription("SurtPrefixedDecideRule. Makes the configured decision "
-                + "for any URI which, when expressed in SURT form, begins "
-                + "with any of the established prefixes (from either seeds "
-                + "specification or an external file).");
-        addElementToDefinition(new SimpleType(ATTR_SURTS_SOURCE_FILE,
-                "Source file from which to infer SURT prefixes. Any URLs " +
-                "in file will be converted to the implied SURT prefix, and " +
-                "literal SURT prefixes may be listed on lines beginning " +
-                "with a '+' character.",
-                ""));
-        addElementToDefinition(new SimpleType(ATTR_SEEDS_AS_SURT_PREFIXES,
-                "Should seeds also be interpreted as SURT prefixes.",
-                DEFAULT_SEEDS_AS_SURT_PREFIXES));
-        Type t = addElementToDefinition(new SimpleType(ATTR_SURTS_DUMP_FILE,
-                "Dump file to save SURT prefixes actually used: " +
-                "Useful debugging SURTs.", ""));
-        t.setExpertSetting(true);
-        t = addElementToDefinition(new SimpleType(ATTR_ALSO_CHECK_VIA,
-                "Whether to also make the configured decision if a " +
-                "URI's 'via' URI (the URI from which it was discovered) " +
-                "in SURT form begins with any of the established prefixes. " +
-                "For example, can be used to ACCEPT URIs that are 'one hop " +
-                "off' URIs fitting the SURT prefixes. Default is false.",
-                DEFAULT_ALSO_CHECK_VIA));
-        t.setOverrideable(false);
-        t.setExpertSetting(true);
-        t = addElementToDefinition(new SimpleType(ATTR_REBUILD_ON_RECONFIG,
-                "Whether to rebuild the internal structures from source " +
-                "files (including seeds if appropriate) every time any " +
-                "configuration change occurs. If true, " +
-                "rule is rebuilt from sources even when (for example) " +
-                "unrelated new domain overrides are set. Rereading large" +
-                "source files can take a long time.", 
-                DEFAULT_REBUILD_ON_RECONFIG));
-        t.setOverrideable(false);
-        t.setExpertSetting(true);
+    public SurtPrefixedDecideRule(CrawlController controller) {
+        this.controller = controller;
     }
+
 
     /**
      * Evaluate whether given object's URI is covered by the SURT prefix set
@@ -138,51 +127,58 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
      * @param object Item to evaluate.
      * @return true if item, as SURT form URI, is prefixed by an item in the set
      */
-    protected boolean evaluate(Object object) {
-        if ( (object instanceof CandidateURI) && 
-                ((Boolean) getUncheckedAttribute(null, ATTR_ALSO_CHECK_VIA))
-                    .booleanValue()) {
-            if(evaluate(((CandidateURI)object).getVia())) {
-                return true;
+    protected DecideResult innerDecide(ProcessorURI uri) {
+        if (uri.get(this, ALSO_CHECK_VIA)) {
+            if (innerDecide(uri, uri.getVia()) == DecideResult.ACCEPT) {
+                return DecideResult.ACCEPT;
             }
         }
-        String candidateSurt;
-        candidateSurt = SurtPrefixSet.getCandidateSurt(object);
-        if (candidateSurt == null) {
-            return false;
-        }
-        return getPrefixes().containsPrefixOf(candidateSurt);
+
+        return innerDecide(uri, uri.getUURI());
     }
+    
+    
+    private DecideResult innerDecide(StateProvider context, UURI uuri) {
+        String candidateSurt;
+        candidateSurt = SurtPrefixSet.getCandidateSurt(uuri);
+        if (candidateSurt == null) {
+            return DecideResult.PASS;
+        }
+        if (getPrefixes(context).containsPrefixOf(candidateSurt)) {
+            return DecideResult.ACCEPT;
+        } else {
+            return DecideResult.PASS;
+        }
+    }
+
 
     /**
      * Synchronized get of prefix set to use
      * 
      * @return SurtPrefixSet to use for check
      */
-    private synchronized SurtPrefixSet getPrefixes() {
+    private synchronized SurtPrefixSet getPrefixes(StateProvider uri) {
         if (surtPrefixes == null) {
-            readPrefixes();
+            readPrefixes(uri);
         }
         return surtPrefixes;
     }
 
-    protected void readPrefixes() {
-        buildSurtPrefixSet();
-        dumpSurtPrefixSet();
+    protected void readPrefixes(StateProvider uri) {
+        buildSurtPrefixSet(uri);
+        dumpSurtPrefixSet(uri);
     }
     
     /**
      * Dump the current prefixes in use to configured dump file (if any)
      */
-    protected void dumpSurtPrefixSet() {
+    protected void dumpSurtPrefixSet(StateProvider uri) {
         // dump surts to file, if appropriate
-        String dumpPath = (String)getUncheckedAttribute(null,
-            ATTR_SURTS_DUMP_FILE);
+        String dumpPath = uri.get(this, SURTS_DUMP_FILE);
         if (dumpPath.length() > 0) {
             File dump = new File(dumpPath);
             if (!dump.isAbsolute()) {
-                dump = new File(getSettingsHandler().getOrder().getController()
-                    .getDisk(), dumpPath);
+                dump = new File(controller.getDisk(), dumpPath);
             }
             try {
                 FileWriter fw = new FileWriter(dump);
@@ -202,18 +198,16 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
      * Construct the set of prefixes to use, from the seed list (
      * which may include both URIs and '+'-prefixed directives).
      */
-    protected void buildSurtPrefixSet() {
+    protected void buildSurtPrefixSet(StateProvider uri) {
         SurtPrefixSet newSurtPrefixes = new SurtPrefixSet();
         FileReader fr = null;
 
         // read SURTs from file, if appropriate
-        String sourcePath = (String)getUncheckedAttribute(null,
-                ATTR_SURTS_SOURCE_FILE);
+        String sourcePath = uri.get(this, SURTS_SOURCE_FILE);
         if (sourcePath.length() > 0) {
             File source = new File(sourcePath);
             if (!source.isAbsolute()) {
-                source = new File(getSettingsHandler().getOrder()
-                    .getController().getDisk(), sourcePath);
+                source = new File(controller.getDisk(), sourcePath);
             }
             try {
                 fr = new FileReader(source);
@@ -229,8 +223,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
         }
         
         // interpret seeds as surts, if appropriate
-        boolean deduceFromSeeds = ((Boolean)getUncheckedAttribute(null,
-                ATTR_SEEDS_AS_SURT_PREFIXES)).booleanValue();
+        boolean deduceFromSeeds = uri.get(this, SEEDS_AS_SURT_PREFIXES);
         if(deduceFromSeeds) {
             try {
                 fr = new FileReader(getSeedfile());
@@ -253,11 +246,10 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
      * 
      * @see org.archive.crawler.framework.CrawlScope#kickUpdate()
      */
-    public synchronized void kickUpdate() {
-        super.kickUpdate();
-        if (((Boolean) getUncheckedAttribute(null, ATTR_REBUILD_ON_RECONFIG))
-                .booleanValue()) {
-            readPrefixes();
+    public synchronized void kickUpdate(StateProvider provider) {
+        super.kickUpdate(provider); // FIXME: Kick update
+        if (provider.get(this, REBUILD_ON_RECONFIG)) {
+            readPrefixes(provider);
         }
         // TODO: make conditional on file having actually changed,
         // perhaps by remembering mod-time
@@ -270,8 +262,7 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
      * @return Seed list file
      */
     protected File getSeedfile() {
-        CrawlScope scope =
-            getSettingsHandler().getOrder().getController().getScope();
+        CrawlScope scope = controller.getScope();
         scope.addSeedListener(this);
         return scope.getSeedfile();
     }
@@ -283,6 +274,6 @@ public class SurtPrefixedDecideRule extends PredicatedDecideRule
     }
     
     protected String prefixFrom(String uri) {
-    	return SurtPrefixSet.prefixFromPlain(uri);
+        return SurtPrefixSet.prefixFromPlain(uri);
     }
 }
