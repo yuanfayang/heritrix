@@ -31,6 +31,7 @@ import java.util.Set;
 import org.apache.commons.httpclient.HttpMethod;
 import org.archive.net.UURI;
 import org.archive.processors.credential.CredentialAvatar;
+import org.archive.processors.fetcher.CrawlHost;
 import org.archive.state.StateProvider;
 import org.archive.util.Recorder;
 
@@ -57,6 +58,9 @@ public interface ProcessorURI extends StateProvider {
     
     boolean isPrerequisite();
     void setPrerequisite(boolean prereq);
+
+    // Used to be a map attribute.
+    void setError(String msg);
     
     // Used to be a map attribute.
     long getFetchBeginTime();
@@ -70,6 +74,7 @@ public interface ProcessorURI extends StateProvider {
     void setDNSServerIPLabel(String label);
     
     FetchType getFetchType();
+    void setFetchType(FetchType type);
     
     Recorder getRecorder();
 
@@ -78,12 +83,15 @@ public interface ProcessorURI extends StateProvider {
     String getUserAgent();
     String getFrom();
 
+    long getContentSize();
     void setContentSize(long size);
     void setContentDigest(String algorithm, byte[] digest);
 
     String getContentType();
     void setContentType(String mimeType);
 
+    long getContentLength();
+    
     Collection<String> getAnnotations();
     Collection<Throwable> getNonFatalFailures();
     
@@ -154,7 +162,7 @@ public interface ProcessorURI extends StateProvider {
      * 
      */
     boolean passedDNS();
-
+    CrawlHost getCrawlHost();
     
     // Eliminate CrawlURI.hasCredentialAvatars
 
@@ -171,4 +179,11 @@ public interface ProcessorURI extends StateProvider {
 
     
     void skipToPostProcessing();
+
+
+    String getPathFromSeed();
+    boolean isSeed();
+    void setSeed(boolean seed);
+    
+    boolean isLocation();
 }
