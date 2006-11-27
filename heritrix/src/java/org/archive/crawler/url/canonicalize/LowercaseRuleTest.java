@@ -23,7 +23,7 @@
 package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.net.UURIFactory;
+import org.archive.state.ExampleStateProvider;
 
 import junit.framework.TestCase;
 
@@ -36,7 +36,7 @@ public class LowercaseRuleTest extends TestCase {
     public void testCanonicalize() throws URIException {
         final String url = "http://WWW.aRchive.Org/index.html";
         assertTrue("Didn't lowercase" + url,
-            url.toLowerCase().equals((new LowercaseRule("test")).
-                canonicalize(url, UURIFactory.getInstance(url))));
+            url.toLowerCase().equals((new LowercaseRule()).
+                canonicalize(url, new ExampleStateProvider())));
     }
 }

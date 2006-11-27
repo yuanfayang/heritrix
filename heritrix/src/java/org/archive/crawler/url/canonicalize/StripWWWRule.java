@@ -24,6 +24,9 @@ package org.archive.crawler.url.canonicalize;
 
 import java.util.regex.Pattern;
 
+import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
+
 
 
 /**
@@ -37,25 +40,28 @@ import java.util.regex.Pattern;
  */
 public class StripWWWRule extends BaseRule {
 
-    private static final long serialVersionUID = -5416391108485746976L;
+    private static final long serialVersionUID = 3L;
 
-    private static final String DESCRIPTION = "Strip any 'www' found. " +
-        "Use this rule to equate 'http://www.archive.org/index.html' and" +
-        " 'http://archive.org/index.html'. The resulting canonicalization" +
-        " returns 'http://archive.org/index.html'.  It removes any www's " +
-        "found, except on URIs that have no path/query component " +
-        "('slash' pages).  Operates on http and https schemes only. " +
-        "Use the more general StripWWWNRule if you want to strip both 'www' " +
-        "and 'www01', 'www02', etc.";
+//    private static final String DESCRIPTION = "Strip any 'www' found. " +
+//        "Use this rule to equate 'http://www.archive.org/index.html' and" +
+//        " 'http://archive.org/index.html'. The resulting canonicalization" +
+//        " returns 'http://archive.org/index.html'.  It removes any www's " +
+//        "found, except on URIs that have no path/query component " +
+//        "('slash' pages).  Operates on http and https schemes only. " +
+//        "Use the more general StripWWWNRule if you want to strip both 'www' " +
+//        "and 'www01', 'www02', etc.";
     
     private static final Pattern REGEX =
         Pattern.compile("(?i)^(https?://)(?:www\\.)([^/]*/.+)$");
 
-    public StripWWWRule(String name) {
-        super(name, DESCRIPTION);
+    static {
+        KeyManager.addKeys(StripWWWRule.class);
+    }
+    
+    public StripWWWRule() {
     }
 
-    public String canonicalize(String url, Object context) {
+    public String canonicalize(String url, StateProvider context) {
         return doStripRegexMatch(url, REGEX.matcher(url));
     }
 }

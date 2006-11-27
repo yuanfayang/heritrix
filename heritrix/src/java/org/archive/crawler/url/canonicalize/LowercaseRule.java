@@ -23,6 +23,10 @@
 package org.archive.crawler.url.canonicalize;
 
 
+import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
+
+
 
 
 /**
@@ -33,16 +37,23 @@ package org.archive.crawler.url.canonicalize;
 public class LowercaseRule
 extends BaseRule {
 
-    private static final long serialVersionUID = -4732482198714929052L;
+    private static final long serialVersionUID = 3L;
     
-    private static final String DESCRIPTION = "Lowercase the URL. " +
-        "Use this rule to lowercase the url.  Operates on all schemes.";
+//    private static final String DESCRIPTION = "Lowercase the URL. " +
+//        "Use this rule to lowercase the url.  Operates on all schemes.";
 
-    public LowercaseRule(String name) {
-        super(name, DESCRIPTION);
+    static {
+        KeyManager.addKeys(LowercaseRule.class);
+    }
+    
+    /**
+     * Constructor.
+     */
+    public LowercaseRule() {
+        super();
     }
 
-    public String canonicalize(String url, Object context) {
+    public String canonicalize(String url, StateProvider context) {
         return url.toLowerCase();
     }
 }

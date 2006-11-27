@@ -24,6 +24,9 @@ package org.archive.crawler.url.canonicalize;
 
 import java.util.regex.Pattern;
 
+import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
+
 
 /**
  * Strip cold fusion session ids.
@@ -33,16 +36,16 @@ import java.util.regex.Pattern;
 public class StripSessionCFIDs
 extends BaseRule {
 
-    private static final long serialVersionUID = 9122689291157731293L;
+    private static final long serialVersionUID = 3L;
 
     private static final String REGEX = "^(.+)" +
         "(?:cfid=[^&]+&cftoken=[^&]+(?:jsession=[^&]+)?)(?:&(.*))?$";
     
-    private static final String DESCRIPTION = "Strip ColdFusion session IDs. " +
-        "Use this rule to remove sessionids that look like the following: " +
-        "CFID=12412453&CFTOKEN=15501799 or " +
-        "CFID=3304324&CFTOKEN=57491900&jsessionid=a63098d96360$B0$D9$A " +
-        "using the following case-insensitive regex: " + REGEX;
+//    private static final String DESCRIPTION = "Strip ColdFusion session IDs. " +
+//        "Use this rule to remove sessionids that look like the following: " +
+//        "CFID=12412453&CFTOKEN=15501799 or " +
+//        "CFID=3304324&CFTOKEN=57491900&jsessionid=a63098d96360$B0$D9$A " +
+//        "using the following case-insensitive regex: " + REGEX;
         
     /**
      * Examples:
@@ -58,12 +61,15 @@ extends BaseRule {
     private static final Pattern COLDFUSION_PATTERN =
         Pattern.compile(REGEX, Pattern.CASE_INSENSITIVE);
     
-
-    public StripSessionCFIDs(String name) {
-        super(name, DESCRIPTION);
+    static {
+        KeyManager.addKeys(StripSessionCFIDs.class);
     }
 
-    public String canonicalize(String url, Object context) {
+    public StripSessionCFIDs() {
+    }
+
+    public String canonicalize(String url, StateProvider context) {
         return doStripRegexMatch(url, COLDFUSION_PATTERN.matcher(url));
     }
+
 }

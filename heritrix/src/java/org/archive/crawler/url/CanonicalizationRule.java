@@ -22,6 +22,8 @@
  */
 package org.archive.crawler.url;
 
+import org.archive.state.StateProvider;
+
 
 /**
  * A rule to apply canonicalizing a url.
@@ -38,12 +40,12 @@ public interface CanonicalizationRule {
      * an object that provides context.
      * @return Result of applying this rule to passed <code>url</code>.
      */
-    public String canonicalize(String url, Object context);
+    public String canonicalize(String url, StateProvider context);
 
     /**
      * @return Name of this rule.
      */
-    public String getName();
+//    public String getName();
     
     /**
      * @param context An object that will provide context for the settings
@@ -51,5 +53,5 @@ public interface CanonicalizationRule {
      * an object that provides context.
      * @return True if this rule is enabled and to be run.
      */
-    public boolean isEnabled(Object context);
+    public boolean isEnabled(StateProvider context);
 }

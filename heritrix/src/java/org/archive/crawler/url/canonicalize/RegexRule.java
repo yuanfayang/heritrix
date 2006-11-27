@@ -24,9 +24,11 @@ package org.archive.crawler.url.canonicalize;
 
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.archive.crawler.settings.SimpleType;
-import org.archive.util.TextUtils;
+import org.archive.state.Key;
+import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
 
 /**
  * General conversion rule.
@@ -36,58 +38,43 @@ import org.archive.util.TextUtils;
 public class RegexRule
 extends BaseRule {
 
-    private static final long serialVersionUID = -2658094415450237847L;
+    private static final long serialVersionUID = -3L;
 
     protected static Logger logger =
         Logger.getLogger(BaseRule.class.getName());
-    private static final String DESCRIPTION = "General regex rule. " +
-        "Specify a matching regex and a format string used outputting" +
-        " result if a match was found.  If problem compiling regex or" +
-        " interpreting format, problem is logged, and this rule does" +
-        " nothing.  See User Manual for example usage.";
-    private static final String ATTR_REGEX = "matching-regex";
-    private static final String ATTR_FORMAT = "format";
-    private static final String ATTR_COMMENT = "comment";
-    
-    public RegexRule(String name) {
-        this(name, "(.*)", "${1}");
-    }
-    
-    protected RegexRule(String name, String defaultRegex,
-            String defaultFormat) {
-        super(name, DESCRIPTION);
-        addElementToDefinition(new SimpleType(ATTR_REGEX,
-            "Java regular expression. If the regex matches, we'll rewrite" +
-            " the passed url using the specified format pattern.",
-            defaultRegex));
-        addElementToDefinition(
-            new SimpleType(ATTR_FORMAT, "Pattern to use rewriting matched" +
-                "url. Use '${1}' to match first regex group, '${2}' for" +
-                "next group, etc.", defaultFormat));
-        addElementToDefinition(new SimpleType(ATTR_COMMENT,
-            "Free-text comment on why this rule was added.", ""));
-    }
 
-    public String canonicalize(String url, Object context) {
-        String regex = getNullOrAttribute(ATTR_REGEX, context);
-        if (regex == null) {
+//    private static final String DESCRIPTION = "General regex rule. " +
+//        "Specify a matching regex and a format string used outputting" +
+//        " result if a match was found.  If problem compiling regex or" +
+//        " interpreting format, problem is logged, and this rule does" +
+//        " nothing.  See User Manual for example usage.";
+
+    
+    final public static Key<Pattern> REGEX = Key.make(Pattern.compile("(.*)"));    
+    
+    final public static Key<String> FORMAT = Key.make("${1}");
+
+    final public static Key<String> COMMENT = Key.make("");
+    
+    static {
+        KeyManager.addKeys(RegexRule.class);
+    }
+    
+    public RegexRule() {
+    }
+    
+
+    public String canonicalize(String url, StateProvider context) {
+        Pattern pattern = context.get(this, REGEX);
+        Matcher matcher = pattern.matcher(url);
+        if (!matcher.matches()) {
             return url;
         }
-        String format = getNullOrAttribute(ATTR_FORMAT, context);
-        if (format == null) {
-            return url;
-        }
-        Matcher matcher = TextUtils.getMatcher(regex, url);
-        String retVal; 
-        if (matcher == null || !matcher.matches()) {
-            retVal = url;
-        } else {
-            StringBuffer buffer = new StringBuffer(url.length() * 2);
-            format(matcher, format, buffer);
-            retVal = buffer.toString();
-        }
-        TextUtils.recycleMatcher(matcher);
-        return retVal;
+        
+        String format = context.get(this, FORMAT);
+        StringBuffer buffer = new StringBuffer(url.length() * 2);
+        format(matcher, format, buffer);
+        return buffer.toString();
     }
     
     /**
@@ -160,12 +147,4 @@ extends BaseRule {
         }
     }
 
-    protected String getNullOrAttribute(String name, Object context) {
-        try {
-            return (String)getAttribute(context, name);
-        } catch (Exception e) {
-            logger.severe(e.getMessage());
-            return null;
-        }
-    }
 }

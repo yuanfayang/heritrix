@@ -22,18 +22,18 @@
  */
 package org.archive.crawler.url;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.settings.MapType;
-import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.url.canonicalize.FixupQueryStr;
 import org.archive.crawler.url.canonicalize.LowercaseRule;
 import org.archive.crawler.url.canonicalize.StripSessionIDs;
 import org.archive.crawler.url.canonicalize.StripUserinfoRule;
 import org.archive.crawler.url.canonicalize.StripWWWRule;
+import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
 
 /**
@@ -42,26 +42,34 @@ import org.archive.util.TmpDirTestCase;
  * @version $Date$, $Revision$
  */
 public class CanonicalizerTest extends TmpDirTestCase {
-    private File orderFile;
-    protected XMLSettingsHandler settingsHandler;
 
-    private MapType rules = null;
+    public static class TestURI extends ExampleStateProvider {
+        private UURI uuri;
+        
+        public TestURI(String uri) {
+            try {
+                this.uuri = UURIFactory.getInstance(uri);
+            } catch (URIException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        public String toString() {
+            return uuri.toString();
+        }
+    }
+
+
+    private List<CanonicalizationRule> rules = null;
     
     protected void setUp() throws Exception {
-        super.setUp();
-        this.orderFile = new File(getTmpDir(), this.getClass().getName() +
-            ".order.xml");
-        this.settingsHandler = new XMLSettingsHandler(orderFile);
-        this.settingsHandler.initialize();
-        
-        this.rules = (MapType)(settingsHandler.getSettingsObject(null)).
-            getModule(CrawlOrder.ATTR_NAME).
-               getAttribute(CrawlOrder.ATTR_RULES);
-        this.rules.addElement(null, new LowercaseRule("lowercase"));
-        this.rules.addElement(null, new StripUserinfoRule("userinfo"));
-        this.rules.addElement(null, new StripWWWRule("www"));
-        this.rules.addElement(null, new StripSessionIDs("ids"));
-        this.rules.addElement(null, new FixupQueryStr("querystr"));
+        super.setUp();        
+        this.rules = new ArrayList<CanonicalizationRule>();
+        this.rules.add(new LowercaseRule());
+        this.rules.add(new StripUserinfoRule());
+        this.rules.add(new StripWWWRule());
+        this.rules.add(new StripSessionIDs());
+        this.rules.add(new FixupQueryStr());
     }
     
     public void testCanonicalize() throws URIException {
@@ -69,21 +77,17 @@ public class CanonicalizerTest extends TmpDirTestCase {
         final String nonQueryStr = "archive.org/index.html";
         final String result = scheme + nonQueryStr;
         assertTrue("Mangled original", result.equals(
-            Canonicalizer.canonicalize(UURIFactory.getInstance(result),
-                this.rules.iterator(UURIFactory.getInstance(result)))));
+            Canonicalizer.canonicalize(new TestURI(result), rules)));
         String tmp = scheme + "www." + nonQueryStr;
         assertTrue("Mangled www", result.equals(
-            Canonicalizer.canonicalize(UURIFactory.getInstance(tmp),
-                this.rules.iterator(UURIFactory.getInstance(result)))));
+            Canonicalizer.canonicalize(new TestURI(tmp), rules)));
         tmp = scheme + "www." + nonQueryStr +
             "?jsessionid=01234567890123456789012345678901";
         assertTrue("Mangled sessionid", result.equals(
-            Canonicalizer.canonicalize(UURIFactory.getInstance(tmp),
-                this.rules.iterator(UURIFactory.getInstance(result)))));
+            Canonicalizer.canonicalize(new TestURI(tmp), rules)));
         tmp = scheme + "www." + nonQueryStr +
             "?jsessionid=01234567890123456789012345678901";
         assertTrue("Mangled sessionid", result.equals(
-             Canonicalizer.canonicalize(UURIFactory.getInstance(tmp),
-                   this.rules.iterator(UURIFactory.getInstance(result)))));       
+             Canonicalizer.canonicalize(new TestURI(tmp), rules)));
     }
 }

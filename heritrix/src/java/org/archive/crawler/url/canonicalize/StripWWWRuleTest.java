@@ -23,7 +23,7 @@
 package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.net.UURIFactory;
+import org.archive.state.ExampleStateProvider;
 
 import junit.framework.TestCase;
 
@@ -35,25 +35,26 @@ import junit.framework.TestCase;
 public class StripWWWRuleTest extends TestCase {
 
     public void testCanonicalize() throws URIException {
+        ExampleStateProvider context = new ExampleStateProvider();
         String url = "http://WWW.aRchive.Org/index.html";
         String expectedResult = "http://aRchive.Org/index.html";
-        String result = (new StripWWWRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
+        String result = (new StripWWWRule()).
+            canonicalize(url, context);
         assertTrue("Failed " + result, expectedResult.equals(result));
         url = "http://wWWW.aRchive.Org/index.html";
         expectedResult = "http://wWWW.aRchive.Org/index.html";
-        result = (new StripWWWRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
+        result = (new StripWWWRule()).
+            canonicalize(url, context);
         assertTrue("Failed " + result, expectedResult.equals(result));
         url = "http://ww.aRchive.Org/index.html";
         expectedResult = "http://ww.aRchive.Org/index.html";
-        result = (new StripWWWRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
+        result = (new StripWWWRule()).
+            canonicalize(url, context);
         assertTrue("Failed " + result, expectedResult.equals(result));
         url = "http://www001.aRchive.Org/index.html";
         expectedResult = "http://www001.aRchive.Org/index.html";
-        result = (new StripWWWRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
+        result = (new StripWWWRule()).
+            canonicalize(url, context);
         assertTrue("Failed " + result, expectedResult.equals(result));
     }
 }
