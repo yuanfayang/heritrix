@@ -22,6 +22,10 @@
  */
 package org.archive.crawler.url.canonicalize;
 
+import org.archive.state.ExampleConcreteProcessor;
+import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
+
 
 
 
@@ -33,8 +37,9 @@ package org.archive.crawler.url.canonicalize;
 public class FixupQueryStr
 extends BaseRule {
 
-    private static final long serialVersionUID = 3169526832544474794L;
+    private static final long serialVersionUID = 3L;
 
+    /*
     private static final String DESCRIPTION =
         "Fixup the question mark that leads off the query string. " +
         "This rule returns 'http://www.archive.org/index.html' if passed" +
@@ -45,12 +50,16 @@ extends BaseRule {
         " Will also strip '&' if last thing in query string." +
         " Operates on all schemes.  This is a good rule to run toward the" +
         " end of canonicalization processing.";
+        */
 
-    public FixupQueryStr(String name) {
-        super(name, DESCRIPTION);
+    static {
+        KeyManager.addKeys(ExampleConcreteProcessor.class);
+    }
+    
+    public FixupQueryStr() {
     }
 
-    public String canonicalize(String url, Object context) {
+    public String canonicalize(String url, StateProvider context) {
         if (url == null || url.length() <= 0) {
             return url;
         }

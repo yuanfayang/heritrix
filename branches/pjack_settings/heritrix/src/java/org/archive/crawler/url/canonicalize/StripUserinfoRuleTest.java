@@ -23,7 +23,7 @@
 package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.net.UURIFactory;
+import org.archive.state.ExampleStateProvider;
 
 import junit.framework.TestCase;
 
@@ -34,27 +34,26 @@ import junit.framework.TestCase;
  */
 public class StripUserinfoRuleTest extends TestCase {
     public void testCanonicalize() throws URIException {
+        ExampleStateProvider context = new ExampleStateProvider();
         String url = "http://WWW.aRchive.Org/index.html";
         final String expectedResult = url;
-        String result = (new StripUserinfoRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
+        String result = (new StripUserinfoRule()).
+            canonicalize(url, context);
         assertTrue("Mangled no userinfo " + result,
             url.equals(result));
         url = "http://stack:password@WWW.aRchive.Org/index.html";
-        result = (new StripUserinfoRule("test")).
-            canonicalize(url, UURIFactory.getInstance(url));
+        result = (new StripUserinfoRule()).
+            canonicalize(url, context);
         assertTrue("Didn't strip userinfo " + result,
             expectedResult.equals(result));
         url = "http://stack:pass@@@@@@word@WWW.aRchive.Org/index.html";
-        result = (new StripUserinfoRule("test")).
-            canonicalize(url, 
-                UURIFactory.getInstance("http://archive.org"));
+        result = (new StripUserinfoRule()).
+            canonicalize(url, context);
         assertTrue("Didn't get to last @ " + result,
             expectedResult.equals(result));
         url = "ftp://stack:pass@@@@@@word@archive.org/index.html";
-        result = (new StripUserinfoRule("test")).
-            canonicalize(url,
-                UURIFactory.getInstance("http://archive.org"));
+        result = (new StripUserinfoRule()).
+            canonicalize(url, context);
         assertTrue("Didn't get to last @ " + result,
             "ftp://archive.org/index.html".equals(result));
     }

@@ -23,7 +23,7 @@
 package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.net.UURIFactory;
+import org.archive.state.ExampleStateProvider;
 
 import junit.framework.TestCase;
 
@@ -35,26 +35,27 @@ import junit.framework.TestCase;
 public class FixupQueryStrTest extends TestCase {
 
     public void testCanonicalize() throws URIException {
+        ExampleStateProvider context = new ExampleStateProvider();
         final String url = "http://WWW.aRchive.Org/index.html";
         assertTrue("Mangled " + url,
-            url.equals((new FixupQueryStr("test")).
-                canonicalize(url, UURIFactory.getInstance(url))));
+            url.equals((new FixupQueryStr()).
+                canonicalize(url, context)));
         assertTrue("Failed to strip '?' " + url,
-            url.equals((new FixupQueryStr("test")).
-                canonicalize(url + "?", UURIFactory.getInstance(url))));
+            url.equals((new FixupQueryStr()).
+                canonicalize(url + "?", context)));
         assertTrue("Failed to strip '?&' " + url,
-            url.equals((new FixupQueryStr("test")).
-                canonicalize(url + "?&", UURIFactory.getInstance(url))));
+            url.equals((new FixupQueryStr()).
+                canonicalize(url + "?&", context)));
         assertTrue("Failed to strip extraneous '&' " + url,
-            (url + "?x=y").equals((new FixupQueryStr("test")).
-                canonicalize(url + "?&x=y", UURIFactory.getInstance(url))));
+            (url + "?x=y").equals((new FixupQueryStr()).
+                canonicalize(url + "?&x=y", context)));
         String tmp = url + "?x=y";
         assertTrue("Mangled x=y " + tmp,
-            tmp.equals((new FixupQueryStr("test")).
-                canonicalize(tmp, UURIFactory.getInstance(url))));
+            tmp.equals((new FixupQueryStr()).
+                canonicalize(tmp, context)));
         String tmp2 = tmp + "&";
-        String fixed = new FixupQueryStr("test").
-            canonicalize(tmp2, UURIFactory.getInstance(url));
+        String fixed = new FixupQueryStr().
+            canonicalize(tmp2, context);
         assertTrue("Mangled " + tmp2, tmp.equals(fixed));
     }
 }

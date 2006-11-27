@@ -24,6 +24,9 @@ package org.archive.crawler.url.canonicalize;
 
 import java.util.regex.Pattern;
 
+import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
+
 
 /**
  * Strip known session ids.
@@ -33,16 +36,16 @@ import java.util.regex.Pattern;
 public class StripSessionIDs
 extends BaseRule {
 
-    private static final long serialVersionUID = -3737115200690525641L;
+    private static final long serialVersionUID = 3L;
 
-    private static final String DESCRIPTION = "Strip known session IDs. " +
-        "Use this rule to remove all of a set of known session IDs." +
-        " For example, this rule will strip JSESSIONID and its value from" +
-        " 'http://archive.org/index.html?" +
-        "JSESSIONID=DDDSSE233232333355FFSXXXXDSDSDS'.  The resulting" +
-        " canonicalization returns 'http://archive.org/index.html'." +
-        " This rule strips JSESSIONID, ASPSESSIONID, PHPSESSID, and 'sid'" +
-        " session ids.";
+//    private static final String DESCRIPTION = "Strip known session IDs. " +
+//        "Use this rule to remove all of a set of known session IDs." +
+//        " For example, this rule will strip JSESSIONID and its value from" +
+//        " 'http://archive.org/index.html?" +
+//        "JSESSIONID=DDDSSE233232333355FFSXXXXDSDSDS'.  The resulting" +
+//        " canonicalization returns 'http://archive.org/index.html'." +
+//        " This rule strips JSESSIONID, ASPSESSIONID, PHPSESSID, and 'sid'" +
+//        " session ids.";
     
     /**
      * Example: jsessionid=999A9EF028317A82AC83F0FDFE59385A.
@@ -71,12 +74,14 @@ extends BaseRule {
             "(?:ASPSESSIONID[a-zA-Z]{8}=[a-zA-Z]{24})(?:&(.*))?$",
                 Pattern.CASE_INSENSITIVE);
     
-
-    public StripSessionIDs(String name) {
-        super(name, DESCRIPTION);
+    static {
+        KeyManager.addKeys(StripSessionIDs.class);
     }
 
-    public String canonicalize(String url, Object context) {
+    public StripSessionIDs() {
+    }
+
+    public String canonicalize(String url, StateProvider context) {
         url = doStripRegexMatch(url, BASE_PATTERN.matcher(url));
         url = doStripRegexMatch(url, SID_PATTERN.matcher(url));
         url = doStripRegexMatch(url, ASPSESSION_PATTERN.matcher(url));

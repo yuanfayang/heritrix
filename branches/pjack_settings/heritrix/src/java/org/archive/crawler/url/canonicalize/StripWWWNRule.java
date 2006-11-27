@@ -24,6 +24,9 @@ package org.archive.crawler.url.canonicalize;
 
 import java.util.regex.Pattern;
 
+import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
+
 
 
 /**
@@ -36,30 +39,34 @@ import java.util.regex.Pattern;
  * @version $Date$, $Revision$
  */
 public class StripWWWNRule extends BaseRule {
-    private static final long serialVersionUID = 3619916990307308590L;
+    private static final long serialVersionUID = 3L;
 
-    private static final String DESCRIPTION = "Strip any 'www[0-9]*' found. " +
-        "Use this rule to equate 'http://www.archive.org/index.html' and " +
-        "'http://www0001.archive.org/index.html' with " +
-        "'http://archive.org/index.html'.  The resulting canonicalization " +
-        "returns 'http://archive.org/index.html'.  It removes any www's " +
-        "or wwwNNN's found, where 'N' is one or more numerics, EXCEPT " +
-        "on URIs that have no path/query component " +
-        ". Top-level 'slash page' URIs are left unstripped: we prefer " +
-        "crawling redundant top pages to missing an entire site only " +
-        "available from either the www-full or www-less hostname, but not " +
-        "both.  Operates on http and https schemes only. " +
-        "Use StripWWWRule to strip a lone 'www' only (This rule is a " +
-        "more general version of StripWWWRule).";
+//    private static final String DESCRIPTION = "Strip any 'www[0-9]*' found. " +
+//        "Use this rule to equate 'http://www.archive.org/index.html' and " +
+//        "'http://www0001.archive.org/index.html' with " +
+//        "'http://archive.org/index.html'.  The resulting canonicalization " +
+//        "returns 'http://archive.org/index.html'.  It removes any www's " +
+//        "or wwwNNN's found, where 'N' is one or more numerics, EXCEPT " +
+//        "on URIs that have no path/query component " +
+//        ". Top-level 'slash page' URIs are left unstripped: we prefer " +
+//        "crawling redundant top pages to missing an entire site only " +
+//        "available from either the www-full or www-less hostname, but not " +
+//        "both.  Operates on http and https schemes only. " +
+//        "Use StripWWWRule to strip a lone 'www' only (This rule is a " +
+//        "more general version of StripWWWRule).";
     
     private static final Pattern REGEX =
         Pattern.compile("(?i)^(https?://)(?:www[0-9]*\\.)([^/]*/.+)$");
 
-    public StripWWWNRule(String name) {
-        super(name, DESCRIPTION);
+    static {
+        KeyManager.addKeys(StripWWWNRule.class);
+    }
+    
+    
+    public StripWWWNRule() {
     }
 
-    public String canonicalize(String url, Object context) {
+    public String canonicalize(String url, StateProvider context) {
         return doStripRegexMatch(url, REGEX.matcher(url));
     }
 }

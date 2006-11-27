@@ -24,6 +24,9 @@ package org.archive.crawler.url.canonicalize;
 
 import java.util.regex.Pattern;
 
+import org.archive.state.KeyManager;
+import org.archive.state.StateProvider;
+
 
 
 /**
@@ -33,13 +36,13 @@ import java.util.regex.Pattern;
  */
 public class StripUserinfoRule extends BaseRule {
 
-    private static final long serialVersionUID = -4271062607638914996L;
+    private static final long serialVersionUID = 3L;
 
-    private static final String DESCRIPTION = "Strip any 'userinfo' found. " +
-        "Use this rule to equate 'http://stack:psswrd@archive.org/index.htm'" + 
-        " and 'http://archive.org/index.htm'. The resulting canonicalization" +
-        " returns 'http://archive.org/index.htm'. Removes any userinfo" +
-        " found.  Operates on http/https/ftp/ftps schemes only.";
+//    private static final String DESCRIPTION = "Strip any 'userinfo' found. " +
+//        "Use this rule to equate 'http://stack:psswrd@archive.org/index.htm'" + 
+//        " and 'http://archive.org/index.htm'. The resulting canonicalization" +
+//        " returns 'http://archive.org/index.htm'. Removes any userinfo" +
+//        " found.  Operates on http/https/ftp/ftps schemes only.";
     
     /**
      * Strip userinfo.
@@ -48,11 +51,14 @@ public class StripUserinfoRule extends BaseRule {
         Pattern.compile("^((?:(?:https?)|(?:ftps?))://)(?:[^/]+@)(.*)$",
             Pattern.CASE_INSENSITIVE);
 
-    public StripUserinfoRule(String name) {
-        super(name, DESCRIPTION);
+    static {
+        KeyManager.addKeys(StripUserinfoRule.class);
+    }
+    
+    public StripUserinfoRule() {
     }
 
-    public String canonicalize(String url, Object context) {
+    public String canonicalize(String url, StateProvider context) {
         return doStripRegexMatch(url, REGEX.matcher(url));
     }
 }

@@ -22,15 +22,15 @@
  */
 package org.archive.crawler.url.canonicalize;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.management.InvalidAttributeValueException;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CrawlOrder;
-import org.archive.crawler.settings.MapType;
-import org.archive.crawler.settings.XMLSettingsHandler;
-import org.archive.net.UURIFactory;
+import org.archive.crawler.url.CanonicalizationRule;
+import org.archive.state.ExampleStateProvider;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -40,28 +40,23 @@ import org.archive.util.TmpDirTestCase;
  * @version $Date$, $Revision$
  */
 public class RegexRuleTest extends TmpDirTestCase {
-    private File orderFile;
-    protected XMLSettingsHandler settingsHandler;
-    private MapType rules = null;
+
+    private List<CanonicalizationRule> rules;
+    private ExampleStateProvider context;
     
     protected void setUp() throws Exception {
         super.setUp();
-        this.orderFile = new File(getTmpDir(), this.getClass().getName() +
-            ".order.xml");
-        this.settingsHandler = new XMLSettingsHandler(orderFile);
-        this.settingsHandler.initialize();
-        this.rules = (MapType)(settingsHandler.getSettingsObject(null)).
-            getModule(CrawlOrder.ATTR_NAME).
-               getAttribute(CrawlOrder.ATTR_RULES);
+        this.rules = new ArrayList<CanonicalizationRule>();
+        this.context = new ExampleStateProvider();
     }
     
     public void testCanonicalize()
     throws URIException, InvalidAttributeValueException {
         final String url = "http://www.aRchive.Org/index.html";
-        RegexRule rr = new RegexRule("Test " + this.getClass().getName());
-        this.rules.addElement(null, rr);
-        rr.canonicalize(url, UURIFactory.getInstance(url));
-        String product = rr.canonicalize(url, null);
+        RegexRule rr = new RegexRule();
+        this.rules.add(rr);
+        rr.canonicalize(url, context);
+        String product = rr.canonicalize(url, context);
         assertTrue("Default doesn't work.",  url.equals(product));
     }
 
@@ -71,11 +66,12 @@ public class RegexRuleTest extends TmpDirTestCase {
         final String urlMinusSessionid = urlBase + "?CATID=96029";
         final String url = urlBase +
 		    ";$sessionid$JKOFFNYAAKUTIP4SY5NBHOR50LD3OEPO?CATID=96029";
-        RegexRule rr = new RegexRule("Test",
-            "^(.+)(?:;\\$sessionid\\$[A-Z0-9]{32})(\\?.*)+$",
-        	"$1$2");
-        this.rules.addElement(null, rr);
-        String product = rr.canonicalize(url, null);
+        RegexRule rr = new RegexRule();
+        context.set(rr, RegexRule.REGEX, 
+         Pattern.compile("^(.+)(?:;\\$sessionid\\$[A-Z0-9]{32})(\\?.*)+$"));
+        context.set(rr, RegexRule.FORMAT, "$1$2");
+        this.rules.add(rr);
+        String product = rr.canonicalize(url, context);
         assertTrue("Failed " + url, urlMinusSessionid.equals(product));
     }
     
@@ -84,11 +80,12 @@ public class RegexRuleTest extends TmpDirTestCase {
         final String urlBase = "http://joann.com/catalog.jhtml";
         final String url = urlBase +
             ";$sessionid$JKOFFNYAAKUTIP4SY5NBHOR50LD3OEPO";
-        RegexRule rr = new RegexRule("Test",
-            "^(.+)(?:;\\$sessionid\\$[A-Z0-9]{32})$",
-            "$1$2");
-        this.rules.addElement(null, rr);
-        String product = rr.canonicalize(url, null);
+        RegexRule rr = new RegexRule();
+        context.set(rr, RegexRule.REGEX, Pattern.compile(
+            "^(.+)(?:;\\$sessionid\\$[A-Z0-9]{32})$"));
+        context.set(rr, RegexRule.FORMAT, "$1$2");
+        this.rules.add(rr);
+        String product = rr.canonicalize(url, context);
         assertTrue("Failed " + url, urlBase.equals(product));
     }
 }

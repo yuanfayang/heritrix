@@ -22,14 +22,11 @@
  */
 package org.archive.crawler.url.canonicalize;
 
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
-import javax.management.AttributeNotFoundException;
-
-import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.url.CanonicalizationRule;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 /**
  * Base of all rules applied canonicalizing a URL that are configurable
@@ -42,38 +39,20 @@ import org.archive.crawler.url.CanonicalizationRule;
  * @version $Date$, $Revision$
  */
 public abstract class BaseRule
-extends ModuleType
 implements CanonicalizationRule {
-    private static Logger logger =
-        Logger.getLogger(BaseRule.class.getName());
-    public static final String ATTR_ENABLED = "enabled";
     
+    
+    final public static Key<Boolean> ENABLED = Key.make(true);
+
+
     /**
      * Constructor.
-     * @param name Name of this canonicalization rule.
-     * @param description Description of what this rule does.
      */
-    public BaseRule(String name, String description) {
-        super(name, description);
-        setExpertSetting(true);
-        setOverrideable(true);
-        Object [] possibleValues = {Boolean.TRUE, Boolean.FALSE};
-        addElementToDefinition(new SimpleType(ATTR_ENABLED,
-            "Rule is enabled.", new Boolean(true), possibleValues));
+    public BaseRule() {
     }
     
-    public boolean isEnabled(Object context) {
-        boolean result = true;
-        try {
-            Boolean b = (Boolean)getAttribute(context, ATTR_ENABLED);
-            if (b != null) {
-                result = b.booleanValue();
-            }
-        } catch (AttributeNotFoundException e) {
-            logger.warning("Failed get of 'enabled' attribute.");
-        }
-
-        return result;
+    public boolean isEnabled(StateProvider context) {
+        return context.get(this, ENABLED);
     }
     
     /**
@@ -101,4 +80,5 @@ implements CanonicalizationRule {
     private String checkForNull(String string) {
         return (string != null)? string: "";
     }
+    
 }

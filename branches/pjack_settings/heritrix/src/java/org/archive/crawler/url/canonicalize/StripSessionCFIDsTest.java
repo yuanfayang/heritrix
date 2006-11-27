@@ -1,7 +1,7 @@
 package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.net.UURIFactory;
+import org.archive.state.ExampleStateProvider;
 
 import junit.framework.TestCase;
 
@@ -29,9 +29,10 @@ public class StripSessionCFIDsTest extends TestCase {
     };
 
     public void testCanonicalize() throws URIException {
+        ExampleStateProvider context = new ExampleStateProvider();
         for (int i = 0; i < INPUTS.length; i++) {
-            String result = (new StripSessionCFIDs(INPUTS[i])).
-                canonicalize(INPUTS[i], UURIFactory.getInstance(INPUTS[i]));
+            String result = (new StripSessionCFIDs().
+                canonicalize(INPUTS[i], context));
             assertEquals(result, OUTPUTS[i]);
         }
     }
