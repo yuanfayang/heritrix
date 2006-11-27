@@ -1,8 +1,8 @@
-/* MatchesRegExpDecideRule
+/* AcceptRule
 *
 * $Id$
 *
-* Created on Apr 4, 2005
+* Created on Apr 1, 2005
 *
 * Copyright (C) 2005 Internet Archive.
 *
@@ -24,54 +24,57 @@
 */
 package org.archive.processors.deciderules;
 
-import java.util.regex.Pattern;
-
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
 
+
 /**
- * Rule applies configured decision to any ProcessorURIs whose String URI
- * matches the supplied regexp.
+ * Rule REJECTs any CrawlURIs whose total number of hops (length of the 
+ * hopsPath string, traversed links of any type) is over a threshold.
+ * Otherwise returns PASS.
  *
  * @author gojomo
  */
-public class MatchesRegExpDecideRule extends DecideRule {
+public class TooManyHopsDecideRule extends DecideRule {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
+
     
-    public static final Key<Pattern> REGEXP = Key.make(Pattern.compile("."));
+    /**
+     * Max path depth for which this filter will match.
+     */
+    final public static Key<Integer> MAX_HOPS = Key.make(20);
+
+    
+    /**
+     * Default access so available to test code.
+     */
+    static final Integer DEFAULT_MAX_HOPS = new Integer(20);
 
     /**
      * Usual constructor. 
      */
-    public MatchesRegExpDecideRule() {
+    public TooManyHopsDecideRule() {
     }
-    
-    
+
     /**
-     * Evaluate whether given object's string version
-     * matches configured regexp
+     * Evaluate whether given object is over the threshold number of
+     * hops.
      * 
      * @param object
-     * @return true if regexp is matched
+     * @return true if the mx-hops is exceeded
      */
     @Override
     protected DecideResult innerDecide(ProcessorURI uri) {
-        Pattern p = getPattern(uri);
-        if (p.matcher(getString(uri)).matches()) {
-            return DecideResult.ACCEPT;
-        } else {
+        String hops = uri.getPathFromSeed();
+        if (hops == null) {
             return DecideResult.PASS;
         }
+        if (hops.length() <= uri.get(this, MAX_HOPS)) {
+            return DecideResult.PASS;
+        }
+        return DecideResult.ACCEPT;
     }
 
-    
-    protected Pattern getPattern(ProcessorURI uri) {
-        return uri.get(this, REGEXP);
-    }
-    
-    protected String getString(ProcessorURI uri) {
-        return uri.toString();
-    }
 }

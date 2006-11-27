@@ -1,10 +1,10 @@
-/* MatchesRegExpDecideRule
+/* FetchStatusDecideRule
 *
 * $Id$
 *
-* Created on Apr 4, 2005
+* Created on Aug 11, 2006
 *
-* Copyright (C) 2005 Internet Archive.
+* Copyright (C) 2006 Internet Archive.
 *
 * This file is part of the Heritrix web crawler (crawler.archive.org).
 *
@@ -24,54 +24,44 @@
 */
 package org.archive.processors.deciderules;
 
-import java.util.regex.Pattern;
-
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
 
+
 /**
- * Rule applies configured decision to any ProcessorURIs whose String URI
- * matches the supplied regexp.
+ * Rule applies the configured decision for any URI which has a
+ * fetch status equal to the 'target-status' setting. 
  *
  * @author gojomo
  */
-public class MatchesRegExpDecideRule extends DecideRule {
+public class FetchStatusDecideRule extends DecideRule {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
+
+    final public static Key<Integer> TARGET_STATUS = Key.make(0);
     
-    public static final Key<Pattern> REGEXP = Key.make(Pattern.compile("."));
-
+    /**
+     * Default access so available to test code.
+     */
+    static final Integer DEFAULT_TARGET_STATUS = new Integer(0);
+    
     /**
      * Usual constructor. 
      */
-    public MatchesRegExpDecideRule() {
+    public FetchStatusDecideRule() {
     }
-    
-    
+
     /**
-     * Evaluate whether given object's string version
-     * matches configured regexp
-     * 
-     * @param object
-     * @return true if regexp is matched
+     * Evaluate whether given object is over the threshold number of
+     * hops.
      */
-    @Override
     protected DecideResult innerDecide(ProcessorURI uri) {
-        Pattern p = getPattern(uri);
-        if (p.matcher(getString(uri)).matches()) {
+        if (uri.getFetchStatus() == uri.get(this, TARGET_STATUS)) {
             return DecideResult.ACCEPT;
         } else {
             return DecideResult.PASS;
         }
     }
 
-    
-    protected Pattern getPattern(ProcessorURI uri) {
-        return uri.get(this, REGEXP);
-    }
-    
-    protected String getString(ProcessorURI uri) {
-        return uri.toString();
-    }
 }

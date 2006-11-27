@@ -1,8 +1,8 @@
-/* MatchesRegExpDecideRule
+/* SeedAcceptDecideRule
 *
 * $Id$
 *
-* Created on Apr 4, 2005
+* Created on Sep 13, 2005
 *
 * Copyright (C) 2005 Internet Archive.
 *
@@ -24,54 +24,30 @@
 */
 package org.archive.processors.deciderules;
 
-import java.util.regex.Pattern;
-
 import org.archive.processors.ProcessorURI;
-import org.archive.state.Key;
 
 
 /**
- * Rule applies configured decision to any ProcessorURIs whose String URI
- * matches the supplied regexp.
+ * Rule which ACCEPTs all 'seed' URIs (those for which 
+ * isSeed is true). Good in a late position to ensure
+ * other scope settings don't lock out explicitly added
+ * seeds.
  *
  * @author gojomo
  */
-public class MatchesRegExpDecideRule extends DecideRule {
+public class SeedAcceptDecideRule extends DecideRule {
 
-    private static final long serialVersionUID = 2L;
-    
-    public static final Key<Pattern> REGEXP = Key.make(Pattern.compile("."));
+    private static final long serialVersionUID = 3L;
 
-    /**
-     * Usual constructor. 
-     */
-    public MatchesRegExpDecideRule() {
+    public SeedAcceptDecideRule() {
     }
+
     
-    
-    /**
-     * Evaluate whether given object's string version
-     * matches configured regexp
-     * 
-     * @param object
-     * @return true if regexp is matched
-     */
     @Override
     protected DecideResult innerDecide(ProcessorURI uri) {
-        Pattern p = getPattern(uri);
-        if (p.matcher(getString(uri)).matches()) {
+        if (uri.isSeed()) {
             return DecideResult.ACCEPT;
-        } else {
-            return DecideResult.PASS;
         }
-    }
-
-    
-    protected Pattern getPattern(ProcessorURI uri) {
-        return uri.get(this, REGEXP);
-    }
-    
-    protected String getString(ProcessorURI uri) {
-        return uri.toString();
+        return DecideResult.PASS;
     }
 }
