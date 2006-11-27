@@ -32,8 +32,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.processors.ProcessorURI;
+import org.archive.processors.deciderules.DecideResult;
+import org.archive.processors.deciderules.DecideRule;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 import bsh.EvalError;
 import bsh.Interpreter;
@@ -55,17 +59,22 @@ import bsh.Interpreter;
  */
 public class BeanShellDecideRule extends DecideRule {
 
-    private static final long serialVersionUID = -8433859929199308527L;
+    private static final long serialVersionUID = 3L;
 
     private static final Logger logger =
         Logger.getLogger(BeanShellDecideRule.class.getName());
     
-    /** setting for script file */
-    public final static String ATTR_SCRIPT_FILE = "script-file"; 
+    /** BeanShell script file. */
+    final public static Key<String> SCRIPT_FILE = Key.makeFinal("");
 
-    /** whether each thread should have its own script runner (true), or
-     * they should share a single script runner with synchronized access */
-    public final static String ATTR_ISOLATE_THREADS = "isolate-threads";
+
+    /**
+     * Whether each ToeThread should get its own independent script context, or
+     * they should share synchronized access to one context. Default is true,
+     * meaning each threads gets its own isolated context.
+     */
+    final public static Key<Boolean> ISOLATE_THREADS = Key.makeFinal(true);
+
 
     protected ThreadLocal<Interpreter> threadInterpreter = 
         new ThreadLocal<Interpreter>();;
@@ -73,45 +82,30 @@ public class BeanShellDecideRule extends DecideRule {
     public Map<Object,Object> sharedMap = 
         Collections.synchronizedMap(new HashMap<Object,Object>());
     protected boolean initialized = false; 
+
     
-    public BeanShellDecideRule(String name) {
-        super(name);
-        setDescription("BeanShellDecideRule. Runs the BeanShell script " +
-                "source (supplied via a file path) against " +
-                "the current URI. Source should define a script method " +
-                "'decisionFor(object)' which will be passed the object" +
-                "to be evaluated and returns one of self.ACCEPT, " +
-                "self.REJECT, or self.PASS. " +
-                "The script may access this BeanShellDecideRule via" +
-                "the 'self' variable and the CrawlController via the " +
-                "'controller' variable. Runs the groovy script source " +
-                "(supplied via a file path) against the " +
-                "current URI.");
-        Type t = addElementToDefinition(new SimpleType(ATTR_SCRIPT_FILE,
-                "BeanShell script file", ""));
-        t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(ATTR_ISOLATE_THREADS,
-                "Whether each ToeThread should get its own independent " +
-                "script context, or they should share synchronized access " +
-                "to one context. Default is true, meaning each threads " +
-                "gets its own isolated context.", true));
-        t.setOverrideable(false);
+    final private CrawlController controller;
+
+    public BeanShellDecideRule(CrawlController controller) {
+        this.controller = controller;
     }
 
-    public synchronized Object decisionFor(Object object) {
+    
+    @Override
+    public synchronized DecideResult innerDecide(ProcessorURI uri) {
         // depending on previous configuration, interpreter may 
         // be local to this thread or shared
-        Interpreter interpreter = getInterpreter(); 
+        Interpreter interpreter = getInterpreter(uri); 
         synchronized(interpreter) {
             // synchronization is harmless for local thread interpreter,
             // necessary for shared interpreter
             try {
-                interpreter.set("object",object);
-                return interpreter.eval("decisionFor(object)");
+                interpreter.set("object",uri);
+                return (DecideResult)interpreter.eval("decisionFor(object)");
             } catch (EvalError e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
-                return PASS;
+                return DecideResult.PASS;
             } 
         }
     }
@@ -121,18 +115,18 @@ public class BeanShellDecideRule extends DecideRule {
      * to this thread. 
      * @return Interpreter to use
      */
-    protected Interpreter getInterpreter() {
+    protected Interpreter getInterpreter(StateProvider context) {
         if(sharedInterpreter==null 
-           && !(Boolean)getUncheckedAttribute(null,ATTR_ISOLATE_THREADS)) {
+           && context.get(this, ISOLATE_THREADS)) {
             // initialize
-            sharedInterpreter = newInterpreter();
+            sharedInterpreter = newInterpreter(context);
         }
         if(sharedInterpreter!=null) {
             return sharedInterpreter;
         }
         Interpreter interpreter = threadInterpreter.get(); 
         if(interpreter==null) {
-            interpreter = newInterpreter(); 
+            interpreter = newInterpreter(context); 
             threadInterpreter.set(interpreter);
         }
         return interpreter; 
@@ -145,16 +139,16 @@ public class BeanShellDecideRule extends DecideRule {
      * 
      * @return  the new Interpreter instance
      */
-    protected Interpreter newInterpreter() {
+    protected Interpreter newInterpreter(StateProvider context) {
         Interpreter interpreter = new Interpreter(); 
         try {
             interpreter.set("self", this);
-            interpreter.set("controller", getController());
+            interpreter.set("controller", controller);
             
-            String filePath = (String) getUncheckedAttribute(null, ATTR_SCRIPT_FILE);
+            String filePath = context.get(this, SCRIPT_FILE);
             if(filePath.length()>0) {
                 try {
-                    File file = getSettingsHandler().getPathRelativeToWorkingDirectory(filePath);
+                    File file = controller.getRelative(filePath);
                     interpreter.source(file.getPath());
                 } catch (IOException e) {
                     logger.log(Level.SEVERE,"unable to read script file",e);
@@ -173,14 +167,14 @@ public class BeanShellDecideRule extends DecideRule {
      * Setup (or reset) Intepreter variables, as appropraite based on 
      * thread-isolation setting. 
      */
-    public void kickUpdate() {
+    public void kickUpdate(StateProvider context) {
         // TODO make it so running state (tallies, etc.) isn't lost on changes
         // unless unavoidable
-        if((Boolean)getUncheckedAttribute(null,ATTR_ISOLATE_THREADS)) {
+        if (context.get(this, ISOLATE_THREADS)) {
             sharedInterpreter = null; 
             threadInterpreter = new ThreadLocal<Interpreter>(); 
         } else {
-            sharedInterpreter = newInterpreter(); 
+            sharedInterpreter = newInterpreter(context); 
             threadInterpreter = null;
         }
     }

@@ -25,6 +25,8 @@
 package org.archive.crawler.deciderules;
 
 
+import org.archive.crawler.framework.CrawlController;
+import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
 
 
@@ -37,7 +39,7 @@ import org.archive.util.SurtPrefixSet;
  */
 public class OnHostsDecideRule extends SurtPrefixedDecideRule {
 
-    private static final long serialVersionUID = -7566348189389792625L;
+    private static final long serialVersionUID = 3L;
 
     //private static final Logger logger =
     //    Logger.getLogger(OnHostsDecideRule.class.getName());
@@ -45,18 +47,8 @@ public class OnHostsDecideRule extends SurtPrefixedDecideRule {
      * Usual constructor. 
      * @param name
      */
-    public OnHostsDecideRule(String name) {
-        super(name);
-        setDescription(
-                 "OnHostsDecideRule. Makes the configured decision " +
-                 "for any URI which is on one of the hosts in the " +
-                 "configured set of hostnames (derived from the seed" +
-                 "list).");
-        // disable direct setting of SURTs-related options
-       getElementFromDefinition(ATTR_SEEDS_AS_SURT_PREFIXES).setTransient(true);
-       getElementFromDefinition(ATTR_SURTS_SOURCE_FILE).setTransient(true);
-       // leaving surts-dump as option helpful for debugging/learning, for now
-       //getElementFromDefinition(ATTR_SURTS_DUMP_FILE).setTransient(true);
+    public OnHostsDecideRule(CrawlController c) {
+        super(c);
     }
 
     /**
@@ -64,10 +56,10 @@ public class OnHostsDecideRule extends SurtPrefixedDecideRule {
      * 
      * @see org.archive.crawler.deciderules.SurtPrefixedDecideRule#readPrefixes()
      */
-    protected void readPrefixes() {
-        buildSurtPrefixSet();
+    protected void readPrefixes(StateProvider context) {
+        buildSurtPrefixSet(context);
         surtPrefixes.convertAllPrefixesToHosts();
-        dumpSurtPrefixSet();
+        dumpSurtPrefixSet(context);
     }
 
 	protected String prefixFrom(String uri) {
