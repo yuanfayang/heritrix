@@ -26,6 +26,7 @@ package org.archive.processors.deciderules;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 
 public abstract class DecideRule {
@@ -58,4 +59,7 @@ public abstract class DecideRule {
         return null;
     }
 
+    public void kickUpdate(StateProvider provider) {
+        
+    }
 }
