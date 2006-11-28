@@ -261,7 +261,9 @@ implements ARCConstants {
         // Preallocate usual line size.
         StringBuilder buffer = new StringBuilder(2048 + 20);
         int read = 0;
+        int previous = -1;
         for (int c = -1; true;) {
+        	previous = c;
             c = stream.read();
             if (c == -1) {
                 throw new RecoverableIOException("Hit EOF before header EOL.");
@@ -289,6 +291,10 @@ implements ARCConstants {
                 // LOOP TERMINATION.
                 break;
             } else if (c == HEADER_FIELD_SEPARATOR) {
+            	if (!isStrict() && previous == HEADER_FIELD_SEPARATOR) {
+            		// Early ARCs sometimes had multiple spaces between fields.
+            		continue;
+            	}
                 if (list != null) {
                     list.add(buffer.toString());
                 }
@@ -329,13 +335,30 @@ implements ARCConstants {
             List<String> originalValues = values;
             if (!isStrict()) {
                 values = fixSpaceInMetadataLine(values, keys.size());
-            }
+                // If values still doesn't match key size, try and do
+                // further repair.
+	            if (keys.size() != values.size()) {
+	            	// Early ARCs had a space in mimetype.
+	            	if (values.size() == (keys.size() + 1) &&
+	            			values.get(4).toLowerCase().startsWith("charset=")) {
+	            		List<String> nuvalues =
+	            			new ArrayList<String>(keys.size());
+	            		nuvalues.add(0, values.get(0));
+	            		nuvalues.add(1, values.get(1));
+	            		nuvalues.add(2, values.get(2));
+	            		nuvalues.add(3, values.get(3) + values.get(4));
+	            		nuvalues.add(4, values.get(5));
+	            		values = nuvalues;
+	            	}
+	            }
+        	}
             if (keys.size() != values.size()) {
                 throw new IOException("Size of field name keys does" +
                     " not match count of field values: " + values);
             }
             // Note that field was fixed on stderr.
-            logStdErr(Level.WARNING, "Fixed spaces in metadata URL." +
+            logStdErr(Level.WARNING, "Fixed spaces in metadata line at " +
+            	"offset " + offset +
                 " Original: " + originalValues + ", New: " + values);
         }
         
