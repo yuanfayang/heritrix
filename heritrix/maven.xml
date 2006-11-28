@@ -114,6 +114,7 @@
             <ant:arg value="org.archive.util.JndiUtils.class" />
             <ant:arg value="org.archive.net.rsync.Handler.class" />
             <ant:arg value="org.archive.net.md5.Handler.class" />
+            <ant:arg value="org.archive.net.s3.Handler.class" />
             <ant:arg value="org.apache.commons.pool.impl.FairGenericObjectPool"
                 />
             <ant:arg value="org.apache.commons.pool.impl.GenericObjectPool" />

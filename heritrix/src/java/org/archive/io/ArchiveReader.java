@@ -716,4 +716,10 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      */
     public abstract void dump(final boolean compress)
     throws IOException, java.text.ParseException;
+    
+    /**
+     * @return an ArchiveReader that will delete a local file on close.  Used
+     * when we bring Archive files local and need to clean up afterward.
+     */
+    public abstract ArchiveReader getDeleteFileOnCloseReader(final File f);
 }

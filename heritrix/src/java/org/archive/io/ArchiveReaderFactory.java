@@ -29,9 +29,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.ParseException;
-import java.util.Iterator;
-import java.util.List;
 
 import org.archive.io.arc.ARCReaderFactory;
 import org.archive.io.warc.WARCReaderFactory;
@@ -169,11 +166,21 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
         // record remotely, might make sense to do a slimmed down
         // ArchiveReader getter.
         // Good if size 2 * inflator buffer to avoid buffer boundaries
-        // (TODO: Implement better handling across buffer boundaries).
-        return getArchiveReader(f.toString(),
-            new RepositionableInputStream(connection.getInputStream(),
-                16 * 1024),
-            (offset == 0));
+        // (TODO: Implement better handling across buffer boundaries --
+        // currently we have RepositionableInputStream calling mark on each
+        // read so we can back up at least the read amount).
+        final int sz = 16 * 1024;
+        if (ARCReaderFactory.isARCSuffix(f.getPath())) {
+            return ARCReaderFactory.get(f.toString(),
+                new RepositionableInputStream(connection.getInputStream(), sz),
+                    (offset == 0));
+        } else if (WARCReaderFactory.isWARCSuffix(f.getPath())) {
+            return WARCReaderFactory.get(f.toString(),
+                new RepositionableInputStream(connection.getInputStream(), sz),
+                    (offset == 0));
+        }
+        throw new IOException("Unknown file extension (Not ARC nor WARC): "
+            + f);
     }
     
     /**
@@ -201,6 +208,17 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
                 return get(f, 0);
             }
         }
+       
+        /** TODO: The below would stream if URL is given an http or s3 URL but
+         * in testing it doesn't work reliably.  Needs more work.
+         * 
+        String scheme = u.getProtocol();
+        if (scheme.startsWith("http") || scheme.equals("s3")) {
+            // Try streaming rather than copying local and then reading (Passing
+            // an offset will get us an Reader that wraps a Stream.
+            return get(u, 0);
+        }
+        */
         
         return makeARCLocal(u.openConnection());
     }
@@ -209,14 +227,27 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
     throws IOException {
         File localFile = null;
         if (connection instanceof HttpURLConnection) {
-            // If http url connection, bring down the resouce local.
-            localFile = File.createTempFile(ArchiveReader.class.getName(),
-            	".tmp", FileUtils.TMPDIR);
-            connection.connect();
+            // If http url connection, bring down the resource local.
+            String p = connection.getURL().getPath();
+            int index = p.lastIndexOf('/');
+            if (index >= 0) {
+                // Name file for the file we're making local.
+                localFile = new File(FileUtils.TMPDIR, p.substring(index + 1));
+                if (localFile.exists()) {
+                    // If file of same name already exists in TMPDIR, then
+                    // clean it up (Assuming only reason a file of same name in
+                    // TMPDIR is because we failed a previous download).
+                    localFile.delete();
+                }
+            } else {
+                localFile = File.createTempFile(ArchiveReader.class.getName(),
+                    ".tmp", FileUtils.TMPDIR);
+            }
             addUserAgent((HttpURLConnection)connection);
+            connection.connect();
             try {
                 IoUtils.readFullyToFile(connection.getInputStream(), localFile,
-                        new byte[16 * 1024]);
+                    new byte[16 * 1024]);
             } catch (IOException ioe) {
                 localFile.delete();
                 throw ioe;
@@ -244,96 +275,8 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
             throw e;
         }
         
-        // Assign to final variables so can assign in inner class.
-        final ArchiveReader r = reader;
-        final File f = localFile;
-        
         // Return a delegate that does cleanup of downloaded file on close.
-        return new ArchiveReader() {
-            private final ArchiveReader delegate = r;
-            private File archiveFile = f;
-            
-            public void close() throws IOException {
-                this.delegate.close();
-                if (this.archiveFile != null) {
-                    if (archiveFile.exists()) {
-                    	archiveFile.delete();
-                    }
-                    this.archiveFile = null;
-                }
-            }
-            
-            public ArchiveRecord get(long o) throws IOException {
-                return this.delegate.get(o);
-            }
-            
-            public boolean isDigest() {
-                return this.delegate.isDigest();
-            }
-            
-            public boolean isStrict() {
-                return this.delegate.isStrict();
-            }
-            
-            public Iterator<ArchiveRecord> iterator() {
-                return this.delegate.iterator();
-            }
-            
-            public void setDigest(boolean d) {
-                this.delegate.setDigest(d);
-            }
-            
-            public void setStrict(boolean s) {
-                this.delegate.setStrict(s);
-            }
-            
-            public List validate() throws IOException {
-                return this.delegate.validate();
-            }
-
-			@Override
-			public ArchiveRecord get() throws IOException {
-				return this.delegate.get();
-			}
-
-			@Override
-			public String getVersion() {
-				return this.delegate.getVersion();
-			}
-
-			@Override
-			public List validate(int noRecords) throws IOException {
-				return this.delegate.validate(noRecords);
-			}
-
-			@Override
-			protected ArchiveRecord createArchiveRecord(InputStream is,
-					long offset)
-			throws IOException {
-				return this.delegate.createArchiveRecord(is, offset);
-			}
-
-			@Override
-			protected void gotoEOR(ArchiveRecord record) throws IOException {
-				this.delegate.gotoEOR(record);
-			}
-
-			@Override
-			public void dump(boolean compress)
-			throws IOException, ParseException {
-				this.delegate.dump(compress);
-			}
-
-			@Override
-			public String getDotFileExtension() {
-				return this.delegate.getDotFileExtension();
-			}
-
-			@Override
-			public String getFileExtension() {
-				return this.delegate.getFileExtension();
-			}
-        };
+        return reader.getDeleteFileOnCloseReader(localFile);
     }
     
     protected void addUserAgent(final HttpURLConnection connection) {

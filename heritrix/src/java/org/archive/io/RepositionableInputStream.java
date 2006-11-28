@@ -32,12 +32,11 @@ import java.io.InputStream;
 
 /**
  * Wrapper around an {@link InputStream} to make a primitive Repositionable
- * stream. Uses a {@link BufferedInputStream}. Has limitations as we come
- * across buffer boundaries.  At least if the access is over the top end of
- * the buffer, could be fixed by calling a buffer fill.  Going back is
- * probably not possible.  Mitigate against buffer boundary problems by
- * having the inflater buffer -- if stream is gzipped -- be at least half
- * size of the backing buffer used here.
+ * stream. Uses a {@link BufferedInputStream}.  Calls mark on every read so
+ * we'll remember at least the last thing read.  Used at least by
+ * {@link GzippedInputStream} when reading streams over a network.  Used to
+ * wrap a HTTP, etc., stream so we can back it up if needs be.
+ * 
  * <p>TODO: More robust implementation.  Tried to use the it.unimi.dsi.io
  * FastBufferdInputStream but relies on FileChannel ByteBuffers and if not
  * present -- as would be the case reading from a network stream, the main
@@ -68,6 +67,9 @@ public class RepositionableInputStream extends BufferedInputStream implements
     
     public synchronized int read(byte[] b, int offset, int ct)
     throws IOException {
+        // Mark the stream so that we'll remember what we just read.  Otherwise
+        // underlying stream will just throw away buffer if needs to fill.
+        super.mark((ct > offset)? ct - offset: ct);
         int read = super.read(b, offset, ct);
         if (read != -1) {
             position += read;
@@ -76,6 +78,9 @@ public class RepositionableInputStream extends BufferedInputStream implements
     }
     
     public int read() throws IOException {
+        // Mark the stream so that we'll remember what we just read.  Otherwise
+        // underlying stream remembers nought.
+        super.mark(1);
         int c = super.read();
         if (c != -1) {
             position++;
@@ -83,10 +88,6 @@ public class RepositionableInputStream extends BufferedInputStream implements
         return c;
     }
 
-    /**
-     * @param offset Offset is ignored.  We call reset on underlying stream. Use
-     * sparingly and only after a call to position.
-     */
     public void position(final long offset) {
         if (this.position == offset) {
             return;
@@ -95,8 +96,8 @@ public class RepositionableInputStream extends BufferedInputStream implements
         long lowerBound = this.position - this.pos;
         long upperBound = lowerBound + this.count;
         if (offset < lowerBound || offset >= upperBound) {
-            throw new IllegalAccessError("Offset outside goes outside " +
-                "current this.buf (TODO: At least do fills if positive)");
+            throw new IllegalAccessError("Offset goes outside " +
+                "current this.buf (TODO: Do buffer fills if positive)");
         }
         this.position = offset;
         this.pos += diff;
