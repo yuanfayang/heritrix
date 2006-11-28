@@ -700,6 +700,27 @@
                 <license>LGPL or Sun Public License (SPL)</license>
             </properties>
         </dependency>
+        <dependency>
+            <id>s3</id>
+            <version>1.0.0</version>
+            <url>http://builds.archive.org:8080/cruisecontrol/buildresults/HEAD-heritrix</url>
+            <properties>
+                <war.bundle>true</war.bundle>
+                <description>
+                This jar contains code for accessing S3 AND
+                org.archive.net.s3.Handler.class.  The S3 code is a subset of
+                code obtained at URL given above.  Here's how I made this jar
+                (after changing some of the statics to have public rather than
+                default access and copying the s3 Handler.class from 
+                Nutchwax build dir local): 
+                 1131  javac  com/amazon/thirdparty/Base64.java com/amazon/s3/Utils.java com/amazon/s3/AWSAuthConnection.java
+
+                 1134 jar -cf s3-20061030.jar `find com org -name '*.class'`
+                 TODO: Clean this up (Need to make sure all is working first).
+                </description>
+                <license />
+            </properties>
+        </dependency>
   </dependencies>
 
   

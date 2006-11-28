@@ -513,6 +513,99 @@ implements ARCConstants {
         // System.out.println(System.currentTimeMillis() - start);
     }
     
+    /**
+     * @return an ArchiveReader that will delete a local file on close.  Used
+     * when we bring Archive files local and need to clean up afterward.
+     */
+    public ARCReader getDeleteFileOnCloseReader(final File f) {
+        final ARCReader d = this;
+        return new ARCReader() {
+            private final ARCReader delegate = d;
+            private File archiveFile = f;
+            
+            public void close() throws IOException {
+                this.delegate.close();
+                if (this.archiveFile != null) {
+                    if (archiveFile.exists()) {
+                        archiveFile.delete();
+                    }
+                    this.archiveFile = null;
+                }
+            }
+            
+            public ArchiveRecord get(long o) throws IOException {
+                return this.delegate.get(o);
+            }
+            
+            public boolean isDigest() {
+                return this.delegate.isDigest();
+            }
+            
+            public boolean isStrict() {
+                return this.delegate.isStrict();
+            }
+            
+            public Iterator<ArchiveRecord> iterator() {
+                return this.delegate.iterator();
+            }
+            
+            public void setDigest(boolean d) {
+                this.delegate.setDigest(d);
+            }
+            
+            public void setStrict(boolean s) {
+                this.delegate.setStrict(s);
+            }
+            
+            public List validate() throws IOException {
+                return this.delegate.validate();
+            }
+
+            @Override
+            public ArchiveRecord get() throws IOException {
+                return this.delegate.get();
+            }
+
+            @Override
+            public String getVersion() {
+                return this.delegate.getVersion();
+            }
+
+            @Override
+            public List validate(int noRecords) throws IOException {
+                return this.delegate.validate(noRecords);
+            }
+
+            @Override
+            protected ARCRecord createArchiveRecord(InputStream is,
+                    long offset)
+            throws IOException {
+                return this.delegate.createArchiveRecord(is, offset);
+            }
+
+            @Override
+            protected void gotoEOR(ArchiveRecord record) throws IOException {
+                this.delegate.gotoEOR(record);
+            }
+
+            @Override
+            public void dump(boolean compress)
+            throws IOException, java.text.ParseException {
+                this.delegate.dump(compress);
+            }
+
+            @Override
+            public String getDotFileExtension() {
+                return this.delegate.getDotFileExtension();
+            }
+
+            @Override
+            public String getFileExtension() {
+                return this.delegate.getFileExtension();
+            }
+        };
+    }
+    
     // Static methods follow.
 
     /**

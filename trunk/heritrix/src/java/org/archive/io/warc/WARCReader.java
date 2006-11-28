@@ -34,6 +34,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.lang.NotImplementedException;
 import org.archive.io.ArchiveReader;
 import org.archive.io.ArchiveRecord;
 
@@ -107,6 +108,12 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
             System.out.println();
         }
 	}
+    
+
+    @Override
+    public ArchiveReader getDeleteFileOnCloseReader(final File f) {
+        throw new NotImplementedException("TODO");
+    }  
 
 	@Override
 	public String getDotFileExtension() {
@@ -304,5 +311,5 @@ public class WARCReader extends ArchiveReader implements WARCConstants {
                 }
             }
         }
-    }   
+    } 
 }
