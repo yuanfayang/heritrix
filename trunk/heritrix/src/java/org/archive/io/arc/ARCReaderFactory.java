@@ -393,7 +393,7 @@ implements ARCConstants {
                 }
 
                 protected ArchiveRecord innerNext() throws IOException {
-                    // Get the positoin before gzipIterator.next moves
+                    // Get the position before gzipIterator.next moves
                     // it on past the gzip header.
                     long p = this.gis.position();
                     InputStream is = (InputStream) this.gzipIterator.next();

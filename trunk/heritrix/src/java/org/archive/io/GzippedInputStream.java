@@ -221,35 +221,19 @@ implements RepositionableStream {
                 ps.position(position() - getInflater().getRemaining() +
                     GZIP_TRAILER_LENGTH);
             }
-            // If at least MINIMAL_GZIP_HEADER_LENGTH available assume
-            // possible other gzip member. Move the stream on checking
-            // as we go to be sure of another record. We do this slow
-            // poke ahead because the calculation using
-            // this.inf.getRemaining can be off by a couple if the
-            // remaining is zero.  There seems to be nothing in
-            // gzipinputstream nor in the inflater that can be relied
-            // upon:  this.eos = false, this.inf.finished = false,
-            // this.inf.readEOF is true. I don't know why its messed up
-            // like this.  Study the core zlib and see if can figure
-            // where inflater is going wrong.
             int read = -1;
             int headerRead = 0;
-            while (getInputStream().available() >
-                    GzipHeader.MINIMAL_GZIP_HEADER_LENGTH) {
-                read = getGzipHeader().readByte(getInputStream());
-                if ((byte)read == (byte)GZIPInputStream.GZIP_MAGIC) {
+            while ((read = getInputStream().read()) != -1) {
+            	if(compareBytes(read, GZIPInputStream.GZIP_MAGIC)) {
                     headerRead++;
-                    read = getGzipHeader().readByte(getInputStream());
-                    if((byte)read ==
-                            (byte)(GZIPInputStream.GZIP_MAGIC >> 8)) {
+                    read = getInputStream().read();
+                    if(compareBytes(read, GZIPInputStream.GZIP_MAGIC >> 8)) {
                         headerRead++;
-                        read =
-                            getGzipHeader().readByte(getInputStream());
-                        if ((byte)read == Deflater.DEFLATED) {
+                        read = getInputStream().read();
+                        if (compareBytes(read, Deflater.DEFLATED)) {
                             headerRead++;
                             // Found gzip header. Backup the stream the
-                            // two bytes we just found and set result
-                            // true.
+                            // bytes we just found and set result true.
                             ps.position(position() - headerRead);
                             result = true;
                             break;
@@ -266,6 +250,10 @@ implements RepositionableStream {
             throw new RuntimeException("Failed i/o: " + e.getMessage());
         }
         return result;
+    }
+    
+    protected boolean compareBytes(final int a, final int b) {
+    	return ((byte)(a & 0xff)) == ((byte)(b & 0xff));
     }
   
     protected Inflater getInflater() {

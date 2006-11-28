@@ -165,10 +165,12 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
         // TODO: Get feedback on this ArchiveReader maker. If fetching single
         // record remotely, might make sense to do a slimmed down
         // ArchiveReader getter.
-        // Good if size 2 * inflator buffer to avoid buffer boundaries
-        // (TODO: Implement better handling across buffer boundaries --
-        // currently we have RepositionableInputStream calling mark on each
-        // read so we can back up at least the read amount).
+        // 
+        // RepositionableInputStream calls mark on each read so can
+        // back up at least the read amount.  TODO: May need to do better
+        // buffering handling making sure RepositionableInputStream is
+        // able to back up the gzip inflater overinflations, its reads
+        // into the next gzip member.
         final int sz = 16 * 1024;
         if (ARCReaderFactory.isARCSuffix(f.getPath())) {
             return ARCReaderFactory.get(f.toString(),
@@ -209,16 +211,13 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
             }
         }
        
-        /** TODO: The below would stream if URL is given an http or s3 URL but
-         * in testing it doesn't work reliably.  Needs more work.
-         * 
         String scheme = u.getProtocol();
         if (scheme.startsWith("http") || scheme.equals("s3")) {
-            // Try streaming rather than copying local and then reading (Passing
-            // an offset will get us an Reader that wraps a Stream.
+            // Try streaming if http or s3 URLs rather than copying local
+        	// and then reading (Passing an offset will get us an Reader
+        	// that wraps a Stream).
             return get(u, 0);
         }
-        */
         
         return makeARCLocal(u.openConnection());
     }
