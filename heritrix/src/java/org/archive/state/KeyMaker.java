@@ -193,4 +193,11 @@ public class KeyMaker<T> {
         return r;
     }
 
+    
+    public static <T> KeyMaker<T> makeNull(Class<T> type) {
+        KeyMaker<T> km = new KeyMaker<T>();
+        km.type = type;
+        km.def = null;
+        return km;
+    }
 }

@@ -292,4 +292,10 @@ final public class Key<Value> {
         KeyMaker<Map<String,X>> km = KeyMaker.makeMap(value);
         return new Key<Map<String,X>>(km);
     }
+
+
+
+    public static <X> Key<X> makeNull(Class<X> cls) {
+        return KeyMaker.makeNull(cls).toKey();
+    }
 }
