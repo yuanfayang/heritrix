@@ -22,6 +22,8 @@
  */
 package org.archive.io;
 
+import it.unimi.dsi.fastutil.io.RepositionableStream;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -116,7 +118,11 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
     /**
      * Wrap a Reader around passed Stream.
      * @param s Identifying String for this Stream used in error messages.
-     * @param is Stream.
+     * Must be a string that ends with the name of the file we're to put
+     * an ArchiveReader on.  This code looks at file endings to figure
+     * whether to return an ARC or WARC reader.
+     * @param is Stream.  Stream will be wrapped with implementation of
+     * RepositionableStream unless already supported.
      * @param atFirstRecord Are we at first Record?
      * @return ArchiveReader.
      * @throws IOException
@@ -131,8 +137,19 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
     protected ArchiveReader getArchiveReader(final String id, 
     		final InputStream is, final boolean atFirstRecord)
     throws IOException {
-    	// Default to compressed WARC.
-    	return WARCReaderFactory.get(id, is, atFirstRecord);
+    	InputStream stream = is;
+    	if (!(stream instanceof RepositionableStream)) {
+    		// RepositionableInputStream calls mark on each read so can
+    		// back up at least the read amount.  Needed for gzip inflater
+    		// overinflations reading into the next gzip member.
+        	stream = new RepositionableInputStream(stream, 16 * 1024);
+    	}
+        if (ARCReaderFactory.isARCSuffix(id)) {
+            return ARCReaderFactory.get(id, stream, atFirstRecord);
+        } else if (WARCReaderFactory.isWARCSuffix(id)) {
+            return WARCReaderFactory.get(id, stream, atFirstRecord);
+        }
+        throw new IOException("Unknown extension (Not ARC nor WARC): " + id);
     }
     
     /**
@@ -162,27 +179,9 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
         // add open-ended range header to the request.  Else, because end-byte
         // is inclusive, subtract 1.
         connection.addRequestProperty("Range", "bytes=" + offset + "-");
-        // TODO: Get feedback on this ArchiveReader maker. If fetching single
-        // record remotely, might make sense to do a slimmed down
-        // ArchiveReader getter.
-        // 
-        // RepositionableInputStream calls mark on each read so can
-        // back up at least the read amount.  TODO: May need to do better
-        // buffering handling making sure RepositionableInputStream is
-        // able to back up the gzip inflater overinflations, its reads
-        // into the next gzip member.
-        final int sz = 16 * 1024;
-        if (ARCReaderFactory.isARCSuffix(f.getPath())) {
-            return ARCReaderFactory.get(f.toString(),
-                new RepositionableInputStream(connection.getInputStream(), sz),
-                    (offset == 0));
-        } else if (WARCReaderFactory.isWARCSuffix(f.getPath())) {
-            return WARCReaderFactory.get(f.toString(),
-                new RepositionableInputStream(connection.getInputStream(), sz),
-                    (offset == 0));
-        }
-        throw new IOException("Unknown file extension (Not ARC nor WARC): "
-            + f);
+
+        return getArchiveReader(f.toString(), connection.getInputStream(),
+            (offset == 0));
     }
     
     /**

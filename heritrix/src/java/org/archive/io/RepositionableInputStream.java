@@ -33,15 +33,18 @@ import java.io.InputStream;
 /**
  * Wrapper around an {@link InputStream} to make a primitive Repositionable
  * stream. Uses a {@link BufferedInputStream}.  Calls mark on every read so
- * we'll remember at least the last thing read.  Used at least by
- * {@link GzippedInputStream} when reading streams over a network.  Used to
- * wrap a HTTP, etc., stream so we can back it up if needs be.
+ * we'll remember at least the last thing read (You can only backup on the
+ * last thing read -- not last 2 or 3 things read).  Used by
+ * {@link GzippedInputStream} when reading streams over a network.  Wraps a
+ * HTTP, etc., stream so we can back it up if needs be after the
+ * GZIP inflater has done a fill of its full buffer though it only needed
+ * the first few bytes to finish decompressing the current GZIP member.
  * 
  * <p>TODO: More robust implementation.  Tried to use the it.unimi.dsi.io
  * FastBufferdInputStream but relies on FileChannel ByteBuffers and if not
  * present -- as would be the case reading from a network stream, the main
  * application for this instance -- then it expects the underlying stream 
- * implements RepositionableStream interface.
+ * implements RepositionableStream interface so chicken or egg problem.
  * @author stack
  */
 public class RepositionableInputStream extends BufferedInputStream implements
