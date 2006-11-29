@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,12 +40,16 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.extractor.Link;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.io.warc.ExperimentalWARCWriter;
 import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCWriterPool;
+import org.archive.processors.ProcessorURI;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.uid.GeneratorFactory;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.anvl.ANVLRecord;
@@ -57,32 +62,74 @@ import org.archive.util.anvl.ANVLRecord;
  */
 public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor
 implements CoreAttributeConstants, CrawlStatusListener,
-WriterPoolSettings, FetchStatusCodes, WARCConstants {
+FetchStatusCodes, WARCConstants {
 
-    private static final long serialVersionUID = 188656957531675821L;
+    private static final long serialVersionUID = 3L;
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
-    
-    /**
-     * Default path list.
-     */
-    private static final String [] DEFAULT_PATH = {"warcs"};
 
-    protected String [] getDefaultPath() {
-        return DEFAULT_PATH;
-    }
+    /**
+     * Where to save files. Supply absolute or relative path. If relative, files
+     * will be written relative to the order.disk-path setting. If more than one
+     * path specified, we'll round-robin dropping files to each. This setting is
+     * safe to change midcrawl (You can remove and add new dirs as the crawler
+     * progresses).
+     */
+    final public static Key<List<String>> PATH = 
+        Key.makeFinal(Collections.singletonList("warcs"));
+
     
     /**
      * @param name Name of this writer.
      */
-    public ExperimentalWARCWriterProcessor(String name) {
-        super(name, "Experimental WARCWriter processor");
+    public ExperimentalWARCWriterProcessor(CrawlController controller) {
+        super(controller);
     }
 
-    protected void setupPool(final AtomicInteger serialNo) {
-		setPool(new WARCWriterPool(serialNo, this, getPoolMaximumActive(),
-            getPoolMaximumWait()));
+
+    @Override
+    protected void setupPool(StateProvider context, AtomicInteger serialNo) {
+        int maxActive = context.get(this, POOL_MAX_ACTIVE);
+        int maxWait = context.get(this, POOL_MAX_WAIT);
+        WriterPoolSettings wps = getWriterPoolSettings(context);
+        setPool(new WARCWriterPool(serialNo, wps, maxActive, maxWait));
     }
+    
+    
+    @Override
+    protected boolean shouldProcess(ProcessorURI puri) {
+        if (!(puri instanceof CrawlURI)) {
+            return false;
+        }
+        
+        CrawlURI curi = (CrawlURI)puri;
+        
+        // If failure, or we haven't fetched the resource yet, return
+        if (curi.getFetchStatus() <= 0) {
+            return false;
+        }
+        
+        // If no content, don't write record.
+        int recordLength = (int)curi.getContentSize();
+        if (recordLength <= 0) {
+                // Write nothing.
+                return false;
+        }
+
+        String scheme = curi.getUURI().getScheme().toLowerCase();
+        if ((scheme.equals("dns") &&
+                curi.getFetchStatus() == S_DNS_SUCCESS) ||
+            ((scheme.equals("http") || scheme.equals("https")) &&
+                        curi.getFetchStatus() > 0 && curi.isHttpTransaction()) ||
+            (scheme.equals("ftp") && curi.getFetchStatus() == 200)) {
+            return true;
+        } else {
+            logger.info("This writer does not write out scheme " +
+                    scheme + " content");
+            return false;
+        }
+    }
+    
     
     /**
      * Writes a CrawlURI and its associated data to store file.
@@ -94,34 +141,14 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
      *            CrawlURI to process.
      * 
      */
-    protected void innerProcess(CrawlURI curi) {
-        // If failure, or we haven't fetched the resource yet, return
-        if (curi.getFetchStatus() <= 0) {
-            return;
-        }
-        
-        // If no content, don't write record.
-        int recordLength = (int)curi.getContentSize();
-        if (recordLength <= 0) {
-        	// Write nothing.
-        	return;
-        }
+    protected void innerProcess(ProcessorURI puri) {
+        CrawlURI curi = (CrawlURI)puri;
         
         String scheme = curi.getUURI().getScheme().toLowerCase();
         try {
-            if ((scheme.equals("dns") &&
-                    curi.getFetchStatus() == S_DNS_SUCCESS) ||
-                ((scheme.equals("http") || scheme.equals("https")) &&
-            		curi.getFetchStatus() > 0 && curi.isHttpTransaction()) ||
-                (scheme.equals("ftp") && curi.getFetchStatus() == 200)) {
-                write(scheme, curi);
-            } else {
-                logger.info("This writer does not write out scheme " +
-                        scheme + " content");
-            }
+            write(scheme, curi);
         } catch (IOException e) {
-            curi.addLocalizedError(this.getName(), e, "WriteRecord: " +
-                curi.toString());
+            curi.getNonFatalFailures().add(e);
             logger.log(Level.SEVERE, "Failed write of Record: " +
                 curi.toString(), e);
         }
@@ -196,7 +223,7 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
                 getPool().returnFile(writer);
             }
         }
-        checkBytesWritten();
+        checkBytesWritten(curi);
     }
     
     protected URI writeRequest(final ExperimentalWARCWriter w,
@@ -303,5 +330,10 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
     public List getMetadata() {
         // TODO: As ANVL?
         return null;
+    }
+    
+    
+    protected Key<List<String>> getPathKey() {
+        return PATH;
     }
 }

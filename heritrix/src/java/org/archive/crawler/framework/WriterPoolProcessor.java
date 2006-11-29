@@ -33,29 +33,26 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
-
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.StringList;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.writer.MetadataProvider;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
+import org.archive.io.WriterPoolSettings;
+import org.archive.processors.Processor;
 import org.archive.processors.fetcher.CrawlHost;
+import org.archive.state.ExampleStateProvider;
+import org.archive.state.Key;
+import org.archive.state.KeyMaker;
+import org.archive.state.StateProvider;
 
 /**
  * Abstract implementation of a file pool processor.
@@ -65,70 +62,78 @@ import org.archive.processors.fetcher.CrawlHost;
  */
 public abstract class WriterPoolProcessor extends Processor
 implements CoreAttributeConstants, CrawlStatusListener {
+    
+    
     private final Logger logger = Logger.getLogger(this.getClass().getName());
 
-    /**
-     * Key to use asking settings for file compression value.
-     */
-    public static final String ATTR_COMPRESS = "compress";
 
     /**
-     * Default as to whether we do compression of files.
+     * Compress files when "writing to disk.
      */
-    public static final boolean DEFAULT_COMPRESS = true;
+    final public static Key<Boolean> COMPRESS = Key.makeFinal(true);
 
-    /**
-     * Key to use asking settings for file prefix value.
-     */
-    public static final String ATTR_PREFIX = "prefix";    
-
-    /**
-     * Key to use asking settings for arc path value.
-     */
-    public static final String ATTR_PATH ="path";
-
-    /**
-     * Key to use asking settings for file suffix value.
-     */
-    public static final String ATTR_SUFFIX = "suffix";
-
-    /**
-     * Key to use asking settings for file max size value.
-     */
-    public static final String ATTR_MAX_SIZE_BYTES = "max-size-bytes";
     
     /**
-     * Key to get maximum pool size.
-     *
-     * This key is for maximum files active in the pool.
+     * File prefix. The text supplied here will be used as a prefix naming
+     * writer files. For example if the prefix is 'IAH', then file names will
+     * look like IAH-20040808101010-0001-HOSTNAME.arc.gz ...if writing ARCs (The
+     * prefix will be separated from the date by a hyphen).
      */
-    public static final String ATTR_POOL_MAX_ACTIVE = "pool-max-active";
+    final public static Key<String> PREFIX = 
+        Key.makeFinal(WriterPoolMember.DEFAULT_PREFIX);
+
 
     /**
-     * Key to get maximum wait on pool object before we give up and
-     * throw IOException.
+     * Where to save files. Supply absolute or relative path. If relative, files
+     * will be written relative to the order.disk-path setting. If more than one
+     * path specified, we'll round-robin dropping files to each. This setting is
+     * safe to change midcrawl (You can remove and add new dirs as the crawler
+     * progresses).
      */
-    public static final String ATTR_POOL_MAX_WAIT = "pool-max-wait";
+    final public static Key<List<String>> PATH = 
+        Key.makeFinal(Collections.singletonList("crawl-store"));
 
-    /***
-     * Key for the maximum bytes to write attribute.
+
+    /**
+     * Suffix to tag onto files. If value is '${HOSTNAME}', will use hostname
+     * for suffix. If empty, no suffix will be added.
      */
-    public static final String ATTR_MAX_BYTES_WRITTEN =
-    	"total-bytes-to-write";
+    final public static Key<String> SUFFIX = 
+        Key.makeFinal(WriterPoolMember.DEFAULT_SUFFIX);
+
+
+    /**
+     * Max size of each file.
+     */
+    final public static Key<Integer> MAX_SIZE_BYTES = Key.makeFinal(100000000);
+
     
     /**
-     * Default maximum file size.
-     * TODO: Check that subclasses can set a different MAX_FILE_SIZE and
-     * it will be used in the constructor as default.
+     * Maximum active files in pool. This setting cannot be varied over the life
+     * of a crawl.
      */
-    private static final int DEFAULT_MAX_FILE_SIZE = 100000000;
-    
+    final public static Key<Integer> POOL_MAX_ACTIVE = 
+        Key.makeFinal(WriterPool.DEFAULT_MAX_ACTIVE);
+
+
     /**
-     * Default path list.
-     * 
-     * TODO: Confirm this one gets picked up.
+     * Maximum time to wait on pool element (milliseconds). This setting cannot
+     * be varied over the life of a crawl.
      */
-    private static final String [] DEFAULT_PATH = {"crawl-store"};
+    final public static Key<Integer> POOL_MAX_WAIT = 
+        Key.makeFinal(WriterPool.DEFAULT_MAXIMUM_WAIT);
+
+
+    /**
+     * Total file bytes to write to disk. Once the size of all files on disk has
+     * exceeded this limit, this processor will stop the crawler. A value of
+     * zero means no upper limit.
+     */
+    final public static Key<Long> MAX_BYTES_WRITTEN = Key.makeExpertFinal(0L);
+
+
+    final public static Key<MetadataProvider> METADATA_PROVIDER = 
+        Key.makeNull(MetadataProvider.class); 
 
     /**
      * Reference to pool.
@@ -140,90 +145,31 @@ implements CoreAttributeConstants, CrawlStatusListener {
      */
     private long totalBytesWritten = 0;
 
+    
+    final private CrawlController controller;
+    
 
-    /**
-     * @param name Name of this processor.
-     */
-    public WriterPoolProcessor(String name) {
-    	this(name, "Pool of files processor");
-    }
-    	
     /**
      * @param name Name of this processor.
      * @param description Description for this processor.
      */
-    public WriterPoolProcessor(final String name,
-        		final String description) {
-        super(name, description);
-        Type e = addElementToDefinition(
-            new SimpleType(ATTR_COMPRESS, "Compress files when " +
-            	"writing to disk.", new Boolean(DEFAULT_COMPRESS)));
-        e.setOverrideable(false);
-        e = addElementToDefinition(
-            new SimpleType(ATTR_PREFIX, 
-                "File prefix. " +
-                "The text supplied here will be used as a prefix naming " +
-                "writer files.  For example if the prefix is 'IAH', " +
-                "then file names will look like " +
-                "IAH-20040808101010-0001-HOSTNAME.arc.gz " +
-                "...if writing ARCs (The prefix will be " +
-                "separated from the date by a hyphen).",
-                WriterPoolMember.DEFAULT_PREFIX));
-        e = addElementToDefinition(
-            new SimpleType(ATTR_SUFFIX, "Suffix to tag onto " +
-                "files. If value is '${HOSTNAME}', will use hostname for " +
-                "suffix. If empty, no suffix will be added.",
-                WriterPoolMember.DEFAULT_SUFFIX));
-        e.setOverrideable(false);
-        e = addElementToDefinition(
-            new SimpleType(ATTR_MAX_SIZE_BYTES, "Max size of each file",
-                new Integer(DEFAULT_MAX_FILE_SIZE)));
-        e.setOverrideable(false);
-        e = addElementToDefinition(
-            new StringList(ATTR_PATH, "Where to files. " +
-                "Supply absolute or relative path.  If relative, files " +
-                "will be written relative to " +
-                "the " + CrawlOrder.ATTR_DISK_PATH + "setting." +
-                " If more than one path specified, we'll round-robin" +
-                " dropping files to each.  This setting is safe" +
-                " to change midcrawl (You can remove and add new dirs" +
-                " as the crawler progresses).", getDefaultPath()));
-        e.setOverrideable(false);
-        e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_ACTIVE,
-            "Maximum active files in pool. " +
-            "This setting cannot be varied over the life of a crawl.",
-            new Integer(WriterPool.DEFAULT_MAX_ACTIVE)));
-        e.setOverrideable(false);
-        e = addElementToDefinition(new SimpleType(ATTR_POOL_MAX_WAIT,
-            "Maximum time to wait on pool element" +
-            " (milliseconds). This setting cannot be varied over the life" +
-            " of a crawl.",
-            new Integer(WriterPool.DEFAULT_MAXIMUM_WAIT)));
-        e.setOverrideable(false);
-        e = addElementToDefinition(new SimpleType(ATTR_MAX_BYTES_WRITTEN,
-            "Total file bytes to write to disk." +
-            " Once the size of all files on disk has exceeded this " +
-            "limit, this processor will stop the crawler. " +
-            "A value of zero means no upper limit.", new Long(0)));
-        e.setOverrideable(false);
-        e.setExpertSetting(true);
+    public WriterPoolProcessor(CrawlController controller) {
+        this.controller = controller;
     }
-    
-    protected String [] getDefaultPath() {
-    	return DEFAULT_PATH;
-	}
 
-    public synchronized void initialTasks() {
+
+    @Override
+    public synchronized void initialTasks(StateProvider context) {
         // Add this class to crawl state listeners and setup pool.
-        getSettingsHandler().getOrder().getController().
-            addCrawlStatusListener(this);
-        setupPool(new AtomicInteger());
+        controller.addCrawlStatusListener(this);
+        setupPool(context, new AtomicInteger());
         // Run checkpoint recovery code.
-        if (getSettingsHandler().getOrder().getController().
-        		isCheckpointRecover()) {
-        	checkpointRecover();
+        if (controller.isCheckpointRecover()) {
+            checkpointRecover();
         }
     }
+    
+    
     
     protected AtomicInteger getSerialNo() {
         return ((WriterPool)getPool()).getSerialNo();
@@ -232,31 +178,23 @@ implements CoreAttributeConstants, CrawlStatusListener {
     /**
      * Set up pool of files.
      */
-    protected abstract void setupPool(final AtomicInteger serialNo);
+    protected abstract void setupPool(StateProvider context, 
+            final AtomicInteger serialNo);
 
-    /**
-     * Writes a CrawlURI and its associated data to store file.
-     *
-     * Currently this method understands the following uri types: dns, http, 
-     * and https.
-     *
-     * @param curi CrawlURI to process.
-     */
-    protected abstract void innerProcess(CrawlURI curi);
     
-    protected void checkBytesWritten() {
-        long max = getMaxToWrite();
+    protected void checkBytesWritten(StateProvider context) {
+        long max = context.get(this, MAX_BYTES_WRITTEN);
         if (max <= 0) {
             return;
         }
         if (max <= this.totalBytesWritten) {
-            getController().requestCrawlStop("Finished - Maximum bytes (" +
+            controller.requestCrawlStop("Finished - Maximum bytes (" +
                 Long.toString(max) + ") written");
         }
     }
     
     protected String getHostAddress(CrawlURI curi) {
-        CrawlHost h = getController().getServerCache().getHostFor(curi);
+        CrawlHost h = curi.getCrawlHost();
         if (h == null) {
             throw new NullPointerException("Crawlhost is null for " +
                 curi + " " + curi.getVia());
@@ -273,112 +211,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
         return h.getIP().getHostAddress();
     }
     
-    /**
-     * Version of getAttributes that catches and logs exceptions
-     * and returns null if failure to fetch the attribute.
-     * @param name Attribute name.
-     * @return Attribute or null.
-     */
-    public Object getAttributeUnchecked(String name) {
-        Object result = null;
-        try {
-            result = super.getAttribute(name);
-        } catch (AttributeNotFoundException e) {
-            logger.warning(e.getLocalizedMessage());
-        } catch (MBeanException e) {
-            logger.warning(e.getLocalizedMessage());
-        } catch (ReflectionException e) {
-            logger.warning(e.getLocalizedMessage());
-        }
-        return result;
-    }
 
-   /**
-    * Max size we want files to be (bytes).
-    *
-    * Default is ARCConstants.DEFAULT_MAX_ARC_FILE_SIZE.  Note that ARC
-    * files will usually be bigger than maxSize; they'll be maxSize + length
-    * to next boundary.
-    * @return ARC maximum size.
-    */
-    public int getMaxSize() {
-        Object obj = getAttributeUnchecked(ATTR_MAX_SIZE_BYTES);
-        return (obj == null)? DEFAULT_MAX_FILE_SIZE: ((Integer)obj).intValue();
-    }
-
-    public String getPrefix() {
-        Object obj = getAttributeUnchecked(ATTR_PREFIX);
-        return (obj == null)? WriterPoolMember.DEFAULT_PREFIX: (String)obj;
-    }
-
-    public List<File> getOutputDirs() {
-        Object obj = getAttributeUnchecked(ATTR_PATH);
-        List list = (obj == null)? Arrays.asList(DEFAULT_PATH): (StringList)obj;
-        ArrayList<File> results = new ArrayList<File>();
-        for (Iterator i = list.iterator(); i.hasNext();) {
-            String path = (String)i.next();
-            File f = new File(path);
-            if (!f.isAbsolute()) {
-                f = new File(getController().getDisk(), path);
-            }
-            if (!f.exists()) {
-                try {
-                    f.mkdirs();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    continue;
-                }
-            }
-            results.add(f);
-        }
-        return results;
-    }
-    
-    public boolean isCompressed() {
-        Object obj = getAttributeUnchecked(ATTR_COMPRESS);
-        return (obj == null)? DEFAULT_COMPRESS:
-            ((Boolean)obj).booleanValue();
-    }
-
-    /**
-     * @return Returns the poolMaximumActive.
-     */
-    public int getPoolMaximumActive() {
-        Object obj = getAttributeUnchecked(ATTR_POOL_MAX_ACTIVE);
-        return (obj == null)? WriterPool.DEFAULT_MAX_ACTIVE:
-            ((Integer)obj).intValue();
-    }
-
-    /**
-     * @return Returns the poolMaximumWait.
-     */
-    public int getPoolMaximumWait() {
-        Object obj = getAttributeUnchecked(ATTR_POOL_MAX_WAIT);
-        return (obj == null)? WriterPool.DEFAULT_MAXIMUM_WAIT:
-            ((Integer)obj).intValue();
-    }
-
-    public String getSuffix() {
-        Object obj = getAttributeUnchecked(ATTR_SUFFIX);
-        String sfx = (obj == null)?
-            WriterPoolMember.DEFAULT_SUFFIX: (String)obj;
-        if (sfx != null && sfx.trim().
-                equals(WriterPoolMember.HOSTNAME_VARIABLE)) {
-            String str = "localhost.localdomain";
-            try {
-                str = InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException ue) {
-                logger.severe("Failed getHostAddress for this host: " + ue);
-            }
-            sfx = str;
-        }
-        return sfx;
-    }
-    
-    public long getMaxToWrite() {
-        Object obj = getAttributeUnchecked(ATTR_MAX_BYTES_WRITTEN);
-        return (obj == null)? 0: ((Long)obj).longValue();
-    }
 
 	public void crawlEnding(String sExitMessage) {
 		this.pool.close();
@@ -399,7 +232,8 @@ implements CoreAttributeConstants, CrawlStatusListener {
     	return this.getClass().getName() + ".state";
     }
     
-    public void crawlCheckpoint(File checkpointDir) throws IOException {
+    public void crawlCheckpoint(StateProvider context, File checkpointDir) 
+    throws IOException {
         int serial = getSerialNo().get();
         if (this.pool.getNumActive() > 0) {
             // If we have open active Archive files, up the serial number
@@ -415,7 +249,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
             this.pool.close();
         } finally {
             // Reopen on checkpoint.
-            setupPool(new AtomicInteger(serial));
+            setupPool(context, new AtomicInteger(serial));
         }
     }
     
@@ -438,7 +272,8 @@ implements CoreAttributeConstants, CrawlStatusListener {
             (ObjectPlusFilesInputStream)stream;
         coistream.registerFinishTask( new Runnable() {
             public void run() {
-            	setupPool(new AtomicInteger());
+                // FIXME: Figure out checkpointing in new settings system
+            	setupPool(new ExampleStateProvider(), new AtomicInteger());
             }
         });
     }
@@ -479,8 +314,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
         
         // If in recover mode, read in the Writer serial number saved
         // off when we checkpointed.
-        File stateFile = new File(getSettingsHandler().getOrder()
-                .getController().getCheckpointRecover().getDirectory(),
+        File stateFile = new File(controller.getCheckpointRecover().getDirectory(),
                 getCheckpointStateFile());
         if (!stateFile.exists()) {
             logger.info(stateFile.getAbsolutePath()
@@ -519,4 +353,79 @@ implements CoreAttributeConstants, CrawlStatusListener {
             dos.close();
         }
     }
+    
+    
+    protected List<String> getMetadata(StateProvider context) {
+        MetadataProvider provider = context.get(this, METADATA_PROVIDER);
+        return provider.getMetadata();
+    }
+
+    
+    protected abstract  Key<List<String>> getPathKey();
+    
+    private List<File> getOutputDirs(StateProvider context) {
+        List<String> list = context.get(this, getPathKey());
+        ArrayList<File> results = new ArrayList<File>();
+        for (String path: list) {
+            File f = new File(path);
+            if (!f.isAbsolute()) {
+                f = new File(controller.getDisk(), path);
+            }
+            if (!f.exists()) {
+                try {
+                    f.mkdirs();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    continue;
+                }
+            }
+            results.add(f);
+        }
+        return results;        
+    }
+    
+    protected WriterPoolSettings getWriterPoolSettings(
+            final StateProvider context) {
+        final int maxSize = context.get(this, MAX_SIZE_BYTES);
+        final List<String> metadata = getMetadata(context);
+        final List<File> output = getOutputDirs(context);
+        final String prefix = context.get(this, PREFIX);
+        final String suffix = context.get(this, SUFFIX);
+        final boolean compressed = context.get(this, COMPRESS);
+        return new WriterPoolSettings() {
+
+            public int getMaxSize() {
+                return maxSize;
+            }
+
+            public List<String> getMetadata() {
+                return metadata;
+            }
+
+            public List<File> getOutputDirs() {
+                return output;
+            }
+
+            public String getPrefix() {
+                return prefix;
+            }
+
+            public String getSuffix() {
+                return suffix;
+            }
+
+            public boolean isCompressed() {
+                return compressed;
+            }
+            
+        };
+    }
+    
+    protected static Key<List<String>> makePath(String defaultPath) {
+        KeyMaker<List<String>> km = KeyMaker.makeList(String.class);
+        km.overrideable = false;
+        km.def = Collections.singletonList(defaultPath);
+        return km.toKey();
+    }
+
 }
