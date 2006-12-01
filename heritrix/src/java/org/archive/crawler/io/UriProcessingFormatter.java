@@ -26,6 +26,7 @@ package org.archive.crawler.io;
 
 import it.unimi.dsi.mg4j.util.MutableString;
 
+import java.util.List;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
@@ -101,7 +102,7 @@ extends Formatter implements CoreAttributeConstants {
                 : null;
                 
         this.buffer.length(0);
-        return this.buffer.append(ArchiveUtils.getLog17Date(time))
+        this.buffer.append(ArchiveUtils.getLog17Date(time))
             .append(" ")
             .append(ArchiveUtils.padTo(curi.getFetchStatus(), 5))
             .append(" ")
@@ -125,9 +126,17 @@ extends Formatter implements CoreAttributeConstants {
             .append(checkForNull((String)digest))
             .append(" ")
             .append(checkForNull(sourceTag))
-            .append(" ")
-            .append(checkForNull(curi.getAnnotations()))
-            .append("\n").toString();
+            .append(" ");
+        List<String> anno = curi.getAnnotations();
+        if (anno.size() > 0) {
+            buffer.append(anno.get(0));
+            for (int i = 1; i < anno.size(); i++) {
+                buffer.append(',');
+                buffer.append(anno.get(1));
+            }
+        }
+            
+        return buffer.append("\n").toString();
     }
     
     /**
