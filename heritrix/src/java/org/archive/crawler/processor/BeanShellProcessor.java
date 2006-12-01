@@ -30,11 +30,13 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
+import org.archive.settings.Sheet;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 import bsh.EvalError;
 import bsh.Interpreter;
@@ -57,48 +59,48 @@ import bsh.Interpreter;
  */
 public class BeanShellProcessor extends Processor implements FetchStatusCodes {
 
-    private static final long serialVersionUID = 6926589944337050754L;
+    private static final long serialVersionUID = 3L;
 
     private static final Logger logger =
         Logger.getLogger(BeanShellProcessor.class.getName());
 
-    /** setting for script file */
-    public final static String ATTR_SCRIPT_FILE = "script-file"; 
 
-    /** whether each thread should have its own script runner (true), or
-     * they should share a single script runner with synchronized access */
-    public final static String ATTR_ISOLATE_THREADS = "isolate-threads";
+    /**
+     *  BeanShell script file.
+     */
+    final static Key<String> SCRIPT_FILE = Key.makeFinal("");
+
+
+    /**
+     * Whether each ToeThread should get its own independent script context, or
+     * they should share synchronized access to one context. Default is true,
+     * meaning each threads gets its own isolated context.
+     * 
+     */
+    final public static Key<Boolean> ISOLATE_THREADS = Key.makeFinal(true);
+
 
     protected ThreadLocal<Interpreter> threadInterpreter;
     protected Interpreter sharedInterpreter;
     public Map<Object,Object> sharedMap = Collections.synchronizedMap(
             new HashMap<Object,Object>());
     
+    
+    final CrawlController controller;
+    
     /**
      * Constructor.
-     * @param name Name of this processor.
      */
-    public BeanShellProcessor(String name) {
-        super(name, "BeanShellProcessor. Runs the BeanShell script source " +
-                "(supplied directly or via a file path) against the " +
-                "current URI. Source should define a script method " +
-                "'process(curi)' which will be passed the current CrawlURI. " +
-                "The script may also access this BeanShellProcessor via" +
-                "the 'self' variable and the CrawlController via the " +
-                "'controller' variable.");
-        Type t = addElementToDefinition(new SimpleType(ATTR_SCRIPT_FILE,
-                "BeanShell script file", ""));
-        t.setOverrideable(false);
-        t = addElementToDefinition(new SimpleType(ATTR_ISOLATE_THREADS,
-                "Whether each ToeThread should get its own independent " +
-                "script context, or they should share synchronized access " +
-                "to one context. Default is true, meaning each threads " +
-                "gets its own isolated context.", true));
-        t.setOverrideable(false);
-
+    public BeanShellProcessor(CrawlController controller) {
+        this.controller = controller;
     }
 
-    protected synchronized void innerProcess(CrawlURI curi) {
+    protected boolean shouldProcess(ProcessorURI curi) {
+        return true;
+    }
+    
+    @Override
+    protected synchronized void innerProcess(ProcessorURI curi) {
         // depending on previous configuration, interpreter may 
         // be local to this thread or shared
         Interpreter interpreter = getInterpreter(); 
@@ -143,12 +145,12 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
         Interpreter interpreter = new Interpreter(); 
         try {
             interpreter.set("self", this);
-            interpreter.set("controller", getController());
+            interpreter.set("controller", controller);
             
-            String filePath = (String) getUncheckedAttribute(null, ATTR_SCRIPT_FILE);
+            String filePath = get(SCRIPT_FILE);
             if(filePath.length()>0) {
                 try {
-                    File file = getSettingsHandler().getPathRelativeToWorkingDirectory(filePath);
+                    File file = controller.getRelative(filePath);
                     interpreter.source(file.getPath());
                 } catch (IOException e) {
                     logger.log(Level.SEVERE,"unable to read script file",e);
@@ -162,8 +164,8 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
         return interpreter; 
     }
 
-    protected void initialTasks() {
-        super.initialTasks();
+    public void initialTasks(StateProvider context) {
+        super.initialTasks(context);
         kickUpdate();
     }
 
@@ -174,12 +176,18 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
     public void kickUpdate() {
         // TODO make it so running state (tallies, etc.) isn't lost on changes
         // unless unavoidable
-        if((Boolean)getUncheckedAttribute(null,ATTR_ISOLATE_THREADS)) {
+        if (get(ISOLATE_THREADS)) {
             sharedInterpreter = null; 
             threadInterpreter = new ThreadLocal<Interpreter>(); 
         } else {
             sharedInterpreter = newInterpreter(); 
             threadInterpreter = null;
         }
+    }
+    
+    
+    private <T> T get(Key<T> key) {
+        Sheet def = controller.getSheetManager().getDefault();
+        return def.get(this, key);
     }
 }

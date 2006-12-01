@@ -35,7 +35,9 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.iterator.LineReadingIterator;
 import org.archive.util.iterator.RegexpLineIterator;
 
@@ -80,11 +82,19 @@ import org.archive.util.iterator.RegexpLineIterator;
  * @version $Date$, $Revision$
  */
 public class LexicalCrawlMapper extends CrawlMapper {
-    private static final long serialVersionUID = 1L;
     
-    /** where to load map from */
-    public static final String ATTR_MAP_SOURCE = "map-source";
-    public static final String DEFAULT_MAP_SOURCE = "";
+    
+    private static final long serialVersionUID = 2L;
+
+
+    /**
+     * Path (or HTTP URL) to map specification file. Each line should include 2
+     * whitespace-separated tokens: the first a key indicating the end of a
+     * range, the second the crawler node to which URIs in the key range should
+     * be mapped.
+     */
+    final public static Key<String> MAP_SOURCE = Key.makeFinal("");
+
     
     /**
      * Mapping of classKey ranges (as represented by their start) to 
@@ -94,19 +104,11 @@ public class LexicalCrawlMapper extends CrawlMapper {
 
     /**
      * Constructor.
-     * @param name Name of this processor.
      */
-    public LexicalCrawlMapper(String name) {
-        super(name, "LexicalCrawlMapper. Maps URIs to a named " +
-                "crawler by a lexical comparison of the URI's " +
-                "classKey to a supplied ranges map.");
-        addElementToDefinition(new SimpleType(ATTR_MAP_SOURCE,
-            "Path (or HTTP URL) to map specification file. Each line " +
-            "should include 2 whitespace-separated tokens: the first a " +
-            "key indicating the end of a range, the second the crawler " +
-            "node to which URIs in the key range should be mapped.",
-            DEFAULT_MAP_SOURCE));
+    public LexicalCrawlMapper(CrawlController c) {
+        super(c);
     }
+
 
     /**
      * Look up the crawler node name to which the given CandidateURI 
@@ -127,10 +129,10 @@ public class LexicalCrawlMapper extends CrawlMapper {
         return (String) tail.get(tail.firstKey());
     }
 
-    protected void initialTasks() {
-        super.initialTasks();
+    public void initialTasks(StateProvider context) {
+        super.initialTasks(context);
         try {
-            loadMap();
+            loadMap(context);
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -143,16 +145,15 @@ public class LexicalCrawlMapper extends CrawlMapper {
      * 
      * @throws IOException
      */
-    protected void loadMap() throws IOException {
+    protected void loadMap(StateProvider context) throws IOException {
         map.clear();
-        String mapSource = (String) getUncheckedAttribute(null,ATTR_MAP_SOURCE);
+        String mapSource = context.get(this, MAP_SOURCE);
         Reader reader = null;
         if(!mapSource.startsWith("http://")) {
             // file-based source
             File source = new File(mapSource);
             if (!source.isAbsolute()) {
-                source = new File(getSettingsHandler().getOrder()
-                        .getController().getDisk(), mapSource);
+                source = new File(getController().getDisk(), mapSource);
             }
             reader = new FileReader(source);
         } else {

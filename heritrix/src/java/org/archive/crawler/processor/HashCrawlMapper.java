@@ -23,10 +23,12 @@
 package org.archive.crawler.processor;
 
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.util.TextUtils;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 import st.ata.util.FPGenerator;
 
@@ -38,41 +40,39 @@ import st.ata.util.FPGenerator;
  * @version $Date$, $Revision$
  */
 public class HashCrawlMapper extends CrawlMapper {
-    private static final long serialVersionUID = 1L;
-    
-    /** count of crawlers */
-    public static final String ATTR_CRAWLER_COUNT = "crawler-count";
-    public static final Long DEFAULT_CRAWLER_COUNT = new Long(1);
 
-    /** regex pattern for reducing classKey */
-    public static final String ATTR_REDUCE_PATTERN = "reduce-prefix-pattern";
-    public static final String DEFAULT_REDUCE_PATTERN = "";
+    private static final long serialVersionUID = 2L;
+    
+
+    /**
+     * Number of crawlers among which to split up the URIs. Their names are
+     * assumed to be 0..N-1.
+     */
+    final public static Key<Long> CRAWLER_COUNT = Key.makeFinal(1L);
+
+
+    /**
+     * A regex pattern to apply to the classKey, using the first match as the
+     * mapping key. If empty (the default), use the full classKey.
+     * 
+     */
+    final public static Key<Pattern> REDUCE_PREFIX_PATTERN = 
+        Key.make(Pattern.compile("."));
     
 //    /** replace pattern for reducing classKey */
 //    public static final String ATTR_REPLACE_PATTERN = "replace-pattern";
 //    public static final String DEFAULT_REPLACE_PATTERN = "";
  
     long bucketCount = 1;
-    String reducePattern = null;
 //    String replacePattern = null;
- 
+
+
+
     /**
      * Constructor.
-     * @param name Name of this processor.
      */
-    public HashCrawlMapper(String name) {
-        super(name, "HashCrawlMapper. Maps URIs to a numerically named " +
-                "crawler by hashing the URI's (possibly transfored) " +
-                "classKey to one of the specified number of buckets.");
-        addElementToDefinition(new SimpleType(ATTR_CRAWLER_COUNT,
-            "Number of crawlers among which to split up the URIs. " +
-            "Their names are assumed to be 0..N-1.",
-            DEFAULT_CRAWLER_COUNT));
-        addElementToDefinition(new SimpleType(ATTR_REDUCE_PATTERN,
-                "A regex pattern to apply to the classKey, using " +
-                "the first match as the mapping key. If empty (the" +
-                "default), use the full classKey.",
-                DEFAULT_REDUCE_PATTERN));
+    public HashCrawlMapper(CrawlController controller) {
+        super(controller);
     }
 
     /**
@@ -85,28 +85,24 @@ public class HashCrawlMapper extends CrawlMapper {
     protected String map(CandidateURI cauri) {
         // get classKey, via frontier to generate if necessary
         String key = getController().getFrontier().getClassKey(cauri);
+        Pattern reducePattern = cauri.get(this, REDUCE_PREFIX_PATTERN);
         return mapString(key, reducePattern, bucketCount); 
     }
 
-    protected void initialTasks() {
-        super.initialTasks();
-        bucketCount = (Long) getUncheckedAttribute(null,ATTR_CRAWLER_COUNT);
-        kickUpdate();
+    public void initialTasks(StateProvider context) {
+        super.initialTasks(context);
+        bucketCount = context.get(this, CRAWLER_COUNT);
     }
 
-    @Override
-    public void kickUpdate() {
-        super.kickUpdate();
-        reducePattern = (String)getUncheckedAttribute(null, ATTR_REDUCE_PATTERN);
-    }
-    
-    public static String mapString(String key, String reducePattern, long bucketCount) {
-        if(reducePattern!=null && reducePattern.length()>0) {
-           Matcher matcher = TextUtils.getMatcher(reducePattern,key);
-           if(matcher.find()) {
-               key = matcher.group();
-           }
-           TextUtils.recycleMatcher(matcher);
+
+    public static String mapString(String key, Pattern reducePattern,
+            long bucketCount) {
+
+        if (reducePattern != null) {
+            Matcher matcher = reducePattern.matcher(key);
+            if (matcher.find()) {
+                key = matcher.group();
+            }
         }
         long fp = FPGenerator.std64.fp(key);
         long bucket = fp % bucketCount;
