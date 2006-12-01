@@ -26,17 +26,15 @@
 package org.archive.crawler.postprocessor;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
+import org.archive.state.Key;
 import org.archive.util.IoUtils;
 
 /**
@@ -47,7 +45,7 @@ import org.archive.util.IoUtils;
  */
 public class LowDiskPauseProcessor extends Processor {
 
-    private static final long serialVersionUID = 3338337700768396302L;
+    private static final long serialVersionUID = 3L;
 
     /**
      * Logger.
@@ -55,23 +53,30 @@ public class LowDiskPauseProcessor extends Processor {
     private static final Logger logger =
         Logger.getLogger(LowDiskPauseProcessor.class.getName());
 
+
     /**
-     * List of mounts to monitor; should match "Mounted on" column of 'df' output
+     * List of filessystem mounts whose 'available' space should be monitored
+     * via 'df' (if available).
      */
-    public static final String ATTR_MONITOR_MOUNTS = "monitor-mounts";
-    public static final String DEFAULT_MONITOR_MOUNTS = "";
+    final public static Key<List<String>> MONITOR_MOUNTS = 
+        Key.makeList(String.class);
+    
+
+    /**
+     * When available space on any monitored mounts falls below this threshold,
+     * the crawl will be paused.
+     */
+    final public static Key<Integer> PAUSE_THRESHOLD_KB = 
+        Key.make(500 * 1024); // 500MB
+
     
     /**
-     * Space available level below which a crawl-pause should be triggered.
+     * Available space via 'df' is rechecked after every increment of this much
+     * content (uncompressed) is observed.
      */
-    public static final String ATTR_PAUSE_THRESHOLD = "pause-threshold-kb";
-    public static final int DEFAULT_PAUSE_THRESHOLD = 500 * 1024; // 500MB
-    
-    /**
-     * Amount of content received between each recheck of free space
-     */
-    public static final String ATTR_RECHECK_THRESHOLD = "recheck-threshold-kb";
-    public static final int DEFAULT_RECHECK_THRESHOLD = 200 * 1024; // 200MB
+    final public static Key<Integer> RECHECK_THRESHOLD =
+        Key.makeFinal(200 * 1024);
+
     
     protected int contentSinceCheck = 0;
     
@@ -84,27 +89,14 @@ public class LowDiskPauseProcessor extends Processor {
      * @param name Name of this writer.
      */
     public LowDiskPauseProcessor(String name) {
-        super(name, "LowDiskPause processor");
-        Type e = addElementToDefinition(
-            new SimpleType(ATTR_MONITOR_MOUNTS, 
-                    "Space-delimited list of filessystem mounts whose " +
-                    "'available' space should be monitored via 'df' " +
-                    "(if available).",
-                DEFAULT_MONITOR_MOUNTS));
-        e.setOverrideable(false);
-        e = addElementToDefinition(
-            new SimpleType(ATTR_PAUSE_THRESHOLD, 
-                    "When available space on any monitored mounts falls " +
-                    "below this threshold, the crawl will be paused. ",
-                    new Integer(DEFAULT_PAUSE_THRESHOLD)));
-        e = addElementToDefinition(
-            new SimpleType(ATTR_RECHECK_THRESHOLD, 
-                    "Available space via 'df' is rechecked after every " +
-                    "increment of this much content (uncompressed) is " +
-                    "observed. ",
-                    new Integer(DEFAULT_RECHECK_THRESHOLD)));
-        e.setOverrideable(false);
     } 
+    
+    
+    @Override
+    protected boolean shouldProcess(ProcessorURI curi) {
+        return true;
+    }
+    
     
     /**
      * Notes a CrawlURI's content size in its running tally. If the 
@@ -114,11 +106,10 @@ public class LowDiskPauseProcessor extends Processor {
      * 
      * @param curi CrawlURI to process.
      */
-    protected void innerProcess(CrawlURI curi) {
-        contentSinceCheck += curi.getContentSize();
+    protected void innerProcess(ProcessorURI curi) {
         synchronized (this) {
-            if (contentSinceCheck/1024 > ((Integer) getUncheckedAttribute(null,
-                    ATTR_RECHECK_THRESHOLD)).intValue()) {
+            contentSinceCheck += curi.getContentSize();
+            if (contentSinceCheck/1024 > curi.get(this, RECHECK_THRESHOLD)) {
                 checkAvailableSpace(curi);
                 contentSinceCheck = 0;
             }
@@ -132,7 +123,7 @@ public class LowDiskPauseProcessor extends Processor {
      * crawl pause. 
      * @param curi Current context.
      */
-    private void checkAvailableSpace(CrawlURI curi) {
+    private void checkAvailableSpace(ProcessorURI curi) {
         try {
             String df = IoUtils.readFullyAsString(Runtime.getRuntime().exec(
                     "df -k").getInputStream());
@@ -141,17 +132,15 @@ public class LowDiskPauseProcessor extends Processor {
                 logger.severe("'df -k' output unacceptable for low-disk checking");
                 return;
             }
-            List monitoredMounts = Arrays.asList(((String) getUncheckedAttribute(null,
-                    ATTR_MONITOR_MOUNTS)).split("\\s*"));
+            List<String> monitoredMounts = curi.get(this, MONITOR_MOUNTS);
             matcher = AVAILABLE_EXTRACTOR.matcher(df);
             while (matcher.find()) {
                 String mount = matcher.group(2);
                 if (monitoredMounts.contains(mount)) {
                     long availKilobytes = Long.parseLong(matcher.group(1));
-                    int thresholdKilobytes = ((Integer) getUncheckedAttribute(
-                            null, ATTR_PAUSE_THRESHOLD)).intValue();
+                    int thresholdKilobytes = curi.get(this, PAUSE_THRESHOLD_KB);
                     if (availKilobytes < thresholdKilobytes ) {
-                        getController().requestCrawlPause();
+                        curi.requestCrawlPause();
                         logger.log(Level.SEVERE, "Low Disk Pause",
                                 availKilobytes + "K available on " + mount
                                         + " (below threshold "
@@ -161,8 +150,7 @@ public class LowDiskPauseProcessor extends Processor {
                 }
             }
         } catch (IOException e) {
-            curi.addLocalizedError(this.getName(), e,
-                    "problem checking available space via 'df'");
+            curi.getNonFatalFailures().add(e);
         }
     }
 }
