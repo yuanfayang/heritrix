@@ -30,15 +30,18 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import javax.management.AttributeNotFoundException;
-
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.deciderules.DecideRule;
-import org.archive.crawler.deciderules.DecideRuleSequence;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
+import org.archive.processors.deciderules.DecideResult;
+import org.archive.processors.deciderules.DecideRule;
+import org.archive.processors.deciderules.DecideRuleSequence;
+import org.archive.settings.Sheet;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.ArrayLongFPCache;
 
@@ -80,29 +83,50 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
         }
     }
     
-    /** whether to map CrawlURI itself (if status nonpositive) */
-    public static final String ATTR_CHECK_URI = "check-uri";
-    public static final Boolean DEFAULT_CHECK_URI = Boolean.TRUE;
-    
-    /** whether to map CrawlURI's outlinks (if CandidateURIs) */
-    public static final String ATTR_CHECK_OUTLINKS = "check-outlinks";
-    public static final Boolean DEFAULT_CHECK_OUTLINKS = Boolean.TRUE;
 
-    /** decide rules to determine if an outlink is subject to mapping */ 
-    public static final String ATTR_MAP_OUTLINK_DECIDE_RULES = "decide-rules";
-
-    /** name of local crawler (URIs mapped to here are not diverted) */
-    public static final String ATTR_LOCAL_NAME = "local-name";
-    public static final String DEFAULT_LOCAL_NAME = ".";
+    /**
+     * Whether to apply the mapping to a URI being processed itself, for example
+     * early in processing (while its status is still 'unattempted').
+     */
+    final public static Key<Boolean> CHECK_URI = Key.make(true);
     
-    /** where to log diversions  */
-    public static final String ATTR_DIVERSION_DIR = "diversion-dir";
-    public static final String DEFAULT_DIVERSION_DIR = "diversions";
 
-    /** rotate logs when change occurs within this # of digits of timestamp  */
-    public static final String ATTR_ROTATION_DIGITS = "rotation-digits";
-    public static final Integer DEFAULT_ROTATION_DIGITS = new Integer(10); // hourly
+    /**
+     * Whether to apply the mapping to discovered outlinks, for example after
+     * extraction has occurred.
+     */
+    final public static Key<Boolean> CHECK_OUTLINKS = Key.make(true);
+
+
+    /** 
+     * Decide rules to determine if an outlink is subject to mapping.
+     */ 
+    final public static Key<DecideRuleSequence> OUTLINK_DECIDE_RULES
+    = Key.make(new DecideRuleSequence());
+
+
+    /**
+     * Name of local crawler node; mappings to this name result in normal
+     * processing (no diversion).
+     */
+    final public static Key<String> LOCAL_NAME = Key.make(".");
     
+
+    /**
+     * Directory to write diversion logs.
+     */
+    final public static Key<String> DIVERSION_DIR = Key.make("diversions");
+
+
+    /**
+     * Number of timestamp digits to use as prefix of log names (grouping all
+     * diversions from that period in a single log). Default is 10 (hourly log
+     * rotation).
+     * 
+     */
+    final public static Key<Integer> ROTATION_DIGITS = Key.make(10); // hourly
+    
+
     /**
      * Mapping of target crawlers to logs (PrintWriters)
      */
@@ -121,68 +145,46 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
     
     protected ArrayLongFPCache cache;
     
+    final private CrawlController controller;
+    
     /**
      * Constructor.
      * @param name Name of this processor.
      */
-    public CrawlMapper(String name, String description) {
-        super(name, description);
-        addElementToDefinition(new SimpleType(ATTR_LOCAL_NAME,
-            "Name of local crawler node; mappings to this name " +
-            "result in normal processing (no diversion).",
-            DEFAULT_LOCAL_NAME));
-        addElementToDefinition(new SimpleType(ATTR_DIVERSION_DIR,
-            "Directory to write diversion logs.",
-            DEFAULT_DIVERSION_DIR));
-        addElementToDefinition(new SimpleType(ATTR_CHECK_URI,
-            "Whether to apply the mapping to a URI being processed " +
-            "itself, for example early in processing (while its " +
-            "status is still 'unattempted').",
-            DEFAULT_CHECK_URI));
-        addElementToDefinition(new SimpleType(ATTR_CHECK_OUTLINKS,
-            "Whether to apply the mapping to discovered outlinks, " +
-            "for example after extraction has occurred. ",
-            DEFAULT_CHECK_OUTLINKS));
-        addElementToDefinition(new DecideRuleSequence(
-                ATTR_MAP_OUTLINK_DECIDE_RULES));
-        addElementToDefinition(new SimpleType(ATTR_ROTATION_DIGITS,
-                "Number of timestamp digits to use as prefix of log " +
-                "names (grouping all diversions from that period in " +
-                "a single log). Default is 10 (hourly log rotation).",
-                DEFAULT_ROTATION_DIGITS));
+    public CrawlMapper(CrawlController controller) {
+        this.controller = controller;
     }
 
+    
+    protected boolean shouldProcess(ProcessorURI puri) {
+        return true;
+    }
 
-    protected void innerProcess(CrawlURI curi) {
+    protected void innerProcess(ProcessorURI puri) {
+        CrawlURI curi = (CrawlURI)puri;
         String nowGeneration = 
             ArchiveUtils.get14DigitDate().substring(
                         0,
-                        ((Integer) getUncheckedAttribute(null,
-                                ATTR_ROTATION_DIGITS)).intValue());
+                        curi.get(this, ROTATION_DIGITS));
         if(!nowGeneration.equals(logGeneration)) {
             updateGeneration(nowGeneration);
         }
         
-        if (curi.getFetchStatus() == 0
-                && ((Boolean) getUncheckedAttribute(null, ATTR_CHECK_URI))
-                        .booleanValue()) {
+        if (curi.getFetchStatus() == 0 && curi.get(this, CHECK_URI)) {
             // apply mapping to the CrawlURI itself
             String target = map(curi);
             if(!localName.equals(target)) {
                 // CrawlURI is mapped to somewhere other than here
                 curi.setFetchStatus(S_BLOCKED_BY_CUSTOM_PROCESSOR);
-                curi.addAnnotation("to:"+target);
-                curi.skipToProcessorChain(getController().
-                        getPostprocessorChain());
+                curi.getAnnotations().add("to:"+target);
+                curi.skipToPostProcessing();
                 divertLog(curi,target);
             } else {
                 // localName means keep locally; do nothing
             }
         }
         
-        if (curi.getOutLinks().size() > 0 && 
-                ((Boolean) getUncheckedAttribute(null, ATTR_CHECK_OUTLINKS))
-                        .booleanValue()) {
+        if (curi.getOutLinks().size() > 0 && curi.get(this, CHECK_OUTLINKS)) {
             // consider outlinks for mapping
             Iterator<CandidateURI> iter = curi.getOutCandidates().iterator(); 
             while(iter.hasNext()) {
@@ -203,17 +205,10 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
     }
     
     protected boolean decideToMapOutlink(CandidateURI cauri) {
-        boolean rejected = getMapOutlinkDecideRule(cauri).decisionFor(cauri)
-                .equals(DecideRule.REJECT);
+        DecideRule rule = cauri.get(this, OUTLINK_DECIDE_RULES);
+        boolean rejected = rule.decisionFor(cauri.asProcessorURI())
+                .equals(DecideResult.REJECT);
         return !rejected;
-    }
-
-    protected DecideRule getMapOutlinkDecideRule(Object o) {
-        try {
-            return (DecideRule)getAttribute(o, ATTR_MAP_OUTLINK_DECIDE_RULES);
-        } catch (AttributeNotFoundException e) {
-            throw new RuntimeException(e);
-        }
     }
     
     
@@ -284,11 +279,11 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
     protected PrintWriter getDiversionLog(String target) {
         FilePrintWriter writer = (FilePrintWriter) diversionLogs.get(target);
         if(writer == null) {
-            String divertDirPath = (String) getUncheckedAttribute(null,ATTR_DIVERSION_DIR);
+            Sheet def = controller.getSheetManager().getDefault();
+            String divertDirPath = def.get(this, DIVERSION_DIR);
             File divertDir = new File(divertDirPath);
             if (!divertDir.isAbsolute()) {
-                divertDir = new File(getSettingsHandler().getOrder()
-                        .getController().getDisk(), divertDirPath);
+                divertDir = new File(controller.getDisk(), divertDirPath);
             }
             divertDir.mkdirs();
             File divertLog = 
@@ -306,9 +301,14 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
         return writer;
     }
 
-    protected void initialTasks() {
-        super.initialTasks();
-        localName = (String) getUncheckedAttribute(null, ATTR_LOCAL_NAME);
+    public void initialTasks(StateProvider context) {
+        super.initialTasks(context);
+        localName = context.get(this, LOCAL_NAME);
         cache = new ArrayLongFPCache();
+    }
+    
+    
+    protected CrawlController getController() {
+        return controller;
     }
 }
