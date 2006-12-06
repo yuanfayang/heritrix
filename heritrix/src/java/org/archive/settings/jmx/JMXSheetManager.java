@@ -51,7 +51,6 @@ import org.archive.crawler.util.Transformer;
 import org.archive.openmbeans.annotations.Bean;
 import org.archive.openmbeans.annotations.Operation;
 import org.archive.openmbeans.annotations.Parameter;
-import org.archive.settings.NamedObject;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
@@ -170,8 +169,14 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
 
 
     @Override
-    public List<NamedObject> getRoots() {
-        return manager.getRoots();
+    public Object getRoot() {
+        return manager.getRoot();
+    }
+    
+    
+    @Override
+    public void setRoot(Object root) {
+        manager.setRoot(root);
     }
 
 
@@ -250,62 +255,9 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
     }
 
     
-    public void addRoot(String name, Object root) {
-        manager.addRoot(name, root);
-    }
     
 
-    @Operation(desc="Instantiates and adds a new object to the list of root objects.")
-    public void addRoot(
-            @Parameter(name="name", desc="The name for the new root name.")
-            String name,
-            
-            @Parameter(name="className", desc="The fully-qualified Java "
-             + "class name of the new root name.")
-            String className) 
-    throws ClassNotFoundException, InstantiationException, IllegalAccessException
-    {
-        Object o = Class.forName(className).newInstance();
-        manager.addRoot(name, o);
-    }
 
-
-    @Override
-    @Operation(desc="Moves an object in the root object list up one position.")
-    public void moveRootUp(
-            @Parameter(name="name", 
-                    desc="The name of the root object to move up.")
-            String name) 
-    {
-        manager.moveRootUp(name);
-    }
-
-
-    @Override
-    @Operation(desc="Moves an object in the root object list down one position.")
-    public void moveRootDown(
-            @Parameter(name="name", 
-                    desc="The name of the root object to move down.")
-            String name) 
-    {
-        manager.moveRootDown(name);
-    }
-    
- 
-    @Override
-    @Operation(desc="Removes a root object.  Any sheets that configure the " +
-            "removed root will have that root's configuration removed.")
-    public void removeRoot(
-            @Parameter(name="rootName", desc="The name of the root to remove.")
-            String rootName) {
-        manager.removeRoot(rootName);
-    }
-
-    
-    @Override
-    public void swapRoot(String name, Object newValue) {
-        manager.swapRoot(name, newValue);
-    }
     
     
     @Operation(desc="Returns the settings overriden by the given single sheet.",
@@ -437,19 +389,8 @@ public class JMXSheetManager extends SheetManager implements DynamicMBean {
         Set<String> names = getSheetNames();
         return names.toArray(new String[names.size()]);
     }
-    
-    
-    @org.archive.openmbeans.annotations.Attribute(desc="The names of the root processors.", def="")
-    public String[] getRootNames() {
-        List<NamedObject> list = getRoots();
-        String[] r = new String[list.size()];
-        for (int i = 0; i < r.length; i++) {
-            r[i] = list.get(i).getName();
-        }
-        return r;
-    }
 
-    
+
     @Operation(desc="Saves all settings currently in memory to persistent storage.")
     public void save() {
         manager.save();

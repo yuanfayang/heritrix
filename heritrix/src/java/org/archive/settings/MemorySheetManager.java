@@ -28,16 +28,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 
 
 /**
@@ -71,82 +65,29 @@ public class MemorySheetManager extends SheetManager {
     /**
      * The root processors.
      */
-    final private List<NamedObject> roots;
+    private Object root;
 
 
     /**
      * Constructor.
      */
-    public MemorySheetManager() {
+    public MemorySheetManager(Object root) {
         sheets = new HashMap<String,Sheet>();
         associations = new ConcurrentHashMap<String,Sheet>();
 
-        roots = Collections.synchronizedList(new NamedObjectArrayList());
+        setRoot(root);
         defaults = addSingleSheet("default");
     }
 
 
     @Override
-    public List<NamedObject> getRoots() {
-        return Collections.unmodifiableList(roots);
-    }
-
-    
-    @Override
-    public void addRoot(String name, Object root) {
-        if (root == null) {
-            throw new IllegalArgumentException();
-        }
-        // FIXME: Ensure name isn't duplicated
-        roots.add(new NamedObject(name, root));
+    public Object getRoot() {
+        return root;
     }
     
     
-    @Override
-    public void removeRoot(String rootName) {
-        Iterator<NamedObject> iter = roots.iterator();
-        while (iter.hasNext()) {
-            NamedObject no = iter.next();
-            if (no.getName().equals(rootName)) {
-                Object processor = no.getObject();
-                iter.remove();
-                removeProcessor(processor);
-            }
-        }
-    }
-    
-    
-    @Override
-    public void moveRootUp(String rootName) {
-        for (int i = 0; i < roots.size(); i++) {
-            if (roots.get(i).getName().equals(rootName)) {
-                Collections.swap(roots, i, i - 1);
-                return;
-            }
-        }
-        throw new IllegalArgumentException("No such root: " + rootName);
-    }
-    
-    
-    @Override
-    public void moveRootDown(String rootName) {
-        for (int i = 0; i < roots.size(); i++) {
-            if (roots.get(i).getName().equals(rootName)) {
-                Collections.swap(roots, i, i + 1);
-                return;
-            }
-        }
-        throw new IllegalArgumentException("No such root: " + rootName);        
-    }
-    
-    
-    private void removeProcessor(Object processor) {
-        for (Sheet s: sheets.values()) {
-            if (s instanceof SingleSheet) {
-                SingleSheet ss = (SingleSheet)s;
-                ss.removeAll(processor);
-            }
-        }
+    public void setRoot(Object root) {
+        this.root = root;
     }
 
 
@@ -253,44 +194,6 @@ public class MemorySheetManager extends SheetManager {
     }
 
 
-    public void swapRoot(String name, Object newValue) {
-        Object oldValue = NamedObject.getByName(getRoots(), name);
-        Set<Key<Object>> oldKeys = new HashSet<Key<Object>>( 
-         KeyManager.getKeys(oldValue.getClass()).values());
-        Collection<Key<Object>> newKeys 
-         = KeyManager.getKeys(oldValue.getClass()).values();
-        oldKeys.removeAll(newKeys);
-        setRoot(name, newValue);
-        // oldKeys now contains dead keys, eg keys that were in the old
-        // processor but not in the new processor
-        for (Sheet s: sheets.values()) {
-            if (s instanceof SingleSheet) {
-                Map<Key,Object> m = ((SingleSheet)s).getAll(oldValue);
-                if (m != null) {
-                    Iterator<Key> iter = m.keySet().iterator();
-                    while (iter.hasNext()) {
-                        Key k = iter.next();
-                        if (oldKeys.contains(k)) {
-                        }
-                        iter.remove();
-                    }
-                }
-            }
-        }
-    }
-    
-    
-    private void setRoot(String name, Object newValue) {
-        ListIterator<NamedObject> iter = roots.listIterator();
-        while (iter.hasNext()) {
-            NamedObject no = iter.next();
-            if (no.getName().equals(name)) {
-                iter.set(new NamedObject(name, newValue));
-            }
-        }        
-    }
-    
-    
     public void reload() {}
     
     public void save() {}

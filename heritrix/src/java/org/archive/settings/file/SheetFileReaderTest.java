@@ -25,6 +25,7 @@ package org.archive.settings.file;
 
 import java.io.StringReader;
 
+import org.archive.crawler2.extractor.ExtractorHTML;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
@@ -50,7 +51,7 @@ public class SheetFileReaderTest extends TestCase {
     
     public void testSheetFileReader() throws Exception {
         StringReader sr = new StringReader(TEST_DATA);
-        SheetManager mgr = new MemorySheetManager();
+        SheetManager mgr = new MemorySheetManager(new ExtractorHTML());
         SingleSheet sheet = mgr.getDefault();
         new PathChanger().change(sheet, new SheetFileReader(sr));
     }

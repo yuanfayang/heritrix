@@ -25,6 +25,7 @@ package org.archive.settings;
 
 
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 
 /**
@@ -33,7 +34,7 @@ import org.archive.state.Key;
  * 
  * @author pjack
  */
-public abstract class Sheet {
+public abstract class Sheet implements StateProvider {
 
     
     /**

@@ -26,9 +26,8 @@ package org.archive.settings.path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.archive.crawler2.extractor.ExtractorJS;
-import org.archive.crawler2.deciderules.DecideRule;
-import org.archive.crawler2.deciderules.DecideRuleSequence;
+import org.archive.processors.deciderules.DecideRule;
+import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.crawler2.extractor.ExtractorHTML;
 import org.archive.settings.SingleSheet;
 
@@ -45,19 +44,20 @@ public class PathChangerTest extends PathTestBase {
         
         list.clear();
         list.add(new PathChange("html.DECIDE_RULES.RULES.1._impl",
-                "org.archive.crawler2.deciderules.MatchesRegExpDecideRule"));
+                "new org.archive.processors.deciderules.MatchesRegExpDecideRule"));
         list.add(new PathChange("html.DECIDE_RULES.RULES.1.REGEXP", ".*?"));
         new PathChanger().change(defaults, list);
         assertEquals(2, this.htmlRules.size());
         
         list.clear();
         list.add(new PathChange("html.DECIDE_RULES.RULES._impl",
-                "java.util.LinkedList"));
+                "new java.util.LinkedList()"));
         new PathChanger().change(defaults, list);
         List<DecideRule> r = defaults.get(htmlSeq, DecideRuleSequence.RULES);
         assertFalse(r == htmlRules);
         assertEquals(0, r.size());
         
+        /*
         list.clear();
         list.add(new PathChange("css._impl", 
                 "org.archive.crawler2.extractor.ExtractorJS"));
@@ -65,8 +65,7 @@ public class PathChangerTest extends PathTestBase {
         ExtractorJS x = (ExtractorJS)manager.getRoot("css");
         DecideRuleSequence seq = defaults.get(x, ExtractorJS.DECIDE_RULES);
         assertTrue(seq == cssSeq);
-        
-        
+        */
     }
 
 }

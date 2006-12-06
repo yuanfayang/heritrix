@@ -72,6 +72,9 @@ public class PathListerTest extends PathTestBase {
         Consumer consumer = new Consumer();
         PathLister.resolveAll(manager.getSheet(sheetName), consumer);
         String result = consumer.sb.toString();
+        System.out.println("SHEET: " + sheetName);
+        System.out.println(expected + "\n\n\n");
+        System.out.println(result);
         assertEquals(expected, result);
     }
 

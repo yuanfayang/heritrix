@@ -29,17 +29,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.settings.NamedObject;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetBundle;
 import org.archive.settings.SheetManager;
@@ -48,8 +46,6 @@ import org.archive.settings.path.PathChanger;
 import org.archive.settings.path.PathLister;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.IoUtils;
-import org.archive.util.LRU;
-import org.archive.util.LRUListener;
 
 import com.sleepycat.je.DatabaseException;
 
@@ -138,10 +134,6 @@ public class FileSheetManager extends SheetManager {
     final private static String BUNDLE_EXT = ".bundle";
     
     
-    /** The name of the file containing the root objects. */
-    final private static String ROOTS_NAME = "roots.txt";
-    
-    
     /** Logger. */
     final private static Logger LOGGER
      = Logger.getLogger(FileSheetManager.class.getName());
@@ -156,11 +148,11 @@ public class FileSheetManager extends SheetManager {
 
     
     /** Sheets that are currently in memory. */
-    final private LRU<String,Sheet> sheets;
+    final private Map<String,Sheet> sheets;
     
 
     /** The root objects. */
-    final private List<NamedObject> roots;
+    private Object root;
 
 
     /** The database of associations.  Maps string context to sheet name. */
@@ -181,13 +173,7 @@ public class FileSheetManager extends SheetManager {
         this.mainDir = main;
         this.sheetsDir = new File(main, SHEETS_DIR_NAME);
         validateDir(sheetsDir);
-        sheets = new LRU<String,Sheet>(maxSheets);
-        sheets.addLRUListener(new LRUListener<String,Sheet>() {
-            public void entryRemoved(String key, Sheet value) {
-                saveSheet(value);
-            }
-        });
-        this.roots = new ArrayList<NamedObject>();
+        sheets = new HashMap<String,Sheet>();
         File assocDir = new File(mainDir, ASSOC_DIR_NAME);
         validateDir(assocDir);
         try {
@@ -227,28 +213,16 @@ public class FileSheetManager extends SheetManager {
 
     
     public void reload() {
-        try {
-            loadRootObjects();
             sheets.clear();
             defaultSheet = loadSingleSheet("default");
             // FIXME: Load associations...
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     
     public void save() {
-        saveRoots();
         for (Sheet s: sheets.values()) {
             saveSheet(s);
         }
-    }
-
-
-    @Override
-    public void addRoot(String name, Object root) {
-        roots.add(new NamedObject(name, root));
     }
 
 
@@ -327,11 +301,17 @@ public class FileSheetManager extends SheetManager {
 
 
     @Override
-    public List<NamedObject> getRoots() {
-        return Collections.unmodifiableList(roots);
+    public Object getRoot() {
+        return root;
     }
 
 
+    @Override
+    public void setRoot(Object root) {
+        this.root = root;
+    }
+    
+    
     @Override
     public Sheet getSheet(String sheetName) throws IllegalArgumentException {
         if (sheetName.equals("default")) {
@@ -374,32 +354,6 @@ public class FileSheetManager extends SheetManager {
         return null;
     }
     
-    @Override
-    public void moveRootDown(String rootName) {
-        int index = NamedObject.getIndex(roots, rootName);
-        if (index < 0) {
-            throw new IllegalArgumentException("No such root: " + rootName);
-        }
-        Collections.swap(roots, index, index + 1);
-    }
-
-    @Override
-    public void moveRootUp(String rootName) {
-        int index = NamedObject.getIndex(roots, rootName);
-        if (index < 0) {
-            throw new IllegalArgumentException("No such root: " + rootName);
-        }
-        Collections.swap(roots, index, index - 1);
-    }
-
-    @Override
-    public void removeRoot(String name) {
-        int index = NamedObject.getIndex(roots, name);
-        if (index < 0) {
-            throw new IllegalArgumentException("No such root: " + name);
-        }
-        roots.remove(index);
-    }
 
     @Override
     public void removeSheet(String sheetName) throws IllegalArgumentException {
@@ -436,11 +390,6 @@ public class FileSheetManager extends SheetManager {
         if (s != null) {
             sheets.put(newName, s);
         }
-    }
-
-    @Override
-    public void swapRoot(String name, Object newValue) {
-        // TODO
     }
 
 
@@ -592,74 +541,6 @@ public class FileSheetManager extends SheetManager {
         File saved = new File(sheetsDir, sb.getName() + BUNDLE_EXT);
         if (!temp.renameTo(saved)) {
             LOGGER.severe("Could not rename temp file for " + sb.getName());
-        }
-    }
-
-
-    /**
-     * Loads the root objects from the root objects file.
-     * 
-     * @throws IOException
-     */
-    private void loadRootObjects() throws IOException {
-        File rf = new File(mainDir, ROOTS_NAME);
-        BufferedReader br = new BufferedReader(new FileReader(rf));
-        try {
-            for (String s = br.readLine(); s != null; s = br.readLine()) {
-                processRootLine(s);
-            }
-        } finally {
-            IoUtils.close(br);
-        }
-    }
-
-
-    /**
-     * Processes a line from the root file.
-     * 
-     * @param line   the line to process
-     * @throws IOException   if the line is malformed
-     */
-    private void processRootLine(String line) throws IOException {
-        if (line.startsWith("#")) {
-            return;
-        }
-        int p = line.indexOf('=');
-        if (p <= 0) {
-            throw new IOException("Malformed line: " + line);
-        }
-        String name = line.substring(0,p);
-        String type = line.substring(p + 1);
-        Object value;
-        try {
-            value = Class.forName(type).newInstance();
-        } catch (Exception e) {
-            IOException io = new IOException();
-            io.initCause(e);
-            throw io;
-        }
-        this.addRoot(name, value);
-    }
-    
-    
-    private void saveRoots() {
-        File rf = new File(mainDir, ROOTS_NAME + ".temp");
-        
-        FileWriter fw = null;
-        try {
-            fw = new FileWriter(rf);
-            for (NamedObject no: roots) {
-                String cname = no.getObject().getClass().getName();
-                fw.append(no.getName()).append('=').append(cname).append('\n');
-            }
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Could not save roots", e);
-        } finally {
-            IoUtils.close(fw);
-        }
-        
-        if (!rf.renameTo(new File(mainDir, "roots.txt"))) {
-            LOGGER.severe("Could not rename roots.txt.temp.");
         }
     }
 

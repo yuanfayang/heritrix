@@ -27,8 +27,8 @@ package org.archive.settings.path;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
-import org.archive.settings.NamedObject;
 import org.archive.settings.Resolved;
 import org.archive.settings.Sheet;
 import org.archive.state.Key;
@@ -93,16 +93,19 @@ public class PathValidator {
      * @return   the object the path represents
      */
     private Object validatePath() {
-        // Get the root object.
-        List<NamedObject> roots = sheet.getSheetManager().getRoots();
-        Object current = NamedObject.getByName(roots, tokens.get(0));
+        Object current = sheet.getSheetManager().getRoot();
         
         // While there are more tokens, process the next token.
-        advance();
         while (!tokens.isEmpty()) {
             String n = tokens.get(0);
-            if (Character.isDigit(n.charAt(0))) {
-                current = validateList(current, n);
+            if (current instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String,Object> map = (Map<String,Object>)current;
+                current = validateMap(map, n);
+            } else if (current instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Object> list = (List<Object>)current;
+                current = validateList(list, n);
             } else {
                 current = validateKey(current, n);
             }
@@ -143,10 +146,7 @@ public class PathValidator {
      * @param indexString   the index as a string
      * @return   the element at that index in the list
      */
-    private Object validateList(Object current, String indexString) {
-        if (!(current instanceof List)) {
-            throw ex(" indexes a non-list at ");
-        }
+    private Object validateList(List<Object> current, String indexString) {
         int index;
         try {
             index = Integer.parseInt(indexString);
@@ -154,14 +154,18 @@ public class PathValidator {
             throw ex(" has non-integer index at ");
         }
         
-        @SuppressWarnings("unchecked")
-        List<Object> list = (List<Object>)current;
-        
         try {
-            return list.get(index);
+            return current.get(index);
         } catch (IndexOutOfBoundsException e) {
             throw ex(" has out-of-bounds index at ");
         }
+    }
+    
+    
+    private Object validateMap(Map<String,Object> current, String keyString) {
+        // FIXME: Have some sort of escaping rules for keyString
+        Object r = current.get(keyString);
+        return r;
     }
 
     

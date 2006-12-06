@@ -199,6 +199,8 @@ public class PathChanger {
     private void processChange(SingleSheet sheet, PathChange pair) {
         String path = pair.getPath();
         String value = pair.getValue();
+        
+        
         if (path.endsWith("._impl")) {
             processObject(sheet, path, value);
             return;
@@ -235,14 +237,8 @@ public class PathChanger {
     private void processObject(SingleSheet sheet, String path, 
             String className) {
         // Instantiate the new object.
-        // FIXME: Somehow allow constructors?
         className = className.trim();
-        Object object;
-        try {
-            object = Class.forName(className).newInstance();
-        } catch (Exception e) {
-            throw new PathChangeException(e);
-        }
+        Object newObject = Construction.construct(sheet, className);
 
         // Now we need to figure out where to store the object.
         // There are three possibilities:
@@ -255,64 +251,58 @@ public class PathChanger {
         // Eliminate the trailing "._impl" from the given path
         path = path.substring(0, path.length() - 6);
 
-        // If the path is now 1 token long, then it's a root object.
+        // If the path is now 1 token long, then it's the root object.
         // (Eg, if given path was X._impl, then it defined root object X.
         // FIXME: If root with that name already exists, replace that root (ew)
         int p = path.lastIndexOf('.');
         if (p < 0) {
-            Object root = sheet.getSheetManager().getRoot(path);
-            if (root == null) {
-                sheet.getSheetManager().addRoot(path, object);
-            } else {
-                sheet.getSheetManager().swapRoot(path, object);
-            }
+            sheet.getSheetManager().setRoot(newObject);
             return;
         }
         
-        String previous = path.substring(0, p);
-        Object processor = PathValidator.validate(sheet, previous);
+        String previousPath = path.substring(0, p);
+        Object previous = PathValidator.validate(sheet, previousPath);
         String lastToken = path.substring(p + 1);
         
-        // Check to see if we're appending to a list.
-        // If so, the last token will be an integer.
-        // Eg, we were passed X.0._impl
-        int index = index(lastToken);
-        if (index >= 0) {
-            if (!(processor instanceof List)) {
-                throw new PathChangeException("Not a list: " + previous);
+        if (previous instanceof List) {
+            int index;
+            try {
+                index = Integer.parseInt(lastToken);
+            } catch (NumberFormatException e) {
+                throw new PathChangeException(e);
             }
             @SuppressWarnings("unchecked")
-            List<Object> list = (List<Object>)processor;
+            List<Object> list = (List<Object>)previous;
             if (index < list.size()) {
-                list.set(index, object);
+                list.set(index, newObject);
             } else if (index == list.size()) {
-                list.add(object);
+                list.add(newObject);
             } else {
                 throw new PathChangeException("Incorrect index: " 
                         + path + " (expected " + list.size() + ")");
             }
             return;
+            
         }
 
-        // Not a root object, not a list member.
+        if (previous instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String,Object> map = (Map<String,Object>)previous;
+            map.put(lastToken, newObject);
+            return;
+        }
+
+        // Not a root object, not a list member, not a mapping.
         // Must be a value for some other processor's Key.
         // The lastToken is therefore a Key field name.
         // Check the KeyManager for that key, then set its value in the sheet.
-        Map<String,Key<Object>> keys = KeyManager.getKeys(processor.getClass());
+        Map<String,Key<Object>> keys = KeyManager.getKeys(previous.getClass());
         Key<Object> key = keys.get(lastToken);
         if (key == null) {
             throw new PathChangeException("No such key: " + path);
         }
-        sheet.set(processor, key, object);
+        sheet.set(previous, key, newObject);
     }
-
     
-    private static int index(String s) {
-        try {
-            return Integer.parseInt(s);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
-    }
 
 }
