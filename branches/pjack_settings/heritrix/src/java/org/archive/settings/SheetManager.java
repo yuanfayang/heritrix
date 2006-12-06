@@ -25,7 +25,6 @@ package org.archive.settings;
 
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 
@@ -54,25 +53,15 @@ public abstract class SheetManager {
     
     
     /**
-     * Returns the root processors configured by this manager.  The returned
-     * list is unmodifiable.
+     * Returns the root module configured by this manager.
      * 
-     * @return  the list of root processors
+     * @return  the root module
      */
-    public abstract List<NamedObject> getRoots();
+    public abstract Object getRoot();
 
     
-    
-    public abstract void addRoot(String name, Object root);
-    
-    
-    public abstract void removeRoot(String name);
-    
-    
-    public abstract void moveRootUp(String rootName);
-    
-    
-    public abstract void moveRootDown(String rootName);
+    // FIXME: Is this wise?
+    public abstract void setRoot(Object object);
 
     /**
      * Returns the names of the sheets being managed.  The returned set 
@@ -206,15 +195,7 @@ public abstract class SheetManager {
      */
     public abstract Sheet getAssociation(String context);
 
-    
-    public Object getRoot(String name) {
-        List<NamedObject> roots = getRoots();
-        return NamedObject.getByName(roots, name);
-    }
-    
-    
-    public abstract void swapRoot(String name, Object newRoot);
-    
+
     
     public abstract void reload();
     

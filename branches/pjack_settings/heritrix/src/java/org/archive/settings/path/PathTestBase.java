@@ -25,12 +25,14 @@ package org.archive.settings.path;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.archive.crawler2.deciderules.AcceptDecideRule;
-import org.archive.crawler2.deciderules.DecideRule;
-import org.archive.crawler2.deciderules.DecideRuleSequence;
-import org.archive.crawler2.deciderules.RejectDecideRule;
+import org.archive.processors.deciderules.AcceptDecideRule;
+import org.archive.processors.deciderules.DecideRule;
+import org.archive.processors.deciderules.DecideRuleSequence;
+import org.archive.processors.deciderules.RejectDecideRule;
 import org.archive.crawler2.extractor.ExtractorCSS;
 import org.archive.crawler2.extractor.ExtractorHTML;
 import org.archive.crawler2.extractor.ExtractorJS;
@@ -71,11 +73,12 @@ public class PathTestBase extends TestCase {
 
 
     public void setUp() {
-        manager = new MemorySheetManager();
+        Map<String,Object> map = new LinkedHashMap<String,Object>();
+        manager = new MemorySheetManager(map);
         SingleSheet defaults = manager.getDefault();
 
         html = new ExtractorHTML();
-        manager.addRoot("html", html);
+        map.put("html", html);
         htmlSeq = new DecideRuleSequence();
         htmlRules = new ArrayList<DecideRule>();
         htmlRule0 = new AcceptDecideRule();
@@ -85,7 +88,7 @@ public class PathTestBase extends TestCase {
         defaults.set(htmlSeq, DecideRuleSequence.RULES, htmlRules);
 
         css = new ExtractorCSS();
-        manager.addRoot("css", css);
+        map.put("css", css);
         cssSeq = new DecideRuleSequence();
         cssRules = new ArrayList<DecideRule>();
         cssRule0 = new RejectDecideRule();
@@ -101,7 +104,7 @@ public class PathTestBase extends TestCase {
         
         
         js = new ExtractorJS();
-        manager.addRoot("js", js);
+        map.put("js", js);
         jsSeq = new DecideRuleSequence();
         jsRules = new ArrayList<DecideRule>();
         defaults.set(js, ExtractorJS.DECIDE_RULES, jsSeq);

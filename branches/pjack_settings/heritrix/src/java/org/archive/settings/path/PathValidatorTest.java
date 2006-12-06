@@ -61,6 +61,8 @@ public class PathValidatorTest extends PathTestBase {
 
     private void validateDefaults() {
         SingleSheet sheet = manager.getDefault();
+        Object o = PathValidator.validate(sheet, "html");
+        System.out.println(o);
         assertTrue(html == PathValidator.validate(sheet, "html"));
         assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.TREAT_FRAMES_AS_EMBED_LINKS"));
         assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "html.IGNORE_FORM_ACTION_URLS"));

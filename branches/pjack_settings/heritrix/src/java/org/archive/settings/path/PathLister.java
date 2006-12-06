@@ -28,8 +28,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import org.archive.settings.NamedObject;
 import org.archive.settings.Resolved;
 import org.archive.settings.Sheet;
 import org.archive.settings.SingleSheet;
@@ -83,14 +83,12 @@ public class PathLister {
      */
     private void list() {
         Sheet defaults = startSheet.getSheetManager().getDefault();
-        for (NamedObject no: startSheet.getSheetManager().getRoots()) {
-            String path = no.getName();
-            Object processor = no.getObject();
-            List<Sheet> list = Collections.singletonList(defaults);
-            consume(path, list, processor);
-            list = Collections.singletonList(startSheet);
-            handleProcessor(list, path, processor);
-        }
+        String path = "";
+        Object module = startSheet.getSheetManager().getRoot();
+        List<Sheet> list = Collections.singletonList(defaults);
+        consume(path, list, module);
+        list = Collections.singletonList(startSheet);
+        advance(path, list, module);
     }
 
 
@@ -119,11 +117,11 @@ public class PathLister {
 
 
     /**
-     * Handles a processor object.  When this method is invoked, the processor
+     * Handles a module object.  When this method is invoked, the module
      * object itself has already been consumed.  This method checks the 
      * the KeyManager for keys defined by the object.  If any of those
-     * key values are themselves processors, then this method is called 
-     * recursively for those processors.
+     * key values are themselves modules, then this method is called 
+     * recursively for those modules.
      * 
      * <p>Note that the given sheet may or may not be the same as 
      * {@link #startSheet}: List elements need to be resolved using the same
@@ -133,11 +131,11 @@ public class PathLister {
      * @param path        the path that leads to the processor
      * @param processor   the processor to handle
      */
-    private void handleProcessor(
+    private void handleModule(
             List<Sheet> sheets,
             String path,
             Object processor) {
-        // Get the keys for the processor
+        // Get the keys for the module
         Class ptype = processor.getClass();
         Collection<Key<Object>> declared = KeyManager.getKeys(ptype).values();
         
@@ -166,23 +164,10 @@ public class PathLister {
         resolvedList.addAll(r.getSheets());
         resolvedList = Collections.unmodifiableList(resolvedList);
         
-        String kpath = path + "." + k.getFieldName();
-        
-        // What happens next depends on type.  Lists are treated specially.
-        // Known "simple" types (eg, String objects) are leaf nodes, since
-        // they cannot define any keys.
-        // Anything else is assumed to be a processor, meaning the KeyManager
-        // will be consulted to find more keys.  This is safe since the
-        // KeyManager will just return an empty set of Keys if the object
-        // isn't really a processor.
+        String kpath = appendPath(path, k.getFieldName());
 
         consume(kpath, resolvedList, r.getValue());
-        if (r.getValue() instanceof List) {
-            handleList(kpath, resolvedList, r.getValue());
-        } else if (!isSimple(k.getType())) {
-            // Assume it's another processor.
-            handleProcessor(sheets, kpath, r.getValue());
-        }
+        advance(kpath, resolvedList, r.getValue());
     }
 
 
@@ -206,6 +191,17 @@ public class PathLister {
     }
 
 
+    private void advance(String path, List<Sheet> list, Object value) {
+        if (value instanceof List) {
+            handleList(path, list, value);
+        } else if (value instanceof Map) {
+            handleMap(path, list, value);
+        } else {
+            // Assume it's another module.
+            handleModule(list, path, value);
+        }
+    }
+
 
     /**
      * Handles a list object.  First consumes the list object itself, then
@@ -221,16 +217,25 @@ public class PathLister {
         List<Object> list = (List<Object>)l;
         for (int i = 0; i < list.size(); i++) {
             Object element = list.get(i);
-            String lpath = path + "." + i;
+            String lpath = appendPath(path, Integer.toString(i));
             consume(lpath, sheets, element);
-            if (element instanceof List) {
-                handleList(lpath, sheets, element);
-            } else if (element != null) {
-                handleProcessor(sheets, lpath, element);
-            }
+            advance(lpath, sheets, element);
+        }
+    }
+    
+    
+    private void handleMap(String path, List<Sheet> sheets, Object m) {
+        @SuppressWarnings("unchecked")
+        Map<String,Object> map = (Map<String,Object>)m;
+        for (Map.Entry<String,Object> entry: map.entrySet()) {
+            Object element = entry.getValue();
+            String mpath = appendPath(path, entry.getKey()); // FXME: Escape keys
+            consume(mpath, sheets, element);
+            advance(mpath, sheets, element);
         }
     }
 
+    
 
     static boolean isSimple(Class c) {
         // FIXME: Move this method somewhere else
@@ -245,4 +250,10 @@ public class PathLister {
     }
 
 
+    private static String appendPath(String path, String next) {
+        if (path.length() == 0) {
+            return next;
+        }
+        return path + "." + next;
+    }
 }
