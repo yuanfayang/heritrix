@@ -34,23 +34,21 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.management.AttributeNotFoundException;
-
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.net.ftp.FTPCommand;
-import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.extractor.Link;
-import static org.archive.crawler.extractor.Link.NAVLINK_HOP;
-import static org.archive.crawler.extractor.Link.NAVLINK_MISC;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.settings.SimpleType;
+import org.archive.crawler2.extractor.Hop;
+import org.archive.crawler2.extractor.Link;
+import org.archive.crawler2.extractor.LinkContext;
+
 import org.archive.io.RecordingInputStream;
 import org.archive.io.ReplayCharSequence;
 import org.archive.net.ClientFTP;
 import org.archive.net.FTPException;
 import org.archive.net.UURI;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
+import org.archive.state.Key;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
 
@@ -64,7 +62,7 @@ import org.archive.util.Recorder;
  * @author pjack
  *
  */
-public class FetchFTP extends Processor implements CoreAttributeConstants {
+public class FetchFTP extends Processor  {
 
     
     /** Serialization ID; robust against trivial API changes. */
@@ -79,135 +77,67 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      Pattern.compile("(.+)$", Pattern.MULTILINE);
 
     
-    /** The name for the <code>username</code> attribute. */
-    final public static String ATTR_USERNAME = "username";
-   
-    /** The description for the <code>username</code> attribute. */
-    final private static String DESC_USERNAME = "The username to send to " +
-     "FTP servers.  By convention, the default value of \"anonymous\" is " +
-     "used for publicly available FTP sites.";
-    
-    /** The default value for the <code>username</code> attribute. */
-    final private static String DEFAULT_USERNAME = "anonymous";
+    /**
+     * The username to send to FTP servers. By convention, the default value of
+     * "anonymous" is used for publicly available FTP sites.
+     */
+    final public static Key<String> USERNAME = Key.make("anonymous");
 
 
-    /** The name for the <code>password</code> attribute. */
-    final public static String ATTR_PASSWORD = "password";
-   
-    /** The description for the <code>password</code> attribute. */
-    final private static String DESC_PASSWORD = "The password to send to " +
-    "FTP servers.  By convention, anonymous users send their email address " +
-    "in this field.";
-    
-    /** The default value for the <code>password</code> attribute. */
-    final private static String DEFAULT_PASSWORD = "";
+    /**
+     * The password to send to FTP servers. By convention, anonymous users send
+     * their email address in this field.
+     */
+    final public static Key<String> PASSWORD = Key.make("password");
+
+
+    /**
+     * Set to true to extract further URIs from FTP directories. Default is
+     * true.
+     */
+    final public static Key<Boolean> EXTRACT_FROM_DIRS = Key.make(true);
 
     
-    /** The name for the <code>extract-from-dirs</code> attribute. */
-    final private static String ATTR_EXTRACT = "extract-from-dirs";
-    
-    /** The description for the <code>extract-from-dirs</code> attribute. */
-    final private static String DESC_EXTRACT = "Set to true to extract "
-     + "further URIs from FTP directories.  Default is true.";
-    
-    /** The default value for the <code>extract-from-dirs</code> attribute. */
-    final private static boolean DEFAULT_EXTRACT = true;
+
+    /**
+     * Set to true to extract the parent URI from all FTP URIs. Default is true.
+     */
+    final public static Key<Boolean> EXTRACT_PARENT = Key.make(true);
+
+
+    /**
+     * Maximum length in bytes to fetch. Fetch is truncated at this length. A
+     * value of 0 means no limit.
+     */
+    final public static Key<Long> MAX_LENGTH_BYTES = Key.make(0L);
 
     
-    /** The name for the <code>extract-parent</code> attribute. */
-    final private static String ATTR_EXTRACT_PARENT = "extract_parent";
-    
-    /** The description for the <code>extract-parent</code> attribute. */
-    final private static String DESC_EXTRACT_PARENT = "Set to true to extract "
-     + "the parent URI from all FTP URIs.  Default is true.";
-    
-    /** The default value for the <code>extract-parent</code> attribute. */
-    final private static boolean DEFAULT_EXTRACT_PARENT = true;
-    
-    
-    /** The name for the <code>max-length-bytes</code> attribute. */
-    final public static String ATTR_MAX_LENGTH = "max-length-bytes";
-    
-    /** The description for the <code>max-length-bytes</code> attribute. */
-    final private static String DESC_MAX_LENGTH = 
-        "Maximum length in bytes to fetch.\n" +
-        "Fetch is truncated at this length. A value of 0 means no limit.";
-    
-    /** The default value for the <code>max-length-bytes</code> attribute. */
-    final private static long DEFAULT_MAX_LENGTH = 0;
 
-    
-    /** The name for the <code>fetch-bandwidth</code> attribute. */
-    final public static String ATTR_BANDWIDTH = "fetch-bandwidth";
-    
-    /** The description for the <code>fetch-bandwidth</code> attribute. */
-    final private static String DESC_BANDWIDTH = "";
-    
-    /** The default value for the <code>fetch-bandwidth</code> attribute. */
-    final private static int DEFAULT_BANDWIDTH = 0;
+    final public static Key<Integer> FETCH_BANDWIDTH = Key.make(0);
     
     
-    /** The name for the <code>timeout-seconds</code> attribute. */
-    final public static String ATTR_TIMEOUT = "timeout-seconds";
-    
-    /** The description for the <code>timeout-seconds</code> attribute. */
-    final private static String DESC_TIMEOUT = "If the fetch is not "
-     + "completed in this number of seconds, give up (and retry later).";
-    
-    /** The default value for the <code>timeout-seconds</code> attribute. */
-    final private static int DEFAULT_TIMEOUT = 1200;
+    /**
+     * If the fetch is not completed in this number of seconds, give up (and
+     * retry later).
+     */
+    final public static Key<Integer> TIMEOUT_SECONDS = Key.make(1200);
     
 
     /**
      * Constructs a new <code>FetchFTP</code>.
-     * 
-     * @param name  the name of this processor
      */
-    public FetchFTP(String name) {
-        super(name, "FTP Fetcher.");
-        add(ATTR_USERNAME, DESC_USERNAME, DEFAULT_USERNAME);
-        add(ATTR_PASSWORD, DESC_PASSWORD, DEFAULT_PASSWORD);
-        add(ATTR_EXTRACT, DESC_EXTRACT, DEFAULT_EXTRACT);
-        add(ATTR_EXTRACT_PARENT, DESC_EXTRACT_PARENT, DEFAULT_EXTRACT_PARENT);
-        add(ATTR_MAX_LENGTH, DESC_MAX_LENGTH, DEFAULT_MAX_LENGTH);
-        add(ATTR_BANDWIDTH, DESC_BANDWIDTH, DEFAULT_BANDWIDTH);
-        add(ATTR_TIMEOUT, DESC_TIMEOUT, DEFAULT_TIMEOUT);
+    public FetchFTP() {
     }
 
     
-    /**
-     * Convenience method for adding an attribute.
-     * 
-     * @param name   The name of the attribute
-     * @param desc   The description of the attribute
-     * @param def    The default value for the attribute
-     */
-    private void add(String name, String desc, Object def) {
-        SimpleType st = new SimpleType(name, desc, def);
-        addElementToDefinition(st);
-    }
-    
-    
-    /**
-     * Convenience method for extracting an attribute.
-     * If a value for the specified name cannot be found,
-     * a warning is written to the log and the specified
-     * default value is returned instead.
-     * 
-     * @param context  The context for the attribute fetch
-     * @param name     The name of the attribute to fetch
-     * @param def      The value to return if the attribute isn't found
-     * @return         The value of that attribute
-     */
-    private Object get(Object context, String name, Object def) {
-        try {
-            return getAttribute(context, name);
-        } catch (AttributeNotFoundException e) {
-            logger.warning("Attribute not found (using default): " + name);
-            return def;
+    @Override
+    protected boolean shouldProcess(ProcessorURI curi) {
+        if (!curi.getUURI().getScheme().equals("ftp")) {
+            return false;
         }
+
+        return true;
     }
-    
 
     /**
      * Processes the given URI.  If the given URI is not an FTP URI, then
@@ -238,13 +168,10 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @throws InterruptedException  if the thread is interrupted during
      *   processing
      */
-    public void innerProcess(CrawlURI curi) throws InterruptedException {
-        if (!curi.getUURI().getScheme().equals("ftp")) {
-            return;
-        }
-        
-        curi.putLong(A_FETCH_BEGAN_TIME, System.currentTimeMillis());
-        Recorder recorder = Recorder.getHttpRecorder();
+    @Override
+    protected void innerProcess(ProcessorURI curi) throws InterruptedException {
+        curi.setFetchBeginTime(System.currentTimeMillis());
+        Recorder recorder = curi.getRecorder();
         ClientFTP client = new ClientFTP();
         
         try {
@@ -258,7 +185,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
         } finally {
             disconnect(client);
             curi.setContentSize(recorder.getRecordedInput().getSize());
-            curi.putLong(A_FETCH_COMPLETED_TIME, System.currentTimeMillis());
+            curi.setFetchCompletedTime(System.currentTimeMillis());
         }
     }
 
@@ -272,7 +199,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @throws IOException  if a network or protocol error occurs
      * @throws InterruptedException  if the thread is interrupted
      */
-    private void fetch(CrawlURI curi, ClientFTP client, Recorder recorder) 
+    private void fetch(ProcessorURI curi, ClientFTP client, Recorder recorder) 
     throws IOException, InterruptedException {
         // Connect to the FTP server.
         UURI uuri = curi.getUURI();
@@ -337,10 +264,9 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @throws IOException  if a network or file error occurs
      * @throws InterruptedException  if the thread is interrupted
      */
-    private void saveToRecorder(CrawlURI curi,
+    private void saveToRecorder(ProcessorURI curi,
             Socket socket, Recorder recorder) 
     throws IOException, InterruptedException {
-        curi.setHttpRecorder(recorder);
         recorder.markContentBegin();
         recorder.inputWrap(socket.getInputStream());
         recorder.outputWrap(socket.getOutputStream());
@@ -362,7 +288,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param curi      The curi to save extracted links to
      * @param recorder  The recorder containing the directory listing
      */
-    private void extract(CrawlURI curi, Recorder recorder) {
+    private void extract(ProcessorURI curi, Recorder recorder) {
         if (!getExtractFromDirs(curi)) {
             return;
         }
@@ -388,7 +314,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param dir   The directory listing to extract links from
      * @throws URIException  if an extracted link is invalid
      */
-    private void extract(CrawlURI curi, ReplayCharSequence dir) {
+    private void extract(ProcessorURI curi, ReplayCharSequence dir) {
         logger.log(Level.FINEST, "Extracting URIs from FTP directory.");
         Matcher matcher = DIR.matcher(dir);
         while (matcher.find()) {
@@ -406,7 +332,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param curi  the curi to store the discovered link in
      * @param file  the filename of the discovered link
      */
-    private void addExtracted(CrawlURI curi, String file) {
+    private void addExtracted(ProcessorURI curi, String file) {
         try {
             file = URLEncoder.encode(file, "UTF-8");
         } catch (UnsupportedEncodingException e) {
@@ -421,8 +347,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
         }
         try {
             UURI n = new UURI(base + "/" + file, true);
-            Link link = new Link(curi.getUURI(), n, NAVLINK_MISC, NAVLINK_HOP);
-            curi.addOutLink(link);
+            Link link = new Link(curi.getUURI(), n, LinkContext.NAVLINK_MISC, Hop.NAVLINK);
+            curi.getOutLinks().add(link);
         } catch (URIException e) {
             logger.log(Level.WARNING, "URI error during extraction.", e);            
         }
@@ -443,7 +369,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * 
      * @param curi  the curi whose parent to add
      */
-    private void addParent(CrawlURI curi) {
+    private void addParent(ProcessorURI curi) {
         if (!getExtractParent(curi)) {
             return;
         }
@@ -458,8 +384,9 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
             String path = uuri.getEscapedCurrentHierPath();
             UURI parent = new UURI(scheme + "://" + auth + path, false);
 
-            Link link = new Link(uuri, parent, NAVLINK_MISC, NAVLINK_HOP);
-            curi.addOutLink(link);
+            Link link = new Link(uuri, parent, LinkContext.NAVLINK_MISC, 
+                    Hop.NAVLINK);
+            curi.getOutLinks().add(link);
         } catch (URIException e) {
             logger.log(Level.WARNING, "URI error during extraction.", e);
         }
@@ -473,8 +400,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param curi  the curi whose attribute to return
      * @return  that curi's <code>extract.from.dirs</code>
      */
-    public boolean getExtractFromDirs(CrawlURI curi) {
-        return (Boolean)get(curi, ATTR_EXTRACT, DEFAULT_EXTRACT);
+    public boolean getExtractFromDirs(ProcessorURI curi) {
+        return curi.get(this, EXTRACT_FROM_DIRS);
     }
     
     
@@ -485,8 +412,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param curi  the curi whose attribute to return
      * @return  that curi's <code>extract-parent</code>
      */
-    public boolean getExtractParent(CrawlURI curi) {
-        return (Boolean)get(curi, ATTR_EXTRACT_PARENT, DEFAULT_EXTRACT_PARENT);
+    public boolean getExtractParent(ProcessorURI curi) {
+        return curi.get(this, EXTRACT_PARENT);
     }
 
 
@@ -497,8 +424,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param curi   the curi whose attribute to return
      * @return   that curi's <code>timeout-seconds</code>
      */
-    public int getTimeout(CrawlURI curi) {
-        return (Integer)get(curi, ATTR_TIMEOUT, DEFAULT_TIMEOUT);
+    public int getTimeout(ProcessorURI curi) {
+        return curi.get(this, TIMEOUT_SECONDS);
     }
 
 
@@ -509,8 +436,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param curi  the curi whose attribute to return
      * @return  that curi's <code>max-length-bytes</code>
      */
-    public long getMaxLength(CrawlURI curi) {
-        return (Long)get(curi, ATTR_MAX_LENGTH, DEFAULT_MAX_LENGTH);
+    public long getMaxLength(ProcessorURI curi) {
+        return curi.get(this, MAX_LENGTH_BYTES);
     }
 
 
@@ -521,8 +448,8 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param curi  the curi whose attribute to return
      * @return  that curi's <code>fetch-bandwidth</code>
      */
-    public int getFetchBandwidth(CrawlURI curi) {
-        return (Integer)get(curi, ATTR_BANDWIDTH, DEFAULT_BANDWIDTH);
+    public int getFetchBandwidth(ProcessorURI curi) {
+        return curi.get(this, FETCH_BANDWIDTH);
     }
 
 
@@ -544,7 +471,7 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
      * @param curi  the curi whose username and password to return
      * @return  an array containing the username and password
      */
-    private String[] getAuth(CrawlURI curi) {
+    private String[] getAuth(ProcessorURI curi) {
         String[] result = new String[2];
         UURI uuri = curi.getUURI();
         String userinfo;
@@ -563,24 +490,12 @@ public class FetchFTP extends Processor implements CoreAttributeConstants {
                 return result;
             }
         }
-        result[0] = (String)get(curi, ATTR_USERNAME, DEFAULT_USERNAME);
-        result[1] = (String)get(curi, ATTR_PASSWORD, DEFAULT_PASSWORD);
+        result[0] = curi.get(this, USERNAME);
+        result[1] = curi.get(this, PASSWORD);
         return result;
     }
     
     
-    /**
-     * Determines the password for the given URI.  If the URI itself contains
-     * a password, then that password is returned.  Otherwise the settings
-     * system is probed for the <code>password</code> attribute, and the value
-     * for that attribute is returned.
-     * 
-     * @param curi  the curi whose password to return
-     * @return  that password
-     */
-    public String determinePassword(CrawlURI curi) {
-        return (String)get(curi, ATTR_PASSWORD, DEFAULT_PASSWORD);
-    }
 
 
     /**
