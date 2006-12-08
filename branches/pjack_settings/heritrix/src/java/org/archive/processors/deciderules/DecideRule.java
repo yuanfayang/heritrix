@@ -26,6 +26,7 @@ package org.archive.processors.deciderules;
 
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 
 
@@ -35,6 +36,13 @@ public abstract class DecideRule {
     final public static Key<Boolean> ENABLED = Key.make(true);
     
     final public static Key<Boolean> INVERT = Key.make(false);
+    
+
+    
+    public DecideRule() {
+        KeyManager.addKeys(getClass());
+    }
+    
     
     public DecideResult decisionFor(ProcessorURI uri) {
         if (!uri.get(this, ENABLED)) {
