@@ -1,10 +1,11 @@
 package org.archive.crawler2.extractor;
 
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 
-import org.apache.commons.httpclient.URIException;
+import org.archive.processors.DefaultProcessorURI;
 
 
 
@@ -13,10 +14,10 @@ public abstract class StringExtractorTestBase extends ContentExtractorTestBase {
     
     public static class TestData {
         
-        public DefaultExtractorURI uri;
+        public DefaultProcessorURI uri;
         public Link expectedResult;
         
-        public TestData(DefaultExtractorURI uri, Link expectedResult) {
+        public TestData(DefaultProcessorURI uri, Link expectedResult) {
             this.uri = uri;
             this.expectedResult = expectedResult;
         }
@@ -33,7 +34,7 @@ public abstract class StringExtractorTestBase extends ContentExtractorTestBase {
 
     
     protected abstract Collection<TestData> makeData(String text, String uri)
-    throws URIException;
+    throws Exception;
 
     /**
      * Tests each text/URI pair in the test data array.
@@ -61,7 +62,7 @@ public abstract class StringExtractorTestBase extends ContentExtractorTestBase {
         for (TestData testData: testDataCol) {
             Extractor extractor = makeExtractor();
             extractor.process(testData.uri);
-            HashSet<Link> expected = new HashSet<Link>();
+            List<Link> expected = new ArrayList<Link>();
             expected.add(testData.expectedResult);
             assertEquals(expected, testData.uri.getOutLinks());
             assertNoSideEffects(testData.uri);

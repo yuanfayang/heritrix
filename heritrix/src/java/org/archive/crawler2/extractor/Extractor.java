@@ -27,7 +27,8 @@ package org.archive.crawler2.extractor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler2.framework.Processor;
+import org.archive.processors.Processor;
+import org.archive.processors.ProcessorURI;
 
 
 /**
@@ -38,8 +39,7 @@ import org.archive.crawler2.framework.Processor;
  * 
  * @author pjack
  */
-public abstract class Extractor 
-extends Processor<ExtractorURI> {
+public abstract class Extractor extends Processor {
 
 
     /** Logger. */
@@ -57,29 +57,27 @@ extends Processor<ExtractorURI> {
      * 
      * @param uri  the URI to extract links from
      */
-    final protected void innerProcess(ExtractorURI uri)
+    final protected void innerProcess(ProcessorURI uri)
     throws InterruptedException {
         try {
             extract(uri);
         } catch (NullPointerException npe) {
-            // both annotate (to highlight in crawl log) & add as local-error
-            uri.addAnnotation("err=" + npe.getClass().getName());
-            uri.addLocalizedError(npe, "");
-            // also log as warning
-            logger.log(Level.WARNING, "NullPointerException", npe);
+            handleException(uri, npe);
         } catch (StackOverflowError soe) {
-            // both annotate (to highlight in crawl log) & add as local-error
-            uri.addAnnotation("err=" + soe.getClass().getName());
-            uri.addLocalizedError(soe, "");
-            // also log as warning
-            logger.log(Level.WARNING, "StackOverflowError", soe);
+            handleException(uri, soe);
         } catch (java.nio.charset.CoderMalfunctionError cme) {
             // See http://sourceforge.net/tracker/index.php?func=detail&aid=1540222&group_id=73833&atid=539099
-            // Both annotate (to highlight in crawl log) & add as local-error
-            uri.addAnnotation("err=" + cme.getClass().getName());
-            uri.addLocalizedError(cme, ""); // <-- Message field ignored when logging.
-            logger.log(Level.WARNING, "CoderMalfunctionError", cme);
+            handleException(uri, cme);
         }
+    }
+    
+    
+    private void handleException(ProcessorURI uri, Throwable t) {
+        // both annotate (to highlight in crawl log) & add as local-error
+        uri.getAnnotations().add("err=" + t.getClass().getName());
+        uri.getNonFatalFailures().add(t);
+        // also log as warning
+        logger.log(Level.WARNING, "Exception", t);        
     }
 
 
@@ -92,6 +90,6 @@ extends Processor<ExtractorURI> {
      * 
      * @param uri  the uri to extract links from
      */
-    protected abstract void extract(ExtractorURI uri);
+    protected abstract void extract(ProcessorURI uri);
 
 }

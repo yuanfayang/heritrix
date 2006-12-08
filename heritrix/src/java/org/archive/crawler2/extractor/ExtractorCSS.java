@@ -32,6 +32,7 @@ import java.util.regex.Matcher;
 import org.apache.commons.httpclient.URIException;
 import org.archive.io.ReplayCharSequence;
 import org.archive.net.UURI;
+import org.archive.processors.ProcessorURI;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -52,7 +53,7 @@ import org.archive.util.TextUtils;
  **/
 
 public class ExtractorCSS extends ContentExtractor {
-//implements CoreAttributeConstants {
+
 
     private static final long serialVersionUID = 2L;
 
@@ -88,7 +89,7 @@ public class ExtractorCSS extends ContentExtractor {
 
     
     @Override
-    protected boolean shouldExtract(ExtractorURI curi) {
+    protected boolean shouldExtract(ProcessorURI curi) {
         String mimeType = curi.getContentType();
         if (mimeType == null) {
             return false; // FIXME: This check should be unnecessary
@@ -103,10 +104,10 @@ public class ExtractorCSS extends ContentExtractor {
     /**
      * @param curi Crawl URI to process.
      */
-    public boolean innerExtract(ExtractorURI curi) {
+    public boolean innerExtract(ProcessorURI curi) {
         ReplayCharSequence cs = null;
         try {
-            cs = curi.getCharSequence();
+            cs = curi.getRecorder().getReplayCharSequence();
         } catch (IOException e) {
             logger.severe("Failed getting ReplayCharSequence: " + e.getMessage());
         }
@@ -135,7 +136,7 @@ public class ExtractorCSS extends ContentExtractor {
         }
     }
 
-    public static long processStyleCode(ExtractorURI curi, CharSequence cs) {
+    public static long processStyleCode(ProcessorURI curi, CharSequence cs) {
         long foundLinks = 0;
         Matcher uris = null;
         String cssUri;

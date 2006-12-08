@@ -26,9 +26,11 @@ package org.archive.crawler2.extractor;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.DefaultProcessorURI;
+import org.archive.util.Recorder;
+
 import static org.archive.crawler2.extractor.LinkContext.NAVLINK_MISC;
 import static org.archive.crawler2.extractor.LinkContext.EMBED_MISC;
 
@@ -72,10 +74,13 @@ public class ExtractorCSSTest extends StringExtractorTestBase {
 
     @Override
     protected Collection<TestData> makeData(String content, String uri) 
-    throws URIException {
+    throws Exception {
         UURI src = UURIFactory.getInstance("http://www.archive.org/start/");
-        DefaultExtractorURI euri = new DefaultExtractorURI(src, NAVLINK_MISC); 
-        euri.setContent(content, "text/css");
+        DefaultProcessorURI euri = new DefaultProcessorURI(src, NAVLINK_MISC);
+        Recorder recorder = createRecorder(content);
+        euri.setContentType("text/css");
+        euri.setRecorder(recorder);
+        euri.setContentLength(content.length());
         
         UURI dest = UURIFactory.getInstance(uri);
         Link link = new Link(src, dest, EMBED_MISC, Hop.EMBED);

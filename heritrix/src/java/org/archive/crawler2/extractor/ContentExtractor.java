@@ -23,6 +23,8 @@
  */
 package org.archive.crawler2.extractor;
 
+import org.archive.processors.ProcessorURI;
+
 
 /**
  * Extracts link from the fetched content of a URI, as opposed to its headers.
@@ -35,10 +37,10 @@ public abstract class ContentExtractor extends Extractor {
     /**
      * Extracts links 
      */
-    final protected void extract(ExtractorURI uri) {
+    final protected void extract(ProcessorURI uri) {
         boolean finished = innerExtract(uri);
         if (finished) {
-            uri.linkExtractionFinished();
+            uri.setLinkExtractionFinished(true);
         }
     }
 
@@ -62,7 +64,7 @@ public abstract class ContentExtractor extends Extractor {
      * @return   true if links should be extracted from the URI, 
      *   false otherwise
      */
-    final protected boolean shouldProcess(ExtractorURI uri) {
+    final protected boolean shouldProcess(ProcessorURI uri) {
         if (uri.isLinkExtractionFinished()) {
             return false;
         }
@@ -89,7 +91,7 @@ public abstract class ContentExtractor extends Extractor {
      * @return   true if links should be extracted from that URI, false
      *   otherwise
      */
-    protected abstract boolean shouldExtract(ExtractorURI uri);
+    protected abstract boolean shouldExtract(ProcessorURI uri);
 
     
     /**
@@ -110,6 +112,6 @@ public abstract class ContentExtractor extends Extractor {
      * @return  true if link extraction finished; false if downstream
      * extractors should attempt to extract links
      */
-    protected abstract boolean innerExtract(ExtractorURI uri);
+    protected abstract boolean innerExtract(ProcessorURI uri);
     
 }
