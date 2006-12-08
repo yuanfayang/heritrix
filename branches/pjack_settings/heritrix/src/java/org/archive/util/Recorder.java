@@ -81,15 +81,7 @@ public class Recorder {
      */
     private String characterEncoding = null;
 
-    /**
-     * Constructor with limited access.
-     * Used internally for case where we're wrapping an already
-     * downloaded stream with a HttpRecorder.
-     */
-    protected Recorder() {
-        super();
-    }
-    
+   
     /**
      * Create an HttpRecorder.
      *
@@ -103,11 +95,20 @@ public class Recorder {
      */
     public Recorder(File tempDir, String backingFilenameBase, 
             int outBufferSize, int inBufferSize) {
-        super();
+        this(ensure(new File(tempDir, backingFilenameBase)), 
+                outBufferSize, inBufferSize);
         tempDir.mkdirs();
-        this.backingFileBasename =
-            (new File(tempDir.getPath(), backingFilenameBase))
-                .getAbsolutePath();
+    }
+    
+    
+    private static File ensure(File tempDir) {
+        tempDir.mkdirs();
+        return tempDir;
+    }
+    
+    public Recorder(File file, int outBufferSize, int inBufferSize) {
+        super();
+        this.backingFileBasename = file.getAbsolutePath();
         this.ris = new RecordingInputStream(inBufferSize,
             this.backingFileBasename + RECORDING_INPUT_STREAM_SUFFIX);
         this.ros = new RecordingOutputStream(outBufferSize,
@@ -130,6 +131,7 @@ public class Recorder {
                 DEFAULT_OUTPUT_BUFFER_SIZE);
     }
 
+    
     /**
      * Wrap the provided stream with the internal RecordingInputStream
      *
