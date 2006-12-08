@@ -53,9 +53,9 @@ public class Canonicalizer {
      * @param rules A crawlorder instance.
      * @return Canonicalized string of uuri else uuri if an error.
      */
-    public static String canonicalize(StateProvider context, 
+    public static String canonicalize(StateProvider context, String uri,
             Iterable<CanonicalizationRule> rules) {
-        return canonicalize(context, rules.iterator());
+        return canonicalize(context, uri, rules.iterator());
     }
 
     /**
@@ -66,9 +66,9 @@ public class Canonicalizer {
      * create a list externally).  Rules must implement the Rule interface.
      * @return Canonicalized URL.
      */
-    public static String canonicalize(StateProvider context, 
+    public static String canonicalize(StateProvider context, String uri,
             Iterator<CanonicalizationRule> rules) {
-        String before = context.toString();
+        String before = uri;
         //String beforeRule = null;
         String canonical = before;
         for (; rules.hasNext();) {

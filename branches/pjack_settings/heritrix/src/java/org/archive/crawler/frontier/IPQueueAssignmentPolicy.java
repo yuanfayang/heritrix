@@ -37,7 +37,7 @@ import org.archive.processors.fetcher.CrawlHost;
 public class IPQueueAssignmentPolicy
 extends HostnameQueueAssignmentPolicy {
     public String getClassKey(CrawlController controller, CandidateURI cauri) {
-        CrawlHost host = controller.getServerCache().getHostFor(cauri);
+        CrawlHost host = controller.getServerCache().getHostFor(cauri.getUURI());
         if (host == null || host.getIP() == null) {
             // if no server or no IP, use superclass implementation
             return super.getClassKey(controller, cauri);
