@@ -68,13 +68,17 @@ public class MemorySheetManager extends SheetManager {
     private Object root;
 
 
+    public MemorySheetManager() {
+        this(null);
+    }
+
+    
     /**
      * Constructor.
      */
     public MemorySheetManager(Object root) {
         sheets = new HashMap<String,Sheet>();
         associations = new ConcurrentHashMap<String,Sheet>();
-
         setRoot(root);
         defaults = addSingleSheet("default");
     }
