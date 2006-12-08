@@ -27,15 +27,14 @@ package org.archive.crawler.scope;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.TmpDirTestCase;
@@ -58,8 +57,8 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
 
         private File seedsfile;
 
-        public UnitTestSeedCachingScope(File seedsfile) {
-            super("test");
+        public UnitTestSeedCachingScope(CrawlController c, File seedsfile) {
+            super(c);
             this.seedsfile = seedsfile;
         }
         
@@ -146,7 +145,7 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        }
    }
 
-   public void testGeneral() throws URIException {
+   public void testGeneral() throws Exception {
        // First make sure that I can get the seed set from seed file.
        SeedCachingScope sl = checkContent(SeedCachingScopeTest.seeds);
        // Now do add and see if get set matches seed file content.
@@ -158,7 +157,7 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        checkContent(sl, set);
    }
 
-   public void testNoScheme() throws IOException {
+   public void testNoScheme() throws Exception {
        final String NOSCHEME = "x.y.z";
        FileWriter fw = new FileWriter(this.seedsfile, true);
        // Write to new (last) line the URL.
@@ -167,7 +166,8 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        fw.flush();
        fw.close();
        boolean found = false;
-       SeedCachingScope sl = new UnitTestSeedCachingScope(seedsfile);
+       CrawlController c = new CrawlController();
+       SeedCachingScope sl = new UnitTestSeedCachingScope(c, seedsfile);
        for (Iterator i = sl.seedsIterator(); i.hasNext();) {
            UURI uuri = (UURI)i.next();
            if (uuri.getHost() == null) {
@@ -181,13 +181,15 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        assertTrue("Did not find " + NOSCHEME, found);
    }
 
-   private SeedCachingScope checkContent(Set seedSet) {
+   private SeedCachingScope checkContent(Set seedSet) throws Exception {
        return checkContent(null, seedSet);
    }
 
-   private SeedCachingScope checkContent(SeedCachingScope sl, Set seedSet) {
+   private SeedCachingScope checkContent(SeedCachingScope sl, Set seedSet) 
+   throws Exception {
+       CrawlController c = new CrawlController();
        if (sl == null) {
-           sl = new UnitTestSeedCachingScope(this.seedsfile);
+           sl = new UnitTestSeedCachingScope(c, this.seedsfile);
        }
        int count = 0;
        for (Iterator i = sl.seedsIterator(); i.hasNext();) {

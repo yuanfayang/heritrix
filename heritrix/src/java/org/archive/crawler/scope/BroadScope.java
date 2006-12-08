@@ -23,6 +23,8 @@
  */
 package org.archive.crawler.scope;
 
+import org.archive.crawler.framework.CrawlController;
+
 
 /**
  * A CrawlScope instance defines which URIs are "in"
@@ -49,20 +51,15 @@ package org.archive.crawler.scope;
  */
 public class BroadScope extends ClassicScope {
 
-    private static final long serialVersionUID = -2354234238454865888L;
+    private static final long serialVersionUID = 3L;
 
     /**
      * Constructor.
-     *
-     * @param name Name of this crawlscope.
      */
-    public BroadScope(String name) {
-        super(name);
-        setDescription("BroadScope: A scope for broad crawls. Crawls made" +
-        " with this scope will not be limited to the hosts or domains of" +
-        " its seeds. NOTE: BroadScoped crawls will eventually run out of" +
-        " memory (See Release Notes).");
+    public BroadScope(CrawlController c) {
+        super(c);
     }
+
 
     /**
      * @param o the URI to check.
