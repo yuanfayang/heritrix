@@ -23,13 +23,17 @@
  */
 package org.archive.crawler.scope;
 
-import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.extractor.Link;
 //import org.archive.crawler.filter.OrFilter;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
-import org.archive.crawler.settings.SimpleType;
+import org.archive.processors.ProcessorURI;
+import org.archive.processors.deciderules.DecideResult;
+import org.archive.processors.deciderules.DecideRuleSequence;
+import org.archive.state.Key;
+
 
 /**
  * ClassicScope: superclass with shared Scope behavior for
@@ -39,10 +43,10 @@ import org.archive.crawler.settings.SimpleType;
  * included if:
  * <pre>
  *    forceAccepts(uri)
- *    || (((isSeed(uri) 
- *         || focusAccepts(uri)) 
- *         || additionalFocusAccepts(uri) 
- *         || transitiveAccepts(uri))
+ *    || ((     (isSeed(uri) 
+ *                    || focusAccepts(uri)) 
+ *                          || additionalFocusAccepts(uri) 
+ *                              || transitiveAccepts(uri))
  *       && !excludeAccepts(uri));</pre>
  *
  * Subclasses should override focusAccepts, additionalFocusAccepts,
@@ -57,66 +61,39 @@ import org.archive.crawler.settings.SimpleType;
  */
 public class ClassicScope extends CrawlScope {
 
-    private static final long serialVersionUID = 4494905304855590002L;
+    private static final long serialVersionUID = 3L;
 
-    //private static final Logger logger = Logger.getLogger(ClassicScope.class
-    //        .getName());
-
-    public static final String ATTR_EXCLUDE_FILTER = "exclude-filter";
-    public static final String ATTR_FORCE_ACCEPT_FILTER = "force-accept-filter";
-
-    public static final String ATTR_MAX_LINK_HOPS = "max-link-hops";
-
-    public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
-
-    // FIXME: Replace deprecated OrFilter with non-deprecated something
     
-    @SuppressWarnings("deprecation")
-    private org.archive.crawler.filter.OrFilter excludeFilter;
-    @SuppressWarnings("deprecation")
-    private org.archive.crawler.filter.OrFilter forceAcceptFilter;
+    /**
+     * Max link hops to include. URIs more than this number of links from a seed
+     * will not be ruled in-scope. (Such determination does not preclude later
+     * inclusion if a shorter path is later discovered.)
+     */
+    final public static Key<Integer> MAX_LINK_HOPS = Key.make(25);
+
 
     /**
-     * @param name
-     *            ignored by superclass
+     * Max transitive hops (embeds, referrals, preconditions) to include. URIs
+     * reached by more than this number of transitive hops will not be ruled
+     * in-scope, even if otherwise on an in-focus site. (Such determination does
+     * not preclude later inclusion if a shorter path is later discovered.)
      */
-    @SuppressWarnings("deprecation")
-    public ClassicScope(String name) {
-        super(name);
-        addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
-            "Max link hops to include. URIs more than this number "
-            + "of links from a seed will not be ruled in-scope. (Such "
-            + "determination does not preclude later inclusion if a "
-            + "shorter path is later discovered.)", new Integer(25)));
-        addElementToDefinition(new SimpleType(ATTR_MAX_TRANS_HOPS,
-            "Max transitive hops (embeds, referrals, preconditions) to " +
-            "include. URIs reached by more than this number of transitive " +
-            "hops will not be ruled in-scope, even if otherwise on an " +
-            "in-focus site. (Such determination does not preclude later " +
-            " inclusion if a shorter path is later discovered.)", 
-            new Integer(5)));
-        this.excludeFilter = (org.archive.crawler.filter.OrFilter)
-            addElementToDefinition(new org.archive.crawler.filter.OrFilter(
-                ATTR_EXCLUDE_FILTER));
-        this.forceAcceptFilter = (org.archive.crawler.filter.OrFilter)
-            addElementToDefinition(
-                new org.archive.crawler.filter.OrFilter(
-                        ATTR_FORCE_ACCEPT_FILTER));
-        this.forceAcceptFilter.setExpertSetting(true);
+    final public static Key<Integer> MAX_TRANS_HOPS = Key.make(5);
 
+    
+    final public static Key<DecideRuleSequence> EXCLUDE_RULES = 
+        Key.make(new DecideRuleSequence());
+
+    public ClassicScope(CrawlController c) {
+        super(c);
         // Try to preserve the values of these attributes when we exchange
         // scopes.
-        setPreservedFields(new String[] { ATTR_SEEDS, ATTR_MAX_LINK_HOPS,
-            ATTR_MAX_TRANS_HOPS, ATTR_EXCLUDE_FILTER,
-            ATTR_FORCE_ACCEPT_FILTER });
+        // FIXME: What?
+//        setPreservedFields(new String[] { ATTR_SEEDS, ATTR_MAX_LINK_HOPS,
+//            ATTR_MAX_TRANS_HOPS, ATTR_EXCLUDE_FILTER,
+//            ATTR_FORCE_ACCEPT_FILTER });
     }
 
-    /**
-     * Default constructor.
-     */
-    public ClassicScope() {
-        this(CrawlScope.ATTR_NAME);
-    }
 
     /**
      * Returns whether the given object (typically a CandidateURI) falls within
@@ -127,10 +104,14 @@ public class ClassicScope extends CrawlScope {
      * @return Whether the given object (typically a CandidateURI) falls within
      *         this scope.
      */
-    protected final boolean innerAccepts(Object o) {
-        return forceAccepts(o) || (((isSeed(o) || focusAccepts(o)) ||
+    protected final DecideResult innerDecide(ProcessorURI o) {
+        if (forceAccepts(o) || (((isSeed(o) || focusAccepts(o)) ||
             additionalFocusAccepts(o) || transitiveAccepts(o)) &&
-            !excludeAccepts(o));
+            !excludeAccepts(o))) {
+            return DecideResult.ACCEPT;
+        } else {
+            return DecideResult.REJECT;
+        }
     }
 
     /**
@@ -142,7 +123,7 @@ public class ClassicScope extends CrawlScope {
      *            the URI to check.
      * @return True if additional focus filter accepts passed object.
      */
-    protected boolean additionalFocusAccepts(Object o) {
+    protected boolean additionalFocusAccepts(ProcessorURI o) {
         return false;
     }
 
@@ -151,7 +132,7 @@ public class ClassicScope extends CrawlScope {
      *            the URI to check.
      * @return True if transitive filter accepts passed object.
      */
-    protected boolean transitiveAccepts(Object o) {
+    protected boolean transitiveAccepts(ProcessorURI o) {
         return false;
     }
 
@@ -159,7 +140,7 @@ public class ClassicScope extends CrawlScope {
      * @param o the URI to check.
      * @return True if force-accepts filter accepts passed object.
      */
-    protected boolean forceAccepts(Object o) {
+    protected boolean forceAccepts(ProcessorURI o) {
         return false;
     }
     
@@ -172,7 +153,7 @@ public class ClassicScope extends CrawlScope {
      *            the URI to check.
      * @return True if focus filter accepts passed object.
      */
-    protected boolean focusAccepts(Object o) {
+    protected boolean focusAccepts(ProcessorURI o) {
         // The CrawlScope doesn't accept any URIs
         return false;
     }
@@ -184,11 +165,14 @@ public class ClassicScope extends CrawlScope {
      *            the URI to check.
      * @return True if exclude filter accepts passed object.
      */
-    @SuppressWarnings("deprecation")
-    protected boolean excludeAccepts(Object o) {
-        return (this.excludeFilter.isEmpty(o)) ? exceedsMaxHops(o)
-                : this.excludeFilter.accepts(o) || exceedsMaxHops(o);
+    protected boolean excludeAccepts(ProcessorURI o) {
+        DecideRuleSequence seq = o.get(this, EXCLUDE_RULES);
+        if (seq.decisionFor(o) == DecideResult.ACCEPT) {
+            return true;
+        }
+        return exceedsMaxHops(o);
     }
+
 
     /**
      * Check if there are too many hops
@@ -197,23 +181,12 @@ public class ClassicScope extends CrawlScope {
      *            URI to check.
      * @return true if too many hops.
      */
-    protected boolean exceedsMaxHops(Object o) {
+    protected boolean exceedsMaxHops(ProcessorURI o) {
         if (!(o instanceof CandidateURI)) {
             return false;
         }
 
-        int maxLinkHops = 0;
-//        int maxTransHops = 0;
-
-        try {
-            maxLinkHops = ((Integer) getAttribute(o, ATTR_MAX_LINK_HOPS))
-                    .intValue();
-//            maxTransHops = ((Integer) getAttribute(o, ATTR_MAX_TRANS_HOPS))
-//                    .intValue();
-        } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        int maxLinkHops = o.get(this, MAX_LINK_HOPS);
 
         CandidateURI cand = (CandidateURI) o;
 
@@ -232,13 +205,5 @@ public class ClassicScope extends CrawlScope {
         return (linkCount > maxLinkHops);
     }
 
-    /**
-     * Take note of a situation (such as settings edit) where involved
-     * reconfiguration (such as reading from external files) may be necessary.
-     */
-    @SuppressWarnings("deprecation")
-    public void kickUpdate() {
-        super.kickUpdate();
-        excludeFilter.kickUpdate();
-    }
+
 }

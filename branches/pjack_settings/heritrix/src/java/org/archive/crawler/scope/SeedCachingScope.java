@@ -26,8 +26,10 @@ package org.archive.crawler.scope;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.net.UURI;
 
 /**
@@ -40,14 +42,14 @@ import org.archive.net.UURI;
  */
 public class SeedCachingScope extends ClassicScope {
 
-    private static final long serialVersionUID = 300230673616424926L;
+    private static final long serialVersionUID = 3L;
 
     //private static final Logger logger =
     //    Logger.getLogger(SeedCachingScope.class.getName());
-    List<UURI> seeds;
+    List<UURI> seeds = new CopyOnWriteArrayList<UURI>();
 
-    public SeedCachingScope(String name) {
-        super(name);
+    public SeedCachingScope(CrawlController c) {
+        super(c);
     }
 
     /* (non-Javadoc)
@@ -58,10 +60,7 @@ public class SeedCachingScope extends ClassicScope {
             // failed
             return false;
         }
-        // FIXME: This is not thread-safe.
-        List<UURI> newSeeds = new ArrayList<UURI>(seeds);
-        newSeeds.add(curi.getUURI());
-        seeds = newSeeds;
+        seeds.add(curi.getUURI());
         return true;
     }
     

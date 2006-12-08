@@ -25,7 +25,11 @@
 package org.archive.crawler.scope;
 
 
-import org.archive.crawler.framework.Filter;
+import org.archive.crawler.framework.CrawlController;
+import org.archive.processors.ProcessorURI;
+import org.archive.processors.deciderules.DecideResult;
+import org.archive.processors.deciderules.DecideRule;
+import org.archive.state.Key;
 
 /**
  * Superclass for Scopes which make use of "additional focus"
@@ -35,34 +39,37 @@ import org.archive.crawler.framework.Filter;
  * @author gojomo
  */
 public abstract class RefinedScope extends ClassicScope {
-    public static final String ATTR_TRANSITIVE_FILTER = "transitiveFilter";
-    public static final String ATTR_ADDITIONAL_FOCUS_FILTER =
-        "additionalScopeFocus";
+    
+    
+    final public static Key<DecideRule> TRANSITIVE_RULE = 
+        Key.makeNull(DecideRule.class);
+    
+    final public static Key<DecideRule> ADDITIONAL_FOCUS_RULE = 
+        Key.makeNull(DecideRule.class);
 
-    Filter additionalFocusFilter;
-    Filter transitiveFilter;
 
-    @SuppressWarnings("deprecation")
-    public RefinedScope(String name) {
-        super(name);
+//    Filter additionalFocusFilter;
+//    Filter transitiveFilter;
 
-        this.additionalFocusFilter = (Filter) addElementToDefinition(
-                new org.archive.crawler.filter.FilePatternFilter(
-                        ATTR_ADDITIONAL_FOCUS_FILTER));
-        this.transitiveFilter = (Filter) addElementToDefinition(
-                new org.archive.crawler.filter.TransclusionFilter(
-                        ATTR_TRANSITIVE_FILTER));
+    public RefinedScope(CrawlController c) {
+        super(c);
     }
 
     /**
      * @param o
      * @return True if transitive filter accepts passed object.
      */
-    protected boolean transitiveAccepts(Object o) {
-        return this.transitiveFilter.accepts(o);
+    @Override
+    protected boolean transitiveAccepts(ProcessorURI o) {
+        DecideRule rule = o.get(this, TRANSITIVE_RULE);
+        return rule.decisionFor(o) == DecideResult.ACCEPT;
     }
+
     
-    protected boolean additionalFocusAccepts(Object o) {
-        return additionalFocusFilter.accepts(o);
+    @Override
+    protected boolean additionalFocusAccepts(ProcessorURI o) {
+        DecideRule rule = o.get(this, ADDITIONAL_FOCUS_RULE);
+        return rule.decisionFor(o) == DecideResult.ACCEPT;
     }
+
 }
