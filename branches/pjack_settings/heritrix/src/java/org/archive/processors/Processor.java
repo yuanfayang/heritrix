@@ -208,4 +208,16 @@ public abstract class Processor {
         return false;
     }
 
+    
+    // FIXME: Raise to interface
+    public void kickUpdate(StateProvider context) {
+    }
+    
+    
+    // FIXME: Raise to interface
+    // FIXME: Internationalize somehow
+    // FIXME: Pass in PrintWriter instead creating large in-memory strings
+    public String report() {
+        return "";
+    }
 }

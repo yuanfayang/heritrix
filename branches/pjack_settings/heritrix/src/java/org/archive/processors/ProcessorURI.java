@@ -25,10 +25,15 @@ package org.archive.processors;
 
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.RobotsHonoringPolicy;
+import org.archive.crawler2.extractor.Link;
+import org.archive.crawler2.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.fetcher.CrawlHost;
@@ -186,4 +191,20 @@ public interface ProcessorURI extends StateProvider {
     void setSeed(boolean seed);
     
     boolean isLocation();
+
+    void requestCrawlPause();
+    
+    List<Link> getOutLinks();
+    
+    UURI getBaseURI();
+    void setBaseURI(UURI base);
+    
+    boolean isLinkExtractionFinished();
+    void setLinkExtractionFinished(boolean b);
+    
+    void addUriError(URIException e, String uri);
+    
+    RobotsHonoringPolicy getRobotsHonoringPolicy();
+    LinkContext getViaContext();
+    
 }
