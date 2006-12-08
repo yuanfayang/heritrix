@@ -25,6 +25,7 @@ package org.archive.util;
 import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -209,6 +210,18 @@ public class IoUtils {
                 throw new EOFException();
             }
             ofs += l;
+        }
+    }
+
+
+    public static void close(Closeable c) {
+        if (c == null) {
+            return;
+        }
+        try {
+            c.close();
+        } catch (IOException e) {
+            
         }
     }
 }
