@@ -26,10 +26,10 @@ package org.archive.crawler.prefetch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.archive.crawler.admin.CrawlJob;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlStatus;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
@@ -147,8 +147,7 @@ public class RuntimeLimitEnforcer
                 if (op.equals(Operation.PAUSE)) {
                     controller.requestCrawlPause();
                 } else if (op.equals(Operation.TERMINATE)){
-                    controller.requestCrawlStop(
-                            CrawlJob.STATUS_FINISHED_TIME_LIMIT);
+                    controller.requestCrawlStop(CrawlStatus.FINISHED_TIME_LIMIT);
                 } else if (op.equals(Operation.BLOCK_URIS)) {
                     curi.setFetchStatus(S_BLOCKED_BY_RUNTIME_LIMIT);
                     curi.getAnnotations().add("Runtime exceeded " + allowedRuntime + 
