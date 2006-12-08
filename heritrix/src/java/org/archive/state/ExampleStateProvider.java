@@ -56,7 +56,8 @@ public class ExampleStateProvider implements StateProvider {
         if (module == null) {
             throw new IllegalArgumentException("Null module.");
         }
-        if (module.getClass().isAssignableFrom(key.getOwner())) {
+        Class<?> owner = key.getOwner();
+        if (!owner.isInstance(module)) {
             throw new IllegalArgumentException("Module and key incompatible.");
         }
         Map<Key,Object> map = values.get(module);
@@ -83,7 +84,8 @@ public class ExampleStateProvider implements StateProvider {
         if (module == null) {
             throw new IllegalArgumentException("Null module.");
         }
-        if (module.getClass().isAssignableFrom(key.getOwner())) {
+        Class<?> owner = key.getOwner();
+        if (!owner.isInstance(owner)) {
             throw new IllegalArgumentException("Module and key incompatible.");
         }
         for (Constraint<T> c: key.getConstraints()) {
