@@ -55,8 +55,6 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.admin.CrawlJob;
-import org.archive.crawler.admin.StatisticsTracker;
 import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -70,15 +68,17 @@ import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
-import org.archive.crawler.settings.MapType;
-import org.archive.crawler.settings.SettingsHandler;
 import org.archive.crawler.util.CheckpointUtils;
 import org.archive.io.GenerationFileHandler;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.Processor;
+import org.archive.processors.credential.CredentialStore;
+import org.archive.settings.MemorySheetManager;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
@@ -110,7 +110,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Gordon Mohr
  */
-public class CrawlController implements Serializable, Reporter {
+public class CrawlController implements Serializable, Reporter, StateProvider {
     // be robust against trivial implementation changes
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(CrawlController.class,1);
@@ -142,7 +142,6 @@ public class CrawlController implements Serializable, Reporter {
     // key subcomponents which define and implement a crawl in progress
     private transient CrawlOrder order;
     private transient CrawlScope scope;
-    private transient ProcessorChainList processorChains;
     
     private transient Frontier frontier;
 
@@ -171,8 +170,14 @@ public class CrawlController implements Serializable, Reporter {
     /**
      * Crawl exit status.
      */
-    private transient String sExit;
+    private transient CrawlStatus sExit;
 
+    
+    private static enum State {
+        NASCENT, RUNNING, PAUSED, PAUSING, CHECKPOINTING, 
+        STOPPING, FINISHED, STARTED, PREPARING 
+    }
+/*
     private static final Object NASCENT = "NASCENT".intern();
     private static final Object RUNNING = "RUNNING".intern();
     private static final Object PAUSED = "PAUSED".intern();
@@ -182,8 +187,8 @@ public class CrawlController implements Serializable, Reporter {
     private static final Object FINISHED = "FINISHED".intern();
     private static final Object STARTED = "STARTED".intern();
     private static final Object PREPARING = "PREPARING".intern();
-
-    transient private Object state = NASCENT;
+*/
+    transient private State state = State.NASCENT;
 
     // disk paths
     private transient File disk;        // overall disk path
@@ -322,31 +327,24 @@ public class CrawlController implements Serializable, Reporter {
      */
     private transient Map<String,CachedBdbMap<?,?>> bigmaps = null;
     
-    /**
-     * Default constructor
-     */
-    public CrawlController() {
-        super();
-        // Defer most setup to initialize methods
-    }
 
-    /**
-     * Starting from nothing, set up CrawlController and associated
-     * classes to be ready for a first crawl.
-     *
-     * @param sm   SheetManager used for context-based settings
-     * @throws InitializationException
-     */
-    public void initialize(SheetManager sm)
+    private transient Map<String,Processor> processors;
+    
+    
+    public CrawlController() throws InitializationException {
+        this(new MemorySheetManager());
+    }
+    
+    public CrawlController(SheetManager manager) 
     throws InitializationException {
-        sendCrawlStateChangeEvent(PREPARING, CrawlJob.STATUS_PREPARING);
+        sendCrawlStateChangeEvent(State.PREPARING, CrawlStatus.PREPARING);
 
         this.singleThreadLock = new ReentrantLock();
-        this.sheetManager = sm;
+        this.sheetManager = manager;
         this.order = new CrawlOrder();
         this.order.setController(this);
         this.bigmaps = new Hashtable<String,CachedBdbMap<?,?>>();
-        sExit = "";
+        sExit = null;
         this.manifest = new StringBuffer();
         String onFailMessage = "";
         try {
@@ -414,6 +412,8 @@ public class CrawlController implements Serializable, Reporter {
         for(int i = 1; i < RESERVE_BLOCKS; i++) {
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
+        
+        processors = get(order, CrawlOrder.PROCESSORS);
     }
 
     
@@ -692,10 +692,6 @@ public class CrawlController implements Serializable, Reporter {
             }
         }
 
-        // Setup processors
-        if (processorChains == null) {
-            processorChains = new ProcessorChainList(order);
-        }
     }
     
     protected void runFrontierRecover(String recoverPath)
@@ -776,7 +772,7 @@ public class CrawlController implements Serializable, Reporter {
         final String cstName = "crawl-statistics";
         if (loggers.isEmpty()) {
             if (!isCheckpointRecover() && this.statistics == null) {
-                this.statistics = new StatisticsTracker(cstName);
+                this.statistics = new StatisticsTracker(this);
             }
             loggers.add((StatisticsTracker)this.statistics);
         }
@@ -786,7 +782,7 @@ public class CrawlController implements Serializable, Reporter {
         }
 
         for (StatisticsTracking tracker: loggers) {
-            tracker.initialize(this);
+            // tracker.initialize(this);
             if (this.statistics == null) {
                 this.statistics = tracker;
             }
@@ -862,7 +858,7 @@ public class CrawlController implements Serializable, Reporter {
     
     protected void rotateLogFiles(String generationSuffix)
     throws IOException {
-        if (this.state != PAUSED && this.state != CHECKPOINTING) {
+        if (this.state != State.PAUSED && this.state != State.CHECKPOINTING) {
             throw new IllegalStateException("Pause crawl before requesting " +
                 "log rotation.");
         }
@@ -908,8 +904,12 @@ public class CrawlController implements Serializable, Reporter {
      * @return Object this controller is using to track crawl statistics
      */
     public StatisticsTracking getStatistics() {
-        return statistics==null ?
-            new StatisticsTracker("crawl-statistics"): this.statistics;
+        try {
+            return statistics==null ?
+                    new StatisticsTracker(this): this.statistics;
+        } catch (FatalConfigurationException e) {
+            throw new RuntimeException(e); // FIXME
+        }
     }
     
     /**
@@ -919,28 +919,35 @@ public class CrawlController implements Serializable, Reporter {
      * @see #sendCheckpointEvent(File) for special case event sending
      * telling listeners to checkpoint.
      */
-    protected void sendCrawlStateChangeEvent(Object newState, String message) {
+    protected void sendCrawlStateChangeEvent(State newState, 
+            CrawlStatus status) {
         synchronized (this.registeredCrawlStatusListeners) {
             this.state = newState;
-            for (Iterator i = this.registeredCrawlStatusListeners.iterator();
-                    i.hasNext();) {
-                CrawlStatusListener l = (CrawlStatusListener)i.next();
-                if (newState.equals(PAUSED)) {
-                   l.crawlPaused(message);
-                } else if (newState.equals(RUNNING)) {
-                    l.crawlResuming(message);
-                } else if (newState.equals(PAUSING)) {
-                   l.crawlPausing(message);
-                } else if (newState.equals(STARTED)) {
-                    l.crawlStarted(message);
-                } else if (newState.equals(STOPPING)) {
-                    l.crawlEnding(message);
-                } else if (newState.equals(FINISHED)) {
-                    l.crawlEnded(message);
-                } else if (newState.equals(PREPARING)) {
-                    l.crawlResuming(message);
-                } else {
-                    throw new RuntimeException("Unknown state: " + newState);
+            for (CrawlStatusListener l: registeredCrawlStatusListeners) {
+                switch (newState) {
+                    case PAUSED:
+                        l.crawlPaused(status.getDescription());
+                        break;
+                    case RUNNING:
+                        l.crawlResuming(status.getDescription());
+                        break;
+                    case PAUSING:
+                        l.crawlPausing(status.getDescription());
+                        break;
+                    case STARTED:
+                        l.crawlStarted(status.getDescription());
+                        break;
+                    case STOPPING:
+                        l.crawlEnding(status.getDescription());
+                        break;
+                    case FINISHED:
+                        l.crawlEnded(status.getDescription());
+                        break;
+                    case PREPARING:
+                        l.crawlResuming(status.getDescription());
+                        break;
+                    default:
+                        throw new RuntimeException("Unknown state: " + newState);
                 }
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.fine("Sent " + newState + " to " + l);
@@ -961,37 +968,36 @@ public class CrawlController implements Serializable, Reporter {
      */
     protected void sendCheckpointEvent(File checkpointDir) throws Exception {
         synchronized (this.registeredCrawlStatusListeners) {
-            if (this.state != PAUSED) {
+            if (this.state != State.PAUSED) {
                 throw new IllegalStateException("Crawler must be completly " +
                     "paused before checkpointing can start");
             }
-            this.state = CHECKPOINTING;
+            this.state = State.CHECKPOINTING;
             for (Iterator i = this.registeredCrawlStatusListeners.iterator();
                     i.hasNext();) {
                 CrawlStatusListener l = (CrawlStatusListener)i.next();
-                l.crawlCheckpoint(checkpointDir);
+                l.crawlCheckpoint(this, checkpointDir);
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine("Sent " + CHECKPOINTING + " to " + l);
+                    LOGGER.fine("Sent " + State.CHECKPOINTING + " to " + l);
                 }
             }
-            LOGGER.fine("Sent " + CHECKPOINTING);
+            LOGGER.fine("Sent " + State.CHECKPOINTING);
         }
     }
 
-    /**
+    /** 
      * Operator requested crawl begin
      */
     public void requestCrawlStart() {
         runProcessorInitialTasks();
 
-        sendCrawlStateChangeEvent(STARTED, CrawlJob.STATUS_PENDING);
-        String jobState;
-        state = RUNNING;
-        jobState = CrawlJob.STATUS_RUNNING;
+        sendCrawlStateChangeEvent(State.STARTED, CrawlStatus.PENDING);
+        CrawlStatus jobState = CrawlStatus.RUNNING;
+        state = State.RUNNING;
         sendCrawlStateChangeEvent(this.state, jobState);
 
         // A proper exit will change this value.
-        this.sExit = CrawlJob.STATUS_FINISHED_ABNORMAL;
+        this.sExit = CrawlStatus.FINISHED_ABNORMAL;
         
         Thread statLogger = new Thread(statistics);
         statLogger.setName("StatLogger");
@@ -1008,7 +1014,7 @@ public class CrawlController implements Serializable, Reporter {
         // Run processors' final tasks
         runProcessorFinalTasks();
         // Ok, now we are ready to exit.
-        sendCrawlStateChangeEvent(FINISHED, this.sExit);
+        sendCrawlStateChangeEvent(State.FINISHED, this.sExit);
         synchronized (this.registeredCrawlStatusListeners) {
             // Remove all listeners now we're done with them.
             this.registeredCrawlStatusListeners.
@@ -1040,7 +1046,6 @@ public class CrawlController implements Serializable, Reporter {
         }
         this.sheetManager = null;
         this.reserveMemory = null;
-        this.processorChains = null;
         if (this.serverCache != null) {
             this.serverCache.cleanup();
             this.serverCache = null;
@@ -1084,31 +1089,31 @@ public class CrawlController implements Serializable, Reporter {
         // Send a notifyAll. At least checkpointing thread may be waiting on a
         // complete pause.
         notifyAll();
-        sendCrawlStateChangeEvent(PAUSED, CrawlJob.STATUS_PAUSED);
+        sendCrawlStateChangeEvent(State.PAUSED, CrawlStatus.PAUSED);
     }
 
     private boolean shouldContinueCrawling() {
         if (frontier.isEmpty()) {
-            this.sExit = CrawlJob.STATUS_FINISHED;
+            this.sExit = CrawlStatus.FINISHED;
             return false;
         }
 
         if (maxBytes > 0 && frontier.totalBytesWritten() >= maxBytes) {
             // Hit the max byte download limit!
-            sExit = CrawlJob.STATUS_FINISHED_DATA_LIMIT;
+            sExit = CrawlStatus.FINISHED_DATA_LIMIT;
             return false;
         } else if (maxDocument > 0
                 && frontier.succeededFetchCount() >= maxDocument) {
             // Hit the max document download limit!
-            this.sExit = CrawlJob.STATUS_FINISHED_DOCUMENT_LIMIT;
+            this.sExit = CrawlStatus.FINISHED_DOCUMENT_LIMIT;
             return false;
         } else if (maxTime > 0 &&
                 statistics.crawlDuration() >= maxTime * 1000) {
             // Hit the max byte download limit!
-            this.sExit = CrawlJob.STATUS_FINISHED_TIME_LIMIT;
+            this.sExit = CrawlStatus.FINISHED_TIME_LIMIT;
             return false;
         }
-        return state == RUNNING;
+        return state == State.RUNNING;
     }
 
     /**
@@ -1132,7 +1137,7 @@ public class CrawlController implements Serializable, Reporter {
      * @return True if checkpointing.
      */
     public boolean isCheckpointing() {
-        return this.state == CHECKPOINTING;
+        return this.state == State.CHECKPOINTING;
     }
     
     /**
@@ -1189,7 +1194,8 @@ public class CrawlController implements Serializable, Reporter {
      * @throws IOException 
      */
     protected void copySettings(final File checkpointDir) throws IOException {
-        final List files = this.settingsHandler.getListOfAllFiles();
+        // FIXME: Overhaul checkpointing
+/*        final List files = this.settingsHandler.getListOfAllFiles();
         boolean copiedSettingsDir = false;
         final File settingsDir = new File(this.disk, "settings");
         for (final Iterator i = files.iterator(); i.hasNext();) {
@@ -1208,7 +1214,7 @@ public class CrawlController implements Serializable, Reporter {
             }
             FileUtils.copyFiles(f, f.isDirectory()? checkpointDir:
                 new File(checkpointDir, f.getName()));
-        }
+        } */
     }
     
     /**
@@ -1407,15 +1413,15 @@ public class CrawlController implements Serializable, Reporter {
      * Operator requested for crawl to stop.
      */
     public synchronized void requestCrawlStop() {
-        requestCrawlStop(CrawlJob.STATUS_ABORTED);
+        requestCrawlStop(CrawlStatus.ABORTED);
     }
     
     /**
      * Operator requested for crawl to stop.
      * @param message 
      */
-    public synchronized void requestCrawlStop(String message) {
-        if (state == STOPPING || state == FINISHED) {
+    public synchronized void requestCrawlStop(CrawlStatus message) {
+        if (state == State.STOPPING || state == State.FINISHED) {
             return;
         }
         if (message == null) {
@@ -1430,7 +1436,7 @@ public class CrawlController implements Serializable, Reporter {
      */
     public void beginCrawlStop() {
         LOGGER.fine("Started.");
-        sendCrawlStateChangeEvent(STOPPING, this.sExit);
+        sendCrawlStateChangeEvent(State.STOPPING, this.sExit);
         if (this.frontier != null) {
             this.frontier.terminate();
             this.frontier.unpause();
@@ -1442,13 +1448,13 @@ public class CrawlController implements Serializable, Reporter {
      * Stop the crawl temporarly.
      */
     public synchronized void requestCrawlPause() {
-        if (state == PAUSING || state == PAUSED) {
+        if (state == State.PAUSING || state == State.PAUSED) {
             // Already about to pause
             return;
         }
-        sExit = CrawlJob.STATUS_WAITING_FOR_PAUSE;
+        sExit = CrawlStatus.WAITING_FOR_PAUSE;
         frontier.pause();
-        sendCrawlStateChangeEvent(PAUSING, this.sExit);
+        sendCrawlStateChangeEvent(State.PAUSING, this.sExit);
         if (toePool.getActiveToeCount() == 0) {
             // if all threads already held, complete pause now
             // (no chance to trigger off later held thread)
@@ -1461,22 +1467,22 @@ public class CrawlController implements Serializable, Reporter {
      * @return true if paused
      */
     public boolean isPaused() {
-        return state == PAUSED;
+        return state == State.PAUSED;
     }
     
     public boolean isPausing() {
-        return state == PAUSING;
+        return state == State.PAUSING;
     }
     
     public boolean isRunning() {
-        return state == RUNNING;
+        return state == State.RUNNING;
     }
 
     /**
      * Resume crawl from paused state
      */
     public synchronized void requestCrawlResume() {
-        if (state != PAUSING && state != PAUSED && state != CHECKPOINTING) {
+        if (state != State.PAUSING && state != State.PAUSED && state != State.CHECKPOINTING) {
             // Can't resume if not been told to pause or if we're in middle of
             // a checkpoint.
             return;
@@ -1484,7 +1490,7 @@ public class CrawlController implements Serializable, Reporter {
         multiThreadMode();
         frontier.unpause();
         LOGGER.fine("Crawl resumed.");
-        sendCrawlStateChangeEvent(RUNNING, CrawlJob.STATUS_RUNNING);
+        sendCrawlStateChangeEvent(State.RUNNING, CrawlStatus.RUNNING);
     }
 
     /**
@@ -1539,29 +1545,6 @@ public class CrawlController implements Serializable, Reporter {
         return scope;
     }
 
-    /** Get the list of processor chains.
-     *
-     * @return the list of processor chains.
-     */
-    public ProcessorChainList getProcessorChainList() {
-        return processorChains;
-    }
-
-    /** Get the first processor chain.
-     *
-     * @return the first processor chain.
-     */
-    public ProcessorChain getFirstProcessorChain() {
-        return processorChains.getFirstChain();
-    }
-
-    /** Get the postprocessor chain.
-     *
-     * @return the postprocessor chain.
-     */
-    public ProcessorChain getPostprocessorChain() {
-        return processorChains.getLastChain();
-    }
 
     /**
      * Get the 'working' directory of the current crawl.
@@ -1617,9 +1600,11 @@ public class CrawlController implements Serializable, Reporter {
     public void kickUpdate() {
         toePool.setSize(order.getMaxToes());
         
-        this.scope.kickUpdate();
+        this.scope.kickUpdate(this);
         this.frontier.kickUpdate();
-        this.processorChains.kickUpdate();
+        for (Processor p: processors.values()) {
+            p.kickUpdate(this);
+        }
         
         // TODO: continue to generalize this, so that any major 
         // component can get a kick when it may need to refresh its data
@@ -1640,11 +1625,8 @@ public class CrawlController implements Serializable, Reporter {
      *
      */
     private void runProcessorInitialTasks(){
-        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
-            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
-                    ip.hasNext(); ) {
-                ((Processor) ip.next()).initialTasks();
-            }
+        for (Processor p: processors.values()) {
+            p.initialTasks(this);
         }
     }
 
@@ -1654,11 +1636,8 @@ public class CrawlController implements Serializable, Reporter {
      *
      */
     private void runProcessorFinalTasks(){
-        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
-            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
-                    ip.hasNext(); ) {
-                ((Processor) ip.next()).finalTasks();
-            }
+        for (Processor p: processors.values()) {
+            p.finalTasks(this);
         }
     }
 
@@ -1710,7 +1689,7 @@ public class CrawlController implements Serializable, Reporter {
      * @return true if crawl is at a finish-possible state
      */
     public boolean atFinish() {
-        return state == RUNNING && !shouldContinueCrawling();
+        return state == State.RUNNING && !shouldContinueCrawling();
     }
     
     private void readObject(ObjectInputStream stream)
@@ -1788,7 +1767,7 @@ public class CrawlController implements Serializable, Reporter {
      */
     public synchronized void toePaused() {
         releaseContinuePermission();
-        if (state ==  PAUSING && toePool.getActiveToeCount() == 0) {
+        if (state == State.PAUSING && toePool.getActiveToeCount() == 0) {
             completePause();
         }
     }
@@ -1797,7 +1776,7 @@ public class CrawlController implements Serializable, Reporter {
      * Note that a ToeThread ended, possibly completing the crawl-stop. 
      */
     public synchronized void toeEnded() {
-        if (state == STOPPING && toePool.getActiveToeCount() == 0) {
+        if (state == State.STOPPING && toePool.getActiveToeCount() == 0) {
             completeStop();
         }
     }
@@ -1811,11 +1790,14 @@ public class CrawlController implements Serializable, Reporter {
      * Call before writing out reports.
      */
     public void addOrderToManifest() {
+        // FIXME: Figure out how to let modules advertise their files
+        /*
         for (Iterator it = getSettingsHandler().getListOfAllFiles().iterator();
                 it.hasNext();) {
             addToManifest((String)it.next(),
                 CrawlController.MANIFEST_CONFIG_FILE, true);
         }
+        */
     }
     
     /**
@@ -1893,15 +1875,11 @@ public class CrawlController implements Serializable, Reporter {
         writer.print("  Job being crawled:    " + getOrder().getCrawlOrderName()
                 + "\n");
 
-        writer.print("  Number of Processors: " +
-            processorChains.processorCount() + "\n");
+        writer.print("  Number of Processors: " + processors.size() + "\n");
         writer.print("  NOTE: Some processors may not return a report!\n\n");
 
-        for (Iterator ic = processorChains.iterator(); ic.hasNext(); ) {
-            for (Iterator ip = ((ProcessorChain) ic.next()).iterator();
-                    ip.hasNext(); ) {
-                writer.print(((Processor) ip.next()).report());
-            }
+        for (Processor p: processors.values()) {
+            writer.print(p.report());
         }
     }
 
@@ -1997,4 +1975,15 @@ public class CrawlController implements Serializable, Reporter {
     public File getCheckpointsDisk() {
         return this.checkpointsDisk;
     }
+    
+    
+    public CredentialStore getCredentialStore() {
+        return getOrderSetting(CrawlOrder.CREDENTIAL_STORE);
+    }
+    
+    
+    public <T> T get(Object module, Key<T> key) {
+        return sheetManager.getDefault().get(module, key);
+    }
+
 }

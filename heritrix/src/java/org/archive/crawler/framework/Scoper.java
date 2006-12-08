@@ -25,12 +25,11 @@ package org.archive.crawler.framework;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.LogUtils;
+import org.archive.processors.deciderules.DecideResult;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 
 /**
  * Base class for Scopers.
@@ -39,70 +38,58 @@ import org.archive.crawler.util.LogUtils;
  * @author stack
  * @version $Date$, $Revision$
  */
-public abstract class Scoper extends Processor {
+public abstract class Scoper extends org.archive.processors.Processor {
     private static Logger LOGGER =
         Logger.getLogger(Scoper.class.getName());
     
+
     /**
-     * Protected so avaiilable to subclasses.
+     * If enabled, override default logger for this class (Default logger writes
+     * the console). Override logger will instead send all logging to a file
+     * named for this class in the job log directory. Set the logging level and
+     * other characteristics of the override logger such as rotation size,
+     * suffix pattern, etc. in heritrix.properties. This attribute is only
+     * checked once, on startup of a job.
      */
-    protected static final String ATTR_OVERRIDE_LOGGER_ENABLED =
-        "override-logger";
+    final public static Key<Boolean> OVERRIDE_LOGGER = Key.makeExpert(false);
+
     
+    // FIXME: Weirdo log overriding might not work on a per-subclass basis,
+    // we may need to cut and paste it to the three subclasses, or eliminate
+    // it in favor of java.util.logging best practice.
+    //
+    // Also, eliminating weirdo log overriding would mean we wouldn't need to
+    // tie into the CrawlController; we'd just need the scope.
+    
+    
+    final CrawlController controller;
+
+
     /**
      * Constructor.
-     * @param name
-     * @param description
+     * 
+     * @param controller   the CrawlController
      */
-    public Scoper(String name, String description) {
-        super(name, description);
-        Type t = addElementToDefinition(
-            new SimpleType(ATTR_OVERRIDE_LOGGER_ENABLED,
-            "If enabled, override default logger for this class (Default " +
-            "logger writes the console).  Override " +
-            "logger will instead send all logging to a file named for this " +
-            "class in the job log directory. Set the logging level and " +
-            "other " +
-            "characteristics of the override logger such as rotation size, " +
-            "suffix pattern, etc. in heritrix.properties. This attribute " +
-            "is only checked once, on startup of a job.",
-            new Boolean(false)));
-        t.setExpertSetting(true);
+    public Scoper(CrawlController controller) {
+        this.controller = controller;
     }
-    
-    protected void initialTasks() {
-        super.initialTasks();
-        if (!isOverrideLogger(null)) {
+
+
+    @Override
+    public void initialTasks(StateProvider defaults) {
+        super.initialTasks(defaults);
+        if (!defaults.get(this, OVERRIDE_LOGGER)) {
             return;
         }
+
         // Set up logger for this instance.  May have special directives
         // since this class can log scope-rejected URLs.
         LogUtils.createFileLogger(getController().getLogsDir(),
             this.getClass().getName(),
             Logger.getLogger(this.getClass().getName()));
     }
-    
-    /**
-     * @param context Context to use looking up attribute.
-     * @return True if we are to override default logger (default logs
-     * to console) with a logger that writes all loggings to a file
-     * named for this class.
-     */
-    protected boolean isOverrideLogger(Object context) {
-        boolean result = true;
-        try {
-            Boolean b = (Boolean)getAttribute(context,
-                ATTR_OVERRIDE_LOGGER_ENABLED);
-            if (b != null) {
-                result = b.booleanValue();
-            }
-        } catch (AttributeNotFoundException e) {
-            LOGGER.warning("Failed get of 'enabled' attribute.");
-        }
 
-        return result;
-    }
-    
+
     /**
      * Schedule the given {@link CandidateURI CandidateURI} with the Frontier.
      * @param caUri The CandidateURI to be scheduled.
@@ -111,7 +98,9 @@ public abstract class Scoper extends Processor {
      */
     protected boolean isInScope(CandidateURI caUri) {
         boolean result = false;
-        if (getController().getScope().accepts(caUri)) {
+        CrawlScope scope = getController().getScope();
+        DecideResult dr = scope.decisionFor(caUri.asProcessorURI());
+        if (dr == DecideResult.ACCEPT) {
             result = true;
             if (LOGGER.isLoggable(Level.FINER)) {
                 LOGGER.finer("Accepted: " + caUri);
@@ -132,5 +121,10 @@ public abstract class Scoper extends Processor {
             return;
         }
         LOGGER.info(caUri.getUURI().toString());
+    }
+
+
+    protected CrawlController getController() {
+        return controller;
     }
 }

@@ -24,7 +24,9 @@
 package org.archive.crawler.framework;
 
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,8 +34,8 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.datamodel.InstancePerThread;
 import org.archive.crawler.framework.exceptions.EndedException;
+import org.archive.processors.Processor;
 import org.archive.processors.fetcher.HostResolver;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.DevUtils;
@@ -56,8 +58,6 @@ Reporter, ProgressStatisticsReporter, HostResolver {
     private static final String STEP_NASCENT = "NASCENT";
     private static final String STEP_ABOUT_TO_GET_URI = "ABOUT_TO_GET_URI";
     private static final String STEP_FINISHED = "FINISHED";
-    private static final String STEP_ABOUT_TO_BEGIN_CHAIN =
-        "ABOUT_TO_BEGIN_CHAIN";
     private static final String STEP_ABOUT_TO_BEGIN_PROCESSOR =
         "ABOUT_TO_BEGIN_PROCESSOR";
     private static final String STEP_DONE_WITH_PROCESSORS =
@@ -115,14 +115,10 @@ Reporter, ProgressStatisticsReporter, HostResolver {
         controller = g.getController();
         serialNumber = sn;
         setPriority(DEFAULT_PRIORITY);
-        int outBufferSize = ((Integer) controller
-                .getOrder()
-                .getUncheckedAttribute(null,CrawlOrder.ATTR_RECORDER_OUT_BUFFER))
-                        .intValue();
-        int inBufferSize = ((Integer) controller
-                .getOrder()
-                .getUncheckedAttribute(null, CrawlOrder.ATTR_RECORDER_IN_BUFFER))
-                .intValue();  
+        int outBufferSize = controller
+                .getOrderSetting(CrawlOrder.RECORDER_OUT_BUFFER);
+        int inBufferSize = controller
+                .getOrderSetting(CrawlOrder.RECORDER_IN_BUFFER);
         httpRecorder = new Recorder(controller.getScratchDisk(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
@@ -284,26 +280,13 @@ Reporter, ProgressStatisticsReporter, HostResolver {
      */
     private void processCrawlUri() throws InterruptedException {
         currentCuri.setThreadNumber(this.serialNumber);
-        currentCuri.setNextProcessorChain(controller.getFirstProcessorChain());
         lastStartTime = System.currentTimeMillis();
-//        System.out.println(currentCuri);
         try {
-            while (currentCuri.nextProcessorChain() != null) {
-                setStep(STEP_ABOUT_TO_BEGIN_CHAIN);
-                // Starting on a new processor chain.
-                currentCuri.setNextProcessor(currentCuri.nextProcessorChain().getFirstProcessor());
-                currentCuri.setNextProcessorChain(currentCuri.nextProcessorChain().getNextProcessorChain());
-
-                while (currentCuri.nextProcessor() != null) {
-                    setStep(STEP_ABOUT_TO_BEGIN_PROCESSOR);
-                    Processor currentProcessor = getProcessor(currentCuri.nextProcessor());
-                    currentProcessorName = currentProcessor.getName();
-                    continueCheck();
-//                    long memBefore = (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024;
-                    currentProcessor.process(currentCuri);
-//                    long memAfter = (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024;
-//                    System.out.println((memAfter-memBefore)+"K in "+currentProcessorName);
-                }
+            for (Map.Entry<String,Processor> me: localProcessors.entrySet()) {
+                setStep(STEP_ABOUT_TO_BEGIN_PROCESSOR);
+                currentProcessorName = me.getKey();
+                continueCheck();
+                me.getValue().process(currentCuri);
             }
             setStep(STEP_DONE_WITH_PROCESSORS);
             currentProcessorName = "";
@@ -349,20 +332,6 @@ Reporter, ProgressStatisticsReporter, HostResolver {
         logger.log(Level.SEVERE, message.toString(), e);
     }
 
-    private Processor getProcessor(Processor processor) {
-        if(!(processor instanceof InstancePerThread)) {
-            // just use the shared Processor
-             return processor;
-        }
-        // must use local copy of processor
-        Processor localProcessor = (Processor) localProcessors.get(
-                    processor.getClass().getName());
-        if (localProcessor == null) {
-            localProcessor = processor.spawn(this.getSerialNumber());
-            localProcessors.put(processor.getClass().getName(),localProcessor);
-        }
-        return localProcessor;
-    }
 
     /**
      * @return Return toe thread serial number.
@@ -613,5 +582,10 @@ Reporter, ProgressStatisticsReporter, HostResolver {
     
     public String getCurrentProcessorName() {
         return currentProcessorName;
+    }
+    
+    
+    public InetAddress resolve(String host) {
+        return controller.getServerCache().getHostFor(host).getIP();
     }
 }

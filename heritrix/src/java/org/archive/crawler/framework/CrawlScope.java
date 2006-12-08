@@ -35,18 +35,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
-import javax.management.ReflectionException;
-
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.scope.SeedFileIterator;
 import org.archive.crawler.scope.SeedListener;
-import org.archive.crawler.settings.CrawlerSettings;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.net.UURI;
+import org.archive.processors.deciderules.DecideRule;
+import org.archive.settings.Sheet;
+import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
 
 /**
@@ -72,56 +69,44 @@ import org.archive.util.DevUtils;
  * @author gojomo
  *
  */
-public class CrawlScope extends Filter {
+public abstract class CrawlScope extends DecideRule {
 
-    private static final long serialVersionUID = -3321533224526211277L;
+    private static final long serialVersionUID = 3L;
 
     private static final Logger logger =
         Logger.getLogger(CrawlScope.class.getName());
     public static final String ATTR_NAME = "scope";
-    public static final String ATTR_SEEDS = "seedsfile";
+    
     
     /**
-     * Whether every configu change should trigger a 
-     * rereading of the original seeds spec/file.
+     * File from which to extract seeds.
      */
-    public static final String 
-        ATTR_REREAD_SEEDS_ON_CONFIG = "reread-seeds-on-config";
-    public static final Boolean
-        DEFAULT_REREAD_SEEDS_ON_CONFIG = Boolean.TRUE;
+    final public static Key<String> SEEDSFILE = Key.makeExpertFinal("seeds.txt");
+
+
+    /**
+     * Whether to reread the seeds specification, whether it has changed or not,
+     * every time any configuration change occurs. If true, seeds are reread
+     * even when (for example) new domain overrides are set. Rereading the seeds
+     * can take a long time with large seed lists.
+     */
+    final public static Key<Boolean> REREAD_SEEDS_ON_CONFIG = 
+        Key.makeExpertFinal(true);
+
     
     protected Set<SeedListener> seedListeners = new HashSet<SeedListener>();
 
-    /** Constructs a new CrawlScope.
-     *
-     * @param name the name is ignored since it always have to be the value of
-     *        the constant ATT_NAME.
-     */
-    public CrawlScope(String name) {
-        // 'name' is never used.
-        super(ATTR_NAME, "Crawl scope");
-        Type t;
-        t = addElementToDefinition(new SimpleType(ATTR_SEEDS,
-                "File from which to extract seeds.", "seeds.txt"));
-        t.setOverrideable(false);
-        t.setExpertSetting(true);
-        t = addElementToDefinition(new SimpleType(ATTR_REREAD_SEEDS_ON_CONFIG,
-                "Whether to reread the seeds specification, whether it has " +
-                "changed or not, every time any configuration change occurs. " +
-                "If true, seeds are reread even when (for example) new " +
-                "domain overrides are set. Rereading the seeds can take a " +
-                "long time with large seed lists.", 
-                DEFAULT_REREAD_SEEDS_ON_CONFIG));
-        t.setOverrideable(false);
-        t.setExpertSetting(true);
+    
+    final private CrawlController controller;
 
+    
+    /** 
+     * Constructs a new CrawlScope.
+     */
+    public CrawlScope(CrawlController c) {
+        this.controller = c;
     }
 
-    /** Default constructor.
-     */
-    public CrawlScope() {
-        this(ATTR_NAME);
-    }
 
     /**
      * Initialize is called just before the crawler starts to run.
@@ -135,9 +120,6 @@ public class CrawlScope extends Filter {
         // by default do nothing (subclasses override)
     }
 
-    public String toString() {
-        return "CrawlScope<" + getName() + ">";
-    }
 
     /**
      * Refresh seeds.
@@ -151,24 +133,16 @@ public class CrawlScope extends Filter {
      * @return Seed list file or null if problem getting settings file.
      */
     public File getSeedfile() {
+        Sheet def = controller.getSheetManager().getDefault();
         File file = null;
         try {
-            file = getSettingsHandler().getPathRelativeToWorkingDirectory(
-                (String)getAttribute(ATTR_SEEDS));
+            file = controller.getRelative(def.get(this, SEEDSFILE));
             if (!file.exists() || !file.canRead()) {
                 throw new IOException("Seeds file " +
                     file.getAbsolutePath() + " does not exist or unreadable.");
             }
         } catch (IOException e) {
             DevUtils.warnHandle(e, "problem reading seeds");
-        } catch (AttributeNotFoundException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-        } catch (MBeanException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-            e.printStackTrace();
-        } catch (ReflectionException e) {
-            DevUtils.warnHandle(e, "problem reading seeds");
-            e.printStackTrace();
         }
 
         return file;
@@ -213,22 +187,9 @@ public class CrawlScope extends Filter {
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */
-    public void listUsedFiles(List<String> list){
-        // Add seed file
-        try {
-            File file = getSettingsHandler().getPathRelativeToWorkingDirectory(
-                    (String)getAttribute(ATTR_SEEDS));
-            list.add(file.getAbsolutePath());
-        } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (MBeanException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ReflectionException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+    public void listUsedFiles(List<String> list) {
+        File file = getSeedfile();
+        list.add(file.getAbsolutePath());
     }
 
     /**
@@ -236,14 +197,13 @@ public class CrawlScope extends Filter {
      * involved reconfiguration (such as reading from external
      * files) may be necessary.
      */
-    public void kickUpdate() {
+    public void kickUpdate(StateProvider context) {
         // TODO: further improve this so that case with hundreds of
         // thousands or millions of seeds works better without requiring
         // this specific settings check 
-        if (((Boolean) getUncheckedAttribute(null, ATTR_REREAD_SEEDS_ON_CONFIG))
-                .booleanValue()) {
+        if (context.get(this, REREAD_SEEDS_ON_CONFIG)) {
             refreshSeeds();
-            getSettingsHandler().getOrder().getController().getFrontier().loadSeeds();
+            controller.getFrontier().loadSeeds();
         }
     }
 
