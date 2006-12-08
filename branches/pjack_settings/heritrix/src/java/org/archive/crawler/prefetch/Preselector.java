@@ -98,8 +98,7 @@ implements FetchStatusCodes {
         // Check if uris should be blocked
         if (curi.get(this, BLOCK_ALL)) {
             curi.setFetchStatus(S_BLOCKED_BY_USER);
-            curi.skipToProcessorChain(getController().
-                getPostprocessorChain());
+            curi.skipToPostProcessing();
         }
 
         // Check if allowed by regular expression
@@ -107,8 +106,7 @@ implements FetchStatusCodes {
         if (regexp != null && !regexp.equals("")) {
             if (!TextUtils.matches(regexp, curi.toString())) {
                 curi.setFetchStatus(S_BLOCKED_BY_USER);
-                curi.skipToProcessorChain(getController().
-                    getPostprocessorChain());
+                curi.skipToPostProcessing();
             }
         }
 
@@ -117,8 +115,7 @@ implements FetchStatusCodes {
         if (regexp != null && !regexp.equals("")) {
             if (TextUtils.matches(regexp, curi.toString())) {
                 curi.setFetchStatus(S_BLOCKED_BY_USER);
-                curi.skipToProcessorChain(getController().
-                    getPostprocessorChain());
+                curi.skipToPostProcessing();
             }
         }
 
@@ -127,8 +124,7 @@ implements FetchStatusCodes {
             if (!isInScope(curi)) {
                 // Scope rejected
                 curi.setFetchStatus(S_OUT_OF_SCOPE);
-                curi.skipToProcessorChain(getController().
-                    getPostprocessorChain());
+                curi.skipToPostProcessing();
             }
         }
     }
