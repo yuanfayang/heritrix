@@ -1469,7 +1469,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
      */
-    public void crawlCheckpoint(File checkpointDir) {
+    public void crawlCheckpoint(StateProvider defaults, File checkpointDir) {
         // TODO Auto-generated method stub
     }
 
