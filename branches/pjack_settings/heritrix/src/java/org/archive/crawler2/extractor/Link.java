@@ -28,6 +28,7 @@ import java.io.Serializable;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURIFactory;
+import org.archive.processors.ProcessorURI;
 
 
 /**
@@ -128,16 +129,16 @@ public class Link implements Serializable {
          ^ context.hashCode() ^ hop.hashCode();
     }
 
-    public static Link addRelativeToBase(ExtractorURI uri, String newUri,
+    public static Link addRelativeToBase(ProcessorURI uri, String newUri,
             LinkContext context, Hop hop) throws URIException {
         Link link = new Link(uri.getUURI(), UURIFactory.getInstance(
-                uri.getBaseURI(), newUri), context, hop);
+                uri.getUURI(), newUri), context, hop);
         uri.getOutLinks().add(link);
         return link;
     }
 
     
-    public static Link addRelativeToVia(ExtractorURI uri, String newUri,
+    public static Link addRelativeToVia(ProcessorURI uri, String newUri,
             LinkContext context, Hop hop) throws URIException {
         return null;
     }

@@ -24,9 +24,16 @@
 package org.archive.crawler2.extractor;
 
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.util.Collections;
+
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.DefaultProcessorURI;
 import org.archive.state.StateProcessorTestBase;
+import org.archive.util.Recorder;
 
 
 /**
@@ -71,14 +78,14 @@ public abstract class ContentExtractorTestBase extends StateProcessorTestBase {
     
     
     /**
-     * Returns a DefaultExtractorURI for testing purposes.
+     * Returns a DefaultProcessorURI for testing purposes.
      * 
-     * @return   a DefaultExtractorURI
+     * @return   a DefaultProcessorURI
      * @throws Exception   just in case
      */
-    protected DefaultExtractorURI defaultURI() throws Exception {
+    protected DefaultProcessorURI defaultURI() throws Exception {
         UURI uuri = UURIFactory.getInstance("http://www.archive.org/start/");
-        return new DefaultExtractorURI(uuri, LinkContext.NAVLINK_MISC);
+        return new DefaultProcessorURI(uuri, LinkContext.NAVLINK_MISC);
     }
     
     
@@ -88,8 +95,10 @@ public abstract class ContentExtractorTestBase extends StateProcessorTestBase {
      * @throws Exception   just in case
      */
     public void testZeroContent() throws Exception {
-        DefaultExtractorURI uri = defaultURI();
-        uri.setContent("", "text/plain");
+        DefaultProcessorURI uri = defaultURI();
+        Recorder recorder = createRecorder("");
+        uri.setContentType("text/plain");
+        uri.setRecorder(recorder);
         extractor.process(uri);
         assertEquals(0, uri.getOutLinks().size());
         assertNoSideEffects(uri);
@@ -103,8 +112,8 @@ public abstract class ContentExtractorTestBase extends StateProcessorTestBase {
      * @throws Exception   just in case
      */
     public void testFinished() throws Exception {
-        DefaultExtractorURI uri = defaultURI();
-        uri.linkExtractionFinished();
+        DefaultProcessorURI uri = defaultURI();
+        uri.setLinkExtractionFinished(true);
         extractor.process(uri);
         assertEquals(0, uri.getOutLinks().size());
         assertNoSideEffects(uri);        
@@ -117,9 +126,24 @@ public abstract class ContentExtractorTestBase extends StateProcessorTestBase {
      * 
      * @param uri   the URI to test
      */
-    protected static void assertNoSideEffects(DefaultExtractorURI uri) {
+    protected static void assertNoSideEffects(DefaultProcessorURI uri) {
         assertEquals(0, uri.getUriErrors().size());
-        assertEquals(0, uri.getLocalizedErrors().size());
-        assertEquals("", uri.getAnnotations());        
+        assertEquals(0, uri.getNonFatalFailures().size());
+        assertEquals(Collections.EMPTY_LIST, uri.getAnnotations());        
     }
+    
+    
+    
+    public static Recorder createRecorder(String content)  
+    throws Exception {
+        File temp = File.createTempFile("test", ".tmp");
+        Recorder recorder = new Recorder(temp, 1024, 1024);
+        byte[] b = content.getBytes(); // FIXME: Allow other encodings?
+        ByteArrayInputStream bais = new ByteArrayInputStream(b);
+        InputStream is = recorder.inputWrap(bais);
+        for (int x = is.read(); x >= 0; x = is.read());
+        is.close();
+        return recorder;
+    }
+
 }

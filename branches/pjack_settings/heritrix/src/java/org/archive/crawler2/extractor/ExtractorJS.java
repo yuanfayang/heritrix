@@ -30,6 +30,7 @@ import java.util.regex.Matcher;
 import org.apache.commons.httpclient.URIException;
 import org.archive.io.ReplayCharSequence;
 import org.archive.net.UURI;
+import org.archive.processors.ProcessorURI;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
@@ -79,7 +80,7 @@ public class ExtractorJS extends ContentExtractor {
     }
 
     
-    protected boolean shouldExtract(ExtractorURI uri) {
+    protected boolean shouldExtract(ProcessorURI uri) {
         String contentType = uri.getContentType();
         if ((contentType == null)) {
             return false;
@@ -112,14 +113,14 @@ public class ExtractorJS extends ContentExtractor {
     
 
     @Override
-    protected boolean innerExtract(ExtractorURI curi) {
+    protected boolean innerExtract(ProcessorURI curi) {
         this.numberOfCURIsHandled++;
 
         ReplayCharSequence cs = null;
         try {
-            cs = curi.getCharSequence();
+            cs = curi.getRecorder().getReplayCharSequence();
         } catch (IOException e) {
-            curi.addLocalizedError(e, "Failed get of replay char sequence.");
+            curi.getNonFatalFailures().add(e);
         }
 
         if (cs == null) {
@@ -149,7 +150,7 @@ public class ExtractorJS extends ContentExtractor {
         }
     }
 
-    public static long considerStrings(ExtractorURI curi, CharSequence cs,
+    public static long considerStrings(ProcessorURI curi, CharSequence cs,
             boolean handlingJSFile) {
         long foundLinks = 0;
         Matcher strings =
@@ -188,7 +189,7 @@ public class ExtractorJS extends ContentExtractor {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorJS\n");
         ret.append("  Function:          Link extraction on JavaScript code\n");
-        ret.append("  ExtractorURIs handled: " + numberOfCURIsHandled + "\n");
+        ret.append("  ProcessorURIs handled: " + numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + numberOfLinksExtracted + "\n\n");
 
         return ret.toString();

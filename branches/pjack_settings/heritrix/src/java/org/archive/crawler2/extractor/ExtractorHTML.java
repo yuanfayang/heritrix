@@ -35,6 +35,7 @@ import org.archive.crawler.datamodel.RobotsHonoringPolicy;
 import org.archive.io.ReplayCharSequence;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.util.DevUtils;
@@ -183,7 +184,7 @@ public class ExtractorHTML extends ContentExtractor {
     }
     
 
-    protected void processGeneralTag(ExtractorURI curi, CharSequence element,
+    protected void processGeneralTag(ProcessorURI curi, CharSequence element,
             CharSequence cs) {
 
         Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
@@ -224,7 +225,8 @@ public class ExtractorHTML extends ContentExtractor {
                 }
                 if (elementStr.equalsIgnoreCase(BASE)) {
                     try {
-                        curi.setBaseURI(value.toString());
+                        UURI base = UURIFactory.getInstance(value.toString());
+                        curi.setBaseURI(base);
                     } catch (URIException e) {
                         curi.addUriError(e, value.toString());
                     }
@@ -336,7 +338,7 @@ public class ExtractorHTML extends ContentExtractor {
                 processEmbed(curi, res, element); // TODO: include attribute too
             }
         } catch (URIException e) {
-            curi.addLocalizedError(e, "BAD CODEBASE " + codebase);
+            curi.getNonFatalFailures().add(e);
         } catch (IllegalArgumentException e) {
             DevUtils.logger.log(Level.WARNING, "processGeneralTag()\n" +
                 "codebase=" + codebase + " res=" + res + "\n" +
@@ -356,7 +358,7 @@ public class ExtractorHTML extends ContentExtractor {
      * @param curi
      * @param cs
      */
-    protected void processScriptCode(ExtractorURI curi, CharSequence cs) {
+    protected void processScriptCode(ProcessorURI curi, CharSequence cs) {
         this.numberOfLinksExtracted +=
             ExtractorJS.considerStrings(curi, cs, false);
     }
@@ -370,7 +372,7 @@ public class ExtractorHTML extends ContentExtractor {
      * @param value
      * @param context
      */
-    protected void processLink(ExtractorURI curi, final CharSequence value,
+    protected void processLink(ProcessorURI curi, final CharSequence value,
             CharSequence context) {
         if (TextUtils.matches(JAVASCRIPT, value)) {
             processScriptCode(curi, value. subSequence(11, value.length()));
@@ -386,7 +388,7 @@ public class ExtractorHTML extends ContentExtractor {
         }
     }
 
-    private void addLinkFromString(ExtractorURI curi, String uri,
+    private void addLinkFromString(ProcessorURI curi, String uri,
             CharSequence context, Hop hop) {
         try {
             // We do a 'toString' on context because its a sequence from
@@ -400,12 +402,12 @@ public class ExtractorHTML extends ContentExtractor {
         }
     }
 
-    protected final void processEmbed(ExtractorURI curi, CharSequence value,
+    protected final void processEmbed(ProcessorURI curi, CharSequence value,
             CharSequence context) {
         processEmbed(curi, value, context, Hop.EMBED);
     }
 
-    protected void processEmbed(ExtractorURI curi, final CharSequence value,
+    protected void processEmbed(ProcessorURI curi, final CharSequence value,
             CharSequence context, Hop hop) {
         if (logger.isLoggable(Level.FINEST)) {
             logger.finest("embed (" + hop.getHopChar() + "): " + value.toString() +
@@ -419,7 +421,7 @@ public class ExtractorHTML extends ContentExtractor {
     }
 
     
-    protected boolean shouldExtract(ExtractorURI uri) {
+    protected boolean shouldExtract(ProcessorURI uri) {
         if (uri.get(this, IGNORE_UNEXPECTED_HTML)) {
             try {
                 // HTML was not expected (eg a GIF was expected) so ignore
@@ -445,17 +447,18 @@ public class ExtractorHTML extends ContentExtractor {
     }
     
     
-    public boolean innerExtract(ExtractorURI curi) {
+    public boolean innerExtract(ProcessorURI curi) {
         this.numberOfCURIsHandled++;
 
         ReplayCharSequence cs = null;
         
         try {
-           cs = curi.getCharSequence();
+           cs = curi.getRecorder().getReplayCharSequence();
         } catch (IOException e) {
-            curi.addLocalizedError(e,
-                "Failed get of replay char sequence " + curi.toString() +
-                    " " + e.getMessage());
+            curi.getNonFatalFailures().add(e);
+            //addLocalizedError(e,
+            //    "Failed get of replay char sequence " + curi.toString() +
+            //        " " + e.getMessage());
             logger.log(Level.SEVERE,"Failed get of replay char sequence in " +
                 Thread.currentThread().getName(), e);
         }
@@ -486,12 +489,12 @@ public class ExtractorHTML extends ContentExtractor {
     /**
      * Run extractor.
      * This method is package visible to ease testing.
-     * @param curi ExtractorURI we're processing.
+     * @param curi ProcessorURI we're processing.
      * @param cs Sequence from underlying ReplayCharSequence. This
      * is TRANSIENT data. Make a copy if you want the data to live outside
      * of this extractors' lifetime.
      */
-    void extract(ExtractorURI curi, CharSequence cs) {
+    void extract(ProcessorURI curi, CharSequence cs) {
         Matcher tags = TextUtils.getMatcher(RELEVANT_TAG_EXTRACTOR, cs);
         while(tags.find()) {
             if(Thread.interrupted()){
@@ -561,11 +564,11 @@ public class ExtractorHTML extends ContentExtractor {
      * Test whether this HTML is so unexpected (eg in place of a GIF URI)
      * that it shouldn't be scanned for links.
      *
-     * @param curi ExtractorURI to examine.
+     * @param curi ProcessorURI to examine.
      * @return True if HTML is acceptable/expected here
      * @throws URIException
      */
-    protected boolean isHtmlExpectedHere(ExtractorURI curi) throws URIException {
+    protected boolean isHtmlExpectedHere(ProcessorURI curi) throws URIException {
         String path = curi.getUURI().getPath();
         if(path==null) {
             // no path extension, HTML is fine
@@ -584,7 +587,7 @@ public class ExtractorHTML extends ContentExtractor {
         return ! TextUtils.matches(NON_HTML_PATH_EXTENSION, ext);
     }
 
-    protected void processScript(ExtractorURI curi, CharSequence sequence,
+    protected void processScript(ProcessorURI curi, CharSequence sequence,
             int endOfOpenTag) {
         // for now, do nothing
         // TODO: best effort extraction of strings
@@ -602,13 +605,13 @@ public class ExtractorHTML extends ContentExtractor {
 
     /**
      * Process metadata tags.
-     * @param curi ExtractorURI we're processing.
+     * @param curi ProcessorURI we're processing.
      * @param cs Sequence from underlying ReplayCharSequence. This
      * is TRANSIENT data. Make a copy if you want the data to live outside
      * of this extractors' lifetime.
      * @return True robots exclusion metatag.
      */
-    protected boolean processMeta(ExtractorURI curi, CharSequence cs) {
+    protected boolean processMeta(ProcessorURI curi, CharSequence cs) {
         Matcher attr = TextUtils.getMatcher(EACH_ATTRIBUTE_EXTRACTOR, cs);
         String name = null;
         String httpEquiv = null;
@@ -659,13 +662,13 @@ public class ExtractorHTML extends ContentExtractor {
 
     /**
      * Process style text.
-     * @param curi ExtractorURI we're processing.
+     * @param curi ProcessorURI we're processing.
      * @param sequence Sequence from underlying ReplayCharSequence. This
      * is TRANSIENT data. Make a copy if you want the data to live outside
      * of this extractors' lifetime.
      * @param endOfOpenTag
      */
-    protected void processStyle(ExtractorURI curi, CharSequence sequence,
+    protected void processStyle(ProcessorURI curi, CharSequence sequence,
             int endOfOpenTag) {
         // First, get attributes of script-open tag as per any other tag.
         processGeneralTag(curi, sequence.subSequence(0,6),
@@ -685,7 +688,7 @@ public class ExtractorHTML extends ContentExtractor {
         StringBuffer ret = new StringBuffer();
         ret.append("Processor: org.archive.crawler.extractor.ExtractorHTML\n");
         ret.append("  Function:          Link extraction on HTML documents\n");
-        ret.append("  ExtractorURIs handled: " + this.numberOfCURIsHandled + "\n");
+        ret.append("  ProcessorURIs handled: " + this.numberOfCURIsHandled + "\n");
         ret.append("  Links extracted:   " + this.numberOfLinksExtracted +
             "\n\n");
         return ret.toString();

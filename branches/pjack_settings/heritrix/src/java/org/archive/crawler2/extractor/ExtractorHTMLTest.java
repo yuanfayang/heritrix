@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.DefaultProcessorURI;
+import org.archive.util.Recorder;
 
 public class ExtractorHTMLTest extends StringExtractorTestBase {
 
@@ -61,22 +62,28 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
     
     @Override
     protected Collection<TestData> makeData(String content, String destURI)
-    throws URIException {
+    throws Exception {
         List<TestData> result = new ArrayList<TestData>();
         UURI src = UURIFactory.getInstance("http://www.archive.org/start/");
-        DefaultExtractorURI euri = new DefaultExtractorURI(src, 
+        DefaultProcessorURI euri = new DefaultProcessorURI(src, 
                 LinkContext.NAVLINK_MISC);
-        euri.setContent(content, "text/html");
-        
+        Recorder recorder = createRecorder(content);
+        euri.setContentType("text/html");
+        euri.setRecorder(recorder);
+        euri.setContentLength(content.length());
+                
         UURI dest = UURIFactory.getInstance(destURI);
         LinkContext context = determineContext(content);
         Hop hop = determineHop(content);
         Link link = new Link(src, dest, context, hop);
+        result.add(new TestData(euri, link));
         
-        euri.setContent(content, "text/html");
-        result.add(new TestData(euri.duplicate(), link));
-        euri.setContent(content, "application/xhtml");
-        result.add(new TestData(euri.duplicate(), link));
+        euri = new DefaultProcessorURI(src, LinkContext.NAVLINK_MISC);
+        recorder = createRecorder(content);
+        euri.setContentType("application/xhtml");
+        euri.setRecorder(recorder);
+        euri.setContentLength(content.length());
+        result.add(new TestData(euri, link));
         
         return result;
     }
