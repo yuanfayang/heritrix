@@ -23,13 +23,8 @@ import java.util.Date;
 import java.util.EventObject;
 import java.util.logging.Level;
 
-import javax.management.AttributeNotFoundException;
-
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.settings.ModuleType;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
+import org.archive.state.Key;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
@@ -52,19 +47,20 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.framework.StatisticsTracking
  * @see org.archive.crawler.admin.StatisticsTracker
  */
-public abstract class AbstractTracker extends ModuleType
+public abstract class AbstractTracker 
 implements StatisticsTracking, CrawlStatusListener, Serializable {
-    /** Default period between logging stat values */
-    public static final Integer DEFAULT_STATISTICS_REPORT_INTERVAL =
-        new Integer(20);
-    /** Attribute name for logging interval in seconds setting
+
+
+    /**
+     * The interval between writing progress information to log.
      */
-    public static final String ATTR_STATS_INTERVAL = "interval-seconds";
+    final public static Key<Integer> INTERVAL_SECONDS = Key.makeFinal(20);
+
 
     /** A reference to the CrawlContoller of the crawl that we are to track
      * statistics for.
      */
-    protected transient CrawlController controller;
+    final protected transient CrawlController controller;
 
     // Keep track of time.
     protected long crawlerStartTime;
@@ -78,34 +74,13 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
     protected boolean shouldrun = true;
 
     /**
-     * @param name
-     * @param description
+     * Constructor.
      */
-    public AbstractTracker(String name, String description) {
-        super(name, description);
-        Type e = addElementToDefinition(new SimpleType(ATTR_STATS_INTERVAL,
-                "The interval between writing progress information to log.",
-                DEFAULT_STATISTICS_REPORT_INTERVAL));
-        e.setOverrideable(false);
-    }
-
-    /**
-     * Sets up the Logger (including logInterval) and registers with the
-     * CrawlController for CrawlStatus and CrawlURIDisposition events.
-     *
-     * @param c A crawl controller instance.
-     * @throws FatalConfigurationException Not thrown here. For overrides that
-     * go to settings system for configuration.
-     * @see CrawlStatusListener
-     * @see org.archive.crawler.event.CrawlURIDispositionListener
-     */
-    public void initialize(CrawlController c)
-    throws FatalConfigurationException {
-        this.controller = c;
-
-        // Add listeners
+    public AbstractTracker(CrawlController controller) {
+        this.controller = controller;
         this.controller.addCrawlStatusListener(this);
     }
+
     
     /**
      * Start thread.  Will call logActivity() at intervals specified by
@@ -249,14 +224,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * log file.
      */
     protected int getLogWriteInterval() {
-        int logInterval;
-        try {
-            logInterval =
-                ((Integer) getAttribute(null, ATTR_STATS_INTERVAL)).intValue();
-        } catch (AttributeNotFoundException e) {
-            logInterval = 10;
-        }
-        return logInterval;
+        return controller.get(this, INTERVAL_SECONDS);
     }
 
     /**
@@ -331,7 +299,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
      * Cleanup resources used, at crawl end. 
      */
     protected void finalCleanup() {
-        controller = null; // Facilitate GC.
+        // controller = null; // Facilitate GC.
     }
 
     /**

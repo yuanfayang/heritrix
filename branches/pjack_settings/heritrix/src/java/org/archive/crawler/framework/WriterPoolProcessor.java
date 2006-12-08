@@ -188,8 +188,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
             return;
         }
         if (max <= this.totalBytesWritten) {
-            controller.requestCrawlStop("Finished - Maximum bytes (" +
-                Long.toString(max) + ") written");
+            controller.requestCrawlStop(CrawlStatus.FINISHED_WRITE_LIMIT);
         }
     }
     

@@ -21,8 +21,6 @@ package org.archive.crawler.framework;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-
 /**
  * An interface for objects that want to collect statistics on
  * running crawls. An implementation of this is referenced in the
@@ -85,8 +83,8 @@ public interface StatisticsTracking extends Runnable {
      * that this class is to gather statistics on.
      * @throws FatalConfigurationException
      */
-    public void initialize(CrawlController c)
-    throws FatalConfigurationException;
+//    public void initialize(CrawlController c)
+//    throws FatalConfigurationException;
 
     /**
      * Returns how long the current crawl has been running (excluding any time
