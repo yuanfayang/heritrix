@@ -50,12 +50,14 @@ import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
+import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.net.UURI;
 import org.archive.processors.fetcher.CrawlHost;
 import org.archive.settings.Sheet;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
 /**
@@ -406,7 +408,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         while (iter.hasNext()) {
             UURI u = (UURI)iter.next();
             CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
-            caUri.setSchedulingDirective(CandidateURI.Priority.MEDIUM);
+            caUri.setSchedulingDirective(CandidateURI.MEDIUM);
             if (get(SOURCE_TAG_SEEDS)) {
                 caUri.putString(CoreAttributeConstants.A_SOURCE_TAG,caUri.toString());
                 caUri.makeHeritable(CoreAttributeConstants.A_SOURCE_TAG);
@@ -516,8 +518,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             // treating the immediate redirect target as a seed.
             this.controller.getScope().addSeed(curi);
             // And it needs rapid scheduling.
-	    if (curi.getSchedulingDirective() == CandidateURI.Priority.NORMAL)
-                curi.setSchedulingDirective(CandidateURI.Priority.MEDIUM);
+	    if (curi.getSchedulingDirective() == CandidateURI.NORMAL)
+                curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }
 
         // optionally preferencing embeds up to MEDIUM
@@ -525,10 +527,10 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
             if (embedHops > 0 && embedHops <= prefHops
-                    && curi.getSchedulingDirective() == CandidateURI.Priority.NORMAL) {
+                    && curi.getSchedulingDirective() == CandidateURI.NORMAL) {
                 // number of embed hops falls within the preferenced range, and
                 // uri is not already MEDIUM -- so promote it
-                curi.setSchedulingDirective(CandidateURI.Priority.MEDIUM);
+                curi.setSchedulingDirective(CandidateURI.MEDIUM);
             }
         }
     }
@@ -555,7 +557,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @return the CrawlServer to be associated with this CrawlURI
      */
     protected CrawlServer getServer(CrawlURI curi) {
-        return this.controller.getServerCache().getServerFor(curi);
+        return this.controller.getServerCache().getServerFor(curi.toString());
     }
 
     /**
@@ -607,7 +609,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             int maxBandwidthKB = get(MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC);
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
-                CrawlHost host = controller.getServerCache().getHostFor(curi);
+                CrawlHost host = curi.getCrawlHost();
                 long minDurationToWait = host.getEarliestNextURIEmitTime()
                         - now;
                 float maxBandwidth = maxBandwidthKB * 1.024F; // kilo factor
@@ -820,7 +822,10 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
-        return Canonicalizer.canonicalize(uuri, this.controller.getOrder());
+        StateProvider def = controller.getSheetManager().getDefault();
+        List<CanonicalizationRule> rules = 
+            controller.getOrderSetting(CrawlOrder.RULES);
+        return Canonicalizer.canonicalize(def, uuri.toString(), rules);
     }
 
     /**
@@ -907,7 +912,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         // TODO Auto-generated method stub
     }
     
-    public void crawlCheckpoint(File checkpointDir)
+    public void crawlCheckpoint(StateProvider context, File checkpointDir)
     throws Exception {
         if (this.recover == null) {
             return;

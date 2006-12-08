@@ -301,8 +301,8 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                 CrawlURI curiExisting = getCrawlURI(curi.toString());
                 long oldCuriProcessingTime = curiExisting.getLong(
                         A_TIME_OF_NEXT_PROCESSING);
-                if(curi.getSchedulingDirective().ordinal() < 
-                        curiExisting.getSchedulingDirective().ordinal()){
+                if(curi.getSchedulingDirective() < 
+                        curiExisting.getSchedulingDirective()){
                     // New scheduling directive is of higher importance,
                     // update to promote URI.
                     curiExisting.setSchedulingDirective(
@@ -1071,13 +1071,13 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             CrawlURI tmp = (CrawlURI)crawlURIBinding.entryToObject(dataEntry);
             ret.append(" URI:                " + tmp.toString() + "\n");
             switch(tmp.getSchedulingDirective()){
-                case HIGHEST : 
+                case CandidateURI.HIGHEST : 
                     ret.append("  Sched. directive:  HIGHEST\n"); break;
-                case HIGH : 
+                case CandidateURI.HIGH : 
                     ret.append("  Sched. directive:  HIGH\n"); break;
-                case MEDIUM : 
+                case CandidateURI.MEDIUM : 
                     ret.append("  Sched. directive:  MEDIUM\n"); break;
-                case NORMAL : 
+                case CandidateURI.NORMAL : 
                     ret.append("  Sched. directive:  NORMAL\n"); break;
             }
             ret.append("  Next processing:   ");
@@ -1144,21 +1144,21 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                                           Object dataInput, 
                                           TupleOutput indexKeyOutput) {
             CrawlURI curi = (CrawlURI)dataInput;
-            CandidateURI.Priority directive = curi.getSchedulingDirective();
+            int directive = curi.getSchedulingDirective();
             // Can not rely on the default directive constants having a good
             // sort order
             int directiveToWrite;
             switch (directive) {
-            case HIGHEST:
+            case CandidateURI.HIGHEST:
                 directiveToWrite = 0;
                 break;
-            case HIGH:
+            case CandidateURI.HIGH:
                 directiveToWrite = 1;
                 break;
-            case MEDIUM:
+            case CandidateURI.MEDIUM:
                 directiveToWrite = 2;
                 break;
-            case NORMAL:
+            case CandidateURI.NORMAL:
                 directiveToWrite = 3;
                 break;
             default:

@@ -34,15 +34,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.UriUniqFilter;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.crawler.util.BloomUriUniqFilter;
 import org.archive.crawler.util.CheckpointUtils;
@@ -50,6 +46,7 @@ import org.archive.crawler.util.DiskFPMergeUriUniqFilter;
 import org.archive.crawler.util.MemFPMergeUriUniqFilter;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.je.DatabaseException;
@@ -310,8 +307,9 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         }
     }
 
-    public void crawlCheckpoint(File checkpointDir) throws Exception {
-        super.crawlCheckpoint(checkpointDir);
+    public void crawlCheckpoint(StateProvider context,
+            File checkpointDir) throws Exception {
+        super.crawlCheckpoint(context, checkpointDir);
         logger.fine("Started serializing already seen as part "
             + "of checkpoint. Can take some time.");
         // An explicit sync on the any deferred write dbs is needed to make the

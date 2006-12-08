@@ -40,6 +40,7 @@ import javax.management.AttributeNotFoundException;
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlServer;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
@@ -52,6 +53,7 @@ import org.archive.crawler.framework.FrontierMarker;
 import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
+import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.net.UURI;
@@ -59,6 +61,7 @@ import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.settings.Sheet;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
 
@@ -207,7 +210,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         while (iter.hasNext()) {
             CandidateURI caUri =
                 CandidateURI.createSeedCandidateURI((UURI)iter.next());
-            caUri.setSchedulingDirective(CandidateURI.Priority.MEDIUM);
+            caUri.setSchedulingDirective(CandidateURI.MEDIUM);
             schedule(caUri);
         }
         batchFlush();
@@ -244,7 +247,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @return Canonicalized version of passed <code>uuri</code>.
      */
     protected String canonicalize(UURI uuri) {
-        return Canonicalizer.canonicalize(uuri, this.controller.getOrder());
+        StateProvider def = controller.getSheetManager().getDefault();
+        List<CanonicalizationRule> rules = 
+            controller.getOrderSetting(CrawlOrder.RULES);
+        return Canonicalizer.canonicalize(def, uuri.toString(), rules);
     }
 
     /**
@@ -312,7 +318,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             // is treating the immediate redirect target as a seed.
             this.controller.getScope().addSeed(curi);
             // And it needs rapid scheduling.
-            curi.setSchedulingDirective(CandidateURI.Priority.MEDIUM);
+            curi.setSchedulingDirective(CandidateURI.MEDIUM);
         }
         
         // Optionally preferencing embeds up to MEDIUM
@@ -321,10 +327,10 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         if (prefHops > 0) {
             int embedHops = curi.getTransHops();
             if (embedHops > 0 && embedHops <= prefHops
-                    && curi.getSchedulingDirective() == CandidateURI.Priority.NORMAL) {
+                    && curi.getSchedulingDirective() == CandidateURI.NORMAL) {
                 // number of embed hops falls within the preferenced range, and
                 // uri is not already MEDIUM -- so promote it
-                curi.setSchedulingDirective(CandidateURI.Priority.MEDIUM);
+                curi.setSchedulingDirective(CandidateURI.MEDIUM);
                 prefEmbed = true;
             }
         }
@@ -395,7 +401,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @return the CrawlServer to be associated with this CrawlURI
      */
     protected CrawlServer getServer(CrawlURI curi) {
-        return this.controller.getServerCache().getServerFor(curi);
+        return this.controller.getServerCache().getServerFor(curi.getUURI());
     }
 
     /* (non-Javadoc)
@@ -598,7 +604,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         // the curi.
         controller.fireCrawledURISuccessfulEvent(curi);
         
-        curi.setSchedulingDirective(CandidateURI.Priority.NORMAL);
+        curi.setSchedulingDirective(CandidateURI.NORMAL);
 
         // Set time of next processing
         curi.putLong(A_TIME_OF_NEXT_PROCESSING,
@@ -695,7 +701,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         failedFetchCount++;
         
         // Put the failed URI at the very back of the queue.
-        curi.setSchedulingDirective(CandidateURI.Priority.NORMAL);
+        curi.setSchedulingDirective(CandidateURI.NORMAL);
         // TODO: reconsider this
         curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE);
 
@@ -734,7 +740,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         // Todo: consider timout before retrying disregarded elements.
         //       Possibly add a setting to the WaitEvaluators?
         curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); 
-        curi.setSchedulingDirective(CandidateURI.Priority.NORMAL);
+        curi.setSchedulingDirective(CandidateURI.NORMAL);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         // Ready the URI for reserialization.
@@ -1138,7 +1144,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     /* (non-Javadoc)
      * @see org.archive.crawler.event.CrawlStatusListener#crawlCheckpoint(java.io.File)
      */
-    public void crawlCheckpoint(File checkpointDir) throws Exception {
+    public void crawlCheckpoint(StateProvider sp, File checkpointDir) 
+    throws Exception {
         // Not interested
     }
 
