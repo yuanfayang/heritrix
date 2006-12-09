@@ -80,6 +80,7 @@ implements RepositionableStream {
      */
     private static final int LINUX_PAGE_SIZE = 4 * 1024;
     
+    private final long initialOffset;
     
     public GzippedInputStream(InputStream is) throws IOException {
         // Have buffer match linux page size.
@@ -97,12 +98,34 @@ implements RepositionableStream {
     public GzippedInputStream(final InputStream is, final int size)
     throws IOException {
         super(checkStream(is), size);
+        // We need to calculate the absolute offset of the current
+        // GZIP Member.  Its almost always going to be zero but not
+        // always (We may have been passed a stream that is already part
+        // ways through a stream of GZIP Members).  So, getting
+        // absolute offset is not exactly straight-forward. The super
+        // class, GZIPInputStream on construction reads in the GZIP Header
+        // which is a pain because I then do not know the absolute offset
+        // at which the GZIP record began.  So, the call above to checkStream()
+        // marked the stream before passing it to the super calls.  Then
+        // below we get current postion at just past the GZIP Header, call
+        // reset so we go back to the absolute start of the GZIP Member in
+        // the file, record the offset for later should we need to start
+        // over again in this file -- i.e. we're asked to get an iterator
+        // from Record zero on -- then we move the file position to just
+        // after the GZIP Header again so we're again aligned for inflation
+        // of the current record.
+        long afterGZIPHeader = ((RepositionableStream)is).position();
+        is.reset();
+        this.initialOffset = ((RepositionableStream)is).position();
+        ((RepositionableStream)is).position(afterGZIPHeader);
     }
     
     protected static InputStream checkStream(final InputStream is)
     throws IOException {
         if (is instanceof RepositionableStream) {
-            return is;
+        	// See note above in constructor.
+        	is.mark(GzipHeader.MINIMAL_GZIP_HEADER_LENGTH * 3);
+        	return is;
         }
         throw new IOException("Passed stream does not" +
             " implement PositionableStream");
@@ -163,9 +186,10 @@ implements RepositionableStream {
         try {
             // We know its a RepositionableStream else we'd have failed
         	// construction.  On iterator construction, set file back to
-        	// zero postion (May not always work dependent on how the
+        	// initial postion so we're ready to read GZIP Members
+        	// (May not always work dependent on how the
         	// RepositionableStream was implemented).
-            ((RepositionableStream)this.in).position(0);
+            ((RepositionableStream)this.in).position(this.initialOffset);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
