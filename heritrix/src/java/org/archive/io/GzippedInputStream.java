@@ -102,9 +102,6 @@ implements RepositionableStream {
     protected static InputStream checkStream(final InputStream is)
     throws IOException {
         if (is instanceof RepositionableStream) {
-            // Mark the stream.  The constructor will do a reset to move us
-            // back to the start of the first gzip member.
-            is.mark(10 * GzipHeader.MINIMAL_GZIP_HEADER_LENGTH);
             return is;
         }
         throw new IOException("Passed stream does not" +
@@ -164,8 +161,11 @@ implements RepositionableStream {
      */
     public Iterator iterator() {
         try {
-            // We called mark in the constructor (See checkStream method).
-            this.in.reset();
+            // We know its a RepositionableStream else we'd have failed
+        	// construction.  On iterator construction, set file back to
+        	// zero postion (May not always work dependent on how the
+        	// RepositionableStream was implemented).
+            ((RepositionableStream)this.in).position(0);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
