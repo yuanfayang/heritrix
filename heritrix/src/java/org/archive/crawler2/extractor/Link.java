@@ -27,6 +27,7 @@ package org.archive.crawler2.extractor;
 import java.io.Serializable;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
 
@@ -131,16 +132,31 @@ public class Link implements Serializable {
 
     public static Link addRelativeToBase(ProcessorURI uri, String newUri,
             LinkContext context, Hop hop) throws URIException {
-        Link link = new Link(uri.getUURI(), UURIFactory.getInstance(
-                uri.getUURI(), newUri), context, hop);
-        uri.getOutLinks().add(link);
-        return link;
+        UURI dest = UURIFactory.getInstance(uri.getUURI(), newUri);
+        return add2(uri, dest, context, hop);
     }
 
     
     public static Link addRelativeToVia(ProcessorURI uri, String newUri,
             LinkContext context, Hop hop) throws URIException {
-        return null;
+        UURI dest = UURIFactory.getInstance(uri.getVia(), newUri);
+        return add2(uri, dest, context, hop);
+    }
+
+
+    public static Link add(ProcessorURI uri, String newUri, LinkContext context,
+            Hop hop) throws URIException {
+        UURI dest = UURIFactory.getInstance(newUri);
+        return add2(uri, dest, context, hop);
+    }
+
+
+    private static Link add2(ProcessorURI uri, UURI dest, LinkContext context,
+            Hop hop) throws URIException {
+        UURI src = uri.getUURI();
+        Link link = new Link(src, dest, context, hop);
+        uri.getOutLinks().add(link);
+        return link;
     }
 
 }
