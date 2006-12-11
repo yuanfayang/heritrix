@@ -52,7 +52,15 @@ public class HTMLLinkContext extends LinkContext {
         // FIXME: Verify that path really is XPath-like
         this.path = path;
     }
+
     
+    public HTMLLinkContext(CharSequence element, CharSequence attribute) {
+        if (attribute == null) {
+            this.path = "";
+        } else {
+            this.path = element + "/@" + attribute;
+        }
+    }
     
     @Override
     public String toString() {

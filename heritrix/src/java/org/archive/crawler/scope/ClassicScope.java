@@ -25,7 +25,7 @@ package org.archive.crawler.scope;
 
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.Hop;
 //import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
@@ -194,7 +194,7 @@ public class ClassicScope extends CrawlScope {
         int linkCount = 0;
         int transCount = 0;
         for (int i = path.length() - 1; i >= 0; i--) {
-            if (path.charAt(i) == Link.NAVLINK_HOP) {
+            if (path.charAt(i) == Hop.NAVLINK.getHopChar()) {
                 linkCount++;
             } else if (linkCount == 0) {
                 transCount++;

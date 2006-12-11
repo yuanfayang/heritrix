@@ -24,7 +24,7 @@
 */
 package org.archive.processors.deciderules;
 
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.Hop;
 import org.archive.processors.ProcessorURI;
 
 
@@ -46,7 +46,7 @@ public class PrerequisiteAcceptDecideRule extends DecideRule {
     public DecideResult innerDecide(ProcessorURI uri) {        
         String hopsPath = uri.getPathFromSeed();
             if (hopsPath != null && hopsPath.length() > 0 &&
-                    hopsPath.charAt(hopsPath.length()-1) == Link.PREREQ_HOP) {
+                    hopsPath.charAt(hopsPath.length()-1) == Hop.PREREQ.getHopChar()) {
                 return DecideResult.ACCEPT;
             }
         return DecideResult.PASS;

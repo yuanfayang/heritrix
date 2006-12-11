@@ -47,6 +47,8 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
+import org.archive.crawler2.extractor.HTMLLinkContext;
+import org.archive.crawler2.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.ArchiveUtils;
@@ -395,8 +397,8 @@ implements FrontierJournal {
                             UURI via = (args.length > 3)?
                                 UURIFactory.getInstance(args[3].toString()):
                                 null;
-                            String viaContext = (args.length > 4)?
-                                    args[4].toString(): "";
+                            LinkContext viaContext = (args.length > 4)?
+                                    new HTMLLinkContext(args[4].toString()): null;
                             CandidateURI caUri = new CandidateURI(u, 
                                     pathFromSeed, via, viaContext);
                             frontier.schedule(caUri);
