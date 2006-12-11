@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler2.extractor;
+package org.archive.processors.extractor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,8 +31,8 @@ import org.archive.net.UURIFactory;
 import org.archive.processors.DefaultProcessorURI;
 import org.archive.util.Recorder;
 
-import static org.archive.crawler2.extractor.LinkContext.NAVLINK_MISC;
-import static org.archive.crawler2.extractor.LinkContext.EMBED_MISC;
+import static org.archive.processors.extractor.LinkContext.EMBED_MISC;
+import static org.archive.processors.extractor.LinkContext.NAVLINK_MISC;
 
 
 /**

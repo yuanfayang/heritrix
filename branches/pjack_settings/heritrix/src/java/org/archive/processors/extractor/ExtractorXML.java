@@ -24,7 +24,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package org.archive.crawler2.extractor;
+package org.archive.processors.extractor;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;

@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler2.extractor;
+package org.archive.processors.extractor;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;

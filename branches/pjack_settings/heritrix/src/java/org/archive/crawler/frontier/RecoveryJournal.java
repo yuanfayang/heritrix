@@ -47,10 +47,10 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.Frontier;
-import org.archive.crawler2.extractor.HTMLLinkContext;
-import org.archive.crawler2.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.extractor.HTMLLinkContext;
+import org.archive.processors.extractor.LinkContext;
 import org.archive.util.ArchiveUtils;
 
 import java.util.concurrent.CountDownLatch;

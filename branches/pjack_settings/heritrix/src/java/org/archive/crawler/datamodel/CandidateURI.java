@@ -34,13 +34,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler2.extractor.HTMLLinkContext;
-import org.archive.crawler2.extractor.Hop;
-import org.archive.crawler2.extractor.Link;
-import org.archive.crawler2.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
+import org.archive.processors.extractor.HTMLLinkContext;
+import org.archive.processors.extractor.Hop;
+import org.archive.processors.extractor.Link;
+import org.archive.processors.extractor.LinkContext;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
