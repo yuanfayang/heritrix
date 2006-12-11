@@ -35,8 +35,10 @@ import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.framework.Checkpointer;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.io.ReplayInputStream;
+import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.fetcher.FetchStats;
@@ -124,7 +126,8 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
      * @throws IOException
      */
     public void updateRobots(CrawlURI curi) {
-        CrawlOrder order = (CrawlOrder)sheetManager.getRoot("order");
+        CrawlController controller = (CrawlController)sheetManager.getRoot();
+        CrawlOrder order = controller.getOrder();
         
         RobotsHonoringPolicy honoringPolicy = order.getRobotsHonoringPolicy();
 
@@ -250,7 +253,8 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
     
     private void postDeserialize() {
     	if (this.robots != null) {
-            CrawlOrder order = (CrawlOrder)sheetManager.getRoot("order");
+            CrawlController controller = (CrawlController)sheetManager.getRoot();
+            CrawlOrder order = controller.getOrder();
             RobotsHonoringPolicy honoringPolicy =
                 order.getRobotsHonoringPolicy();
             this.robots.honoringPolicy = honoringPolicy;
@@ -336,37 +340,36 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
     
     /**
      * Get key to use doing lookup on server instances.
-     * @param cauri CandidateURI we're to get server key for.
+     * 
+     * @param cauri  CandidateURI we're to get server key for.
      * @return String to use as server key.
      * @throws URIException
      */
-	public static String getServerKey(CandidateURI cauri)
-	throws URIException {
-	    // TODO: evaluate if this is really necessary -- why not 
-	    // make the server of a dns CandidateURI the looked-up domain,
-	    // also simplifying FetchDNS?
-	    String key = cauri.getUURI().getAuthorityMinusUserinfo();
-	    if (key == null) {
-	        // Fallback for cases where getAuthority() fails (eg 'dns:'.
-	        // DNS UURIs have the 'domain' in the 'path' parameter, not
-	        // in the authority).
-	        key = cauri.getUURI().getCurrentHierPath();
-	        if(key != null && !key.matches("[-_\\w\\.:]+")) {
-	            // Not just word chars and dots and colons and dashes and
-	            // underscores; throw away
-	            key = null;
-	        }
-	    }
-	    if (key != null &&
-	            cauri.getUURI().getScheme().equals(UURIFactory.HTTPS)) {
-	        // If https and no port specified, add default https port to
-	        // distinuish https from http server without a port.
-	        if (!key.matches(".+:[0-9]+")) {
-	            key += ":" + UURIFactory.HTTPS_PORT;
-	        }
-	    }
-	    return key;
-	}
+    public static String getServerKey(UURI uuri) throws URIException {
+        // TODO: evaluate if this is really necessary -- why not
+        // make the server of a dns CandidateURI the looked-up domain,
+        // also simplifying FetchDNS?
+        String key = uuri.getAuthorityMinusUserinfo();
+        if (key == null) {
+            // Fallback for cases where getAuthority() fails (eg 'dns:'.
+            // DNS UURIs have the 'domain' in the 'path' parameter, not
+            // in the authority).
+            key = uuri.getCurrentHierPath();
+            if (key != null && !key.matches("[-_\\w\\.:]+")) {
+                // Not just word chars and dots and colons and dashes and
+                // underscores; throw away
+                key = null;
+            }
+        }
+        if (key != null && uuri.getScheme().equals(UURIFactory.HTTPS)) {
+            // If https and no port specified, add default https port to
+            // distinuish https from http server without a port.
+            if (!key.matches(".+:[0-9]+")) {
+                key += ":" + UURIFactory.HTTPS_PORT;
+            }
+        }
+        return key;
+    }
 
     /* (non-Javadoc)
      * @see org.archive.crawler.datamodel.CrawlSubstats.HasCrawlSubstats#getSubstats()

@@ -42,11 +42,13 @@ import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.StatisticsTracking;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
-import org.archive.crawler.url.canonicalize.BaseRule;
+import org.archive.crawler.url.CanonicalizationRule;
+import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
 import org.archive.settings.Sheet;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
+import org.archive.state.StateProvider;
 
 
 /**
@@ -73,7 +75,7 @@ public class CrawlOrder implements Serializable {
      * This setting specifies a file level directory to store those settings. The path
      * is relative to {@link #DISK_PATH} unless an absolute path is provided.
      */
-    final public static Key<String> SETTINGS_DIRECTORY = expert("settings");
+    final public static Key<String> SETTINGS_DIRECTORY = Key.makeExpertFinal("settings");
 
 
     /**
@@ -81,35 +83,35 @@ public class CrawlOrder implements Serializable {
      * be kept. If this path is a relative path, it will be
      * relative to the crawl order.
      */
-    final public static Key<String> DISK_PATH = expert("");
+    final public static Key<String> DISK_PATH = Key.makeExpertFinal("");
 
 
     /**
      * Directory where crawler log files will be kept. If this path is a 
      * relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> LOGS_PATH = expert("logs"); 
+    final public static Key<String> LOGS_PATH = Key.makeExpertFinal("logs"); 
 
 
     /**
      * Directory where crawler checkpoint files will be kept. If this 
      * path is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> CHECKPOINTS_PATH = expert("checkpoints");
+    final public static Key<String> CHECKPOINTS_PATH = Key.makeExpertFinal("checkpoints");
 
 
     /**
      * Directory where crawler-state files will be kept. If this path 
      * is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> STATE_PATH = expert("state");
+    final public static Key<String> STATE_PATH = Key.makeExpertFinal("state");
 
 
     /**
      * Directory where discardable temporary files will be kept. If 
      * this path is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> SCRATCH_PATH = expert("scratch");
+    final public static Key<String> SCRATCH_PATH = Key.makeExpertFinal("scratch");
 
 
     /**
@@ -143,14 +145,15 @@ public class CrawlOrder implements Serializable {
      * Size in bytes of in-memory buffer to record outbound traffic. One such 
      * buffer is reserved for every ToeThread. 
      */
-    final public static Key<Integer> RECORDER_OUT_BUFFER = expert(4096);
+    final public static Key<Integer> RECORDER_OUT_BUFFER = Key.makeExpertFinal(4096);
 
 
     /**
      * Size in bytes of in-memory buffer to record inbound traffic. One such 
      * buffer is reserved for every ToeThread.
      */
-    final public static Key<Integer> RECORDER_IN_BUFFER = expert(65536);
+    final public static Key<Integer> RECORDER_IN_BUFFER = 
+        Key.makeExpertFinal(65536);
 
             
     /**
@@ -158,7 +161,7 @@ public class CrawlOrder implements Serializable {
      * means no preference (accept BDB's default, usually 60%, or the 
      * je.maxMemoryPercent property value).
      */
-    final public static Key<Integer> BDB_CACHE_PERCENT = expert(0);
+    final public static Key<Integer> BDB_CACHE_PERCENT = Key.makeExpertFinal(0);
 
 
     /**
@@ -183,7 +186,8 @@ public class CrawlOrder implements Serializable {
      * Ordered list of url canonicalization rules.  Rules are applied in the 
      * order listed from top to bottom.
      */
-    final public static Key<List<BaseRule>> RULES = finalList(BaseRule.class);
+    final public static Key<List<CanonicalizationRule>> RULES = 
+        finalList(CanonicalizationRule.class);
 
 
     /**
@@ -199,7 +203,7 @@ public class CrawlOrder implements Serializable {
      * Optional. Points at recover log (or recover.gz log) OR the checkpoint 
      * directory to use recovering a crawl.
      */
-    final public static Key<String> RECOVER_PATH = expert("");
+    final public static Key<String> RECOVER_PATH = Key.makeExpertFinal("");
 
 
     /**
@@ -216,7 +220,8 @@ public class CrawlOrder implements Serializable {
      * files that comprise a checkpoint are manually assembled. This is an
      * expert setting.
      */
-    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = expert(true);
+    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
+        Key.makeExpertFinal(true);
 
 
     /**
@@ -225,17 +230,24 @@ public class CrawlOrder implements Serializable {
      * being retried. Default is false, meaning failures are forgotten, and the
      * corresponding URIs will be retried in the recovered crawl.
      */
-    final public static Key<Boolean> RECOVER_RETAIN_FAILURES = expert(false);
+    final public static Key<Boolean> RECOVER_RETAIN_FAILURES = 
+        Key.makeExpertFinal(false);
 
 
     /**
     FIXME
      */
-    final public static Key<CredentialStore> CREDENTIAL_STORE = expert((CredentialStore)null);
+    final public static Key<CredentialStore> CREDENTIAL_STORE = 
+        Key.makeExpertFinal((CredentialStore)null);
 
     
-    final public static Key<CrawlScope> SCOPE = expert((CrawlScope)null); // FIXME
+    final public static Key<CrawlScope> SCOPE = 
+        Key.makeExpertFinal((CrawlScope)null); 
+    // FIXME
 
+    
+    final public static Key<Map<String,Processor>> PROCESSORS =
+        Key.makeMap(Processor.class);
 
 
     private transient CrawlController controller;
@@ -261,12 +273,12 @@ public class CrawlOrder implements Serializable {
      * @param curi
      * @return user-agent header value to use
      */
-    public String getUserAgent(CrawlURI curi) {
+    public String getUserAgent(StateProvider curi) {
         if (curi == null) {
             Sheet def = controller.getSheetManager().getDefault();
             return def.get(this, HTTP_HEADERS).get("user-agent");
         }
-        return curi.get(HTTP_HEADERS).get("user-agent");
+        return curi.get(this, HTTP_HEADERS).get("user-agent");
     }
 
     /**
@@ -278,7 +290,7 @@ public class CrawlOrder implements Serializable {
             Sheet def = controller.getSheetManager().getDefault();
             return def.get(this, HTTP_HEADERS).get("from");
         }
-        return curi.get(HTTP_HEADERS).get("from");
+        return curi.get(this, HTTP_HEADERS).get("from");
     }
 
     /**
@@ -388,17 +400,7 @@ public class CrawlOrder implements Serializable {
     }
     
     
-    private static <T> Key<T> expert(T def) {
-        @SuppressWarnings("unchecked")
-        Class<T> c = (Class<T>)def.getClass();
-        
-        KeyMaker<T> maker = new KeyMaker<T>();
-        maker.expert = true;
-        maker.overrideable = false;
-        maker.def = def;
-        maker.type = c;
-        return new Key<T>(maker);
-    }
+
 
 
     private static Key<Map<String,String>> makeHttpHeaders() {

@@ -58,7 +58,7 @@ import org.archive.state.StateProvider;
  */
 public class RobotsHonoringPolicy {
 
-    private static final long serialVersionUID = 8850011643923116605L;
+    private static final long serialVersionUID = 3L;
 
     
     /**
