@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.net.UURI;
 import org.archive.processors.fetcher.CrawlHost;
 import org.archive.processors.fetcher.CrawlHostCache;
 import org.archive.settings.SheetManager;
@@ -113,23 +114,23 @@ public class ServerCache implements CrawlHostCache {
 
     /**
      * Get the {@link CrawlServer} associated with <code>curi</code>.
-     * @param cauri CandidateURI we're to get server from.
+     * @param uuri CandidateURI we're to get server from.
      * @return CrawlServer instance that matches the passed CandidateURI.
      */
-    public CrawlServer getServerFor(CandidateURI cauri) {
+    public CrawlServer getServerFor(UURI uuri) {
         CrawlServer cs = null;
         try {
-            String key = CrawlServer.getServerKey(cauri);
+            String key = CrawlServer.getServerKey(uuri);
             // TODOSOMEDAY: make this robust against those rare cases
             // where authority is not a hostname.
             if (key != null) {
                 cs = getServerFor(key);
             }
         } catch (URIException e) {
-            logger.severe(e.getMessage() + ": " + cauri);
+            logger.severe(e.getMessage() + ": " + uuri);
             e.printStackTrace();
         } catch (NullPointerException npe) {
-            logger.severe(npe.getMessage() + ": " + cauri);
+            logger.severe(npe.getMessage() + ": " + uuri);
             npe.printStackTrace();
         }
         return cs;
@@ -167,13 +168,13 @@ public class ServerCache implements CrawlHostCache {
     
     /**
      * Get the {@link CrawlHost} associated with <code>curi</code>.
-     * @param cauri CandidateURI we're to return Host for.
+     * @param uuri CandidateURI we're to return Host for.
      * @return CandidateURI instance that matches the passed Host name.
      */
-    public CrawlHost getHostFor(CandidateURI cauri) {
+    public CrawlHost getHostFor(UURI uuri) {
         CrawlHost h = null;
         try {
-            h = getHostFor(cauri.getUURI().getReferencedHost());
+            h = getHostFor(uuri.getReferencedHost());
         } catch (URIException e) {
             e.printStackTrace();
         }

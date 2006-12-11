@@ -31,20 +31,23 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.extractor.Link;
-import org.archive.crawler.framework.Processor;
-import org.archive.crawler.framework.ProcessorChain;
+import org.archive.crawler2.extractor.Hop;
+import org.archive.crawler2.extractor.Link;
+import org.archive.crawler2.extractor.LinkContext;
 import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.credential.Rfc2617Credential;
+import org.archive.processors.fetcher.CrawlHost;
 import org.archive.state.Key;
 import org.archive.util.Base32;
 import org.archive.util.Recorder;
@@ -68,11 +71,8 @@ import st.ata.util.HashtableAList;
 public class CrawlURI extends CandidateURI
 implements FetchStatusCodes, ProcessorURI {
 
-    private static final long serialVersionUID = 7874096757350100472L;
+    private static final long serialVersionUID = 3L;
 
-    
-    public static enum Priority { HIGHEST, HIGH, MEDIUM, NORMAL }
-    
     
     public static final int UNCALCULATED = -1;
     
@@ -84,8 +84,6 @@ implements FetchStatusCodes, ProcessorURI {
     // via
 
     // Processing progress
-    transient private Processor nextProcessor;
-    transient private ProcessorChain nextProcessorChain;
     private int fetchStatus = 0;    // default to unattempted
     private int deferrals = 0;     // count of postponements for prerequisites
     private int fetchAttempts = 0; // the number of fetch attempts that have been made
@@ -381,42 +379,6 @@ implements FetchStatusCodes, ProcessorURI {
         this.deferrals = 0;
     }
 
-    /**
-     * Get the next processor to process this URI.
-     *
-     * @return the processor that should process this URI next.
-     */
-    public Processor nextProcessor() {
-        return nextProcessor;
-    }
-
-    /**
-     * Get the processor chain that should be processing this URI after the
-     * current chain is finished with it.
-     *
-     * @return the next processor chain to process this URI.
-     */
-    public ProcessorChain nextProcessorChain() {
-        return nextProcessorChain;
-    }
-
-    /**
-     * Set the next processor to process this URI.
-     *
-     * @param processor the next processor to process this URI.
-     */
-    public void setNextProcessor(Processor processor) {
-        nextProcessor = processor;
-    }
-
-    /**
-     * Set the next processor chain to process this URI.
-     *
-     * @param nextProcessorChain the next processor chain to process this URI.
-     */
-    public void setNextProcessorChain(ProcessorChain nextProcessorChain) {
-        this.nextProcessorChain = nextProcessorChain;
-    }
 
     /**
      * Do all actions associated with setting a <code>CrawlURI</code> as
@@ -427,13 +389,16 @@ implements FetchStatusCodes, ProcessorURI {
      * @param preq Object to set a prerequisite.
      * @throws URIException
      */
-    public void markPrerequisite(String preq,
-            ProcessorChain lastProcessorChain) throws URIException {
-        Link link = createLink(preq,Link.PREREQ_MISC,Link.PREREQ_HOP);
+    public void markPrerequisite(String preq) throws URIException {
+        UURI src = getUURI();
+        UURI dest = UURIFactory.getInstance(preq);
+        LinkContext lc = LinkContext.PREREQ_MISC;
+        Hop hop = Hop.PREREQ;
+        Link link = new Link(src, dest, lc, hop);
         setPrerequisiteUri(link);
         incrementDeferrals();
         setFetchStatus(S_DEFERRED);
-        skipToProcessorChain(lastProcessorChain);
+        skipToPostProcessing();
     }
 
     /**
@@ -669,9 +634,8 @@ implements FetchStatusCodes, ProcessorURI {
      *
      * @return the annotations set for this uri.
      */
-    public String getAnnotations() {
-        return (containsKey(A_ANNOTATIONS))?
-            getString(A_ANNOTATIONS): null;
+    public List<String> getAnnotations() {
+        return null; // TODO
     }
 
     /**
@@ -723,28 +687,6 @@ implements FetchStatusCodes, ProcessorURI {
         userAgent = string;
     }
 
-    /**
-     * Set which processor should be the next processor to process this uri
-     * instead of using the default next processor.
-     *
-     * @param processorChain the processor chain to skip to.
-     * @param processor the processor in the processor chain to skip to.
-     */
-    public void skipToProcessor(ProcessorChain processorChain,
-            Processor processor) {
-        setNextProcessorChain(processorChain);
-        setNextProcessor(processor);
-    }
-
-    /**
-     * Set which processor chain should be processing this uri next.
-     *
-     * @param processorChain the processor chain to skip to.
-     */
-    public void skipToProcessorChain(ProcessorChain processorChain) {
-        setNextProcessorChain(processorChain);
-        setNextProcessor(null);
-    }
 
     /**
      * For completed HTTP transactions, the length of the content-body.
@@ -1159,8 +1101,8 @@ implements FetchStatusCodes, ProcessorURI {
      * 
      * @return Collection of all discovered outbound Links
      */
-    public Collection<Link> getOutLinks() {
-        return Transform.subclasses(outLinks, Link.class);
+    public List<Link> getOutLinks() {
+        return null; // TODO
     }
     
     /**
@@ -1229,80 +1171,7 @@ implements FetchStatusCodes, ProcessorURI {
         return this.outLinks.size();
     }
 
-    /**
-     * Convenience method for creating a Link discovered at this URI
-     * with the given string and context
-     * 
-     * @param url
-     *            String to use to create Link
-     * @param context
-     *            CharSequence context to use
-     * @param hopType
-     * @return Link.
-     * @throws URIException
-     *             if Link UURI cannot be constructed
-     */
-    public Link createLink(String url, CharSequence context,
-            char hopType) throws URIException {
-        return new Link(getUURI(), UURIFactory.getInstance(getUURI(),
-                url), context, hopType);
-    }
-    
-    /**
-     * Convenience method for creating a Link with the given string and
-     * context
-     * 
-     * @param url
-     *            String to use to create Link
-     * @param context
-     *            CharSequence context to use
-     * @param hopType
-     * @throws URIException
-     *             if Link UURI cannot be constructed
-     */
-    public void createAndAddLink(String url, CharSequence context,
-            char hopType) throws URIException {
-        addOutLink(createLink(url, context, hopType));
-    }
-
-    /**
-     * Convenience method for creating a Link with the given string and
-     * context, relative to a previously set base HREF if available (or
-     * relative to the current CrawlURI if no other base has been set)
-     * 
-     * @param url String URL to add as destination of link
-     * @param context String context where link was discovered
-     * @param hopType char hop-type indicator
-     * @throws URIException
-     */
-    public void createAndAddLinkRelativeToBase(String url,
-            CharSequence context, char hopType) throws URIException {
-        addOutLink(new Link(getUURI(), UURIFactory.getInstance(
-                getBaseURI(), url), context, hopType));
-    }
-    
-    /**
-     * Convenience method for creating a Link with the given string and
-     * context, relative to this CrawlURI's via UURI if available. (If
-     * a via is not available, falls back to using 
-     * #createAndAddLinkRelativeToBase.)
-     * 
-     * @param url String URL to add as destination of link
-     * @param context String context where link was discovered
-     * @param hopType char hop-type indicator
-     * @throws URIException
-     */
-    public void createAndAddLinkRelativeToVia(String url,
-            CharSequence context, char hopType) throws URIException {
-        if(getVia()!=null) {
-            addOutLink(new Link(getUURI(), UURIFactory.getInstance(
-                getVia(), url), context, hopType));
-        } else {
-            // if no 'via', fall back to base/self
-            createAndAddLinkRelativeToBase(url,context,hopType);
-        }
-    }
-    
+        
     /**
      * Set the (HTML) Base URI used for derelativizing internal URIs. 
      * 
@@ -1376,5 +1245,190 @@ implements FetchStatusCodes, ProcessorURI {
         return null;
     }
 
+    public boolean attachRfc2617Credential(String realm) {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
+    public boolean detachRfc2617Credential(String realm) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public Map<String, Object> getData() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String getDNSServerIPLabel() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public long getFetchBeginTime() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public long getFetchCompletedTime() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public FetchType getFetchType() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String getFrom() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Collection<Throwable> getNonFatalFailures() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Recorder getRecorder() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String getResolvedName() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean passedDNS() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean populateCredentials(HttpMethod method) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public void promoteCredentials() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setDNSServerIPLabel(String label) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setError(String msg) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setFetchBeginTime(long time) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setFetchCompletedTime(long time) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setFetchType(FetchType type) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setHttpMethod(HttpMethod method) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void skipToPostProcessing() {
+        // TODO Auto-generated method stub
+        
+    }
+
+
+    public void setForceRetire(boolean b) {
+        // TODO: Was a map attribute
+    }
+
+
+    public boolean isWaitReevaluated() {
+        return false; // TODO: Was a map attribute
+    }
+    
+    
+    public void setWaitReevaluated(boolean b) {
+        // TODO
+    }
+
+    
+    public static enum ContentState { CHANGED, UNCHANGED, UNKNOWN };
+    
+    public ContentState getContentState() {
+        return null; // TODO: Was a map attribute
+    }
+
+
+    public void setContentState(ContentState state) {
+        // TODO
+    }
+
+    
+    public long getFetchOverdueTime() {
+        return 0L; // TODO: Was a map attribute
+    }
+    
+    
+    public void setWaitInterval(long wi) {
+        // TODO: Was a map attribute
+    }
+
+    public CrawlHost getCrawlHost() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void requestCrawlPause() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setSeed(boolean seed) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void addUriError(URIException e, String uri) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public HttpMethod getHttpMethod() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public RobotsHonoringPolicy getRobotsHonoringPolicy() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean isLinkExtractionFinished() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public void setBaseURI(UURI base) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setLinkExtractionFinished(boolean b) {
+        // TODO Auto-generated method stub
+        
+    }
 }

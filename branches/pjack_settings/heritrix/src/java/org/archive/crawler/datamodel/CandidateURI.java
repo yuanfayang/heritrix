@@ -31,11 +31,16 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.HTMLLinkContext;
+import org.archive.crawler2.extractor.Hop;
+import org.archive.crawler2.extractor.Link;
+import org.archive.crawler2.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
@@ -60,12 +65,31 @@ import st.ata.util.HashtableAList;
  */
 public class CandidateURI
 implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
-    private static final long serialVersionUID = -7152937921526560388L;
+    private static final long serialVersionUID = -3L;
 
-    public static enum Priority { HIGHEST, HIGH, MEDIUM, NORMAL }
+    /** Highest scheduling priority.
+     * Before any others of its class.
+     */
+    public static final int HIGHEST = 0;
     
+    /** High scheduling priority.
+     * After any {@link #HIGHEST}.
+     */
+    public static final int HIGH = 1;
     
-    private Priority priority = Priority.NORMAL;
+    /** Medium priority.
+     * After any {@link #HIGH}.
+     */
+    public static final int MEDIUM = 2;
+    
+    /** Normal/low priority.
+     * Whenever/end of queue.
+     */
+    public static final int NORMAL = 3;
+
+    
+    private int schedulingDirective = NORMAL;
+
     
     /** 
      * Usuable URI under consideration. Transient to allow
@@ -98,7 +122,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     /**
      * Context of URI's discovery, as per the 'context' in Link
      */
-    private CharSequence viaContext;
+    private LinkContext viaContext;
     
     /**
      * Flexible dynamic attributes list.
@@ -154,7 +178,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
      * @param viaContext
      */
     public CandidateURI(UURI u, String pathFromSeed, UURI via,
-            CharSequence viaContext) {
+            LinkContext viaContext) {
         this.uuri = u;
         this.pathFromSeed = pathFromSeed;
         this.via = via;
@@ -207,7 +231,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     /**
      * @return CharSequence context in which this one was discovered
      */
-    public CharSequence getViaContext() {
+    public LinkContext getViaContext() {
         return this.viaContext;
     }
     
@@ -324,14 +348,14 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     /**
      * @return Returns the schedulingDirective.
      */
-    public Priority getSchedulingDirective() {
-        return priority;
+    public int getSchedulingDirective() {
+        return schedulingDirective;
     }
     /** 
      * @param priority The schedulingDirective to set.
      */
-    public void setSchedulingDirective(Priority priority) {
-        this.priority = priority;
+    public void setSchedulingDirective(int priority) {
+        this.schedulingDirective = priority;
     }
 
 
@@ -339,14 +363,14 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
      * @return True if needs immediate scheduling.
      */
     public boolean needsImmediateScheduling() {
-        return priority == Priority.HIGH;
+        return schedulingDirective == HIGH;
     }
 
     /**
      * @return True if needs soon but not top scheduling.
      */
     public boolean needsSoonScheduling() {
-        return priority == Priority.MEDIUM;
+        return schedulingDirective == MEDIUM;
     }
 
     /**
@@ -365,7 +389,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
         String path = getPathFromSeed();
         int transCount = 0;
         for(int i=path.length()-1;i>=0;i--) {
-            if(path.charAt(i)==Link.NAVLINK_HOP) {
+            if(path.charAt(i)==Hop.NAVLINK.getHopChar()) {
                 break;
             }
             transCount++;
@@ -389,8 +413,8 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
                 args[1]: "";
         UURI via = (args.length > 2 && !args[2].equals("-")) ?
                 UURIFactory.getInstance(args[2]) : null;
-        CharSequence viaContext = (args.length > 3 && !args[3].equals("-")) ?
-                args[2]: null;
+        LinkContext viaContext = (args.length > 3 && !args[3].equals("-")) ?
+                new HTMLLinkContext(args[2]): null;
         return new CandidateURI(UURIFactory.getInstance(args[0]),
                 pathFromSeeds, via, viaContext);
     }
@@ -415,7 +439,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
             (UURI)link.getDestination():
             UURIFactory.getInstance(baseUURI,
                 link.getDestination().toString());
-        CandidateURI newCaURI = new CandidateURI(u, getPathFromSeed() + link.getHopType(),
+        CandidateURI newCaURI = new CandidateURI(u, getPathFromSeed() + link.getHopType().getHopChar(),
                 getUURI(), link.getContext());
         newCaURI.inheritFrom(this);
         return newCaURI;
@@ -432,7 +456,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
      * @throws URIException
      */
     public CandidateURI createCandidateURI(UURI baseUURI, Link link,
-        Priority scheduling, boolean seed)
+        int scheduling, boolean seed)
     throws URIException {
         final CandidateURI caURI = createCandidateURI(baseUURI, link);
         caURI.setSchedulingDirective(scheduling);
@@ -535,6 +559,11 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
         return getAList().getKeys();
     }
     
+    
+    public Map<String,Object> getData() {
+        return null; // TODO
+    }
+    
     /**
      * @return True if this CandidateURI was result of a redirect:
      * i.e. Its parent URI redirected to here, this URI was what was in 
@@ -543,7 +572,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     public boolean isLocation() {
         return this.pathFromSeed != null && this.pathFromSeed.length() > 0 &&
             this.pathFromSeed.charAt(this.pathFromSeed.length() - 1) ==
-                Link.REFER_HOP;
+                Hop.REFER.getHopChar();
     }
 
     /**
@@ -701,4 +730,8 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
         return null; // FIXME
     }
 
+    
+    public ProcessorURI asProcessorURI() {
+        return null; // FIXME
+    }
 }
