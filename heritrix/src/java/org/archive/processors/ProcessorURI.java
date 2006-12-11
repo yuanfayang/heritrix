@@ -105,6 +105,7 @@ public interface ProcessorURI extends StateProvider {
     void setFetchStatus(int status);
     
     // Used to be a map attribute. May still want to be one.
+    HttpMethod getHttpMethod();
     void setHttpMethod(HttpMethod method);
     
 
