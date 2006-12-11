@@ -21,6 +21,7 @@ package org.archive.crawler.event;
 import java.io.File;
 
 import org.archive.crawler.framework.CrawlController;
+import org.archive.state.StateProvider;
 
 
 /**
@@ -96,5 +97,7 @@ public interface CrawlStatusListener {
      * that are let out of this checkpoint are assumed fatal
      * and terminate further checkpoint processing.
      */
-    public void crawlCheckpoint(File checkpointDir) throws Exception;
+    public void crawlCheckpoint(StateProvider provider,
+            File checkpointDir) throws Exception;
+
 }
