@@ -39,7 +39,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.Link;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.WriterPoolProcessor;
 import org.archive.io.WriterPoolMember;

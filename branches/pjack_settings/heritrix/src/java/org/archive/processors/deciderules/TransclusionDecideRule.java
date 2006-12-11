@@ -25,7 +25,7 @@
 package org.archive.processors.deciderules;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.Hop;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
@@ -84,7 +84,7 @@ public class TransclusionDecideRule extends DecideRule {
         }
         int count = 0;
         for (int i = hopsPath.length() - 1; i >= 0; i--) {
-            if (hopsPath.charAt(i) != Link.NAVLINK_HOP) {
+            if (hopsPath.charAt(i) != Hop.NAVLINK.getHopChar()) {
                 // TODO: count some hops for more (to bias against chains 
                 // of them, eg 'X' speculative links that might really be
                 // navlinks)

@@ -30,7 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.Link;
 import org.archive.net.UURI;
 
 /**

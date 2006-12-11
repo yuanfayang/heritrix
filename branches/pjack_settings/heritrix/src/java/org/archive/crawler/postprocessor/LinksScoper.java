@@ -35,7 +35,8 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.Hop;
+import org.archive.crawler2.extractor.Link;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessorURI;
@@ -228,7 +229,7 @@ implements FetchStatusCodes {
         if (curi.isSeed()
                 && (curi.getFetchStatus() == 301 ||
                     curi.getFetchStatus() == 302)
-                && wref.getHopType() == Link.REFER_HOP) {
+                && wref.getHopType() == Hop.REFER) {
             // Check if redirects from seeds should be treated as seeds.
             if (redirectsNewSeeds) {
                 return true;
@@ -246,7 +247,7 @@ implements FetchStatusCodes {
      */
     protected int getSchedulingFor(final CrawlURI curi, final Link wref,
             final int preferenceDepthHops) {
-        final char c = wref.getHopType();
+        final Hop c = wref.getHopType();
         if (LOGGER.isLoggable(Level.FINEST)) {
             LOGGER.finest(curi + " with path=" + curi.getPathFromSeed() +
                 " isSeed=" + curi.isSeed() + " with fetchStatus=" +
@@ -255,7 +256,7 @@ implements FetchStatusCodes {
         }
 
         switch (c) {
-            case Link.REFER_HOP:
+            case REFER:
                 // Treat redirects somewhat urgently
                 // This also ensures seed redirects remain seed priority
                 return (preferenceDepthHops >= 0 ? CandidateURI.HIGH :

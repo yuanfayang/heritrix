@@ -29,7 +29,9 @@ package org.archive.extractor;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.Hop;
+import org.archive.crawler2.extractor.Link;
+import org.archive.crawler2.extractor.LinkContext;
 import org.archive.net.UURIFactory;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
@@ -90,7 +92,7 @@ public class RegexpCSSLinkExtractor extends CharSequenceLinkExtractor {
                 // TODO: handle relative URIs?
                 try {
                     Link link = new Link(source, UURIFactory.getInstance(base,
-                            cssUri), Link.EMBED_MISC, Link.EMBED_HOP);
+                            cssUri), LinkContext.EMBED_MISC, Hop.EMBED);
                     next.addLast(link);
                 } catch (URIException e) {
                     extractErrorListener.noteExtractError(e, source, cssUri);

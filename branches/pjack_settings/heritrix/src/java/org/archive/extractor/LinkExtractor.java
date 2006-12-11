@@ -28,7 +28,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.Link;
 import org.archive.net.UURI;
 
 /**

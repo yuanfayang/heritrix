@@ -31,7 +31,10 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.extractor.Link;
+import org.archive.crawler2.extractor.HTMLLinkContext;
+import org.archive.crawler2.extractor.Hop;
+import org.archive.crawler2.extractor.Link;
+import org.archive.crawler2.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.util.DevUtils;
@@ -195,7 +198,7 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
             CharSequence value = cs.subSequence(start, end);
             if (attr.start(2) > -1) {
                 // HREF
-                CharSequence context = Link.elementContext(element, attr.group(2));
+                LinkContext context = new HTMLLinkContext(element, attr.group(2));
                 if(element.toString().equalsIgnoreCase(LINK)) {
                     // <LINK> elements treated as embeds (css, ico, etc)
                     processEmbed(value, context);
@@ -212,20 +215,20 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
                 }
             } else if (attr.start(3) > -1) {
                 // ACTION
-                CharSequence context = Link.elementContext(element, attr.group(3));
+                LinkContext context = new HTMLLinkContext(element, attr.group(3));
                 processLink(value, context);
             } else if (attr.start(4) > -1) {
                 // ON____
                 processScriptCode(value); // TODO: context?
             } else if (attr.start(5) > -1) {
                 // SRC etc.
-                CharSequence context = Link.elementContext(element, attr.group(5));
+                LinkContext context = new HTMLLinkContext(element, attr.group(5));
                 processEmbed(value, context);
             } else if (attr.start(6) > -1) {
                 // CODEBASE
                 // TODO: more HTML deescaping?
                 codebase = TextUtils.replaceAll(ESCAPED_AMP, value, AMP);
-                CharSequence context = Link.elementContext(element,attr.group(6));
+                LinkContext context = new HTMLLinkContext(element,attr.group(6));
                 processEmbed(codebase, context);
             } else if (attr.start(7) > -1) {
                 // CLASSID, DATA
@@ -259,7 +262,7 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
             } else if (attr.start(10) > -1) {
                 // VALUE
                 if(TextUtils.matches(LIKELY_URI_PATH, value)) {
-                    CharSequence context = Link.elementContext(element, attr.group(10));
+                    LinkContext context = new HTMLLinkContext(element, attr.group(10));
                     processLink(value, context);
                 }
 
@@ -292,7 +295,7 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
                 if (codebaseURI != null) {
                     res = codebaseURI.resolve(res).toString();
                 }
-                processEmbed(res, element); // TODO: include attribute too
+                processEmbed(res, new HTMLLinkContext(element.toString())); // TODO: include attribute too
             }
         } catch (URIException e) {
             extractErrorListener.noteExtractError(e,source,codebase);
@@ -318,13 +321,13 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
      * @param value
      * @param context
      */
-    protected void processLink(CharSequence value, CharSequence context) {
+    protected void processLink(CharSequence value, LinkContext context) {
         String link = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
 
         if(TextUtils.matches(JAVASCRIPT, link)) {
             processScriptCode(value.subSequence(11, value.length()));
         } else {
-            addLinkFromString(link, context,Link.NAVLINK_HOP);
+            addLinkFromString(link, context, Hop.NAVLINK);
         }
     }
 
@@ -332,19 +335,19 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
      * @param uri
      * @param context
      */
-    private void addLinkFromString(String uri, CharSequence context, char hopType) {
+    private void addLinkFromString(String uri, LinkContext context, Hop hop) {
         try {
             Link link = new Link(source, UURIFactory.getInstance(
-                    base, uri), context, hopType);
+                    base, uri), context, hop);
             next.addLast(link);
         } catch (URIException e) {
            extractErrorListener.noteExtractError(e,source,uri);
         }
     }
 
-    protected long processEmbed(CharSequence value, CharSequence context) {
+    protected long processEmbed(CharSequence value, LinkContext context) {
         String embed = TextUtils.replaceAll(ESCAPED_AMP, value, "&");
-        addLinkFromString(embed, context,Link.EMBED_HOP);
+        addLinkFromString(embed, context, Hop.EMBED);
         return 1;
     }
 
@@ -403,7 +406,11 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
         } else if ("refresh".equalsIgnoreCase(httpEquiv) && content != null) {
             String refreshUri = content.substring(content.indexOf("=") + 1);
             try {
-                Link refreshLink = new Link(source, UURIFactory.getInstance(base,refreshUri), Link.elementContext("meta",httpEquiv),Link.REFER_HOP);
+                Link refreshLink = new Link(
+                        source, 
+                        UURIFactory.getInstance(base,refreshUri), 
+                        new HTMLLinkContext("meta", httpEquiv),
+                        Hop.REFER);
                 next.addLast(refreshLink);
             } catch (URIException e) {
                 extractErrorListener.noteExtractError(e,source,refreshUri);
