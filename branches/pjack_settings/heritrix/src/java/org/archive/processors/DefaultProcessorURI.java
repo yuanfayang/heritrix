@@ -70,6 +70,7 @@ implements ProcessorURI {
 
     private int fetchStatus;
     private FetchType fetchType = FetchType.UNKNOWN;
+    private HttpMethod httpMethod;
     
     private String pathFromSeed;
     
@@ -306,8 +307,7 @@ implements ProcessorURI {
     }
 
     public void setHttpMethod(HttpMethod method) {
-        // TODO Auto-generated method stub
-
+        this.httpMethod = method;
     }
 
     public void setLinkExtractionFinished(boolean b) {
@@ -328,4 +328,7 @@ implements ProcessorURI {
     }
 
 
+    public HttpMethod getHttpMethod() {
+        return this.httpMethod;
+    }
 }
