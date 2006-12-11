@@ -25,7 +25,7 @@ package org.archive.settings.file;
 
 import java.io.StringReader;
 
-import org.archive.crawler2.extractor.ExtractorHTML;
+import org.archive.processors.extractor.ExtractorHTML;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;

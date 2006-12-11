@@ -21,7 +21,7 @@
  * To change the template for this generated file go to
  * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
  */
-package org.archive.crawler2.extractor;
+package org.archive.processors.extractor;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -34,8 +34,8 @@ import org.archive.processors.ProcessorURI;
 import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
-import static org.archive.crawler2.extractor.LinkContext.JS_MISC;
-import static org.archive.crawler2.extractor.Hop.SPECULATIVE;
+import static org.archive.processors.extractor.Hop.SPECULATIVE;
+import static org.archive.processors.extractor.LinkContext.JS_MISC;
 
 /**
  * Processes Javascript files for strings that are likely to be

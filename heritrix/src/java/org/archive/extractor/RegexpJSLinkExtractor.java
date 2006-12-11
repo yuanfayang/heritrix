@@ -28,11 +28,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler2.extractor.Hop;
-import org.archive.crawler2.extractor.Link;
-import org.archive.crawler2.extractor.LinkContext;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.extractor.Hop;
+import org.archive.processors.extractor.Link;
+import org.archive.processors.extractor.LinkContext;
 import org.archive.util.TextUtils;
 
 /**

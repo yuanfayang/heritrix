@@ -25,13 +25,13 @@ package org.archive.crawler.scope;
 
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler2.extractor.Hop;
 //import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
+import org.archive.processors.extractor.Hop;
 import org.archive.state.Key;
 
 

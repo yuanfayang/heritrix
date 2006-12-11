@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler2.extractor;
+package org.archive.processors.extractor;
 
 import java.io.Serializable;
 

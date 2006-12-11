@@ -19,7 +19,7 @@
  * Created on Jul 14, 2003
  *
  */
-package org.archive.crawler2.extractor;
+package org.archive.processors.extractor;
 
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfName;

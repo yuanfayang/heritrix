@@ -28,7 +28,7 @@ import java.util.List;
 
 import org.archive.processors.deciderules.DecideRule;
 import org.archive.processors.deciderules.DecideRuleSequence;
-import org.archive.crawler2.extractor.ExtractorHTML;
+import org.archive.processors.extractor.ExtractorHTML;
 import org.archive.settings.SingleSheet;
 
 public class PathChangerTest extends PathTestBase {

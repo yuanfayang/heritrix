@@ -24,8 +24,8 @@
 */
 package org.archive.processors.deciderules;
 
-import org.archive.crawler2.extractor.Hop;
 import org.archive.processors.ProcessorURI;
+import org.archive.processors.extractor.Hop;
 
 
 /**

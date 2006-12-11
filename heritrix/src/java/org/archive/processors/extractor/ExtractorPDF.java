@@ -19,7 +19,7 @@
  * Created on Jul 11, 2003
  *
  */
-package org.archive.crawler2.extractor;
+package org.archive.processors.extractor;
 
 import java.io.File;
 import java.io.IOException;
