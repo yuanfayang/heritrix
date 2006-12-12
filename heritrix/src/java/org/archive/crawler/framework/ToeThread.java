@@ -242,8 +242,8 @@ Reporter, ProgressStatisticsReporter, HostResolver {
         String context = "unknown";
 		if(currentCuri!=null) {
             // update fetch-status, saving original as annotation
-            currentCuri.addAnnotation("err="+err.getClass().getName());
-            currentCuri.addAnnotation("os"+currentCuri.getFetchStatus());
+            currentCuri.getAnnotations().add("err="+err.getClass().getName());
+            currentCuri.getAnnotations().add("os"+currentCuri.getFetchStatus());
 			currentCuri.setFetchStatus(S_SERIOUS_ERROR);
             context = currentCuri.singleLineReport() + " in " + currentProcessorName;
 		}
@@ -322,8 +322,8 @@ Reporter, ProgressStatisticsReporter, HostResolver {
         e.printStackTrace(System.err);
         currentCuri.setFetchStatus(S_RUNTIME_EXCEPTION);
         // store exception temporarily for logging
-        currentCuri.addAnnotation("err="+e.getClass().getName());
-        currentCuri.putObject(A_RUNTIME_EXCEPTION, e);
+        currentCuri.getAnnotations().add("err="+e.getClass().getName());
+        currentCuri.getData().put(A_RUNTIME_EXCEPTION, e);
         String message = "Problem " + e + 
                 " occured when trying to process '"
                 + currentCuri.toString()

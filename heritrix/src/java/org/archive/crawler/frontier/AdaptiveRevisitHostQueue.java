@@ -235,8 +235,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             if (size > 0) {
                 // If size > 0 then we just opened an existing DB.
                 // Set nextReadyTime;
-                nextReadyTime = peek().getLong(
-                        A_TIME_OF_NEXT_PROCESSING);
+                nextReadyTime = peek().getNextProcessingTime();
                 // Move any items in processingUriDB into the primariUriDB, ensure
                 // that they wind up on top!
                 flushProcessingURIs();
@@ -288,8 +287,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             
             OperationStatus opStatus = strictAdd(curi,false);
             
-            long curiProcessingTime = curi.getLong(
-                    A_TIME_OF_NEXT_PROCESSING);
+            long curiProcessingTime = curi.getNextProcessingTime();
     
             if (opStatus == OperationStatus.KEYEXIST){ 
                 // Override an existing URI
@@ -299,8 +297,9 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                 // will promote the URI to an earlier processing time.
                 boolean update = false;
                 CrawlURI curiExisting = getCrawlURI(curi.toString());
-                long oldCuriProcessingTime = curiExisting.getLong(
-                        A_TIME_OF_NEXT_PROCESSING);
+                long oldCuriProcessingTime = 
+                	curiExisting.getNextProcessingTime();
+
                 if(curi.getSchedulingDirective() < 
                         curiExisting.getSchedulingDirective()){
                     // New scheduling directive is of higher importance,
@@ -315,9 +314,8 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                     // the original and either overrideSetTimeOnDups was set
                     // or update is true, meaning a higher priority scheduling
                     // directive for this URI.
-                    curiExisting.putLong(
-                            A_TIME_OF_NEXT_PROCESSING,
-                            curiProcessingTime);
+                    curiExisting.setNextProcessingTime(curiProcessingTime);
+
                     update = true;
                 }
                 if(update){
@@ -413,8 +411,8 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                 strictAdd(curi,false); // Ignore any duplicates. Go with the
                                        // ones already in the queue.
                 // Update nextReadyTime if needed.
-                long curiNextReadyTime = curi.getLong(
-                        A_TIME_OF_NEXT_PROCESSING);
+                long curiNextReadyTime = curi.getNextProcessingTime();
+
                 if(curiNextReadyTime<nextReadyTime){
                     setNextReadyTime(curiNextReadyTime);
                 }
@@ -668,8 +666,8 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                 }
 
                 // Check if we need to update nextReadyTime
-                long curiTimeOfNextProcessing = curi.getLong(
-                        A_TIME_OF_NEXT_PROCESSING);
+                long curiTimeOfNextProcessing = curi.getNextProcessingTime();
+
                 if(nextReadyTime > curiTimeOfNextProcessing){
                     setNextReadyTime(curiTimeOfNextProcessing);
                 }
@@ -741,8 +739,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             CrawlURI top = peek();
             long nextReady = Long.MAX_VALUE;
             if(top != null){
-                nextReady = top.getLong(
-                        A_TIME_OF_NEXT_PROCESSING);
+                nextReady = top.getNextProcessingTime();
             }
             inProcessing++;
             setNextReadyTime(nextReady);
@@ -1082,8 +1079,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             }
             ret.append("  Next processing:   ");
             long nextProcessing = 
-                tmp.getLong(A_TIME_OF_NEXT_PROCESSING) - 
-                System.currentTimeMillis();
+                tmp.getNextProcessingTime() - System.currentTimeMillis();
             if(nextProcessing < 0){
                 ret.append("Overdue  ");
                 nextProcessing = nextProcessing*-1;
@@ -1094,17 +1090,17 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
                 ret.append("  Last fetch status: " + 
                         tmp.getFetchStatus() + "\n");
             }
-            if(tmp.containsKey(A_WAIT_INTERVAL)){
+            if(tmp.containsDataKey(A_WAIT_INTERVAL)){
                 ret.append("  Wait interval:     " + 
                         ArchiveUtils.formatMillisecondsToConventional(
-                                tmp.getLong(A_WAIT_INTERVAL)) + "\n");
+                                (Long)tmp.getData().get(A_WAIT_INTERVAL)) + "\n");
             }
-            if(tmp.containsKey(A_NUMBER_OF_VISITS)){
-                ret.append("  Visits:            " + tmp.getInt(
+            if(tmp.containsDataKey(A_NUMBER_OF_VISITS)){
+                ret.append("  Visits:            " + tmp.getData().get(
                         A_NUMBER_OF_VISITS) + "\n");
             }
-            if(tmp.containsKey(A_NUMBER_OF_VERSIONS)){
-                ret.append("  Versions:          " + tmp.getInt(
+            if(tmp.containsDataKey(A_NUMBER_OF_VERSIONS)){
+                ret.append("  Versions:          " + tmp.getData().get(
                         A_NUMBER_OF_VERSIONS) + "\n");
             }
             
@@ -1167,7 +1163,7 @@ implements AdaptiveRevisitAttributeConstants, FrontierGroup {
             
             indexKeyOutput.writeInt(directiveToWrite);
             long timeOfNextProcessing =
-                curi.getLong(A_TIME_OF_NEXT_PROCESSING);
+                curi.getNextProcessingTime();
             
             indexKeyOutput.writeLong(timeOfNextProcessing);
             return true;

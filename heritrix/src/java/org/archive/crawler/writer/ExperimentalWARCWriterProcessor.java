@@ -177,7 +177,7 @@ FetchStatusCodes, WARCConstants {
             // 'transaction'.
             final URI baseid = getRecordID();
             final String timestamp =
-                ArchiveUtils.get14DigitDate(curi.getLong(A_FETCH_BEGAN_TIME));
+                ArchiveUtils.get14DigitDate(curi.getFetchBeginTime());
             if (lowerCaseScheme.startsWith("http")) {
                 // Add named fields for ip, checksum, and relate the metadata
                 // and request to the resource field.
@@ -197,7 +197,7 @@ FetchStatusCodes, WARCConstants {
                 	baseid, curi, r);
                 writeMetadata(w, timestamp, baseid, curi, r);
             } else if (lowerCaseScheme.equals("dns")) {
-                String ip = curi.getString(A_DNS_SERVER_IP_LABEL);
+                String ip = (String)curi.getData().get(A_DNS_SERVER_IP_LABEL);
                 ANVLRecord r = null;
                 if (ip != null && ip.length() > 0) {
                 	r = new ANVLRecord();
@@ -275,12 +275,13 @@ FetchStatusCodes, WARCConstants {
                 r.addLabelValue("outlink", link.toString());
             }
         }
-        if (curi.isTruncatedFetch()) {
-            String value = curi.isTimeTruncatedFetch()?
+        if (isTruncatedFetch(curi)) {
+        	Collection<String> anno = curi.getAnnotations();
+            String value = anno.contains(TIMER_TRUNC) ?
                     NAMED_FIELD_TRUNCATED_VALUE_TIME:
-                curi.isLengthTruncatedFetch()?
+                anno.contains(LENGTH_TRUNC) ?
                         NAMED_FIELD_TRUNCATED_VALUE_LEN:
-                curi.isHeaderTruncatedFetch()?
+                anno.contains(HEADER_TRUNC) ?
                         NAMED_FIELD_TRUNCATED_VALUE_HEAD:
                 NAMED_FIELD_TRUNCATED_VALUE_UNSPECIFIED;
                       
@@ -300,6 +301,14 @@ FetchStatusCodes, WARCConstants {
         w.writeMetadataRecord(curi.toString(), timestamp, ANVLRecord.MIMETYPE,
             uid, namedFields, new ByteArrayInputStream(b), b.length);
         return uid;
+    }
+    
+    
+    private boolean isTruncatedFetch(CrawlURI curi) {
+    	Collection<String> anno = curi.getAnnotations();
+    	return anno.contains(LENGTH_TRUNC) 
+    	 || anno.contains(TIMER_TRUNC) 
+    	 || anno.contains(HEADER_TRUNC);
     }
     
     protected URI getRecordID() throws IOException {

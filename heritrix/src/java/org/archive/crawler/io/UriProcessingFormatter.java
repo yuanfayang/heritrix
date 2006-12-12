@@ -26,7 +26,8 @@ package org.archive.crawler.io;
 
 import it.unimi.dsi.mg4j.util.MutableString;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
@@ -81,9 +82,9 @@ extends Formatter implements CoreAttributeConstants {
 
         long time = System.currentTimeMillis();
         String arcTimeAndDuration;
-        if(curi.containsKey(A_FETCH_COMPLETED_TIME)) {
-            long completedTime = curi.getLong(A_FETCH_COMPLETED_TIME);
-            long beganTime = curi.getLong(A_FETCH_BEGAN_TIME);
+        if(curi.containsDataKey(A_FETCH_COMPLETED_TIME)) {
+            long completedTime = curi.getFetchCompletedTime();
+            long beganTime = curi.getFetchBeginTime();
             arcTimeAndDuration = ArchiveUtils.get17DigitDate(beganTime) + "+"
                     + Long.toString(completedTime - beganTime);
         } else {
@@ -97,8 +98,8 @@ extends Formatter implements CoreAttributeConstants {
             digest = Base32.encode((byte [])digest);
         }
 
-        String sourceTag = curi.containsKey(A_SOURCE_TAG) 
-                ? curi.getString(A_SOURCE_TAG)
+        String sourceTag = curi.containsDataKey(A_SOURCE_TAG) 
+                ? curi.getSourceTag()
                 : null;
                 
         this.buffer.length(0);
@@ -127,12 +128,13 @@ extends Formatter implements CoreAttributeConstants {
             .append(" ")
             .append(checkForNull(sourceTag))
             .append(" ");
-        List<String> anno = curi.getAnnotations();
+        Collection<String> anno = curi.getAnnotations();
         if (anno.size() > 0) {
-            buffer.append(anno.get(0));
-            for (int i = 1; i < anno.size(); i++) {
-                buffer.append(',');
-                buffer.append(anno.get(1));
+        	Iterator<String> iter = anno.iterator();
+            buffer.append(iter.next());
+            while (iter.hasNext()) {
+            	buffer.append(',');
+            	buffer.append(iter.next());
             }
         }
             

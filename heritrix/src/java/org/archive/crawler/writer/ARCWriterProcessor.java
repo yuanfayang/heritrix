@@ -155,7 +155,7 @@ FetchStatusCodes {
             	InputStream is = curi.getHttpRecorder().getRecordedInput().
             		getReplayInputStream();
                 write(curi, recordLength, is,
-                    curi.getString(A_DNS_SERVER_IP_LABEL));
+                    (String)curi.getData().get(A_DNS_SERVER_IP_LABEL));
             } else if ((scheme.equals("http") || scheme.equals("https")) &&
             		curi.getFetchStatus() > 0 && curi.isHttpTransaction()) {
                 InputStream is = curi.getHttpRecorder().getRecordedInput().
@@ -198,11 +198,11 @@ FetchStatusCodes {
         try {
             if (in instanceof ReplayInputStream) {
                 w.write(curi.toString(), curi.getContentType(),
-                    ip, curi.getLong(A_FETCH_BEGAN_TIME),
+                    ip, curi.getFetchBeginTime(),
                     recordLength, (ReplayInputStream)in);
             } else {
                 w.write(curi.toString(), curi.getContentType(),
-                    ip, curi.getLong(A_FETCH_BEGAN_TIME),
+                    ip, curi.getFetchBeginTime(),
                     recordLength, in);
             }
         } catch (IOException e) {

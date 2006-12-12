@@ -100,15 +100,9 @@ implements AdaptiveRevisitAttributeConstants {
          * peek(); All are added later then current time!
          */
 
-        curis[0].putLong(
-                A_TIME_OF_NEXT_PROCESSING,
-                System.currentTimeMillis()); // now
-        curis[1].putLong(
-                A_TIME_OF_NEXT_PROCESSING,
-                System.currentTimeMillis()+5000); // in 5 sec
-        curis[2].putLong(
-                A_TIME_OF_NEXT_PROCESSING,
-                System.currentTimeMillis()+20000); // in 20 sec.
+        curis[0].setNextProcessingTime(System.currentTimeMillis());
+        curis[1].setNextProcessingTime(System.currentTimeMillis()+5000); // in 5 sec
+        curis[2].setNextProcessingTime(System.currentTimeMillis()+20000); // in 20 sec.
         
         hq.add(curis[0],false);
         assertEquals("First CrawlURI should be top",curis[0].toString(),
@@ -144,8 +138,8 @@ implements AdaptiveRevisitAttributeConstants {
         assertEquals("Size of HQ should now be 2",2,hq.getSize());
 
         // Return it with next fetch time in the future.
-        curi.putLong(A_TIME_OF_NEXT_PROCESSING,
-            hq.peek().getLong(A_TIME_OF_NEXT_PROCESSING)
+        curi.setNextProcessingTime(
+            hq.peek().getNextProcessingTime()
                         +100000); // 100 sec behind current top.
         hq.update(curi,false,0);
         assertEquals("Second CrawlURI should be still be top",
@@ -180,16 +174,13 @@ implements AdaptiveRevisitAttributeConstants {
          * this fails as it should (i.e. URIs time of next processing remains 
          * unchanged).
          */
-        curis[2].putLong(
-                A_TIME_OF_NEXT_PROCESSING,
-                curis[1].getLong(A_TIME_OF_NEXT_PROCESSING)
-                            -1000); // 1 sec. prior to current top 
+        curis[2].setNextProcessingTime(curis[1].getNextProcessingTime() - 1000);
+                // 1 sec. prior to current top 
         hq.add(curis[2],true);
         assertEquals("Size of HQ should still be 3",hq.getSize(),3);
         assertEquals("Third CrawlURI should be now be top",
                 curis[2].toString(), hq.peek().toString());
-        curis[2].putLong(A_TIME_OF_NEXT_PROCESSING,
-                curis[1].getLong(A_TIME_OF_NEXT_PROCESSING)
+        curis[2].setNextProcessingTime(curis[1].getNextProcessingTime()
                             +10000); // 10 sec. later 
         hq.add(curis[2],true);
         assertEquals("Size of HQ should still be 3",hq.getSize(),3);
@@ -223,9 +214,8 @@ implements AdaptiveRevisitAttributeConstants {
          *
          */
         
-        curis[3].putLong(A_TIME_OF_NEXT_PROCESSING,
-                curis[1].getLong(A_TIME_OF_NEXT_PROCESSING) 
-                        - 1); // 1 msec. ahead of current top (order [2] 3 1 0) 
+        curis[3].setNextProcessingTime(curis[1].getNextProcessingTime() - 1); 
+        // 1 msec. ahead of current top (order [2] 3 1 0) 
         hq.add(curis[3],false);
         assertEquals("Size of HQ should now be 4",4,hq.getSize());
         
@@ -341,8 +331,8 @@ implements AdaptiveRevisitAttributeConstants {
          */
         
         hq.update(curis[2],true,System.currentTimeMillis() + 1000000); // 10sec
-        curis[3].putLong(A_TIME_OF_NEXT_PROCESSING,
-                curis[1].getLong(A_TIME_OF_NEXT_PROCESSING) 
+        curis[3].setNextProcessingTime(
+                curis[1].getNextProcessingTime() 
                         + 1000); // 1 sec. behind of current top 
         assertTrue("HQ should still be ready, is " + hq.getStateByName(),
                 hq.getState()==AdaptiveRevisitHostQueue.HQSTATE_READY);

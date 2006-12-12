@@ -114,7 +114,7 @@ implements AdaptiveRevisitAttributeConstants {
      * Constructor.
      */
     public WaitEvaluator() {
-        CrawlURI.addAlistPersistentMember(A_WAIT_INTERVAL);
+        CrawlURI.getPersistenetDataKeys().add(A_WAIT_INTERVAL);
     }
 
     
@@ -150,8 +150,8 @@ implements AdaptiveRevisitAttributeConstants {
             * 1000L;
 
             // Retrieve wait interval
-            if(curi.containsKey(A_WAIT_INTERVAL)){
-                waitInterval =  curi.getLong(A_WAIT_INTERVAL); 
+            if(curi.containsDataKey(A_WAIT_INTERVAL)) {
+                waitInterval = (Long)curi.getData().get(A_WAIT_INTERVAL); 
 
                 // Should override time be taken into account?
                 boolean useOverrideTime = curi.get(this, USE_OVERDUE_TIME); 

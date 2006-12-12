@@ -29,9 +29,11 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -299,7 +301,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             curi = (CrawlURI) caUri;
         } else {
             curi = CrawlURI.from(caUri,System.currentTimeMillis());
-            curi.putLong(A_TIME_OF_NEXT_PROCESSING,
+            curi.getData().put(A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis());
             // New CrawlURIs get 'current time' as the time of next processing.
         }
@@ -337,7 +339,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
 
         // Finally, allow curi to be fetched right now 
         // (while not overriding overdue items)
-        curi.putLong(A_TIME_OF_NEXT_PROCESSING,
+        curi.getData().put(A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis());
         
         try {
@@ -442,14 +444,14 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             CrawlURI curi = hq.next();
             // Populate CURI with 'transient' variables such as server.
             logger.fine("Issuing " + curi.toString());
-            long temp = curi.getLong(A_TIME_OF_NEXT_PROCESSING);
+            long temp = (Long)curi.getData().get(A_TIME_OF_NEXT_PROCESSING);
             long currT = System.currentTimeMillis();
             long overdue = (currT-temp);
             if(logger.isLoggable(Level.FINER)){
                 String waitI = "not set";
-                if(curi.containsKey(A_WAIT_INTERVAL)){
+                if(curi.containsDataKey(A_WAIT_INTERVAL)){
                     waitI = ArchiveUtils.formatMillisecondsToConventional(
-                            curi.getLong(A_WAIT_INTERVAL));
+                            (Long)curi.getData().get(A_WAIT_INTERVAL));
                 }
                 logger.finer("Wait interval: " + waitI + 
                         ", Time of next proc: " + temp +
@@ -461,7 +463,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
                 logger.severe("Time overdue for " + curi.toString() + 
                         "is negative (" + overdue + ")!");
             }
-            curi.putLong(A_FETCH_OVERDUE,overdue);
+            curi.getData().put(A_FETCH_OVERDUE, overdue);
             return curi;
         } catch (IOException e) {
             // TODO: Need to handle this in an intelligent manner. 
@@ -534,7 +536,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             logger.warning("RTE in innerFinished() " +
                 e.getMessage());
             e.printStackTrace();
-            curi.putObject(A_RUNTIME_EXCEPTION, e);
+            curi.getData().put(A_RUNTIME_EXCEPTION, e);
             failureDisposition(curi);
         } catch (AttributeNotFoundException e) {
             logger.severe(e.getMessage());
@@ -547,16 +549,13 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @param curi CrawlURI with errors.
      */
     private void logLocalizedErrors(CrawlURI curi) {
-        if(curi.containsKey(A_LOCALIZED_ERRORS)) {
-            List localErrors = (List)curi.getObject(A_LOCALIZED_ERRORS);
-            Iterator iter = localErrors.iterator();
-            while(iter.hasNext()) {
-                Object array[] = {curi, iter.next()};
-                controller.localErrors.log(Level.WARNING,
-                    curi.getUURI().toString(), array);
-            }
+        if (curi.containsDataKey(A_LOCALIZED_ERRORS)) {
+        	Collection<Throwable> x = curi.getNonFatalFailures();
+        	for (Throwable e: x) {
+        		controller.localErrors.log(Level.WARNING, curi.toString(), e);
+        	}
             // once logged, discard
-            curi.remove(A_LOCALIZED_ERRORS);
+            curi.getData().remove(A_LOCALIZED_ERRORS);
         }
     }
     
@@ -567,28 +566,29 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     protected void successDisposition(CrawlURI curi) {
         curi.aboutToLog();
+        Map<String,Object> cdata = curi.getData();
 
         long waitInterval = 0;
         
-        if(curi.containsKey(A_WAIT_INTERVAL)){
-            waitInterval = curi.getLong(A_WAIT_INTERVAL);
-            curi.addAnnotation("wt:" + 
+        if(curi.containsDataKey(A_WAIT_INTERVAL)){
+            waitInterval = (Long)cdata.get(A_WAIT_INTERVAL);
+            curi.getAnnotations().add("wt:" + 
                     ArchiveUtils.formatMillisecondsToConventional(
                             waitInterval));
         } else {
             logger.severe("Missing wait interval for " + curi.toString() +
                     " WaitEvaluator may be missing.");
         }
-        if(curi.containsKey(A_NUMBER_OF_VISITS)){
-            curi.addAnnotation(curi.getInt(A_NUMBER_OF_VISITS) + "vis");
+        if(curi.containsDataKey(A_NUMBER_OF_VISITS)){
+            curi.getAnnotations().add(cdata.get(A_NUMBER_OF_VISITS) + "vis");
         }
-        if(curi.containsKey(A_NUMBER_OF_VERSIONS)){
-            curi.addAnnotation(curi.getInt(A_NUMBER_OF_VERSIONS) + "ver");
+        if(curi.containsDataKey(A_NUMBER_OF_VERSIONS)){
+            curi.getAnnotations().add(cdata.get(A_NUMBER_OF_VERSIONS) + "ver");
         }
-        if(curi.containsKey(A_FETCH_OVERDUE)){
-            curi.addAnnotation("ov:" +
+        if(curi.containsDataKey(A_FETCH_OVERDUE)){
+            curi.getAnnotations().add("ov:" +
                     ArchiveUtils.formatMillisecondsToConventional(
-                    (curi.getLong(A_FETCH_OVERDUE))));
+                    (Long)cdata.get(A_FETCH_OVERDUE)));
         }
         
         Object array[] = { curi };
@@ -607,8 +607,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         curi.setSchedulingDirective(CandidateURI.NORMAL);
 
         // Set time of next processing
-        curi.putLong(A_TIME_OF_NEXT_PROCESSING,
-                System.currentTimeMillis()+waitInterval);
+        cdata.put(A_TIME_OF_NEXT_PROCESSING, 
+        		System.currentTimeMillis() + waitInterval);
         
         
         /* Update HQ */
@@ -617,8 +617,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         // Wake up time is based on the time when a fetch was completed + the
         // calculated snooze time for politeness. If the fetch completion time
         // is missing, we'll use current time.
-        long wakeupTime = (curi.containsKey(A_FETCH_COMPLETED_TIME)?
-                curi.getLong(A_FETCH_COMPLETED_TIME):
+        long wakeupTime = (curi.containsDataKey(A_FETCH_COMPLETED_TIME)?
+                (Long)cdata.get(A_FETCH_COMPLETED_TIME):
                     (new Date()).getTime()) + calculateSnoozeTime(curi);
         
         // Ready the URI for reserialization.
@@ -647,16 +647,16 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
             throws AttributeNotFoundException {
         long delay = 0;
         if(errorWait){
-            if(curi.containsKey(A_RETRY_DELAY)) {
-                delay = curi.getLong(A_RETRY_DELAY);
+            if(curi.containsDataKey(A_RETRY_DELAY)) {
+                delay = (Long)curi.getData().get(A_RETRY_DELAY);
             } else {
                 // use ARFrontier default
                 delay = curi.get(this, RETRY_DELAY); 
             }
         }
         
-        long retryTime = (curi.containsKey(A_FETCH_COMPLETED_TIME)?
-                curi.getLong(A_FETCH_COMPLETED_TIME):
+        long retryTime = (curi.containsDataKey(A_FETCH_COMPLETED_TIME)?
+                (Long)curi.getData().get(A_FETCH_COMPLETED_TIME):
                     (new Date()).getTime()) + delay;
         
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
@@ -703,7 +703,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         // Put the failed URI at the very back of the queue.
         curi.setSchedulingDirective(CandidateURI.NORMAL);
         // TODO: reconsider this
-        curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE);
+        curi.getData().put(A_TIME_OF_NEXT_PROCESSING, Long.MAX_VALUE);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
         // Ready the URI for serialization.
@@ -739,7 +739,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         
         // Todo: consider timout before retrying disregarded elements.
         //       Possibly add a setting to the WaitEvaluators?
-        curi.putLong(A_TIME_OF_NEXT_PROCESSING,Long.MAX_VALUE); 
+        curi.getData().put(A_TIME_OF_NEXT_PROCESSING, Long.MAX_VALUE); 
         curi.setSchedulingDirective(CandidateURI.NORMAL);
 
         AdaptiveRevisitHostQueue hq = hostQueues.getHQ(curi.getClassKey());
@@ -868,13 +868,13 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      */
     protected long calculateSnoozeTime(CrawlURI curi) {
         long durationToWait = 0;
-        if (curi.containsKey(A_FETCH_BEGAN_TIME)
-            && curi.containsKey(A_FETCH_COMPLETED_TIME)) {
+        if (curi.containsDataKey(A_FETCH_BEGAN_TIME)
+            && curi.containsDataKey(A_FETCH_COMPLETED_TIME)) {
             
             
-                long completeTime = curi.getLong(A_FETCH_COMPLETED_TIME);
+                long completeTime = curi.getFetchCompletedTime();
                 long durationTaken = 
-                    (completeTime - curi.getLong(A_FETCH_BEGAN_TIME));
+                    (completeTime - curi.getFetchBeginTime());
                 
                 durationToWait = (long)(curi.get(this, DELAY_FACTOR) * durationTaken);
     

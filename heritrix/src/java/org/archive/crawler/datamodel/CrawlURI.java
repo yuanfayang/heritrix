@@ -28,6 +28,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
 import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
@@ -51,9 +53,6 @@ import org.archive.processors.fetcher.CrawlHost;
 import org.archive.state.Key;
 import org.archive.util.Base32;
 import org.archive.util.Recorder;
-
-import st.ata.util.AList;
-import st.ata.util.HashtableAList;
 
 
 /**
@@ -69,7 +68,7 @@ import st.ata.util.HashtableAList;
  * @author Gordon Mohr
  */
 public class CrawlURI extends CandidateURI
-implements FetchStatusCodes, ProcessorURI {
+implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
     private static final long serialVersionUID = 3L;
 
@@ -167,8 +166,8 @@ implements FetchStatusCodes, ProcessorURI {
      * Any key mentioned in this list will not be cleared out at the end
      * of a pass down the processing chain.
      */
-    private static final List<Object> alistPersistentMember
-     = new CopyOnWriteArrayList<Object>(
+    private static final Collection<String> persistentKeys
+     = new CopyOnWriteArrayList<String>(
             new String [] {A_CREDENTIAL_AVATARS_KEY});
 
     /**
@@ -201,7 +200,7 @@ implements FetchStatusCodes, ProcessorURI {
         ordinal = o;
         setIsSeed(caUri.isSeed());
         setSchedulingDirective(caUri.getSchedulingDirective());
-        setAList(caUri.getAList());
+        this.data = caUri.data;
     }
 
     /**
@@ -410,7 +409,7 @@ implements FetchStatusCodes, ProcessorURI {
      * @param link Link to set as prereq.
      */
     public void setPrerequisiteUri(Object link) {
-        putObject(A_PREREQUISITE_URI, link);
+        getData().put(A_PREREQUISITE_URI, link);
     }
 
     /**
@@ -422,14 +421,14 @@ implements FetchStatusCodes, ProcessorURI {
      * @return the prerequisite for this URI or null if no prerequisite.
      */
     public Object getPrerequisiteUri() {
-        return getObject(A_PREREQUISITE_URI);
+        return getData().get(A_PREREQUISITE_URI);
     }
     
     /**
      * @return True if this CrawlURI has a prerequisite.
      */
     public boolean hasPrerequisiteUri() {
-        return containsKey(A_PREREQUISITE_URI);
+        return containsDataKey(A_PREREQUISITE_URI);
     }
 
     /**
@@ -525,7 +524,7 @@ implements FetchStatusCodes, ProcessorURI {
      * This methods removes the attribute list.
      */
     public void stripToMinimal() {
-        clearAList();
+    	data = null;
     }
 
     /** Get the size in bytes of this URI's content.
@@ -537,36 +536,6 @@ implements FetchStatusCodes, ProcessorURI {
         return contentSize;
     }
 
-    /**
-     * Make note of a non-fatal error, local to a particular Processor,
-     * which should be logged somewhere, but allows processing to continue.
-     *
-     * This is how you add to the local-error log (the 'localized' in
-     * the below is making an error local rather than global, not
-     * making a swiss-french version of the error.).
-     * 
-     * @param processorName Name of processor the exception was thrown
-     * in.
-     * @param ex Throwable to log.
-     * @param message Extra message to log beyond exception message.
-     */
-    public void addLocalizedError(final String processorName,
-            final Throwable ex, final String message) {
-        List<LocalizedError> localizedErrors;
-        if (containsKey(A_LOCALIZED_ERRORS)) {
-            @SuppressWarnings("unchecked")
-            List<LocalizedError> temp // to prevent warning on cast
-             = (List<LocalizedError>) getObject(A_LOCALIZED_ERRORS);
-            localizedErrors = temp;
-        } else {
-            localizedErrors = new ArrayList<LocalizedError>();
-            putObject(A_LOCALIZED_ERRORS, localizedErrors);
-        }
-
-        localizedErrors.add(new LocalizedError(processorName, ex, message));
-        addAnnotation("le:" + getClassSimpleName(ex.getClass()) + "@" +
-            processorName);
-    }
     
     // TODO: Move to utils.
     protected String getClassSimpleName(final Class c) {
@@ -575,67 +544,17 @@ implements FetchStatusCodes, ProcessorURI {
         return ((index > 0 && (index + 1) < classname.length())?
             classname.substring(index + 1): classname);
     }
-
-    /**
-     * Add an annotation: an abbrieviated indication of something special
-     * about this URI that need not be present in every crawl.log line,
-     * but should be noted for future reference. 
-     *
-     * @param annotation the annotation to add; should not contain 
-     * whitespace or a comma
-     */
-    public void addAnnotation(String annotation) {
-        String annotations;
-        if(containsKey(A_ANNOTATIONS)) {
-            annotations = getString(A_ANNOTATIONS);
-            annotations += ","+annotation;
-        } else {
-            annotations = annotation;
-        }
-
-        putString(A_ANNOTATIONS,annotations);
-    }
     
-    /**
-     * TODO: Implement truncation using booleans rather than as this
-     * ugly String parse.
-     * @return True if fetch was truncated.
-     */
-    public boolean isTruncatedFetch() {
-        return annotationContains(TRUNC_SUFFIX);
-    }
-    
-    public boolean isLengthTruncatedFetch() {
-        return annotationContains(LENGTH_TRUNC);
-    }
-    
-    public boolean isTimeTruncatedFetch() {
-        return annotationContains(TIMER_TRUNC);
-    }
-    
-    public boolean isHeaderTruncatedFetch() {
-        return annotationContains(HEADER_TRUNC);
-    }
-    
-    protected boolean annotationContains(final String str2Find) {
-        boolean result = false;
-        if (!containsKey(A_ANNOTATIONS)) {
-            return result;
-        }
-        String annotations = getString(A_ANNOTATIONS);
-        if (annotations != null && annotations.length() > 0) {
-            result = annotations.indexOf(str2Find) >= 0;
-        }
-        return result;
-    }
 
     /**
      * Get the annotations set for this uri.
      *
      * @return the annotations set for this uri.
      */
-    public List<String> getAnnotations() {
-        return null; // TODO
+    public Collection<String> getAnnotations() {
+    	@SuppressWarnings("unchecked")
+    	List<String> list = (List<String>)getData().get(A_ANNOTATIONS);
+    	return list;
     }
 
     /**
@@ -744,7 +663,7 @@ implements FetchStatusCodes, ProcessorURI {
     public void linkExtractorFinished() {
         linkExtractorFinished = true;
         if(discardedOutlinks>0) {
-            addAnnotation("dol:"+discardedOutlinks);
+            getAnnotations().add("dol:"+discardedOutlinks);
         }
     }
 
@@ -754,7 +673,7 @@ implements FetchStatusCodes, ProcessorURI {
      */
     public void aboutToLog() {
         if (fetchAttempts>1) {
-            addAnnotation(fetchAttempts+"t");
+            getAnnotations().add(fetchAttempts + "t");
         }
     }
 
@@ -786,7 +705,7 @@ implements FetchStatusCodes, ProcessorURI {
      * @return True if this is a http transaction.
      */
     public boolean isHttpTransaction() {
-        return containsKey(A_HTTP_TRANSACTION);
+        return containsDataKey(A_HTTP_TRANSACTION);
     }
 
     /**
@@ -804,22 +723,24 @@ implements FetchStatusCodes, ProcessorURI {
         // Clear 'links extracted' flag.
         this.linkExtractorFinished = false;
         // Clean the alist of all but registered permanent members.
-        setAList(getPersistentAList());
+        this.data = getPersistentDataMap();
     }
     
-    @SuppressWarnings("deprecation")
-    protected AList getPersistentAList() {
-        AList newAList = new HashtableAList();
-        // copy declared persistent keys
-        if(alistPersistentMember!=null && alistPersistentMember.size() > 0) {
-            newAList.copyKeysFrom(alistPersistentMember.iterator(), getAList());
-        } 
-        // also copy declared 'heritable' keys
-        List heritableKeys = (List) getObject(A_HERITABLE_KEYS);
-        if(heritableKeys!=null) {
-            newAList.copyKeysFrom(heritableKeys.iterator(), getAList());
-        }
-        return newAList;
+    protected Map<String,Object> getPersistentDataMap() {
+    	if (data == null) {
+    		return null;
+    	}
+    	Map<String,Object> result = new HashMap<String,Object>(getData());
+    	Set<String> retain = new HashSet<String>(persistentKeys);
+    	
+    	if (containsDataKey(A_HERITABLE_KEYS)) {
+    		@SuppressWarnings("unchecked")
+        	List<String> heritable = (List<String>)getData().get(A_HERITABLE_KEYS);
+        	retain.addAll(heritable);
+    	}
+    	
+    	result.keySet().retainAll(retain);
+    	return result;
     }
 
     /**
@@ -840,8 +761,8 @@ implements FetchStatusCodes, ProcessorURI {
     /**
      * @param avatars Credential avatars to save off.
      */
-    private void setCredentialAvatars(Set avatars) {
-        putObject(A_CREDENTIAL_AVATARS_KEY, avatars);
+    private void setCredentialAvatars(Set<CredentialAvatar> avatars) {
+        getData().put(A_CREDENTIAL_AVATARS_KEY, avatars);
     }
 
     /**
@@ -849,7 +770,7 @@ implements FetchStatusCodes, ProcessorURI {
      */
     @SuppressWarnings("unchecked")
     public Set<CredentialAvatar> getCredentialAvatars() {
-        return (Set)getObject(A_CREDENTIAL_AVATARS_KEY);
+        return (Set)getData().get(A_CREDENTIAL_AVATARS_KEY);
     }
 
     /**
@@ -876,14 +797,6 @@ implements FetchStatusCodes, ProcessorURI {
         avatars.add(ca);
     }
 
-    /**
-     * Remove all credential avatars from this crawl uri.
-     */
-    public void removeCredentialAvatars() {
-        if (hasCredentialAvatars()) {
-            remove(A_CREDENTIAL_AVATARS_KEY);
-        }
-    }
 
     /**
      * Remove all credential avatars from this crawl uri.
@@ -1179,7 +1092,7 @@ implements FetchStatusCodes, ProcessorURI {
      * @throws URIException if supplied string cannot be interpreted as URI
      */
     public void setBaseURI(String baseHref) throws URIException {
-        putObject(A_HTML_BASE, UURIFactory.getInstance(baseHref));
+        getData().put(A_HTML_BASE, UURIFactory.getInstance(baseHref));
     }
       
     /**
@@ -1188,10 +1101,10 @@ implements FetchStatusCodes, ProcessorURI {
      * @return UURI base URI previously set 
      */  
     public UURI getBaseURI() {
-        if (!containsKey(A_HTML_BASE)) {
+        if (!containsDataKey(A_HTML_BASE)) {
             return getUURI();
         }
-        return (UURI)getObject(A_HTML_BASE);
+        return (UURI)getData().get(A_HTML_BASE);
     }
     
     /**
@@ -1199,17 +1112,10 @@ implements FetchStatusCodes, ProcessorURI {
      * processings.
      * @param key Key to add.
      */
-    public static void addAlistPersistentMember(Object key) {
-        alistPersistentMember.add(key);
+    public static Collection<String> getPersistenetDataKeys() {
+    	return persistentKeys;
     }
-    
-    /**
-     * @param key Key to remove.
-     * @return True if list contained the element.
-     */
-    public static boolean removeAlistPersistentMember(Object key) {
-        return alistPersistentMember.remove(key);
-    }
+
 
     /**
      * Custom serialization writing an empty 'outLinks' as null. Estimated
@@ -1286,8 +1192,16 @@ implements FetchStatusCodes, ProcessorURI {
     }
 
     public Collection<Throwable> getNonFatalFailures() {
-        // TODO Auto-generated method stub
-        return null;
+    	@SuppressWarnings("unchecked")
+    	List<Throwable> list = (List)getData().get(A_LOCALIZED_ERRORS);
+    	if (list == null) {
+    		list = new ArrayList<Throwable>();
+    		getData().put(A_LOCALIZED_ERRORS, list);
+    	}
+    	
+    	// FIXME: Previous code automatically added annotation when "localized error"
+    	// was added, override collection to implement that?
+        return list;
     }
 
     public Recorder getRecorder() {
@@ -1430,5 +1344,15 @@ implements FetchStatusCodes, ProcessorURI {
     public void setLinkExtractionFinished(boolean b) {
         // TODO Auto-generated method stub
         
+    }
+    
+    
+    public long getNextProcessingTime() {
+    	return (Long)getData().get(A_TIME_OF_NEXT_PROCESSING);
+    }
+    
+    
+    public void setNextProcessingTime(long t) {
+    	getData().put(A_TIME_OF_NEXT_PROCESSING, t);
     }
 }

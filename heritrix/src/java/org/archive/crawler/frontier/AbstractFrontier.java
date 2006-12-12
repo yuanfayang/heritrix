@@ -32,8 +32,10 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -410,8 +412,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             CandidateURI caUri = CandidateURI.createSeedCandidateURI(u);
             caUri.setSchedulingDirective(CandidateURI.MEDIUM);
             if (get(SOURCE_TAG_SEEDS)) {
-                caUri.putString(CoreAttributeConstants.A_SOURCE_TAG,caUri.toString());
-                caUri.makeHeritable(CoreAttributeConstants.A_SOURCE_TAG);
+                caUri.setSourceTag(caUri.toString());
             }
             schedule(caUri);
             count++;
@@ -585,12 +586,12 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      */
     protected long politenessDelayFor(CrawlURI curi) {
         long durationToWait = 0;
-        if (curi.containsKey(A_FETCH_BEGAN_TIME)
-                && curi.containsKey(A_FETCH_COMPLETED_TIME)) {
+        Map<String,Object> cdata = curi.getData();
+        if (cdata.containsKey(A_FETCH_BEGAN_TIME)
+                && cdata.containsKey(A_FETCH_COMPLETED_TIME)) {
 
-            long completeTime = curi.getLong(A_FETCH_COMPLETED_TIME);
-            long durationTaken = (completeTime - curi
-                    .getLong(A_FETCH_BEGAN_TIME));
+            long completeTime = curi.getFetchCompletedTime();
+            long durationTaken = (completeTime - curi.getFetchBeginTime());
             durationToWait = (long)(get(DELAY_FACTOR) * durationTaken);
 
             long minDelay = get(MIN_DELAY);
@@ -682,16 +683,13 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      *  
      */
     protected void logLocalizedErrors(CrawlURI curi) {
-        if (curi.containsKey(A_LOCALIZED_ERRORS)) {
-            List localErrors = (List)curi.getObject(A_LOCALIZED_ERRORS);
-            Iterator iter = localErrors.iterator();
-            while (iter.hasNext()) {
-                Object array[] = {curi, iter.next()};
-                controller.localErrors.log(Level.WARNING, curi.getUURI()
-                        .toString(), array);
-            }
+        if (curi.containsDataKey(A_LOCALIZED_ERRORS)) {
+        	Collection<Throwable> x = curi.getNonFatalFailures();
+        	for (Throwable e: x) {
+        		controller.localErrors.log(Level.WARNING, curi.toString(), e);
+        	}
             // once logged, discard
-            curi.remove(A_LOCALIZED_ERRORS);
+            curi.getData().remove(A_LOCALIZED_ERRORS);
         }
     }
 

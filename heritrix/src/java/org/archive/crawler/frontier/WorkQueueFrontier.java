@@ -837,7 +837,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     }
 
     private boolean includesRetireDirective(CrawlURI curi) {
-        return curi.containsKey(A_FORCE_RETIRE) && (Boolean)curi.getObject(A_FORCE_RETIRE);
+        return curi.containsDataKey(A_FORCE_RETIRE) 
+         && (Boolean)curi.getData().get(A_FORCE_RETIRE);
     }
 
     /**
