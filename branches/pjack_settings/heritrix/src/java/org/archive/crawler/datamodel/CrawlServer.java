@@ -176,7 +176,7 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
                     reader = new BufferedReader(new StringReader(honoringPolicy
                             .getCustomRobots(curi)));
                 } else {
-                    contentBodyStream = curi.getHttpRecorder()
+                    contentBodyStream = curi.getRecorder()
                             .getRecordedInput().getContentReplayInputStream();
 
                     contentBodyStream.setToResponseBodyStart();
@@ -194,8 +194,7 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
         } catch (IOException e) {
             robots = RobotsExclusionPolicy.ALLOWALL;
             validRobots = true;
-            curi.addLocalizedError(getName(), e,
-                    "robots.txt parsing IOException");
+            curi.getNonFatalFailures().add(e);
         }
     }
 

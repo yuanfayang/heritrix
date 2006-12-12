@@ -181,7 +181,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
      * Set the <tt>isSeed</tt> attribute of this URI.
      * @param b Is this URI a seed, true or false.
      */
-    public void setIsSeed(boolean b) {
+    public void setSeed(boolean b) {
         this.isSeed = b;
         if (this.isSeed) {
             if(pathFromSeed==null) {
@@ -392,7 +392,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     
     public static CandidateURI createSeedCandidateURI(UURI uuri) {
         CandidateURI c = new CandidateURI(uuri);
-        c.setIsSeed(true);
+        c.setSeed(true);
         return c;
     }
     
@@ -431,7 +431,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     throws URIException {
         final CandidateURI caURI = createCandidateURI(baseUURI, link);
         caURI.setSchedulingDirective(scheduling);
-        caURI.setIsSeed(seed);
+        caURI.setSeed(seed);
         return caURI;
     }
     
