@@ -29,7 +29,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,8 +46,6 @@ import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Reporter;
 
-import st.ata.util.AList;
-import st.ata.util.HashtableAList;
 
 /**
  * A URI, discovered or passed-in, that may be scheduled.
@@ -135,17 +133,11 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
      * classes {@link CrawlURI} or this class, CandidateURI.
      *
      * Transient to allow more efficient custom serialization.
+     * 
+     * Package-protected so CrawlURI can access it directly.
      */
-    private transient AList alist;
-    
-    /**
-     * Cache of this candidate uuri as a string.
-     *
-     * Profiling shows us spending about 1-2% of total elapsed time in
-     * toString.
-     */
-    private String cachedCandidateURIString = null;
-    
+    transient Map<String,Object> data;
+
 
     /**
      * Frontier/Scheduler lifecycle info.
@@ -244,27 +236,16 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     
     /**
      * Called when making a copy of another CandidateURI.
-     * @param alist AList to use.
+     * @param data   data map to use
      */
-    protected void setAList(AList alist) {
-        this.alist = alist;
+    protected void setData(Map<String,Object> data) {
+        this.data = data;
     }
 
     public void setVia(UURI via) {
         this.via = via;
     }
 
-    /**
-     * @return This candidate URI as a string wrapped with 'CandidateURI(' +
-     * ')'.
-     */
-    public synchronized String getCandidateURIString() {
-        if (this.cachedCandidateURIString == null) {
-            this.cachedCandidateURIString =
-                "CandidateURI(" + toString() + ")";
-        }
-        return this.cachedCandidateURIString;
-    }
 
     /**
      * Method returns string version of this URI's referral URI.
@@ -273,25 +254,15 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     public String flattenVia() {
         return (via == null)? "": via.toString();
     }
-    
-    /**
-     * @return The UURI this CandidateURI wraps as a string 
-     * (We used return what {@link #getCandidateURIString()}
-     * returns on a toString -- use that method if you still need
-     * this functionality).
-     * @see #getCandidateURIString()
-     */
-    public String toString() {
-        return getURIString();
-    }
+
 
     /**
-     * @return URI String
-     * @deprecated Use {@link #toString()}.
+     * @return The UURI this CandidateURI wraps as a string 
      */
-    public String getURIString() {
-        return getUURI().toString();
+    public String toString() {
+    	return getUURI().toString();
     }
+
 
     /**
      * Compares the domain of this CandidateURI with that of another
@@ -470,10 +441,13 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
      * @param ancestor
      */
     protected void inheritFrom(CandidateURI ancestor) {
-        List heritableKeys = (List) ancestor.getObject(A_HERITABLE_KEYS);
-        if(heritableKeys!=null) {
-            getAList().copyKeysFrom(heritableKeys.iterator(),ancestor.getAList());
-        }
+    	Map<String,Object> adata = ancestor.getData();
+    	@SuppressWarnings("unchecked")
+    	List<String> heritableKeys = (List<String>)adata.get(A_HERITABLE_KEYS);
+    	Map<String,Object> thisData = getData();
+    	for (String key: heritableKeys) {
+    		thisData.put(key, adata.get(key));
+    	}
     }
     
     /**
@@ -493,77 +467,24 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     public void setClassKey(String key) {
         classKey = key;
     }
-    
-    /**
-     * Assumption is that only one thread at a time will ever be accessing
-     * a particular CandidateURI.
-     * 
-     * @deprecated Public access will be deprecated. This methods access
-     * will change in next release.  Use specialized accessors instead such
-     * as {@link #getString(String)}.
-     * 
-     * @return the attribute list.
-     */
-    public AList getAList() {
-        if (this.alist == null) {
-            this.alist = new HashtableAList();
-        }
-        return this.alist;
-    }
-    
-    protected void clearAList() {
-        this.alist = null;
-    }
-    
-    public void putObject(String key, Object value) {
-        getAList().putObject(key, value);
-    }
-    
-    public Object getObject(String key) {
-        return getAList().getObject(key);
-    }
-    
-    public String getString(String key) {
-        return getAList().getString(key);
-    }
-    
-    public void putString(String key, String value) {
-        getAList().putString(key, value);
-    }
-    
-    public long getLong(String key) {
-        return getAList().getLong(key);
-    }
-    
-    public void putLong(String key, long value) {
-        getAList().putLong(key, value);
-    }
-    
-    public int getInt(String key) {
-        return getAList().getInt(key);
-    }
-    
-    public void putInt(String key, int value) {
-        getAList().putInt(key, value);
-    }
-    
-    public boolean containsKey(String key) {
-        return getAList().containsKey(key);
-    }
-    
-    public void remove(String key) {
-        getAList().remove(key);
-    }
-    
-    public Iterator keys() {
-        return getAList().getKeys();
-    }
-    
+
     
     public Map<String,Object> getData() {
-        return null; // TODO
+    	if (data == null) {
+    		data = new HashMap<String,Object>();
+    	}
+    	return data;
     }
     
+    
+    public boolean containsDataKey(String key) {
+    	if (data == null) {
+    		return false;
+    	}
+    	return data.containsKey(key);
+    }
+
+
     /**
      * @return True if this CandidateURI was result of a redirect:
      * i.e. Its parent URI redirected to here, this URI was what was in 
@@ -589,7 +510,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
         stream.defaultWriteObject();
         stream.writeUTF(uuri.toString());
         stream.writeObject((via == null) ? null : via.getURI());
-        stream.writeObject((alist==null) ? null : alist);
+        stream.writeObject((data==null) ? null : data);
     }
 
     /**
@@ -605,7 +526,9 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
         stream.defaultReadObject();
         uuri = readUuri(stream.readUTF());
         via = readUuri((String)stream.readObject());
-        alist = (AList) stream.readObject();
+        @SuppressWarnings("unchecked")
+        Map<String,Object> temp = (Map<String,Object>)stream.readObject();
+        this.data = temp;
     }
 
     /**
@@ -698,11 +621,10 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
      */
     public void makeHeritable(String key) {
         @SuppressWarnings("unchecked")
-        List<String> heritableKeys = (List<String>) getObject(A_HERITABLE_KEYS);
-        if(heritableKeys==null) {
+        List<String> heritableKeys = (List<String>)data.get(A_HERITABLE_KEYS);
+        if (heritableKeys == null) {
             heritableKeys = new ArrayList<String>();
-            heritableKeys.add(A_HERITABLE_KEYS);
-            putObject(A_HERITABLE_KEYS,heritableKeys);
+            data.put(A_HERITABLE_KEYS, heritableKeys);
         }
         heritableKeys.add(key);
     }
@@ -714,14 +636,14 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
      * @param key to make non-heritable
      */
     public void makeNonHeritable(String key) {
-        List heritableKeys = (List) getObject(A_HERITABLE_KEYS);
-        if(heritableKeys==null) {
+        List heritableKeys = (List)data.get(A_HERITABLE_KEYS);
+        if(heritableKeys == null) {
             return;
         }
         heritableKeys.remove(key);
         if(heritableKeys.size()==1) {
             // only remaining heritable key is itself; disable completely
-            remove(A_HERITABLE_KEYS);
+            data.remove(A_HERITABLE_KEYS);
         }
     }
 
@@ -733,5 +655,16 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     
     public ProcessorURI asProcessorURI() {
         return null; // FIXME
+    }
+
+
+    public String getSourceTag() {
+    	return (String)getData().get(A_SOURCE_TAG);
+    }
+    
+    
+    public void setSourceTag(String sourceTag) {
+    	getData().put(A_SOURCE_TAG, sourceTag);
+    	makeHeritable(A_SOURCE_TAG);
     }
 }

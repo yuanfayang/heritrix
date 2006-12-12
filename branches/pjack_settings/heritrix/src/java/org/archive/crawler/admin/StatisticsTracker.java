@@ -738,7 +738,7 @@ implements CrawlURIDispositionListener, Serializable {
                 getHostFor(curi).getHostName(),
                 curi.getContentSize());
         
-        if (curi.containsKey(CrawlURI.A_SOURCE_TAG)){
+        if (curi.containsDataKey(CrawlURI.A_SOURCE_TAG)){
             saveSourceStats(curi.getString(CrawlURI.A_SOURCE_TAG), 
                     this.controller.getServerCache().getHostFor(curi).
                     getHostName()); 
