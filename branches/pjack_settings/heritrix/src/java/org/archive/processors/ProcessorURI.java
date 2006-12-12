@@ -200,8 +200,8 @@ public interface ProcessorURI extends StateProvider {
     UURI getBaseURI();
     void setBaseURI(UURI base);
     
-    boolean isLinkExtractionFinished();
-    void setLinkExtractionFinished(boolean b);
+    boolean hasBeenLinkExtracted();
+    void linkExtractorFinished();
     
     void addUriError(URIException e, String uri);
     

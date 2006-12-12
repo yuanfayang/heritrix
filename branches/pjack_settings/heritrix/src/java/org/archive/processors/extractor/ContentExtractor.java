@@ -40,7 +40,7 @@ public abstract class ContentExtractor extends Extractor {
     final protected void extract(ProcessorURI uri) {
         boolean finished = innerExtract(uri);
         if (finished) {
-            uri.setLinkExtractionFinished(true);
+            uri.linkExtractorFinished();
         }
     }
 
@@ -48,7 +48,7 @@ public abstract class ContentExtractor extends Extractor {
     /**
      * Determines if links should be extracted from the given URI.  This 
      * method performs three checks.  The first is to check the URI's
-     * {@link ExtractorURI#isLinkExtractionFinished()} result.  If that
+     * {@link ExtractorURI#hasBeenLinkExtracted()} result.  If that
      * result is true, then this method returns false, as some other 
      * extractor has claimed that links are already extracted.
      * 
@@ -65,7 +65,7 @@ public abstract class ContentExtractor extends Extractor {
      *   false otherwise
      */
     final protected boolean shouldProcess(ProcessorURI uri) {
-        if (uri.isLinkExtractionFinished()) {
+        if (uri.hasBeenLinkExtracted()) {
             return false;
         }
         if (uri.getContentLength() <= 0) {
@@ -81,7 +81,7 @@ public abstract class ContentExtractor extends Extractor {
     /**
      * Determines if otherwise valid URIs should have links extracted or not.
      * The given URI will not have its 
-     * {@link ExtractorURI#isLinkExtractionFinished()} flag set, and its
+     * {@link ExtractorURI#hasBeenLinkExtracted()} flag set, and its
      * content length will be greater than zero.  Subclasses should 
      * implement this method to perform additional checks.  For instance,
      * the {@link ExtractorHTML} implementation checks that the content-type

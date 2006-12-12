@@ -225,7 +225,7 @@ implements ProcessorURI {
         return viaContext;
     }
 
-    public boolean isLinkExtractionFinished() {
+    public boolean hasBeenLinkExtracted() {
         return linkExtractionFinished;
     }
 
@@ -310,8 +310,8 @@ implements ProcessorURI {
         this.httpMethod = method;
     }
 
-    public void setLinkExtractionFinished(boolean b) {
-        linkExtractionFinished = b;
+    public void linkExtractorFinished() {
+        linkExtractionFinished = true;
     }
 
     public void setPrerequisite(boolean prereq) {
