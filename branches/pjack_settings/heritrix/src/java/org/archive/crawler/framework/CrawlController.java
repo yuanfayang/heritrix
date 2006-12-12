@@ -79,6 +79,7 @@ import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
+import org.archive.surt.SURTTokenizer;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
@@ -1986,4 +1987,36 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
         return sheetManager.getDefault().get(module, key);
     }
 
+    
+    /**
+     * Returns the configuration for the given URI.
+     * 
+     * @param uri
+     * @return
+     */
+    public StateProvider findConfig(UURI uri) {
+        SURTTokenizer st;
+        try {
+            st = new SURTTokenizer(uri.toString());
+        } catch (URIException e) {
+            throw new AssertionError();
+        }
+        
+        SheetList list = null;
+        for (String s = st.nextSearch(); s != null; s = st.nextSearch()) {
+            Sheet sheet = sheetManager.getAssociation(s);
+            if (sheet != null) {
+                if (list == null) {
+                    list = new SheetList();
+                }
+                list.add(sheet);
+            }
+        }
+        if (list == null) {
+            return sheetManager.getDefault();
+        }
+        
+        list.add(sheetManager.getDefault());
+        return list;
+    }
 }
