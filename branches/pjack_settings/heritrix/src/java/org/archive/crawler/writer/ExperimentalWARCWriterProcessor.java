@@ -234,8 +234,8 @@ FetchStatusCodes, WARCConstants {
         final URI uid = qualifyRecordID(baseid, TYPE, REQUEST);
         w.writeRequestRecord(curi.toString(), timestamp, mimetype, uid,
             namedFields,
-            curi.getHttpRecorder().getRecordedOutput().getReplayInputStream(),
-            curi.getHttpRecorder().getRecordedOutput().getSize());
+            curi.getRecorder().getRecordedOutput().getReplayInputStream(),
+            curi.getRecorder().getRecordedOutput().getSize());
         return uid;
     }
     
@@ -246,8 +246,8 @@ FetchStatusCodes, WARCConstants {
     throws IOException {
         w.writeResponseRecord(curi.toString(), timestamp, mimetype, baseid,
             namedFields,
-            curi.getHttpRecorder().getRecordedInput().getReplayInputStream(),
-            curi.getHttpRecorder().getRecordedInput().getSize());
+            curi.getRecorder().getRecordedInput().getReplayInputStream(),
+            curi.getRecorder().getRecordedInput().getSize());
         return baseid;
     }
     
