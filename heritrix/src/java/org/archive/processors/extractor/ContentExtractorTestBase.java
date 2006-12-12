@@ -113,7 +113,7 @@ public abstract class ContentExtractorTestBase extends StateProcessorTestBase {
      */
     public void testFinished() throws Exception {
         DefaultProcessorURI uri = defaultURI();
-        uri.setLinkExtractionFinished(true);
+        uri.linkExtractorFinished();
         extractor.process(uri);
         assertEquals(0, uri.getOutLinks().size());
         assertNoSideEffects(uri);        
