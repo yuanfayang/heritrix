@@ -152,17 +152,17 @@ FetchStatusCodes {
             // an example.
             if ((scheme.equals("dns") &&
             		curi.getFetchStatus() == S_DNS_SUCCESS)) {
-            	InputStream is = curi.getHttpRecorder().getRecordedInput().
+            	InputStream is = curi.getRecorder().getRecordedInput().
             		getReplayInputStream();
                 write(curi, recordLength, is,
                     (String)curi.getData().get(A_DNS_SERVER_IP_LABEL));
             } else if ((scheme.equals("http") || scheme.equals("https")) &&
             		curi.getFetchStatus() > 0 && curi.isHttpTransaction()) {
-                InputStream is = curi.getHttpRecorder().getRecordedInput().
+                InputStream is = curi.getRecorder().getRecordedInput().
             		getReplayInputStream();
                 write(curi, recordLength, is, getHostAddress(curi));
             } else if (scheme.equals("ftp") && (curi.getFetchStatus() == 200)) {
-                InputStream is = curi.getHttpRecorder().getRecordedInput().
+                InputStream is = curi.getRecorder().getRecordedInput().
                  getReplayInputStream();
                 write(curi, recordLength, is, getHostAddress(curi));
             } else {
