@@ -72,7 +72,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
     private static final long serialVersionUID = 3L;
 
-    
+
     public static final int UNCALCULATED = -1;
     
     // INHERITED FROM CANDIDATEURI
@@ -198,7 +198,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
         super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(),
             caUri.getViaContext());
         ordinal = o;
-        setIsSeed(caUri.isSeed());
+        setSeed(caUri.isSeed());
         setSchedulingDirective(caUri.getSchedulingDirective());
         this.data = caUri.data;
     }
@@ -614,8 +614,8 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      */
     public long getContentLength() {
         if (this.contentLength < 0) {
-            this.contentLength = (getHttpRecorder() != null)?
-                getHttpRecorder().getResponseContentLength(): 0;
+            this.contentLength = (getRecorder() != null)?
+                getRecorder().getResponseContentLength(): 0;
         }
         return this.contentLength;
     }
@@ -683,7 +683,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      * @return Returns the httpRecorder.  May be null but its set early in
      * FetchHttp so there is an issue if its null.
      */
-    public Recorder getHttpRecorder() {
+    public Recorder getRecorder() {
         return httpRecorder;
     }
 
@@ -692,7 +692,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      *
      * @param httpRecorder The httpRecorder to set.
      */
-    public void setHttpRecorder(Recorder httpRecorder) {
+    public void setRecorder(Recorder httpRecorder) {
         this.httpRecorder = httpRecorder;
     }
 
@@ -726,7 +726,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
         this.data = getPersistentDataMap();
     }
     
-    protected Map<String,Object> getPersistentDataMap() {
+    private Map<String,Object> getPersistentDataMap() {
     	if (data == null) {
     		return null;
     	}
@@ -1161,24 +1161,28 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
         return false;
     }
 
-    public Map<String, Object> getData() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     public String getDNSServerIPLabel() {
-        // TODO Auto-generated method stub
-        return null;
+        if (data == null) {
+            return null;
+        } else {
+            return (String)data.get(A_DNS_SERVER_IP_LABEL);
+        }
     }
 
     public long getFetchBeginTime() {
-        // TODO Auto-generated method stub
-        return 0;
+        if (containsDataKey(A_FETCH_BEGAN_TIME)) {
+            return (Long)getData().get(A_FETCH_BEGAN_TIME);
+        } else {
+            return 0L;
+        }
     }
 
     public long getFetchCompletedTime() {
-        // TODO Auto-generated method stub
-        return 0;
+        if (containsDataKey(A_FETCH_COMPLETED_TIME)) {
+            return (Long)getData().get(A_FETCH_COMPLETED_TIME);
+        } else {
+            return 0L;
+        }
     }
 
     public FetchType getFetchType() {
@@ -1187,6 +1191,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
     public String getFrom() {
+        
         // TODO Auto-generated method stub
         return null;
     }
@@ -1204,10 +1209,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
         return list;
     }
 
-    public Recorder getRecorder() {
-        // TODO Auto-generated method stub
-        return null;
-    }
 
     public String getResolvedName() {
         // TODO Auto-generated method stub
@@ -1226,27 +1227,23 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
     public void promoteCredentials() {
         // TODO Auto-generated method stub
-        
     }
 
     public void setDNSServerIPLabel(String label) {
-        // TODO Auto-generated method stub
-        
+        getData().put(A_DNS_SERVER_IP_LABEL, label);
     }
 
     public void setError(String msg) {
-        // TODO Auto-generated method stub
-        
+        // TODO: Figure out where this is read, if ever.
+        getData().put("error", msg);
     }
 
     public void setFetchBeginTime(long time) {
-        // TODO Auto-generated method stub
-        
+    	getData().put(A_FETCH_BEGAN_TIME, time);
     }
 
     public void setFetchCompletedTime(long time) {
-        // TODO Auto-generated method stub
-        
+        getData().put(A_FETCH_COMPLETED_TIME, time);
     }
 
     public void setFetchType(FetchType type) {
@@ -1255,8 +1252,8 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
     public void setHttpMethod(HttpMethod method) {
-        // TODO Auto-generated method stub
-        
+        getData().put(A_HTTP_TRANSACTION, method);
+        // FIXME: Also set FetchType?
     }
 
     public void skipToPostProcessing() {
@@ -1266,39 +1263,50 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
 
     public void setForceRetire(boolean b) {
-        // TODO: Was a map attribute
+        getData().put(A_FORCE_RETIRE, b);
     }
 
 
     public boolean isWaitReevaluated() {
-        return false; // TODO: Was a map attribute
+        if (data == null) {
+            return false;
+        } else {
+            return (Boolean)data.get(A_WAIT_REEVALUATED);
+        }
     }
     
     
     public void setWaitReevaluated(boolean b) {
-        // TODO
+        getData().put(A_WAIT_REEVALUATED, b);
     }
 
     
     public static enum ContentState { CHANGED, UNCHANGED, UNKNOWN };
     
     public ContentState getContentState() {
-        return null; // TODO: Was a map attribute
+        if (data == null) {
+            return ContentState.UNKNOWN;
+        } else {
+            return (ContentState)data.get(A_CONTENT_STATE_KEY);
+        }
     }
 
 
     public void setContentState(ContentState state) {
-        // TODO
+        getData().put(A_CONTENT_STATE_KEY, state);
     }
 
     
     public long getFetchOverdueTime() {
-        return 0L; // TODO: Was a map attribute
+        if (data != null) {
+            return (Long)data.get(A_FETCH_OVERDUE);
+        }
+        return 0L; // TODO: Determine sane default for this
     }
     
     
     public void setWaitInterval(long wi) {
-        // TODO: Was a map attribute
+        getData().put(A_WAIT_INTERVAL, wi);
     }
 
     public CrawlHost getCrawlHost() {
@@ -1311,10 +1319,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
         
     }
 
-    public void setSeed(boolean seed) {
-        // TODO Auto-generated method stub
-        
-    }
 
     public void addUriError(URIException e, String uri) {
         // TODO Auto-generated method stub
@@ -1322,33 +1326,31 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
     public HttpMethod getHttpMethod() {
-        // TODO Auto-generated method stub
+        if (data != null) {
+            return (HttpMethod)data.get(A_HTTP_TRANSACTION);
+        }
         return null;
     }
+
 
     public RobotsHonoringPolicy getRobotsHonoringPolicy() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public boolean isLinkExtractionFinished() {
-        // TODO Auto-generated method stub
-        return false;
-    }
 
     public void setBaseURI(UURI base) {
-        // TODO Auto-generated method stub
-        
+        getData().put(A_HTML_BASE, base);
     }
 
-    public void setLinkExtractionFinished(boolean b) {
-        // TODO Auto-generated method stub
-        
-    }
     
     
     public long getNextProcessingTime() {
-    	return (Long)getData().get(A_TIME_OF_NEXT_PROCESSING);
+        if (data != null) {
+            return (Long)data.get(A_TIME_OF_NEXT_PROCESSING);
+        } else {
+            return 0L;
+        }
     }
     
     
