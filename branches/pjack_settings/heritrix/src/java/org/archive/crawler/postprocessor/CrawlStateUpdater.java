@@ -31,8 +31,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
-import org.archive.processors.fetcher.CrawlHost;
-import org.archive.processors.fetcher.CrawlServer;
+import org.archive.processors.util.CrawlHost;
+import org.archive.processors.util.CrawlServer;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 

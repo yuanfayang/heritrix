@@ -31,8 +31,8 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.processors.ProcessorURI;
-import org.archive.processors.fetcher.CrawlHost;
-import org.archive.processors.fetcher.ServerCache;
+import org.archive.processors.util.CrawlHost;
+import org.archive.processors.util.ServerCache;
 import org.archive.state.Key;
 import org.xbill.DNS.Address;
 

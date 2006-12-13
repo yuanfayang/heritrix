@@ -39,8 +39,8 @@ import org.archive.net.UURI;
 import org.archive.processors.credential.Credential;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.credential.CredentialStore;
-import org.archive.processors.fetcher.CrawlHost;
-import org.archive.processors.fetcher.CrawlServer;
+import org.archive.processors.util.CrawlHost;
+import org.archive.processors.util.CrawlServer;
 import org.archive.state.Key;
 
 /**

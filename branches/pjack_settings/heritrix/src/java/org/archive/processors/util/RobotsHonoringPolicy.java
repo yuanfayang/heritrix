@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.processors.fetcher;
+package org.archive.processors.util;
 
 import java.util.List;
 

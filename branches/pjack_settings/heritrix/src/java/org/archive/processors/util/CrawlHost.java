@@ -21,13 +21,14 @@
  *
  * $Header$
  */
-package org.archive.processors.fetcher;
+package org.archive.processors.util;
 
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.processors.fetcher.FetchStats;
 import org.archive.util.InetAddressUtil;
 
 /** 
