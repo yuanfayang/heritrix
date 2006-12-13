@@ -27,9 +27,11 @@ package org.archive.processors.fetcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.net.InetAddress;
@@ -51,6 +53,7 @@ import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.HttpVersion;
+import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.auth.AuthChallengeParser;
 import org.apache.commons.httpclient.auth.AuthScheme;
 import org.apache.commons.httpclient.auth.BasicScheme;
@@ -62,6 +65,10 @@ import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.processors.credential.Credential;
+import org.archive.processors.credential.CredentialAvatar;
+import org.archive.processors.credential.CredentialStore;
+import org.archive.processors.credential.Rfc2617Credential;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -82,8 +89,6 @@ import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
 
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseException;
 
 /**
  * HTTP fetcher that uses <a
@@ -144,13 +149,13 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     /**
      * File to preload cookies from.
      */
-    final public static Key<String> LOAD_COOKIES_FROM_FILE = Key.makeExpert("");
+//    final public static Key<String> LOAD_COOKIES_FROM_FILE = Key.makeExpert("");
 
     
     /**
      * When crawl finishes save cookies to this file.
      */
-    final public static Key<String> SAVE_COOKIES_FROM_FILE = Key.makeExpert("");
+//    final public static Key<String> SAVE_COOKIES_FROM_FILE = Key.makeExpert("");
 
     
     /**
@@ -299,7 +304,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     /**
      * Store cookies in BDB-backed map.
      */
-    final public static Key<Boolean> USE_BDB_FOR_COOKIES = Key.make(true);
+//    final public static Key<Boolean> USE_BDB_FOR_COOKIES = Key.make(true);
 
 
     /**
@@ -312,11 +317,11 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     /**
      * Database backing cookie map, if using BDB
      */
-    protected Database cookieDb; 
+//    protected Database cookieDb; 
     /**
      * Name of cookie BDB Database
      */
-    public static final String COOKIEDB_NAME = "http_cookies";
+//    public static final String COOKIEDB_NAME = "http_cookies";
     
     /* FIXME: This needs to live somewhere else
     static {
@@ -345,11 +350,13 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     private SSLSocketFactory sslfactory = null;
     
     
+    final private CredentialStore credentialStore;
 
     /**
      * Constructor.
      */
-    public FetchHTTP() {
+    public FetchHTTP(CredentialStore cs) {
+        this.credentialStore = cs;
     }
 
     protected void innerProcess(final ProcessorURI curi)
@@ -405,7 +412,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         HostConfiguration customConfigOrNull = configureMethod(curi, method);
 
         // Populate credentials. Set config so auth. is not automatic.
-        boolean addedCredentials = curi.populateCredentials(method);
+        boolean addedCredentials = populateCredentials(curi, method);
         method.setDoAuthentication(addedCredentials);
         
         try {
@@ -480,7 +487,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             // Promote the credentials from the ProcessorURI to the CrawlServer
             // so they are available for all subsequent ProcessorURIs on this
             // server.
-            curi.promoteCredentials();
+            promoteCredentials(curi);
             if (logger.isLoggable(Level.FINE)) {
                 // Print out the cookie.  Might help with the debugging.
                 Header setCookie = method.getResponseHeader("set-cookie");
@@ -751,18 +758,20 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * CrawlServer so they are available for all subsequent ProcessorURIs on this
      * server.
      */
-    /*
     private boolean populateCredentials(ProcessorURI curi, HttpMethod method) {        
         // First look at the server avatars. Add any that are to be volunteered
         // on every request (e.g. RFC2617 credentials).  Every time creds will
         // return true when we call 'isEveryTime().
-        CrawlServer server =
-            getController().getServerCache().getServerFor(curi);
+        String serverKey;
+        try {
+            serverKey = CrawlServer.getServerKey(curi.getUURI());
+        } catch (URIException e) {
+            return false;
+        }
+        CrawlServer server = curi.getCrawlServer(serverKey);
         if (server.hasCredentialAvatars()) {
-            Set avatars = server.getCredentialAvatars();
-            for (Iterator i = avatars.iterator(); i.hasNext();) {
-                CredentialAvatar ca = (CredentialAvatar)i.next();
-                Credential c = ca.getCredential(getSettingsHandler(), curi);
+            for (CredentialAvatar ca: server.getCredentialAvatars()) {
+                Credential c = ca.getCredential(credentialStore, curi);
                 if (c.isEveryTime()) {
                     c.populate(curi, this.http, method, ca.getPayload());
                 }
@@ -774,18 +783,16 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // Now look in the curi.  The Curi will have credentials loaded either
         // by the handle401 method if its a rfc2617 or it'll have been set into
         // the curi by the preconditionenforcer as this login uri came through.
-        if (curi.hasCredentialAvatars()) {
-            Set avatars = curi.getCredentialAvatars();
-            for (Iterator i = avatars.iterator(); i.hasNext();) {
-                CredentialAvatar ca = (CredentialAvatar)i.next();
-                Credential c = ca.getCredential(getSettingsHandler(), curi);
-                if (c.populate(curi, this.http, method, ca.getPayload())) {
-                    result = true;
-                }
+        for (CredentialAvatar ca: curi.getCredentialAvatars()) {
+            Credential c = ca.getCredential(credentialStore, curi);
+            if (c.populate(curi, this.http, method, ca.getPayload())) {
+                result = true;
             }
         }
+    
+        return result;
     }
-*/
+
 
 
     /**
@@ -793,50 +800,26 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      *
      * @param curi ProcessorURI whose credentials we are to promote.
      */
-    /*
     private void promoteCredentials(final ProcessorURI curi) {
         Set<CredentialAvatar> avatars = curi.getCredentialAvatars();
         for (Iterator<CredentialAvatar> i = avatars.iterator(); i.hasNext() ;) {
             CredentialAvatar ca = i.next();
             i.remove();
+            // The server to attach too may not be the server that hosts
+            // this passed curi.  It might be of another subdomain.
+            // The avatar needs to be added to the server that is dependent
+            // on this precondition.  Find it by name.  Get the name from
+            // the credential this avatar represents.
             Credential c = credentialStore.getCredential(curi, ca);
             String cd = c.getCredentialDomain(curi);
-        }
-        
-        
-        if (!curi.hasCredentialAvatars()) {
-            logger.severe("No credentials to promote when there should be " +
-                curi);
-        } else {
-            Set avatars = curi.getCredentialAvatars();
-            for (Iterator i = avatars.iterator(); i.hasNext();) {
-                CredentialAvatar ca = (CredentialAvatar)i.next();
-                curi.removeCredentialAvatar(ca);
-                // The server to attach too may not be the server that hosts
-                // this passed curi.  It might be of another subdomain.
-                // The avatar needs to be added to the server that is dependent
-                // on this precondition.  Find it by name.  Get the name from
-                // the credential this avatar represents.
-                Credential c = ca.getCredential(getSettingsHandler(), curi);
-                String cd = null;
-                try {
-                    cd = c.getCredentialDomain(curi);
-                }
-                catch (AttributeNotFoundException e) {
-                    logger.severe("Failed to get cred domain for " + curi +
-                        " for " + ca + ": " + e.getMessage());
-                }
-                if (cd != null) {
-                    CrawlServer cs
-                        = getController().getServerCache().getServerFor(cd);
-                    if (cs != null) {
-                        cs.addCredentialAvatar(ca);
-                    }
+            if (cd != null) {
+                CrawlServer cs = curi.getCrawlServer(cd);
+                if (cs != null) {
+                    cs.addCredentialAvatar(ca);
                 }
             }
         }
     }
-*/
 
     /**
      * Server is looking for basic/digest auth credentials (RFC2617). If we have
@@ -855,6 +838,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
         String realm = authscheme.getRealm();
 
+        /* =======================================================
         // Look to see if this curi had rfc2617 avatars loaded. If so, are
         // any of them for this realm? If so, then the credential failed
         // if we got a 401 and it should be let die a natural 401 death.
@@ -867,14 +851,15 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                     + " to " + curi.toString());
             return;
         }
-        
         curi.attachRfc2617Credential(realm);
+         =============================================================
+        */
         
-/*        // Look to see if this curi had rfc2617 avatars loaded. If so, are
+        
+        // Look to see if this curi had rfc2617 avatars loaded. If so, are
         // any of them for this realm? If so, then the credential failed
         // if we got a 401 and it should be let die a natural 401 death.
-        Set curiRfc2617Credentials = getCredentials(getSettingsHandler(), curi,
-                Rfc2617Credential.class);
+        Set curiRfc2617Credentials = getCredentials(curi, Rfc2617Credential.class);
         Rfc2617Credential extant = Rfc2617Credential.getByRealm(
                 curiRfc2617Credentials, realm, curi);
         if (extant != null) {
@@ -892,32 +877,26 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             // curi and let it come around again. Add in the AuthScheme
             // we got too. Its needed when we go to run the Auth on
             // second time around.
-            CredentialStore cs = CredentialStore
-                    .getCredentialStore(getSettingsHandler());
-            if (cs == null) {
-                logger.severe("No credential store for " + curi);
+            String serverKey = getServerKey(curi);
+            CrawlServer server = curi.getCrawlServer(serverKey);
+            Set storeRfc2617Credentials = credentialStore.subset(curi,
+                    Rfc2617Credential.class, server.getName());
+            if (storeRfc2617Credentials == null
+                    || storeRfc2617Credentials.size() <= 0) {
+                logger.info("No rfc2617 credentials for " + curi);
             } else {
-                CrawlServer server = getController().getServerCache()
-                        .getServerFor(curi);
-                Set storeRfc2617Credentials = cs.subset(curi,
-                        Rfc2617Credential.class, server.getName());
-                if (storeRfc2617Credentials == null
-                        || storeRfc2617Credentials.size() <= 0) {
-                    logger.info("No rfc2617 credentials for " + curi);
+                Rfc2617Credential found = Rfc2617Credential.getByRealm(
+                        storeRfc2617Credentials, realm, curi);
+                if (found == null) {
+                    logger.info("No rfc2617 credentials for realm " + realm
+                            + " in " + curi);
                 } else {
-                    Rfc2617Credential found = Rfc2617Credential.getByRealm(
-                            storeRfc2617Credentials, realm, curi);
-                    if (found == null) {
-                        logger.info("No rfc2617 credentials for realm " + realm
-                                + " in " + curi);
-                    } else {
-                        found.attach(curi, authscheme.getRealm());
-                        logger.info("Found credential for realm " + realm
-                                + " in store for " + curi.toString());
-                    }
+                    found.attach(curi, authscheme.getRealm());
+                    logger.info("Found credential for realm " + realm
+                            + " in store for " + curi.toString());
                 }
             }
-        } */
+        }
     }
     
     /**
@@ -990,16 +969,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     }
         
     /**
-     * @param handler Settings Handler.
      * @param curi ProcessorURI that got a 401.
      * @param type Class of credential to get from curi.
      * @return Set of credentials attached to this curi.
      */
-    /* Unused, methinks
-    private Set<Credential> getCredentials(SettingsHandler handler, 
-            ProcessorURI curi, Class type) {
+    private Set<Credential> getCredentials(ProcessorURI curi, Class type) {
         Set<Credential> result = null;
-
         
         if (curi.hasCredentialAvatars()) {
             for (Iterator i = curi.getCredentialAvatars().iterator();
@@ -1009,13 +984,13 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                     if (result == null) {
                         result = new HashSet<Credential>();
                     }
-                    result.add(ca.getCredential(handler, curi));
+                    result.add(ca.getCredential(credentialStore, curi));
                 }
             }
         }
         return result;
     }
-    */
+
 
     public void initialTasks(StateProvider defaults) {
         super.initialTasks(defaults);
@@ -1055,14 +1030,14 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * Perform any final cleanup related to the HttpClient instance.
      */
     protected void cleanupHttp() {
-        if(cookieDb!=null) {
-            try {
-                cookieDb.close();
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
+//        if(cookieDb!=null) {
+//            try {
+//                cookieDb.close();
+//            } catch (DatabaseException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     protected void configureHttp(StateProvider defaults) {
@@ -1521,4 +1496,13 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     }
 
 
+    private static String getServerKey(ProcessorURI uri) {
+        try {
+            return CrawlServer.getServerKey(uri.getUURI()); 
+        } catch (URIException e) {
+            logger.severe(e.getMessage() + ": " + uri);
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.datamodel;
+package org.archive.processors.fetcher;
 
 import java.util.List;
 

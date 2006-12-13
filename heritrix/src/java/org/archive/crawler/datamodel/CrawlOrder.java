@@ -45,6 +45,7 @@ import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
+import org.archive.processors.fetcher.RobotsHonoringPolicy;
 import org.archive.settings.Sheet;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;

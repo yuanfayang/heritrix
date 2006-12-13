@@ -31,11 +31,11 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.RobotsHonoringPolicy;
 import org.archive.io.ReplayCharSequence;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
+import org.archive.processors.fetcher.RobotsHonoringPolicy;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.util.DevUtils;

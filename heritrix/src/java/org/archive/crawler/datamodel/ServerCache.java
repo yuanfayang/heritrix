@@ -32,6 +32,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.net.UURI;
 import org.archive.processors.fetcher.CrawlHost;
 import org.archive.processors.fetcher.CrawlHostCache;
+import org.archive.processors.fetcher.CrawlServer;
 import org.archive.settings.SheetManager;
 
 /**
@@ -43,7 +44,6 @@ public class ServerCache implements CrawlHostCache {
     private static Logger logger =
         Logger.getLogger(ServerCache.class.getName());
     
-    private SheetManager sheetManager = null;
     
     /**
      * hostname[:port] -> CrawlServer.
@@ -74,14 +74,12 @@ public class ServerCache implements CrawlHostCache {
      */
     public ServerCache(final SheetManager sh)
     throws Exception {
-        this.sheetManager = sh;
         this.servers = new Hashtable<String,CrawlServer>();
         this.hosts = new Hashtable<String,CrawlHost>();
     }
     
     public ServerCache(final CrawlController c)
     throws Exception {
-        this.sheetManager = c.getSheetManager();
         this.servers = c.getBigMap("servers", String.class, CrawlServer.class);
         this.hosts = c.getBigMap("hosts", String.class, CrawlHost.class);
     }
@@ -104,7 +102,6 @@ public class ServerCache implements CrawlHostCache {
         // Ensure key is private object
         String skey = new String(s);
         cserver = new CrawlServer(skey);
-        cserver.setSheetManager(sheetManager);
         servers.put(skey,cserver);
         if (logger.isLoggable(Level.FINER)) {
             logger.finer("Created server " + s);
