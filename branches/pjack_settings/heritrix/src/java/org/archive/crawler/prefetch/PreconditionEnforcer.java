@@ -33,7 +33,7 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.processors.Processor;
+import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessorURI;
 import org.archive.net.UURI;
 import org.archive.processors.credential.Credential;
@@ -51,7 +51,7 @@ import org.archive.state.Key;
  * @author gojomo
  */
 public class PreconditionEnforcer
-        extends Processor
+        extends CrawlerProcessor
         implements CoreAttributeConstants, FetchStatusCodes {
 
     private static final long serialVersionUID = 3L;
@@ -83,13 +83,10 @@ public class PreconditionEnforcer
      * annotated in the crawl.log, but still fetched. Default is false.
      */
     final public static Key<Boolean> CALCULATE_ROBOTS_ONLY = Key.makeExpert(true);
-
-
-    final CrawlController controller;
     
     
     public PreconditionEnforcer(CrawlController controller) {
-        this.controller = controller;
+        super(controller);
     }
 
     
@@ -152,12 +149,13 @@ public class PreconditionEnforcer
         catch (URIException e) {
             logger.severe("Failed get of path for " + curi);
         }
+        
         // require /robots.txt if not present
         if (isRobotsExpired(curi)) {
         	// Need to get robots
             if (logger.isLoggable(Level.FINE)) {
-                logger.fine( "No valid robots for " +
-                    controller.getServerCache().getServerFor(curi.getUURI()) +
+                CrawlServer server = getServerFor(curi);
+                logger.fine( "No valid robots for " + server  +
                     "; deferring " + curi);
             }
 
@@ -174,8 +172,8 @@ public class PreconditionEnforcer
             return true;
         }
         // test against robots.txt if available
-        CrawlServer cs = controller.getServerCache().getServerFor(curi.getUURI());
-        if(cs.isValidRobots()){
+        CrawlServer cs = getServerFor(curi);
+        if (cs.isValidRobots()) {
             String ua = controller.getOrder().getUserAgent(curi);
             if(cs.getRobots().disallows(curi, ua)) {
                 if(curi.get(this, CALCULATE_ROBOTS_ONLY)) {
@@ -215,7 +213,7 @@ public class PreconditionEnforcer
             return false; 
         }
         
-        CrawlServer cs = controller.getServerCache().getServerFor(curi.getUURI());
+        CrawlServer cs = getServerFor(curi);
         if(cs == null) {
             curi.setFetchStatus(S_UNFETCHABLE_URI);
             curi.skipToPostProcessing();
@@ -225,7 +223,7 @@ public class PreconditionEnforcer
         // If we've done a dns lookup and it didn't resolve a host
         // cancel further fetch-processing of this URI, because
         // the domain is unresolvable
-        CrawlHost ch = controller.getServerCache().getHostFor(curi.getUURI());
+        CrawlHost ch = getHostFor(curi);
         if (ch == null || ch.hasBeenLookedUp() && ch.getIP() == null) {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine( "no dns for " + ch +
@@ -271,7 +269,7 @@ public class PreconditionEnforcer
      * @return true if ip should be looked up.
      */
     public boolean isIpExpired(ProcessorURI curi) {
-        CrawlHost host = controller.getServerCache().getHostFor(curi.getUURI());
+        CrawlHost host = getHostFor(curi);
         if (!host.hasBeenLookedUp()) {
             // IP has not been looked up yet.
             return true;
@@ -329,8 +327,7 @@ public class PreconditionEnforcer
      * @return true if the robots policy is expired.
      */
     public boolean isRobotsExpired(ProcessorURI curi) {
-        CrawlServer server =
-            controller.getServerCache().getServerFor(curi.getUURI());
+        CrawlServer server = getServerFor(curi);
         long robotsFetched = server.getRobotsFetchedTime();
         if (robotsFetched == CrawlServer.ROBOTS_NOT_FETCHED) {
             // Have not attempted to fetch robots
@@ -403,8 +400,7 @@ public class PreconditionEnforcer
                 // html form).
                 String prereq = c.getPrerequisite(curi);
                 if (prereq == null || prereq.length() <= 0) {
-                    CrawlServer server =
-                        controller.getServerCache().getServerFor(curi.getUURI());
+                    CrawlServer server = getServerFor(curi);
                     logger.severe(server.getName() + " has "
                         + " credential(s) of type " + c + " but prereq"
                         + " is null.");
@@ -438,8 +434,7 @@ public class PreconditionEnforcer
     private boolean authenticated(final Credential credential,
             final ProcessorURI curi) {
         boolean result = false;
-        CrawlServer server =
-            controller.getServerCache().getServerFor(curi.getUURI());
+        CrawlServer server = getServerFor(curi);
         if (!server.hasCredentialAvatars()) {
             return result;
         }
@@ -454,4 +449,6 @@ public class PreconditionEnforcer
         }
         return result;
     }
+
+
 }

@@ -20,7 +20,7 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.archive.crawler.datamodel;
+package org.archive.processors.fetcher;
 
 import java.util.Map;
 import java.util.Hashtable;
@@ -28,21 +28,20 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.net.UURI;
 import org.archive.processors.fetcher.CrawlHost;
-import org.archive.processors.fetcher.CrawlHostCache;
+import org.archive.processors.fetcher.ServerCache;
 import org.archive.processors.fetcher.CrawlServer;
-import org.archive.settings.SheetManager;
+
 
 /**
  * Server and Host cache.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class ServerCache implements CrawlHostCache {
+public class DefaultServerCache implements ServerCache {
     private static Logger logger =
-        Logger.getLogger(ServerCache.class.getName());
+        Logger.getLogger(DefaultServerCache.class.getName());
     
     
     /**
@@ -59,29 +58,17 @@ public class ServerCache implements CrawlHostCache {
     
     /**
      * Constructor.
-     * Shutdown access to the default constructor by making it protected.
      */
-    protected ServerCache() {
-        super();
+    public DefaultServerCache() {
+        this(new Hashtable<String,CrawlServer>(), new Hashtable<String,CrawlHost>());
     }
     
-    /**
-     * This constructor creates a ServerCache that is all memory-based using
-     * Hashtables.  Used for unit testing only
-     * (Use {@link #ServerCache(CrawlController)} when crawling).
-     * @param sh
-     * @throws Exception
-     */
-    public ServerCache(final SheetManager sh)
-    throws Exception {
-        this.servers = new Hashtable<String,CrawlServer>();
-        this.hosts = new Hashtable<String,CrawlHost>();
-    }
     
-    public ServerCache(final CrawlController c)
-    throws Exception {
-        this.servers = c.getBigMap("servers", String.class, CrawlServer.class);
-        this.hosts = c.getBigMap("hosts", String.class, CrawlHost.class);
+    
+    public DefaultServerCache(Map<String,CrawlServer> servers, 
+            Map<String,CrawlHost> hosts) {
+        this.servers = servers;
+        this.hosts = hosts;
     }
     
     /**
