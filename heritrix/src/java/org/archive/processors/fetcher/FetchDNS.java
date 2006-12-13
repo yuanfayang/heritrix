@@ -38,6 +38,8 @@ import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
+import org.archive.processors.util.CrawlHost;
+import org.archive.processors.util.ServerCache;
 import org.archive.state.Key;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;

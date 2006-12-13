@@ -25,10 +25,10 @@ package org.archive.crawler.framework;
 
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
-import org.archive.processors.fetcher.CrawlHost;
-import org.archive.processors.fetcher.CrawlServer;
-import org.archive.processors.fetcher.ServerCache;
-import org.archive.processors.fetcher.ServerCacheUtil;
+import org.archive.processors.util.CrawlHost;
+import org.archive.processors.util.CrawlServer;
+import org.archive.processors.util.ServerCache;
+import org.archive.processors.util.ServerCacheUtil;
 
 public abstract class CrawlerProcessor extends Processor {
 

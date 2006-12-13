@@ -58,7 +58,7 @@ import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.net.UURI;
-import org.archive.processors.fetcher.CrawlServer;
+import org.archive.processors.util.CrawlServer;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.settings.Sheet;

@@ -21,7 +21,7 @@
  *
  * $Id$
  */
-package org.archive.processors.fetcher;
+package org.archive.processors.util;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

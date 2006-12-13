@@ -35,7 +35,7 @@ import org.archive.net.UURI;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
-import org.archive.processors.fetcher.RobotsHonoringPolicy;
+import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.state.StateProvider;
 import org.archive.util.Recorder;
 

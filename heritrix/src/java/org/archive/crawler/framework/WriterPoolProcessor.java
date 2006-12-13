@@ -48,7 +48,7 @@ import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.processors.Processor;
-import org.archive.processors.fetcher.CrawlHost;
+import org.archive.processors.util.CrawlHost;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
