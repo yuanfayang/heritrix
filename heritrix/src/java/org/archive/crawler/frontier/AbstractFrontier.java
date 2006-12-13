@@ -455,7 +455,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         if (caUri instanceof CrawlURI) {
             curi = (CrawlURI)caUri;
         } else {
-            curi = CrawlURI.from(caUri, nextOrdinal++);
+            curi = CrawlURI.from(controller, caUri, nextOrdinal++);
         }
         curi.setClassKey(getClassKey(curi));
         return curi;

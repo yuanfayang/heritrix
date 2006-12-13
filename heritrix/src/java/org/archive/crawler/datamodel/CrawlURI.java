@@ -39,6 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
 import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
@@ -51,6 +52,7 @@ import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
 import org.archive.processors.fetcher.CrawlHost;
 import org.archive.state.Key;
+import org.archive.state.StateProvider;
 import org.archive.util.Base32;
 import org.archive.util.Recorder;
 
@@ -177,14 +179,19 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     private byte[] contentDigest = null;
     private String contentDigestScheme = null;
 
+    
+    final private CrawlController controller;
+    
+    private transient StateProvider provider;
 
     /**
      * Create a new instance of CrawlURI from a {@link UURI}.
      *
      * @param uuri the UURI to base this CrawlURI on.
      */
-    public CrawlURI(UURI uuri) {
+    public CrawlURI(CrawlController c, UURI uuri) {
         super(uuri);
+        this.controller = c;
     }
 
     /**
@@ -193,14 +200,14 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      * @param caUri the CandidateURI to base this CrawlURI on.
      * @param o Monotonically increasing number within a crawl.
      */
-    @SuppressWarnings("deprecation")
-    public CrawlURI(CandidateURI caUri, long o) {
+    public CrawlURI(CrawlController c, CandidateURI caUri, long o) {
         super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(),
             caUri.getViaContext());
         ordinal = o;
         setSeed(caUri.isSeed());
         setSchedulingDirective(caUri.getSchedulingDirective());
         this.data = caUri.data;
+        this.controller = c;
     }
 
     /**
@@ -753,9 +760,10 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      * @param ordinal
      * @return A crawlURI made from the passed CandidateURI.
      */
-    public static CrawlURI from(CandidateURI caUri, long ordinal) {
+    public static CrawlURI from(CrawlController c, CandidateURI caUri, 
+            long ordinal) {
         return (caUri instanceof CrawlURI)?
-            (CrawlURI)caUri: new CrawlURI(caUri, ordinal);
+            (CrawlURI)caUri: new CrawlURI(c, caUri, ordinal);
     }
 
     /**
@@ -1147,8 +1155,10 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
     
     public <T> T get(Object module, Key<T> key) {
-        // FIXME
-        return null;
+        if (provider == null) {
+            provider = getController().findConfig(getUURI());
+        }
+        return provider.get(module, key);
     }
 
     public boolean attachRfc2617Credential(String realm) {
@@ -1191,9 +1201,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
     public String getFrom() {
-        
-        // TODO Auto-generated method stub
-        return null;
+        return getController().getOrderSetting(CrawlOrder.HTTP_HEADERS).get("from");
     }
 
     public Collection<Throwable> getNonFatalFailures() {
@@ -1211,22 +1219,16 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
 
     public String getResolvedName() {
-        // TODO Auto-generated method stub
-        return null;
+        return getController().getServerCache().getServerFor(getUURI()).getName();    
     }
 
-    public boolean passedDNS() {
-        // TODO Auto-generated method stub
-        return false;
-    }
 
     public boolean populateCredentials(HttpMethod method) {
-        // TODO Auto-generated method stub
         return false;
     }
 
     public void promoteCredentials() {
-        // TODO Auto-generated method stub
+        // TODO
     }
 
     public void setDNSServerIPLabel(String label) {
@@ -1310,19 +1312,16 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
     public CrawlHost getCrawlHost() {
-        // TODO Auto-generated method stub
-        return null;
+        return getController().getServerCache().getHostFor(getUURI());
     }
 
     public void requestCrawlPause() {
-        // TODO Auto-generated method stub
-        
+        getController().requestCrawlPause();
     }
 
 
     public void addUriError(URIException e, String uri) {
-        // TODO Auto-generated method stub
-        
+        getController().logUriError(e, getUURI(), uri);
     }
 
     public HttpMethod getHttpMethod() {
@@ -1334,8 +1333,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
 
     public RobotsHonoringPolicy getRobotsHonoringPolicy() {
-        // TODO Auto-generated method stub
-        return null;
+        return getController().getOrderSetting(CrawlOrder.ROBOTS_HONORING_POLICY);
     }
 
 
@@ -1356,5 +1354,10 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     
     public void setNextProcessingTime(long t) {
     	getData().put(A_TIME_OF_NEXT_PROCESSING, t);
+    }
+    
+    
+    private CrawlController getController() {
+        return controller;
     }
 }

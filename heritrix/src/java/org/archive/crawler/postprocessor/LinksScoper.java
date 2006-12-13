@@ -216,7 +216,7 @@ implements FetchStatusCodes {
         // TODO: Fix filters so work on CandidateURI.
         CrawlURI curi = (caUri instanceof CrawlURI)?
             (CrawlURI)caUri:
-            new CrawlURI(caUri.getUURI());
+            new CrawlURI(getController(), caUri.getUURI());
         DecideRuleSequence seq = caUri.get(this, REJECT_RULES);
         if (seq.decisionFor(curi) == DecideResult.ACCEPT) {
             LOGGER.info(curi.getUURI().toString());

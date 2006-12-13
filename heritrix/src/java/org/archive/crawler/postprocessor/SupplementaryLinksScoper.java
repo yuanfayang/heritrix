@@ -101,7 +101,7 @@ public class SupplementaryLinksScoper extends Scoper {
         // TODO: Fix filters so work on CandidateURI.
         CrawlURI curi = (caUri instanceof CrawlURI)?
             (CrawlURI)caUri:
-            new CrawlURI(caUri.getUURI());
+            new CrawlURI(getController(), caUri.getUURI());
         boolean result = false;
         DecideRuleSequence seq = curi.get(this, LINK_RULES);
         if (seq.decisionFor(curi) == DecideResult.ACCEPT) {

@@ -300,7 +300,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         if(caUri instanceof CrawlURI) {
             curi = (CrawlURI) caUri;
         } else {
-            curi = CrawlURI.from(caUri,System.currentTimeMillis());
+            curi = CrawlURI.from(controller,caUri,System.currentTimeMillis());
             curi.getData().put(A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis());
             // New CrawlURIs get 'current time' as the time of next processing.
@@ -989,7 +989,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
 
     public void considerIncluded(UURI u) {
         // This will cause the URI to be crawled!!!
-        CrawlURI curi = new CrawlURI(u);
+        CrawlURI curi = new CrawlURI(controller, u);
         innerSchedule(curi);
 
     }
