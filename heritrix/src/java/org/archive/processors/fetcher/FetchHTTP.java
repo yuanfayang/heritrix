@@ -65,6 +65,7 @@ import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.FetchStatusCodes;
+import org.archive.net.UURI;
 import org.archive.processors.credential.Credential;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.credential.CredentialStore;
@@ -352,10 +353,13 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     
     final private CredentialStore credentialStore;
 
+    final private ServerCache serverCache;
+    
     /**
      * Constructor.
      */
-    public FetchHTTP(CredentialStore cs) {
+    public FetchHTTP(ServerCache cache, CredentialStore cs) {
+        this.serverCache = cache;
         this.credentialStore = cs;
     }
 
@@ -627,7 +631,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             return false;
         }
 
-        CrawlHost host = curi.getCrawlHost();
+        CrawlHost host = getHostFor(curi.getUURI());
         if (host.getIP() == null && host.hasBeenLookedUp()) {
             curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
             return false;
@@ -768,7 +772,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         } catch (URIException e) {
             return false;
         }
-        CrawlServer server = curi.getCrawlServer(serverKey);
+        CrawlServer server = serverCache.getServerFor(serverKey);
         if (server.hasCredentialAvatars()) {
             for (CredentialAvatar ca: server.getCredentialAvatars()) {
                 Credential c = ca.getCredential(credentialStore, curi);
@@ -813,7 +817,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             Credential c = credentialStore.getCredential(curi, ca);
             String cd = c.getCredentialDomain(curi);
             if (cd != null) {
-                CrawlServer cs = curi.getCrawlServer(cd);
+                CrawlServer cs = serverCache.getServerFor(cd);
                 if (cs != null) {
                     cs.addCredentialAvatar(ca);
                 }
@@ -878,7 +882,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             // we got too. Its needed when we go to run the Auth on
             // second time around.
             String serverKey = getServerKey(curi);
-            CrawlServer server = curi.getCrawlServer(serverKey);
+            CrawlServer server = serverCache.getServerFor(serverKey);
             Set storeRfc2617Credentials = credentialStore.subset(curi,
                     Rfc2617Credential.class, server.getName());
             if (storeRfc2617Credentials == null
@@ -1504,5 +1508,21 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             e.printStackTrace();
             return null;
         }
+    }
+
+
+    /**
+     * Get the {@link CrawlHost} associated with <code>curi</code>.
+     * @param uuri CandidateURI we're to return Host for.
+     * @return CandidateURI instance that matches the passed Host name.
+     */
+    private CrawlHost getHostFor(UURI uuri) {
+        CrawlHost h = null;
+        try {
+            h = serverCache.getHostFor(uuri.getReferencedHost());
+        } catch (URIException e) {
+            e.printStackTrace();
+        }
+        return h;
     }
 }

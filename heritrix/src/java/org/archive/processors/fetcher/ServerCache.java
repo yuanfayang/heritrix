@@ -24,8 +24,12 @@
  */
 package org.archive.processors.fetcher;
 
-public interface CrawlHostCache {
+public interface ServerCache {
 
     CrawlHost getHostFor(String host);
+    
+    CrawlServer getServerFor(String serverKey);
 
+    
+    void cleanup();
 }

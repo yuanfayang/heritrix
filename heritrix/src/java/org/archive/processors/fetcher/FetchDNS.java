@@ -69,7 +69,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
     protected InetAddress serverInetAddr = null;
 
 
-    final private CrawlHostCache crawlHostCache;
+    final private ServerCache crawlHostCache;
     
     
     /**
@@ -91,15 +91,9 @@ implements CoreAttributeConstants, FetchStatusCodes {
     
     private byte [] reusableBuffer = new byte[1024];
 
-    /** 
-     * Create a new instance of FetchDNS.
-     */
-    public FetchDNS() {
-        this(new DefaultCrawlHostCache());
-    }
 
     
-    public FetchDNS(CrawlHostCache cache) {
+    public FetchDNS(ServerCache cache) {
         this.crawlHostCache = cache;
     }
     

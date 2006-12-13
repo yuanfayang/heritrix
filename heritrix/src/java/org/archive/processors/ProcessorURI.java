@@ -35,8 +35,6 @@ import org.archive.net.UURI;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
-import org.archive.processors.fetcher.CrawlHost;
-import org.archive.processors.fetcher.CrawlServer;
 import org.archive.processors.fetcher.RobotsHonoringPolicy;
 import org.archive.state.StateProvider;
 import org.archive.util.Recorder;
@@ -131,8 +129,12 @@ public interface ProcessorURI extends StateProvider {
      * 
      * 
      */
-    CrawlHost getCrawlHost();
-    CrawlServer getCrawlServer(String serverKey);
+    
+    void requestCrawlPause();
+    RobotsHonoringPolicy getRobotsHonoringPolicy();
+    void skipToPostProcessing();
+
+    
     // Eliminate CrawlURI.hasCredentialAvatars
 
 
@@ -147,7 +149,6 @@ public interface ProcessorURI extends StateProvider {
     String getResolvedName();
 
     
-    void skipToPostProcessing();
 
 
     String getPathFromSeed();
@@ -156,19 +157,17 @@ public interface ProcessorURI extends StateProvider {
     
     boolean isLocation();
 
-    void requestCrawlPause();
     
     List<Link> getOutLinks();
     
     UURI getBaseURI();
     void setBaseURI(UURI base);
-    
+
     boolean hasBeenLinkExtracted();
     void linkExtractorFinished();
-    
+
     void addUriError(URIException e, String uri);
-    
-    RobotsHonoringPolicy getRobotsHonoringPolicy();
+
     LinkContext getViaContext();
-    
+
 }

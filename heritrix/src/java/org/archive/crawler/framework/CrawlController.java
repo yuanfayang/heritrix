@@ -58,7 +58,10 @@ import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.Checkpoint;
 import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.datamodel.ServerCache;
+import org.archive.processors.fetcher.CrawlHost;
+import org.archive.processors.fetcher.CrawlServer;
+import org.archive.processors.fetcher.DefaultServerCache;
+import org.archive.processors.fetcher.ServerCache;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
@@ -670,7 +673,11 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             scope.initialize(this);
         }
         try {
-            this.serverCache = new ServerCache(this);
+            Map<String,CrawlServer> servers =
+                getBigMap("servers", String.class, CrawlServer.class);
+            Map<String,CrawlHost> hosts = 
+                getBigMap("hosts", String.class, CrawlHost.class);
+            this.serverCache = new DefaultServerCache(servers, hosts);
         } catch (Exception e) {
             throw new FatalConfigurationException("Unable to" +
                " initialize frontier (Failed setup of ServerCache) " + e);

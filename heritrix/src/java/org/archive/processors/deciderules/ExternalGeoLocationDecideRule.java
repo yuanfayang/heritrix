@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.URIException;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.fetcher.CrawlHost;
+import org.archive.processors.fetcher.ServerCache;
 import org.archive.state.Key;
 import org.xbill.DNS.Address;
 
@@ -74,8 +75,11 @@ public class ExternalGeoLocationDecideRule extends DecideRule {
     private String countryCode;
     private ExternalGeoLookupInterface implementation = null;
 
+    
+    final private ServerCache serverCache;
 
-    public ExternalGeoLocationDecideRule() {
+    public ExternalGeoLocationDecideRule(ServerCache cache) {
+        this.serverCache = cache;
     }
 
     
@@ -89,7 +93,7 @@ public class ExternalGeoLocationDecideRule extends DecideRule {
         InetAddress address;
         try {
             host = uri.getUURI().getHost();
-            crawlHost = uri.getCrawlHost();
+            crawlHost = serverCache.getHostFor(host);
             if (crawlHost.getCountryCode() != null) {
                 return (crawlHost.getCountryCode().equals(countryCode)) 
                         ? DecideResult.ACCEPT

@@ -47,6 +47,8 @@ import org.archive.crawler.framework.AbstractTracker;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.net.UURI;
+import org.archive.processors.fetcher.ServerCache;
+import org.archive.processors.fetcher.ServerCacheUtil;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.LongWrapper;
@@ -729,14 +731,14 @@ implements CrawlURIDispositionListener, Serializable {
         incrementMapCount(mimeTypeBytes, mime, curi.getContentSize());
 
         // Save hosts stats.
+        ServerCache sc = controller.getServerCache();
         saveHostStats((curi.getFetchStatus() == 1)? "dns:":
-                this.controller.getServerCache().
-                getHostFor(curi.getUURI()).getHostName(),
+                ServerCacheUtil.getHostFor(sc, curi.getUURI()).getHostName(),
                 curi.getContentSize());
         
         if (curi.getData().containsKey(CrawlURI.A_SOURCE_TAG)) {
         	saveSourceStats((String)curi.getData().get(CrawlURI.A_SOURCE_TAG),
-                    this.controller.getServerCache().getHostFor(curi.getUURI()).
+                        ServerCacheUtil.getHostFor(sc, curi.getUURI()).
                     getHostName()); 
         }
     }

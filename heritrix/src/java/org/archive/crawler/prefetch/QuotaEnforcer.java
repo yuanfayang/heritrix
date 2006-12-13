@@ -25,8 +25,8 @@ package org.archive.crawler.prefetch;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.fetcher.FetchStats;
-import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
@@ -38,7 +38,7 @@ import org.archive.state.Key;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class QuotaEnforcer extends Processor implements FetchStatusCodes {
+public class QuotaEnforcer extends CrawlerProcessor implements FetchStatusCodes {
 
     private static final long serialVersionUID = 3L;
 
@@ -177,15 +177,11 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
     };
 
     
-    
-    final CrawlController controller;
-
-
     /**
      * Constructor.
      */
     public QuotaEnforcer(CrawlController controller) {
-        this.controller = controller;
+        super(controller);
     }
     
     
@@ -197,8 +193,8 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
         CrawlURI curi = (CrawlURI)puri;
         FetchStats.HasFetchStats[] haveStats = 
             new FetchStats.HasFetchStats[] {
-                controller.getServerCache().getServerFor(curi.getUURI()), // server
-                controller.getServerCache().getHostFor(curi.getUURI()), // host
+                getServerFor(curi), // server
+                getHostFor(curi), // host
                 controller.getFrontier().getGroup(curi) // group
             };
         
