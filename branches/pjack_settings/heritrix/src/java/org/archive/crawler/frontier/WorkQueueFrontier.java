@@ -1220,7 +1220,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
 
     public void considerIncluded(UURI u) {
         this.alreadyIncluded.note(canonicalize(u));
-        CrawlURI temp = new CrawlURI(u);
+        CrawlURI temp = new CrawlURI(controller, u);
         temp.setClassKey(getClassKey(temp));
         getQueueFor(temp).expend(getCost(temp));
     }
