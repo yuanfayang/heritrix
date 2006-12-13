@@ -232,7 +232,7 @@ public class CredentialStore {
      * but different ports (e.g. http and https).
      * @return Unmodifable sublist of all elements of passed type.
      */
-    public Set<Credential> subset(CrawlURI context, Class type, String rootUri) {
+    public Set<Credential> subset(ProcessorURI context, Class type, String rootUri) {
         Set<Credential> result = null;
         for (Credential c: getAll(context)) {
             if (!type.isInstance(c)) {

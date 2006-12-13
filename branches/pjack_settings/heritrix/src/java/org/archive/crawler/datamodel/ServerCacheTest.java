@@ -27,6 +27,7 @@ import junit.framework.TestCase;
 import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.processors.fetcher.CrawlServer;
 import org.archive.settings.SheetManager;
 
 /**

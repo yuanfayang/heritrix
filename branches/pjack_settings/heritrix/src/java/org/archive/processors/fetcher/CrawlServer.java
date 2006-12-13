@@ -21,12 +21,11 @@
  *
  * $Header$
  */
-package org.archive.crawler.datamodel;
+package org.archive.processors.fetcher;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.HashSet;
@@ -34,15 +33,14 @@ import java.util.Set;
 import java.util.zip.Checksum;
 
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.framework.Checkpointer;
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.ToeThread;
+//import org.archive.crawler.framework.Checkpointer;
+//import org.archive.crawler.framework.CrawlController;
+//import org.archive.crawler.framework.ToeThread;
+import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.io.ReplayInputStream;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.credential.CredentialAvatar;
-import org.archive.processors.fetcher.FetchStats;
-import org.archive.settings.SheetManager;
 
 /**
  * Represents a single remote "server".
@@ -54,7 +52,7 @@ import org.archive.settings.SheetManager;
  */
 public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
 
-    private static final long serialVersionUID = -989714570750970369L;
+    private static final long serialVersionUID = 3L;
 
     public static final long ROBOTS_NOT_FETCHED = -1;
     /** only check if robots-fetch is perhaps superfluous 
@@ -63,7 +61,6 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
 
     private final String server; // actually, host+port in the https case
     private int port;
-    private transient SheetManager sheetManager;
     private RobotsExclusionPolicy robots;
     long robotsFetched = ROBOTS_NOT_FETCHED;
     boolean validRobots = false;
@@ -126,10 +123,7 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
      * @throws IOException
      */
     public void updateRobots(CrawlURI curi) {
-        CrawlController controller = (CrawlController)sheetManager.getRoot();
-        CrawlOrder order = controller.getOrder();
-        
-        RobotsHonoringPolicy honoringPolicy = order.getRobotsHonoringPolicy();
+        RobotsHonoringPolicy honoringPolicy = curi.getRobotsHonoringPolicy();
 
         robotsFetched = System.currentTimeMillis();
 
@@ -220,77 +214,6 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
         return port;
     }
 
-    /** 
-     * Called when object is being deserialized.
-     * In addition to the default java deserialization, this method
-     * re-establishes the references to settings handler and robots honoring
-     * policy.
-     *
-     * @param stream the stream to deserialize from.
-     * @throws IOException if I/O errors occur
-     * @throws ClassNotFoundException If the class for an object being restored
-     *         cannot be found.
-     */
-    private void readObject(ObjectInputStream stream)
-            throws IOException, ClassNotFoundException {
-        stream.defaultReadObject();
-        Thread t = Thread.currentThread();
-        if (t instanceof Checkpointer.CheckpointingThread) {
-            sheetManager = ((Checkpointer.CheckpointingThread)t)
-        		.getController().getSheetManager();
-        } else if (t instanceof ToeThread) {
-            sheetManager = ((ToeThread) Thread.currentThread())
-                .getController().getSheetManager();
-        } else {
-            // TODO: log differently? (if no throw here
-            // NPE is inevitable)
-            throw new RuntimeException("CrawlServer must deserialize " +
-                    "in a ToeThread or CheckpointingThread");
-        }
-        postDeserialize();
-    }
-    
-    private void postDeserialize() {
-    	if (this.robots != null) {
-            CrawlController controller = (CrawlController)sheetManager.getRoot();
-            CrawlOrder order = controller.getOrder();
-            RobotsHonoringPolicy honoringPolicy =
-                order.getRobotsHonoringPolicy();
-            this.robots.honoringPolicy = honoringPolicy;
-    	}
-    }
-
-    /** Get the sheet manager.
-     *
-     * @return the settings handler.
-     */
-    public SheetManager getSheetManager() {
-        return this.sheetManager;
-    }
-
-    /** Get the settings object in effect for this server.
-     * @param curi
-     *
-     * @return the settings object in effect for this server.
-     * @throws URIException
-     */
-/*    private CrawlerSettings getSettings(CandidateURI curi) {
-        try {
-            return this.settingsHandler.
-                getSettings(curi.getUURI().getReferencedHost(),
-                    curi.getUURI());
-        } catch (URIException e) {
-            return null;
-        }
-    } */
-
-    /** Set the settings handler to be used by this server.
-     *
-     * @param settingsHandler the settings handler to be used by this server.
-     */
-    public void setSheetManager(SheetManager manager) {
-        this.sheetManager = manager;
-    }
 
     public void incrementConsecutiveConnectionErrors() {
         this.consecutiveConnectionErrors++;
@@ -303,7 +226,7 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
     /**
      * @return Credential avatars for this server.  Returns null if none.
      */
-    public Set getCredentialAvatars() {
+    public Set<CredentialAvatar> getCredentialAvatars() {
         return this.avatars;
     }
 

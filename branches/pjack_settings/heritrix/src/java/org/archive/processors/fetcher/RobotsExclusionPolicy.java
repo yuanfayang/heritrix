@@ -21,7 +21,7 @@
  *
  * $Header$
  */
-package org.archive.crawler.datamodel;
+package org.archive.processors.fetcher;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,6 +37,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CrawlURI;
+import org.archive.crawler.datamodel.Robotstxt;
 import org.archive.state.StateProvider;
 
 /**

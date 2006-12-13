@@ -39,6 +39,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
 import org.archive.crawler.util.Transform;
@@ -51,6 +53,8 @@ import org.archive.processors.extractor.Hop;
 import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
 import org.archive.processors.fetcher.CrawlHost;
+import org.archive.processors.fetcher.CrawlServer;
+import org.archive.processors.fetcher.RobotsHonoringPolicy;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.Base32;
@@ -141,10 +145,8 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      */
     private boolean prerequisite = false;
 
-    /**
-     * Set to true if this <code>curi</code> is to be POST'd rather than GET-d.
-     */
-    private boolean post = false;
+    
+    private FetchType fetchType = FetchType.UNKNOWN;
 
     /** 
      * Monotonically increasing number within a crawl;
@@ -766,60 +768,27 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
             (CrawlURI)caUri: new CrawlURI(c, caUri, ordinal);
     }
 
-    /**
-     * @param avatars Credential avatars to save off.
-     */
-    private void setCredentialAvatars(Set<CredentialAvatar> avatars) {
-        getData().put(A_CREDENTIAL_AVATARS_KEY, avatars);
-    }
 
     /**
      * @return Credential avatars.  Null if none set.
      */
-    @SuppressWarnings("unchecked")
     public Set<CredentialAvatar> getCredentialAvatars() {
-        return (Set)getData().get(A_CREDENTIAL_AVATARS_KEY);
+        @SuppressWarnings("unchecked")
+        Set<CredentialAvatar> r = (Set)getData().get(A_CREDENTIAL_AVATARS_KEY);
+        if (r == null) {
+            r = new HashSet<CredentialAvatar>();
+            getData().put(A_CREDENTIAL_AVATARS_KEY, r);
+        }
+        return r;
     }
 
     /**
      * @return True if there are avatars attached to this instance.
      */
     public boolean hasCredentialAvatars() {
-        return getCredentialAvatars() != null &&
-            getCredentialAvatars().size() > 0;
+        return containsDataKey(A_CREDENTIAL_AVATARS_KEY);
     }
 
-    /**
-     * Add an avatar.
-     *
-     * We do lazy instantiation.
-     *
-     * @param ca Credential avatar to add to set of avatars.
-     */
-    public void addCredentialAvatar(CredentialAvatar ca) {
-        Set<CredentialAvatar> avatars = getCredentialAvatars();
-        if (avatars == null) {
-            avatars = new HashSet<CredentialAvatar>();
-            setCredentialAvatars(avatars);
-        }
-        avatars.add(ca);
-    }
-
-
-    /**
-     * Remove all credential avatars from this crawl uri.
-     * @param ca Avatar to remove.
-     * @return True if we removed passed parameter.  False if no operation
-     * performed.
-     */
-    public boolean removeCredentialAvatar(CredentialAvatar ca) {
-        boolean result = false;
-        Set avatars = getCredentialAvatars();
-        if (avatars != null && avatars.size() > 0) {
-            result = avatars.remove(ca);
-        }
-        return result;
-    }
 
     /**
      * Ask this URI if it was a success or not.
@@ -876,28 +845,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
         return result;
 	}
 
-    /**
-     * Set whether this URI should be fetched by sending a HTTP POST request.
-     * Else a HTTP GET request will be used.
-     *
-     * @param b Set whether this curi is to be POST'd.  Else its to be GET'd.
-     */
-    public void setPost(boolean b) {
-        this.post = b;
-    }
-
-    /**
-     * Returns true if this URI should be fetched by sending a HTTP POST request.
-     *
-     *
-     * TODO: Compound this and {@link #isHttpTransaction()} method so that there
-     * is one place to go to find out if get http, post http, ftp, dns.
-     *
-     * @return Returns is this CrawlURI instance is to be posted.
-     */
-    public boolean isPost() {
-        return this.post;
-    }
 
     /**
      * Set the retained content-digest value (usu. SHA1). 
@@ -1161,15 +1108,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
         return provider.get(module, key);
     }
 
-    public boolean attachRfc2617Credential(String realm) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean detachRfc2617Credential(String realm) {
-        // TODO Auto-generated method stub
-        return false;
-    }
 
     public String getDNSServerIPLabel() {
         if (data == null) {
@@ -1196,8 +1134,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
     public FetchType getFetchType() {
-        // TODO Auto-generated method stub
-        return null;
+        return fetchType;
     }
 
     public String getFrom() {
@@ -1223,13 +1160,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
 
-    public boolean populateCredentials(HttpMethod method) {
-        return false;
-    }
-
-    public void promoteCredentials() {
-        // TODO
-    }
 
     public void setDNSServerIPLabel(String label) {
         getData().put(A_DNS_SERVER_IP_LABEL, label);
@@ -1249,13 +1179,18 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
     public void setFetchType(FetchType type) {
-        // TODO Auto-generated method stub
-        
+        fetchType = type;
     }
 
     public void setHttpMethod(HttpMethod method) {
         getData().put(A_HTTP_TRANSACTION, method);
-        // FIXME: Also set FetchType?
+        if (method instanceof PostMethod) {
+            fetchType = FetchType.HTTP_POST;
+        } else if (method instanceof GetMethod) {
+            fetchType = FetchType.HTTP_GET;
+        } else {
+            fetchType = FetchType.UNKNOWN;
+        }
     }
 
     public void skipToPostProcessing() {
@@ -1313,6 +1248,10 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
     public CrawlHost getCrawlHost() {
         return getController().getServerCache().getHostFor(getUURI());
+    }
+    
+    public CrawlServer getCrawlServer(String serverKey) {
+        return getController().getServerCache().getServerFor(serverKey);
     }
 
     public void requestCrawlPause() {

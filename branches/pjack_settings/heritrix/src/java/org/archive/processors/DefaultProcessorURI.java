@@ -10,12 +10,13 @@ import java.util.Set;
 
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.RobotsHonoringPolicy;
 import org.archive.net.UURI;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
 import org.archive.processors.fetcher.CrawlHost;
+import org.archive.processors.fetcher.CrawlServer;
+import org.archive.processors.fetcher.RobotsHonoringPolicy;
 import org.archive.state.ExampleStateProvider;
 import org.archive.util.Recorder;
 
@@ -147,7 +148,19 @@ implements ProcessorURI {
         // TODO Auto-generated method stub
         return null;
     }
+    
+    
+    public CrawlServer getCrawlServer(String serverKey) {
+        // TODO
+        return null;
+    }
 
+    
+    public boolean hasCredentialAvatars() {
+        return getCredentialAvatars().size() > 0;
+    }
+    
+    
     public Set<CredentialAvatar> getCredentialAvatars() {
         return avatars;
     }

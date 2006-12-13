@@ -31,12 +31,13 @@ import java.util.Set;
 
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.RobotsHonoringPolicy;
 import org.archive.net.UURI;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
 import org.archive.processors.fetcher.CrawlHost;
+import org.archive.processors.fetcher.CrawlServer;
+import org.archive.processors.fetcher.RobotsHonoringPolicy;
 import org.archive.state.StateProvider;
 import org.archive.util.Recorder;
 
@@ -108,47 +109,10 @@ public interface ProcessorURI extends StateProvider {
     HttpMethod getHttpMethod();
     void setHttpMethod(HttpMethod method);
     
-
-    /* OK, the Heritrix implementation of this will need to merge 
-     * CredentialAvatars from the server with CredentialAvatars from
-     * this instance itself.  CredentialAvatars from this instnace itself
-     * must be promoted to the proper CrawlServer.
-     * 
-     * However, the non-Heritrix implementation might not do any of that.
-     * In particular I'm trying to free FetchHTTP from needing to know about
-     * CrawlServers.
-     * 
-     * See the old versions of FetchHTTP.populateCredentials and
-     * FetchHTTP.promoteCredentials for the Heritrix implementation of this
-     * method.
-     * 
-     * @param method
-     */
-    boolean populateCredentials(HttpMethod method);
-    void promoteCredentials();
     
+    boolean hasCredentialAvatars();
     Set<CredentialAvatar> getCredentialAvatars();
 
-    /**
-     * Detaches an Rfc2617Credential if one exists.
-     * 
-     * Heritrix implementation lives in FetchHTTP.handle401
-     * 
-     * @return  true if a Rfc2617Credential existed and was detached
-     */
-    boolean detachRfc2617Credential(String realm);
-    
-    
-    /**
-     * Search this curi's environment for an RFC 2617 credential that is 
-     * appropriate for the realm.
-     * 
-     * Heritrix implementation lives in FetchHTTP.handle401
-     * 
-     * @param realm
-     * @return
-     */
-    boolean attachRfc2617Credential(String realm);
 
 
     /*
@@ -168,7 +132,7 @@ public interface ProcessorURI extends StateProvider {
      * 
      */
     CrawlHost getCrawlHost();
-    
+    CrawlServer getCrawlServer(String serverKey);
     // Eliminate CrawlURI.hasCredentialAvatars
 
 
