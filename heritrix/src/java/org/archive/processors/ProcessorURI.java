@@ -167,7 +167,6 @@ public interface ProcessorURI extends StateProvider {
      * 
      * 
      */
-    boolean passedDNS();
     CrawlHost getCrawlHost();
     
     // Eliminate CrawlURI.hasCredentialAvatars

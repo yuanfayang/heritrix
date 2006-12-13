@@ -615,14 +615,17 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             return false;             
         }
         String scheme = curi.getUURI().getScheme();
-         if (!(scheme.equals("http") || scheme.equals("https"))) {
-             // handles only plain http and https
-             return false;
-         }
-         if (!curi.passedDNS()) {
-             curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
-             return false;
-         }
+        if (!(scheme.equals("http") || scheme.equals("https"))) {
+            // handles only plain http and https
+            return false;
+        }
+
+        CrawlHost host = curi.getCrawlHost();
+        if (host.getIP() == null && host.hasBeenLookedUp()) {
+            curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
+            return false;
+        }
+
         return true;
     }
 
