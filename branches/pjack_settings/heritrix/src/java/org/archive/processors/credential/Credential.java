@@ -28,8 +28,10 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.processors.ProcessorURI;
+import org.archive.processors.util.CrawlServer;
+import org.archive.processors.util.ServerCache;
+import org.archive.processors.util.ServerCacheUtil;
 import org.archive.state.Key;
 
 
@@ -222,13 +224,14 @@ public abstract class Credential {
      * @param curi ProcessorURI to test.
      * @return True if domain for credential matches that of the passed curi.
      */
-    public boolean rootUriMatch(CrawlController controller, 
+    public boolean rootUriMatch(ServerCache cache, 
             ProcessorURI curi) {
         String cd = getCredentialDomain(curi);
 
         // TODO: Account for port.  Currently we do not distingush between
         // http and https; they both get same crawl server instance.
-        String serverName = curi.getResolvedName();
+        CrawlServer serv = ServerCacheUtil.getServerFor(cache, curi.getUURI());
+        String serverName = serv.getName();
 //        String serverName = controller.getServerCache().getServerFor(curi).
 //            getName();
         logger.fine("RootURI: Comparing " + serverName + " " + cd);
