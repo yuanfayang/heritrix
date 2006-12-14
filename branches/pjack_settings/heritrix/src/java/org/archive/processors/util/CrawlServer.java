@@ -120,8 +120,8 @@ public class CrawlServer implements Serializable, FetchStats.HasFetchStats {
      * @param curi the crawl URI containing the fetched robots.txt
      * @throws IOException
      */
-    public void updateRobots(CrawlURI curi) {
-        RobotsHonoringPolicy honoringPolicy = curi.getRobotsHonoringPolicy();
+    public void updateRobots(RobotsHonoringPolicy honoringPolicy, 
+            CrawlURI curi) {
 
         robotsFetched = System.currentTimeMillis();
 

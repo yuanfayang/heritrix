@@ -27,13 +27,15 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.crawler.framework.Frontier.FrontierGroup;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
-import org.archive.processors.Processor;
+import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.processors.ProcessorURI;
 
 
@@ -46,7 +48,7 @@ import org.archive.processors.ProcessorURI;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class CrawlStateUpdater extends Processor implements
+public class CrawlStateUpdater extends CrawlerProcessor implements
         CoreAttributeConstants, FetchStatusCodes {
 
     private static final long serialVersionUID = -1072728147960180091L;
@@ -55,11 +57,9 @@ public class CrawlStateUpdater extends Processor implements
         Logger.getLogger(CrawlStateUpdater.class.getName());
 
     
-    final private CrawlController controller;
-    
-    
+
     public CrawlStateUpdater(CrawlController controller) {
-        this.controller = controller;
+        super(controller);
     }
 
 
@@ -73,13 +73,11 @@ public class CrawlStateUpdater extends Processor implements
         CrawlURI curi = (CrawlURI)puri;
         
         // Tally per-server, per-host, per-frontier-class running totals
-        CrawlServer server =
-            controller.getServerCache().getServerFor(curi.getUURI());
+        CrawlServer server = getServerFor(curi);
         if (server != null) {
             server.getSubstats().tally(curi);
         }
-        CrawlHost host = 
-            controller.getServerCache().getHostFor(curi.getUURI());
+        CrawlHost host = getHostFor(curi);
         if (host != null) {
             host.getSubstats().tally(curi);
         } 
@@ -101,8 +99,10 @@ public class CrawlStateUpdater extends Processor implements
             try {
                 if (curi.getUURI().getPath() != null &&
                         curi.getUURI().getPath().equals("/robots.txt")) {
+                    RobotsHonoringPolicy rhp = controller.
+                        getOrderSetting(CrawlOrder.ROBOTS_HONORING_POLICY);
                     // Update server with robots info
-                    server.updateRobots(curi);
+                    server.updateRobots(rhp,  curi);
                 }
             }
             catch (URIException e) {
