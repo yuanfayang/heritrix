@@ -171,7 +171,7 @@ public class ExtractorJS extends ContentExtractor {
                         Link.addRelativeToBase(curi, string, JS_MISC, SPECULATIVE);
                     }
                 } catch (URIException e) {
-                    curi.addUriError(e, string);
+                    logUriError(e, curi, string);
                 }
             } else {
                foundLinks += considerStrings(curi, subsequence, handlingJSFile);

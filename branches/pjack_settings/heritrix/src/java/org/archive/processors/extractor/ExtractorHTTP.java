@@ -80,9 +80,7 @@ implements CoreAttributeConstants {
             curi.getOutLinks().add(link);
             numberOfLinksExtracted++;
         } catch (URIException e) {
-            // There may not be a controller (e.g. If we're being run
-            // by the extractor tool).
-            curi.addUriError(e, loc.getValue());
+            logUriError(e, curi, loc.getValue());
         }
 
     }

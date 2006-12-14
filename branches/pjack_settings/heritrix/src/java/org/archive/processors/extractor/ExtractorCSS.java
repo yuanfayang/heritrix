@@ -154,7 +154,7 @@ public class ExtractorCSS extends ContentExtractor {
                     Link.addRelativeToBase(curi, cssUri, 
                             LinkContext.EMBED_MISC, Hop.EMBED);
                 } catch (URIException e) {
-                    curi.addUriError(e, cssUri);
+                    logUriError(e, curi, cssUri);
                 }
             }
         } catch (StackOverflowError e) {
