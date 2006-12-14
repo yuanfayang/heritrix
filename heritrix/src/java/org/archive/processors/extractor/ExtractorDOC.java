@@ -121,7 +121,7 @@ public class ExtractorDOC extends ContentExtractor {
             Link link = new Link(curi.getUURI(), dest, lc, Hop.NAVLINK);
             curi.getOutLinks().add(link);
         } catch (URIException e1) {
-            curi.addUriError(e1, hyperlink);
+            logUriError(e1, curi, hyperlink);
         }
         numberOfLinksExtracted++;        
     }

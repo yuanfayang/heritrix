@@ -138,7 +138,7 @@ public class ExtractorXML extends ContentExtractor {
             } catch (URIException e) {
                 // There may not be a controller (e.g. If we're being run
                 // by the extractor tool).
-                curi.addUriError(e, xmlUri);
+                logUriError(e, curi, xmlUri);
             }
         }
         return foundLinks;

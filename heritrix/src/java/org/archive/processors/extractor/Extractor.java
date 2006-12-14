@@ -27,7 +27,10 @@ package org.archive.processors.extractor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.URIException;
+import org.archive.net.UURIFactory;
 import org.archive.processors.Processor;
+import org.archive.processors.ProcessorLevel;
 import org.archive.processors.ProcessorURI;
 
 
@@ -91,5 +94,16 @@ public abstract class Extractor extends Processor {
      * @param uri  the uri to extract links from
      */
     protected abstract void extract(ProcessorURI uri);
+
+    
+    protected static void logUriError(URIException e, ProcessorURI uri, 
+            CharSequence l) {
+        if (e.getReasonCode() == UURIFactory.IGNORED_SCHEME) {
+            // don't log those that are intentionally ignored
+            return; 
+        }
+        Object[] array = { uri.getUURI(), l };
+        logger.log(ProcessorLevel.URI, e.getMessage(), array);
+    }
 
 }

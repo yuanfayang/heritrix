@@ -180,7 +180,17 @@ public class ExtractorHTML extends ContentExtractor {
     protected long numberOfCURIsHandled = 0;
     protected long numberOfLinksExtracted = 0;
 
+    
+    final private RobotsHonoringPolicy honoringPolicy;
+
+    
     public ExtractorHTML() {
+        this(new RobotsHonoringPolicy());
+    }
+    
+    
+    public ExtractorHTML(RobotsHonoringPolicy rhp) {
+        this.honoringPolicy = rhp;
     }
     
 
@@ -228,7 +238,7 @@ public class ExtractorHTML extends ContentExtractor {
                         UURI base = UURIFactory.getInstance(value.toString());
                         curi.setBaseURI(base);
                     } catch (URIException e) {
-                        curi.addUriError(e, value.toString());
+                        logUriError(e, curi, value);
                     }
                 }
             } else if (attr.start(3) > -1) {
@@ -398,7 +408,7 @@ public class ExtractorHTML extends ContentExtractor {
             HTMLLinkContext hc = new HTMLLinkContext(context.toString());
             Link.addRelativeToBase(curi, uri, hc, hop);
         } catch (URIException e) {
-            curi.addUriError(e, uri);
+            logUriError(e, curi, uri);
         }
     }
 
@@ -636,7 +646,7 @@ public class ExtractorHTML extends ContentExtractor {
         if("robots".equalsIgnoreCase(name) && content != null ) {
             // This attribute never seemed to get used, so I'm commented it out
             // curi.putString(A_META_ROBOTS, content);
-            RobotsHonoringPolicy policy = curi.getRobotsHonoringPolicy();
+            RobotsHonoringPolicy policy = honoringPolicy;
             String contentLower = content.toLowerCase();
             if ((policy == null
                 || (!policy.isType(curi, RobotsHonoringPolicy.Type.IGNORE)
@@ -654,7 +664,7 @@ public class ExtractorHTML extends ContentExtractor {
             try {
                 Link.addRelativeToBase(curi, refreshUri, HTMLLinkContext.META, Hop.REFER);
             } catch (URIException e) {
-                curi.addUriError(e, refreshUri);
+                logUriError(e, curi, refreshUri);
             }
         }
         return false;
