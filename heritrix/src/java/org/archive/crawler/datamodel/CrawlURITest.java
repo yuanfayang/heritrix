@@ -46,7 +46,7 @@ public class CrawlURITest extends TmpDirTestCase {
         final String url = "http://www.dh.gov.uk/Home/fs/en";
         this.seed = new CrawlURI(UURIFactory.getInstance(url));
         this.seed.setSchedulingDirective(CandidateURI.MEDIUM);
-        this.seed.setIsSeed(true);
+        this.seed.setSeed(true);
         // Force caching of string.
         this.seed.toString();
         // TODO: should this via really be itself?
@@ -93,10 +93,10 @@ public class CrawlURITest extends TmpDirTestCase {
         CandidateURI c = CandidateURI.
             createSeedCandidateURI(UURIFactory.
                 getInstance("http://www.archive.org"));
-        c.putString("key", "value");
+        c.getData().put("key", "value");
         CrawlURI curi = new CrawlURI(c, 0);
         assertTrue("Didn't find AList item",
-            curi.getString("key").equals("value"));
+            curi.getData().get("key").equals("value"));
     }
     
 // TODO: move to QueueAssignmentPolicies
