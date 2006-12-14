@@ -34,11 +34,16 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
+import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
 import org.archive.net.UURI;
+import org.archive.net.UURIFactory;
 import org.archive.processors.credential.Credential;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.credential.CredentialStore;
+import org.archive.processors.extractor.Hop;
+import org.archive.processors.extractor.Link;
+import org.archive.processors.extractor.LinkContext;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
 import org.archive.state.Key;
@@ -90,15 +95,23 @@ public class PreconditionEnforcer
     }
 
     
+    @Override
     protected boolean shouldProcess(ProcessorURI puri) {
         return (puri instanceof CrawlURI);
     }
     
-
+    
+    @Override
     protected void innerProcess(ProcessorURI puri) {
+        throw new AssertionError();
+    }
+
+    
+    @Override
+    protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
         if (considerDnsPreconditions(curi)) {
-            return;
+            return ProcessResult.FINISH;
         }
 
         // make sure we only process schemes we understand (i.e. not dns)
@@ -106,15 +119,15 @@ public class PreconditionEnforcer
         if (! (scheme.equals("http") || scheme.equals("https"))) {
             logger.fine("PolitenessEnforcer doesn't understand uri's of type " +
                 scheme + " (ignoring)");
-            return;
+            return ProcessResult.PROCEED;
         }
 
         if (considerRobotsPreconditions(curi)) {
-            return;
+            return ProcessResult.FINISH;
         }
 
         if (!curi.isPrerequisite() && credentialPrecondition(curi)) {
-            return;
+            return ProcessResult.FINISH;
         }
 
         // OK, it's allowed
@@ -124,7 +137,7 @@ public class PreconditionEnforcer
         // curi.setDelayFactor(getDelayFactorFor(curi));
         // curi.setMinimumDelay(getMinimumDelayFor(curi));
 
-        return;
+        return ProcessResult.PROCEED;
     }
 
     /**
@@ -163,7 +176,7 @@ public class PreconditionEnforcer
             // crawled.
             try {
                 String prereq = curi.getUURI().resolve("/robots.txt").toString();
-                curi.markPrerequisite(prereq);
+                markPrerequisite(curi, prereq);
             }
             catch (URIException e1) {
                 logger.severe("Failed resolve using " + curi);
@@ -193,7 +206,7 @@ public class PreconditionEnforcer
             return false;
         }
         // No valid robots found => Attempt to get robots.txt failed
-        curi.skipToPostProcessing();
+//        curi.skipToPostProcessing();
         curi.setFetchStatus(S_ROBOTS_PREREQUISITE_FAILURE);
         curi.setError("robots.txt prerequisite failed");
         if (logger.isLoggable(Level.FINE)) {
@@ -216,7 +229,7 @@ public class PreconditionEnforcer
         CrawlServer cs = getServerFor(curi);
         if(cs == null) {
             curi.setFetchStatus(S_UNFETCHABLE_URI);
-            curi.skipToPostProcessing();
+//            curi.skipToPostProcessing();
             return true;
         }
 
@@ -230,7 +243,7 @@ public class PreconditionEnforcer
                     " cancelling processing for ProcessorURI " + curi.toString());
             }
             curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
-            curi.skipToPostProcessing();
+//            curi.skipToPostProcessing();
             return true;
         }
 
@@ -241,7 +254,7 @@ public class PreconditionEnforcer
                 + " for dns lookup.");
             String preq = "dns:" + ch.getHostName();
             try {
-                curi.markPrerequisite(preq);
+                markPrerequisite(curi, preq);
             } catch (URIException e) {
                 throw new RuntimeException(e); // shouldn't ever happen
             }
@@ -386,7 +399,7 @@ public class PreconditionEnforcer
                 break;
             }
 
-            if (!c.rootUriMatch(controller, curi)) {
+            if (!c.rootUriMatch(controller.getServerCache(), curi)) {
                 continue;
             }
 
@@ -406,7 +419,7 @@ public class PreconditionEnforcer
                         + " is null.");
                 } else {
                     try {
-                        curi.markPrerequisite(prereq);
+                        markPrerequisite(curi, prereq);
                     } catch (URIException e) {
                         logger.severe("unable to set credentials prerequisite "+prereq);
                         controller.logUriError(e,curi.getUURI(),prereq);
@@ -451,4 +464,25 @@ public class PreconditionEnforcer
     }
 
 
+    /**
+     * Do all actions associated with setting a <code>CrawlURI</code> as
+     * requiring a prerequisite.
+     *
+     * @param lastProcessorChain Last processor chain reference.  This chain is
+     * where this <code>CrawlURI</code> goes next.
+     * @param preq Object to set a prerequisite.
+     * @throws URIException
+     */
+    private void markPrerequisite(CrawlURI curi, String preq) 
+    throws URIException {
+        UURI src = curi.getUURI();
+        UURI dest = UURIFactory.getInstance(preq);
+        LinkContext lc = LinkContext.PREREQ_MISC;
+        Hop hop = Hop.PREREQ;
+        Link link = new Link(src, dest, lc, hop);
+        curi.setPrerequisiteUri(link);
+        curi.incrementDeferrals();
+        curi.setFetchStatus(S_DEFERRED);
+        //skipToPostProcessing();
+    }
 }

@@ -28,6 +28,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Scoper;
+import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.util.TextUtils;
@@ -86,19 +87,26 @@ implements FetchStatusCodes {
     }
 
     
+    @Override
     protected boolean shouldProcess(ProcessorURI puri) {
         return puri instanceof CrawlURI;
     }
 
-
+    
     @Override
     protected void innerProcess(ProcessorURI puri) {
+        throw new AssertionError();
+    }
+    
+
+    @Override
+    protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
         
         // Check if uris should be blocked
         if (curi.get(this, BLOCK_ALL)) {
             curi.setFetchStatus(S_BLOCKED_BY_USER);
-            curi.skipToPostProcessing();
+            return ProcessResult.FINISH;
         }
 
         // Check if allowed by regular expression
@@ -106,7 +114,7 @@ implements FetchStatusCodes {
         if (regexp != null && !regexp.equals("")) {
             if (!TextUtils.matches(regexp, curi.toString())) {
                 curi.setFetchStatus(S_BLOCKED_BY_USER);
-                curi.skipToPostProcessing();
+                return ProcessResult.FINISH;
             }
         }
 
@@ -115,7 +123,7 @@ implements FetchStatusCodes {
         if (regexp != null && !regexp.equals("")) {
             if (TextUtils.matches(regexp, curi.toString())) {
                 curi.setFetchStatus(S_BLOCKED_BY_USER);
-                curi.skipToPostProcessing();
+                return ProcessResult.FINISH;
             }
         }
 
@@ -124,8 +132,10 @@ implements FetchStatusCodes {
             if (!isInScope(curi)) {
                 // Scope rejected
                 curi.setFetchStatus(S_OUT_OF_SCOPE);
-                curi.skipToPostProcessing();
+                return ProcessResult.FINISH;
             }
         }
+        
+        return ProcessResult.PROCEED;
     }
 }

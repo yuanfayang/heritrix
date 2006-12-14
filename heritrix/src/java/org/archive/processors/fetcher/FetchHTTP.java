@@ -76,6 +76,7 @@ import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.processors.ProcessResult;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import static org.archive.processors.ProcessorURI.FetchType.HTTP_POST;
@@ -613,6 +614,19 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         curi.getRecorder().close();
     }
 
+    
+    @Override
+    public ProcessResult process(ProcessorURI uri) throws InterruptedException {
+        if (uri.getFetchStatus() < 0) {
+            // already marked as errored, this pass through
+            // skip to end
+            return ProcessResult.FINISH;
+        } else {
+            return super.process(uri);
+        }
+    }
+    
+    
     /**
      * Can this processor fetch the given ProcessorURI. May set a fetch
      * status if this processor would usually handle the ProcessorURI,
@@ -621,13 +635,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * @param curi
      * @return True if processor can fetch.
      */
+    @Override
     protected boolean shouldProcess(ProcessorURI curi) {
-        if(curi.getFetchStatus()<0) {
-            // already marked as errored, this pass through
-            // skip to end
-            curi.skipToPostProcessing();
-            return false;             
-        }
         String scheme = curi.getUURI().getScheme();
         if (!(scheme.equals("http") || scheme.equals("https"))) {
             // handles only plain http and https

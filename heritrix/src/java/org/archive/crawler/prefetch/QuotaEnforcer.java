@@ -27,6 +27,7 @@ import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.fetcher.FetchStats;
+import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
@@ -190,6 +191,10 @@ public class QuotaEnforcer extends CrawlerProcessor implements FetchStatusCodes 
     }
 
     protected void innerProcess(ProcessorURI puri) {
+        throw new AssertionError();
+    }
+    
+    protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
         FetchStats.HasFetchStats[] haveStats = 
             new FetchStats.HasFetchStats[] {
@@ -200,9 +205,11 @@ public class QuotaEnforcer extends CrawlerProcessor implements FetchStatusCodes 
         
         for(int cat=SERVER;cat<=GROUP;cat++) {
             if (checkQuotas(curi,haveStats[cat],cat)) {
-                return;
+                return ProcessResult.FINISH;
             }
         }
+        
+        return ProcessResult.PROCEED;
     }
 
     /**
@@ -251,7 +258,6 @@ public class QuotaEnforcer extends CrawlerProcessor implements FetchStatusCodes 
         if (quota >= 0 && actual >= quota) {
             curi.setFetchStatus(S_BLOCKED_BY_QUOTA);
             curi.getAnnotations().add("Q:"+key.getFieldName());
-            curi.skipToPostProcessing();
             if (curi.get(this, FORCE_RETIRE)) {
                 curi.setForceRetire(true);
             }
