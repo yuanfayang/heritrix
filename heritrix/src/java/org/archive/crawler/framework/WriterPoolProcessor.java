@@ -47,7 +47,6 @@ import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
-import org.archive.processors.Processor;
 import org.archive.processors.util.CrawlHost;
 import org.archive.state.ExampleStateProvider;
 import org.archive.state.Key;
@@ -60,7 +59,7 @@ import org.archive.state.StateProvider;
  * @author Parker Thompson
  * @author stack
  */
-public abstract class WriterPoolProcessor extends Processor
+public abstract class WriterPoolProcessor extends CrawlerProcessor
 implements CoreAttributeConstants, CrawlStatusListener {
     
     
@@ -146,15 +145,13 @@ implements CoreAttributeConstants, CrawlStatusListener {
     private long totalBytesWritten = 0;
 
     
-    final private CrawlController controller;
-    
 
     /**
      * @param name Name of this processor.
      * @param description Description for this processor.
      */
     public WriterPoolProcessor(CrawlController controller) {
-        this.controller = controller;
+        super(controller);
     }
 
 
@@ -193,7 +190,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
     }
     
     protected String getHostAddress(CrawlURI curi) {
-        CrawlHost h = curi.getCrawlHost();
+        CrawlHost h = getHostFor(curi);
         if (h == null) {
             throw new NullPointerException("Crawlhost is null for " +
                 curi + " " + curi.getVia());
