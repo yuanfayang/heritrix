@@ -59,6 +59,8 @@ import org.archive.crawler.url.Canonicalizer;
 import org.archive.crawler.util.BdbUriUniqFilter;
 import org.archive.net.UURI;
 import org.archive.processors.util.CrawlServer;
+import org.archive.processors.util.ServerCache;
+import org.archive.processors.util.ServerCacheUtil;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.settings.Sheet;
@@ -300,7 +302,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
         if(caUri instanceof CrawlURI) {
             curi = (CrawlURI) caUri;
         } else {
-            curi = CrawlURI.from(controller,caUri,System.currentTimeMillis());
+            curi = CrawlURI.from(caUri,System.currentTimeMillis());
             curi.getData().put(A_TIME_OF_NEXT_PROCESSING,
                 System.currentTimeMillis());
             // New CrawlURIs get 'current time' as the time of next processing.
@@ -403,7 +405,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
      * @return the CrawlServer to be associated with this CrawlURI
      */
     protected CrawlServer getServer(CrawlURI curi) {
-        return this.controller.getServerCache().getServerFor(curi.getUURI());
+        ServerCache cache = controller.getServerCache();
+        UURI uuri = curi.getUURI();
+        return ServerCacheUtil.getServerFor(cache, uuri);
     }
 
     /* (non-Javadoc)
@@ -989,7 +993,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
 
     public void considerIncluded(UURI u) {
         // This will cause the URI to be crawled!!!
-        CrawlURI curi = new CrawlURI(controller, u);
+        CrawlURI curi = new CrawlURI(u);
         innerSchedule(curi);
 
     }
