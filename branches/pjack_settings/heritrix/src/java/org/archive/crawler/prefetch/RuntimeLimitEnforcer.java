@@ -30,6 +30,7 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlStatus;
+import org.archive.processors.ProcessResult;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
@@ -137,8 +138,14 @@ public class RuntimeLimitEnforcer
     }
 
     
+    @Override 
+    protected void innerProcess(ProcessorURI curi) {
+        throw new AssertionError();
+    }
+    
     @Override
-    protected void innerProcess(ProcessorURI curi) throws InterruptedException {
+    protected ProcessResult innerProcessResult(ProcessorURI curi)
+    throws InterruptedException {
         long allowedRuntime = getRuntime(curi);
         long currentRuntime = controller.getStatistics().crawlDuration();
         if(currentRuntime > allowedRuntime){
@@ -152,13 +159,14 @@ public class RuntimeLimitEnforcer
                     curi.setFetchStatus(S_BLOCKED_BY_RUNTIME_LIMIT);
                     curi.getAnnotations().add("Runtime exceeded " + allowedRuntime + 
                             "ms");
-                    curi.skipToPostProcessing();
+                    return ProcessResult.FINISH;
                 }
             } else {
                 logger.log(Level.SEVERE,"Null value for end-operation " + 
                         " when processing " + curi.toString());
             }
         }
+        return ProcessResult.PROCEED;
     }
     
     /**

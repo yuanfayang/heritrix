@@ -34,6 +34,7 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.processors.ProcessResult;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
@@ -156,11 +157,18 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
     }
 
     
+    @Override
     protected boolean shouldProcess(ProcessorURI puri) {
         return true;
     }
-
+    
+    @Override
     protected void innerProcess(ProcessorURI puri) {
+        throw new AssertionError();
+    }
+
+    @Override
+    protected ProcessResult innerProcessResult(ProcessorURI puri) {
         CrawlURI curi = (CrawlURI)puri;
         String nowGeneration = 
             ArchiveUtils.get14DigitDate().substring(
@@ -177,8 +185,8 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
                 // CrawlURI is mapped to somewhere other than here
                 curi.setFetchStatus(S_BLOCKED_BY_CUSTOM_PROCESSOR);
                 curi.getAnnotations().add("to:"+target);
-                curi.skipToPostProcessing();
                 divertLog(curi,target);
+                return ProcessResult.FINISH;
             } else {
                 // localName means keep locally; do nothing
             }
@@ -202,6 +210,7 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
                 }
             }
         }
+        return ProcessResult.PROCEED;
     }
     
     protected boolean decideToMapOutlink(CandidateURI cauri) {

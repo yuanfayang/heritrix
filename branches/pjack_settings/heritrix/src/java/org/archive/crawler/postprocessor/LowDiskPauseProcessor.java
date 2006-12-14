@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.archive.processors.ProcessResult;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
@@ -96,7 +97,11 @@ public class LowDiskPauseProcessor extends Processor {
     protected boolean shouldProcess(ProcessorURI curi) {
         return true;
     }
-    
+
+    @Override
+    protected void innerProcess(ProcessorURI uri) {
+        throw new AssertionError();
+    }
     
     /**
      * Notes a CrawlURI's content size in its running tally. If the 
@@ -106,12 +111,16 @@ public class LowDiskPauseProcessor extends Processor {
      * 
      * @param curi CrawlURI to process.
      */
-    protected void innerProcess(ProcessorURI curi) {
+    @Override
+    protected ProcessResult innerProcessResult(ProcessorURI curi) {
         synchronized (this) {
             contentSinceCheck += curi.getContentSize();
             if (contentSinceCheck/1024 > curi.get(this, RECHECK_THRESHOLD)) {
-                checkAvailableSpace(curi);
+                ProcessResult r = checkAvailableSpace(curi);
                 contentSinceCheck = 0;
+                return r;
+            } else {
+                return ProcessResult.PROCEED;
             }
         }
     }
@@ -123,14 +132,14 @@ public class LowDiskPauseProcessor extends Processor {
      * crawl pause. 
      * @param curi Current context.
      */
-    private void checkAvailableSpace(ProcessorURI curi) {
+    private ProcessResult checkAvailableSpace(ProcessorURI curi) {
         try {
             String df = IoUtils.readFullyAsString(Runtime.getRuntime().exec(
                     "df -k").getInputStream());
             Matcher matcher = VALID_DF_OUTPUT.matcher(df);
             if(!matcher.matches()) {
                 logger.severe("'df -k' output unacceptable for low-disk checking");
-                return;
+                return ProcessResult.PROCEED;
             }
             List<String> monitoredMounts = curi.get(this, MONITOR_MOUNTS);
             matcher = AVAILABLE_EXTRACTOR.matcher(df);
@@ -140,17 +149,17 @@ public class LowDiskPauseProcessor extends Processor {
                     long availKilobytes = Long.parseLong(matcher.group(1));
                     int thresholdKilobytes = curi.get(this, PAUSE_THRESHOLD_KB);
                     if (availKilobytes < thresholdKilobytes ) {
-                        curi.requestCrawlPause();
                         logger.log(Level.SEVERE, "Low Disk Pause",
                                 availKilobytes + "K available on " + mount
                                         + " (below threshold "
                                         + thresholdKilobytes + "K)");
-                        break;
+                        return ProcessResult.STUCK;
                     }
                 }
             }
         } catch (IOException e) {
             curi.getNonFatalFailures().add(e);
         }
+        return ProcessResult.PROCEED;
     }
 }

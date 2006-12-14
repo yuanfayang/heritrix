@@ -100,21 +100,23 @@ public abstract class Processor {
      * @param uri  The URI to process
      * @throws  InterruptedException   if the thread is interrupted
      */
-    final public void process(ProcessorURI uri) throws InterruptedException {
+    public ProcessResult process(ProcessorURI uri) 
+    throws InterruptedException {
         if (!uri.get(this, ENABLED)) {
-            return;
+            return ProcessResult.PROCEED;
         }
         
         if (uri.get(this, DECIDE_RULES).decisionFor(uri) == DecideResult.REJECT) {
             innerRejectProcess(uri);
-            return;
+            return ProcessResult.PROCEED;
         }
         
         if (shouldProcess(uri)) {
             uriCount.incrementAndGet();
-            innerProcess(uri);
+            return innerProcessResult(uri);
+        } else {
+            return ProcessResult.PROCEED;
         }
-        return;
     }
 
     
@@ -142,6 +144,12 @@ public abstract class Processor {
      */
     protected abstract boolean shouldProcess(ProcessorURI uri);
 
+    
+    protected ProcessResult innerProcessResult(ProcessorURI uri) 
+    throws InterruptedException {
+        innerProcess(uri);
+        return ProcessResult.PROCEED;
+    }
 
     /**
      * Actually performs the process.  By the time this method is invoked,
