@@ -56,6 +56,8 @@ import org.archive.crawler.url.Canonicalizer;
 import org.archive.net.UURI;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
+import org.archive.processors.util.ServerCache;
+import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.Sheet;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
@@ -455,7 +457,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         if (caUri instanceof CrawlURI) {
             curi = (CrawlURI)caUri;
         } else {
-            curi = CrawlURI.from(controller, caUri, nextOrdinal++);
+            curi = CrawlURI.from(caUri, nextOrdinal++);
         }
         curi.setClassKey(getClassKey(curi));
         return curi;
@@ -610,7 +612,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             int maxBandwidthKB = get(MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC);
             if (maxBandwidthKB > 0) {
                 // Enforce bandwidth limit
-                CrawlHost host = curi.getCrawlHost();
+                ServerCache cache = controller.getServerCache();
+                CrawlHost host = ServerCacheUtil.getHostFor(cache, curi.getUURI());
                 long minDurationToWait = host.getEarliestNextURIEmitTime()
                         - now;
                 float maxBandwidth = maxBandwidthKB * 1.024F; // kilo factor

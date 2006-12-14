@@ -41,7 +41,6 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.frontier.AdaptiveRevisitAttributeConstants;
 import org.archive.crawler.util.Transform;
 import org.archive.net.UURI;
@@ -49,12 +48,7 @@ import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.credential.Rfc2617Credential;
-import org.archive.processors.extractor.Hop;
 import org.archive.processors.extractor.Link;
-import org.archive.processors.extractor.LinkContext;
-import org.archive.processors.util.CrawlHost;
-import org.archive.processors.util.CrawlServer;
-import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.Base32;
@@ -100,6 +94,10 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
 
     // User agent to masquerade as when crawling this URI. If null, globals should be used
     private String userAgent = null;
+    
+    // From header
+    // TODO: This and user-agent really belong in FetchHTTP
+    private transient String from = null;
 
     // Once a link extractor has finished processing this curi this will be
     // set as true
@@ -181,9 +179,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     private byte[] contentDigest = null;
     private String contentDigestScheme = null;
 
-    
-    final private CrawlController controller;
-    
+        
     private transient StateProvider provider;
 
     /**
@@ -191,9 +187,8 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      *
      * @param uuri the UURI to base this CrawlURI on.
      */
-    public CrawlURI(CrawlController c, UURI uuri) {
+    public CrawlURI(UURI uuri) {
         super(uuri);
-        this.controller = c;
     }
 
     /**
@@ -202,14 +197,13 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      * @param caUri the CandidateURI to base this CrawlURI on.
      * @param o Monotonically increasing number within a crawl.
      */
-    public CrawlURI(CrawlController c, CandidateURI caUri, long o) {
+    public CrawlURI(CandidateURI caUri, long o) {
         super(caUri.getUURI(), caUri.getPathFromSeed(), caUri.getVia(),
             caUri.getViaContext());
         ordinal = o;
         setSeed(caUri.isSeed());
         setSchedulingDirective(caUri.getSchedulingDirective());
         this.data = caUri.data;
-        this.controller = c;
     }
 
     /**
@@ -388,26 +382,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
 
-    /**
-     * Do all actions associated with setting a <code>CrawlURI</code> as
-     * requiring a prerequisite.
-     *
-     * @param lastProcessorChain Last processor chain reference.  This chain is
-     * where this <code>CrawlURI</code> goes next.
-     * @param preq Object to set a prerequisite.
-     * @throws URIException
-     */
-    public void markPrerequisite(String preq) throws URIException {
-        UURI src = getUURI();
-        UURI dest = UURIFactory.getInstance(preq);
-        LinkContext lc = LinkContext.PREREQ_MISC;
-        Hop hop = Hop.PREREQ;
-        Link link = new Link(src, dest, lc, hop);
-        setPrerequisiteUri(link);
-        incrementDeferrals();
-        setFetchStatus(S_DEFERRED);
-        skipToPostProcessing();
-    }
+
 
     /**
      * Set a prerequisite for this URI.
@@ -762,10 +737,9 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      * @param ordinal
      * @return A crawlURI made from the passed CandidateURI.
      */
-    public static CrawlURI from(CrawlController c, CandidateURI caUri, 
-            long ordinal) {
+    public static CrawlURI from(CandidateURI caUri, long ordinal) {
         return (caUri instanceof CrawlURI)?
-            (CrawlURI)caUri: new CrawlURI(c, caUri, ordinal);
+            (CrawlURI)caUri: new CrawlURI(caUri, ordinal);
     }
 
 
@@ -1103,7 +1077,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     
     public <T> T get(Object module, Key<T> key) {
         if (provider == null) {
-            provider = getController().findConfig(getUURI());
+            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
         }
         return provider.get(module, key);
     }
@@ -1138,9 +1112,14 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
     public String getFrom() {
-        return getController().getOrderSetting(CrawlOrder.HTTP_HEADERS).get("from");
+        return from;
     }
 
+    
+    public void setFrom(String from) {
+        this.from = from;
+    }
+    
     public Collection<Throwable> getNonFatalFailures() {
     	@SuppressWarnings("unchecked")
     	List<Throwable> list = (List)getData().get(A_LOCALIZED_ERRORS);
@@ -1153,12 +1132,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     	// was added, override collection to implement that?
         return list;
     }
-
-
-    public String getResolvedName() {
-        return getController().getServerCache().getServerFor(getUURI()).getName();    
-    }
-
 
 
     public void setDNSServerIPLabel(String label) {
@@ -1193,10 +1166,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
         }
     }
 
-    public void skipToPostProcessing() {
-        // TODO Auto-generated method stub
-        
-    }
 
 
     public void setForceRetire(boolean b) {
@@ -1246,22 +1215,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
         getData().put(A_WAIT_INTERVAL, wi);
     }
 
-    public CrawlHost getCrawlHost() {
-        return getController().getServerCache().getHostFor(getUURI());
-    }
-    
-    public CrawlServer getCrawlServer(String serverKey) {
-        return getController().getServerCache().getServerFor(serverKey);
-    }
-
-    public void requestCrawlPause() {
-        getController().requestCrawlPause();
-    }
-
-
-    public void addUriError(URIException e, String uri) {
-        getController().logUriError(e, getUURI(), uri);
-    }
 
     public HttpMethod getHttpMethod() {
         if (data != null) {
@@ -1271,9 +1224,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     }
 
 
-    public RobotsHonoringPolicy getRobotsHonoringPolicy() {
-        return getController().getOrderSetting(CrawlOrder.ROBOTS_HONORING_POLICY);
-    }
 
 
     public void setBaseURI(UURI base) {
@@ -1295,8 +1245,4 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     	getData().put(A_TIME_OF_NEXT_PROCESSING, t);
     }
     
-    
-    private CrawlController getController() {
-        return controller;
-    }
 }

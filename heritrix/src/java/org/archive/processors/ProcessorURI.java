@@ -30,12 +30,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURI;
 import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
-import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.state.StateProvider;
 import org.archive.util.Recorder;
 
@@ -99,7 +97,6 @@ public interface ProcessorURI extends StateProvider {
     Collection<String> getAnnotations();
     Collection<Throwable> getNonFatalFailures();
     
-    // Give a better name?
     int getFetchStatus();
     void setFetchStatus(int status);
     
@@ -110,46 +107,6 @@ public interface ProcessorURI extends StateProvider {
     
     boolean hasCredentialAvatars();
     Set<CredentialAvatar> getCredentialAvatars();
-
-
-
-    /*
-     * True if the DNS lookup occurred and worked.
-     * 
-     * Heritrix implementation should be:
-     * 
-     *          CrawlHost host = getController().getServerCache().getHostFor(curi);
-         // make sure the dns lookup succeeded
-         if (host.getIP() == null && host.hasBeenLookedUp()) {
-             curi.setFetchStatus(S_DOMAIN_PREREQUISITE_FAILURE);
-             return false;
-         }
-         return true;
-
-     * 
-     * 
-     */
-    
-    void requestCrawlPause();
-    RobotsHonoringPolicy getRobotsHonoringPolicy();
-    void skipToPostProcessing();
-
-    
-    // Eliminate CrawlURI.hasCredentialAvatars
-
-
-    /*
-     * Host name as determined by DNS? Maybe? Needed by Credential.rootUriMatch
-     * 
-     * Heritrix implementation is:
-     * 
-     *   String serverName = controller.getServerCache().getServerFor(curi).
-     *       getName();
-     */
-    String getResolvedName();
-
-    
-
 
     String getPathFromSeed();
     boolean isSeed();
@@ -165,8 +122,6 @@ public interface ProcessorURI extends StateProvider {
 
     boolean hasBeenLinkExtracted();
     void linkExtractorFinished();
-
-    void addUriError(URIException e, String uri);
 
     LinkContext getViaContext();
 
