@@ -140,6 +140,14 @@ public class PathChanger {
         };
 
 
+    final public static Transformer<String,Object> OBJECT_TRANSFORMER =
+        new Transformer<String,Object>() {
+            public Object transform(String s) {
+                
+                return null; 
+            }
+        };
+
     
 //    final private BufferedReader reader;
 //    final private SingleSheet sheet;
@@ -148,7 +156,7 @@ public class PathChanger {
     /**
      * Transformers used to convert simple objects from strings.
      */
-    final private Map<Class,Transformer> transformers;
+    final private Map<String,Transformer<String,Object>> transformers;
 
 
     /**
@@ -158,17 +166,18 @@ public class PathChanger {
      * and so on.
      */
     public PathChanger() {
-        transformers = new HashMap<Class,Transformer>();
-        registerTransformer(Boolean.class, BOOLEAN_TRANSFORMER);
-        registerTransformer(Byte.class, BYTE_TRANSFORMER);
-        registerTransformer(Character.class, CHAR_TRANSFORMER);
-        registerTransformer(Double.class, DOUBLE_TRANSFORMER);
-        registerTransformer(Float.class, FLOAT_TRANSFORMER);
-        registerTransformer(Integer.class, INT_TRANSFORMER);
-        registerTransformer(Long.class, LONG_TRANSFORMER);
-        registerTransformer(Short.class, SHORT_TRANSFORMER);
-        registerTransformer(String.class, STRING_TRANSFORMER);
-        registerTransformer(Pattern.class, PATTERN_TRANSFORMER);
+        transformers = new HashMap<String,Transformer<String,Object>>();
+        registerTransformer("boolean", BOOLEAN_TRANSFORMER);
+        registerTransformer("byte", BYTE_TRANSFORMER);
+        registerTransformer("char", CHAR_TRANSFORMER);
+        registerTransformer("double", DOUBLE_TRANSFORMER);
+        registerTransformer("float", FLOAT_TRANSFORMER);
+        registerTransformer("int", INT_TRANSFORMER);
+        registerTransformer("long", LONG_TRANSFORMER);
+        registerTransformer("short", SHORT_TRANSFORMER);
+        registerTransformer("string", STRING_TRANSFORMER);
+        registerTransformer("pattern", PATTERN_TRANSFORMER);
+        //registerTransformer("object", OBJECT_TRANSFORMER);
     }
 
 
@@ -179,9 +188,11 @@ public class PathChanger {
      * @param cls   the type of object to transform strings into
      * @param transformer   the transformer to use 
      */
-    public <T> void registerTransformer(Class<T> cls, 
-            Transformer<String,T> transformer) {
-        transformers.put(cls, transformer);
+    public <T> void registerTransformer(String suffix, 
+            Transformer transformer) {
+        @SuppressWarnings("unchecked")
+        Transformer<String,Object> t = transformer;
+        transformers.put(suffix, t);
     }
 
     
@@ -199,71 +210,44 @@ public class PathChanger {
     private void processChange(SingleSheet sheet, PathChange pair) {
         String path = pair.getPath();
         String value = pair.getValue();
+
+        int p = path.lastIndexOf(':');
+        if (p < 0) {
+            throw new PathChangeException("No type suffix on path, cannot parse.");
+        }
         
+        String suffix = path.substring(p + 1);
+        path = path.substring(0, p);
         
-        if (path.endsWith("._impl")) {
-            processObject(sheet, path, value);
+        if (suffix.equals("object")) {
+            Object v = Construction.construct(sheet, value);
+            finish(sheet, path, v);
             return;
         }
 
-        int p = path.lastIndexOf('.');
-        if (p < 0) {
-            throw new PathChangeException("Root objects can't be primitive: " + path);
+        Transformer<String,Object> transformer = transformers.get(suffix);
+        if (transformer == null) {
+            throw new PathChangeException("No transformer for type " + suffix);
         }
-        String previous = path.substring(0, p);
-        String lastToken = path.substring(p + 1);
-        Object processor = PathValidator.validate(sheet, previous);
-        Map<String,Key<Object>> keys = KeyManager.getKeys(processor.getClass());
-        Key<Object> key = keys.get(lastToken);
-        if (key == null) {
-            throw new PathChangeException("No such key: " + lastToken);
-        }
-        Object v;
-        @SuppressWarnings("unchecked")
-        Transformer<String,Object> t = this.transformers.get(key.getType());
-        if (t == null) {
-            throw new PathChangeException("Can't transform " 
-                    + key.getType().getName());
-        }
-        try {
-            v = t.transform(value);
-        } catch (Exception e) {
-            throw new PathChangeException("Could not parse value: " + value);
-        }
-        sheet.set(processor, key, v);
+        Object v = transformer.transform(value);
+        finish(sheet, path, v);        
     }
 
 
-    private void processObject(SingleSheet sheet, String path, 
-            String className) {
-        // Instantiate the new object.
-        className = className.trim();
-        Object newObject = Construction.construct(sheet, className);
-
-        // Now we need to figure out where to store the object.
-        // There are three possibilities:
-        // (1) The newly minted object is a root object, and goes in the
-        //     Sheet Manager.
-        // (2) The newly minted object is a member of a List.
-        // (3) The newly minted object is the value of some other object's
-        //     Key field.
-        
-        // Eliminate the trailing "._impl" from the given path
-        path = path.substring(0, path.length() - 6);
-
-        // If the path is now 1 token long, then it's the root object.
-        // (Eg, if given path was X._impl, then it defined root object X.
-        // FIXME: If root with that name already exists, replace that root (ew)
+    private void finish(SingleSheet sheet, String path, Object value) {
         int p = path.lastIndexOf('.');
         if (p < 0) {
-            sheet.getSheetManager().setRoot(newObject);
-            return;
+            if (path.equals(PathValidator.ROOT_NAME)) {
+                sheet.getSheetManager().setRoot(value);
+                return;
+            } else {
+                throw new PathChangeException("Missing controller.");
+            }
         }
         
         String previousPath = path.substring(0, p);
-        Object previous = PathValidator.validate(sheet, previousPath);
         String lastToken = path.substring(p + 1);
-        
+        Object previous = PathValidator.validate(sheet, previousPath);
         if (previous instanceof List) {
             int index;
             try {
@@ -274,35 +258,29 @@ public class PathChanger {
             @SuppressWarnings("unchecked")
             List<Object> list = (List<Object>)previous;
             if (index < list.size()) {
-                list.set(index, newObject);
+                list.set(index, value);
             } else if (index == list.size()) {
-                list.add(newObject);
+                list.add(value);
             } else {
                 throw new PathChangeException("Incorrect index: " 
                         + path + " (expected " + list.size() + ")");
             }
             return;
-            
         }
-
+        
         if (previous instanceof Map) {
             @SuppressWarnings("unchecked")
             Map<String,Object> map = (Map<String,Object>)previous;
-            map.put(lastToken, newObject);
+            map.put(lastToken, value);
             return;
         }
 
-        // Not a root object, not a list member, not a mapping.
-        // Must be a value for some other processor's Key.
-        // The lastToken is therefore a Key field name.
-        // Check the KeyManager for that key, then set its value in the sheet.
         Map<String,Key<Object>> keys = KeyManager.getKeys(previous.getClass());
         Key<Object> key = keys.get(lastToken);
         if (key == null) {
             throw new PathChangeException("No such key: " + path);
         }
-        sheet.set(previous, key, newObject);
+        sheet.set(previous, key, value);
     }
-    
 
 }
