@@ -45,6 +45,9 @@ import org.archive.state.KeyManager;
 public class PathValidator {
 
     
+    final static String ROOT_NAME = "controller";
+
+    
     /**
      * The sheet being used to resolve the path.
      */
@@ -93,6 +96,12 @@ public class PathValidator {
      * @return   the object the path represents
      */
     private Object validatePath() {
+        String first = tokens.get(0);
+        advance();
+        if (!first.equals(ROOT_NAME)) {
+            throw ex("No controller.");
+        }
+
         Object current = sheet.getSheetManager().getRoot();
         
         // While there are more tokens, process the next token.
@@ -114,7 +123,7 @@ public class PathValidator {
         return current;
     }
 
-    
+
     /**
      * Advances to the next token.  Appends the the next token to the 
      * subPath for error reporting, and shrinks the 
