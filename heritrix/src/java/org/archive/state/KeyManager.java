@@ -111,7 +111,7 @@ final public class KeyManager {
         for (Field field: c.getDeclaredFields()) {
             if (isKeyField(field)) {
                 Key<Object> k = getKey(field);
-                String name = field.getName();
+                String name = field.getName().toLowerCase().replace('_', '-');
                 k.setMetadata(c, name);
                 Key old = discovered.put(name, k);
                 if (old != null) {
