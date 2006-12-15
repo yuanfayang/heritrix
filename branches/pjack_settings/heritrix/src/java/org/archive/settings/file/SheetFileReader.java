@@ -45,6 +45,10 @@ extends TransformingIteratorWrapper<String,PathChange> {
             return null;
         }
         
+        if (line.trim().equals("")) {
+            return null;
+        }
+        
         int p = line.indexOf('=');
         if (p < 0) {
             throw new IllegalStateException("Invalid line: " + line);
