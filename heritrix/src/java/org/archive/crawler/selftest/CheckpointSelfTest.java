@@ -42,7 +42,6 @@ import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.Checkpointer;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.settings.XMLSettingsHandler;
 import org.archive.crawler.util.CheckpointUtils;
 
 

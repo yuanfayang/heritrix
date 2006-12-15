@@ -42,7 +42,6 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -240,7 +239,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             throws FatalConfigurationException, IOException {
         c.addCrawlStatusListener(this);
         File logsDisk = null;
-        logsDisk = c.getSettingsDir(CrawlOrder.LOGS_PATH);
+        logsDisk = c.getSettingsDir(CrawlController.LOGS_PATH);
         if (logsDisk != null) {
             String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
             if (get(RECOVERY_LOG_ENABLED)) {
@@ -825,7 +824,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected String canonicalize(UURI uuri) {
         StateProvider def = controller.getSheetManager().getDefault();
         List<CanonicalizationRule> rules = 
-            controller.getOrderSetting(CrawlOrder.URI_CANONICALIZATION_RULES);
+            controller.getOrderSetting(CrawlController.URI_CANONICALIZATION_RULES);
         return Canonicalizer.canonicalize(def, uuri.toString(), rules);
     }
 

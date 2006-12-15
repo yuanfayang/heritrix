@@ -47,6 +47,7 @@ import org.archive.io.arc.ARCWriter;
 import org.archive.io.arc.ARCWriterPool;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyMaker;
 import org.archive.state.StateProvider;
 
 
@@ -75,8 +76,7 @@ FetchStatusCodes {
      * safe to change midcrawl (You can remove and add new dirs as the crawler
      * progresses).
      */
-    final public static Key<List<String>> PATH = 
-        Key.makeFinal(Collections.singletonList("arcs"));
+    final public static Key<List<String>> PATH = makePath();
 
         
         
@@ -228,4 +228,13 @@ FetchStatusCodes {
     protected Key<List<String>> getPathKey() {
         return PATH;
     }
+
+
+    private static Key<List<String>> makePath() {
+        KeyMaker<List<String>> km = KeyMaker.makeList(String.class);
+        km.overrideable = false;
+        km.def = Collections.singletonList("arcs");
+        return km.toKey();
+    }
+
 }

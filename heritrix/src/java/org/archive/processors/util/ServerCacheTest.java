@@ -35,7 +35,7 @@ import org.archive.processors.fetcher.DefaultServerCache;
  * 
  * @author gojomo
  */
-public class DefaultServerCacheTest extends TestCase {
+public class ServerCacheTest extends TestCase {
     public void testHolds() throws Exception {
         DefaultServerCache servers = new DefaultServerCache();
         String serverKey = "www.example.com:9090";

@@ -187,7 +187,7 @@ public class PreconditionEnforcer
         // test against robots.txt if available
         CrawlServer cs = getServerFor(curi);
         if (cs.isValidRobots()) {
-            String ua = controller.getOrder().getUserAgent(curi);
+            String ua = controller.getUserAgent(curi);
             if(cs.getRobots().disallows(curi, ua)) {
                 if(curi.get(this, CALCULATE_ROBOTS_ONLY)) {
                     // annotate URI as excluded, but continue to process normally

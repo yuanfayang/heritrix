@@ -89,8 +89,8 @@ implements CoreAttributeConstants, CrawlStatusListener {
      * safe to change midcrawl (You can remove and add new dirs as the crawler
      * progresses).
      */
-    final public static Key<List<String>> PATH = 
-        Key.makeFinal(Collections.singletonList("crawl-store"));
+//    final public static Key<List<String>> PATH = 
+//        Key.makeFinal(Collections.singletonList("crawl-store"));
 
 
     /**
@@ -128,7 +128,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
      * exceeded this limit, this processor will stop the crawler. A value of
      * zero means no upper limit.
      */
-    final public static Key<Long> MAX_BYTES_WRITTEN = Key.makeExpertFinal(0L);
+    final public static Key<Long> TOTAL_BYTES_TO_WRITE = Key.makeExpertFinal(0L);
 
 
     final public static Key<MetadataProvider> METADATA_PROVIDER = 
@@ -180,7 +180,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
 
     
     protected void checkBytesWritten(StateProvider context) {
-        long max = context.get(this, MAX_BYTES_WRITTEN);
+        long max = context.get(this, TOTAL_BYTES_TO_WRITE);
         if (max <= 0) {
             return;
         }

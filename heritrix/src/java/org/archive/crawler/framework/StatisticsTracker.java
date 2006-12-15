@@ -188,7 +188,7 @@ implements CrawlURIDispositionListener, Serializable {
     throws FatalConfigurationException {
         super(c);
         try {
-            this.sourceHostDistribution = c.getBigMap("sourceHostDistribution",
+/*            this.sourceHostDistribution = c.getBigMap("sourceHostDistribution",
             	    String.class, HashMap.class);
             this.hostsDistribution = c.getBigMap("hostsDistribution",
                 String.class, LongWrapper.class);
@@ -197,7 +197,7 @@ implements CrawlURIDispositionListener, Serializable {
             this.hostsLastFinished = c.getBigMap("hostsLastFinished",
                 String.class, Long.class);
             this.processedSeedsRecords = c.getBigMap("processedSeedsRecords",
-                    String.class, SeedRecord.class);
+                    String.class, SeedRecord.class); */
         } catch (Exception e) {
             throw new FatalConfigurationException("Failed setup of" +
                 " StatisticsTracker: " + e);
@@ -977,7 +977,7 @@ implements CrawlURIDispositionListener, Serializable {
     }
     
     protected void writeCrawlReportTo(PrintWriter writer) {
-        writer.print("Crawl Name: " + controller.getOrder().getCrawlOrderName());
+        writer.print("Crawl Name: " + controller.getSheetManager().getCrawlName());
         writer.print("\nCrawl Status: " + sExitMessage);
         writer.print("\nDuration Time: " +
                 ArchiveUtils.formatMillisecondsToConventional(crawlDuration()));

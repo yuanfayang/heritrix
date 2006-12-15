@@ -42,7 +42,6 @@ import javax.management.AttributeNotFoundException;
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.datamodel.UriUniqFilter;
@@ -253,7 +252,7 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     protected String canonicalize(UURI uuri) {
         StateProvider def = controller.getSheetManager().getDefault();
         List<CanonicalizationRule> rules = 
-            controller.getOrderSetting(CrawlOrder.RULES);
+            controller.getOrderSetting(CrawlController.URI_CANONICALIZATION_RULES);
         return Canonicalizer.canonicalize(def, uuri.toString(), rules);
     }
 
