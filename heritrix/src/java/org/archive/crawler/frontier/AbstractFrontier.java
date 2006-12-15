@@ -100,11 +100,11 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * always wait this long after one completion before recontacting same
      * server, regardless of multiple
      */
-    final public static Key<Integer> MIN_DELAY = Key.make(3000);
+    final public static Key<Integer> MIN_DELAY_MS = Key.make(3000);
     
 
     /** never wait more than this long, regardless of multiple */
-    final public static Key<Integer> MAX_DELAY = Key.make(30000);
+    final public static Key<Integer> MAX_DELAY_MS = Key.make(30000);
     
 
     /** number of hops of embeds (ERX) to bump to front of host queue */
@@ -596,13 +596,13 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             long durationTaken = (completeTime - curi.getFetchBeginTime());
             durationToWait = (long)(get(DELAY_FACTOR) * durationTaken);
 
-            long minDelay = get(MIN_DELAY);
+            long minDelay = get(MIN_DELAY_MS);
             if (minDelay > durationToWait) {
                 // wait at least the minimum
                 durationToWait = minDelay;
             }
 
-            long maxDelay = get(MAX_DELAY);
+            long maxDelay = get(MAX_DELAY_MS);
             if (durationToWait > maxDelay) {
                 // wait no more than the maximum
                 durationToWait = maxDelay;
@@ -825,7 +825,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected String canonicalize(UURI uuri) {
         StateProvider def = controller.getSheetManager().getDefault();
         List<CanonicalizationRule> rules = 
-            controller.getOrderSetting(CrawlOrder.RULES);
+            controller.getOrderSetting(CrawlOrder.URI_CANONICALIZATION_RULES);
         return Canonicalizer.canonicalize(def, uuri.toString(), rules);
     }
 
