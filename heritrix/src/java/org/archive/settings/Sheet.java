@@ -96,7 +96,7 @@ public abstract class Sheet implements StateProvider {
      * @return  either the value for that processor/Key combination, or null
      *    if this sheet does not include such a value
      */
-    public abstract <T> T get(Object processor, Key<T> key);
+    public abstract <T> T check(Object processor, Key<T> key);
 
     
     public abstract <T> Resolved<T> resolve(Object processor, Key<T> key);
@@ -104,7 +104,7 @@ public abstract class Sheet implements StateProvider {
 
     public <T> Resolved<T> resolveDefault(Object processor, Key<T> key) {
         SingleSheet defaults = getSheetManager().getDefault();
-        T result = defaults.get(processor, key);
+        T result = defaults.check(processor, key);
         if (result == null) {
             result = key.getDefaultValue();
         }
@@ -112,5 +112,10 @@ public abstract class Sheet implements StateProvider {
             result = key.getDefaultValue();
         }
         return new Resolved<T>(defaults, processor, key, result);
+    }
+    
+    
+    final public <T> T get(Object module, Key<T> key) {
+        return resolve(module, key).getValue();
     }
 }

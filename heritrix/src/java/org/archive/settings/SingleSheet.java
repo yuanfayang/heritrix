@@ -58,7 +58,7 @@ public class SingleSheet extends Sheet {
         
     
     @Override
-    public <T> T get(Object target, Key<T> key) {
+    public <T> T check(Object target, Key<T> key) {
         Identity id = new Identity(target);
         Map<Key,Object> keys = settings.get(id);
         if (keys == null) {
@@ -73,7 +73,7 @@ public class SingleSheet extends Sheet {
 
     
     public <T> Resolved<T> resolve(Object processor, Key<T> key) {
-        T result = get(processor, key);
+        T result = check(processor, key);
         if (result == null) {
             return resolveDefault(processor, key);
         }
