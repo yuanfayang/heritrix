@@ -65,9 +65,9 @@ public class SheetBundle extends Sheet {
      * the given processor/key combination, then that value is returned and
      * any remaining sheets in the bundle are ignored.
      */
-    public <T> T get(Object processor, Key<T> key) {
+    public <T> T check(Object processor, Key<T> key) {
         for (Sheet sheet: sheets) {
-            T result = sheet.get(processor, key);
+            T result = sheet.check(processor, key);
             if (result != null) {
                 return result;
             }
@@ -101,7 +101,7 @@ public class SheetBundle extends Sheet {
                 sheets.remove(sheets.size() - 1);
             } else {
                 SingleSheet ss = (SingleSheet)sheet;
-                T value = ss.get(processor, key);
+                T value = ss.check(processor, key);
                 if (value != null) {
                     sheets.add(ss);
                     return new Resolved<T>(sheets, processor, key, value);
