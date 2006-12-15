@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.exceptions.EndedException;
@@ -116,9 +115,9 @@ Reporter, ProgressStatisticsReporter, HostResolver {
         serialNumber = sn;
         setPriority(DEFAULT_PRIORITY);
         int outBufferSize = controller
-                .getOrderSetting(CrawlOrder.RECORDER_OUT_BUFFER);
+                .getOrderSetting(CrawlController.RECORDER_OUT_BUFFER_BYTES);
         int inBufferSize = controller
-                .getOrderSetting(CrawlOrder.RECORDER_IN_BUFFER);
+                .getOrderSetting(CrawlController.RECORDER_IN_BUFFER_BYTES);
         httpRecorder = new Recorder(controller.getScratchDisk(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
@@ -128,7 +127,7 @@ Reporter, ProgressStatisticsReporter, HostResolver {
      * @see java.lang.Thread#run()
      */
     public void run() {
-        String name = controller.getOrder().getCrawlOrderName();
+        String name = controller.getSheetManager().getCrawlName();
         logger.fine(getName()+" started for order '"+name+"'");
 
         try {

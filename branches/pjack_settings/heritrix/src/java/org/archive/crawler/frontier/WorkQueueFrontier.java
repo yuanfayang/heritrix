@@ -1063,7 +1063,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         w.print(ArchiveUtils.TIMESTAMP12.format(new Date()));
         w.print("\n");
         w.print(" Job being crawled: ");
-        w.print(controller.getOrder().getCrawlOrderName());
+        w.print(controller.getSheetManager().getCrawlName());
         w.print("\n");
         w.print("\n -----===== STATS =====-----\n");
         w.print(" Discovered:    ");

@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
-import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
@@ -100,7 +99,7 @@ public class CrawlStateUpdater extends CrawlerProcessor implements
                 if (curi.getUURI().getPath() != null &&
                         curi.getUURI().getPath().equals("/robots.txt")) {
                     RobotsHonoringPolicy rhp = controller.
-                        getOrderSetting(CrawlOrder.ROBOTS_HONORING_POLICY);
+                        getOrderSetting(CrawlController.ROBOTS_HONORING_POLICY);
                     // Update server with robots info
                     server.updateRobots(rhp,  curi);
                 }
