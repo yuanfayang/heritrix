@@ -931,4 +931,21 @@ public class UURIFactoryTest extends TestCase {
             getInstance("http://foo.com/foo.foo/../foo.html").toString(),
                  "http://foo.com/foo.html" );
     }
+    
+    public void testHttpSchemeColonSlash() {
+    	boolean exception = false;
+    	try {
+    		UURIFactory.getInstance("https:/");
+    	} catch (URIException e) {
+    		exception = true;
+    	}
+    	assertTrue("Didn't throw exception when one expected", exception);
+    	exception = false;
+    	try {
+    		UURIFactory.getInstance("http://");
+    	} catch (URIException e) {
+    		exception = true;
+    	}
+    	assertTrue("Didn't throw exception when one expected", exception);
+    }
 }
