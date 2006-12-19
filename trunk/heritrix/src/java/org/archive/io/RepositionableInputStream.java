@@ -50,7 +50,7 @@ import java.io.InputStream;
 public class RepositionableInputStream extends BufferedInputStream implements
         RepositionableStream {
     private long position = 0;
-    private long markPosition = 0;
+    private long markPosition = -1;
     
     public RepositionableInputStream(InputStream in) {
         super(in);
@@ -70,9 +70,14 @@ public class RepositionableInputStream extends BufferedInputStream implements
     
     public synchronized int read(byte[] b, int offset, int ct)
     throws IOException {
-        // Mark the stream so that we'll remember what we just read.  Otherwise
-        // underlying stream will just throw away buffer if needs to fill.
-        super.mark((ct > offset)? ct - offset: ct);
+        // Mark the underlying stream so that we'll remember what we are about
+    	// to read unless a mark has been set in this RepositionableStream
+    	// (We have two levels of mark).  In this latter case we want the
+    	// underlying stream to preserve its mark position so aligns with
+    	// this RS when eset is called.
+    	if (!isMarked()) {
+    		super.mark((ct > offset)? ct - offset: ct);
+    	}
         int read = super.read(b, offset, ct);
         if (read != -1) {
             position += read;
@@ -81,9 +86,14 @@ public class RepositionableInputStream extends BufferedInputStream implements
     }
     
     public int read() throws IOException {
-        // Mark the stream so that we'll remember what we just read.  Otherwise
-        // underlying stream remembers nought.
-        super.mark(1);
+        // Mark the underlying stream so that we'll remember what we are about
+    	// to read unless a mark has been set in this RepositionableStream
+    	// (We have two levels of mark).  In this latter case we want the
+    	// underlying stream to preserve its mark position so aligns with
+    	// this RS when eset is called.
+    	if (!isMarked()) {
+    		super.mark(1);
+    	}
         int c = super.read();
         if (c != -1) {
             position++;
@@ -114,6 +124,11 @@ public class RepositionableInputStream extends BufferedInputStream implements
     public void reset() throws IOException {
         super.reset();
         this.position = this.markPosition;
+        this.markPosition = -1;
+    }
+    
+    protected boolean isMarked() {
+    	return this.markPosition != -1;
     }
 
     public long position() {
