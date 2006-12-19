@@ -837,4 +837,98 @@ public class UURIFactoryTest extends TestCase {
             "http://www.yahoo.com/foo?somechars!@$%^&*()_-+={[}]|\'%22;:/?.%3E,%3C",
             uuri.toString());
     }
+    
+    /**
+     * Check that our 'normalization' does same as Nutch's
+     * Below before-and-afters were taken from the nutch urlnormalizer-basic
+     * TestBasicURLNormalizer class  (December 2006, Nutch 0.9-dev).
+     * @throws URIException
+     */
+    public void testSameAsNutchURLFilterBasic() throws URIException {
+        assertEquals(UURIFactory.getInstance(" http://foo.com/ ").toString(),
+            "http://foo.com/");
+
+        // check that protocol is lower cased
+        assertEquals(UURIFactory.getInstance("HTTP://foo.com/").toString(),
+            "http://foo.com/");
+        
+        // check that host is lower cased
+        assertEquals(UURIFactory.
+                getInstance("http://Foo.Com/index.html").toString(),
+            "http://foo.com/index.html");
+        assertEquals(UURIFactory.
+                getInstance("http://Foo.Com/index.html").toString(),
+            "http://foo.com/index.html");
+
+        // check that port number is normalized
+        assertEquals(UURIFactory.
+                getInstance("http://foo.com:80/index.html").toString(),
+            "http://foo.com/index.html");
+        assertEquals(UURIFactory.getInstance("http://foo.com:81/").toString(),
+            "http://foo.com:81/");
+
+        // check that null path is normalized
+        assertEquals(UURIFactory.getInstance("http://foo.com").toString(),
+            "http://foo.com/");
+
+        // check that references are removed
+        assertEquals(UURIFactory.
+                getInstance("http://foo.com/foo.html#ref").toString(),
+            "http://foo.com/foo.html");
+
+        //     // check that encoding is normalized
+        //     normalizeTest("http://foo.com/%66oo.html", "http://foo.com/foo.html");
+
+        // check that unnecessary "../" are removed
+        assertEquals(UURIFactory.
+                getInstance("http://foo.com/aa/../").toString(),
+            "http://foo.com/" );
+        assertEquals(UURIFactory.
+                getInstance("http://foo.com/aa/bb/../").toString(),
+            "http://foo.com/aa/");
+
+        /* We fail this one.  Here we produce: 'http://foo.com/'.
+        assertEquals(UURIFactory.
+                getInstance("http://foo.com/aa/..").toString(),
+            "http://foo.com/aa/..");
+         */
+        
+        assertEquals(UURIFactory.
+            getInstance("http://foo.com/aa/bb/cc/../../foo.html").toString(),
+                "http://foo.com/aa/foo.html");
+        assertEquals(UURIFactory.
+            getInstance("http://foo.com/aa/bb/../cc/dd/../ee/foo.html").
+                toString(),
+                    "http://foo.com/aa/cc/ee/foo.html");
+        assertEquals(UURIFactory.
+            getInstance("http://foo.com/../foo.html").toString(),
+                "http://foo.com/foo.html" );
+        assertEquals(UURIFactory.
+            getInstance("http://foo.com/../../foo.html").toString(),
+                "http://foo.com/foo.html" );
+        assertEquals(UURIFactory.
+            getInstance("http://foo.com/../aa/../foo.html").toString(),
+                "http://foo.com/foo.html" );
+        assertEquals(UURIFactory.
+            getInstance("http://foo.com/aa/../../foo.html").toString(),
+                "http://foo.com/foo.html" );
+        assertEquals(UURIFactory.
+                getInstance("http://foo.com/aa/../bb/../foo.html/../../").
+                    toString(),
+            "http://foo.com/" );
+        assertEquals(UURIFactory.getInstance("http://foo.com/../aa/foo.html").
+            toString(), "http://foo.com/aa/foo.html" );
+        assertEquals(UURIFactory.
+                getInstance("http://foo.com/../aa/../foo.html").toString(),
+            "http://foo.com/foo.html" );
+        assertEquals(UURIFactory.
+                getInstance("http://foo.com/a..a/foo.html").toString(),
+            "http://foo.com/a..a/foo.html" );
+        assertEquals(UURIFactory.
+                getInstance("http://foo.com/a..a/../foo.html").toString(),
+            "http://foo.com/foo.html" );
+        assertEquals(UURIFactory.
+            getInstance("http://foo.com/foo.foo/../foo.html").toString(),
+                 "http://foo.com/foo.html" );
+    }
 }
