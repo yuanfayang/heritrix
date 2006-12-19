@@ -123,8 +123,10 @@ implements RepositionableStream {
     protected static InputStream checkStream(final InputStream is)
     throws IOException {
         if (is instanceof RepositionableStream) {
-        	// See note above in constructor.
-        	is.mark(GzipHeader.MINIMAL_GZIP_HEADER_LENGTH * 3);
+        	// See note above in constructor on why the mark here.
+        	// Also minimal gzip header is 10.  IA GZIP Headers are 20 bytes.
+        	// Multiply by 4 in case extra info in the header.
+        	is.mark(GzipHeader.MINIMAL_GZIP_HEADER_LENGTH * 4);
         	return is;
         }
         throw new IOException("Passed stream does not" +

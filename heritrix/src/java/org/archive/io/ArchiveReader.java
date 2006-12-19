@@ -121,7 +121,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
      */
     protected InputStream getInputStream(final File f, final long offset)
     throws IOException {
-        return new RepositionableBufferedInputStream(
+        return new RandomAccessBufferedInputStream(
             new RandomAccessInputStream(f, offset));
     }
 
@@ -410,35 +410,25 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
     }
     
     /**
-     * Class that adds PositionableStream methods to a BufferedInputStream.
+     * Add buffering to RandomAccessInputStream.
      */
-    protected class RepositionableBufferedInputStream
-    extends BufferedInputStream
-    		implements RepositionableStream {
+    protected class RandomAccessBufferedInputStream
+    extends BufferedInputStream implements RepositionableStream {
 
-        public RepositionableBufferedInputStream(InputStream is)
+        public RandomAccessBufferedInputStream(RandomAccessInputStream is)
         		throws IOException {
             super(is);
-            doStreamCheck();
         }
 
-        public RepositionableBufferedInputStream(InputStream is, int size)
+        public RandomAccessBufferedInputStream(RandomAccessInputStream is, int size)
         		throws IOException {
             super(is, size);
-            doStreamCheck();
-        }
-        
-        private void doStreamCheck() throws IOException {
-            if (!(this.in instanceof RepositionableStream)) {
-                throw new IOException(
-                    "Passed stream must implement PositionableStream");
-            }
         }
 
         public long position() throws IOException {
             // Current position is the underlying files position
             // minus the amount thats in the buffer yet to be read.
-            return ((RepositionableStream)this.in).position() -
+            return ((RandomAccessInputStream)this.in).position() -
             	(this.count - this.pos);
         }
 
@@ -446,7 +436,7 @@ public abstract class ArchiveReader implements ArchiveFileConstants {
             // Force refill of buffer whenever there's been a seek.
             this.pos = 0;
             this.count = 0;
-            ((RepositionableStream)this.in).position(position);
+            ((RandomAccessInputStream)this.in).position(position);
         }
     }
     
