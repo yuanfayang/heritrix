@@ -30,6 +30,8 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.archive.crawler.framework.CrawlController;
+
 import st.ata.util.FPGenerator;
 
 import com.sleepycat.bind.tuple.LongBinding;
@@ -54,7 +56,7 @@ import com.sleepycat.je.OperationStatus;
  * and 2.3.5 'Elminating Already-Visited URLs' in 'Mining the Web' by Soumen
  * Chakrabarti talk of a two-level key with the first 24 bits a hash of the
  * host plus port and with the last 40 as a hash of the path.  Testing
- * showed adoption of such a scheme halving lookup times (This implementation
+ * showed adoption of such a scheme halving lookup times (Tutilhis implementation
  * actually concatenates scheme + host in first 24 bits and path + query in
  * trailing 40 bits).
  * 
@@ -86,6 +88,13 @@ extends SetBasedUriUniqFilter implements Serializable {
 		super();
 	}
     
+   
+   // Help the settings system along
+   public BdbUriUniqFilter(CrawlController c) throws IOException {
+       this(c.getBdbEnvironment());
+   }
+        
+        
     /**
      * Constructor.
      * @param environment A bdb environment ready-configured.
