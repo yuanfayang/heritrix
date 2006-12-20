@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.archive.crawler.util.Transform;
+import org.archive.state.Constraint;
 import org.archive.state.Key;
 
 
@@ -90,6 +91,23 @@ public class SingleSheet extends Sheet {
      *     the property from this sheet
      */
     public <T> void set(Object processor, Key<T> key, T value) {
+        if (!key.getOwner().isInstance(processor)) {
+            throw new IllegalArgumentException("Illegal module type.");
+        }
+        if ((value != null) && !key.getType().isInstance(value)) {
+            throw new IllegalArgumentException("Illegal value type for " +
+                    key.getFieldName() + ". Expected " + 
+                    key.getType().getName() + " but got " + 
+                    value.getClass().getName());
+        }
+        T v = key.getType().cast(value);
+        for (Constraint<T> c: key.getConstraints()) {
+            if (!c.allowed(v)) {
+                throw new IllegalArgumentException("IllegalValue");
+            }
+        }
+        
+        // Module and value are of the correct type, and value is valid.
         Identity id = new Identity(processor);
         Map<Key,Object> map = settings.get(id);
         if (map == null) {
