@@ -26,6 +26,7 @@
 
 package org.archive.processors.extractor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -104,7 +105,7 @@ public class ExtractorImpliedURI extends Extractor {
      */
     @Override
     public void extract(ProcessorURI curi) {
-        List<Link> links = curi.getOutLinks();
+        List<Link> links = new ArrayList<Link>(curi.getOutLinks());
         int max = links.size();
         for (int i = 0; i < max; i++) {
             Link link = links.get(i);
