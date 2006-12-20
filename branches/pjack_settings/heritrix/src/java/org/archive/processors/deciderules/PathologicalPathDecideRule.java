@@ -53,7 +53,7 @@ public class PathologicalPathDecideRule extends DecideRule {
     final public static Key<Integer> MAX_REPETITIONS = Key.makeFinal(2);
 
 
-    private AtomicReference<Pattern> pattern;
+    private AtomicReference<Pattern> pattern = new AtomicReference<Pattern>();
 
     
     /** Constructs a new PathologicalPathFilter.
