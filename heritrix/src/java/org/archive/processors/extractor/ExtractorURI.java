@@ -88,7 +88,7 @@ public class ExtractorURI extends Extractor {
      */
     @Override
     public void extract(ProcessorURI curi) {
-        List<Link> links = curi.getOutLinks();
+        List<Link> links = new ArrayList<Link>(curi.getOutLinks());
         int max = links.size();
         for (int i = 0; i < max; i++) {
             Link wref = links.get(i);
