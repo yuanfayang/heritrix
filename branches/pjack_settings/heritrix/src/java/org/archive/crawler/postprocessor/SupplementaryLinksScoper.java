@@ -27,6 +27,7 @@ package org.archive.crawler.postprocessor;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,6 +39,7 @@ import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.state.Key;
+
 
 /**
  * Run CandidateURI links carried in the passed CrawlURI through a filter
@@ -82,19 +84,26 @@ public class SupplementaryLinksScoper extends Scoper {
         CrawlURI curi = (CrawlURI)puri;
         
         // If prerequisites or no links, nothing to be done in here.
-        if (curi.hasPrerequisiteUri() || curi.outlinksSize() <= 0) {
+        if (curi.hasPrerequisiteUri() || curi.getOutLinks().isEmpty()) {
             return;
         }
         
         Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
-        for (CandidateURI cauri: curi.getOutCandidates()) {
-            if (isInScope(cauri)) {
-                inScopeLinks.add(cauri);
+        Iterator<CandidateURI> iter = curi.getOutCandidates().iterator();
+        while (iter.hasNext()) {
+            CandidateURI cauri = iter.next();
+            if (!isInScope(cauri)) {
+                iter.remove();
             }
         }
+//        for (CandidateURI cauri: curi.getOutCandidates()) {
+//            if (isInScope(cauri)) {
+//                inScopeLinks.add(cauri);
+//            }
+//        }
         // Replace current links collection w/ inscopeLinks.  May be
         // an empty collection.
-        curi.replaceOutlinks(inScopeLinks);
+//        curi.replaceOutlinks(inScopeLinks);
     }
     
     protected boolean isInScope(CandidateURI caUri) {

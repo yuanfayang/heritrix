@@ -24,7 +24,6 @@
  */
 package org.archive.processors.fetcher;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -94,44 +93,39 @@ import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
 
-
 /**
  * HTTP fetcher that uses <a
  * href="http://jakarta.apache.org/commons/httpclient/">Apache Jakarta Commons
  * HttpClient</a> library.
- *
+ * 
  * @author Gordon Mohr
  * @author Igor Ranitovic
  * @author others
  * @version $Id$
  */
-public class FetchHTTP extends Processor
-implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
+public class FetchHTTP extends Processor implements CoreAttributeConstants,
+        FetchStatusCodes, CrawlStatusListener {
     // be robust against trivial implementation changes
-    private static final long serialVersionUID =
-        ArchiveUtils.classnameBasedUID(FetchHTTP.class,1);
-    
-    private static Logger logger = Logger.getLogger(FetchHTTP.class.getName());
+    private static final long serialVersionUID = ArchiveUtils
+            .classnameBasedUID(FetchHTTP.class, 1);
 
+    private static Logger logger = Logger.getLogger(FetchHTTP.class.getName());
 
     /**
      * Proxy host IP (set only if needed).
      */
     final public static Key<String> HTTP_PROXY_HOST = Key.makeExpert("");
-    
-    
+
     /**
      * Proxy port (set only if needed).
      */
     final public static Key<Integer> HTTP_PROXY_PORT = Key.makeExpert(0);
-    
 
     /**
      * If the fetch is not completed in this number of seconds, give up (and
      * retry later).
      */
     final public static Key<Integer> TIMEOUT_SECONDS = Key.make(1200);
-
 
     /**
      * If the socket is unresponsive for this number of milliseconds, give up.
@@ -143,48 +137,41 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      */
     final public static Key<Integer> SOTIMEOUT_MS = Key.makeExpert(20000);
 
-
     /**
      * Maximum length in bytes to fetch. Fetch is truncated at this length. A
      * value of 0 means no limit.
      */
     final public static Key<Long> MAX_LENGTH_BYTES = Key.make(0L);
 
-
     /**
      * File to preload cookies from.
      */
-//    final public static Key<String> LOAD_COOKIES_FROM_FILE = Key.makeExpert("");
-
-    
+    // final public static Key<String> LOAD_COOKIES_FROM_FILE =
+    // Key.makeExpert("");
     /**
      * When crawl finishes save cookies to this file.
      */
-//    final public static Key<String> SAVE_COOKIES_FROM_FILE = Key.makeExpert("");
-
-    
+    // final public static Key<String> SAVE_COOKIES_FROM_FILE =
+    // Key.makeExpert("");
     /**
      * Accept Headers to include in each request. Each must be the complete
      * header, e.g., 'Accept-Language: en'.
      */
-    final public static Key<List<String>> ACCEPT_HEADERS = 
-        Key.makeList(String.class);
-    
+    final public static Key<List<String>> ACCEPT_HEADERS = Key
+            .makeList(String.class);
 
     /**
      * The character encoding to use for files that do not have one specified in
      * the HTTP response headers. Default: ISO-8859-1.
      */
-    final public static Key<String> DEFAULT_ENCODING = 
-        Key.makeExpert("ISO-8859-1");
+    final public static Key<String> DEFAULT_ENCODING = Key
+            .makeExpert("ISO-8859-1");
 
-    
     /**
      * Whether or not to perform an on-the-fly SHA1 hash of retrieved
      * content-bodies.
      */
     final public static Key<Boolean> SHA1_CONTENT = Key.makeExpert(true);
-
 
     /**
      * The maximum KB/sec to use when fetching data from a server. The default
@@ -192,12 +179,10 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      */
     final public static Key<Integer> FETCH_BANDWIDTH = Key.makeExpert(0);
 
-    
     /**
      * SSL trust level setting attribute name.
      */
-    
-    
+
     /**
      * SSL certificate trust level. Range is from the default 'open' (trust all
      * certs including expired, selfsigned, and those for which we do not have a
@@ -205,12 +190,8 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * 'normal' (all valid certificates not including selfsigned) to 'strict'
      * (Cert is valid and DN must match servername).
      */
-    final public static Key<String> TRUST_LEVEL = 
-        Key.makeExpertFinal(ConfigurableX509TrustManager.DEFAULT);
-    
-    
-
-
+    final public static Key<String> TRUST_LEVEL = Key
+            .makeExpertFinal(ConfigurableX509TrustManager.DEFAULT);
 
     public static final String SHA1 = "sha1";
 
@@ -224,40 +205,36 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     private int recoveryRetries = 0;
 
     /**
-     * Count of crawl uris handled.
-     * Would like to be 'long', but longs aren't atomic
+     * Count of crawl uris handled. Would like to be 'long', but longs aren't
+     * atomic
      */
-//    private int curisHandled = 0;
-
-
+    // private int curisHandled = 0;
     /**
      * DecideRules applied after receipt of HTTP response headers but before we
      * start to download the body. If any filter returns FALSE, the fetch is
      * aborted. Prerequisites such as robots.txt by-pass filtering (i.e. they
      * cannot be midfetch aborted.
      */
-    final public static Key<DecideRuleSequence> MIDFETCH_RULES = 
-        Key.make(new DecideRuleSequence());
-//  see [ 1379040 ] regex for midfetch filter not being stored in crawl order
-//  http://sourceforge.net/support/tracker.php?aid=1379040
-//         this.midfetchfilters.setExpertSetting(true);
+    final public static Key<DecideRuleSequence> MIDFETCH_RULES = Key
+            .make(new DecideRuleSequence());
 
-    
+    // see [ 1379040 ] regex for midfetch filter not being stored in crawl order
+    // http://sourceforge.net/support/tracker.php?aid=1379040
+    // this.midfetchfilters.setExpertSetting(true);
+
     /**
      * What to log if midfetch abort.
      */
     private static final String MIDFETCH_ABORT_LOG = "midFetchAbort";
-    
 
     /**
      * Send 'Connection: close' header with every request.
      */
-    final public static Key<Boolean> SEND_CONNECTION_CLOSE = 
-        Key.makeExpert(true);
+    final public static Key<Boolean> SEND_CONNECTION_CLOSE = Key
+            .makeExpert(true);
 
-    private static final Header HEADER_SEND_CONNECTION_CLOSE =
-        new Header("Connection", "close");
-    
+    private static final Header HEADER_SEND_CONNECTION_CLOSE = new Header(
+            "Connection", "close");
 
     /**
      * Send 'Referer' header with every request.
@@ -269,10 +246,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      */
     final public static Key<Boolean> SEND_REFERER = Key.makeExpert(true);
 
-
     /**
-     * Send 'Range' header when a limit ({@link #MAX_LENGTH_BYTES}) on document
-     * size.
+     * Send 'Range' header when a limit ({@link #MAX_LENGTH_BYTES}) on
+     * document size.
      * <p>
      * Be polite to the HTTP servers and send the 'Range' header, stating that
      * you are only interested in the first n bytes. Only pertinent if
@@ -282,83 +258,68 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * generate '416 Request Range Not Satisfiable' response.
      */
     final public static Key<Boolean> SEND_RANGE = Key.makeExpert(false);
-    
-    
-    
+
     public static final String REFERER = "Referer";
+
     public static final String RANGE = "Range";
+
     public static final String RANGE_PREFIX = "bytes=0-";
+
     public static final String HTTP_SCHEME = "http";
+
     public static final String HTTPS_SCHEME = "https";
-    
-    
+
     /**
      * 
      */
-    final public static Key<CookieStorage> COOKIE_STORAGE = 
-        makeCookieStorageKey();
-    
-    
+    final public static Key<CookieStorage> COOKIE_STORAGE = makeCookieStorageKey();
 
     /**
      * Disable cookie handling.
      */
     final public static Key<Boolean> IGNORE_COOKIES = Key.make(false);
 
-    
     /**
      * Store cookies in BDB-backed map.
      */
-//    final public static Key<Boolean> USE_BDB_FOR_COOKIES = Key.make(true);
-
-
+    // final public static Key<Boolean> USE_BDB_FOR_COOKIES = Key.make(true);
     /**
      * Local IP address or hostname to use when making connections (binding
      * sockets). When not specified, uses default local address(es).
      */
     final public static Key<String> LOCAL_ADDRESS = Key.makeExpert("");
 
-
     /**
      * Database backing cookie map, if using BDB
      */
-//    protected Database cookieDb; 
+    // protected Database cookieDb;
     /**
      * Name of cookie BDB Database
      */
-//    public static final String COOKIEDB_NAME = "http_cookies";
-    
-    /* FIXME: This needs to live somewhere else
-    static {
-    	Protocol.registerProtocol("http", new Protocol("http",
-            new HeritrixProtocolSocketFactory(), 80));
-    	try {
-			Protocol.registerProtocol("https",
-			    new Protocol("https", ((ProtocolSocketFactory)
-			        new HeritrixSSLProtocolSocketFactory()), 443));
-		} catch (KeyManagementException e) {
-			e.printStackTrace();
-		} catch (KeyStoreException e) {
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-    }
-    */
-    
-    //static final String SERVER_CACHE_KEY = "heritrix.server.cache";
+    // public static final String COOKIEDB_NAME = "http_cookies";
+    /*
+     * FIXME: This needs to live somewhere else static {
+     * Protocol.registerProtocol("http", new Protocol("http", new
+     * HeritrixProtocolSocketFactory(), 80)); try {
+     * Protocol.registerProtocol("https", new Protocol("https",
+     * ((ProtocolSocketFactory) new HeritrixSSLProtocolSocketFactory()), 443)); }
+     * catch (KeyManagementException e) { e.printStackTrace(); } catch
+     * (KeyStoreException e) { e.printStackTrace(); } catch
+     * (NoSuchAlgorithmException e) { e.printStackTrace(); } }
+     */
+
+    // static final String SERVER_CACHE_KEY = "heritrix.server.cache";
     static final String SSL_FACTORY_KEY = "heritrix.ssl.factory";
-    
-    /***
+
+    /***************************************************************************
      * Socket factory that has the configurable trust manager installed.
      */
     private SSLSocketFactory sslfactory = null;
-    
-    
+
     final private CredentialStore credentialStore;
 
     final private ServerCache serverCache;
-    
+
     /**
      * Constructor.
      */
@@ -368,22 +329,22 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     }
 
     protected void innerProcess(final ProcessorURI curi)
-    throws InterruptedException {
+            throws InterruptedException {
         // Note begin time
         curi.setFetchBeginTime(System.currentTimeMillis());
 
         // Get a reference to the HttpRecorder that is set into this ToeThread.
         Recorder rec = curi.getRecorder();
-        
+
         // Shall we get a digest on the content downloaded?
         boolean sha1Content = curi.get(this, SHA1_CONTENT);
-        if(sha1Content) {
+        if (sha1Content) {
             rec.getRecordedInput().setSha1Digest();
         } else {
             // clear
             rec.getRecordedInput().setDigest(null);
         }
-        
+
         // Below we do two inner classes that add check of midfetch
         // filters just as we're about to receive the response body.
         String curiString = curi.getUURI().toString();
@@ -391,8 +352,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         if (curi.getFetchType() == HTTP_POST) {
             method = new HttpRecorderPostMethod(curiString, rec) {
                 protected void readResponseBody(HttpState state,
-                        HttpConnection conn)
-                throws IOException, HttpException {
+                        HttpConnection conn) throws IOException, HttpException {
                     addResponseContent(this, curi);
                     if (checkMidfetchAbort(curi, this.httpRecorderMethod, conn)) {
                         doAbort(curi, this, MIDFETCH_ABORT_LOG);
@@ -404,11 +364,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         } else {
             method = new HttpRecorderGetMethod(curiString, rec) {
                 protected void readResponseBody(HttpState state,
-                        HttpConnection conn)
-                throws IOException, HttpException {
+                        HttpConnection conn) throws IOException, HttpException {
                     addResponseContent(this, curi);
-                    if (checkMidfetchAbort(curi, this.httpRecorderMethod,
-                            conn)) {
+                    if (checkMidfetchAbort(curi, this.httpRecorderMethod, conn)) {
                         doAbort(curi, this, MIDFETCH_ABORT_LOG);
                     } else {
                         super.readResponseBody(state, conn);
@@ -422,15 +380,15 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         // Populate credentials. Set config so auth. is not automatic.
         boolean addedCredentials = populateCredentials(curi, method);
         method.setDoAuthentication(addedCredentials);
-        
+
         try {
             this.http.executeMethod(customConfigOrNull, method);
         } catch (RecorderTooMuchHeaderException ex) {
             // when too much header material, abort like other truncations
             doAbort(curi, method, HEADER_TRUNC);
         } catch (IOException e) {
-        	failedExecuteCleanup(method, curi, e);
-        	return;
+            failedExecuteCleanup(method, curi, e);
+            return;
         } catch (ArrayIndexOutOfBoundsException e) {
             // For weird windows-only ArrayIndex exceptions in native
             // code... see
@@ -439,23 +397,23 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             failedExecuteCleanup(method, curi, e);
             return;
         }
-        
-        // set softMax on bytes to get (if implied by content-length) 
+
+        // set softMax on bytes to get (if implied by content-length)
         long softMax = method.getResponseContentLength();
-        
+
         // set hardMax on bytes (if set by operator)
         long hardMax = getMaxLength(curi);
 
-	// Get max fetch rate (bytes/ms). It comes in in KB/sec, which
-	// requires nothing to normalize.
+        // Get max fetch rate (bytes/ms). It comes in in KB/sec, which
+        // requires nothing to normalize.
         int maxFetchRate = getMaxFetchRate(curi);
 
         try {
             if (!method.isAborted()) {
                 // Force read-to-end, so that any socket hangs occur here,
                 // not in later modules.
-                rec.getRecordedInput().readFullyOrUntil(softMax,
-                        hardMax, 1000 * getTimeout(curi), maxFetchRate);
+                rec.getRecordedInput().readFullyOrUntil(softMax, hardMax,
+                        1000 * getTimeout(curi), maxFetchRate);
             }
         } catch (RecorderTimeoutException ex) {
             doAbort(curi, method, TIMER_TRUNC);
@@ -482,13 +440,14 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             setCharacterEncoding(curi, rec, method);
             curi.setContentSize(rec.getRecordedInput().getSize());
         }
-        
+
         curi.setContentDigest(SHA1, rec.getRecordedInput().getDigestValue());
         if (logger.isLoggable(Level.INFO)) {
-            logger.info(( (curi.getFetchType() == HTTP_POST)? "POST": "GET") + " " +
-                curi.getUURI().toString() + " " + method.getStatusCode() +
-                " " + rec.getRecordedInput().getSize() + " " +
-                curi.getContentType());
+            logger.info(((curi.getFetchType() == HTTP_POST) ? "POST" : "GET")
+                    + " " + curi.getUURI().toString() + " "
+                    + method.getStatusCode() + " "
+                    + rec.getRecordedInput().getSize() + " "
+                    + curi.getContentType());
         }
 
         if (isSuccess(curi) && addedCredentials) {
@@ -497,7 +456,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             // server.
             promoteCredentials(curi);
             if (logger.isLoggable(Level.FINE)) {
-                // Print out the cookie.  Might help with the debugging.
+                // Print out the cookie. Might help with the debugging.
                 Header setCookie = method.getResponseHeader("set-cookie");
                 if (setCookie != null) {
                     logger.fine(setCookie.toString().trim());
@@ -507,26 +466,26 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             // 401 is not 'success'.
             handle401(method, curi);
         }
-        
+
         if (rec.getRecordedInput().isOpen()) {
-            logger.severe(curi.toString() + " RIS still open. Should have" +
-                " been closed by method release: " +
-                Thread.currentThread().getName());
+            logger.severe(curi.toString() + " RIS still open. Should have"
+                    + " been closed by method release: "
+                    + Thread.currentThread().getName());
             try {
                 rec.getRecordedInput().close();
             } catch (IOException e) {
-                logger.log(Level.SEVERE,"second-chance RIS close failed",e);
+                logger.log(Level.SEVERE, "second-chance RIS close failed", e);
             }
         }
     }
-    
+
     protected void doAbort(ProcessorURI curi, HttpMethod method,
             String annotation) {
         curi.getAnnotations().add(annotation);
         curi.getRecorder().close();
         method.abort();
     }
-    
+
     protected boolean checkMidfetchAbort(ProcessorURI curi,
             HttpRecorderMethod method, HttpConnection conn) {
         if (curi.isPrerequisite()) {
@@ -540,71 +499,85 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         method.markContentBegin(conn);
         return true;
     }
-    
+
     /**
      * This method populates <code>curi</code> with response status and
      * content type.
-     * @param curi ProcessorURI to populate.
-     * @param method Method to get response status and headers from.
+     * 
+     * @param curi
+     *            ProcessorURI to populate.
+     * @param method
+     *            Method to get response status and headers from.
      */
-    protected void addResponseContent (HttpMethod method, ProcessorURI curi) {
+    protected void addResponseContent(HttpMethod method, ProcessorURI curi) {
         curi.setFetchStatus(method.getStatusCode());
         Header ct = method.getResponseHeader("content-type");
-        curi.setContentType((ct == null)? null: ct.getValue());
-        // Save method into curi too.  Midfetch filters may want to leverage
+        curi.setContentType((ct == null) ? null : ct.getValue());
+        // Save method into curi too. Midfetch filters may want to leverage
         // info in here.
         curi.setHttpMethod(method);
     }
 
     /**
      * Set the character encoding based on the result headers or default.
-     *
-     * The HttpClient returns its own default encoding ("ISO-8859-1") if one
-     * isn't specified in the Content-Type response header. We give the user
-     * the option of overriding this, so we need to detect the case where the
-     * default is returned.
-     *
-     * Now, it may well be the case that the default returned by HttpClient
-     * and the default defined by the user are the same.
      * 
-     * @param rec Recorder for this request.
-     * @param method Method used for the request.
+     * The HttpClient returns its own default encoding ("ISO-8859-1") if one
+     * isn't specified in the Content-Type response header. We give the user the
+     * option of overriding this, so we need to detect the case where the
+     * default is returned.
+     * 
+     * Now, it may well be the case that the default returned by HttpClient and
+     * the default defined by the user are the same.
+     * 
+     * @param rec
+     *            Recorder for this request.
+     * @param method
+     *            Method used for the request.
      */
     private void setCharacterEncoding(ProcessorURI uri, final Recorder rec,
-        final HttpMethod method) {
+            final HttpMethod method) {
         String encoding = null;
 
         try {
             encoding = ((HttpMethodBase) method).getResponseCharSet();
-            if (encoding == null ||
-                    encoding.equals(DEFAULT_ENCODING.getDefaultValue())) {
+            if (encoding == null
+                    || encoding.equals(DEFAULT_ENCODING.getDefaultValue())) {
                 encoding = uri.get(this, DEFAULT_ENCODING);
             }
         } catch (Exception e) {
-            logger.warning("Failed get default encoding: " +
-                e.getLocalizedMessage());
+            logger.warning("Failed get default encoding: "
+                    + e.getLocalizedMessage());
         }
         rec.setCharacterEncoding(encoding);
     }
 
     /**
      * Cleanup after a failed method execute.
-     * @param curi ProcessorURI we failed on.
-     * @param method Method we failed on.
-     * @param exception Exception we failed with.
+     * 
+     * @param curi
+     *            ProcessorURI we failed on.
+     * @param method
+     *            Method we failed on.
+     * @param exception
+     *            Exception we failed with.
      */
     private void failedExecuteCleanup(final HttpMethod method,
             final ProcessorURI curi, final Exception exception) {
         cleanup(curi, exception, "executeMethod", S_CONNECT_FAILED);
         method.releaseConnection();
     }
-    
+
     /**
      * Cleanup after a failed method execute.
-     * @param curi ProcessorURI we failed on.
-     * @param exception Exception we failed with.
-     * @param message   Message to log with failure. FIXME: Seems ignored
-     * @param status Status to set on the fetch.
+     * 
+     * @param curi
+     *            ProcessorURI we failed on.
+     * @param exception
+     *            Exception we failed with.
+     * @param message
+     *            Message to log with failure. FIXME: Seems ignored
+     * @param status
+     *            Status to set on the fetch.
      */
     private void cleanup(final ProcessorURI curi, final Exception exception,
             final String message, final int status) {
@@ -614,7 +587,6 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         curi.getRecorder().close();
     }
 
-    
     @Override
     public ProcessResult process(ProcessorURI uri) throws InterruptedException {
         if (uri.getFetchStatus() < 0) {
@@ -625,13 +597,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             return super.process(uri);
         }
     }
-    
-    
+
     /**
-     * Can this processor fetch the given ProcessorURI. May set a fetch
-     * status if this processor would usually handle the ProcessorURI,
-     * but cannot in this instance.
-     *
+     * Can this processor fetch the given ProcessorURI. May set a fetch status
+     * if this processor would usually handle the ProcessorURI, but cannot in
+     * this instance.
+     * 
      * @param curi
      * @return True if processor can fetch.
      */
@@ -654,129 +625,142 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
 
     /**
      * Configure the HttpMethod setting options and headers.
-     *
-     * @param curi ProcessorURI from which we pull configuration.
-     * @param method The Method to configure.
+     * 
+     * @param curi
+     *            ProcessorURI from which we pull configuration.
+     * @param method
+     *            The Method to configure.
      */
-    protected HostConfiguration configureMethod(ProcessorURI curi, HttpMethod method) {
+    protected HostConfiguration configureMethod(ProcessorURI curi,
+            HttpMethod method) {
         // Don't auto-follow redirects
         method.setFollowRedirects(false);
-        
-//        // set soTimeout
-//        method.getParams().setSoTimeout(
-//                ((Integer) getUncheckedAttribute(curi, ATTR_SOTIMEOUT_MS))
-//                        .intValue());
-        
+
+        // // set soTimeout
+        // method.getParams().setSoTimeout(
+        // ((Integer) getUncheckedAttribute(curi, ATTR_SOTIMEOUT_MS))
+        // .intValue());
+
         // Set cookie policy.
         boolean ignoreCookies = curi.get(this, IGNORE_COOKIES);
         method.getParams().setCookiePolicy(
-                ignoreCookies ? CookiePolicy.IGNORE_COOKIES:
-                CookiePolicy.BROWSER_COMPATIBILITY);
+                ignoreCookies ? CookiePolicy.IGNORE_COOKIES
+                        : CookiePolicy.BROWSER_COMPATIBILITY);
 
         // Use only HTTP/1.0 (to avoid receiving chunked responses)
         method.getParams().setVersion(HttpVersion.HTTP_1_0);
 
         method.setRequestHeader("User-Agent", curi.getUserAgent());
         method.setRequestHeader("From", curi.getFrom());
-        
+
         // Set retry handler.
         method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
-            new HeritrixHttpMethodRetryHandler());
-        
+                new HeritrixHttpMethodRetryHandler());
+
         final long maxLength = getMaxLength(curi);
-        if(maxLength > 0 && curi.get(this, SEND_RANGE)) {
-            method.addRequestHeader(RANGE,
-                RANGE_PREFIX.concat(Long.toString(maxLength - 1)));
+        if (maxLength > 0 && curi.get(this, SEND_RANGE)) {
+            method.addRequestHeader(RANGE, RANGE_PREFIX.concat(Long
+                    .toString(maxLength - 1)));
         }
-        
+
         if (curi.get(this, SEND_CONNECTION_CLOSE)) {
             method.addRequestHeader(HEADER_SEND_CONNECTION_CLOSE);
         }
-        
+
         if (curi.get(this, SEND_REFERER)) {
             // RFC2616 says no referer header if referer is https and the url
             // is not
             String via = flattenVia(curi);
-            if (via != null && via.length() > 0 &&
-                !(via.startsWith(HTTPS_SCHEME) &&
-                    curi.getUURI().getScheme().equals(HTTP_SCHEME))) {
+            if (via != null
+                    && via.length() > 0
+                    && !(via.startsWith(HTTPS_SCHEME) && curi.getUURI()
+                            .getScheme().equals(HTTP_SCHEME))) {
                 method.setRequestHeader(REFERER, via);
             }
         }
-        
+
         // TODO: What happens if below method adds a header already
         // added above: e.g. Connection, Range, or Referer?
         setAcceptHeaders(curi, method);
-        
+
         return configureProxy(curi);
     }
 
     /**
-     * Setup proxy, based on attributes in ProcessorURI and settings, 
-     * for this ProcessorURI only. 
+     * Setup proxy, based on attributes in ProcessorURI and settings, for this
+     * ProcessorURI only.
+     * 
      * @return HostConfiguration customized as necessary, or null if no
-     * customization required
+     *         customization required
      */
-    private HostConfiguration configureProxy(ProcessorURI curi) {
+    private HostConfiguration configureProxy(StateProvider curi) {
         String proxy = (String) getAttributeEither(curi, HTTP_PROXY_HOST);
-        int port = -1; 
-        if(proxy.length()==0) {
-            proxy = null; 
+        int port = -1;
+        if (proxy.length() == 0) {
+            proxy = null;
         } else {
-            port = (Integer)getAttributeEither(curi, HTTP_PROXY_PORT);
+            port = (Integer) getAttributeEither(curi, HTTP_PROXY_PORT);
         }
         HostConfiguration config = this.http.getHostConfiguration();
-        if(config.getProxyHost() == proxy && config.getProxyPort() == port) {
+        if (config.getProxyHost() == proxy && config.getProxyPort() == port) {
             // no change
-            return null; 
+            return null;
         }
-        if (proxy != null && proxy.equals(config.getProxyHost()) 
+        if (proxy != null && proxy.equals(config.getProxyHost())
                 && config.getProxyPort() == port) {
             // no change
-            return null; 
+            return null;
         }
         config = new HostConfiguration(config); // copy of config
-        config.setProxy(proxy,port);
-        return config; 
+        config.setProxy(proxy, port);
+        return config;
     }
 
     /**
-     * Get a value either from inside the ProcessorURI instance, or from 
-     * settings (module attributes). 
+     * Get a value either from inside the ProcessorURI instance, or from
+     * settings (module attributes).
      * 
-     * @param curi ProcessorURI to consult
-     * @param key key to lookup
+     * @param curi
+     *            ProcessorURI to consult
+     * @param key
+     *            key to lookup
      * @return value from either ProcessorURI (preferred) or settings
      */
-    protected Object getAttributeEither(ProcessorURI curi, Key<?> key) {
-        Object r = curi.getData().get(key.getFieldName());
-        if (r != null) {
-            return r;
+    protected Object getAttributeEither(StateProvider provider, Key<?> key) {
+        if (provider instanceof ProcessorURI) {
+            ProcessorURI curi = (ProcessorURI) provider;
+            Object r = curi.getData().get(key.getFieldName());
+            if (r != null) {
+                return r;
+            }
         }
-        return curi.get(this, key);
+        return provider.get(this, key);
     }
 
     /**
      * Add credentials if any to passed <code>method</code>.
-     *
-     * Do credential handling.  Credentials are in two places.  1. Credentials
+     * 
+     * Do credential handling. Credentials are in two places. 1. Credentials
      * that succeeded are added to the CrawlServer (Or rather, avatars for
      * credentials are whats added because its not safe to keep around
-     * references to credentials).  2. Credentials to be tried are in the curi.
+     * references to credentials). 2. Credentials to be tried are in the curi.
      * Returns true if found credentials to be tried.
-     *
-     * @param curi Current ProcessorURI.
-     * @param method The method to add to.
-     * @return True if prepopulated <code>method</code> with credentials AND the
-     * credentials came from the <code>curi</code>, not from the CrawlServer.
-     * The former is  special in that if the <code>curi</curi> credentials
+     * 
+     * @param curi
+     *            Current ProcessorURI.
+     * @param method
+     *            The method to add to.
+     * @return True if prepopulated <code>method</code> with credentials AND
+     *         the credentials came from the <code>curi</code>, not from the
+     *         CrawlServer. The former is special in that if the
+     *         <code>curi</curi> credentials
      * succeed, then the caller needs to promote them from the ProcessorURI to the
      * CrawlServer so they are available for all subsequent ProcessorURIs on this
      * server.
      */
-    private boolean populateCredentials(ProcessorURI curi, HttpMethod method) {        
+    private boolean populateCredentials(ProcessorURI curi, HttpMethod method) {
         // First look at the server avatars. Add any that are to be volunteered
-        // on every request (e.g. RFC2617 credentials).  Every time creds will
+        // on every request (e.g. RFC2617 credentials). Every time creds will
         // return true when we call 'isEveryTime().
         String serverKey;
         try {
@@ -786,7 +770,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
         CrawlServer server = serverCache.getServerFor(serverKey);
         if (server.hasCredentialAvatars()) {
-            for (CredentialAvatar ca: server.getCredentialAvatars()) {
+            for (CredentialAvatar ca : server.getCredentialAvatars()) {
                 Credential c = ca.getCredential(credentialStore, curi);
                 if (c.isEveryTime()) {
                     c.populate(curi, this.http, method, ca.getPayload());
@@ -795,36 +779,35 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
 
         boolean result = false;
-        
-        // Now look in the curi.  The Curi will have credentials loaded either
+
+        // Now look in the curi. The Curi will have credentials loaded either
         // by the handle401 method if its a rfc2617 or it'll have been set into
         // the curi by the preconditionenforcer as this login uri came through.
-        for (CredentialAvatar ca: curi.getCredentialAvatars()) {
+        for (CredentialAvatar ca : curi.getCredentialAvatars()) {
             Credential c = ca.getCredential(credentialStore, curi);
             if (c.populate(curi, this.http, method, ca.getPayload())) {
                 result = true;
             }
         }
-    
+
         return result;
     }
 
-
-
     /**
      * Promote successful credential to the server.
-     *
-     * @param curi ProcessorURI whose credentials we are to promote.
+     * 
+     * @param curi
+     *            ProcessorURI whose credentials we are to promote.
      */
     private void promoteCredentials(final ProcessorURI curi) {
         Set<CredentialAvatar> avatars = curi.getCredentialAvatars();
-        for (Iterator<CredentialAvatar> i = avatars.iterator(); i.hasNext() ;) {
+        for (Iterator<CredentialAvatar> i = avatars.iterator(); i.hasNext();) {
             CredentialAvatar ca = i.next();
             i.remove();
             // The server to attach too may not be the server that hosts
-            // this passed curi.  It might be of another subdomain.
+            // this passed curi. It might be of another subdomain.
             // The avatar needs to be added to the server that is dependent
-            // on this precondition.  Find it by name.  Get the name from
+            // on this precondition. Find it by name. Get the name from
             // the credential this avatar represents.
             Credential c = credentialStore.getCredential(curi, ca);
             String cd = c.getCredentialDomain(curi);
@@ -839,13 +822,15 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
 
     /**
      * Server is looking for basic/digest auth credentials (RFC2617). If we have
-     * any, put them into the ProcessorURI and have it come around again. Presence
-     * of the credential serves as flag to frontier to requeue promptly. If we
-     * already tried this domain and still got a 401, then our credentials are
-     * bad. Remove them and let this curi die.
-     *
-     * @param method Method that got a 401.
-     * @param curi ProcessorURI that got a 401.
+     * any, put them into the ProcessorURI and have it come around again.
+     * Presence of the credential serves as flag to frontier to requeue
+     * promptly. If we already tried this domain and still got a 401, then our
+     * credentials are bad. Remove them and let this curi die.
+     * 
+     * @param method
+     *            Method that got a 401.
+     * @param curi
+     *            ProcessorURI that got a 401.
      */
     protected void handle401(final HttpMethod method, final ProcessorURI curi) {
         AuthScheme authscheme = getAuthScheme(method, curi);
@@ -854,28 +839,25 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
         String realm = authscheme.getRealm();
 
-        /* =======================================================
+        /*
+         * ======================================================= // Look to
+         * see if this curi had rfc2617 avatars loaded. If so, are // any of
+         * them for this realm? If so, then the credential failed // if we got a
+         * 401 and it should be let die a natural 401 death. if
+         * (curi.detachRfc2617Credential(realm)) { // Then, already tried this
+         * credential. Remove ANY rfc2617 // credential since presence of a
+         * rfc2617 credential serves // as flag to frontier to requeue this curi
+         * and let the curi // die a natural death. logger.warning("Auth failed
+         * (401) though supplied realm " + realm + " to " + curi.toString());
+         * return; } curi.attachRfc2617Credential(realm);
+         * =============================================================
+         */
+
         // Look to see if this curi had rfc2617 avatars loaded. If so, are
         // any of them for this realm? If so, then the credential failed
         // if we got a 401 and it should be let die a natural 401 death.
-        if (curi.detachRfc2617Credential(realm)) {
-            // Then, already tried this credential. Remove ANY rfc2617
-            // credential since presence of a rfc2617 credential serves
-            // as flag to frontier to requeue this curi and let the curi
-            // die a natural death.
-            logger.warning("Auth failed (401) though supplied realm " + realm
-                    + " to " + curi.toString());
-            return;
-        }
-        curi.attachRfc2617Credential(realm);
-         =============================================================
-        */
-        
-        
-        // Look to see if this curi had rfc2617 avatars loaded. If so, are
-        // any of them for this realm? If so, then the credential failed
-        // if we got a 401 and it should be let die a natural 401 death.
-        Set curiRfc2617Credentials = getCredentials(curi, Rfc2617Credential.class);
+        Set curiRfc2617Credentials = getCredentials(curi,
+                Rfc2617Credential.class);
         Rfc2617Credential extant = Rfc2617Credential.getByRealm(
                 curiRfc2617Credentials, realm, curi);
         if (extant != null) {
@@ -914,33 +896,35 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             }
         }
     }
-    
+
     /**
-     * @param method Method that got a 401.
-     * @param curi ProcessorURI that got a 401.
+     * @param method
+     *            Method that got a 401.
+     * @param curi
+     *            ProcessorURI that got a 401.
      * @return Returns first wholesome authscheme found else null.
      */
     protected AuthScheme getAuthScheme(final HttpMethod method,
             final ProcessorURI curi) {
-        Header [] headers = method.getResponseHeaders("WWW-Authenticate");
+        Header[] headers = method.getResponseHeaders("WWW-Authenticate");
         if (headers == null || headers.length <= 0) {
-            logger.info("We got a 401 but no WWW-Authenticate challenge: " +
-                curi.toString());
+            logger.info("We got a 401 but no WWW-Authenticate challenge: "
+                    + curi.toString());
             return null;
         }
 
         Map authschemes = null;
         try {
             authschemes = AuthChallengeParser.parseChallenges(headers);
-        } catch(MalformedChallengeException e) {
+        } catch (MalformedChallengeException e) {
             logger.info("Failed challenge parse: " + e.getMessage());
         }
         if (authschemes == null || authschemes.size() <= 0) {
-            logger.info("We got a 401 and WWW-Authenticate challenge" +
-                " but failed parse of the header " + curi.toString());
+            logger.info("We got a 401 and WWW-Authenticate challenge"
+                    + " but failed parse of the header " + curi.toString());
             return null;
-        }            
-         
+        }
+
         AuthScheme result = null;
         // Use the first auth found.
         for (Iterator i = authschemes.keySet().iterator(); result == null
@@ -983,19 +967,21 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
 
         return result;
     }
-        
+
     /**
-     * @param curi ProcessorURI that got a 401.
-     * @param type Class of credential to get from curi.
+     * @param curi
+     *            ProcessorURI that got a 401.
+     * @param type
+     *            Class of credential to get from curi.
      * @return Set of credentials attached to this curi.
      */
     private Set<Credential> getCredentials(ProcessorURI curi, Class type) {
         Set<Credential> result = null;
-        
+
         if (curi.hasCredentialAvatars()) {
-            for (Iterator i = curi.getCredentialAvatars().iterator();
-                    i.hasNext();) {
-                CredentialAvatar ca = (CredentialAvatar)i.next();
+            for (Iterator i = curi.getCredentialAvatars().iterator(); i
+                    .hasNext();) {
+                CredentialAvatar ca = (CredentialAvatar) i.next();
                 if (ca.match(type)) {
                     if (result == null) {
                         result = new HashSet<Credential>();
@@ -1007,10 +993,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         return result;
     }
 
-
     public void initialTasks(StateProvider defaults) {
         super.initialTasks(defaults);
-//        this.getController().addCrawlStatusListener(this);
+        // this.getController().addCrawlStatusListener(this);
         configureHttp(defaults);
 
         CookieStorage cm = defaults.get(this, COOKIE_STORAGE);
@@ -1031,12 +1016,12 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                     + e.getMessage(), e);
         }
     }
-    
+
     public void finalTasks(StateProvider defaults) {
         // At the end save cookies to the file specified in the order file.
         CookieStorage cs = defaults.get(this, COOKIE_STORAGE);
         @SuppressWarnings("unchecked")
-        Map<String,Cookie> map = http.getState().getCookiesMap();
+        Map<String, Cookie> map = http.getState().getCookiesMap();
         cs.saveCookiesMap(map);
         cleanupHttp();
         super.finalTasks(defaults);
@@ -1046,34 +1031,34 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * Perform any final cleanup related to the HttpClient instance.
      */
     protected void cleanupHttp() {
-//        if(cookieDb!=null) {
-//            try {
-//                cookieDb.close();
-//            } catch (DatabaseException e) {
-//                // TODO Auto-generated catch block
-//                e.printStackTrace();
-//            }
-//        }
+        // if(cookieDb!=null) {
+        // try {
+        // cookieDb.close();
+        // } catch (DatabaseException e) {
+        // // TODO Auto-generated catch block
+        // e.printStackTrace();
+        // }
+        // }
     }
 
     protected void configureHttp(StateProvider defaults) {
-        // Get timeout.  Use it for socket and for connection timeout.
+        // Get timeout. Use it for socket and for connection timeout.
         int soTimeout = defaults.get(this, SOTIMEOUT_MS);
         int timeout = (soTimeout > 0) ? soTimeout : 0;
-        
+
         // HttpConnectionManager cm = new ThreadLocalHttpConnectionManager();
         HttpConnectionManager cm = new SingleHttpConnectionManager();
-        
+
         // TODO: The following settings should be made in the corresponding
         // HttpConnectionManager, not here.
         HttpConnectionManagerParams hcmp = cm.getParams();
         hcmp.setConnectionTimeout(timeout);
         hcmp.setStaleCheckingEnabled(true);
-        // Minimizes bandwidth usage.  Setting to true disables Nagle's
-        // algorithm.  IBM JVMs < 142 give an NPE setting this boolean
+        // Minimizes bandwidth usage. Setting to true disables Nagle's
+        // algorithm. IBM JVMs < 142 give an NPE setting this boolean
         // on ssl sockets.
         hcmp.setTcpNoDelay(false);
-        
+
         this.http = new HttpClient(cm);
         HttpClientParams hcp = this.http.getParams();
         // Set default socket timeout.
@@ -1094,57 +1079,50 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
             }
         }
 
-  //      configureHttpCookies(defaults);
-        
+        // configureHttpCookies(defaults);
+
         // Configure how we want the method to act.
         this.http.getParams().setParameter(
-            HttpMethodParams.SINGLE_COOKIE_HEADER, new Boolean(true));
+                HttpMethodParams.SINGLE_COOKIE_HEADER, new Boolean(true));
         this.http.getParams().setParameter(
-            HttpMethodParams.UNAMBIGUOUS_STATUS_LINE , new Boolean(false));
+                HttpMethodParams.UNAMBIGUOUS_STATUS_LINE, new Boolean(false));
         this.http.getParams().setParameter(
-            HttpMethodParams.STRICT_TRANSFER_ENCODING, new Boolean(false));
+                HttpMethodParams.STRICT_TRANSFER_ENCODING, new Boolean(false));
         this.http.getParams().setIntParameter(
-            HttpMethodParams.STATUS_LINE_GARBAGE_LIMIT, 10);
-        
-        HostConfiguration configOrNull = configureProxy(null);
-        if(configOrNull!=null) {
+                HttpMethodParams.STATUS_LINE_GARBAGE_LIMIT, 10);
+
+        HostConfiguration configOrNull = configureProxy(defaults);
+        if (configOrNull != null) {
             // global proxy settings are in effect
             this.http.setHostConfiguration(configOrNull);
         }
-        
+
         hcmp.setParameter(SSL_FACTORY_KEY, this.sslfactory);
     }
 
-
     /**
-     * Set the HttpClient HttpState instance to use a BDB-backed
-     * StoredSortedMap for cookie storage, if that option is chosen.
+     * Set the HttpClient HttpState instance to use a BDB-backed StoredSortedMap
+     * for cookie storage, if that option is chosen.
      */
-/*    private void configureHttpCookies(StateProvider defaults) {
-        // If Bdb-backed cookies chosen, replace map in HttpState
-        if(defaults.get(this, USE_BDB_FOR_COOKIES)) {
-            try {
-                Environment env = getController().getBdbEnvironment();
-                StoredClassCatalog classCatalog = getController().getClassCatalog();
-                DatabaseConfig dbConfig = new DatabaseConfig();
-                dbConfig.setTransactional(false);
-                dbConfig.setAllowCreate(true);
-                cookieDb = env.openDatabase(null, COOKIEDB_NAME, dbConfig);
-                StoredSortedMap cookiesMap = new StoredSortedMap(cookieDb,
-                        new StringBinding(), new SerialBinding(classCatalog,
-                                Cookie.class), true);
-                this.http.getState().setCookiesMap(cookiesMap);
-            } catch (DatabaseException e) {
-                // TODO Auto-generated catch block
-                logger.severe(e.getMessage());
-                e.printStackTrace();
-            }
-        }
-    }
-*/
+    /*
+     * private void configureHttpCookies(StateProvider defaults) { // If
+     * Bdb-backed cookies chosen, replace map in HttpState if(defaults.get(this,
+     * USE_BDB_FOR_COOKIES)) { try { Environment env =
+     * getController().getBdbEnvironment(); StoredClassCatalog classCatalog =
+     * getController().getClassCatalog(); DatabaseConfig dbConfig = new
+     * DatabaseConfig(); dbConfig.setTransactional(false);
+     * dbConfig.setAllowCreate(true); cookieDb = env.openDatabase(null,
+     * COOKIEDB_NAME, dbConfig); StoredSortedMap cookiesMap = new
+     * StoredSortedMap(cookieDb, new StringBinding(), new
+     * SerialBinding(classCatalog, Cookie.class), true);
+     * this.http.getState().setCookiesMap(cookiesMap); } catch
+     * (DatabaseException e) { // TODO Auto-generated catch block
+     * logger.severe(e.getMessage()); e.printStackTrace(); } } }
+     */
 
     /**
-     * @param curi Current ProcessorURI.  Used to get context.
+     * @param curi
+     *            Current ProcessorURI. Used to get context.
      * @return Timeout value for total request.
      */
     private int getTimeout(ProcessorURI curi) {
@@ -1179,64 +1157,39 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * <li>5. EXPIRATION: The expiration time of the cookie value (unix style.)
      * <li>6. NAME: The name of the cookie value
      * <li>7. VALUE: The cookie value
-     *
-     * @param cookiesFile file in the Netscape's 'cookies.txt' format.
+     * 
+     * @param cookiesFile
+     *            file in the Netscape's 'cookies.txt' format.
      */
-/*    public void loadCookies(String cookiesFile) {
-        // Do nothing if cookiesFile is not specified.
-        if (cookiesFile == null || cookiesFile.length() <= 0) {
-            return;
-        }
-        RandomAccessFile raf = null;
-        try {
-            raf = new RandomAccessFile(cookiesFile, "r");
-            String[] cookieParts;
-            String line;
-            Cookie cookie = null;
-            while ((line = raf.readLine()) != null) {
-                // Line that starts with # is commented line, therefore skip it.
-                if (!line.startsWith("#")) {
-                    cookieParts = line.split("\\t");
-                    if (cookieParts.length == 7) {
-                        // Create cookie with not expiration date (-1 value).
-                        // TODO: add this as an option.
-                        cookie =
-                            new Cookie(cookieParts[0], cookieParts[5],
-                                cookieParts[6], cookieParts[2], -1,
-                                Boolean.valueOf(cookieParts[3]).booleanValue());
+    /*
+     * public void loadCookies(String cookiesFile) { // Do nothing if
+     * cookiesFile is not specified. if (cookiesFile == null ||
+     * cookiesFile.length() <= 0) { return; } RandomAccessFile raf = null; try {
+     * raf = new RandomAccessFile(cookiesFile, "r"); String[] cookieParts;
+     * String line; Cookie cookie = null; while ((line = raf.readLine()) !=
+     * null) { // Line that starts with # is commented line, therefore skip it.
+     * if (!line.startsWith("#")) { cookieParts = line.split("\\t"); if
+     * (cookieParts.length == 7) { // Create cookie with not expiration date (-1
+     * value). // TODO: add this as an option. cookie = new
+     * Cookie(cookieParts[0], cookieParts[5], cookieParts[6], cookieParts[2],
+     * -1, Boolean.valueOf(cookieParts[3]).booleanValue());
+     * 
+     * if (cookieParts[1].toLowerCase().equals("true")) {
+     * cookie.setDomainAttributeSpecified(true); } else {
+     * cookie.setDomainAttributeSpecified(false); }
+     * this.http.getState().addCookie(cookie); logger.fine( "Adding cookie: " +
+     * cookie.toExternalForm()); } } } } catch (FileNotFoundException e) { // We
+     * should probably throw FatalConfigurationException.
+     * System.out.println("Could not find file: " + cookiesFile + " (Element: " +
+     * ATTR_LOAD_COOKIES + ")"); } catch (IOException e) { // We should probably
+     * throw FatalConfigurationException. e.printStackTrace(); } finally { try {
+     * if (raf != null) { raf.close(); } } catch (IOException e) {
+     * e.printStackTrace(); } } }
+     */
 
-                        if (cookieParts[1].toLowerCase().equals("true")) {
-                            cookie.setDomainAttributeSpecified(true);
-                        } else {
-                            cookie.setDomainAttributeSpecified(false);
-                        }
-                        this.http.getState().addCookie(cookie);
-                        logger.fine(
-                            "Adding cookie: " + cookie.toExternalForm());
-                    }
-                }
-            }
-        } catch (FileNotFoundException e) {
-            // We should probably throw FatalConfigurationException.
-            System.out.println("Could not find file: " + cookiesFile
-                    + " (Element: " + ATTR_LOAD_COOKIES + ")");
-
-        } catch (IOException e) {
-            // We should probably throw FatalConfigurationException.
-            e.printStackTrace();
-        } finally {
-            try {
-                if (raf != null) {
-                    raf.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    */
-
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.framework.Processor#report()
      */
     public String report() {
@@ -1249,10 +1202,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         return ret.toString();
     }
 
-
     /**
      * Load cookies from the file specified in the order file.
-     *
+     * 
      * <p>
      * The file is a text file in the Netscape's 'cookies.txt' file format.<br>
      * Example entry of cookies.txt file:<br>
@@ -1273,137 +1225,87 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * <li>7. VALUE: The cookie value
      */
     /*
-    public void loadCookies(StateProvider defaults) {
-        loadCookies(defaults.get(this, LOAD_COOKIES_FROM_FILE));
-    }
-    */
-
+     * public void loadCookies(StateProvider defaults) {
+     * loadCookies(defaults.get(this, LOAD_COOKIES_FROM_FILE)); }
+     */
 
     /**
      * Saves cookies to the file specified in the order file.
-     *
+     * 
      * Output file is in the Netscape 'cookies.txt' format.
-     *
+     * 
      */
-/*    public void saveCookies() {
-        try {
-            saveCookies((String) getAttribute(ATTR_SAVE_COOKIES));
-        } catch (MBeanException e) {
-            logger.warning(e.getLocalizedMessage());
-        } catch (ReflectionException e) {
-            logger.warning(e.getLocalizedMessage());
-        } catch (AttributeNotFoundException e) {
-            logger.warning(e.getLocalizedMessage());
-        }
-    }
-*/
+    /*
+     * public void saveCookies() { try { saveCookies((String)
+     * getAttribute(ATTR_SAVE_COOKIES)); } catch (MBeanException e) {
+     * logger.warning(e.getLocalizedMessage()); } catch (ReflectionException e) {
+     * logger.warning(e.getLocalizedMessage()); } catch
+     * (AttributeNotFoundException e) { logger.warning(e.getLocalizedMessage()); } }
+     */
 
     /**
      * Saves cookies to a file.
-     *
+     * 
      * Output file is in the Netscape 'cookies.txt' format.
-     *
-     * @param saveCookiesFile output file.
+     * 
+     * @param saveCookiesFile
+     *            output file.
      */
     /*
-    public void saveCookies(String saveCookiesFile) {
-        // Do nothing if cookiesFile is not specified.
-        if (saveCookiesFile == null || saveCookiesFile.length() <= 0) {
-            return;
-        }
+     * public void saveCookies(String saveCookiesFile) { // Do nothing if
+     * cookiesFile is not specified. if (saveCookiesFile == null ||
+     * saveCookiesFile.length() <= 0) { return; }
+     * 
+     * FileOutputStream out = null; try { out = new FileOutputStream(new
+     * File(saveCookiesFile)); @SuppressWarnings("unchecked") Map<String,Cookie>
+     * cookies = http.getState().getCookiesMap(); String tab ="\t"; out.write("#
+     * Heritrix Cookie File\n".getBytes()); out.write( "# This file is the
+     * Netscape cookies.txt format\n\n".getBytes()); for (Cookie cookie:
+     * cookies.values()) { MutableString line = new MutableString(1024 * 2); //
+     * Guess an initial size line.append(cookie.getDomain()); line.append(tab);
+     * line.append( cookie.isDomainAttributeSpecified() == true ? "TRUE" :
+     * "FALSE"); line.append(tab); line.append(cookie.getPath());
+     * line.append(tab); line.append( cookie.getSecure() == true ? "TRUE" :
+     * "FALSE"); line.append(tab); line.append(cookie.getName());
+     * line.append(tab); line.append(cookie.getValue()); line.append("\n");
+     * out.write(line.toString().getBytes()); } } catch (FileNotFoundException
+     * e) { // We should probably throw FatalConfigurationException.
+     * System.out.println("Could not find file: " + saveCookiesFile + "
+     * (Element: " + this.SAVE_COOKIES_FROM_FILE + ")"); } catch (IOException e) {
+     * e.printStackTrace(); } finally { try { if (out != null) { out.close(); } }
+     * catch (IOException e) { e.printStackTrace(); } } }
+     */
 
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(new File(saveCookiesFile));
-            @SuppressWarnings("unchecked")
-            Map<String,Cookie> cookies = http.getState().getCookiesMap();
-            String tab ="\t";
-            out.write("# Heritrix Cookie File\n".getBytes());
-            out.write(
-                "# This file is the Netscape cookies.txt format\n\n".getBytes());
-            for (Cookie cookie: cookies.values()) {
-                MutableString line =
-                    new MutableString(1024 * 2); // Guess an initial size
-                line.append(cookie.getDomain());
-                line.append(tab);
-                line.append(
-                    cookie.isDomainAttributeSpecified() == true
-                        ? "TRUE"
-                        : "FALSE");
-                line.append(tab);
-                line.append(cookie.getPath());
-                line.append(tab);
-                line.append(
-                    cookie.getSecure() == true ? "TRUE" : "FALSE");
-                line.append(tab);
-                line.append(cookie.getName());
-                line.append(tab);
-                line.append(cookie.getValue());
-                line.append("\n");
-                out.write(line.toString().getBytes());
-            }
-        } catch (FileNotFoundException e) {
-            // We should probably throw FatalConfigurationException.
-            System.out.println("Could not find file: " + saveCookiesFile
-                    + " (Element: " + this.SAVE_COOKIES_FROM_FILE + ")");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (out != null) {
-                    out.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    */
-
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */
     /*
-    protected void listUsedFiles(List<String> list) {
-        // List the cookies files
-        // Add seed file
-        try {
-            String tmp = (String)getAttribute(ATTR_LOAD_COOKIES);
-            if(tmp != null && tmp.length() > 0){
-                File file = getSettingsHandler().
-                        getPathRelativeToWorkingDirectory(tmp);
-                list.add(file.getAbsolutePath());
-            }
-            tmp = (String)getAttribute(ATTR_SAVE_COOKIES);
-            if(tmp != null && tmp.length() > 0){
-                File file = getSettingsHandler().
-                        getPathRelativeToWorkingDirectory(tmp);
-                list.add(file.getAbsolutePath());
-            }
-        } catch (AttributeNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (MBeanException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ReflectionException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-    */
-    
+     * protected void listUsedFiles(List<String> list) { // List the cookies
+     * files // Add seed file try { String tmp =
+     * (String)getAttribute(ATTR_LOAD_COOKIES); if(tmp != null && tmp.length() >
+     * 0){ File file = getSettingsHandler().
+     * getPathRelativeToWorkingDirectory(tmp); list.add(file.getAbsolutePath()); }
+     * tmp = (String)getAttribute(ATTR_SAVE_COOKIES); if(tmp != null &&
+     * tmp.length() > 0){ File file = getSettingsHandler().
+     * getPathRelativeToWorkingDirectory(tmp); list.add(file.getAbsolutePath()); } }
+     * catch (AttributeNotFoundException e) { // TODO Auto-generated catch block
+     * e.printStackTrace(); } catch (MBeanException e) { // TODO Auto-generated
+     * catch block e.printStackTrace(); } catch (ReflectionException e) { //
+     * TODO Auto-generated catch block e.printStackTrace(); } }
+     */
+
     private void setAcceptHeaders(ProcessorURI curi, HttpMethod get) {
         List<String> acceptHeaders = curi.get(this, ACCEPT_HEADERS);
         if (acceptHeaders.isEmpty()) {
             return;
         }
-        for (String hdr: acceptHeaders) {
+        for (String hdr : acceptHeaders) {
             String[] nvp = hdr.split(": +");
             if (nvp.length == 2) {
                 get.setRequestHeader(nvp[0], nvp[1]);
-            }
-            else {
+            } else {
                 logger.warning("Invalid accept header: " + hdr);
             }
         }
@@ -1413,96 +1315,94 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     // Code removed: Only useful for handling cookies; cookie responsibility
     // has been delegated to CookieStorage
     /*
-    private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.defaultWriteObject();
-        // save cookies
-        @SuppressWarnings("unchecked")
-        Collection<Cookie> c = http.getState().getCookiesMap().values();
-        Cookie[] cookies = c.toArray(new Cookie[c.size()]);
-        stream.writeObject(cookies);
-    }
-    
-    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-        stream.defaultReadObject();
-        Cookie cookies[] = (Cookie[]) stream.readObject();
-        ObjectPlusFilesInputStream coistream = (ObjectPlusFilesInputStream)stream;
-        coistream.registerFinishTask( new PostRestore(cookies) );
-    }
+     * private void writeObject(ObjectOutputStream stream) throws IOException {
+     * stream.defaultWriteObject(); // save cookies
+     * @SuppressWarnings("unchecked") Collection<Cookie> c =
+     * http.getState().getCookiesMap().values(); Cookie[] cookies =
+     * c.toArray(new Cookie[c.size()]); stream.writeObject(cookies); }
+     * 
+     * private void readObject(ObjectInputStream stream) throws IOException,
+     * ClassNotFoundException { stream.defaultReadObject(); Cookie cookies[] =
+     * (Cookie[]) stream.readObject(); ObjectPlusFilesInputStream coistream =
+     * (ObjectPlusFilesInputStream)stream; coistream.registerFinishTask( new
+     * PostRestore(cookies) ); }
+     * 
+     * class PostRestore implements Runnable { Cookie cookies[]; public
+     * PostRestore(Cookie cookies[]) { this.cookies = cookies; } public void
+     * run() { configureHttp(); for(int i = 0; i < cookies.length; i++) {
+     * getHttp().getState().addCookie(cookies[i]); } } }
+     */
 
-    class PostRestore implements Runnable {
-        Cookie cookies[];
-        public PostRestore(Cookie cookies[]) {
-            this.cookies = cookies;
-        }
-        public void run() {
-            configureHttp();
-            for(int i = 0; i < cookies.length; i++) {
-                getHttp().getState().addCookie(cookies[i]);
-            }
-        }
-    }
-    */
-    
-    
-    
     /**
      * @return Returns the http instance.
      */
     protected HttpClient getHttp() {
         return this.http;
     }
-    
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
      */
     public void crawlStarted(String message) {
         // TODO Auto-generated method stub
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlStarted(java.lang.String)
      */
     public void crawlCheckpoint(StateProvider defaults, File checkpointDir) {
         // TODO Auto-generated method stub
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnding(java.lang.String)
      */
     public void crawlEnding(String sExitMessage) {
         // TODO Auto-generated method stub
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlEnded(java.lang.String)
      */
     public void crawlEnded(String sExitMessage) {
         this.http = null;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPausing(java.lang.String)
      */
     public void crawlPausing(String statusMessage) {
         // TODO Auto-generated method stub
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlPaused(java.lang.String)
      */
     public void crawlPaused(String statusMessage) {
         // TODO Auto-generated method stub
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.archive.crawler.event.CrawlStatusListener#crawlResuming(java.lang.String)
      */
     public void crawlResuming(String statusMessage) {
         // TODO Auto-generated method stub
     }
-    
-    
+
     public static Key<CookieStorage> makeCookieStorageKey() {
         KeyMaker<CookieStorage> km = new KeyMaker<CookieStorage>();
         km.type = CookieStorage.class;
@@ -1511,10 +1411,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         return km.toKey();
     }
 
-
     private static String getServerKey(ProcessorURI uri) {
         try {
-            return CrawlServer.getServerKey(uri.getUURI()); 
+            return CrawlServer.getServerKey(uri.getUURI());
         } catch (URIException e) {
             logger.severe(e.getMessage() + ": " + uri);
             e.printStackTrace();
@@ -1522,10 +1421,11 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         }
     }
 
-
     /**
      * Get the {@link CrawlHost} associated with <code>curi</code>.
-     * @param uuri CandidateURI we're to return Host for.
+     * 
+     * @param uuri
+     *            CandidateURI we're to return Host for.
      * @return CandidateURI instance that matches the passed Host name.
      */
     private CrawlHost getHostFor(UURI uuri) {

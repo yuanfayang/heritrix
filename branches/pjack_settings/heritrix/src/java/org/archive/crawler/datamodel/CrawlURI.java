@@ -129,7 +129,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      *
      * May be null even on successfully fetched URI.
      */
-    private String contentType = null;
+    private String contentType = "unknown";
 
     /**
      * True if this CrawlURI has been deemed a prerequisite by the
@@ -179,8 +179,6 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     private byte[] contentDigest = null;
     private String contentDigestScheme = null;
 
-        
-    private transient StateProvider provider;
 
     /**
      * Create a new instance of CrawlURI from a {@link UURI}.
@@ -538,6 +536,10 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     public Collection<String> getAnnotations() {
     	@SuppressWarnings("unchecked")
     	List<String> list = (List<String>)getData().get(A_ANNOTATIONS);
+        if (list == null) {
+            list = new ArrayList<String>();
+            getData().put(A_ANNOTATIONS, list);
+        }
     	return list;
     }
 
@@ -930,21 +932,21 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      * The LinksScoper processor converts Link instances in this collection
      * to CandidateURI instances. 
      */
-    transient Collection<Object> outLinks = new HashSet<Object>();
+    transient Collection<Link> outLinks = new HashSet<Link>();
+    
+    
+    transient Collection<CandidateURI> outCandidates = new HashSet<CandidateURI>();
     
     /**
      * Returns discovered links.  The returned collection might be empty if
      * no links were discovered, or if something like LinksScoper promoted
      * the links to CandidateURIs.
      * 
-     * Elements can be removed from the returned collection, but not added.
-     * To add a discovered link, use one of the createAndAdd methods or
-     * {@link #getOutObjects()}.
-     * 
      * @return Collection of all discovered outbound Links
      */
-    public List<Link> getOutLinks() {
-        return null; // TODO
+    public Collection<Link> getOutLinks() {
+        return outLinks;
+//        return Transform.subclasses(outLinks, Link.class);
     }
     
     /**
@@ -952,66 +954,15 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
      * emtpy until something like LinksScoper promotes discovered Links
      * into CandidateURIs.
      * 
-     * Elements can be removed from the returned collection, but not added.
-     * To add a candidate URI, use {@link #replaceOutlinks(Collection)} or
-     * {@link #getOutObjects}.
-     * 
      * @return  Collection of candidate URIs
      */
     public Collection<CandidateURI> getOutCandidates() {
-        return Transform.subclasses(outLinks, CandidateURI.class);
+        return outCandidates;
     }
     
     
-    /**
-     * Returns all of the outbound objects.  The returned Collection will
-     * contain Link instances, or CandidateURI instances, or both.  
-     * 
-     * @return  the collection of Links and/or CandidateURIs
-     */
-    public Collection<Object> getOutObjects() {
-        return outLinks;
-    }
-    
-    /**
-     * Add a discovered Link, unless it would exceed the max number
-     * to accept. (If so, increment discarded link counter.) 
-     * 
-     * @param link the Link to add
-     */
-    public void addOutLink(Link link) {
-        if (outLinks.size() < MAX_OUTLINKS) {
-            outLinks.add(link);
-        } else {
-            // note & discard
-            discardedOutlinks++;
-        }
-    }
-    
-    public void clearOutlinks() {
-        this.outLinks.clear();
-    }
-    
-    /**
-     * Replace current collection of links w/ passed list.
-     * Used by Scopers adjusting the list of links (removing those
-     * not in scope and promoting Links to CandidateURIs).
-     * 
-     * @param a collection of CandidateURIs replacing any previously
-     *   existing outLinks or outCandidates
-     */
-    public void replaceOutlinks(Collection<CandidateURI> links) {
-        clearOutlinks();
-        this.outLinks.addAll(links);
-    }
     
     
-    /**
-     * @return Count of outlinks.
-     */
-    public int outlinksSize() {
-        return this.outLinks.size();
-    }
 
         
     /**
@@ -1056,6 +1007,7 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
         stream.writeObject((outLinks.isEmpty()) ? null : outLinks);
+        stream.writeObject((outCandidates.isEmpty()) ? null : outCandidates);
     }
 
     /**
@@ -1070,17 +1022,16 @@ implements AdaptiveRevisitAttributeConstants, FetchStatusCodes, ProcessorURI {
             ClassNotFoundException {
         stream.defaultReadObject();
         @SuppressWarnings("unchecked")
-        HashSet<Object> ol = (HashSet<Object>) stream.readObject();
-        outLinks = (ol == null) ? new HashSet<Object>() : ol;
+        HashSet<Link> ol = (HashSet<Link>) stream.readObject();
+        outLinks = (ol == null) ? new HashSet<Link>() : ol;
+        @SuppressWarnings("unchecked")
+        HashSet<CandidateURI> oc = (HashSet<CandidateURI>)stream.readObject();
+        outCandidates = (oc == null) ? new HashSet<CandidateURI>() : oc;
     }
 
     
-    public <T> T get(Object module, Key<T> key) {
-        if (provider == null) {
-            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
-        }
-        return provider.get(module, key);
-    }
+    
+    
 
 
     public String getDNSServerIPLabel() {

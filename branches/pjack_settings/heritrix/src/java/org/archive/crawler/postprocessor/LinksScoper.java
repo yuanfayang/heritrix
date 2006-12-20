@@ -119,11 +119,11 @@ implements FetchStatusCodes {
         
         // Don't extract links of error pages.
         if (curi.getFetchStatus() < 200 || curi.getFetchStatus() >= 400) {
-            curi.clearOutlinks();
+            curi.getOutLinks().clear();
             return false;
         }
         
-        if (curi.outlinksSize() <= 0) {
+        if (curi.getOutLinks().isEmpty()) {
             // No outlinks to process.
             return false;
         }
@@ -138,37 +138,52 @@ implements FetchStatusCodes {
         final boolean redirectsNewSeeds = curi.get(this, 
                 SEED_REDIRECTS_NEW_SEEDS); 
         int preferenceDepthHops = curi.get(this, PREFERENCE_DEPTH_HOPS); 
-        Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
-        for (final Iterator i = curi.getOutObjects().iterator(); i.hasNext();) {
-            Object o = i.next();
-            if(o instanceof Link){
-                final Link wref = (Link)o;
-                try {
-                    final int directive = getSchedulingFor(curi, wref, 
-                        preferenceDepthHops);
-                    final CandidateURI caURI =
-                        curi.createCandidateURI(curi.getBaseURI(), wref, 
-                            directive, 
-                            considerAsSeed(curi, wref, redirectsNewSeeds));
-                    if (isInScope(caURI)) {
-                        inScopeLinks.add(caURI);
-                    }
-                } catch (URIException e) {
-                    getController().logUriError(e, curi.getUURI(), 
-                        wref.getDestination().toString());
-                }
-            } else if(o instanceof CandidateURI){
-                CandidateURI caURI = (CandidateURI)o;
-                if(isInScope(caURI)){
-                    inScopeLinks.add(caURI);
-                }
-            } else {
-                LOGGER.severe("Unexpected type: " + o);
+        
+        for (Link wref: curi.getOutLinks()) try {
+            int directive = getSchedulingFor(curi, wref, preferenceDepthHops);
+            CandidateURI caURI = curi.createCandidateURI(curi.getBaseURI(), 
+                    wref, directive, 
+                    considerAsSeed(curi, wref, redirectsNewSeeds));
+            if (isInScope(caURI)) {
+                curi.getOutCandidates().add(caURI);
             }
+        } catch (URIException e) {
+            getController().logUriError(e, curi.getUURI(), 
+                    wref.getDestination().toString());
         }
-        // Replace current links collection w/ inscopeLinks.  May be
-        // an empty collection.
-        curi.replaceOutlinks(inScopeLinks);
+        curi.getOutLinks().clear();
+        
+//        Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
+//        for (final Iterator i = curi.getOutObjects().iterator(); i.hasNext();) {
+//            Object o = i.next();
+//            if(o instanceof Link){
+//                final Link wref = (Link)o;
+//                try {
+//                    final int directive = getSchedulingFor(curi, wref, 
+//                        preferenceDepthHops);
+//                    final CandidateURI caURI =
+//                        curi.createCandidateURI(curi.getBaseURI(), wref, 
+//                            directive, 
+//                            considerAsSeed(curi, wref, redirectsNewSeeds));
+//                    if (isInScope(caURI)) {
+//                        inScopeLinks.add(caURI);
+//                    }
+//                } catch (URIException e) {
+//                    getController().logUriError(e, curi.getUURI(), 
+//                        wref.getDestination().toString());
+//                }
+//            } else if(o instanceof CandidateURI){
+//                CandidateURI caURI = (CandidateURI)o;
+//                if(isInScope(caURI)){
+//                    inScopeLinks.add(caURI);
+//                }
+//            } else {
+//                LOGGER.severe("Unexpected type: " + o);
+//            }
+//        }
+//        // Replace current links collection w/ inscopeLinks.  May be
+//        // an empty collection.
+//        curi.replaceOutlinks(inScopeLinks);
     }
     
     /**
@@ -190,6 +205,7 @@ implements FetchStatusCodes {
             }
             caUri.setSchedulingDirective(prereqPriority);
             caUri.setForceFetch(true);
+            getController().setStateProvider(caUri);
             if(isInScope(caUri)) {
                 // replace link with CandidateURI
                 curi.setPrerequisiteUri(caUri);

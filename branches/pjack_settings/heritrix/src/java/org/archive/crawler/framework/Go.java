@@ -1,5 +1,6 @@
 package org.archive.crawler.framework;
 
+import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,17 +12,38 @@ import org.archive.settings.SingleSheet;
 import org.archive.settings.file.SheetFileReader;
 import org.archive.settings.path.PathChange;
 import org.archive.settings.path.PathChanger;
+import org.archive.util.IoUtils;
 
 public class Go {
 
+    private static void deleteAll(File dir) {
+        if (!dir.exists()) {
+            return;
+        }
+        for (File f: dir.listFiles()) {
+            if (f.isDirectory()) {
+                deleteAll(f);
+            }
+            f.delete();
+        }
+    }
+    
+    
     
     public static void main(String args[]) throws Exception {
+        deleteAll(new File("/Users/pjack/Desktop/crawl"));
+        
         MemorySheetManager mgr = new MemorySheetManager();
         
         FileReader fr = new FileReader("/Users/pjack/Desktop/settings.txt");
         SheetFileReader sfr = new SheetFileReader(fr);
         PathChanger changer = new PathChanger();
         changer.change(mgr.getDefault(), sfr);
+        
+        Bootstrap root = (Bootstrap)mgr.getRoot();
+        CrawlController c = mgr.getDefault().get(mgr.getRoot(), Bootstrap.CONTROLLER);
+        c.setupToePool();
+        c.requestCrawlStart();
         
         /*
         CrawlController cc = new CrawlController(mgr);

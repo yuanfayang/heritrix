@@ -99,6 +99,7 @@ public abstract class Scoper extends org.archive.processors.Processor {
     protected boolean isInScope(CandidateURI caUri) {
         boolean result = false;
         CrawlScope scope = getController().getScope();
+        getController().setStateProvider(caUri);
         DecideResult dr = scope.decisionFor(caUri.asProcessorURI());
         if (dr == DecideResult.ACCEPT) {
             result = true;

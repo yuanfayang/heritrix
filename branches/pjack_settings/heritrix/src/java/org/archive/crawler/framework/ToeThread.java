@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.exceptions.EndedException;
@@ -81,8 +82,8 @@ Reporter, ProgressStatisticsReporter, HostResolver {
      */
     private Recorder httpRecorder = null;
     
-    private HashMap<String,Processor> localProcessors
-     = new HashMap<String,Processor>();
+ //   private HashMap<String,Processor> localProcessors
+ //    = new HashMap<String,Processor>();
     private String currentProcessorName = "";
 
     private String coreName;
@@ -115,9 +116,9 @@ Reporter, ProgressStatisticsReporter, HostResolver {
         serialNumber = sn;
         setPriority(DEFAULT_PRIORITY);
         int outBufferSize = controller
-                .getOrderSetting(CrawlController.RECORDER_OUT_BUFFER_BYTES);
+                .getOrderSetting(CrawlOrder.RECORDER_OUT_BUFFER_BYTES);
         int inBufferSize = controller
-                .getOrderSetting(CrawlController.RECORDER_IN_BUFFER_BYTES);
+                .getOrderSetting(CrawlOrder.RECORDER_IN_BUFFER_BYTES);
         httpRecorder = new Recorder(controller.getScratchDisk(),
             "tt" + sn + "http", outBufferSize, inBufferSize);
         lastFinishTime = System.currentTimeMillis();
@@ -136,7 +137,7 @@ Reporter, ProgressStatisticsReporter, HostResolver {
                 continueCheck();
                 
                 setStep(STEP_ABOUT_TO_GET_URI);
-                
+
                 CrawlURI curi = controller.getFrontier().next();
                 
                 synchronized(this) {
@@ -175,7 +176,7 @@ Reporter, ProgressStatisticsReporter, HostResolver {
         // Do cleanup so that objects can be GC.
         this.httpRecorder.closeRecorders();
         this.httpRecorder = null;
-        localProcessors = null;
+//        localProcessors = null;
 
         logger.fine(getName()+" finished for order '"+name+"'");
         setStep(STEP_FINISHED);
@@ -280,6 +281,10 @@ Reporter, ProgressStatisticsReporter, HostResolver {
     private void processCrawlUri() throws InterruptedException {
         currentCuri.setThreadNumber(this.serialNumber);
         lastStartTime = System.currentTimeMillis();
+        Map<String,Processor> localProcessors = 
+            controller.get(controller, CrawlController.PROCESSORS);
+        controller.setStateProvider(currentCuri);
+        currentCuri.setRecorder(httpRecorder);
         try {
             for (Map.Entry<String,Processor> me: localProcessors.entrySet()) {
                 setStep(STEP_ABOUT_TO_BEGIN_PROCESSOR);

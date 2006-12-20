@@ -8,9 +8,8 @@ public class CrawlerServerCache extends DefaultServerCache {
    
     
     public CrawlerServerCache(CrawlController c) throws Exception {
-        // FIXME: Make this work
-//        super(c.getBigMap("servers", String.class, CrawlServer.class),
-//                c.getBigMap("hosts", String.class, CrawlHost.class));
+        super(c.getBigMap("servers", String.class, CrawlServer.class),
+                c.getBigMap("hosts", String.class, CrawlHost.class));
     }
     
     

@@ -29,14 +29,18 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.URIException;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
+import org.archive.processors.credential.CredentialAvatar;
 import org.archive.processors.extractor.HTMLLinkContext;
 import org.archive.processors.extractor.Hop;
 import org.archive.processors.extractor.Link;
@@ -44,6 +48,7 @@ import org.archive.processors.extractor.LinkContext;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
+import org.archive.util.Recorder;
 import org.archive.util.Reporter;
 
 
@@ -62,7 +67,7 @@ import org.archive.util.Reporter;
  * @author Gordon Mohr
  */
 public class CandidateURI
-implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
+implements Serializable, Reporter, CoreAttributeConstants, StateProvider, ProcessorURI {
     private static final long serialVersionUID = -3L;
 
     /** Highest scheduling priority.
@@ -148,6 +153,11 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
      */
     private String classKey;
 
+    
+    
+    private transient StateProvider provider;
+    
+    
     /**
      * Constructor.
      * Protected access to block access to default constructor.
@@ -445,9 +455,11 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     	@SuppressWarnings("unchecked")
     	List<String> heritableKeys = (List<String>)adata.get(A_HERITABLE_KEYS);
     	Map<String,Object> thisData = getData();
-    	for (String key: heritableKeys) {
-    		thisData.put(key, adata.get(key));
-    	}
+        if (heritableKeys != null) {
+            for (String key: heritableKeys) {
+    	        thisData.put(key, adata.get(key));
+    	    }
+        }
     }
     
     /**
@@ -471,7 +483,7 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     
     public Map<String,Object> getData() {
     	if (data == null) {
-    		data = new HashMap<String,Object>();
+    	    data = new HashMap<String,Object>();
     	}
     	return data;
     }
@@ -649,12 +661,15 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
 
 
     public <T> T get(Object module, Key<T> key) {
-        return null; // FIXME
+        if (provider == null) {
+            throw new AssertionError("ToeThread never set up CrawlURI's sheet.");
+        }
+        return provider.get(module, key);
     }
 
-    
+
     public ProcessorURI asProcessorURI() {
-        return null; // FIXME
+        return this; // FIXME
     }
 
 
@@ -667,4 +682,206 @@ implements Serializable, Reporter, CoreAttributeConstants, StateProvider {
     	getData().put(A_SOURCE_TAG, sourceTag);
     	makeHeritable(A_SOURCE_TAG);
     }
+
+
+    public void setStateProvider(StateProvider p) {
+        this.provider = p;
+    }
+
+    
+    public StateProvider getStateProvider() {
+        return provider;
+    }
+
+    public Collection<String> getAnnotations() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public UURI getBaseURI() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public long getContentLength() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public long getContentSize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public String getContentType() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Set<CredentialAvatar> getCredentialAvatars() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String getDNSServerIPLabel() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public long getFetchBeginTime() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public long getFetchCompletedTime() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int getFetchStatus() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public FetchType getFetchType() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String getFrom() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public HttpMethod getHttpMethod() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Collection<Throwable> getNonFatalFailures() {
+        @SuppressWarnings("unchecked")
+        List<Throwable> list = (List)getData().get(A_LOCALIZED_ERRORS);
+        if (list == null) {
+                list = new ArrayList<Throwable>();
+                getData().put(A_LOCALIZED_ERRORS, list);
+        }
+        
+        // FIXME: Previous code automatically added annotation when "localized error"
+        // was added, override collection to implement that?
+        return list;
+    }
+
+    public Collection<Link> getOutLinks() {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+//        return null;
+    }
+
+    public Recorder getRecorder() {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+    }
+
+    public String getUserAgent() {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+//        return null;
+    }
+
+    public boolean hasBeenLinkExtracted() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean hasCredentialAvatars() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isPrerequisite() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public void linkExtractorFinished() {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setBaseURI(UURI base) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setContentDigest(String algorithm, byte[] digest) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setContentSize(long size) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setContentType(String mimeType) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setDNSServerIPLabel(String label) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setError(String msg) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setFetchBeginTime(long time) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setFetchCompletedTime(long time) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setFetchStatus(int status) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setFetchType(FetchType type) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setHttpMethod(HttpMethod method) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setPrerequisite(boolean prereq) {
+        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        
+    }
+
+
+
+
 }
