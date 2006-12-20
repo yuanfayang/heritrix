@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.crawler.writer.EmptyMetadataProvider;
 import org.archive.crawler.writer.MetadataProvider;
 import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.WriterPool;
@@ -132,7 +133,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
 
 
     final public static Key<MetadataProvider> METADATA_PROVIDER = 
-        Key.makeNull(MetadataProvider.class); 
+        makeMetadataProvider();
 
     /**
      * Reference to pool.
@@ -157,6 +158,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
 
     @Override
     public synchronized void initialTasks(StateProvider context) {
+        System.out.println("\n\nINITIAL TASKS\n\n");
         // Add this class to crawl state listeners and setup pool.
         controller.addCrawlStatusListener(this);
         setupPool(context, new AtomicInteger());
@@ -424,4 +426,12 @@ implements CoreAttributeConstants, CrawlStatusListener {
         return km.toKey();
     }
 
+    
+    private static Key<MetadataProvider> makeMetadataProvider() {
+        KeyMaker<MetadataProvider> km = new KeyMaker<MetadataProvider>();
+        km.def = new EmptyMetadataProvider();
+        km.type = MetadataProvider.class;
+        km.overrideable = false;
+        return km.toKey();
+    }
 }
