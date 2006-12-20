@@ -45,7 +45,7 @@ import org.archive.state.KeyManager;
 public class PathValidator {
 
     
-    final static String ROOT_NAME = "controller";
+    final static String ROOT_NAME = "root";
 
     
     /**

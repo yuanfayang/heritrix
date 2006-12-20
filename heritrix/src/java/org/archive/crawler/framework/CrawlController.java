@@ -55,12 +55,10 @@ import javax.management.MBeanException;
 import javax.management.ReflectionException;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.Checkpoint;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.processors.fetcher.DefaultServerCache;
-import org.archive.processors.util.CrawlHost;
-import org.archive.processors.util.CrawlServer;
-import org.archive.processors.util.RobotsHonoringPolicy;
 import org.archive.processors.util.ServerCache;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
@@ -80,7 +78,6 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
-import org.archive.settings.MemorySheetManager;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.state.Key;
@@ -144,7 +141,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * This setting specifies a file level directory to store those settings. The path
      * is relative to {@link #DISK_PATH} unless an absolute path is provided.
      */
-    final public static Key<String> SETTINGS_DIRECTORY = Key.makeExpertFinal("settings");
+//    final public static Key<String> SETTINGS_DIRECTORY = Key.makeExpertFinal("settings");
 
 
     /**
@@ -152,77 +149,77 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * be kept. If this path is a relative path, it will be
      * relative to the crawl order.
      */
-    final public static Key<String> DISK_PATH = Key.makeExpertFinal("");
+//    final public static Key<String> DISK_PATH = Key.makeExpertFinal("");
 
 
     /**
      * Directory where crawler log files will be kept. If this path is a 
      * relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> LOGS_PATH = Key.makeExpertFinal("logs"); 
+//    final public static Key<String> LOGS_PATH = Key.makeExpertFinal("logs"); 
 
 
     /**
      * Directory where crawler checkpoint files will be kept. If this 
      * path is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> CHECKPOINTS_PATH = Key.makeExpertFinal("checkpoints");
+//    final public static Key<String> CHECKPOINTS_PATH = Key.makeExpertFinal("checkpoints");
 
 
     /**
      * Directory where crawler-state files will be kept. If this path 
      * is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> STATE_PATH = Key.makeExpertFinal("state");
+//    final public static Key<String> STATE_PATH = Key.makeExpertFinal("state");
 
 
     /**
      * Directory where discardable temporary files will be kept. If 
      * this path is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> SCRATCH_PATH = Key.makeExpertFinal("scratch");
+//    final public static Key<String> SCRATCH_PATH = Key.makeExpertFinal("scratch");
 
 
     /**
      * Maximum number of bytes to download. Once this number is exceeded 
      * the crawler will stop. A value of zero means no upper limit.
      */
-    final public static Key<Long> MAX_BYTES_DOWNLOAD = Key.makeFinal(0L);
+//    final public static Key<Long> MAX_BYTES_DOWNLOAD = Key.makeFinal(0L);
 
 
     /**
      * Maximum number of documents to download. Once this number is exceeded the 
      * crawler will stop. A value of zero means no upper limit.
      */
-    final public static Key<Long> MAX_DOCUMENT_DOWNLOAD = Key.makeFinal(0L);
+//    final public static Key<Long> MAX_DOCUMENT_DOWNLOAD = Key.makeFinal(0L);
 
 
     /**
      * Maximum amount of time to crawl (in seconds). Once this much time has 
      * elapsed the crawler will stop. A value of zero means no upper limit.
      */
-    final public static Key<Long> MAX_TIME_SEC = Key.makeFinal(0L);
+//    final public static Key<Long> MAX_TIME_SEC = Key.makeFinal(0L);
 
 
     /**
      * Maximum number of threads processing URIs at the same time.
      */
-    final public static Key<Integer> MAX_TOE_THREADS = Key.makeFinal(0);
+//    final public static Key<Integer> MAX_TOE_THREADS = Key.makeFinal(0);
 
 
     /**
      * Size in bytes of in-memory buffer to record outbound traffic. One such 
      * buffer is reserved for every ToeThread. 
      */
-    final public static Key<Integer> RECORDER_OUT_BUFFER_BYTES = Key.makeExpertFinal(4096);
+//    final public static Key<Integer> RECORDER_OUT_BUFFER_BYTES = Key.makeExpertFinal(4096);
 
 
     /**
      * Size in bytes of in-memory buffer to record inbound traffic. One such 
      * buffer is reserved for every ToeThread.
      */
-    final public static Key<Integer> RECORDER_IN_BUFFER_BYTES = 
-        Key.makeExpertFinal(65536);
+//    final public static Key<Integer> RECORDER_IN_BUFFER_BYTES = 
+//        Key.makeExpertFinal(65536);
 
             
     /**
@@ -230,15 +227,15 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * means no preference (accept BDB's default, usually 60%, or the 
      *up je.maxMemoryPercent property value).
      */
-    final public static Key<Integer> BDB_CACHE_PERCENT = Key.makeExpertFinal(0);
+//    final public static Key<Integer> BDB_CACHE_PERCENT = Key.makeExpertFinal(0);
 
 
     /**
      * HTTP headers. Information that will be used when constructing the HTTP 
      * headers of the crawler's HTTP requests.
      */
-    final public static Key<Map<String,String>> HTTP_HEADERS
-     = makeHttpHeaders();
+//    final public static Key<Map<String,String>> HTTP_HEADERS
+//     = makeHttpHeaders();
 
 
     /**
@@ -248,8 +245,8 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
 
 
 
-    final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
-        Key.make(new RobotsHonoringPolicy());
+//    final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
+//        Key.make(new RobotsHonoringPolicy());
 
     /**
      * Ordered list of url canonicalization rules.  Rules are applied in the 
@@ -272,7 +269,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * Optional. Points at recover log (or recover.gz log) OR the checkpoint 
      * directory to use recovering a crawl.
      */
-    final public static Key<String> RECOVER_PATH = Key.makeExpertFinal("");
+//    final public static Key<String> RECOVER_PATH = Key.makeExpertFinal("");
 
 
     /**
@@ -289,8 +286,8 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * files that comprise a checkpoint are manually assembled. This is an
      * expert setting.
      */
-    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
-        Key.makeExpertFinal(true);
+//    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
+//        Key.makeExpertFinal(true);
 
 
     /**
@@ -299,8 +296,8 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * being retried. Default is false, meaning failures are forgotten, and the
      * corresponding URIs will be retried in the recovered crawl.
      */
-    final public static Key<Boolean> RECOVER_RETAIN_FAILURES = 
-        Key.makeExpertFinal(false);
+//    final public static Key<Boolean> RECOVER_RETAIN_FAILURES = 
+//        Key.makeExpertFinal(false);
 
 
     final public static Key<CredentialStore> CREDENTIAL_STORE = 
@@ -345,9 +342,9 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
 
     // key subcomponents which define and implement a crawl in progress
     //private transient CrawlOrder order;
-    private transient CrawlScope scope;
+//    private transient CrawlScope scope;
     
-    private transient Frontier frontier;
+//    private transient Frontier frontier;
 
     private transient ToePool toePool;
     
@@ -532,20 +529,16 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     private transient Map<String,CachedBdbMap<?,?>> bigmaps = null;
     
 
-    private transient Map<String,Processor> processors;
+//    private transient Map<String,Processor> processors;
     
-    
-    public CrawlController() throws InitializationException {
-        this(new MemorySheetManager());
-    }
-    
-    public CrawlController(SheetManager manager) 
+
+    final private CrawlOrder order;
+
+
+    public CrawlController(SheetManager manager, CrawlOrder order) 
     throws InitializationException {
         this.sheetManager = manager;
-    }
-
-
-    public void initialize() throws InitializationException {
+        this.order = order;
         sendCrawlStateChangeEvent(State.PREPARING, CrawlStatus.PREPARING);
 
         this.singleThreadLock = new ReentrantLock();
@@ -598,8 +591,8 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             onFailMessage = "Unable to setup bdb environment.";
             setupBdb();
             
-            onFailMessage = "Unable to setup statistics";
-            setupStatTracking();
+//            onFailMessage = "Unable to setup statistics";
+//            setupStatTracking();
             
             onFailMessage = "Unable to setup crawl modules";
             setupCrawlModules();
@@ -613,7 +606,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
         // force creation of DNS Cache now -- avoids CacheCleaner in toe-threads group
         dns.getRecords("localhost", Type.A, DClass.IN);
         
-        setupToePool();
+        // setupToePool();
         setThresholds();
         
         reserveMemory = new LinkedList<char[]>();
@@ -621,13 +614,13 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             reserveMemory.add(new char[RESERVE_BLOCK_SIZE]);
         }
         
-        processors = get(this, PROCESSORS);
+//        processors = get(this, PROCESSORS);
     }
 
     
     public <T> T getOrderSetting(Key<T> key) {
         Sheet def = sheetManager.getDefault();
-        return def.get(this, key);
+        return def.get(order, key);
     }
     
     
@@ -667,14 +660,14 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     }
     
     protected boolean getCheckpointCopyBdbjeLogs() {
-        return getOrderSetting(CHECKPOINT_COPY_BDBJE_LOGS);
+        return getOrderSetting(CrawlOrder.CHECKPOINT_COPY_BDBJE_LOGS);
     }
     
     private void setupBdb()
     throws FatalConfigurationException, AttributeNotFoundException {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
-        int bdbCachePercent = getOrderSetting(BDB_CACHE_PERCENT);
+        int bdbCachePercent = getOrderSetting(CrawlOrder.BDB_CACHE_PERCENT);
         if(bdbCachePercent > 0) {
             // Operator has expressed a preference; override BDB default or 
             // je.properties value
@@ -872,7 +865,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
 
     private void setupCrawlModules() throws FatalConfigurationException,
              AttributeNotFoundException, MBeanException, ReflectionException {
-        if (scope == null) {
+/*        if (scope == null) {
             scope = getOrderSetting(SCOPE);
             scope.initialize(this);
         }
@@ -887,13 +880,13 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
                 // to a directory, its a checkpoint recovery).
                 // TODO: make recover path relative to job root dir.
                 if (!isCheckpointRecover()) {
-                    runFrontierRecover(getOrderSetting(RECOVER_PATH));
+                    runFrontierRecover(get(this, CrawlOrder.RECOVER_PATH));
                 }
             } catch (IOException e) {
                 throw new FatalConfigurationException(
                     "unable to initialize frontier: " + e);
             }
-        }
+        } */
 
     }
     
@@ -913,9 +906,9 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             return;
         }
         boolean retainFailures = getOrderSetting(
-                RECOVER_RETAIN_FAILURES);
+                CrawlOrder.RECOVER_RETAIN_FAILURES);
         try {
-            frontier.importRecoverLog(recoverPath, retainFailures);
+            getFrontier().importRecoverLog(recoverPath, retainFailures);
         } catch (IOException e) {
             e.printStackTrace();
             throw (FatalConfigurationException) new FatalConfigurationException(
@@ -924,20 +917,20 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     }
 
     private void setupDisk() {
-        String diskPath = getOrderSetting(DISK_PATH);
+        String diskPath = get(order, CrawlOrder.DISK_PATH);
         this.disk = getRelative(diskPath);
         this.disk.mkdirs();
-        this.logsDisk = getSettingsDir(LOGS_PATH);
-        this.checkpointsDisk = getSettingsDir(CHECKPOINTS_PATH);
-        this.stateDisk = getSettingsDir(STATE_PATH);
-        this.scratchDisk = getSettingsDir(SCRATCH_PATH);
+        this.logsDisk = getSettingsDir(CrawlOrder.LOGS_PATH);
+        this.checkpointsDisk = getSettingsDir(CrawlOrder.CHECKPOINTS_PATH);
+        this.stateDisk = getSettingsDir(CrawlOrder.STATE_PATH);
+        this.scratchDisk = getSettingsDir(CrawlOrder.SCRATCH_PATH);
     }
     
     /**
      * @return The logging directory or null if problem reading the settings.
      */
     public File getLogsDir() {
-        return getSettingsDir(LOGS_PATH);
+        return getSettingsDir(CrawlOrder.LOGS_PATH);
     }
     
     /**
@@ -950,7 +943,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * @throws AttributeNotFoundException
      */
     public File getSettingsDir(Key<String> key) {
-        String path = getOrderSetting(key);
+        String path = get(order, key);
         File f = new File(path);
         if (!f.isAbsolute()) {
             f = new File(disk.getPath(), path);
@@ -1046,6 +1039,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             logsPath + LOGNAME_PROGRESS_STATISTICS + CURRENT_LOG_SUFFIX,
             new StatisticsLogFormatter(), true);
 
+        System.out.println("\n\n\nLOGGING ENABLED\n\n\n");
     }
 
     private void setupLogFile(Logger logger, String filename, Formatter f,
@@ -1098,9 +1092,9 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * Sets the values for max bytes, docs and time based on crawl order. 
      */
     private void setThresholds() {
-        maxBytes = getOrderSetting(MAX_BYTES_DOWNLOAD);
-        maxDocument = getOrderSetting(MAX_DOCUMENT_DOWNLOAD);
-        maxTime = getOrderSetting(MAX_TIME_SEC);
+        maxBytes = getOrderSetting(CrawlOrder.MAX_BYTES_DOWNLOAD);
+        maxDocument = getOrderSetting(CrawlOrder.MAX_DOCUMENT_DOWNLOAD);
+        maxTime = getOrderSetting(CrawlOrder.MAX_TIME_SEC);
     }
 
     /**
@@ -1206,7 +1200,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
         statLogger.setName("StatLogger");
         statLogger.start();
         
-        frontier.start();
+        getFrontier().start();
     }
 
     /**
@@ -1239,11 +1233,11 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
 
         // Do cleanup.
         this.statistics = null;
-        this.frontier = null;
+//        this.frontier = null;
         this.disk = null;
         this.scratchDisk = null;
 //        this.order = null;
-        this.scope = null;
+//        this.scope = null;
         if (this.sheetManager !=  null) {
             this.sheetManager.cleanup();
         }
@@ -1296,6 +1290,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     }
 
     private boolean shouldContinueCrawling() {
+        Frontier frontier = getFrontier();
         if (frontier.isEmpty()) {
             this.sExit = CrawlStatus.FINISHED;
             return false;
@@ -1580,7 +1575,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     }
     
     public static Checkpoint getCheckpointRecover(CrawlController c) {
-        String path = c.get(c, RECOVER_PATH);
+        String path = c.get(c, CrawlOrder.RECOVER_PATH);
         if (path == null || path.length() <= 0) {
             return null;
         }
@@ -1638,9 +1633,10 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     public void beginCrawlStop() {
         LOGGER.fine("Started.");
         sendCrawlStateChangeEvent(State.STOPPING, this.sExit);
-        if (this.frontier != null) {
-            this.frontier.terminate();
-            this.frontier.unpause();
+        Frontier frontier = getFrontier();
+        if (frontier != null) {
+            frontier.terminate();
+            frontier.unpause();
         }
         LOGGER.fine("Finished."); 
     }
@@ -1654,7 +1650,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             return;
         }
         sExit = CrawlStatus.WAITING_FOR_PAUSE;
-        frontier.pause();
+        getFrontier().pause();
         sendCrawlStateChangeEvent(State.PAUSING, this.sExit);
         if (toePool.getActiveToeCount() == 0) {
             // if all threads already held, complete pause now
@@ -1689,7 +1685,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             return;
         }
         multiThreadMode();
-        frontier.unpause();
+        getFrontier().unpause();
         LOGGER.fine("Crawl resumed.");
         sendCrawlStateChangeEvent(State.RUNNING, CrawlStatus.RUNNING);
     }
@@ -1704,10 +1700,10 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
         return toePool.getActiveToeCount();
     }
 
-    private void setupToePool() {
+    public void setupToePool() {
         toePool = new ToePool(this);
         // TODO: make # of toes self-optimizing
-        toePool.setSize(get(this, MAX_TOE_THREADS));
+        toePool.setSize(get(order, CrawlOrder.MAX_TOE_THREADS));
     }
 
 
@@ -1715,7 +1711,8 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * @return The server cache instance.
      */
     public ServerCache getServerCache() {
-        return serverCache;
+        return get(this, SERVER_CACHE);
+//        return serverCache;
     }
 
     /**
@@ -1730,14 +1727,16 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * @return The frontier.
      */
     public Frontier getFrontier() {
-        return frontier;
+        return get(this, FRONTIER);
+//        return frontier;
     }
 
     /**
      * @return This crawl scope.
      */
     public CrawlScope getScope() {
-        return scope;
+        return get(this, SCOPE);
+//        return scope;
     }
 
 
@@ -1793,11 +1792,11 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * settings. This includes, number of toe threads and seeds.
      */
     public void kickUpdate() {
-        toePool.setSize(get(this, MAX_TOE_THREADS));
+        toePool.setSize(get(this, CrawlOrder.MAX_TOE_THREADS));
         
-        this.scope.kickUpdate(this);
-        this.frontier.kickUpdate();
-        for (Processor p: processors.values()) {
+        getScope().kickUpdate(this);
+        getFrontier().kickUpdate();
+        for (Processor p: get(this, PROCESSORS).values()) {
             p.kickUpdate(this);
         }
         
@@ -1820,7 +1819,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      *
      */
     private void runProcessorInitialTasks(){
-        for (Processor p: processors.values()) {
+        for (Processor p: get(this, PROCESSORS).values()) {
             p.initialTasks(this);
         }
     }
@@ -1831,7 +1830,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      *
      */
     private void runProcessorFinalTasks(){
-        for (Processor p: processors.values()) {
+        for (Processor p: get(this, PROCESSORS).values()) {
             p.finalTasks(this);
         }
     }
@@ -2070,10 +2069,10 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
         writer.print("  Job being crawled:    " + sheetManager.getCrawlName()
                 + "\n");
 
-        writer.print("  Number of Processors: " + processors.size() + "\n");
+        writer.print("  Number of Processors: " + get(this, PROCESSORS).size() + "\n");
         writer.print("  NOTE: Some processors may not return a report!\n\n");
 
-        for (Processor p: processors.values()) {
+        for (Processor p: get(this, PROCESSORS).values()) {
             writer.print(p.report());
         }
     }
@@ -2182,6 +2181,13 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     }
 
     
+    public void setStateProvider(CandidateURI uri) {
+        if (uri.getStateProvider() == null) {
+            StateProvider sp = findConfig(uri.getUURI());
+            uri.setStateProvider(sp);
+        }
+    }
+    
     /**
      * Returns the configuration for the given URI.
      * 
@@ -2216,7 +2222,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     
     
     public void checkUserAgentAndFrom() throws FatalConfigurationException {
-        Map<String,String> hh = get(this, HTTP_HEADERS);
+        Map<String,String> hh = get(order, CrawlOrder.HTTP_HEADERS);
         String userAgent = hh.get("user-agent");
         String from = hh.get("from");
         boolean valid = true;
@@ -2241,26 +2247,9 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
 
     
     public String getUserAgent(StateProvider p) {
-        return p.get(this, HTTP_HEADERS).get("user-agent");
+        return p.get(order, CrawlOrder.HTTP_HEADERS).get("user-agent");
     }
     
-
-    private static Key<Map<String,String>> makeHttpHeaders() {
-        Map<String,String> hh = new HashMap<String,String>();
-        hh.put("user-agent", 
-         "Mozilla/5.0 (compatible; heritrix/@VERSION@ +PROJECT_URL_HERE)");
-        hh.put("from", "CONTACT_EMAIL_ADDRESS_HERE");
-        hh = Collections.unmodifiableMap(hh);
-        
-        KeyMaker<Map<String,String>> km = KeyMaker.makeMap(String.class);
-        km.overrideable = false;
-        km.def = hh;
-        
-        // FIXME: Add header constraints to enforce valid email etc
-        
-        return km.toKey();
-    }
-
 
     private static <T> Key<List<T>> finalList(Class<T> element) {
         KeyMaker<List<T>> km = KeyMaker.makeList(element);
