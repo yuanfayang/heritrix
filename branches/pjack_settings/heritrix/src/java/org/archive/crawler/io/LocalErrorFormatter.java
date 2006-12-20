@@ -40,8 +40,10 @@ public class LocalErrorFormatter extends UriProcessingFormatter implements CoreA
      * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
      */
     public String format(LogRecord lr) {
-        LocalizedError err = (LocalizedError) lr.getParameters()[1];
-        Throwable ex = (Throwable)err.exception;
+//        Throwable ex = lr.getThrown();
+        Throwable ex = (Throwable)lr.getParameters()[1];
+//        LocalizedError err = (LocalizedError) lr.getParameters()[1];
+//        Throwable ex = (Throwable)err.exception;
         StringWriter sw = new StringWriter();
         ex.printStackTrace(new PrintWriter(sw));
 
