@@ -129,7 +129,7 @@ extends Formatter implements CoreAttributeConstants {
             .append(checkForNull(sourceTag))
             .append(" ");
         Collection<String> anno = curi.getAnnotations();
-        if (anno.size() > 0) {
+        if ((anno != null) && (anno.size() > 0)) {
         	Iterator<String> iter = anno.iterator();
             buffer.append(iter.next());
             while (iter.hasNext()) {
