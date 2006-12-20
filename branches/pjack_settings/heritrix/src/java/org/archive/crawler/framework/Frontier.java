@@ -136,8 +136,8 @@ public interface Frontier extends Reporter {
      * @throws IOException If there is a problem reading settings or seeds file
      *            from disk.
      */
-    public void initialize(CrawlController c)
-            throws FatalConfigurationException, IOException;
+//    public void initialize(CrawlController c)
+//            throws FatalConfigurationException, IOException;
 
     /**
      * Get the next URI that should be processed. If no URI becomes availible

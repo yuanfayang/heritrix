@@ -132,8 +132,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * Defines how to assign URIs to queues. Can assign by host, by ip, and into
      * one of a fixed set of buckets (1k).
      */
-    final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
-        makeQAP();
+//    final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
+//        makeQAP();
     
     
     /** queue assignment to force onto CrawlURIs; intended to be overridden */
@@ -207,7 +207,20 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * @param name Name of this frontier.
      * @param description Description for this frontier.
      */
-    public AbstractFrontier() {
+    public AbstractFrontier(CrawlController c, QueueAssignmentPolicy qap) throws IOException {
+        this.controller = c;
+        c.addCrawlStatusListener(this);
+        File logsDisk = null;
+        logsDisk = c.getLogsDir();
+        if (logsDisk != null) {
+            String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
+            if (get(RECOVERY_LOG_ENABLED)) {
+                this.recover = new RecoveryJournal(logsPath,
+                    FrontierJournal.LOGNAME_RECOVER);
+            }
+        }
+        queueAssignmentPolicy = qap; //get(QUEUE_ASSIGNMENT_POLICY);
+        pause();
     }
     
     
@@ -235,11 +248,12 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         notifyAll();
     }
 
+    /*
     public void initialize(CrawlController c)
             throws FatalConfigurationException, IOException {
         c.addCrawlStatusListener(this);
         File logsDisk = null;
-        logsDisk = c.getSettingsDir(CrawlController.LOGS_PATH);
+        logsDisk = c.getLogsDir();
         if (logsDisk != null) {
             String logsPath = logsDisk.getAbsolutePath() + File.separatorChar;
             if (get(RECOVERY_LOG_ENABLED)) {
@@ -248,7 +262,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             }
         }
         queueAssignmentPolicy = get(QUEUE_ASSIGNMENT_POLICY);
-    }
+    }*/
 
     synchronized public void terminate() {
         shouldTerminate = true;
@@ -459,6 +473,8 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
             curi = CrawlURI.from(caUri, nextOrdinal++);
         }
         curi.setClassKey(getClassKey(curi));
+        StateProvider settings = controller.findConfig(caUri.getUURI());
+        curi.setStateProvider(settings);
         return curi;
     }
 
@@ -688,7 +704,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
         if (curi.containsDataKey(A_LOCALIZED_ERRORS)) {
         	Collection<Throwable> x = curi.getNonFatalFailures();
         	for (Throwable e: x) {
-        		controller.localErrors.log(Level.WARNING, curi.toString(), e);
+        		controller.localErrors.log(Level.WARNING, curi.toString(), new Object[] { curi, e });
         	}
             // once logged, discard
             curi.getData().remove(A_LOCALIZED_ERRORS);

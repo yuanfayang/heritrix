@@ -84,11 +84,6 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     private final static String DEFAULT_INCLUDED =
         BdbUriUniqFilter.class.getName();
     
-    /**
-     * Constructor.
-     */
-    public BdbFrontier() {
-    }
 
     
     /**
@@ -151,7 +146,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
                 }
             }   
         } */
-        uuf.setDestination(this);
+//        uuf.setDestination(this);
         return uuf;
     }
     
@@ -261,10 +256,22 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     protected boolean workQueueDataOnDisk() {
         return true;
     }
+
     
-    public void initialize(CrawlController c)
+    /**
+     * Constructor.
+     */
+    public BdbFrontier(CrawlController c,
+            QueueAssignmentPolicy qap,
+            UriUniqFilter alreadySeen)
     throws FatalConfigurationException, IOException {
-        super.initialize(c);
+        super(c, qap, alreadySeen);
+//    }
+
+    
+//    public void initialize(CrawlController c)
+//    throws FatalConfigurationException, IOException {
+//        super.initialize(c);
         if (c.isCheckpointRecover()) {
             // If a checkpoint recover, copy old values from serialized
             // instance into this Frontier instance. Do it this way because 
