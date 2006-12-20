@@ -115,7 +115,7 @@ public interface ProcessorURI extends StateProvider {
     boolean isLocation();
 
     
-    List<Link> getOutLinks();
+    Collection<Link> getOutLinks();
     
     UURI getBaseURI();
     void setBaseURI(UURI base);
