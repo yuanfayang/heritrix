@@ -200,31 +200,43 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             WagCostAssignmentPolicy.class.getName(),
             AntiCalendarCostAssignmentPolicy.class.getName()};
 
+    
+    public <T> T get(Key<T> key) {
+        Sheet def = controller.getSheetManager().getDefault();
+        return def.get(this, key);
+    }
+
     /**
      * Create the CommonFrontier
      * 
      * @param name
      * @param description
      */
-    public WorkQueueFrontier() {
-    }
+    public WorkQueueFrontier(
+            CrawlController c,
+            QueueAssignmentPolicy qap,
+            UriUniqFilter uuf) 
+    throws FatalConfigurationException, IOException {
+        super(c, qap);
+//        this.queueAssignmentPolicy = qap;
+        this.alreadyIncluded = uuf;
+        alreadyIncluded.setDestination(this);
+//    }
 
     
-    public <T> T get(Key<T> key) {
-        Sheet def = controller.getSheetManager().getDefault();
-        return def.get(this, key);
-    }
     
     /**
      * Initializes the Frontier, given the supplied CrawlController.
      *
      * @see org.archive.crawler.framework.Frontier#initialize(org.archive.crawler.framework.CrawlController)
      */
-    public void initialize(CrawlController c)
-            throws FatalConfigurationException, IOException {
+//    public void initialize(CrawlController c)
+//            throws FatalConfigurationException, IOException {
         // Call the super method. It sets up frontier journalling.
-        super.initialize(c);
-        this.controller = c;
+//        super.initialize(c);
+
+        
+        //this.controller = c;
         
         this.targetSizeForReadyQueues = get(TARGET_READY_BACKLOG);
         if (this.targetSizeForReadyQueues < 1) {
@@ -253,7 +265,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
                     }
                 }
             }
-            this.alreadyIncluded = createAlreadyIncluded();
+//            this.alreadyIncluded = createAlreadyIncluded();
             initQueue();
         } catch (IOException e) {
             e.printStackTrace();
@@ -287,10 +299,10 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // references.
         if (this.alreadyIncluded != null) {
             this.alreadyIncluded.close();
-            this.alreadyIncluded = null;
+//            this.alreadyIncluded = null;
         }
 
-        this.queueAssignmentPolicy = null;
+//        this.queueAssignmentPolicy = null;
         
         try {
             closeQueue();
@@ -301,18 +313,20 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         this.wakeTimer.cancel();
         
         this.allQueues.clear();
-        this.allQueues = null;
-        this.inProcessQueues = null;
-        this.readyClassQueues = null;
-        this.snoozedClassQueues = null;
-        this.inactiveQueues = null;
-        this.retiredQueues = null;
         
-        this.costAssignmentPolicy = null;
+        
+//        this.allQueues = null;
+//        this.inProcessQueues = null;
+//        this.readyClassQueues = null;
+//        this.snoozedClassQueues = null;
+//        this.inactiveQueues = null;
+//        this.retiredQueues = null;
+//        
+//        this.costAssignmentPolicy = null;
         
         // Clearing controller is a problem. We get NPEs in #preNext.
         super.crawlEnded(sExitMessage);
-        this.controller = null;
+        //this.controller = null;
     }
 
     /**
@@ -621,7 +635,8 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     private int getCost(CrawlURI curi) {
         int cost = curi.getHolderCost();
         if (cost == CrawlURI.UNCALCULATED) {
-            cost = costAssignmentPolicy.costOf(curi);
+            cost = curi.get(this, COST_POLICY).costOf(curi);
+//            cost = costAssignmentPolicy.costOf(curi);
             curi.setHolderCost(cost);
         }
         return cost;
@@ -672,6 +687,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         // get a CrawlURI for override context purposes
         CrawlURI contextUri = queue.peek(this); 
         // TODO: consider confusing cross-effects of this and IP-based politeness
+        controller.setStateProvider(contextUri);
         queue.setSessionBalance(contextUri.get(this, BALANCE_REPLENISH_AMOUNT));
         // reset total budget (it may have changed)
         // TODO: is this the best way to be sensitive to potential mid-crawl changes
@@ -817,6 +833,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             }
             incrementFailedFetchCount();
             // let queue note error
+            controller.setStateProvider(curi);
             wq.noteError(curi.get(this, ERROR_PENALTY_AMOUNT));
             doJournalFinishedFailure(curi);
             wq.expend(getCost(curi)); // failures cost
