@@ -70,6 +70,12 @@ implements ARCConstants {
     		getArchiveReader(arcFileOrUrl);
     }
     
+    public static ARCReader get(String arcFileOrUrl, final long offset)
+    throws MalformedURLException, IOException {
+    	return (ARCReader)ARCReaderFactory.factory.
+    		getArchiveReader(arcFileOrUrl, offset);
+    }
+    
     public static ARCReader get(final File f) throws IOException {
     	return (ARCReader)ARCReaderFactory.factory.getArchiveReader(f);
     }
@@ -98,7 +104,7 @@ implements ARCConstants {
             final boolean skipSuffixTest, final long offset)
     throws IOException {
     	return (ARCReader)ARCReaderFactory.factory.getArchiveReader(f,
-    		skipSuffixTest, 0);
+    		skipSuffixTest, offset);
     }
     
     protected ArchiveReader getArchiveReader(final File arcFile,

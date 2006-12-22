@@ -801,8 +801,8 @@ implements ARCConstants {
                 System.out.println("Error: Pass one arcfile only.");
                 usage(formatter, options, 1);
             }
-            ARCReader arc = ARCReaderFactory.get(
-            	new File((String)cmdlineArgs.get(0)), offset);
+            ARCReader arc = ARCReaderFactory.get((String)cmdlineArgs.get(0),
+            	offset);
             arc.setStrict(strict);
             // We must parse headers if we need to skip them.
             if (format.equals(NOHEAD) || format.equals(HEADER)) {

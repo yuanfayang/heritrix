@@ -188,7 +188,7 @@ implements RepositionableStream {
         try {
             // We know its a RepositionableStream else we'd have failed
         	// construction.  On iterator construction, set file back to
-        	// initial postion so we're ready to read GZIP Members
+        	// initial position so we're ready to read GZIP Members
         	// (May not always work dependent on how the
         	// RepositionableStream was implemented).
             ((RepositionableStream)this.in).position(this.initialOffset);
@@ -237,8 +237,7 @@ implements RepositionableStream {
         // remaining bytes. Then add 8 bytes to get us past the GZIP
         // CRC trailer block that ends all gzip members.
         try {
-            RepositionableStream ps =
-                (RepositionableStream)getInputStream();
+            RepositionableStream ps = (RepositionableStream)getInputStream();
             // 8 is sizeof gzip CRC block thats on tail of gzipped
             // record. If remaining is < 8 then experience indicates
             // we're seeking past the gzip header -- don't backup the
@@ -247,9 +246,15 @@ implements RepositionableStream {
                 ps.position(position() - getInflater().getRemaining() +
                     GZIP_TRAILER_LENGTH);
             }
-            int read = -1;
-            int headerRead = 0;
-            while ((read = getInputStream().read()) != -1) {
+            for (int read = -1; true;) {
+                int headerRead = 0;
+                // Use marking if available.
+                if (getInputStream().markSupported()) {
+                	getInputStream().mark(3);
+                }
+                if ((read = getInputStream().read()) == -1) {
+                	break;
+                }
             	if(compareBytes(read, GZIPInputStream.GZIP_MAGIC)) {
                     headerRead++;
                     read = getInputStream().read();
@@ -260,7 +265,7 @@ implements RepositionableStream {
                             headerRead++;
                             // Found gzip header. Backup the stream the
                             // bytes we just found and set result true.
-                            ps.position(position() - headerRead);
+                            backup(headerRead);
                             result = true;
                             break;
                         }
@@ -268,14 +273,22 @@ implements RepositionableStream {
                     // Didn't find gzip header.  Back up stream one
                     // byte because the byte just read might be the
                     // actual start of the gzip header. Needs testing.
-                    ps.position(position() - headerRead);
-                    headerRead = 0;
+                    backup(headerRead);
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed i/o: " + e.getMessage());
         }
         return result;
+    }
+    
+    protected void backup(final int amount) throws IOException {
+        if (getInputStream().markSupported()) {
+        	getInputStream().reset();
+        } else {
+        	((RepositionableStream)getInputStream()).
+        		position(position() - amount);
+        }
     }
     
     protected boolean compareBytes(final int a, final int b) {
