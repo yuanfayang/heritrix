@@ -48,6 +48,11 @@ import org.archive.util.IoUtils;
  * @version $Date$ $Revision$
  */
 public class ArchiveReaderFactory implements ArchiveFileConstants {
+	/**
+	 * Offset value for when we want to stream all.
+	 */
+	private final static int STREAM_ALL = -1;
+	
 	private static final ArchiveReaderFactory factory =
 		new ArchiveReaderFactory();
 	
@@ -74,8 +79,15 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
     
     protected ArchiveReader getArchiveReader(final String arcFileOrUrl)
     throws MalformedURLException, IOException {
+    	return getArchiveReader(arcFileOrUrl, STREAM_ALL);
+    }
+    
+    protected ArchiveReader getArchiveReader(final String arcFileOrUrl,
+    	final long offset)
+    throws MalformedURLException, IOException {
     	return UURI.hasScheme(arcFileOrUrl)?
-    		get(new URL(arcFileOrUrl)): get(new File(arcFileOrUrl));
+    		get(new URL(arcFileOrUrl), offset):
+    			get(new File(arcFileOrUrl), offset);
     }
     
     /**
@@ -100,7 +112,7 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
      */
     public static ArchiveReader get(final File f, final long offset)
     throws IOException {
-    	return ArchiveReaderFactory.factory.getArchiveReader(f, 0);
+    	return ArchiveReaderFactory.factory.getArchiveReader(f, offset);
 	}
     
     protected ArchiveReader getArchiveReader(final File f,
@@ -175,11 +187,13 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
             throw new IOException("This method only handles HTTP connections.");
         }
         addUserAgent((HttpURLConnection)connection);
-        // Use a Range request (Assumes HTTP 1.1 on other end). If length <= 0,
-        // add open-ended range header to the request.  Else, because end-byte
-        // is inclusive, subtract 1.
-        connection.addRequestProperty("Range", "bytes=" + offset + "-");
-
+        if (offset != STREAM_ALL) {
+        	// Use a Range request (Assumes HTTP 1.1 on other end). If
+        	// length >= 0, add open-ended range header to the request.  Else,
+        	// because end-byte is inclusive, subtract 1.
+        	connection.addRequestProperty("Range", "bytes=" + offset + "-");
+        }
+        
         return getArchiveReader(f.toString(), connection.getInputStream(),
             (offset == 0));
     }
@@ -215,7 +229,7 @@ public class ArchiveReaderFactory implements ArchiveFileConstants {
             // Try streaming if http or s3 URLs rather than copying local
         	// and then reading (Passing an offset will get us an Reader
         	// that wraps a Stream).
-            return get(u, 0);
+            return get(u, STREAM_ALL);
         }
         
         return makeARCLocal(u.openConnection());

@@ -114,6 +114,8 @@ public class RepositionableInputStream extends BufferedInputStream implements
         }
         this.position = offset;
         this.pos += diff;
+        // Clear any mark.
+        this.markPosition = -1;
     }
 
     public void mark(int readlimit) {
