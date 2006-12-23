@@ -98,6 +98,14 @@ implements RepositionableStream {
     public GzippedInputStream(final InputStream is, final int size)
     throws IOException {
         super(checkStream(is), size);
+        if (!is.markSupported()) {
+        	throw new IllegalArgumentException("GzippedInputStream requires " +
+        		"a markable stream");
+        }
+        if (!(is instanceof RepositionableStream)) {
+        	throw new IllegalArgumentException("GzippedInputStream requires " +
+    		"a stream that implements RepositionableStream");
+        }
         // We need to calculate the absolute offset of the current
         // GZIP Member.  Its almost always going to be zero but not
         // always (We may have been passed a stream that is already part
@@ -246,49 +254,41 @@ implements RepositionableStream {
                 ps.position(position() - getInflater().getRemaining() +
                     GZIP_TRAILER_LENGTH);
             }
-            for (int read = -1; true;) {
-                int headerRead = 0;
-                // Use marking if available.
-                if (getInputStream().markSupported()) {
-                	getInputStream().mark(3);
-                }
+            for (int read = -1, headerRead = 0; true; headerRead = 0) {
+                // Give a hint to underlying stream that we're going to want to
+                // do some backing up.
+                getInputStream().mark(3);
                 if ((read = getInputStream().read()) == -1) {
-                	break;
+                    break;
                 }
-            	if(compareBytes(read, GZIPInputStream.GZIP_MAGIC)) {
+                if(compareBytes(read, GZIPInputStream.GZIP_MAGIC)) {
                     headerRead++;
-                    read = getInputStream().read();
+                    if ((read = getInputStream().read()) == -1) {
+                    	break;
+                    }
                     if(compareBytes(read, GZIPInputStream.GZIP_MAGIC >> 8)) {
                         headerRead++;
-                        read = getInputStream().read();
+                        if ((read = getInputStream().read()) == -1) {
+                        	break;
+                        }
                         if (compareBytes(read, Deflater.DEFLATED)) {
                             headerRead++;
                             // Found gzip header. Backup the stream the
                             // bytes we just found and set result true.
-                            backup(headerRead);
+                            getInputStream().reset();
                             result = true;
                             break;
                         }
                     }
-                    // Didn't find gzip header.  Back up stream one
-                    // byte because the byte just read might be the
-                    // actual start of the gzip header. Needs testing.
-                    backup(headerRead);
+                    // Didn't find gzip header.  Reset stream but one byte
+                    // futher on then redo header tests.
+                    ps.position(ps.position() - headerRead);
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed i/o: " + e.getMessage());
         }
         return result;
-    }
-    
-    protected void backup(final int amount) throws IOException {
-        if (getInputStream().markSupported()) {
-        	getInputStream().reset();
-        } else {
-        	((RepositionableStream)getInputStream()).
-        		position(position() - amount);
-        }
     }
     
     protected boolean compareBytes(final int a, final int b) {
