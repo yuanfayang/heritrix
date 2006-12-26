@@ -168,9 +168,12 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
                 this.regularBuffer.length +
                     (this.regularBuffer.length * MULTIPLIER),
                 SEQUENCE_LENGTH, fileName, "UTF-8");
-
-        for (int i = 0; i < MULTIPLIER; i++) {
-            accessingCharacters(rcs);
+        try {
+            for (int i = 0; i < MULTIPLIER; i++) {
+                accessingCharacters(rcs);
+            }
+        } finally {
+            rcs.close();
         }
     }
     
@@ -189,17 +192,29 @@ public class ReplayCharSequenceFactoryTest extends TmpDirTestCase
     }
     
     public void testReplayCharSequenceByteToStringMulti() throws IOException {
+        // A String of ASCII characters.
         String fileContent = "Some file content";
+        // Though ASCII, call it UTF-8 so we trigger multibyte handling.
         byte [] buffer = fileContent.getBytes("UTF-8");
         File f = new File(getTmpDir(),
             "testReplayCharSequenceByteToStringMulti.txt");
-        String fileName =
-            writeFile(f, buffer, buffer.length).getAbsolutePath();
-        ReplayCharSequence rcs = this.factory.getReplayCharSequence(
-            buffer, buffer.length, 0, fileName, "UTF-8");
-        String result = rcs.toString();
-        assertTrue("Strings don't match " + result + " " + fileContent,
-                fileContent.equals(result));
+        final int MULTIPLICAND = 10;
+        StringBuilder sb =
+            new StringBuilder(MULTIPLICAND * fileContent.length());
+        for (int i = 0; i < MULTIPLICAND; i++) {
+            sb.append(fileContent);
+        }
+        String expectedResult = sb.toString();
+        String fileName = writeFile(f, buffer, MULTIPLICAND - 1).
+            getAbsolutePath();
+        for (int i = 0; i < 3; i++) {
+            ReplayCharSequence rcs = this.factory.getReplayCharSequence(
+                buffer, buffer.length + f.length(), 0, fileName, "UTF-8");
+            String result = rcs.toString();
+            assertTrue("Strings don't match " + result + " " + expectedResult +
+                " on attempt " + i, result.equals(expectedResult));
+            rcs.close();
+        }
     }
     
     /**
