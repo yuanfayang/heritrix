@@ -174,7 +174,7 @@ public class ArchiveUtils {
     
     /**
      * Utility function for creating arc-style date stamps
-     * in the format yyyMMddHHmmssSSS.
+     * in the format yyyyMMddHHmmssSSS.
      * Date stamps are in the UTC time zone
      *
      * @param date milliseconds since epoc
@@ -190,7 +190,7 @@ public class ArchiveUtils {
 
     /**
      * Utility function for creating arc-style date stamps
-     * in the format yyyMMddHHmmss.
+     * in the format yyyyMMddHHmmss.
      * Date stamps are in the UTC time zone
      *
      * @param date milliseconds since epoc
@@ -206,7 +206,7 @@ public class ArchiveUtils {
 
     /**
      * Utility function for creating arc-style date stamps
-     * in the format yyyMMddHHmm.
+     * in the format yyyyMMddHHmm.
      * Date stamps are in the UTC time zone
      *
      * @param date milliseconds since epoc
@@ -219,6 +219,66 @@ public class ArchiveUtils {
     public static String get12DigitDate(Date d) {
         return TIMESTAMP12.format(d);
     }
+    
+    /**
+     * Parses an ARC-style date.  If passed String is < 12 characters in length,
+     * we pad.  At a minimum, String should contain a year (>=4 characters).
+     * Parse will also fail if day or month are incompletely specified.  Depends
+     * on the above getXXDigitDate methods.
+     * @param A 4-17 digit date in ARC style (<code>yyyy</code> to
+     * <code>yyyyMMddHHmmssSSS</code>) formatting.  
+     * @return A Date object representing the passed String. 
+     * @throws ParseException
+     */
+    public static Date getDate(String d) throws ParseException {
+        Date date = null;
+        if (d == null) {
+            throw new IllegalArgumentException("Passed date is null");
+        }
+        switch (d.length()) {
+        case 14:
+            date = ArchiveUtils.parse14DigitDate(d);
+            break;
+
+        case 17:
+            date = ArchiveUtils.parse17DigitDate(d);
+            break;
+
+        case 12:
+            date = ArchiveUtils.parse12DigitDate(d);
+            break;
+           
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            throw new ParseException("Date string must at least contain a" +
+                "year: " + d, d.length());
+            
+        default:
+            if (!(d.startsWith("19") || d.startsWith("20"))) {
+                throw new ParseException("Unrecognized century: " + d, 0);
+            }
+            if (d.length() < 8 && (d.length() % 2) != 0) {
+                throw new ParseException("Incomplete month/date: " + d,
+                    d.length());
+            }
+            StringBuilder sb = new StringBuilder(d);
+            if (sb.length() < 8) {
+                for (int i = sb.length(); sb.length() < 8; i += 2) {
+                    sb.append("01");
+                }
+            }
+            if (sb.length() < 12) {
+                for (int i = sb.length(); sb.length() < 12; i++) {
+                    sb.append("0");
+                }
+            }
+            date = ArchiveUtils.parse12DigitDate(sb.toString());
+        }
+
+        return date;
+    }
 
     /**
      * Utility function for parsing arc-style date stamps
@@ -230,7 +290,7 @@ public class ArchiveUtils {
      * @return the Date corresponding to the date stamp string
      * @throws ParseException if the inputstring was malformed
      */
-    public static Date parse17DigitDate(String date) throws ParseException{
+    public static Date parse17DigitDate(String date) throws ParseException {
         return TIMESTAMP17.parse(date);
     }
 
