@@ -25,6 +25,7 @@
 
 package org.archive.util;
 
+import java.util.Date;
 import java.text.ParseException;
 
 import junit.framework.Test;
@@ -129,6 +130,33 @@ public class ArchiveUtilsTest extends TestCase {
         } catch (ParseException e) {
             fail("Could not parse a date : " + e.getMessage());
         }
+    }
+    
+    public void testTooShortParseDigitDate() throws ParseException {
+        String d = "X";
+        boolean b = false;
+        try {
+            ArchiveUtils.getDate(d);
+        } catch (ParseException e) {
+            b = true;
+        }
+        assertTrue(b);
+        
+        Date date = ArchiveUtils.getDate("1999");
+        assertTrue(date.getTime() == 915148800000L);
+        
+        b = false;
+        try {
+            ArchiveUtils.getDate("19991");
+        } catch (ParseException e) {
+            b = true;
+        }
+        assertTrue(b);
+        
+        ArchiveUtils.getDate("19990101");
+        ArchiveUtils.getDate("1999010101");
+        ArchiveUtils.getDate("19990101010101"); 
+        ArchiveUtils.getDate("1960"); 
     }
 
     /** check that parse12DigitDate doesn't accept a bad date */
