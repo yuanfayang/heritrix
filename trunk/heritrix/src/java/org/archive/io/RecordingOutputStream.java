@@ -489,10 +489,13 @@ public class RecordingOutputStream extends OutputStream {
                 
             } else {
                 // raw data overflows to disk; use temp file
-                return new MultiByteReplayCharSequence(
-                        getReplayInputStream(startOffset), 
+                ReplayInputStream ris = getReplayInputStream(startOffset);
+                ReplayCharSequence rcs = new MultiByteReplayCharSequence(
+                        ris, 
                         this.backingFilename,
                         characterEncoding);
+                ris.close(); 
+                return rcs;
             }
             
         }
