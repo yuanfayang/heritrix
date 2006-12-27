@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.archive.util.DevUtils;
 
@@ -65,6 +66,9 @@ import org.archive.util.DevUtils;
  * @version $Revision$, $Date$
  */
 class ByteReplayCharSequence implements ReplayCharSequence {
+
+    protected static Logger logger =
+        Logger.getLogger(ByteReplayCharSequence.class.getName());
 
     /**
      * Buffer that holds the first bit of content.
@@ -144,7 +148,7 @@ class ByteReplayCharSequence implements ReplayCharSequence {
      *
      * @throws IOException
      */
-    ByteReplayCharSequence(byte[] buffer, long size,
+    public ByteReplayCharSequence(byte[] buffer, long size,
             long responseBodyStart, String backingFilename)
         throws IOException {
 
@@ -252,8 +256,8 @@ class ByteReplayCharSequence implements ReplayCharSequence {
      * @param index Index of character to access.
      */
     private void recenterBuffer(int index) {
-        if (ReplayCharSequenceFactory.logger.isLoggable(Level.FINE)) {
-            ReplayCharSequenceFactory.logger.fine("Recentering around " + index + " in " +
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("Recentering around " + index + " in " +
                 this.backingFilename);
         }
         this.wrapOrigin = index - (this.wraparoundBuffer.length / 2);
@@ -372,7 +376,7 @@ class ByteReplayCharSequence implements ReplayCharSequence {
                     DEFAULT_SINGLE_BYTE_ENCODING));
             }
             catch (UnsupportedEncodingException e) {
-                ReplayCharSequenceFactory.logger.severe("Failed encoding string: " + e.getMessage());
+                logger.severe("Failed encoding string: " + e.getMessage());
             }
         }
         if (offset >= this.prefixBuffer.length) {
