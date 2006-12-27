@@ -22,12 +22,14 @@
  */
 package org.archive.io;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
@@ -38,6 +40,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Provides a (Replay)CharSequence view on recorded streams (a prefix
@@ -79,8 +82,11 @@ import java.util.logging.Level;
  * @author stack
  * @version $Revision$, $Date$
  */
-class MultiByteReplayCharSequence implements ReplayCharSequence {
+public class MultiByteReplayCharSequence implements ReplayCharSequence {
 
+    protected static Logger logger =
+        Logger.getLogger(MultiByteReplayCharSequence.class.getName());
+    
     /**
      * Name of the encoding we use writing out concatenated decoded prefix
      * buffer and decoded backing file.
@@ -109,7 +115,7 @@ class MultiByteReplayCharSequence implements ReplayCharSequence {
 
 
     /**
-     * Constructor.
+     * Constructor for all in-memory operation.
      *
      * @param buffer In-memory buffer of recordings prefix.  We read from
      * here first and will only go to the backing file if <code>size</code>
@@ -128,17 +134,34 @@ class MultiByteReplayCharSequence implements ReplayCharSequence {
      *
      * @throws IOException
      */
-    MultiByteReplayCharSequence(byte[] buffer, long size,
-            long responseBodyStart, String backingFilename, String encoding)
+    public MultiByteReplayCharSequence(byte[] buffer, long size,
+            long responseBodyStart, String encoding)
         throws IOException {
         super();
-        if (encoding == null) {
-            throw new NullPointerException("Character encoding is null.");
-        }
-
-        this.content = decode(buffer, backingFilename, size,
-            responseBodyStart, encoding);
+        this.content = decodeInMemory(buffer, size, responseBodyStart, 
+                encoding);
      }
+
+    /**
+     * Constructor for overflow-to-disk-file operation.
+     *
+     * @param contentReplayInputStream inputStream of content
+     * @param backingFilename hint for name of temp file
+     * @param characterEncoding Encoding to use reading the stream.
+     * For now, should be java canonical name for the
+     * encoding. 
+     *
+     * @throws IOException
+     */
+    public MultiByteReplayCharSequence(
+            ReplayInputStream contentReplayInputStream,
+            String backingFilename,
+            String characterEncoding)
+        throws IOException {
+        super();
+        this.content = decodeToFile(contentReplayInputStream, 
+                backingFilename, characterEncoding);
+    }
 
     /**
      * Decode passed buffer and backing file into a CharBuffer.
@@ -166,52 +189,29 @@ class MultiByteReplayCharSequence implements ReplayCharSequence {
      * buffer.
      * @throws IOException
      */
-    private CharBuffer decode(byte[] buffer, String backingFilename,
-            long size, long responseBodyStart, String encoding)
+    private CharBuffer decodeToFile(ReplayInputStream inStream, 
+            String backingFilename, String encoding)
         throws IOException {
 
         CharBuffer charBuffer = null;
 
-        if (size <= buffer.length) {
-            charBuffer =
-                decodeInMemory(buffer, size, responseBodyStart, encoding);
-        } else {
-            File backingFile = new File(backingFilename);
-            if (!backingFile.exists()) {
-                throw new FileNotFoundException(backingFilename +
-                     "doesn't exist");
-            }
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(inStream,encoding));
+        
+        this.decodedFile = new File(backingFilename + "." + WRITE_ENCODING);
+        BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(
+                        new FileOutputStream(this.decodedFile), 
+                        WRITE_ENCODING)); 
 
-            // Get decoder.  Will burp if encoding string is bad.
-            // Should probably keep it around.  I'm sure its not
-            // cheap to construct. Tell decoder to replace bad chars with
-            // default marks.
-            CharsetDecoder decoder =
-                (Charset.forName(encoding)).newDecoder();
-            decoder.onMalformedInput(CodingErrorAction.REPLACE);
-            decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
-            decoder.reset();
-
-            // Get a memory mapped bytebuffer view onto backing file
-            // and a bytebuffer view onto passed in-memory buffer.
-            // Pass them around as an array of ByteBuffers.  That I can
-            // do this, pass around an array of ByteBuffers rather than
-            // a byte array and an input stream, is why I'm using Channels.
-            ByteBuffer [] buffers = {ByteBuffer.wrap(buffer),
-                getReadOnlyMemoryMappedBuffer(backingFile)};
-            try {
-                this.decodedFile = decodeToFile(buffers, decoder,
-                    backingFilename + "." + WRITE_ENCODING);
-            } catch (IOException e) {
-                ReplayCharSequenceFactory.logger.info("Adding info to " + e + ": " +
-                    backingFile.toString() +
-                    " " + backingFile.length() + " " + backingFile.exists() +
-                    size + " " + buffer.length);
-                throw e;
-            }
-            charBuffer = getReadOnlyMemoryMappedBuffer(this.decodedFile).
-                asCharBuffer();
+        int c;
+        while((c = reader.read())>=0) {
+            writer.write(c);
         }
+        writer.close();
+        
+        charBuffer = getReadOnlyMemoryMappedBuffer(this.decodedFile).
+            asCharBuffer();
 
         return charBuffer;
     }
@@ -284,195 +284,6 @@ class MultiByteReplayCharSequence implements ReplayCharSequence {
         return bb;
     }
 
-    /**
-     * Decode passed array of bytebuffers into a file of passed name.
-     *
-     * This is the guts of the
-     * {@link #decode(byte[], String, long, long, String)} method.
-     *
-     * @param buffers Array of byte buffers.
-     * @param decoder Decoder to use decoding.
-     * @param name Name of file we decoded into.
-     *
-     * @return File we put unicode decoding into.
-     * @throws IOException
-     */
-    private File decodeToFile(ByteBuffer [] buffers, CharsetDecoder decoder,
-            String name)
-        throws IOException {
-
-        if (buffers.length <= 0) {
-            throw new IllegalArgumentException("No bytebuffers to read.");
-        }
-        
-        // Place to catch decodings in memory. I'll then write to writer. If
-        // I can't get a character array from it, then there is going to
-        // be probs so throw exception here.
-        CharBuffer cb = CharBuffer.allocate(1024 * 4);
-        if (!cb.hasArray()) {
-            throw new IOException("Can't get array from CharBuffer.");
-        }
-
-        File unicode = new File(name);
-        if (unicode.exists()) {
-            ReplayCharSequenceFactory.logger.warning(unicode.toString() + " already exists");
-        }
-        Writer writer = null;
-
-        IOException exceptionThrown = null;
-        int step = -1; 
-        try {
-            step = 0;
-            // Get a writer.  Output in our WRITE_ENCODING.
-            writer = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(unicode), WRITE_ENCODING));
-            step = 1; 
-            CoderResult result = null;
-            ByteBuffer bb = null;
-            for (int i = 0; i < buffers.length; i++) {
-                bb = manageTransition(bb, buffers[i], decoder, cb);
-                // If we fill the decoder buffer or if decoder reports
-                // underfilled and the buffer has content in it, then go
-                // and drain the buffer and recall the decoder.
-                step = 2; 
-                while((result = decoder.decode(bb, cb, false))
-                            == CoderResult.OVERFLOW) {
-                    drainCharBuffer(cb, writer);
-                }
-                step = 3; 
-                if (result != CoderResult.UNDERFLOW) {
-                    throw new IOException("Unexpected result: " + result);
-                }
-                step = 4; 
-            }
-            step = 5; 
-            if ((result = decoder.decode(bb, cb, true)) ==
-                    CoderResult.OVERFLOW) {
-                step = 6; 
-                drainCharBuffer(cb, writer);
-                step = 7; 
-            }
-            step = 8; 
-            // Flush any remaining state from the decoder, being careful
-            // to detect output buffer overflow(s)
-            while (decoder.flush(cb) == CoderResult.OVERFLOW) {
-                step = 9; 
-                drainCharBuffer(cb, writer);
-                step = 10; 
-            }
-            step = 11; 
-            // Drain any chars remaining in the output buffer
-            drainCharBuffer(cb, writer);
-            step = 12; 
-        }
-
-        catch (IOException e) {
-            exceptionThrown = e;
-            ReplayCharSequenceFactory.logger.log(Level.WARNING, "IOE, highest step="+step, e);
-            throw e;
-        }
-
-        finally {
-            if (writer != null) {
-                try {
-                    writer.flush();
-                    writer.close();
-                } catch (IOException e) {
-                    if (exceptionThrown != null) {
-                        exceptionThrown.printStackTrace();
-                    }
-                    ReplayCharSequenceFactory.logger.log(Level.WARNING, "Failed close.  Check logs", e);
-                }
-            }
-            if (!unicode.exists()) {
-                ReplayCharSequenceFactory.logger.warning(unicode.toString() + 
-                " does not exist, buffers.length=" +
-                buffers.length + " step=" + step);
-            }
-            if (exceptionThrown != null) {
-                deleteFile(unicode, exceptionThrown);
-            }
-        }
-
-        return unicode;
-    }
-
-    /**
-     * Manage buffer transition.
-     *
-     * Handle case of multibyte characters spanning buffers.
-     * See "[ 935122 ] ToeThreads hung in ExtractorHTML after Pause":
-     * http://sourceforge.net/tracker/?func=detail&aid=935122&group_id=73833&atid=539099
-     *
-	 * @param previous The buffer we're leaving.
-	 * @param next The buffer we're going to.
-     * @param decoder Decoder to use decoding.
-     * @param cb Where we're putting decoded characters.
-	 * @return Pointer to next buffer with postion set to just past
-     * any byte read making the transition.
-	 */
-	private ByteBuffer manageTransition(ByteBuffer previous,
-         ByteBuffer next, CharsetDecoder decoder, CharBuffer cb) {
-
-        if (previous == null || !previous.hasRemaining()) {
-            return next;
-        }
-
-        // previous has content remaining but its just a piece of a
-        // multibyte character.  Need to go to next buffer to get the
-        // rest of the character.  Save off tail for moment.
-
-        ByteBuffer tail = previous.slice();
-        int cbPosition = cb.position();
-
-        ByteBuffer tbb = null;
-        final int MAX_CHAR_SIZE = 6;
-        for (int i = 0; i < MAX_CHAR_SIZE; i++) {
-        	    tbb = ByteBuffer.allocate(tail.capacity() + i + 1);
-            tbb.put(tail);
-            // Copy first bytes without disturbing buffer position.
-            for (int j = 0; j <= i; j++) {
-                tbb.put(next.get(j));
-            }
-            CoderResult result = decoder.decode(tbb, cb, false);
-            if (result == CoderResult.UNDERFLOW) {
-            	    // Enough bytes for us to move on.
-                next.position(i + 1);
-                break;
-            }
-            // Go around again.  Restore cb to where it was.
-            cb.position(cbPosition);
-            tail.rewind();
-        }
-
-        return next;
-	}
-
-	/**
-     * Helper method to drain the char buffer and write its content to
-     * the given output stream (as bytes).  Upon return, the buffer is empty
-     * and ready to be refilled.
-     *
-     * @param cb A CharBuffer containing chars to be written.
-     * @param writer An output stream to consume the bytes in cb.
-	 * @throws IOException
-     */
-    private void drainCharBuffer(CharBuffer cb, Writer writer)
-        throws IOException  {
-
-        // Prepare buffer for draining
-        cb.flip();
-
-        // This writes the chars contained in the CharBuffer but doesn't
-        // actually modify the state of the buffer. If the char buffer was
-        // being drained by calls to get(), a loop might be needed here.
-        if (cb.hasRemaining()) {
-            writer.write (cb.array(), cb.arrayOffset(), cb.limit());
-        }
-
-        cb.clear();        // Prepare buffer to be filled again
-    }
-
     private void deleteFile(File fileToDelete) {
         deleteFile(fileToDelete, null);        
     }
@@ -481,7 +292,7 @@ class MultiByteReplayCharSequence implements ReplayCharSequence {
         if (e != null) {
             // Log why the delete to help with debug of java.io.FileNotFoundException:
             // ....tt53http.ris.UTF-16BE.
-            ReplayCharSequenceFactory.logger.severe("Deleting " + fileToDelete + " because of "
+            logger.severe("Deleting " + fileToDelete + " because of "
                 + e.toString());
         }
         if (fileToDelete != null && fileToDelete.exists()) {

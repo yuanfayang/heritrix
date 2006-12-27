@@ -31,8 +31,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * I/O Utility methods.
@@ -40,6 +45,9 @@ import java.util.List;
  * @version $Date$, $Revision$
  */
 public class IoUtils {
+    protected static Logger logger =
+        Logger.getLogger(IoUtils.class.getName());
+    
     /**
      * @param file File to operate on.
      * @return Path suitable for use getting resources off the CLASSPATH
@@ -210,5 +218,38 @@ public class IoUtils {
             }
             ofs += l;
         }
+    }
+    
+    /**
+     * Return the maximum number of bytes per character in the named
+     * encoding, or 0 if encoding is invalid or unsupported. 
+     *
+     * @param encoding Encoding to consider.  For now, should be java 
+     * canonical name for the encoding.
+     *
+     * @return True if multibyte encoding.
+     */
+    public static float encodingMaxBytesPerChar(String encoding) {
+        boolean isMultibyte = false;
+        final Charset cs;
+        try {
+            if (encoding != null && encoding.length() > 0) {
+                cs = Charset.forName(encoding);
+                if(cs.canEncode()) {
+                    return cs.newEncoder().maxBytesPerChar();
+                } else {
+                    logger.info("Encoding not fully supported: " + encoding
+                            + ".  Defaulting to single byte.");
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            // Unsupported encoding
+            logger.log(Level.INFO,"Illegal encoding name: " + encoding,e);
+        }
+
+        logger.fine("Encoding " + encoding + " is multibyte: "
+            + ((isMultibyte) ? Boolean.TRUE : Boolean.FALSE));
+        // default: return 0
+        return 0;
     }
 }
