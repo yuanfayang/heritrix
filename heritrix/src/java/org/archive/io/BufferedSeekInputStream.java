@@ -207,5 +207,15 @@ public class BufferedSeekInputStream extends SeekInputStream {
         offset = (int)(p % buffer.length);        
     }
 
+    /** 
+     * Close the stream, including the wrapped input stream. 
+     */
+    public void close() throws IOException {
+        super.close();
+        if(this.input!=null) {
+            this.input.close();
+        }
+    }
+
 
 }
