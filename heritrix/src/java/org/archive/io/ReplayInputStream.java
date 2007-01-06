@@ -120,7 +120,6 @@ public class ReplayInputStream extends SeekInputStream
             return c;
         }
         int c = diskStream.read();
-        System.out.println(position + " " + c);
         if (c >= 0) {
             position++;
         }
