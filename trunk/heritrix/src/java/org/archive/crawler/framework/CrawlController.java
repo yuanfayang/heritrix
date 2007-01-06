@@ -81,8 +81,8 @@ import org.archive.util.CachedBdbMap;
 import org.archive.util.FileUtils;
 import org.archive.util.Reporter;
 import org.xbill.DNS.DClass;
+import org.xbill.DNS.Lookup;
 import org.xbill.DNS.Type;
-import org.xbill.DNS.dns;
 
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.je.CheckpointConfig;
@@ -400,7 +400,9 @@ public class CrawlController implements Serializable, Reporter {
         }
 
         // force creation of DNS Cache now -- avoids CacheCleaner in toe-threads group
-        dns.getRecords("localhost", Type.A, DClass.IN);
+        // also cap size at 1 (we never wanta cached value; 0 is non-operative)
+        Lookup.getDefaultCache(DClass.IN).setMaxEntries(1);
+        //dns.getRecords("localhost", Type.A, DClass.IN);
         
         setupToePool();
         setThresholds();

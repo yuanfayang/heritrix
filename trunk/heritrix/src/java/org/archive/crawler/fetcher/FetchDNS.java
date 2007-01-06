@@ -45,10 +45,11 @@ import org.archive.util.HttpRecorder;
 import org.archive.util.InetAddressUtil;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
-import org.xbill.DNS.FindServer;
+import org.xbill.DNS.Lookup;
 import org.xbill.DNS.Record;
+import org.xbill.DNS.ResolverConfig;
+import org.xbill.DNS.TextParseException;
 import org.xbill.DNS.Type;
-import org.xbill.DNS.dns;
 
 
 /**
@@ -136,7 +137,11 @@ implements CoreAttributeConstants, FetchStatusCodes {
 
         // Try to get the records for this host (assume domain name)
         // TODO: Bug #935119 concerns potential hang here
-        rrecordSet = dns.getRecords(dnsName, TypeType, ClassType);
+        try {
+            rrecordSet = (new Lookup(dnsName, TypeType, ClassType)).run();
+        } catch (TextParseException e) {
+            rrecordSet = null;
+        }
         curi.setContentType("text/dns");
         if (rrecordSet != null) {
             if (logger.isLoggable(Level.FINE)) {
@@ -190,7 +195,7 @@ implements CoreAttributeConstants, FetchStatusCodes {
         try {
         	recordDNS(curi, rrecordSet);
             curi.setFetchStatus(S_DNS_SUCCESS);
-            curi.putString(A_DNS_SERVER_IP_LABEL, FindServer.server());
+            curi.putString(A_DNS_SERVER_IP_LABEL, ResolverConfig.getCurrentConfig().server());
         } catch (IOException e) {
         	logger.log(Level.SEVERE, "Failed store of DNS Record for " +
         		curi.toString(), e);
