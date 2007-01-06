@@ -146,6 +146,13 @@ class TransformIterator<Original,Transformed> implements Iterator<Transformed> {
         return r;
     }
 
+    // FIXME: this can break standard Iterator contract, for example
+    // transformIterator.next();
+    // if(transformIterator.hasNext()) {
+    //   transformIterator.remove();
+    // }
+    // usual iterator contract is to remove the last object returned
+    // by next; in this case the subsequent
     public void remove() {
         iterator.remove();
     }
