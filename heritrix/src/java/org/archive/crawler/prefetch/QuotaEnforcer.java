@@ -22,6 +22,9 @@
  */
 package org.archive.crawler.prefetch;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlSubstats;
 import org.archive.crawler.datamodel.CrawlURI;
@@ -41,8 +44,7 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
 
     private static final long serialVersionUID = 6091720623469404595L;
 
-    //private static final Logger LOGGER =
-    //    Logger.getLogger(QuotaEnforcer.class.getName());
+    private final Logger LOGGER = Logger.getLogger(this.getClass().getName());
     
     // indexed table of reused string categorical names/keys
     protected static final int SERVER = 0;
@@ -236,8 +238,8 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
                 getController().getFrontier().getGroup(curi) // group
             };
         
-        for(int cat=SERVER;cat<=GROUP;cat++) {
-            if (checkQuotas(curi,haveStats[cat],cat)) {
+        for(int cat = SERVER; cat <= GROUP; cat++) {
+            if (checkQuotas(curi, haveStats[cat], cat)) {
                 return;
             }
         }
@@ -255,6 +257,12 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
     protected boolean checkQuotas(final CrawlURI curi,
             final CrawlSubstats.HasCrawlSubstats hasStats,
             final int CAT) {
+        if (hasStats == null) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine(curi.toString() + " null stats category: " + CAT);
+            }
+            return false;
+        }
         CrawlSubstats substats = hasStats.getSubstats();
         long[] actuals = new long[] {
                 -1, // dummy
@@ -263,8 +271,8 @@ public class QuotaEnforcer extends Processor implements FetchStatusCodes {
                 substats.getFetchResponses(),
                 substats.getTotalBytes()/1024,
         };
-        for(int q=SUCCESSES; q<=RESPONSE_KB;q++) {
-            if(applyQuota(curi,keys[CAT][q],actuals[q])) {
+        for(int q = SUCCESSES; q <= RESPONSE_KB; q++) {
+            if(applyQuota(curi, keys[CAT][q], actuals[q])) {
                 return true; 
             }
         }
