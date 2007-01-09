@@ -33,7 +33,14 @@
 ::               automatically on Windows as we have nothing like sed)
 ::             - No double confirmation for fixing permissions
 ::             - More verbose on errors
-:: 2006-09-07  - REALLY fixed the classpath this time
+::
+:: 2006-09-07  REALLY fixed the classpath this time (Max)
+::
+:: 2007-01-06  Minor improvements (Max):
+::             - Simplified code (using setlocal) 
+::             - Removed old comments
+::             - Show hint when admin switch / nowui wasn't given
+::             - Start message wasn't shown on slow/busy machines
 ::
 ::  Optional environment variables
 :: 
@@ -67,30 +74,21 @@
 ::                   password file, etc.)
 :: 
 @echo off
-
+setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 set PRG=%0
 set PRGDIR=%~p0
 :: windows doesn't have a sleep command build-in
 set SLEEP=ping 127.0.0.1 -n 2 -w 1000
 
-if "%1"=="RUN" goto run
+:: Main heritrix class.
+if not defined CLASS_MAIN set CLASS_MAIN=org.archive.crawler.Heritrix
+if "%CLASS_MAIN%"=="org.archive.crawler.Heritrix" (
+    if "%1"=="" goto admin_switch_missing
+)
 if "%1"=="BGR" goto run_in_background
 :: preserve original command line arguments
-if "%*"=="*" (
-	:: windows separates things like --digest=false into "--digest" and "false" if using %1 %2 %3...
-	:: But as command extensions are enabled by default, this should be no problem for most users
-    echo NOTICE:  Try starting your console with "cmd /E:ON" if you are experiencing
-    echo          problems passing command line arguments to Heritrix
-	echo.
-	set HERITRIX_CMDLINE=%1 %2 %3 %4 %5 %6 %7 %8 %9
-) else (
-	set HERITRIX_CMDLINE=%*
-)
-:: Enabling command extensions and delayed variable expansion
-cmd /E:ON /F:ON /V:ON /c %PRG% RUN
-goto :end
+set HERITRIX_CMDLINE=%*
 
-:run
 :: Read local heritrix properties if any.
 :: To do this on Windows, tempor. rename .heritrixrc to heritrixrc.cmd
 :: This is of course only useful if .heritrixrc contains Windows style "set VAR=value" statements
@@ -133,20 +131,13 @@ if not defined JAVACMD set JAVACMD="%JAVA_HOME%\bin\java" -Dje.disable.java.adle
 :: Ignore previous classpath.  Build one that contains heritrix jar and content
 :: of the lib directory into the variable CP.
 set CP=
-set OLD_CLASSPATH=%CLASSPATH%
 for %%j in ("%HERITRIX_HOME%\*.jar" "%HERITRIX_HOME%\lib\*.jar") do set CP=!CP!;%%j
 set CLASSPATH=!CP!
-
-:: DONT cygwin path translation
-:: if expr `uname` : 'CYGWIN*' > /dev/null; then
-::    CP=`cygpath -p -w "%CP"`
-::    HERITRIX_HOME=`cygpath -p -w "%HERITRIX_HOME"`
-:: fi
 
 :: Make sure of java opts.
 if not defined JAVA_OPTS set JAVA_OPTS= -Xmx256m
 
-:: Setting environment vars in nested IFs is error prone, thus using GOTOs
+:: Enable JMX?
 if not defined JMX_OFF goto configure_jmx
 goto jmx_configured
 
@@ -154,29 +145,7 @@ goto jmx_configured
 if not defined JMX_PORT set JMX_PORT=8849
 if not defined JMX_OPTS set JMX_OPTS=-Dcom.sun.management.jmxremote.port=%JMX_PORT% -Dcom.sun.management.jmxremote.ssl=false "-Dcom.sun.management.jmxremote.password.file=%HERITRIX_HOME%\jmxremote.password"
 
-:: DONT Copy into place a jmxremote password file that uses the heritrix password
-:: interpolated (First need to find the current password if one supplied on
-:: command-line, else use whats in heritrix.properties as default).
-:: Need to make it so its only readable by user else jconsole won't use it.
-:: JMX_PASSWORD=`echo "%@" |sed -n -e 's/.*--admin=[^:]*:\([^ ]*\).*/\1/p' -e 's/.*-a *[^:]*:\([^ ]*\).*/\1/p'`
-:: if [ -z "%JMX_PASSWORD" ]
-:: then
-::  JMX_PASSWORD=`sed -n -e 's/heritrix.cmdline.admin[ ]*=[^:]*:\(.*\)/\1/p' \
-::  %{HERITRIX_HOME}\conf\heritrix.properties`
-:: fi
-:: JMX_PWORD_FILE="%{HERITRIX_HOME}\jmxremote.password"
-:: if [ -f "%{JMX_PWORD_FILE}" ]
-::  then
-:: rm -f "%{JMX_PWORD_FILE}"
-:: fi
-:: sed -e "s/@PASSWORD@/%{JMX_PASSWORD}/" \
-::  "%{HERITRIX_HOME}\conf\jmxremote.password.template" > "%{JMX_PWORD_FILE}"
-:: chmod 600 "%{JMX_PWORD_FILE}"
-
 :jmx_configured
-
-:: Main heritrix class.
-if not defined CLASS_MAIN set CLASS_MAIN=org.archive.crawler.Heritrix
 
 :: heritrix_dmesg.log contains startup output from the crawler main class. 
 :: As soon as content appears in this log, this shell script prints the 
@@ -189,25 +158,23 @@ set startMessage=%HERITRIX_HOME%\heritrix_dmesg.log
 if exist "%startMessage%" del "%startmessage%"
 if exist "%HERITRIX_HOME%\jmx_permissions_broken" del "%HERITRIX_HOME%\jmx_permissions_broken"
 
-:: Run heritrix as daemon.  Redirect stdout and stderr to a file.
+:: Redirect stdout and stderr to a file.
 :: Print start message with date, java version, java opts, ulimit, and uname.
 if not defined HERITRIX_OUT set HERITRIX_OUT=%HERITRIX_HOME%\heritrix_out.log
-
 set stdouterrlog=%HERITRIX_OUT%
 echo %DATE% %TIME% Starting heritrix >>"%stdouterrlog%"
-:: uname -a >> %stdouterrlog%
+echo %OS% %COMPUTERNAME% %PROCESSOR_IDENTIFIER% >>"%stdouterrlog%"
 %JAVACMD% %JAVA_OPTS% -version >>"%stdouterrlog%"  2>&1
 echo JAVA_OPTS=%JAVA_OPTS% >>"%stdouterrlog%"
-:: ulimit -a >> %stdouterrlog 2>&1
 
-:: DONT If FOREGROUND is set, run heritrix in foreground.
+:: If FOREGROUND is set, run heritrix in foreground.
 :start_heritrix
 if not defined FOREGROUND goto run_in_background
 %JAVACMD% "-Dheritrix.home=%HERITRIX_HOME%" -Djava.protocol.handler.pkgs=org.archive.net "-Dheritrix.out=%HERITRIX_OUT%" %JAVA_OPTS% %JMX_OPTS% %CLASS_MAIN% %HERITRIX_CMDLINE%
 :: errorlevel 130 if aborted with Ctrl+c (at least my sun jvm 1.5_07...)
-if errorlevel 130 goto :end
+if errorlevel 130 goto end
 if errorlevel 1 goto handle_errors
-goto :end
+goto end
 
 :run_in_background
 if not "%1"=="BGR" (
@@ -217,11 +184,11 @@ if not "%1"=="BGR" (
     title Heritrix
     :: adding  ">>%stdouterrlog% 2>&1" causes an access denied error as heritrix writes also to this file	
     %JAVACMD% "-Dheritrix.home=%HERITRIX_HOME%" -Djava.protocol.handler.pkgs=org.archive.net "-Dheritrix.out=%HERITRIX_OUT%" %JAVA_OPTS% %JMX_OPTS% %CLASS_MAIN% %HERITRIX_CMDLINE%	
-    if errorlevel 130 goto :end
+    if errorlevel 130 goto end
     if errorlevel 1 echo.!ERRORLEVEL! >"%HERITRIX_HOME%\jmx_permissions_broken"
 	pause
 	)
-goto :end
+goto end
 
 :wait_for_log_file
 SET HERITRIX_COUNTER=
@@ -237,11 +204,7 @@ if exist "%HERITRIX_HOME%\jmx_permissions_broken" (
     goto fix_jmx_permissions
 )
 if exist "%startMessage%" (
-    %SLEEP%>nul
-    type "%startMessage%"
-    :: can happen when heritrix writes to the file at the same time
-    if errorlevel 1 goto print_logfile
-    goto delete_logfile
+    goto print_and_delete_logfile
 )
 :: keep trying for 30 more seconds
 if "!HERITRIX_COUNTER!"==".............................." goto start_may_failed
@@ -249,19 +212,21 @@ set HERITRIX_COUNTER=.!HERITRIX_COUNTER!
 echo .
 goto print_logfile
 
-:delete_logfile
-set HERITRIX_COUNTER=
+:print_and_delete_logfile
 %SLEEP%>nul
 %SLEEP%>nul
+type "%startMessage%"
+:: can happen when heritrix writes to the file at the same time
+if errorlevel 1 goto print_logfile
 del "%startMessage%" >nul 2>&1
 :: del doesn't set the ERRORLEVEL var if unsuccessful, so we can't try again
-goto :end
+goto end
 
 :handle_errors
 
 :fix_jmx_permissions
 if exist "%startMessage%" type "%startMessage%"
-if not "%CLASS_MAIN%"=="org.archive.crawler.Heritrix" goto start_may_failed
+if not "%CLASS_MAIN%"=="org.archive.crawler.Heritrix" goto end
 if defined PERMISSIONS_FIXED goto fix_jmx_permission_failed
 echo.
 echo Heritrix failed to start properly. Possible causes:
@@ -269,18 +234,26 @@ echo.
 echo - Login and password have not been specified (see --admin switch)
 echo - another program uses the port for the web UI (8080 by default)
 echo   (e.g. another Heritrix instance)
-if defined JMX_OFF goto :end
+if defined JMX_OFF goto end
 echo - JMX password file is missing or permissions not set correctly
 echo.
 if not exist "%HERITRIX_HOME%\jmxremote.password" goto permissions_file_missing
 set /P FIXIT=Do you want to try to fix the permissions (Y/N)?
-if /I "%FIXIT:~0,1%"=="n" goto :end
+if /I "%FIXIT:~0,1%"=="n" goto end
 echo y|cacls "%HERITRIX_HOME%\jmxremote.password" /P %USERNAME%:R >nul
 if errorlevel 1 goto fix_jmx_permission_failed
 set PERMISSIONS_FIXED=true
 set /P RESTART=Restart Heritrix (Y/N)?
 if /I "%RESTART:~0,1%"=="y" goto start_heritrix
-goto :end
+goto end
+
+:admin_switch_missing
+echo You have to specify either a username and password for the 
+echo web interface or start Heritrix without the web ui.
+echo.
+echo Example: %0 --admin=admin:letmein
+echo          %0 --nowui myOrder.xml
+goto end
 
 :permissions_file_missing
 echo.
@@ -289,34 +262,24 @@ echo   %HERITRIX_HOME%\jmxremote.password.template.
 echo Copy it to 
 echo   %HERITRIX_HOME%\jmxremote.password 
 echo and edit the passwords at the end of the file.
-goto :end
+goto end
 
 :fix_jmx_permission_failed
-set PERMISSIONS_FIXED=
 echo.
 echo Either fixing the permissions failed or there was another problem.
 echo You may have to set the ownership of the file 
 echo   %HERITRIX_HOME%\jmxremote.password
-echo manually to yourself (%USERNAME%).
-goto :end
+echo manually to yourself (%USERNAME%) and restrict the access to read-only.
+goto end
 
 :start_may_failed
-set HERITRIX_COUNTER=
 echo.
 echo Starting Heritrix seems to have failed
-goto :end
+goto end
 
 :no_java_home
 echo.
 echo Please define either JAVA_HOME or JAVACMD or make sure java.exe is in PATH
-goto :end
+goto end
 
 :end
-:: do some cleanup
-set HERITRIX_CMDLINE=
-if defined OLD_CLASSPATH set CLASSPATH=%OLD_CLASSPATH%
-set CP=
-set SLEEP=
-set PRGDIR=
-set PRG=
-set startMessage=
