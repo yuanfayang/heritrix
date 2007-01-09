@@ -1,5 +1,5 @@
 :: This is the Windows version of the extractor shell script
-:: Caveats, see heritrix.cmd
+:: Caveats and version history, see heritrix.cmd
 ::
 :: This script runs the org.archive.crawler.extractor.ExtractorTool main.
 :: Pass '--help' to get usage message.
@@ -14,16 +14,7 @@
 ::
 :: JAVA_OPTS        Java runtime options.
 @echo off
-
+setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 set PRGDIR=%~p0
-
-if "%PRGDIR%"=="~p0" (
-  cmd /E:ON /F:ON /V:ON /c %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
-  goto:eof
-)
-
 set CLASS_MAIN=org.archive.crawler.extractor.ExtractorTool
 call "%PRGDIR%\foreground_heritrix.cmd" %*
-set CLASS_MAIN=
-
-:eof
