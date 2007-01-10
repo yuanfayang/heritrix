@@ -304,11 +304,16 @@ public class MultiByteReplayCharSequence implements ReplayCharSequence {
     {
         this.content = null;
         deleteFile(this.decodedFile);
+        // clear decodedFile -- so that double-close (as in 
+        // finalize()) won't delete a later instance with same name
+        // see bug [ 1218961 ] "failed get of replay" in ExtractorHTML... usu: UTF-16BE
+        this.decodedFile = null;
     }
 
     protected void finalize() throws Throwable
     {
         super.finalize();
+        // Maybe TODO: eliminate close here, requiring explicit close instead
         close();
     }
 
