@@ -12,12 +12,20 @@
     </authorgroup>
   </articleinfo>
 
-   <sect1 id="TBD">
-    <title>Release TBD</title>
+   <sect1 id="1_10_2">
+    <title>Release 1.10.2 - 01/XX/2007</title>
     <abstract>
-      <para>TBD...</para>
+      <para>This is primarily a bug-fix release, with a couple of new
+      features, provided before a number of significant changes to 
+      the Heritrix project that will require developer and crawl 
+      operator adjustments. Post-1.10.2, Heritrix source code control, issue 
+      tracking, and build process will migrate to new systems. Also, updates 
+      to core classes, especially with regard to the settings architecture, 
+      will noticeably break backward compatibility with 1.10.2 and prior 
+      crawler settings files and formats. 
+       </para>
     </abstract>
-    <sect2 id="TBD_contributors">
+    <sect2 id="1_10_2_contributors">
     <title>Contributors</title>
         <para>
     <itemizedlist>
@@ -26,7 +34,7 @@
     </itemizedlist>
         </para>
     </sect2> 
-    <sect2 id="TBD_changes">
+    <sect2 id="1_10_2_changes">
         <title>Changes</title>
         <sect3 id="jerichohtml">
          <title>Jericho HTML Extractor</title>
@@ -53,6 +61,43 @@ scale crawl)
 </quote>
          </para>
         </sect3>
+        <para><table>
+          <title>All Tracked Changes</title>
+
+          <tgroup cols="5">
+            <thead>
+              <row>
+                <entry>ID</entry>
+                <entry>Type</entry>
+                <entry>Summary</entry>
+                <entry>Open Date</entry>
+                <entry>By</entry>
+                <entry>Filer</entry>
+              </row>
+            </thead>
+
+            <tbody>
+
+<!--  additions  -->
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=913002&amp;group_id=73833&amp;atid=539102">913002</ulink></entry><entry>Add</entry><entry>Make ExtractorHTML aggressiveness configurable</entry><entry>2004-03-09</entry><entry>gojomo</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1573708&amp;group_id=73833&amp;atid=539102">1573708</ulink></entry><entry>Add</entry><entry>[Contrib] JerichoExtractorHTML</entry><entry>2006-10-09</entry><entry>nobody</entry><entry>pandae</entry></row>
+<!--  fixes  -->
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1629242&amp;group_id=73833&amp;atid=539099">1629242</ulink></entry><entry>Fix</entry><entry>filehandle leak: ReplayInputStream/BufferedSeekInputStream</entry><entry>2007-01-05</entry><entry>karl-ia</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1218961&amp;group_id=73833&amp;atid=539099">1218961</ulink></entry><entry>Fix</entry><entry>"failed get of replay" in ExtractorHTML... usu: UTF-16BE</entry><entry>2005-06-11</entry><entry>karl-ia</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=996161&amp;group_id=73833&amp;atid=539099">996161</ulink></entry><entry>Fix</entry><entry>Fix DNSJava issues (memory)</entry><entry>2004-07-22</entry><entry>karl-ia</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1477371&amp;group_id=73833&amp;atid=539099">1477371</ulink></entry><entry>Fix</entry><entry>ExtractorDOC wants whole doc in memory</entry><entry>2006-04-26</entry><entry>paul_jack</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1618928&amp;group_id=73833&amp;atid=539099">1618928</ulink></entry><entry>Fix</entry><entry>Do not allow http:/ and https:/ urls</entry><entry>2006-12-19</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1596176&amp;group_id=73833&amp;atid=539099">1596176</ulink></entry><entry>Fix</entry><entry>NotMatchesListRegExpDecideRule extends wrong class</entry><entry>2006-11-14</entry><entry>nobody</entry><entry>pandae</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1593540&amp;group_id=73833&amp;atid=539099">1593540</ulink></entry><entry>Fix</entry><entry>NPE in quotaEnforcer.checkQuotas</entry><entry>2006-11-09</entry><entry>nobody</entry><entry>svc</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1587413&amp;group_id=73833&amp;atid=539099">1587413</ulink></entry><entry>Fix</entry><entry>[PATCH] Webapp doesn't find profiles and ignores jobsdir</entry><entry>2006-10-30</entry><entry>nobody</entry><entry>nobody</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1572391&amp;group_id=73833&amp;atid=539099">1572391</ulink></entry><entry>Fix</entry><entry>SURTs for IP-address URIs unhelpful</entry><entry>2006-10-06</entry><entry>gojomo</entry><entry>gojomo</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1501810&amp;group_id=73833&amp;atid=539099">1501810</ulink></entry><entry>Fix</entry><entry>NPE in FetchHTTP.saveCookies</entry><entry>2006-06-06</entry><entry>gojomo</entry><entry>stack-sf</entry></row>
+
+            </tbody>
+          </tgroup>
+        </table>
+        </para>
+        
     </sect2>
    </sect1>
 
