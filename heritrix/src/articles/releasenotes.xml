@@ -93,6 +93,7 @@ scale crawl)
 <row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1587413&amp;group_id=73833&amp;atid=539099">1587413</ulink></entry><entry>Fix</entry><entry>[PATCH] Webapp doesn't find profiles and ignores jobsdir</entry><entry>2006-10-30</entry><entry>nobody</entry><entry>nobody</entry></row>
 <row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1572391&amp;group_id=73833&amp;atid=539099">1572391</ulink></entry><entry>Fix</entry><entry>SURTs for IP-address URIs unhelpful</entry><entry>2006-10-06</entry><entry>gojomo</entry><entry>gojomo</entry></row>
 <row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1501810&amp;group_id=73833&amp;atid=539099">1501810</ulink></entry><entry>Fix</entry><entry>NPE in FetchHTTP.saveCookies</entry><entry>2006-06-06</entry><entry>gojomo</entry><entry>stack-sf</entry></row>
+<row><entry><ulink url="https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1501810&amp;group_id=73833&amp;atid=539099">1633117</ulink></entry><entry>Fix</entry><entry>Useragent compare because of case in RobotsExclusionPolicy</entry><entry>2007-01-11</entry><entry>stack-sf</entry><entry>stack-sf</entry></row>
 
             </tbody>
           </tgroup>
