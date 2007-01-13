@@ -40,6 +40,9 @@ import org.archive.util.TextUtils;
  * @author gojomo
  */
 public class HopsPathMatchesRegExpDecideRule extends PredicatedDecideRule {
+
+    private static final long serialVersionUID = -8881013912393934053L;
+
     private static final Logger logger =
         Logger.getLogger(HopsPathMatchesRegExpDecideRule.class.getName());
     

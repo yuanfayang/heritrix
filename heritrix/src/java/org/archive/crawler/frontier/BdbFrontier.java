@@ -169,15 +169,15 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
         return uuf;
     }
     
-    protected UriUniqFilter deserializeAlreadySeen(final Class cls,
+    protected UriUniqFilter deserializeAlreadySeen(
+            final Class<? extends UriUniqFilter> cls,
             final File dir)
     throws FileNotFoundException, IOException {
         UriUniqFilter uuf = null;
         try {
             logger.fine("Started deserializing " + cls.getName() +
                 " of checkpoint recover.");
-            uuf = (UriUniqFilter)CheckpointUtils.
-                readObjectFromFile(cls, dir);
+            uuf = CheckpointUtils.readObjectFromFile(cls, dir);
             logger.fine("Finished deserializing bdbje as part " +
                 "of checkpoint recover.");
         } catch (ClassNotFoundException e) {
@@ -236,8 +236,8 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
      * @param verbose 
      * @return List of URIs (strings).
      */
-    public ArrayList getURIsList(FrontierMarker marker, int numberOfMatches,
-            final boolean verbose) {
+    public ArrayList<String> getURIsList(FrontierMarker marker, 
+            int numberOfMatches, final boolean verbose) {
         List curis;
         try {
             curis = pendingUris.getFrom(marker, numberOfMatches);
@@ -245,7 +245,7 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        ArrayList results = new ArrayList(curis.size());
+        ArrayList<String> results = new ArrayList<String>(curis.size());
         Iterator iter = curis.iterator();
         while(iter.hasNext()) {
             CrawlURI curi = (CrawlURI) iter.next();

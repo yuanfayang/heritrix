@@ -22,7 +22,7 @@
  */
 package org.archive.crawler.postprocessor;
 
-import java.io.IOException;
+
 import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
@@ -46,6 +46,9 @@ import org.archive.crawler.framework.Frontier.FrontierGroup;
  */
 public class CrawlStateUpdater extends Processor implements
         CoreAttributeConstants, FetchStatusCodes {
+
+    private static final long serialVersionUID = -1072728147960180091L;
+
     private static final Logger logger =
         Logger.getLogger(CrawlStateUpdater.class.getName());
 

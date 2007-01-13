@@ -28,15 +28,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class Robotstxt {
     public static boolean parse(BufferedReader reader,
-            final LinkedList userAgents, final Map disallows)
+            final LinkedList<String> userAgents, 
+            final Map<String,List<String>> disallows)
     throws IOException {
         boolean hasErrors = false;
         String read;
-        ArrayList current = null;
+        ArrayList<String> current = null;
         String catchall = null;
         while (reader != null) {
             do {
@@ -59,7 +61,7 @@ public class Robotstxt {
                     if (current == null || current.size() != 0) {
                         // only create new rules-list if necessary
                         // otherwise share with previous user-agent
-                        current = new ArrayList();
+                        current = new ArrayList<String>();
                     }
                     if (ua.equals("*")) {
                         ua = "";

@@ -24,8 +24,6 @@
 */
 package org.archive.crawler.deciderules;
 
-import java.util.logging.Logger;
-
 
 /**
  * Rule applies configured decision to any URIs which do *not*
@@ -35,8 +33,10 @@ import java.util.logging.Logger;
  */
 public class NotMatchesFilePatternDecideRule
 extends MatchesFilePatternDecideRule {
-    private static final Logger logger =
-        Logger.getLogger(NotMatchesRegExpDecideRule.class.getName());
+
+    private static final long serialVersionUID = -8161371026787859554L;
+    //private static final Logger logger =
+    //    Logger.getLogger(NotMatchesRegExpDecideRule.class.getName());
 
     /**
      * Usual constructor. 

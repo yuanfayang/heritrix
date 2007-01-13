@@ -53,10 +53,7 @@ public class ToeThread extends Thread
 implements CoreAttributeConstants, FetchStatusCodes, HttpRecorderMarker,
 Reporter, ProgressStatisticsReporter {
     private static final String STEP_NASCENT = "NASCENT";
-    private static final String STEP_PAUSING = "PAUSING";
     private static final String STEP_ABOUT_TO_GET_URI = "ABOUT_TO_GET_URI";
-    private static final String STEP_EXIT_PROCESSING_LOOP =
-        "EXIT_PROCESSING_LOOP";
     private static final String STEP_FINISHED = "FINISHED";
     private static final String STEP_ABOUT_TO_BEGIN_CHAIN =
         "ABOUT_TO_BEGIN_CHAIN";
@@ -84,7 +81,8 @@ Reporter, ProgressStatisticsReporter {
      */
     private HttpRecorder httpRecorder = null;
     
-    private HashMap localProcessors = new HashMap();
+    private HashMap<String,Processor> localProcessors
+     = new HashMap<String,Processor>();
     private String currentProcessorName = "";
 
     private String coreName;
@@ -311,7 +309,7 @@ Reporter, ProgressStatisticsReporter {
         } catch (RuntimeExceptionWrapper e) {
             // Workaround to get cause from BDB
             if(e.getCause() == null) {
-                e.initCause(e.getDetail());
+                e.initCause(e.getCause());
             }
             recoverableProblem(e);
         } catch (AssertionError ae) {

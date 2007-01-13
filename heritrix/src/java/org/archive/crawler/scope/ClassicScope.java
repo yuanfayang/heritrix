@@ -23,13 +23,11 @@
  */
 package org.archive.crawler.scope;
 
-import java.util.logging.Logger;
-
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.extractor.Link;
-import org.archive.crawler.filter.OrFilter;
+//import org.archive.crawler.filter.OrFilter;
 import org.archive.crawler.framework.CrawlScope;
 import org.archive.crawler.settings.SimpleType;
 
@@ -58,8 +56,11 @@ import org.archive.crawler.settings.SimpleType;
  * @author gojomo
  */
 public class ClassicScope extends CrawlScope {
-    private static final Logger logger = Logger.getLogger(ClassicScope.class
-            .getName());
+
+    private static final long serialVersionUID = 4494905304855590002L;
+
+    //private static final Logger logger = Logger.getLogger(ClassicScope.class
+    //        .getName());
 
     public static final String ATTR_EXCLUDE_FILTER = "exclude-filter";
     public static final String ATTR_FORCE_ACCEPT_FILTER = "force-accept-filter";
@@ -68,13 +69,18 @@ public class ClassicScope extends CrawlScope {
 
     public static final String ATTR_MAX_TRANS_HOPS = "max-trans-hops";
 
-    private OrFilter excludeFilter;
-    private OrFilter forceAcceptFilter;
+    // FIXME: Replace deprecated OrFilter with non-deprecated something
+    
+    @SuppressWarnings("deprecation")
+    private org.archive.crawler.filter.OrFilter excludeFilter;
+    @SuppressWarnings("deprecation")
+    private org.archive.crawler.filter.OrFilter forceAcceptFilter;
 
     /**
      * @param name
      *            ignored by superclass
      */
+    @SuppressWarnings("deprecation")
     public ClassicScope(String name) {
         super(name);
         addElementToDefinition(new SimpleType(ATTR_MAX_LINK_HOPS,
@@ -89,10 +95,13 @@ public class ClassicScope extends CrawlScope {
             "in-focus site. (Such determination does not preclude later " +
             " inclusion if a shorter path is later discovered.)", 
             new Integer(5)));
-        this.excludeFilter = (OrFilter)addElementToDefinition(new OrFilter(
-            ATTR_EXCLUDE_FILTER));
-        this.forceAcceptFilter = (OrFilter)addElementToDefinition(
-            new OrFilter(ATTR_FORCE_ACCEPT_FILTER));
+        this.excludeFilter = (org.archive.crawler.filter.OrFilter)
+            addElementToDefinition(new org.archive.crawler.filter.OrFilter(
+                ATTR_EXCLUDE_FILTER));
+        this.forceAcceptFilter = (org.archive.crawler.filter.OrFilter)
+            addElementToDefinition(
+                new org.archive.crawler.filter.OrFilter(
+                        ATTR_FORCE_ACCEPT_FILTER));
         this.forceAcceptFilter.setExpertSetting(true);
 
         // Try to preserve the values of these attributes when we exchange
@@ -175,6 +184,7 @@ public class ClassicScope extends CrawlScope {
      *            the URI to check.
      * @return True if exclude filter accepts passed object.
      */
+    @SuppressWarnings("deprecation")
     protected boolean excludeAccepts(Object o) {
         return (this.excludeFilter.isEmpty(o)) ? exceedsMaxHops(o)
                 : this.excludeFilter.accepts(o) || exceedsMaxHops(o);
@@ -193,13 +203,13 @@ public class ClassicScope extends CrawlScope {
         }
 
         int maxLinkHops = 0;
-        int maxTransHops = 0;
+//        int maxTransHops = 0;
 
         try {
             maxLinkHops = ((Integer) getAttribute(o, ATTR_MAX_LINK_HOPS))
                     .intValue();
-            maxTransHops = ((Integer) getAttribute(o, ATTR_MAX_TRANS_HOPS))
-                    .intValue();
+//            maxTransHops = ((Integer) getAttribute(o, ATTR_MAX_TRANS_HOPS))
+//                    .intValue();
         } catch (AttributeNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -226,6 +236,7 @@ public class ClassicScope extends CrawlScope {
      * Take note of a situation (such as settings edit) where involved
      * reconfiguration (such as reading from external files) may be necessary.
      */
+    @SuppressWarnings("deprecation")
     public void kickUpdate() {
         super.kickUpdate();
         excludeFilter.kickUpdate();

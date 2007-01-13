@@ -40,6 +40,9 @@ import org.archive.crawler.framework.ToeThread;
  *
  */
 public class ExtractorPDF extends Extractor implements CoreAttributeConstants {
+
+    private static final long serialVersionUID = -6040669467531928494L;
+
     private static final Logger LOGGER =
         Logger.getLogger(ExtractorPDF.class.getName());
     private static int DEFAULT_MAX_SIZE_TO_PARSE = 5*1024*1024; // 5MB

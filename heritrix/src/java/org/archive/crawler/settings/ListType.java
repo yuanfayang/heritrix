@@ -30,13 +30,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.archive.util.SubList;
+
 /** Super type for all lists.
  *
  * @author John Erik Halse
  */
-public abstract class ListType extends Type implements List {
+public abstract class ListType<T> extends Type implements List<Object> {
 
-    private final List listData = new ArrayList();
+    private final List<T> listData = new ArrayList<T>();
     private final String description;
 
     /** Constructs a new ListType.
@@ -58,8 +60,8 @@ public abstract class ListType extends Type implements List {
      * per the Collections.add contract).
      */
     public boolean add(Object element) {
-        element = checkType(element);
-        return this.listData.add(element);
+        T checked = checkType(element);
+        return this.listData.add(checked);
     }
 
     /** Inserts the specified element at the specified position in this list.
@@ -73,8 +75,8 @@ public abstract class ListType extends Type implements List {
      *         and could not be converted.
      */
     public void add(int index, Object element) {
-        element = checkType(element);
-        this.listData.add(index, element);
+        T checked = checkType(element);
+        this.listData.add(index, checked);
     }
 
     /** Appends all of the elements in the specified list to the end of this
@@ -88,7 +90,7 @@ public abstract class ListType extends Type implements List {
      *
      * @param l list whose elements are to be added to this list.
      */
-    protected void addAll(ListType l) {
+    protected void addAll(ListType<T> l) {
         this.listData.addAll(l.listData);
     }
 
@@ -102,16 +104,16 @@ public abstract class ListType extends Type implements List {
      *         and could not be converted.
      */
     public Object set(int index, Object element) {
-        element = checkType(element);
-        return this.listData.set(index, element);
+        T checked = checkType(element);
+        return this.listData.set(index, checked);
     }
 
     /** Returns an iterator over the elements in this list in proper sequence.
      *
      * @return an iterator over the elements in this list.
      */
-    public Iterator iterator() {
-        return this.listData.iterator();
+    public Iterator<Object> iterator() {
+        return new ListIter();
     }
 
     /** Get the number of elements in this list.
@@ -140,7 +142,7 @@ public abstract class ListType extends Type implements List {
      * @throws ClassCastException is thrown if the element was of wrong type
      *         and could not be converted.
      */
-    public abstract Object checkType(Object element) throws ClassCastException;
+    public abstract T checkType(Object element) throws ClassCastException;
 
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.Type#getDefaultValue()
@@ -193,14 +195,23 @@ public abstract class ListType extends Type implements List {
         return this;
     }
 
-    public boolean addAll(Collection c)
+    public boolean addAll(Collection<? extends Object> c)
     {
-        return this.listData.addAll(c);
+    	for (Object o : c) {
+            T checked = checkType(o);
+            listData.add(checked);
+        }
+        return true;
     }
 
-    public boolean addAll(int index, Collection c)
+    public boolean addAll(int index, Collection<? extends Object> c)
     {
-        return this.listData.addAll(index, c);
+    	for (Object o : c) {
+            T checked = checkType(o);
+            listData.add(index, checked);
+            index++;
+        }
+        return true;
     }
 
     public boolean contains(Object o)
@@ -223,19 +234,19 @@ public abstract class ListType extends Type implements List {
         return this.listData.lastIndexOf(o);
     }
 
-    public ListIterator listIterator()
+    public ListIterator<Object> listIterator()
     {
-        return this.listData.listIterator();
+        return new ListIter();
     }
 
-    public ListIterator listIterator(int index)
+    public ListIterator<Object> listIterator(int index)
     {
-        return this.listData.listIterator(index);
+    	return new ListIter(index);
     }
 
-    public List subList(int fromIndex, int toIndex)
+    public List<Object> subList(int fromIndex, int toIndex)
     {
-        return this.listData.subList(fromIndex, toIndex);
+        return new SubList<Object>(this, fromIndex, toIndex);
     }
 
     public Object[] toArray()
@@ -243,7 +254,7 @@ public abstract class ListType extends Type implements List {
         return this.listData.toArray();
     }
 
-    public Object[] toArray(Object[] a)
+    public <X> X[] toArray(X[] a)
     {
         return this.listData.toArray(a);
     }
@@ -266,5 +277,67 @@ public abstract class ListType extends Type implements List {
     public boolean retainAll(Collection c)
     {
         return this.listData.retainAll(c);
+    }
+
+    /**
+     * Returns a compile-time typesafe version of this list.  Unlike this
+     * List, the returned list will not accept String values as elements.
+     * 
+     * @return  a typesafe version of this list
+     */
+    public List<T> typesafe() {
+        return listData;
+    }
+
+    private class ListIter implements ListIterator<Object> {
+
+        final private ListIterator<T> delegate;
+
+        public ListIter() {
+            this.delegate = listData.listIterator();
+        }
+
+        public ListIter(int index) {
+            this.delegate = listData.listIterator(index);
+        }
+
+        public void add(Object o) {
+            T checked = checkType(o);
+            delegate.add(checked);
+        }
+
+        public boolean hasNext() {
+            return delegate.hasNext();
+        }
+
+        public boolean hasPrevious() {
+            return delegate.hasPrevious();
+        }
+
+        public Object next() {
+            return delegate.next();
+        }
+
+        public int nextIndex() {
+            return delegate.nextIndex();
+        }
+
+        public Object previous() {
+            return delegate.previous();
+        }
+
+        public int previousIndex() {
+            return delegate.previousIndex();
+        }
+
+        public void remove() {
+            delegate.remove();
+        }
+
+        public void set(Object o) {
+            T checked = checkType(o);
+            delegate.set(checked);
+        }
+
     }
 }

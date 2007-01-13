@@ -76,7 +76,7 @@ public class CredentialStoreTest extends SettingsFrameworkTestCase {
     }
 
     private List checkContextNames(Iterator i, int size) {
-        List names = new ArrayList(size);
+        List<String> names = new ArrayList<String>(size);
         for (; i.hasNext();) {
             String name = ((Credential)i.next()).getName();
             names.add(name);
@@ -99,7 +99,7 @@ public class CredentialStoreTest extends SettingsFrameworkTestCase {
             assertNotNull("Failed create of " + cl, c);
             logger.info("Created " + c.getName());
         }
-        List names = new ArrayList(types.size());
+        List<String> names = new ArrayList<String>(types.size());
         for (Iterator i = store.iterator(null); i.hasNext();) {
             names.add(((Credential)i.next()).getName());
         }

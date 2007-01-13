@@ -435,10 +435,10 @@ public class FileUtils {
     public static void syncDirectories(final File src,
             final FilenameFilter filter, final File tgt)
     throws IOException {
-        Set srcFilenames = null;
+        Set<String> srcFilenames = null;
         do {
-            srcFilenames = new HashSet(Arrays.asList(src.list(filter)));
-            List tgtFilenames = Arrays.asList(tgt.list(filter));
+            srcFilenames = new HashSet<String>(Arrays.asList(src.list(filter)));
+            List<String> tgtFilenames = Arrays.asList(tgt.list(filter));
             srcFilenames.removeAll(tgtFilenames);
             if (srcFilenames.size() > 0) {
                 int count = FileUtils.copyFiles(src, srcFilenames, tgt);

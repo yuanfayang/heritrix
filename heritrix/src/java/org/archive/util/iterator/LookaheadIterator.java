@@ -35,8 +35,8 @@ import java.util.NoSuchElementException;
  * @author gojomo
  *
  */
-public abstract class LookaheadIterator implements Iterator {
-    protected Object next;
+public abstract class LookaheadIterator<T> implements Iterator<T> {
+    protected T next;
 
     /** 
      * Test whether any items remain; loads next item into
@@ -60,12 +60,12 @@ public abstract class LookaheadIterator implements Iterator {
      * 
      * @see java.util.Iterator#next()
      */
-    public Object next() {
+    public T next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
         // 'next' is guaranteed non-null by a hasNext() which returned true
-        Object returnObj = this.next;
+        T returnObj = this.next;
         this.next = null;
         return returnObj;
     }

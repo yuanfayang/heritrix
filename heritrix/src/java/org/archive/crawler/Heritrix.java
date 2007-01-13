@@ -243,6 +243,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     private static boolean containerInitialized = false;
     
+    /**
+     * True if properties have been loaded.
+     */
+    private static boolean propertiesLoaded = false;
+    
     private static final String JAR_SUFFIX = ".jar";
     
     private AlertManager alertManager;
@@ -311,7 +316,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * usage for this instances Map is in CrawlJob#preRegister to find the hosting
      * Heritrix instance).
      */
-    private static Map instances = new Hashtable();
+    private static Map<String,Heritrix> instances
+     = new Hashtable<String,Heritrix>();
     
     private OpenMBeanInfoSupport openMBeanInfo;
     private final static String STATUS_ATTR = "Status";
@@ -748,9 +754,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      * @throws IOException
      */
     public static File getJobsdir() throws IOException {
+        Heritrix.loadProperties(); // if called in constructor
         String jobsdirStr = System.getProperty("heritrix.jobsdir", "jobs");
-        return jobsdirStr.startsWith(File.separator)?
-            new File(jobsdirStr):
+        File jobsdir = new File(jobsdirStr);
+        return (jobsdir.isAbsolute())?
+            jobsdir:
             new File(getHeritrixHome(), jobsdirStr);
     }
     
@@ -834,6 +842,11 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
      */
     protected static Properties loadProperties()
     throws IOException {
+        if (Heritrix.propertiesLoaded) {
+            return System.getProperties();
+        }
+        Heritrix.propertiesLoaded = true;
+            
         Properties properties = new Properties();
         properties.load(getPropertiesInputStream());
         
@@ -1711,7 +1724,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     throws InstanceAlreadyExistsException, MBeanRegistrationException,
     NotCompliantMBeanException {
         try {
-            Hashtable ht = new Hashtable();
+            Hashtable<String,String> ht = new Hashtable<String,String>();
             ht.put(JmxUtils.NAME, name);
             ht.put(JmxUtils.TYPE, type);
             registerMBean(server, objToRegister,
@@ -1776,7 +1789,7 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     public static ObjectName getJmxObjectName(final String name,
             final String type)
     throws MalformedObjectNameException, NullPointerException {
-        Hashtable ht = new Hashtable();
+        Hashtable<String,String> ht = new Hashtable<String,String>();
         ht.put(JmxUtils.NAME, name);
         ht.put(JmxUtils.TYPE, type);
         return new ObjectName(CRAWLER_PACKAGE, ht);
@@ -2337,7 +2350,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     public ObjectName preRegister(MBeanServer server, ObjectName name)
     throws Exception {
         this.mbeanServer = server;
-        Hashtable ht = name.getKeyPropertyList();
+        @SuppressWarnings("unchecked")
+        Hashtable<String,String> ht = name.getKeyPropertyList();
         if (!ht.containsKey(JmxUtils.NAME)) {
             throw new IllegalArgumentException("Name property required" +
                 name.getCanonicalName());
@@ -2363,7 +2377,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     protected static ObjectName addVitals(ObjectName name)
     throws UnknownHostException, MalformedObjectNameException,
     NullPointerException {
-        Hashtable ht = name.getKeyPropertyList();
+        @SuppressWarnings("unchecked")
+        Hashtable<String,String> ht = name.getKeyPropertyList();
         if (!ht.containsKey(JmxUtils.HOST)) {
             ht.put(JmxUtils.HOST, InetAddress.getLocalHost().getHostName());
             name = new ObjectName(name.getDomain(), ht);
@@ -2384,7 +2399,8 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     
     protected static ObjectName addGuiPort(ObjectName name)
     throws MalformedObjectNameException, NullPointerException {
-        Hashtable ht = name.getKeyPropertyList();
+        @SuppressWarnings("unchecked")
+        Hashtable<String,String> ht = name.getKeyPropertyList();
         if (!ht.containsKey(JmxUtils.GUI_PORT)) {
             // Add gui port if this instance was started with a gui.
             if (Heritrix.gui) {

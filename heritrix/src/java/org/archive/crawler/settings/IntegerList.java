@@ -27,7 +27,9 @@ package org.archive.crawler.settings;
  *
  * @author John Erik Halse
  */
-public class IntegerList extends ListType {
+public class IntegerList extends ListType<Integer> {
+
+    private static final long serialVersionUID = -637584927948877976L;
 
     /** Creates a new IntegerList.
      *
@@ -168,13 +170,14 @@ public class IntegerList extends ListType {
      * @throws ClassCastException is thrown if the element was of wrong type
      *         and could not be converted.
      */
-    public Object checkType(Object element) throws ClassCastException {
-        if (!(element instanceof Integer)) {
-            element =
+    public Integer checkType(Object element) throws ClassCastException {
+        if (element instanceof Integer) {
+            return (Integer)element;
+        } else {
+            return (Integer)
                 SettingsHandler.StringToType(
                     (String) element,
                     SettingsHandler.INTEGER);
         }
-        return element;
     }
 }

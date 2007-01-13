@@ -63,7 +63,9 @@ import com.sleepycat.je.EnvironmentConfig;
  * @author gojomo
  *  
  */
-public class CachedBdbMap extends AbstractMap implements Map, Serializable {
+public class CachedBdbMap<K,V> extends AbstractMap<K,V> 
+implements Map<K,V>, Serializable {
+    
     private static final long serialVersionUID = -8655539411367047332L;
 
     private static final Logger logger =
@@ -76,7 +78,8 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * A map of BDB JE Environments so that we reuse the Environment for
      * databases in the same directory.
      */
-    private static final Map dbEnvironmentMap = new HashMap();
+    private static final Map<String,DbEnvironmentEntry> dbEnvironmentMap = 
+        new HashMap<String,DbEnvironmentEntry>();
 
     /** The BDB JE environment used for this instance.
      */
@@ -89,9 +92,9 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     protected transient StoredSortedMap diskMap;
 
     /** The softreferenced cache */
-    private transient Map memMap;
+    private transient Map<K,SoftEntry<V>> memMap;
 
-    protected transient ReferenceQueue refQueue;
+    protected transient ReferenceQueue<V> refQueue;
 
     /** The number of objects in the diskMap StoredMap. 
      *  (Package access for unit testing.) */
@@ -141,7 +144,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
     /**
      * Simple structure to keep needed information about a DB Environment.
      */
-    protected class DbEnvironmentEntry {
+    protected static class DbEnvironmentEntry {
         Environment environment;
         StoredClassCatalog classCatalog;
         int openDbCount = 0;
@@ -192,7 +195,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      *             throws an exception.
      */
     public CachedBdbMap(final File dbDir, final String dbName,
-            final Class keyClass, final Class valueClass)
+            final Class<K> keyClass, final Class<V> valueClass)
     throws DatabaseException {
         this(dbName);
         this.dbEnvironment = getDbEnvironment(dbDir);
@@ -234,8 +237,8 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * This method is used by constructors and when deserializing an instance.
      */
     protected void initializeInstance() {
-        this.memMap = new HashMap();
-        this.refQueue = new ReferenceQueue();
+        this.memMap = new HashMap<K,SoftEntry<V>>();
+        this.refQueue = new ReferenceQueue<V>();
     }
     
     protected StoredSortedMap createDiskMap(Database database,
@@ -335,25 +338,27 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
      * 
      * @see java.util.Map#keySet()
      */
-    public Set keySet() {
+    @SuppressWarnings("unchecked")
+    public Set<K> keySet() {
         return diskMap.keySet();
     }
     
-    public Set entrySet() {
+    public Set<Map.Entry<K,V>> entrySet() {
         // Would require complicated implementation to 
         // maintain identity guarantees, so skipping
         throw new UnsupportedOperationException();
     }
 
-    public synchronized Object get(final Object key) {
+    public synchronized V get(final Object object) {
+        K key = toKey(object);
         countOfGets++;
         expungeStaleEntries();
         if (countOfGets % 10000 == 0) {
             logCacheSummary();
         }
-        SoftEntry entry = (SoftEntry)memMap.get(key);
+        SoftEntry<V> entry = memMap.get(key);
         if (entry != null) {
-            Object val = entry.get(); // get & hold, so not cleared pre-return
+            V val = entry.get(); // get & hold, so not cleared pre-return
             if (val != null) {
                 cacheHit++;
                 return val;
@@ -364,12 +369,12 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         }
 
         // check backing diskMap
-        Object o = this.diskMap.get(key);
-        if (o != null) {
+        V v = diskMapGet(key);
+        if (v != null) {
             diskHit++;
-            memMap.put(key, new SoftEntry(key, o, refQueue));
+            memMap.put(key, new SoftEntry<V>(key, v, refQueue));
         }
-        return o;
+        return v;
     }
 
     /**
@@ -390,9 +395,9 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         }
     }
     
-    public synchronized Object put(Object key, Object value) {
-        Object prevVal = get(key);
-        memMap.put(key, new SoftEntry(key, value, refQueue));
+    public synchronized V put(K key, V value) {
+        V prevVal = get(key);
+        memMap.put(key, new SoftEntry<V>(key, value, refQueue));
         diskMap.put(key,value); // dummy
         if(prevVal==null) {
             diskMapSize++;
@@ -417,8 +422,8 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         }
     }
 
-    public synchronized Object remove(final Object key) {
-        Object prevValue = get(key);
+    public synchronized V remove(final Object key) {
+        V prevValue = get(key);
         memMap.remove(key);
         expungeStaleEntries();
         diskMap.remove(key);
@@ -512,7 +517,7 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
 
     private void expungeStaleEntries() {
         int c = 0;
-        for(SoftEntry entry; (entry = (SoftEntry)refQueue.poll()) != null;) {
+        for(SoftEntry entry; (entry = refQueuePoll()) != null;) {
             expungeStaleEntry(entry);
             c++;
         }
@@ -546,10 +551,10 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         entry.clearPhantom();
     }
     
-    private class PhantomEntry extends PhantomReference {
+    private class PhantomEntry<T> extends PhantomReference<T> {
         private final Object key;
 
-        public PhantomEntry(Object key, Object referent) {
+        public PhantomEntry(Object key, T referent) {
             super(referent, null);
             this.key = key;
         }
@@ -579,12 +584,12 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         }
     }
 
-    private class SoftEntry extends SoftReference {
-        private PhantomEntry phantom;
+    private class SoftEntry<T> extends SoftReference<T> {
+        private PhantomEntry<T> phantom;
 
-        public SoftEntry(Object key, Object referent, ReferenceQueue q) {
+        public SoftEntry(Object key, T referent, ReferenceQueue<T> q) {
             super(referent, q);
-            this.phantom = new PhantomEntry(key, referent);
+            this.phantom = new PhantomEntry<T>(key, referent);
         }
 
         /**
@@ -608,5 +613,22 @@ public class CachedBdbMap extends AbstractMap implements Map, Serializable {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(getDatabaseName() + " diskMapSize: " + diskMapSize);
         }
+    }
+    
+ 
+    
+    @SuppressWarnings("unchecked")
+    private K toKey(Object o) {
+        return (K)o;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private V diskMapGet(K k) {
+        return (V)diskMap.get(k);
+    }
+    
+    @SuppressWarnings("unchecked")
+    private SoftEntry<V> refQueuePoll() {
+        return (SoftEntry)refQueue.poll();
     }
 }

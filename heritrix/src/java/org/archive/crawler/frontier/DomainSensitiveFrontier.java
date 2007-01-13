@@ -67,6 +67,9 @@ import org.archive.crawler.settings.Type;
  */
 public class DomainSensitiveFrontier extends BdbFrontier
 implements CrawlURIDispositionListener {
+
+    private static final long serialVersionUID = -3330190056282726202L;
+
     private static final Logger logger =
         Logger.getLogger(DomainSensitiveFrontier.class.getName());
     
@@ -80,7 +83,7 @@ implements CrawlURIDispositionListener {
     public static final String DEFAULT_MODE = COUNT_OVERRIDE;
         
     // TODO: Make this a BigMap.
-    private Hashtable hostCounters = new Hashtable();
+    private Hashtable<String,Long> hostCounters = new Hashtable<String,Long>();
     private boolean countPerOverride = true;
     private String counterMode;
 

@@ -32,6 +32,7 @@ import java.util.Iterator;
 import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.URIException;
+import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 
 /**
@@ -41,9 +42,9 @@ import org.archive.net.UURIFactory;
  */
 public class DomainScopeTest extends TestCase {
 
-    private ArrayList testSeeds;
-    private ArrayList urlsInScope;
-    private ArrayList urlsOutOfScope;
+    private ArrayList<UURI> testSeeds;
+    private ArrayList<UURI> urlsInScope;
+    private ArrayList<UURI> urlsOutOfScope;
 
     private TestUnitDomainScope dc;
 
@@ -53,7 +54,10 @@ public class DomainScopeTest extends TestCase {
      *
      * Also override seedsIterator so the test seeds are used.
      */
+    @SuppressWarnings("deprecation")
     private class TestUnitDomainScope extends DomainScope {
+
+        private static final long serialVersionUID = 2509499903112690451L;
 
         public TestUnitDomainScope(String name) {
             super(name);
@@ -62,7 +66,7 @@ public class DomainScopeTest extends TestCase {
         /* Force test seeds to be used. 
          * @see org.archive.crawler.framework.CrawlScope#seedsIterator()
          */
-        public Iterator seedsIterator() {
+        public Iterator<UURI> seedsIterator() {
             return testSeeds.iterator();
         }
         
@@ -80,9 +84,9 @@ public class DomainScopeTest extends TestCase {
     }
 
     public void setUp() throws URIException {
-        testSeeds = new ArrayList();
-        urlsInScope = new ArrayList();
-        urlsOutOfScope = new ArrayList();
+        testSeeds = new ArrayList<UURI>();
+        urlsInScope = new ArrayList<UURI>();
+        urlsOutOfScope = new ArrayList<UURI>();
         dc = new TestUnitDomainScope("TESTCASE");
 
         // Add seeds
@@ -125,7 +129,7 @@ public class DomainScopeTest extends TestCase {
         addURL(urlsOutOfScope, "http://y.z.com");
     }
 
-    public void addURL(ArrayList list, String url) throws URIException {
+    public void addURL(ArrayList<UURI> list, String url) throws URIException {
         list.add(UURIFactory.getInstance(url));
     }
 

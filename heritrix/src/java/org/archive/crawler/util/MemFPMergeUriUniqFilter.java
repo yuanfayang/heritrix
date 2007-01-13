@@ -41,7 +41,7 @@ public class MemFPMergeUriUniqFilter extends FPMergeUriUniqFilter {
      */
     protected LongIterator beginFpMerge() {
         newFps = new LongArrayList((int) (allFps.size()+(pending()/2)));
-        return allFps.longIterator();
+        return allFps.iterator();
     }
 
     /* (non-Javadoc)

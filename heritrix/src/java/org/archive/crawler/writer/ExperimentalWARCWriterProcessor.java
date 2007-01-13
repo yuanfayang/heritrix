@@ -28,7 +28,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,7 +58,10 @@ import org.archive.util.anvl.ANVLRecord;
 public class ExperimentalWARCWriterProcessor extends WriterPoolProcessor
 implements CoreAttributeConstants, CrawlStatusListener,
 WriterPoolSettings, FetchStatusCodes, WARCConstants {
-	private final Logger logger = Logger.getLogger(this.getClass().getName());
+
+    private static final long serialVersionUID = 188656957531675821L;
+
+    private final Logger logger = Logger.getLogger(this.getClass().getName());
     
     /**
      * Default path list.
@@ -240,10 +242,10 @@ WriterPoolSettings, FetchStatusCodes, WARCConstants {
             r.addLabelValue("via", curi.flattenVia());
             r.addLabelValue("pathFromSeed", curi.getPathFromSeed());
         }
-        Collection links = curi.getOutLinks();
+        Collection<Link> links = curi.getOutLinks();
         if (links != null || links.size() > 0) {
-            for (final Iterator i = links.iterator(); i.hasNext();) {
-                r.addLabelValue("outlink", ((Link)i.next()).toString());
+            for (Link link: links) {
+                r.addLabelValue("outlink", link.toString());
             }
         }
         if (curi.isTruncatedFetch()) {

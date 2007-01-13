@@ -32,6 +32,9 @@ import java.util.regex.Pattern;
  */
 public class StripSessionCFIDs
 extends BaseRule {
+
+    private static final long serialVersionUID = 9122689291157731293L;
+
     private static final String REGEX = "^(.+)" +
         "(?:cfid=[^&]+&cftoken=[^&]+(?:jsession=[^&]+)?)(?:&(.*))?$";
     

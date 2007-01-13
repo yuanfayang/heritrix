@@ -33,8 +33,6 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.deciderules.DecideRule;
 import org.archive.crawler.deciderules.DecidingFilter;
 import org.archive.crawler.framework.Filter;
-import org.archive.crawler.frontier.BdbFrontier;
-import org.archive.crawler.prefetch.QuotaEnforcer;
 import org.archive.crawler.settings.CrawlerSettings;
 import org.archive.crawler.settings.MapType;
 import org.archive.crawler.settings.SimpleType;
@@ -50,6 +48,9 @@ import org.archive.crawler.settings.SimpleType;
  * {@link DecideRule}.
  */
 public class OrFilter extends Filter {
+
+    private static final long serialVersionUID = -6835737313105835112L;
+
     private static final Logger logger =
         Logger.getLogger(OrFilter.class.getName());
     public static final String ATTR_MATCH_RETURN_VALUE = "if-matches-return";

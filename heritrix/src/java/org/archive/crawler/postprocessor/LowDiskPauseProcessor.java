@@ -46,6 +46,9 @@ import org.archive.util.IoUtils;
  * filesystems falls below certain thresholds.
  */
 public class LowDiskPauseProcessor extends Processor {
+
+    private static final long serialVersionUID = 3338337700768396302L;
+
     /**
      * Logger.
      */

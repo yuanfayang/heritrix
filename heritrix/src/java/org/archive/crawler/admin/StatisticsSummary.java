@@ -99,28 +99,30 @@ public class StatisticsSummary {
     protected String totalDataWritten;
     
     /** Keep track of the file types we see (mime type -> count) */
-    protected Hashtable mimeTypeDistribution = new Hashtable();
-    protected Hashtable mimeTypeBytes = new Hashtable();
-    protected Hashtable mimeTypeDnsDistribution = new Hashtable();
-    protected Hashtable mimeTypeDnsBytes = new Hashtable();
+    protected Hashtable<String,LongWrapper> mimeTypeDistribution = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,LongWrapper> mimeTypeBytes = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,LongWrapper> mimeTypeDnsDistribution = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,LongWrapper> mimeTypeDnsBytes = new Hashtable<String,LongWrapper>();
     
     /** Keep track of status codes */
-    protected Hashtable statusCodeDistribution = new Hashtable();
-    protected Hashtable dnsStatusCodeDistribution = new Hashtable();
+    protected Hashtable<String,LongWrapper> statusCodeDistribution = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,LongWrapper> dnsStatusCodeDistribution
+     = new Hashtable<String,LongWrapper>();
     
     /** Keep track of hosts */
-    protected Hashtable hostsDistribution = new Hashtable(); 
-    protected Hashtable hostsBytes = new Hashtable(); 
-    protected Hashtable hostsDnsDistribution = new Hashtable();
-    protected Hashtable hostsDnsBytes = new Hashtable(); 
+    protected Hashtable<String,LongWrapper> hostsDistribution = new Hashtable<String,LongWrapper>(); 
+    protected Hashtable<String,LongWrapper> hostsBytes = new Hashtable<String,LongWrapper>(); 
+    protected Hashtable<String,LongWrapper> hostsDnsDistribution = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,LongWrapper> hostsDnsBytes = new Hashtable<String,LongWrapper>(); 
 
     /** Keep track of TLDs */
-    protected Hashtable tldDistribution = new Hashtable();
-    protected Hashtable tldBytes = new Hashtable();
-    protected Hashtable tldHostDistribution = new Hashtable();
+    protected Hashtable<String,LongWrapper> tldDistribution = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,LongWrapper> tldBytes = new Hashtable<String,LongWrapper>();
+    protected Hashtable<String,LongWrapper> tldHostDistribution = new Hashtable<String,LongWrapper>();
 
     /** Keep track of processed seeds */
-    protected transient Map processedSeedsRecords = new Hashtable();
+    protected transient Map<String,SeedRecord> processedSeedsRecords 
+     = new Hashtable<String,SeedRecord>();
 
     /**
      * Constructor
@@ -157,7 +159,8 @@ public class StatisticsSummary {
      *               exist it will be added (set to 1).  If null it will
      *            increment the counter "unknown".
      */
-    protected static void incrementMapCount(Map map, String key) {
+    protected static void incrementMapCount(Map<String,LongWrapper> map, 
+            String key) {
     	incrementMapCount(map,key,1);
     }
 
@@ -176,12 +179,12 @@ public class StatisticsSummary {
      *            The amount to increment counter related to the
      *            <code>key</code>.
      */
-    protected static void incrementMapCount(Map map, String key,
-            long increment) {
+    protected static void incrementMapCount(Map<String,LongWrapper> map, 
+            String key, long increment) {
         if (key == null) {
             key = "unknown";
         }
-        LongWrapper lw = (LongWrapper)map.get(key);
+        LongWrapper lw = map.get(key);
         if(lw == null) {
             map.put(key, new LongWrapper(increment));
         } else {
@@ -336,13 +339,13 @@ public class StatisticsSummary {
      *            Assumes values are wrapped with LongWrapper.
      * @return a sorted set containing the same elements as the map.
      */
-    public TreeMap getReverseSortedCopy(final Map mapOfLongWrapperValues) {
-        TreeMap sortedMap = new TreeMap(new Comparator() {
-            public int compare(Object e1, Object e2) {
-                long firstVal = ((LongWrapper)mapOfLongWrapperValues.get(e1)).
-                    longValue;
-                long secondVal = ((LongWrapper)mapOfLongWrapperValues.get(e2)).
-                    longValue;
+    public TreeMap<String,LongWrapper> getReverseSortedCopy(
+            final Map<String,LongWrapper> mapOfLongWrapperValues) {
+        TreeMap<String,LongWrapper> sortedMap = new TreeMap<String,LongWrapper>(
+          new Comparator<String>() {
+            public int compare(String e1, String e2) {
+                long firstVal = mapOfLongWrapperValues.get(e1).longValue;
+                long secondVal = mapOfLongWrapperValues.get(e2).longValue;
                 if (firstVal < secondVal) {
                     return 1;
                 }
@@ -350,16 +353,13 @@ public class StatisticsSummary {
                     return -1;
                 }
                 // If the values are the same, sort by keys.
-                return ((String)e1).compareTo((String)e2);
+                return e1.compareTo(e2);
             }
         });
         try {
             sortedMap.putAll(mapOfLongWrapperValues);
         } catch (UnsupportedOperationException e) {
-            Iterator i = mapOfLongWrapperValues.keySet().iterator();
-            for (;i.hasNext();) {
-                // Ok. Try doing it the slow way then.
-                Object key = i.next();
+            for (String key: mapOfLongWrapperValues.keySet()) {
                 sortedMap.put(key, mapOfLongWrapperValues.get(key));
             }
         }
@@ -668,11 +668,10 @@ public class StatisticsSummary {
      * Returns sorted Iterator of seeds records based on status code.
      * @return sorted Iterator of seeds records
      */
-    public Iterator getSeedRecordsSortedByStatusCode() {
-        TreeSet sortedSet = new TreeSet(new Comparator() {
-            public int compare(Object e1, Object e2) {
-                SeedRecord sr1 = (SeedRecord)e1;
-                SeedRecord sr2 = (SeedRecord)e2;
+    public Iterator<SeedRecord> getSeedRecordsSortedByStatusCode() {
+        TreeSet<SeedRecord> sortedSet = new TreeSet<SeedRecord>(
+          new Comparator<SeedRecord>() {
+            public int compare(SeedRecord sr1, SeedRecord sr2) {
                 int code1 = sr1.getStatusCode();
                 int code2 = sr2.getStatusCode();
                 if (code1 == code2) {
@@ -689,10 +688,7 @@ public class StatisticsSummary {
                 return new Integer(code1).compareTo(new Integer(code2));
             }
         });
-        for (Iterator iterator = processedSeedsRecords.entrySet().iterator();
-                iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            SeedRecord sr = (SeedRecord)entry.getValue();
+        for (SeedRecord sr: processedSeedsRecords.values()) {
             sortedSet.add(sr);
         }
         

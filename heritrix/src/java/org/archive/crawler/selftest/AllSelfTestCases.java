@@ -58,7 +58,7 @@ public class AllSelfTestCases
                 CharsetSelfTest.class,
                 AuthSelfTest.class,
                 BadURIsStopPageParsingSelfTest.class,
-                // Works locally but not on crawltools.
+                // Works locally but not on builds.archive.org.
                 // FlashParseSelfTest.class
                 CheckpointSelfTest.class,
             };

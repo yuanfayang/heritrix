@@ -85,10 +85,10 @@
         prereqs="jar"
         description="Use autojar to make subjars from heritrix jar." >
         <!--Needs to be able to find the autojar jar file. Define its
-        location in the variable autojar.location.  Do this in a
-        build.properties rather than in maven.properties so that
-        support for this task is optional rather than core to the
-        heritrix build.
+        location in the variable autojar.location.  Must be full path to
+        the autojar jar file. Do this in a build.properties rather than in
+        maven.properties so that support for this task is optional rather
+        than core to the heritrix build.
         -->
         <ant:exec dir="${JAVA_HOME}/bin" executable="java" >
             <ant:arg value="-jar" />
@@ -103,15 +103,18 @@
             <ant:arg value="org.archive.io.arc.ARCWriterPool.class" />
             <ant:arg value="org.archive.io.arc.ARCWriter.class" />
             <ant:arg value="org.archive.io.arc.ARCLocation.class" />
-            <ant:arg value="org.archive.io.arc.WARCReader.class" />
+            <ant:arg value="org.archive.io.arc.ARC2WCDX.class" />
+            <ant:arg value="org.archive.io.warc.WARCReader.class" />
+            <ant:arg value="org.archive.io.warc.WARCReaderFactory.class" />
             <ant:arg 
-                value="org.archive.io.arc.WARCWriterPool.class" />
+                value="org.archive.io.warc.WARCWriterPool.class" />
             <ant:arg 
-            value="org.archive.io.arc.ExperimentalWARCWriter.class" />
+            value="org.archive.io.warc.ExperimentalWARCWriter.class" />
             <ant:arg value="org.archive.util.JmxUtils.class" />
             <ant:arg value="org.archive.util.JndiUtils.class" />
             <ant:arg value="org.archive.net.rsync.Handler.class" />
             <ant:arg value="org.archive.net.md5.Handler.class" />
+            <ant:arg value="org.archive.net.s3.Handler.class" />
             <ant:arg value="org.apache.commons.pool.impl.FairGenericObjectPool"
                 />
             <ant:arg value="org.apache.commons.pool.impl.GenericObjectPool" />
@@ -330,7 +333,8 @@
         <chmod file="${basename}/bin/*" perm="a+rx" />
         <exec failonerror="true"
                 timeout="120000"
-                executable="${basename}/bin/foreground_heritrix">
+                executable="/bin/sh" >
+            <arg line="${basename}/bin/foreground_heritrix" />
             <arg line="--selftest" />
             <arg line="--port=8083" />
         </exec>

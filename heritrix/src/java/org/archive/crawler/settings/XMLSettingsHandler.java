@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -165,7 +164,6 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @return the file path for this settings object.
      */
     protected final File settingsToFilename(CrawlerSettings settings) {
-        File settingsDirectory = getSettingsDirectory();
         File file;
 
         if (settings.getScope() == null || settings.getScope().equals("")) {
@@ -386,7 +384,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         File settingsDir = getSettingsDirectory();
 
         //Find the right start directory.
-        ArrayList domains = new ArrayList();
+        ArrayList<String> domains = new ArrayList<String>();
         //First we deconstruct the rootDomain string
         while(rootDomain != null && rootDomain.length()>0){
             if(rootDomain.indexOf('.')<0){
@@ -408,17 +406,7 @@ public class XMLSettingsHandler extends SettingsHandler {
         }
         //Then we move to the approprite directory.
         settingsDir = new File(settingsDir.getPath()+subDir);
-        TreeSet confirmedSubDomains = new TreeSet(new Comparator() {
-                public int compare(Object o1, Object o2) {
-                    if(o1 instanceof String && o2 instanceof String){
-                        return ((String)o1).compareTo(o2.toString());
-                    } else {
-                        // We only account for strings.
-                        return 0;
-                    }
-                }
-            }
-        );
+        TreeSet<String> confirmedSubDomains = new TreeSet<String>();
         if(settingsDir.exists()){
             // Found our place! Search through it's subdirs.
             File[] possibleSubDomains = settingsDir.listFiles();
@@ -483,8 +471,8 @@ public class XMLSettingsHandler extends SettingsHandler {
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.SettingsHandler#getListOfAllFiles()
      */
-    public List getListOfAllFiles() {
-        ArrayList list = new ArrayList();
+    public List<String> getListOfAllFiles() {
+        ArrayList<String> list = new ArrayList<String>();
         // Add CrawlOrder.
         list.add(getOrderFile().getAbsolutePath());
         // Iterate through the entire override hierarchy
@@ -504,7 +492,8 @@ public class XMLSettingsHandler extends SettingsHandler {
      *           will be recursively interrogated.
      * @param list The list to add found files to.
      */
-    private void recursiveFindSecondaryFiles(ComplexType mbean, ArrayList list) {
+    private void recursiveFindSecondaryFiles(ComplexType mbean, 
+            ArrayList<String> list) {
         MBeanInfo info = mbean.getMBeanInfo();
         MBeanAttributeInfo[] a = info.getAttributes();
         // Interrogate the current module
@@ -547,7 +536,7 @@ public class XMLSettingsHandler extends SettingsHandler {
      * @param dir Starting directory
      * @param list The list to add to
      */
-    private void recursiveFindFiles(File dir, ArrayList list){
+    private void recursiveFindFiles(File dir, ArrayList<String> list){
         File[] subs = dir.listFiles();
         if (subs != null) {
             for(int i=0 ; i < subs.length ; i++){

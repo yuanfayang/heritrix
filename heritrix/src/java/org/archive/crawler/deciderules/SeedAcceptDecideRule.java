@@ -36,6 +36,9 @@ import org.archive.crawler.datamodel.CandidateURI;
  * @author gojomo
  */
 public class SeedAcceptDecideRule extends AcceptDecideRule {
+
+    private static final long serialVersionUID = 2167939872761313683L;
+
     public SeedAcceptDecideRule(String name) {
         super(name);
         setDescription("SeedAcceptDecideRule. ACCEPTs " +

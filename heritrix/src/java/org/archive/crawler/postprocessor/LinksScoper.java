@@ -58,6 +58,9 @@ import org.archive.crawler.settings.Type;
  */
 public class LinksScoper extends Scoper
 implements FetchStatusCodes {
+
+    private static final long serialVersionUID = -4074442117992496793L;
+
     private static Logger LOGGER =
         Logger.getLogger(LinksScoper.class.getName());
 
@@ -143,8 +146,8 @@ implements FetchStatusCodes {
             ATTR_SEED_REDIRECTS_NEW_SEEDS)).booleanValue();
         int preferenceDepthHops = ((Integer)getUncheckedAttribute(curi,
             ATTR_PREFERENCE_DEPTH_HOPS)).intValue();
-        Collection inScopeLinks = new HashSet();
-        for (final Iterator i = curi.getOutLinks().iterator(); i.hasNext();) {
+        Collection<CandidateURI> inScopeLinks = new HashSet<CandidateURI>();
+        for (final Iterator i = curi.getOutObjects().iterator(); i.hasNext();) {
             Object o = i.next();
             if(o instanceof Link){
                 final Link wref = (Link)o;

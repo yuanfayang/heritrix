@@ -51,6 +51,9 @@ import org.archive.net.UURIFactory;
  * @author gojomo
  */
 public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats {
+
+    private static final long serialVersionUID = -989714570750970369L;
+
     public static final long ROBOTS_NOT_FETCHED = -1;
     /** only check if robots-fetch is perhaps superfluous 
      * after this many tries */
@@ -73,7 +76,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
     /**
      * Set of credential avatars.
      */
-    private transient Set avatars =  null;
+    private transient Set<CredentialAvatar> avatars =  null;
 
     /**
      * Creates a new CrawlServer object.
@@ -314,7 +317,7 @@ public class CrawlServer implements Serializable, CrawlSubstats.HasCrawlSubstats
      */
     public void addCredentialAvatar(CredentialAvatar ca) {
         if (this.avatars == null) {
-            this.avatars = new HashSet();
+            this.avatars = new HashSet<CredentialAvatar>();
         }
         this.avatars.add(ca);
     }

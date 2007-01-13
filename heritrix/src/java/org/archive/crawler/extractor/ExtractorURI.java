@@ -26,11 +26,8 @@
 
 package org.archive.crawler.extractor;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,14 +35,10 @@ import java.util.regex.Matcher;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.httpclient.URIException;
-import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
 import org.archive.crawler.datamodel.CrawlURI;
-import org.archive.crawler.framework.CrawlController;
-import org.archive.io.ReplayCharSequence;
 import org.archive.net.LaxURLCodec;
 import org.archive.net.UURI;
-import org.archive.util.DevUtils;
 import org.archive.util.TextUtils;
 
 /**
@@ -63,6 +56,9 @@ import org.archive.util.TextUtils;
  **/
 
 public class ExtractorURI extends Extractor implements CoreAttributeConstants {
+
+    private static final long serialVersionUID = -6273897743240970822L;
+
     private static Logger LOGGER =
         Logger.getLogger(ExtractorURI.class.getName());
 
@@ -92,14 +88,10 @@ public class ExtractorURI extends Extractor implements CoreAttributeConstants {
 
         this.numberOfCURIsHandled++;
         // use array copy because discoveriess will add to outlinks
-        Object[] sourceLinks = curi.getOutLinks().toArray();
-        for (Object o : sourceLinks) {
-            if(o instanceof Link) {
-                final Link wref = (Link)o;
-                extractLink(curi,wref);
-            } else {
-                LOGGER.severe("Unexpected type: " + o);
-            }
+        Collection<Link> links = curi.getOutLinks();
+        Link[] sourceLinks = links.toArray(new Link[links.size()]);
+        for (Link wref: sourceLinks) {
+            extractLink(curi,wref);
         }
     }
 

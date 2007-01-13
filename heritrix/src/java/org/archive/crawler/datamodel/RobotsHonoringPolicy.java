@@ -62,6 +62,9 @@ import org.archive.crawler.settings.TextField;
  *
  */
 public class RobotsHonoringPolicy  extends ModuleType {
+
+    private static final long serialVersionUID = 8850011643923116605L;
+
     private static Logger logger =
         Logger.getLogger("org.archive.crawler.datamodel.RobotsHonoringPolicy");
 

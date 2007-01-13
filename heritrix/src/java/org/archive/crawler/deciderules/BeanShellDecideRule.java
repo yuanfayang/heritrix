@@ -33,7 +33,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.settings.SimpleType;
-import org.archive.crawler.settings.TextField;
 import org.archive.crawler.settings.Type;
 
 import bsh.EvalError;
@@ -55,6 +54,9 @@ import bsh.Interpreter;
  * @author gojomo
  */
 public class BeanShellDecideRule extends DecideRule {
+
+    private static final long serialVersionUID = -8433859929199308527L;
+
     private static final Logger logger =
         Logger.getLogger(BeanShellDecideRule.class.getName());
     
@@ -68,7 +70,8 @@ public class BeanShellDecideRule extends DecideRule {
     protected ThreadLocal<Interpreter> threadInterpreter = 
         new ThreadLocal<Interpreter>();;
     protected Interpreter sharedInterpreter;
-    public Map sharedMap = Collections.synchronizedMap(new HashMap());
+    public Map<Object,Object> sharedMap = 
+        Collections.synchronizedMap(new HashMap<Object,Object>());
     protected boolean initialized = false; 
     
     public BeanShellDecideRule(String name) {

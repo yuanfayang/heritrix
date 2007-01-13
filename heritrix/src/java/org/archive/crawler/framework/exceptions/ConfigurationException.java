@@ -35,6 +35,8 @@ import org.archive.crawler.framework.exceptions.InitializationException;
  */
 public class ConfigurationException extends InitializationException {
 
+    private static final long serialVersionUID = -9078913414698851380L;
+
     // optionally store the file name and element so the catcher
     // can report the information and/or take other actions based on it
     protected String file = null;

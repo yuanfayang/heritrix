@@ -24,7 +24,6 @@
 package org.archive.crawler.util;
 
 import java.io.Serializable;
-import java.util.logging.Logger;
 
 import org.archive.util.ArchiveUtils;
 import org.archive.util.fingerprint.LongFPSet;
@@ -46,8 +45,8 @@ implements Serializable {
     private static final long serialVersionUID =
         ArchiveUtils.classnameBasedUID(FPUriUniqFilter.class, 1);
     
-    private static Logger logger =
-        Logger.getLogger(FPUriUniqFilter.class.getName());
+//    private static Logger logger =
+//        Logger.getLogger(FPUriUniqFilter.class.getName());
     
     private LongFPSet fpset;
     private transient FPGenerator fpgen = FPGenerator.std64;

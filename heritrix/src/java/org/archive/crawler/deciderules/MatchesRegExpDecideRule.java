@@ -41,6 +41,9 @@ import org.archive.util.TextUtils;
  * @author gojomo
  */
 public class MatchesRegExpDecideRule extends PredicatedDecideRule {
+
+    private static final long serialVersionUID = 6441410917074319295L;
+
     private static final Logger logger =
         Logger.getLogger(MatchesRegExpDecideRule.class.getName());
     

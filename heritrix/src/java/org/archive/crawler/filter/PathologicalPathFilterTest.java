@@ -28,6 +28,8 @@ import junit.framework.TestCase;
 
 /**
  * @author John Erik Halse
+ * @deprecated  The tested class is deprecated, so this test will
+ * eventually go away.
  */
 public class PathologicalPathFilterTest extends TestCase {
     public final void testAccepts() {

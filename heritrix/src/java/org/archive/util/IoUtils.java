@@ -25,13 +25,19 @@ package org.archive.util;
 import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * I/O Utility methods.
@@ -39,6 +45,9 @@ import java.util.List;
  * @version $Date$, $Revision$
  */
 public class IoUtils {
+    protected static Logger logger =
+        Logger.getLogger(IoUtils.class.getName());
+    
     /**
      * @param file File to operate on.
      * @return Path suitable for use getting resources off the CLASSPATH
@@ -88,10 +97,10 @@ public class IoUtils {
      * @exception IOException If passed directory does not exist and is not
      * createable, or directory is not writeable or is not a directory.
      */
-    public static List ensureWriteableDirectory(List dirs)
+    public static List ensureWriteableDirectory(List<File> dirs)
     throws IOException {
-        for (Iterator i = dirs.iterator(); i.hasNext();) {
-             ensureWriteableDirectory((File)i.next());
+        for (Iterator<File> i = dirs.iterator(); i.hasNext();) {
+             ensureWriteableDirectory(i.next());
         }
         return dirs;
     }
@@ -195,5 +204,52 @@ public class IoUtils {
         IOException ioe = new IOException(e.toString());
         ioe.initCause(e);
         return ioe;
+    }
+    
+    
+    public static void readFully(InputStream input, byte[] buf) 
+    throws IOException {
+        int max = buf.length;
+        int ofs = 0;
+        while (ofs < max) {
+            int l = input.read(buf, ofs, max - ofs);
+            if (l == 0) {
+                throw new EOFException();
+            }
+            ofs += l;
+        }
+    }
+    
+    /**
+     * Return the maximum number of bytes per character in the named
+     * encoding, or 0 if encoding is invalid or unsupported. 
+     *
+     * @param encoding Encoding to consider.  For now, should be java 
+     * canonical name for the encoding.
+     *
+     * @return True if multibyte encoding.
+     */
+    public static float encodingMaxBytesPerChar(String encoding) {
+        boolean isMultibyte = false;
+        final Charset cs;
+        try {
+            if (encoding != null && encoding.length() > 0) {
+                cs = Charset.forName(encoding);
+                if(cs.canEncode()) {
+                    return cs.newEncoder().maxBytesPerChar();
+                } else {
+                    logger.info("Encoding not fully supported: " + encoding
+                            + ".  Defaulting to single byte.");
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            // Unsupported encoding
+            logger.log(Level.INFO,"Illegal encoding name: " + encoding,e);
+        }
+
+        logger.fine("Encoding " + encoding + " is multibyte: "
+            + ((isMultibyte) ? Boolean.TRUE : Boolean.FALSE));
+        // default: return 0
+        return 0;
     }
 }

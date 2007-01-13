@@ -259,11 +259,11 @@ implements ARCConstants {
     private int getTokenizedHeaderLine(final InputStream stream,
             List<String> list) throws IOException {
         // Preallocate usual line size.
-        // TODO: Replace StringBuffer with more lightweight.  We burn
-        // alot of our parse CPU in this method.
-        StringBuffer buffer = new StringBuffer(2048 + 20);
+        StringBuilder buffer = new StringBuilder(2048 + 20);
         int read = 0;
+        int previous = -1;
         for (int c = -1; true;) {
+        	previous = c;
             c = stream.read();
             if (c == -1) {
                 throw new RecoverableIOException("Hit EOF before header EOL.");
@@ -291,10 +291,15 @@ implements ARCConstants {
                 // LOOP TERMINATION.
                 break;
             } else if (c == HEADER_FIELD_SEPARATOR) {
+            	if (!isStrict() && previous == HEADER_FIELD_SEPARATOR) {
+            		// Early ARCs sometimes had multiple spaces between fields.
+            		continue;
+            	}
                 if (list != null) {
                     list.add(buffer.toString());
                 }
-                buffer = new StringBuffer();
+                // reset to empty
+                buffer.setLength(0);
             } else {
                 buffer.append((char)c);
             }
@@ -330,13 +335,30 @@ implements ARCConstants {
             List<String> originalValues = values;
             if (!isStrict()) {
                 values = fixSpaceInMetadataLine(values, keys.size());
-            }
+                // If values still doesn't match key size, try and do
+                // further repair.
+	            if (keys.size() != values.size()) {
+	            	// Early ARCs had a space in mimetype.
+	            	if (values.size() == (keys.size() + 1) &&
+	            			values.get(4).toLowerCase().startsWith("charset=")) {
+	            		List<String> nuvalues =
+	            			new ArrayList<String>(keys.size());
+	            		nuvalues.add(0, values.get(0));
+	            		nuvalues.add(1, values.get(1));
+	            		nuvalues.add(2, values.get(2));
+	            		nuvalues.add(3, values.get(3) + values.get(4));
+	            		nuvalues.add(4, values.get(5));
+	            		values = nuvalues;
+	            	}
+	            }
+        	}
             if (keys.size() != values.size()) {
                 throw new IOException("Size of field name keys does" +
                     " not match count of field values: " + values);
             }
             // Note that field was fixed on stderr.
-            logStdErr(Level.WARNING, "Fixed spaces in metadata URL." +
+            logStdErr(Level.WARNING, "Fixed spaces in metadata line at " +
+            	"offset " + offset +
                 " Original: " + originalValues + ", New: " + values);
         }
         
@@ -447,26 +469,35 @@ implements ARCConstants {
 	protected boolean output(final String format) 
 	throws IOException, java.text.ParseException {
 		boolean result = super.output(format);
-		if(!result && format.equals(NOHEAD)) {
+		if(!result && (format.equals(NOHEAD) || format.equals(HEADER))) {
 			throw new IOException(format +
-				" only supported for single Records");
+				" format only supported for single Records");
 		}
 		return result;
 	}
     
-    protected boolean outputRecord(final String format)
-    throws IOException {
-    	boolean result = super.outputRecord(format);
-    	if(!result && format.equals(NOHEAD)) {
-            // No point digesting if dumping content.
-            setDigest(false);
-            ARCRecord r = (ARCRecord)get();
-            r.skipHttpHeader();
-            r.dump();
-            result = true;
-        }
-        return result;
-    }
+    protected boolean outputRecord(final String format) throws IOException {
+		boolean result = super.outputRecord(format);
+		if (result) {
+			return result;
+		}
+		if (format.equals(NOHEAD)) {
+			// No point digesting if dumping content.
+			setDigest(false);
+			ARCRecord r = (ARCRecord) get();
+			r.skipHttpHeader();
+			r.dump();
+			result = true;
+		} else if (format.equals(HEADER)) {
+			// No point digesting if dumping content.
+			setDigest(false);
+			ARCRecord r = (ARCRecord) get();
+			r.dumpHttpHeader();
+			result = true;
+		}
+
+		return result;
+	}
 
     public void dump(final boolean compress)
     throws IOException, java.text.ParseException {
@@ -505,6 +536,99 @@ implements ARCConstants {
         // System.out.println(System.currentTimeMillis() - start);
     }
     
+    /**
+     * @return an ArchiveReader that will delete a local file on close.  Used
+     * when we bring Archive files local and need to clean up afterward.
+     */
+    public ARCReader getDeleteFileOnCloseReader(final File f) {
+        final ARCReader d = this;
+        return new ARCReader() {
+            private final ARCReader delegate = d;
+            private File archiveFile = f;
+            
+            public void close() throws IOException {
+                this.delegate.close();
+                if (this.archiveFile != null) {
+                    if (archiveFile.exists()) {
+                        archiveFile.delete();
+                    }
+                    this.archiveFile = null;
+                }
+            }
+            
+            public ArchiveRecord get(long o) throws IOException {
+                return this.delegate.get(o);
+            }
+            
+            public boolean isDigest() {
+                return this.delegate.isDigest();
+            }
+            
+            public boolean isStrict() {
+                return this.delegate.isStrict();
+            }
+            
+            public Iterator<ArchiveRecord> iterator() {
+                return this.delegate.iterator();
+            }
+            
+            public void setDigest(boolean d) {
+                this.delegate.setDigest(d);
+            }
+            
+            public void setStrict(boolean s) {
+                this.delegate.setStrict(s);
+            }
+            
+            public List validate() throws IOException {
+                return this.delegate.validate();
+            }
+
+            @Override
+            public ArchiveRecord get() throws IOException {
+                return this.delegate.get();
+            }
+
+            @Override
+            public String getVersion() {
+                return this.delegate.getVersion();
+            }
+
+            @Override
+            public List validate(int noRecords) throws IOException {
+                return this.delegate.validate(noRecords);
+            }
+
+            @Override
+            protected ARCRecord createArchiveRecord(InputStream is,
+                    long offset)
+            throws IOException {
+                return this.delegate.createArchiveRecord(is, offset);
+            }
+
+            @Override
+            protected void gotoEOR(ArchiveRecord record) throws IOException {
+                this.delegate.gotoEOR(record);
+            }
+
+            @Override
+            public void dump(boolean compress)
+            throws IOException, java.text.ParseException {
+                this.delegate.dump(compress);
+            }
+
+            @Override
+            public String getDotFileExtension() {
+                return this.delegate.getDotFileExtension();
+            }
+
+            @Override
+            public String getFileExtension() {
+                return this.delegate.getFileExtension();
+            }
+        };
+    }
+    
     // Static methods follow.
 
     /**
@@ -517,7 +641,7 @@ implements ARCConstants {
             int exitCode) {
         formatter.printHelp("java org.archive.io.arc.ARCReader" +
             " [--digest=true|false] \\\n" +
-            " [--format=cdx|cdxfile|dump|gzipdump|nohead]" +
+            " [--format=cdx|cdxfile|dump|gzipdump|header|nohead]" +
             " [--offset=#] \\\n[--strict] [--parse] ARC_FILE|ARC_URL",
                 options);
         System.exit(exitCode);
@@ -607,8 +731,8 @@ implements ARCConstants {
         options.addOption(new Option("p","parse", true,
         	"Pass true|false to parse HTTP Headers. Default: false."));
         options.addOption(new Option("f","format", true,
-            "Output options: 'cdx', cdxfile', 'dump', 'gzipdump'," +
-            "'or 'nohead'. Default: 'cdx'."));
+            "Output options: 'cdx', 'cdxfile', 'dump', 'gzipdump', " +
+            "'header', or 'nohead'. Default: 'cdx'."));
         PosixParser parser = new PosixParser();
         CommandLine cmdline = parser.parse(options, args, false);
         List cmdlineArgs = cmdline.getArgList();
@@ -654,7 +778,7 @@ implements ARCConstants {
                     boolean match = false;
                     // List of supported formats.
                     final String [] supportedFormats =
-                		{CDX, DUMP, GZIP_DUMP, NOHEAD, CDX_FILE};
+                		{CDX, DUMP, GZIP_DUMP, HEADER, NOHEAD, CDX_FILE};
                     for (int ii = 0; ii < supportedFormats.length; ii++) {
                         if (supportedFormats[ii].equals(format)) {
                             match = true;
@@ -677,9 +801,13 @@ implements ARCConstants {
                 System.out.println("Error: Pass one arcfile only.");
                 usage(formatter, options, 1);
             }
-            ARCReader arc = ARCReaderFactory.get(
-            	new File((String)cmdlineArgs.get(0)), offset);
+            ARCReader arc = ARCReaderFactory.get((String)cmdlineArgs.get(0),
+            	offset);
             arc.setStrict(strict);
+            // We must parse headers if we need to skip them.
+            if (format.equals(NOHEAD) || format.equals(HEADER)) {
+                parse = true;
+            }
             arc.setParseHttpHeaders(parse);
             outputRecord(arc, format);
         } else {
