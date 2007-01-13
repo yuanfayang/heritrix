@@ -29,6 +29,9 @@ package org.archive.io;
  * @author Gordon Mohr
  */
 public class RecorderTimeoutException extends RecorderIOException {
+
+    private static final long serialVersionUID = 7433214063765078269L;
+
     public RecorderTimeoutException() {
         super();
     }

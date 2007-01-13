@@ -45,7 +45,7 @@ public class BadURIsStopPageParsingSelfTest extends SelfTestCase
      * We don't find goodtwo.html because it has a BASE that is out
      * of scope.
      */
-    private static final List FILES_TO_FIND =
+    private static final List<File> FILES_TO_FIND =
         Arrays.asList(new File[]
             {new File("goodone.html"),
                 new File("goodthree.html"),
@@ -54,8 +54,9 @@ public class BadURIsStopPageParsingSelfTest extends SelfTestCase
                 new File("three.html")});
 
     public void testFilesFound() {
-        List foundFiles = filesFoundInArc();
-        ArrayList editedFoundFiles = new ArrayList(foundFiles.size());
+        List<File> foundFiles = filesFoundInArc();
+        ArrayList<File> editedFoundFiles
+         = new ArrayList<File>(foundFiles.size());
         for (Iterator i = foundFiles.iterator(); i.hasNext();) {
             File f = (File)i.next();
             if (f.getAbsolutePath().endsWith("polishex.html")) {

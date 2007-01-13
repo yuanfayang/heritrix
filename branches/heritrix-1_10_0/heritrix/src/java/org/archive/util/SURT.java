@@ -72,12 +72,15 @@ public class SURT {
     // 1: scheme://
     // 2: userinfo (if present)
     // 3: @ (if present)
-    // 4: host
-    // 5: :port
-    // 6: path
+    // 4: dotted-quad host
+    // 5: other host
+    // 6: :port
+    // 7: path
     static String URI_SPLITTER = 
-            "^(\\w+://)(?:([-\\w\\.!~\\*'\\(\\)%;:&=+$,]+?)(@))?(\\S+?)(:\\d+)?(/\\S*)?$";
-    //        1           2                                 3   4      5       6
+            "^(\\w+://)(?:([-\\w\\.!~\\*'\\(\\)%;:&=+$,]+?)(@))?"+
+    //        1           2                                 3    
+            "(?:((?:\\d{1,3}\\.){3}\\d{1,3})|(\\S+?))(:\\d+)?(/\\S*)?$";
+    //           4                            5       6       7
     
     // RFC2396 
     //       reserved    = ";" | "/" | "?" | ":" | "@" | "&" | "=" | "+" |
@@ -117,25 +120,31 @@ public class SURT {
         // 3 extra characters ('(', ')', and one more ',' than '.'s
         // in original)
         StringBuffer builder = new StringBuffer(s.length()+3);
-        PreJ15Utils.append(builder,s,m.start(1),m.end(1)); // scheme://
+        append(builder,s,m.start(1),m.end(1)); // scheme://
         builder.append(BEGIN_TRANSFORMED_AUTHORITY); // '('
         
-        int hostSegEnd = m.end(4);
-        int hostStart = m.start(4); 
-        for(int i = m.end(4)-1; i>=hostStart; i--) {
-            if(s.charAt(i-1)!=DOT && i > hostStart) {
-                continue;
+        if(m.start(4)>-1) {
+            // dotted-quad ip match: don't reverse
+            append(builder,s,m.start(4),m.end(4));
+        } else {
+            // other hostname match: do reverse
+            int hostSegEnd = m.end(5);
+            int hostStart = m.start(5); 
+            for(int i = m.end(5)-1; i>=hostStart; i--) {
+                if(s.charAt(i-1)!=DOT && i > hostStart) {
+                    continue;
+                }
+                append(builder,s,i,hostSegEnd); // rev host segment
+                builder.append(TRANSFORMED_HOST_DELIM);     // ','
+                hostSegEnd = i-1;
             }
-            PreJ15Utils.append(builder,s,i,hostSegEnd); // rev host segment
-            builder.append(TRANSFORMED_HOST_DELIM);     // ','
-            hostSegEnd = i-1;
         }
 
-        PreJ15Utils.append(builder,s,m.start(5),m.end(5)); // :port
-        PreJ15Utils.append(builder,s,m.start(3),m.end(3)); // at
-        PreJ15Utils.append(builder,s,m.start(2),m.end(2)); // userinfo
+        append(builder,s,m.start(6),m.end(6)); // :port
+        append(builder,s,m.start(3),m.end(3)); // at
+        append(builder,s,m.start(2),m.end(2)); // userinfo
         builder.append(END_TRANSFORMED_AUTHORITY); // ')'
-        PreJ15Utils.append(builder,s,m.start(6),m.end(6)); // path
+        append(builder,s,m.start(7),m.end(7)); // path
         for(int i = 0; i < builder.length(); i++) {
             builder.setCharAt(i,Character.toLowerCase(builder.charAt((i))));
         }
@@ -143,10 +152,14 @@ public class SURT {
         return builder.toString();
     }
     
-    private static String emptyIfNull(String string) {
-        return string == null ? "" : string;
+    private static void append(StringBuffer b, CharSequence cs, int start, 
+            int end) {
+        if (start < 0) {
+            return;
+        }
+        b.append(cs, start, end);
     }
-    
+        
     /**
      * Allow class to be used as a command-line tool for converting 
      * URL lists (or naked host or host/path fragments implied

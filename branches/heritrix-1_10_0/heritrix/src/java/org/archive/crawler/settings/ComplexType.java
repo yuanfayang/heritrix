@@ -76,8 +76,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     private transient ComplexType parent;
     private String description;
     private String absoluteName;
-    private final List definition = new ArrayList();
-    protected final Map definitionMap = new HashMap();
+    private final List<Type> definition = new ArrayList<Type>();
+    protected final Map<String,Type> definitionMap = new HashMap<String,Type>();
     private boolean initialized = false;
     private String[] preservedFields = new String[0];
 
@@ -992,7 +992,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     */
    private class AttributeIterator implements Iterator {
        private Context context;
-       private Stack attributeStack = new Stack();
+       private Stack<Iterator<MBeanAttributeInfo>> attributeStack
+        = new Stack<Iterator<MBeanAttributeInfo>>();
        private Iterator currentIterator;
 
        public AttributeIterator(Object ctxt) {
@@ -1048,7 +1049,8 @@ public abstract class ComplexType extends Type implements DynamicMBean {
     */
    public class MBeanAttributeInfoIterator implements Iterator {
        private Context context;
-       private Stack attributeStack = new Stack();
+       private Stack<Iterator<MBeanAttributeInfo>> attributeStack
+        = new Stack<Iterator<MBeanAttributeInfo>>();
        private Iterator currentIterator;
        private int attributeCount = 0;
 

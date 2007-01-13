@@ -27,6 +27,7 @@ import org.apache.commons.pool.impl.GenericKeyedObjectPool.ObjectTimestampPair;
  * @author Gordon Mohr
  * @version $Revision$ $Date$
  */
+@SuppressWarnings("unchecked")
 public class FairGenericObjectPool extends GenericObjectPool {
 
     //--- constructors -----------------------------------------------

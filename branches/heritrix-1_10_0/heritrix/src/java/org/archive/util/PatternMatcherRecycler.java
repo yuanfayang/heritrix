@@ -46,11 +46,11 @@ public class PatternMatcherRecycler {
     private final static int MAXIMUM_STACK_SIZE = 10;
     
     private Pattern pattern;
-    private Stack matchers;
+    private Stack<Matcher> matchers;
 
     public PatternMatcherRecycler(Pattern p) {
         this.pattern = p;
-        this.matchers = new Stack();
+        this.matchers = new Stack<Matcher>();
     }
 
     public Pattern getPattern() {

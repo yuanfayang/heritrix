@@ -32,6 +32,9 @@ package org.archive.io;
  */
 public class RecorderTooMuchHeaderException
 extends RecorderIOException {
+
+    private static final long serialVersionUID = 3528516034898129150L;
+
     public RecorderTooMuchHeaderException() {
         super();
     }

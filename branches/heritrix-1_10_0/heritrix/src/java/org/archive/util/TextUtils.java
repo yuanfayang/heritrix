@@ -40,9 +40,10 @@ public class TextUtils {
      */
     private static final int MAX_ENTITY_WIDTH = 9;
     
-    private static final ThreadLocal TL_MATCHER_MAP = new ThreadLocal() {
-        protected Object initialValue() {
-            return new HashMap(50);
+    private static final ThreadLocal<Map<String,Matcher>> TL_MATCHER_MAP
+     = new ThreadLocal<Map<String,Matcher>>() {
+        protected Map<String,Matcher> initialValue() {
+            return new HashMap<String,Matcher>(50);
         }
     };
 
@@ -66,7 +67,7 @@ public class TextUtils {
         if (pattern == null) {
             throw new IllegalArgumentException("String 'pattern' must not be null");
         }
-        final Map matchers = (Map)TL_MATCHER_MAP.get();
+        final Map<String,Matcher> matchers = TL_MATCHER_MAP.get();
         Matcher m = (Matcher)matchers.get(pattern);
         if(m == null) {
             m = Pattern.compile(pattern).matcher(input);
@@ -78,7 +79,7 @@ public class TextUtils {
     }
 
     public static void recycleMatcher(Matcher m) {
-        final Map matchers = (Map)TL_MATCHER_MAP.get();
+        final Map<String,Matcher> matchers = TL_MATCHER_MAP.get();
         matchers.put(m.pattern().pattern(),m);
     }
     

@@ -27,8 +27,9 @@ import java.net.InetAddress;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Record;
+import org.xbill.DNS.TextParseException;
 import org.xbill.DNS.Type;
-import org.xbill.DNS.dns;
+import org.xbill.DNS.Lookup;;
 
 /**
  * Utility methods based on DNSJava.
@@ -57,7 +58,12 @@ public class DNSJavaUtil {
         }
         
         // Ask dnsjava for the inetaddress.  Should be in its cache.
-        Record[] rrecordSet = dns.getRecords(host, Type.A, DClass.IN);
+        Record[] rrecordSet;
+        try {
+            rrecordSet = (new Lookup(host, Type.A, DClass.IN)).run();
+        } catch (TextParseException e) {
+            rrecordSet = null;
+        }
         if (rrecordSet != null) {
             // Get TTL and IP info from the first A record (there may be
             // multiple, e.g. www.washington.edu).

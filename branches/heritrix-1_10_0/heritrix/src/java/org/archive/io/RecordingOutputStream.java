@@ -32,6 +32,8 @@ import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.archive.util.IoUtils;
+
 
 /**
  * An output stream that records all writes to wrapped output
@@ -343,12 +345,18 @@ public class RecordingOutputStream extends OutputStream {
     }
 
     public ReplayInputStream getReplayInputStream() throws IOException {
+        return getReplayInputStream(0);
+    }
+    
+    public ReplayInputStream getReplayInputStream(long skip) throws IOException {
         // If this method is being called, then assumption must be that the
         // stream is closed. If it ain't, then the stream gotten won't work
         // -- the size will zero so any attempt at a read will get back EOF.
         assert this.out == null: "Stream is still open.";
-        return new ReplayInputStream(this.buffer, this.size,
-            this.contentBeginMark, this.backingFilename);
+        ReplayInputStream replay = new ReplayInputStream(this.buffer, 
+                this.size, this.contentBeginMark, this.backingFilename);
+        replay.skip(skip);
+        return replay; 
     }
 
     /**
@@ -358,9 +366,7 @@ public class RecordingOutputStream extends OutputStream {
      * @return An RIS.
      */
     public ReplayInputStream getContentReplayInputStream() throws IOException {
-        ReplayInputStream replay = getReplayInputStream();
-        replay.skip(this.contentBeginMark);
-        return replay;
+        return getReplayInputStream(this.contentBeginMark);
     }
 
     public long getSize() {
@@ -448,18 +454,52 @@ public class RecordingOutputStream extends OutputStream {
         return getReplayCharSequence(null);
     }
 
+    public ReplayCharSequence getReplayCharSequence(String characterEncoding) 
+    throws IOException {
+        return getReplayCharSequence(characterEncoding, this.contentBeginMark);
+    }
+    
     /**
      * @param characterEncoding Encoding of recorded stream.
      * @return A ReplayCharSequence  Will return null if an IOException.  Call
      * close on returned RCS when done.
      * @throws IOException
      */
-    public ReplayCharSequence getReplayCharSequence(String characterEncoding)
-    		throws IOException {
-        return ReplayCharSequenceFactory.getInstance().
-        	getReplayCharSequence(this.buffer, this.size,
-        	        this.contentBeginMark, this.backingFilename,
-                    characterEncoding);
+    public ReplayCharSequence getReplayCharSequence(String characterEncoding, 
+            long startOffset) throws IOException {
+        // TODO: handled transfer-encoding: chunked content-bodies properly
+        float maxBytesPerChar = IoUtils.encodingMaxBytesPerChar(characterEncoding);
+        if(maxBytesPerChar<=1) {
+            // single
+            // TODO: take into account single-byte encoding may be non-default
+            return new ByteReplayCharSequence(
+                    this.buffer, 
+                    this.size, 
+                    startOffset,
+                    this.backingFilename);
+        } else {
+            // multibyte 
+            if(this.size <= this.buffer.length) {
+                // raw data is all in memory; do in memory
+                return new MultiByteReplayCharSequence(
+                        this.buffer, 
+                        this.size, 
+                        startOffset,
+                        characterEncoding);
+                
+            } else {
+                // raw data overflows to disk; use temp file
+                ReplayInputStream ris = getReplayInputStream(startOffset);
+                ReplayCharSequence rcs = new MultiByteReplayCharSequence(
+                        ris, 
+                        this.backingFilename,
+                        characterEncoding);
+                ris.close(); 
+                return rcs;
+            }
+            
+        }
+        
     }
 
     public long getResponseContentLength() {

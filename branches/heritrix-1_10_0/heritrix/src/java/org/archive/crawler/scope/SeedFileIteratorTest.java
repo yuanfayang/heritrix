@@ -61,11 +61,11 @@ public class SeedFileIteratorTest extends TestCase {
         StringWriter ignored = new StringWriter();
         SeedFileIterator iter = new SeedFileIterator(new BufferedReader(
                 new StringReader(seedFile)), new BufferedWriter(ignored));
-        LinkedList seeds = new LinkedList();
+        LinkedList<String> seeds = new LinkedList<String>();
         while (iter.hasNext()) {
-            Object n = iter.next();
+            UURI n = iter.next();
             if (n instanceof UURI) {
-                seeds.add(((UURI)n).getURI());
+                seeds.add(n.getURI());
             }
         }
         assertTrue("didn't get naked host", seeds

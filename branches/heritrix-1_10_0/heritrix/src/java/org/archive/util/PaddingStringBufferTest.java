@@ -131,9 +131,8 @@ public class PaddingStringBufferTest extends TestCase {
 
     /** test the newline() */
     public void testNewline(){
-        PaddingStringBuffer retBuf;
         assertEquals("nothing should be in the buffer", "", buf.toString());
-        retBuf = buf.newline();
+        buf.newline();
         assertTrue("should contain newline", buf.toString().indexOf('\n')!=-1);
         assertEquals("line position should be 0",0,buf.linePos);
     }

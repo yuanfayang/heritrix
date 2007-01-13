@@ -45,7 +45,8 @@ import org.archive.crawler.settings.MapType;
  */
 public class ProcessorChainList {
     private List<ProcessorChain> chainList = new ArrayList<ProcessorChain>();
-    private Map chainMap = new HashMap();
+    private Map<String,ProcessorChain> chainMap
+     = new HashMap<String,ProcessorChain>();
 
     /** Constructs a new ProcessorChainList.
      *

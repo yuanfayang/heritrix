@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -88,6 +89,9 @@ import org.archive.util.IoUtils;
 */
 public class MirrorWriterProcessor
 extends Processor implements CoreAttributeConstants {
+
+    private static final long serialVersionUID = 301407556928389168L;
+
     /**
      * Key to use asking settings for case sensitive option.
      */
@@ -176,7 +180,8 @@ extends Processor implements CoreAttributeConstants {
     private static final String DEFAULT_TOO_LONG_DIRECTORY = "LONG";
 
     /** An empty Map.*/
-    private static final Map EMPTY_MAP = new TreeMap();
+    private static final Map<String,String> EMPTY_MAP
+     = Collections.unmodifiableMap(new TreeMap<String,String>());
 
     /**
        Regular expression matching a file system path segment.
@@ -447,10 +452,10 @@ extends Processor implements CoreAttributeConstants {
             StringList hostMap = (StringList) getAttribute(ATTR_HOST_MAP, curi);
             if ((null != hostMap) && (hostMap.size() > 1)) {
                 ensurePairs(hostMap);
-                Iterator i = hostMap.iterator();
+                Iterator<String> i = hostMap.typesafe().iterator();
                 for (boolean more = true; more && i.hasNext();) {
-                    String h1 = (String) i.next();
-                    String h2 = (String) i.next();
+                    String h1 = i.next();
+                    String h2 = i.next();
                     if (host.equalsIgnoreCase(h1)) {
                         more = false;
                         if ((null != h2) && (0 != h2.length())) {
@@ -496,11 +501,12 @@ extends Processor implements CoreAttributeConstants {
             maxPathLen = DEFAULT_MAX_PATH_LEN;
         }
 
-        Map characterMap = EMPTY_MAP;
+        Map<String,String> characterMap = EMPTY_MAP;
         StringList cm = (StringList) getAttribute(ATTR_CHAR_MAP, curi);
         if ((null != cm) && (cm.size() > 1)) {
             ensurePairs(cm);
-            characterMap = new HashMap(cm.size()); // Will be half full.
+            characterMap = new HashMap<String,String>(cm.size()); 
+            // Above will be half full.
             for (Iterator i = cm.iterator(); i.hasNext();) {
                 String s1 = (String) i.next();
                 String s2 = (String) i.next();
@@ -527,12 +533,11 @@ extends Processor implements CoreAttributeConstants {
             tld = DEFAULT_TOO_LONG_DIRECTORY;
         }
 
-        Set underscoreSet = null;
+        Set<String> underscoreSet = null;
         StringList us = (StringList) getAttribute(ATTR_UNDERSCORE_SET, curi);
         if ((null != us) && (0 != us.size())) {
-            underscoreSet = new HashSet(us.size(), 0.5F);
-            for (Iterator i = us.iterator(); i.hasNext();) {
-                String s = (String) i.next();
+            underscoreSet = new HashSet<String>(us.size(), 0.5F);
+            for (String s: us.typesafe()) {
                 if ((null != s) && (0 != s.length())) {
                     underscoreSet.add(s.toLowerCase());
                 }

@@ -24,10 +24,8 @@
  */
 package org.archive.io;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 
@@ -39,9 +37,9 @@ import java.io.OutputStream;
  *
  * @author gojomo
  */
-public class ReplayInputStream extends InputStream
+public class ReplayInputStream extends SeekInputStream
 {
-    private BufferedInputStream diskStream;
+    private BufferedSeekInputStream diskStream;
     private byte[] buffer;
     private long position;
 
@@ -56,16 +54,6 @@ public class ReplayInputStream extends InputStream
      * Where the response body starts, if marked
      */
     protected long responseBodyStart = -1;
-
-    /**
-     * The position the last time {@link #mark(int)} was called.
-     */
-    private long markpos = -1;
-
-    /**
-     * The readlimit passed the last time mark was called.
-     */
-    private long readlimit = -1;
 
 
     /**
@@ -106,17 +94,17 @@ public class ReplayInputStream extends InputStream
         this.buffer = buffer;
         this.size = size;
         if (size > buffer.length) {
-            FileInputStream fis = new FileInputStream(backingFilename);
-            // Cannot use FastBufferedInputStream because it does not
-            // support marking of the stream.
-            diskStream = new BufferedInputStream(fis, 4096);
+            RandomAccessInputStream rais = new RandomAccessInputStream(
+                    new File(backingFilename));
+            diskStream = new BufferedSeekInputStream(rais, 4096);
         }
     }
 
-    public long setToResponseBodyStart() {
-        this.position = responseBodyStart;
+    public long setToResponseBodyStart() throws IOException {
+        position(responseBodyStart);
         return this.position;
     }
+    
 
     /* (non-Javadoc)
      * @see java.io.InputStream#read()
@@ -183,34 +171,6 @@ public class ReplayInputStream extends InputStream
         }
     }
 
-    public synchronized void mark(int limit) {
-        this.readlimit = limit;
-        this.markpos = this.position;
-    }
-
-    public boolean markSupported() {
-        return true;
-    }
-
-    /* (non-Javadoc)
-     * @see java.io.InputStream#reset()
-     */
-    public synchronized void reset()
-        throws IOException
-    {
-        if (this.markpos == -1)
-        {
-            throw new IOException("Mark has not been called (markpos == -1).");
-        }
-
-        // Adhere to the InputStream.reset contract -- only reset if we're
-        // w/i readlimit.
-        if ((this.markpos - this.position) < this.readlimit)
-        {
-            this.position = markpos;
-        }
-    }
-
     /**
      * Total size of stream content.
      * @return Returns the size.
@@ -226,5 +186,35 @@ public class ReplayInputStream extends InputStream
      */
     public long remaining() {
         return size - position;
+    }
+    
+
+    /**
+     * Reposition the stream.
+     * 
+     * @param p  the new position for this stream
+     * @throws IOException  if an IO error occurs
+     */
+    public void position(long p) throws IOException {
+        if (p < 0) {
+            throw new IOException("Negative seek offset.");
+        }
+        if (p >= size) {
+            throw new IOException("Desired position exceeds size.");
+        }
+        if (p < buffer.length) {
+            // Only seek file if necessary
+            if (position > buffer.length) {
+                diskStream.position(0);
+            }
+        } else {
+            diskStream.position(p - buffer.length);
+        }
+        this.position = p;
+    }
+    
+    
+    public long position() throws IOException {
+        return position;
     }
 }

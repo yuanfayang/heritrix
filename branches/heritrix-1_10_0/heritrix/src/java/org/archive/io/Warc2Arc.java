@@ -40,7 +40,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.archive.io.arc.ARCWriter;
-import org.archive.io.arc.ARCConstants;
 import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCReader;
 import org.archive.io.warc.WARCReaderFactory;

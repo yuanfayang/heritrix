@@ -34,6 +34,9 @@ package org.archive.util.fingerprint;
  *
  */
 public class LongFPSetCache extends MemLongFPSet {
+    
+    private static final long serialVersionUID = -5307436423975825566L;
+
     long sweepHand = 0;
 
     public LongFPSetCache() {

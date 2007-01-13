@@ -64,6 +64,7 @@ import com.sleepycat.collections.StoredIterator;
  * 
  * @since 2.0 
  */
+@SuppressWarnings("unchecked")
 public class CookieSpecBase implements CookieSpec {
     
     /** Log object */

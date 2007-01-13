@@ -30,7 +30,10 @@ import org.archive.net.UURI;
 
 
 public class AddRedirectFromRootServerToScope extends PredicatedDecideRule {
-	private static final Logger LOGGER =
+
+    private static final long serialVersionUID = 2644131585813079064L;
+
+    private static final Logger LOGGER =
 	        Logger.getLogger(AddRedirectFromRootServerToScope.class.getName());
 	private static final String SLASH = "/";
 	public AddRedirectFromRootServerToScope(String name) {
@@ -52,7 +55,9 @@ public class AddRedirectFromRootServerToScope extends PredicatedDecideRule {
 		try {
 			// Mark URI as seed if via is from different host, URI is not a seed
 			// already, URI is redirect and via is root server
-			if (!curi.getUURI().getHostBasename().equals(via.getHostBasename())
+			if (curi.getUURI().getHostBasename() != null &&
+					via.getHostBasename() != null &&
+					!curi.getUURI().getHostBasename().equals(via.getHostBasename())
 				    && curi.isLocation()
 					&& via.getPath().equals(SLASH)) {
 				curi.setIsSeed(true);

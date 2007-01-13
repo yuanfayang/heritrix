@@ -108,7 +108,7 @@ implements UriUniqFilter.HasUriReceiver {
      * inputs, no longer collide. 
      */
     public void testCreateKeyCollisions() {
-        HashSet fingerprints = new HashSet();
+        HashSet<Long> fingerprints = new HashSet<Long>();
         fingerprints.add(new Long(BdbUriUniqFilter
                 .createKey("dns:mail.daps.dla.mil")));
         fingerprints.add(new Long(BdbUriUniqFilter
@@ -138,7 +138,7 @@ implements UriUniqFilter.HasUriReceiver {
     protected void runTestWriting(long max)
     throws DatabaseException, URIException {
         long start = System.currentTimeMillis();
-        ArrayList list = new ArrayList(1000);
+        ArrayList<UURI> list = new ArrayList<UURI>(1000);
         int count = 0;
         for (; count < max; count++) {
             UURI u = UURIFactory.getInstance("http://www" +

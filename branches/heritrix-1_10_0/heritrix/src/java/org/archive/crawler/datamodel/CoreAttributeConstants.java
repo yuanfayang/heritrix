@@ -109,7 +109,10 @@ public interface CoreAttributeConstants {
      * against {@link CrawlURI}).
      */
     public static final String TRUNC_SUFFIX = "Trunc";
-    public static final String HEADER_TRUNC = "header" + TRUNC_SUFFIX;
+    // headerTrunc
+    public static final String HEADER_TRUNC = "header" + TRUNC_SUFFIX; 
+    // timeTrunc
     public static final String TIMER_TRUNC = "time" + TRUNC_SUFFIX;
-    public static final String LENGTH_TRUNC = "len" + TRUNC_SUFFIX;
+    // lenTrunc
+    public static final String LENGTH_TRUNC = "len" + TRUNC_SUFFIX; 
 }

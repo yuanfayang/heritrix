@@ -22,11 +22,9 @@
 */
 package org.archive.io;
 
-import it.unimi.dsi.fastutil.io.RepositionableStream;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 
 
@@ -35,8 +33,7 @@ import java.io.RandomAccessFile;
  *
  * @author gojomo
  */
-public class RandomAccessInputStream extends InputStream
-		implements RepositionableStream {
+public class RandomAccessInputStream extends SeekInputStream {
     
     /**
      * Reference to the random access file this stream is reading from.

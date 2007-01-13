@@ -33,7 +33,6 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScheme;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.SimpleType;
@@ -48,6 +47,8 @@ import org.archive.crawler.settings.Type;
  * @version $Revision$, $Date$
  */
 public class Rfc2617Credential extends Credential {
+
+    private static final long serialVersionUID = -1909614285968756188L;
 
     private static Logger logger =
         Logger.getLogger(Rfc2617Credential.class.getName());

@@ -36,6 +36,9 @@ import org.apache.commons.httpclient.HttpStatus;
  * @author gojomo
  */
 public class CrawlSubstats implements Serializable, FetchStatusCodes {
+
+    private static final long serialVersionUID = 8624425657056569036L;
+
     public interface HasCrawlSubstats {
         public CrawlSubstats getSubstats();
     }

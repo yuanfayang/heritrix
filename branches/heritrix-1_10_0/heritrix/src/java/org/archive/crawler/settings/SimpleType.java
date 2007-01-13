@@ -31,6 +31,9 @@ package org.archive.crawler.settings;
  *
  */
 public class SimpleType extends Type {
+
+    private static final long serialVersionUID = -5134952907004648419L;
+
     private final String description;
     private Object[] legalValues = null;
 

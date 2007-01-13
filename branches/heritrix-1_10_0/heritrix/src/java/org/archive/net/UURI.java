@@ -33,7 +33,6 @@ import java.util.logging.Logger;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.extractor.ExtractorURI;
 import org.archive.util.SURT;
 import org.archive.util.TextUtils;
 
@@ -62,6 +61,9 @@ import org.archive.util.TextUtils;
  */
 public class UURI extends LaxURI
 implements CharSequence, Serializable {
+
+    private static final long serialVersionUID = -1277570889914647093L;
+
     private static Logger LOGGER =
         Logger.getLogger(UURI.class.getName());
     

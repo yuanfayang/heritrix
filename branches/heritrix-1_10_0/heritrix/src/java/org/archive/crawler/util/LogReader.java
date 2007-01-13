@@ -861,18 +861,21 @@ public class LogReader
      * @return
      * @throws IOException
      */
-    private static CompositeFileReader seriesReader(String fileName) throws IOException {
-        LinkedList filenames = new LinkedList();
+    private static CompositeFileReader seriesReader(String fileName)
+    throws IOException {
+        LinkedList<File> filenames = new LinkedList<File>();
         int seriesNumber = 1;
         NumberFormat fmt = new DecimalFormat("00000");
         String predecessorFilename =
-            fileName.substring(0,fileName.length()-CrawlController.CURRENT_LOG_SUFFIX.length())
+            fileName.substring(0,fileName.length() 
+            - CrawlController.CURRENT_LOG_SUFFIX.length())
             + fmt.format(seriesNumber);
         while((new File(predecessorFilename)).exists()) {
-            filenames.add(predecessorFilename);
+            filenames.add(new File(predecessorFilename));
             seriesNumber++;
             predecessorFilename =
-                fileName.substring(0,fileName.length()-CrawlController.CURRENT_LOG_SUFFIX.length())
+                fileName.substring(0,fileName.length()
+                - CrawlController.CURRENT_LOG_SUFFIX.length())
                 + fmt.format(seriesNumber);
         }
         filenames.add(new File(fileName)); // add current file

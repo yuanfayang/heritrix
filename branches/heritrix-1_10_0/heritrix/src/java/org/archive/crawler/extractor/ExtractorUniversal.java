@@ -23,7 +23,6 @@ package org.archive.crawler.extractor;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import javax.management.AttributeNotFoundException;
@@ -55,8 +54,11 @@ import org.archive.util.TextUtils;
  */
 public class ExtractorUniversal extends Extractor
 implements CoreAttributeConstants {
-    private static final Logger logger =
-        Logger.getLogger(ExtractorUniversal.class.getName());
+
+    private static final long serialVersionUID = -7593380118857156939L;
+
+//    private static final Logger logger =
+//        Logger.getLogger(ExtractorUniversal.class.getName());
     
     private static String ATTR_MAX_DEPTH_BYTES = "max-depth-bytes";
 

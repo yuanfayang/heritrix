@@ -31,8 +31,6 @@ import org.archive.crawler.deciderules.DecidingScope;
 import org.archive.crawler.filter.FilePatternFilter;
 import org.archive.crawler.filter.TransclusionFilter;
 import org.archive.crawler.framework.Filter;
-import org.archive.crawler.frontier.BdbFrontier;
-import org.archive.crawler.prefetch.QuotaEnforcer;
 import org.archive.net.UURI;
 
 /**
@@ -69,6 +67,9 @@ import org.archive.net.UURI;
  * @deprecated As of release 1.10.0.  Replaced by {@link DecidingScope}.
  */
 public class DomainScope extends SeedCachingScope {
+
+    private static final long serialVersionUID = 648062105277258820L;
+
     private static final Logger logger =
         Logger.getLogger(DomainScope.class.getName());
 

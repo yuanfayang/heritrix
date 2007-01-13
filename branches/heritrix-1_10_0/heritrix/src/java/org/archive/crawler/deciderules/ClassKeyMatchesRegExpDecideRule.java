@@ -28,7 +28,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.settings.SimpleType;
 import org.archive.util.TextUtils;
 
 
@@ -40,6 +39,9 @@ import org.archive.util.TextUtils;
  * @author gojomo
  */
 public class ClassKeyMatchesRegExpDecideRule extends MatchesRegExpDecideRule {
+
+    private static final long serialVersionUID = 1178873944436973294L;
+
     private static final Logger logger =
         Logger.getLogger(ClassKeyMatchesRegExpDecideRule.class.getName());
 

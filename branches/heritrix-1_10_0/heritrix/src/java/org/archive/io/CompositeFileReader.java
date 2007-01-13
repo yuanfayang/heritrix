@@ -24,6 +24,7 @@
 */
 package org.archive.io;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
@@ -38,7 +39,7 @@ public class CompositeFileReader extends InputStreamReader {
      * @param filenames
      * @throws IOException
      */
-    public CompositeFileReader(List filenames) throws IOException {
+    public CompositeFileReader(List<File> filenames) throws IOException {
         super(new CompositeFileInputStream(filenames));
     }
 

@@ -23,6 +23,12 @@
         href="http://crawler.archive.org/cgi-bin/wiki.pl?HomePage"/>
       <item name="Browse/Submit a Bug" 
         href="http://sourceforge.net/tracker/?group_id=73833&amp;atid=539099"/>
+      <item name="Related Projects" >
+        <item name="Archive Access"
+            href="http://archive-access.sourceforge.net/" /> 
+        <item name="Deduplicator"
+            href="http://deduplicator.sourceforge.net" /> 
+      </item>
     </menu>
     <footer>
         <a href="http://sourceforge.net/projects/archive-crawler/">

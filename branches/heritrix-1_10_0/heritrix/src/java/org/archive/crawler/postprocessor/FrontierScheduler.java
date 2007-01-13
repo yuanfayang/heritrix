@@ -25,7 +25,7 @@
  */
 package org.archive.crawler.postprocessor;
 
-import java.util.Iterator;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,6 +44,9 @@ import org.archive.crawler.framework.Processor;
  */
 public class FrontierScheduler extends Processor
 implements FetchStatusCodes {
+
+    private static final long serialVersionUID = -5178775477602250542L;
+
     private static Logger LOGGER =
         Logger.getLogger(FrontierScheduler.class.getName());
     
@@ -71,19 +74,8 @@ implements FetchStatusCodes {
         }
 
         synchronized(this) {
-            for (final Iterator iter = curi.getOutLinks().iterator();
-                    iter.hasNext();) {
-                Object obj = iter.next();
-                CandidateURI cauri = null;
-                if (obj instanceof CandidateURI) {
-                    cauri = (CandidateURI)obj;
-                } else {
-                    LOGGER.severe("Unexpected type: " + obj);
-                }
-                
-                if (cauri != null) { 
-                    schedule(cauri);
-                }
+            for (CandidateURI cauri: curi.getOutCandidates()) {
+                schedule(cauri);
             }
         }
     }

@@ -38,6 +38,9 @@ import org.archive.crawler.settings.SimpleType;
  */
 public class ExternalImplDecideRule
 extends PredicatedDecideRule {
+
+    private static final long serialVersionUID = 7727715263469524372L;
+
     private static final Logger LOGGER =
         Logger.getLogger(ExternalImplDecideRule.class.getName());
     static final String ATTR_IMPLEMENTATION = "implementation-class";

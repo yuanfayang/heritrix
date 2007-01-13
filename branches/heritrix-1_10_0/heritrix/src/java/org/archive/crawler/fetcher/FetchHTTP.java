@@ -36,6 +36,7 @@ import java.io.RandomAccessFile;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -1018,9 +1019,9 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
      * @param type Class of credential to get from curi.
      * @return Set of credentials attached to this curi.
      */
-    private Set getCredentials(SettingsHandler handler, CrawlURI curi,
-            Class type) {
-        Set result = null;
+    private Set<Credential> getCredentials(SettingsHandler handler, 
+            CrawlURI curi, Class type) {
+        Set<Credential> result = null;
 
         if (curi.hasCredentialAvatars()) {
             for (Iterator i = curi.getCredentialAvatars().iterator();
@@ -1028,7 +1029,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
                 CredentialAvatar ca = (CredentialAvatar)i.next();
                 if (ca.match(type)) {
                     if (result == null) {
-                        result = new HashSet();
+                        result = new HashSet<Credential>();
                     }
                     result.add(ca.getCredential(handler, curi));
                 }
@@ -1383,29 +1384,30 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
         FileOutputStream out = null;
         try {
             out = new FileOutputStream(new File(saveCookiesFile));
-            Cookie cookies[] = this.http.getState().getCookies();
+            @SuppressWarnings("unchecked")
+            Map<String,Cookie> cookies = http.getState().getCookiesMap();
             String tab ="\t";
             out.write("# Heritrix Cookie File\n".getBytes());
             out.write(
                 "# This file is the Netscape cookies.txt format\n\n".getBytes());
-            for (int i = 0; i < cookies.length; i++) {
+            for (Cookie cookie: cookies.values()) {
                 MutableString line =
                     new MutableString(1024 * 2 /*Guess an initial size*/);
-                line.append(cookies[i].getDomain());
+                line.append(cookie.getDomain());
                 line.append(tab);
                 line.append(
-                    cookies[i].isDomainAttributeSpecified() == true
+                    cookie.isDomainAttributeSpecified() == true
                         ? "TRUE"
                         : "FALSE");
                 line.append(tab);
-                line.append(cookies[i].getPath());
+                line.append(cookie.getPath());
                 line.append(tab);
                 line.append(
-                    cookies[i].getSecure() == true ? "TRUE" : "FALSE");
+                    cookie.getSecure() == true ? "TRUE" : "FALSE");
                 line.append(tab);
-                line.append(cookies[i].getName());
+                line.append(cookie.getName());
                 line.append(tab);
-                line.append(cookies[i].getValue());
+                line.append((null==cookie.getValue())?"":cookie.getValue());
                 line.append("\n");
                 out.write(line.toString().getBytes());
             }
@@ -1429,7 +1431,7 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     /* (non-Javadoc)
      * @see org.archive.crawler.settings.ModuleType#listUsedFiles(java.util.List)
      */
-    protected void listUsedFiles(List list) {
+    protected void listUsedFiles(List<String> list) {
         // List the cookies files
         // Add seed file
         try {
@@ -1482,7 +1484,10 @@ implements CoreAttributeConstants, FetchStatusCodes, CrawlStatusListener {
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
         // save cookies
-        stream.writeObject(http.getState().getCookies());
+        @SuppressWarnings("unchecked")
+        Collection<Cookie> c = http.getState().getCookiesMap().values();
+        Cookie[] cookies = c.toArray(new Cookie[c.size()]);
+        stream.writeObject(cookies);
     }
     
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {

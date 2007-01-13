@@ -46,13 +46,13 @@ public class ServerCache {
      * hostname[:port] -> CrawlServer.
      * Set in the initialization.
      */
-    protected Map servers = null;
+    protected Map<String,CrawlServer> servers = null;
     
     /**
      * hostname -> CrawlHost.
      * Set in the initialization.
      */
-    protected Map hosts = null;
+    protected Map<String,CrawlHost> hosts = null;
     
     /**
      * Constructor.
@@ -72,8 +72,8 @@ public class ServerCache {
     public ServerCache(final SettingsHandler sh)
     throws Exception {
         this.settingsHandler = sh;
-        this.servers = new Hashtable();
-        this.hosts = new Hashtable();
+        this.servers = new Hashtable<String,CrawlServer>();
+        this.hosts = new Hashtable<String,CrawlHost>();
     }
     
     public ServerCache(final CrawlController c)

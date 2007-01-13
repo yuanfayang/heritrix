@@ -28,7 +28,6 @@ import java.util.logging.Logger;
 import javax.management.AttributeNotFoundException;
 
 import org.archive.crawler.datamodel.CandidateURI;
-import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.settings.SimpleType;
 import org.archive.crawler.settings.Type;
 import org.archive.crawler.util.LogUtils;

@@ -41,7 +41,7 @@ import java.util.logging.FileHandler;
  * @author gojomo
  */
 public class GenerationFileHandler extends FileHandler {
-    private LinkedList filenameSeries = new LinkedList();
+    private LinkedList<String> filenameSeries = new LinkedList<String>();
     private boolean shouldManifest = false;
 
     /**
@@ -72,7 +72,7 @@ public class GenerationFileHandler extends FileHandler {
      * @param shouldManifest
      * @throws IOException
      */
-    public GenerationFileHandler(LinkedList filenameSeries,
+    public GenerationFileHandler(LinkedList<String> filenameSeries,
             boolean shouldManifest)
     throws IOException {
         super((String)filenameSeries.getFirst(), false); // Never append in this case

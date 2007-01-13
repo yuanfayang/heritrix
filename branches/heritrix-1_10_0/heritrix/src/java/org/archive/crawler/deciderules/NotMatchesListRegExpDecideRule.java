@@ -24,7 +24,6 @@
  */
 package org.archive.crawler.deciderules;
 
-import java.util.logging.Logger;
 
 /**
  * Rule applies configured decision to any URIs which do *not*
@@ -32,9 +31,12 @@ import java.util.logging.Logger;
  *
  * @author Kristinn Sigurdsson
  */
-public class NotMatchesListRegExpDecideRule extends MatchesRegExpDecideRule {
-    private static final Logger logger =
-        Logger.getLogger(NotMatchesListRegExpDecideRule.class.getName());
+public class NotMatchesListRegExpDecideRule extends MatchesListRegExpDecideRule {
+
+    private static final long serialVersionUID = 8691360087063555583L;
+
+    //private static final Logger logger =
+    //    Logger.getLogger(NotMatchesListRegExpDecideRule.class.getName());
 
 
     /**
@@ -45,8 +47,8 @@ public class NotMatchesListRegExpDecideRule extends MatchesRegExpDecideRule {
         super(name);
         setDescription("NotMatchesListRegExpDecideRule. Applies the configured " +
             "decision to URIs *not* matching the supplied regular " +
-            "expressions.\n The list of regular expressions can be " +
-            "considered logically AND or OR.\n" +
+            "expressions. The list of regular expressions can be " +
+            "considered logically AND or OR. " +
             "NOTE: This means that if there are no regular expressions in " +
             "the list, this rule will apply to *all* URIs!");
     }

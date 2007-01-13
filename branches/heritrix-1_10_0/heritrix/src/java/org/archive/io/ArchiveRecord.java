@@ -81,8 +81,6 @@ public abstract class ArchiveRecord extends InputStream {
 
     boolean strict = false;
     
-    private int contentBegin = -1;
-    
     private ArchiveRecord() {
         super();
     }

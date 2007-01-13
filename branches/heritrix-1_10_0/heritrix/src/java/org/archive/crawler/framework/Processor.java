@@ -52,6 +52,9 @@ import org.archive.crawler.settings.SimpleType;
  * @see org.archive.crawler.framework.ToeThread
  */
 public class Processor extends ModuleType {
+
+    private static final long serialVersionUID = 6248563827413710226L;
+
     /**
      * Key to use asking settings for filters value.
      */

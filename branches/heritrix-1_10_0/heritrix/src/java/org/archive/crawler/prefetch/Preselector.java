@@ -45,6 +45,8 @@ import org.archive.util.TextUtils;
 public class Preselector extends Scoper
 implements FetchStatusCodes {
 
+    private static final long serialVersionUID = 3738560264369561017L;
+
     /** whether to reapply crawl scope at this step */
     public static final String ATTR_RECHECK_SCOPE = "recheck-scope";
     /** indicator allowing all URIs (of a given host, typically) to

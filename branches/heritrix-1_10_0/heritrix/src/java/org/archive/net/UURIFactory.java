@@ -57,6 +57,8 @@ import org.archive.util.TextUtils;
  */
 public class UURIFactory extends URI {
     
+    private static final long serialVersionUID = -6146295130382209042L;
+
     /**
      * Logging instance.
      */
@@ -456,6 +458,9 @@ public class UURIFactory extends URI {
             if (base == null) {
                 throw new URIException("Relative URI but no base: " + uri);
             }
+        } else {
+        	checkHttpSchemeSpecificPartSlashPrefix(base, uriScheme,
+        		uriSchemeSpecificPart);
         }
         
         // fixup authority portion: lowercase/IDN-punycode any domain; 
@@ -538,6 +543,35 @@ public class UURIFactory extends URI {
         appendNonNull(s, uriPath, "", false);
         appendNonNull(s, uriQuery, "?", false);
         return s.toString();
+    }
+    
+    /**
+     * If http(s) scheme, check scheme specific part begins '//'.
+     * @throws URIException 
+     * @see http://www.faqs.org/rfcs/rfc1738.html Section 3.1. Common Internet
+     * Scheme Syntax
+     */
+    protected void checkHttpSchemeSpecificPartSlashPrefix(final URI base,
+    		final String scheme, final String schemeSpecificPart)
+    throws URIException {
+    	// Only apply this check if no base.
+    	if (base != null) {
+    		return;
+    	}
+    	if (scheme == null || scheme.length() <= 0) {
+    		return;
+    	}
+    	if (!scheme.equals("http") && !scheme.equals("https")) {
+    		return;
+    	}
+    	if (!schemeSpecificPart.startsWith("//")) {
+    		throw new URIException("http scheme specific part must " +
+    		    "begin '//': " + schemeSpecificPart);
+    	}
+    	if (schemeSpecificPart.length() <= 2) {
+    		throw new URIException("http scheme specific part is " +
+        		"too short: " + schemeSpecificPart);
+    	}
     }
     
     /**

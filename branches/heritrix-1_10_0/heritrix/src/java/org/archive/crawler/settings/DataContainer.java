@@ -27,7 +27,6 @@ package org.archive.crawler.settings;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,22 +42,25 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author John Erik Halse
  */
-public class DataContainer extends HashMap {
+public class DataContainer extends HashMap<String,Object> {
+
+    private static final long serialVersionUID = 2089160108643429282L;
+
     /** The ComplexType for which this DataContainer keeps data */
     private ComplexType complexType;
 
     /** The Settings object for which this data is valid */
-    private Reference settings;
+    private Reference<CrawlerSettings> settings;
 
     /** The attributes defined for this DataContainers combination of
      * ComplexType and CrawlerSettings.
      */
-    private List attributes;
+    private List<MBeanAttributeInfo> attributes;
 
     /** All attributes that have their value set for this DataContainers
      * combination of ComplexType and CrawlerSettings. This includes overrides.
      */
-    private Map attributeNames;
+    private Map<String,MBeanAttributeInfo> attributeNames;
 
     /** Create a data container for a module.
      *
@@ -67,11 +69,11 @@ public class DataContainer extends HashMap {
      */
     public DataContainer(CrawlerSettings settings, ComplexType module) {
         super();
-        this.settings = new WeakReference(settings);
+        this.settings = new WeakReference<CrawlerSettings>(settings);
         this.complexType = module;
         attributes =
-            new CopyOnWriteArrayList();
-        attributeNames = new HashMap();
+            new CopyOnWriteArrayList<MBeanAttributeInfo>();
+        attributeNames = new HashMap<String,MBeanAttributeInfo>();
     }
 
     /** Add a new element to the data container.
@@ -123,7 +125,7 @@ public class DataContainer extends HashMap {
         return info;
     }
 
-    protected List getLocalAttributeInfoList() {
+    protected List<MBeanAttributeInfo> getLocalAttributeInfoList() {
         return attributes;
     }
 
@@ -166,7 +168,7 @@ public class DataContainer extends HashMap {
         return true;
     }
 
-    public Object put(Object key, Object value) {
+    public Object put(String key, Object value) {
         throw new UnsupportedOperationException();
     }
 

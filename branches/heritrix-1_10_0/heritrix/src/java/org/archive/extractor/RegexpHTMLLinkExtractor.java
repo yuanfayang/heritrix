@@ -54,7 +54,7 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
     boolean extractInlineCss = true;
     boolean extractInlineJs = true;
 
-    protected LinkedList next = new LinkedList();
+    protected LinkedList<Link> next = new LinkedList<Link>();
     protected Matcher tags;
 
     /* (non-Javadoc)
@@ -184,7 +184,7 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
 
         // Just in case it's an OBJECT or APPLET tag
         String codebase = null;
-        ArrayList resources = null;
+        ArrayList<String> resources = null;
         long tally = next.size();
 
         while (attr.find()) {
@@ -230,13 +230,13 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
             } else if (attr.start(7) > -1) {
                 // CLASSID, DATA
                 if (resources == null) {
-                    resources = new ArrayList();
+                    resources = new ArrayList<String>();
                 }
                 resources.add(value.toString());
             } else if (attr.start(8) > -1) {
                 // ARCHIVE
                 if (resources==null) {
-                    resources = new ArrayList();
+                    resources = new ArrayList<String>();
                 }
                 String[] multi = TextUtils.split(WHITESPACE, value);
                 for(int i = 0; i < multi.length; i++ ) {
@@ -245,7 +245,7 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
             } else if (attr.start(9) > -1) {
                 // CODE
                 if (resources==null) {
-                    resources = new ArrayList();
+                    resources = new ArrayList<String>();
                 }
                 // If element is applet and code value does not end with
                 // '.class' then append '.class' to the code value.
@@ -353,7 +353,6 @@ public class RegexpHTMLLinkExtractor extends CharSequenceLinkExtractor {
         "|(mp3)|(mp4)|(swf)|(wav)|(au)|(aiff)|(mid)";
 
     protected void processScript(CharSequence sequence, int endOfOpenTag) {
-        long tally = 0;
         // first, get attributes of script-open tag
         // as per any other tag
         processGeneralTag(sequence.subSequence(0,6),

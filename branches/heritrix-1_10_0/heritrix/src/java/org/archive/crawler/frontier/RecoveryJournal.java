@@ -443,7 +443,7 @@ implements FrontierJournal {
      */
     private static CharSequence[] splitOnSpaceRuns(CharSequence read) {
         int lastStart = 0;
-        ArrayList segs = new ArrayList(5);
+        ArrayList<CharSequence> segs = new ArrayList<CharSequence>(5);
         int i;
         for(i=0;i<read.length();i++) {
             if (read.charAt(i)==' ') {
