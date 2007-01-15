@@ -322,10 +322,16 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
     private OpenMBeanInfoSupport openMBeanInfo;
     private final static String STATUS_ATTR = "Status";
     private final static String VERSION_ATTR = "Version";
+    private final static String ISRUNNING_ATTR = "IsRunning";
+    private final static String ISCRAWLING_ATTR = "IsCrawling";
+    private final static String ALERTCOUNT_ATTR = "AlertCount";
+    private final static String NEWALERTCOUNT_ATTR = "NewAlertCount";
+    private final static String CURRENTJOB_ATTR = "CurrentJob";
     private final static List ATTRIBUTE_LIST;
     static {
         ATTRIBUTE_LIST = Arrays.asList(new String [] {STATUS_ATTR,
-            VERSION_ATTR});
+            VERSION_ATTR, ISRUNNING_ATTR, ISCRAWLING_ATTR,
+            ALERTCOUNT_ATTR, NEWALERTCOUNT_ATTR, CURRENTJOB_ATTR});
     }
     
     private final static String START_OPER = "start";
@@ -1949,6 +1955,30 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         attributes[1] =
             new OpenMBeanAttributeInfoSupport(Heritrix.VERSION_ATTR,
                 "Heritrix version", SimpleType.STRING, true, false, false);
+        // Attributes.
+        attributes[2] =
+            new OpenMBeanAttributeInfoSupport(Heritrix.ISRUNNING_ATTR,
+                "Whether the crawler is running", SimpleType.BOOLEAN, true,
+                false, false);
+        // Attributes.
+        attributes[3] =
+            new OpenMBeanAttributeInfoSupport(Heritrix.ISCRAWLING_ATTR,
+                "Whether the crawler is crawling", SimpleType.BOOLEAN, true,
+                false, false);
+        // Attributes.
+        attributes[4] =
+            new OpenMBeanAttributeInfoSupport(Heritrix.ALERTCOUNT_ATTR,
+                "The number of alerts", SimpleType.INTEGER, true, false, false);
+        // Attributes.
+        attributes[5] =
+            new OpenMBeanAttributeInfoSupport(Heritrix.NEWALERTCOUNT_ATTR,
+                "The number of new alerts", SimpleType.INTEGER, true, false,
+                false);
+        // Attributes.
+        attributes[6] =
+            new OpenMBeanAttributeInfoSupport(Heritrix.CURRENTJOB_ATTR,
+                "The name of the job currently being crawled", 
+                SimpleType.STRING, true, false, false);
 
         // Constructors.
         constructors[0] = new OpenMBeanConstructorInfoSupport(
@@ -2108,6 +2138,25 @@ public class Heritrix implements DynamicMBean, MBeanRegistration {
         }
         if (attribute_name.equals(VERSION_ATTR)) {
             return getVersion();
+        }
+
+        if (attribute_name.equals(ISRUNNING_ATTR)) {
+            return new Boolean(this.getJobHandler().isRunning());
+        }
+        if (attribute_name.equals(ISCRAWLING_ATTR)) {
+            return new Boolean(this.getJobHandler().isCrawling());
+        }
+        if (attribute_name.equals(ALERTCOUNT_ATTR)) {
+            return new Integer(getAlertsCount());
+        }
+        if (attribute_name.equals(NEWALERTCOUNT_ATTR)) {
+            return new Integer(getNewAlertsCount());
+        }
+        if (attribute_name.equals(CURRENTJOB_ATTR)) {
+            if (this.getJobHandler().isCrawling()) {
+                return this.getJobHandler().getCurrentJob().getJmxJobName();
+            }
+            return null;
         }
         throw new AttributeNotFoundException("Attribute " +
             attribute_name + " not found.");
