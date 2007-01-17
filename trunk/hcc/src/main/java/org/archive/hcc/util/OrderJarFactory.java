@@ -276,7 +276,9 @@ public class OrderJarFactory {
 		}
 		
 		if(hc.getRegex() != null){
-			w.append("<object name=\"acceptByType\"><string name=\"regexp\">"+ hc.getRegex() +"</string></object>");
+			w.append("<object name=\"rejectIfRegexMatch\">" +
+                    "<string name=\"regexp\">"+ hc.getRegex() +"</string>" +
+                     "</object>");
 		}
 		
 		Long docLimit = hc.getDocumentLimit();
