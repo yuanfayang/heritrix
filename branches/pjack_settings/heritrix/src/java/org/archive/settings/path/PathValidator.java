@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.archive.settings.Offline;
 import org.archive.settings.Resolved;
 import org.archive.settings.Sheet;
 import org.archive.state.Key;
@@ -99,7 +100,7 @@ public class PathValidator {
         String first = tokens.get(0);
         advance();
         if (!first.equals(ROOT_NAME)) {
-            throw ex("No controller.");
+            throw ex("No root.");
         }
 
         Object current = sheet.getSheetManager().getRoot();
@@ -130,6 +131,9 @@ public class PathValidator {
      *
      */
     private void advance() {
+        if (subPath.length() > 0) {
+            subPath.append('.');
+        }
         subPath.append(tokens.get(0));
         tokens.remove(0);
     }
@@ -190,7 +194,12 @@ public class PathValidator {
             throw ex(" has null pointer at ");
         }
         
-        Class c = current.getClass();
+        Class c;
+        if (current instanceof Offline) {
+            c = ((Offline)current).getType();
+        } else {
+            c = current.getClass();
+        }
         Key<Object> key = KeyManager.getKeys(c).get(keyName);
         if (key == null) {
             throw ex(" has invalid key field name at ");

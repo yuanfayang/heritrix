@@ -1,4 +1,4 @@
-/* Copyright (C) 2006 Internet Archive.
+/* Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,39 +16,40 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * PathChange.java
- * Created on October 24, 2006
+ * Offline.java
+ * Created on January 17, 2007
  *
  * $Header$
  */
-package org.archive.settings.path;
+package org.archive.settings;
 
-public class PathChange {
-    
-    
-    final private String path;
-    final private String value;
-    final private String type;
-    
+final public class Offline<T> {
 
-    public PathChange(String path, String type, String value) {
-        this.path = path;
+    
+    private Class<T> type;
+    
+    
+    public Offline(Class<T> type) {
         this.type = type;
-        this.value = value;
     }
     
     
-    public String getPath() {
-        return path;
-    }
-    
-    
-    public String getValue() {
-        return value;
-    }
-    
-    
-    public String getType() {
+    public Class<T> getType() {
         return type;
+    }
+    
+
+    public static <T> Offline<T> make(Class<T> cls) {
+        return new Offline<T>(cls);
+    }
+    
+    
+    public String toString() {
+        String tname = type.getName();
+        int p = tname.lastIndexOf('.');
+        if (p >= 0) {
+            tname = tname.substring(p + 1);
+        }
+        return "Offline<" + tname + ">";
     }
 }

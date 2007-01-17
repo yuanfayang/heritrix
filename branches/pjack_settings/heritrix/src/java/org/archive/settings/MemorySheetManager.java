@@ -41,6 +41,9 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class MemorySheetManager extends SheetManager {
 
+    
+    private boolean online;
+    
 
     /**
      * Maps a sheet's name to the actual sheet.  All access to this field 
@@ -73,16 +76,26 @@ public class MemorySheetManager extends SheetManager {
     }
 
     
+    public MemorySheetManager(Object root) {
+        this(root, true);
+    }
+    
     /**
      * Constructor.
      */
-    public MemorySheetManager(Object root) {
+    public MemorySheetManager(Object root, boolean online) {
         sheets = new HashMap<String,Sheet>();
         associations = new ConcurrentHashMap<String,Sheet>();
         setRoot(root);
         defaults = addSingleSheet("default");
+        this.online = online;
     }
 
+    
+    @Override
+    public boolean isOnline() {
+        return online;
+    }
 
     @Override
     public Object getRoot() {

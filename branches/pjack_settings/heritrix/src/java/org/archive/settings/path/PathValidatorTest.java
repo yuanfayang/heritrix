@@ -49,7 +49,8 @@ import org.archive.settings.SingleSheet;
  * @author pjack
  */
 public class PathValidatorTest extends PathTestBase {
-
+   
+    
 
 
     public void testValidate() {
@@ -57,105 +58,209 @@ public class PathValidatorTest extends PathTestBase {
         validateOverride1();
         validateOverride2();
         validateBundle();
+        
+        validateOfflineDefaults();
+        validateOfflineOverride1();
+        validateOfflineOverride2();
+        validateOfflineBundle();
     }
 
     private void validateDefaults() {
         SingleSheet sheet = manager.getDefault();
-        Object o = PathValidator.validate(sheet, "html");
-        System.out.println(o);
-        assertTrue(html == PathValidator.validate(sheet, "html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.TREAT_FRAMES_AS_EMBED_LINKS"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "html.IGNORE_FORM_ACTION_URLS"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "html.IGNORE_UNEXPECTED_HTML"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.OVERLY_EAGER_LINK_DETECTION"));
-        assertTrue(htmlSeq == PathValidator.validate(sheet, "html.DECIDE_RULES"));
-        assertTrue(htmlRules == PathValidator.validate(sheet, "html.DECIDE_RULES.RULES"));
-        assertTrue(htmlRule0 == PathValidator.validate(sheet, "html.DECIDE_RULES.RULES.0"));
+        assertTrue(html == PathValidator.validate(sheet, "root.html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
+        assertTrue(htmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
+        assertTrue(htmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(htmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
         
-        assertTrue(css == PathValidator.validate(sheet, "css"));
-        assertTrue(cssSeq == PathValidator.validate(sheet, "css.DECIDE_RULES"));
-        assertTrue(cssRules == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES"));
-        assertTrue(cssRule0 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.0"));
-        assertTrue(cssRule1 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.1"));
-        assertTrue(cssRule1_list == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.1.RULES"));
-        assertTrue(cssRule1_0 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.1.RULES.0"));
+        assertTrue(css == PathValidator.validate(sheet, "root.css"));
+        assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
+        assertTrue(cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        assertTrue(cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(cssRule1_list == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules"));
+        assertTrue(cssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
 
-        assertTrue(js == PathValidator.validate(sheet, "js"));
-        assertTrue(jsSeq == PathValidator.validate(sheet, "js.DECIDE_RULES"));
-        assertTrue(jsRules == PathValidator.validate(sheet, "js.DECIDE_RULES.RULES"));
+        assertTrue(js == PathValidator.validate(sheet, "root.js"));
+        assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
+        assertTrue(jsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));
     }
     
     
     private void validateOverride1() {
         Sheet sheet = manager.getSheet("override1");
-        assertTrue(html == PathValidator.validate(sheet, "html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.TREAT_FRAMES_AS_EMBED_LINKS"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "html.IGNORE_FORM_ACTION_URLS"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "html.IGNORE_UNEXPECTED_HTML"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.OVERLY_EAGER_LINK_DETECTION"));
-        assertTrue(htmlSeq == PathValidator.validate(sheet, "html.DECIDE_RULES"));
-        assertTrue(htmlRules == PathValidator.validate(sheet, "html.DECIDE_RULES.RULES"));
-        assertTrue(htmlRule0 == PathValidator.validate(sheet, "html.DECIDE_RULES.RULES.0"));
+        assertTrue(html == PathValidator.validate(sheet, "root.html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
+        assertTrue(htmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
+        assertTrue(htmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(htmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
         
-        assertTrue(css == PathValidator.validate(sheet, "css"));
-        assertTrue(cssSeq == PathValidator.validate(sheet, "css.DECIDE_RULES"));
-        assertTrue(o1cssRules == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES"));
-        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.0"));
-        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.1"));
-        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.2"));
+        assertTrue(css == PathValidator.validate(sheet, "root.css"));
+        assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
+        assertTrue(o1cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
 
-        assertTrue(js == PathValidator.validate(sheet, "js"));
-        assertTrue(jsSeq == PathValidator.validate(sheet, "js.DECIDE_RULES"));
-        assertTrue(jsRules == PathValidator.validate(sheet, "js.DECIDE_RULES.RULES"));
+        assertTrue(js == PathValidator.validate(sheet, "root.js"));
+        assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
+        assertTrue(jsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));
     }
 
     
     private void validateOverride2() {
         Sheet sheet = manager.getSheet("override2");
-        assertTrue(html == PathValidator.validate(sheet, "html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.TREAT_FRAMES_AS_EMBED_LINKS"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "html.IGNORE_FORM_ACTION_URLS"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.IGNORE_UNEXPECTED_HTML"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.OVERLY_EAGER_LINK_DETECTION"));
+        assertTrue(html == PathValidator.validate(sheet, "root.html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
         
-        assertTrue(htmlSeq == PathValidator.validate(sheet, "html.DECIDE_RULES"));
-        assertTrue(htmlRules == PathValidator.validate(sheet, "html.DECIDE_RULES.RULES"));
-        assertTrue(htmlRule0 == PathValidator.validate(sheet, "html.DECIDE_RULES.RULES.0"));
+        assertTrue(htmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
+        assertTrue(htmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(htmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
         
-        assertTrue(css == PathValidator.validate(sheet, "css"));
-        assertTrue(cssSeq == PathValidator.validate(sheet, "css.DECIDE_RULES"));
-        assertTrue(cssRules == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES"));
-        assertTrue(cssRule0 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.0"));
-        assertTrue(cssRule1 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.1"));
-        assertTrue(cssRule1_list == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.1.RULES"));
-        assertTrue(cssRule1_0 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.1.RULES.0"));
+        assertTrue(css == PathValidator.validate(sheet, "root.css"));
+        assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
+        assertTrue(cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        assertTrue(cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(cssRule1_list == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules"));
+        assertTrue(cssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
 
-        assertTrue(js == PathValidator.validate(sheet, "js"));
-        assertTrue(jsSeq == PathValidator.validate(sheet, "js.DECIDE_RULES"));
-        assertTrue(jsRules == PathValidator.validate(sheet, "js.DECIDE_RULES.RULES"));
+        assertTrue(js == PathValidator.validate(sheet, "root.js"));
+        assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
+        assertTrue(jsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));
     }
 
 
     private void validateBundle() {
         Sheet sheet = manager.getSheet("bundle");
-        assertTrue(html == PathValidator.validate(sheet, "html"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.TREAT_FRAMES_AS_EMBED_LINKS"));
-        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "html.IGNORE_FORM_ACTION_URLS"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.IGNORE_UNEXPECTED_HTML"));
-        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "html.OVERLY_EAGER_LINK_DETECTION"));
-        assertTrue(htmlSeq == PathValidator.validate(sheet, "html.DECIDE_RULES"));
-        assertTrue(htmlRules == PathValidator.validate(sheet, "html.DECIDE_RULES.RULES"));
-        assertTrue(htmlRule0 == PathValidator.validate(sheet, "html.DECIDE_RULES.RULES.0"));
+        assertTrue(html == PathValidator.validate(sheet, "root.html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
+        assertTrue(htmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
+        assertTrue(htmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(htmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
         
-        assertTrue(css == PathValidator.validate(sheet, "css"));
-        assertTrue(cssSeq == PathValidator.validate(sheet, "css.DECIDE_RULES"));
-        assertTrue(o1cssRules == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES"));
-        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.0"));
-        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.1"));
-        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "css.DECIDE_RULES.RULES.2"));
+        assertTrue(css == PathValidator.validate(sheet, "root.css"));
+        assertTrue(cssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
+        assertTrue(o1cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        assertTrue(o1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(o1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(o1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
 
-        assertTrue(js == PathValidator.validate(sheet, "js"));
-        assertTrue(jsSeq == PathValidator.validate(sheet, "js.DECIDE_RULES"));
-        assertTrue(jsRules == PathValidator.validate(sheet, "js.DECIDE_RULES.RULES"));        
+        assertTrue(js == PathValidator.validate(sheet, "root.js"));
+        assertTrue(jsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
+        assertTrue(jsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));        
     }
+
+
+    private void validateOfflineDefaults() {
+        SingleSheet sheet = offlineManager.getDefault();
+        assertTrue(offlineHtml == PathValidator.validate(sheet, "root.html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
+        assertTrue(offlineHtmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
+        assertTrue(offlineHtmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(offlineHtmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
+        
+        assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
+        assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
+        assertTrue(offlineCssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        assertTrue(offlineCssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(offlineCssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(offlineCssRule1_list == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules"));
+        assertTrue(offlineCssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
+
+        assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
+        assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
+        assertTrue(offlineJsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));
+    }
+
+
+    
+    private void validateOfflineOverride1() {
+        Sheet sheet = offlineManager.getSheet("override1");
+        assertTrue(offlineHtml == PathValidator.validate(sheet, "root.html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
+        assertTrue(offlineHtmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
+        assertTrue(offlineHtmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(offlineHtmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
+        
+        assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
+        assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
+        assertTrue(offlineO1cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        assertTrue(offlineO1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(offlineO1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(offlineO1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+
+        assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
+        assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
+        assertTrue(offlineJsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));
+    }
+
+
+    private void validateOfflineOverride2() {
+        Sheet sheet = offlineManager.getSheet("override2");
+        assertTrue(offlineHtml == PathValidator.validate(sheet, "root.html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
+        
+        assertTrue(offlineHtmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
+        assertTrue(offlineHtmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(offlineHtmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
+        
+        assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
+        assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
+        assertTrue(offlineCssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        assertTrue(offlineCssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(offlineCssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(offlineCssRule1_list == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules"));
+        assertTrue(offlineCssRule1_0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1.rules.0"));
+
+        assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
+        assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
+        assertTrue(offlineJsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));
+    }
+
+    
+    private void validateOfflineBundle() {
+        Sheet sheet = offlineManager.getSheet("bundle");
+        assertTrue(offlineHtml == PathValidator.validate(sheet, "root.html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.treat-frames-as-embed-links"));
+        assertEquals(Boolean.FALSE, PathValidator.validate(sheet, "root.html.ignore-form-action-urls"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.ignore-unexpected-html"));
+        assertEquals(Boolean.TRUE, PathValidator.validate(sheet, "root.html.overly-eager-link-detection"));
+        assertTrue(offlineHtmlSeq == PathValidator.validate(sheet, "root.html.decide-rules"));
+        assertTrue(offlineHtmlRules == PathValidator.validate(sheet, "root.html.decide-rules.rules"));
+        assertTrue(offlineHtmlRule0 == PathValidator.validate(sheet, "root.html.decide-rules.rules.0"));
+        
+        assertTrue(offlineCss == PathValidator.validate(sheet, "root.css"));
+        assertTrue(offlineCssSeq == PathValidator.validate(sheet, "root.css.decide-rules"));
+        assertTrue(offlineO1cssRules == PathValidator.validate(sheet, "root.css.decide-rules.rules"));
+        assertTrue(offlineO1cssRule0 == PathValidator.validate(sheet, "root.css.decide-rules.rules.0"));
+        assertTrue(offlineO1cssRule1 == PathValidator.validate(sheet, "root.css.decide-rules.rules.1"));
+        assertTrue(offlineO1cssRule2 == PathValidator.validate(sheet, "root.css.decide-rules.rules.2"));
+
+        assertTrue(offlineJs == PathValidator.validate(sheet, "root.js"));
+        assertTrue(offlineJsSeq == PathValidator.validate(sheet, "root.js.decide-rules"));
+        assertTrue(offlineJsRules == PathValidator.validate(sheet, "root.js.decide-rules.rules"));        
+    }
+
 }

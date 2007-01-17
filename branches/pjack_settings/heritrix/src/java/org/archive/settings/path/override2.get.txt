@@ -1,1 +1,1 @@
-override2 -> html.IGNORE_UNEXPECTED_HTML=true
+override2 -> root.html.ignore-unexpected-html=boolean:true

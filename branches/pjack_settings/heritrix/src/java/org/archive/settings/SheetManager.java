@@ -24,8 +24,16 @@
 package org.archive.settings;
 
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+
+import org.archive.state.Key;
+import org.archive.state.KeyManager;
+import org.archive.state.KeyTypes;
 
 
 /**
@@ -35,13 +43,22 @@ import java.util.Set;
  */
 public abstract class SheetManager {
 
+    
+    final private UnspecifiedSheet unspecified;
+    
 
     /**
      * Constructor.
      */
     public SheetManager() {
+        this.unspecified = new UnspecifiedSheet(this, "unspecified");
     }
 
+    
+    Sheet getUnspecifiedSheet() {
+        return unspecified;
+    }
+    
 
     /**
      * Returns the default sheet.  This sheet is consulted if there is no
@@ -210,4 +227,36 @@ public abstract class SheetManager {
         return "unknown"; // FIXME: Make this abstract 
     }
     
+    
+    public File getWorkingDirectory() {
+        return new File("."); // FIXME: Make this abstract
+    }
+
+    
+    public boolean isOnline() {
+        return true; // FIXME: Make this abstract
+    }
+
+    
+    public List<Object> getDependencies(Object module) {
+        Class c;
+        if (module instanceof Offline) {
+            c = ((Offline)module).getType();
+        } else {
+            c = module.getClass();
+        }
+        if (KeyTypes.isSimple(c)) {
+            return Collections.emptyList();
+        }
+        List<Key<Object>> deps = KeyManager.getDependencyKeys(c);
+        if (deps.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        List<Object> result = new ArrayList<Object>();
+        for (Key<Object> k: deps) {
+            result.add(getDefault().resolve(module, k).getValue());
+        }
+        return result;
+    }
 }

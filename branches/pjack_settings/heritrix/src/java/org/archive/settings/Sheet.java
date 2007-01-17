@@ -24,7 +24,11 @@
 package org.archive.settings;
 
 
+import java.util.List;
+import java.util.Map;
+
 import org.archive.state.Key;
+import org.archive.state.KeyTypes;
 import org.archive.state.StateProvider;
 
 
@@ -90,32 +94,110 @@ public abstract class Sheet implements StateProvider {
      * Looks up a value for a property.  
      * 
      * @param <T>
-     * @param processor   the processor who needs the property value
-     * @param key         a key (declared by the processor) that defines the
+     * @param module   the module who needs the property value
+     * @param key         a key (declared by the module) that defines the
      *                    property to return
-     * @return  either the value for that processor/Key combination, or null
+     * @return  either the value for that module/Key combination, or null
      *    if this sheet does not include such a value
      */
-    public abstract <T> T check(Object processor, Key<T> key);
+    public abstract <T> T check(Object module, Key<T> key);
 
     
-    public abstract <T> Resolved<T> resolve(Object processor, Key<T> key);
+    public abstract <T> Offline checkOffline(Offline module, Key<T> key);
+    
+    public abstract <T> Resolved<T> resolve(Object module, Key<T> key);
 
 
-    public <T> Resolved<T> resolveDefault(Object processor, Key<T> key) {
+    <T> Resolved<T> resolveDefault(Object module, Key<T> key) {
+        if (isOnline(key)) {
+            return resolveDefaultOnline(module, key);
+        } else {
+            return resolveDefaultOffline(module, key);
+        }
+    }
+    
+    
+    private <T> Resolved<T> resolveDefaultOnline(Object module, Key<T> key) {
         SingleSheet defaults = getSheetManager().getDefault();
-        T result = defaults.check(processor, key);
+        T result = defaults.check(module, key);
         if (result == null) {
             result = key.getDefaultValue();
+            return Resolved.makeOnline(module, key, result, 
+                    getSheetManager().getUnspecifiedSheet());
         }
+        return Resolved.makeOnline(module, key, result, defaults);
+    }
+    
+    
+    private <T> Resolved<T> resolveDefaultOffline(Object module, Key<T> key) {
+        Offline offline = (Offline)module;
+        SingleSheet defaults = getSheetManager().getDefault();
+        Offline result = defaults.checkOffline(offline, key);
         if (result == null) {
-            result = key.getDefaultValue();
+            result = Offline.make(key.getDefaultValue().getClass());
+            return Resolved.makeOffline(
+                    getSheetManager().getUnspecifiedSheet(),
+                    module, key, result);
         }
-        return new Resolved<T>(defaults, processor, key, result);
+        return Resolved.makeOffline(defaults, module, key, result);
     }
     
     
     final public <T> T get(Object module, Key<T> key) {
-        return resolve(module, key).getValue();
+        return resolve(module, key).getOnlineValue();
+    }
+
+
+
+    
+    /**
+     * Returns true if the "online" method of lookup and storage should be
+     * used for the given key.  For offline sheets, only some kinds of 
+     * objects are actually proxied with Offline objects.  For instance,
+     * Strings and other essentially primitive types are stored using the
+     * the actual object values instead of Offline proxies.
+     * 
+     * <p>This will return true if:
+     * 
+     * <ol>
+     * <li>The SheetManager's isOnline() returns true.
+     * <li>The given key's type is java.util.List.
+     * <li>The given key's type is java.util.Map.
+     * <li>The given key's isLeaf() method returns true.
+     * </ol>
+     * 
+     * @param key
+     * @return
+     */
+    boolean isOnline(Key key) {
+        if (getSheetManager().isOnline()) {
+            return true;
+        }
+        if (key.getType() == List.class) {
+            return true;
+        }
+        if (key.getType() == Map.class) {
+            return true;
+        }
+        if (KeyTypes.isSimple(key.getType())) {
+            return true;
+        }
+        return false;
+    }
+
+
+    public String toString() {
+        return name;
+    }
+    
+    
+    static <T> void validateModuleType(Object module, Key<T> key) {
+        Class mtype = (module instanceof Offline) ? 
+                ((Offline)module).getType() : module.getClass();
+        if (!key.getOwner().isAssignableFrom(mtype)) {
+            throw new IllegalArgumentException("Illegal module type.  " +
+                    "Key owner is " + key.getOwner().getName() + 
+                    " but module is " + mtype.getName()); 
+        }
     }
 }
