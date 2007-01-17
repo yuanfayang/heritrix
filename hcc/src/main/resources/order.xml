@@ -45,9 +45,9 @@
 	          <newObject name="acceptIfTranscluded" class="org.archive.crawler.deciderules.TransclusionDecideRule">
 	            <integer name="max-trans-hops">1</integer>
 	          </newObject>
-	          <newObject name="acceptByType" class="org.archive.crawler.deciderules.MatchesFilePatternDecideRule">
-	            <string name="decision">ACCEPT</string>
-	            <string name="use-preset-pattern">All</string>
+	          <newObject name="rejectIfRegexMatch" class="org.archive.crawler.deciderules.MatchesFilePatternDecideRule">
+	            <string name="decision">REJECT</string>
+	            <string name="use-preset-pattern">Custom</string>
 	            <string name="regexp"></string>
 	          </newObject>
 	          <newObject name="rejectIfPathological" class="org.archive.crawler.deciderules.PathologicalPathDecideRule">
