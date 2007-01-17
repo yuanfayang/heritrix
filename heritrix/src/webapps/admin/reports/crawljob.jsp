@@ -424,7 +424,7 @@
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
-                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=(String)key%>&grep=true">
+                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^.{24}\s*<%=(String)key%>&grep=true">
                                 <%=CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)key))%>
                             </a>&nbsp;
                         </td>
@@ -792,7 +792,7 @@
             %>
                     <tr <%=alt?"bgcolor=#EEEEFF":""%>>
                         <td nowrap>
-                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=\d{17}\s*<%=(String)key%>&grep=true">
+                            <a style="text-decoration: none;" href="<%=request.getContextPath()%>/logs.jsp?job=<%=cjob.getUID()%>&log=crawl.log&mode=regexpr&regexpr=^.{24}\s*<%=(String)key%>&grep=true">
                                 <%=CrawlURI.fetchStatusCodesToString(Integer.parseInt((String)key))%>
                             </a>&nbsp;
                         </td>
