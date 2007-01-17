@@ -51,27 +51,45 @@ public class KeyManagerTest extends TestCase {
         Map<String,Key<Object>> m = KeyManager.getKeys(ExampleConcreteProcessor.class);
         
         Set<String> expected = new HashSet<String>();
-        expected.add("LEFT");
-        expected.add("RIGHT");
-        expected.add("CATCH_DIVISION_BY_ZERO");
-        expected.add("DIVISION_BY_ZERO_RESULT");
+        expected.add("left");
+        expected.add("right");
+        expected.add("catch-division-by-zero");
+        expected.add("division-by-zero-result");
         assertEquals(expected, m.keySet());
          
         m = KeyManager.getKeys(ExampleAbstractProcessor.class);
-        expected.remove("CATCH_DIVISION_BY_ZERO");
-        expected.remove("DIVISION_BY_ZERO_RESULT");
+        expected.remove("catch-division-by-zero");
+        expected.remove("division-by-zero-result");
+        assertEquals(expected, m.keySet());
+        
+        m = KeyManager.getKeys(ExampleDependentModule.class);
+        expected.add("runnable");
+        expected.add("logger");
         assertEquals(expected, m.keySet());
         
         // Classes were initialized by above code
         Set<Key> expectedKeys = new HashSet<Key>();
         expectedKeys.add(ExampleAbstractProcessor.LEFT);
         expectedKeys.add(ExampleAbstractProcessor.RIGHT);
+        expectedKeys.add(ExampleDependentModule.CHARSEQUENCE);
+        expectedKeys.add(ExampleDependentModule.RUNNABLE);
+        assertEquals(expectedKeys, new HashSet<Key>(m.values()));
+        assertTrue(KeyManager.getDependencyConstructor(
+                ExampleDependentModule.class) != null);
+        assertEquals(2, 
+                KeyManager.getDependencyKeys(ExampleDependentModule.class).size());
+
+        expectedKeys.remove(ExampleDependentModule.CHARSEQUENCE);
+        expectedKeys.remove(ExampleDependentModule.RUNNABLE);        
+        m = KeyManager.getKeys(ExampleAbstractProcessor.class);
         assertEquals(expectedKeys, new HashSet<Key>(m.values()));
         
         expectedKeys.add(ExampleConcreteProcessor.CATCH_DIVISION_BY_ZERO);
         expectedKeys.add(ExampleConcreteProcessor.DIVISION_BY_ZERO_RESULT);
         m = KeyManager.getKeys(ExampleConcreteProcessor.class);
         assertEquals(expectedKeys, new HashSet<Key>(m.values()));
+        
+        
         
         try {
             m = KeyManager.getKeys(ExampleInvalidProcessor1.class);
@@ -104,6 +122,33 @@ public class KeyManagerTest extends TestCase {
             // Expected; make sure cause was InvalidKey
             assertTrue(e.getCause() instanceof InvalidKeyException);
         }
+        
+        
+        try {
+            m = KeyManager.getKeys(ExampleInvalidDependency1.class);
+            fail();
+        } catch (ExceptionInInitializerError e) {
+            // Expected; make sure cause was DependencyException
+            assertTrue(e.getCause() instanceof DependencyException);
+        }
+
+        
+        try {
+            m = KeyManager.getKeys(ExampleInvalidDependency2.class);
+            fail();
+        } catch (ExceptionInInitializerError e) {
+            // Expected; make sure cause was DependencyException
+            assertTrue(e.getCause() instanceof DependencyException);
+        }
+
+        try {
+            m = KeyManager.getKeys(ExampleInvalidDependency3.class);
+            fail();
+        } catch (ExceptionInInitializerError e) {
+            // Expected; make sure cause was DependencyException
+            assertTrue(e.getCause() instanceof DependencyException);
+        }
+
     }
     
     

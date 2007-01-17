@@ -24,6 +24,7 @@
 package org.archive.state;
 
 
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -58,11 +59,20 @@ final public class Key<Value> {
     /** The constraints that determine valid values for the field. */
     final private Set<Constraint<Value>> constraints;
 
+    // Note that all flags are false by default, and set to true in the
+    // presence of a corresponding annotation.
+    
     /** True if the property is considered "expert". */
-    final private boolean expert;
+    private boolean expert;
 
     /** True if the property can be overridden. */
-    final private boolean overrideable;
+    private boolean global;
+    
+    /** True if the property can be mutated. */
+    private boolean immutable;
+    
+    /** True if the property is a dependency for the class that defined it. */
+    private boolean dependency;
     
     /**
      * Constructs a new key.
@@ -76,8 +86,6 @@ final public class Key<Value> {
         maker.validate();
         this.type = maker.type;
         this.def = maker.def;
-        this.expert = maker.expert;
-        this.overrideable = maker.overrideable;
         Set<Constraint<Value>> s = new HashSet<Constraint<Value>>(maker.constraints);
         this.constraints = Collections.unmodifiableSet(s);
         maker.reset();
@@ -88,11 +96,26 @@ final public class Key<Value> {
      * Invoked by the KeyManager when it registers a new key.
      * 
      * @param owner  the class that declared this key
-     * @param name   the field name of this key
+     * @param field   the Key's field
      */
-    void setMetadata(Class owner, String name) {
-        this.fieldName = name;
+    void setMetadata(Class owner, Field field) {
+        this.fieldName = field.getName().toLowerCase().replace('_', '-');
         this.owner = owner;
+        if (field.getAnnotation(Expert.class) != null) {
+            this.expert = true;
+        }
+        if (field.getAnnotation(Global.class) != null) {
+            this.global = true;
+        }
+        if (field.getAnnotation(Immutable.class) != null) {
+            this.global = true;
+            this.immutable = true;
+        }
+        if (field.getAnnotation(Dependency.class) != null) {
+            this.global = true;
+            this.immutable = true;
+            this.dependency = true;
+        }
     }
 
 
@@ -108,15 +131,26 @@ final public class Key<Value> {
 
     
     /**
-     * Returns true if the property can be overridden.  Overrideable properties
+     * Returns false if the property can be overridden.  Overrideable properties
      * may have different values depending on context.  Non-overrideable 
      * properties have the same value for all contexts.
      * 
-     * @return  true if thispropery can be overridden
+     * @return  false if this propery can be overridden
      */
-    public boolean isOverrideable() {
-        return overrideable;
+    public boolean isGlobal() {
+        return global;
     }
+    
+    
+    public boolean isImmutable() {
+        return immutable;
+    }
+    
+    
+    public boolean isDependency() {
+        return dependency;
+    }
+    
     
     /**
      * Returns the name of the Java field that declared this key.
@@ -156,7 +190,7 @@ final public class Key<Value> {
      * 
      * @return  the class who declared this key
      */
-    public Class getOwner() {
+    public Class<?> getOwner() {
         return owner;
     }
 
@@ -197,24 +231,6 @@ final public class Key<Value> {
     }
 
 
-    /**
-     * Creates a new expert Key with the given default value and no 
-     * constraints.
-     * 
-     * @param <X>   the type of values for the key
-     * @param def   the default value for the key
-     * @return  the new Key
-     */
-    public static <X> Key<X> makeExpert(X def) {
-        KeyMaker<X> result = new KeyMaker<X>();
-        @SuppressWarnings("unchecked")
-        Class<X> c = (Class<X>)def.getClass();
-        result.type = c;
-        result.def = def;
-        result.expert = true;
-        return new Key<X>(result);
-    }
-    
 
     /**
      * Creates a basic Key.  The returned Key has the given default value,
@@ -234,34 +250,11 @@ final public class Key<Value> {
     }
 
 
-    /**
-     * Creates a new non-overrideable Key with the given default value and no 
-     * constraints.
-     * 
-     * @param <X>   the type of values for the key
-     * @param def   the default value for the key
-     * @return  the new Key
-     */    
-    public static <X> Key<X> makeFinal(X def) {
-        KeyMaker<X> result = KeyMaker.make(def);
-        result.overrideable = false;
-        return new Key<X>(result);
-    }
-    
-
-    /**
-     * Creates a new non-overrideable Key with the given default value and no 
-     * constraints.
-     * 
-     * @param <X>   the type of values for the key
-     * @param def   the default value for the key
-     * @return  the new Key
-     */    
-    public static <X> Key<X> makeExpertFinal(X def) {
-        KeyMaker<X> result = KeyMaker.make(def);
-        result.overrideable = false;
-        result.expert = true;
-        return new Key<X>(result);
+    public static <X> Key<X> make(Class<X> type, X def) {
+        KeyMaker<X> result = new KeyMaker<X>();
+        result.type = type;
+        result.def = def;
+        return result.toKey();
     }
 
     
@@ -298,4 +291,9 @@ final public class Key<Value> {
     public static <X> Key<X> makeNull(Class<X> cls) {
         return KeyMaker.makeNull(cls).toKey();
     }
+
+
+
+    
+
 }
