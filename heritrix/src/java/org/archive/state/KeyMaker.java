@@ -74,12 +74,6 @@ public class KeyMaker<T> {
 
     /** Default value for the property.  Defaults to null. */
     public T def;
-    
-    /** Expert flag, defaults false. */
-    public boolean expert = false;
-    
-    /** Overrideable flag, defaults true. */
-    public boolean overrideable = true;
 
 
     /** Constructor. */

@@ -85,7 +85,7 @@ public class ExampleStateProvider implements StateProvider {
             throw new IllegalArgumentException("Null module.");
         }
         Class<?> owner = key.getOwner();
-        if (!owner.isInstance(owner)) {
+        if (!owner.isInstance(module)) {
             throw new IllegalArgumentException("Module and key incompatible.");
         }
         for (Constraint<T> c: key.getConstraints()) {
