@@ -27,6 +27,7 @@ package org.archive.settings;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.archive.state.Key;
@@ -76,41 +77,72 @@ public class SheetBundle extends Sheet {
     }
 
     
-    public <T> Resolved<T> resolve(Object processor, Key<T> key) {
+    public <T> Offline checkOffline(Offline module, Key<T> key) {
+        for (Sheet sheet: sheets) {
+            Offline result = sheet.checkOffline(module, key);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+    
+    
+    public <T> Resolved<T> resolve(Object module, Key<T> key) {
+        if (Map.class.isAssignableFrom(key.getType())) {
+            return new MapResolver<T>(this, module, key).resolve();
+        }
+        
+        
+        if (key.getType().isAssignableFrom(List.class)) {
+            return new ListResolver<T>(this, module, key).resolve();
+        }
+        
+        return resolveNormal(module, key);
+    }
+
+    
+    private <T> Resolved<T> resolveNormal (Object module, Key<T> key) {
         List<Sheet> sheets = new ArrayList<Sheet>();
         sheets.add(this);
-        Resolved<T> r = resolve(sheets, processor, key);
+        Resolved<T> r = resolveNormal(sheets, module, key);
         if (r == null) {
-            return resolveDefault(processor, key);
+            return resolveDefault(module, key);
         } else {
             return r;
         }
     }
     
     
-    private <T> Resolved<T> resolve(List<Sheet> sheets, Object processor, Key<T> key) {
+    private static <T> Resolved<T> resolveNormal(
+            List<Sheet> sheets, 
+            Object module, 
+            Key<T> key) {
         SheetBundle bundle = (SheetBundle)sheets.get(sheets.size() - 1);
         for (Sheet sheet: bundle.getSheets()) {
             if (sheet instanceof SheetBundle) {
                 SheetBundle sb = (SheetBundle)sheet;
                 sheets.add(sb);
-                Resolved<T> r = resolve(sheets, processor, key);
+                Resolved<T> r = resolveNormal(sheets, module, key);
                 if (r != null) {
                     return r;
                 }
                 sheets.remove(sheets.size() - 1);
             } else {
                 SingleSheet ss = (SingleSheet)sheet;
-                T value = ss.check(processor, key);
+                T value = ss.check(module, key);
                 if (value != null) {
                     sheets.add(ss);
-                    return new Resolved<T>(sheets, processor, key, value);
+                    return Resolved.makeOnline(module, key, value, sheets);
                 }
             }
         }
         return null;
     }
     
+    
+
+
     /**
      * Returns the list of sheets contained in this bundle.
      * 

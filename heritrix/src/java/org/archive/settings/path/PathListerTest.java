@@ -27,30 +27,69 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.archive.settings.Offline;
 import org.archive.settings.Sheet;
+import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
+import org.archive.state.Key;
+import org.archive.state.KeyManager;
+import org.archive.state.KeyTypes;
 
 public class PathListerTest extends PathTestBase {
 
     public static class Consumer implements PathListConsumer {
         
         public StringBuilder sb = new StringBuilder();
+        private Map<Object,String> refs = new IdentityHashMap<Object,String>();
         
         public void consume(String path, List<Sheet> sheets, Object value) {
             for (Sheet s: sheets) {
                 sb.append(s.getName()).append(" -> ");
             }
-            Class c = value.getClass();
-            if (isSimple(c)) {
-                sb.append(path).append('=').append(value);
-            } else {
-                sb.append(path).append("._impl=").append(c.getName()); 
-            }
+            sb.append(path).append('=');
+            consume(sheets, path, value);
             sb.append('\n');
         }
+        
+        
+        private void consume(List<Sheet> sheets, String path, Object value) {
+            Class c = (value instanceof Offline) ? ((Offline)value).getType() : value.getClass();
+            if (KeyTypes.isSimple(c)) {
+                String tag = KeyTypes.getSimpleTypeTag(c);
+                sb.append(tag).append(':').append(value);
+                return;
+            }
+
+            String ref = refs.get(value);
+            if (ref != null) {
+                sb.append(ref);
+                return;
+            }
+            
+            sb.append("object:").append(c.getName());
+        }
+   }
+
+
+    public void ntestQ() throws Exception {
+//        String expected = load(sheetName + ".resolved.txt");
+        Consumer consumer = new Consumer();
+        PathLister.getAll((SingleSheet)offlineManager.getSheet("override2"), consumer);
+        String result = consumer.sb.toString();
+        System.out.println(result);
+        
+        
+  //      System.out.println("SHEET: " + sheetName);
+  //      System.out.println(expected + "\n\n\n");
+  //      System.out.println(result);
+  //      assertEquals(expected, result);
+        
     }
+    
     
     public void testResolveAll() throws Exception {
         runResolve("default");
@@ -70,12 +109,22 @@ public class PathListerTest extends PathTestBase {
     private void runResolve(String sheetName) throws IOException {
         String expected = load(sheetName + ".resolved.txt");
         Consumer consumer = new Consumer();
-        PathLister.resolveAll(manager.getSheet(sheetName), consumer);
+        
+        PathLister.resolveAll(offlineManager.getSheet(sheetName), consumer);
         String result = consumer.sb.toString();
-        System.out.println("SHEET: " + sheetName);
+        System.out.println("OFFLINE SHEET: " + sheetName);
         System.out.println(expected + "\n\n\n");
         System.out.println(result);
         assertEquals(expected, result);
+
+        consumer = new Consumer();
+        PathLister.resolveAll(manager.getSheet(sheetName), consumer);
+        result = consumer.sb.toString();
+        System.out.println("ONLINE SHEET: " + sheetName);
+        System.out.println(expected + "\n\n\n");
+        System.out.println(result);
+        assertEquals(expected, result);
+
     }
 
     
@@ -89,20 +138,6 @@ public class PathListerTest extends PathTestBase {
     }
 
     
-    static boolean isSimple(Class c) {
-        if (c.isPrimitive()) {
-            return true;
-        }
-        if (c == Boolean.class) {
-            return true;
-        }
-        if (c == String.class) {
-            return true;
-        }
-        // FIXME: BigDecimal, BigInteger, Date, Pattern and so on...
-        return false;
-    }
-
     private static String load(String name) throws IOException {
         InputStream inp = PathListerTest.class.getResourceAsStream(name);
         BufferedReader br = new BufferedReader(new InputStreamReader(inp));

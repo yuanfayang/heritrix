@@ -140,19 +140,6 @@ public class PathChanger {
         };
 
 
-    final public static Transformer<String,Object> OBJECT_TRANSFORMER =
-        new Transformer<String,Object>() {
-            public Object transform(String s) {
-                
-                return null; 
-            }
-        };
-
-    
-//    final private BufferedReader reader;
-//    final private SingleSheet sheet;
-
-
     /**
      * Transformers used to convert simple objects from strings.
      */
@@ -209,15 +196,8 @@ public class PathChanger {
     
     private void processChange(SingleSheet sheet, PathChange pair) {
         String path = pair.getPath();
+        String suffix = pair.getType();
         String value = pair.getValue();
-
-        int p = path.lastIndexOf(':');
-        if (p < 0) {
-            throw new PathChangeException("No type suffix on path, cannot parse.");
-        }
-        
-        String suffix = path.substring(p + 1);
-        path = path.substring(0, p);
         
         if (suffix.equals("object")) {
             Object v = Construction.construct(sheet, value);

@@ -24,12 +24,13 @@
 package org.archive.settings.path;
 
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.archive.settings.Offline;
 import org.archive.settings.Resolved;
 import org.archive.settings.Sheet;
 import org.archive.settings.SingleSheet;
@@ -83,11 +84,11 @@ public class PathLister {
      */
     private void list() {
         Sheet defaults = startSheet.getSheetManager().getDefault();
-        String path = "";
+        String path = "root";
         Object module = startSheet.getSheetManager().getRoot();
         List<Sheet> list = Collections.singletonList(defaults);
         consume(path, list, module);
-        list = Collections.singletonList(startSheet);
+//        list = Collections.singletonList(startSheet);
         advance(path, list, module);
     }
 
@@ -129,18 +130,31 @@ public class PathLister {
      * 
      * @param sheet       the sheet to use to resolve values
      * @param path        the path that leads to the processor
-     * @param processor   the processor to handle
+     * @param module   the processor to handle
      */
     private void handleModule(
             List<Sheet> sheets,
             String path,
-            Object processor) {
+            Object module) {
         // Get the keys for the module
-        Class ptype = processor.getClass();
-        Collection<Key<Object>> declared = KeyManager.getKeys(ptype).values();
+        Class ptype;
+        if (module instanceof Offline) {
+            ptype = ((Offline)module).getType();
+        } else {
+            ptype = module.getClass();
+        }
         
+        // Always list dependencies first
+        Collection<Key<Object>> deps = KeyManager.getDependencyKeys(ptype);
+        for (Key<Object> k: deps) {
+            handleKey(sheets, path, module, k);
+        }
+        
+        Collection<Key<Object>> declared = KeyManager.getKeys(ptype).values();
         for (Key<Object> k: declared) {
-            handleKey(sheets, path, processor, k);
+            if (!k.isDependency()) {
+                handleKey(sheets, path, module, k);
+            }
         }
     }
 
@@ -157,17 +171,24 @@ public class PathLister {
      */
     private void handleKey(List<Sheet> sheets, String path, Object processor, 
             Key<Object> k) {
-        Sheet last = sheets.get(sheets.size() - 1);
-        Resolved<Object> r = last.resolve(processor, k);
-        List<Sheet> resolvedList = new ArrayList<Sheet>(sheets);
-        resolvedList.remove(resolvedList.size() - 1);
-        resolvedList.addAll(r.getSheets());
-        resolvedList = Collections.unmodifiableList(resolvedList);
-        
-        String kpath = appendPath(path, k.getFieldName());
+        Resolved<Object> r = startSheet.resolve(processor, k);
+        //List<Sheet> resolvedList = new ArrayList<Sheet>(sheets);
+        //resolvedList.remove(resolvedList.size() - 1);
+        //resolvedList.addAll(r.getSheets());
+        //resolvedList = Collections.unmodifiableList(resolvedList);
 
+        List<Sheet> resolvedList = r.getSheets();
+        
+        String kpath = appendPath(path, k.getFieldName());        
         consume(kpath, resolvedList, r.getValue());
-        advance(kpath, resolvedList, r.getValue());
+        
+        if (Map.class.isAssignableFrom(k.getType())) {
+            handleMap(kpath, r.getMapSheets(), r.getValue());
+        } else if (List.class.isAssignableFrom(k.getType())) {
+            handleList(kpath, r.getListSheets(), r.getValue());
+        } else {
+            handleModule(sheets, kpath, r.getValue());
+        }
     }
 
 
@@ -189,20 +210,29 @@ public class PathLister {
             consumer.consume(path, list, value);
         }
     }
-
+    
 
     private void advance(String path, List<Sheet> list, Object value) {
         if (value instanceof List) {
-            handleList(path, list, value);
+            @SuppressWarnings("unchecked")
+            List<Object> v = (List)value;
+            List<List<Sheet>> sheets = Collections.nCopies(v.size(), list);
+            handleList(path, sheets, v);
         } else if (value instanceof Map) {
-            handleMap(path, list, value);
+            @SuppressWarnings("unchecked")
+            Map<String,Object> map = (Map)value;
+            Map<String,List<Sheet>> sheets = new HashMap<String,List<Sheet>>();
+            for (String k: map.keySet()) {
+                sheets.put(k, list);
+            }
+            handleMap(path, sheets, map);
         } else {
             // Assume it's another module.
             handleModule(list, path, value);
         }
     }
 
-
+    
     /**
      * Handles a list object.  First consumes the list object itself, then
      * consumes each element of the list.
@@ -212,41 +242,30 @@ public class PathLister {
      * @param l       the list, as an object (easier to cast in the method
      *   body than at each call site)
      */
-    private void handleList(String path, List<Sheet> sheets, Object l) {
+    private void handleList(String path, List<List<Sheet>> sheets, Object l) {
         @SuppressWarnings("unchecked")
         List<Object> list = (List<Object>)l;
+        
         for (int i = 0; i < list.size(); i++) {
             Object element = list.get(i);
             String lpath = appendPath(path, Integer.toString(i));
-            consume(lpath, sheets, element);
-            advance(lpath, sheets, element);
+            consume(lpath, sheets.get(i), element);
+            advance(lpath, sheets.get(i), element);
         }
     }
-    
-    
-    private void handleMap(String path, List<Sheet> sheets, Object m) {
+
+
+    private void handleMap(String path, Map<String,List<Sheet>> sheetMap, Object m) {
         @SuppressWarnings("unchecked")
         Map<String,Object> map = (Map<String,Object>)m;
         for (Map.Entry<String,Object> entry: map.entrySet()) {
             Object element = entry.getValue();
-            String mpath = appendPath(path, entry.getKey()); // FXME: Escape keys
+            String entryKey = entry.getKey(); // FIXME: Escape keys
+            String mpath = appendPath(path, entryKey);
+            List<Sheet> sheets = sheetMap.get(entryKey);
             consume(mpath, sheets, element);
             advance(mpath, sheets, element);
         }
-    }
-
-    
-
-    static boolean isSimple(Class c) {
-        // FIXME: Move this method somewhere else
-        if (c.isPrimitive()) {
-            return true;
-        }
-        if (c == String.class) {
-            return true;
-        }
-        // FIXME: BigDecimal, BigInteger, Date, Pattern and so on...
-        return false;
     }
 
 

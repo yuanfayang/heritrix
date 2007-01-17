@@ -6,7 +6,7 @@ import org.archive.settings.Sheet;
 
 class Construction {
 
-    
+
     private static Object getReference(Sheet sheet, String value) {
         if (value.equals("sheetManager")) {
             return sheet.getSheetManager();
@@ -14,7 +14,8 @@ class Construction {
             return PathValidator.validate(sheet, value);
         }
     }
-    
+
+
     public static Object construct(Sheet sheet, String value) {
         if (!value.startsWith("new ")) {
             return getReference(sheet, value);

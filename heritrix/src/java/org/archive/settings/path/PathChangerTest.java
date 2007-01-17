@@ -37,20 +37,21 @@ public class PathChangerTest extends PathTestBase {
     public void testChange() {
         SingleSheet defaults = manager.getDefault();
         List<PathChange> list = new ArrayList<PathChange>();
-        list.add(new PathChange("html.ENABLED", "false"));
+        list.add(new PathChange("root.html.enabled", "boolean", "false"));
         new PathChanger().change(defaults, list);
         Boolean b = defaults.get(html, ExtractorHTML.ENABLED);
         assertEquals(Boolean.FALSE, b);
         
         list.clear();
-        list.add(new PathChange("html.DECIDE_RULES.RULES.1._impl",
+        list.add(new PathChange("root.html.decide-rules.rules.1", "object",
                 "new org.archive.processors.deciderules.MatchesRegExpDecideRule"));
-        list.add(new PathChange("html.DECIDE_RULES.RULES.1.REGEXP", ".*?"));
+        list.add(new PathChange("root.html.decide-rules.rules.1.regexp",
+                "pattern", ".*?"));
         new PathChanger().change(defaults, list);
         assertEquals(2, this.htmlRules.size());
         
         list.clear();
-        list.add(new PathChange("html.DECIDE_RULES.RULES._impl",
+        list.add(new PathChange("root.html.decide-rules.rules", "object",
                 "new java.util.LinkedList()"));
         new PathChanger().change(defaults, list);
         List<DecideRule> r = defaults.get(htmlSeq, DecideRuleSequence.RULES);
