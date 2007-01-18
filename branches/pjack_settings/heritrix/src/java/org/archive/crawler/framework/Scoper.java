@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.util.LogUtils;
 import org.archive.processors.deciderules.DecideResult;
+import org.archive.state.Expert;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -51,7 +52,8 @@ public abstract class Scoper extends org.archive.processors.Processor {
      * suffix pattern, etc. in heritrix.properties. This attribute is only
      * checked once, on startup of a job.
      */
-    final public static Key<Boolean> OVERRIDE_LOGGER = Key.makeExpert(false);
+    @Expert
+    final public static Key<Boolean> OVERRIDE_LOGGER = Key.make(false);
 
     
     // FIXME: Weirdo log overriding might not work on a per-subclass basis,

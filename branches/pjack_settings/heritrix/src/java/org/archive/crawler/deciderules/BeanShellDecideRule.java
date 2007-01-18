@@ -36,6 +36,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRule;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -65,7 +66,8 @@ public class BeanShellDecideRule extends DecideRule {
         Logger.getLogger(BeanShellDecideRule.class.getName());
     
     /** BeanShell script file. */
-    final public static Key<String> SCRIPT_FILE = Key.makeFinal("");
+    @Immutable
+    final public static Key<String> SCRIPT_FILE = Key.make("");
 
 
     /**
@@ -73,7 +75,8 @@ public class BeanShellDecideRule extends DecideRule {
      * they should share synchronized access to one context. Default is true,
      * meaning each threads gets its own isolated context.
      */
-    final public static Key<Boolean> ISOLATE_THREADS = Key.makeFinal(true);
+    @Immutable
+    final public static Key<Boolean> ISOLATE_THREADS = Key.make(true);
 
 
     protected ThreadLocal<Interpreter> threadInterpreter = 

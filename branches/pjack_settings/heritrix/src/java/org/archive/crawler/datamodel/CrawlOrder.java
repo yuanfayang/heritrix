@@ -27,7 +27,6 @@
 
 package org.archive.crawler.datamodel;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,22 +34,13 @@ import java.util.List;
 import java.util.Map;
 //import java.util.logging.Logger;
 
-import javax.management.AttributeNotFoundException;
-
-import org.archive.crawler.framework.CrawlController;
-import org.archive.crawler.framework.CrawlScope;
-import org.archive.crawler.framework.Frontier;
-import org.archive.crawler.framework.StatisticsTracking;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.url.CanonicalizationRule;
-import org.archive.processors.Processor;
-import org.archive.processors.credential.CredentialStore;
 import org.archive.processors.util.RobotsHonoringPolicy;
-import org.archive.settings.Sheet;
+import org.archive.state.Expert;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
-import org.archive.state.StateProvider;
 
 
 /**
@@ -73,7 +63,8 @@ public class CrawlOrder implements Serializable {
      * This setting specifies a file level directory to store those settings. The path
      * is relative to {@link #DISK_PATH} unless an absolute path is provided.
      */
-    final public static Key<String> SETTINGS_DIRECTORY = Key.makeExpertFinal("settings");
+    @Expert @Immutable
+    final public static Key<String> SETTINGS_DIRECTORY = Key.make("settings");
 
 
     /**
@@ -81,77 +72,88 @@ public class CrawlOrder implements Serializable {
      * be kept. If this path is a relative path, it will be
      * relative to the crawl order.
      */
-    final public static Key<String> DISK_PATH = Key.makeExpertFinal("");
+    @Expert @Immutable
+    final public static Key<String> DISK_PATH = Key.make("");
 
 
     /**
      * Directory where crawler log files will be kept. If this path is a 
      * relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> LOGS_PATH = Key.makeExpertFinal("logs"); 
+    @Expert @Immutable
+    final public static Key<String> LOGS_PATH = Key.make("logs"); 
 
 
     /**
      * Directory where crawler checkpoint files will be kept. If this 
      * path is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> CHECKPOINTS_PATH = Key.makeExpertFinal("checkpoints");
+    @Expert @Immutable
+    final public static Key<String> CHECKPOINTS_PATH = Key.make("checkpoints");
 
 
     /**
      * Directory where crawler-state files will be kept. If this path 
      * is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> STATE_PATH = Key.makeExpertFinal("state");
+    @Expert @Immutable
+    final public static Key<String> STATE_PATH = Key.make("state");
 
 
     /**
      * Directory where discardable temporary files will be kept. If 
      * this path is a relative path, it will be relative to the {@link #DISK_PATH}.
      */
-    final public static Key<String> SCRATCH_PATH = Key.makeExpertFinal("scratch");
+    @Expert @Immutable
+    final public static Key<String> SCRATCH_PATH = Key.make("scratch");
 
 
     /**
      * Maximum number of bytes to download. Once this number is exceeded 
      * the crawler will stop. A value of zero means no upper limit.
      */
-    final public static Key<Long> MAX_BYTES_DOWNLOAD = Key.makeFinal(0L);
+    @Immutable
+    final public static Key<Long> MAX_BYTES_DOWNLOAD = Key.make(0L);
 
 
     /**
      * Maximum number of documents to download. Once this number is exceeded the 
      * crawler will stop. A value of zero means no upper limit.
      */
-    final public static Key<Long> MAX_DOCUMENT_DOWNLOAD = Key.makeFinal(0L);
+    @Immutable
+    final public static Key<Long> MAX_DOCUMENT_DOWNLOAD = Key.make(0L);
 
 
     /**
      * Maximum amount of time to crawl (in seconds). Once this much time has 
      * elapsed the crawler will stop. A value of zero means no upper limit.
      */
-    final public static Key<Long> MAX_TIME_SEC = Key.makeFinal(0L);
+    @Immutable
+    final public static Key<Long> MAX_TIME_SEC = Key.make(0L);
 
 
     /**
      * Maximum number of threads processing URIs at the same time.
      */
-    final public static Key<Integer> MAX_TOE_THREADS = Key.makeFinal(0);
+    @Immutable
+    final public static Key<Integer> MAX_TOE_THREADS = Key.make(0);
 
 
     /**
      * Size in bytes of in-memory buffer to record outbound traffic. One such 
      * buffer is reserved for every ToeThread. 
      */
-    final public static Key<Integer> RECORDER_OUT_BUFFER_BYTES = Key.makeExpertFinal(4096);
+    @Expert @Immutable
+    final public static Key<Integer> RECORDER_OUT_BUFFER_BYTES = Key.make(4096);
 
 
     /**
      * Size in bytes of in-memory buffer to record inbound traffic. One such 
      * buffer is reserved for every ToeThread.
      */
+    @Expert @Immutable
     final public static Key<Integer> RECORDER_IN_BUFFER_BYTES = 
-        Key.makeExpertFinal(65536);
+        Key.make(65536);
 
             
     /**
@@ -159,13 +161,15 @@ public class CrawlOrder implements Serializable {
      * means no preference (accept BDB's default, usually 60%, or the 
      * je.maxMemoryPercent property value).
      */
-    final public static Key<Integer> BDB_CACHE_PERCENT = Key.makeExpertFinal(0);
+    @Expert @Immutable
+    final public static Key<Integer> BDB_CACHE_PERCENT = Key.make(0);
 
 
     /**
      * HTTP headers. Information that will be used when constructing the HTTP 
      * headers of the crawler's HTTP requests.
      */
+    @Immutable
     final public static Key<Map<String,String>> HTTP_HEADERS
      = makeHttpHeaders();
 
@@ -177,8 +181,9 @@ public class CrawlOrder implements Serializable {
      * Ordered list of url canonicalization rules.  Rules are applied in the 
      * order listed from top to bottom.
      */
+    @Immutable
     final public static Key<List<CanonicalizationRule>> RULES = 
-        finalList(CanonicalizationRule.class);
+        Key.makeList(CanonicalizationRule.class);
 
 
 
@@ -186,7 +191,8 @@ public class CrawlOrder implements Serializable {
      * Optional. Points at recover log (or recover.gz log) OR the checkpoint 
      * directory to use recovering a crawl.
      */
-    final public static Key<String> RECOVER_PATH = Key.makeExpertFinal("");
+    @Expert @Immutable
+    final public static Key<String> RECOVER_PATH = Key.make("");
 
 
     /**
@@ -203,8 +209,9 @@ public class CrawlOrder implements Serializable {
      * files that comprise a checkpoint are manually assembled. This is an
      * expert setting.
      */
+    @Expert @Immutable
     final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
-        Key.makeExpertFinal(true);
+        Key.make(true);
 
 
     /**
@@ -213,8 +220,9 @@ public class CrawlOrder implements Serializable {
      * being retried. Default is false, meaning failures are forgotten, and the
      * corresponding URIs will be retried in the recovered crawl.
      */
+    @Expert @Immutable
     final public static Key<Boolean> RECOVER_RETAIN_FAILURES = 
-        Key.makeExpertFinal(false);
+        Key.make(false);
 
 
     
@@ -237,7 +245,6 @@ public class CrawlOrder implements Serializable {
         hh = Collections.unmodifiableMap(hh);
         
         KeyMaker<Map<String,String>> km = KeyMaker.makeMap(String.class);
-        km.overrideable = false;
         km.def = hh;
         
         // FIXME: Add header constraints to enforce valid email etc
@@ -246,11 +253,5 @@ public class CrawlOrder implements Serializable {
     }
 
 
-    private static <T> Key<List<T>> finalList(Class<T> element) {
-        KeyMaker<List<T>> km = KeyMaker.makeList(element);
-        km.expert = true;
-        km.overrideable = false;
-        return new Key<List<T>>(km);
-    }
 
 }

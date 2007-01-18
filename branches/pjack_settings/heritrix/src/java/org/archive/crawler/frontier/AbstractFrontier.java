@@ -49,7 +49,6 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Frontier;
 import org.archive.crawler.framework.ToeThread;
 import org.archive.crawler.framework.exceptions.EndedException;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.url.Canonicalizer;
 import org.archive.net.UURI;
@@ -58,8 +57,10 @@ import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.Sheet;
+import org.archive.state.Expert;
+import org.archive.state.Global;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 
@@ -111,13 +112,15 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
 
 
     /** maximum per-host bandwidth usage */
+    @Expert
     final public static Key<Integer> MAX_PER_HOST_BANDWIDTH_USAGE_KB_SEC =
-        Key.makeExpert(0);
+        Key.make(0);
 
 
     /** maximum overall bandwidth usage */
+    @Global
     final public static Key<Integer> TOTAL_BANDWIDTH_USAGE_KB_SEC =
-        Key.makeFinal(0);
+        Key.make(0);
 
 
     /** for retryable problems, seconds to wait before a retry */
@@ -137,18 +140,21 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     
     
     /** queue assignment to force onto CrawlURIs; intended to be overridden */
+    @Immutable @Expert
     final public static Key<String> FORCE_QUEUE_ASSIGNMENT = 
-        Key.makeExpertFinal("");
+        Key.make("");
 
     // word chars, dash, period, comma, colon
     protected final static String ACCEPTABLE_FORCE_QUEUE = "[-\\w\\.,:]*";
 
     
     /** whether pause, rather than finish, when crawl appears done */
-    final public static Key<Boolean> PAUSE_AT_FINISH = Key.makeFinal(false);
+    @Immutable
+    final public static Key<Boolean> PAUSE_AT_FINISH = Key.make(false);
     
     
     /** whether to pause at crawl start */
+    @Immutable
     final public static Key<Boolean> PAUSE_AT_START = Key.make(false);
 
 
@@ -158,14 +164,15 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
      * from that seed. When present, such source tags appear in the
      * second-to-last crawl.log field.
      */
-    final public static Key<Boolean> SOURCE_TAG_SEEDS = Key.makeFinal(false);
+    @Immutable
+    final public static Key<Boolean> SOURCE_TAG_SEEDS = Key.make(false);
 
 
     /**
      * Recover log on or off attribute.
      */
-    final public static Key<Boolean> RECOVERY_LOG_ENABLED = 
-        Key.makeExpertFinal(true);
+    @Immutable @Expert
+    final public static Key<Boolean> RECOVERY_LOG_ENABLED = Key.make(true);
 
 
     // top-level stats
@@ -946,15 +953,6 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     public void reportTo(PrintWriter writer) {
         reportTo(null, writer);
     }
-    
-    
-    private static Key<QueueAssignmentPolicy> makeQAP() {
-        KeyMaker<QueueAssignmentPolicy> km = new KeyMaker<QueueAssignmentPolicy>();
-        km.type = QueueAssignmentPolicy.class;
-        km.def = new HostnameQueueAssignmentPolicy();
-        km.overrideable = false;
-        km.expert = true;
-        return km.toKey();
-    }
+
 
 }

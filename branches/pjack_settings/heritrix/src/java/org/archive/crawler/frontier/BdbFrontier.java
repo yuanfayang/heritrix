@@ -44,6 +44,7 @@ import org.archive.crawler.util.BloomUriUniqFilter;
 import org.archive.crawler.util.CheckpointUtils;
 import org.archive.crawler.util.DiskFPMergeUriUniqFilter;
 import org.archive.crawler.util.MemFPMergeUriUniqFilter;
+import org.archive.state.Expert;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.StateProvider;
@@ -76,8 +77,9 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
             DiskFPMergeUriUniqFilter.class.getName()};
     
     /** URI-already-included to use (by class name) */
+    @Expert
     final public static Key<UriUniqFilter> URI_INCLUDED_STRUCTURE =
-        makeUUF();
+        Key.make(UriUniqFilter.class, null);
     
     public final static String ATTR_INCLUDED = "uri-included-structure";
     
@@ -332,12 +334,4 @@ public class BdbFrontier extends WorkQueueFrontier implements Serializable {
     }
     
     
-    private static Key<UriUniqFilter> makeUUF() {
-        KeyMaker<UriUniqFilter> km = new KeyMaker<UriUniqFilter>();
-        km.type = UriUniqFilter.class;
-        // FIXME!
-//        km.def = new BdbUriUniqFilter();
-        km.expert = true;
-        return km.toKey();
-    }
 }

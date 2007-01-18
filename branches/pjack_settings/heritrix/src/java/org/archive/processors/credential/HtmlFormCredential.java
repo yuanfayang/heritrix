@@ -35,8 +35,9 @@ import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.archive.processors.ProcessorURI;
+import org.archive.state.Expert;
+import org.archive.state.Global;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 
@@ -59,19 +60,23 @@ public class HtmlFormCredential extends Credential {
      * Full URI of page that contains the HTML login form we're to apply these
      * credentials too: E.g. http://www.archive.org
      */
-    final public static Key<String> LOGIN_URI = Key.makeExpertFinal("");
+    @Global @Expert
+    final public static Key<String> LOGIN_URI = Key.make("");
 
 
     /**
      * Form items.
      */
-    final public static Key<Map<String,String>> FORM_ITEMS = makeFormItems();
+    @Global @Expert
+    final public static Key<Map<String,String>> FORM_ITEMS = 
+        Key.makeMap(String.class);
 
     
     /**
      * GET or POST.
      */
-    final public static Key<String> FORM_METHOD = Key.makeExpertFinal("POST");
+    @Global @Expert
+    final public static Key<String> FORM_METHOD = Key.make("POST");
     
 
     /**
@@ -197,10 +202,5 @@ public class HtmlFormCredential extends Credential {
     }
     
     
-    private static Key<Map<String,String>> makeFormItems() {
-        KeyMaker<Map<String,String>> km = KeyMaker.makeMap(String.class);
-        km.overrideable = false;
-        km.expert = true;
-        return km.toKey();
-    }
+
 }

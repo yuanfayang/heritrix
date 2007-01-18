@@ -36,6 +36,7 @@ import java.util.TreeMap;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.iterator.LineReadingIterator;
@@ -93,7 +94,8 @@ public class LexicalCrawlMapper extends CrawlMapper {
      * range, the second the crawler node to which URIs in the key range should
      * be mapped.
      */
-    final public static Key<String> MAP_SOURCE = Key.makeFinal("");
+    @Immutable
+    final public static Key<String> MAP_SOURCE = Key.make("");
 
     
     /**

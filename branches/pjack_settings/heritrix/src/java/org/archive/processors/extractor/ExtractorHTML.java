@@ -36,6 +36,7 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.RobotsHonoringPolicy;
+import org.archive.state.Expert;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
 import org.archive.util.DevUtils;
@@ -160,17 +161,21 @@ public class ExtractorHTML extends ContentExtractor {
     static final String FRAME = "frame";
     static final String IFRAME = "iframe";
 
+    @Expert
     public static final Key<Boolean> TREAT_FRAMES_AS_EMBED_LINKS = 
-        Key.makeExpert(true);
+        Key.make(true);
     
+    @Expert
     public static final Key<Boolean> IGNORE_FORM_ACTION_URLS =
-        Key.makeExpert(false);
+        Key.make(false);
     
+    @Expert
     public static final Key<Boolean> OVERLY_EAGER_LINK_DETECTION =
-        Key.makeExpert(true);
+        Key.make(true);
     
+    @Expert
     public static final Key<Boolean> IGNORE_UNEXPECTED_HTML = 
-        Key.makeExpert(true);
+        Key.make(true);
     
     
     static {

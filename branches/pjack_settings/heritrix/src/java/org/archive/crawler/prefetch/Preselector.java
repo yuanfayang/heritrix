@@ -30,6 +30,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.ProcessorURI;
+import org.archive.state.Expert;
 import org.archive.state.Key;
 import org.archive.util.TextUtils;
 
@@ -56,27 +57,31 @@ implements FetchStatusCodes {
      * queues. Setting this value to true forces the URI to be checked against
      * the scope when it is comming out of the queue, possibly after the scope
      * is altered.
-     */    
-    final public static Key<Boolean> RECHECK_SCOPE = Key.makeExpert(false);
+     */
+    @Expert
+    final public static Key<Boolean> RECHECK_SCOPE = Key.make(false);
 
 
     /**
      * Block all URIs from being processed. This is most likely to be used in
      * overrides to easily reject certain hosts from being processed.
      */
-    final public static Key<Boolean> BLOCK_ALL = Key.makeExpert(false);
+    @Expert
+    final public static Key<Boolean> BLOCK_ALL = Key.make(false);
 
     
     /**
      * Block all URIs matching the regular expression from being processed.
      */
-    final public static Key<String> BLOCK_BY_REGEXP = Key.makeExpert("");
+    @Expert
+    final public static Key<String> BLOCK_BY_REGEXP = Key.make("");
 
 
     /**
      * Allow only URIs matching the regular expression to be processed.
      */
-    final public static Key<String> ALLOW_BY_REGEXP = Key.makeExpert("");
+    @Expert
+    final public static Key<String> ALLOW_BY_REGEXP = Key.make("");
 
 
     /**

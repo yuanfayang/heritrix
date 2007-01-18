@@ -35,6 +35,8 @@ import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.archive.processors.ProcessorURI;
+import org.archive.state.Expert;
+import org.archive.state.Global;
 import org.archive.state.Key;
 
 
@@ -54,13 +56,16 @@ public class Rfc2617Credential extends Credential {
 
 
     /** Basic/Digest Auth realm. */
-    final public static Key<String> REALM = Key.makeExpertFinal("Realm");
+    @Global @Expert
+    final public static Key<String> REALM = Key.make("Realm");
 
     /** Login. */
-    final public static Key<String> LOGIN = Key.makeExpertFinal("login");
+    @Global @Expert
+    final public static Key<String> LOGIN = Key.make("login");
     
     /** Password. */
-    final public static Key<String> PASSWORD = Key.makeExpertFinal("password");
+    @Global @Expert
+    final public static Key<String> PASSWORD = Key.make("password");
 
 
     /**

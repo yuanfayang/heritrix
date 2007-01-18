@@ -48,6 +48,7 @@ import org.archive.io.warc.WARCConstants;
 import org.archive.io.warc.WARCWriterPool;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.extractor.Link;
+import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.uid.GeneratorFactory;
@@ -75,8 +76,9 @@ FetchStatusCodes, WARCConstants {
      * safe to change midcrawl (You can remove and add new dirs as the crawler
      * progresses).
      */
+    @Global
     final public static Key<List<String>> PATH = 
-        Key.makeFinal(Collections.singletonList("warcs"));
+        Key.make(Collections.singletonList("warcs"));
 
     
     /**

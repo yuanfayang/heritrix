@@ -53,8 +53,9 @@ import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.net.UURI;
 import org.archive.settings.Sheet;
+import org.archive.state.Expert;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
 import org.archive.util.ArchiveUtils;
 
 import com.sleepycat.collections.StoredIterator;
@@ -108,33 +109,39 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
      * in active rotation. (As a result, queue's next try may be much
      * further in the future than the snooze target delay.)
      */
+    @Immutable @Expert
     final public static Key<Long> SNOOZE_DEACTIVATE_MS = 
-        Key.makeExpertFinal(5L*60L*1000L);
+        Key.make(5L*60L*1000L);
     
     
     private static final Logger logger =
         Logger.getLogger(WorkQueueFrontier.class.getName());
     
     /** whether to hold queues INACTIVE until needed for throughput */
-    final public static Key<Boolean> HOLD_QUEUES = Key.makeExpertFinal(true);
+    final public static Key<Boolean> HOLD_QUEUES = Key.make(true);
 
     /** amount to replenish budget on each activation (duty cycle) */
+    @Immutable @Expert
     final public static Key<Integer> BALANCE_REPLENISH_AMOUNT = 
-        Key.makeExpertFinal(3000);
+        Key.make(3000);
     
     /** whether to hold queues INACTIVE until needed for throughput */
+    @Immutable @Expert
     final public static Key<Integer> ERROR_PENALTY_AMOUNT = 
-        Key.makeExpertFinal(100);
+        Key.make(100);
 
     /** total expenditure to allow a queue before 'retiring' it  */
-    final public static Key<Long> QUEUE_TOTAL_BUDGET = Key.makeExpertFinal(-1L);
+    final public static Key<Long> QUEUE_TOTAL_BUDGET = Key.make(-1L);
 
     /** cost assignment policy to use. */
-    final public static Key<CostAssignmentPolicy> COST_POLICY = makeCP();
+    @Expert
+    final public static Key<CostAssignmentPolicy> COST_POLICY = 
+        Key.make(CostAssignmentPolicy.class, new UnitCostAssignmentPolicy());
 
     /** target size of ready queues backlog */
+    @Immutable @Expert
     final public static Key<Integer> TARGET_READY_BACKLOG = 
-        Key.makeExpertFinal(50);
+        Key.make(50);
     
     /** those UURIs which are already in-process (or processed), and
      thus should not be rescheduled */
@@ -1289,14 +1296,5 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         return queuedUriCount == 0 && alreadyIncluded.pending() == 0;
     }
 
-
-    private static Key<CostAssignmentPolicy> makeCP() {
-        KeyMaker<CostAssignmentPolicy> km 
-         = new KeyMaker<CostAssignmentPolicy>();
-        km.type = CostAssignmentPolicy.class;
-        km.def = new UnitCostAssignmentPolicy();
-        km.expert = true;
-        return km.toKey();
-    }
 }
 

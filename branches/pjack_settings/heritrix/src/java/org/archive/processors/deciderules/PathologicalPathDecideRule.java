@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import org.archive.processors.ProcessorURI;
+import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -50,7 +51,8 @@ public class PathologicalPathDecideRule extends DecideRule {
      * its decision (usually REJECT) if a path-segment is repeated more than
      * number of times.
      */
-    final public static Key<Integer> MAX_REPETITIONS = Key.makeFinal(2);
+    @Global
+    final public static Key<Integer> MAX_REPETITIONS = Key.make(2);
 
 
     private AtomicReference<Pattern> pattern = new AtomicReference<Pattern>();

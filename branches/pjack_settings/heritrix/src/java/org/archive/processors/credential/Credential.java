@@ -32,6 +32,8 @@ import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
+import org.archive.state.Expert;
+import org.archive.state.Global;
 import org.archive.state.Key;
 
 
@@ -58,7 +60,8 @@ public abstract class Credential {
     /**
      * The root domain this credential goes against: E.g. www.archive.org
      */
-    final public static Key<String> CREDENTIAL_DOMAIN = Key.makeExpertFinal("");
+    @Global @Expert
+    final public static Key<String> CREDENTIAL_DOMAIN = Key.make("");
     
     
     /**

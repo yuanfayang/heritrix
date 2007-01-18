@@ -42,6 +42,7 @@ import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.processors.extractor.Hop;
 import org.archive.processors.extractor.Link;
+import org.archive.state.Expert;
 import org.archive.state.Key;
 
 /**
@@ -70,8 +71,9 @@ implements FetchStatusCodes {
      * If enabled, any URL found because a seed redirected to it (original seed
      * returned 301 or 302), will also be treated as a seed.
      */
+    @Expert
     final public static Key<Boolean> SEED_REDIRECTS_NEW_SEEDS = 
-        Key.makeExpert(true);
+        Key.make(true);
 
     
     /**
@@ -79,8 +81,9 @@ implements FetchStatusCodes {
      * {@link DecideResult#ACCEPT}, the URI is logged (if the logging level is
      * INFO). Depends on {@link Scoper#OVERRIDE_LOGGER} being enabled.
      */
+    @Expert
     final public static Key<DecideRuleSequence> REJECT_RULES = 
-        Key.makeExpert(new DecideRuleSequence());
+        Key.make(new DecideRuleSequence());
 
     
     /**
@@ -93,7 +96,8 @@ implements FetchStatusCodes {
      * with all discovered links processed before remaining seeds. Seed
      * redirects are treated as one hop from a seed.
      */
-    final public static Key<Integer> PREFERENCE_DEPTH_HOPS = Key.makeExpert(-1);
+    @Expert
+    final public static Key<Integer> PREFERENCE_DEPTH_HOPS = Key.make(-1);
     
     
     /**

@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -48,7 +49,8 @@ public class HashCrawlMapper extends CrawlMapper {
      * Number of crawlers among which to split up the URIs. Their names are
      * assumed to be 0..N-1.
      */
-    final public static Key<Long> CRAWLER_COUNT = Key.makeFinal(1L);
+    @Immutable
+    final public static Key<Long> CRAWLER_COUNT = Key.make(1L);
 
 
     /**
