@@ -87,8 +87,9 @@ import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.io.RecorderTooMuchHeaderException;
+import org.archive.state.Expert;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
@@ -114,12 +115,14 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
     /**
      * Proxy host IP (set only if needed).
      */
-    final public static Key<String> HTTP_PROXY_HOST = Key.makeExpert("");
+    @Expert
+    final public static Key<String> HTTP_PROXY_HOST = Key.make("");
 
     /**
      * Proxy port (set only if needed).
      */
-    final public static Key<Integer> HTTP_PROXY_PORT = Key.makeExpert(0);
+    @Expert
+    final public static Key<Integer> HTTP_PROXY_PORT = Key.make(0);
 
     /**
      * If the fetch is not completed in this number of seconds, give up (and
@@ -135,7 +138,8 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
      * {@link #TIMEOUT_SECONDS} for optimal configuration: ensures at least one
      * retry read.
      */
-    final public static Key<Integer> SOTIMEOUT_MS = Key.makeExpert(20000);
+    @Expert
+    final public static Key<Integer> SOTIMEOUT_MS = Key.make(20000);
 
     /**
      * Maximum length in bytes to fetch. Fetch is truncated at this length. A
@@ -147,12 +151,12 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
      * File to preload cookies from.
      */
     // final public static Key<String> LOAD_COOKIES_FROM_FILE =
-    // Key.makeExpert("");
+    // Key.make("");
     /**
      * When crawl finishes save cookies to this file.
      */
     // final public static Key<String> SAVE_COOKIES_FROM_FILE =
-    // Key.makeExpert("");
+    // Key.make("");
     /**
      * Accept Headers to include in each request. Each must be the complete
      * header, e.g., 'Accept-Language: en'.
@@ -164,20 +168,23 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
      * The character encoding to use for files that do not have one specified in
      * the HTTP response headers. Default: ISO-8859-1.
      */
+    @Expert
     final public static Key<String> DEFAULT_ENCODING = Key
-            .makeExpert("ISO-8859-1");
+            .make("ISO-8859-1");
 
     /**
      * Whether or not to perform an on-the-fly SHA1 hash of retrieved
      * content-bodies.
      */
-    final public static Key<Boolean> SHA1_CONTENT = Key.makeExpert(true);
+    @Expert
+    final public static Key<Boolean> SHA1_CONTENT = Key.make(true);
 
     /**
      * The maximum KB/sec to use when fetching data from a server. The default
      * of 0 means no maximum.
      */
-    final public static Key<Integer> FETCH_BANDWIDTH = Key.makeExpert(0);
+    @Expert
+    final public static Key<Integer> FETCH_BANDWIDTH = Key.make(0);
 
     /**
      * SSL trust level setting attribute name.
@@ -190,8 +197,9 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
      * 'normal' (all valid certificates not including selfsigned) to 'strict'
      * (Cert is valid and DN must match servername).
      */
+    @Immutable @Expert
     final public static Key<String> TRUST_LEVEL = Key
-            .makeExpertFinal(ConfigurableX509TrustManager.DEFAULT);
+            .make(ConfigurableX509TrustManager.DEFAULT);
 
     public static final String SHA1 = "sha1";
 
@@ -230,8 +238,9 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
     /**
      * Send 'Connection: close' header with every request.
      */
+    @Expert
     final public static Key<Boolean> SEND_CONNECTION_CLOSE = Key
-            .makeExpert(true);
+            .make(true);
 
     private static final Header HEADER_SEND_CONNECTION_CLOSE = new Header(
             "Connection", "close");
@@ -244,7 +253,8 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
      * remote server and can be of assistance to webmasters trying to figure how
      * a crawler got to a particular area on a site.
      */
-    final public static Key<Boolean> SEND_REFERER = Key.makeExpert(true);
+    @Expert
+    final public static Key<Boolean> SEND_REFERER = Key.make(true);
 
     /**
      * Send 'Range' header when a limit ({@link #MAX_LENGTH_BYTES}) on
@@ -257,7 +267,8 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
      * the response mid-download. On rare occasion, sending 'Range' will
      * generate '416 Request Range Not Satisfiable' response.
      */
-    final public static Key<Boolean> SEND_RANGE = Key.makeExpert(false);
+    @Expert
+    final public static Key<Boolean> SEND_RANGE = Key.make(false);
 
     public static final String REFERER = "Referer";
 
@@ -272,7 +283,9 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
     /**
      * 
      */
-    final public static Key<CookieStorage> COOKIE_STORAGE = makeCookieStorageKey();
+    @Immutable
+    final public static Key<CookieStorage> COOKIE_STORAGE = 
+        Key.make(CookieStorage.class, new SimpleCookieStorage());
 
     /**
      * Disable cookie handling.
@@ -287,7 +300,7 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
      * Local IP address or hostname to use when making connections (binding
      * sockets). When not specified, uses default local address(es).
      */
-    final public static Key<String> LOCAL_ADDRESS = Key.makeExpert("");
+    final public static Key<String> LOCAL_ADDRESS = Key.make("");
 
     /**
      * Database backing cookie map, if using BDB
@@ -1403,13 +1416,6 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
         // TODO Auto-generated method stub
     }
 
-    public static Key<CookieStorage> makeCookieStorageKey() {
-        KeyMaker<CookieStorage> km = new KeyMaker<CookieStorage>();
-        km.type = CookieStorage.class;
-        km.def = new SimpleCookieStorage();
-        km.overrideable = false;
-        return km.toKey();
-    }
 
     private static String getServerKey(ProcessorURI uri) {
         try {

@@ -37,6 +37,8 @@ import org.archive.net.UURI;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRule;
+import org.archive.state.Expert;
+import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.SurtPrefixSet;
@@ -83,7 +85,8 @@ public class SurtPrefixedDecideRule extends DecideRule
     /**
      * Dump file to save SURT prefixes actually used: Useful debugging SURTs.
      */
-    final public static Key<String> SURTS_DUMP_FILE = Key.makeExpert("");
+    @Expert
+    final public static Key<String> SURTS_DUMP_FILE = Key.make("");
 
 
     /**
@@ -93,8 +96,8 @@ public class SurtPrefixedDecideRule extends DecideRule
      * domain overrides are set. Rereading large source files can take a long
      * time.
      */
-    final public static Key<Boolean> REBUILD_ON_RECONFIG = 
-        Key.makeExpertFinal(true);
+    @Expert @Global
+    final public static Key<Boolean> REBUILD_ON_RECONFIG = Key.make(true);
 
 
     /**
@@ -103,8 +106,9 @@ public class SurtPrefixedDecideRule extends DecideRule
      * established prefixes. For example, can be used to ACCEPT URIs that are
      * 'one hop off' URIs fitting the SURT prefixes. Default is false.
      */
+    @Expert @Global
     final public static Key<Boolean> ALSO_CHECK_VIA = 
-        Key.makeExpertFinal(false);
+        Key.make(false);
 
     
     protected SurtPrefixSet surtPrefixes = null;

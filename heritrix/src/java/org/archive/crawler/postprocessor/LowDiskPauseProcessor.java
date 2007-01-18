@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import org.archive.processors.ProcessResult;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
+import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.util.IoUtils;
 
@@ -75,8 +76,9 @@ public class LowDiskPauseProcessor extends Processor {
      * Available space via 'df' is rechecked after every increment of this much
      * content (uncompressed) is observed.
      */
+    @Global
     final public static Key<Integer> RECHECK_THRESHOLD =
-        Key.makeFinal(200 * 1024);
+        Key.make(200 * 1024);
 
     
     protected int contentSinceCheck = 0;

@@ -80,6 +80,9 @@ import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
+import org.archive.state.Expert;
+import org.archive.state.Global;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
@@ -131,129 +134,24 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     private static String ACCEPTABLE_FROM = "\\S+@\\S+\\.\\S+";
 
     
-    
+    @Immutable
     final public static Key<ServerCache> SERVER_CACHE = Key.makeNull(ServerCache.class); // FIXME
-
-    
-    /**
-     * Directory where override settings are kept. The settings for many modules can 
-     * be overridden based on the domain or subdomain of the URI being processed. 
-     * This setting specifies a file level directory to store those settings. The path
-     * is relative to {@link #DISK_PATH} unless an absolute path is provided.
-     */
-//    final public static Key<String> SETTINGS_DIRECTORY = Key.makeExpertFinal("settings");
-
-
-    /**
-     * Directory where logs, arcs and other run time files will
-     * be kept. If this path is a relative path, it will be
-     * relative to the crawl order.
-     */
-//    final public static Key<String> DISK_PATH = Key.makeExpertFinal("");
-
-
-    /**
-     * Directory where crawler log files will be kept. If this path is a 
-     * relative path, it will be relative to the {@link #DISK_PATH}.
-     */
-//    final public static Key<String> LOGS_PATH = Key.makeExpertFinal("logs"); 
-
-
-    /**
-     * Directory where crawler checkpoint files will be kept. If this 
-     * path is a relative path, it will be relative to the {@link #DISK_PATH}.
-     */
-//    final public static Key<String> CHECKPOINTS_PATH = Key.makeExpertFinal("checkpoints");
-
-
-    /**
-     * Directory where crawler-state files will be kept. If this path 
-     * is a relative path, it will be relative to the {@link #DISK_PATH}.
-     */
-//    final public static Key<String> STATE_PATH = Key.makeExpertFinal("state");
-
-
-    /**
-     * Directory where discardable temporary files will be kept. If 
-     * this path is a relative path, it will be relative to the {@link #DISK_PATH}.
-     */
-//    final public static Key<String> SCRATCH_PATH = Key.makeExpertFinal("scratch");
-
-
-    /**
-     * Maximum number of bytes to download. Once this number is exceeded 
-     * the crawler will stop. A value of zero means no upper limit.
-     */
-//    final public static Key<Long> MAX_BYTES_DOWNLOAD = Key.makeFinal(0L);
-
-
-    /**
-     * Maximum number of documents to download. Once this number is exceeded the 
-     * crawler will stop. A value of zero means no upper limit.
-     */
-//    final public static Key<Long> MAX_DOCUMENT_DOWNLOAD = Key.makeFinal(0L);
-
-
-    /**
-     * Maximum amount of time to crawl (in seconds). Once this much time has 
-     * elapsed the crawler will stop. A value of zero means no upper limit.
-     */
-//    final public static Key<Long> MAX_TIME_SEC = Key.makeFinal(0L);
-
-
-    /**
-     * Maximum number of threads processing URIs at the same time.
-     */
-//    final public static Key<Integer> MAX_TOE_THREADS = Key.makeFinal(0);
-
-
-    /**
-     * Size in bytes of in-memory buffer to record outbound traffic. One such 
-     * buffer is reserved for every ToeThread. 
-     */
-//    final public static Key<Integer> RECORDER_OUT_BUFFER_BYTES = Key.makeExpertFinal(4096);
-
-
-    /**
-     * Size in bytes of in-memory buffer to record inbound traffic. One such 
-     * buffer is reserved for every ToeThread.
-     */
-//    final public static Key<Integer> RECORDER_IN_BUFFER_BYTES = 
-//        Key.makeExpertFinal(65536);
-
-            
-    /**
-     * Percentage of heap to allocate to BerkeleyDB JE cache. Default of zero 
-     * means no preference (accept BDB's default, usually 60%, or the 
-     *up je.maxMemoryPercent property value).
-     */
-//    final public static Key<Integer> BDB_CACHE_PERCENT = Key.makeExpertFinal(0);
-
-
-    /**
-     * HTTP headers. Information that will be used when constructing the HTTP 
-     * headers of the crawler's HTTP requests.
-     */
-//    final public static Key<Map<String,String>> HTTP_HEADERS
-//     = makeHttpHeaders();
 
 
     /**
      * The frontier to use for the crawl.
      */
-    final public static Key<Frontier> FRONTIER = makeFrontier();
+    @Immutable
+    final public static Key<Frontier> FRONTIER = Key.make(Frontier.class, null);
 
-
-
-//    final public static Key<RobotsHonoringPolicy> ROBOTS_HONORING_POLICY =
-//        Key.make(new RobotsHonoringPolicy());
 
     /**
      * Ordered list of url canonicalization rules.  Rules are applied in the 
      * order listed from top to bottom.
      */
+    @Global
     final public static Key<List<CanonicalizationRule>> URI_CANONICALIZATION_RULES = 
-        finalList(CanonicalizationRule.class);
+        Key.makeList(CanonicalizationRule.class);
 
 
     /**
@@ -261,50 +159,19 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * trackers that monitor a crawl and write logs, reports and/or provide 
      * information to the user interface.
      */
+    @Global
     final public static Key<List<StatisticsTracking>> LOGGERS = 
-        finalList(StatisticsTracking.class);
-
-
-    /**
-     * Optional. Points at recover log (or recover.gz log) OR the checkpoint 
-     * directory to use recovering a crawl.
-     */
-//    final public static Key<String> RECOVER_PATH = Key.makeExpertFinal("");
-
-
-    /**
-     * When true, on a checkpoint, we copy off the bdbje log files to the
-     * checkpoint directory. To recover a checkpoint, just set the recover-path
-     * to point at the checkpoint directory to recover. This is default setting.
-     * But if crawl is large, copying bdbje log files can take tens of minutes
-     * and even upwards of an hour (Copying bdbje log files will consume bulk of
-     * time checkpointing). If this setting is false, we do NOT copy bdbje logs
-     * on checkpoint AND we set bdbje to NEVER delete log files (instead we have
-     * it rename files-to-delete with a '.del' extension). Assumption is that
-     * when this setting is false, an external process is managing the removal
-     * of bdbje log files and that come time to recover from a checkpoint, the
-     * files that comprise a checkpoint are manually assembled. This is an
-     * expert setting.
-     */
-//    final public static Key<Boolean> CHECKPOINT_COPY_BDBJE_LOGS = 
-//        Key.makeExpertFinal(true);
-
-
-    /**
-     * When recovering via the recover.log, should failures in the log be
-     * retained in the recovered crawl, preventing the corresponding URIs from
-     * being retried. Default is false, meaning failures are forgotten, and the
-     * corresponding URIs will be retried in the recovered crawl.
-     */
-//    final public static Key<Boolean> RECOVER_RETAIN_FAILURES = 
-//        Key.makeExpertFinal(false);
-
-
-    final public static Key<CredentialStore> CREDENTIAL_STORE = 
-        Key.makeExpertFinal(new CredentialStore());
+        Key.makeList(StatisticsTracking.class);
 
     
-    final public static Key<CrawlScope> SCOPE = makeScope();
+    @Expert @Immutable
+    final public static Key<CredentialStore> CREDENTIAL_STORE = 
+        Key.make(new CredentialStore());
+
+    
+    @Expert @Immutable
+    final public static Key<CrawlScope> SCOPE = 
+        Key.make(CrawlScope.class, new EmptyScope());
 
     
     final public static Key<Map<String,Processor>> PROCESSORS =
@@ -962,7 +829,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
      * @throws InvalidAttributeValueException
      * @throws FatalConfigurationException
      */
-    private void setupStatTracking()
+/*    private void setupStatTracking()
     throws InvalidAttributeValueException, FatalConfigurationException {
         List<StatisticsTracking> loggers = getOrderSetting(LOGGERS);
         final String cstName = "crawl-statistics";
@@ -983,7 +850,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
                 this.statistics = tracker;
             }
         }
-    }
+    } */
     
     protected void restoreStatisticsTracker(List<StatisticsTracking> loggers,
         String replaceName)
@@ -1096,6 +963,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
         maxDocument = getOrderSetting(CrawlOrder.MAX_DOCUMENT_DOWNLOAD);
         maxTime = getOrderSetting(CrawlOrder.MAX_TIME_SEC);
     }
+   
 
     /**
      * @return Object this controller is using to track crawl statistics
@@ -2251,31 +2119,14 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     }
     
 
-    private static <T> Key<List<T>> finalList(Class<T> element) {
-        KeyMaker<List<T>> km = KeyMaker.makeList(element);
-        km.expert = true;
-        km.overrideable = false;
-        return new Key<List<T>>(km);
-    }
 
     
-    private static Key<Frontier> makeFrontier() {
-        KeyMaker<Frontier> r = KeyMaker.makeNull(Frontier.class);
-        r.overrideable = false;
-        r.def = new EmptyFrontier();
-        return r.toKey();
+
+
+
+    
+    public CrawlOrder getOrder() {
+        return order;
     }
-
-
-    private static Key<CrawlScope> makeScope() {
-        // FIXME: Extract CrawlScope to interface so we can provide
-        // a non-null default.
-        KeyMaker<CrawlScope> r = KeyMaker.makeNull(CrawlScope.class);
-        r.overrideable = false;
-        r.expert = true;
-        r.def = new EmptyScope();
-        return r.toKey();
-    }
-
     
 }

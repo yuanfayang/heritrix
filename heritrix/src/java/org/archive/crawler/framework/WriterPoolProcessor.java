@@ -50,6 +50,9 @@ import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.processors.util.CrawlHost;
 import org.archive.state.ExampleStateProvider;
+import org.archive.state.Expert;
+import org.archive.state.Global;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.StateProvider;
@@ -70,7 +73,8 @@ implements CoreAttributeConstants, CrawlStatusListener {
     /**
      * Compress files when "writing to disk.
      */
-    final public static Key<Boolean> COMPRESS = Key.makeFinal(true);
+    @Immutable
+    final public static Key<Boolean> COMPRESS = Key.make(true);
 
     
     /**
@@ -79,8 +83,9 @@ implements CoreAttributeConstants, CrawlStatusListener {
      * look like IAH-20040808101010-0001-HOSTNAME.arc.gz ...if writing ARCs (The
      * prefix will be separated from the date by a hyphen).
      */
+    @Immutable
     final public static Key<String> PREFIX = 
-        Key.makeFinal(WriterPoolMember.DEFAULT_PREFIX);
+        Key.make(WriterPoolMember.DEFAULT_PREFIX);
 
 
     /**
@@ -98,30 +103,34 @@ implements CoreAttributeConstants, CrawlStatusListener {
      * Suffix to tag onto files. If value is '${HOSTNAME}', will use hostname
      * for suffix. If empty, no suffix will be added.
      */
+    @Immutable
     final public static Key<String> SUFFIX = 
-        Key.makeFinal(WriterPoolMember.DEFAULT_SUFFIX);
+        Key.make(WriterPoolMember.DEFAULT_SUFFIX);
 
 
     /**
      * Max size of each file.
      */
-    final public static Key<Integer> MAX_SIZE_BYTES = Key.makeFinal(100000000);
+    @Immutable
+    final public static Key<Integer> MAX_SIZE_BYTES = Key.make(100000000);
 
     
     /**
      * Maximum active files in pool. This setting cannot be varied over the life
      * of a crawl.
      */
+    @Immutable
     final public static Key<Integer> POOL_MAX_ACTIVE = 
-        Key.makeFinal(WriterPool.DEFAULT_MAX_ACTIVE);
+        Key.make(WriterPool.DEFAULT_MAX_ACTIVE);
 
 
     /**
      * Maximum time to wait on pool element (milliseconds). This setting cannot
      * be varied over the life of a crawl.
      */
+    @Immutable
     final public static Key<Integer> POOL_MAX_WAIT = 
-        Key.makeFinal(WriterPool.DEFAULT_MAXIMUM_WAIT);
+        Key.make(WriterPool.DEFAULT_MAXIMUM_WAIT);
 
 
     /**
@@ -129,11 +138,12 @@ implements CoreAttributeConstants, CrawlStatusListener {
      * exceeded this limit, this processor will stop the crawler. A value of
      * zero means no upper limit.
      */
-    final public static Key<Long> TOTAL_BYTES_TO_WRITE = Key.makeExpertFinal(0L);
+    @Immutable @Expert
+    final public static Key<Long> TOTAL_BYTES_TO_WRITE = Key.make(0L);
 
-
+    @Immutable
     final public static Key<MetadataProvider> METADATA_PROVIDER = 
-        makeMetadataProvider();
+        Key.make(MetadataProvider.class, new EmptyMetadataProvider());
 
     /**
      * Reference to pool.
@@ -421,17 +431,9 @@ implements CoreAttributeConstants, CrawlStatusListener {
     
     protected static Key<List<String>> makePath(String defaultPath) {
         KeyMaker<List<String>> km = KeyMaker.makeList(String.class);
-        km.overrideable = false;
         km.def = Collections.singletonList(defaultPath);
         return km.toKey();
     }
 
     
-    private static Key<MetadataProvider> makeMetadataProvider() {
-        KeyMaker<MetadataProvider> km = new KeyMaker<MetadataProvider>();
-        km.def = new EmptyMetadataProvider();
-        km.type = MetadataProvider.class;
-        km.overrideable = false;
-        return km.toKey();
-    }
 }

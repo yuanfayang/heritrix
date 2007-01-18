@@ -42,6 +42,9 @@ import org.archive.crawler.scope.SeedListener;
 import org.archive.net.UURI;
 import org.archive.processors.deciderules.DecideRule;
 import org.archive.settings.Sheet;
+import org.archive.state.Expert;
+import org.archive.state.Global;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.DevUtils;
@@ -81,7 +84,8 @@ public abstract class CrawlScope extends DecideRule {
     /**
      * File from which to extract seeds.
      */
-    final public static Key<String> SEEDSFILE = Key.makeExpertFinal("seeds.txt");
+    @Expert @Immutable
+    final public static Key<String> SEEDSFILE = Key.make("seeds.txt");
 
 
     /**
@@ -90,8 +94,8 @@ public abstract class CrawlScope extends DecideRule {
      * even when (for example) new domain overrides are set. Rereading the seeds
      * can take a long time with large seed lists.
      */
-    final public static Key<Boolean> REREAD_SEEDS_ON_CONFIG = 
-        Key.makeExpertFinal(true);
+    @Global @Expert
+    final public static Key<Boolean> REREAD_SEEDS_ON_CONFIG = Key.make(true);
 
     
     protected Set<SeedListener> seedListeners = new HashSet<SeedListener>();

@@ -850,7 +850,7 @@ implements CrawlURIDispositionListener, Serializable {
     /**
      * @param writer Where to write.
      */
-    protected void writeSeedsReportTo(PrintWriter writer) {
+    public void writeSeedsReportTo(PrintWriter writer) {
         // Build header.
         writer.print("[code] [status] [seed] [redirect]\n");
 

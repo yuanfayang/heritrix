@@ -24,6 +24,7 @@ import java.util.EventObject;
 import java.util.logging.Level;
 
 import org.archive.crawler.event.CrawlStatusListener;
+import org.archive.state.Global;
 import org.archive.state.Key;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
@@ -54,7 +55,8 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
     /**
      * The interval between writing progress information to log.
      */
-    final public static Key<Integer> INTERVAL_SECONDS = Key.makeFinal(20);
+    @Global
+    final public static Key<Integer> INTERVAL_SECONDS = Key.make(20);
 
 
     /** A reference to the CrawlContoller of the crawl that we are to track

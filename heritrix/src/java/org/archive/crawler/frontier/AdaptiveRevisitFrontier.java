@@ -63,6 +63,9 @@ import org.archive.processors.util.ServerCacheUtil;
 import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.settings.Sheet;
+import org.archive.state.Expert;
+import org.archive.state.Global;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 import org.archive.util.ArchiveUtils;
@@ -107,7 +110,8 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     final public static Key<Long> RETRY_DELAY = Key.make(900L);
     
     /** Maximum simultaneous requests in process to a host (queue) */
-    final public static Key<Integer> HOST_VALENCE = Key.makeExpert(1);
+    @Expert
+    final public static Key<Integer> HOST_VALENCE = Key.make(1);
 
     /** Number of hops of embeds (ERX) to bump to front of host queue */
     final public static Key<Integer> PREFERENCE_EMBED_HOPS = 
@@ -115,8 +119,9 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     
     /** Queue assignment to force on CrawlURIs. Intended to be used 
      *  via overrides*/
+    @Immutable
     final public static Key<String> FORCE_QUEUE_ASSIGNMENT = 
-        Key.makeExpertFinal("");
+        Key.make("");
 
     /** Acceptable characters in forced queue names.
      *  Word chars, dash, period, comma, colon */
@@ -125,14 +130,16 @@ implements Frontier, FetchStatusCodes, CoreAttributeConstants,
     /** Should the queue assignment ignore www in hostnames, effectively 
      *  stripping them away. 
      */
+    @Expert
     final public static Key<Boolean> QUEUE_IGNORE_WWW = 
-        Key.makeExpert(false);
+        Key.make(false);
     
     /** Should the Frontier use a seperate 'already included' datastructure
      *  or rely on the queues'. 
      */
+    @Immutable @Expert
     final public static Key<Boolean> USE_URI_UNIQ_FILTER = 
-        Key.makeExpertFinal(false);
+        Key.make(false);
 
     
     private CrawlController controller;

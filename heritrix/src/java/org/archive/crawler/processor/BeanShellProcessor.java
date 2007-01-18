@@ -35,6 +35,7 @@ import org.archive.crawler.framework.CrawlController;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.settings.Sheet;
+import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
 
@@ -68,7 +69,8 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
     /**
      *  BeanShell script file.
      */
-    final static Key<String> SCRIPT_FILE = Key.makeFinal("");
+    @Immutable
+    final static Key<String> SCRIPT_FILE = Key.make("");
 
 
     /**
@@ -77,7 +79,8 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
      * meaning each threads gets its own isolated context.
      * 
      */
-    final public static Key<Boolean> ISOLATE_THREADS = Key.makeFinal(true);
+    @Immutable
+    final public static Key<Boolean> ISOLATE_THREADS = Key.make(true);
 
 
     protected ThreadLocal<Interpreter> threadInterpreter;

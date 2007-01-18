@@ -46,6 +46,7 @@ import org.archive.processors.extractor.Link;
 import org.archive.processors.extractor.LinkContext;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
+import org.archive.state.Expert;
 import org.archive.state.Key;
 
 /**
@@ -69,8 +70,9 @@ public class PreconditionEnforcer
      * The minimum interval for which a dns-record will be considered valid (in
      * seconds). If the record's DNS TTL is larger, that will be used instead.
      */
+    @Expert
     final public static Key<Integer> IP_VALIDITY_DURATION_SECONDS =
-        Key.makeExpert(60*60*6);
+        Key.make(60*60*6);
 
 
     /**
@@ -78,8 +80,9 @@ public class PreconditionEnforcer
      * be valid. If the value is set to '0', then the robots.txt information
      * will never expire.
      */
+    @Expert
     final public static Key<Integer> ROBOTS_VALIDITY_DURATION_SECONDS =
-        Key.makeExpert(60*60*24);
+        Key.make(60*60*24);
 
 
     /**
@@ -87,7 +90,8 @@ public class PreconditionEnforcer
      * applying any exclusions found. If true, exlcuded URIs will only be
      * annotated in the crawl.log, but still fetched. Default is false.
      */
-    final public static Key<Boolean> CALCULATE_ROBOTS_ONLY = Key.makeExpert(true);
+    @Expert
+    final public static Key<Boolean> CALCULATE_ROBOTS_ONLY = Key.make(true);
     
     
     public PreconditionEnforcer(CrawlController controller) {

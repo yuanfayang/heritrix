@@ -38,6 +38,7 @@ import org.archive.crawler.framework.Scoper;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
+import org.archive.state.Expert;
 import org.archive.state.Key;
 
 
@@ -63,8 +64,9 @@ public class SupplementaryLinksScoper extends Scoper {
     /**
      * Rules to apply to each link carried by the URI.
      */
+    @Expert
     final public static Key<DecideRuleSequence> LINK_RULES = 
-        Key.makeExpert(new DecideRuleSequence());
+        Key.make(new DecideRuleSequence());
     
     
     /**

@@ -40,6 +40,7 @@ import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.ServerCache;
+import org.archive.state.Expert;
 import org.archive.state.Key;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.Recorder;
@@ -78,15 +79,17 @@ implements CoreAttributeConstants, FetchStatusCodes {
      * If a DNS lookup fails, whether or not to fallback to InetAddress
      * resolution, which may use local 'hosts' files or other mechanisms.
      */
+    @Expert
     final public static Key<Boolean> ACCEPT_NON_DNS_RESOLVES = 
-        Key.makeExpert(false);
+        Key.make(false);
 
     
     /**
      * Whether or not to perform an on-the-fly SHA1 hash of retrieved
      * content-bodies.
      */
-    final public static Key<Boolean> SHA1_CONTENT = Key.makeExpert(true);
+    @Expert
+    final public static Key<Boolean> SHA1_CONTENT = Key.make(true);
 
     private static final long DEFAULT_TTL_FOR_NON_DNS_RESOLVES
         = 6 * 60 * 60; // 6 hrs
