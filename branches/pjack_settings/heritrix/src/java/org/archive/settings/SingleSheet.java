@@ -28,6 +28,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.archive.state.Constraint;
 import org.archive.state.Key;
@@ -42,9 +44,28 @@ public class SingleSheet extends Sheet {
     
 
     /**
-     * Maps processor/Key combo to value for that combo.
+     * Maps the identity hash code of a module to the Key/Value settings
+     * for that module in this sheet.
+     * 
+     * <p>Since the lookup happens based on an integer, and not the module 
+     * itself, the existence of settings for a particular module will not 
+     * prevent that module from being garbage collected.
+     * 
+     * <p>Modules placed into this map are registered with the
+     * {@link SingleSheetCleanUpThread}, which removes module settings from 
+     * SingleSheets after those modules are garbage collected.  This allows
+     * the settings to be garbage collected themselves, assuming no other
+     * strong references exist.
+     * 
+     * <p>The implementation used is a ConcurrentHashMap.  This is important,
+     * as we expect overrides to be rare.  If there are 300 ToeThreads,
+     * chances are that all 300 will require concurrent read access to the 
+     * default sheet; so full-on synchronization is undesirable.
+     * 
+     * <p>You can think of this map as a sort of 
+     * "ConcurrentIdentityWeakHashMap".
      */
-    private Map<Object,Map<Key,Object>> settings;
+    private ConcurrentMap<Integer,Map<Key,Object>> settings;
 
 
     /**
@@ -54,19 +75,13 @@ public class SingleSheet extends Sheet {
      */
     SingleSheet(SheetManager manager, String name) {
         super(manager, name);
-        this.settings = new HashMap<Object,Map<Key,Object>>();
+        this.settings = new ConcurrentHashMap<Integer,Map<Key,Object>>();
     }
-        
-    
+
     @Override
     public <T> T check(Object target, Key<T> key) {
         validateModuleType(target, key);
-        Object lookup;
-        if (target instanceof Offline) {
-            lookup = target;
-        } else {
-            lookup = new Identity(target);
-        }
+        Integer lookup = System.identityHashCode(target);
         Map<Key,Object> keys = settings.get(lookup);
         if (keys == null) {
             return null;
@@ -85,7 +100,8 @@ public class SingleSheet extends Sheet {
         if (isOnline(key)) {
             throw new IllegalStateException("Not an offline key.");
         }
-        Map<Key,Object> keys = settings.get(module);
+        Integer lookup = System.identityHashCode(module);
+        Map<Key,Object> keys = settings.get(lookup);
         if (keys == null) {
             return null;
         }
@@ -202,14 +218,14 @@ public class SingleSheet extends Sheet {
      * Sets a property.
      * 
      * @param <T>         the type of the property to set
-     * @param processor   the processor to set the property on
+     * @param module   the processor to set the property on
      * @param key         the property to set
      * @param value       the new value for that property, or null to remove
      *     the property from this sheet
      */
-    public <T> void set(Object processor, Key<T> key, T value) {
+    public <T> void set(Object module, Key<T> key, T value) {
         Class vtype = (value == null) ? null: value.getClass();
-        validateTypes(processor.getClass(), key, vtype);
+        validateTypes(module, key, vtype);
         T v = key.getType().cast(value);
         for (Constraint<T> c: key.getConstraints()) {
             if (!c.allowed(v)) {
@@ -218,17 +234,7 @@ public class SingleSheet extends Sheet {
         }
         
         // Module and value are of the correct type, and value is valid.
-        Identity id = new Identity(processor);
-        Map<Key,Object> map = settings.get(id);
-        if (map == null) {
-            map = new HashMap<Key,Object>();
-            settings.put(id, map);
-        }
-        if (value == null) {
-            map.remove(key);
-        } else {
-            map.put(key, value);
-        }
+        set2(module, key, value);
     }
 
     
@@ -241,22 +247,48 @@ public class SingleSheet extends Sheet {
         } else {
             vtype = value.getClass();
         }
-        validateTypes(module.getType(), key, vtype);
-        Map<Key,Object> map = settings.get(module);
-        if (map == null) {
-            map = new HashMap<Key,Object>();
-            settings.put(module, map);
-        }
-        map.put(key, value);
+        validateTypes(module, key, vtype);
+        set2(module, key, value);
     }
+
     
-    
-    private static <T> void validateTypes(Class<?> mtype, Key<T> key, Class vtype) {
-        if (!key.getOwner().isAssignableFrom(mtype)) {
-            throw new IllegalArgumentException("Illegal module type.  " +
-                    "Key owner is " + key.getOwner().getName() + 
-                    " but module is " + mtype.getName()); 
+    /**
+     * Performs the actual mutation after preconditions are enforced.
+     * When this method is called, it is known that the key belongs to the
+     * module, and that the value is appropriate for the key.
+     * 
+     * @param <T>
+     * @param module   the module whose setting to change
+     * @param key      the setting's key
+     * @param value    the new value for that setting
+     */
+    private <T> void set2(Object module, Key<T> key, Object value) {
+        Integer id = System.identityHashCode(module);
+        Map<Key,Object> map = settings.get(id);
+        if (map == null) {
+            map = new ConcurrentHashMap<Key,Object>();
+            Map<Key,Object> prev = settings.putIfAbsent(id, map);
+            if (prev == null) {
+                // No other thread has inserted its own map for this module,
+                // which means the module needs to be enqueued so we can
+                // remove its settings after it is garbage collected.
+                SingleSheetCleanUpThread.enqueue(this, module);
+            } else {
+                // Use the map inserted by some other thread; the module
+                // has already been enqueued.
+                map = prev;
+            }
         }
+        if (value == null) {
+            map.remove(key);
+        } else {
+            map.put(key, value);
+        }
+    }
+
+
+    private static <T> void validateTypes(Object module, Key<T> key, Class vtype) {
+        validateModuleType(module, key);
         if ((vtype != null) && !key.getType().isAssignableFrom(vtype)) {
             throw new IllegalArgumentException("Illegal value type for " +
                     key.getFieldName() + ". Expected " + 
@@ -265,16 +297,27 @@ public class SingleSheet extends Sheet {
         }
     }
 
-    public void removeAll(Object processor) {
-        Identity id = new Identity(processor);
-        settings.remove(id);
+
+    /**
+     * Used by {@link SingleSheetCleanUpThread} to remove module settings
+     * after the module is garbage collected.
+     * 
+     * @param ref  the reference to the module to remove
+     */
+    void remove(ModuleReference ref) {
+        settings.remove(ref.getModuleIdentity());
     }
 
-
-    public Map<Key,Object> getAll(Object processor) {
-        Identity id = new Identity(processor);
-        return settings.get(id);
+    
+    /**
+     * Determines whether settings exist in this sheet for a particular module.
+     * Used only for unit testing.
+     * 
+     * @param identityHashCode  the module's identity hash code
+     * @return   true if this sheet contains settings for that module
+     */
+    boolean hasSettings(int identityHashCode) {
+        return settings.containsKey(identityHashCode);
     }
-
 
 }
