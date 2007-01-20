@@ -26,6 +26,10 @@
       <item name="Related Projects" >
         <item name="Archive Access"
             href="http://archive-access.sourceforge.net/" /> 
+        <item name="Heritrix Cluster Controller (hcc)"
+            href="http://crawler.sourceforge.net/hcc" /> 
+        <item name="cmdline-jmxclient"
+            href="http://crawler.sourceforge.net/cmdline-jmxclient" /> 
         <item name="Deduplicator"
             href="http://deduplicator.sourceforge.net" /> 
       </item>
