@@ -19,7 +19,7 @@
  * SheetFileReader.java
  * Created on October 24, 2006
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/settings/file/Attic/SheetFileReader.java,v 1.1.2.2 2006/12/15 22:09:33 paul_jack Exp $
  */
 package org.archive.settings.file;
 
@@ -55,7 +55,15 @@ extends TransformingIteratorWrapper<String,PathChange> {
         }
         String path = line.substring(0,p);
         String value = line.substring(p + 1);
-        return new PathChange(path, value);
+        
+        p = value.indexOf(':');
+        if (p < 0) {
+            throw new IllegalStateException("Invalid line: " + line);
+        }
+        
+        String type = value.substring(0, p);
+        value = value.substring(p + 1);
+        return new PathChange(path, type, value);
     }
     
 }

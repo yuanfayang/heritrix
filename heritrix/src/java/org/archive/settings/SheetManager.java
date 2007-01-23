@@ -44,6 +44,8 @@ import org.archive.state.KeyTypes;
 public abstract class SheetManager {
 
     
+    final public static String DEFAULT_SHEET_NAME = "default";
+    
     final private UnspecifiedSheet unspecified;
     
 
