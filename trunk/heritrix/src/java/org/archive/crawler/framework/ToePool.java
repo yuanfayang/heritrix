@@ -206,7 +206,7 @@ public class ToePool extends ThreadGroup implements Reporter {
      */
     protected void standardReportTo(PrintWriter writer) {
         writer.print("Toe threads report - "
-                + ArchiveUtils.TIMESTAMP12.format(new Date()) + "\n");
+                + ArchiveUtils.get12DigitDate() + "\n");
         writer.print(" Job being crawled: "
                 + this.controller.getOrder().getCrawlOrderName() + "\n");
         writer.print(" Number of toe threads in pool: " + getToeCount() + " ("

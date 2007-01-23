@@ -671,7 +671,7 @@ public class CrawlJobHandler implements CrawlStatusListener {
      * @see ArchiveUtils#TIMESTAMP17
      */
     public String getNextJobUID() {
-        return ArchiveUtils.TIMESTAMP17.format(new Date());
+        return ArchiveUtils.get17DigitDate();
     }
 
     /**

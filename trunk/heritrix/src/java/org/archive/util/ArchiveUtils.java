@@ -1,7 +1,7 @@
 /*
  * ArchiveUtils
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/util/ArchiveUtils.java,v 1.38 2007/01/23 00:29:48 gojomo Exp $
  *
  * Created on Jul 7, 2003
  *
@@ -39,33 +39,41 @@ import java.util.TimeZone;
 /**
  * Miscellaneous useful methods.
  *
- *
- * @author gojomo
+ * @author gojomo & others
  */
 public class ArchiveUtils {
 
     /**
      * Arc-style date stamp in the format yyyyMMddHHmm and UTC time zone.
      */
-    public static final SimpleDateFormat TIMESTAMP12;
+    private static final ThreadLocal<SimpleDateFormat> 
+        TIMESTAMP12 = threadLocalDateFormat("yyyyMMddHHmm");;
+    
     /**
      * Arc-style date stamp in the format yyyyMMddHHmmss and UTC time zone.
      */
-    public static final SimpleDateFormat TIMESTAMP14;
+    private static final ThreadLocal<SimpleDateFormat> 
+       TIMESTAMP14 = threadLocalDateFormat("yyyyMMddHHmmss");
     /**
      * Arc-style date stamp in the format yyyyMMddHHmmssSSS and UTC time zone.
      */
-    public static final SimpleDateFormat TIMESTAMP17;
+    private static final ThreadLocal<SimpleDateFormat> 
+        TIMESTAMP17 = threadLocalDateFormat("yyyyMMddHHmmssSSS");
+
     /**
      * Log-style date stamp in the format yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
      * UTC time zone is assumed.
      */
-    public static final SimpleDateFormat TIMESTAMP17ISO8601Z;
+    private static final ThreadLocal<SimpleDateFormat> 
+        TIMESTAMP17ISO8601Z = threadLocalDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    
     /**
      * Log-style date stamp in the format yyyy-MM-dd'T'HH:mm:ss'Z'
      * UTC time zone is assumed.
      */
-    public static final SimpleDateFormat TIMESTAMP14ISO8601Z;
+    private static final ThreadLocal<SimpleDateFormat>
+        TIMESTAMP14ISO8601Z = threadLocalDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    
     /**
      * Default character to use padding strings.
      */
@@ -75,18 +83,16 @@ public class ArchiveUtils {
     private static final int HOUR_IN_MS = 60 * 60 * 1000;
     /** milliseconds in a day */
     private static final int DAY_IN_MS = 24 * HOUR_IN_MS;
-
-    // Initialize fomatters with pattern and time zone
-    static {
-        TimeZone TZ = TimeZone.getTimeZone("GMT");
-        TIMESTAMP12 = new SimpleDateFormat("yyyyMMddHHmm");
-        TIMESTAMP12.setTimeZone(TZ);
-        TIMESTAMP14 = new SimpleDateFormat("yyyyMMddHHmmss");
-        TIMESTAMP14.setTimeZone(TZ);
-        TIMESTAMP17 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-        TIMESTAMP17.setTimeZone(TZ);
-        TIMESTAMP17ISO8601Z = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        TIMESTAMP14ISO8601Z = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    
+    private static ThreadLocal<SimpleDateFormat> threadLocalDateFormat(final String pattern) {
+        ThreadLocal<SimpleDateFormat> tl = new ThreadLocal<SimpleDateFormat>() {
+            protected SimpleDateFormat initialValue() {
+                SimpleDateFormat df = new SimpleDateFormat(pattern);
+                df.setTimeZone(TimeZone.getTimeZone("GMT"));
+                return df;
+            }
+        };
+        return tl;
     }
     
     public static int MAX_INT_CHAR_WIDTH =
@@ -99,7 +105,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get17DigitDate(){
-        return TIMESTAMP17.format(new Date());
+        return TIMESTAMP17.get().format(new Date());
     }
 
     /**
@@ -109,7 +115,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get14DigitDate(){
-        return TIMESTAMP14.format(new Date());
+        return TIMESTAMP14.get().format(new Date());
     }
 
     /**
@@ -119,7 +125,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get12DigitDate(){
-        return TIMESTAMP12.format(new Date());
+        return TIMESTAMP12.get().format(new Date());
     }
 
     /**
@@ -131,7 +137,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String getLog17Date(){
-        return TIMESTAMP17ISO8601Z.format(new Date());
+        return TIMESTAMP17ISO8601Z.get().format(new Date());
     }
     
     /**
@@ -144,7 +150,7 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String getLog17Date(long date){
-        return TIMESTAMP17ISO8601Z.format(new Date(date));
+        return TIMESTAMP17ISO8601Z.get().format(new Date(date));
     }
     
     /**
@@ -156,7 +162,20 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String getLog14Date(){
-        return TIMESTAMP14ISO8601Z.format(new Date());
+        return TIMESTAMP14ISO8601Z.get().format(new Date());
+    }
+    
+    /**
+     * Utility function for creating log timestamps, in
+     * W3C/ISO8601 format, assuming UTC. 
+     * 
+     * Format is yyyy-MM-dd'T'HH:mm:ss'Z'
+     * @param date long timestamp to format.
+     * 
+     * @return the date stamp
+     */
+    public static String getLog14Date(long date){
+        return TIMESTAMP14ISO8601Z.get().format(new Date(date));
     }
     
     /**
@@ -168,8 +187,8 @@ public class ArchiveUtils {
      * 
      * @return the date stamp
      */
-    public static String getLog14Date(long date){
-        return TIMESTAMP14ISO8601Z.format(new Date(date));
+    public static String getLog14Date(Date date){
+        return TIMESTAMP14ISO8601Z.get().format(date);
     }
     
     /**
@@ -181,11 +200,11 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get17DigitDate(long date){
-        return TIMESTAMP17.format(new Date(date));
+        return TIMESTAMP17.get().format(new Date(date));
     }
     
     public static String get17DigitDate(Date date){
-        return TIMESTAMP17.format(date);
+        return TIMESTAMP17.get().format(date);
     }
 
     /**
@@ -197,11 +216,11 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get14DigitDate(long date){
-        return TIMESTAMP14.format(new Date(date));
+        return TIMESTAMP14.get().format(new Date(date));
     }
 
     public static String get14DigitDate(Date d) {
-        return TIMESTAMP14.format(d);
+        return TIMESTAMP14.get().format(d);
     }
 
     /**
@@ -213,11 +232,11 @@ public class ArchiveUtils {
      * @return the date stamp
      */
     public static String get12DigitDate(long date){
-        return TIMESTAMP12.format(new Date(date));
+        return TIMESTAMP12.get().format(new Date(date));
     }
     
     public static String get12DigitDate(Date d) {
-        return TIMESTAMP12.format(d);
+        return TIMESTAMP12.get().format(d);
     }
     
     /**
@@ -291,7 +310,7 @@ public class ArchiveUtils {
      * @throws ParseException if the inputstring was malformed
      */
     public static Date parse17DigitDate(String date) throws ParseException {
-        return TIMESTAMP17.parse(date);
+        return TIMESTAMP17.get().parse(date);
     }
 
     /**
@@ -305,7 +324,7 @@ public class ArchiveUtils {
      * @throws ParseException if the inputstring was malformed
      */
     public static Date parse14DigitDate(String date) throws ParseException{
-        return TIMESTAMP14.parse(date);
+        return TIMESTAMP14.get().parse(date);
     }
 
     /**
@@ -319,7 +338,7 @@ public class ArchiveUtils {
      * @throws ParseException if the inputstring was malformed
      */
     public static Date parse12DigitDate(String date) throws ParseException{
-        return TIMESTAMP12.parse(date);
+        return TIMESTAMP12.get().parse(date);
     }
     
     /**
