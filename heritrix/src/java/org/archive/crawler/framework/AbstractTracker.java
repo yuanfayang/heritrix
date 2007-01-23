@@ -274,7 +274,7 @@ implements StatisticsTracking, CrawlStatusListener, Serializable {
 
     protected void logNote(final String note) {
         this.controller.logProgressStatistics(new PaddingStringBuffer()
-                     .append(ArchiveUtils.TIMESTAMP14.format(new Date()))
+                     .append(ArchiveUtils.get14DigitDate())
                      .append(" ")
                      .append(note)
                      .toString());

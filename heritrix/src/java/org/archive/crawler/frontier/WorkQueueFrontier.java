@@ -1135,7 +1135,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
             allCount - activeCount - inactiveCount - retiredCount;
 
         w.print("Frontier report - ");
-        w.print(ArchiveUtils.TIMESTAMP12.format(new Date()));
+        w.print(ArchiveUtils.get12DigitDate());
         w.print("\n");
         w.print(" Job being crawled: ");
         w.print(controller.getOrder().getCrawlOrderName());
