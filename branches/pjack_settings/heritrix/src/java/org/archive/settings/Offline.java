@@ -19,7 +19,7 @@
  * Offline.java
  * Created on January 17, 2007
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/settings/Attic/Offline.java,v 1.1.2.1 2007/01/17 01:48:01 paul_jack Exp $
  */
 package org.archive.settings;
 
@@ -52,4 +52,14 @@ final public class Offline<T> {
         }
         return "Offline<" + tname + ">";
     }
+
+
+    public static Class getType(Object object) {
+        if (object instanceof Offline) {
+            return ((Offline)object).getType();
+        } else {
+            return object.getClass();
+        }
+    }
+
 }
