@@ -65,10 +65,10 @@
       <para>Heritrix can be obtained as packaged binary or source downloaded
       from the crawler <ulink
       url="http://sourceforge.net/projects/archive-crawler">sourceforge home
-      page</ulink>, or via CVS checkout from cvs.sourceforge.net. See the
+      page</ulink>, or via checkout from archive-crawler.svn.sourceforge.net. See the
       crawler <ulink
-      url="http://sourceforge.net/cvs/?group_id=73833">sourceforge cvs
-      page</ulink> for how to fetch from CVS. The <literal>Module Name</literal>
+      url="http://sourceforge.net/svn/?group_id=73833">sourceforge svn
+      page</ulink> for how to fetch from subversion. The <literal>Module Name</literal>
       name to use checking out heritrix is
       <literal>ArchiveOpenCrawler</literal>, the name Heritrix had before it
       was called Heritrix.
@@ -143,8 +143,7 @@
        </para>
        </note>
 
-      <para>To build a CVS source checkout
-      with Maven:<programlisting>% cd CVS_CHECKOUT_DIR 
+      <para>To build a source checkout with Maven:<programlisting>% cd CHECKOUT_DIR 
 % $MAVEN_HOME/bin/maven dist</programlisting>In the target/distribution
       subdir, you will find packaged source and binary builds. Run
       $MAVEN_HOME/bin/maven -g for other Maven possibilities.</para>
@@ -162,9 +161,9 @@
 
       <para>The development team uses Eclipse as the development environment.
       This is of course optional, but for those who want to use Eclipse, you
-      can, at the head of the CVS tree, find Eclipse
+      can, at the head of the source tree, find Eclipse
       <emphasis>.project</emphasis> and <emphasis>.classpath</emphasis>
-      configuration files that should make integrating the CVS checkout into
+      configuration files that should make integrating the source checkout into
       your Eclipse development environment straight-forward.</para>
 
       <para>When running direct from checkout directories, rather than a Maven
@@ -295,12 +294,11 @@ ${package_declaration}</programlisting></para>
       another package would not be able to do.</para>
     </sect2>
     <sect2 id="log_messages">
-    <title>CVS Log Message Format</title>
-    <para>A suggested format for CVS log messages can be found at the
+    <title>Log Message Format</title>
+    <para>A suggested format for source code log messages can be found at the
     subversion site, <ulink 
     url="http://subversion.tigris.org/hacking.html#log-messages">Log
-    Messages</ulink> (Elsewhere the same recommendations have been made by the
-    same folks regards CVS commits).
+    Messages</ulink>.
     </para>
 
     </sect2>
@@ -2416,7 +2414,7 @@ public class SimpleExtractor extends Processor
       ARC Reader. See 
       <ulink url="http://crawler.archive.org/cgi-bin/wiki.pl?BnfArcTools">BAT</ulink> for documentation and where to download..
       </para>
-      See <ulink url="http://cvs.sourceforge.net/viewcvs.py/archive-access/archive-access/projects/hedaern/">Hedaern</ulink> for python readers/writers and
+      See <ulink url="http://archive-access.cvs.sourceforge.net/viewcvs.py/archive-access/archive-access/projects/hedaern/">Hedaern</ulink> for python readers/writers and
       for a skeleton webapp that allows querying by timestamp+date as well
           as full-text search of ARC content..
       <para>
@@ -2503,7 +2501,7 @@ public class SimpleExtractor extends Processor
     only increment for external releases when an official update to the
     previous release version has been tested and packaged.</para>
 
-    <para>In CVS, version numbers are applied as tags of the form
+    <para>Version numbers are applied as tags of the form
     "heritrix-#_#_#".  Branches occur at major transistions and are labeled
     with the form "heritrix_#_#'.</para> 
 
@@ -2511,13 +2509,13 @@ public class SimpleExtractor extends Processor
     appropriate to become an external/"st able" release, it is considered a
     "Release Candidate" (No where is this written in versions). If testing
     confirms it is suitable for release, it is
-    assigned the next even minor/mode value (and a zero patchlevel), CVS
+    assigned the next even minor/mode value (and a zero patchlevel), 
     version-labelled, and packaged for release. Immediately after release, and
-    before additional coding occurs, the CVS HEAD is assigned the next odd
+    before additional coding occurs, the HEAD is assigned the next odd
     minor/mode value (and a zero patchlevel) in project/source files.</para>
 
     <para>If patches are required to a released version, before the next
-    release is ready, they are applied to a CVS branch from the release
+    release is ready, they are applied to a branch from the release
     version tag, tested, and released as the subsequent patchlevel.</para>
 
     <para>Keep in mind that each version number is an integer, not merely a
@@ -2552,7 +2550,7 @@ public class SimpleExtractor extends Processor
 
       <listitem>
         <para>Update releasenotes.xml bugs and RFEs closed since last
-        release (Looking at CVS history to figure what's changed is too
+        release (Looking at source code history to figure what's changed is too
         hard; All major changes should have associated BUG and RFE).</para>
       </listitem>
 
@@ -2597,7 +2595,7 @@ public class SimpleExtractor extends Processor
       </listitem>
 
       <listitem>
-        <para>Tag the CVS repository.  If a bugfix release -- an
+        <para>Tag the repository.  If a bugfix release -- an
         increase in the least significant digits -- then tag the 
         release. Otherwise, if a major or minor release make a branch
         (See <xref linkend="release_numbering" /> for more on release
@@ -2609,9 +2607,6 @@ public class SimpleExtractor extends Processor
         if making a release 1.10.0, then name the branch heritrix-1_10
             and if making 2.0.0, name the branch heritrix-2. 
         </para>
-        <para>
-        Here is how to tag
-        (Add the '-b' flag to make branch): % cvs -q tag heritrix-?_?_?</para>
       </listitem>
 
       <listitem>
@@ -2640,7 +2635,7 @@ public class SimpleExtractor extends Processor
     <title>Settings XML Schema</title>
     <para>The XML Schema that describes the crawler job order file can be
     viewed as xhtml here, <ulink
-    url="http://cvs.sourceforge.net/viewcvs.py/archive-crawler/ArchiveOpenCrawler/src/webapps/root/heritrix_settings.html?rev=1">heritrix_settings.html</ulink>.</para>
+    url="https://archive-crawler.svn.sourceforge.net/svnroot/archive-crawler/trunk/heritrix/src/webapps/admin/heritrix_settings.html">heritrix_settings.html</ulink>.</para>
   </appendix>
 
   <appendix id="profiling">
