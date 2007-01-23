@@ -19,7 +19,7 @@
  * PathChangerTest.java
  * Created on October 24, 2006
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/settings/path/Attic/PathChangerTest.java,v 1.1.2.4 2007/01/17 01:48:00 paul_jack Exp $
  */
 package org.archive.settings.path;
 
@@ -34,7 +34,7 @@ import org.archive.settings.SingleSheet;
 public class PathChangerTest extends PathTestBase {
 
 
-    public void testChange() {
+    public void testOnlineChange() {
         SingleSheet defaults = manager.getDefault();
         List<PathChange> list = new ArrayList<PathChange>();
         list.add(new PathChange("root.html.enabled", "boolean", "false"));
@@ -44,7 +44,7 @@ public class PathChangerTest extends PathTestBase {
         
         list.clear();
         list.add(new PathChange("root.html.decide-rules.rules.1", "object",
-                "new org.archive.processors.deciderules.MatchesRegExpDecideRule"));
+                "org.archive.processors.deciderules.MatchesRegExpDecideRule"));
         list.add(new PathChange("root.html.decide-rules.rules.1.regexp",
                 "pattern", ".*?"));
         new PathChanger().change(defaults, list);
@@ -52,21 +52,38 @@ public class PathChangerTest extends PathTestBase {
         
         list.clear();
         list.add(new PathChange("root.html.decide-rules.rules", "object",
-                "new java.util.LinkedList()"));
+                "java.util.LinkedList"));
         new PathChanger().change(defaults, list);
         List<DecideRule> r = defaults.get(htmlSeq, DecideRuleSequence.RULES);
         assertFalse(r == htmlRules);
         assertEquals(0, r.size());
-        
-        /*
-        list.clear();
-        list.add(new PathChange("css._impl", 
-                "org.archive.crawler2.extractor.ExtractorJS"));
+    }
+    
+    
+    public void testOfflineChange() {
+        SingleSheet defaults = offlineManager.getDefault();
+        List<PathChange> list = new ArrayList<PathChange>();
+        list.add(new PathChange("root.html.enabled", "boolean", "false"));
         new PathChanger().change(defaults, list);
-        ExtractorJS x = (ExtractorJS)manager.getRoot("css");
-        DecideRuleSequence seq = defaults.get(x, ExtractorJS.DECIDE_RULES);
-        assertTrue(seq == cssSeq);
-        */
+        Boolean b = defaults.get(offlineHtml, ExtractorHTML.ENABLED);
+        assertEquals(Boolean.FALSE, b);
+        
+        list.clear();
+        list.add(new PathChange("root.html.decide-rules.rules.1", "object",
+                "org.archive.processors.deciderules.MatchesRegExpDecideRule"));
+        list.add(new PathChange("root.html.decide-rules.rules.1.regexp",
+                "pattern", ".*?"));
+        new PathChanger().change(defaults, list);
+        assertEquals(2, this.offlineHtmlRules.size());
+        
+        list.clear();
+        list.add(new PathChange("root.html.decide-rules.rules", "object",
+                "java.util.LinkedList"));
+        new PathChanger().change(defaults, list);
+        List r = (List)defaults.resolve(offlineHtmlSeq, DecideRuleSequence.RULES).getValue();
+        assertFalse(r == offlineHtmlRules);
+        assertEquals(0, r.size());
+
     }
 
 }
