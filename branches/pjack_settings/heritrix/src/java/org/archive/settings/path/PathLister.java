@@ -19,7 +19,7 @@
  * PathLister.java
  * Created on October 24, 2006
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/settings/path/Attic/PathLister.java,v 1.1.2.3 2007/01/17 01:48:00 paul_jack Exp $
  */
 package org.archive.settings.path;
 
@@ -88,7 +88,6 @@ public class PathLister {
         Object module = startSheet.getSheetManager().getRoot();
         List<Sheet> list = Collections.singletonList(defaults);
         consume(path, list, module);
-//        list = Collections.singletonList(startSheet);
         advance(path, list, module);
     }
 
@@ -133,7 +132,6 @@ public class PathLister {
      * @param module   the processor to handle
      */
     private void handleModule(
-            List<Sheet> sheets,
             String path,
             Object module) {
         // Get the keys for the module
@@ -147,13 +145,13 @@ public class PathLister {
         // Always list dependencies first
         Collection<Key<Object>> deps = KeyManager.getDependencyKeys(ptype);
         for (Key<Object> k: deps) {
-            handleKey(sheets, path, module, k);
+            handleKey(path, module, k);
         }
         
         Collection<Key<Object>> declared = KeyManager.getKeys(ptype).values();
         for (Key<Object> k: declared) {
             if (!k.isDependency()) {
-                handleKey(sheets, path, module, k);
+                handleKey(path, module, k);
             }
         }
     }
@@ -169,7 +167,7 @@ public class PathLister {
      * @param processor   the processor 
      * @param k           the key
      */
-    private void handleKey(List<Sheet> sheets, String path, Object processor, 
+    private void handleKey(String path, Object processor, 
             Key<Object> k) {
         Resolved<Object> r = startSheet.resolve(processor, k);
         //List<Sheet> resolvedList = new ArrayList<Sheet>(sheets);
@@ -187,7 +185,7 @@ public class PathLister {
         } else if (List.class.isAssignableFrom(k.getType())) {
             handleList(kpath, r.getListSheets(), r.getValue());
         } else {
-            handleModule(sheets, kpath, r.getValue());
+            handleModule(kpath, r.getValue());
         }
     }
 
@@ -228,7 +226,7 @@ public class PathLister {
             handleMap(path, sheets, map);
         } else {
             // Assume it's another module.
-            handleModule(list, path, value);
+            handleModule(path, value);
         }
     }
 

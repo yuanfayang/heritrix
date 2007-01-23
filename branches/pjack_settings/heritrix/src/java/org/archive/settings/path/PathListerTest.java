@@ -33,10 +33,7 @@ import java.util.Map;
 
 import org.archive.settings.Offline;
 import org.archive.settings.Sheet;
-import org.archive.settings.SheetManager;
 import org.archive.settings.SingleSheet;
-import org.archive.state.Key;
-import org.archive.state.KeyManager;
 import org.archive.state.KeyTypes;
 
 public class PathListerTest extends PathTestBase {
