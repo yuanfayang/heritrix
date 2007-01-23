@@ -94,8 +94,8 @@
         scm:<system>:<system specific connection string> 
      -->
     <repository>
-       <connection>scm:cvs:pserver:anonymous@archive-crawler.cvs.sourceforge.net:/cvsroot/archive-crawler:ArchiveOpenCrawler</connection>
-        <url>http://archive-crawler.cvs.sourceforge.net/archive-crawler/ArchiveOpenCrawler/</url>
+       <connection>scm:svn:https://archive-access.svn.sourceforge.net/svnroot/archive-crawler</connection>
+        <url>https://archive-access.svn.sourceforge.net/svnroot/archive-crawler</url>
     </repository>
 
     <versions />
@@ -115,7 +115,7 @@
             </archive>
         </mailingList>  
         <mailingList>  
-            <name>Crawler CVS Commits</name>
+            <name>Crawler Commits</name>
             <subscribe>
             http://lists.sourceforge.net/lists/listinfo/archive-crawler-cvs
             </subscribe>
