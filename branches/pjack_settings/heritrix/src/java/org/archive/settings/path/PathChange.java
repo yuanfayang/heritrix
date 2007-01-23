@@ -19,9 +19,13 @@
  * PathChange.java
  * Created on October 24, 2006
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/settings/path/Attic/PathChange.java,v 1.1.2.2 2007/01/17 01:48:00 paul_jack Exp $
  */
 package org.archive.settings.path;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class PathChange {
     
@@ -29,13 +33,34 @@ public class PathChange {
     final private String path;
     final private String value;
     final private String type;
+    final private List<PathChange> dependencies;
     
 
-    public PathChange(String path, String type, String value) {
+    public PathChange(String path, String type, String value, 
+            List<PathChange> dependencies) {
+        if (path == null) {
+            throw new IllegalArgumentException("path must not be null");
+        }
+        if (type == null) {
+            throw new IllegalArgumentException("type must not be null");
+        }
+        if (type == null) {
+            throw new IllegalArgumentException("value must not be null");
+        }
+        if (dependencies == null) {
+            throw new IllegalArgumentException("dependencies must not be null");
+        }
         this.path = path;
         this.type = type;
         this.value = value;
+        this.dependencies = new ArrayList<PathChange>(dependencies);
     }
+    
+    
+    @SuppressWarnings("unchecked")
+    public PathChange(String path, String type, String value) {
+        this(path, type, value, Collections.EMPTY_LIST);
+    }    
     
     
     public String getPath() {
@@ -51,4 +76,39 @@ public class PathChange {
     public String getType() {
         return type;
     }
+    
+    
+    public List<PathChange> getDependencies() {
+        return dependencies;
+    }
+
+
+    public boolean equals(Object other) {
+        if (!(other instanceof PathChange)) {
+            return false;
+        }
+        
+        PathChange pc = (PathChange)other;
+        return pc.type.equals(type) 
+            && pc.value.equals(value)
+            && pc.path.equals(path)
+            && pc.dependencies.equals(dependencies);
+    }
+    
+    
+    public int hashCode() {
+        return type.hashCode() 
+            ^ value.hashCode() 
+            ^ path.hashCode() 
+            ^ dependencies.hashCode();
+    }
+    
+    
+    public String toString() {
+        return "PathChange{path=" + path 
+            + ", type=" + type 
+            + ", value=" + value 
+            + ", dependencies=" + dependencies + "}";
+    }
+
 }
