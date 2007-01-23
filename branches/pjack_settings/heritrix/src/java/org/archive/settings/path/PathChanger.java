@@ -19,21 +19,24 @@
  * PathChanger.java
  * Created on October 24, 2006
  *
- * $Header$
+ * $Header: /cvsroot/archive-crawler/ArchiveOpenCrawler/src/java/org/archive/settings/path/Attic/PathChanger.java,v 1.1.2.4 2007/01/17 01:47:59 paul_jack Exp $
  */
 package org.archive.settings.path;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
-import org.archive.crawler.util.Transformer;
+import org.archive.settings.Offline;
 import org.archive.settings.SingleSheet;
 import org.archive.settings.path.PathValidator;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.KeyTypes;
 
 
 /**
@@ -46,105 +49,18 @@ import org.archive.state.KeyManager;
  */
 public class PathChanger {
 
-
-    /** Default transformer for booleans. */
-    final public static Transformer<String,Boolean> BOOLEAN_TRANSFORMER =
-        new Transformer<String,Boolean>() {
-            public Boolean transform(String s) {
-                return Boolean.parseBoolean(s);
-            }
-        };
-
-        
-    /** Default transformer for bytes. */
-    final public static Transformer<String,Byte> BYTE_TRANSFORMER =
-        new Transformer<String,Byte>() {
-            public Byte transform(String s) {
-                return Byte.decode(s);
-            }
-        };
-
     
-    /** Default transformer for chars. */
-    final public static Transformer<String,Character> CHAR_TRANSFORMER =
-        new Transformer<String,Character>() {
-            public Character transform(String s) {
-                if (s.length() != 1) {
-                    throw new IllegalArgumentException();
-                }
-                return s.charAt(0);
-            }
-        };
-
-        
-    /** Default transformer for doubles. */
-    final public static Transformer<String,Double> DOUBLE_TRANSFORMER =
-        new Transformer<String,Double>() {
-            public Double transform(String s) {
-                return Double.parseDouble(s);
-            }
-        };
-
-        
-    /** Default transformer for floats. */
-    final public static Transformer<String,Float> FLOAT_TRANSFORMER =
-        new Transformer<String,Float>() {
-            public Float transform(String s) {
-                return Float.parseFloat(s);
-            }
-        };
-
-
-    /** Default transformer for ints. */
-    final public static Transformer<String,Integer> INT_TRANSFORMER =
-        new Transformer<String,Integer>() {
-            public Integer transform(String s) {
-                return Integer.decode(s);
-            }
-        };
-
-
-    /** Default transformer for longs. */
-    final public static Transformer<String,Long> LONG_TRANSFORMER =
-        new Transformer<String,Long>() {
-            public Long transform(String s) {
-                return Long.decode(s);
-            }
-        };
-
-
-    /** Default transformer for shorts. */
-    final public static Transformer<String,Short> SHORT_TRANSFORMER =
-        new Transformer<String,Short>() {
-            public Short transform(String s) {
-                return Short.decode(s);
-            }
-        };
-
-
-    /** Default transformer for strings. */
-    final public static Transformer<String,String> STRING_TRANSFORMER =
-        new Transformer<String,String>() {
-            public String transform(String s) {
-                return s;
-            }
-        };
-        
+    final public static String OBJECT_TAG = "object";
     
-    /** Default transformer for regular expressions. */
-    final public static Transformer<String,Pattern> PATTERN_TRANSFORMER =
-        new Transformer<String,Pattern>() {
-            public Pattern transform(String s) {
-                return Pattern.compile(s);
-            }
-        };
-
-
+    final public static String REFERENCE_TAG = "reference";
+    
     /**
-     * Transformers used to convert simple objects from strings.
+     * A list of objects whose construction must be delayed until 
+     * dependencies are constructed first.
      */
-    final private Map<String,Transformer<String,Object>> transformers;
-
+    final private LinkedList<PathChange> delayed = 
+        new LinkedList<PathChange>();
+    
 
     /**
      * Constructs a new PathChanger with the default set of transformers.
@@ -153,33 +69,6 @@ public class PathChanger {
      * and so on.
      */
     public PathChanger() {
-        transformers = new HashMap<String,Transformer<String,Object>>();
-        registerTransformer("boolean", BOOLEAN_TRANSFORMER);
-        registerTransformer("byte", BYTE_TRANSFORMER);
-        registerTransformer("char", CHAR_TRANSFORMER);
-        registerTransformer("double", DOUBLE_TRANSFORMER);
-        registerTransformer("float", FLOAT_TRANSFORMER);
-        registerTransformer("int", INT_TRANSFORMER);
-        registerTransformer("long", LONG_TRANSFORMER);
-        registerTransformer("short", SHORT_TRANSFORMER);
-        registerTransformer("string", STRING_TRANSFORMER);
-        registerTransformer("pattern", PATTERN_TRANSFORMER);
-        //registerTransformer("object", OBJECT_TRANSFORMER);
-    }
-
-
-    /**
-     * Registers a transformer for the given type of object.
-     * 
-     * @param <T>  the type of object to transform strings into
-     * @param cls   the type of object to transform strings into
-     * @param transformer   the transformer to use 
-     */
-    public <T> void registerTransformer(String suffix, 
-            Transformer transformer) {
-        @SuppressWarnings("unchecked")
-        Transformer<String,Object> t = transformer;
-        transformers.put(suffix, t);
     }
 
     
@@ -189,32 +78,118 @@ public class PathChanger {
     
     public void change(SingleSheet ss, Iterator<PathChange> changes) {
         while (changes.hasNext()) {
-            processChange(ss, changes.next());
+            change(ss, changes.next());
         }
     }
     
     
-    private void processChange(SingleSheet sheet, PathChange pair) {
+    
+    public void change(SingleSheet sheet, PathChange pair) {
         String path = pair.getPath();
-        String suffix = pair.getType();
+        String typeTag = pair.getType();
         String value = pair.getValue();
         
-        if (suffix.equals("object")) {
-            Object v = Construction.construct(sheet, value);
-            finish(sheet, path, v);
-            return;
+        Object v;
+        if (typeTag.equals(REFERENCE_TAG)) {
+            v = makeReference(sheet, value);
+        } else if (typeTag.equals(OBJECT_TAG)) {
+            v = makeObject(sheet, pair);
+        } else {
+            v = makeSimple(typeTag, value);
         }
 
-        Transformer<String,Object> transformer = transformers.get(suffix);
-        if (transformer == null) {
-            throw new PathChangeException("No transformer for type " + suffix);
-        }
-        Object v = transformer.transform(value);
         finish(sheet, path, v);        
     }
 
+    
+    private Object makeReference(SingleSheet sheet, String value) {
+        return PathValidator.validate(sheet, value);
+    }
+    
+    
+    private Object makeSimple(String typeTag, String value) {
+        Class type = KeyTypes.getSimpleType(typeTag);
+        try {
+            return KeyTypes.fromString(type, value);
+        } catch (Exception e) {
+            throw new PathChangeException(e);
+        }
+    }
+    
+    private Object makeObject(SingleSheet sheet, PathChange pc) {
+        String path = pc.getPath();
+        String value = pc.getValue();
+
+        Class c;
+        try {
+            c = Class.forName(value);
+        } catch (ClassNotFoundException e) {
+            throw new PathChangeException("No such class: " + value);
+        }
+        
+        List<Key<Object>> dep = KeyManager.getDependencyKeys(c);
+        Constructor cons = KeyManager.getDependencyConstructor(c);
+        if (dep.isEmpty()) try {
+            return cons.newInstance();
+        } catch (InstantiationException e) {
+            throw new PathChangeException(e);
+        } catch (InvocationTargetException e) {
+            throw new PathChangeException(e);
+        } catch (IllegalAccessException e) {
+            throw new PathChangeException(e);
+        }
+        
+        Map<String,Object> depValues = new HashMap<String,Object>();
+        for (PathChange dpc: pc.getDependencies()) {
+            String dpath = dpc.getPath();
+            String dtag = dpc.getType();
+            String dvalue = dpc.getValue();
+            Object dv;
+            if (dtag.equals(OBJECT_TAG)) {
+                throw new PathChangeException(
+                        "  Dependency " + dpath + " must be constructed "
+                        + "before its dependent object " + path + ".");
+            } else if (dtag.equals(REFERENCE_TAG)) {
+                dv = makeReference(sheet, dvalue);
+            } else {
+                dv = makeSimple(dtag, dvalue);
+            }
+            depValues.put(dpath, dv);
+        }
+        
+        Object[] params = new Object[dep.size()];
+        for (int i = 0; i < dep.size(); i++) {
+            Key<Object> k = dep.get(i);
+            if (!depValues.containsKey(k.getFieldName())) {
+                throw new PathChangeException(path 
+                 + " does not define a dependency for " + k.getFieldName());
+            }
+            params[i] = depValues.get(k.getFieldName());
+        }
+        
+        Object result;
+        try {
+            result = cons.newInstance(params);
+        } catch (InstantiationException e) {
+            throw new PathChangeException(e);
+        } catch (InvocationTargetException e) {
+            throw new PathChangeException(e);
+        } catch (IllegalAccessException e) {
+            throw new PathChangeException(e);
+        }
+        
+        for (int i = 0; i < dep.size(); i++) {
+            sheet.set(result, dep.get(i), params[i]);
+        }
+        return result;
+    }
+    
 
     private void finish(SingleSheet sheet, String path, Object value) {
+        if (!delayed.isEmpty() && path.startsWith(delayed.getLast().getPath())) {
+            // this had better be a reference to a 
+        }
+        
         int p = path.lastIndexOf('.');
         if (p < 0) {
             if (path.equals(PathValidator.ROOT_NAME)) {
@@ -255,12 +230,17 @@ public class PathChanger {
             return;
         }
 
-        Map<String,Key<Object>> keys = KeyManager.getKeys(previous.getClass());
+        Class prevType = Offline.getType(previous);
+        Map<String,Key<Object>> keys = KeyManager.getKeys(prevType);
         Key<Object> key = keys.get(lastToken);
         if (key == null) {
             throw new PathChangeException("No such key: " + path);
         }
-        sheet.set(previous, key, value);
+        if (value instanceof Offline) {
+            sheet.setOffline((Offline)previous, key, (Offline)value);
+        } else {
+            sheet.set(previous, key, value);
+        }
     }
 
 }
