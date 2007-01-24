@@ -26,6 +26,9 @@
 package org.archive.util;
 
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.text.ParseException;
 
 import junit.framework.Test;
@@ -351,6 +354,46 @@ public class ArchiveUtilsTest extends TestCase {
     public static void testZeroPadInteger() {
         assertEquals(ArchiveUtils.zeroPadInteger(1), "0000000001");
         assertEquals(ArchiveUtils.zeroPadInteger(1000000000), "1000000000");
+    }
+    
+    /**
+     * Test stable behavior of date formatting under heavy concurrency. 
+     * 
+     * @throws InterruptedException
+     */
+    public static void testDateFormatConcurrency() throws InterruptedException {        
+        final int COUNT = 1000;
+        Thread [] ts = new Thread[COUNT];
+        final Semaphore allDone = new Semaphore(-COUNT+1);
+        final AtomicInteger failures = new AtomicInteger(0); 
+        for (int i = 0; i < COUNT; i++) {
+            Thread t = new Thread() {
+                public void run() {
+                    long n = System.currentTimeMillis();
+                    final String d = ArchiveUtils.get17DigitDate(n);
+                    for (int i = 0; i < 1000; i++) {
+                        try {
+                            sleep(10);
+                        } catch (InterruptedException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        String d2 = ArchiveUtils.get17DigitDate(n);
+                        if(!d.equals(d2)) {
+                            failures.incrementAndGet();
+                            break; 
+                        }
+                    }
+                    allDone.release();
+                }
+            };
+            ts[i] = t;
+            ts[i].setName(Integer.toString(i));
+            ts[i].start();
+            while(!ts[i].isAlive()) /* Wait for thread to spin up*/;
+        }
+        allDone.acquire(); // wait for all threads to finish
+        assertEquals(failures.get()+" format mismatches",0,failures.get()); 
     }
 }
 
