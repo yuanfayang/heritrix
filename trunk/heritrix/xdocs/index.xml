@@ -44,6 +44,19 @@
     </section>
     <section name="News and Status">
 
+    <subsection name="HDFS Writer Processor 01/25/2007">
+      <p>
+      The HDFS Writer Processor extension enables storing crawled content
+      directly into HDFS, the 
+      <a href="http://lucene.apache.org/hadoop">Hadoop</a> Distributed
+      FileSystem.  For details, see the
+      <a href="http://www.zvents.com/hdfs/README.txt">README.txt</a>.
+      To download, see <a 
+      href="http://www.zvents.com/labs/hdfs_writer_processor">HDFS Writer
+      Processor</a>
+      </p>
+    </subsection>
+
     <subsection name="Release 1.10.2 01/15/2007">
     <p>This is primarily a bug-fix release, with a couple of new
       features, provided before a number of significant changes to 
