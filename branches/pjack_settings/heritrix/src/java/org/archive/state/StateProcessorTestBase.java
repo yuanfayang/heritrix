@@ -24,9 +24,12 @@
 package org.archive.state;
 
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Locale;
 import java.util.Map;
+
+import org.archive.util.TestUtils;
 
 import junit.framework.TestCase;
 
@@ -39,14 +42,18 @@ import junit.framework.TestCase;
 public abstract class StateProcessorTestBase extends TestCase {
 
 
-    protected Class processorClass;
 
+    
+    public StateProcessorTestBase() {
+        KeyMetadataMaker.makeDefaultLocale(new File("src/java"), 
+                getModuleClass());
+    }
 
-    /**
-     * Sets up the test.  Subclasses should use this method to assign a class
-     * value to {@link processorClass}.
-     */
-    public abstract void setUp();
+    
+    protected abstract Class getModuleClass();
+    
+    
+    protected abstract Object makeModule();
 
 
     /**
@@ -54,8 +61,8 @@ public abstract class StateProcessorTestBase extends TestCase {
      * {@link KeyManager#addKeys(Class)}.
      */
     public void testKeyManagerRegistration() {
-        Map<String,Key<Object>> keys = KeyManager.getKeys(processorClass);
-        Field[] fields = processorClass.getFields();
+        Map<String,Key<Object>> keys = KeyManager.getKeys(getModuleClass());
+        Field[] fields = getModuleClass().getFields();
         int expectedKeyCount = 0;
         for (Field f: fields) {
             if (f.getType() == Key.class) {
@@ -75,11 +82,16 @@ public abstract class StateProcessorTestBase extends TestCase {
      * descriptions in English.
      */
     public void testDefaultLocale() {
-        Map<String,Key<Object>> keys = KeyManager.getKeys(processorClass);
+        Map<String,Key<Object>> keys = KeyManager.getKeys(getModuleClass());
         for (Key k: keys.values()) {
             String n = k.getFieldName();
             TestCase.assertNotNull(n, k.getName(Locale.ENGLISH));
             TestCase.assertNotNull(n, k.getDescription(Locale.ENGLISH));
         }
+    }
+
+    
+    public void testSerialization() throws Exception {
+        TestUtils.testSerialization(makeModule());
     }
 }

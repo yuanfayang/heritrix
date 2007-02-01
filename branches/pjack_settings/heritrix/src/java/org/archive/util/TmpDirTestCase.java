@@ -42,12 +42,12 @@ public class TmpDirTestCase extends TestCase
      * Name of the system property that holds pointer to tmp directory into
      * which we can safely write files.
      */
-    private static final String TEST_TMP_SYSTEM_PROPERTY_NAME = "testtmpdir";
+    public static final String TEST_TMP_SYSTEM_PROPERTY_NAME = "testtmpdir";
 
     /**
      * Default test tmp.
      */
-    private static final String DEFAULT_TEST_TMP_DIR = File.separator + "tmp" +
+    public static final String DEFAULT_TEST_TMP_DIR = File.separator + "tmp" +
         File.separator + "heritrix-junit-tests";
 
     /**

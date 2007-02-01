@@ -198,11 +198,13 @@ final public class KeyManager {
      * Returns true if the given field defines a Key.
      * The field must be final, public and static.
      * Also, the field's type must be {@link Key}.
+     *
+     * Package-protected so KeyMetadataMaker can use it.
      * 
      * @param f  the field to test
      * @return  true if that field is a Key field
      */
-    private static boolean isKeyField(Field f) {
+    static boolean isKeyField(Field f) {
         int mods = f.getModifiers();
         if (f.getType() != Key.class) {
             return false;
