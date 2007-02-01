@@ -1,4 +1,5 @@
-/* Copyright (C) 2006 Internet Archive.
+/* 
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,27 +17,36 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ProcessorTest.java
- * Created on October 5, 2006
+ * TestAll.java
  *
- * $Header$
+ * Created on Feb 1, 2007
+ *
+ * $Id:$
  */
+
 package org.archive.processors;
 
-
-import org.archive.state.StateProcessorTestBase;
-
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
- * Unit test for Processor.
- * 
  * @author pjack
+ *
  */
-public abstract class ProcessorTest extends StateProcessorTestBase {
+public class TestAll {
 
     
+    public static Test suite() throws Exception {
+        String cname = TestAll.class.getName();
+        int p = cname.lastIndexOf('.');
+        String pname = cname.substring(0, p);
+        
+        TestSuite suite = new TestSuite(pname);
+        suite.addTest(org.archive.processors.extractor.TestAll.suite());
+        suite.addTest(org.archive.processors.fetcher.TestAll.suite());
+        suite.addTest(org.archive.processors.writer.TestAll.suite());
+        return suite;        
+    }
     
-
-
-
+    
 }

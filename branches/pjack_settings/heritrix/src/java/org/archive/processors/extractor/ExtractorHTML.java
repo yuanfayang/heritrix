@@ -161,18 +161,41 @@ public class ExtractorHTML extends ContentExtractor {
     static final String FRAME = "frame";
     static final String IFRAME = "iframe";
 
+    
+    /**
+     * If true, FRAME/IFRAME SRC-links are treated as embedded resources (like
+     * IMG, 'E' hop-type), otherwise they are treated as navigational links.
+     * Default is true.
+     */
     @Expert
     public static final Key<Boolean> TREAT_FRAMES_AS_EMBED_LINKS = 
         Key.make(true);
+
     
+    /**
+     * If true, URIs appearing as the ACTION attribute in HTML FORMs are
+     * ignored. Default is false.
+     */
     @Expert
     public static final Key<Boolean> IGNORE_FORM_ACTION_URLS =
         Key.make(false);
     
+
+    /**
+     * If true, strings that look like URIs found in unusual places (such as
+     * form VALUE attributes) will be extracted. This typically finds both valid
+     * and invalid URIs, and attempts to fetch the invalid URIs sometimes
+     * generate webmaster concerns over odd crawler behavior. Default is true.
+     */
     @Expert
     public static final Key<Boolean> OVERLY_EAGER_LINK_DETECTION =
         Key.make(true);
     
+
+    /**
+     * If true, URIs which end in typical non-HTML extensions (such as .gif)
+     * will not be scanned as if it were HTML. Default is true.
+     */
     @Expert
     public static final Key<Boolean> IGNORE_UNEXPECTED_HTML = 
         Key.make(true);

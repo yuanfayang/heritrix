@@ -32,6 +32,7 @@ import java.util.Collections;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.DefaultProcessorURI;
+import org.archive.processors.ProcessorTest;
 import org.archive.state.StateProcessorTestBase;
 import org.archive.util.Recorder;
 
@@ -41,7 +42,7 @@ import org.archive.util.Recorder;
  * 
  * @author pjack
  */
-public abstract class ContentExtractorTestBase extends StateProcessorTestBase {
+public abstract class ContentExtractorTestBase extends ProcessorTest {
 
     
     /**
@@ -56,18 +57,15 @@ public abstract class ContentExtractorTestBase extends StateProcessorTestBase {
      * fields.
      */
     final public void setUp() {
-        processorClass = getProcessorClass();
         extractor = makeExtractor();
     }
     
     
-    /**
-     * Subclasses should return the Extractor subclass being tested.
-     * 
-     * @return  the Extractor subclass being tested
-     */
-    protected abstract Class getProcessorClass();
-    
+    @Override
+    protected Object makeModule() {
+        return makeExtractor();
+    }
+        
     
     /**
      * Subclasses should return an Extractor instance to test.

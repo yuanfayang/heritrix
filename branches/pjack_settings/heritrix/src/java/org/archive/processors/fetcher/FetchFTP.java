@@ -112,7 +112,10 @@ public class FetchFTP extends Processor  {
     final public static Key<Long> MAX_LENGTH_BYTES = Key.make(0L);
 
     
-
+    /**
+     * The maximum KB/sec to use when fetching data from a server. The default
+     * of 0 means no maximum.
+     */
     final public static Key<Integer> FETCH_BANDWIDTH = Key.make(0);
     
     

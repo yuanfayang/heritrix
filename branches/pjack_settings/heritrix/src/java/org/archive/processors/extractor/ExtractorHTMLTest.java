@@ -51,7 +51,7 @@ public class ExtractorHTMLTest extends StringExtractorTestBase {
     }
 
     @Override
-    protected Class getProcessorClass() {
+    protected Class getModuleClass() {
         return ExtractorHTML.class;
     }
 

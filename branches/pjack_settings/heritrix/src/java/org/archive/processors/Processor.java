@@ -24,6 +24,7 @@
 package org.archive.processors;
 
 
+import java.io.Serializable;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -44,7 +45,7 @@ import org.archive.state.StateProvider;
  * 
  * @author pjack
  */
-public abstract class Processor {
+public abstract class Processor implements Serializable {
     
 
     /** 

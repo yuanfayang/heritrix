@@ -87,6 +87,7 @@ import org.archive.httpclient.SingleHttpConnectionManager;
 import org.archive.io.RecorderLengthExceededException;
 import org.archive.io.RecorderTimeoutException;
 import org.archive.io.RecorderTooMuchHeaderException;
+import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
@@ -302,6 +303,23 @@ public class FetchHTTP extends Processor implements CoreAttributeConstants,
      */
     final public static Key<String> LOCAL_ADDRESS = Key.make("");
 
+    
+    /**
+     * Used to store credentials.
+     */
+    @Dependency
+    final public static Key<CredentialStore> CREDENTIAL_STORE =
+        Key.make(CredentialStore.class, null);
+    
+    
+    /**
+     * Used to do DNS lookups.
+     */
+    @Dependency
+    final public static Key<ServerCache> SERVER_CACHE =
+        Key.make(ServerCache.class, null);
+    
+    
     /**
      * Database backing cookie map, if using BDB
      */
