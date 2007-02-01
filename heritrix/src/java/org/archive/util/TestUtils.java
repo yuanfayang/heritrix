@@ -24,8 +24,16 @@
 */ 
 package org.archive.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.ref.SoftReference;
+import java.util.Arrays;
 import java.util.LinkedList;
+
+import junit.framework.TestCase;
+
 
 /**
  * Utility methods useful in testing situations.
@@ -51,4 +59,29 @@ public class TestUtils {
             }
         }
     }
+
+
+    public static void testSerialization(Object proc) throws Exception {
+        byte[] first = serialize(proc);
+        ByteArrayInputStream binp = new ByteArrayInputStream(first);
+        ObjectInputStream oinp = new ObjectInputStream(binp);
+        Object o = oinp.readObject();
+        oinp.close();
+        TestCase.assertEquals(proc.getClass(), o.getClass());
+        byte[] second = serialize(o);
+        TestCase.assertTrue(Arrays.equals(first, second));
+    }
+
+
+    private static byte[] serialize(Object o) throws Exception {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ObjectOutputStream oout = new ObjectOutputStream(bout);    
+        oout.writeObject(o);
+        oout.close();
+        return bout.toByteArray();        
+    }
+
+
+
+
 }
