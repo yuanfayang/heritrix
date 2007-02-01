@@ -40,6 +40,7 @@ import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.ServerCache;
+import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Key;
 import org.archive.util.ArchiveUtils;
@@ -64,7 +65,7 @@ public class FetchDNS extends Processor
 implements CoreAttributeConstants, FetchStatusCodes {
 	private static final long serialVersionUID = 3L;
 
-	private Logger logger = Logger.getLogger(this.getClass().getName());
+	private static Logger logger = Logger.getLogger(FetchDNS.class.getName());
 
     // Defaults.
     private short ClassType = DClass.IN;
@@ -83,6 +84,13 @@ implements CoreAttributeConstants, FetchStatusCodes {
     final public static Key<Boolean> ACCEPT_NON_DNS_RESOLVES = 
         Key.make(false);
 
+    
+    /**
+     * Used to do DNS lookups.
+     */
+    @Dependency
+    final public static Key<ServerCache> SERVER_CACHE = 
+        Key.make(ServerCache.class, null);
     
     /**
      * Whether or not to perform an on-the-fly SHA1 hash of retrieved

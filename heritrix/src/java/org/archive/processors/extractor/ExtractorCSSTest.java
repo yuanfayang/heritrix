@@ -62,7 +62,7 @@ public class ExtractorCSSTest extends StringExtractorTestBase {
     };
     
     @Override
-    protected Class getProcessorClass() {
+    protected Class getModuleClass() {
         return ExtractorCSS.class;
     }
     

@@ -32,6 +32,8 @@ import org.archive.crawler.framework.ToeThread;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.ProcessorURI;
+import org.archive.processors.util.DefaultTempDirProvider;
+import org.archive.state.Dependency;
 import org.archive.state.Key;
 
 
@@ -60,6 +62,13 @@ public class ExtractorPDF extends ContentExtractor {
 
     final private TempDirProvider tempDirProvider;
     
+    
+    /**
+     * Provides the location for temporary PDF files to be written.
+     */
+    @Dependency
+    final public static Key<TempDirProvider> TEMP_DIR_PROVIDER =
+        Key.make(TempDirProvider.class, new DefaultTempDirProvider());
     
     
 

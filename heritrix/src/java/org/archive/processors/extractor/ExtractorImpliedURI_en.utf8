@@ -1,0 +1,11 @@
+build-pattern-description:
+Replacement pattern to build 'implied' URI, using captured groups of 
+trigger expression. 
+
+
+trigger-regexp-description:
+Triggering regular expression. When a discovered URI matches this 
+pattern, the 'implied' URI will be built. The capturing groups of this 
+expression are available for the build replacement pattern. 
+
+

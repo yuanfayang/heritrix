@@ -1,0 +1,8 @@
+max-depth-bytes-description:
+How deep to look into files for URI strings, in bytes. 
+
+
+max-url-length-description:
+Max length of URIs in bytes. 
+
+

@@ -1,4 +1,5 @@
-/* Copyright (C) 2006 Internet Archive.
+/* 
+ * Copyright (C) 2007 Internet Archive.
  *
  * This file is part of the Heritrix web crawler (crawler.archive.org).
  *
@@ -16,27 +17,38 @@
  * along with Heritrix; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ProcessorTest.java
- * Created on October 5, 2006
+ * ExtractorXML.java
  *
- * $Header$
+ * Created on Jan 31, 2007
+ *
+ * $Id:$
  */
-package org.archive.processors;
+package org.archive.processors.extractor;
 
 
-import org.archive.state.StateProcessorTestBase;
+import org.archive.processors.ProcessorTest;
 
 
 /**
- * Unit test for Processor.
- * 
+ * Unit test for {@link ExtractorXML}.
+ *
  * @author pjack
  */
-public abstract class ProcessorTest extends StateProcessorTestBase {
+public class ExtractorXMLTest extends ProcessorTest {
 
     
+    @Override
+    protected Class getModuleClass() {
+        return ExtractorXML.class;
+    }
     
-
-
-
+    
+    @Override
+    protected Object makeModule() {
+        return new ExtractorXML();
+    }
+    
+    
+    // TODO TESTME!
+    
 }
