@@ -30,11 +30,11 @@ import java.util.ArrayList;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.exceptions.EndedException;
-import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InvalidFrontierMarkerException;
 import org.archive.crawler.frontier.FrontierJournal;
 import org.archive.net.UURI;
 import org.archive.processors.fetcher.FetchStats;
+import org.archive.state.Module;
 import org.archive.util.Reporter;
 
 
@@ -110,7 +110,7 @@ import org.archive.util.Reporter;
  * @see org.archive.crawler.framework.FrontierHostStatistics
  * @see org.archive.crawler.settings.ModuleType
  */
-public interface Frontier extends Reporter {
+public interface Frontier extends Module, Reporter {
     /**
      * All URI Frontiers should have the same 'name' attribute. This constant
      * defines that name. This is a name used to reference the Frontier being

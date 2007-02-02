@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.Module;
 import org.archive.state.StateProvider;
 
 
@@ -49,7 +50,7 @@ import org.archive.state.StateProvider;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CredentialStore {
+public class CredentialStore implements Module {
 
     private static final long serialVersionUID = 3L;
 
