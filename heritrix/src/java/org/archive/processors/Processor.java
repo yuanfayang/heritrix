@@ -36,6 +36,7 @@ import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRuleSequence;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Module;
 import org.archive.state.StateProvider;
 
 
@@ -45,7 +46,7 @@ import org.archive.state.StateProvider;
  * 
  * @author pjack
  */
-public abstract class Processor implements Serializable {
+public abstract class Processor implements Module, Serializable {
     
 
     /** 

@@ -41,6 +41,7 @@ import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
+import org.archive.state.Module;
 
 
 /**
@@ -50,7 +51,7 @@ import org.archive.state.KeyManager;
  *
  * @see org.archive.crawler.settings.ModuleType
  */
-public class CrawlOrder implements Serializable {
+public class CrawlOrder implements Module, Serializable {
 
 
     private static final long serialVersionUID = 3L;

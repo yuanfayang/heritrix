@@ -35,6 +35,7 @@ import org.archive.processors.util.ServerCacheUtil;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Key;
+import org.archive.state.Module;
 
 
 
@@ -51,7 +52,7 @@ import org.archive.state.Key;
  * @author stack
  * @version $Revision$, $Date$
  */
-public abstract class Credential {
+public abstract class Credential implements Module {
 
     private static final Logger logger =
         Logger.getLogger(Credential.class.getName());

@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.state.Global;
 import org.archive.state.Key;
+import org.archive.state.Module;
 import org.archive.util.ArchiveUtils;
 import org.archive.util.PaddingStringBuffer;
 
@@ -49,7 +50,7 @@ import org.archive.util.PaddingStringBuffer;
  * @see org.archive.crawler.admin.StatisticsTracker
  */
 public abstract class AbstractTracker 
-implements StatisticsTracking, CrawlStatusListener, Serializable {
+implements StatisticsTracking, CrawlStatusListener, Serializable, Module {
 
 
     /**
