@@ -46,7 +46,7 @@ implements AdaptiveRevisitAttributeConstants {
     
     private static final long serialVersionUID = 3L;
 
-    Logger logger = Logger.getLogger(WaitEvaluator.class.getName());
+    static Logger logger = Logger.getLogger(WaitEvaluator.class.getName());
 
 
     /**

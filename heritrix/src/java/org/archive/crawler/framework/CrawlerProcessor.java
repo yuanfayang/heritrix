@@ -29,11 +29,23 @@ import org.archive.processors.util.CrawlHost;
 import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
+import org.archive.state.Dependency;
+import org.archive.state.Key;
 
 public abstract class CrawlerProcessor extends Processor {
 
     
     final protected CrawlController controller;
+    
+    
+    /**
+     * The crawl controller.
+     */
+    @Dependency
+    final public static Key<CrawlController> CONTROLLER = 
+        Key.make(CrawlController.class, null);
+    
+    
     
     public CrawlerProcessor(CrawlController controller) {
         this.controller = controller;

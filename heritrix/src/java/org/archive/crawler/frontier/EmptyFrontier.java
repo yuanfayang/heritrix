@@ -2,6 +2,7 @@ package org.archive.crawler.frontier;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import org.archive.crawler.datamodel.CandidateURI;
@@ -20,8 +21,11 @@ import org.archive.net.UURI;
  * 
  * @author pjack
  */
-public class EmptyFrontier implements Frontier {
+public class EmptyFrontier implements Frontier, Serializable {
 
+    private static final long serialVersionUID = 1L;
+
+    
     public long averageDepth() {
         return 0;
     }

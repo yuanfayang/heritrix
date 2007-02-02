@@ -53,7 +53,7 @@ public abstract class StateProcessorTestBase extends TestCase {
     protected abstract Class getModuleClass();
     
     
-    protected abstract Object makeModule();
+    protected abstract Object makeModule() throws Exception ;
 
 
     /**

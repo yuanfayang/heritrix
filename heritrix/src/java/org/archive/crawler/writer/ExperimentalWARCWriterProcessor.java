@@ -67,7 +67,8 @@ FetchStatusCodes, WARCConstants {
 
     private static final long serialVersionUID = 3L;
 
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
+    private static final Logger logger = 
+        Logger.getLogger(ExperimentalWARCWriterProcessor.class.getName());
 
     /**
      * Where to save files. Supply absolute or relative path. If relative, files

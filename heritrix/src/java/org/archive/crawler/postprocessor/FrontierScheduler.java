@@ -30,8 +30,11 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.Frontier;
+import org.archive.crawler.frontier.EmptyFrontier;
 import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
+import org.archive.state.Dependency;
+import org.archive.state.Key;
 
 
 /**
@@ -50,6 +53,13 @@ implements FetchStatusCodes {
     
     final Frontier frontier;
 
+    
+    /**
+     * The frontier to use.
+     */
+    @Dependency
+    final public static Key<Frontier> FRONTIER = Key.make(Frontier.class, 
+            new EmptyFrontier());
 
     /**
      */
