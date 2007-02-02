@@ -24,15 +24,27 @@ package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.state.ExampleStateProvider;
+import org.archive.state.StateProcessorTestBase;
 
-import junit.framework.TestCase;
 
 /**
  * Test stripping of userinfo from an url.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class StripUserinfoRuleTest extends TestCase {
+public class StripUserinfoRuleTest extends StateProcessorTestBase {
+
+
+    @Override
+    protected Class getModuleClass() {
+        return StripUserinfoRule.class;
+    }
+
+    @Override
+    protected Object makeModule() throws Exception {
+        return new StripUserinfoRule();
+    }
+
     public void testCanonicalize() throws URIException {
         ExampleStateProvider context = new ExampleStateProvider();
         String url = "http://WWW.aRchive.Org/index.html";

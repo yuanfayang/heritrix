@@ -24,17 +24,29 @@ package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.state.ExampleStateProvider;
+import org.archive.state.StateProcessorTestBase;
 
-import junit.framework.TestCase;
 
 /**
  * Test stripping of session ids.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class StripSessionIDsTest extends TestCase {
+public class StripSessionIDsTest extends StateProcessorTestBase {
     private static final String  BASE = "http://www.archive.org/index.html";
-    
+
+
+    @Override
+    protected Class getModuleClass() {
+        return StripSessionIDs.class;
+    }
+
+    @Override
+    protected Object makeModule() throws Exception {
+        return new StripSessionIDs();
+    }
+
+
     public void testCanonicalize() throws URIException {
         ExampleStateProvider context = new ExampleStateProvider();
         String str32id = "0123456789abcdefghijklemopqrstuv";
