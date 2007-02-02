@@ -64,7 +64,6 @@ import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.event.CrawlURIDispositionListener;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.crawler.framework.exceptions.InitializationException;
-import org.archive.crawler.frontier.EmptyFrontier;
 import org.archive.crawler.io.LocalErrorFormatter;
 import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
@@ -80,11 +79,11 @@ import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
+import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
-import org.archive.state.KeyMaker;
 import org.archive.state.KeyManager;
 import org.archive.state.StateProvider;
 import org.archive.surt.SURTTokenizer;
@@ -177,6 +176,14 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     final public static Key<Map<String,Processor>> PROCESSORS =
         Key.makeMap(Processor.class);
 
+    
+    @Dependency
+    final public static Key<CrawlOrder> ORDER = Key.make(new CrawlOrder());
+    
+    
+    @Dependency
+    final public static Key<SheetManager> SHEET_MANAGER = 
+        Key.make(SheetManager.class, null);
     
     
     static {
@@ -906,7 +913,6 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
             logsPath + LOGNAME_PROGRESS_STATISTICS + CURRENT_LOG_SUFFIX,
             new StatisticsLogFormatter(), true);
 
-        System.out.println("\n\n\nLOGGING ENABLED\n\n\n");
     }
 
     private void setupLogFile(Logger logger, String filename, Formatter f,
@@ -1443,7 +1449,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     }
     
     public static Checkpoint getCheckpointRecover(CrawlController c) {
-        String path = c.get(c, CrawlOrder.RECOVER_PATH);
+        String path = c.get(c.order, CrawlOrder.RECOVER_PATH);
         if (path == null || path.length() <= 0) {
             return null;
         }
