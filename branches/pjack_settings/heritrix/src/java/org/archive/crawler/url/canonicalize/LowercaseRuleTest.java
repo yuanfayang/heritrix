@@ -24,15 +24,27 @@ package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.state.ExampleStateProvider;
+import org.archive.state.StateProcessorTestBase;
 
-import junit.framework.TestCase;
 
 /**
  * Unit test lowercase rule.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class LowercaseRuleTest extends TestCase {
+public class LowercaseRuleTest extends StateProcessorTestBase {
+
+
+    @Override
+    protected Class getModuleClass() {
+        return LowercaseRule.class;
+    }
+
+    @Override
+    protected Object makeModule() throws Exception {
+        return new LowercaseRule();
+    }
+
     public void testCanonicalize() throws URIException {
         final String url = "http://WWW.aRchive.Org/index.html";
         assertTrue("Didn't lowercase" + url,

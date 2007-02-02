@@ -31,7 +31,7 @@ import javax.management.InvalidAttributeValueException;
 import org.apache.commons.httpclient.URIException;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.state.ExampleStateProvider;
-import org.archive.util.TmpDirTestCase;
+import org.archive.state.StateProcessorTestBase;
 
 
 /**
@@ -39,11 +39,23 @@ import org.archive.util.TmpDirTestCase;
  * @author stack
  * @version $Date$, $Revision$
  */
-public class RegexRuleTest extends TmpDirTestCase {
+public class RegexRuleTest extends StateProcessorTestBase {
+
 
     private List<CanonicalizationRule> rules;
     private ExampleStateProvider context;
-    
+
+
+    @Override
+    protected Class getModuleClass() {
+        return RegexRule.class;
+    }
+
+    @Override
+    protected Object makeModule() throws Exception {
+        return new RegexRule();
+    }
+
     protected void setUp() throws Exception {
         super.setUp();
         this.rules = new ArrayList<CanonicalizationRule>();

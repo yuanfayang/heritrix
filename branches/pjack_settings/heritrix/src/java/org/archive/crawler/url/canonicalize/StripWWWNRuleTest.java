@@ -24,15 +24,25 @@ package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.state.ExampleStateProvider;
+import org.archive.state.StateProcessorTestBase;
 
-import junit.framework.TestCase;
 
 /**
  * Test stripping 'www' if present.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class StripWWWNRuleTest extends TestCase {
+public class StripWWWNRuleTest extends StateProcessorTestBase {
+
+    @Override
+    protected Class getModuleClass() {
+        return StripWWWNRule.class;
+    }
+
+    @Override
+    protected Object makeModule() throws Exception {
+        return new StripWWWNRule();
+    }
 
     public void testCanonicalize() throws URIException {
         ExampleStateProvider context = new ExampleStateProvider();

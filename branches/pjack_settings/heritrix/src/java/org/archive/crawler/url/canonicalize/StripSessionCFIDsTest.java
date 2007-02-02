@@ -2,10 +2,20 @@ package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.state.ExampleStateProvider;
+import org.archive.state.StateProcessorTestBase;
 
-import junit.framework.TestCase;
+public class StripSessionCFIDsTest extends StateProcessorTestBase {
 
-public class StripSessionCFIDsTest extends TestCase {
+    @Override
+    protected Class getModuleClass() {
+        return StripSessionCFIDs.class;
+    }
+
+    @Override
+    protected Object makeModule() throws Exception {
+        return new StripSessionCFIDs();
+    }
+
     private static final String [] INPUTS = {
         "http://a.b.c/boo?CFID=1169580&CFTOKEN=48630702" +
             "&dtstamp=22%2F08%2F2006%7C06%3A58%3A11",

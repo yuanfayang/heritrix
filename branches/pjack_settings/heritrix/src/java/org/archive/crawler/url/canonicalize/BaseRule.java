@@ -22,6 +22,7 @@
  */
 package org.archive.crawler.url.canonicalize;
 
+import java.io.Serializable;
 import java.util.regex.Matcher;
 
 import org.archive.crawler.url.CanonicalizationRule;
@@ -40,7 +41,7 @@ import org.archive.state.StateProvider;
  * @version $Date$, $Revision$
  */
 public abstract class BaseRule
-implements CanonicalizationRule, Module {
+implements CanonicalizationRule, Module, Serializable {
     
     
     final public static Key<Boolean> ENABLED = Key.make(true);

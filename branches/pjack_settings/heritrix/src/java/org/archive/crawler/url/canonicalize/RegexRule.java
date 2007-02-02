@@ -50,11 +50,18 @@ extends BaseRule {
 //        " nothing.  See User Manual for example usage.";
 
     
+    /**
+     * The regular expression to use to match.
+     */
     final public static Key<Pattern> REGEX = Key.make(Pattern.compile("(.*)"));    
     
+    
+    /**
+     * The format string to use when a match is found.
+     */
     final public static Key<String> FORMAT = Key.make("${1}");
 
-    final public static Key<String> COMMENT = Key.make("");
+    //final public static Key<String> COMMENT = Key.make("");
     
     static {
         KeyManager.addKeys(RegexRule.class);

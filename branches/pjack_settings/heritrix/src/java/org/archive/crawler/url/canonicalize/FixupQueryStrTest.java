@@ -24,15 +24,24 @@ package org.archive.crawler.url.canonicalize;
 
 import org.apache.commons.httpclient.URIException;
 import org.archive.state.ExampleStateProvider;
-
-import junit.framework.TestCase;
+import org.archive.state.StateProcessorTestBase;
 
 /**
  * Test we strip trailing question mark.
  * @author stack
  * @version $Date$, $Revision$
  */
-public class FixupQueryStrTest extends TestCase {
+public class FixupQueryStrTest extends StateProcessorTestBase {
+
+    @Override
+    protected Class getModuleClass() {
+        return FixupQueryStr.class;
+    }
+
+    @Override
+    protected Object makeModule() throws Exception {
+        return new FixupQueryStr();
+    }
 
     public void testCanonicalize() throws URIException {
         ExampleStateProvider context = new ExampleStateProvider();
