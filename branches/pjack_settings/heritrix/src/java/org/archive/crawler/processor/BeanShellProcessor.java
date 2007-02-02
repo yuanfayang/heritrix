@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
-import org.archive.processors.Processor;
+import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessorURI;
 import org.archive.settings.Sheet;
 import org.archive.state.Immutable;
@@ -58,7 +58,8 @@ import bsh.Interpreter;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public class BeanShellProcessor extends Processor implements FetchStatusCodes {
+public class BeanShellProcessor extends CrawlerProcessor 
+implements FetchStatusCodes {
 
     private static final long serialVersionUID = 3L;
 
@@ -70,7 +71,7 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
      *  BeanShell script file.
      */
     @Immutable
-    final static Key<String> SCRIPT_FILE = Key.make("");
+    final public static Key<String> SCRIPT_FILE = Key.make("");
 
 
     /**
@@ -89,13 +90,11 @@ public class BeanShellProcessor extends Processor implements FetchStatusCodes {
             new HashMap<Object,Object>());
     
     
-    final CrawlController controller;
-    
     /**
      * Constructor.
      */
     public BeanShellProcessor(CrawlController controller) {
-        this.controller = controller;
+        super(controller);
     }
 
     protected boolean shouldProcess(ProcessorURI curi) {

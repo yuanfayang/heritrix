@@ -39,7 +39,7 @@ import org.archive.state.StateProvider;
  * @author stack
  * @version $Date$, $Revision$
  */
-public abstract class Scoper extends org.archive.processors.Processor {
+public abstract class Scoper extends CrawlerProcessor {
     private static Logger LOGGER =
         Logger.getLogger(Scoper.class.getName());
     
@@ -63,9 +63,6 @@ public abstract class Scoper extends org.archive.processors.Processor {
     // Also, eliminating weirdo log overriding would mean we wouldn't need to
     // tie into the CrawlController; we'd just need the scope.
     
-    
-    final CrawlController controller;
-
 
     /**
      * Constructor.
@@ -73,7 +70,7 @@ public abstract class Scoper extends org.archive.processors.Processor {
      * @param controller   the CrawlController
      */
     public Scoper(CrawlController controller) {
-        this.controller = controller;
+        super(controller);
     }
 
 

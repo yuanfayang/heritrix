@@ -91,7 +91,7 @@ public class LowDiskPauseProcessor extends Processor {
     /**
      * @param name Name of this writer.
      */
-    public LowDiskPauseProcessor(String name) {
+    public LowDiskPauseProcessor() {
     } 
     
     

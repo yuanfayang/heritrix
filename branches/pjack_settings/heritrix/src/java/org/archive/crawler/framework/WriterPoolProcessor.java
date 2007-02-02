@@ -31,7 +31,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,14 +43,11 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.event.CrawlStatusListener;
 import org.archive.crawler.writer.EmptyMetadataProvider;
 import org.archive.crawler.writer.MetadataProvider;
-import org.archive.io.ObjectPlusFilesInputStream;
 import org.archive.io.WriterPool;
 import org.archive.io.WriterPoolMember;
 import org.archive.io.WriterPoolSettings;
 import org.archive.processors.util.CrawlHost;
-import org.archive.state.ExampleStateProvider;
 import org.archive.state.Expert;
-import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.KeyMaker;
@@ -67,7 +63,8 @@ public abstract class WriterPoolProcessor extends CrawlerProcessor
 implements CoreAttributeConstants, CrawlStatusListener {
     
     
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
+    private static final Logger logger = 
+        Logger.getLogger(WriterPoolProcessor.class.getName());
 
 
     /**
@@ -273,6 +270,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
         // sExitMessage is unused.
 	}
 	
+        /*
     private void readObject(ObjectInputStream stream)
     throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
@@ -284,7 +282,7 @@ implements CoreAttributeConstants, CrawlStatusListener {
             	setupPool(new ExampleStateProvider(), new AtomicInteger());
             }
         });
-    }
+    }*/
 
 	protected WriterPool getPool() {
 		return pool;

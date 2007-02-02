@@ -34,8 +34,8 @@ import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessResult;
-import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.processors.deciderules.DecideResult;
 import org.archive.processors.deciderules.DecideRule;
@@ -69,7 +69,8 @@ import st.ata.util.FPGenerator;
  * @author gojomo
  * @version $Date$, $Revision$
  */
-public abstract class CrawlMapper extends Processor implements FetchStatusCodes {
+public abstract class CrawlMapper extends CrawlerProcessor 
+implements FetchStatusCodes {
     /**
      * PrintWriter which remembers the File to which it writes. 
      */
@@ -146,14 +147,13 @@ public abstract class CrawlMapper extends Processor implements FetchStatusCodes 
     
     protected ArrayLongFPCache cache;
     
-    final private CrawlController controller;
     
     /**
      * Constructor.
      * @param name Name of this processor.
      */
     public CrawlMapper(CrawlController controller) {
-        this.controller = controller;
+        super(controller);
     }
 
     

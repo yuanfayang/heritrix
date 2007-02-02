@@ -1,0 +1,21 @@
+end-operation-description:
+The action that the processor takes once the runtime has elapsed. 
+<p> 
+Operation: Pause job - Pauses the crawl. A change (increase) to the 
+runtime duration will make it pausible to resume the crawl. Attempts to 
+resume the crawl without modifying the run time will cause it to be 
+immediately paused again. 
+<p> 
+Operation: Terminate job - Terminates the job. Equivalent to using the 
+max-time setting on the CrawlController. 
+<p> 
+Operation: Block URIs - Blocks each URI with an -5002 (blocked by custom 
+processor) fetch status code. This will cause all the URIs queued to wind 
+up in the crawl.log. 
+
+
+runtime-seconds-description:
+The amount of time, in seconds, that the crawl will be allowed to run 
+before this processor performs it's 'end operation.' 
+
+

@@ -30,8 +30,8 @@ import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.framework.CrawlController;
 import org.archive.crawler.framework.CrawlStatus;
+import org.archive.crawler.framework.CrawlerProcessor;
 import org.archive.processors.ProcessResult;
-import org.archive.processors.Processor;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 
@@ -64,11 +64,11 @@ import org.archive.state.Key;
  * @author Kristinn Sigur&eth;sson
  */
 public class RuntimeLimitEnforcer 
-                extends Processor implements FetchStatusCodes {
+                extends CrawlerProcessor implements FetchStatusCodes {
 
     private static final long serialVersionUID = 3L;
     
-    protected Logger logger = Logger.getLogger(
+    protected static Logger logger = Logger.getLogger(
             RuntimeLimitEnforcer.class.getName());
 
 
@@ -124,11 +124,8 @@ public class RuntimeLimitEnforcer
     final public static Key<Operation> END_OPERATION = Key.make(Operation.PAUSE);
 
     
-    final CrawlController controller;
-    
-    
     public RuntimeLimitEnforcer(CrawlController controller) {
-        this.controller = controller;
+        super(controller);
     }
 
     

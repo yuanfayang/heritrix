@@ -119,6 +119,17 @@ final public class KeyManager {
         
         // Remember dependencies for later processing.
         Map<Class,Key<Object>> dependencies = new HashMap<Class,Key<Object>>();
+
+        // Pre-populate dependencies with superclass's dependencies.
+        List<Key<Object>> superDeps;
+        if (c.getSuperclass() != null) {
+            superDeps = getDependencyKeys(c.getSuperclass());
+        } else {
+            superDeps = Collections.emptyList();
+        }
+        for (Key<Object> k: superDeps) {
+            dependencies.put(k.getType(), k);
+        }
         
         // Add keys declared by given class
         for (Field field: c.getDeclaredFields()) {
@@ -147,7 +158,7 @@ final public class KeyManager {
         // Figure out which Dependency keys match which parameters in the
         // constructor.
         List<Key<Object>> depConsParams = depConsParams(cons, dependencies);
-        
+                
         // Store the key-related data for the class for future reference
         discovered = Collections.unmodifiableMap(discovered);
         kmd = new KeyManagerData(discovered, cons, depConsParams);
@@ -158,7 +169,14 @@ final public class KeyManager {
     private static List<Key<Object>> depConsParams(Constructor cons, 
             Map<Class,Key<Object>> dependencies) {
         if (cons == null) {
-            return Collections.emptyList();
+            // An abstract class won't have a dependency constructor,
+            // but we need to remember its dependency keys in case subclasses
+            // need them.  Since the constructor doesn't matter for an 
+            // abstract class, the dependency keys can be returned in any
+            // order.
+            List<Key<Object>> result = new ArrayList<Key<Object>>();
+            result.addAll(dependencies.values());
+            return Collections.unmodifiableList(result);
         }
         List<Key<Object>> depConsParams;
         Class[] ptypes = cons.getParameterTypes();

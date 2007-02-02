@@ -25,9 +25,6 @@
  */
 package org.archive.crawler.postprocessor;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
