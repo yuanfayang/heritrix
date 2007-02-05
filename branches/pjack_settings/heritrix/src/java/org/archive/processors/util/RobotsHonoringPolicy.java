@@ -23,6 +23,7 @@
  */
 package org.archive.processors.util;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.archive.state.Key;
@@ -56,7 +57,7 @@ import org.archive.state.StateProvider;
  * @author John Erik Halse
  *
  */
-public class RobotsHonoringPolicy {
+public class RobotsHonoringPolicy implements Serializable {
 
     private static final long serialVersionUID = 3L;
 
