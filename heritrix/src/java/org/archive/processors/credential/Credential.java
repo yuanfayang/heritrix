@@ -22,6 +22,7 @@
  */
 package org.archive.processors.credential;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -52,7 +53,7 @@ import org.archive.state.Module;
  * @author stack
  * @version $Revision$, $Date$
  */
-public abstract class Credential implements Module {
+public abstract class Credential implements Module, Serializable {
 
     private static final Logger logger =
         Logger.getLogger(Credential.class.getName());
