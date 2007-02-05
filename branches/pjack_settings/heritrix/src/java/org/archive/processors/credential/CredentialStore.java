@@ -22,6 +22,7 @@
  */
 package org.archive.processors.credential;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +35,7 @@ import java.util.logging.Logger;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
+import org.archive.state.KeyManager;
 import org.archive.state.Module;
 import org.archive.state.StateProvider;
 
@@ -50,7 +52,7 @@ import org.archive.state.StateProvider;
  * @author stack
  * @version $Revision$, $Date$
  */
-public class CredentialStore implements Module {
+public class CredentialStore implements Module, Serializable {
 
     private static final long serialVersionUID = 3L;
 
@@ -66,7 +68,6 @@ public class CredentialStore implements Module {
      */
     public static final Key<Map<String,Credential>> CREDENTIALS
      = Key.makeMap(Credential.class);
-    
 
     /**
      * List of possible credential types as a List.
@@ -80,6 +81,7 @@ public class CredentialStore implements Module {
         // Array of all known credential types.
         Class [] tmp = {HtmlFormCredential.class, Rfc2617Credential.class};
         credentialTypes = Collections.unmodifiableList(Arrays.asList(tmp));
+        KeyManager.addKeys(CredentialStore.class);
     }
 
     /**
@@ -95,31 +97,6 @@ public class CredentialStore implements Module {
         return CredentialStore.credentialTypes;
     }
 
-    /**
-     * Get a credential store reference.
-     * @param context A settingshandler object.
-     * @return A credential store or null if we failed getting one.
-     */
-    /* FIXME: Move this somwhere else (CrawlController?)
-    public static CredentialStore getCredentialStore(SheetManager sm) {
-        CrawlOrder context = (CrawlOrder)sm.getRoot(CrawlOrder.ROOT_NAME);
-        CrawlController controller = context.getController();
-        Sheet def = controller.getSheetManager().getDefault();
-        return def.get(context, CrawlOrder.CREDENTIAL_STORE);        
-    }
-    */
-
-    /**
-     * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
-     * context.  If null, we use global context.
-     * @return A map of all credentials from passed context.
-     * @throws AttributeNotFoundException
-     */
-//    protected MapType get(Object context)
-//        throws AttributeNotFoundException {
-//
-//       return (MapType)getAttribute(context, ATTR_CREDENTIALS);
-//    }
 
     /**
      * @param context Pass a CrawlURI, CrawlerSettings or UURI.  Used to set
@@ -145,65 +122,6 @@ public class CredentialStore implements Module {
         return context.get(this, CREDENTIALS).get(name);
     }
 
-    /**
-     * Create and add to the list a credential of the passed <code>type</code>
-     * giving the credential the passed <code>name</code>.
-     *
-     * @param context Pass a CrawlerSettings.  Used to set
-     * context.  If null, we use global context.
-     * @param name Name to give the manufactured credential.  Should be unique
-     * else the add of the credential to the list of credentials will fail.
-     * @param type Type of credentials to get.
-     * @return The credential created and added to the list of credentials.
-     * @throws IllegalArgumentException
-     * @throws AttributeNotFoundException
-     * @throws InvocationTargetException
-     * @throws InvalidAttributeValueException
-     */
-    public Credential create(StateProvider context, String name, Class type) 
-        throws IllegalArgumentException {
-        Credential c;
-        try {
-            c = (Credential)type.newInstance();
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException(e);
-        } catch (InstantiationException e) {            
-            throw new IllegalArgumentException(e);
-        }
-        Map<String,Credential> map = context.get(this, CREDENTIALS);
-        map.put(name, c);
-        return c;
-    }
-
-    /**
-     * Delete the credential <code>name</code>.
-     *
-     * @param context Pass a CrawlerSettings.  Used to set
-     * context.  If null, we use global context.
-     * @param credential Credential to delete.
-     * @throws IllegalArgumentException
-     * @throws AttributeNotFoundException
-     */
-//    public void remove(CrawlerSettings context, Credential credential)
-//        throws AttributeNotFoundException, IllegalArgumentException {
-//
-//        remove(context, credential.getName());
-//    }
-
-    /**
-     * Delete the credential <code>name</code>.
-     *
-     * @param context Pass a CrawlerSettings.  Used to set
-     * context.  If null, we use global context.
-     * @param name Name of credential to delete.
-     * @throws IllegalArgumentException
-     * @throws AttributeNotFoundException
-     */
-    public void remove(StateProvider context, String name)
-        throws IllegalArgumentException {
-        Map<String,Credential> map = context.get(this, CREDENTIALS);
-        map.remove(name);
-    }
 
     /**
      * Return set made up of all credentials of the passed
