@@ -26,7 +26,6 @@ package org.archive.crawler.scope;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
@@ -46,7 +45,7 @@ public class SeedCachingScope extends ClassicScope {
 
     //private static final Logger logger =
     //    Logger.getLogger(SeedCachingScope.class.getName());
-    List<UURI> seeds = new CopyOnWriteArrayList<UURI>();
+    List<UURI> seeds = null; 
 
     public SeedCachingScope(CrawlController c) {
         super(c);

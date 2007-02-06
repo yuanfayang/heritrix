@@ -69,7 +69,6 @@ import org.archive.crawler.io.RuntimeErrorFormatter;
 import org.archive.crawler.io.StatisticsLogFormatter;
 import org.archive.crawler.io.UriErrorFormatter;
 import org.archive.crawler.io.UriProcessingFormatter;
-import org.archive.crawler.scope.EmptyScope;
 import org.archive.crawler.url.CanonicalizationRule;
 import org.archive.crawler.util.CheckpointUtils;
 import org.archive.io.GenerationFileHandler;
@@ -170,7 +169,7 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
     
     @Expert @Immutable
     final public static Key<CrawlScope> SCOPE = 
-        Key.make(CrawlScope.class, new EmptyScope());
+        Key.make(CrawlScope.class, null);
 
     
     final public static Key<Map<String,Processor>> PROCESSORS =
@@ -2036,7 +2035,15 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
 
     
     public File getRelative(String path) {
-        return new File(path); // FIXME
+        File f = new File(path);
+        if (f.isAbsolute()) {
+            return f;
+        }
+        
+        //FIXME: Verify this was previous behavior
+        String relPath = this.getOrderSetting(CrawlOrder.DISK_PATH);
+        File dir = new File(relPath);
+        return new File(dir, path);
     }
     
     

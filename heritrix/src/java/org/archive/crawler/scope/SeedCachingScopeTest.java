@@ -35,8 +35,10 @@ import java.util.TreeSet;
 
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.framework.CrawlController;
+import org.archive.crawler.framework.CrawlControllerTest;
 import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
+import org.archive.state.StateProcessorTestBase;
 import org.archive.util.TmpDirTestCase;
 
 
@@ -45,27 +47,7 @@ import org.archive.util.TmpDirTestCase;
 * @author stack gojomo
 * @version $Revision$, $Date$
 */
-public class SeedCachingScopeTest extends TmpDirTestCase {
-    /**
-     * Constrained SeedCachingScope subclass for testing
-     * 
-     * @author gojomo
-     */
-    private class UnitTestSeedCachingScope extends SeedCachingScope {
-
-        private static final long serialVersionUID = -1651873833038665447L;
-
-        private File seedsfile;
-
-        public UnitTestSeedCachingScope(CrawlController c, File seedsfile) {
-            super(c);
-            this.seedsfile = seedsfile;
-        }
-        
-        public File getSeedfile() {
-            return seedsfile;
-        } 
-    }
+public class SeedCachingScopeTest extends StateProcessorTestBase {
     
    private static Set<UURI> seeds = null;
 
@@ -98,7 +80,23 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
     */
    private File seedsfile;
 
+   
+   private CrawlController controller;
 
+   
+
+   @Override
+   protected Class getModuleClass() {
+       return SeedCachingScope.class;
+   }
+
+
+   @Override
+   protected Object makeModule() {
+       return new SeedCachingScope(controller);
+   }
+   
+   
    /* (non-Javadoc)
     * @see org.archive.util.TmpDirTestCase#setUp()
     */
@@ -125,13 +123,15 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        }
 
        // Write a seeds file w/ our list of seeds.
-       this.seedsfile = new File(getTmpDir(),
+       this.seedsfile = new File(TmpDirTestCase.tmpDir(),
                SeedCachingScopeTest.class.getName() + ".seedfile");
        PrintWriter writer = new PrintWriter(new FileWriter(this.seedsfile));
        for (int i = 0; i < uris.length; i++) {
            writer.println(uris[i]);
        }
        writer.close();
+       
+       controller = CrawlControllerTest.makeTempCrawlController();
    }
 
 
@@ -166,7 +166,7 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
        fw.flush();
        fw.close();
        boolean found = false;
-       CrawlController c = new CrawlController();
+       CrawlController c = controller;
        SeedCachingScope sl = new UnitTestSeedCachingScope(c, seedsfile);
        for (Iterator i = sl.seedsIterator(); i.hasNext();) {
            UURI uuri = (UURI)i.next();
@@ -187,7 +187,7 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
 
    private SeedCachingScope checkContent(SeedCachingScope sl, Set seedSet) 
    throws Exception {
-       CrawlController c = new CrawlController();
+       CrawlController c = controller;
        if (sl == null) {
            sl = new UnitTestSeedCachingScope(c, this.seedsfile);
        }
@@ -204,3 +204,30 @@ public class SeedCachingScopeTest extends TmpDirTestCase {
    }
 }
 
+
+/**
+ * Constrained SeedCachingScope subclass for testing
+ * 
+ * @author gojomo
+ */
+class UnitTestSeedCachingScope extends SeedCachingScope {
+
+    private static final long serialVersionUID = -1651873833038665447L;
+
+    private File seedsfile;
+
+    
+    public UnitTestSeedCachingScope(CrawlController c) {
+        this(c, new File("seeds.txt"));
+    }
+    
+    
+    public UnitTestSeedCachingScope(CrawlController c, File seedsfile) {
+        super(c);
+        this.seedsfile = seedsfile;
+    }
+    
+    public File getSeedfile() {
+        return seedsfile;
+    } 
+}

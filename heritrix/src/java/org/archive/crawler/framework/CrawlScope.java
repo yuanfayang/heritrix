@@ -42,6 +42,7 @@ import org.archive.crawler.scope.SeedListener;
 import org.archive.net.UURI;
 import org.archive.processors.deciderules.DecideRule;
 import org.archive.settings.Sheet;
+import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -100,6 +101,14 @@ public abstract class CrawlScope extends DecideRule {
     
     protected Set<SeedListener> seedListeners = new HashSet<SeedListener>();
 
+
+    /**
+     * The crawl controller that owns this scope.
+     */
+    @Dependency
+    final public static Key<CrawlController> CONTROLLER = 
+        Key.make(CrawlController.class, null);
+    
     
     final private CrawlController controller;
 

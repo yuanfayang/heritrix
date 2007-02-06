@@ -1,0 +1,6 @@
+decide-rules-description:
+DecidingScope: a Scope which makes its accept/reject decision based on 
+whatever DecideRules have been set up inside it. 
+@author gojomo 
+
+
