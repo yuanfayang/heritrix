@@ -1,0 +1,15 @@
+max-link-hops-description:
+Max link hops to include. URIs more than this number of links from a seed 
+will not be ruled in-scope. (Such determination does not preclude later 
+inclusion if a shorter path is later discovered.) 
+
+
+max-trans-hops-description:
+Max transitive hops (embeds, referrals, preconditions) to include. URIs 
+reached by more than this number of transitive hops will not be ruled 
+in-scope, even if otherwise on an in-focus site. (Such determination does 
+not preclude later inclusion if a shorter path is later discovered.) 
+
+
+exclude-rules-description:
+The decide rules that determine exclusions.

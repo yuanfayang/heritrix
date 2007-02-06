@@ -71,19 +71,7 @@ public class TmpDirTestCase extends TestCase
      */
     protected void setUp() throws Exception {
         super.setUp();
-        String tmpDirStr = System.getProperty(TEST_TMP_SYSTEM_PROPERTY_NAME);
-        tmpDirStr = (tmpDirStr == null)? DEFAULT_TEST_TMP_DIR: tmpDirStr;
-        this.tmpDir = new File(tmpDirStr);
-        if (!this.tmpDir.exists())
-        {
-            this.tmpDir.mkdirs();
-        }
-
-        if (!this.tmpDir.canWrite())
-        {
-            throw new IOException(this.tmpDir.getAbsolutePath() +
-                 " is unwriteable.");
-        }
+        this.tmpDir = tmpDir();
     }
 
     /*
@@ -124,5 +112,24 @@ public class TmpDirTestCase extends TestCase
                 FileUtils.deleteDir(files[i]);
             }
         }
+    }
+    
+    
+    public static File tmpDir() throws IOException {
+        String tmpDirStr = System.getProperty(TEST_TMP_SYSTEM_PROPERTY_NAME);
+        tmpDirStr = (tmpDirStr == null)? DEFAULT_TEST_TMP_DIR: tmpDirStr;
+        File tmpDir = new File(tmpDirStr);
+        if (!tmpDir.exists())
+        {
+            tmpDir.mkdirs();
+        }
+
+        if (!tmpDir.canWrite())
+        {
+            throw new IOException(tmpDir.getAbsolutePath() +
+                 " is unwriteable.");
+        }
+        
+        return tmpDir;
     }
 }

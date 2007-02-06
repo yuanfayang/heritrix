@@ -30,13 +30,16 @@ import static org.archive.util.TmpDirTestCase.DEFAULT_TEST_TMP_DIR;
 import static org.archive.util.TmpDirTestCase.TEST_TMP_SYSTEM_PROPERTY_NAME;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.archive.crawler.datamodel.CrawlOrder;
+import org.archive.crawler.scope.DecidingScope;
 import org.archive.settings.MemorySheetManager;
 import org.archive.settings.SingleSheet;
 import org.archive.state.StateProcessorTestBase;
+import org.archive.util.IoUtils;
 
 /**
  * 
@@ -71,6 +74,15 @@ public class CrawlControllerTest extends StateProcessorTestBase {
             tmp.mkdirs();
         }
         
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(new File(tmp, "seeds.txt"));
+            fileWriter.write("http://www.pandemoniummovie.com");
+            fileWriter.close();
+        } finally {
+            IoUtils.close(fileWriter);
+        }
+
         CrawlOrder order = new CrawlOrder();
         Map<String,String> headers = new HashMap<String,String>();
         headers.put("user-agent", "Heritrix (+http://www.archive.org) abc");
@@ -81,6 +93,9 @@ public class CrawlControllerTest extends StateProcessorTestBase {
         def.set(order, CrawlOrder.DISK_PATH, tmp.getAbsolutePath());
         def.set(order, CrawlOrder.HTTP_HEADERS, headers);
         
-        return new CrawlController(manager, order);
+        CrawlController controller = new CrawlController(manager, order);
+        CrawlScope scope = new DecidingScope(controller);
+        def.set(controller, CrawlController.SCOPE, scope);
+        return controller;
     }
 }

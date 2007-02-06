@@ -24,13 +24,16 @@
 package org.archive.processors.deciderules;
 
 
+import java.io.Serializable;
+
 import org.archive.processors.ProcessorURI;
 import org.archive.state.Key;
 import org.archive.state.KeyManager;
+import org.archive.state.Module;
 import org.archive.state.StateProvider;
 
 
-public abstract class DecideRule {
+public abstract class DecideRule implements Module, Serializable {
 
     
     final public static Key<Boolean> ENABLED = Key.make(true);
