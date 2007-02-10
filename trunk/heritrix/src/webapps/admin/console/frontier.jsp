@@ -49,11 +49,19 @@
     <script type="text/javascript">
         function doDisplayInitial(){
             document.frmFrontierList.action.value = "initial";
+            document.frmFrontierList.method = "GET";
             document.frmFrontierList.submit();
         }
         
         function doDisplayNext(){
             document.frmFrontierList.action.value = "next";
+            document.frmFrontierList.method = "GET";
+            document.frmFrontierList.submit();
+        }
+        
+        function doCount(){
+            document.frmFrontierList.action.value = "count";
+            document.frmFrontierList.method = "GET";
             document.frmFrontierList.submit();
         }
         
@@ -137,7 +145,9 @@
                 &nbsp;<a href="<%=request.getContextPath()%>/help/regexpr.jsp">?</a>&nbsp;&nbsp;
             </td>
             <td nowrap>
-                <input type="button" value="Display URIs" onClick="doDisplayInitial()">&nbsp;&nbsp;&nbsp;<input type="button" value="Delete URIs" onClick="doDelete()">
+                <input type="button" value="Display URIs" onClick="doDisplayInitial()">&nbsp;&nbsp;&nbsp;
+                <input type="button" value="Count URIs" onClick="doCount()">&nbsp;&nbsp;&nbsp;
+                <input type="button" value="Delete URIs" onClick="doDelete()">
             </td>
             <td width="100%">
             </td>
@@ -191,7 +201,19 @@
                        // Reuse old marker.
                        marker = (FrontierMarker)session.getAttribute("marker");
                        regexpr = marker.getMatchExpression();
-                    } else if(action.equals("delete")){
+                    } else if(action.equals("count")) {
+					   //
+                       marker = handler.getInitialMarker(regexpr,false);
+					   int count = 0;
+					   do {
+					       ArrayList list = handler.getPendingURIsList(marker,100,false);
+					       count += list.size();
+					   } while (marker.hasNext());
+					   marker = null;
+                       out.println("<tr><td height='5'></td></tr>");
+                       out.println("<tr><td colspan='7'><b>" + count + " URIs matching</b> <code>" + regexpr + "</code></b></td></tr>");
+                       out.println("<tr><td height='5'></td></tr>");
+                     } else if(action.equals("delete")){
                        // Delete based on regexpr.
                        long numberOfDeletes = handler.deleteURIsFromPending(regexpr);
                        out.println("<tr><td height='5'></td></tr>");
@@ -219,13 +241,17 @@
                         
                         if(marker.getNextItemNumber() > numberOfMatches+1){
                             // Not starting from 1.
-                            from = to-found;
+                            from = to-found+1;
                         }
 %>
                         <tr><td height="5"></td></tr>
                         <tr>
                             <td colspan="7">
-                                <% if(to>0) { %> Displaying URIs <%=from%> - <%=to%> matching <% } else { %> No URIs found matching <% } %> expression '<code><%=regexpr%></code>'.  <% if(hasNext){ %> <a href="javascript:doDisplayNext()">Get next set of matches &gt;&gt;</a> <% } %>
+                                <% if(to>0) 
+                                	{ %> Displaying URIs <%=from%> - <%=to%> matching <% } 
+                                   else 
+                                    { %> No URIs found matching <% } %> expression '<code><%=regexpr%></code>'.  
+                                 <% if(hasNext){ %> <a href="javascript:doDisplayNext()">Get next set of matches &gt;&gt;</a> <% } %>
                             </td>
                         </tr>
                         <tr><td height="5"></td></tr>
