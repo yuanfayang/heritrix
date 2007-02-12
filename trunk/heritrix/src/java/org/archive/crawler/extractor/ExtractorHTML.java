@@ -86,7 +86,7 @@ implements CoreAttributeConstants {
       
       static final String RELEVANT_TAG_EXTRACTOR =
           "(?is)<(?:((script[^>]*+)>.*?</script)" + // 1, 2
-          "|((style[^>]*+)>[^<]*+</style)" + // 3, 4
+          "|((style[^>]*+)>.*?</style)" + // 3, 4
           "|(((meta)|(?:\\w{1,"+MAX_ELEMENT_LENGTH+"}))\\s+[^>]*+)" + // 5, 6, 7
           "|(!--.*?--))>"; // 8 
 
