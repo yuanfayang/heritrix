@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.archive.state.Constraint;
 import org.archive.state.Key;
@@ -44,28 +43,22 @@ public class SingleSheet extends Sheet {
     
 
     /**
-     * Maps the identity hash code of a module to the Key/Value settings
-     * for that module in this sheet.
      * 
-     * <p>Since the lookup happens based on an integer, and not the module 
-     * itself, the existence of settings for a particular module will not 
-     * prevent that module from being garbage collected.
-     * 
-     * <p>Modules placed into this map are registered with the
-     * {@link SingleSheetCleanUpThread}, which removes module settings from 
-     * SingleSheets after those modules are garbage collected.  This allows
-     * the settings to be garbage collected themselves, assuming no other
-     * strong references exist.
-     * 
-     * <p>The implementation used is a ConcurrentHashMap.  This is important,
-     * as we expect overrides to be rare.  If there are 300 ToeThreads,
-     * chances are that all 300 will require concurrent read access to the 
-     * default sheet; so full-on synchronization is undesirable.
-     * 
-     * <p>You can think of this map as a sort of 
-     * "ConcurrentIdentityWeakHashMap".
      */
-    private ConcurrentMap<Integer,Map<Key,Object>> settings;
+    private static final long serialVersionUID = 1L;
+
+
+    /**
+     * Maps a module to the Key/Value settings for that module.  The map only
+     * keeps weak references to the module; the existence of settings for a
+     * module will not prevent that module from being garbage collected.
+     * Modules are compared inside the map by reference, not using the
+     * equals() method.  The map should have performance characteristics 
+     * similar to ConcurrentHashMap -- in particular, the get() operation
+     * usually will not block even if another thread is writing to the map.
+     * See the {@link SheetMap} class for more details.
+     */    
+    private SheetMap<Object,Map<Key,Object>> settings;
 
 
     /**
@@ -75,14 +68,13 @@ public class SingleSheet extends Sheet {
      */
     SingleSheet(SheetManager manager, String name) {
         super(manager, name);
-        this.settings = new ConcurrentHashMap<Integer,Map<Key,Object>>();
+        this.settings = new SheetMap<Object,Map<Key,Object>>();
     }
 
     @Override
-    public <T> T check(Object target, Key<T> key) {
-        validateModuleType(target, key);
-        Integer lookup = System.identityHashCode(target);
-        Map<Key,Object> keys = settings.get(lookup);
+    public <T> T check(Object module, Key<T> key) {
+        validateModuleType(module, key);
+        Map<Key,Object> keys = settings.get(module);
         if (keys == null) {
             return null;
         }
@@ -100,8 +92,7 @@ public class SingleSheet extends Sheet {
         if (isOnline(key)) {
             throw new IllegalStateException("Not an offline key.");
         }
-        Integer lookup = System.identityHashCode(module);
-        Map<Key,Object> keys = settings.get(lookup);
+        Map<Key,Object> keys = settings.get(module);
         if (keys == null) {
             return null;
         }
@@ -265,19 +256,13 @@ public class SingleSheet extends Sheet {
      * @param value    the new value for that setting
      */
     private <T> void set2(Object module, Key<T> key, Object value) {
-        Integer id = System.identityHashCode(module);
-        Map<Key,Object> map = settings.get(id);
+        Map<Key,Object> map = settings.get(module);
         if (map == null) {
             map = new ConcurrentHashMap<Key,Object>();
-            Map<Key,Object> prev = settings.putIfAbsent(id, map);
-            if (prev == null) {
-                // No other thread has inserted its own map for this module,
-                // which means the module needs to be enqueued so we can
-                // remove its settings after it is garbage collected.
-                SingleSheetCleanUpThread.enqueue(this, module);
-            } else {
-                // Use the map inserted by some other thread; the module
-                // has already been enqueued.
+            Map<Key,Object> prev = settings.putIfAbsent(module, map);
+            if (prev != null) {
+                // Some other thread beat us to inserting the map; use that
+                // previous map instead.
                 map = prev;
             }
         }
@@ -300,26 +285,5 @@ public class SingleSheet extends Sheet {
     }
 
 
-    /**
-     * Used by {@link SingleSheetCleanUpThread} to remove module settings
-     * after the module is garbage collected.
-     * 
-     * @param ref  the reference to the module to remove
-     */
-    void remove(ModuleReference ref) {
-        settings.remove(ref.getModuleIdentity());
-    }
-
-    
-    /**
-     * Determines whether settings exist in this sheet for a particular module.
-     * Used only for unit testing.
-     * 
-     * @param identityHashCode  the module's identity hash code
-     * @return   true if this sheet contains settings for that module
-     */
-    boolean hasSettings(int identityHashCode) {
-        return settings.containsKey(identityHashCode);
-    }
 
 }

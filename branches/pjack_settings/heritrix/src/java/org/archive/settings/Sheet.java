@@ -24,6 +24,7 @@
 package org.archive.settings;
 
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +39,7 @@ import org.archive.state.StateProvider;
  * 
  * @author pjack
  */
-public abstract class Sheet implements StateProvider {
+public abstract class Sheet implements StateProvider, Serializable {
 
     
     /**

@@ -32,6 +32,12 @@ import org.archive.state.Key;
 class UnspecifiedSheet extends Sheet {
 
     
+    /**
+     * First version.
+     */
+    private static final long serialVersionUID = 1L;
+    
+    
     final private List<Sheet> thisList;
     
     
