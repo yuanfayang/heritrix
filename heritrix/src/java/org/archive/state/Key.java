@@ -25,7 +25,9 @@ package org.archive.state;
 
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.archive.i18n.LocaleCache;
+import org.archive.settings.Offline;
 
 
 /**
@@ -55,6 +58,9 @@ final public class Key<Value> {
     
     /** The default value of the field. */
     final private Value def;
+    
+    /** The default offline value of the field. */
+    final private Object offlineDef;
     
     /** The constraints that determine valid values for the field. */
     final private Set<Constraint<Value>> constraints;
@@ -86,10 +92,13 @@ final public class Key<Value> {
         maker.validate();
         this.type = maker.type;
         this.def = maker.def;
+        this.offlineDef = makeOfflineDefault(maker.def);
         Set<Constraint<Value>> s = new HashSet<Constraint<Value>>(maker.constraints);
         this.constraints = Collections.unmodifiableSet(s);
         maker.reset();
     }
+    
+    
 
 
     /**
@@ -292,8 +301,69 @@ final public class Key<Value> {
         return KeyMaker.makeNull(cls).toKey();
     }
 
-
+    
+    public boolean hasOffline() {
+        return hasOffline(type);
+    }
 
     
+    private static boolean hasOffline(Class type) {
+        if (List.class.isAssignableFrom(type)) {
+            return false;
+        }
+        if (Map.class.isAssignableFrom(type)) {
+            return false;
+        }
+        if (KeyTypes.isSimple(type)) {
+            return false;
+        }
+        return true;
+    }
+
+    
+    public Object getOfflineDefault() {
+        return offlineDef;
+    }
+    
+
+    private static Object makeOfflineDefault(Object def) {
+        if (def == null) {
+            return null;
+        }
+        Class type = def.getClass();
+        if (KeyTypes.isSimple(type)) {
+            return def;
+        }
+        if (List.class.isAssignableFrom(type)) {
+            return makeOfflineList(def);
+        }
+        if (Map.class.isAssignableFrom(type)) {
+            return makeOfflineMap(def);
+        }
+        return Offline.make(def.getClass());
+    }
+
+
+    private static List<Object> makeOfflineList(Object def) {
+        @SuppressWarnings("unchecked")
+        List<Object> list = (List)def;
+        ArrayList<Object> result = new ArrayList<Object>(list.size());
+        for (Object o: list) {
+            result.add(makeOfflineDefault(o));
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    
+    private static Map<String,Object> makeOfflineMap(Object def) {
+        @SuppressWarnings("unchecked")
+        Map<String,Object> map = (Map)def;
+        
+        Map<String,Object> result = new HashMap(map.size());
+        for (Map.Entry<String,Object> me: map.entrySet()) {
+            result.put(me.getKey(), makeOfflineDefault(me.getValue()));
+        }
+        return Collections.unmodifiableMap(result);
+    }
 
 }
