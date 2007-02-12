@@ -42,6 +42,12 @@ import java.util.concurrent.ConcurrentMap;
 public class MemorySheetManager extends SheetManager {
 
     
+    /**
+     * First version.
+     */
+    private static final long serialVersionUID = 1L;
+
+
     private boolean online;
     
 
@@ -214,4 +220,5 @@ public class MemorySheetManager extends SheetManager {
     public void reload() {}
     
     public void save() {}
+
 }

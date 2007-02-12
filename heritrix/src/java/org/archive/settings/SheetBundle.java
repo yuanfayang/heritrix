@@ -41,7 +41,13 @@ import org.archive.state.Key;
 public class SheetBundle extends Sheet {
 
 
-    /** 
+    /**
+     * First version.
+     */
+    private static final long serialVersionUID = 1L;
+
+
+    /**
      * The sheets contained in this bundle.
      */
     private List<Sheet> sheets;

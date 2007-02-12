@@ -25,6 +25,7 @@ package org.archive.settings;
 
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +42,7 @@ import org.archive.state.KeyTypes;
  * 
  * @author pjack
  */
-public abstract class SheetManager {
+public abstract class SheetManager implements Serializable {
 
     
     final public static String DEFAULT_SHEET_NAME = "default";
