@@ -121,9 +121,8 @@ public abstract class Sheet implements StateProvider {
         SingleSheet defaults = getSheetManager().getDefault();
         T result = defaults.check(module, key);
         if (result == null) {
-            result = key.getDefaultValue();
-            return Resolved.makeOnline(module, key, result, 
-                    getSheetManager().getUnspecifiedSheet());
+            Sheet un = getSheetManager().getUnspecifiedSheet();
+            return un.resolve(module, key);
         }
         return Resolved.makeOnline(module, key, result, defaults);
     }
@@ -134,12 +133,10 @@ public abstract class Sheet implements StateProvider {
         SingleSheet defaults = getSheetManager().getDefault();
         Offline result = defaults.checkOffline(offline, key);
         if (result == null) {
-            result = Offline.make(key.getDefaultValue().getClass());
-            return Resolved.makeOffline(
-                    getSheetManager().getUnspecifiedSheet(),
-                    module, key, result);
+            Sheet un = getSheetManager().getUnspecifiedSheet();
+            return un.resolve(module, key);
         }
-        return Resolved.makeOffline(defaults, module, key, result);
+        return Resolved.makeOffline(module, key, result, defaults);
     }
     
     
@@ -170,19 +167,24 @@ public abstract class Sheet implements StateProvider {
      * @return
      */
     boolean isOnline(Key key) {
+        return isOnline(key.getType());
+    }
+    
+    
+    boolean isOnline(Class type) {
         if (getSheetManager().isOnline()) {
             return true;
         }
-        if (key.getType() == List.class) {
+        if (type == List.class) {
             return true;
         }
-        if (key.getType() == Map.class) {
+        if (type == Map.class) {
             return true;
         }
-        if (KeyTypes.isSimple(key.getType())) {
+        if (KeyTypes.isSimple(type)) {
             return true;
         }
-        return false;
+        return false;        
     }
 
 

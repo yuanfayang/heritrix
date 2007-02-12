@@ -129,7 +129,7 @@ public class Resolved<T> {
     }
     
     
-    private static <T> Resolved<T> make(
+    static <T> Resolved<T> make(
             Object module,
             Key<T> key,
             Object value,
@@ -152,10 +152,10 @@ public class Resolved<T> {
 
 
     public static <T> Resolved<T> makeOffline(
-            List<Sheet> sheets,
             Object module,
             Key<T> key,
-            Offline offline) {
+            Offline offline,
+            List<Sheet> sheets) {
         List<Sheet> l = new ArrayList<Sheet>(sheets);
         l = Collections.unmodifiableList(l);
         return make(module, key, offline, sheets, null);
@@ -163,12 +163,12 @@ public class Resolved<T> {
 
     
     public static <T> Resolved<T> makeOffline(
-            Sheet sheet,
             Object module,
             Key<T> key,
-            Offline offline) {
+            Offline offline,
+            Sheet sheet) {
         List<Sheet> l = Collections.singletonList(sheet);
-        return makeOffline(l, module, key, offline);
+        return makeOffline(module, key, offline, l);
     }
     
 
@@ -193,5 +193,16 @@ public class Resolved<T> {
             List<List<Sheet>> elementSheets) {
         return make(module, key, value, sheets, elementSheets);
     }
-    
+
+
+    public static <T> Resolved<T> makeList(
+            Object module, 
+            Key<T> key,
+            T value, 
+            List<Sheet> sheets,
+            List<List<Sheet>> elementSheets) {
+        return make(module, key, value, sheets, elementSheets);
+    }
+
+
 }

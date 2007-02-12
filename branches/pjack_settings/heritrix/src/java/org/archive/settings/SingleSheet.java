@@ -141,7 +141,7 @@ public class SingleSheet extends Sheet {
         if (result == null) {
             return resolveDefault(module, key);
         }
-        return Resolved.makeOffline(this, module, key, result);
+        return Resolved.makeOffline(module, key, result, this);
     }
     
     
@@ -189,8 +189,10 @@ public class SingleSheet extends Sheet {
         List<Sheet> sheets;
         List<List<Sheet>> elementSheets;
         if ((defList == null) && (myList == null)) {
-            return null; // FIXME: Return default value of key here
+            Sheet un = getSheetManager().getUnspecifiedSheet();
+            return un.resolve(module, key);
         }
+
 
         if ((defList != null) && (myList != null)) {
             sheets = Collections.singletonList((Sheet)def);

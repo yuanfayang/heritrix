@@ -23,36 +23,51 @@
  */
 package org.archive.settings;
 
+
+import java.util.Collections;
+import java.util.List;
+
 import org.archive.state.Key;
 
-public class UnspecifiedSheet extends Sheet {
+class UnspecifiedSheet extends Sheet {
 
     
+    final private List<Sheet> thisList;
     
     
     public UnspecifiedSheet(SheetManager manager, String name) {
         super(manager, name);
+        thisList = Collections.singletonList((Sheet)this);
     }
 
     @Override
     public <T> T check(Object module, Key<T> key) {
-        validateModuleType(module.getClass(), key);
-        return key.getDefaultValue();
+        validateModuleType(Offline.getType(module), key);
+        if (getSheetManager().isOnline()) {
+            return key.getDefaultValue();
+        } else {
+            @SuppressWarnings("unchecked")
+            T t = (T)key.getOfflineDefault();
+            return t;
+        }
     }
 
     @Override
     public <T> Offline checkOffline(Offline module, Key<T> key) {
         validateModuleType(module.getType(), key);
-        return Offline.make(key.getDefaultValue().getClass());
+        return (Offline)key.getOfflineDefault();
     }
 
     @Override
     public <T> Resolved<T> resolve(Object module, Key<T> key) {
-        // TODO Auto-generated method stub
-        return null;
+        if (getSheetManager().isOnline()) {
+            return Resolved.makeOnline(module, key, key.getDefaultValue(), 
+                    thisList);
+        }
+        
+        return Resolved.make(module, key, key.getOfflineDefault(), 
+                thisList, null);
     }
 
-    
-    
-    
+
 }
