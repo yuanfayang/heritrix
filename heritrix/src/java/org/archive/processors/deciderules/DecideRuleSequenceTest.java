@@ -34,9 +34,18 @@ import org.archive.state.StateProcessorTestBase;
  */
 public class DecideRuleSequenceTest extends StateProcessorTestBase {
 
-    public void setUp() {
-        processorClass = DecideRuleSequence.class;
-    }
 
-    // FIXME: Add tests
+    
+    @Override
+    protected Object makeModule() {
+        return new DecideRuleSequence();
+    }
+    
+    
+    @Override
+    protected Class getModuleClass() {
+        return DecideRuleSequence.class;
+    }
+    
+    // TODO TESTME
 }
