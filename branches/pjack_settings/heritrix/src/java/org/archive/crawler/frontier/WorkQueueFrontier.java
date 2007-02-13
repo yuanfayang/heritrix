@@ -53,6 +53,7 @@ import org.archive.crawler.framework.exceptions.EndedException;
 import org.archive.crawler.framework.exceptions.FatalConfigurationException;
 import org.archive.net.UURI;
 import org.archive.settings.Sheet;
+import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
@@ -213,6 +214,15 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         return def.get(this, key);
     }
 
+    
+    /**
+     * The UriUniqFilter to use.
+     */
+    @Dependency
+    public final static Key<UriUniqFilter> URI_UNIQ_FILTER =
+        Key.make(UriUniqFilter.class, null);
+    
+    
     /**
      * Create the CommonFrontier
      * 
@@ -336,14 +346,6 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
         //this.controller = null;
     }
 
-    /**
-     * Create a UriUniqFilter that will serve as record 
-     * of already seen URIs.
-     *
-     * @return A UURISet that will serve as a record of already seen URIs
-     * @throws IOException
-     */
-    protected abstract UriUniqFilter createAlreadyIncluded() throws IOException;
 
     /**
      * Arrange for the given CandidateURI to be visited, if it is not
@@ -642,8 +644,7 @@ implements FetchStatusCodes, CoreAttributeConstants, HasUriReceiver,
     private int getCost(CrawlURI curi) {
         int cost = curi.getHolderCost();
         if (cost == CrawlURI.UNCALCULATED) {
-            cost = curi.get(this, COST_POLICY).costOf(curi);
-//            cost = costAssignmentPolicy.costOf(curi);
+            cost = costAssignmentPolicy.costOf(curi);
             curi.setHolderCost(cost);
         }
         return cost;

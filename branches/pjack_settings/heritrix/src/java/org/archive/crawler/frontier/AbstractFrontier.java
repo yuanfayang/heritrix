@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.HttpStatus;
 import org.archive.crawler.datamodel.CandidateURI;
 import org.archive.crawler.datamodel.CoreAttributeConstants;
+import org.archive.crawler.datamodel.CrawlOrder;
 import org.archive.crawler.datamodel.CrawlURI;
 import org.archive.crawler.datamodel.FetchStatusCodes;
 import org.archive.crawler.event.CrawlStatusListener;
@@ -57,6 +58,7 @@ import org.archive.processors.util.CrawlServer;
 import org.archive.processors.util.ServerCache;
 import org.archive.processors.util.ServerCacheUtil;
 import org.archive.settings.Sheet;
+import org.archive.state.Dependency;
 import org.archive.state.Expert;
 import org.archive.state.Global;
 import org.archive.state.Immutable;
@@ -210,6 +212,22 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     /** file collecting report of ignored seed-file entries (if any) */
     public static final String IGNORED_SEEDS_FILENAME = "seeds.ignored";
 
+    
+    /**
+     * The crawl controller using this Frontier.
+     */
+    @Dependency
+    final public static Key<CrawlController> CONTROLLER = 
+        Key.make(CrawlController.class, null);
+
+
+    /**
+     * The queue assignment policy to use with this Frontier.
+     */
+    @Dependency
+    final public static Key<QueueAssignmentPolicy> QUEUE_ASSIGNMENT_POLICY =
+        Key.make(QueueAssignmentPolicy.class, null);
+    
     /**
      * @param name Name of this frontier.
      * @param description Description for this frontier.
@@ -847,7 +865,7 @@ implements CrawlStatusListener, Frontier, FetchStatusCodes,
     protected String canonicalize(UURI uuri) {
         StateProvider def = controller.getSheetManager().getDefault();
         List<CanonicalizationRule> rules = 
-            controller.getOrderSetting(CrawlController.URI_CANONICALIZATION_RULES);
+            controller.getOrderSetting(CrawlOrder.RULES);
         return Canonicalizer.canonicalize(def, uuri.toString(), rules);
     }
 

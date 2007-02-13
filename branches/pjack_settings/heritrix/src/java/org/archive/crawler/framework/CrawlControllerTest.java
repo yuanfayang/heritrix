@@ -95,7 +95,12 @@ public class CrawlControllerTest extends StateProcessorTestBase {
         
         CrawlController controller = new CrawlController(manager, order);
         CrawlScope scope = new DecidingScope(controller);
+        def.set(controller, CrawlController.SHEET_MANAGER, manager);
+        def.set(controller, CrawlController.ORDER, order);
         def.set(controller, CrawlController.SCOPE, scope);
+        def.set(controller, CrawlController.SERVER_CACHE, 
+                new CrawlerServerCache(controller));
         return controller;
     }
+
 }
