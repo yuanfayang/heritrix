@@ -7,3 +7,4 @@ org.archive.crawler.url.canonicalize.StripWWWNRule
 org.archive.crawler.url.canonicalize.StripSessionIDs
 org.archive.crawler.url.canonicalize.RegexRule
 org.archive.crawler.url.canonicalize.FixupQueryStr
+org.archive.crawler.url.canonicalize.StripExtraSlashes
