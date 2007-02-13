@@ -76,6 +76,7 @@ import org.archive.net.UURI;
 import org.archive.net.UURIFactory;
 import org.archive.processors.Processor;
 import org.archive.processors.credential.CredentialStore;
+import org.archive.processors.fetcher.DefaultServerCache;
 import org.archive.settings.Sheet;
 import org.archive.settings.SheetManager;
 import org.archive.state.Dependency;
@@ -133,7 +134,8 @@ public class CrawlController implements Serializable, Reporter, StateProvider {
 
     
     @Immutable
-    final public static Key<ServerCache> SERVER_CACHE = Key.makeNull(ServerCache.class); // FIXME
+    final public static Key<ServerCache> SERVER_CACHE = 
+        Key.make(ServerCache.class, null);
 
 
     /**

@@ -64,7 +64,6 @@ import org.archive.queue.MemQueue;
 import org.archive.queue.Queue;
 import org.archive.settings.Sheet;
 import org.archive.state.Expert;
-import org.archive.state.Global;
 import org.archive.state.Immutable;
 import org.archive.state.Key;
 import org.archive.state.StateProvider;
@@ -84,7 +83,7 @@ import org.archive.util.ArchiveUtils;
  * @author Kristinn Sigurdsson
  */
 public class AdaptiveRevisitFrontier  
-implements Frontier, FetchStatusCodes, CoreAttributeConstants,
+implements Frontier, FetchStatusCodes, CoreAttributeConstants, Serializable,
         AdaptiveRevisitAttributeConstants, CrawlStatusListener, HasUriReceiver {
 
     private static final long serialVersionUID = -3L;
