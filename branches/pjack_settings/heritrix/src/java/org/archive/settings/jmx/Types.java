@@ -50,12 +50,14 @@ public class Types {
             SET_DATA = new CompositeType(
                     "set_data", 
                     "A path/value pair.", 
-                    new String[] { "path", "key", "value" },
+                    new String[] { "type", "path", "key", "value" },
                     new String[] { 
+                            "The data type of the value.", // FIXME: List choices
                             "The path to a processor.", 
                             "The name of one of the processor's keys.", 
                             "The new value for that key in that processor." }, 
-                    new OpenType[] { 
+                    new OpenType[] {
+                            SimpleType.STRING,
                             SimpleType.STRING, 
                             SimpleType.STRING, 
                             SimpleType.STRING });
